@@ -1,0 +1,42 @@
+CREATE TABLE `applications` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`status` enum('draft','submitted','under_review','approved','rejected','changes_requested') NOT NULL DEFAULT 'draft',
+	`projectName` varchar(255) NOT NULL,
+	`projectType` enum('early_stage','mature') NOT NULL,
+	`location` varchar(255) NOT NULL,
+	`vision` text NOT NULL,
+	`landStatus` enum('owned','leased','committed','seeking') NOT NULL,
+	`teamSize` int NOT NULL,
+	`teamDescription` text NOT NULL,
+	`regenerativePractices` text NOT NULL,
+	`governanceApproach` text NOT NULL,
+	`communityEngagement` text NOT NULL,
+	`timeCommitment` text NOT NULL,
+	`currentFunding` text,
+	`fundingNeeds` text NOT NULL,
+	`websiteUrl` varchar(512),
+	`videoUrl` varchar(512),
+	`documentsUrl` text,
+	`additionalNotes` text,
+	`submittedAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `applications_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `reviews` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`applicationId` int NOT NULL,
+	`reviewerId` int NOT NULL,
+	`decision` enum('approve','reject','request_changes','pending') NOT NULL DEFAULT 'pending',
+	`comments` text NOT NULL,
+	`internalNotes` text,
+	`alignmentScore` int,
+	`readinessScore` int,
+	`impactScore` int,
+	`teamScore` int,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `reviews_id` PRIMARY KEY(`id`)
+);

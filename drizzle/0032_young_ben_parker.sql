@@ -1,0 +1,1 @@
+ALTER TABLE `newsletter_subscribers` MODIFY COLUMN `source` enum('homepage','investor_form','connect_form','apply_form','footer','exit_intent','other') NOT NULL DEFAULT 'other';

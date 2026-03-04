@@ -1,0 +1,490 @@
+/**
+ * Email Service using Resend
+ * Provides direct email sending functionality with tracking and branded templates
+ * Domain: regencivics.earth (verified)
+ */
+
+import { Resend } from 'resend';
+
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Verified sender email
+const SENDER_EMAIL = 'ReGen Civics <team@regencivics.earth>';
+const SENDER_NOREPLY = 'ReGen Civics <noreply@regencivics.earth>';
+
+// Base URL for tracking (use environment variable in production)
+const BASE_URL = process.env.VITE_APP_URL || 'https://regencivics.earth';
+
+export interface SendEmailParams {
+  to: string | string[];
+  subject: string;
+  html: string;
+  from?: string;
+  replyTo?: string;
+  // Tracking metadata
+  template?: string;
+  inquiryType?: string;
+  inquiryId?: number;
+  recipientName?: string;
+  // Email log ID for tracking (if pre-created)
+  emailLogId?: number;
+}
+
+/**
+ * Generate branded email header
+ */
+function getEmailHeader(): string {
+  return `
+    <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+      <img src="https://regencivics.earth/images/logo-light.png" alt="ReGen Civics" style="height: 50px; margin-bottom: 10px;" onerror="this.style.display='none'" />
+      <h1 style="color: #7dd87d; margin: 0; font-family: 'Quicksand', sans-serif; font-size: 24px;">ReGen Civics</h1>
+      <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the Regenerative Renaissance</p>
+    </div>
+  `;
+}
+
+/**
+ * Generate branded email footer with social links and no-reply notice
+ */
+function getEmailFooter(): string {
+  return `
+    <div style="background: #f0f7f0; padding: 25px 20px; margin-top: 30px; border-radius: 0 0 8px 8px; border-top: 3px solid #7dd87d;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <p style="color: #1a472a; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">Connect With Us</p>
+        <div style="margin: 15px 0;">
+          <a href="https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34" style="display: inline-block; margin: 0 10px; color: #25D366; text-decoration: none; font-size: 14px; font-weight: bold;">
+            &#x1F4AC; WhatsApp
+          </a>
+          <a href="https://discord.gg/8aTzTxH3Qe" style="display: inline-block; margin: 0 10px; color: #5865F2; text-decoration: none; font-size: 14px; font-weight: bold;">
+            &#x1F3AE; Discord
+          </a>
+          <a href="https://www.youtube.com/@SEEDSRegenerativeEconomies" style="display: inline-block; margin: 0 10px; color: #FF0000; text-decoration: none; font-size: 14px; font-weight: bold;">
+            &#x25B6; YouTube
+          </a>
+        </div>
+      </div>
+      
+      <div style="background: #e8f5e9; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+        <p style="color: #1a472a; font-size: 13px; margin: 0; text-align: center;">
+          <strong>Questions or want to engage?</strong><br>
+          <span style="color: #4a7c59;">We don't respond to emails directly. Please join our community on WhatsApp or Discord for questions, discussions, and engagement!</span>
+        </p>
+      </div>
+      
+      <div style="text-align: center; border-top: 1px solid #c8e6c9; padding-top: 15px;">
+        <p style="color: #4a7c59; font-size: 12px; margin: 0;">
+          <a href="https://regencivics.earth" style="color: #4a7c59;">regencivics.earth</a>
+        </p>
+        <p style="color: #888; font-size: 11px; margin: 10px 0 0 0;">
+          This is an automated message. Please do not reply to this email.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Wrap email content with branded template
+ */
+function wrapWithBrandedTemplate(content: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>ReGen Civics</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Nunito', Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        ${getEmailHeader()}
+        <div style="padding: 30px 25px;">
+          ${content}
+        </div>
+        ${getEmailFooter()}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Add tracking pixel to email HTML
+ */
+function addTrackingPixel(html: string, emailLogId?: number): string {
+  if (!emailLogId) return html;
+  
+  const trackingPixelUrl = `${BASE_URL}/api/track/open/${emailLogId}`;
+  return html + `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
+}
+
+/**
+ * Wrap links with click tracking
+ */
+function wrapLinksWithTracking(html: string, emailLogId?: number): string {
+  if (!emailLogId) return html;
+  
+  // Replace href links with tracked versions (except mailto and tel links)
+  return html.replace(
+    /href="(https?:\/\/[^"]+)"/g,
+    (match, url) => {
+      const trackedUrl = `${BASE_URL}/api/track/click/${emailLogId}?url=${encodeURIComponent(url)}`;
+      return `href="${trackedUrl}"`;
+    }
+  );
+}
+
+/**
+ * Send an email using Resend with tracking
+ * @param params Email parameters
+ * @returns Email ID if successful, null if failed
+ */
+export async function sendEmail(params: SendEmailParams): Promise<{ id: string | null; trackingData?: any }> {
+  try {
+    const { 
+      to, 
+      subject, 
+      html, 
+      from = SENDER_NOREPLY, 
+      replyTo, 
+      template, 
+      inquiryType, 
+      inquiryId, 
+      recipientName,
+      emailLogId 
+    } = params;
+    
+    // Wrap content with branded template
+    let processedHtml = wrapWithBrandedTemplate(html);
+    
+    // Add tracking if emailLogId is provided
+    if (emailLogId) {
+      processedHtml = wrapLinksWithTracking(processedHtml, emailLogId);
+      processedHtml = addTrackingPixel(processedHtml, emailLogId);
+    }
+    
+    const response = await resend.emails.send({
+      from,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html: processedHtml,
+      // Don't set replyTo since we don't respond to emails
+    });
+    
+    if (response.error) {
+      console.error('[Email] Failed to send:', response.error);
+      return { id: null };
+    }
+    
+    console.log('[Email] Sent successfully:', response.data?.id);
+    
+    // Return tracking data for logging
+    return {
+      id: response.data?.id || null,
+      trackingData: {
+        recipientEmail: Array.isArray(to) ? to[0] : to,
+        recipientName,
+        subject,
+        template,
+        inquiryType,
+        inquiryId,
+        emailLogId,
+      },
+    };
+  } catch (error) {
+    console.error('[Email] Error sending email:', error);
+    return { id: null };
+  }
+}
+
+/**
+ * Test email connection
+ * @returns true if connection is successful
+ */
+export async function testEmailConnection(): Promise<boolean> {
+  try {
+    console.log('[Email] Testing connection with API key:', process.env.RESEND_API_KEY?.substring(0, 10) + '...');
+    
+    // Send a test email to verify the API key works
+    const response = await resend.emails.send({
+      from: SENDER_NOREPLY,
+      to: ['delivered@resend.dev'], // Resend's test email address
+      subject: 'Test Email - ReGen Civics',
+      html: wrapWithBrandedTemplate('<p>This is a test email to verify Resend integration.</p>'),
+    });
+    
+    console.log('[Email] Response:', JSON.stringify(response, null, 2));
+    
+    if (response.error) {
+      console.error('[Email] Response error:', response.error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[Email] Connection test failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Email templates for common scenarios
+ * All templates include no-reply messaging and social links in footer
+ */
+export const emailTemplates = {
+  landProjectAccepted: (projectName: string, recipientName: string) => ({
+    subject: `Congratulations! ${projectName} Passed Our Quality Check`,
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Great News, ${recipientName}!</h2>
+      <p style="color: #333; line-height: 1.6;">We're excited to inform you that <strong>${projectName}</strong> has passed our initial quality check for ReGen Civics Season 2.</p>
+      
+      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #4a7c59; margin-top: 0;">What This Means</h3>
+        <p style="color: #333; margin-bottom: 0;">Your project meets our criteria for regenerative land stewardship and community building. However, final participation in Season 2 depends on our community governance process.</p>
+      </div>
+      
+      <h3 style="color: #4a7c59;">Next Steps</h3>
+      <ul style="color: #333; line-height: 1.8;">
+        <li><strong>Community Governance:</strong> Your application will be reviewed by our community through a participatory voting process</li>
+        <li><strong>Follow the Journey:</strong> We highly encourage you to stay engaged regardless of the final selection outcome</li>
+        <li><strong>Alliance Eligibility:</strong> If you complete all the steps, you may still be eligible for joining the ReGen Civics Alliance even if not selected for Season 2</li>
+      </ul>
+      
+      <p style="color: #333;">We'll keep you updated on the governance process and next steps.</p>
+      
+      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>
+    `,
+  }),
+  
+  followUp: (recipientName: string) => ({
+    subject: 'Following Up on Your ReGen Civics Inquiry',
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Hello ${recipientName},</h2>
+      <p style="color: #333; line-height: 1.6;">Thank you for your interest in ReGen Civics. We wanted to follow up on your inquiry and let you know we've received it.</p>
+      
+      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #333; margin: 0;">We're here to support you on your regenerative journey. If you have questions or want to learn more, join our community channels where our team and community members are active!</p>
+      </div>
+      
+      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>
+    `,
+  }),
+  
+  requestMoreInfo: (recipientName: string, questions: string) => ({
+    subject: 'Additional Information Needed for Your Application',
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Hello ${recipientName},</h2>
+      <p style="color: #333; line-height: 1.6;">Thank you for your application to ReGen Civics. To move forward with your review, we need some additional information:</p>
+      
+      <div style="background: #fff3e0; padding: 20px; border-left: 4px solid #d4a574; margin: 20px 0; border-radius: 0 8px 8px 0;">
+        ${questions}
+      </div>
+      
+      <p style="color: #333;">Please provide this information through our community channels or by updating your application.</p>
+      
+      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>
+    `,
+  }),
+  
+  applicationReceived: (projectName: string, recipientName: string) => ({
+    subject: `Application Received: ${projectName}`,
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Thank You, ${recipientName}!</h2>
+      <p style="color: #333; line-height: 1.6;">We've received your application for <strong>${projectName}</strong> to join ReGen Civics.</p>
+      
+      <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+        <p style="color: #2e7d32; font-size: 18px; margin: 0;">Your application is now in our review queue</p>
+      </div>
+      
+      <h3 style="color: #4a7c59;">What Happens Next?</h3>
+      <ol style="color: #333; line-height: 1.8;">
+        <li>Our team will review your application within 5-7 business days</li>
+        <li>You'll receive an email update on your application status</li>
+        <li>If selected, you'll be invited to join our onboarding process</li>
+      </ol>
+      
+      <p style="color: #333;">In the meantime, we encourage you to join our community and connect with other regenerative projects!</p>
+      
+      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>
+    `,
+  }),
+  
+  investorWelcome: (recipientName: string, investmentRange: string) => ({
+    subject: 'Your ReGen Civics Investor Deck is Ready',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
+        <div style="background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #7dd87d; margin: 0 0 8px 0; font-size: 28px;">Welcome, ${recipientName}!</h1>
+          <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 16px;">Your investor materials are ready.</p>
+        </div>
+        
+        <div style="padding: 30px;">
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">Thank you for your interest in the ReGen Civics Alliance Fund. We've received your inquiry and are excited to share our full investment materials with you.</p>
+          
+          <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 20px; border-radius: 0 8px 8px 0; margin: 24px 0;">
+            <p style="color: #1a472a; margin: 0 0 8px 0; font-weight: bold;">Your Inquiry Summary</p>
+            <p style="color: #555; margin: 0; font-size: 14px;"><strong>Investment Interest:</strong> ${investmentRange}</p>
+          </div>
+          
+          <h3 style="color: #1a472a; margin-top: 28px;">Your Investor Materials</h3>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+            <tr>
+              <td style="padding: 12px; background: #f9f9f9; border-radius: 8px; vertical-align: top;">
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #1a472a;">Investor Deck (PDF)</p>
+                <p style="margin: 0 0 12px 0; color: #555; font-size: 13px; line-height: 1.5;">Our full 16-slide presentation covering the fund thesis, structure, portfolio, governance, and investment terms.</p>
+                <a href="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/regen-civics-investor-deck-v3_b8e3b334.pdf" style="display: inline-block; background: #1a472a; color: #7dd87d; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">Download Investor Deck</a>
+              </td>
+            </tr>
+          </table>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+            <tr>
+              <td style="padding: 12px; background: #f9f9f9; border-radius: 8px; vertical-align: top;">
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #1a472a;">Investment Memorandum (Online)</p>
+                <p style="margin: 0 0 12px 0; color: #555; font-size: 13px; line-height: 1.5;">The full interactive investment memorandum with detailed financials, risk factors, portfolio overview, competitive positioning, and FAQs. Bookmark this link for easy access anytime.</p>
+                <a href="https://regencivics.earth/opportunity" style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">View Investment Memorandum</a>
+              </td>
+            </tr>
+          </table>
+          
+          <h3 style="color: #1a472a; margin-top: 28px;">Next Steps</h3>
+          <ol style="color: #555; line-height: 1.9; font-size: 14px; padding-left: 20px;">
+            <li>Review the investor deck and investment memorandum at your own pace</li>
+            <li><a href="https://calendly.com/rieki-cordon/30min" style="color: #1a472a; font-weight: bold;">Schedule a due diligence call</a> when you're ready to go deeper</li>
+            <li><a href="https://regencivics.earth/loi" style="color: #1a472a; font-weight: bold;">Submit a Letter of Intent</a> to secure your place in the founding investor cohort</li>
+          </ol>
+          
+          <div style="background: #1a472a; color: rgba(255,255,255,0.7); padding: 16px 20px; border-radius: 8px; margin-top: 28px; font-size: 12px; line-height: 1.6;">
+            <p style="margin: 0;">This is an automated confirmation. For questions, please reach out directly to <strong style="color: #7dd87d;">Rieki@pm.me</strong> or connect via our community channels. Direct replies to this email are not monitored.</p>
+          </div>
+          
+          <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center;">
+            <p style="color: #4a7c59; font-weight: bold; margin-bottom: 4px;">The ReGen Civics Team</p>
+            <p style="color: #999; font-size: 12px; margin: 0;">Healthier lands, healthier people, increasing real world value.</p>
+          </div>
+        </div>
+      </div>
+    `,
+  }),
+  
+  newsletterWelcome: (recipientName: string) => ({
+    subject: 'Welcome to the ReGen Civics Newsletter!',
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Welcome to the Journey, ${recipientName || 'Friend'}!</h2>
+      <p style="color: #333; line-height: 1.6;">You're now part of the ReGen Civics community. Get ready for updates on regenerative land projects, community events, and the infinite game of building a better world.</p>
+      
+      <div style="background: linear-gradient(135deg, #e8f5e9 0%, #f0f7f0 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+        <p style="color: #1a472a; font-size: 18px; margin: 0 0 10px 0; font-weight: bold;">What to Expect</p>
+        <p style="color: #4a7c59; margin: 0;">Monthly updates, project spotlights, community stories, and invitations to participate in the regenerative renaissance.</p>
+      </div>
+      
+      <p style="color: #333;">While you wait for our next newsletter, join our community to connect with fellow regenerators!</p>
+      
+      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>
+    `,
+  }),
+  
+  contributionAccepted: (recipientName: string, contributionTitle: string, campaignTitle: string, ownerNotes?: string) => ({
+    subject: `Great News! Your Contribution to "${campaignTitle}" Has Been Accepted`,
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Congratulations, ${recipientName}!</h2>
+      <p style="color: #333; line-height: 1.6;">Your contribution <strong>"${contributionTitle}"</strong> to the campaign <strong>"${campaignTitle}"</strong> has been accepted!</p>
+      
+      <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border-left: 4px solid #4caf50;">
+        <p style="color: #2e7d32; font-size: 18px; margin: 0;">Your contribution is now part of this regenerative project!</p>
+      </div>
+      
+      ${ownerNotes ? `
+      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #4a7c59; font-weight: bold; margin: 0 0 10px 0;">Message from the Campaign Owner:</p>
+        <p style="color: #333; margin: 0; font-style: italic;">${ownerNotes}</p>
+      </div>
+      ` : ''}
+      
+      <h3 style="color: #4a7c59;">What Happens Next?</h3>
+      <ul style="color: #333; line-height: 1.8;">
+        <li>The campaign owner will reach out to coordinate the details of your contribution</li>
+        <li>You can track the campaign's progress on the ReGen Civics website</li>
+        <li>Connect with other contributors through our community channels</li>
+      </ul>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="https://regencivics.earth/campaigns" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">View Campaign</a>
+      </div>
+      
+      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>
+    `,
+  }),
+  
+  contributionRejected: (recipientName: string, contributionTitle: string, campaignTitle: string, ownerNotes?: string) => ({
+    subject: `Update on Your Contribution to "${campaignTitle}"`,
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Hello ${recipientName},</h2>
+      <p style="color: #333; line-height: 1.6;">Thank you for your interest in contributing to <strong>"${campaignTitle}"</strong>. After careful consideration, the campaign owner has decided not to accept your contribution <strong>"${contributionTitle}"</strong> at this time.</p>
+      
+      ${ownerNotes ? `
+      <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #d4a574;">
+        <p style="color: #8d6e63; font-weight: bold; margin: 0 0 10px 0;">Message from the Campaign Owner:</p>
+        <p style="color: #333; margin: 0; font-style: italic;">${ownerNotes}</p>
+      </div>
+      ` : ''}
+      
+      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #4a7c59; margin-top: 0;">Don't Give Up!</h3>
+        <p style="color: #333; margin: 0;">There are many other regenerative projects that could benefit from your support. Browse our active campaigns to find another project that aligns with your values and resources.</p>
+      </div>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="https://regencivics.earth/campaigns" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Browse Campaigns</a>
+      </div>
+      
+      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>
+    `,
+  }),
+  
+  contributionFulfilled: (recipientName: string, contributionTitle: string, campaignTitle: string, ownerNotes?: string) => ({
+    subject: `Your Contribution to "${campaignTitle}" Has Been Fulfilled!`,
+    html: `
+      <h2 style="color: #1a472a; margin-top: 0;">Thank You, ${recipientName}!</h2>
+      <p style="color: #333; line-height: 1.6;">Your contribution <strong>"${contributionTitle}"</strong> to <strong>"${campaignTitle}"</strong> has been marked as fulfilled!</p>
+      
+      <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+        <p style="color: #2e7d32; font-size: 20px; margin: 0 0 10px 0; font-weight: bold;">You Made a Difference!</p>
+        <p style="color: #4a7c59; margin: 0;">Your contribution has helped bring this regenerative vision closer to reality.</p>
+      </div>
+      
+      ${ownerNotes ? `
+      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #4a7c59; font-weight: bold; margin: 0 0 10px 0;">Message from the Campaign Owner:</p>
+        <p style="color: #333; margin: 0; font-style: italic;">${ownerNotes}</p>
+      </div>
+      ` : ''}
+      
+      <p style="color: #333; line-height: 1.6;">You are now part of the regenerative renaissance. Consider sharing your experience with others and exploring more ways to contribute to the movement!</p>
+      
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="https://regencivics.earth/campaigns" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Explore More Campaigns</a>
+      </div>
+      
+      <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+        <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
+      </div>
+    `,
+  }),
+};

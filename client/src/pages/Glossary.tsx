@@ -1,0 +1,331 @@
+/**
+ * Glossary Page - Searchable reference for all key terms
+ * Helps first-time visitors understand specialized terminology
+ */
+import { useState, useMemo } from "react";
+import { Search, BookOpen, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { SEO } from "@/components/SEO";
+import { BackButton } from "@/components/BackButton";
+import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
+import { AnimatedSection } from "@/components/AnimatedSection";
+import { Link } from "wouter";
+import { PageTransition } from "@/components/PageTransition";
+
+interface GlossaryEntry {
+  term: string;
+  definition: string;
+  category: string;
+  relatedLink?: string;
+  relatedLabel?: string;
+}
+
+const glossaryEntries: GlossaryEntry[] = [
+  // Core Concepts
+  {
+    term: "Regenerative Renaissance",
+    definition: "A global movement to shift from extractive economic systems to ones that restore and regenerate ecological, social, and financial capital. ReGen Civics positions itself as a catalyst for this transition.",
+    category: "Core Concepts",
+    relatedLink: "/",
+    relatedLabel: "Learn more",
+  },
+  {
+    term: "Infinite Game",
+    definition: "A concept from James P. Carse's philosophy. Unlike finite games (played to win), infinite games are played to continue playing. ReGen Civics is designed as an infinite game where the goal is perpetual regeneration, not extraction.",
+    category: "Core Concepts",
+    relatedLink: "/game",
+    relatedLabel: "Game Overview",
+  },
+  {
+    term: "Ecosystemic Development",
+    definition: "An approach to development that mimics natural ecosystems, creating interconnected, self-sustaining systems rather than isolated projects. It integrates ecological, social, and economic dimensions.",
+    category: "Core Concepts",
+  },
+  {
+    term: "8 Forms of Capital",
+    definition: "A framework recognizing eight types of wealth beyond money: Financial, Material, Living (ecological), Social, Intellectual, Experiential, Spiritual, and Cultural capital. Used in ReGen Civics to measure holistic value creation.",
+    category: "Core Concepts",
+    relatedLink: "/calculator",
+    relatedLabel: "Contribution Calculator",
+  },
+  {
+    term: "HEIST Framework",
+    definition: "Holistic Ecosystemic Impact and Sustainability Tracking. A proprietary framework used by ReGen Civics to measure, audit, and verify the regenerative impact of land projects across multiple dimensions.",
+    category: "Core Concepts",
+  },
+
+  // Fund & Investment
+  {
+    term: "Crowd-Pooling",
+    definition: "A mechanism where community members pool resources (money, skills, materials, time) to collectively fund and support regenerative land projects. Similar to crowdfunding but includes non-financial contributions.",
+    category: "Fund & Investment",
+    relatedLink: "/crowd-pooling",
+    relatedLabel: "Crowd Pooling Tool",
+  },
+  {
+    term: "Impact Investing",
+    definition: "Investments made with the intention to generate positive, measurable social and environmental impact alongside a financial return. ReGen Civics focuses on land-backed impact investments.",
+    category: "Fund & Investment",
+    relatedLink: "/opportunity",
+    relatedLabel: "Investment Thesis",
+  },
+  {
+    term: "Land-Backed Investment",
+    definition: "Investment secured by real land assets, providing tangible collateral. ReGen Civics invests in regenerative land projects where the land itself serves as the underlying asset.",
+    category: "Fund & Investment",
+    relatedLink: "/fund",
+    relatedLabel: "Fund Overview",
+  },
+  {
+    term: "De-risked Vehicle",
+    definition: "A financial structure designed to reduce investment risk through diversification, collateral, governance safeguards, and staged capital deployment. The ReGen Civics fund uses multiple de-risking strategies.",
+    category: "Fund & Investment",
+  },
+  {
+    term: "Treasury",
+    definition: "The collective financial resources managed by the ReGen Civics fund, including invested capital, returns, and community contributions. Governed transparently through DAO mechanisms.",
+    category: "Fund & Investment",
+    relatedLink: "/fund",
+    relatedLabel: "Treasury Dashboard",
+  },
+
+  // Governance & Technology
+  {
+    term: "Hypha DAO",
+    definition: "A Decentralized Autonomous Organization platform that ReGen Civics uses for governance, proposals, and community decision-making. Built on the Base blockchain (Coinbase L2).",
+    category: "Governance & Technology",
+    relatedLink: "/governance",
+    relatedLabel: "Governance",
+  },
+  {
+    term: "DAO (Decentralized Autonomous Organization)",
+    definition: "An organization governed by smart contracts and community voting rather than centralized leadership. Decisions are made transparently through proposals and token-weighted voting.",
+    category: "Governance & Technology",
+    relatedLink: "/governance",
+    relatedLabel: "Governance",
+  },
+  {
+    term: "Base Blockchain",
+    definition: "A Layer 2 blockchain built by Coinbase, offering low transaction costs and high speed. ReGen Civics chose Base for its accessibility, security, and alignment with mainstream adoption.",
+    category: "Governance & Technology",
+  },
+  {
+    term: "RGVoice Token",
+    definition: "A governance token in the ReGen Civics ecosystem used for voting on proposals and community decisions. Earned through participation and contributions.",
+    category: "Governance & Technology",
+  },
+  {
+    term: "$Regen Token",
+    definition: "A utility token used within the ReGen Civics ecosystem to track contributions, reward participation, and facilitate value exchange between players, projects, and the fund.",
+    category: "Governance & Technology",
+  },
+  {
+    term: "$RCivics Token",
+    definition: "A utility token representing civic participation in the ReGen Civics ecosystem. Used for tracking engagement and unlocking governance privileges.",
+    category: "Governance & Technology",
+  },
+
+  // Program & Community
+  {
+    term: "Season",
+    definition: "A structured program cycle (typically 13 weeks) where land projects go through an incubator process. Each season follows natural rhythms: Spring (planting), Summer (growing), Fall (harvesting), Winter (resting).",
+    category: "Program & Community",
+    relatedLink: "/seasons",
+    relatedLabel: "Seasons",
+  },
+  {
+    term: "Quest",
+    definition: "A specific task or mission within the ReGen Civics game that players can complete to earn tokens and contribute to regenerative outcomes. Quests range from educational to hands-on ecological work.",
+    category: "Program & Community",
+    relatedLink: "/quest",
+    relatedLabel: "Start Questing",
+  },
+  {
+    term: "Player",
+    definition: "An active participant in the ReGen Civics infinite game. Players complete quests, earn tokens, contribute to governance, and support land projects through various forms of capital.",
+    category: "Program & Community",
+    relatedLink: "/play",
+    relatedLabel: "Become a Player",
+  },
+  {
+    term: "Alliance Partner",
+    definition: "An organization that joins the ReGen Civics network to provide services, expertise, or resources to regenerative land projects. Partners include NGOs, consultancies, and service providers.",
+    category: "Program & Community",
+    relatedLink: "/ally",
+    relatedLabel: "Alliance",
+  },
+  {
+    term: "The Gathering Grove",
+    definition: "The community forum within ReGen Civics where players, investors, land projects, and alliance partners connect, discuss, and collaborate.",
+    category: "Program & Community",
+    relatedLink: "/community",
+    relatedLabel: "Community Forum",
+  },
+  {
+    term: "Seed of Life",
+    definition: "A sacred geometry symbol used as the visual identity of ReGen Civics. Represents the interconnected, fractal nature of regenerative systems and the potential for growth from a single seed.",
+    category: "Program & Community",
+  },
+
+  // Land & Ecology
+  {
+    term: "Ecovillage",
+    definition: "An intentional community designed to be socially, economically, and ecologically sustainable. Ecovillages are a primary investment target for the ReGen Civics fund.",
+    category: "Land & Ecology",
+    relatedLink: "/land",
+    relatedLabel: "Land Projects",
+  },
+  {
+    term: "Regenerative Agriculture",
+    definition: "Farming practices that restore soil health, increase biodiversity, improve water cycles, and sequester carbon. Goes beyond sustainability to actively improve the land.",
+    category: "Land & Ecology",
+  },
+  {
+    term: "Restoration Ecology",
+    definition: "The scientific study and practice of restoring degraded, damaged, or destroyed ecosystems. A key component of many ReGen Civics land projects.",
+    category: "Land & Ecology",
+  },
+  {
+    term: "Bioregion",
+    definition: "A geographic area defined by natural boundaries (watersheds, ecosystems) rather than political borders. ReGen Civics organizes projects by bioregion to support place-based regeneration.",
+    category: "Land & Ecology",
+  },
+
+  // Historical
+  {
+    term: "SEEDS",
+    definition: "The predecessor movement to ReGen Civics, focused on building a regenerative economy. Many of the frameworks, community members, and principles of ReGen Civics evolved from the SEEDS ecosystem.",
+    category: "Historical",
+    relatedLink: "/blog/remembering-our-roots",
+    relatedLabel: "Our History",
+  },
+];
+
+// Sort alphabetically
+const sortedEntries = [...glossaryEntries].sort((a, b) => a.term.localeCompare(b.term));
+
+// Get unique categories
+const categories = Array.from(new Set(glossaryEntries.map((e) => e.category)));
+
+export default function Glossary() {
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    return sortedEntries.filter((entry) => {
+      const matchesSearch =
+        !search ||
+        entry.term.toLowerCase().includes(search.toLowerCase()) ||
+        entry.definition.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = !activeCategory || entry.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [search, activeCategory]);
+
+  return (
+    <PageTransition>
+      <div className="min-h-screen">
+        <SEO
+          title="Glossary | ReGen Civics"
+          description="Definitions for key terms used in the ReGen Civics ecosystem, including HEIST framework, crowd-pooling, ecosystemic development, and more."
+          url="/glossary"
+        />
+        <BackButton />
+
+        {/* Hero */}
+        <section className="py-16 md:py-24 px-4 text-center">
+          <div className="max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7dd87d]/10 text-[#7dd87d] text-sm mb-6" style={{ fontFamily: "var(--font-accent)" }}>
+              <BookOpen className="w-4 h-4" />
+              <span>Reference Guide</span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
+              ReGen Glossary
+            </h1>
+            <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto mb-8">
+              Definitions for the key terms, frameworks, and concepts used throughout the ReGen Civics ecosystem.
+            </p>
+
+            {/* Search */}
+            <div className="relative max-w-md mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <Input
+                type="text"
+                placeholder="Search terms..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[#7dd87d]/50"
+              />
+            </div>
+
+            {/* Category filters */}
+            <div className="flex flex-wrap justify-center gap-2 mt-6">
+              <button
+                onClick={() => setActiveCategory(null)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  !activeCategory
+                    ? "bg-[#7dd87d] text-[#1a472a]"
+                    : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70"
+                }`}
+              >
+                All ({sortedEntries.length})
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    activeCategory === cat
+                      ? "bg-[#7dd87d] text-[#1a472a]"
+                      : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Entries */}
+        <section className="pb-16 md:pb-24 px-4">
+          <div className="max-w-3xl mx-auto space-y-3">
+            {filtered.length === 0 && (
+              <div className="text-center py-12">
+                <SeedOfLifeIcon className="w-12 h-12 text-white/10 mx-auto mb-4" size={48} />
+                <p className="text-white/40 text-sm">No terms match your search.</p>
+              </div>
+            )}
+            {filtered.map((entry, i) => (
+              <AnimatedSection key={entry.term} delay={Math.min(i * 0.03, 0.3)}>
+                <div className="p-5 rounded-xl bg-white/5 border border-white/10 hover:border-[#7dd87d]/20 transition-colors">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-white font-bold text-base mb-1" style={{ fontFamily: "var(--font-display)" }}>
+                        {entry.term}
+                      </h3>
+                      <span className="text-[#7dd87d]/50 text-[10px] uppercase tracking-wider font-bold">
+                        {entry.category}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-white/60 text-sm leading-relaxed mt-2">
+                    {entry.definition}
+                  </p>
+                  {entry.relatedLink && (
+                    <Link
+                      href={entry.relatedLink}
+                      className="inline-flex items-center gap-1 mt-3 text-[#7dd87d] text-xs hover:underline"
+                    >
+                      {entry.relatedLabel || "Learn more"} <ExternalLink className="w-3 h-3" />
+                    </Link>
+                  )}
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </section>
+      </div>
+    </PageTransition>
+  );
+}

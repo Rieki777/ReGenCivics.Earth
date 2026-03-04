@@ -1,0 +1,1 @@
+ALTER TABLE `investor_inquiries` MODIFY COLUMN `investmentRange` enum('under_250k','250k_1m','1m_5m','5m_10m','over_10m','under_10k','10k_50k','50k_100k','100k_500k','500k_1m','over_1m') NOT NULL;

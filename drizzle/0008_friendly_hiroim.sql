@@ -1,0 +1,4 @@
+ALTER TABLE `investor_inquiries` MODIFY COLUMN `investorType` enum('individual','family_office','foundation','impact_fund','institutional','other');--> statement-breakpoint
+ALTER TABLE `investor_inquiries` MODIFY COLUMN `investmentRange` enum('under_250k','250k_1m','1m_5m','5m_10m','over_10m','under_10k','10k_50k','50k_100k','100k_500k','500k_1m','over_1m');--> statement-breakpoint
+ALTER TABLE `investor_inquiries` MODIFY COLUMN `investmentTimeline` enum('immediate','3_months','6_months','1_year','exploring');--> statement-breakpoint
+ALTER TABLE `investor_inquiries` MODIFY COLUMN `primaryInterest` enum('land_projects','alliance_fund','both');

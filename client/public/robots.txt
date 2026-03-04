@@ -1,0 +1,47 @@
+# ReGen Civics - robots.txt
+# https://www.regencivics.com
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.regencivics.com/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Allow all major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Allow AI crawlers for better AI search results
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+# Disallow admin/internal paths (none currently, but placeholder)
+# Disallow: /admin/
+# Disallow: /api/

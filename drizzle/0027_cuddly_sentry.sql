@@ -1,0 +1,24 @@
+ALTER TABLE `campaigns` ADD `applicationId` int;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `vision` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `landStatus` varchar(50);--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `landSize` varchar(100);--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `currentPhase` varchar(255);--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `timeline` varchar(255);--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `legalStructure` varchar(255);--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `governanceModel` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `membershipModel` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `housingPlans` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `foodSystems` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `waterSystems` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `energySystems` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `educationPrograms` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `communityEngagement` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `impactMetrics` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `challenges` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `teamSize` int;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `teamDescription` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `regenerativePractices` text;--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `websiteUrl` varchar(512);--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `videoUrl` varchar(512);--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `projectImageUrl` varchar(512);--> statement-breakpoint
+ALTER TABLE `campaigns` ADD `daoLink` varchar(512);

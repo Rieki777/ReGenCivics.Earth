@@ -1,0 +1,31 @@
+{
+  "name": "ReGen Civics: Infinite Game of Regeneration",
+  "short_name": "ReGen Civics",
+  "description": "An Infinite Game for the Regenerative Renaissance. Join investors, land projects, alliance partners, and players building a regenerative civilization.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a472a",
+  "theme_color": "#1a472a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["finance", "education", "social"],
+  "lang": "en"
+}

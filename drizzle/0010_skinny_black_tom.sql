@@ -1,0 +1,20 @@
+CREATE TABLE `crowd_pooling_projects` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`applicationId` int,
+	`projectName` varchar(255) NOT NULL,
+	`projectDescription` text,
+	`location` varchar(255),
+	`projectImageUrl` varchar(512),
+	`projectUrl` varchar(512),
+	`targetCurrency` varchar(10) NOT NULL DEFAULT 'USD',
+	`targetAmount` int NOT NULL,
+	`currentAmount` int NOT NULL DEFAULT 0,
+	`contributorCount` int NOT NULL DEFAULT 0,
+	`startDate` timestamp,
+	`endDate` timestamp,
+	`status` enum('upcoming','active','completed','paused') NOT NULL DEFAULT 'upcoming',
+	`isVisible` int NOT NULL DEFAULT 1,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `crowd_pooling_projects_id` PRIMARY KEY(`id`)
+);
