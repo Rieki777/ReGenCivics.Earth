@@ -20,7 +20,7 @@ export function cspMiddleware(_req: Request, res: Response, next: NextFunction) 
     "img-src 'self' data: https: blob:",
     "font-src 'self' https://fonts.gstatic.com data:",
     "connect-src 'self' https: wss:",
-    "frame-src 'self' https://calendly.com https://www.youtube.com https://youtu.be",
+    "frame-src 'self' https://calendly.com https://www.youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://www.vimeo.com https://fast.wistia.net https://www.loom.com https://www.dailymotion.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
