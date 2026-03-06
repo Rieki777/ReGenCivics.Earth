@@ -41,6 +41,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
+import { LazyImage } from "@/components/LazyImage";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 
 function CollapsibleSection({
@@ -734,16 +735,14 @@ export default function Land() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/akMLmQzqqlUsisDu.webp"
                     alt="Liminal Village aerial view"
-                    loading="lazy"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/yyyxPsMbwSGiMHEp.webp"
                     alt="Liminal Village sunset"
-                    loading="lazy"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
                 </div>
@@ -783,16 +782,14 @@ export default function Land() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/xHHoWlRQHaZwWmCV.webp"
                     alt="Heartland glamping tent"
-                    loading="lazy"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/eHZRDmAdPefGZGgJ.webp"
                     alt="Heartland wellness"
-                    loading="lazy"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
                 </div>
@@ -824,16 +821,14 @@ export default function Land() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/rmKnVnHXVDidptKc.jpg"
                     alt="Traditional Dream Factory greenhouse"
-                    loading="lazy"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/ezyQpMhwRnDAKylV.jpg"
                     alt="Traditional Dream Factory aerial view"
-                    loading="lazy"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
                 </div>

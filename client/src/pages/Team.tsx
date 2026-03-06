@@ -38,6 +38,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { SEO, pageSEO } from '@/components/SEO';
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import { LazyImage } from "@/components/LazyImage";
 
 const coreValues = [
   { icon: Heart, title: "Honesty (with Empathy)", description: "We speak truth with care, balancing directness with compassion for each other's journeys." },
@@ -351,11 +352,12 @@ export default function Team() {
       {/* Hero Section */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="https://assets.regencivics.earth/PPEoXqTcNBKerkDe.jpg" 
-            alt="Regenerative Ikigai" 
+          <LazyImage
+            src="https://assets.regencivics.earth/PPEoXqTcNBKerkDe.jpg"
+            alt="Regenerative Ikigai"
             className="w-full h-full object-cover"
-          loading="lazy" />
+            placeholder={<div className="w-full h-full bg-[#1a472a]" />}
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a]/85 via-[#1a472a]/75 to-[#1a472a]" />
         </div>
         
@@ -492,11 +494,12 @@ export default function Team() {
 
           {/* Static Ikigai Diagram Image */}
           <div className="relative max-w-2xl mx-auto mb-8">
-            <img 
-              src="https://assets.regencivics.earth/sceUJeMUZWMBHqFi.png" 
-              alt="Regenerative Ikigai - The intersection of what you love creating, what you're good at, what the renaissance needs, and what ReGen Civics will pay you for" 
+            <LazyImage
+              src="https://assets.regencivics.earth/sceUJeMUZWMBHqFi.png"
+              alt="Regenerative Ikigai - The intersection of what you love creating, what you're good at, what the renaissance needs, and what ReGen Civics will pay you for"
               className="w-full h-auto"
-            loading="lazy" />
+              aspect="1/1"
+            />
             <p className="text-center text-white/60 text-sm mt-4 italic">
               Ikigai (生き甲斐) is a Japanese concept meaning "a reason for being" - a purpose in life that makes one's life worthwhile.
             </p>

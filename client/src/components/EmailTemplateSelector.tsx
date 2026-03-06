@@ -4,7 +4,7 @@
  * Opens an inline compose form — select a template, edit subject/body, then send.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -226,7 +226,18 @@ export function EmailTemplateSelector({
   const [isSending, setIsSending] = useState(false);
   const [scheduledFor, setScheduledFor] = useState("");
   const [isScheduleMode, setIsScheduleMode] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [hasDraft, setHasDraft] = useState(() => !!localStorage.getItem(`email_draft_${recipientEmail}`));
   const { toast } = useToast();
+
+  const draftKey = `email_draft_${recipientEmail}`;
+
+  // Persist draft to localStorage while composing
+  useEffect(() => {
+    if (!isComposing || (!subject && !body)) return;
+    localStorage.setItem(draftKey, JSON.stringify({ subject, body, templateId: selectedTemplateId }));
+  }, [isComposing, subject, body, selectedTemplateId, draftKey]);
+
   const sendEmailMutation = trpc.email.sendDirect.useMutation();
   const scheduleEmailMutation = trpc.scheduledEmails.schedule.useMutation();
 
@@ -245,6 +256,18 @@ export function EmailTemplateSelector({
 
   const handleOpen = () => {
     setIsComposing(true);
+    const saved = localStorage.getItem(draftKey);
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved);
+        setSubject(draft.subject || '');
+        setBody(draft.body || '');
+        setSelectedTemplateId(draft.templateId || 'custom');
+        setDraftRestored(true);
+        setTimeout(() => setDraftRestored(false), 3000);
+        return;
+      } catch {}
+    }
     loadTemplate("follow_up");
   };
 
@@ -267,6 +290,8 @@ export function EmailTemplateSelector({
           scheduledFor: new Date(scheduledFor).toISOString(),
         });
         toast({ title: "Email Scheduled!", description: `Will send to ${recipientName || recipientEmail} on ${new Date(scheduledFor).toLocaleString()}` });
+        localStorage.removeItem(draftKey);
+        setHasDraft(false);
         setIsComposing(false);
         setIsScheduleMode(false);
         setScheduledFor('');
@@ -289,6 +314,8 @@ export function EmailTemplateSelector({
         inquiryType,
       });
       toast({ title: "Email Sent!", description: `Successfully sent to ${recipientName || recipientEmail}` });
+      localStorage.removeItem(draftKey);
+      setHasDraft(false);
       setIsComposing(false);
     } catch (error: any) {
       toast({ title: "Email Failed", description: error.message || "Failed to send email. Please try again.", variant: "destructive" });
@@ -304,6 +331,7 @@ export function EmailTemplateSelector({
           <p className="text-xs font-semibold text-[#1a472a] flex items-center gap-1.5">
             <Mail className="w-3 h-3" />
             To: {recipientName || recipientEmail} &lt;{recipientEmail}&gt;
+            {draftRestored && <span className="text-[10px] text-amber-600 font-normal flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Draft restored</span>}
           </p>
           <button
             onClick={() => setIsComposing(false)}
@@ -432,12 +460,13 @@ export function EmailTemplateSelector({
   return (
     <Button
       variant={variant}
-      className={`border-[#1a472a]/30 ${className}`}
+      className={`border-[#1a472a]/30 ${className} relative`}
       onClick={handleOpen}
       disabled={!recipientEmail}
     >
       <Mail className="w-4 h-4 mr-2" />
       Send Email
+      {hasDraft && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-white" title="Unsaved draft" />}
     </Button>
   );
 }

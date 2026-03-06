@@ -2200,6 +2200,29 @@ const SHORTCUTS = [
   { key: 'Esc', desc: 'Close dialog / clear search' },
 ];
 
+// ─── Investor Priority Scoring ─────────────────────────────────────────────────
+
+function getInvestorPriority(investor: any): { score: number; label: string; color: string } {
+  let score = 0;
+  const range = (investor.investmentRange || '').toLowerCase();
+  if (range.includes('1m') || range.includes('1,000,000') || range.includes('million')) score += 5;
+  else if (range.includes('500k') || range.includes('500,000')) score += 4;
+  else if (range.includes('100k') || range.includes('100,000')) score += 3;
+  else if (range.includes('50k') || range.includes('50,000')) score += 2;
+  else if (range) score += 1;
+  const daysOld = (Date.now() - new Date(investor.createdAt).getTime()) / 86_400_000;
+  if (daysOld <= 7) score += 3;
+  else if (daysOld <= 30) score += 2;
+  else score += 1;
+  const status = investor.status || 'new';
+  if (status === 'new') score += 2;
+  else if (status === 'in_discussion') score += 1;
+  else if (status === 'declined' || status === 'archived') score -= 3;
+  if (score >= 8) return { score, label: 'High', color: 'bg-red-100 text-red-700 border-red-200' };
+  if (score >= 5) return { score, label: 'Med', color: 'bg-amber-100 text-amber-700 border-amber-200' };
+  return { score, label: 'Low', color: 'bg-gray-100 text-gray-500 border-gray-200' };
+}
+
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [investorSearch, setInvestorSearch] = useState('');
@@ -2207,6 +2230,8 @@ function AdminDashboard() {
   const [investorStatusFilter, setInvestorStatusFilter] = useState<string>('all');
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiSelectedContact, setAiSelectedContact] = useState<{ email?: string; name?: string } | null>(null);
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
 
   function handleAIAction(action: AdminAIAction) {
     if (action.type === "navigate" && action.tab) {
@@ -2233,7 +2258,7 @@ function AdminDashboard() {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
       if (e.key === '?') { e.preventDefault(); setShowShortcuts(s => !s); }
-      if (e.key === '/' ) { e.preventDefault(); (document.querySelector('[data-search-input]') as HTMLInputElement)?.focus(); }
+      if (e.key === '/' ) { e.preventDefault(); (document.querySelector('[data-global-search]') as HTMLInputElement)?.focus(); }
       if (TAB_KEYS[e.key] && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         setActiveTab(TAB_KEYS[e.key]);
@@ -2320,6 +2345,19 @@ function AdminDashboard() {
     app.location?.toLowerCase().includes(appSearch.toLowerCase()) ||
     app.vision?.toLowerCase().includes(appSearch.toLowerCase())
   );
+
+  const q = globalSearch.trim().toLowerCase();
+  const globalResults = q.length > 1 ? {
+    investors: (investors || []).filter((i: any) =>
+      i.fullName?.toLowerCase().includes(q) || i.email?.toLowerCase().includes(q) || i.organization?.toLowerCase().includes(q)
+    ).slice(0, 4),
+    applications: (applications || []).filter((a: any) =>
+      a.projectName?.toLowerCase().includes(q) || a.contactName?.toLowerCase().includes(q) || a.location?.toLowerCase().includes(q)
+    ).slice(0, 4),
+    inquiries: (inquiries || []).filter((i: any) =>
+      i.fullName?.toLowerCase().includes(q) || i.email?.toLowerCase().includes(q)
+    ).slice(0, 4),
+  } : null;
 
   // Investor investment range totals for display
   const investorRangeCounts = (investors || []).reduce((acc: Record<string, number>, inv: any) => {
@@ -2418,6 +2456,79 @@ function AdminDashboard() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Global Search Bar */}
+      <div className="bg-white border-b border-[#1a472a]/10">
+        <div className="container px-4 py-2.5">
+          <div className="relative max-w-2xl mx-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/40 pointer-events-none" />
+            <input
+              type="text"
+              data-global-search
+              placeholder='Search all contacts… (press "/" to focus)'
+              value={globalSearch}
+              onChange={(e) => { setGlobalSearch(e.target.value); setGlobalSearchOpen(true); }}
+              onFocus={() => setGlobalSearchOpen(true)}
+              onBlur={() => setTimeout(() => setGlobalSearchOpen(false), 200)}
+              className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+            />
+            {globalSearch && (
+              <button onClick={() => setGlobalSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/40 hover:text-[#1a472a]">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {globalSearchOpen && globalResults && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#1a472a]/20 rounded-xl shadow-xl z-50 overflow-hidden">
+                {globalResults.investors.length === 0 && globalResults.applications.length === 0 && globalResults.inquiries.length === 0 ? (
+                  <p className="p-4 text-sm text-[#1a472a]/40 text-center">No results for "{globalSearch}"</p>
+                ) : (
+                  <div className="divide-y divide-[#1a472a]/10">
+                    {globalResults.investors.length > 0 && (
+                      <div>
+                        <p className="px-3 py-1.5 text-[10px] font-semibold text-[#1a472a]/50 uppercase tracking-wide bg-amber-50">Investors</p>
+                        {globalResults.investors.map((i: any) => (
+                          <button key={i.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
+                            onClick={() => { setInvestorSearch(i.email || i.fullName); setActiveTab('investors'); setGlobalSearch(''); }}>
+                            <TrendingUp className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                            <span className="text-sm text-[#1a472a] font-medium">{i.fullName}</span>
+                            <span className="text-xs text-[#1a472a]/50 truncate">{i.email}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {globalResults.applications.length > 0 && (
+                      <div>
+                        <p className="px-3 py-1.5 text-[10px] font-semibold text-[#1a472a]/50 uppercase tracking-wide bg-green-50">Projects</p>
+                        {globalResults.applications.map((a: any) => (
+                          <button key={a.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
+                            onClick={() => { setAppSearch(a.projectName || a.contactName); setActiveTab('applications'); setGlobalSearch(''); }}>
+                            <Sprout className="w-3.5 h-3.5 text-[#4a7c59] flex-shrink-0" />
+                            <span className="text-sm text-[#1a472a] font-medium">{a.projectName || a.contactName}</span>
+                            <span className="text-xs text-[#1a472a]/50">{a.location}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {globalResults.inquiries.length > 0 && (
+                      <div>
+                        <p className="px-3 py-1.5 text-[10px] font-semibold text-[#1a472a]/50 uppercase tracking-wide bg-purple-50">Inquiries</p>
+                        {globalResults.inquiries.map((i: any) => (
+                          <button key={i.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
+                            onClick={() => { setActiveTab(i.pathType || 'live'); setGlobalSearch(''); }}>
+                            <MessageSquare className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
+                            <span className="text-sm text-[#1a472a] font-medium">{i.fullName || i.email}</span>
+                            <span className="text-xs text-[#1a472a]/50">{i.pathType?.replace(/_/g, ' ')}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -2621,6 +2732,67 @@ function AdminDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Today's Focus */}
+              {(() => {
+                const now = Date.now();
+                const h48 = now - 48 * 3_600_000;
+                const h24 = now - 24 * 3_600_000;
+                const overdueInvestors = (investors || []).filter((i: any) =>
+                  (!i.status || i.status === 'new') && new Date(i.createdAt).getTime() < h48
+                );
+                const overdueInquiries = (inquiries || []).filter((i: any) =>
+                  (!i.status || i.status === 'new') && new Date(i.createdAt).getTime() < h48
+                );
+                const newToday = [
+                  ...(investors || []).filter((i: any) => new Date(i.createdAt).getTime() > h24)
+                    .map((i: any) => ({ type: 'investor', name: i.fullName || i.email })),
+                  ...(applications || []).filter((a: any) => new Date(a.submittedAt || a.createdAt).getTime() > h24)
+                    .map((a: any) => ({ type: 'application', name: a.projectName || a.contactName })),
+                  ...(inquiries || []).filter((i: any) => new Date(i.createdAt).getTime() > h24)
+                    .map((i: any) => ({ type: 'inquiry', name: i.fullName || i.email })),
+                ];
+                const hasItems = overdueInvestors.length > 0 || overdueInquiries.length > 0 || newToday.length > 0;
+                if (!hasItems) return null;
+                return (
+                  <div className="bg-white border-2 border-[#1a472a]/10 rounded-xl p-4 space-y-2">
+                    <h3 className="text-sm font-semibold text-[#1a472a] flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Today's Focus
+                    </h3>
+                    {overdueInvestors.length > 0 && (
+                      <button onClick={() => { setInvestorStatusFilter('new'); setActiveTab('investors'); }}
+                        className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors">
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                        <span className="text-xs text-red-700">
+                          <strong>{overdueInvestors.length}</strong> investor{overdueInvestors.length !== 1 ? 's' : ''} in "new" status for 48+ hours — follow up now
+                        </span>
+                      </button>
+                    )}
+                    {overdueInquiries.length > 0 && (
+                      <button onClick={() => setActiveTab('live')}
+                        className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors">
+                        <AlertTriangle className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                        <span className="text-xs text-orange-700">
+                          <strong>{overdueInquiries.length}</strong> {overdueInquiries.length !== 1 ? 'inquiries' : 'inquiry'} waiting 48+ hours for a response
+                        </span>
+                      </button>
+                    )}
+                    {newToday.length > 0 && (
+                      <div className="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-200">
+                        <Sparkles className="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-xs text-green-700">
+                          <strong>{newToday.length}</strong> new submission{newToday.length !== 1 ? 's' : ''} in the last 24h:{' '}
+                          <span className="text-green-600">
+                            {newToday.slice(0, 3).map(n => n.name).filter(Boolean).join(', ')}
+                            {newToday.length > 3 ? ` +${newToday.length - 3} more` : ''}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Quick Actions */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -3404,6 +3576,14 @@ function AdminDashboard() {
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${age.bg} ${age.color}`}>
                                       {age.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
                                       {age.label}
+                                    </span>
+                                  );
+                                })()}
+                                {(() => {
+                                  const p = getInvestorPriority(investor);
+                                  return (
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${p.color}`} title={`Priority score: ${p.score}`}>
+                                      {p.label} priority
                                     </span>
                                   );
                                 })()}

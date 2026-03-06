@@ -34,6 +34,7 @@ import { SEO } from "@/components/SEO";
 import { JsonLD, schemas } from "@/components/JsonLD";
 import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
+import { LazyImage } from "@/components/LazyImage";
 import InvestorJourney from "@/components/InvestorJourney";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 
@@ -518,23 +519,23 @@ export default function Fund() {
             <AnimatedSection animation="slide-up" delay={200}>
               <div className="glass-panel p-3 border-amber-400/20 overflow-hidden rounded-xl">
                 <div className="space-y-2">
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/qxKCptuMsYLJOEzx.jpg"
                     alt="Regenerative floating island communities"
                     className="w-full h-48 md:h-56 object-cover rounded-lg"
-                    loading="lazy"
+                    aspect="16/9"
                   />
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/cQIjYKqAtIzcnlPb.jpg"
                     alt="Tree of life roots and branches"
                     className="w-full h-36 md:h-44 object-cover rounded-lg"
-                    loading="lazy"
+                    aspect="16/9"
                   />
-                  <img
+                  <LazyImage
                     src="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.png"
                     alt="Underwater tree of life with bridges and community"
                     className="w-full h-48 md:h-56 object-cover rounded-lg"
-                    loading="lazy"
+                    aspect="16/9"
                   />
                 </div>
               </div>
