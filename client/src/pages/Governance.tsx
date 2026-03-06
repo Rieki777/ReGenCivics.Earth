@@ -890,8 +890,8 @@ export default function Governance() {
             </p>
             <div className="flex justify-center mb-8">
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/token-distinction_ed9ec1f1.png"
-                alt="RCVoice vs $RCivics Token Distinction"
+                src="/earned-through-quests.png"
+                alt="RCVoice vs RGVoice — Earned Through Quests"
                 className="w-full rounded-xl shadow-2xl"
                 loading="lazy"
               />

@@ -1098,7 +1098,7 @@ export default function Opportunity() {
                 { q: "If crypto markets experience severe downturn:", a: "Our returns derive from tangible land and operating communities generating actual revenue, not token speculation. Token price may fluctuate, but underlying asset value and cash distributions continue independently. We're using crypto rails for coordination efficiency, not betting on crypto market sentiment. If blockchain technology disappeared tomorrow, our land projects would still exist, still generate revenue, and still distribute returns." },
                 { q: "If regulations restrict on-chain governance:", a: "We maintain traditional legal structures (LPs, SPVs) with on-chain governance as a coordination layer. If forced to abandon blockchain tools, we can operate through conventional fund administration (just less efficiently and transparently). Legal compliance is primary, technology is secondary." },
                 { q: "If we can't reach $400M AUM by Year 7:", a: "The path to $400M is sequential fundraising across multiple vintage years, not one giant fund. Token listing prerequisites are flexible; we can list with $200M AUM if ecosystem maturity supports it. The perpetual structure means no forced timeline; we build at the pace the market supports." },
-                { q: "If token liquidity markets don't develop:", a: "We have multiple liquidity pathways: exchange listings (primary plan), annual tender offers (fund buys back at NAV), increased redemption caps, or strategic buyer for entire fund. Token markets are the preferred mechanism but not the only mechanism. Investors should assume limited liquidity and invest with 10+ year horizon regardless." },
+                { q: "If token liquidity markets don't develop:", a: "We have multiple liquidity pathways: exchange listings (primary plan), annual tender offers (fund buys back at NAV), increased redemption caps, or strategic buyer for entire fund. Token markets are the preferred mechanism but not the only mechanism. Investors should assume limited liquidity and invest with long-term horizon regardless." },
               ].map((item, i) => (
                 <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/10 mb-3">
                   <h4 className="font-bold text-amber-400 text-sm mb-2">{item.q}</h4>
@@ -1246,7 +1246,7 @@ export default function Opportunity() {
                       ["Market Risk", "Land value decline", "Diversified portfolio across global jurisdictions; land-backed collateral"],
                       ["Operational Risk", "Project failure", "Alliance support network; quality control standards; invest in proven models"],
                       ["Regulatory Risk", "Changing land use laws or crypto regulations", "Multi-jurisdictional diversification; traditional legal structures primary; local counsel"],
-                      ["Liquidity Risk", "Capital lock-up", "$RCivics token secondary markets; multiple liquidity pathways; 10+ year investor mindset"],
+                      ["Liquidity Risk", "Capital lock-up", "$RCivics token secondary markets; multiple liquidity pathways; long-term investor mindset"],
                       ["Governance Risk", "Decision-making delays", "90% unity requirement ensures broad conviction; on-chain transparency"],
                       ["Ecological Credit Risk", "Carbon/biodiversity market volatility", "Conservative underwriting; credits treated as upside, not core returns"],
                       ["Technology Risk", "Blockchain infrastructure failure", "Traditional fund administration as backup; legal structures independent of technology"],
@@ -1514,7 +1514,7 @@ export default function Opportunity() {
                         "Impact investors seeking measurable regeneration with financial returns",
                         "Crypto-native investors wanting real-world asset exposure",
                         "Family offices looking for uncorrelated alternative assets",
-                        "Accredited investors with 10+ year time horizon",
+                        "Accredited investors with long-term time horizon",
                         "Those who understand both traditional finance AND blockchain innovation",
                         "Investors excited about pioneering coordination infrastructure",
                         "People who want active governance participation, not passive management"
@@ -1670,7 +1670,7 @@ export default function Opportunity() {
                   <p><strong className="text-white">Years 1-3:</strong> Extremely limited. Capital is deployed to land projects and alliance organizations. No distributions. Limited annual redemptions (5% cap) for hardship cases only.</p>
                   <p><strong className="text-white">Years 3-7:</strong> Moderate liquidity. Quarterly distributions from portfolio cash flows. Limited annual redemptions (5% cap, NAV less 5% discount, pro-rata if oversubscribed).</p>
                   <p><strong className="text-white">Year 7-10:</strong> Liquidity via crypto exchange listings (target range), targeting Coinbase and other top-tier centralized exchanges plus decentralized exchanges on Base network. This is contingent on ecosystem maturity, not a guarantee.</p>
-                  <p className="text-xs text-white/50 italic">Unlike traditional funds that force exits at year 10, our perpetual structure means you're never forced to sell appreciating assets. However, you should invest with a 10+ year mindset. Year 7-10 listing is a target range, not a guarantee.</p>
+                  <p className="text-xs text-white/50 italic">Unlike traditional funds that force exits at year 10, our perpetual structure means you're never forced to sell appreciating assets. However, you should invest with a long-term mindset. Year 7-10 listing is a target range, not a guarantee.</p>
                 </FAQItem>
 
                 <FAQItem question="What is your deal flow advantage?">
@@ -1727,7 +1727,7 @@ export default function Opportunity() {
                 </FAQItem>
 
                 <FAQItem question="What if the secondary market doesn't develop by Year 7-10?">
-                  <p>We maintain multiple liquidity pathways: <strong className="text-white">Plan A:</strong> Exchange listings. <strong className="text-white">Plan B:</strong> Annual tender offers at NAV. <strong className="text-white">Plan C:</strong> Increased redemption caps (from 5% to 10-15% annually). <strong className="text-white">Plan D:</strong> Strategic buyer for entire fund. You're never permanently trapped, but you should invest assuming limited liquidity and a 10+ year horizon.</p>
+                  <p>We maintain multiple liquidity pathways: <strong className="text-white">Plan A:</strong> Exchange listings. <strong className="text-white">Plan B:</strong> Annual tender offers at NAV. <strong className="text-white">Plan C:</strong> Increased redemption caps (from 5% to 10-15% annually). <strong className="text-white">Plan D:</strong> Strategic buyer for entire fund. You're never permanently trapped, but you should invest assuming limited liquidity and a long-term horizon.</p>
                 </FAQItem>
 
                 <FAQItem question="What makes $RCivics valuable on secondary markets?">
