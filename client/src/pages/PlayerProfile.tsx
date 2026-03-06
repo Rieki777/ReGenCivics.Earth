@@ -7,14 +7,14 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import { TaoSpinner } from '@/components/TaoSpinner';
-import { 
-  User, 
-  Wallet, 
-  Link2, 
-  Shield, 
-  Trophy, 
-  Star, 
-  Coins, 
+import {
+  User,
+  Wallet,
+  Link2,
+  Shield,
+  Trophy,
+  Star,
+  Coins,
   ExternalLink,
   Edit,
   Save,
@@ -26,7 +26,9 @@ import {
   Copy,
   Check,
   HelpCircle,
-  Info
+  Info,
+  Share2,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -696,6 +698,73 @@ function OrgClaimSection({ userId }: { userId: number }) {
   );
 }
 
+const SOCIAL_QUEST_DISMISSED_KEY = 'regen_social_quest_dismissed';
+
+function SocialShareQuestCard() {
+  const [dismissed, setDismissed] = useState(() =>
+    localStorage.getItem(SOCIAL_QUEST_DISMISSED_KEY) === '1'
+  );
+
+  function dismiss() {
+    localStorage.setItem(SOCIAL_QUEST_DISMISSED_KEY, '1');
+    setDismissed(true);
+  }
+
+  const shareText = `I'm playing the Infinite Game with @ReGenCivics — building regenerative civilizations through quests, land projects, and collective governance. Join me! 🌱 regencivics.earth`;
+  const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+
+  if (dismissed) return null;
+
+  return (
+    <AnimatedSection animation="slide-up">
+      <div className="relative glass-panel p-5 rounded-xl border border-[#d4a574]/30 bg-gradient-to-r from-[#d4a574]/10 to-[#ffd700]/5">
+        <button
+          onClick={dismiss}
+          className="absolute top-3 right-3 text-white/40 hover:text-white/70 transition-colors"
+          aria-label="Dismiss"
+        >
+          <X className="w-4 h-4" />
+        </button>
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full bg-[#d4a574]/20 border border-[#d4a574]/40 flex items-center justify-center shrink-0">
+            <Share2 className="w-5 h-5 text-[#d4a574]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-white font-semibold text-sm">Share Your ReGen Civics Story</h3>
+              <span className="text-[10px] bg-[#d4a574]/20 text-[#d4a574] px-2 py-0.5 rounded-full font-medium border border-[#d4a574]/30">
+                Quest
+              </span>
+            </div>
+            <p className="text-white/60 text-xs mb-3">
+              Tell your network you're part of the Regenerative Renaissance. Earn{' '}
+              <span className="text-[#7dd87d] font-medium">1 RVoice</span> +{' '}
+              <span className="text-[#ffd700] font-medium">33 ReGen tokens</span> when you share.
+            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={shareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 bg-[#d4a574] hover:bg-[#c4955f] text-[#1a472a] text-xs font-bold px-4 py-2 rounded-lg transition-colors"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Share on X / Twitter
+              </a>
+              <button
+                onClick={dismiss}
+                className="text-white/40 hover:text-white/60 text-xs transition-colors"
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AnimatedSection>
+  );
+}
+
 export default function PlayerProfile() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const { data: profile, isLoading: profileLoading, refetch } = trpc.playerProfiles.me.useQuery(undefined, {
@@ -789,6 +858,7 @@ export default function PlayerProfile() {
               <AnimatedSection animation="slide-up">
                 <ProfileCard profile={profile} isOwner={true} onUpdate={() => refetch()} />
               </AnimatedSection>
+              <SocialShareQuestCard />
               <AnimatedSection animation="slide-up">
                 <div className="glass-panel p-6 rounded-xl">
                   <h2 className="text-lg font-bold text-white mb-5">Edit Profile</h2>
