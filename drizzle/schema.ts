@@ -473,7 +473,10 @@ export const playerProfiles = mysqlTable("player_profiles", {
   // Status
   isVerified: int("isVerified").default(0).notNull(), // Verified via Hypha/blockchain
   isActive: int("isActive").default(1).notNull(),
-  
+
+  // Email digest preferences
+  emailDigestFrequency: mysqlEnum("emailDigestFrequency", ["never", "weekly", "monthly", "seasonal"]).default("monthly").notNull(),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

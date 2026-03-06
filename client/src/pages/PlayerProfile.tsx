@@ -47,6 +47,7 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { getLoginUrl } from '@/const';
 import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
+import { DigestPreferences } from "@/components/DigestPreferences";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -868,6 +869,9 @@ export default function PlayerProfile() {
               {/* Steward: Org Claim + Join Request Dashboard */}
               <AnimatedSection animation="slide-up">
                 <OrgClaimSection userId={user!.id} />
+              </AnimatedSection>
+              <AnimatedSection animation="slide-up">
+                <DigestPreferences currentFrequency={(profile as any).emailDigestFrequency || 'monthly'} />
               </AnimatedSection>
               {user?.role === 'admin' && (
                 <AnimatedSection animation="slide-up">

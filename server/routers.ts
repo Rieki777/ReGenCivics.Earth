@@ -998,6 +998,22 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Update email digest frequency preference
+    updateDigestFrequency: protectedProcedure
+      .input(z.object({
+        frequency: z.enum(["never", "weekly", "monthly", "seasonal"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+        if (!profile) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Create a profile first" });
+        }
+        await db.updatePlayerProfile(profile.id, {
+          emailDigestFrequency: input.frequency,
+        });
+        return { success: true };
+      }),
+
     // Link Base blockchain account
     linkBaseAccount: protectedProcedure
       .input(z.object({

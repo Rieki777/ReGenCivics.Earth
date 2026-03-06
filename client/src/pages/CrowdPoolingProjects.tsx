@@ -803,8 +803,10 @@ export default function CrowdPoolingProjects() {
   const [selectedProject, setSelectedProject] = useState<typeof sampleProjects[0] | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   
-  // Fetch real projects from database
-  const { data: dbProjects, isLoading: dbLoading } = trpc.crowdPoolingProjects.list.useQuery();
+  // Fetch real projects from database — auto-refresh every 5 minutes
+  const { data: dbProjects, isLoading: dbLoading } = trpc.crowdPoolingProjects.list.useQuery(undefined, {
+    refetchInterval: 5 * 60 * 1000,
+  });
   
   // Convert DB projects to the same shape as sample projects for display
   const realProjects = (dbProjects || []).map((p: any) => ({
@@ -909,6 +911,56 @@ export default function CrowdPoolingProjects() {
         </div>
       </div>
       
+      {/* Aggregate Progress Banner */}
+      {dbProjects && dbProjects.length > 0 && (() => {
+        const totalFunded = dbProjects.reduce((s: number, p: any) => s + (p.currentAmount || 0), 0);
+        const totalTarget = dbProjects.reduce((s: number, p: any) => s + (p.targetAmount || 0), 0);
+        const totalContributors = dbProjects.reduce((s: number, p: any) => s + (p.contributorCount || 0), 0);
+        const activeCount = dbProjects.filter((p: any) => p.status === 'active').length;
+        const pct = totalTarget > 0 ? Math.round((totalFunded / totalTarget) * 100) : 0;
+
+        const fmtK = (n: number) => n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `$${(n/1_000).toFixed(0)}K` : `$${n}`;
+
+        return (
+          <div className="bg-[#1a472a]/90 border-b border-[#7dd87d]/20 py-4">
+            <div className="container">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap gap-6">
+                  <div className="text-center">
+                    <p className="text-[#7dd87d] font-bold text-xl">{activeCount}</p>
+                    <p className="text-white/60 text-xs">Active Projects</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[#7dd87d] font-bold text-xl">{fmtK(totalFunded)}</p>
+                    <p className="text-white/60 text-xs">Pooled</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[#7dd87d] font-bold text-xl">{totalContributors}</p>
+                    <p className="text-white/60 text-xs">Contributors</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[#7dd87d] font-bold text-xl">{pct}%</p>
+                    <p className="text-white/60 text-xs">Avg Funded</p>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-48 max-w-xs">
+                  <div className="flex items-center justify-between text-xs text-white/60 mb-1">
+                    <span>Overall Progress</span>
+                    <span>{fmtK(totalFunded)} / {fmtK(totalTarget)}</span>
+                  </div>
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#7dd87d] rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(pct, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Main Content */}
       <main className="container py-8 md:py-12">
         {/* How It Works */}
