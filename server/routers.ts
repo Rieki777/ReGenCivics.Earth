@@ -139,6 +139,31 @@ export const appRouter = router({
         return updatedApplication;
       }),
 
+    // Steward update - approved steward can update public-facing listing fields
+    stewardUpdate: protectedProcedure
+      .input(z.object({
+        applicationId: z.number(),
+        websiteUrl: z.string().url().optional().or(z.literal('')),
+        videoUrl: z.string().url().optional().or(z.literal('')),
+        additionalNotes: z.string().max(2000).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify user is an approved steward for this application (orgId is the application ID as string)
+        const claims = await db.getOrgClaimsByUser(ctx.user.id);
+        const approvedClaim = claims.find(
+          (c: any) => c.orgId === String(input.applicationId) && c.status === 'approved'
+        );
+        if (!approvedClaim && ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: "FORBIDDEN", message: "You are not the approved steward for this listing" });
+        }
+        await db.updateApplication(input.applicationId, {
+          websiteUrl: input.websiteUrl || undefined,
+          videoUrl: input.videoUrl || undefined,
+          additionalNotes: input.additionalNotes || undefined,
+        });
+        return { ok: true };
+      }),
+
     // Submit an application
     submit: protectedProcedure
       .input(z.object({ id: z.number() }))
@@ -3513,6 +3538,28 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await db.updateOrgClaimStatus(input.id, 'rejected');
         return { ok: true };
+      }),
+
+    // Admin: directly assign a user as steward (no pending step required)
+    adminAssign: adminProcedure
+      .input(z.object({
+        userId: z.number().int().positive(),
+        orgType: z.enum(["land_project", "alliance_org"]),
+        orgId: z.string().min(1),
+        orgName: z.string().min(1),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await db.createOrgClaim({
+          userId: input.userId,
+          orgType: input.orgType,
+          orgId: input.orgId,
+          orgName: input.orgName,
+        });
+        const claim = await db.updateOrgClaimStatus(id, 'approved');
+        if (claim) {
+          await db.routeJoinRequestsToSteward(claim.orgId, claim.userId);
+        }
+        return { id, ok: true };
       }),
   }),
 

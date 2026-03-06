@@ -4,7 +4,7 @@
  * Players can create profiles and link their Hypha/Base accounts
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'wouter';
 import { TaoSpinner } from '@/components/TaoSpinner';
 import {
@@ -541,6 +541,11 @@ function OrgClaimSection({ userId }: { userId: number }) {
   const orgOptions = claimType === "land_project" ? LAND_PROJECTS : ALLIANCE_ORGS;
   const selectedOrg = orgOptions.find(o => o.id === claimOrgId);
 
+  const stewardUpdateMutation = trpc.applications.stewardUpdate.useMutation({
+    onSuccess: () => toast.success("Listing updated"),
+    onError: (e) => toast.error("Failed to update listing", { description: e.message }),
+  });
+
   const hasStewardRole = approvedClaims.length > 0;
 
   return (
@@ -623,6 +628,7 @@ function OrgClaimSection({ userId }: { userId: number }) {
           {approvedClaims.map(claim => {
             const requests = joinRequests?.filter(r => r.targetId === claim.orgId) ?? [];
             const pending = requests.filter(r => r.status === 'pending');
+            const isDbListing = /^\d+$/.test(claim.orgId);
             return (
               <div key={claim.id} className="bg-white/10 border border-white/20 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -636,6 +642,15 @@ function OrgClaimSection({ userId }: { userId: number }) {
                     </span>
                   )}
                 </div>
+
+                {/* Edit listing (only for DB-backed applications, i.e. numeric orgId) */}
+                {isDbListing && (
+                  <StewardListingEditor
+                    applicationId={parseInt(claim.orgId)}
+                    onSave={(data) => stewardUpdateMutation.mutate({ applicationId: parseInt(claim.orgId), ...data })}
+                    saving={stewardUpdateMutation.isPending}
+                  />
+                )}
 
                 {requests.length === 0 ? (
                   <p className="text-white/40 text-sm">No join requests yet.</p>
@@ -695,6 +710,81 @@ function OrgClaimSection({ userId }: { userId: number }) {
           Steward a land project or alliance org to see join requests here.
         </p>
       )}
+    </div>
+  );
+}
+
+// Inline editor for approved stewards to update their DB-backed listing
+function StewardListingEditor({ applicationId, onSave, saving }: {
+  applicationId: number;
+  onSave: (data: { websiteUrl?: string; videoUrl?: string; additionalNotes?: string }) => void;
+  saving: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [notes, setNotes] = useState('');
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="text-xs text-[#7dd87d]/60 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
+      >
+        <Edit className="w-3 h-3" /> Edit listing details
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-white/5 rounded-lg p-3 space-y-2 border border-white/10">
+      <p className="text-white/60 text-xs font-medium uppercase tracking-wide">Edit Public Listing</p>
+      <div className="grid grid-cols-1 gap-2">
+        <div>
+          <label className="text-white/50 text-xs mb-0.5 block">Website URL</label>
+          <input
+            value={websiteUrl}
+            onChange={e => setWebsiteUrl(e.target.value)}
+            placeholder="https://yourproject.earth"
+            className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d]"
+          />
+        </div>
+        <div>
+          <label className="text-white/50 text-xs mb-0.5 block">Video URL (optional)</label>
+          <input
+            value={videoUrl}
+            onChange={e => setVideoUrl(e.target.value)}
+            placeholder="https://youtube.com/..."
+            className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d]"
+          />
+        </div>
+        <div>
+          <label className="text-white/50 text-xs mb-0.5 block">Public notes / update (max 2000 chars)</label>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            maxLength={2000}
+            rows={3}
+            placeholder="Share an update about your project..."
+            className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d] resize-none"
+          />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          disabled={saving}
+          onClick={() => { onSave({ websiteUrl, videoUrl, additionalNotes: notes }); setOpen(false); }}
+          className="flex-1 py-1.5 text-xs rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold disabled:opacity-50 hover:bg-[#6bc86b] transition-colors"
+        >
+          {saving ? 'Saving…' : 'Save Changes'}
+        </button>
+        <button
+          onClick={() => setOpen(false)}
+          className="px-3 py-1.5 text-xs rounded-lg bg-white/10 text-white/60 hover:bg-white/20 transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }

@@ -2095,6 +2095,12 @@ function OrgClaimsAdminPanel() {
   const rejectMutation = trpc.orgClaims.reject.useMutation({
     onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Claim rejected"); },
   });
+  const assignMutation = trpc.orgClaims.adminAssign.useMutation({
+    onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Steward assigned directly"); setAssignForm({ userId: '', orgType: 'land_project', orgId: '', orgName: '' }); },
+    onError: (e) => toast.error("Assignment failed", { description: e.message }),
+  });
+  const [assignForm, setAssignForm] = useState({ userId: '', orgType: 'land_project' as 'land_project' | 'alliance_org', orgId: '', orgName: '' });
+  const [showAssign, setShowAssign] = useState(false);
 
   return (
     <Card className="bg-white border-[#1a472a]/10">
@@ -2110,12 +2116,12 @@ function OrgClaimsAdminPanel() {
         {!isLoading && !claims?.length && (
           <p className="text-sm text-[#1a472a]/40">No stewardship claims yet.</p>
         )}
-        <div className="space-y-3">
+        <div className="space-y-3 mb-4">
           {claims?.map((claim: any) => (
             <div key={claim.id} className="flex items-center justify-between p-3 rounded-lg border border-[#1a472a]/10 bg-[#f8f5f0]">
               <div>
                 <p className="font-medium text-[#1a472a] text-sm">{claim.orgName}</p>
-                <p className="text-xs text-[#1a472a]/50">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId}</p>
+                <p className="text-xs text-[#1a472a]/50">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId} · ID: {claim.orgId}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={
@@ -2140,6 +2146,75 @@ function OrgClaimsAdminPanel() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Admin Direct Assign */}
+        <div className="border-t border-[#1a472a]/10 pt-4">
+          <button
+            onClick={() => setShowAssign(!showAssign)}
+            className="flex items-center gap-2 text-sm text-[#4a7c59] font-medium hover:text-[#1a472a]"
+          >
+            <Shield className="w-4 h-4" />
+            Directly assign steward (skip claim flow)
+          </button>
+          {showAssign && (
+            <div className="mt-3 space-y-3 p-4 bg-[#f0f7f0] rounded-lg border border-[#7dd87d]/20">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-[#1a472a]/60 mb-1 block">User ID</label>
+                  <input
+                    type="number"
+                    value={assignForm.userId}
+                    onChange={e => setAssignForm(f => ({ ...f, userId: e.target.value }))}
+                    placeholder="User ID #"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#1a472a]/60 mb-1 block">Org Type</label>
+                  <select
+                    value={assignForm.orgType}
+                    onChange={e => setAssignForm(f => ({ ...f, orgType: e.target.value as any }))}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
+                  >
+                    <option value="land_project">Land Project</option>
+                    <option value="alliance_org">Alliance Org</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-[#1a472a]/60 mb-1 block">Org ID (slug or DB ID)</label>
+                  <input
+                    value={assignForm.orgId}
+                    onChange={e => setAssignForm(f => ({ ...f, orgId: e.target.value }))}
+                    placeholder="e.g. ubuntu or 42"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#1a472a]/60 mb-1 block">Org Display Name</label>
+                  <input
+                    value={assignForm.orgName}
+                    onChange={e => setAssignForm(f => ({ ...f, orgName: e.target.value }))}
+                    placeholder="Ubuntu Village"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
+                  />
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
+                disabled={!assignForm.userId || !assignForm.orgId || !assignForm.orgName || assignMutation.isPending}
+                onClick={() => assignMutation.mutate({
+                  userId: parseInt(assignForm.userId),
+                  orgType: assignForm.orgType,
+                  orgId: assignForm.orgId,
+                  orgName: assignForm.orgName,
+                })}
+              >
+                {assignMutation.isPending ? 'Assigning…' : 'Assign Steward'}
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
