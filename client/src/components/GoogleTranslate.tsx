@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react';
 const GOOGLE_LANG_MAP: Record<string, string> = {
   en: 'en',
   es: 'es',
+  ru: 'ru',
   pt: 'pt',
   fr: 'fr',
   id: 'id',
@@ -165,17 +166,25 @@ export function triggerGoogleTranslate(langCode: string) {
 }
 
 /**
- * Reset Google Translate back to original language
+ * Reset Google Translate back to original English content.
+ * Google Translate doesn't expose a clean "restore original" API, so we
+ * clear the translation cookie and reload to ensure a clean English state.
  */
 export function resetGoogleTranslate() {
-  // Find the Google Translate select element and set to empty (original)
-  const selectEl = document.querySelector('.goog-te-combo') as HTMLSelectElement;
-  if (selectEl) {
-    selectEl.value = '';
-    selectEl.dispatchEvent(new Event('change'));
-  }
-  
-  // Also try the cookie approach
+  // Clear the googtrans cookie (this persists the chosen language across pages)
   document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname;
+
+  // Try widget select first (works when widget is visible)
+  const selectEl = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+  if (selectEl) {
+    // Set to English explicitly — empty string is unreliable
+    selectEl.value = 'en';
+    selectEl.dispatchEvent(new Event('change'));
+    // Reload after a short delay to ensure the translation state is fully cleared
+    setTimeout(() => window.location.reload(), 300);
+  } else {
+    // Widget not found — reload directly clears translation state via cleared cookie
+    window.location.reload();
+  }
 }
