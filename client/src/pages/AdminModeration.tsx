@@ -122,7 +122,7 @@ export default function AdminModeration() {
                   className={`px-3 py-1.5 rounded-full text-xs transition-all ${
                     reportFilter === status
                       ? 'bg-[#7dd87d] text-[#1a472a] font-semibold'
-                      : 'bg-white/10 text-white/60 hover:bg-white/20'
+                      : 'bg-white/10 text-white/80 hover:bg-white/20'
                   }`}
                 >
                   {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All'}
@@ -155,7 +155,7 @@ export default function AdminModeration() {
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
                             report.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
                             report.status === 'actioned' ? 'bg-green-500/20 text-green-400' :
-                            'bg-white/10 text-white/40'
+                            'bg-white/10 text-white/70'
                           }`}>
                             {report.status}
                           </span>
@@ -168,7 +168,7 @@ export default function AdminModeration() {
                         {report.details && (
                           <p className="text-white/50 text-xs mt-1">{report.details}</p>
                         )}
-                        <p className="text-white/30 text-xs mt-1">
+                        <p className="text-white/55 text-xs mt-1">
                           {new Date(report.createdAt).toLocaleString()}
                         </p>
                       </div>
@@ -185,7 +185,7 @@ export default function AdminModeration() {
                             size="sm"
                             variant="outline"
                             onClick={() => updateReportMutation.mutate({ id: report.id, status: 'dismissed' })}
-                            className="border-white/20 text-white/50 hover:bg-white/10 h-8 px-2"
+                            className="border-white/20 text-white/75 hover:bg-white/10 h-8 px-2"
                           >
                             Dismiss
                           </Button>
@@ -221,14 +221,14 @@ export default function AdminModeration() {
                   <Plus className="w-4 h-4 mr-1" /> Add
                 </Button>
               </div>
-              <p className="text-white/30 text-xs mt-2">Enter the user ID from the database to grant moderator privileges.</p>
+              <p className="text-white/60 text-xs mt-2">Enter the user ID from the database to grant moderator privileges.</p>
             </div>
 
             {/* Moderator List */}
             <div className="space-y-2">
               {moderatorsQuery.data?.length === 0 ? (
                 <div className="text-center py-8">
-                  <Shield className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                  <Shield className="w-10 h-10 text-white/45 mx-auto mb-3" />
                   <p className="text-white/40 text-sm">No moderators assigned yet</p>
                 </div>
               ) : (
@@ -236,7 +236,7 @@ export default function AdminModeration() {
                   <div key={mod.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between">
                     <div>
                       <p className="text-white font-medium text-sm">{mod.userName}</p>
-                      <p className="text-white/40 text-xs">User ID: {mod.userId} | Added {new Date(mod.createdAt).toLocaleDateString()}</p>
+                      <p className="text-white/65 text-xs">User ID: {mod.userId} | Added {new Date(mod.createdAt).toLocaleDateString()}</p>
                     </div>
                     <Button
                       size="sm"

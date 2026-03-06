@@ -34,6 +34,7 @@ import NewsletterSignup from "@/components/NewsletterSignup";
 import { SocialLinks } from "@/components/SocialLinks";
 
 import { SEO, pageSEO } from "@/components/SEO";
+import { JsonLD, schemas } from "@/components/JsonLD";
 import { PathCardImage } from "@/components/PathCardImage";
 import "@/components/PathCardImage.css";
 import AutoplayVideo from "@/components/AutoplayVideo";
@@ -41,6 +42,8 @@ import HowItWorks from "@/components/HowItWorks";
 import { ProgressiveOnboarding, useIsReturnVisitor } from "@/components/ProgressiveOnboarding";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { ImagePreloader } from "@/components/ImagePreloader";
+import { LiveStats } from "@/components/LiveStats";
+import { trpc } from "@/lib/trpc";
 
 // Path card data
 const pathCards = [
@@ -140,12 +143,26 @@ const insightCards = [
 ];
 
 
+// Maps userProfile.path values to pathCards ids
+const PATH_TO_CARD_ID: Record<string, string> = {
+  investor: "fund",
+  land_project: "land",
+  ally: "ally",
+  player: "play",
+};
+
 export default function Home() {
   const { user, loading } = useAuth();
   const [fundOpen, setFundOpen] = useState(false);
   const [gameOpen, setGameOpen] = useState(false);
   const isReturnVisitor = useIsReturnVisitor();
   const [showFullPage, setShowFullPage] = useState(false);
+
+  const { data: userProfile } = trpc.userProfiles.getMe.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 300_000,
+  });
+  const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
   const bgImage = isReturnVisitor 
     ? "https://assets.regencivics.earth/OySlQvtOgDYjZaIa.webp"
@@ -160,9 +177,8 @@ export default function Home() {
       overlayOpacity={0.55}
       theme="forest"
       blendColor="18, 45, 28"
-      backgroundPositionY="0%"
       sectionOverlays={[
-        { id: "hero", opacity: 0.45 },           // Hero - dark forest bg, let detail show
+        { id: "hero", opacity: 0.35 },           // Hero - let image detail show through
         { id: "four-paths", opacity: 0.55 },      // Four Paths cards - moderate
         { id: "scarcity", opacity: 0.50 },         // Scarcity to Regeneration - let art show
         { id: "who-are-you", opacity: 0.60 },      // Who Are You - needs text readability
@@ -171,7 +187,9 @@ export default function Home() {
       ]}
     >
       <SEO {...pageSEO.home} />
-      
+      <JsonLD data={schemas.organization()} />
+      <JsonLD data={schemas.website()} />
+
       {/* Editable Banner */}
       <BannerDisplay bannerKey="main-banner" />
       
@@ -204,6 +222,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Live Stats Bar */}
+        <LiveStats />
 
         {/* Hero Section with Video */}
         <section className="relative min-h-[60vh] flex items-center py-12 md:py-16">
@@ -264,8 +285,18 @@ export default function Home() {
                 >
                   <Link href={card.href}>
                     <div
-                      className={`glass-panel p-6 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} relative ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'}`}
+                      className={`glass-panel p-6 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} relative ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'} ${userCardId === card.id ? 'ring-2 ring-offset-1 ring-offset-transparent' : ''}`}
+                      style={userCardId === card.id ? { '--tw-ring-color': card.accentColor } as React.CSSProperties : undefined}
                     >
+                      {/* "Your Path" badge for logged-in users */}
+                      {userCardId === card.id && (
+                        <div
+                          className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: card.accentColor, color: "#1a1a1a" }}
+                        >
+                          Your Path
+                        </div>
+                      )}
                       {/* Card illustration with hover animation */}
                       <div className="mb-4">
                         <PathCardImage

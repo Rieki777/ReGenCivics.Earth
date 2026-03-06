@@ -2,7 +2,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, Clock, FileText, Loader2, Plus, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, Clock, FileText, Plus, XCircle, AlertCircle } from "lucide-react";
+import { TaoSpinner } from "@/components/TaoSpinner";
 import { Link, useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { BackButton } from "@/components/BackButton";
@@ -55,12 +56,7 @@ export default function MyApplications() {
   );
 
   if (authLoading || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
-      <BackButton />
-        <Loader2 className="w-8 h-8 animate-spin text-[#4a7c59]" />
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
 
   if (!user) {

@@ -4,9 +4,10 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { cacheGet, cacheSet, isCacheAvailable } from '../cache';
 
-// Rate limiting store (in production, use Redis)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+// In-memory fallback store for when Redis is unavailable
+const rateLimitFallback = new Map<string, { count: number; resetTime: number }>();
 
 /**
  * Content Security Policy Middleware
@@ -15,10 +16,11 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 export function cspMiddleware(_req: Request, res: Response, next: NextFunction) {
   const cspHeader = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com https://www.youtube.com https://s.ytimg.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
     "img-src 'self' data: https: blob:",
     "font-src 'self' https://fonts.gstatic.com data:",
+    "media-src 'self' https: blob:",
     "connect-src 'self' https: wss:",
     "frame-src 'self' https://calendly.com https://www.youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://www.vimeo.com https://fast.wistia.net https://www.loom.com https://www.dailymotion.com",
     "object-src 'none'",
@@ -62,15 +64,36 @@ export function securityHeadersMiddleware(_req: Request, res: Response, next: Ne
  * Prevents abuse of public endpoints
  */
 export function rateLimitMiddleware(
-  windowMs: number = 15 * 60 * 1000, // 15 minutes
+  windowMs: number = 15 * 60 * 1000,
   maxRequests: number = 100
 ) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const key = req.ip || 'unknown';
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const ip = req.ip || 'unknown';
+    const routeKey = req.path.replace(/\//g, '_');
+    const key = `ratelimit:${routeKey}:${ip}`;
     const now = Date.now();
-    
-    const record = rateLimitStore.get(key);
-    
+    const windowSec = Math.ceil(windowMs / 1000);
+
+    if (isCacheAvailable()) {
+      try {
+        const current = await cacheGet<{ count: number; resetTime: number }>(key);
+        if (current && now < current.resetTime) {
+          if (current.count >= maxRequests) {
+            res.status(429).json({ error: 'Too many requests, please try again later' });
+            return;
+          }
+          await cacheSet(key, { count: current.count + 1, resetTime: current.resetTime }, windowSec);
+        } else {
+          await cacheSet(key, { count: 1, resetTime: now + windowMs }, windowSec);
+        }
+        return next();
+      } catch {
+        // fall through to in-memory fallback
+      }
+    }
+
+    // In-memory fallback
+    const record = rateLimitFallback.get(key);
     if (record && now < record.resetTime) {
       if (record.count >= maxRequests) {
         res.status(429).json({ error: 'Too many requests, please try again later' });
@@ -78,9 +101,8 @@ export function rateLimitMiddleware(
       }
       record.count++;
     } else {
-      rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
+      rateLimitFallback.set(key, { count: 1, resetTime: now + windowMs });
     }
-    
     next();
   };
 }

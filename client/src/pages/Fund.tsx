@@ -31,6 +31,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SEO } from "@/components/SEO";
+import { JsonLD, schemas } from "@/components/JsonLD";
 import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import InvestorJourney from "@/components/InvestorJourney";
@@ -126,7 +127,7 @@ export default function Fund() {
       blendColor="12, 42, 48"
       overlayColor="12, 42, 48"
       sectionOverlays={[
-        { id: "hero", opacity: 0.45 },            // Hero - dramatic crystal cave, show detail
+        { id: "hero", opacity: 0.35 },            // Hero - let image detail show through
         { id: "problem", opacity: 0.55 },          // Problem statement
         { id: "solution", opacity: 0.50 },          // Solution approach - let art breathe
         { id: "structure", opacity: 0.60 },         // Fund structure - needs readability
@@ -138,6 +139,7 @@ export default function Fund() {
         description="Land-backed investments in systemic regeneration. A community-governed venture fund directing resources to regenerative land projects."
         url="/fund"
       />
+      <JsonLD data={schemas.investmentFund()} />
 
       {/* Fund Status Banner */}
       <div className="bg-gradient-to-r from-[#d4a574] via-[#ffd700] to-[#d4a574] border-b-2 border-[#ffd700]/50 shadow-[0_4px_15px_rgba(255,215,0,0.3)]">
@@ -582,6 +584,7 @@ export default function Fund() {
                 loop
                 muted
                 playsInline
+                preload="metadata"
                 className="w-full h-auto"
                 poster="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.png"
               >

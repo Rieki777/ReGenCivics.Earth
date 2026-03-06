@@ -80,7 +80,7 @@ export function Breadcrumb({ currentLabel, className = "" }: BreadcrumbProps) {
       </Link>
       {crumbs.map((crumb) => (
         <span key={crumb.path} className="flex items-center gap-1.5 flex-shrink-0">
-          <ChevronRight className="w-3 h-3 text-white/20" />
+          <ChevronRight className="w-3 h-3 text-white/45" />
           {crumb.isLast ? (
             <span className="text-white/60 font-medium truncate max-w-[200px]">
               {crumb.label}

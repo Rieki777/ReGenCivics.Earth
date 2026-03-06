@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch } from "wouter";
-import { lazy, Suspense } from "react";
+import { Route, Switch, useLocation } from "wouter";
+import { lazy, Suspense, useState, useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navigation from "./components/Navigation";
@@ -14,7 +14,18 @@ import ReGenGuide from "./components/ReGenGuide";
 import SiteFooter from "./components/SiteFooter";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
+import { ExitIntentCapture } from "./components/ExitIntentCapture";
+import CommandPalette from "./components/CommandPalette";
+import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
+import { PathSelectionScreen } from "./components/PathSelectionScreen";
+import { useAuth } from "./_core/hooks/useAuth";
+import { trpc } from "./lib/trpc";
 
+// Routes that bypass site chrome (nav, footer, background effects)
+const ADMIN_ROUTES = ["/admin", "/admin/"];
+function isAdminRoute(path: string) {
+  return path === "/admin" || path.startsWith("/admin/");
+}
 // Lazy load pages for better initial load performance
 const Home = lazy(() => import("./pages/Home"));
 const Quest = lazy(() => import("./pages/Quest"));
@@ -147,35 +158,73 @@ function Router() {
   );
 }
 
+// Shows PathSelectionScreen once for newly-authenticated users who haven't chosen a path
+function PathOnboarding() {
+  const { user } = useAuth();
+  const [dismissed, setDismissed] = useState(false);
+
+  const { data: profile } = trpc.userProfiles.getMe.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    // Reset dismissed state when a new user logs in
+    if (!user) setDismissed(false);
+  }, [user?.id]);
+
+  if (!user || dismissed) return null;
+  // Show interstitial only when profile exists but onboarding isn't complete yet
+  // (null profile means row not created yet — treat same as incomplete)
+  if (profile && profile.onboardingComplete) return null;
+  // Don't show if profile query is still loading (undefined)
+  if (profile === undefined) return null;
+
+  return <PathSelectionScreen onComplete={() => setDismissed(true)} />;
+}
+
 // NOTE: About Theme
 // - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
 //   to keep consistent foreground/background color across components
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
+function AppInner() {
+  useGlobalScrollReveal();
+  return null;
+}
+
 function App() {
+  const [location] = useLocation();
+  const adminMode = isAdminRoute(location);
+
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme="dark" switchable>
         <TooltipProvider>
           <Toaster />
-          <StructuredData />
-          {/* Skip to content - accessibility */}
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[10000] focus:px-4 focus:py-2 focus:bg-[#7dd87d] focus:text-[#1a472a] focus:rounded-lg focus:font-bold focus:text-sm focus:shadow-lg"
-          >
-            Skip to main content
-          </a>
-          <MycelialBackground />
-          <Navigation />
+          {!adminMode && <StructuredData />}
+          {!adminMode && (
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[10000] focus:px-4 focus:py-2 focus:bg-[#7dd87d] focus:text-[#1a472a] focus:rounded-lg focus:font-bold focus:text-sm focus:shadow-lg"
+            >
+              Skip to main content
+            </a>
+          )}
+          {!adminMode && <MycelialBackground />}
+          {!adminMode && <Navigation />}
           <main id="main-content">
             <Router />
           </main>
-          <SiteFooter />
-          <CookieConsent />
+          {!adminMode && <SiteFooter />}
+          {!adminMode && <CookieConsent />}
           <AnalyticsLoader />
           <ScrollToTop />
-          <ReGenGuide />
+          {!adminMode && <PathOnboarding />}
+          {!adminMode && <ReGenGuide />}
+          {!adminMode && <AppInner />}
+          {!adminMode && <ExitIntentCapture />}
+          {!adminMode && <CommandPalette />}
           <ServiceWorkerRegister />
         </TooltipProvider>
       </ThemeProvider>

@@ -310,7 +310,6 @@ function DualProgressBar({
 
   return (
     <div className="space-y-2">
-      <BackButton />
       {label && (
         <div className="flex items-center justify-between text-xs">
           <span className="font-medium text-[#1a472a]">{label}</span>
@@ -957,20 +956,35 @@ export default function CrowdPoolingProjects() {
             </div>
           )}
           {allProjects.map((project: any) => (
-            <div 
+            <div
               key={project.id}
-              className="bg-white rounded-2xl overflow-hidden border border-[#7dd87d]/30 hover:border-[#7dd87d] transition-all cursor-pointer shadow-sm hover:shadow-md"
+              data-reveal
+              className="group bg-white rounded-2xl overflow-hidden border border-[#7dd87d]/30 hover:border-[#7dd87d] transition-all duration-300 cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1"
               onClick={() => handleOpenDetail(project)}
             >
               {/* Project Image */}
-              <div className="h-40 bg-gradient-to-br from-[#1a472a] to-[#2d5a3d] relative">
+              <div className="h-52 bg-gradient-to-br from-[#1a472a] to-[#2d5a3d] relative overflow-hidden">
                 {project.image ? (
-                  <img src={project.image} alt={project.name} className="w-full h-full object-cover" loading="lazy" />
+                  <img
+                    src={project.image}
+                    alt={project.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <SeedOfLifeIcon className="w-16 h-16 text-white/20" size={64} />
+                    <SeedOfLifeIcon className="w-16 h-16 text-white/35" size={64} />
                   </div>
                 )}
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                {/* Funding % in bottom-left */}
+                <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                  <span className="bg-[#7dd87d] text-[#1a472a] font-bold text-base px-3 py-1 rounded-lg leading-tight">
+                    {Math.round((project.currentAmount / project.targetAmount) * 100)}%
+                  </span>
+                  <span className="text-white text-sm font-medium drop-shadow-sm">funded</span>
+                </div>
                 <Badge className="absolute top-3 right-3 bg-[#7dd87d] text-[#1a472a]">
                   {project.status === 'active' ? 'Active' : project.status === 'upcoming' ? 'Upcoming' : project.status === 'completed' ? 'Completed' : 'Paused'}
                 </Badge>

@@ -3,32 +3,19 @@
  * Legal document page with enchanted forest theme
  */
 
-import { Link } from "wouter";
-import { SEO, pageSEO } from "@/components/SEO";
-import { ArrowLeft, AlertTriangle, Shield } from "lucide-react";
-import { BackButton } from "@/components/BackButton";
+import { pageSEO } from "@/components/SEO";
+import { AlertTriangle } from "lucide-react";
+import LegalPageLayout from "@/components/LegalPageLayout";
 
 export default function RiskDisclosure() {
   return (
-    <div className="min-h-screen bg-[#0d2818] text-white">
-      <SEO {...pageSEO.riskDisclosure} />
-      {/* Header */}
-      <div className="bg-gradient-to-b from-[#1a472a] to-[#0d2818] py-8 px-4 border-b border-[#7dd87d]/20">
-        <div className="container mx-auto max-w-3xl">
-          <BackButton />
-          <div className="flex items-center gap-3 mt-4 mb-4">
-            <AlertTriangle className="w-8 h-8 text-[#ffd700]" />
-            <h1 className="text-2xl md:text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-              Risk Disclosure Statement
-            </h1>
-          </div>
-          <p className="text-white/60 text-sm">Last Updated: February 2026</p>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="container mx-auto max-w-3xl px-4 py-8">
-        <div className="prose prose-invert max-w-none space-y-8 text-white/80 text-sm leading-relaxed">
+    <LegalPageLayout
+      icon={<AlertTriangle className="w-8 h-8 text-[#ffd700]" />}
+      title="Risk Disclosure Statement"
+      lastUpdated="February 2026"
+      seo={pageSEO.riskDisclosure}
+    >
+      <div className="space-y-8">
           
           <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-8">
             <p className="text-red-300 font-bold text-base mb-2">READ THIS CAREFULLY BEFORE INVESTING</p>
@@ -276,8 +263,7 @@ export default function RiskDisclosure() {
           <p className="text-white/50 text-xs mt-8 italic">
             This Risk Disclosure does not constitute legal, tax, or investment advice. Consult qualified professionals before investing.
           </p>
-        </div>
       </div>
-    </div>
+    </LegalPageLayout>
   );
 }

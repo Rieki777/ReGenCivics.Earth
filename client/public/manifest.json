@@ -4,9 +4,11 @@
   "description": "An Infinite Game for the Regenerative Renaissance. Join investors, land projects, alliance partners, and players building a regenerative civilization.",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#1a472a",
   "theme_color": "#1a472a",
   "orientation": "portrait-primary",
+  "scope": "/",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -24,6 +26,22 @@
       "src": "/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Admin Dashboard",
+      "short_name": "Admin",
+      "description": "Open admin dashboard",
+      "url": "/admin",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Applications",
+      "short_name": "Applications",
+      "description": "Review project applications",
+      "url": "/admin/applications",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],
   "categories": ["finance", "education", "social"],

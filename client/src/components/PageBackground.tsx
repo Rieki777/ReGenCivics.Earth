@@ -582,11 +582,11 @@ export default function PageBackground({
     }
   }, [mobileBackgroundImage]);
 
-  // Parallax scroll effect - moves background position based on scroll
+  // Parallax scroll effect - uses transform (GPU-composited) instead of backgroundPositionY
+  // This keeps the background on the compositor thread for sharp, crisp rendering
   useEffect(() => {
-    if (!parallax) return;
-    
-    // Respect reduced motion preference
+    if (!parallax || isMobile) return;
+
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
 
@@ -598,15 +598,14 @@ export default function PageBackground({
             const rect = containerRef.current.getBoundingClientRect();
             const containerHeight = containerRef.current.offsetHeight;
             const viewportHeight = window.innerHeight;
-            
-            // Calculate scroll progress through this container (0 to 1)
+
             const scrollProgress = Math.max(0, Math.min(1,
               (viewportHeight - rect.top) / (containerHeight + viewportHeight)
             ));
-            
-            // Move background from top to bottom as user scrolls
-            const bgOffset = scrollProgress * parallaxSpeed * 100;
-            bgRef.current.style.backgroundPositionY = `${bgOffset}%`;
+
+            // Translate the oversize background div — stays GPU-composited
+            const offset = scrollProgress * parallaxSpeed * containerHeight * 0.15;
+            bgRef.current.style.transform = `translateY(${offset}px)`;
           }
           ticking = false;
         });
@@ -617,7 +616,7 @@ export default function PageBackground({
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [parallax, parallaxSpeed]);
+  }, [parallax, parallaxSpeed, isMobile]);
 
   const isLoaded = isMobile && mobileBackgroundImage ? mobileBgLoaded : bgLoaded;
   const activeImage = isMobile && mobileBackgroundImage ? mobileBackgroundImage : backgroundImage;
@@ -639,25 +638,30 @@ export default function PageBackground({
           style={{
             backgroundImage: `url(${activePlaceholder})`,
             backgroundSize: "cover",
-            backgroundPosition: `center ${backgroundPositionY || "top"}`,
+            backgroundPosition: `center ${backgroundPositionY || "center"}`,
             backgroundRepeat: "no-repeat",
+            backgroundAttachment: "scroll",
             filter: "blur(20px)",
             transform: "scale(1.1)", // Prevent blur edges from showing
           }}
         />
       )}
 
-      {/* Full-res background image layer */}
+      {/* Full-res background image layer — scroll attachment + transform parallax keeps
+          the image GPU-composited for sharp, crisp rendering on all screen densities */}
       <div
         ref={bgRef}
-        className={`absolute inset-0 z-[2] transition-opacity duration-1000 ${
+        className={`absolute z-[2] transition-opacity duration-1000 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
         style={{
+          inset: isMobile ? "0" : "-8% 0",
           backgroundImage: `url(${activeImage})`,
           backgroundSize: "cover",
-          backgroundPosition: `center ${backgroundPositionY || "top"}`,
+          backgroundPosition: `center ${backgroundPositionY || "center"}`,
           backgroundRepeat: "no-repeat",
+          backgroundAttachment: "scroll",
+          willChange: "transform",
         }}
       />
 

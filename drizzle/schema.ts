@@ -11,7 +11,7 @@ export const users = mysqlTable("users", {
    * Use this for relations between tables.
    */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
+  /** OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -587,6 +587,57 @@ export const emailLogs = mysqlTable("email_logs", {
 export type EmailLog = typeof emailLogs.$inferSelect;
 export type InsertEmailLog = typeof emailLogs.$inferInsert;
 
+
+/**
+ * Contact Notes table
+ * Internal admin notes per contact (investor, inquiry, application)
+ */
+export const contactNotes = mysqlTable("contact_notes", {
+  id: int("id").primaryKey().autoincrement(),
+  contactType: varchar("contactType", { length: 50 }).notNull(), // investor | inquiry | application
+  contactId: int("contactId").notNull(),
+  note: text("note").notNull(),
+  authorName: varchar("authorName", { length: 255 }).default("Admin"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ContactNote = typeof contactNotes.$inferSelect;
+export type InsertContactNote = typeof contactNotes.$inferInsert;
+
+/**
+ * Contact Tags table
+ * Freeform labels per contact (investor, inquiry, application)
+ */
+export const contactTags = mysqlTable("contact_tags", {
+  id: int("id").primaryKey().autoincrement(),
+  contactType: varchar("contactType", { length: 50 }).notNull(),
+  contactId: int("contactId").notNull(),
+  tag: varchar("tag", { length: 100 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ContactTag = typeof contactTags.$inferSelect;
+export type InsertContactTag = typeof contactTags.$inferInsert;
+
+/**
+ * Scheduled Emails table
+ * Stores emails scheduled to be sent at a future time
+ */
+export const scheduledEmails = mysqlTable("scheduled_emails", {
+  id: int("id").primaryKey().autoincrement(),
+  recipientEmail: varchar("recipientEmail", { length: 320 }).notNull(),
+  recipientName: varchar("recipientName", { length: 255 }),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  body: text("body").notNull(),
+  inquiryType: varchar("inquiryType", { length: 50 }).default("general"),
+  scheduledFor: timestamp("scheduledFor").notNull(),
+  status: mysqlEnum("status", ["pending", "sent", "cancelled", "failed"]).default("pending").notNull(),
+  sentAt: timestamp("sentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ScheduledEmail = typeof scheduledEmails.$inferSelect;
+export type InsertScheduledEmail = typeof scheduledEmails.$inferInsert;
 
 /**
  * Saved Contributions table
@@ -1248,6 +1299,16 @@ export const userProfiles = mysqlTable("userProfiles", {
   reputation: int("reputation").default(0).notNull(),
   postCount: int("postCount").default(0).notNull(),
   replyCount: int("replyCount").default(0).notNull(),
+  // Path-aware onboarding fields
+  path: mysqlEnum("path", ["investor", "land_project", "ally", "player"]),
+  onboardingComplete: tinyint("onboardingComplete").default(0).notNull(),
+  investmentRange: varchar("investmentRange", { length: 255 }),
+  projectName: varchar("projectName", { length: 255 }),
+  projectUrl: varchar("projectUrl", { length: 500 }),
+  organizationName: varchar("organizationName", { length: 255 }),
+  questInterests: text("questInterests"),
+  displayName: varchar("displayName", { length: 255 }),
+  avatarUrl: varchar("avatarUrl", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1271,3 +1332,59 @@ export const siteBanners = mysqlTable("siteBanners", {
 
 export type SiteBanner = typeof siteBanners.$inferSelect;
 export type InsertSiteBanner = typeof siteBanners.$inferInsert;
+
+// ─── Email Magic Link Tokens ──────────────────────────────────────────────────
+export const emailTokens = mysqlTable("email_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EmailToken = typeof emailTokens.$inferSelect;
+
+// ─── Project Join Requests ────────────────────────────────────────────────────
+// Created when someone submits a "live" (join land project) or "alliance"
+// (join org) form in /connect. Routed to the steward of that project/org.
+export const projectJoinRequests = mysqlTable("project_join_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  // Who is requesting
+  submitterName: varchar("submitterName", { length: 255 }).notNull(),
+  submitterEmail: varchar("submitterEmail", { length: 320 }).notNull(),
+  submitterMessage: text("submitterMessage"),
+  // What they want to join
+  targetType: mysqlEnum("targetType", ["land_project", "alliance_org"]).notNull(),
+  targetId: varchar("targetId", { length: 255 }).notNull(),
+  targetName: varchar("targetName", { length: 255 }).notNull(),
+  // Steward routing (null until someone claims the org)
+  stewardUserId: int("stewardUserId"),
+  // Processing status
+  status: mysqlEnum("status", ["pending", "reviewed", "accepted", "rejected"]).default("pending").notNull(),
+  // Link back to the general inquiry for context
+  connectInquiryId: int("connectInquiryId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProjectJoinRequest = typeof projectJoinRequests.$inferSelect;
+export type InsertProjectJoinRequest = typeof projectJoinRequests.$inferInsert;
+
+// ─── Org Claims ───────────────────────────────────────────────────────────────
+// Users can claim stewardship of a land project or alliance org.
+// Once approved (by admin), join requests for that org are routed to them.
+export const orgClaims = mysqlTable("org_claims", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  orgType: mysqlEnum("orgType", ["land_project", "alliance_org"]).notNull(),
+  orgId: varchar("orgId", { length: 255 }).notNull(),
+  orgName: varchar("orgName", { length: 255 }).notNull(),
+  // Admin approves/rejects claim
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OrgClaim = typeof orgClaims.$inferSelect;
+export type InsertOrgClaim = typeof orgClaims.$inferInsert;
+export type InsertEmailToken = typeof emailTokens.$inferInsert;

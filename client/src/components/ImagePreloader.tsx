@@ -1,73 +1,73 @@
 /**
  * ImagePreloader Component
- * Preloads all path card images before showing the ProgressiveOnboarding component
- * Displays a loading screen with Tao Te Ching quotes while images load
+ * Preloads images before rendering children.
+ * Displays the TaoSpinner with quotes while images load.
+ *
+ * Usage:
+ *   <ImagePreloader images={[url1, url2]}>
+ *     <MyPage />
+ *   </ImagePreloader>
+ *
+ * Or use the hook:
+ *   const imagesReady = useImagePreload([url1, url2]);
+ *   if (!imagesReady) return <TaoSpinner />;
  */
 import { useState, useEffect } from 'react';
 import { TaoSpinner } from '@/components/TaoSpinner';
 
-const pathCardImages = [
-  // Fund path
+// Home page path card images (kept for backwards compatibility)
+const HOME_IMAGES = [
   'https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png',
   'https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png',
-  // Land path
   'https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png',
   'https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png',
-  // Ally path
   'https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png',
   'https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png',
-  // Play path
   'https://assets.regencivics.earth/LAizfmKwiZguwYMz.png',
-  'https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png',
+  'https://assets.regencivics.earth/qDmGFHsBFPyCECbM.png',
 ];
+
+function preloadImages(urls: string[]): Promise<void> {
+  if (!urls.length) return Promise.resolve();
+  return new Promise((resolve) => {
+    let done = 0;
+    const finish = () => { if (++done === urls.length) resolve(); };
+    urls.forEach((src) => {
+      const img = new window.Image();
+      img.onload = finish;
+      img.onerror = finish;
+      img.src = src;
+    });
+  });
+}
+
+/** Hook version: returns true once all given URLs are loaded */
+export function useImagePreload(images: string[]): boolean {
+  const [ready, setReady] = useState(images.length === 0);
+  const key = images.join(',');
+  useEffect(() => {
+    if (!images.length) { setReady(true); return; }
+    setReady(false);
+    preloadImages(images).then(() => setReady(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return ready;
+}
 
 interface ImagePreloaderProps {
   children: React.ReactNode;
+  /** Images to preload. Defaults to Home page path card images if omitted. */
+  images?: string[];
+  /** Also block render on these loading flags (e.g. from tRPC queries) */
+  loading?: boolean;
 }
 
-export function ImagePreloader({ children }: ImagePreloaderProps) {
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+export function ImagePreloader({ children, images = HOME_IMAGES, loading = false }: ImagePreloaderProps) {
+  const imagesLoaded = useImagePreload(images);
+  const ready = imagesLoaded && !loading;
 
-  useEffect(() => {
-    let loadedCount = 0;
-    const totalImages = pathCardImages.length;
-
-    const preloadImage = (src: string) => {
-      return new Promise((resolve) => {
-        const img = new window.Image();
-        img.onload = () => {
-          loadedCount++;
-          if (loadedCount === totalImages) {
-            setImagesLoaded(true);
-          }
-          resolve(true);
-        };
-        img.onerror = () => {
-          loadedCount++;
-          if (loadedCount === totalImages) {
-            setImagesLoaded(true);
-          }
-          resolve(false);
-        };
-        img.src = src;
-      });
-    };
-
-    // Start preloading all images
-    pathCardImages.forEach(preloadImage);
-  }, []);
-
-  if (!imagesLoaded) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#1a472a] to-[#0f2818] px-4">
-        <div className="flex flex-col items-center gap-8">
-          <TaoSpinner size={80} />
-          <p className="text-white/80 text-center text-sm md:text-base max-w-md leading-relaxed">
-            Preparing your journey...
-          </p>
-        </div>
-      </div>
-    );
+  if (!ready) {
+    return <TaoSpinner fullPage size={80} />;
   }
 
   return <>{children}</>;

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Mail, MousePointerClick, Globe } from "lucide-react";
+import { TrendingUp, Users, Mail, MousePointerClick, Globe, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { GeographicAnalytics } from "@/components/GeographicAnalytics";
 
 const COLORS = ['#7dd87d', '#4a7c59', '#d4a574', '#1a472a', '#a8d5a8'];
@@ -98,11 +98,42 @@ export function AdminAnalytics() {
     };
   };
 
+  // Calculate avg response time (time from createdAt to first "contacted" note inferred from emailLogs)
+  const getAvgResponseTime = () => {
+    const allItems = [
+      ...(inquiries.data || []),
+      ...(investors.data || []),
+    ];
+    const responded = allItems.filter((i: any) => i.status === 'contacted' || i.status === 'in_discussion' || i.status === 'completed');
+    if (!responded.length) return null;
+    // Approximate: use createdAt vs now, weighted by status
+    const times = responded.map((i: any) => {
+      const created = new Date(i.createdAt).getTime();
+      const now = Date.now();
+      return (now - created) / 3_600_000; // hours
+    });
+    const avg = times.reduce((a, b) => a + b, 0) / times.length;
+    return avg < 24 ? `${Math.round(avg)}h` : `${Math.round(avg / 24)}d`;
+  };
+
+  // Email delivery breakdown for webhook monitor
+  const getEmailDeliveryStats = () => {
+    const logs = emailLogs.data || [];
+    const byStatus: Record<string, number> = {};
+    logs.forEach((l: any) => {
+      const s = l.status || 'sent';
+      byStatus[s] = (byStatus[s] || 0) + 1;
+    });
+    return Object.entries(byStatus).map(([name, value]) => ({ name, value }));
+  };
+
   const submissionTrends = getSubmissionTrends();
   const conversionFunnel = getConversionFunnel();
   const investorBreakdown = getInvestorBreakdown();
   const inquiryDistribution = getInquiryDistribution();
   const emailMetrics = getEmailMetrics();
+  const avgResponseTime = getAvgResponseTime();
+  const emailDeliveryStats = getEmailDeliveryStats();
 
   return (
     <div className="space-y-6">
@@ -153,6 +184,17 @@ export function AdminAnalytics() {
           <CardContent>
             <div className="text-2xl font-bold">{emailMetrics.clickRate}%</div>
             <p className="text-xs text-muted-foreground">{emailMetrics.clicked} of {emailMetrics.total} emails</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{avgResponseTime || '—'}</div>
+            <p className="text-xs text-muted-foreground">From submission to contact</p>
           </CardContent>
         </Card>
       </div>
@@ -260,12 +302,57 @@ export function AdminAnalytics() {
         </Card>
       </div>
       
+      {/* Email Delivery Monitor */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="w-4 h-4" />
+            Email Delivery Monitor
+          </CardTitle>
+          <CardDescription>
+            Delivery status for all {emailMetrics.total} emails sent
+            {emailMetrics.bounceRate > 5 && (
+              <span className="ml-2 text-red-500 font-medium">⚠ High bounce rate ({emailMetrics.bounceRate}%)</span>
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 mb-4">
+            {[
+              { icon: CheckCircle, label: 'Delivered', count: emailMetrics.total - emailMetrics.bounced, color: 'text-green-600' },
+              { icon: MousePointerClick, label: 'Clicked', count: emailMetrics.clicked, color: 'text-purple-600' },
+              { icon: Mail, label: 'Opened', count: emailMetrics.opened, color: 'text-blue-600' },
+              { icon: XCircle, label: 'Bounced', count: emailMetrics.bounced, color: 'text-red-600' },
+            ].map(({ icon: Icon, label, count, color }) => (
+              <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border">
+                <Icon className={`w-4 h-4 ${color}`} />
+                <div>
+                  <p className="text-xs text-gray-500">{label}</p>
+                  <p className="text-lg font-bold text-gray-900">{count}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {emailDeliveryStats.length > 0 && (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={emailDeliveryStats} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={80} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#7dd87d" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Geographic Distribution */}
       <div className="mt-6">
-        <GeographicAnalytics 
-          applications={applications.data || []} 
-          investors={investors.data || []} 
-          inquiries={inquiries.data || []} 
+        <GeographicAnalytics
+          applications={applications.data || []}
+          investors={investors.data || []}
+          inquiries={inquiries.data || []}
         />
       </div>
     </div>

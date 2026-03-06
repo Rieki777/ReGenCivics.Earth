@@ -12,10 +12,12 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, Map as MapIcon, MessageCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Sun, Moon, Search } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Drawer } from "vaul";
 
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { AuthDialog } from "@/components/AuthDialog";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -30,6 +32,27 @@ import {
 import { SOCIAL_LINKS } from "@/components/SocialLinks";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
+// Prefetch a route chunk on hover — import() is cached by the module system
+const prefetch = (path: string) => {
+  const routes: Record<string, () => Promise<unknown>> = {
+    "/fund": () => import("@/pages/Fund"),
+    "/land": () => import("@/pages/Land"),
+    "/ally": () => import("@/pages/Ally"),
+    "/play": () => import("@/pages/Play"),
+    "/opportunity": () => import("@/pages/Opportunity"),
+    "/game": () => import("@/pages/Game"),
+    "/quest": () => import("@/pages/Quest"),
+    "/seasons": () => import("@/pages/Seasons"),
+    "/schedule": () => import("@/pages/Schedule"),
+    "/team": () => import("@/pages/Team"),
+    "/map": () => import("@/pages/Map"),
+    "/blog": () => import("@/pages/Blog"),
+    "/community": () => import("@/pages/Community"),
+    "/apply": () => import("@/pages/Apply"),
+  };
+  routes[path]?.();
+};
+
 export default function Navigation() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -38,6 +61,8 @@ export default function Navigation() {
   const [mobileSeasonsOpen, setMobileSeasonsOpen] = useState(false);
   const [mobileSocialsOpen, setMobileSocialsOpen] = useState(false);
   const { user, isAuthenticated, loading, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
 
   // Convert SOCIAL_LINKS to array format for dropdown
@@ -103,14 +128,15 @@ export default function Navigation() {
             {/* 4 Paths Dropdown - NEW */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className={`flex items-center gap-2 rounded-full px-4 ${
                     is4PathsActive
-                      ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]' 
+                      ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]'
                       : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
                   }`}
                   style={{ fontFamily: 'var(--font-accent)' }}
+                  onMouseEnter={() => { prefetch("/fund"); prefetch("/land"); prefetch("/ally"); prefetch("/play"); }}
                 >
                   <SeedOfLifeIcon className="w-4 h-4" />
                   4 Paths
@@ -155,14 +181,15 @@ export default function Navigation() {
             {/* Play the Game Dropdown - Game-related items only */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className={`flex items-center gap-2 rounded-full px-4 ${
                     isPlayGameActive
-                      ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]' 
+                      ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]'
                       : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
                   }`}
                   style={{ fontFamily: 'var(--font-accent)' }}
+                  onMouseEnter={() => { prefetch("/game"); prefetch("/quest"); prefetch("/play"); }}
                 >
                   <FlowerOfLifeIcon className="w-4 h-4" size={16} />
                   Play the Game
@@ -368,6 +395,15 @@ export default function Navigation() {
             </DropdownMenu>
 
 
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full text-[#7dd87d] hover:bg-white/10 transition-colors"
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
             {/* Language Switcher */}
             <LanguageSwitcher compact />
 
@@ -435,7 +471,7 @@ export default function Navigation() {
                 variant="ghost" 
                 className="flex items-center gap-2 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] hover:text-[#1a472a] rounded-full px-4"
                 style={{ fontFamily: 'var(--font-accent)' }}
-                onClick={() => window.location.href = getLoginUrl()}
+                onClick={() => setAuthDialogOpen(true)}
               >
                 <LogIn className="w-4 h-4" />
                 Sign In
@@ -443,22 +479,54 @@ export default function Navigation() {
             )}
           </div>
 
+          {/* Cmd+K Search — mobile & desktop */}
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("open-command-palette"));
+            }}
+            className="p-2 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Search (Ctrl+K)"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+
           {/* Mobile Menu Button */}
           <button
             className="md:hidden text-white p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
             aria-expanded={mobileMenuOpen}
-            aria-controls="mobile-navigation"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <Menu className="w-6 h-6" />
           </button>
         </nav>
+      </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div id="mobile-navigation" className="md:hidden py-4 border-t border-[#7dd87d]/20 max-h-[calc(100vh-4rem)] overflow-y-auto" role="navigation" aria-label="Mobile navigation">
-            <div className="flex flex-col gap-2">
+      {/* Mobile Drawer — slides in from right */}
+      <Drawer.Root open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} direction="right">
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[60] md:hidden" />
+          <Drawer.Content
+            className="fixed inset-y-0 right-0 z-[70] w-[min(85vw,320px)] bg-[#0d2818] border-l border-[#7dd87d]/20 flex flex-col overflow-hidden md:hidden focus:outline-none"
+            aria-label="Mobile navigation"
+          >
+            {/* Drawer header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-[#7dd87d]/20 bg-[#1a472a]">
+              <span className="text-[#7dd87d] font-bold text-sm" style={{ fontFamily: 'var(--font-display)' }}>
+                ReGen Civics
+              </span>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white/60 hover:text-white p-1 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto">
+            <div className="flex flex-col gap-1 p-3">
 
               {/* Language Switcher - Mobile */}
               <div className="px-4 py-2">
@@ -854,7 +922,7 @@ export default function Navigation() {
                     className="flex items-center justify-center gap-2 mx-4 py-3 w-[calc(100%-2rem)] bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] rounded-xl transition-all font-medium"
                     style={{ fontFamily: 'var(--font-accent)' }}
                     onClick={() => {
-                      window.location.href = getLoginUrl();
+                      setAuthDialogOpen(true);
                       setMobileMenuOpen(false);
                     }}
                   >
@@ -865,9 +933,16 @@ export default function Navigation() {
 
               </div>
             </div>
-          </div>
-        )}
-      </div>
+            </div>{/* end scrollable */}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+
+      <AuthDialog
+        open={authDialogOpen}
+        onOpenChange={setAuthDialogOpen}
+        onLogin={() => setAuthDialogOpen(false)}
+      />
     </header>
   );
 }

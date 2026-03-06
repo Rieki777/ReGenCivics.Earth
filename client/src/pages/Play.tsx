@@ -265,7 +265,7 @@ export default function Play() {
       theme="magic"
       blendColor="20, 30, 45"
       sectionOverlays={[
-        { id: "hero", opacity: 0.40 },             // Hero - magical game world, show vibrancy
+        { id: "hero", opacity: 0.30 },             // Hero - let image detail show through
         { id: "why-games", opacity: 0.50 },         // Why games - let colorful art show
         { id: "seasons", opacity: 0.55 },            // Seasons overview
         { id: "how-to-play", opacity: 0.50 },        // How to play - engaging, lighter
@@ -468,6 +468,7 @@ export default function Play() {
                 loop
                 muted
                 playsInline
+                preload="metadata"
                 className="w-full h-auto"
               >
                 <source src="https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4" type="video/mp4" />

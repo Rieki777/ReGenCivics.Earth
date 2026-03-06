@@ -3,19 +3,19 @@
   
   <!-- ===== Core Pages ===== -->
   <url>
-    <loc>https://www.regencivics.com/</loc>
+    <loc>https://regencivics.earth/</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/seasons</loc>
+    <loc>https://regencivics.earth/seasons</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/schedule</loc>
+    <loc>https://regencivics.earth/schedule</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -23,25 +23,25 @@
   
   <!-- ===== Four Paths ===== -->
   <url>
-    <loc>https://www.regencivics.com/fund</loc>
+    <loc>https://regencivics.earth/fund</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/land</loc>
+    <loc>https://regencivics.earth/land</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/ally</loc>
+    <loc>https://regencivics.earth/ally</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/play</loc>
+    <loc>https://regencivics.earth/play</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -49,49 +49,49 @@
   
   <!-- ===== Content Pages ===== -->
   <url>
-    <loc>https://www.regencivics.com/game</loc>
+    <loc>https://regencivics.earth/game</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/quest</loc>
+    <loc>https://regencivics.earth/quest</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/team</loc>
+    <loc>https://regencivics.earth/team</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog</loc>
+    <loc>https://regencivics.earth/blog</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/community</loc>
+    <loc>https://regencivics.earth/community</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/map</loc>
+    <loc>https://regencivics.earth/map</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/glossary</loc>
+    <loc>https://regencivics.earth/glossary</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/governance</loc>
+    <loc>https://regencivics.earth/governance</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -99,31 +99,31 @@
   
   <!-- ===== Conversion Pages ===== -->
   <url>
-    <loc>https://www.regencivics.com/connect</loc>
+    <loc>https://regencivics.earth/connect</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/apply</loc>
+    <loc>https://regencivics.earth/apply</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/investor</loc>
+    <loc>https://regencivics.earth/investor</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/loi</loc>
+    <loc>https://regencivics.earth/loi</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/opportunity</loc>
+    <loc>https://regencivics.earth/opportunity</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -131,37 +131,37 @@
   
   <!-- ===== Tool Pages ===== -->
   <url>
-    <loc>https://www.regencivics.com/calculator</loc>
+    <loc>https://regencivics.earth/calculator</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/crowd-pooling</loc>
+    <loc>https://regencivics.earth/crowd-pooling</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/crowd-pooling-projects</loc>
+    <loc>https://regencivics.earth/crowd-pooling-projects</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/compare-projects</loc>
+    <loc>https://regencivics.earth/compare-projects</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/showcase</loc>
+    <loc>https://regencivics.earth/showcase</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/socials</loc>
+    <loc>https://regencivics.earth/socials</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -169,19 +169,19 @@
   
   <!-- ===== One-Pagers ===== -->
   <url>
-    <loc>https://www.regencivics.com/one-pager/land</loc>
+    <loc>https://regencivics.earth/one-pager/land</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/one-pager/alliance</loc>
+    <loc>https://regencivics.earth/one-pager/alliance</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/one-pager/player</loc>
+    <loc>https://regencivics.earth/one-pager/player</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -189,73 +189,73 @@
   
   <!-- ===== Blog Posts ===== -->
   <url>
-    <loc>https://www.regencivics.com/blog/what-makes-regen-civics-different</loc>
+    <loc>https://regencivics.earth/blog/what-makes-regen-civics-different</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/remembering-season-1</loc>
+    <loc>https://regencivics.earth/blog/remembering-season-1</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/remembering-our-roots</loc>
+    <loc>https://regencivics.earth/blog/remembering-our-roots</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/regen-civics-runs-on-base</loc>
+    <loc>https://regencivics.earth/blog/regen-civics-runs-on-base</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/what-if-organizations-met-needs</loc>
+    <loc>https://regencivics.earth/blog/what-if-organizations-met-needs</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/great-american-chestnut-abundance</loc>
+    <loc>https://regencivics.earth/blog/great-american-chestnut-abundance</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/introducing-games-and-quests</loc>
+    <loc>https://regencivics.earth/blog/introducing-games-and-quests</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/how-to-apply-for-season-2</loc>
+    <loc>https://regencivics.earth/blog/how-to-apply-for-season-2</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/how-to-use-contribution-calculator</loc>
+    <loc>https://regencivics.earth/blog/how-to-use-contribution-calculator</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/how-to-set-up-player-profile</loc>
+    <loc>https://regencivics.earth/blog/how-to-set-up-player-profile</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/getting-investment-through-regen-civics</loc>
+    <loc>https://regencivics.earth/blog/getting-investment-through-regen-civics</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/blog/what-makes-land-project-good-investment</loc>
+    <loc>https://regencivics.earth/blog/what-makes-land-project-good-investment</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
@@ -263,37 +263,37 @@
   
   <!-- ===== User & Community Pages ===== -->
   <url>
-    <loc>https://www.regencivics.com/community/quests</loc>
+    <loc>https://regencivics.earth/community/quests</loc>
     <lastmod>2026-02-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/community/new</loc>
+    <loc>https://regencivics.earth/community/new</loc>
     <lastmod>2026-02-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/profile</loc>
+    <loc>https://regencivics.earth/profile</loc>
     <lastmod>2026-02-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/investmentform</loc>
+    <loc>https://regencivics.earth/investmentform</loc>
     <lastmod>2026-02-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/my-applications</loc>
+    <loc>https://regencivics.earth/my-applications</loc>
     <lastmod>2026-02-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/create-campaign</loc>
+    <loc>https://regencivics.earth/create-campaign</loc>
     <lastmod>2026-02-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -301,25 +301,25 @@
 
   <!-- ===== Legal Pages ===== -->
   <url>
-    <loc>https://www.regencivics.com/risk-disclosure</loc>
+    <loc>https://regencivics.earth/risk-disclosure</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/terms-of-use</loc>
+    <loc>https://regencivics.earth/terms-of-use</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/privacy-policy</loc>
+    <loc>https://regencivics.earth/privacy-policy</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://www.regencivics.com/disclaimers</loc>
+    <loc>https://regencivics.earth/disclaimers</loc>
     <lastmod>2026-02-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

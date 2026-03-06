@@ -27,7 +27,7 @@ describe('ImagePreloader', () => {
     
     // Verify all images have valid URLs
     pathCardImages.forEach(url => {
-      expect(url).toMatch(/^https:\/\/files\.manuscdn\.com\//);
+      expect(url).toMatch(/^https:\/\/assets\.regencivics\.earth\//);
     });
   });
 

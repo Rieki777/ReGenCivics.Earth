@@ -248,13 +248,13 @@ export default function Glossary() {
 
             {/* Search */}
             <div className="relative max-w-md mx-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/55" />
               <Input
                 type="text"
                 placeholder="Search terms..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:border-[#7dd87d]/50"
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
               />
             </div>
 
@@ -265,7 +265,7 @@ export default function Glossary() {
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   !activeCategory
                     ? "bg-[#7dd87d] text-[#1a472a]"
-                    : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70"
+                    : "bg-white/5 text-white/75 hover:bg-white/10 hover:text-white/90"
                 }`}
               >
                 All ({sortedEntries.length})
@@ -277,7 +277,7 @@ export default function Glossary() {
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                     activeCategory === cat
                       ? "bg-[#7dd87d] text-[#1a472a]"
-                      : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70"
+                      : "bg-white/5 text-white/75 hover:bg-white/10 hover:text-white/90"
                   }`}
                 >
                   {cat}
@@ -292,7 +292,7 @@ export default function Glossary() {
           <div className="max-w-3xl mx-auto space-y-3">
             {filtered.length === 0 && (
               <div className="text-center py-12">
-                <SeedOfLifeIcon className="w-12 h-12 text-white/10 mx-auto mb-4" size={48} />
+                <SeedOfLifeIcon className="w-12 h-12 text-white/35 mx-auto mb-4" size={48} />
                 <p className="text-white/40 text-sm">No terms match your search.</p>
               </div>
             )}

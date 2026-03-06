@@ -177,7 +177,7 @@ export default function CrowdPoolingCampaigns() {
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <Leaf className="w-16 h-16 text-white/20" />
+                        <Leaf className="w-16 h-16 text-white/35" />
                       </div>
                     )}
                     {(campaign as any).imageCount > 1 && (

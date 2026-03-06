@@ -10,10 +10,11 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Link, useParams, useLocation } from "wouter";
 import { useState } from "react";
-import { 
-  User, MessageSquare, Heart, Star, Calendar, 
+import {
+  User, MessageSquare, Heart, Star, Calendar,
   MapPin, Globe, Edit2, ArrowLeft, Award, TrendingUp
 } from "lucide-react";
+import { TaoSpinner } from "@/components/TaoSpinner";
 
 export default function UserForumProfile() {
   const params = useParams<{ id: string }>();
@@ -38,18 +39,14 @@ export default function UserForumProfile() {
   const data = profileQuery.data;
 
   if (profileQuery.isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
-        <div className="animate-pulse text-[#7dd87d]">Loading profile...</div>
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
 
   if (!data?.user) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
         <div className="text-center">
-          <User className="w-16 h-16 text-white/20 mx-auto mb-4" />
+          <User className="w-16 h-16 text-white/40 mx-auto mb-4" />
           <h2 className="text-white/60 text-lg mb-4">User not found</h2>
           <Link href="/community" className="text-[#7dd87d] hover:underline">Back to Forum</Link>
         </div>

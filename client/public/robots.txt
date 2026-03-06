@@ -1,11 +1,11 @@
 # ReGen Civics - robots.txt
-# https://www.regencivics.com
+# https://regencivics.earth
 
 User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://www.regencivics.com/sitemap.xml
+Sitemap: https://regencivics.earth/sitemap.xml
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

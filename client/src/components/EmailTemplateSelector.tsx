@@ -1,29 +1,34 @@
 /**
  * Email Template Selector Component
- * Provides pre-written email templates for common admin responses
+ * Provides pre-written email templates for common admin responses.
+ * Opens an inline compose form — select a template, edit subject/body, then send.
  */
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/hooks/use-toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Mail, ChevronDown, CheckCircle, XCircle, Clock, HelpCircle, Calendar, MessageSquare } from "lucide-react";
+import { Mail, Send, X, Loader2, CheckCircle, XCircle, Clock, HelpCircle, Calendar, MessageSquare, Zap, AlarmClock } from "lucide-react";
+
+const QUICK_REPLIES = [
+  "We'll be in touch within 48 hours.",
+  "Thank you for your interest in ReGen Civics!",
+  "Let's schedule a call: https://calendly.com/rieki-cordon/30min",
+  "We've received your submission and will review it shortly.",
+  "Could you share more details about your project timeline?",
+];
 
 // Email template types
-export type TemplateType = 
-  | "follow_up" 
-  | "acceptance" 
-  | "rejection" 
-  | "more_info" 
-  | "schedule_call" 
+export type TemplateType =
+  | "follow_up"
+  | "acceptance"
+  | "rejection"
+  | "more_info"
+  | "schedule_call"
   | "land_project_accepted"
   | "custom";
 
@@ -54,7 +59,7 @@ Do you have any questions I can help answer? Or would you like to schedule a cal
 Looking forward to hearing from you!
 
 Warm regards,
-The ReGen Civics Team`
+The ReGen Civics Team`,
   },
   {
     id: "acceptance",
@@ -77,7 +82,7 @@ If you have any questions, don't hesitate to reach out. We're here to support yo
 Welcome aboard!
 
 Warm regards,
-The ReGen Civics Team`
+The ReGen Civics Team`,
   },
   {
     id: "rejection",
@@ -98,7 +103,7 @@ We encourage you to:
 Thank you for being part of the regenerative renaissance. We wish you all the best in your journey!
 
 Warm regards,
-The ReGen Civics Team`
+The ReGen Civics Team`,
   },
   {
     id: "more_info",
@@ -120,7 +125,7 @@ Please reply to this email with the requested details at your earliest convenien
 Thank you for your patience, and we look forward to learning more!
 
 Warm regards,
-The ReGen Civics Team`
+The ReGen Civics Team`,
   },
   {
     id: "schedule_call",
@@ -142,7 +147,7 @@ During our call, we can:
 Looking forward to speaking with you soon!
 
 Warm regards,
-The ReGen Civics Team`
+The ReGen Civics Team`,
   },
   {
     id: "land_project_accepted",
@@ -170,7 +175,7 @@ Schedule a call to discuss: https://calendly.com/rieki-cordon/30min
 We are excited about your project and look forward to the journey ahead!
 
 Warm regards,
-The ReGen Civics Team`
+The ReGen Civics Team`,
   },
   {
     id: "custom",
@@ -182,14 +187,25 @@ The ReGen Civics Team`
 [Write your custom message here]
 
 Warm regards,
-The ReGen Civics Team`
-  }
+The ReGen Civics Team`,
+  },
 ];
+
+// Backend template type mapping (used for logging only; content always sent via customSubject/customBody)
+const templateTypeMap: Record<TemplateType, string> = {
+  follow_up: "follow_up",
+  acceptance: "acceptance",
+  rejection: "not_selected",
+  more_info: "request_info",
+  schedule_call: "schedule_call",
+  land_project_accepted: "land_project_accepted",
+  custom: "custom",
+};
 
 interface EmailTemplateSelectorProps {
   recipientEmail: string;
   recipientName: string;
-  contextSubject?: string; // Additional context for subject line
+  contextSubject?: string;
   variant?: "default" | "outline";
   className?: string;
   inquiryType?: "investor" | "alliance" | "project" | "general";
@@ -201,120 +217,231 @@ export function EmailTemplateSelector({
   contextSubject,
   variant = "outline",
   className = "",
-  inquiryType = "general"
+  inquiryType = "general",
 }: EmailTemplateSelectorProps) {
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType | null>(null);
+  const [isComposing, setIsComposing] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<TemplateType>("follow_up");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState("");
+  const [isScheduleMode, setIsScheduleMode] = useState(false);
   const { toast } = useToast();
   const sendEmailMutation = trpc.email.sendDirect.useMutation();
+  const scheduleEmailMutation = trpc.scheduledEmails.schedule.useMutation();
 
-  // Replace template placeholders with actual values
-  const processTemplate = (template: EmailTemplate) => {
-    const name = recipientName || "there";
-    const subject = contextSubject 
-      ? `${template.subject} - ${contextSubject}`
-      : template.subject;
-    
-    const body = template.body
-      .replace(/\{\{name\}\}/g, name)
-      .replace(/\n/g, "%0D%0A"); // URL encode line breaks
-    
-    return {
-      subject: encodeURIComponent(subject),
-      body: body
-    };
-  };
-
-  const handleSelectTemplate = async (template: EmailTemplate) => {
-    setSelectedTemplate(template.id);
-    setIsSending(true);
-    
-    try {
-      // Map template IDs to backend template types
-      const templateTypeMap: Record<TemplateType, string> = {
-        follow_up: "follow_up",
-        acceptance: "acceptance",
-        rejection: "not_selected",
-        more_info: "request_info",
-        schedule_call: "schedule_call",
-        land_project_accepted: "land_project_accepted",
-        custom: "custom"
-      };
-      
+  const loadTemplate = (templateId: TemplateType) => {
+    setSelectedTemplateId(templateId);
+    const tpl = emailTemplates.find((t) => t.id === templateId);
+    if (tpl) {
       const name = recipientName || "there";
-      const subject = contextSubject 
-        ? `${template.subject} - ${contextSubject}`
-        : template.subject;
-      const body = template.body.replace(/\{\{name\}\}/g, name);
-      
-      await sendEmailMutation.mutateAsync({
-        to: recipientEmail,
-        recipientName: name,
-        templateType: templateTypeMap[template.id] as any,
-        customSubject: template.id === "custom" ? subject : undefined,
-        customBody: template.id === "custom" ? body : undefined,
-        inquiryType: inquiryType
-      });
-      
-      toast({
-        title: "Email Sent!",
-        description: `Successfully sent ${template.label} email to ${recipientName}`,
-      });
-    } catch (error: any) {
-      console.error("Failed to send email:", error);
-      toast({
-        title: "Email Failed",
-        description: error.message || "Failed to send email. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSending(false);
-      setSelectedTemplate(null);
+      const subj = contextSubject
+        ? `${tpl.subject} - ${contextSubject}`
+        : tpl.subject;
+      setSubject(subj);
+      setBody(tpl.body.replace(/\{\{name\}\}/g, name));
     }
   };
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant={variant} 
-          className={`border-[#1a472a]/30 ${className}`}
-          disabled={isSending}
-        >
-          <Mail className="w-4 h-4 mr-2" />
-          {isSending ? "Sending..." : "Send Email"}
-          <ChevronDown className="w-4 h-4 ml-2" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Choose a Template</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {emailTemplates.map((template) => {
-          const Icon = template.icon;
-          return (
-            <DropdownMenuItem
-              key={template.id}
-              onClick={() => handleSelectTemplate(template)}
-              className="cursor-pointer"
+  const handleOpen = () => {
+    setIsComposing(true);
+    loadTemplate("follow_up");
+  };
+
+  const handleSend = async () => {
+    if (!subject.trim() || !body.trim()) {
+      toast({ title: "Missing fields", description: "Please fill in both subject and body.", variant: "destructive" });
+      return;
+    }
+
+    // Schedule mode
+    if (isScheduleMode && scheduledFor) {
+      try {
+        setIsSending(true);
+        await scheduleEmailMutation.mutateAsync({
+          recipientEmail,
+          recipientName: recipientName || "there",
+          subject,
+          body,
+          inquiryType,
+          scheduledFor: new Date(scheduledFor).toISOString(),
+        });
+        toast({ title: "Email Scheduled!", description: `Will send to ${recipientName || recipientEmail} on ${new Date(scheduledFor).toLocaleString()}` });
+        setIsComposing(false);
+        setIsScheduleMode(false);
+        setScheduledFor('');
+      } catch (error: any) {
+        toast({ title: "Schedule Failed", description: error.message || "Failed to schedule email.", variant: "destructive" });
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await sendEmailMutation.mutateAsync({
+        to: recipientEmail,
+        recipientName: recipientName || "there",
+        templateType: "custom",
+        customSubject: subject,
+        customBody: body,
+        inquiryType,
+      });
+      toast({ title: "Email Sent!", description: `Successfully sent to ${recipientName || recipientEmail}` });
+      setIsComposing(false);
+    } catch (error: any) {
+      toast({ title: "Email Failed", description: error.message || "Failed to send email. Please try again.", variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  if (isComposing) {
+    return (
+      <div className={`w-full border border-[#1a472a]/20 rounded-lg p-3 bg-[#f8faf8] space-y-2 ${className}`}>
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-[#1a472a] flex items-center gap-1.5">
+            <Mail className="w-3 h-3" />
+            To: {recipientName || recipientEmail} &lt;{recipientEmail}&gt;
+          </p>
+          <button
+            onClick={() => setIsComposing(false)}
+            className="text-[#1a472a]/40 hover:text-[#1a472a] transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-[10px] text-[#1a472a]/60 uppercase tracking-wide">Template</Label>
+            <Select
+              value={selectedTemplateId}
+              onValueChange={(v) => loadTemplate(v as TemplateType)}
             >
-              <Icon className={`w-4 h-4 mr-2 ${
-                template.id === "acceptance" ? "text-green-600" :
-                template.id === "land_project_accepted" ? "text-emerald-500" :
-                template.id === "rejection" ? "text-red-500" :
-                template.id === "follow_up" ? "text-amber-500" :
-                template.id === "more_info" ? "text-blue-500" :
-                template.id === "schedule_call" ? "text-purple-500" :
-                "text-gray-500"
-              }`} />
-              {template.label}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+              <SelectTrigger className="h-8 text-xs bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {emailTemplates.map((t) => {
+                  const Icon = t.icon;
+                  return (
+                    <SelectItem key={t.id} value={t.id}>
+                      <span className="flex items-center gap-2">
+                        <Icon className="w-3 h-3" />
+                        {t.label}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-[#1a472a]/60 uppercase tracking-wide">Subject</Label>
+            <Input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Subject line..."
+              className="h-8 text-xs bg-white"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label className="text-[10px] text-[#1a472a]/60 uppercase tracking-wide">
+              Body (editable)
+            </Label>
+            <span className="text-[10px] text-[#1a472a]/40 flex items-center gap-1">
+              <Zap className="w-2.5 h-2.5" /> Quick inserts:
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1 mb-1">
+            {QUICK_REPLIES.map((qr) => (
+              <button
+                key={qr}
+                type="button"
+                onClick={() => setBody((prev) => prev + (prev.endsWith('\n') || prev === '' ? '' : '\n') + qr)}
+                className="px-2 py-0.5 rounded-full bg-[#f0f7f0] border border-[#4a7c59]/20 text-[10px] text-[#4a7c59] hover:bg-[#4a7c59]/10 transition-colors max-w-[200px] truncate"
+                title={qr}
+              >
+                {qr.length > 35 ? qr.slice(0, 33) + '…' : qr}
+              </button>
+            ))}
+          </div>
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            className="bg-white text-xs min-h-[120px] resize-y font-mono"
+            placeholder="Email body..."
+          />
+        </div>
+
+        {/* Schedule toggle */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsScheduleMode(m => !m)}
+            className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-colors ${isScheduleMode ? 'bg-[#4a7c59]/10 border-[#4a7c59]/40 text-[#4a7c59]' : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-[#4a7c59]/30'}`}
+          >
+            <AlarmClock className="w-2.5 h-2.5" />
+            Send Later
+          </button>
+          {isScheduleMode && (
+            <Input
+              type="datetime-local"
+              value={scheduledFor}
+              onChange={(e) => setScheduledFor(e.target.value)}
+              min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+              className="h-7 text-xs bg-white flex-1"
+            />
+          )}
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <Button
+            onClick={handleSend}
+            disabled={isSending || !subject.trim() || !body.trim() || (isScheduleMode && !scheduledFor)}
+            className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white flex-1"
+            size="sm"
+          >
+            {isSending ? (
+              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+            ) : isScheduleMode ? (
+              <AlarmClock className="w-3 h-3 mr-1" />
+            ) : (
+              <Send className="w-3 h-3 mr-1" />
+            )}
+            {isScheduleMode ? 'Schedule Send' : 'Send Email'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsComposing(false)}
+            className="border-[#1a472a]/20"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      variant={variant}
+      className={`border-[#1a472a]/30 ${className}`}
+      onClick={handleOpen}
+      disabled={!recipientEmail}
+    >
+      <Mail className="w-4 h-4 mr-2" />
+      Send Email
+    </Button>
   );
 }
 
-// Export templates for use elsewhere if needed
+// Export templates and types for use in bulk email flows
 export { emailTemplates };
 export type { EmailTemplate };

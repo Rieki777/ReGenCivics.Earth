@@ -11,15 +11,15 @@ export function LegalFooterLinks() {
       <Link href="/risk-disclosure" className="hover:text-white/60 transition-colors">
         Risk Disclosure
       </Link>
-      <span className="text-white/20">|</span>
+      <span className="text-white/35">|</span>
       <Link href="/terms-of-use" className="hover:text-white/60 transition-colors">
         Terms of Use
       </Link>
-      <span className="text-white/20">|</span>
+      <span className="text-white/35">|</span>
       <Link href="/privacy-policy" className="hover:text-white/60 transition-colors">
         Privacy Policy
       </Link>
-      <span className="text-white/20">|</span>
+      <span className="text-white/35">|</span>
       <Link href="/disclaimers" className="hover:text-white/60 transition-colors">
         Disclaimers
       </Link>

@@ -11,6 +11,7 @@ import { nanoid } from "nanoid";
 import { checkRateLimit } from "./rate-limit";
 import { notifyIfEnabled, getNotificationTypeForPath } from "./notify-with-prefs";
 import { invokeLLM } from "./_core/llm";
+import { CHAT_SYSTEM_PROMPT } from "./_core/oauth";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "./bannerHelpers";
 import { adminProcedure } from "./_core/trpc";
 
@@ -52,6 +53,13 @@ export const appRouter = router({
       return {
         success: true,
       } as const;
+    }),
+  }),
+
+  // Public stats
+  stats: router({
+    getPublicStats: publicProcedure.query(async () => {
+      return db.getPublicStats();
     }),
   }),
 
@@ -1087,10 +1095,23 @@ export const appRouter = router({
         }
         
         const { sendEmail, emailTemplates } = await import("./_core/email");
-        
+
         let emailContent: { subject: string; html: string };
-        
-        if (input.templateType === "land_project_accepted") {
+
+        // If the caller passes custom subject + body (from compose dialog), always use them.
+        // This respects admin edits regardless of the template type label used for logging.
+        if (input.customSubject && input.customBody) {
+          const htmlBody = input.customBody
+            .split(/\n\n+/)
+            .map((para: string) => para.trim())
+            .filter(Boolean)
+            .map((para: string) => `<p style="color: #333; line-height: 1.6;">${para.replace(/\n/g, "<br/>")}</p>`)
+            .join("");
+          emailContent = {
+            subject: input.customSubject,
+            html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">${htmlBody}<div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p></div></div>`,
+          };
+        } else if (input.templateType === "land_project_accepted") {
           emailContent = emailTemplates.landProjectAccepted("Project Name", input.recipientName);
         } else if (input.templateType === "follow_up") {
           emailContent = emailTemplates.followUp(input.recipientName);
@@ -1281,9 +1302,19 @@ export const appRouter = router({
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
       }
-      
+
       return await db.getAllEmailLogs();
     }),
+
+    // Get email logs for a specific contact by email address
+    getLogsForEmail: protectedProcedure
+      .input(z.object({ email: z.string().email() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+        }
+        return await db.getEmailLogsByEmail(input.email);
+      }),
 
     // Send test email
     sendTest: protectedProcedure
@@ -1527,8 +1558,24 @@ export const appRouter = router({
           try {
             let emailContent: { subject: string; html: string };
             const name = recipient.name || "Friend";
-            
-            switch (input.templateType) {
+
+            // If caller passes custom subject + body, always use them (respects compose-dialog edits).
+            // {{name}} and {{email}} are merged per-recipient.
+            if (input.customSubject && input.customBody) {
+              const rawBody = input.customBody
+                .replace(/\{\{name\}\}/g, name)
+                .replace(/\{\{email\}\}/g, recipient.email);
+              const htmlBody = rawBody
+                .split(/\n\n+/)
+                .map((para: string) => para.trim())
+                .filter(Boolean)
+                .map((para: string) => `<p style="color: #333; line-height: 1.6;">${para.replace(/\n/g, "<br/>")}</p>`)
+                .join("");
+              emailContent = {
+                subject: input.customSubject,
+                html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">${htmlBody}<div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p></div></div>`,
+              };
+            } else switch (input.templateType) {
               case "newsletter_welcome":
                 emailContent = templates.newsletterWelcome(name);
                 break;
@@ -2631,57 +2678,8 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         checkRateLimit(ctx, "chat_ask");
-        const systemPrompt = `You are the ReGen Civics Guide, a helpful assistant on the ReGen Civics website. You help visitors understand the ReGen Civics Fund and Infinite Game.
-
-## TONE
-- Professional yet approachable. Warm but measured. Think "trusted advisor at a dinner party," not "salesperson."
-- Avoid excessive exclamation marks. Limit to one per response at most.
-- Do not open with "That's a great/fantastic question!" Just answer directly.
-- Keep responses under 150 words. Be concise.
-
-## KEY FACTS YOU KNOW
-- ReGen Civics has two interconnected spaces: (1) The ReGen Civics Fund and (2) The Infinite Game.
-- The Fund is a venture fund investing in two arms: Land Projects (regenerative agriculture, eco-villages, conservation, housing, infrastructure) and Alliance Organizations (service providers, technology partners, and consultancies supporting those projects).
-- Minimum investment: $250,000. The fund is open only to accredited investors.
-- Geographic focus: Global. The fund achieves stability through broad diversification across regions.
-- The fund uses a seasonal accelerator model aligned with equinoxes and solstices. Season 2 begins March Equinox 2026.
-- Alliance partners contribute equity, services, and technology in exchange for $RCivics tokens through a Value Exchange Model.
-- The Infinite Game is an open game anyone can play, featuring quests focused on personal health, community building, and ecological restoration.
-- Four paths to participate: Investors (Fund), Land Projects, Alliance Partners, and Players (Game).
-- Non-accredited investors cannot invest in the fund but can participate as Players in the Infinite Game.
-
-## SITE PAGES YOU CAN REFERENCE
-- /opportunity - Full investment thesis, fund snapshot, strategy, risk overview
-- /risk-disclosure - Comprehensive risk disclosure (27 risk categories)
-- /fund - Fund overview and investor journey
-- /schedule - Book a discovery call or join an open session
-- /investor - Submit an investor interest form
-- /loi - Sign a Letter of Intent
-- /apply - Apply as a land project or alliance partner
-- /team - Meet the team
-- /play - Learn about the Infinite Game
-- /land - Learn about the land project path
-- /ally - Learn about the alliance partner path
-- /seasons - Learn about the seasonal accelerator model
-
-## STRICT GUARDRAILS - NEVER DO THESE
-1. NEVER fabricate specific financial numbers: no IRR targets, return projections, fee percentages, carry rates, or fund size.
-2. NEVER state the specific Reg D exemption type (506b vs 506c). Say "the fund operates under Regulation D" and direct them to review fund documents or speak with the team.
-3. NEVER fabricate lock-up periods, redemption terms, or liquidity provisions. Say these details are in the fund documents and suggest a discovery call.
-4. NEVER fabricate details about Season 1 outcomes or specific project results. Say Season 2 is the upcoming public intake period.
-5. NEVER make claims about $RCivics token tradability, exchange listings, or securities classification. Say the team can discuss token mechanics in detail.
-6. NEVER provide legal, tax, or compliance advice. Suggest consulting their own advisors.
-7. NEVER disparage competitors or other funds.
-8. If asked about topics unrelated to ReGen Civics, politely decline and redirect.
-
-## WHEN DISCUSSING RISKS
-Always mention the /risk-disclosure page. Acknowledge that all investments carry risk, including potential loss of capital. Mention the diversification strategy as a risk mitigation approach but never as a guarantee.
-
-## WHEN ASKED ABOUT FUND TERMS
-Direct them to: (1) the investment thesis at /opportunity, (2) booking a discovery call at /schedule, or (3) submitting an investor interest form at /investor.`;
-
         const llmMessages = [
-          { role: "system" as const, content: systemPrompt },
+          { role: "system" as const, content: CHAT_SYSTEM_PROMPT },
           ...input.messages.map(m => ({
             role: m.role as "user" | "assistant",
             content: m.content,
@@ -2689,12 +2687,8 @@ Direct them to: (1) the investment thesis at /opportunity, (2) booking a discove
         ];
 
         const response = await invokeLLM({ messages: llmMessages });
-        const rawContent = response.choices?.[0]?.message?.content;
-        const content = typeof rawContent === 'string' 
-          ? rawContent 
-          : Array.isArray(rawContent) 
-            ? rawContent.map((c: any) => c.type === 'text' ? c.text : '').join('') 
-            : "I am not sure how to help with that. Please try rephrasing your question.";
+        const content = response.choices?.[0]?.message?.content
+          ?? "I am not sure how to help with that. Please try rephrasing your question.";
         return { content };
       }),
   }),
@@ -3228,6 +3222,336 @@ Direct them to: (1) the investment thesis at /opportunity, (2) booking a discove
       .input(z.object({ key: z.string() }))
       .mutation(async ({ input }) => {
         return await toggleBannerActive(input.key);
+      }),
+  }),
+
+  // User profile onboarding router
+  userProfiles: router({
+    // Get current user's extended profile (path, onboarding fields, etc.)
+    getMe: protectedProcedure.query(async ({ ctx }) => {
+      return db.getUserProfile(ctx.user.id);
+    }),
+
+    // Set the user's path (called once from PathSelectionScreen)
+    setPath: protectedProcedure
+      .input(z.object({
+        path: z.enum(["investor", "land_project", "ally", "player"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.upsertUserProfile(ctx.user.id, {
+          path: input.path,
+          onboardingComplete: 1,
+        });
+        return { success: true };
+      }),
+
+    // Update extended profile fields (called from ProfileEditForm)
+    updateProfile: protectedProcedure
+      .input(z.object({
+        displayName: z.string().max(255).optional(),
+        bio: z.string().optional(),
+        location: z.string().max(255).optional(),
+        avatarUrl: z.string().max(500).optional(),
+        investmentRange: z.string().max(255).optional(),
+        projectName: z.string().max(255).optional(),
+        projectUrl: z.string().max(500).optional(),
+        organizationName: z.string().max(255).optional(),
+        questInterests: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.upsertUserProfile(ctx.user.id, input);
+        return { success: true };
+      }),
+  }),
+
+  // ============================================
+  // Contact Notes
+  // ============================================
+  contactNotes: router({
+    list: protectedProcedure
+      .input(z.object({ contactType: z.string(), contactId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        return await db.getContactNotes(input.contactType, input.contactId);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        contactType: z.string(),
+        contactId: z.number(),
+        note: z.string().min(1).max(2000),
+        authorName: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        return await db.createContactNote({
+          contactType: input.contactType,
+          contactId: input.contactId,
+          note: input.note,
+          authorName: input.authorName || ctx.user.name || "Admin",
+        });
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        await db.deleteContactNote(input.id);
+      }),
+  }),
+
+  // ============================================
+  // Contact Tags
+  // ============================================
+  contactTags: router({
+    list: protectedProcedure
+      .input(z.object({ contactType: z.string(), contactId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        return await db.getContactTags(input.contactType, input.contactId);
+      }),
+
+    add: protectedProcedure
+      .input(z.object({
+        contactType: z.string(),
+        contactId: z.number(),
+        tag: z.string().min(1).max(100),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        return await db.addContactTag({
+          contactType: input.contactType,
+          contactId: input.contactId,
+          tag: input.tag.trim().toLowerCase(),
+        });
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        await db.removeContactTag(input.id);
+      }),
+  }),
+
+  // ============================================
+  // Scheduled Emails
+  // ============================================
+  scheduledEmails: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return await db.getScheduledEmails();
+    }),
+
+    schedule: protectedProcedure
+      .input(z.object({
+        recipientEmail: z.string().email(),
+        recipientName: z.string().optional(),
+        subject: z.string().min(1),
+        body: z.string().min(1),
+        inquiryType: z.string().optional(),
+        scheduledFor: z.string(), // ISO datetime string
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        return await db.createScheduledEmail({
+          recipientEmail: input.recipientEmail,
+          recipientName: input.recipientName,
+          subject: input.subject,
+          body: input.body,
+          inquiryType: input.inquiryType || "general",
+          scheduledFor: new Date(input.scheduledFor),
+        });
+      }),
+
+    cancel: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        await db.updateScheduledEmailStatus(input.id, 'cancelled');
+      }),
+  }),
+
+  // ─── Project Join Requests ────────────────────────────────────────────────
+  projectJoinRequests: router({
+    // Public: anyone can submit a join request (comes from /connect form)
+    create: publicProcedure
+      .input(z.object({
+        submitterName: z.string().min(1),
+        submitterEmail: z.string().email(),
+        submitterMessage: z.string().optional(),
+        targetType: z.enum(["land_project", "alliance_org"]),
+        targetId: z.string().min(1),
+        targetName: z.string().min(1),
+        connectInquiryId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // Find approved steward for this org (if any)
+        const claims = await db.getAllOrgClaims();
+        const approved = claims.find(
+          c => c.orgId === input.targetId && c.status === 'approved'
+        );
+        const id = await db.createProjectJoinRequest({
+          ...input,
+          stewardUserId: approved?.userId ?? null,
+        });
+        return { id };
+      }),
+
+    // Steward: see requests routed to them
+    myRequests: protectedProcedure.query(async ({ ctx }) => {
+      return db.getJoinRequestsForSteward(ctx.user.id);
+    }),
+
+    // Admin: see all requests
+    listAll: adminProcedure.query(async () => {
+      return db.getAllJoinRequests();
+    }),
+
+    updateStatus: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(["pending", "reviewed", "accepted", "rejected"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Allow admin or the steward assigned to the request
+        const all = await db.getAllJoinRequests();
+        const req = all.find(r => r.id === input.id);
+        if (!req) throw new TRPCError({ code: "NOT_FOUND" });
+        if (ctx.user.role !== "admin" && req.stewardUserId !== ctx.user.id) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        await db.updateJoinRequestStatus(input.id, input.status);
+        return { ok: true };
+      }),
+  }),
+
+  // ─── Org Claims ───────────────────────────────────────────────────────────
+  orgClaims: router({
+    // Any authenticated user can claim an org (pending admin approval)
+    claim: protectedProcedure
+      .input(z.object({
+        orgType: z.enum(["land_project", "alliance_org"]),
+        orgId: z.string().min(1),
+        orgName: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createOrgClaim({
+          userId: ctx.user.id,
+          orgType: input.orgType,
+          orgId: input.orgId,
+          orgName: input.orgName,
+        });
+        return { id };
+      }),
+
+    // Get own claims
+    mine: protectedProcedure.query(async ({ ctx }) => {
+      return db.getOrgClaimsByUser(ctx.user.id);
+    }),
+
+    // Admin: see all claims
+    listAll: adminProcedure.query(async () => {
+      return db.getAllOrgClaims();
+    }),
+
+    // Admin: approve or reject a claim
+    approve: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const claim = await db.updateOrgClaimStatus(input.id, 'approved');
+        if (claim) {
+          // Route all pending join requests for this org to the new steward
+          await db.routeJoinRequestsToSteward(claim.orgId, claim.userId);
+        }
+        return { ok: true };
+      }),
+
+    reject: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.updateOrgClaimStatus(input.id, 'rejected');
+        return { ok: true };
+      }),
+  }),
+
+  // ─── Admin AI Chat ────────────────────────────────────────────────────────
+  adminAI: router({
+    chat: adminProcedure
+      .input(z.object({
+        messages: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string(),
+        })).max(30),
+        // Live context snapshot passed from the client
+        context: z.object({
+          activeTab: z.string().optional(),
+          investorCount: z.number().optional(),
+          inquiryCount: z.number().optional(),
+          applicationCount: z.number().optional(),
+          selectedContactEmail: z.string().optional(),
+          selectedContactName: z.string().optional(),
+        }).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const ctx = input.context ?? {};
+        const contextBlock = [
+          ctx.activeTab ? `Active admin tab: ${ctx.activeTab}` : null,
+          ctx.investorCount !== undefined ? `Total investors in DB: ${ctx.investorCount}` : null,
+          ctx.inquiryCount !== undefined ? `Total general inquiries: ${ctx.inquiryCount}` : null,
+          ctx.applicationCount !== undefined ? `Total applications: ${ctx.applicationCount}` : null,
+          ctx.selectedContactEmail ? `Currently viewing contact: ${ctx.selectedContactName ?? ''} <${ctx.selectedContactEmail}>` : null,
+        ].filter(Boolean).join("\n");
+
+        const systemPrompt = `You are an AI admin assistant for ReGen Civics — a regenerative civilization project coordinating land projects, alliance organizations, and investors.
+
+You live inside the /admin dashboard and help administrators (like Rieki and the team) coordinate the Infinite Game.
+
+## Your Role
+- Help the admin navigate, search, and make sense of the data in the dashboard
+- Suggest next actions based on contact status, age of inquiry, and pipeline health
+- Draft emails, plan follow-ups, and help prioritize attention
+- Explain what each table/tab does and how to use it
+- Learn the team's patterns and suggest automations
+
+## Admin Dashboard Tabs
+- **Overview**: Key metrics and stats (investor count, inquiry count, applications)
+- **Applications**: Land project applications from potential season participants
+- **Investors**: Investor inquiry pipeline with status tracking
+- **Alliance**: General inquiries (alliance orgs, collaborations, etc.)
+- **Live**: People wanting to live at a land project
+- **Create**: "Create with ReGens" collaboration requests
+- **Other**: Catch-all inquiries
+- **Kanban**: Drag-and-drop view of investor/inquiry/application pipelines
+- **Settings**: Email templates, newsletter subscribers, scheduled emails
+
+## Available Actions
+When you want the admin to take an action, include a JSON action block in your response wrapped in <action> tags. The UI will render these as buttons.
+
+Examples:
+<action>{"type":"navigate","tab":"investors","label":"Go to Investors tab"}</action>
+<action>{"type":"compose","to":"email@example.com","subject":"Following up on your inquiry","label":"Draft email to contact"}</action>
+<action>{"type":"search","query":"search term","label":"Search for this contact"}</action>
+<action>{"type":"focus","contactEmail":"email@example.com","label":"Open contact card"}</action>
+
+## Current Context
+${contextBlock || "No specific context provided."}
+
+## Communication Style
+- Be direct, warm, and efficient
+- Use bullet points for lists
+- Flag urgent items (old inquiries, stale applications)
+- Suggest concrete next steps
+- When you don't know something specific about the data, say so — you can only see what the admin shares with you`;
+
+        const llmMessages = [
+          { role: "system" as const, content: systemPrompt },
+          ...input.messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+        ];
+
+        const response = await invokeLLM({ messages: llmMessages, maxTokens: 1500 });
+        const content = response.choices?.[0]?.message?.content ?? "I'm not sure how to help with that. Could you rephrase?";
+        return { content };
       }),
   }),
 });

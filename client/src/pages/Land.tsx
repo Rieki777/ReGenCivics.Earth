@@ -176,7 +176,7 @@ export default function Land() {
       theme="garden"
       blendColor="22, 50, 30"
       sectionOverlays={[
-        { id: "hero", opacity: 0.40 },             // Hero - degraded land, dramatic, show detail
+        { id: "hero", opacity: 0.30 },             // Hero - let image detail show through
         { id: "problem", opacity: 0.55 },           // Problem overview
         { id: "approach", opacity: 0.50 },           // Restoration approach - let greenery show
         { id: "criteria", opacity: 0.55 },           // Selection criteria
@@ -674,8 +674,8 @@ export default function Land() {
                 loop
                 muted
                 playsInline
+                preload="metadata"
                 className="w-full aspect-video object-cover"
-                poster=""
               >
                 <source src="https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
@@ -905,6 +905,7 @@ export default function Land() {
                 loop
                 muted
                 playsInline
+                preload="metadata"
                 className="w-full h-auto"
                 poster="https://assets.regencivics.earth/ACFKZcufsmYBYHhs.jpg"
               />

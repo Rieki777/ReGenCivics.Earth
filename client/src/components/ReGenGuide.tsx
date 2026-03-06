@@ -1,59 +1,126 @@
 /**
  * ReGenGuide - Floating AI chat assistant widget.
- * A small floating button in the bottom-right that opens a chat panel.
- * Uses the AIChatBox component internally with tRPC for LLM calls.
+ * Uses streaming SSE for real-time word-by-word responses.
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { MessageCircle, X, Sparkles } from "lucide-react";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+
+const PATH_WELCOMES: Record<string, string> = {
+  investor: "Welcome back! I can help you explore investment opportunities in regenerative land projects, understand our fund structure, or connect you with promising projects. What would you like to know?",
+  land_project: "Welcome! I can help you understand how to showcase your land project, connect with investors, and navigate our platform. What would you like to know?",
+  ally: "Welcome! I can help you explore partnership opportunities, understand how Alliance Partners contribute to our ecosystem, and find ways to connect your organization. What would you like to know?",
+  player: "Welcome, Player! I can help you discover Quests, understand the Infinite Game mechanics, and find ways to contribute and earn rewards. What would you like to know?",
+};
 
 export default function ReGenGuide() {
+  const { user } = useAuth();
+  const { data: profile } = trpc.userProfiles.getMe.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 300_000,
+  });
+
+  const userPath = profile?.path ?? undefined;
+  const welcomeMessage =
+    userPath && PATH_WELCOMES[userPath]
+      ? PATH_WELCOMES[userPath]
+      : "Welcome to ReGen Civics! I can help you understand the Fund, the Infinite Game, how to participate, or anything else about our regenerative ecosystem. What would you like to know?";
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content:
-        "Welcome to ReGen Civics! I can help you understand the Fund, the Infinite Game, how to participate, or anything else about our regenerative ecosystem. What would you like to know?",
+      content: welcomeMessage,
     },
   ]);
-
-  const chatMutation = trpc.chat.ask.useMutation();
+  const [isStreaming, setIsStreaming] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   const handleSendMessage = useCallback(
-    (content: string) => {
+    async (content: string) => {
       const userMessage: Message = { role: "user", content };
-      const updatedMessages = [...messages, userMessage];
-      setMessages(updatedMessages);
+      const withUser = [...messages, userMessage];
+      setMessages(withUser);
+      setIsStreaming(true);
 
-      chatMutation.mutate(
-        {
-          messages: updatedMessages.map((m) => ({
-            role: m.role as "user" | "assistant",
-            content: m.content,
-          })),
-        },
-        {
-          onSuccess: (data) => {
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: data.content },
-            ]);
-          },
-          onError: () => {
-            setMessages((prev) => [
-              ...prev,
-              {
-                role: "assistant",
-                content:
-                  "Sorry, I had trouble processing that. Please try again or visit our /schedule page to join a live session where the team can help directly.",
-              },
-            ]);
-          },
+      // Add an empty placeholder for the streaming assistant response
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      try {
+        const response = await fetch("/api/chat/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: withUser.map((m) => ({ role: m.role, content: m.content })),
+            userPath,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.body) throw new Error("No response body");
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const data = line.slice(6);
+            if (data === "[DONE]") break;
+
+            try {
+              const parsed = JSON.parse(data) as { content?: string; error?: string };
+              if (parsed.content) {
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const last = updated[updated.length - 1];
+                  if (last?.role === "assistant") {
+                    updated[updated.length - 1] = {
+                      ...last,
+                      content: last.content + parsed.content,
+                    };
+                  }
+                  return updated;
+                });
+              }
+            } catch {
+              // ignore malformed JSON lines
+            }
+          }
         }
-      );
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last?.role === "assistant" && last.content === "") {
+            updated[updated.length - 1] = {
+              ...last,
+              content:
+                "Sorry, I had trouble processing that. Please try again or visit our /schedule page to join a live session where the team can help directly.",
+            };
+          }
+          return updated;
+        });
+      } finally {
+        setIsStreaming(false);
+      }
     },
-    [messages, chatMutation]
+    [messages]
   );
 
   return (
@@ -71,6 +138,13 @@ export default function ReGenGuide() {
               >
                 ReGen Guide
               </span>
+              {isStreaming && (
+                <span className="flex gap-0.5 ml-1">
+                  <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:300ms]" />
+                </span>
+              )}
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -85,7 +159,7 @@ export default function ReGenGuide() {
           <AIChatBox
             messages={messages}
             onSendMessage={handleSendMessage}
-            isLoading={chatMutation.isPending}
+            isLoading={isStreaming}
             placeholder="Ask about the Fund, Game, or how to participate..."
             height={320}
             className="border-0 rounded-none"

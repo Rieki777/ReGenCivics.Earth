@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, CheckCircle2, Loader2, XCircle, AlertCircle, Send } from "lucide-react";
+import { TaoSpinner } from "@/components/TaoSpinner";
 import { useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { getLoginUrl } from "@/const";
@@ -57,11 +58,7 @@ export default function AdminApplicationDetail() {
   });
 
   if (authLoading || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4a7c59]" />
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
 
   if (!user) {

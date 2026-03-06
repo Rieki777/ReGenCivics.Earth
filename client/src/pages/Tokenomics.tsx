@@ -955,7 +955,7 @@ export default function Tokenomics() {
       </section>
 
       {/* ── Stats ── */}
-      <section className="py-12 px-4 bg-[#0d2818]/50">
+      <section data-reveal className="py-12 px-4 bg-[#0d2818]/50">
         <div ref={statsRef} className="container">
           <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
             {[

@@ -131,7 +131,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g., How to submit a proposal to the DAO"
-          className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+          className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
           required
         />
       </div>
@@ -158,7 +158,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="What specific questions should the video answer?"
-          className="bg-white/10 border-white/20 text-white placeholder:text-white/40 min-h-[80px]"
+          className="bg-white/10 border-white/20 text-white placeholder:text-white/60 min-h-[80px]"
         />
       </div>
       
@@ -170,7 +170,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
           />
         </div>
         <div>
@@ -179,7 +179,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
           />
         </div>
       </div>
@@ -433,7 +433,7 @@ export default function Blog() {
               value={voteEmail}
               onChange={(e) => setVoteEmail(e.target.value)}
               placeholder="your@email.com"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
             />
             <Button 
               onClick={handleVoteSubmit}

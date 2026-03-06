@@ -151,7 +151,7 @@ export default function Ally() {
       blendColor="15, 40, 45"
       overlayColor="15, 40, 45"
       sectionOverlays={[
-        { id: "hero", opacity: 0.40 },             // Hero - aurora/treehouse, show beauty
+        { id: "hero", opacity: 0.30 },             // Hero - let image detail show through
         { id: "roles", opacity: 0.55 },             // Alliance roles
         { id: "benefits", opacity: 0.50 },           // Benefits - let network art show
         { id: "process", opacity: 0.55 },            // How it works

@@ -32,7 +32,7 @@ import {
   Camera
 } from "lucide-react";
 import { toast } from "sonner";
-import { SeedOfLifeSpinner } from "@/components/SeedOfLifeSpinner";
+import { TaoSpinner } from "@/components/TaoSpinner";
 import { CampaignImageUpload } from "@/components/CampaignImageUpload";
 import { getLoginUrl } from "@/const";
 import { BackButton } from "@/components/BackButton";
@@ -75,15 +75,7 @@ export default function CampaignManage() {
   
   // Handle auth loading
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
-      <BackButton />
-        <div className="text-center">
-          <SeedOfLifeSpinner size={64} className="text-[#7dd87d] mx-auto mb-4" />
-          <p className="text-[#7dd87d]/80 text-sm animate-pulse">Loading...</p>
-        </div>
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
   
   // Require authentication
@@ -109,14 +101,7 @@ export default function CampaignManage() {
   }
   
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
-        <div className="text-center">
-          <SeedOfLifeSpinner size={64} className="text-[#7dd87d] mx-auto mb-4" />
-          <p className="text-[#7dd87d]/80 text-sm animate-pulse">Loading campaign...</p>
-        </div>
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
   
   if (error || !campaign) {

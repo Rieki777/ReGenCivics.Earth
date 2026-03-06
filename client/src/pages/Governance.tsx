@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 import { useEffect, useRef, useState } from "react";
+import { AnimatedSection } from "@/components/AnimatedSection";
 
 // Fund vs Game RCVoice Toggle Component
 function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game') => void }) {
@@ -734,7 +735,7 @@ export default function Governance() {
       </section>
 
       {/* Fund vs Game Governance Comparison Chart - moved to top */}
-      <section className="py-16 px-4 bg-[#0d2818]/50">
+      <section data-reveal className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Fund vs Game: Governance at a Glance</h2>

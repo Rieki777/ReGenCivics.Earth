@@ -295,7 +295,7 @@ export default function QuestSuggestions() {
                         className={`w-12 h-12 md:w-14 md:h-14 rounded-xl flex flex-col items-center justify-center transition-all ${
                           hasVoted
                             ? 'bg-[#7dd87d] text-[#1a472a] shadow-lg shadow-[#7dd87d]/20'
-                            : 'bg-white/10 text-white/60 hover:bg-[#7dd87d]/20 hover:text-[#7dd87d]'
+                            : 'bg-white/10 text-white/80 hover:bg-[#7dd87d]/20 hover:text-[#7dd87d]'
                         }`}
                       >
                         <ChevronUp className="w-5 h-5" />

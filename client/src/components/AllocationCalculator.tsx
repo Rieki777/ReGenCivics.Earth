@@ -114,7 +114,7 @@ export default function AllocationCalculator() {
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       investmentAmount === amount
                         ? "bg-[#7dd87d] text-[#1a472a]"
-                        : "bg-white/10 text-white/70 hover:bg-white/20"
+                        : "bg-white/10 text-white/85 hover:bg-white/20"
                     }`}
                   >
                     {formatCurrency(amount)}
@@ -134,7 +134,7 @@ export default function AllocationCalculator() {
                   className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
                     selectedScenario === idx
                       ? "text-[#1a472a] shadow-lg"
-                      : "bg-white/5 text-white/60 hover:bg-white/10"
+                      : "bg-white/5 text-white/80 hover:bg-white/10"
                   }`}
                   style={
                     selectedScenario === idx
@@ -196,7 +196,7 @@ export default function AllocationCalculator() {
                     <TrendingUp className="w-4 h-4 text-[#7dd87d]" />
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="w-3 h-3 text-white/30" />
+                        <Info className="w-3 h-3 text-white/60" />
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="text-xs max-w-[200px]">
@@ -238,7 +238,7 @@ export default function AllocationCalculator() {
                 <div className="grid grid-cols-5 gap-2">
                   {projections.map((p) => (
                     <div key={p.year} className="text-center">
-                      <p className="text-white/40 text-xs mb-1">Year {p.year}</p>
+                      <p className="text-white/65 text-xs mb-1">Year {p.year}</p>
                       <p className="text-white font-bold text-sm md:text-base">
                         {formatCurrency(p.value)}
                       </p>
@@ -249,7 +249,7 @@ export default function AllocationCalculator() {
 
               {/* Disclaimer */}
               <div className="mt-6 pt-4 border-t border-white/10">
-                <p className="text-white/30 text-[10px] leading-relaxed">
+                <p className="text-white/60 text-[10px] leading-relaxed">
                   <Sparkles className="w-3 h-3 inline mr-1" />
                   All projections are hypothetical and for illustration purposes only. Actual returns may differ materially. 
                   Past performance does not guarantee future results. This is not financial advice. 

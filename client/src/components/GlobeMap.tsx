@@ -1158,7 +1158,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                     placeholder="Search name, country, role..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/10 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
+                    className="w-full bg-white/10 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
                   />
                 </div>
                 {/* Country filter */}
@@ -1187,7 +1187,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 ))}
                 {filteredEntities.length === 0 && (
                   <div className="text-center py-8">
-                    <Globe className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                    <Globe className="w-8 h-8 text-white/40 mx-auto mb-2" />
                     <p className="text-white/40 text-xs">No results match your filters</p>
                     <button onClick={clearFilters} className="text-xs text-[#7dd87d] mt-2 hover:underline">Clear filters</button>
                   </div>
@@ -1303,7 +1303,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               placeholder="Search name, country, role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
+              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
             />
           </div>
           <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
@@ -1333,7 +1333,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           ))}
           {filteredEntities.length === 0 && (
             <div className="text-center py-8">
-              <Globe className="w-8 h-8 text-white/20 mx-auto mb-2" />
+              <Globe className="w-8 h-8 text-white/40 mx-auto mb-2" />
               <p className="text-white/40 text-sm">No results match your filters</p>
               <button onClick={clearFilters} className="text-sm text-[#7dd87d] mt-2 hover:underline">Clear filters</button>
             </div>

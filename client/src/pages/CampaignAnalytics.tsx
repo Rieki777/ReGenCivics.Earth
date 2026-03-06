@@ -8,19 +8,19 @@ import { trpc } from "@/lib/trpc";
 import { useParams, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  ArrowLeft, 
-  BarChart3, 
-  Eye, 
-  Users, 
-  TrendingUp, 
-  Smartphone, 
-  Monitor, 
+import {
+  ArrowLeft,
+  BarChart3,
+  Eye,
+  Users,
+  TrendingUp,
+  Smartphone,
+  Monitor,
   Tablet,
   Globe,
-  Calendar,
-  Loader2
+  Calendar
 } from "lucide-react";
+import { TaoSpinner } from "@/components/TaoSpinner";
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 
@@ -66,11 +66,7 @@ export default function CampaignAnalytics() {
   }
   
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#f8f5f0] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4a7c59]" />
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
   
   if (!campaign) {

@@ -3,32 +3,19 @@
  * Legal document page with enchanted forest theme
  */
 
-import { Link } from "wouter";
-import { SEO, pageSEO } from "@/components/SEO";
+import { pageSEO } from "@/components/SEO";
 import { Shield } from "lucide-react";
-import { BackButton } from "@/components/BackButton";
+import LegalPageLayout from "@/components/LegalPageLayout";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-[#0d2818] text-white">
-      <SEO {...pageSEO.privacyPolicy} />
-      {/* Header */}
-      <div className="bg-gradient-to-b from-[#1a472a] to-[#0d2818] py-8 px-4 border-b border-[#7dd87d]/20">
-        <div className="container mx-auto max-w-3xl">
-          <BackButton />
-          <div className="flex items-center gap-3 mt-4 mb-4">
-            <Shield className="w-8 h-8 text-[#7dd87d]" />
-            <h1 className="text-2xl md:text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-              Privacy Policy
-            </h1>
-          </div>
-          <p className="text-white/60 text-sm">Last Updated: February 2026</p>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="container mx-auto max-w-3xl px-4 py-8">
-        <div className="prose prose-invert max-w-none space-y-6 text-white/80 text-sm leading-relaxed">
+    <LegalPageLayout
+      icon={<Shield className="w-8 h-8 text-[#7dd87d]" />}
+      title="Privacy Policy"
+      lastUpdated="February 2026"
+      seo={pageSEO.privacyPolicy}
+    >
+      <div className="space-y-6">
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>1. Introduction</h2>
@@ -114,8 +101,7 @@ export default function PrivacyPolicy() {
             <p className="mt-1">For EU/GDPR inquiries, contact our Data Protection Officer at <a href="mailto:dpo@regencivics.earth" className="text-[#7dd87d] underline hover:text-[#7dd87d]/80">dpo@regencivics.earth</a></p>
           </section>
 
-        </div>
       </div>
-    </div>
+    </LegalPageLayout>
   );
 }

@@ -31,7 +31,7 @@ import {
   X
 } from "lucide-react";
 import { toast } from "sonner";
-import { SeedOfLifeSpinner } from "@/components/SeedOfLifeSpinner";
+import { TaoSpinner } from "@/components/TaoSpinner";
 import { ContributionModal } from "@/components/ContributionModal";
 import { SEO } from "@/components/SEO";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -98,15 +98,7 @@ export default function CampaignDetail() {
   );
   
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
-      <BackButton />
-        <div className="text-center">
-          <SeedOfLifeSpinner size={64} className="text-[#7dd87d] mx-auto mb-4" />
-          <p className="text-[#7dd87d]/80 text-sm animate-pulse">Loading campaign...</p>
-        </div>
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
   
   if (error || !campaign) {

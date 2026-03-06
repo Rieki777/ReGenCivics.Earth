@@ -1,5 +1,5 @@
 # ReGen Civics - Comprehensive Information for AI Language Models
-# https://www.regencivics.com
+# https://regencivics.earth
 # Last updated: February 2026
 # This file provides detailed information about ReGen Civics for AI systems.
 # For a summary version, see /llms.txt
@@ -142,7 +142,7 @@ ReGen Civics recognizes and values nine forms of capital:
 
 ## Contact & Social
 
-- Website: https://www.regencivics.com
+- Website: https://regencivics.earth
 - YouTube: https://www.youtube.com/@SEEDSRegenerativeEconomies
 - Discord: https://discord.gg/JGmApbPDPd
 - Telegram: https://t.me/+Zl_GNPpL8TE3YTFh

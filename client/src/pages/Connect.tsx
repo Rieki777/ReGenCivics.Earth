@@ -304,8 +304,40 @@ export default function Connect() {
     onError: () => console.warn("Failed to subscribe to newsletter"),
   });
   
+  const joinRequestMutation = trpc.projectJoinRequests.create.useMutation();
+
   const submitMutation = trpc.generalInquiries.submit.useMutation({
     onSuccess: () => {
+      // Create project join requests for "live" (land project) and "alliance"/"create_with_regens" (org) paths
+      if (selectedPath === "live" && selectedProjects.length > 0) {
+        selectedProjects.forEach(projectId => {
+          const project = landProjects.find(p => p.id === projectId);
+          if (project && project.id !== "other") {
+            joinRequestMutation.mutate({
+              submitterName: fullName || email,
+              submitterEmail: email,
+              submitterMessage: additionalNotes || undefined,
+              targetType: "land_project",
+              targetId: project.id,
+              targetName: project.name,
+            });
+          }
+        });
+      } else if ((selectedPath === "alliance" || selectedPath === "create_with_regens") && selectedOrganizations.length > 0) {
+        selectedOrganizations.forEach(orgId => {
+          const org = allianceOrganizations.find(o => o.id === orgId);
+          if (org && org.id !== "all" && org.id !== "other") {
+            joinRequestMutation.mutate({
+              submitterName: fullName || email,
+              submitterEmail: email,
+              submitterMessage: partnershipDescription || additionalNotes || undefined,
+              targetType: "alliance_org",
+              targetId: org.id,
+              targetName: org.name,
+            });
+          }
+        });
+      }
       setStep("success");
       setIsSubmitting(false);
     },

@@ -14,4 +14,6 @@ export const ENV = {
   applePrivateKey: process.env.APPLE_PRIVATE_KEY ?? "",
   // App URL
   appUrl: process.env.APP_URL ?? "http://localhost:3000",
+  // AI
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
 };

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, Clock, FileText, Loader2, XCircle, AlertCircle, Eye } from "lucide-react";
+import { CheckCircle2, Clock, FileText, XCircle, AlertCircle, Eye } from "lucide-react";
+import { TaoSpinner } from "@/components/TaoSpinner";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 
@@ -55,11 +56,7 @@ export default function AdminApplications() {
   );
 
   if (authLoading || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4a7c59]" />
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
 
   if (!user) {

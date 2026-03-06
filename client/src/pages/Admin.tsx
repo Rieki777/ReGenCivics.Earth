@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
+import { AdminAIAssistant, type AdminAIAction } from "@/components/AdminAIAssistant";
 import { CrowdPoolingProjectsManager } from "@/components/CrowdPoolingProjectsManager";
 import { AdminCampaignApproval } from "@/components/AdminCampaignApproval";
 import { Button } from "@/components/ui/button";
@@ -10,12 +11,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { 
-  Lock, 
-  FileText, 
-  Users, 
-  TrendingUp, 
-  MessageSquare, 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Lock,
+  FileText,
+  Users,
+  TrendingUp,
+  MessageSquare,
   Eye,
   Calendar,
   Mail,
@@ -40,22 +42,338 @@ import {
   Globe,
   Handshake,
   Sparkles,
-  X
+  X,
+  Search,
+  CheckCheck,
+  AlertTriangle,
+  DollarSign,
+  Filter,
+  RefreshCw,
+  Send,
+  Clock,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { TaoSpinner } from "@/components/TaoSpinner";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { toast } from "sonner";
-import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
+import { EmailTemplateSelector, emailTemplates } from "@/components/EmailTemplateSelector";
 import { RoleSubmissionsView } from "@/components/RoleSubmissionsView";
-import { AdminAnalytics } from "@/components/AdminAnalytics";
+// AdminAnalytics lazy-loaded below
 import { EmailSettings } from "@/components/EmailSettings";
 import { LOIManager } from "@/components/LOIManager";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
 import { AdminBannerEditor } from "@/components/AdminBannerEditor";
+const AdminKanban = lazy(() => import("@/components/AdminKanban").then(m => ({ default: m.AdminKanban })));
+const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then(m => ({ default: m.ActivityTimeline })));
+const AdminAnalyticsLazy = lazy(() => import("@/components/AdminAnalytics").then(m => ({ default: m.AdminAnalytics })));
 
 const ADMIN_PASSWORD = "333";
+
+// ─── Utility: age / response-time indicator ───────────────────────────────────
+function getAgeInfo(createdAt: string | Date): { label: string; color: string; bg: string; isOverdue: boolean } {
+  const ageMs = Date.now() - new Date(createdAt).getTime();
+  const ageH = ageMs / 3_600_000;
+  if (ageH < 24) return { label: `${Math.round(ageH)}h ago`, color: 'text-green-700', bg: 'bg-green-50 border-green-200', isOverdue: false };
+  if (ageH < 48) return { label: `${Math.floor(ageH / 24)}d ago`, color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200', isOverdue: false };
+  return { label: `${Math.floor(ageH / 24)}d — overdue`, color: 'text-red-700', bg: 'bg-red-50 border-red-200', isOverdue: true };
+}
+
+// ─── Email History Panel ───────────────────────────────────────────────────────
+function EmailHistoryPanel({ email }: { email: string }) {
+  const [open, setOpen] = useState(false);
+  const { data: logs, isLoading } = trpc.email.getLogsForEmail.useQuery(
+    { email },
+    { enabled: open && !!email }
+  );
+
+  return (
+    <div className="border-t border-[#1a472a]/10 pt-4">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 text-xs text-[#1a472a]/60 hover:text-[#1a472a] transition-colors w-full"
+      >
+        <Mail className="w-3.5 h-3.5" />
+        <span className="font-medium">Email History</span>
+        {logs?.length ? <span className="text-[#7dd87d]">({logs.length})</span> : null}
+        <ChevronRight className={`w-3.5 h-3.5 ml-auto transition-transform ${open ? 'rotate-90' : ''}`} />
+      </button>
+      {open && (
+        <div className="mt-2 space-y-2">
+          {isLoading && <p className="text-xs text-[#1a472a]/40 py-2">Loading…</p>}
+          {!isLoading && !logs?.length && (
+            <p className="text-xs text-[#1a472a]/40 py-2">No emails sent to this contact yet.</p>
+          )}
+          {logs?.map((log: any) => (
+            <div key={log.id} className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 text-xs">
+              <p className="font-medium text-[#1a472a] truncate">{log.subject}</p>
+              <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] text-[#1a472a]/50">
+                <span>{new Date(log.sentAt).toLocaleString()}</span>
+                <span className={
+                  log.status === 'delivered' ? 'text-green-600 font-medium' :
+                  log.status === 'bounced' ? 'text-red-600 font-medium' :
+                  log.status === 'failed' ? 'text-red-500' : 'text-gray-500'
+                }>{log.status}</span>
+                {log.openedAt && <span className="text-blue-500">· opened</span>}
+                {log.clickedAt && <span className="text-purple-500">· clicked</span>}
+                {log.template && <span className="text-[#4a7c59]/60">template: {log.template}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Contact Notes Panel ───────────────────────────────────────────────────────
+function ContactNotesPanel({ contactType, contactId }: { contactType: string; contactId: number }) {
+  const [newNote, setNewNote] = useState('');
+  const utils = trpc.useUtils();
+
+  const { data: notes, isLoading } = trpc.contactNotes.list.useQuery({ contactType, contactId });
+  const createNote = trpc.contactNotes.create.useMutation({
+    onSuccess: () => {
+      utils.contactNotes.list.invalidate({ contactType, contactId });
+      setNewNote('');
+      toast.success('Note saved');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteNote = trpc.contactNotes.delete.useMutation({
+    onSuccess: () => utils.contactNotes.list.invalidate({ contactType, contactId }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div className="border-t border-[#1a472a]/10 pt-4 space-y-3">
+      <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide flex items-center gap-1.5">
+        <MessageSquare className="w-3.5 h-3.5" />
+        Internal Notes {notes?.length ? `(${notes.length})` : ''}
+      </p>
+      {isLoading && <p className="text-xs text-[#1a472a]/40">Loading…</p>}
+      {notes?.map((note: any) => (
+        <div key={note.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-[#1a472a] whitespace-pre-wrap">{note.note}</p>
+            <p className="text-[10px] text-[#1a472a]/40 mt-1">
+              {note.authorName} · {new Date(note.createdAt).toLocaleString()}
+            </p>
+          </div>
+          <button
+            onClick={() => deleteNote.mutate({ id: note.id })}
+            className="text-red-400 hover:text-red-600 flex-shrink-0 mt-0.5"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <Textarea
+          value={newNote}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewNote(e.target.value)}
+          placeholder="Add an internal note (visible to admin team only)…"
+          className="min-h-[60px] text-xs bg-white flex-1 resize-none"
+        />
+        <Button
+          size="sm"
+          onClick={() => createNote.mutate({ contactType, contactId, note: newNote })}
+          disabled={!newNote.trim() || createNote.isPending}
+          className="self-end bg-[#1a472a] hover:bg-[#2d5a3d]"
+        >
+          {createNote.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Reminder Panel ───────────────────────────────────────────────────────────
+function ReminderPanel({ contactType, contactId }: { contactType: string; contactId: number }) {
+  const [date, setDate] = useState('');
+  const [msg, setMsg] = useState('');
+  const utils = trpc.useUtils();
+
+  const { data: notes } = trpc.contactNotes.list.useQuery({ contactType, contactId });
+  const createNote = trpc.contactNotes.create.useMutation({
+    onSuccess: () => {
+      utils.contactNotes.list.invalidate({ contactType, contactId });
+      setDate(''); setMsg('');
+      toast.success('Reminder set');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteNote = trpc.contactNotes.delete.useMutation({
+    onSuccess: () => utils.contactNotes.list.invalidate({ contactType, contactId }),
+  });
+
+  const reminders = (notes || []).filter((n: any) => n.note.startsWith('⏰ Reminder'));
+
+  const handleSet = () => {
+    if (!date) return;
+    const text = `⏰ Reminder [${date}]: ${msg || 'Follow up'}`;
+    createNote.mutate({ contactType, contactId, note: text });
+  };
+
+  return (
+    <div className="border-t border-[#1a472a]/10 pt-4 space-y-2">
+      <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide flex items-center gap-1.5">
+        <Clock className="w-3.5 h-3.5" />
+        Reminders {reminders.length > 0 ? `(${reminders.length})` : ''}
+      </p>
+      {reminders.map((r: any) => (
+        <div key={r.id} className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded-lg text-xs">
+          <span className="flex-1 text-orange-800">{r.note}</span>
+          <button onClick={() => deleteNote.mutate({ id: r.id })} className="text-orange-400 hover:text-red-500">
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <Input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="h-7 text-xs bg-white w-36"
+        />
+        <Input
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+          placeholder="Reminder note…"
+          className="h-7 text-xs bg-white flex-1"
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSet(); }}
+        />
+        <Button
+          size="sm"
+          onClick={handleSet}
+          disabled={!date || createNote.isPending}
+          className="h-7 bg-[#1a472a] hover:bg-[#2d5a3d]"
+        >
+          <Plus className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Assignee Select ──────────────────────────────────────────────────────────
+const TEAM_MEMBERS = ['Rieki', 'Alice', 'Bob', 'Carlos', 'Dana', 'Evan'];
+
+function AssigneeSelect({ contactType, contactId }: { contactType: string; contactId: number }) {
+  const utils = trpc.useUtils();
+  const { data: tags } = trpc.contactTags.list.useQuery({ contactType, contactId });
+  const addTag = trpc.contactTags.add.useMutation({
+    onSuccess: () => utils.contactTags.list.invalidate({ contactType, contactId }),
+  });
+  const removeTag = trpc.contactTags.remove.useMutation({
+    onSuccess: () => utils.contactTags.list.invalidate({ contactType, contactId }),
+  });
+
+  const assigneeTag = tags?.find((t: any) => t.tag.startsWith('assignee:'));
+  const currentAssignee = assigneeTag?.tag?.replace('assignee:', '') || '';
+
+  const handleChange = (value: string) => {
+    if (assigneeTag) removeTag.mutate({ id: assigneeTag.id });
+    if (value && value !== 'unassigned') {
+      addTag.mutate({ contactType, contactId, tag: `assignee:${value}` });
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-[#1a472a]/60 shrink-0">Assigned to:</span>
+      <Select value={currentAssignee || 'unassigned'} onValueChange={handleChange}>
+        <SelectTrigger className="h-7 text-xs flex-1 max-w-[160px]">
+          <SelectValue placeholder="Unassigned" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="unassigned">Unassigned</SelectItem>
+          {TEAM_MEMBERS.map(m => (
+            <SelectItem key={m} value={m}>{m}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+// ─── Contact Tags Panel ────────────────────────────────────────────────────────
+const PRESET_TAGS = ['hot-lead', 'vip', 'follow-up', 'do-not-contact', 'season-3', 'needs-call', 'investor-ready', 'land-project'];
+
+function ContactTagsPanel({ contactType, contactId }: { contactType: string; contactId: number }) {
+  const [input, setInput] = useState('');
+  const utils = trpc.useUtils();
+
+  const { data: tags } = trpc.contactTags.list.useQuery({ contactType, contactId });
+  const addTag = trpc.contactTags.add.useMutation({
+    onSuccess: () => {
+      utils.contactTags.list.invalidate({ contactType, contactId });
+      setInput('');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const removeTag = trpc.contactTags.remove.useMutation({
+    onSuccess: () => utils.contactTags.list.invalidate({ contactType, contactId }),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const existingTagNames = new Set(tags?.map((t: any) => t.tag) || []);
+
+  const handleAdd = (tag: string) => {
+    const trimmed = tag.trim().toLowerCase();
+    if (!trimmed || existingTagNames.has(trimmed)) return;
+    addTag.mutate({ contactType, contactId, tag: trimmed });
+  };
+
+  return (
+    <div className="border-t border-[#1a472a]/10 pt-4 space-y-2">
+      <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide">Tags</p>
+      <div className="flex flex-wrap gap-1.5">
+        {tags?.map((t: any) => (
+          <span
+            key={t.id}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7dd87d]/20 border border-[#4a7c59]/30 text-xs text-[#1a472a]"
+          >
+            {t.tag}
+            <button onClick={() => removeTag.mutate({ id: t.id })} className="text-[#1a472a]/40 hover:text-red-500">
+              <X className="w-2.5 h-2.5" />
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-1 flex-wrap">
+        {PRESET_TAGS.filter(pt => !existingTagNames.has(pt)).slice(0, 6).map(pt => (
+          <button
+            key={pt}
+            type="button"
+            onClick={() => handleAdd(pt)}
+            className="px-2 py-0.5 text-[10px] rounded-full bg-gray-100 hover:bg-[#7dd87d]/20 border border-gray-200 text-gray-600 hover:text-[#1a472a] transition-colors"
+          >
+            + {pt}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAdd(input); } }}
+          placeholder="Add custom tag…"
+          className="h-7 text-xs bg-white flex-1"
+        />
+        <Button
+          size="sm"
+          onClick={() => handleAdd(input)}
+          disabled={!input.trim() || addTag.isPending}
+          className="h-7 bg-[#1a472a] hover:bg-[#2d5a3d]"
+        >
+          <Plus className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // Path type labels and icons
 const pathTypeConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
@@ -617,51 +935,50 @@ const allianceOrgsList = [
 ];
 
 // Helper function to export inquiries to CSV
-function exportToCSV(data: any[], filename: string, projectName?: string) {
-  if (data.length === 0) {
-    toast.error("No data to export");
-    return;
-  }
+function csvRow(cells: any[]) {
+  return cells.map((c: any) => `"${String(c ?? '').replace(/"/g, '""').replace(/[\n\r]/g, ' ')}"`).join(',');
+}
 
-  // Build CSV headers and rows
-  const headers = ["Full Name", "Email", "Organization", "Message", "Status", "Date", "Selected Projects/Orgs", "Additional Details"];
-  const rows = data.map((item: any) => {
-    let formData: any = {};
-    try {
-      formData = item.formData ? JSON.parse(item.formData) : {};
-    } catch (e) {
-      formData = {};
-    }
-    
-    const selectedItems = formData.selectedProjects || formData.selectedOrganizations || [];
-    const additionalDetails = Object.entries(formData)
-      .filter(([key]) => !['selectedProjects', 'selectedOrganizations'].includes(key))
-      .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join('; ') : value}`)
-      .join(' | ');
-    
-    return [
-      item.fullName || '',
-      item.email || '',
-      item.organization || '',
-      (item.message || '').replace(/[\n\r]/g, ' '),
-      item.status || '',
-      new Date(item.createdAt).toLocaleDateString(),
-      Array.isArray(selectedItems) ? selectedItems.join('; ') : selectedItems,
-      additionalDetails.replace(/[\n\r]/g, ' ')
-    ];
-  });
-
-  const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.map((cell: string) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-  ].join('\n');
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+function downloadCSV(content: string, filename: string) {
+  const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `${filename}${projectName ? '_' + projectName : ''}_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
+}
+
+function exportToCSV(data: any[], filename: string, projectName?: string) {
+  if (data.length === 0) { toast.error("No data to export"); return; }
+
+  // Detect type from filename or data shape
+  if (filename.includes('investor')) {
+    const headers = ["Full Name","Email","Phone","Organization","Role","Location","Investor Type","Investment Range","Timeline","Primary Interest","Investment Experience","Motivations","Impact Goals","Questions","Referral Source","Status","Submitted"];
+    const rows = data.map((i: any) => csvRow([
+      i.fullName, i.email, i.phone, i.organization, i.role, i.location,
+      i.investorType, i.investmentRange, i.investmentTimeline, i.primaryInterest,
+      i.investmentExperience, i.motivations, i.impactGoals, i.questionsForTeam,
+      i.referralSource || i.howHeard, i.status, new Date(i.createdAt).toLocaleString()
+    ]));
+    downloadCSV([headers.join(','), ...rows].join('\n'), filename + (projectName ? '_' + projectName : ''));
+  } else if (filename.includes('application')) {
+    const headers = ["Project Name","Contact Name","Contact Email","Location","Size (ha)","Current People","Target People","Households","Land Status","Vision","Regenerative Practices","Governance","Current Funding","Funding Needs","Status","Submitted"];
+    const rows = data.map((a: any) => csvRow([
+      a.projectName, a.contactName, a.contactEmail, a.location,
+      a.projectSizeHectares, a.currentPeopleCount, a.intendedPeopleCount, a.intendedHouseholdCount,
+      a.landStatus, a.vision, a.regenerativePractices, a.governanceApproach,
+      a.currentFunding, a.fundingNeeds, a.status,
+      a.submittedAt ? new Date(a.submittedAt).toLocaleString() : 'Draft'
+    ]));
+    downloadCSV([headers.join(','), ...rows].join('\n'), filename + (projectName ? '_' + projectName : ''));
+  } else {
+    const headers = ["Full Name","Email","Organization","Path Type","Message","Status","Location","Date"];
+    const rows = data.map((i: any) => csvRow([
+      i.fullName, i.email, i.organization, i.pathType,
+      i.message, i.status, i.location, new Date(i.createdAt).toLocaleString()
+    ]));
+    downloadCSV([headers.join(','), ...rows].join('\n'), filename + (projectName ? '_' + projectName : ''));
+  }
   toast.success(`Exported ${data.length} records to CSV`);
 }
 
@@ -692,15 +1009,63 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
   const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({});
   const [showReviewModal, setShowReviewModal] = useState<number | null>(null);
   const [currentReviewNote, setCurrentReviewNote] = useState('');
+  const [search, setSearch] = useState('');
+  const [showBulkEmail, setShowBulkEmail] = useState(false);
+  const [bulkEmailTemplate, setBulkEmailTemplate] = useState('follow_up');
+  const [bulkEmailSubject, setBulkEmailSubject] = useState('');
+  const [bulkEmailBody, setBulkEmailBody] = useState('');
+
+  const utils = trpc.useUtils();
+  const auditNote = trpc.contactNotes.create.useMutation();
+  const updateStatusMutation = trpc.generalInquiries.updateStatus.useMutation({
+    onSuccess: (_data, variables) => {
+      utils.generalInquiries.list.invalidate();
+      auditNote.mutate({ contactType: 'inquiry', contactId: variables.id, note: `📋 Status → ${variables.status}`, authorName: 'System' });
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to update status: ${error.message}`);
+    },
+  });
+
+  const sendBulkEmailMutation = trpc.email.sendBulk.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Sent ${data.totalSent} email${data.totalSent !== 1 ? 's' : ''}${data.totalFailed > 0 ? `, ${data.totalFailed} failed` : ''}!`);
+      setShowBulkEmail(false);
+      setSelectedItems(new Set());
+      setShowBulkActions(false);
+    },
+    onError: (error: any) => {
+      toast.error(`Bulk email failed: ${error.message}`);
+    },
+  });
+
+  const loadBulkTemplate = (templateId: string) => {
+    setBulkEmailTemplate(templateId);
+    const tpl = emailTemplates.find(t => t.id === templateId);
+    if (tpl) {
+      setBulkEmailSubject(tpl.subject);
+      setBulkEmailBody(tpl.body); // Keep {{name}} placeholder for per-recipient merge
+    }
+  };
   
   const config = pathTypeConfig[pathType] || pathTypeConfig.other;
   const Icon = config.icon;
   const baseFilteredInquiries = inquiries.filter((i: any) => i.pathType === pathType);
-  
-  // Apply active filter
-  const filteredInquiries = activeFilter 
-    ? filterByProject(baseFilteredInquiries, activeFilter)
+
+  // Apply search filter
+  const searchFiltered = search
+    ? baseFilteredInquiries.filter((i: any) =>
+        i.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        i.email?.toLowerCase().includes(search.toLowerCase()) ||
+        i.message?.toLowerCase().includes(search.toLowerCase()) ||
+        i.location?.toLowerCase().includes(search.toLowerCase())
+      )
     : baseFilteredInquiries;
+
+  // Apply active filter
+  const filteredInquiries = activeFilter
+    ? filterByProject(searchFiltered, activeFilter)
+    : searchFiltered;
   
   // Determine which project list to use based on path type
   const projectList = pathType === 'live' ? landProjectsList : 
@@ -771,12 +1136,26 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
     <div>
       {/* Filter & Export Controls */}
       <div className="p-4 border-b border-[#1a472a]/10 bg-[#f0ebe3]/30">
+        {/* Search Row */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/40" />
+          <input
+            type="text"
+            placeholder={`Search ${config.label.toLowerCase()} by name, email, or message...`}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+          />
+        </div>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <p className="text-sm text-[#1a472a]/70">
               {filteredInquiries.length} {filteredInquiries.length === 1 ? 'inquiry' : 'inquiries'}
               {activeFilterName && (
                 <span className="ml-1 text-[#7dd87d]">for {activeFilterName}</span>
+              )}
+              {search && (
+                <span className="ml-1 text-blue-500">matching "{search}"</span>
               )}
             </p>
             
@@ -933,25 +1312,68 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
               variant="outline"
               size="sm"
               className="border-[#1a472a]/30 text-[#1a472a]"
+              disabled={updateStatusMutation.isPending}
               onClick={() => {
-                toast.success(`Marked ${selectedItems.size} items as reviewed`);
+                const prevStatuses = Array.from(selectedItems).map(id => ({
+                  id,
+                  status: filteredInquiries.find((i: any) => i.id === id)?.status || 'new',
+                }));
+                Array.from(selectedItems).forEach(id =>
+                  updateStatusMutation.mutate({ id, status: 'contacted' })
+                );
+                toast(`Marked ${selectedItems.size} items as reviewed`, {
+                  action: {
+                    label: 'Undo',
+                    onClick: () => prevStatuses.forEach(({ id, status }) => updateStatusMutation.mutate({ id, status })),
+                  },
+                  duration: 5000,
+                });
                 setSelectedItems(new Set());
                 setShowBulkActions(false);
               }}
             >
+              <CheckCheck className="w-4 h-4 mr-1" />
               Mark as Reviewed
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="border-[#1a472a]/30 text-[#1a472a]"
+              className="border-amber-300 text-amber-700 hover:bg-amber-50"
+              disabled={updateStatusMutation.isPending}
               onClick={() => {
-                toast.success(`Archived ${selectedItems.size} items`);
+                const prevStatuses = Array.from(selectedItems).map(id => ({
+                  id,
+                  status: filteredInquiries.find((i: any) => i.id === id)?.status || 'new',
+                }));
+                Array.from(selectedItems).forEach(id =>
+                  updateStatusMutation.mutate({ id, status: 'archived' })
+                );
+                toast(`Archived ${selectedItems.size} items`, {
+                  action: {
+                    label: 'Undo',
+                    onClick: () => prevStatuses.forEach(({ id, status }) => updateStatusMutation.mutate({ id, status })),
+                  },
+                  duration: 5000,
+                });
                 setSelectedItems(new Set());
                 setShowBulkActions(false);
               }}
             >
               Archive
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-blue-300 text-blue-700 hover:bg-blue-50"
+              onClick={() => {
+                if (!showBulkEmail) {
+                  loadBulkTemplate('follow_up');
+                }
+                setShowBulkEmail(!showBulkEmail);
+              }}
+            >
+              <Mail className="w-4 h-4 mr-1" />
+              Send Email
             </Button>
             <Button
               variant="ghost"
@@ -960,6 +1382,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
               onClick={() => {
                 setSelectedItems(new Set());
                 setShowBulkActions(false);
+                setShowBulkEmail(false);
               }}
             >
               Cancel
@@ -967,7 +1390,91 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
           </div>
         </div>
       )}
-      
+
+      {/* Bulk Email Compose */}
+      {showBulkEmail && selectedItems.size > 0 && (
+        <div className="p-4 bg-blue-50 border-b border-blue-200 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+              <Send className="w-4 h-4" />
+              Send email to {selectedItems.size} selected contact{selectedItems.size !== 1 ? 's' : ''}
+            </p>
+            <button onClick={() => setShowBulkEmail(false)} className="text-blue-400 hover:text-blue-700">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-blue-700">Template</Label>
+              <Select value={bulkEmailTemplate} onValueChange={loadBulkTemplate}>
+                <SelectTrigger className="h-8 text-xs bg-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {emailTemplates.map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-blue-700">Subject</Label>
+              <Input
+                value={bulkEmailSubject}
+                onChange={(e) => setBulkEmailSubject(e.target.value)}
+                className="h-8 text-xs bg-white"
+                placeholder="Subject line..."
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-blue-700">Body (use {'{{name}}'} for recipient name)</Label>
+            <Textarea
+              value={bulkEmailBody}
+              onChange={(e) => setBulkEmailBody(e.target.value)}
+              className="bg-white text-xs min-h-[100px] resize-y"
+              placeholder="Email body..."
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                const recipients = filteredInquiries
+                  .filter((i: any) => selectedItems.has(i.id))
+                  .filter((i: any) => i.email)
+                  .map((i: any) => ({ email: i.email, name: i.fullName || i.email }));
+                if (recipients.length === 0) {
+                  toast.error('No valid email addresses in selection');
+                  return;
+                }
+                // Always use "custom" templateType since we always supply customSubject+customBody.
+                // The server's bulk handler respects customSubject/customBody over template defaults.
+                sendBulkEmailMutation.mutate({
+                  recipients,
+                  templateType: 'custom',
+                  customSubject: bulkEmailSubject,
+                  customBody: bulkEmailBody,
+                });
+              }}
+              disabled={sendBulkEmailMutation.isPending || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}
+              className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
+              size="sm"
+            >
+              {sendBulkEmailMutation.isPending ? (
+                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+              ) : (
+                <Send className="w-3 h-3 mr-1" />
+              )}
+              Send to {selectedItems.size} Contact{selectedItems.size !== 1 ? 's' : ''}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowBulkEmail(false)}
+              className="border-blue-300 text-blue-700">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Inquiry List */}
       <div className="divide-y divide-[#1a472a]/10">
       {filteredInquiries.map((inquiry: any, currentIndex: number) => {
@@ -1050,13 +1557,19 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-end gap-1.5">
                     <Badge className={`${inquiry.status === 'pending' || inquiry.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
                       {inquiry.status}
                     </Badge>
-                    <span className="text-xs text-[#1a472a]/50">
-                      {new Date(inquiry.createdAt).toLocaleDateString()}
-                    </span>
+                    {(() => {
+                      const age = getAgeInfo(inquiry.createdAt);
+                      return (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${age.bg} ${age.color}`}>
+                          {age.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
+                          {age.label}
+                        </span>
+                      );
+                    })()}
                     <ChevronRight className="w-4 h-4 text-[#1a472a]/30" />
                   </div>
                 </div>
@@ -1367,19 +1880,47 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                   </div>
                 )}
                 
-                {/* Review Notes Section */}
-                <div className="border-t border-[#1a472a]/10 pt-4">
-                  <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Review Notes</p>
-                  <Textarea
-                    placeholder="Add notes about this inquiry (e.g., follow-up actions, observations, decisions)..."
-                    value={reviewNotes[inquiry.id] || ''}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReviewNotes(prev => ({ ...prev, [inquiry.id]: e.target.value }))}
-                    className="min-h-[80px] bg-white border-[#1a472a]/20"
-                  />
-                </div>
+                {/* Activity Timeline */}
+                <Suspense fallback={null}><ActivityTimeline email={inquiry.email} contactType="inquiry" contactId={inquiry.id} /></Suspense>
+
+                {/* Email History */}
+                <EmailHistoryPanel email={inquiry.email} />
+
+                {/* Internal Notes */}
+                <ContactNotesPanel contactType="inquiry" contactId={inquiry.id} />
+                <ContactTagsPanel contactType="inquiry" contactId={inquiry.id} />
+                <ReminderPanel contactType="inquiry" contactId={inquiry.id} />
               </div>
-              
+
               <DialogFooter className="flex-col gap-3">
+                {/* Assignee */}
+                <AssigneeSelect contactType="inquiry" contactId={inquiry.id} />
+                {/* Status update row */}
+                <div className="w-full flex items-center gap-2">
+                  <span className="text-xs text-[#1a472a]/60 shrink-0">Update status:</span>
+                  <Select
+                    value={inquiry.status}
+                    onValueChange={(newStatus: any) => {
+                      const prevStatus = inquiry.status;
+                      updateStatusMutation.mutate({ id: inquiry.id, status: newStatus });
+                      toast('Status updated', {
+                        action: { label: 'Undo', onClick: () => updateStatusMutation.mutate({ id: inquiry.id, status: prevStatus }) },
+                        duration: 5000,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="contacted">Contacted</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {/* Navigation indicator */}
                 <div className="w-full flex items-center justify-between text-xs text-[#1a472a]/50">
                   <span>Inquiry {currentIndex + 1} of {filteredInquiries.length}</span>
@@ -1433,18 +1974,28 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                       className="w-full"
                     />
                   </div>
-                  <Button 
+                  <Button
                     className="bg-[#1a472a] hover:bg-[#2d5a3d] flex-1"
+                    disabled={updateStatusMutation.isPending}
                     onClick={() => {
+                      const prevStatus = inquiry.status;
+                      updateStatusMutation.mutate({ id: inquiry.id, status: 'contacted' });
                       const note = reviewNotes[inquiry.id] || '';
-                      toast.success(`Marked as reviewed${note ? ' with notes' : ''}`);
-                      // If there's a next inquiry, navigate to it
+                      toast(`Marked as reviewed${note ? ' with notes' : ''}`, {
+                        action: { label: 'Undo', onClick: () => updateStatusMutation.mutate({ id: inquiry.id, status: prevStatus }) },
+                        duration: 5000,
+                      });
                       if (currentIndex < filteredInquiries.length - 1) {
                         const nextInquiry = filteredInquiries[currentIndex + 1];
-                        toast.info(`Moving to next inquiry: ${nextInquiry.fullName || 'Anonymous'}`, { duration: 2000 });
+                        toast.info(`Next: ${nextInquiry.fullName || 'Anonymous'}`, { duration: 2000 });
                       }
                     }}
                   >
+                    {updateStatusMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                    ) : (
+                      <CheckCheck className="w-4 h-4 mr-1" />
+                    )}
                     Mark as Reviewed
                     {currentIndex < filteredInquiries.length - 1 && (
                       <ChevronRight className="w-4 h-4 ml-1" />
@@ -1462,13 +2013,267 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
 }
 
 // Main Admin Dashboard
+// ─── Scheduled Emails Manager ─────────────────────────────────────────────────
+function ScheduledEmailsManager() {
+  const utils = trpc.useUtils();
+  const { data: scheduled, isLoading } = trpc.scheduledEmails.list.useQuery();
+  const cancel = trpc.scheduledEmails.cancel.useMutation({
+    onSuccess: () => {
+      utils.scheduledEmails.list.invalidate();
+      toast.success('Scheduled email cancelled');
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const pending = scheduled?.filter((s: any) => s.status === 'pending') || [];
+  const past = scheduled?.filter((s: any) => s.status !== 'pending') || [];
+
+  return (
+    <Card className="bg-white border-2 border-[#1a472a]/10">
+      <CardHeader>
+        <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <Send className="w-5 h-5" />
+          Scheduled Emails
+        </CardTitle>
+        <CardDescription>{pending.length} pending</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading && <p className="text-sm text-[#1a472a]/40">Loading…</p>}
+        {!isLoading && scheduled?.length === 0 && (
+          <p className="text-sm text-[#1a472a]/40">No scheduled emails. Use "Send Later" when composing to schedule.</p>
+        )}
+        {pending.length > 0 && (
+          <div className="space-y-2 mb-4">
+            <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide">Pending</p>
+            {pending.map((s: any) => (
+              <div key={s.id} className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-[#1a472a] truncate">{s.subject}</p>
+                  <p className="text-xs text-[#1a472a]/60">To: {s.recipientName || s.recipientEmail} · {new Date(s.scheduledFor).toLocaleString()}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50 shrink-0"
+                  onClick={() => cancel.mutate({ id: s.id })}
+                  disabled={cancel.isPending}
+                >
+                  <X className="w-3 h-3 mr-1" /> Cancel
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        {past.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide">History</p>
+            {past.slice(0, 10).map((s: any) => (
+              <div key={s.id} className="flex items-center gap-3 p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-[#1a472a]/70 truncate">{s.subject}</p>
+                  <p className="text-xs text-[#1a472a]/40">
+                    To: {s.recipientName || s.recipientEmail} ·
+                    <span className={s.status === 'sent' ? 'text-green-600' : s.status === 'cancelled' ? 'text-gray-500' : 'text-red-500'}> {s.status}</span>
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Org Claims Admin Panel ────────────────────────────────────────────────────
+function OrgClaimsAdminPanel() {
+  const utils = trpc.useUtils();
+  const { data: claims, isLoading } = trpc.orgClaims.listAll.useQuery();
+  const approveMutation = trpc.orgClaims.approve.useMutation({
+    onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Claim approved — join requests routed to steward"); },
+  });
+  const rejectMutation = trpc.orgClaims.reject.useMutation({
+    onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Claim rejected"); },
+  });
+
+  return (
+    <Card className="bg-white border-[#1a472a]/10">
+      <CardHeader>
+        <CardTitle className="text-lg text-[#1a472a] flex items-center gap-2">
+          <Shield className="w-5 h-5 text-[#7dd87d]" />
+          Org / Project Stewardship Claims
+        </CardTitle>
+        <CardDescription>Review requests from users claiming stewardship of land projects or alliance orgs</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading && <p className="text-sm text-[#1a472a]/40">Loading…</p>}
+        {!isLoading && !claims?.length && (
+          <p className="text-sm text-[#1a472a]/40">No stewardship claims yet.</p>
+        )}
+        <div className="space-y-3">
+          {claims?.map((claim: any) => (
+            <div key={claim.id} className="flex items-center justify-between p-3 rounded-lg border border-[#1a472a]/10 bg-[#f8f5f0]">
+              <div>
+                <p className="font-medium text-[#1a472a] text-sm">{claim.orgName}</p>
+                <p className="text-xs text-[#1a472a]/50">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className={
+                  claim.status === 'approved' ? 'border-green-500 text-green-700' :
+                  claim.status === 'rejected' ? 'border-red-500 text-red-700' :
+                  'border-yellow-500 text-yellow-700'
+                }>
+                  {claim.status}
+                </Badge>
+                {claim.status === 'pending' && (
+                  <>
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-green-500 text-green-700 hover:bg-green-50"
+                      onClick={() => approveMutation.mutate({ id: claim.id })}>
+                      Approve
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-red-400 text-red-600 hover:bg-red-50"
+                      onClick={() => rejectMutation.mutate({ id: claim.id })}>
+                      Reject
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Join Requests Admin Panel ─────────────────────────────────────────────────
+function JoinRequestsAdminPanel() {
+  const { data: requests, isLoading } = trpc.projectJoinRequests.listAll.useQuery();
+
+  return (
+    <Card className="bg-white border-[#1a472a]/10">
+      <CardHeader>
+        <CardTitle className="text-lg text-[#1a472a] flex items-center gap-2">
+          <Users className="w-5 h-5 text-[#7dd87d]" />
+          Project / Org Join Requests
+        </CardTitle>
+        <CardDescription>All requests submitted via /connect to join a land project or alliance org</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading && <p className="text-sm text-[#1a472a]/40">Loading…</p>}
+        {!isLoading && !requests?.length && (
+          <p className="text-sm text-[#1a472a]/40">No join requests yet.</p>
+        )}
+        <div className="space-y-2 max-h-80 overflow-y-auto">
+          {requests?.map((req: any) => (
+            <div key={req.id} className="p-3 rounded-lg border border-[#1a472a]/10 bg-[#f8f5f0] text-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-[#1a472a]">{req.submitterName}</p>
+                  <p className="text-xs text-[#1a472a]/50">{req.submitterEmail}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-[#1a472a]/70 font-medium">{req.targetName}</p>
+                  <Badge variant="outline" className="text-xs h-5 mt-0.5">
+                    {req.status}
+                  </Badge>
+                </div>
+              </div>
+              {req.submitterMessage && (
+                <p className="mt-1.5 text-xs text-[#1a472a]/60 italic border-t border-[#1a472a]/10 pt-1.5">"{req.submitterMessage}"</p>
+              )}
+              {!req.stewardUserId && (
+                <p className="mt-1 text-xs text-amber-600">No steward assigned — approve an org claim to route this</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Keyboard shortcuts help content
+const SHORTCUTS = [
+  { key: '/', desc: 'Focus search' },
+  { key: '1–9', desc: 'Jump to tab (1=Overview, 2=Apps, 3=Investors…)' },
+  { key: 'Esc', desc: 'Close dialog / clear search' },
+];
+
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [investorSearch, setInvestorSearch] = useState('');
+  const [appSearch, setAppSearch] = useState('');
+  const [investorStatusFilter, setInvestorStatusFilter] = useState<string>('all');
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [aiSelectedContact, setAiSelectedContact] = useState<{ email?: string; name?: string } | null>(null);
+
+  function handleAIAction(action: AdminAIAction) {
+    if (action.type === "navigate" && action.tab) {
+      setActiveTab(action.tab);
+    } else if (action.type === "search" && action.query) {
+      setInvestorSearch(action.query);
+      setActiveTab("investors");
+    } else if (action.type === "compose" && action.to) {
+      // Open compose — navigate to investors/alliance and set the search
+      setInvestorSearch(action.to);
+    } else if (action.type === "focus" && action.contactEmail) {
+      setAiSelectedContact({ email: action.contactEmail, name: action.contactEmail });
+    }
+  }
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const TAB_KEYS: Record<string, string> = {
+      '1': 'overview', '2': 'applications', '3': 'investors',
+      '4': 'alliance', '5': 'live', '6': 'create', '7': 'other',
+      '8': 'kanban', '9': 'settings',
+    };
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (e.key === '?') { e.preventDefault(); setShowShortcuts(s => !s); }
+      if (e.key === '/' ) { e.preventDefault(); (document.querySelector('[data-search-input]') as HTMLInputElement)?.focus(); }
+      if (TAB_KEYS[e.key] && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        setActiveTab(TAB_KEYS[e.key]);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Fetch all data
   const { data: applications, isLoading: loadingApps } = trpc.applications.list.useQuery();
   const { data: investors, isLoading: loadingInvestors } = trpc.investorInquiries.list.useQuery();
   const { data: inquiries, isLoading: loadingInquiries } = trpc.generalInquiries.list.useQuery();
+
+  const utils = trpc.useUtils();
+  const auditNote = trpc.contactNotes.create.useMutation();
+
+  const logAudit = (contactType: string, contactId: number, message: string) => {
+    auditNote.mutate({ contactType, contactId, note: `📋 ${message}`, authorName: 'System' });
+  };
+
+  const updateInvestorMutation = trpc.investorInquiries.updateStatus.useMutation({
+    onSuccess: (_data, variables) => {
+      utils.investorInquiries.list.invalidate();
+      logAudit('investor', variables.id, `Status → ${variables.status}`);
+    },
+    onError: (error: any) => {
+      toast.error(`Failed: ${error.message}`);
+    },
+  });
+
+  const updateGeneralMutation = trpc.generalInquiries.updateStatus.useMutation({
+    onSuccess: (_data, variables) => {
+      utils.generalInquiries.list.invalidate();
+      logAudit('general_inquiry', variables.id, `Status → ${variables.status}`);
+    },
+    onError: (error: any) => {
+      toast.error(`Failed: ${error.message}`);
+    },
+  });
 
   const isLoading = loadingApps || loadingInvestors || loadingInquiries;
 
@@ -1489,31 +2294,85 @@ function AdminDashboard() {
     return acc;
   }, {}) || {};
 
+  // Duplicate email detection for investors
+  const investorEmailCounts = (investors || []).reduce((acc: Record<string, number>, inv: any) => {
+    if (inv.email) acc[inv.email] = (acc[inv.email] || 0) + 1;
+    return acc;
+  }, {});
+  const duplicateInvestorEmails = new Set(
+    Object.entries(investorEmailCounts).filter(([, c]) => c > 1).map(([e]) => e)
+  );
+
+  // Filtered lists for search
+  const filteredInvestors = (investors || []).filter((inv: any) => {
+    const matchesSearch = !investorSearch ||
+      inv.fullName?.toLowerCase().includes(investorSearch.toLowerCase()) ||
+      inv.email?.toLowerCase().includes(investorSearch.toLowerCase()) ||
+      inv.investmentRange?.toLowerCase().includes(investorSearch.toLowerCase()) ||
+      inv.organization?.toLowerCase().includes(investorSearch.toLowerCase());
+    const matchesStatus = investorStatusFilter === 'all' || inv.status === investorStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredApps = (applications || []).filter((app: any) =>
+    !appSearch ||
+    app.projectName?.toLowerCase().includes(appSearch.toLowerCase()) ||
+    app.location?.toLowerCase().includes(appSearch.toLowerCase()) ||
+    app.vision?.toLowerCase().includes(appSearch.toLowerCase())
+  );
+
+  // Investor investment range totals for display
+  const investorRangeCounts = (investors || []).reduce((acc: Record<string, number>, inv: any) => {
+    const range = inv.investmentRange || 'Not specified';
+    acc[range] = (acc[range] || 0) + 1;
+    return acc;
+  }, {});
+
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#f0ebe3] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-[#7dd87d] animate-spin mx-auto mb-4" />
-          <p className="text-[#1a472a]/70">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <TaoSpinner fullPage size={72} />;
   }
 
   return (
     <div className="min-h-screen bg-[#f0ebe3]">
+      {/* Keyboard shortcuts modal */}
+      {showShortcuts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowShortcuts(false)}>
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-[#1a472a]">Keyboard Shortcuts</h3>
+              <button onClick={() => setShowShortcuts(false)} className="text-[#1a472a]/40 hover:text-[#1a472a]"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="space-y-2">
+              {SHORTCUTS.map(s => (
+                <div key={s.key} className="flex items-center justify-between text-sm">
+                  <kbd className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 font-mono text-xs">{s.key}</kbd>
+                  <span className="text-[#1a472a]/70">{s.desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
-      <div className="bg-[#1a472a] text-white py-4 md:py-8">
+      <div className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] text-white py-4 md:py-6">
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3 md:gap-4">
-              <img src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png" alt="ReGen Civics" className="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" loading="lazy"
-              />
+              <img src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png" alt="ReGen Civics" className="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" loading="lazy" />
               <div>
-                <h1 className="text-xl md:text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                  Admin Dashboard
-                </h1>
-                <p className="text-white/70 text-sm md:text-base">Manage applications, investors, and inquiries</p>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-xl md:text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                    Admin Dashboard
+                  </h1>
+                  {stats.pendingReview > 0 && (
+                    <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-amber-400 text-[#1a472a] text-xs font-bold min-w-[24px]">
+                      {stats.pendingReview}
+                    </span>
+                  )}
+                </div>
+                <p className="text-white/70 text-sm md:text-base">
+                  {stats.totalApplications + stats.totalInvestors + stats.totalInquiries} total submissions
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3 flex-wrap">
@@ -1529,7 +2388,17 @@ function AdminDashboard() {
                   <span className="hidden sm:inline">Forum </span>Moderation
                 </Button>
               </Link>
-              <Button 
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-white/30 text-white hover:bg-white/10 text-xs"
+                onClick={() => setShowShortcuts(true)}
+                title="Keyboard shortcuts (?)"
+              >
+                <HelpCircle className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="hidden md:inline ml-1">Shortcuts</span>
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
                 className="border-white/30 text-white hover:bg-white/10 text-xs md:text-sm"
@@ -1709,8 +2578,15 @@ function AdminDashboard() {
               <Sparkles className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Banners</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="settings" 
+            <TabsTrigger
+              value="kanban"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+            >
+              <Filter className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Kanban</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
               className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Settings className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
@@ -1721,6 +2597,55 @@ function AdminDashboard() {
           {/* Overview Tab */}
           <TabsContent value="overview">
             <div className="space-y-6">
+              {/* Pending Items Alert */}
+              {stats.pendingReview > 0 && (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-amber-800">
+                      {stats.pendingReview} item{stats.pendingReview !== 1 ? 's' : ''} pending review
+                    </p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Review and respond to keep your community engaged
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button size="sm" variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-100 text-xs"
+                      onClick={() => setActiveTab('applications')}>
+                      Applications
+                    </Button>
+                    <Button size="sm" variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-100 text-xs"
+                      onClick={() => setActiveTab('investors')}>
+                      Investors
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Send Newsletter', icon: Mail, color: 'bg-blue-500', tab: 'newsletter' },
+                  { label: 'Review Applications', icon: FileText, color: 'bg-[#4a7c59]', tab: 'applications' },
+                  { label: 'Email Templates', icon: Sparkles, color: 'bg-purple-500', tab: 'settings' },
+                  { label: 'View Analytics', icon: TrendingUp, color: 'bg-amber-500', tab: 'analytics' },
+                ].map((action) => {
+                  const ActionIcon = action.icon;
+                  return (
+                    <button
+                      key={action.label}
+                      onClick={() => setActiveTab(action.tab)}
+                      className="p-4 rounded-xl bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 hover:shadow-md transition-all text-left group"
+                    >
+                      <div className={`w-9 h-9 rounded-lg ${action.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                        <ActionIcon className="w-5 h-5 text-white" />
+                      </div>
+                      <p className="text-sm font-semibold text-[#1a472a]">{action.label}</p>
+                    </button>
+                  );
+                })}
+              </div>
+
               {/* Analytics Charts Row */}
               <div className="grid lg:grid-cols-3 gap-6">
                 {/* Submissions Over Time */}
@@ -2042,17 +2967,59 @@ function AdminDashboard() {
           <TabsContent value="applications">
             <Card className="bg-white border-2 border-[#1a472a]/10">
               <CardHeader>
-                <CardTitle className="text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                  Project Applications
-                </CardTitle>
-                <CardDescription>
-                  Land project applications for Season 2
-                </CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                      <Sprout className="w-5 h-5 text-[#4a7c59]" />
+                      Project Applications
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {applications?.length || 0} total · {applications?.filter((a: any) => a.status === 'submitted').length || 0} awaiting review
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-[#7dd87d] text-[#1a472a] w-fit"
+                      onClick={() => exportToCSV(applications || [], 'project_applications')}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-[#1a472a]/30 text-[#1a472a]"
+                      asChild
+                    >
+                      <a href="/admin/applications">Full Review Page</a>
+                    </Button>
+                  </div>
+                </div>
+                {/* Search */}
+                <div className="relative mt-3">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/40" />
+                  <input
+                    type="text"
+                    placeholder="Search by project name, location, or vision..."
+                    value={appSearch}
+                    onChange={(e) => setAppSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+                  />
+                </div>
+                {filteredApps.length !== (applications?.length || 0) && (
+                  <p className="text-xs text-[#1a472a]/50 pt-1">
+                    Showing {filteredApps.length} of {applications?.length || 0} applications
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="p-0">
                 {applications && applications.length > 0 ? (
                   <div className="divide-y divide-[#1a472a]/10">
-                    {applications.map((app: any) => (
+                    {filteredApps.map((app: any) => {
+                      const ageApp = getAgeInfo(app.submittedAt || app.createdAt || new Date());
+                      return (
                       <Dialog key={app.id}>
                         <DialogTrigger asChild>
                           <div className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer">
@@ -2102,11 +3069,19 @@ function AdminDashboard() {
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-2">
-                                <Badge className={`${app.status === 'submitted' ? 'bg-yellow-100 text-yellow-800' : app.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} border`}>
-                                  {app.status}
+                                <Badge className={
+                                  app.status === 'submitted' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  app.status === 'under_review' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  app.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
+                                  app.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
+                                  app.status === 'changes_requested' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                                  'bg-gray-100 text-gray-700 border-gray-200'
+                                }>
+                                  {app.status?.replace(/_/g, ' ')}
                                 </Badge>
-                                <span className="text-xs text-[#1a472a]/50">
-                                  {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : 'Draft'}
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${ageApp.bg} ${ageApp.color}`}>
+                                  {ageApp.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
+                                  {app.submittedAt ? ageApp.label : 'Draft'}
                                 </span>
                               </div>
                             </div>
@@ -2257,24 +3232,35 @@ function AdminDashboard() {
                                 Copy Message
                               </Button>
                             </div>
+
+                            <Suspense fallback={null}><ActivityTimeline email={app.contactEmail || ''} contactType="project_application" contactId={app.id} /></Suspense>
+                            <EmailHistoryPanel email={app.contactEmail || ''} />
+                            <ContactNotesPanel contactType="project_application" contactId={app.id} />
+                            <ContactTagsPanel contactType="project_application" contactId={app.id} />
+                            <ReminderPanel contactType="project_application" contactId={app.id} />
                           </div>
-                          <DialogFooter className="flex-col sm:flex-row gap-2">
+                          <DialogFooter className="flex-col gap-2">
+                            <AssigneeSelect contactType="project_application" contactId={app.id} />
+                            <div className="flex flex-col sm:flex-row gap-2">
                             <EmailTemplateSelector
                               recipientEmail={app.contactEmail || ''}
                               recipientName={app.contactName || ''}
                               contextSubject={app.projectName}
+                              inquiryType="project"
                               className="w-full sm:w-auto"
                             />
-                            <Link href={`/admin/applications?project=${app.id}`}>
+                            <Link href={`/admin/application/${app.id}`}>
                               <Button className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:w-auto">
                                 <FileText className="w-4 h-4 mr-2" />
                                 Review Project
                               </Button>
                             </Link>
+                            </div>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="p-8 text-center text-[#1a472a]/50">
@@ -2290,17 +3276,87 @@ function AdminDashboard() {
           <TabsContent value="investors">
             <Card className="bg-white border-2 border-[#1a472a]/10">
               <CardHeader>
-                <CardTitle className="text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                  Investor Inquiries
-                </CardTitle>
-                <CardDescription>
-                  Investment interest submissions
-                </CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                      <TrendingUp className="w-5 h-5 text-amber-500" />
+                      Investor Inquiries
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {investors?.length || 0} total · {investors?.filter((i: any) => i.status === 'new' || i.status === 'pending').length || 0} pending review
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-[#7dd87d] text-[#1a472a] w-fit"
+                    onClick={() => exportToCSV(investors || [], 'investor_inquiries')}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </Button>
+                </div>
+                {/* Investment Range Breakdown */}
+                {Object.keys(investorRangeCounts).length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-3 border-t border-[#1a472a]/10 mt-3">
+                    {Object.entries(investorRangeCounts)
+                      .sort(([,a], [,b]) => (b as number) - (a as number))
+                      .map(([range, count]) => (
+                        <span key={range} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                          <DollarSign className="w-3 h-3" />
+                          {range}: <strong>{count as number}</strong>
+                        </span>
+                      ))}
+                  </div>
+                )}
+                {/* Search & Filter Row */}
+                <div className="flex flex-col sm:flex-row gap-2 pt-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/40" />
+                    <input
+                      type="text"
+                      data-search-input
+                      placeholder="Search by name, email, range, or org..."
+                      value={investorSearch}
+                      onChange={(e) => setInvestorSearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+                    />
+                  </div>
+                  <Select value={investorStatusFilter} onValueChange={setInvestorStatusFilter}>
+                    <SelectTrigger className="sm:w-44 h-9 text-sm">
+                      <Filter className="w-3 h-3 mr-1" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="contacted">Contacted</SelectItem>
+                      <SelectItem value="in_discussion">In Discussion</SelectItem>
+                      <SelectItem value="committed">Committed</SelectItem>
+                      <SelectItem value="declined">Declined</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {filteredInvestors.length !== (investors?.length || 0) && (
+                  <p className="text-xs text-[#1a472a]/50 pt-1">
+                    Showing {filteredInvestors.length} of {investors?.length || 0} investors
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="p-0">
                 {investors && investors.length > 0 ? (
+                  filteredInvestors.length === 0 ? (
+                    <div className="p-8 text-center text-[#1a472a]/50">
+                      <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                      <p>No investors match your search</p>
+                      <button onClick={() => { setInvestorSearch(''); setInvestorStatusFilter('all'); }} className="text-[#7dd87d] text-sm mt-2 hover:underline">
+                        Clear filters
+                      </button>
+                    </div>
+                  ) : (
                   <div className="divide-y divide-[#1a472a]/10">
-                    {investors.map((investor: any) => (
+                    {filteredInvestors.map((investor: any) => (
                       <Dialog key={investor.id}>
                         <DialogTrigger asChild>
                           <div className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer">
@@ -2331,13 +3387,31 @@ function AdminDashboard() {
                                   )}
                                 </div>
                               </div>
-                              <div className="flex flex-col items-end gap-2">
-                                <Badge className={`${investor.status === 'pending' || investor.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
-                                  {investor.status}
+                              <div className="flex flex-col items-end gap-1.5">
+                                <Badge className={
+                                  investor.status === 'new' || investor.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  investor.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  investor.status === 'in_discussion' ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                                  investor.status === 'committed' ? 'bg-green-100 text-green-800 border-green-200' :
+                                  investor.status === 'declined' ? 'bg-red-100 text-red-800 border-red-200' :
+                                  'bg-gray-100 text-gray-700 border-gray-200'
+                                }>
+                                  {investor.status?.replace(/_/g, ' ')}
                                 </Badge>
-                                <span className="text-xs text-[#1a472a]/50">
-                                  {new Date(investor.createdAt).toLocaleDateString()}
-                                </span>
+                                {(() => {
+                                  const age = getAgeInfo(investor.createdAt);
+                                  return (
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${age.bg} ${age.color}`}>
+                                      {age.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
+                                      {age.label}
+                                    </span>
+                                  );
+                                })()}
+                                {duplicateInvestorEmails.has(investor.email) && (
+                                  <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-[10px]">
+                                    Duplicate email
+                                  </Badge>
+                                )}
                                 <ChevronRight className="w-4 h-4 text-[#1a472a]/30" />
                               </div>
                             </div>
@@ -2361,18 +3435,33 @@ function AdminDashboard() {
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Email</p>
-                                <p className="text-[#1a472a]">{investor.email}</p>
+                                <a href={`mailto:${investor.email}`} className="text-[#4a7c59] hover:underline break-all">
+                                  {investor.email}
+                                </a>
                               </div>
                               <div>
                                 <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Status</p>
-                                <Badge className={`${investor.status === 'pending' || investor.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
-                                  {investor.status}
+                                <Badge className={
+                                  investor.status === 'new' || investor.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  investor.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  investor.status === 'in_discussion' ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                                  investor.status === 'committed' ? 'bg-green-100 text-green-800 border-green-200' :
+                                  investor.status === 'declined' ? 'bg-red-100 text-red-800 border-red-200' :
+                                  'bg-gray-100 text-gray-700 border-gray-200'
+                                }>
+                                  {investor.status?.replace(/_/g, ' ')}
                                 </Badge>
                               </div>
                               <div>
                                 <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Submitted</p>
                                 <p className="text-[#1a472a]">{new Date(investor.createdAt).toLocaleString()}</p>
                               </div>
+                              {investor.organization && (
+                                <div>
+                                  <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Organization</p>
+                                  <p className="text-[#1a472a]">{investor.organization}</p>
+                                </div>
+                              )}
                             </div>
                             
                             {/* Investment Details */}
@@ -2453,27 +3542,88 @@ function AdminDashboard() {
                                 <p className="text-[#1a472a]">{investor.howHeard}</p>
                               </div>
                             )}
+
+                            {/* Activity Timeline */}
+                            <Suspense fallback={null}><ActivityTimeline email={investor.email} contactType="investor" contactId={investor.id} /></Suspense>
+
+                            {/* Email History */}
+                            <EmailHistoryPanel email={investor.email} />
+
+                            {/* Internal Notes */}
+                            <ContactNotesPanel contactType="investor" contactId={investor.id} />
+                            <ContactTagsPanel contactType="investor" contactId={investor.id} />
+                            <ReminderPanel contactType="investor" contactId={investor.id} />
                           </div>
-                          
-                          <DialogFooter className="flex-col sm:flex-row gap-2">
-                            <EmailTemplateSelector
-                              recipientEmail={investor.email}
-                              recipientName={investor.fullName}
-                              contextSubject="Investment Inquiry"
-                              className="w-full sm:w-auto"
-                            />
-                            <Button className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:w-auto">
-                              Mark as Reviewed
-                            </Button>
+
+                          <DialogFooter className="flex-col gap-3">
+                            {/* Assignee */}
+                            <AssigneeSelect contactType="investor" contactId={investor.id} />
+                            {/* Status update */}
+                            <div className="w-full flex items-center gap-2">
+                              <span className="text-xs text-[#1a472a]/60 shrink-0">Status:</span>
+                              <Select
+                                value={investor.status}
+                                onValueChange={(newStatus: any) => {
+                                  const prevStatus = investor.status;
+                                  updateInvestorMutation.mutate({ id: investor.id, status: newStatus });
+                                  toast('Status updated', {
+                                    action: { label: 'Undo', onClick: () => updateInvestorMutation.mutate({ id: investor.id, status: prevStatus }) },
+                                    duration: 5000,
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs flex-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="new">New</SelectItem>
+                                  <SelectItem value="contacted">Contacted</SelectItem>
+                                  <SelectItem value="in_discussion">In Discussion</SelectItem>
+                                  <SelectItem value="committed">Committed</SelectItem>
+                                  <SelectItem value="declined">Declined</SelectItem>
+                                  <SelectItem value="archived">Archived</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="w-full flex flex-col sm:flex-row gap-2">
+                              <EmailTemplateSelector
+                                recipientEmail={investor.email}
+                                recipientName={investor.fullName}
+                                contextSubject="Investment Inquiry"
+                                inquiryType="investor"
+                                className="w-full sm:flex-1"
+                              />
+                              <Button
+                                className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:flex-1"
+                                disabled={updateInvestorMutation.isPending}
+                                onClick={() => {
+                                  const prevStatus = investor.status;
+                                  updateInvestorMutation.mutate({ id: investor.id, status: 'contacted' });
+                                  toast('Marked as reviewed', {
+                                    action: { label: 'Undo', onClick: () => updateInvestorMutation.mutate({ id: investor.id, status: prevStatus }) },
+                                    duration: 5000,
+                                  });
+                                }}
+                              >
+                                {updateInvestorMutation.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                                ) : (
+                                  <CheckCheck className="w-4 h-4 mr-1" />
+                                )}
+                                Mark as Reviewed
+                              </Button>
+                            </div>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
                     ))}
                   </div>
+                  )
                 ) : (
                   <div className="p-8 text-center text-[#1a472a]/50">
                     <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-30" />
                     <p>No investor inquiries yet</p>
+                    <p className="text-xs mt-2">Investor inquiries will appear here when submitted</p>
                   </div>
                 )}
               </CardContent>
@@ -2569,6 +3719,7 @@ function AdminDashboard() {
                   {inquiries?.filter((i: any) => ['other', 'learn', 'finance'].includes(i.pathType)).map((inquiry: any) => {
                     const config = pathTypeConfig[inquiry.pathType] || pathTypeConfig.other;
                     const Icon = config.icon;
+                    const ageOther = getAgeInfo(inquiry.createdAt);
                     return (
                       <Dialog key={inquiry.id}>
                         <DialogTrigger asChild>
@@ -2592,11 +3743,18 @@ function AdminDashboard() {
                                 </div>
                               </div>
                               <div className="flex flex-col items-end gap-2">
-                                <Badge className={`${inquiry.status === 'pending' || inquiry.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
-                                  {inquiry.status}
+                                <Badge className={
+                                  inquiry.status === 'new' || inquiry.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  inquiry.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  inquiry.status === 'in_progress' ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                                  inquiry.status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
+                                  'bg-gray-100 text-gray-700 border-gray-200'
+                                }>
+                                  {inquiry.status?.replace(/_/g, ' ')}
                                 </Badge>
-                                <span className="text-xs text-[#1a472a]/50">
-                                  {new Date(inquiry.createdAt).toLocaleDateString()}
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${ageOther.bg} ${ageOther.color}`}>
+                                  {ageOther.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
+                                  {ageOther.label}
                                 </span>
                                 <ChevronRight className="w-4 h-4 text-[#1a472a]/30" />
                               </div>
@@ -2615,18 +3773,23 @@ function AdminDashboard() {
                               </div>
                             </DialogTitle>
                           </DialogHeader>
-                          
+
                           <div className="space-y-6 py-4">
                             {/* Contact Info */}
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Email</p>
-                                <p className="text-[#1a472a]">{inquiry.email}</p>
+                                <a href={`mailto:${inquiry.email}`} className="text-[#4a7c59] hover:underline">{inquiry.email}</a>
                               </div>
                               <div>
                                 <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Status</p>
-                                <Badge className={`${inquiry.status === 'pending' || inquiry.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
-                                  {inquiry.status}
+                                <Badge className={
+                                  inquiry.status === 'new' || inquiry.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  inquiry.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  inquiry.status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' :
+                                  'bg-gray-100 text-gray-700 border-gray-200'
+                                }>
+                                  {inquiry.status?.replace(/_/g, ' ')}
                                 </Badge>
                               </div>
                               <div>
@@ -2650,18 +3813,64 @@ function AdminDashboard() {
                                 </div>
                               </div>
                             )}
+
+                            <Suspense fallback={null}><ActivityTimeline email={inquiry.email} contactType="general_inquiry" contactId={inquiry.id} /></Suspense>
+                            <EmailHistoryPanel email={inquiry.email} />
+                            <ContactNotesPanel contactType="general_inquiry" contactId={inquiry.id} />
+                            <ContactTagsPanel contactType="general_inquiry" contactId={inquiry.id} />
+                            <ReminderPanel contactType="general_inquiry" contactId={inquiry.id} />
                           </div>
-                          
-                          <DialogFooter className="flex-col sm:flex-row gap-2">
-                            <EmailTemplateSelector
-                              recipientEmail={inquiry.email}
-                              recipientName={inquiry.fullName || ''}
-                              contextSubject="General Inquiry"
-                              className="w-full sm:w-auto"
-                            />
-                            <Button className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:w-auto">
-                              Mark as Reviewed
-                            </Button>
+
+                          <DialogFooter className="flex-col gap-3">
+                            <AssigneeSelect contactType="general_inquiry" contactId={inquiry.id} />
+                            <div className="w-full flex items-center gap-2">
+                              <span className="text-xs text-[#1a472a]/60 shrink-0">Status:</span>
+                              <Select
+                                value={inquiry.status}
+                                onValueChange={(newStatus: any) => {
+                                  const prevStatus = inquiry.status;
+                                  updateGeneralMutation.mutate({ id: inquiry.id, status: newStatus });
+                                  toast('Status updated', {
+                                    action: { label: 'Undo', onClick: () => updateGeneralMutation.mutate({ id: inquiry.id, status: prevStatus }) },
+                                    duration: 5000,
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs flex-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="new">New</SelectItem>
+                                  <SelectItem value="contacted">Contacted</SelectItem>
+                                  <SelectItem value="in_progress">In Progress</SelectItem>
+                                  <SelectItem value="completed">Completed</SelectItem>
+                                  <SelectItem value="archived">Archived</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="w-full flex flex-col sm:flex-row gap-2">
+                              <EmailTemplateSelector
+                                recipientEmail={inquiry.email}
+                                recipientName={inquiry.fullName || ''}
+                                contextSubject="General Inquiry"
+                                className="w-full sm:flex-1"
+                              />
+                              <Button
+                                className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:flex-1"
+                                disabled={updateGeneralMutation.isPending}
+                                onClick={() => {
+                                  const prevStatus = inquiry.status;
+                                  updateGeneralMutation.mutate({ id: inquiry.id, status: 'contacted' });
+                                  toast('Marked as reviewed', {
+                                    action: { label: 'Undo', onClick: () => updateGeneralMutation.mutate({ id: inquiry.id, status: prevStatus }) },
+                                    duration: 5000,
+                                  });
+                                }}
+                              >
+                                <CheckCheck className="w-4 h-4 mr-1" />
+                                Mark as Reviewed
+                              </Button>
+                            </div>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
@@ -2741,7 +3950,9 @@ function AdminDashboard() {
           {/* Analytics Tab */}
           <TabsContent value="analytics">
             <div className="space-y-6">
-              <AdminAnalytics />
+              <Suspense fallback={<div className="flex items-center justify-center py-20 text-[#1a472a]/50">Loading analytics…</div>}>
+                <AdminAnalyticsLazy />
+              </Suspense>
             </div>
           </TabsContent>
 
@@ -2757,16 +3968,54 @@ function AdminDashboard() {
             </div>
           </TabsContent>
 
+          {/* Kanban Board Tab */}
+          <TabsContent value="kanban">
+            <Card className="bg-white border-2 border-[#1a472a]/10">
+              <CardHeader>
+                <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                  <Filter className="w-5 h-5" />
+                  Kanban Board
+                </CardTitle>
+                <CardDescription>Drag cards between columns to update status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<div className="flex items-center justify-center py-20 text-[#1a472a]/50">Loading board…</div>}>
+                  <AdminKanban
+                    investors={investors || []}
+                    inquiries={inquiries || []}
+                    applications={applications || []}
+                  />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings">
             <div className="space-y-6">
               <NotificationPreferences />
               <ReviewerEmailManager />
               <EmailSettings />
+              <ScheduledEmailsManager />
+              <OrgClaimsAdminPanel />
+              <JoinRequestsAdminPanel />
             </div>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Floating AI Assistant */}
+      <AdminAIAssistant
+        context={{
+          activeTab,
+          investorCount: investors?.length,
+          inquiryCount: inquiries?.length,
+          applicationCount: applications?.length,
+          selectedContactEmail: aiSelectedContact?.email,
+          selectedContactName: aiSelectedContact?.name,
+        }}
+        onAction={handleAIAction}
+      />
     </div>
   );
 }

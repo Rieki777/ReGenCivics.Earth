@@ -117,11 +117,11 @@ export function FooterSearch() {
         onClick={() => setOpen(true)}
         className="w-full max-w-md mx-auto flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-white/8 transition-all cursor-pointer group"
       >
-        <Search className="w-4 h-4 text-white/30 group-hover:text-[#7dd87d] transition-colors" />
-        <span className="text-white/30 text-sm group-hover:text-white/50 transition-colors">
+        <Search className="w-4 h-4 text-white/55 group-hover:text-[#7dd87d] transition-colors" />
+        <span className="text-white/55 text-sm group-hover:text-white/80 transition-colors">
           Search pages, tools, and resources...
         </span>
-        <kbd className="hidden sm:inline-flex ml-auto items-center gap-0.5 px-2 py-0.5 rounded bg-white/10 text-white/30 text-[10px] font-mono">
+        <kbd className="hidden sm:inline-flex ml-auto items-center gap-0.5 px-2 py-0.5 rounded bg-white/10 text-white/55 text-[10px] font-mono">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>

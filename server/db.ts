@@ -1,15 +1,22 @@
-import { and, desc, eq, like, or } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile } from "../drizzle/schema";
+import mysql from "mysql2/promise";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
+// Lazily create the drizzle instance with a connection pool.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const pool = mysql.createPool({
+        uri: process.env.DATABASE_URL,
+        connectionLimit: 10,
+        waitForConnections: true,
+        queueLimit: 0,
+      });
+      _db = drizzle(pool as any);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -648,8 +655,109 @@ export async function markEmailOpened(id: number) {
 export async function markEmailClicked(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   await db.update(emailLogs).set({ clickedAt: new Date() }).where(eq(emailLogs.id, id));
+}
+
+export async function getEmailLogsByEmail(recipientEmail: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(emailLogs)
+    .where(eq(emailLogs.recipientEmail, recipientEmail))
+    .orderBy(desc(emailLogs.sentAt))
+    .limit(50);
+}
+
+
+// ============================================
+// Contact Notes Queries
+// ============================================
+
+import { contactNotes, InsertContactNote, contactTags, InsertContactTag, scheduledEmails, InsertScheduledEmail } from "../drizzle/schema";
+
+export async function getContactNotes(contactType: string, contactId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contactNotes)
+    .where(and(eq(contactNotes.contactType, contactType), eq(contactNotes.contactId, contactId)))
+    .orderBy(desc(contactNotes.createdAt));
+}
+
+export async function createContactNote(data: InsertContactNote) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(contactNotes).values(data);
+  return result[0].insertId;
+}
+
+export async function deleteContactNote(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(contactNotes).where(eq(contactNotes.id, id));
+}
+
+// ============================================
+// Contact Tags Queries
+// ============================================
+
+export async function getContactTags(contactType: string, contactId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(contactTags)
+    .where(and(eq(contactTags.contactType, contactType), eq(contactTags.contactId, contactId)))
+    .orderBy(contactTags.createdAt);
+}
+
+export async function addContactTag(data: InsertContactTag) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(contactTags).values(data);
+  return result[0].insertId;
+}
+
+export async function removeContactTag(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(contactTags).where(eq(contactTags.id, id));
+}
+
+// ============================================
+// Scheduled Emails Queries
+// ============================================
+
+export async function createScheduledEmail(data: InsertScheduledEmail) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(scheduledEmails).values(data);
+  return result[0].insertId;
+}
+
+export async function getScheduledEmails() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(scheduledEmails).orderBy(scheduledEmails.scheduledFor);
+}
+
+export async function getPendingScheduledEmails() {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  return await db.select().from(scheduledEmails)
+    .where(and(eq(scheduledEmails.status, 'pending'), gt(scheduledEmails.scheduledFor, now)));
+}
+
+export async function getDueScheduledEmails() {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  return await db.select().from(scheduledEmails)
+    .where(and(eq(scheduledEmails.status, 'pending')));
+}
+
+export async function updateScheduledEmailStatus(id: number, status: 'sent' | 'cancelled' | 'failed', sentAt?: Date) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(scheduledEmails).set({ status, sentAt: sentAt || undefined }).where(eq(scheduledEmails.id, id));
 }
 
 
@@ -1572,6 +1680,34 @@ export async function getLetterOfIntentStats() {
 
 
 // ============================================================================
+// Public Stats
+// ============================================================================
+
+export async function getPublicStats(): Promise<{
+  applications: number;
+  members: number;
+  landProjects: number;
+  investorsCommitted: number;
+}> {
+  const db = await getDb();
+  if (!db) return { applications: 0, members: 0, landProjects: 0, investorsCommitted: 0 };
+
+  const [appsRows, usersRows, loisRows, projectsRows] = await Promise.all([
+    db.select().from(applications),
+    db.select().from(users),
+    db.select().from(letterOfIntent).where(eq(letterOfIntent.status, 'confirmed')),
+    db.select().from(crowdPoolingProjects).where(eq(crowdPoolingProjects.status, 'active')),
+  ]);
+
+  return {
+    applications: appsRows.length,
+    members: usersRows.length,
+    landProjects: projectsRows.length,
+    investorsCommitted: loisRows.length,
+  };
+}
+
+// ============================================================================
 // Notification Preferences Functions
 // ============================================================================
 
@@ -2120,7 +2256,21 @@ export async function getUserProfile(userId: number) {
   return row || null;
 }
 
-export async function upsertUserProfile(userId: number, data: { bio?: string; location?: string; website?: string; preferredLanguage?: string }) {
+export async function upsertUserProfile(userId: number, data: {
+  bio?: string;
+  location?: string;
+  website?: string;
+  preferredLanguage?: string;
+  path?: "investor" | "land_project" | "ally" | "player";
+  onboardingComplete?: number;
+  investmentRange?: string;
+  projectName?: string;
+  projectUrl?: string;
+  organizationName?: string;
+  questInterests?: string;
+  displayName?: string;
+  avatarUrl?: string;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const existing = await getUserProfile(userId);
@@ -2223,4 +2373,98 @@ export async function createForumNotification(data: { userId: number; type: stri
     message: data.message,
     campaignId: data.postId || null, // Reuse campaignId field to store postId for linking
   });
+}
+
+// ─── Email Magic Link Token Functions ────────────────────────────────────────
+
+export async function createEmailToken(data: { email: string; token: string; expiresAt: Date }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Clean up old unused tokens for this email before creating a new one
+  await db.delete(emailTokens).where(and(eq(emailTokens.email, data.email), isNull(emailTokens.usedAt)));
+  await db.insert(emailTokens).values(data);
+}
+
+export async function findAndConsumeEmailToken(token: string): Promise<EmailToken | null> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const now = new Date();
+  const rows = await db
+    .select()
+    .from(emailTokens)
+    .where(and(eq(emailTokens.token, token), isNull(emailTokens.usedAt), gt(emailTokens.expiresAt, now)))
+    .limit(1);
+
+  const row = rows[0];
+  if (!row) return null;
+
+  // Mark as used
+  await db.update(emailTokens).set({ usedAt: now }).where(eq(emailTokens.id, row.id));
+  return row;
+}
+
+// ─── Project Join Requests ───────────────────────────────────────────────────
+export async function createProjectJoinRequest(data: InsertProjectJoinRequest): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(projectJoinRequests).values(data);
+  return (result[0] as any).insertId;
+}
+
+export async function getJoinRequestsForSteward(stewardUserId: number): Promise<ProjectJoinRequest[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(projectJoinRequests)
+    .where(eq(projectJoinRequests.stewardUserId, stewardUserId))
+    .orderBy(desc(projectJoinRequests.createdAt));
+}
+
+export async function getAllJoinRequests(): Promise<ProjectJoinRequest[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(projectJoinRequests).orderBy(desc(projectJoinRequests.createdAt));
+}
+
+export async function updateJoinRequestStatus(id: number, status: 'pending' | 'reviewed' | 'accepted' | 'rejected'): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(projectJoinRequests).set({ status }).where(eq(projectJoinRequests.id, id));
+}
+
+// Route pending join requests to a newly approved steward
+export async function routeJoinRequestsToSteward(orgId: string, stewardUserId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(projectJoinRequests)
+    .set({ stewardUserId })
+    .where(and(eq(projectJoinRequests.targetId, orgId), isNull(projectJoinRequests.stewardUserId)));
+}
+
+// ─── Org Claims ──────────────────────────────────────────────────────────────
+export async function createOrgClaim(data: InsertOrgClaim): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(orgClaims).values(data);
+  return (result[0] as any).insertId;
+}
+
+export async function getOrgClaimsByUser(userId: number): Promise<OrgClaim[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(orgClaims).where(eq(orgClaims.userId, userId));
+}
+
+export async function getAllOrgClaims(): Promise<OrgClaim[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(orgClaims).orderBy(desc(orgClaims.createdAt));
+}
+
+export async function updateOrgClaimStatus(id: number, status: 'pending' | 'approved' | 'rejected'): Promise<OrgClaim | null> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(orgClaims).set({ status }).where(eq(orgClaims.id, id));
+  const rows = await db.select().from(orgClaims).where(eq(orgClaims.id, id)).limit(1);
+  return rows[0] ?? null;
 }
