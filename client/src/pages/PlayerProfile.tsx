@@ -170,8 +170,8 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
         
         <a 
-          href="https://hypha.earth" 
-          target="_blank" 
+          href="https://app.hypha.earth/en/network"
+          target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-sm text-[#7dd87d] hover:underline"
         >
@@ -847,9 +847,9 @@ export default function PlayerProfile() {
                   <div className="w-12 h-12 bg-[#7dd87d] rounded-full flex items-center justify-center mx-auto mb-4">
                     <Trophy className="w-6 h-6 text-[#1a472a]" />
                   </div>
-                  <h3 className="text-white font-semibold mb-2">3. Earn Badges</h3>
+                  <h3 className="text-white font-semibold mb-2">3. Earn Tokens</h3>
                   <p className="text-white/60 text-sm">
-                    Complete quests, contribute to projects, and earn badges for your achievements
+                    Complete quests, contribute to projects, and earn tokens for your contributions
                   </p>
                 </CardContent>
               </Card>

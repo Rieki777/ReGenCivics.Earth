@@ -1699,7 +1699,7 @@ export default function Opportunity() {
                 </FAQItem>
 
                 <FAQItem question="What if you don't reach the target fund size?">
-                  <p>Minimum viable fund is $20M. If we don't reach this threshold in Letters of Intent, we won't proceed to the governance event. Above minimum, we can deploy effectively with adjusted portfolio allocation across fewer but well-diversified projects. The fund can operate successfully anywhere between $20M and $50M.</p>
+                  <p>We won't accept any capital until we have &gt;$20M committed — at that point we'll have all investors wire the funds and start operations. Until then, your Letter of Intent is a non-binding expression of interest; no money moves. Above minimum, we can deploy effectively with adjusted portfolio allocation across fewer but well-diversified projects. The fund can operate successfully anywhere between $20M and $50M.</p>
                 </FAQItem>
 
                 <FAQItem question="Why is the minimum investment $250,000?">

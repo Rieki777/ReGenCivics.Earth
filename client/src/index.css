@@ -370,7 +370,75 @@
   .animate-bounce-gentle {
     animation: bounce-gentle 2s ease-in-out infinite;
   }
-  
+
+  /* Quest card shimmer effects */
+  @keyframes gold-shimmer {
+    0%   { background-position: -300% 0; }
+    100% { background-position: 300% 0; }
+  }
+  @keyframes green-shimmer {
+    0%   { background-position: -300% 0; }
+    100% { background-position: 300% 0; }
+  }
+
+  .quest-card-gold {
+    position: relative;
+    overflow: hidden;
+  }
+  .quest-card-gold::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 20%,
+      rgba(212, 165, 116, 0.12) 38%,
+      rgba(255, 215, 0, 0.22) 50%,
+      rgba(212, 165, 116, 0.12) 62%,
+      transparent 80%
+    );
+    background-size: 300% 100%;
+    animation: gold-shimmer 4s ease-in-out infinite;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .quest-card-gold {
+    border-color: rgba(212, 165, 116, 0.4) !important;
+    box-shadow: 0 0 0 1px rgba(212, 165, 116, 0.2), 0 4px 16px rgba(212, 165, 116, 0.1);
+  }
+  .quest-card-gold:hover {
+    box-shadow: 0 0 0 1px rgba(255, 215, 0, 0.4), 0 8px 32px rgba(212, 165, 116, 0.25);
+  }
+
+  .quest-card-green {
+    position: relative;
+    overflow: hidden;
+  }
+  .quest-card-green::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 20%,
+      rgba(125, 216, 125, 0.10) 38%,
+      rgba(74, 124, 89, 0.20) 50%,
+      rgba(125, 216, 125, 0.10) 62%,
+      transparent 80%
+    );
+    background-size: 300% 100%;
+    animation: green-shimmer 4s ease-in-out infinite;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .quest-card-green {
+    border-color: rgba(125, 216, 125, 0.4) !important;
+    box-shadow: 0 0 0 1px rgba(125, 216, 125, 0.15), 0 4px 16px rgba(125, 216, 125, 0.08);
+  }
+  .quest-card-green:hover {
+    box-shadow: 0 0 0 1px rgba(125, 216, 125, 0.5), 0 8px 32px rgba(125, 216, 125, 0.2);
+  }
+
   /* Staggered animation delays */
   .delay-100 { animation-delay: 100ms; }
   .delay-200 { animation-delay: 200ms; }

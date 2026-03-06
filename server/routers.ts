@@ -2613,6 +2613,31 @@ export const appRouter = router({
           userId: null,
         });
         
+        // Send confirmation email to the investor
+        try {
+          const { sendEmail } = await import("./_core/email");
+          await sendEmail({
+            to: input.email,
+            subject: "Your Letter of Intent — ReGen Civics",
+            html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a472a">
+<h2 style="color:#1a472a">Thank you, ${input.fullName}!</h2>
+<p>We've received your Letter of Intent for <strong>$${input.pledgeAmount.toLocaleString()}</strong>. We're thrilled to have you as a potential capital partner in the regenerative transition.</p>
+<p><strong>What happens next:</strong></p>
+<ul>
+<li>We'll review your LOI and reach out within 2–3 business days.</li>
+<li>No capital moves until we reach &gt;$20M in committed LOIs — your pledge is non-binding until then.</li>
+</ul>
+<h3 style="color:#1a472a">Keep the momentum going</h3>
+<p>📄 <a href="https://regencivics.earth/opportunity" style="color:#4a7c59">Read the full investment opportunity</a></p>
+<p>📅 <a href="https://calendly.com/rieki-cordon/30min" style="color:#4a7c59">Schedule a discovery call with Rieki</a></p>
+<p style="color:#666;font-size:12px;margin-top:32px">Questions? Reply to this email or reach us at <a href="mailto:Rieki@pm.me">Rieki@pm.me</a></p>
+<p style="color:#666;font-size:12px">ReGen Civics — Building the coordination layer for the regenerative transition.</p>
+</div>`,
+          });
+        } catch (e) {
+          console.warn("Failed to send LOI confirmation email:", e);
+        }
+
         // Notify owner of new LOI (respects notification preferences)
         try {
           await notifyIfEnabled("loiSubmissions", {
@@ -2622,7 +2647,7 @@ export const appRouter = router({
         } catch (e) {
           console.warn("Failed to send notification:", e);
         }
-        
+
         return { id: loiId, success: true };
       }),
 

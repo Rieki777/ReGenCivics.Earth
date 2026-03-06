@@ -33,6 +33,7 @@ import {
   Vote,
   Coins,
   Printer,
+  Star,
 } from "lucide-react";
 import PageBackground from "@/components/PageBackground";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -538,6 +539,20 @@ export default function Land() {
                         exchange ownership or access with the network to become co-invested in the
                         alliance
                       </span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Priority */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <h4 className="font-bold text-white mb-3 flex items-center gap-2 text-lg">
+                    <Star className="w-5 h-5 text-[#d4a574]" />
+                    Priority
+                  </h4>
+                  <ul className="space-y-2 text-white/70 text-base">
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#d4a574] mt-1">★</span>
+                      <span>Priority given to land projects that are working towards being a case-study and incubator themselves — actively tracking and mapping their process, creating a replicable "play" for how others can mimic their protocols, and intending to host teams to come learn from them. Our priority is to support the projects that want to support more projects.</span>
                     </li>
                   </ul>
                 </div>

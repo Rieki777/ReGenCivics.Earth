@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy } from "lucide-react";
+import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { Link } from "wouter";
 import { ParallaxSection } from "@/components/ParallaxSection";
@@ -23,10 +23,18 @@ import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { QuestCarousel } from "@/components/QuestCarousel";
 
+// Image base URL for quest art — drop files matching quest-NN-slug.png to this path
+const QUEST_IMG_BASE = "https://assets.regencivics.earth/quests";
+
+function questImageUrl(id: number, slug: string) {
+  return `${QUEST_IMG_BASE}/quest-${String(id).padStart(2, '0')}-${slug}.png`;
+}
+
 // Quest data organized by season
 const questData = {
   intro: {
     id: 0,
+    slug: "fire",
     title: "Quest 0: Fire",
     subtitle: "Transforming the Stories That No Longer Serve Us",
     description: "Introduction to Quests, background, and intention setting for this journey. An invitation to burn the stories that are no longer serving you to make room for new stories to emerge.",
@@ -40,6 +48,7 @@ const questData = {
   spring: [
     {
       id: 1,
+      slug: "potion-brewing",
       title: "Potion Brewing",
       subtitle: "Diversifying Our Inner Soils",
       description: "Focus on our Microbiomes & Guts, Fungi Kingdom, Bacteria Kingdom, and Soil Kingdoms. Heal our relationship to the foundations of life.",
@@ -50,6 +59,7 @@ const questData = {
     },
     {
       id: 2,
+      slug: "saving-seeds",
       title: "Saving Seeds",
       subtitle: "Sovereignty & Co-Evolution",
       description: "Growing plants that know us, and consciously evolving alongside the plants that nourish us.",
@@ -60,6 +70,7 @@ const questData = {
     },
     {
       id: 3,
+      slug: "healing-wholes",
       title: "Healing Wholes",
       subtitle: "Food Abundance",
       description: "Gardening our bioregions and homesteads. Healing our relationship to plants & extending our inner-soils to relate directly with our bioregions.",
@@ -72,6 +83,7 @@ const questData = {
   summer: [
     {
       id: 4,
+      slug: "dreaming-spaces-of-love",
       title: "Dreaming Spaces of Love",
       subtitle: "Family Homesteads",
       description: "Designing, dreaming, and co-creating our ideal homes, gardens, and life intended to meet all our needs. A 'Kins Domain' for your family of life.",
@@ -82,9 +94,10 @@ const questData = {
     },
     {
       id: 5,
+      slug: "rites-of-love",
       title: "Rites of Love",
-      subtitle: "Becoming Indigenous",
-      description: "Marrying the Earth and your beloved, becoming indigenous to our Spaces of Love, and other Sacred Rites.",
+      subtitle: "We are the Land",
+      description: "Marrying the Earth and your beloved, remembering we're one with our Spaces of Love, and other Sacred Rites to connect with Earth.",
       reward: { regen: 111, rvoice: 1 },
       icon: Heart,
       deliverable: "Video/article or... Get Married!",
@@ -92,6 +105,7 @@ const questData = {
     },
     {
       id: 6,
+      slug: "healing-circles",
       title: "Healing Circles",
       subtitle: "Community Gathering",
       description: "Gathering in natural spaces with 10+ other humans to swap & practice healing modalities. Share whatever modality you're most aligned with.",
@@ -104,6 +118,7 @@ const questData = {
   fall: [
     {
       id: 7,
+      slug: "wild-foraging",
       title: "Wild Foraging",
       subtitle: "Deep Nourishment",
       description: "Foraging mushrooms, medicinal herbs, berries & tree magic. Eating sunlight and enjoying food plant-to-mouth while attuning to our ideal diets.",
@@ -114,6 +129,7 @@ const questData = {
     },
     {
       id: 8,
+      slug: "medicine-journey",
       title: "Medicine Journey",
       subtitle: "Inner Exploration",
       description: "A guided journey into the depths of consciousness, exploring the medicine within and around us.",
@@ -124,6 +140,7 @@ const questData = {
     },
     {
       id: 9,
+      slug: "tree-talk",
       title: "Tree Talk",
       subtitle: "Forest Communication",
       description: "Learning to communicate with and understand the wisdom of trees. Deepening our relationship with the forest.",
@@ -136,6 +153,7 @@ const questData = {
   winter: [
     {
       id: 10,
+      slug: "communication-patterns",
       title: "Communication Patterns",
       subtitle: "How We Relate",
       description: "Exploring and improving our patterns of communication. Learning to listen deeply and speak authentically.",
@@ -146,6 +164,7 @@ const questData = {
     },
     {
       id: 11,
+      slug: "coordination-patterns",
       title: "Coordination Patterns",
       subtitle: "How We Organize",
       description: "Understanding how we coordinate as groups. Exploring governance, decision-making, and collective action.",
@@ -156,6 +175,7 @@ const questData = {
     },
     {
       id: 12,
+      slug: "breathplay-future-dreaming",
       title: "Breathplay & Future Dreaming",
       subtitle: "Visioning Together",
       description: "Using breathwork to access expanded states and dream into the future we want to create together.",
@@ -235,90 +255,130 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-function QuestCard({ quest, colorClass, onOpenDetails }: { quest: typeof questData.spring[0], colorClass: string, onOpenDetails?: (questId: string) => void }) {
+// Original quest IDs (0–12) get gold shimmer; future quests get green shimmer
+const ORIGINAL_QUEST_IDS = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12]);
+
+function QuestCard({ quest, colorClass, onOpenDetails }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void }) {
   const Icon = quest.icon;
   const hasDetails = questDetailsData[`quest-${quest.id}`];
   const questId = `quest-${quest.id}`;
   const [showHowTo, setShowHowTo] = useState(false);
-  
+  const [imgError, setImgError] = useState(false);
+
   const proposalName = `Quest ${quest.id}: ${quest.title}`;
-  
+  const slug = (quest as any).slug as string | undefined;
+  const imgUrl = slug ? questImageUrl(quest.id, slug) : null;
+  const shimmerClass = ORIGINAL_QUEST_IDS.has(quest.id) ? 'quest-card-gold' : 'quest-card-green';
+
   return (
-    <div 
-      className={`relative bg-white p-6 rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-lg transition-all hover:-translate-y-1 ${colorClass} ${hasDetails ? 'cursor-pointer group' : ''}`}
+    <div
+      className={`relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-lg transition-all hover:-translate-y-1 ${colorClass} ${shimmerClass} ${hasDetails ? 'cursor-pointer group' : ''}`}
       onClick={() => hasDetails && onOpenDetails?.(questId)}
     >
-      {/* Completion Badge */}
-      <QuestCompletionBadge questId={questId} />
-      
-      <div className="flex items-start gap-4 mb-4">
-        <div className="w-12 h-12 rounded-full bg-[#4a7c59] flex items-center justify-center flex-shrink-0">
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <h4 className="font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-            Quest {quest.id}: {quest.title}
-          </h4>
-          <p className="text-sm text-[#1a472a]/70">{quest.subtitle}</p>
-        </div>
-      </div>
-      <p className="text-sm text-[#1a472a]/80 mb-4">
-        {quest.description}
-      </p>
-      <div className="flex items-center gap-2 text-xs mb-3">
-        <span className="px-2 py-1 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">+{quest.reward.regen} $Regen</span>
-        <span className="px-2 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold">+{quest.reward.rvoice} RGVoice</span>
-      </div>
-      <p className="text-xs text-[#1a472a]/60 italic mb-3">
-        <strong>Deliverable:</strong> {quest.deliverable}
-      </p>
-      
-      {/* How to Complete Section */}
-      <div className="mt-3 pt-3 border-t border-[#1a472a]/10">
-        <button
-          onClick={(e) => { e.stopPropagation(); setShowHowTo(!showHowTo); }}
-          className="flex items-center gap-1.5 text-xs font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors mb-2"
-        >
-          <ClipboardCopy className="w-3.5 h-3.5" />
-          How to complete & claim tokens
-          <ChevronDown className={`w-3 h-3 transition-transform ${showHowTo ? 'rotate-180' : ''}`} />
-        </button>
-        
-        {showHowTo && (
-          <div className="space-y-1.5 mb-3" onClick={(e) => e.stopPropagation()}>
-            <CopyButton text={proposalName} label="Proposal Name" />
-            <div className="text-[10px] text-[#1a472a]/50 px-2 py-1 bg-[#f8f5f0] rounded-md">
-              <strong>Details:</strong> Share your deliverables here: {quest.deliverable}
-            </div>
-            <CopyButton text={String(quest.reward.regen)} label="ReGen tokens" />
-            <CopyButton text="1" label="RGVoice" />
-            <a
-              href="https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs bg-[#1a472a] hover:bg-[#0f2d1a] text-white px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold mt-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink className="w-3 h-3" />
-              Submit Proposal on DAO
-            </a>
+      {/* Quest image */}
+      <div className="relative w-full h-36 bg-gradient-to-br from-[#1a472a]/10 to-[#4a7c59]/10 rounded-t-xl overflow-hidden">
+        {imgUrl && !imgError ? (
+          <img
+            src={imgUrl}
+            alt={`Quest ${quest.id}: ${quest.title}`}
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-40">
+            <ImageIcon className="w-8 h-8 text-[#1a472a]" />
+            <span className="text-[10px] text-[#1a472a] font-mono">
+              {slug ? `quest-${String(quest.id).padStart(2,'0')}-${slug}.png` : 'image coming soon'}
+            </span>
           </div>
         )}
+        {/* Completion Badge */}
+        <QuestCompletionBadge questId={questId} />
       </div>
-      
-      {/* Mark Complete Button */}
-      <div className="flex items-center justify-between mt-2 pt-3 border-t border-[#1a472a]/10">
-        <MarkCompleteButton questId={questId} size="sm" />
-        {hasDetails ? (
-          <p className="text-xs text-[#4a7c59] flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-            <Sparkles className="w-3 h-3" />
-            View guide
-          </p>
-        ) : quest.id >= 4 && (
-          <p className="text-xs text-[#1a472a]/50 italic">
-            Details coming soon
-          </p>
-        )}
+
+      <div className="p-5">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-[#4a7c59] flex items-center justify-center flex-shrink-0">
+            <Icon className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h4 className="font-bold text-[#1a472a] text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+              Quest {quest.id}: {quest.title}
+            </h4>
+            <p className="text-xs text-[#1a472a]/70">{quest.subtitle}</p>
+          </div>
+        </div>
+
+        <p className="text-sm text-[#1a472a]/80 mb-3">{quest.description}</p>
+
+        <div className="flex items-center gap-2 text-xs mb-2">
+          <span className="px-2 py-0.5 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">+{quest.reward.regen} $Regen</span>
+          <span className="px-2 py-0.5 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold">+{quest.reward.rvoice} RGVoice</span>
+        </div>
+
+        <p className="text-xs text-[#1a472a]/60 italic mb-3">
+          <strong>Deliverable:</strong> {quest.deliverable}
+        </p>
+
+        {/* How to Complete Section */}
+        <div className="mt-3 pt-3 border-t border-[#1a472a]/10">
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowHowTo(!showHowTo); }}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors mb-2"
+          >
+            <ClipboardCopy className="w-3.5 h-3.5" />
+            How to complete & claim tokens
+            <ChevronDown className={`w-3 h-3 transition-transform ${showHowTo ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showHowTo && (
+            <div className="space-y-1.5 mb-3" onClick={(e) => e.stopPropagation()}>
+              <CopyButton text={proposalName} label="Proposal Name" />
+              <div className="text-[10px] text-[#1a472a]/50 px-2 py-1 bg-[#f8f5f0] rounded-md">
+                <strong>Details:</strong> Share your deliverables here: {quest.deliverable}
+              </div>
+              <CopyButton text={String(quest.reward.regen)} label="ReGen tokens" />
+              <CopyButton text="1" label="RGVoice" />
+              {imgUrl && (
+                <a
+                  href={imgUrl}
+                  download={`quest-${String(quest.id).padStart(2,'0')}-${slug}.png`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs bg-[#d4a574]/20 hover:bg-[#d4a574]/40 text-[#8b6135] border border-[#d4a574]/40 px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Download className="w-3 h-3" />
+                  Download Quest Image
+                </a>
+              )}
+              <a
+                href="https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs bg-[#1a472a] hover:bg-[#0f2d1a] text-white px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="w-3 h-3" />
+                Submit Proposal on DAO
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Mark Complete Button */}
+        <div className="flex items-center justify-between mt-2 pt-3 border-t border-[#1a472a]/10">
+          <MarkCompleteButton questId={questId} size="sm" />
+          {hasDetails ? (
+            <p className="text-xs text-[#4a7c59] flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+              <Sparkles className="w-3 h-3" />
+              View guide
+            </p>
+          ) : quest.id >= 4 && (
+            <p className="text-xs text-[#1a472a]/50 italic">Details coming soon</p>
+          )}
+        </div>
       </div>
     </div>
   );

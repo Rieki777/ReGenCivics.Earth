@@ -244,7 +244,24 @@ export default function Navigation() {
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Contribution Calculator</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
-                <DropdownMenuItem 
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/regen-games'}
+                >
+                  <span className="text-lg mr-3">🏅</span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>The ReGen Games</span>
+                  <span className="ml-auto text-[9px] bg-[#d4a574]/30 text-[#d4a574] px-1.5 py-0.5 rounded-full">Soon</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/custom-games'}
+                >
+                  <span className="text-lg mr-3">🎮</span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Custom Land Games</span>
+                  <span className="ml-auto text-[9px] bg-[#d4a574]/30 text-[#d4a574] px-1.5 py-0.5 rounded-full">Soon</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
+                <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/profile'}
                 >
@@ -709,11 +726,40 @@ export default function Navigation() {
                       Contribution Calculator
                     </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
-                    <Link 
+                    <Link
+                      href="/regen-games"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/regen-games'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🏅</span>
+                      The ReGen Games
+                      <span className="ml-auto text-[9px] bg-[#d4a574]/30 text-[#d4a574] px-1.5 py-0.5 rounded-full">Soon</span>
+                    </Link>
+                    <Link
+                      href="/custom-games"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/custom-games'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="text-lg">🎮</span>
+                      Custom Land Games
+                      <span className="ml-auto text-[9px] bg-[#d4a574]/30 text-[#d4a574] px-1.5 py-0.5 rounded-full">Soon</span>
+                    </Link>
+                    <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
+                    <Link
                       href="/profile"
                       className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
-                        location === '/profile' 
-                          ? 'bg-[#7dd87d] text-[#1a472a]' 
+                        location === '/profile'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
                           : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
                       }`}
                       style={{ fontFamily: 'var(--font-accent)' }}

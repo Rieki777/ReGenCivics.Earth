@@ -85,6 +85,8 @@ const AdminModeration = lazy(() => import("./pages/AdminModeration"));
 const Glossary = lazy(() => import("./pages/Glossary"));
 const Tokenomics = lazy(() => import("./pages/Tokenomics"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
+const ReGenGames = lazy(() => import("./pages/ReGenGames"));
+const CustomGames = lazy(() => import("./pages/CustomGames"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -150,6 +152,8 @@ function Router() {
         <Route path={"/admin/moderation"} component={AdminModeration} />
 <Route path={"/glossary"} component={Glossary} />
         <Route path={"/newsletter"} component={Newsletter} />
+        <Route path={"/regen-games"} component={ReGenGames} />
+        <Route path={"/custom-games"} component={CustomGames} />
         <Route path="/404" component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />

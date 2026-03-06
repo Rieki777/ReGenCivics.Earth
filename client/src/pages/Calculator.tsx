@@ -119,7 +119,7 @@ export default function Calculator() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <a 
-              href="https://app.hypha.earth/en/dho/regen-civics/proposals/create"
+              href="https://app.hypha.earth/en/dho/regen-games/"
               target="_blank"
               rel="noopener noreferrer"
             >
