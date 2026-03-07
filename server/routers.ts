@@ -523,6 +523,31 @@ export const appRouter = router({
           console.warn("Failed to send investor welcome email:", emailErr);
         }
 
+        // Schedule investor drip sequence (Day 3, 7, 14, 30)
+        try {
+          const { emailTemplates: dripTpl } = await import("./_core/email");
+          const now = Date.now();
+          const drip = [
+            { days: 3,  template: dripTpl.investorDripDay3(input.fullName) },
+            { days: 7,  template: dripTpl.investorDripDay7(input.fullName) },
+            { days: 14, template: dripTpl.investorDripDay14(input.fullName) },
+            { days: 30, template: dripTpl.investorDripDay30(input.fullName) },
+          ];
+          for (const { days, template } of drip) {
+            const scheduledFor = new Date(now + days * 24 * 60 * 60 * 1000);
+            await db.createScheduledEmail({
+              recipientEmail: input.email,
+              recipientName: input.fullName,
+              subject: template.subject,
+              body: template.html,
+              inquiryType: "investor",
+              scheduledFor,
+            });
+          }
+        } catch (dripErr) {
+          console.warn("Failed to schedule investor drip emails:", dripErr);
+        }
+
         // Notify owner of new investor inquiry
         try {
           const rangeLabels: Record<string, string> = {
@@ -3639,6 +3664,133 @@ ${contextBlock || "No specific context provided."}
 
         const response = await invokeLLM({ messages: llmMessages, maxTokens: 1500 });
         const content = response.choices?.[0]?.message?.content ?? "I'm not sure how to help with that. Could you rephrase?";
+        return { content };
+      }),
+  }),
+
+  // ─── Player Contributions ─────────────────────────────────────────────────
+  playerContributions: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      if (!profile) return [];
+      return db.getPlayerContributionsByProfileId(profile.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        capitalType: z.enum(["financial","social","cultural","living","intellectual","experiential","material","spiritual"]),
+        title: z.string().min(1).max(255),
+        description: z.string().max(2000).optional(),
+        estimatedValue: z.number().int().min(0).optional(),
+        projectName: z.string().max(255).optional(),
+        evidenceUrl: z.string().url().optional().or(z.literal('')),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "Create a profile first" });
+        const id = await db.createPlayerContribution({
+          profileId: profile.id,
+          userId: ctx.user.id,
+          capitalType: input.capitalType,
+          title: input.title,
+          description: input.description,
+          estimatedValue: input.estimatedValue,
+          projectName: input.projectName,
+          evidenceUrl: input.evidenceUrl || undefined,
+        });
+        // Update cached total on profile
+        const all = await db.getPlayerContributionsByProfileId(profile.id);
+        const total = all.reduce((sum, c) => sum + (c.estimatedValue ?? 0), 0);
+        await db.updatePlayerProfile(profile.id, { totalContributionValue: total });
+        return { id };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify ownership before deleting
+        const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });
+        await db.deletePlayerContribution(input.id, ctx.user.id);
+        // Recalculate cached total
+        const all = await db.getPlayerContributionsByProfileId(profile.id);
+        const total = all.reduce((sum, c) => sum + (c.estimatedValue ?? 0), 0);
+        await db.updatePlayerProfile(profile.id, { totalContributionValue: total });
+        return { ok: true };
+      }),
+
+    adminVerify: adminProcedure
+      .input(z.object({
+        id: z.number().int().positive(),
+        status: z.enum(["verified", "rejected"]),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updatePlayerContributionStatus(input.id, input.status);
+        return { ok: true };
+      }),
+  }),
+
+  // ─── Public Site Tour AI ──────────────────────────────────────────────────
+  siteTour: router({
+    chat: publicProcedure
+      .input(z.object({
+        messages: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string(),
+        })).max(20),
+        currentPage: z.string().optional(),
+        userRole: z.enum(["guest", "user", "admin"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const page = input.currentPage ?? "/";
+        const role = input.userRole ?? "guest";
+
+        const systemPrompt = `You are the ReGen Civics site guide — a warm, knowledgeable companion helping visitors discover and navigate the platform.
+
+Current visitor context:
+- Page: ${page}
+- Role: ${role}
+
+Your knowledge base:
+- ReGen Civics is a regenerative civilization venture fund + infinite collaborative game
+- Fund: targets 12-18% net IRR + $RCivics token appreciation. Min investment $250K. Quarterly distributions from Year 3. 8% preferred return, 20% carry, 1.5% management fee.
+- Quests: 13 original quests (gold shimmer) + growing quest library (green shimmer). Earn RVoice + ReGen tokens. Start at /quests.
+- Land projects: regenerative land-backed investments. Apply at /apply. Browse approved projects at /land.
+- Alliance orgs: partner organizations supporting the regenerative ecosystem. Learn at /alliance.
+- Investors: submit Letter of Intent at /loi. Read the full opportunity at /opportunity. Allocation explorer at /opportunity#calculator.
+- Governance: RCVoice (earned through contributions, governs proposals) vs RGVoice (broader governance). Explained at /governance.
+- Tokenomics: $RCivics token on Hypha DAO. Live stats coming soon. Learn at /tokenomics.
+- Player profile: create at /player-profile. Complete quests, earn tokens, link your Hypha account.
+- Contribution calculator: estimate 8-forms-of-capital contribution value at /calculator.
+- Crowd pooling: pool capital for land projects at /crowd-pooling.
+- Regen Games: coming soon at /regen-games. Custom land games at /custom-games.
+- Map: global network of projects at /map.
+- Blog/Learn: insights and updates at /blog.
+
+Page-specific context:
+${page === '/' ? '- You are on the home page. Offer to explain the fund, the game, or direct them to key sections.' : ''}
+${page.includes('/opportunity') ? '- You are on the investment opportunity page. Visitor may be a potential LP.' : ''}
+${page.includes('/quest') ? '- You are on the quests page. Help them understand how to earn tokens.' : ''}
+${page.includes('/governance') ? '- You are on the governance page. Explain the two-token model.' : ''}
+${page.includes('/player') ? '- You are on the player profile page. Help them get set up.' : ''}
+${page.includes('/tokenomics') ? '- You are on the tokenomics page. Token distributions have not begun yet.' : ''}
+${page.includes('/land') ? '- You are on the land projects page. Help them understand the land investment thesis.' : ''}
+${page.includes('/apply') ? '- You are on the application page. This visitor may be a land project looking to join.' : ''}
+
+Guidelines:
+- Keep responses concise: 2-4 sentences max unless they ask for detail
+- Be warm, encouraging, and use plain English (no markdown headers)
+- Offer concrete next steps with page paths like /opportunity or /quests
+- If asked something you don't know, admit it and suggest they contact the team
+- Don't make up specific numbers not in your knowledge base above`;
+
+        const llmMessages = [
+          { role: "system" as const, content: systemPrompt },
+          ...input.messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+        ];
+
+        const response = await invokeLLM({ messages: llmMessages, maxTokens: 400 });
+        const content = response.choices?.[0]?.message?.content ?? "I'd be happy to help! What would you like to know about ReGen Civics?";
         return { content };
       }),
   }),

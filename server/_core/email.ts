@@ -458,6 +458,134 @@ export const emailTemplates = {
     `,
   }),
   
+  // ── Investor drip sequence ──────────────────────────────────────────────────
+  // Day 3: Fund overview deep-dive
+  investorDripDay3: (recipientName: string) => ({
+    subject: 'The ReGen Civics Fund: How the Economics Work',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
+        <div style="background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #7dd87d; margin: 0 0 8px 0; font-size: 22px;">The Economics of Regeneration</h1>
+          <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">A note for ${recipientName}</p>
+        </div>
+        <div style="padding: 28px 30px;">
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">We wanted to share a bit more about how the fund is structured, because it's genuinely different from a typical alternative investment.</p>
+          <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 18px 20px; border-radius: 0 8px 8px 0; margin: 20px 0;">
+            <p style="color: #1a472a; margin: 0 0 10px 0; font-weight: bold; font-size: 15px;">Fund Structure at a Glance</p>
+            <ul style="color: #333; margin: 0; padding-left: 20px; line-height: 1.9; font-size: 14px;">
+              <li><strong>Target return:</strong> 12–18% net IRR (Target scenario)</li>
+              <li><strong>Preferred return:</strong> 8% cumulative before carry</li>
+              <li><strong>Carried interest:</strong> 20% above the preferred return</li>
+              <li><strong>Management fee:</strong> 1.5% annually</li>
+              <li><strong>Minimum commitment:</strong> $250,000</li>
+              <li><strong>Distributions:</strong> Quarterly from Year 3</li>
+            </ul>
+          </div>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">The fund deploys into a diversified portfolio of regenerative land projects — eco-villages, food forests, and community-owned land — that generate returns through land appreciation, community revenue, and alliance services.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">You can explore our full allocation model and scenario projections at <a href="https://regencivics.earth/opportunity" style="color: #4a7c59;">regencivics.earth/opportunity</a>.</p>
+          <div style="text-align: center; margin: 24px 0 8px;">
+            <a href="https://regencivics.earth/opportunity" style="display: inline-block; background: #1a472a; color: #7dd87d; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #7dd87d;">Read the Full Opportunity</a>
+          </div>
+        </div>
+        <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
+          <p style="color: #999; font-size: 12px; margin: 0;">ReGen Civics · <a href="https://regencivics.earth" style="color: #4a7c59;">regencivics.earth</a></p>
+        </div>
+      </div>
+    `,
+  }),
+
+  // Day 7: Land project case study
+  investorDripDay7: (recipientName: string) => ({
+    subject: 'Inside a ReGen Civics Land Project',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
+        <div style="background: linear-gradient(135deg, #2d5a3d 0%, #1a472a 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #d4a574; margin: 0 0 8px 0; font-size: 22px;">What We're Actually Building</h1>
+          <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">For ${recipientName}</p>
+        </div>
+        <div style="padding: 28px 30px;">
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">Behind every fund investment is a real place — land being stewarded by people committed to regeneration. Here's what a typical Season 2 project looks like.</p>
+          <div style="background: #fff8f0; border: 1px solid #d4a574; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="color: #8a5a00; font-weight: bold; margin: 0 0 10px 0;">A Regenerative Land Project in the Fund</p>
+            <ul style="color: #333; margin: 0; padding-left: 20px; line-height: 1.9; font-size: 14px;">
+              <li>Community-owned land (1–500+ hectares)</li>
+              <li>Mixed-use: residential, food production, ecological restoration</li>
+              <li>Governed by a DAO — transparent, participatory</li>
+              <li>Revenue from membership, produce, services, and events</li>
+              <li>Success fees flow back to fund investors quarterly from Year 3+</li>
+            </ul>
+          </div>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">We currently have 13+ projects in various stages on the map. Browse them at <a href="https://regencivics.earth/map" style="color: #4a7c59;">regencivics.earth/map</a>.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">If you'd like to understand how we evaluate and select projects — including our due diligence process — come explore our Forum and ask any questions you have. <a href="https://regencivics.earth/community" style="color: #4a7c59;">Join the Forum →</a></p>
+          <div style="text-align: center; margin: 24px 0 8px;">
+            <a href="https://regencivics.earth/land" style="display: inline-block; background: #2d5a3d; color: #d4a574; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #d4a574;">Explore Land Projects</a>
+          </div>
+        </div>
+        <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
+          <p style="color: #999; font-size: 12px; margin: 0;">ReGen Civics · <a href="https://regencivics.earth" style="color: #4a7c59;">regencivics.earth</a></p>
+        </div>
+      </div>
+    `,
+  }),
+
+  // Day 14: FAQ + call invitation
+  investorDripDay14: (recipientName: string) => ({
+    subject: 'Common questions from investors — and an invitation',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
+        <div style="background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #7dd87d; margin: 0 0 8px 0; font-size: 22px;">Two Weeks In — Your Questions, Answered</h1>
+          <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">For ${recipientName}</p>
+        </div>
+        <div style="padding: 28px 30px;">
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">It's been two weeks since you expressed interest in ReGen Civics. We thought we'd answer the questions we hear most often at this stage.</p>
+          <div style="margin: 20px 0;">
+            <p style="color: #1a472a; font-weight: bold; margin: 0 0 6px 0; font-size: 15px;">When does the fund accept capital?</p>
+            <p style="color: #333; line-height: 1.7; font-size: 14px; margin: 0 0 18px 0;">The fund will not accept capital until we have reached our $20M threshold, ensuring meaningful diversification from day one. We are currently building commitments through Letters of Intent. At this point we'll host a 3-day event where investors, land project stewards, and a council of domain experts will have the opportunity to gather and decide on the final structure of the fund — so it best represents the needs and perspectives of all parties it's designed to serve.</p>
+            <p style="color: #1a472a; font-weight: bold; margin: 0 0 6px 0; font-size: 15px;">Is this a long-term commitment?</p>
+            <p style="color: #333; line-height: 1.7; font-size: 14px; margin: 0 0 18px 0;">Yes — this is a long-term investment aligned with the timelines of land and ecological restoration. Quarterly distributions begin in Year 3. The fund is designed to grow with the regenerative economy.</p>
+            <p style="color: #1a472a; font-weight: bold; margin: 0 0 6px 0; font-size: 15px;">How do I signal serious interest?</p>
+            <p style="color: #333; line-height: 1.7; font-size: 14px; margin: 0 0 18px 0;">Sign a non-binding Letter of Intent at <a href="https://regencivics.earth/loi" style="color: #4a7c59;">regencivics.earth/loi</a>. This signals your intent and ensures you're included in our formal launch process. It carries no obligation.</p>
+          </div>
+          <div style="background: #f0f7f0; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+            <p style="color: #1a472a; font-weight: bold; margin: 0 0 8px 0;">Ready to talk?</p>
+            <p style="color: #4a7c59; margin: 0 0 16px 0; font-size: 14px;">Schedule a 30-minute call with our team — no pressure, just a conversation.</p>
+            <a href="https://calendly.com/rieki-cordon/30min" style="display: inline-block; background: #1a472a; color: #7dd87d; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 1px solid #7dd87d;">Book a Call</a>
+          </div>
+        </div>
+        <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
+          <p style="color: #999; font-size: 12px; margin: 0;">ReGen Civics · <a href="https://regencivics.earth" style="color: #4a7c59;">regencivics.earth</a></p>
+        </div>
+      </div>
+    `,
+  }),
+
+  // Day 30: LOI nudge
+  investorDripDay30: (recipientName: string) => ({
+    subject: 'One month on — have you signed your Letter of Intent?',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #fff;">
+        <div style="background: linear-gradient(135deg, #8a5a00 0%, #5c3a00 100%); padding: 32px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: #ffd700; margin: 0 0 8px 0; font-size: 22px;">Securing Your Position</h1>
+          <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">A note for ${recipientName}</p>
+        </div>
+        <div style="padding: 28px 30px;">
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">It's been a month since you first reached out about ReGen Civics. We want to make sure you haven't missed the chance to secure your position in the fund.</p>
+          <div style="background: #fff8e0; border: 2px solid #ffd700; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+            <p style="color: #8a5a00; font-weight: bold; font-size: 16px; margin: 0 0 8px 0;">Sign Your Letter of Intent</p>
+            <p style="color: #5c3a00; font-size: 14px; margin: 0 0 16px 0;">Non-binding. Takes 2 minutes. Ensures you're first in line when the fund opens.</p>
+            <a href="https://regencivics.earth/loi" style="display: inline-block; background: #8a5a00; color: #ffd700; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 2px solid #ffd700;">Sign the LOI</a>
+          </div>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">If you have questions, concerns, or simply want to talk through the opportunity, reply to this email or <a href="https://calendly.com/rieki-cordon/30min" style="color: #4a7c59;">book a call here</a>.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">The regenerative renaissance is underway — and your capital can help it accelerate.</p>
+        </div>
+        <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
+          <p style="color: #999; font-size: 12px; margin: 0;">You received this because you expressed interest in ReGen Civics. <a href="https://regencivics.earth/unsubscribe" style="color: #4a7c59;">Unsubscribe</a></p>
+        </div>
+      </div>
+    `,
+  }),
+
   contributionFulfilled: (recipientName: string, contributionTitle: string, campaignTitle: string, ownerNotes?: string) => ({
     subject: `Your Contribution to "${campaignTitle}" Has Been Fulfilled!`,
     html: `

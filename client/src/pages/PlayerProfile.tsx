@@ -28,7 +28,22 @@ import {
   HelpCircle,
   Info,
   Share2,
-  X
+  X,
+  LayoutGrid,
+  BookOpen,
+  Leaf,
+  Settings,
+  Plus,
+  Trash2,
+  BadgeCheck,
+  DollarSign,
+  Users as UsersIcon,
+  Palette,
+  Sprout,
+  Lightbulb,
+  Zap,
+  Hammer,
+  Heart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -789,6 +804,368 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
   );
 }
 
+// ─── 8 Forms of Capital ─────────────────────────────────────────────────────
+const CAPITAL_TYPES = [
+  { value: "financial",     label: "Financial",     icon: DollarSign, color: "#d4a574", desc: "Money, investments, grants, loans" },
+  { value: "social",        label: "Social",        icon: UsersIcon,  color: "#7dd87d", desc: "Networks, relationships, trust" },
+  { value: "cultural",      label: "Cultural",      icon: Palette,    color: "#f97316", desc: "Art, stories, rituals, values" },
+  { value: "living",        label: "Living",        icon: Sprout,     color: "#22c55e", desc: "Land, ecosystems, biodiversity" },
+  { value: "intellectual",  label: "Intellectual",  icon: Lightbulb,  color: "#a78bfa", desc: "Knowledge, skills, IP, research" },
+  { value: "experiential",  label: "Experiential",  icon: Zap,        color: "#fbbf24", desc: "Skills gained through doing" },
+  { value: "material",      label: "Material",      icon: Hammer,     color: "#94a3b8", desc: "Tools, equipment, infrastructure" },
+  { value: "spiritual",     label: "Spiritual",     icon: Heart,      color: "#f43f5e", desc: "Vision, meaning, purpose" },
+] as const;
+
+type CapitalType = typeof CAPITAL_TYPES[number]["value"];
+
+// ─── Contributions Tab ───────────────────────────────────────────────────────
+function ContributionsTab() {
+  const { data: contributions, isLoading, refetch } = trpc.playerContributions.list.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [capitalType, setCapitalType] = useState<CapitalType>("financial");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [estimatedValue, setEstimatedValue] = useState("");
+  const [projectName, setProjectName] = useState("");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
+
+  const createMutation = trpc.playerContributions.create.useMutation({
+    onSuccess: () => {
+      toast.success("Contribution logged");
+      refetch();
+      setShowForm(false);
+      setTitle(""); setDescription(""); setEstimatedValue(""); setProjectName(""); setEvidenceUrl("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deleteMutation = trpc.playerContributions.delete.useMutation({
+    onSuccess: () => { toast.success("Contribution removed"); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) { toast.error("Title is required"); return; }
+    createMutation.mutate({
+      capitalType,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      estimatedValue: estimatedValue ? parseInt(estimatedValue) : undefined,
+      projectName: projectName.trim() || undefined,
+      evidenceUrl: evidenceUrl.trim() || undefined,
+    });
+  }
+
+  const totalValue = contributions?.reduce((s, c) => s + (c.estimatedValue ?? 0), 0) ?? 0;
+
+  // Group by capital type for display
+  const byType = CAPITAL_TYPES.map(ct => ({
+    ...ct,
+    items: contributions?.filter(c => c.capitalType === ct.value) ?? [],
+  })).filter(g => g.items.length > 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Summary bar */}
+      {contributions && contributions.length > 0 && (
+        <div className="glass-panel rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-white/50 text-xs mb-0.5">Total Logged Value</p>
+            <p className="text-2xl font-bold text-[#7dd87d]">${totalValue.toLocaleString()}</p>
+          </div>
+          <div className="flex gap-4">
+            <div className="text-center">
+              <p className="text-white font-bold text-lg">{contributions.length}</p>
+              <p className="text-white/50 text-xs">Entries</p>
+            </div>
+            <div className="text-center">
+              <p className="text-white font-bold text-lg">{byType.length}</p>
+              <p className="text-white/50 text-xs">Capital types</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[#7dd87d] font-bold text-lg">
+                {contributions.filter(c => c.status === "verified").length}
+              </p>
+              <p className="text-white/50 text-xs">Verified</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add contribution button / form */}
+      {!showForm ? (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-[#7dd87d]/30 text-[#7dd87d]/70 hover:border-[#7dd87d]/60 hover:text-[#7dd87d] hover:bg-[#7dd87d]/5 transition-all text-sm font-medium"
+        >
+          <Plus className="w-4 h-4" /> Log a Contribution
+        </button>
+      ) : (
+        <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-white font-semibold">Log a Contribution</h3>
+            <button type="button" onClick={() => setShowForm(false)} className="text-white/40 hover:text-white/70">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Capital type picker */}
+          <div>
+            <label className="text-white/60 text-xs mb-2 block">Form of Capital *</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {CAPITAL_TYPES.map(ct => {
+                const Icon = ct.icon;
+                const selected = capitalType === ct.value;
+                return (
+                  <button
+                    key={ct.value}
+                    type="button"
+                    onClick={() => setCapitalType(ct.value)}
+                    className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-all text-xs font-medium ${
+                      selected
+                        ? "border-[#7dd87d] bg-[#7dd87d]/10 text-white"
+                        : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" style={{ color: selected ? ct.color : undefined }} />
+                    {ct.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-white/40 text-xs mt-1.5">
+              {CAPITAL_TYPES.find(c => c.value === capitalType)?.desc}
+            </p>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="text-white/60 text-xs mb-1.5 block">What did you contribute? *</label>
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="e.g. Designed brand identity for La Tierra"
+              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="text-white/60 text-xs mb-1.5 block">Details (optional)</label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={2}
+              placeholder="More context about this contribution..."
+              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30 resize-none"
+            />
+          </div>
+
+          {/* Value + project row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-white/60 text-xs mb-1.5 block">Est. Value USD (optional)</label>
+              <input
+                type="number"
+                min="0"
+                value={estimatedValue}
+                onChange={e => setEstimatedValue(e.target.value)}
+                placeholder="0"
+                className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
+              />
+            </div>
+            <div>
+              <label className="text-white/60 text-xs mb-1.5 block">Project / Org (optional)</label>
+              <input
+                value={projectName}
+                onChange={e => setProjectName(e.target.value)}
+                placeholder="e.g. La Tierra"
+                className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
+              />
+            </div>
+          </div>
+
+          {/* Evidence URL */}
+          <div>
+            <label className="text-white/60 text-xs mb-1.5 block">Evidence link (optional)</label>
+            <input
+              value={evidenceUrl}
+              onChange={e => setEvidenceUrl(e.target.value)}
+              placeholder="https://..."
+              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="flex-1 py-2.5 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#6bc86b] transition-colors"
+            >
+              {createMutation.isPending ? "Logging…" : "Log Contribution"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="px-4 py-2.5 rounded-xl bg-white/10 text-white/60 text-sm hover:bg-white/20 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Contribution log grouped by capital type */}
+      {isLoading ? (
+        <div className="text-center py-8"><TaoSpinner size={40} /></div>
+      ) : byType.length === 0 ? (
+        <div className="text-center py-12">
+          <Leaf className="w-10 h-10 text-white/20 mx-auto mb-3" />
+          <p className="text-white/40 text-sm">No contributions logged yet.</p>
+          <p className="text-white/30 text-xs mt-1">Use the button above to record your first contribution.</p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {byType.map(group => {
+            const Icon = group.icon;
+            return (
+              <div key={group.value}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className="w-4 h-4" style={{ color: group.color }} />
+                  <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">{group.label} Capital</span>
+                  <span className="text-white/30 text-xs ml-auto">
+                    {group.items.filter(i => i.estimatedValue).reduce((s, i) => s + (i.estimatedValue ?? 0), 0) > 0
+                      ? `$${group.items.reduce((s, i) => s + (i.estimatedValue ?? 0), 0).toLocaleString()}`
+                      : ""}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {group.items.map(item => (
+                    <div
+                      key={item.id}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-start gap-3 group/row"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-white text-sm font-medium">{item.title}</p>
+                          {item.status === "verified" && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] text-[#7dd87d] bg-[#7dd87d]/10 border border-[#7dd87d]/20 px-1.5 py-0.5 rounded-full">
+                              <BadgeCheck className="w-2.5 h-2.5" /> Verified
+                            </span>
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-white/50 text-xs mt-0.5 line-clamp-2">{item.description}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          {item.projectName && (
+                            <span className="text-white/40 text-xs">{item.projectName}</span>
+                          )}
+                          {item.estimatedValue && item.estimatedValue > 0 && (
+                            <span className="text-[#d4a574] text-xs font-medium">${item.estimatedValue.toLocaleString()}</span>
+                          )}
+                          {item.evidenceUrl && (
+                            <a
+                              href={item.evidenceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-white/40 hover:text-[#7dd87d] text-xs flex items-center gap-0.5 transition-colors"
+                            >
+                              <ExternalLink className="w-3 h-3" /> evidence
+                            </a>
+                          )}
+                          <span className="text-white/25 text-xs ml-auto">
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => deleteMutation.mutate({ id: item.id })}
+                        disabled={deleteMutation.isPending}
+                        className="opacity-0 group-hover/row:opacity-100 text-white/30 hover:text-red-400 transition-all p-1 shrink-0"
+                        aria-label="Delete contribution"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Quests Tab ───────────────────────────────────────────────────────────────
+const QUEST_NAMES: Record<string, string> = {
+  "quest-0": "Regenerative Foundations",
+  "quest-1": "Mycelial Network Builder",
+  "quest-2": "Land Stewardship Basics",
+  "quest-3": "Community Governance 101",
+  "quest-4": "Regenerative Finance",
+  "quest-5": "Ecosystem Mapping",
+  "quest-6": "Alliance Builder",
+  "quest-7": "Token Economics",
+  "quest-8": "Season Keeper",
+  "quest-9": "Game Master",
+  "quest-10": "Sovereignty Quest",
+  "quest-11": "Bioregional Connector",
+  "quest-12": "Legacy Builder",
+  "food-foresting": "Food Foresting",
+};
+
+function QuestsTab({ profile }: { profile: any }) {
+  const completed: string[] = (() => {
+    try { return JSON.parse(profile.questsCompleted || "[]"); } catch { return []; }
+  })();
+
+  if (completed.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
+        <p className="text-white/40 text-sm">No quests completed yet.</p>
+        <a href="/quest" className="inline-flex items-center gap-1 mt-3 text-[#7dd87d] text-sm hover:underline">
+          Browse quests <ArrowRight className="w-3.5 h-3.5" />
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-white/50 text-xs">{completed.length} quest{completed.length !== 1 ? "s" : ""} completed</p>
+        <a href="/quest" className="text-[#7dd87d] text-xs hover:underline flex items-center gap-1">
+          Find more <ArrowRight className="w-3 h-3" />
+        </a>
+      </div>
+      <div className="space-y-2">
+        {completed.map((questId) => (
+          <div
+            key={questId}
+            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#7dd87d]/15 border border-[#7dd87d]/30 flex items-center justify-center shrink-0">
+              <Trophy className="w-4 h-4 text-[#7dd87d]" />
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">
+                {QUEST_NAMES[questId] ?? questId.replace(/[-_]/g, " ").replace(/\bquest\b/gi, "").trim() || questId}
+              </p>
+              <p className="text-white/40 text-xs">Completed</p>
+            </div>
+            <CheckCircle2 className="w-4 h-4 text-[#7dd87d] ml-auto shrink-0" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const SOCIAL_QUEST_DISMISSED_KEY = 'regen_social_quest_dismissed';
 
 function SocialShareQuestCard() {
@@ -856,12 +1233,22 @@ function SocialShareQuestCard() {
   );
 }
 
+type ProfileTab = "overview" | "quests" | "contributions" | "settings";
+
+const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
+  { id: "overview",       label: "Overview",       icon: LayoutGrid },
+  { id: "quests",         label: "Quests",         icon: BookOpen },
+  { id: "contributions",  label: "Contributions",  icon: Leaf },
+  { id: "settings",       label: "Settings",       icon: Settings },
+];
+
 export default function PlayerProfile() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const { data: profile, isLoading: profileLoading, refetch } = trpc.playerProfiles.me.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  
+  const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
+
   const isLoading = authLoading || profileLoading;
 
   if (isLoading) return <TaoSpinner fullPage size={72} />;
@@ -944,29 +1331,92 @@ export default function PlayerProfile() {
               </Card>
             </AnimatedSection>
           ) : (
-            // Has profile
-            <div className="space-y-6">
+            // Has profile — tabbed layout
+            <div className="space-y-0">
+              {/* Tab nav */}
               <AnimatedSection animation="slide-up">
-                <ProfileCard profile={profile} isOwner={true} onUpdate={() => refetch()} />
-              </AnimatedSection>
-              <SocialShareQuestCard />
-              <AnimatedSection animation="slide-up">
-                <div className="glass-panel p-6 rounded-xl">
-                  <h2 className="text-lg font-bold text-white mb-5">Edit Profile</h2>
-                  <ProfileEditForm />
+                <div className="flex gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 mb-6 overflow-x-auto scrollbar-none">
+                  {PROFILE_TABS.map(tab => {
+                    const Icon = tab.icon;
+                    const active = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-1 justify-center ${
+                          active
+                            ? "bg-[#1a472a] text-white shadow-sm border border-[#7dd87d]/20"
+                            : "text-white/50 hover:text-white/80"
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${active ? "text-[#7dd87d]" : ""}`} />
+                        <span className="hidden sm:inline">{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </AnimatedSection>
-              {/* Steward: Org Claim + Join Request Dashboard */}
-              <AnimatedSection animation="slide-up">
-                <OrgClaimSection userId={user!.id} />
-              </AnimatedSection>
-              <AnimatedSection animation="slide-up">
-                <DigestPreferences currentFrequency={(profile as any).emailDigestFrequency || 'monthly'} />
-              </AnimatedSection>
-              {user?.role === 'admin' && (
+
+              {/* Overview tab */}
+              {activeTab === "overview" && (
+                <div className="space-y-6">
+                  <AnimatedSection animation="slide-up">
+                    <ProfileCard profile={profile} isOwner={true} onUpdate={() => refetch()} />
+                  </AnimatedSection>
+                  <SocialShareQuestCard />
+                </div>
+              )}
+
+              {/* Quests tab */}
+              {activeTab === "quests" && (
                 <AnimatedSection animation="slide-up">
-                  <NotificationPreferences />
+                  <div className="glass-panel p-6 rounded-xl">
+                    <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-[#7dd87d]" /> Quest Log
+                    </h2>
+                    <QuestsTab profile={profile} />
+                  </div>
                 </AnimatedSection>
+              )}
+
+              {/* Contributions tab */}
+              {activeTab === "contributions" && (
+                <AnimatedSection animation="slide-up">
+                  <div className="glass-panel p-6 rounded-xl">
+                    <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                      <Leaf className="w-5 h-5 text-[#7dd87d]" /> Contribution Log
+                    </h2>
+                    <p className="text-white/50 text-sm mb-5">
+                      Record contributions across the 8 forms of capital. Self-reported values can be verified by admins.
+                    </p>
+                    <ContributionsTab />
+                  </div>
+                </AnimatedSection>
+              )}
+
+              {/* Settings tab */}
+              {activeTab === "settings" && (
+                <div className="space-y-6">
+                  <AnimatedSection animation="slide-up">
+                    <div className="glass-panel p-6 rounded-xl">
+                      <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
+                        <Settings className="w-5 h-5 text-[#7dd87d]" /> Edit Profile
+                      </h2>
+                      <ProfileEditForm />
+                    </div>
+                  </AnimatedSection>
+                  <AnimatedSection animation="slide-up">
+                    <DigestPreferences currentFrequency={(profile as any).emailDigestFrequency || 'monthly'} />
+                  </AnimatedSection>
+                  <AnimatedSection animation="slide-up">
+                    <OrgClaimSection userId={user!.id} />
+                  </AnimatedSection>
+                  {user?.role === 'admin' && (
+                    <AnimatedSection animation="slide-up">
+                      <NotificationPreferences />
+                    </AnimatedSection>
+                  )}
+                </div>
               )}
             </div>
           )}

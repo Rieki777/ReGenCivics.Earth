@@ -16,6 +16,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { ExitIntentCapture } from "./components/ExitIntentCapture";
 import CommandPalette from "./components/CommandPalette";
+import { SiteTour } from "./components/SiteTour";
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { PathSelectionScreen } from "./components/PathSelectionScreen";
 import { useAuth } from "./_core/hooks/useAuth";
@@ -229,6 +230,7 @@ function App() {
           {!adminMode && <AppInner />}
           {!adminMode && <ExitIntentCapture />}
           {!adminMode && <CommandPalette />}
+          {!adminMode && <SiteTour />}
           <ServiceWorkerRegister />
         </TooltipProvider>
       </ThemeProvider>

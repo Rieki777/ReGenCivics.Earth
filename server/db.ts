@@ -552,6 +552,49 @@ export async function deletePlayerProfile(id: number) {
 
 
 // ============================================
+// Player Contributions Queries
+// ============================================
+import { InsertPlayerContribution, playerContributions } from "../drizzle/schema";
+
+export async function createPlayerContribution(data: InsertPlayerContribution) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(playerContributions).values(data);
+  return result.insertId;
+}
+
+export async function getPlayerContributionsByProfileId(profileId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db
+    .select()
+    .from(playerContributions)
+    .where(eq(playerContributions.profileId, profileId))
+    .orderBy(playerContributions.createdAt);
+}
+
+export async function deletePlayerContribution(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .delete(playerContributions)
+    .where(and(eq(playerContributions.id, id), eq(playerContributions.userId, userId)));
+}
+
+export async function updatePlayerContributionStatus(
+  id: number,
+  status: "pending" | "verified" | "rejected"
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(playerContributions)
+    .set({ status, verifiedAt: status === "verified" ? new Date() : null })
+    .where(eq(playerContributions.id, id));
+}
+
+
+// ============================================
 // Crowd Pooling Projects Queries
 // ============================================
 

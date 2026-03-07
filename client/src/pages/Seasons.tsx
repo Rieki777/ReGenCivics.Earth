@@ -747,6 +747,149 @@ export default function Seasons() {
         </div>
       </section>
 
+      {/* Season Timeline */}
+      <section className="py-16 px-4 bg-gradient-to-b from-transparent to-[#0d2818]/50">
+        <div className="container mx-auto max-w-4xl">
+          <AnimatedSection animation="slide-up">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 bg-[#d4a574]/20 px-4 py-2 rounded-full mb-4 border border-[#d4a574]/30">
+                <Star className="w-4 h-4 text-[#d4a574]" />
+                <span className="text-[#d4a574] font-medium text-sm">The Journey So Far</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
+                Season <span className="text-[#7dd87d]">Timeline</span>
+              </h2>
+              <p className="text-white/60 mt-3 max-w-xl mx-auto">From the first cohort to a growing global network of regenerative land projects.</p>
+            </div>
+          </AnimatedSection>
+
+          <div className="relative">
+            {/* Vertical line */}
+            <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-[#7dd87d]/40 via-[#d4a574]/40 to-[#7dd87d]/10 -translate-x-px hidden sm:block" />
+
+            {[
+              {
+                season: "Season 1",
+                period: "Spring Season · 2021",
+                status: "complete" as const,
+                color: "#7dd87d",
+                outcomes: [
+                  "First cohort of 13 land projects incubated",
+                  "Regenerative Infinite Games framework built and evolved",
+                  "13-week curriculum developed & refined",
+                  "Alliance network foundations established",
+                  "Crowd pooling platform conceived",
+                ],
+                side: "left",
+              },
+              {
+                season: "Season 2",
+                period: "Winter Season · 2021–2026",
+                status: "complete" as const,
+                color: "#d4a574",
+                outcomes: [
+                  "Expanded cohort with international projects",
+                  "DAO governance structures implemented and refined",
+                  "Tokenomics framework designed",
+                  "Fund structure finalized & investor outreach begun",
+                  "Quests, Games, CrowdPooling structures built out",
+                  "Admin panel for coordinating projects and applications built",
+                  "Tooling for the Fund and Games built, tested, and refined",
+                  "Legal and regulatory exploration to design the Fund",
+                ],
+                side: "right",
+              },
+              {
+                season: "Season 3",
+                period: "Spring Season · September 2026",
+                status: "active" as const,
+                color: "#ffd700",
+                outcomes: [
+                  "Upcoming cohort — opening September Equinox",
+                  "Live investor due diligence for fund launch",
+                  "ReGen Games & custom land games rollout",
+                  "Fund governance & $RCivics token live",
+                  "ReGen Game Governance & $ReGen token live",
+                  "Accepting LOIs for the Fund",
+                  "Built out a 'ReGen Game' template for land projects",
+                ],
+                side: "left",
+              },
+              {
+                season: "Season 4+",
+                period: "2027 & Beyond",
+                status: "future" as const,
+                color: "#a0aec0",
+                outcomes: [
+                  "Fund reaches $20M+ threshold & goes live",
+                  "Quarterly distributions begin (Year 3)",
+                  "Network expands to 30+ projects globally",
+                  "Bioregional hubs established on 4+ continents",
+                  "Regenerative economy networking across our Earth",
+                ],
+                side: "right",
+              },
+            ].map((item, idx) => (
+              <AnimatedSection key={item.season} animation="slide-up" delay={idx * 100}>
+                <div className={`relative flex items-start gap-6 mb-10 sm:mb-12 ${
+                  item.side === "right" ? "sm:flex-row-reverse sm:text-right" : ""
+                }`}>
+                  {/* Node */}
+                  <div className="relative z-10 shrink-0">
+                    <div
+                      className={`w-16 h-16 rounded-full flex items-center justify-center border-2 shadow-lg ${
+                        item.status === "complete"
+                          ? "bg-[#1a472a]"
+                          : item.status === "active"
+                          ? "bg-[#1a472a] animate-pulse"
+                          : "bg-[#0d2818]"
+                      }`}
+                      style={{ borderColor: item.color }}
+                    >
+                      {item.status === "complete" ? (
+                        <CheckCircle className="w-7 h-7" style={{ color: item.color }} />
+                      ) : item.status === "active" ? (
+                        <Sprout className="w-7 h-7" style={{ color: item.color }} />
+                      ) : (
+                        <Sparkles className="w-6 h-6" style={{ color: item.color, opacity: 0.5 }} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className={`flex-1 glass-panel rounded-2xl p-5 ${item.side === "right" ? "sm:mr-6" : "sm:ml-6"}`}>
+                    <div className={`flex items-center gap-3 mb-3 flex-wrap ${item.side === "right" ? "sm:justify-end" : ""}`}>
+                      <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
+                        {item.season}
+                      </h3>
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium"
+                        style={{
+                          backgroundColor: `${item.color}20`,
+                          color: item.color,
+                          border: `1px solid ${item.color}40`,
+                        }}
+                      >
+                        {item.status === "complete" ? "Complete" : item.status === "active" ? "Opening Now" : "Coming Soon"}
+                      </span>
+                      <span className="text-white/40 text-sm ml-auto">{item.period}</span>
+                    </div>
+                    <ul className={`space-y-1.5 ${item.side === "right" ? "sm:text-right" : ""}`}>
+                      {item.outcomes.map((o) => (
+                        <li key={o} className="flex items-start gap-2 text-white/70 text-sm">
+                          {item.side !== "right" && <span style={{ color: item.color }} className="mt-0.5 shrink-0">›</span>}
+                          <span>{o}</span>
+                          {item.side === "right" && <span style={{ color: item.color }} className="mt-0.5 shrink-0 sm:hidden">‹</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Related Content */}
       <RelatedContent pages={relatedContentMap.seasons.pages} blog={relatedContentMap.seasons.blog} />
     </div>

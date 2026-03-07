@@ -680,6 +680,52 @@ export type SavedContribution = typeof savedContributions.$inferSelect;
 export type InsertSavedContribution = typeof savedContributions.$inferInsert;
 
 /**
+ * Player Contributions table
+ * Structured log of contributions a player has made, categorised by the 8 forms of capital.
+ * Each row is one logged contribution entry on a player's profile.
+ */
+export const playerContributions = mysqlTable("player_contributions", {
+  id: int("id").autoincrement().primaryKey(),
+  profileId: int("profileId").notNull(), // FK → player_profiles.id
+  userId: int("userId").notNull(),       // Denormalised for fast per-user queries
+
+  // What kind of capital was contributed
+  capitalType: mysqlEnum("capitalType", [
+    "financial",
+    "social",
+    "cultural",
+    "living",
+    "intellectual",
+    "experiential",
+    "material",
+    "spiritual",
+  ]).notNull(),
+
+  // What was contributed
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+
+  // Estimated USD value (player self-reported, optional)
+  estimatedValue: int("estimatedValue"),
+
+  // Which project / org received the contribution (optional free-text)
+  projectName: varchar("projectName", { length: 255 }),
+
+  // Link to evidence / proof (optional URL)
+  evidenceUrl: varchar("evidenceUrl", { length: 512 }),
+
+  // Verification status (admin can verify self-reported entries)
+  status: mysqlEnum("status", ["pending", "verified", "rejected"]).default("pending").notNull(),
+  verifiedAt: timestamp("verifiedAt"),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PlayerContribution = typeof playerContributions.$inferSelect;
+export type InsertPlayerContribution = typeof playerContributions.$inferInsert;
+
+/**
  * Campaigns table
  * Stores crowd pooling campaigns created by projects
  */
