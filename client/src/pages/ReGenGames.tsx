@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import { NewsletterSignup } from "@/components/NewsletterSignup";
+import NewsletterSignup from "@/components/NewsletterSignup";
 import { BackButton } from "@/components/BackButton";
 import { Trophy, Globe, Heart, Users, Sparkles, ArrowRight } from "lucide-react";
 
