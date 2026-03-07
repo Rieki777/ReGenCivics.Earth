@@ -1,0 +1,8 @@
+.git
+.github
+docs
+*.docx
+*.pdf
+*.zip
+*.md
+attached_assets
