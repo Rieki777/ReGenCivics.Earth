@@ -1154,7 +1154,7 @@ function QuestsTab({ profile }: { profile: any }) {
             </div>
             <div>
               <p className="text-white text-sm font-medium">
-                {QUEST_NAMES[questId] ?? questId.replace(/[-_]/g, " ").replace(/\bquest\b/gi, "").trim() || questId}
+                {(QUEST_NAMES[questId] ?? questId.replace(/[-_]/g, " ").replace(/\bquest\b/gi, "").trim()) || questId}
               </p>
               <p className="text-white/40 text-xs">Completed</p>
             </div>
