@@ -1,4 +1,4 @@
-CREATE TABLE `player_contributions` (
+CREATE TABLE IF NOT EXISTS `player_contributions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `profileId` int NOT NULL,
   `userId` int NOT NULL,

@@ -69,12 +69,38 @@ CREATE TABLE IF NOT EXISTS `scheduled_emails` (
 	CONSTRAINT `scheduled_emails_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `path` enum('investor','land_project','ally','player');--> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `onboardingComplete` tinyint DEFAULT 0 NOT NULL;--> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `investmentRange` varchar(255);--> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `projectName` varchar(255);--> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `projectUrl` varchar(500);--> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `organizationName` varchar(255);--> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `questInterests` text;--> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `displayName` varchar(255);--> statement-breakpoint
-ALTER TABLE `userProfiles` ADD `avatarUrl` varchar(500);
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'path');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `path` enum(''investor'',''land_project'',''ally'',''player'')', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+--> statement-breakpoint
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'onboardingComplete');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `onboardingComplete` tinyint DEFAULT 0 NOT NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+--> statement-breakpoint
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'investmentRange');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `investmentRange` varchar(255)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+--> statement-breakpoint
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'projectName');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `projectName` varchar(255)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+--> statement-breakpoint
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'projectUrl');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `projectUrl` varchar(500)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+--> statement-breakpoint
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'organizationName');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `organizationName` varchar(255)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+--> statement-breakpoint
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'questInterests');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `questInterests` text', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+--> statement-breakpoint
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'displayName');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `displayName` varchar(255)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+--> statement-breakpoint
+SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'userProfiles' AND COLUMN_NAME = 'avatarUrl');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `userProfiles` ADD `avatarUrl` varchar(500)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
