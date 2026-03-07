@@ -771,7 +771,6 @@ const translations: Record<Language, TranslationKeys> = {
     'common.viewAll': 'すべて表示',
     'common.noResults': '結果が見つかりません',
   },
-};
 
   ru: {
     'nav.home': 'Главная',
