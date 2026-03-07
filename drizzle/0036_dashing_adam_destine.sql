@@ -1,4 +1,4 @@
-CREATE TABLE `contact_notes` (
+CREATE TABLE IF NOT EXISTS `contact_notes` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`contactType` varchar(50) NOT NULL,
 	`contactId` int NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE `contact_notes` (
 	CONSTRAINT `contact_notes_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `contact_tags` (
+CREATE TABLE IF NOT EXISTS `contact_tags` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`contactType` varchar(50) NOT NULL,
 	`contactId` int NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE `contact_tags` (
 	CONSTRAINT `contact_tags_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `email_tokens` (
+CREATE TABLE IF NOT EXISTS `email_tokens` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`email` varchar(320) NOT NULL,
 	`token` varchar(64) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE `email_tokens` (
 	CONSTRAINT `email_tokens_token_unique` UNIQUE(`token`)
 );
 --> statement-breakpoint
-CREATE TABLE `org_claims` (
+CREATE TABLE IF NOT EXISTS `org_claims` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`userId` int NOT NULL,
 	`orgType` enum('land_project','alliance_org') NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE `org_claims` (
 	CONSTRAINT `org_claims_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `project_join_requests` (
+CREATE TABLE IF NOT EXISTS `project_join_requests` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`submitterName` varchar(255) NOT NULL,
 	`submitterEmail` varchar(320) NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE `project_join_requests` (
 	CONSTRAINT `project_join_requests_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE `scheduled_emails` (
+CREATE TABLE IF NOT EXISTS `scheduled_emails` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`recipientEmail` varchar(320) NOT NULL,
 	`recipientName` varchar(255),
