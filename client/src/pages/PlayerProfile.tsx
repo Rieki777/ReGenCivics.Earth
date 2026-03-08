@@ -84,13 +84,23 @@ const badgeDefinitions: Record<string, { name: string; icon: string; description
 
 // Profile Creation Form
 function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
-  const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('');
-  const [baseAccountName, setBaseAccountName] = useState('');
-  const [hyphaProfileUrl, setHyphaProfileUrl] = useState('');
-  
+  const [displayName, setDisplayName] = useState(() => sessionStorage.getItem('playerProfileDraft_displayName') ?? '');
+  const [bio, setBio] = useState(() => sessionStorage.getItem('playerProfileDraft_bio') ?? '');
+  const [baseAccountName, setBaseAccountName] = useState(() => sessionStorage.getItem('playerProfileDraft_baseAccountName') ?? '');
+  const [hyphaProfileUrl, setHyphaProfileUrl] = useState(() => sessionStorage.getItem('playerProfileDraft_hyphaProfileUrl') ?? '');
+
+  const handleDisplayNameChange = (val: string) => { setDisplayName(val); sessionStorage.setItem('playerProfileDraft_displayName', val); };
+  const handleBioChange = (val: string) => { setBio(val); sessionStorage.setItem('playerProfileDraft_bio', val); };
+  const handleBaseAccountChange = (val: string) => { setBaseAccountName(val); sessionStorage.setItem('playerProfileDraft_baseAccountName', val); };
+  const handleHyphaUrlChange = (val: string) => { setHyphaProfileUrl(val); sessionStorage.setItem('playerProfileDraft_hyphaProfileUrl', val); };
+
+  const clearDraft = () => {
+    ['displayName', 'bio', 'baseAccountName', 'hyphaProfileUrl'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
+  };
+
   const createMutation = trpc.playerProfiles.create.useMutation({
     onSuccess: () => {
+      clearDraft();
       toast.success('Profile created successfully!');
       onSuccess();
     },
@@ -98,7 +108,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
       toast.error(error.message || 'Failed to create profile');
     },
   });
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName.trim()) {
@@ -119,7 +129,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
         <label className="text-sm font-medium text-[#1a472a] mb-2 block">Display Name *</label>
         <Input
           value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
+          onChange={(e) => handleDisplayNameChange(e.target.value)}
           placeholder="Your player name"
           className="border-[#1a472a]/20"
           required
@@ -130,7 +140,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
         <label className="text-sm font-medium text-[#1a472a] mb-2 block">Bio</label>
         <Textarea
           value={bio}
-          onChange={(e) => setBio(e.target.value)}
+          onChange={(e) => handleBioChange(e.target.value)}
           placeholder="Tell us about yourself and your regenerative journey..."
           className="border-[#1a472a]/20 min-h-[100px]"
         />
@@ -140,15 +150,15 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
         <div className="flex items-center gap-2 text-[#1a472a]">
           <Wallet className="w-5 h-5 text-[#7dd87d]" />
           <span className="font-medium">Link Your Base Blockchain Account</span>
-          <Badge variant="outline" className="text-xs">Optional</Badge>
+          <Badge variant="outline" className="text-xs text-[#1a472a]/80 border-[#1a472a]/40">Optional</Badge>
         </div>
-        <p className="text-sm text-[#1a472a]/70">
+        <p className="text-sm text-[#1a472a]/90">
           Connect your Base blockchain account to verify your on-chain identity and track your RVOICE/RGEN tokens.
         </p>
         
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <label className="text-sm text-[#1a472a]/70">Base Blockchain Account</label>
+            <label className="text-sm text-[#1a472a]/90">Base Blockchain Account</label>
             <Popover>
               <PopoverTrigger asChild>
                 <button type="button" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
@@ -178,17 +188,17 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <Input
             value={baseAccountName}
-            onChange={(e) => setBaseAccountName(e.target.value)}
+            onChange={(e) => handleBaseAccountChange(e.target.value)}
             placeholder="e.g., 0xaAaF...354e"
             className="border-[#1a472a]/20 font-mono"
           />
         </div>
         
         <div>
-          <label className="text-sm text-[#1a472a]/70 mb-1 block">Hypha Profile URL</label>
+          <label className="text-sm text-[#1a472a]/90 mb-1 block">Hypha Profile URL</label>
           <Input
             value={hyphaProfileUrl}
-            onChange={(e) => setHyphaProfileUrl(e.target.value)}
+            onChange={(e) => handleHyphaUrlChange(e.target.value)}
             placeholder="https://hypha.earth/profile/yourname"
             className="border-[#1a472a]/20"
           />

@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 10 84 80" fill="none">
-  <!-- Seeds of Life: 7 circles, transparent background -->
-  <!-- Center circle with green fill -->
-  <circle cx="50" cy="50" r="20" fill="rgba(125,216,125,0.25)" stroke="#FFD700" stroke-width="2"/>
-  <!-- 6 surrounding circles at one radius distance -->
-  <circle cx="70" cy="50"    r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
-  <circle cx="60" cy="67.32" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
-  <circle cx="40" cy="67.32" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
-  <circle cx="30" cy="50"    r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
-  <circle cx="40" cy="32.68" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
-  <circle cx="60" cy="32.68" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Dark green circle background -->
+  <circle cx="50" cy="50" r="50" fill="#1a472a"/>
+  <!-- Seeds of Life: 7 overlapping circles in gold -->
+  <circle cx="50" cy="50"    r="20" fill="rgba(125,216,125,0.15)" stroke="#FFD700" stroke-width="2.5"/>
+  <circle cx="70" cy="50"    r="20" fill="none" stroke="#FFD700" stroke-width="2.5"/>
+  <circle cx="60" cy="67.32" r="20" fill="none" stroke="#FFD700" stroke-width="2.5"/>
+  <circle cx="40" cy="67.32" r="20" fill="none" stroke="#FFD700" stroke-width="2.5"/>
+  <circle cx="30" cy="50"    r="20" fill="none" stroke="#FFD700" stroke-width="2.5"/>
+  <circle cx="40" cy="32.68" r="20" fill="none" stroke="#FFD700" stroke-width="2.5"/>
+  <circle cx="60" cy="32.68" r="20" fill="none" stroke="#FFD700" stroke-width="2.5"/>
   <!-- Center accent dot -->
   <circle cx="50" cy="50" r="4" fill="#7dd87d"/>
 </svg>
