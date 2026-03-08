@@ -170,17 +170,23 @@ export default function ReGenGuide() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-4 right-4 z-[9999] w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 btn-press ${
-          isOpen
-            ? "bg-white/10 border border-white/20 text-white/60 hover:text-white"
-            : "bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] shadow-[0_0_20px_rgba(125,216,125,0.4)]"
-        }`}
-        aria-label={isOpen ? "Close Your ReGen Guide" : "Open Your ReGen Guide"}
+        className={`fixed bottom-4 right-4 z-[9999] flex items-center justify-center shadow-lg transition-all duration-300 btn-press
+          w-14 h-14 rounded-full
+          sm:w-auto sm:h-auto sm:px-4 sm:py-3 sm:rounded-full sm:gap-2
+          ${
+            isOpen
+              ? "bg-white/10 border border-white/20 text-white/60 hover:text-white"
+              : "bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] shadow-[0_0_20px_rgba(125,216,125,0.4)]"
+          }`}
+        aria-label={isOpen ? "Close ReGen Guide" : "Open ReGen Guide"}
       >
         {isOpen ? (
           <X className="w-6 h-6" />
         ) : (
-          <MessageCircle className="w-6 h-6" />
+          <>
+            <MessageCircle className="w-6 h-6" />
+            <span className="hidden sm:inline text-sm font-semibold">ReGen Guide</span>
+          </>
         )}
       </button>
     </>
