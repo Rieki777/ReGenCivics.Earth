@@ -127,7 +127,7 @@ export function SiteTour() {
         />
       )}
 
-      {/* Chat panel — slide in from right */}
+      {/* Chat panel  -  slide in from right */}
       <div
         className={`fixed z-50 flex flex-col transition-transform duration-300 ease-in-out
           inset-0 sm:inset-auto sm:bottom-0 sm:right-0 sm:top-auto sm:h-[580px] sm:w-[380px] sm:rounded-t-2xl sm:rounded-bl-2xl
@@ -187,7 +187,7 @@ export function SiteTour() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Starter prompts — shown when only the welcome message exists */}
+        {/* Starter prompts  -  shown when only the welcome message exists */}
         {messages.length <= 1 && (
           <div className="px-4 pb-2 space-y-1.5 shrink-0">
             <p className="text-white/40 text-xs mb-2">Suggested questions:</p>

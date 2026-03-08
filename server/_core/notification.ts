@@ -51,7 +51,7 @@ export async function notifyOwner(payload: NotificationPayload): Promise<boolean
   const ownerEmail = process.env.OWNER_EMAIL;
 
   if (!resendApiKey || !ownerEmail) {
-    console.warn("[Notification] RESEND_API_KEY or OWNER_EMAIL not configured — skipping owner notification");
+    console.warn("[Notification] RESEND_API_KEY or OWNER_EMAIL not configured  -  skipping owner notification");
     return false;
   }
 

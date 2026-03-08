@@ -1,5 +1,5 @@
 /**
- * AuthDialog — Unified auth modal.
+ * AuthDialog  -  Unified auth modal.
  * Shows Google, Apple, and Email magic-link login options.
  */
 import { useEffect, useState } from "react";

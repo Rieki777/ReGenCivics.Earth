@@ -2696,20 +2696,20 @@ export const appRouter = router({
           const { sendEmail } = await import("./_core/email");
           await sendEmail({
             to: input.email,
-            subject: "Your Letter of Intent — ReGen Civics",
+            subject: "Your Letter of Intent  -  ReGen Civics",
             html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a472a">
 <h2 style="color:#1a472a">Thank you, ${input.fullName}!</h2>
 <p>We've received your Letter of Intent for <strong>$${input.pledgeAmount.toLocaleString()}</strong>. We're thrilled to have you as a potential capital partner in the regenerative transition.</p>
 <p><strong>What happens next:</strong></p>
 <ul>
 <li>We'll review your LOI and reach out within 2–3 business days.</li>
-<li>No capital moves until we reach &gt;$20M in committed LOIs — your pledge is non-binding until then.</li>
+<li>No capital moves until we reach &gt;$20M in committed LOIs  -  your pledge is non-binding until then.</li>
 </ul>
 <h3 style="color:#1a472a">Keep the momentum going</h3>
 <p>📄 <a href="https://regencivics.earth/opportunity" style="color:#4a7c59">Read the full investment opportunity</a></p>
 <p>📅 <a href="https://calendly.com/rieki-cordon/30min" style="color:#4a7c59">Schedule a discovery call with Rieki</a></p>
 <p style="color:#666;font-size:12px;margin-top:32px">Questions? Reply to this email or reach us at <a href="mailto:Rieki@pm.me">Rieki@pm.me</a></p>
-<p style="color:#666;font-size:12px">ReGen Civics — Building the coordination layer for the regenerative transition.</p>
+<p style="color:#666;font-size:12px">ReGen Civics  -  Building the coordination layer for the regenerative transition.</p>
 </div>`,
           });
         } catch (e) {
@@ -3628,7 +3628,7 @@ export const appRouter = router({
           ctx.selectedContactEmail ? `Currently viewing contact: ${ctx.selectedContactName ?? ''} <${ctx.selectedContactEmail}>` : null,
         ].filter(Boolean).join("\n");
 
-        const systemPrompt = `You are an AI admin assistant for ReGen Civics — a regenerative civilization project coordinating land projects, alliance organizations, and investors.
+        const systemPrompt = `You are an AI admin assistant for ReGen Civics  -  a regenerative civilization project coordinating land projects, alliance organizations, and investors.
 
 You live inside the /admin dashboard and help administrators (like Rieki and the team) coordinate the Infinite Game.
 
@@ -3667,7 +3667,7 @@ ${contextBlock || "No specific context provided."}
 - Use bullet points for lists
 - Flag urgent items (old inquiries, stale applications)
 - Suggest concrete next steps
-- When you don't know something specific about the data, say so — you can only see what the admin shares with you`;
+- When you don't know something specific about the data, say so  -  you can only see what the admin shares with you`;
 
         const llmMessages = [
           { role: "system" as const, content: systemPrompt },
@@ -3757,7 +3757,7 @@ ${contextBlock || "No specific context provided."}
         const page = input.currentPage ?? "/";
         const role = input.userRole ?? "guest";
 
-        const systemPrompt = `You are the ReGen Civics site guide — a warm, knowledgeable companion helping visitors discover and navigate the platform.
+        const systemPrompt = `You are the ReGen Civics site guide  -  a warm, knowledgeable companion helping visitors discover and navigate the platform.
 
 Current visitor context:
 - Page: ${page}

@@ -23,7 +23,7 @@ import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { QuestCarousel } from "@/components/QuestCarousel";
 
-// Image base URL for quest art — drop files matching quest-NN-slug.png to this path
+// Image base URL for quest art  -  drop files matching quest-NN-slug.png to this path
 const QUEST_IMG_BASE = "https://assets.regencivics.earth/quests";
 
 function questImageUrl(id: number, slug: string) {

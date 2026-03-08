@@ -178,13 +178,13 @@ export function resetGoogleTranslate() {
   // Try widget select first (works when widget is visible)
   const selectEl = document.querySelector('.goog-te-combo') as HTMLSelectElement;
   if (selectEl) {
-    // Set to English explicitly — empty string is unreliable
+    // Set to English explicitly  -  empty string is unreliable
     selectEl.value = 'en';
     selectEl.dispatchEvent(new Event('change'));
     // Reload after a short delay to ensure the translation state is fully cleared
     setTimeout(() => window.location.reload(), 300);
   } else {
-    // Widget not found — reload directly clears translation state via cleared cookie
+    // Widget not found  -  reload directly clears translation state via cleared cookie
     window.location.reload();
   }
 }

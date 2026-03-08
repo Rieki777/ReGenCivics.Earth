@@ -1,5 +1,5 @@
 /**
- * PathSelectionScreen — Full-screen interstitial shown once after first login.
+ * PathSelectionScreen  -  Full-screen interstitial shown once after first login.
  * User picks their path; selection is stored via tRPC and onboardingComplete is set.
  */
 import { useState } from "react";

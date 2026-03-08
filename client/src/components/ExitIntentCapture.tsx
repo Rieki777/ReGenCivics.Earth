@@ -43,7 +43,7 @@ const contextConfig: Record<PageContext, {
     icon: <FileText className="w-5 h-5 text-[#7dd87d]" />,
     headline: "Before You Go",
     subline: "Take the investment thesis with you",
-    body: "Get our full investment thesis and fund overview sent directly to your inbox. No spam — just the information you need to make an informed decision.",
+    body: "Get our full investment thesis and fund overview sent directly to your inbox. No spam  -  just the information you need to make an informed decision.",
     cta: "Send Me the Thesis",
     successMessage: "We'll send you the investment thesis and keep you updated on the regenerative renaissance.",
   },

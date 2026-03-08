@@ -803,7 +803,7 @@ export default function CrowdPoolingProjects() {
   const [selectedProject, setSelectedProject] = useState<typeof sampleProjects[0] | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   
-  // Fetch real projects from database — auto-refresh every 5 minutes
+  // Fetch real projects from database  -  auto-refresh every 5 minutes
   const { data: dbProjects, isLoading: dbLoading } = trpc.crowdPoolingProjects.list.useQuery(undefined, {
     refetchInterval: 5 * 60 * 1000,
   });

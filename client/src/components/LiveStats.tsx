@@ -1,5 +1,5 @@
 /**
- * LiveStats — animated counters showing real-time platform stats.
+ * LiveStats  -  animated counters showing real-time platform stats.
  * Counts up from 0 when the element enters the viewport.
  */
 import { useEffect, useRef, useState } from "react";

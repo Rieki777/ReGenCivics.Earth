@@ -100,7 +100,7 @@ export function FirstVisitOnboarding() {
           <button
             onClick={dismiss}
             className="absolute top-4 right-4 text-white/40 hover:text-white/80 transition-colors p-1.5 rounded-lg hover:bg-white/10"
-            aria-label="Skip — browse freely"
+            aria-label="Skip  -  browse freely"
           >
             <X className="w-4 h-4" />
           </button>

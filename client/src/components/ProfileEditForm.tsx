@@ -1,5 +1,5 @@
 /**
- * ProfileEditForm — Path-aware profile edit form shown on /profile.
+ * ProfileEditForm  -  Path-aware profile edit form shown on /profile.
  * Fields vary based on the user's chosen path.
  */
 import { useState, useEffect } from "react";

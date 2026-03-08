@@ -101,7 +101,7 @@ function FundStatusBanner() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-[#1a472a]">
           <div className="flex items-center gap-2 font-bold text-sm sm:text-base">
             <PulsingDot color="#1a472a" />
-            <span>Fund In Formation — Currently Accepting Letters of Intent</span>
+            <span>Fund In Formation  -  Currently Accepting Letters of Intent</span>
           </div>
           <span className="hidden sm:inline text-[#1a472a]/60">|</span>
           <Link href="/loi">
@@ -1709,7 +1709,7 @@ export default function Opportunity() {
                 </FAQItem>
 
                 <FAQItem question="What if you don't reach the target fund size?">
-                  <p>We won't accept any capital until we have &gt;$20M committed — at that point we'll have all investors wire the funds and start operations. Until then, your Letter of Intent is a non-binding expression of interest; no money moves. Above minimum, we can deploy effectively with adjusted portfolio allocation across fewer but well-diversified projects. The fund can operate successfully anywhere between $20M and $50M.</p>
+                  <p>We won't accept any capital until we have &gt;$20M committed  -  at that point we'll have all investors wire the funds and start operations. Until then, your Letter of Intent is a non-binding expression of interest; no money moves. Above minimum, we can deploy effectively with adjusted portfolio allocation across fewer but well-diversified projects. The fund can operate successfully anywhere between $20M and $50M.</p>
                 </FAQItem>
 
                 <FAQItem question="Why is the minimum investment $250,000?">

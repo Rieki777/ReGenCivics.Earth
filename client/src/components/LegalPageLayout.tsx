@@ -90,7 +90,7 @@ export default function LegalPageLayout({
       {/* Two-column layout */}
       <div className="container mx-auto max-w-6xl px-4 py-10">
         <div className="flex gap-10">
-          {/* Sticky TOC — desktop only */}
+          {/* Sticky TOC  -  desktop only */}
           {toc.length > 0 && (
             <aside className="hidden lg:block w-56 shrink-0">
               <div className="sticky top-24">

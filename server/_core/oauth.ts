@@ -91,7 +91,7 @@ async function getGoogleUserInfo(accessToken: string) {
 // ─── Apple OAuth ─────────────────────────────────────────────────────────────
 
 async function getAppleUserInfo(idToken: string) {
-  // Decode the JWT payload (no verification needed here — Apple already signed it)
+  // Decode the JWT payload (no verification needed here  -  Apple already signed it)
   const payload = JSON.parse(
     Buffer.from(idToken.split(".")[1], "base64url").toString()
   );

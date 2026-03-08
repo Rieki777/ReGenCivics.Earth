@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Rye's Preferences
+
+- **File uploads**: When Rye uploads files (CSVs, images, docs, etc.), handle moving them to the correct project location automatically. Never give manual Finder/Explorer instructions -- just do it and confirm where they landed.
+- **Writing style**: Never use em-dashes or other common LLM text patterns (e.g. "Certainly!", "Great question!", filler affirmations, overly formal transitions). Write plainly and directly.
+
 ## Commands
 
 ```bash

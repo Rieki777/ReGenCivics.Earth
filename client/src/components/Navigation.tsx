@@ -32,7 +32,7 @@ import {
 import { SOCIAL_LINKS } from "@/components/SocialLinks";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-// Prefetch a route chunk on hover — import() is cached by the module system
+// Prefetch a route chunk on hover  -  import() is cached by the module system
 const prefetch = (path: string) => {
   const routes: Record<string, () => Promise<unknown>> = {
     "/fund": () => import("@/pages/Fund"),
@@ -496,7 +496,7 @@ export default function Navigation() {
             )}
           </div>
 
-          {/* Cmd+K Search — mobile & desktop */}
+          {/* Cmd+K Search  -  mobile & desktop */}
           <button
             onClick={() => {
               window.dispatchEvent(new CustomEvent("open-command-palette"));
@@ -519,7 +519,7 @@ export default function Navigation() {
         </nav>
       </div>
 
-      {/* Mobile Drawer — slides in from right */}
+      {/* Mobile Drawer  -  slides in from right */}
       <Drawer.Root open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} direction="right">
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[60] md:hidden" />

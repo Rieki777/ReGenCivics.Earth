@@ -10,7 +10,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 
 const PATH_WELCOMES: Record<string, string> = {
   investor: "Welcome back! As your personal guide, I can help you explore investment opportunities, understand our fund structure, review the seasonal accelerator model, or connect you to the right resources. What can I help you with?",
-  land_project: "Welcome back! I'm here to support your land project journey — whether that's showcasing your project, connecting with investors, navigating the platform, or understanding the accelerator. What would you like to explore?",
+  land_project: "Welcome back! I'm here to support your land project journey  -  whether that's showcasing your project, connecting with investors, navigating the platform, or understanding the accelerator. What would you like to explore?",
   ally: "Welcome back! I can help you understand partnership opportunities, how Alliance Partners contribute to the ecosystem, and how your organisation can plug in and add value. What are you curious about?",
   player: "Welcome, Player! I'm your guide to Quests, the Infinite Game, token rewards, and all the ways you can contribute and co-create. What would you like to know?",
 };
@@ -111,7 +111,7 @@ export default function ReGenGuide() {
             updated[updated.length - 1] = {
               ...last,
               content:
-                "Sorry, I ran into a hiccup. Please try again in a moment — or visit /schedule to book a live session with the team.",
+                "Sorry, I ran into a hiccup. Please try again in a moment  -  or visit /schedule to book a live session with the team.",
             };
           }
           return updated;

@@ -805,7 +805,7 @@ export default function Seasons() {
                 status: "active" as const,
                 color: "#ffd700",
                 outcomes: [
-                  "Upcoming cohort — opening September Equinox",
+                  "Upcoming cohort  -  opening September Equinox",
                   "Live investor due diligence for fund launch",
                   "ReGen Games & custom land games rollout",
                   "Fund governance & $RCivics token live",

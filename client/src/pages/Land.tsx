@@ -552,7 +552,7 @@ export default function Land() {
                   <ul className="space-y-2 text-white/70 text-base">
                     <li className="flex items-start gap-2">
                       <span className="text-[#d4a574] mt-1">★</span>
-                      <span>Priority given to land projects that are working towards being a case-study and incubator themselves — actively tracking and mapping their process, creating a replicable "play" for how others can mimic their protocols, and intending to host teams to come learn from them. Our priority is to support the projects that want to support more projects.</span>
+                      <span>Priority given to land projects that are working towards being a case-study and incubator themselves  -  actively tracking and mapping their process, creating a replicable "play" for how others can mimic their protocols, and intending to host teams to come learn from them. Our priority is to support the projects that want to support more projects.</span>
                     </li>
                   </ul>
                 </div>

@@ -1,5 +1,5 @@
 /**
- * Legacy data API stub — the Manus Forge data proxy is no longer available.
+ * Legacy data API stub  -  the Manus Forge data proxy is no longer available.
  * This module is kept to avoid import errors. Replace with direct API calls
  * to individual services (YouTube Data API, etc.) if needed.
  */

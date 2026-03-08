@@ -206,7 +206,7 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
         </div>
       </AnimatedSection>
 
-      {/* Personalized shortcut cards — shown above path cards for return visitors */}
+      {/* Personalized shortcut cards  -  shown above path cards for return visitors */}
       <PersonalizedCards />
 
       {/* 4 Path Cards - Mobile optimized 2x2 grid */}

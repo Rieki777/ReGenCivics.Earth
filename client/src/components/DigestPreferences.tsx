@@ -10,10 +10,10 @@ import { toast } from "sonner";
 type DigestFrequency = "never" | "weekly" | "monthly" | "seasonal";
 
 const OPTIONS: { value: DigestFrequency; label: string; description: string }[] = [
-  { value: "weekly", label: "Weekly", description: "Every Monday — stay on top of new quests & project updates" },
-  { value: "monthly", label: "Monthly", description: "First of the month — fund updates, highlights & community news" },
-  { value: "seasonal", label: "Seasonal", description: "4x per year — deep-dive reflections & major milestones" },
-  { value: "never", label: "Never", description: "No digest emails — you can always visit the site directly" },
+  { value: "weekly", label: "Weekly", description: "Every Monday  -  stay on top of new quests & project updates" },
+  { value: "monthly", label: "Monthly", description: "First of the month  -  fund updates, highlights & community news" },
+  { value: "seasonal", label: "Seasonal", description: "4x per year  -  deep-dive reflections & major milestones" },
+  { value: "never", label: "Never", description: "No digest emails  -  you can always visit the site directly" },
 ];
 
 interface Props {

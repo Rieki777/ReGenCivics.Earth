@@ -1,5 +1,5 @@
 /**
- * Voice transcription stub — the legacy AI speech proxy is no longer available.
+ * Voice transcription stub  -  the legacy AI speech proxy is no longer available.
  * To re-enable: integrate directly with OpenAI Whisper API or Cloudflare Workers AI.
  */
 

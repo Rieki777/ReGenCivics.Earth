@@ -891,7 +891,7 @@ export default function Governance() {
             <div className="flex justify-center mb-8">
               <img
                 src="/images/governance/rcvoice-vs-rgvoice.png"
-                alt="RCVoice vs RGVoice — Two Tokens Coordinating Systemic Regeneration"
+                alt="RCVoice vs RGVoice  -  Two Tokens Coordinating Systemic Regeneration"
                 className="w-full rounded-xl shadow-2xl"
                 loading="lazy"
               />

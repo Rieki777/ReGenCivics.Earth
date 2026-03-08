@@ -603,7 +603,7 @@ export default function PageBackground({
               (viewportHeight - rect.top) / (containerHeight + viewportHeight)
             ));
 
-            // Translate the oversize background div — stays GPU-composited
+            // Translate the oversize background div  -  stays GPU-composited
             const offset = scrollProgress * parallaxSpeed * containerHeight * 0.15;
             bgRef.current.style.transform = `translateY(${offset}px)`;
           }
@@ -647,7 +647,7 @@ export default function PageBackground({
         />
       )}
 
-      {/* Full-res background image layer — scroll attachment + transform parallax keeps
+      {/* Full-res background image layer  -  scroll attachment + transform parallax keeps
           the image GPU-composited for sharp, crisp rendering on all screen densities */}
       <div
         ref={bgRef}

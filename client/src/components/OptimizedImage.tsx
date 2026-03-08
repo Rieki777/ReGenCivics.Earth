@@ -14,7 +14,7 @@ interface OptimizedImageProps {
   /** srcset string e.g. "img-400.webp 400w, img-800.webp 800w" */
   srcSet?: string;
   sizes?: string;
-  /** Aspect ratio placeholder (e.g. "16/9") — prevents layout shift */
+  /** Aspect ratio placeholder (e.g. "16/9")  -  prevents layout shift */
   aspectRatio?: string;
   width?: number;
   height?: number;

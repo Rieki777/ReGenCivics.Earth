@@ -1178,7 +1178,7 @@ function SocialShareQuestCard() {
     setDismissed(true);
   }
 
-  const shareText = `I'm playing the Infinite Game with @ReGenCivics — building regenerative civilizations through quests, land projects, and collective governance. Join me! 🌱 regencivics.earth`;
+  const shareText = `I'm playing the Infinite Game with @ReGenCivics  -  building regenerative civilizations through quests, land projects, and collective governance. Join me! 🌱 regencivics.earth`;
   const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
 
   if (dismissed) return null;
@@ -1331,7 +1331,7 @@ export default function PlayerProfile() {
               </Card>
             </AnimatedSection>
           ) : (
-            // Has profile — tabbed layout
+            // Has profile  -  tabbed layout
             <div className="space-y-0">
               {/* Tab nav */}
               <AnimatedSection animation="slide-up">

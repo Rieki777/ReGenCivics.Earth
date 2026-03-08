@@ -752,7 +752,7 @@ export default function Apply() {
                   <div className="group relative cursor-help">
                     <HelpCircle className="w-4 h-4 text-[#1a472a]/40 mt-0.5" />
                     <div className="absolute left-0 bottom-full mb-2 w-64 bg-[#1a472a] text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
-                      Dietary alignment matters for community cohesion. Shared meals are central to regenerative living — knowing the community's dietary culture helps prospective members assess fit before applying.
+                      Dietary alignment matters for community cohesion. Shared meals are central to regenerative living  -  knowing the community's dietary culture helps prospective members assess fit before applying.
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 /**
- * ReGen Games — Coming Soon teaser page
+ * ReGen Games  -  Coming Soon teaser page
  * Route: /regen-games
  */
 
@@ -16,7 +16,7 @@ export default function ReGenGames() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
-        title="The ReGen Games — ReGen Civics"
+        title="The ReGen Games  -  ReGen Civics"
         description="What if the Olympics wasn't about competition, but collaboration? The ReGen Games are in-person events where we regenerate community gardens, villages, watersheds, and eventually whole bioregions."
       />
 

@@ -1,7 +1,7 @@
 /**
  * Email Template Selector Component
  * Provides pre-written email templates for common admin responses.
- * Opens an inline compose form — select a template, edit subject/body, then send.
+ * Opens an inline compose form  -  select a template, edit subject/body, then send.
  */
 
 import { useState, useEffect } from "react";

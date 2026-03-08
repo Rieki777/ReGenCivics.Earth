@@ -1,5 +1,5 @@
 /**
- * Custom Games for Land Projects — Coming Soon teaser page
+ * Custom Games for Land Projects  -  Coming Soon teaser page
  * Route: /custom-games
  */
 
@@ -16,7 +16,7 @@ export default function CustomGames() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
-        title="Custom Games for Land Projects — ReGen Civics"
+        title="Custom Games for Land Projects  -  ReGen Civics"
         description="We'll replicate some of what we built here on ReGen Civics to help you create a custom game specific to your land project."
       />
 

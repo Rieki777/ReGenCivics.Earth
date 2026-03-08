@@ -1,5 +1,5 @@
 /**
- * Image generation stub — the legacy AI image proxy is no longer available.
+ * Image generation stub  -  the legacy AI image proxy is no longer available.
  * To re-enable: integrate directly with Anthropic's image capabilities,
  * OpenAI DALL-E, or Cloudflare Workers AI.
  */

@@ -193,7 +193,7 @@ export function AdminAnalytics() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgResponseTime || '—'}</div>
+            <div className="text-2xl font-bold">{avgResponseTime || '-'}</div>
             <p className="text-xs text-muted-foreground">From submission to contact</p>
           </CardContent>
         </Card>

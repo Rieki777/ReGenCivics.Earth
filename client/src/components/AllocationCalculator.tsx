@@ -231,7 +231,7 @@ export default function AllocationCalculator() {
                     <div key={p.year} className="text-center">
                       <p className="text-white/50 text-xs mb-1.5">Year {p.year}</p>
                       {p.distributionYears === 0 ? (
-                        <p className="text-white/30 text-sm font-medium">—</p>
+                        <p className="text-white/30 text-sm font-medium"> - </p>
                       ) : (
                         <>
                           <p className="text-[#7dd87d] font-bold text-sm md:text-base">
@@ -251,7 +251,7 @@ export default function AllocationCalculator() {
                 <div className="mt-4 flex items-start gap-2 bg-white/5 rounded-lg px-3 py-2">
                   <div className="w-2 h-2 rounded-full bg-white/20 mt-1 shrink-0" />
                   <p className="text-white/40 text-xs">
-                    Years 1–2 are reinvestment phase — no cash distributions. Year 3 also triggers annual
+                    Years 1–2 are reinvestment phase  -  no cash distributions. Year 3 also triggers annual
                     redemption windows (at NAV less 5% early-exit discount).
                   </p>
                 </div>
@@ -294,7 +294,7 @@ export default function AllocationCalculator() {
                     <strong className="text-white/70">{fmtFull(earmarkDDFee)}</strong>
                   </p>
                   <p className="text-white/50 text-xs">
-                    If the project passes, those funds deploy directly to that project — same return structure applies.
+                    If the project passes, those funds deploy directly to that project  -  same return structure applies.
                   </p>
                 </div>
               )}
@@ -324,7 +324,7 @@ export default function AllocationCalculator() {
                     <div>
                       <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Management Fee</p>
                       <p className="text-white font-semibold">1.5% annually</p>
-                      <p className="text-white/50 text-xs mt-0.5">Applied to NAV each year — already reflected in net IRR projections above</p>
+                      <p className="text-white/50 text-xs mt-0.5">Applied to NAV each year  -  already reflected in net IRR projections above</p>
                     </div>
                     <div>
                       <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Preferred Return</p>
@@ -337,7 +337,7 @@ export default function AllocationCalculator() {
                       <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Carried Interest</p>
                       <p className="text-white font-semibold">20% above preferred return</p>
                       <p className="text-white/50 text-xs mt-0.5">
-                        Applies to cash distributions and asset sales only —{" "}
+                        Applies to cash distributions and asset sales only  - {" "}
                         <strong className="text-white/70">not token trading gains</strong> (you keep 100% of
                         secondary market appreciation)
                       </p>
@@ -352,7 +352,7 @@ export default function AllocationCalculator() {
                   </div>
                   <div className="md:col-span-2 bg-[#7dd87d]/10 border border-[#7dd87d]/20 rounded-lg p-3 text-xs text-white/70">
                     <strong className="text-[#7dd87d]">Key insight:</strong> Carry goes to the governance
-                    treasury — controlled by all RCVoice holders including you. You're not paying carry to a
+                    treasury  -  controlled by all RCVoice holders including you. You're not paying carry to a
                     distant fund manager; you're contributing to a collectively-governed treasury you help direct.
                   </div>
                 </div>

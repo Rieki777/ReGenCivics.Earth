@@ -77,7 +77,7 @@ function getAgeInfo(createdAt: string | Date): { label: string; color: string; b
   const ageH = ageMs / 3_600_000;
   if (ageH < 24) return { label: `${Math.round(ageH)}h ago`, color: 'text-green-700', bg: 'bg-green-50 border-green-200', isOverdue: false };
   if (ageH < 48) return { label: `${Math.floor(ageH / 24)}d ago`, color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200', isOverdue: false };
-  return { label: `${Math.floor(ageH / 24)}d — overdue`, color: 'text-red-700', bg: 'bg-red-50 border-red-200', isOverdue: true };
+  return { label: `${Math.floor(ageH / 24)}d  -  overdue`, color: 'text-red-700', bg: 'bg-red-50 border-red-200', isOverdue: true };
 }
 
 // ─── Email History Panel ───────────────────────────────────────────────────────
@@ -2090,7 +2090,7 @@ function OrgClaimsAdminPanel() {
   const utils = trpc.useUtils();
   const { data: claims, isLoading } = trpc.orgClaims.listAll.useQuery();
   const approveMutation = trpc.orgClaims.approve.useMutation({
-    onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Claim approved — join requests routed to steward"); },
+    onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Claim approved  -  join requests routed to steward"); },
   });
   const rejectMutation = trpc.orgClaims.reject.useMutation({
     onSuccess: () => { utils.orgClaims.listAll.invalidate(); toast.success("Claim rejected"); },
@@ -2258,7 +2258,7 @@ function JoinRequestsAdminPanel() {
                 <p className="mt-1.5 text-xs text-[#1a472a]/60 italic border-t border-[#1a472a]/10 pt-1.5">"{req.submitterMessage}"</p>
               )}
               {!req.stewardUserId && (
-                <p className="mt-1 text-xs text-amber-600">No steward assigned — approve an org claim to route this</p>
+                <p className="mt-1 text-xs text-amber-600">No steward assigned  -  approve an org claim to route this</p>
               )}
             </div>
           ))}
@@ -2315,7 +2315,7 @@ function AdminDashboard() {
       setInvestorSearch(action.query);
       setActiveTab("investors");
     } else if (action.type === "compose" && action.to) {
-      // Open compose — navigate to investors/alliance and set the search
+      // Open compose  -  navigate to investors/alliance and set the search
       setInvestorSearch(action.to);
     } else if (action.type === "focus" && action.contactEmail) {
       setAiSelectedContact({ email: action.contactEmail, name: action.contactEmail });
@@ -2840,7 +2840,7 @@ function AdminDashboard() {
                         className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors">
                         <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
                         <span className="text-xs text-red-700">
-                          <strong>{overdueInvestors.length}</strong> investor{overdueInvestors.length !== 1 ? 's' : ''} in "new" status for 48+ hours — follow up now
+                          <strong>{overdueInvestors.length}</strong> investor{overdueInvestors.length !== 1 ? 's' : ''} in "new" status for 48+ hours  -  follow up now
                         </span>
                       </button>
                     )}

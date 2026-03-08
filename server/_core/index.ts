@@ -109,7 +109,7 @@ async function startServer() {
     const PATH_GREETINGS: Record<string, string> = {
       investor: "This user is an Investor interested in funding regenerative land projects. Tailor responses to highlight investment opportunities, returns, and project due diligence.",
       land_project: "This user has a Land Project and wants to build a regenerative community. Tailor responses to highlight how to list their project, connect with investors, and use the platform's tools.",
-      ally: "This user is an Alliance Partner — an organization supporting regenerative projects. Tailor responses to partnership opportunities, co-creation, and how to contribute expertise or resources.",
+      ally: "This user is an Alliance Partner  -  an organization supporting regenerative projects. Tailor responses to partnership opportunities, co-creation, and how to contribute expertise or resources.",
       player: "This user is a Player who wants to do Quests and co-create the Infinite Game. Tailor responses to quests, game mechanics, contribution opportunities, and community participation.",
     };
 
