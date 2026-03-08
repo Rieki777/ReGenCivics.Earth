@@ -42,7 +42,6 @@ import HowItWorks from "@/components/HowItWorks";
 import { ProgressiveOnboarding, useIsReturnVisitor } from "@/components/ProgressiveOnboarding";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { ImagePreloader } from "@/components/ImagePreloader";
-import { LiveStats } from "@/components/LiveStats";
 import { trpc } from "@/lib/trpc";
 
 // Path card data
@@ -164,9 +163,7 @@ export default function Home() {
   });
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
-  const bgImage = isReturnVisitor 
-    ? "https://assets.regencivics.earth/OySlQvtOgDYjZaIa.webp"
-    : "https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp"; // Seamless desktop background
+  const bgImage = "https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp"; // Seamless desktop background
 
   return (
     <PageBackground
@@ -222,9 +219,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        {/* Live Stats Bar */}
-        <LiveStats />
 
         {/* Hero Section with Video */}
         <section className="relative min-h-[60vh] flex items-center py-12 md:py-16">

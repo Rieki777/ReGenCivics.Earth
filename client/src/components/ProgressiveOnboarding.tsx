@@ -6,10 +6,12 @@
  */
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { ArrowRight, Coins, Sprout, Handshake, Globe, ChevronDown } from 'lucide-react';
+import { ArrowRight, Coins, Sprout, Handshake, Globe, ChevronDown, Map, Compass, MessageSquare, TrendingUp, Zap, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { PathCardImage } from '@/components/PathCardImage';
+import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/_core/hooks/useAuth';
 
 const VISIT_KEY = 'regen_civics_visit_count';
 const ONBOARDING_DISMISSED_KEY = 'regen_civics_onboarding_dismissed';
@@ -96,6 +98,97 @@ export function useIsReturnVisitor(): boolean {
   return isReturn;
 }
 
+function PersonalizedCards() {
+  const { user } = useAuth();
+  const { data: profile } = trpc.userProfiles.getMe.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 300_000,
+  });
+
+  const hasVisitedForum =
+    typeof window !== 'undefined' &&
+    localStorage.getItem('regen_visited_forum') === 'true';
+
+  if (!user || !profile) return null;
+
+  type PersonalCard = {
+    id: string;
+    title: string;
+    subtitle: string;
+    href: string;
+    image: string;
+    accentColor: string;
+    icon: React.ElementType;
+  };
+
+  const cards: PersonalCard[] = [];
+
+  const completedQuests: number[] = (() => {
+    try { return JSON.parse((profile as any).questsCompleted ?? '[]') ?? []; }
+    catch { return []; }
+  })();
+
+  if (profile.path) {
+    cards.push({ id: 'journey-quests', title: 'Journey Quests', subtitle: 'Welcome to the Journey Quests', href: '/profile#quests', image: '/images/return-cards/journey-quests.png', accentColor: '#7dd87d', icon: Map });
+  }
+  if (completedQuests.length > 0 && completedQuests.length < 12) {
+    cards.push({ id: 'next-quest', title: 'Continue Your Quest', subtitle: `Quest ${completedQuests.length + 1} of 12 awaits`, href: '/quest', image: '/images/return-cards/next-quest.png', accentColor: '#fbbf24', icon: Compass });
+  }
+  if (hasVisitedForum) {
+    cards.push({ id: 'community', title: 'Back to the Forum', subtitle: 'Continue the conversation', href: '/community', image: '/images/return-cards/community.png', accentColor: '#60a5fa', icon: MessageSquare });
+  }
+  if (profile.path === 'investor' && (profile as any).investorFormSubmitted) {
+    cards.push({ id: 'opportunity', title: 'Investor Dashboard', subtitle: 'View the opportunity', href: '/opportunity', image: '/images/return-cards/opportunity.png', accentColor: '#a78bfa', icon: TrendingUp });
+  }
+  if (profile.path === 'land_project') {
+    cards.push({ id: 'accelerator', title: 'Seasonal Accelerator', subtitle: 'Grow your project', href: '/apply', image: '/images/return-cards/accelerator.png', accentColor: '#34d399', icon: Zap });
+  }
+  if (completedQuests.length === 0 && !(profile as any).investorFormSubmitted) {
+    cards.push({ id: 'schedule', title: 'Book a Discovery Call', subtitle: 'Talk with the team', href: '/schedule', image: '/images/return-cards/schedule.png', accentColor: '#f472b6', icon: CalendarDays });
+  }
+
+  if (cards.length === 0) return null;
+
+  return (
+    <div className="w-full max-w-4xl mb-6">
+      <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-3 text-center">
+        Pick up where you left off
+      </p>
+      <div className="flex flex-wrap justify-center gap-3">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <AnimatedSection key={card.id} animation="fade-in">
+              <Link href={card.href}>
+                <div
+                  className="glass-panel p-3 w-40 md:w-48 group hover:scale-105 transition-all duration-300 cursor-pointer overflow-hidden"
+                  style={{ borderColor: `${card.accentColor}33` }}
+                >
+                  <div className="h-20 mb-2 overflow-hidden rounded-md bg-white/5">
+                    <img
+                      src={card.image}
+                      alt={card.title}
+                      className="w-full h-full object-cover"
+                      loading="eager"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <Icon className="w-3 h-3 flex-shrink-0" style={{ color: card.accentColor }} />
+                    <span className="text-white text-xs font-bold truncate" style={{ fontFamily: 'var(--font-display)' }}>
+                      {card.title}
+                    </span>
+                  </div>
+                  <p className="text-white/60 text-[10px] leading-tight">{card.subtitle}</p>
+                </div>
+              </Link>
+            </AnimatedSection>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () => void }) {
   return (
     <div className="min-h-[85vh] flex flex-col items-center justify-center py-8 px-4">
@@ -112,6 +205,9 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
           </p>
         </div>
       </AnimatedSection>
+
+      {/* Personalized shortcut cards — shown above path cards for return visitors */}
+      <PersonalizedCards />
 
       {/* 4 Path Cards - Mobile optimized 2x2 grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 max-w-4xl w-full mb-8">

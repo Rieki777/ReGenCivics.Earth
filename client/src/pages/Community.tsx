@@ -18,7 +18,7 @@ import { BackButton } from "@/components/BackButton";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -66,6 +66,11 @@ export default function Community() {
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const { t } = useLanguage();
+
+  // Track forum visit so ProgressiveOnboarding can show the "Back to Forum" card
+  useEffect(() => {
+    try { localStorage.setItem('regen_visited_forum', 'true'); } catch { /* ignore */ }
+  }, []);
 
   const { data: categories, isLoading } = trpc.forum.categories.useQuery();
 

@@ -30,6 +30,10 @@ function questImageUrl(id: number, slug: string) {
   return `${QUEST_IMG_BASE}/quest-${String(id).padStart(2, '0')}-${slug}.png`;
 }
 
+function questImageFallback(id: number, slug: string) {
+  return `/images/quests/quest-${String(id).padStart(2, '0')}-${slug}.png`;
+}
+
 // Quest data organized by season
 const questData = {
   intro: {
@@ -277,22 +281,16 @@ function QuestCard({ quest, colorClass, onOpenDetails }: { quest: typeof questDa
     >
       {/* Quest image */}
       <div className="relative w-full h-36 bg-gradient-to-br from-[#1a472a]/10 to-[#4a7c59]/10 rounded-t-xl overflow-hidden">
-        {imgUrl && !imgError ? (
+        {imgUrl ? (
           <img
-            src={imgUrl}
+            src={imgError ? questImageFallback(quest.id, slug!) : imgUrl}
             alt={`Quest ${quest.id}: ${quest.title}`}
             className="w-full h-full object-cover"
             onError={() => setImgError(true)}
             loading="lazy"
+            decoding="async"
           />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-40">
-            <ImageIcon className="w-8 h-8 text-[#1a472a]" />
-            <span className="text-[10px] text-[#1a472a] font-mono">
-              {slug ? `quest-${String(quest.id).padStart(2,'0')}-${slug}.png` : 'image coming soon'}
-            </span>
-          </div>
-        )}
+        ) : null}
         {/* Completion Badge */}
         <QuestCompletionBadge questId={questId} />
       </div>

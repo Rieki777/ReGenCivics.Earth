@@ -398,7 +398,7 @@
       transparent 80%
     );
     background-size: 300% 100%;
-    animation: gold-shimmer 4s ease-in-out infinite;
+    animation: gold-shimmer 16s ease-in-out infinite;
     pointer-events: none;
     border-radius: inherit;
   }
@@ -427,7 +427,7 @@
       transparent 80%
     );
     background-size: 300% 100%;
-    animation: green-shimmer 4s ease-in-out infinite;
+    animation: green-shimmer 16s ease-in-out infinite;
     pointer-events: none;
     border-radius: inherit;
   }

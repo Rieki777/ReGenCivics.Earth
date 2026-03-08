@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch, useLocation } from "wouter";
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navigation from "./components/Navigation";
@@ -18,9 +18,6 @@ import { ExitIntentCapture } from "./components/ExitIntentCapture";
 import CommandPalette from "./components/CommandPalette";
 import { SiteTour } from "./components/SiteTour";
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
-import { PathSelectionScreen } from "./components/PathSelectionScreen";
-import { useAuth } from "./_core/hooks/useAuth";
-import { trpc } from "./lib/trpc";
 
 // Routes that bypass site chrome (nav, footer, background effects)
 const ADMIN_ROUTES = ["/admin", "/admin/"];
@@ -163,31 +160,6 @@ function Router() {
   );
 }
 
-// Shows PathSelectionScreen once for newly-authenticated users who haven't chosen a path
-function PathOnboarding() {
-  const { user } = useAuth();
-  const [dismissed, setDismissed] = useState(false);
-
-  const { data: profile } = trpc.userProfiles.getMe.useQuery(undefined, {
-    enabled: !!user,
-    staleTime: 60_000,
-  });
-
-  useEffect(() => {
-    // Reset dismissed state when a new user logs in
-    if (!user) setDismissed(false);
-  }, [user?.id]);
-
-  if (!user || dismissed) return null;
-  // Show interstitial only when profile exists but onboarding isn't complete yet
-  // (null profile means row not created yet — treat same as incomplete)
-  if (profile && profile.onboardingComplete) return null;
-  // Don't show if profile query is still loading (undefined)
-  if (profile === undefined) return null;
-
-  return <PathSelectionScreen onComplete={() => setDismissed(true)} />;
-}
-
 // NOTE: About Theme
 // - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
 //   to keep consistent foreground/background color across components
@@ -225,7 +197,6 @@ function App() {
           {!adminMode && <CookieConsent />}
           <AnalyticsLoader />
           <ScrollToTop />
-          {!adminMode && <PathOnboarding />}
           {!adminMode && <ReGenGuide />}
           {!adminMode && <AppInner />}
           {!adminMode && <ExitIntentCapture />}
