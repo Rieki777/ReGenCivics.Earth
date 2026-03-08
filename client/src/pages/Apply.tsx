@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileUpload } from "@/components/FileUpload";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Save, MapPin, Map as MapIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Save, MapPin, Map as MapIcon, HelpCircle } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
@@ -41,6 +41,8 @@ type FormData = {
   intendedPeopleCount: number | null;
   intendedHouseholdCount: number | null;
   mixedUse: string[]; // ["residential", "commercial", "industrial"]
+  meetingFrequency: "everyday" | "2_3x_week" | "weekly" | "2_3x_month" | "monthly" | "2_3x_year" | "yearly_plus" | "";
+  dietaryPatterns: string[];
   // Values & Alignment
   regenerativePractices: string;
   governanceApproach: string;
@@ -72,6 +74,8 @@ const INITIAL_FORM_DATA: FormData = {
   intendedPeopleCount: null,
   intendedHouseholdCount: null,
   mixedUse: [],
+  meetingFrequency: "",
+  dietaryPatterns: [],
   // Values & Alignment
   regenerativePractices: "",
   governanceApproach: "",
@@ -123,6 +127,8 @@ export default function Apply() {
         } else if (key === "mixedUse") {
           // Store mixedUse as JSON string
           updateData.mixedUse = JSON.stringify(value);
+        } else if (key === "dietaryPatterns") {
+          updateData.dietaryPatterns = JSON.stringify(value);
         } else if (value !== "" && value !== null && value !== undefined) {
           updateData[key] = value;
         }
@@ -645,6 +651,31 @@ export default function Apply() {
                 </div>
               </div>
 
+              {/* Meeting Frequency */}
+              <div className="space-y-2">
+                <Label htmlFor="meetingFrequency" className="text-base font-semibold text-[#1a472a]">
+                  Meeting Frequency
+                </Label>
+                <p className="text-sm text-[#1a472a]/60">How often does your core community gather in person?</p>
+                <Select
+                  value={formData.meetingFrequency}
+                  onValueChange={(v) => updateField("meetingFrequency", v)}
+                >
+                  <SelectTrigger id="meetingFrequency">
+                    <SelectValue placeholder="Select meeting frequency..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="everyday">Everyday</SelectItem>
+                    <SelectItem value="2_3x_week">2–3× per week</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="2_3x_month">2–3× per month</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="2_3x_year">2–3× per year</SelectItem>
+                    <SelectItem value="yearly_plus">Yearly or less</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <Label htmlFor="teamSize">Core Team Size *</Label>
                 <Input
@@ -712,6 +743,47 @@ export default function Apply() {
                   rows={5}
                   className="mt-1"
                 />
+              </div>
+
+              {/* Dietary Patterns */}
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <Label className="text-base font-semibold text-[#1a472a]">Dietary Patterns</Label>
+                  <div className="group relative cursor-help">
+                    <HelpCircle className="w-4 h-4 text-[#1a472a]/40 mt-0.5" />
+                    <div className="absolute left-0 bottom-full mb-2 w-64 bg-[#1a472a] text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+                      Dietary alignment matters for community cohesion. Shared meals are central to regenerative living — knowing the community's dietary culture helps prospective members assess fit before applying.
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-[#1a472a]/60">Select all that apply to your community. This helps prospective members find aligned communities.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "vegan", label: "Vegan" },
+                    { value: "vegetarian", label: "Vegetarian" },
+                    { value: "plant_based", label: "Plant-Based" },
+                    { value: "pescatarian", label: "Pescatarian" },
+                    { value: "omnivore", label: "Omnivore" },
+                    { value: "animal_based", label: "Animal-Based" },
+                    { value: "keto", label: "Keto" },
+                    { value: "no_shared_diets", label: "No Shared Diets" },
+                  ].map(({ value, label }) => (
+                    <label key={value} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-[#1a472a]/5 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.dietaryPatterns.includes(value)}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...formData.dietaryPatterns, value]
+                            : formData.dietaryPatterns.filter(v => v !== value);
+                          updateField("dietaryPatterns", next);
+                        }}
+                        className="w-4 h-4 accent-[#4a7c59]"
+                      />
+                      <span className="text-sm text-[#1a472a]">{label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
           )}

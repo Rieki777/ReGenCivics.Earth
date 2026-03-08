@@ -72,7 +72,17 @@ export const applications = mysqlTable("applications", {
   intendedPeopleCount: int("intendedPeopleCount"), // Intended full community size (people)
   intendedHouseholdCount: int("intendedHouseholdCount"), // Intended full community size (households)
   mixedUse: text("mixedUse"), // JSON array: ["residential", "commercial", "industrial"]
-  
+  meetingFrequency: mysqlEnum("meetingFrequency", [
+    "everyday",
+    "2_3x_week",
+    "weekly",
+    "2_3x_month",
+    "monthly",
+    "2_3x_year",
+    "yearly_plus"
+  ]),
+  dietaryPatterns: text("dietaryPatterns"), // JSON array: ["vegan","vegetarian","plant_based","pescatarian","omnivore","animal_based","keto","no_shared_diets"]
+
   // Alignment & Values
   regenerativePractices: text("regenerativePractices").notNull(),
   governanceApproach: text("governanceApproach").notNull(),

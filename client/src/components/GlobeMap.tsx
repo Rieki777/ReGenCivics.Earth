@@ -71,6 +71,8 @@ export interface MapEntity {
   season?: string;
   roles?: OrgRole[];
   isGlobal?: boolean; // true for entities that orbit the globe
+  meetingFrequency?: string;
+  dietaryPatterns?: string[]; // parsed from JSON
 }
 
 // Hard-coded Season 1 Land Projects with real coordinates from slide deck
@@ -570,6 +572,36 @@ function EntityCard({
           <p className="text-[#7dd87d] text-xs font-semibold mt-1.5">Size: {entity.size}</p>
         )}
 
+        {/* Meeting Frequency */}
+        {isSelected && entity.meetingFrequency && (
+          <p className="text-white/60 text-xs mt-1">
+            <span className="text-white/40">Meets:</span>{" "}
+            {({
+              everyday: "Everyday",
+              "2_3x_week": "2–3× per week",
+              weekly: "Weekly",
+              "2_3x_month": "2–3× per month",
+              monthly: "Monthly",
+              "2_3x_year": "2–3× per year",
+              yearly_plus: "Yearly or less",
+            } as Record<string, string>)[entity.meetingFrequency] ?? entity.meetingFrequency}
+          </p>
+        )}
+
+        {/* Dietary Patterns */}
+        {isSelected && entity.dietaryPatterns && entity.dietaryPatterns.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {entity.dietaryPatterns.map((d) => (
+              <span
+                key={d}
+                className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#4a7c59]/30 text-[#7dd87d] font-medium capitalize"
+              >
+                {d.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Role tags for organizations */}
         {entity.roles && entity.roles.length > 0 && (
           <div className="flex items-center gap-1 flex-wrap mt-1.5">
@@ -694,6 +726,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
   const [globeReady, setGlobeReady] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
+  const [meetingFreqFilter, setMeetingFreqFilter] = useState<string>("");
+  const [dietaryFilter, setDietaryFilter] = useState<string>("");
   const orbitAngleRef = useRef(0);
   const orbitAnimRef = useRef<number | null>(null);
 
@@ -716,6 +750,10 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
       url: app.websiteUrl || undefined,
       status: app.status,
       season: "Season 2",
+      meetingFrequency: app.meetingFrequency || undefined,
+      dietaryPatterns: app.dietaryPatterns
+        ? (() => { try { return JSON.parse(app.dietaryPatterns); } catch { return []; } })()
+        : undefined,
     }));
   }, [applicantData]);
 
@@ -739,6 +777,12 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     if (countryFilter) {
       result = result.filter((e) => e.country === countryFilter);
     }
+    if (meetingFreqFilter) {
+      result = result.filter((e) => e.meetingFrequency === meetingFreqFilter);
+    }
+    if (dietaryFilter) {
+      result = result.filter((e) => e.dietaryPatterns?.includes(dietaryFilter));
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -750,7 +794,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
       );
     }
     return result;
-  }, [allEntities, filter, searchQuery, countryFilter]);
+  }, [allEntities, filter, searchQuery, countryFilter, meetingFreqFilter, dietaryFilter]);
 
   // Separate pinned vs global/orbiting entities
   const pinnedEntities = useMemo(() => filteredEntities.filter((e) => !e.isGlobal), [filteredEntities]);
@@ -1096,9 +1140,11 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     setSearchQuery("");
     setCountryFilter("");
     setFilter("all");
+    setMeetingFreqFilter("");
+    setDietaryFilter("");
   }, []);
 
-  const hasActiveFilters = searchQuery || countryFilter || filter !== "all";
+  const hasActiveFilters = searchQuery || countryFilter || filter !== "all" || meetingFreqFilter || dietaryFilter;
 
   // Mobile-first: on small screens, globe and cards stack vertically
   // On desktop (md+), use the overlay sidebar layout
@@ -1165,6 +1211,37 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 <div className="mt-2">
                   <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
                 </div>
+                {/* Meeting Frequency filter */}
+                <select
+                  value={meetingFreqFilter}
+                  onChange={(e) => setMeetingFreqFilter(e.target.value)}
+                  className="mt-2 text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                >
+                  <option value="">All Frequencies</option>
+                  <option value="everyday">Everyday</option>
+                  <option value="2_3x_week">2–3× / week</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="2_3x_month">2–3× / month</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="2_3x_year">2–3× / year</option>
+                  <option value="yearly_plus">Yearly or less</option>
+                </select>
+                {/* Dietary filter */}
+                <select
+                  value={dietaryFilter}
+                  onChange={(e) => setDietaryFilter(e.target.value)}
+                  className="mt-2 text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                >
+                  <option value="">All Diets</option>
+                  <option value="vegan">Vegan</option>
+                  <option value="vegetarian">Vegetarian</option>
+                  <option value="plant_based">Plant-Based</option>
+                  <option value="pescatarian">Pescatarian</option>
+                  <option value="omnivore">Omnivore</option>
+                  <option value="animal_based">Animal-Based</option>
+                  <option value="keto">Keto</option>
+                  <option value="no_shared_diets">No Shared Diets</option>
+                </select>
                 {/* Clear filters */}
                 {hasActiveFilters && (
                   <button
@@ -1307,6 +1384,37 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
             />
           </div>
           <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
+          {/* Meeting Frequency filter */}
+          <select
+            value={meetingFreqFilter}
+            onChange={(e) => setMeetingFreqFilter(e.target.value)}
+            className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer"
+          >
+            <option value="">All Frequencies</option>
+            <option value="everyday">Everyday</option>
+            <option value="2_3x_week">2–3× / week</option>
+            <option value="weekly">Weekly</option>
+            <option value="2_3x_month">2–3× / month</option>
+            <option value="monthly">Monthly</option>
+            <option value="2_3x_year">2–3× / year</option>
+            <option value="yearly_plus">Yearly or less</option>
+          </select>
+          {/* Dietary filter */}
+          <select
+            value={dietaryFilter}
+            onChange={(e) => setDietaryFilter(e.target.value)}
+            className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer"
+          >
+            <option value="">All Diets</option>
+            <option value="vegan">Vegan</option>
+            <option value="vegetarian">Vegetarian</option>
+            <option value="plant_based">Plant-Based</option>
+            <option value="pescatarian">Pescatarian</option>
+            <option value="omnivore">Omnivore</option>
+            <option value="animal_based">Animal-Based</option>
+            <option value="keto">Keto</option>
+            <option value="no_shared_diets">No Shared Diets</option>
+          </select>
           {hasActiveFilters && (
             <button
               onClick={clearFilters}

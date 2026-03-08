@@ -117,6 +117,16 @@ export const appRouter = router({
           websiteUrl: z.string().optional(),
           videoUrl: z.string().optional(),
           documentsUrl: z.string().optional(),
+          meetingFrequency: z.enum([
+            "everyday",
+            "2_3x_week",
+            "weekly",
+            "2_3x_month",
+            "monthly",
+            "2_3x_year",
+            "yearly_plus"
+          ]).optional(),
+          dietaryPatterns: z.string().optional(), // JSON array string
           additionalNotes: z.string().optional(),
           latitude: z.number().optional(),
           longitude: z.number().optional(),
@@ -317,6 +327,8 @@ export const appRouter = router({
           vision: app.vision?.substring(0, 200) || "",
           websiteUrl: app.websiteUrl,
           projectSizeHectares: app.projectSizeHectares,
+          meetingFrequency: app.meetingFrequency || undefined,
+          dietaryPatterns: app.dietaryPatterns || undefined,
         }));
     }),
   }),

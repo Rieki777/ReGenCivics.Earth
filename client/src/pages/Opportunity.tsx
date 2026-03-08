@@ -278,13 +278,18 @@ function HighlightCard({ icon: Icon, title, children, accent = false }: {
 export default function Opportunity() {
   const [, setLocation] = useLocation();
   const [verified, setVerified] = useState<boolean | null>(null);
+  const [investorName, setInvestorName] = useState<string | null>(null);
 
   useEffect(() => {
-    const isVerified = sessionStorage.getItem('investor_verified') === 'true';
+    const isVerified =
+      sessionStorage.getItem('investor_verified') === 'true' ||
+      localStorage.getItem('investor_verified') === 'true';
     if (!isVerified) {
       setLocation('/investor');
     } else {
       setVerified(true);
+      const name = localStorage.getItem('investor_name');
+      if (name) setInvestorName(name);
     }
   }, [setLocation]);
 
@@ -302,6 +307,11 @@ export default function Opportunity() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
+      {investorName && (
+        <div className="text-center py-2 text-sm text-[#7dd87d]/70">
+          Welcome back, {investorName.split(" ")[0]} 👋
+        </div>
+      )}
       <SEO {...pageSEO.opportunity} />
       <TableOfContents />
       <MobileTableOfContents />

@@ -108,6 +108,11 @@ export function ExitIntentCapture() {
     if (dismissed || show || submitted) return;
     const hasSubmitted = sessionStorage.getItem("formSubmitted");
     if (hasSubmitted) return;
+    // Don't show on investor pages if the visitor already gave their email
+    const investorVerified =
+      localStorage.getItem('investor_verified') === 'true' ||
+      sessionStorage.getItem('investor_verified') === 'true';
+    if (investorVerified && context === 'investor') return;
     setShow(true);
   }, [dismissed, show, submitted]);
 

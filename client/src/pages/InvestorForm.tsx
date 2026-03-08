@@ -177,6 +177,10 @@ export default function InvestorForm() {
     onSuccess: () => {
       // Set verification flag so /opportunity page knows the form was completed
       sessionStorage.setItem('investor_verified', 'true');
+      // Persist across sessions so returning investors skip the form
+      localStorage.setItem('investor_verified', 'true');
+      localStorage.setItem('investor_email', formData.email);
+      localStorage.setItem('investor_name', formData.fullName);
       setIsSubmitted(true);
     },
   });
