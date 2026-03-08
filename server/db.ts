@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNull, like, or } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, like, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim } from "../drizzle/schema";
@@ -2510,4 +2510,30 @@ export async function updateOrgClaimStatus(id: number, status: 'pending' | 'appr
   await db.update(orgClaims).set({ status }).where(eq(orgClaims.id, id));
   const rows = await db.select().from(orgClaims).where(eq(orgClaims.id, id)).limit(1);
   return rows[0] ?? null;
+}
+
+export async function getInvestorInquiryByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(investorInquiries).where(eq(investorInquiries.userId, userId)).orderBy(desc(investorInquiries.createdAt)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function searchApplications(query: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({
+    id: applications.id,
+    projectName: applications.projectName,
+    location: applications.location,
+    country: applications.country,
+  }).from(applications)
+    .where(
+      and(
+        ne(applications.status, "draft"),
+        or(like(applications.projectName, `%${query}%`), like(applications.location, `%${query}%`))
+      )
+    )
+    .limit(20);
+  return rows;
 }

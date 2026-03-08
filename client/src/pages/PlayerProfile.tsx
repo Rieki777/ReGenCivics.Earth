@@ -4,7 +4,7 @@
  * Players can create profiles and link their Hypha/Base accounts
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'wouter';
 import { TaoSpinner } from '@/components/TaoSpinner';
 import {
@@ -44,6 +44,13 @@ import {
   Zap,
   Hammer,
   Heart,
+  FolderOpen,
+  MapPin,
+  Layers,
+  Calculator as CalculatorIcon,
+  TrendingUp,
+  Building2,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -337,7 +344,13 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
 }
 
 // Profile Display Card
-function ProfileCard({ profile, isOwner, onUpdate }: { profile: any; isOwner: boolean; onUpdate: () => void }) {
+function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }: {
+  profile: any;
+  isOwner: boolean;
+  onUpdate: () => void;
+  onSyncTokens?: () => void;
+  syncIsPending?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   const badges: string[] = profile.badges ? JSON.parse(profile.badges) : [];
   
@@ -406,6 +419,29 @@ function ProfileCard({ profile, isOwner, onUpdate }: { profile: any; isOwner: bo
             <p className="text-sm text-[#1a472a]/60">ReGen Tokens</p>
           </div>
         </div>
+        {isOwner && onSyncTokens && (
+          profile.walletAddress ? (
+            <div className="flex items-center gap-2 mt-1">
+              <button
+                onClick={onSyncTokens}
+                disabled={syncIsPending}
+                className="flex items-center gap-1.5 text-[#4a7c59]/70 hover:text-[#4a7c59] text-xs transition-colors disabled:opacity-40"
+              >
+                <RefreshCw className={`w-3 h-3 ${syncIsPending ? "animate-spin" : ""}`} />
+                {syncIsPending ? "Syncing..." : "Refresh balances"}
+              </button>
+              {profile.lastTokenSync && (
+                <span className="text-[#1a472a]/30 text-xs">
+                  Updated {new Date(profile.lastTokenSync).toLocaleTimeString()}
+                </span>
+              )}
+            </div>
+          ) : (
+            <p className="text-[#1a472a]/40 text-xs mt-1">
+              Add your wallet address in Settings to sync balances.
+            </p>
+          )
+        )}
         
         {/* Contribution Value */}
         <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a9f4a]/20 rounded-lg p-4">
@@ -1233,10 +1269,309 @@ function SocialShareQuestCard() {
   );
 }
 
-type ProfileTab = "overview" | "quests" | "contributions" | "settings";
+// ─── Submissions Tab helpers ──────────────────────────────────────────────────
+
+function applicationStatusColor(status: string): "green" | "amber" | "red" | "blue" | "gray" {
+  const map: Record<string, "green" | "amber" | "red" | "blue" | "gray"> = {
+    draft: "gray", submitted: "blue", under_review: "blue",
+    approved: "green", rejected: "red", changes_requested: "amber",
+  };
+  return map[status] ?? "gray";
+}
+
+function campaignStatusColor(status: string): "green" | "amber" | "red" | "blue" | "gray" {
+  const map: Record<string, "green" | "amber" | "red" | "blue" | "gray"> = {
+    draft: "gray", pending_review: "blue", active: "green",
+    funded: "green", completed: "green", cancelled: "red", rejected: "red",
+  };
+  return map[status] ?? "gray";
+}
+
+function investorStatusColor(status: string): "green" | "amber" | "red" | "blue" | "gray" {
+  const map: Record<string, "green" | "amber" | "red" | "blue" | "gray"> = {
+    new: "blue", contacted: "amber", in_discussion: "amber",
+    committed: "green", declined: "red", archived: "gray",
+  };
+  return map[status] ?? "gray";
+}
+
+function SubmissionCard({
+  title, subtitle, status, statusColor, updatedAt, primaryAction, secondaryAction
+}: {
+  title: string;
+  subtitle?: string;
+  status: string;
+  statusColor: "green" | "amber" | "red" | "blue" | "gray";
+  updatedAt: string | Date;
+  primaryAction?: { label: string; href: string };
+  secondaryAction?: { label: string; href: string };
+}) {
+  const colorMap = {
+    green: "bg-green-500/20 text-green-300",
+    amber: "bg-amber-500/20 text-amber-300",
+    red: "bg-red-500/20 text-red-300",
+    blue: "bg-blue-500/20 text-blue-300",
+    gray: "bg-white/10 text-white/50",
+  };
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-white font-medium text-sm truncate">{title}</p>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colorMap[statusColor]}`}>
+            {status.replace(/_/g, " ")}
+          </span>
+        </div>
+        {subtitle && <p className="text-white/40 text-xs mt-0.5 truncate">{subtitle}</p>}
+        <p className="text-white/30 text-xs mt-0.5">Updated {new Date(updatedAt).toLocaleDateString()}</p>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {secondaryAction && (
+          <a href={secondaryAction.href} className="text-white/50 hover:text-white text-xs px-2 py-1 rounded border border-white/10 hover:border-white/30 transition-colors">
+            {secondaryAction.label}
+          </a>
+        )}
+        {primaryAction && (
+          <a href={primaryAction.href} className="text-[#1a472a] bg-[#7dd87d] hover:bg-[#6bc86b] text-xs px-3 py-1.5 rounded font-medium transition-colors">
+            {primaryAction.label}
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SubmissionsSection<T>({
+  title, icon: Icon, items, renderItem, emptyMessage, emptyAction
+}: {
+  title: string;
+  icon: React.ElementType;
+  items: T[];
+  renderItem: (item: T) => React.ReactNode;
+  emptyMessage: string;
+  emptyAction?: { label: string; href: string };
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className="w-4 h-4 text-[#7dd87d]" />
+        <h3 className="text-white font-semibold text-sm uppercase tracking-wider">{title}</h3>
+        <span className="text-white/40 text-xs">({items.length})</span>
+      </div>
+      {items.length === 0 ? (
+        <div className="bg-white/5 rounded-lg px-4 py-5 text-center">
+          <p className="text-white/40 text-sm">{emptyMessage}</p>
+          {emptyAction && (
+            <a href={emptyAction.href} className="mt-2 inline-block text-[#7dd87d] text-sm font-medium hover:underline">
+              {emptyAction.label}
+            </a>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2">{items.map(renderItem)}</div>
+      )}
+    </div>
+  );
+}
+
+function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
+  const [showClaimForm, setShowClaimForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string; type: "land_project" | "alliance_org" } | null>(null);
+  const claimMutation = trpc.orgClaims.claim.useMutation();
+
+  const { data: searchResults } = trpc.applications.search.useQuery(
+    { q: searchQuery },
+    { enabled: searchQuery.length > 2 }
+  );
+
+  const handleClaim = async () => {
+    if (!selectedOrg) return;
+    await claimMutation.mutateAsync({
+      orgType: selectedOrg.type,
+      orgId: selectedOrg.id,
+      orgName: selectedOrg.name,
+    });
+    setShowClaimForm(false);
+    setSelectedOrg(null);
+    setSearchQuery("");
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-[#7dd87d]" />
+          <h3 className="text-white font-semibold text-sm uppercase tracking-wider">Organisation & Land Project Claims</h3>
+        </div>
+        {!showClaimForm && (
+          <button onClick={() => setShowClaimForm(true)} className="text-[#7dd87d] text-xs font-medium hover:underline">
+            + Claim a listing
+          </button>
+        )}
+      </div>
+      {orgClaims.length > 0 && (
+        <div className="space-y-2 mb-4">
+          {orgClaims.map((claim) => (
+            <SubmissionCard
+              key={claim.id}
+              title={claim.orgName}
+              subtitle={claim.orgType === "land_project" ? "Land Project" : "Alliance Organisation"}
+              status={claim.status}
+              statusColor={claim.status === "approved" ? "green" : claim.status === "rejected" ? "red" : "amber"}
+              updatedAt={claim.createdAt}
+            />
+          ))}
+        </div>
+      )}
+      {showClaimForm && (
+        <div className="bg-white/5 border border-[#7dd87d]/20 rounded-lg p-4 space-y-3">
+          <p className="text-white/70 text-sm">
+            Search for a land project or organisation listed on ReGen Civics that you steward or represent.
+            After submission, an admin will verify and approve your claim.
+          </p>
+          <input
+            type="text"
+            placeholder="Search by project or organisation name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#7dd87d]/60"
+          />
+          {searchResults && searchResults.length > 0 && !selectedOrg && (
+            <div className="bg-[#0d2b1a] border border-white/10 rounded-lg divide-y divide-white/10 max-h-48 overflow-y-auto">
+              {searchResults.map((result: any) => (
+                <button
+                  key={result.id}
+                  onClick={() => { setSelectedOrg({ id: String(result.id), name: result.projectName, type: "land_project" }); setSearchQuery(result.projectName); }}
+                  className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors"
+                >
+                  <p className="text-white text-sm font-medium">{result.projectName}</p>
+                  <p className="text-white/40 text-xs">{result.location} · Land Project</p>
+                </button>
+              ))}
+            </div>
+          )}
+          {selectedOrg && (
+            <div className="flex items-center justify-between bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-lg px-4 py-3">
+              <div>
+                <p className="text-white text-sm font-medium">{selectedOrg.name}</p>
+                <p className="text-white/50 text-xs">{selectedOrg.type === "land_project" ? "Land Project" : "Alliance Org"}</p>
+              </div>
+              <button onClick={() => setSelectedOrg(null)} className="text-white/40 hover:text-white/70 text-xs">x Change</button>
+            </div>
+          )}
+          <div className="flex gap-2 justify-end pt-1">
+            <button onClick={() => { setShowClaimForm(false); setSelectedOrg(null); setSearchQuery(""); }} className="text-white/50 text-sm px-3 py-1.5 rounded hover:text-white transition-colors">
+              Cancel
+            </button>
+            <button
+              disabled={!selectedOrg || claimMutation.isPending}
+              onClick={handleClaim}
+              className="bg-[#7dd87d] text-[#1a472a] text-sm font-medium px-4 py-1.5 rounded disabled:opacity-40 hover:bg-[#6bc86b] transition-colors"
+            >
+              {claimMutation.isPending ? "Submitting..." : "Submit Claim"}
+            </button>
+          </div>
+        </div>
+      )}
+      {orgClaims.length === 0 && !showClaimForm && (
+        <p className="text-white/30 text-xs text-center py-2">No claims yet. If you steward a listed project or organisation, you can claim it above.</p>
+      )}
+    </div>
+  );
+}
+
+function SubmissionsTab() {
+  const { data: applications = [] } = trpc.applications.myApplications.useQuery();
+  const { data: campaigns = [] } = trpc.campaigns.myCampaigns.useQuery();
+  const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery();
+  const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery();
+  const { data: orgClaims = [] } = trpc.orgClaims.mine.useQuery();
+
+  return (
+    <div className="space-y-8 py-2">
+      <SubmissionsSection
+        title="Land Project Applications"
+        icon={MapPin}
+        items={applications}
+        renderItem={(app: any) => (
+          <SubmissionCard
+            key={app.id}
+            title={app.projectName}
+            subtitle={app.location}
+            status={app.status}
+            statusColor={applicationStatusColor(app.status)}
+            updatedAt={app.updatedAt}
+            primaryAction={
+              app.status === "draft" || app.status === "changes_requested"
+                ? { label: app.status === "draft" ? "Continue Editing" : "Review & Resubmit", href: `/apply?id=${app.id}` }
+                : { label: "View Application", href: `/my-applications` }
+            }
+          />
+        )}
+        emptyMessage="No applications yet."
+        emptyAction={{ label: "Apply Now", href: "/apply" }}
+      />
+      <SubmissionsSection
+        title="Crowd-Pooling Campaigns"
+        icon={Layers}
+        items={campaigns}
+        renderItem={(campaign: any) => (
+          <SubmissionCard
+            key={campaign.id}
+            title={campaign.title}
+            subtitle={campaign.location ?? campaign.projectName}
+            status={campaign.status}
+            statusColor={campaignStatusColor(campaign.status)}
+            updatedAt={campaign.updatedAt}
+            primaryAction={{ label: "Manage", href: `/campaign/${campaign.id}/manage` }}
+            secondaryAction={{ label: "Analytics", href: `/campaign/${campaign.id}/analytics` }}
+          />
+        )}
+        emptyMessage="No campaigns yet."
+        emptyAction={{ label: "Create Campaign", href: "/create-campaign" }}
+      />
+      <SubmissionsSection
+        title="Saved Contribution Profiles"
+        icon={CalculatorIcon}
+        items={savedCalcs}
+        renderItem={(sc: any) => (
+          <SubmissionCard
+            key={sc.id}
+            title={sc.name}
+            subtitle={sc.projectName ?? "Generic profile"}
+            status={sc.isDefault ? "default" : "saved"}
+            statusColor="green"
+            updatedAt={sc.updatedAt}
+            primaryAction={{ label: "Edit", href: `/calculator?savedId=${sc.id}` }}
+          />
+        )}
+        emptyMessage="No saved contribution profiles."
+        emptyAction={{ label: "Open Calculator", href: "/calculator" }}
+      />
+      {investorInquiry && (
+        <SubmissionsSection title="Investor Inquiry" icon={TrendingUp} items={[investorInquiry]} renderItem={(inv: any) => (
+          <SubmissionCard
+            key={inv.id}
+            title={inv.fullName}
+            subtitle={`${inv.organization ?? ""} · ${inv.investmentRange ?? "Range not set"}`}
+            status={inv.status}
+            statusColor={investorStatusColor(inv.status)}
+            updatedAt={inv.updatedAt}
+            primaryAction={{ label: "View Opportunity", href: "/opportunity" }}
+          />
+        )} emptyMessage="" />
+      )}
+      <OrgClaimsSection orgClaims={orgClaims} />
+    </div>
+  );
+}
+
+type ProfileTab = "overview" | "submissions" | "quests" | "contributions" | "settings";
 
 const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
+  { id: "submissions",    label: "My Submissions",  icon: FolderOpen },
   { id: "quests",         label: "Quests",         icon: BookOpen },
   { id: "contributions",  label: "Contributions",  icon: Leaf },
   { id: "settings",       label: "Settings",       icon: Settings },
@@ -1244,10 +1579,30 @@ const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[]
 
 export default function PlayerProfile() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const utils = trpc.useUtils();
   const { data: profile, isLoading: profileLoading, refetch } = trpc.playerProfiles.me.useQuery(undefined, {
     enabled: isAuthenticated,
   });
   const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
+
+  const syncTokensMutation = trpc.playerProfiles.syncTokens.useMutation({
+    onSuccess: () => {
+      utils.playerProfiles.me.invalidate();
+    },
+  });
+
+  useEffect(() => {
+    if (!profile) return;
+    if (!(profile as any).walletAddress) return;
+    const tenMinutes = 10 * 60 * 1000;
+    const lastSync = (profile as any).lastTokenSync;
+    const isStale = !lastSync ||
+      Date.now() - new Date(lastSync).getTime() > tenMinutes;
+    if (isStale && !syncTokensMutation.isPending) {
+      syncTokensMutation.mutate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(profile as any)?.walletAddress, (profile as any)?.lastTokenSync]);
 
   const isLoading = authLoading || profileLoading;
 
@@ -1361,9 +1716,22 @@ export default function PlayerProfile() {
               {activeTab === "overview" && (
                 <div className="space-y-6">
                   <AnimatedSection animation="slide-up">
-                    <ProfileCard profile={profile} isOwner={true} onUpdate={() => refetch()} />
+                    <ProfileCard
+                      profile={profile}
+                      isOwner={true}
+                      onUpdate={() => refetch()}
+                      onSyncTokens={() => syncTokensMutation.mutate()}
+                      syncIsPending={syncTokensMutation.isPending}
+                    />
                   </AnimatedSection>
                   <SocialShareQuestCard />
+                </div>
+              )}
+
+              {/* Submissions tab */}
+              {activeTab === "submissions" && (
+                <div className="mt-6">
+                  <SubmissionsTab />
                 </div>
               )}
 

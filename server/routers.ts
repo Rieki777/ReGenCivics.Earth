@@ -306,6 +306,23 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Public: Search applications by name/location (for org claim form)
+    search: publicProcedure
+      .input(z.object({ q: z.string().min(1) }))
+      .query(async ({ input }) => {
+        return db.searchApplications(input.q);
+      }),
+
+    // Self-service: get own application by ID
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const app = await db.getApplicationById(input.id);
+        if (!app) throw new TRPCError({ code: 'NOT_FOUND' });
+        if (app.userId !== ctx.user.id) throw new TRPCError({ code: 'FORBIDDEN' });
+        return app;
+      }),
+
     // Public: Get submitted applications for the globe map (limited fields)
     mapData: publicProcedure.query(async () => {
       const allApps = await db.getAllApplications();
@@ -625,6 +642,11 @@ export const appRouter = router({
         await db.updateInvestorInquiry(input.id, { status: input.status });
         return { success: true };
       }),
+
+    // Self-service: get own investor inquiry
+    mine: protectedProcedure.query(async ({ ctx }) => {
+      return db.getInvestorInquiryByUserId(ctx.user.id);
+    }),
   }),
 
   // General Inquiry router (Catch-all Routing Form)
@@ -1112,23 +1134,58 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    // Admin: Update token balances (from blockchain sync)
+    // Self-service: sync own token balances from Base blockchain.
+    // Rate-limited to once per 5 minutes by checking lastTokenSync.
     syncTokens: protectedProcedure
-      .input(z.object({
-        id: z.number(),
-        rvoiceBalance: z.number(),
-        rgenBalance: z.number(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+      .mutation(async ({ ctx }) => {
+        const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+        if (!profile) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Player profile not found" });
         }
-        await db.updatePlayerProfile(input.id, {
-          rvoiceBalance: input.rvoiceBalance,
-          rgenBalance: input.rgenBalance,
+        if (!profile.walletAddress) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "No wallet address on profile" });
+        }
+
+        // Rate limit: don't sync more than once per 5 minutes
+        if (profile.lastTokenSync) {
+          const msSince = Date.now() - new Date(profile.lastTokenSync).getTime();
+          if (msSince < 5 * 60 * 1000) {
+            return {
+              rvoice: profile.rvoiceBalance,
+              rgen: profile.rgenBalance,
+              cached: true,
+            };
+          }
+        }
+
+        const { fetchTokenBalances } = await import("./blockchain");
+        const balances = await fetchTokenBalances(profile.walletAddress);
+
+        await db.updatePlayerProfile(profile.id, {
+          rvoiceBalance: balances.rvoice,
+          rgenBalance: balances.rgen,
           lastTokenSync: new Date(),
         });
-        return { success: true };
+
+        return { rvoice: balances.rvoice, rgen: balances.rgen, cached: false };
+      }),
+
+    // Admin: force-sync any profile by ID
+    adminSyncTokens: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ input }) => {
+        const profile = await db.getPlayerProfileById(input.profileId);
+        if (!profile || !profile.walletAddress) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Profile not found or no wallet address" });
+        }
+        const { fetchTokenBalances } = await import("./blockchain");
+        const balances = await fetchTokenBalances(profile.walletAddress);
+        await db.updatePlayerProfile(profile.id, {
+          rvoiceBalance: balances.rvoice,
+          rgenBalance: balances.rgen,
+          lastTokenSync: new Date(),
+        });
+        return { rvoice: balances.rvoice, rgen: balances.rgen };
       }),
 
     // Admin: Award badge
