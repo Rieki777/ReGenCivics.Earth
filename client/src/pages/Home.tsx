@@ -38,6 +38,7 @@ import { JsonLD, schemas } from "@/components/JsonLD";
 import { PathCardImage } from "@/components/PathCardImage";
 import "@/components/PathCardImage.css";
 import AutoplayVideo from "@/components/AutoplayVideo";
+import VideoPreviewCard from "@/components/VideoPreviewCard";
 import HowItWorks from "@/components/HowItWorks";
 import { ProgressiveOnboarding, useIsReturnVisitor } from "@/components/ProgressiveOnboarding";
 import { BannerDisplay } from "@/components/BannerDisplay";
@@ -163,17 +164,19 @@ export default function Home() {
   });
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
-  const bgImage = "https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp"; // Seamless desktop background
+  const bgImage = "https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp";
+  const mobileBgImage = "https://assets.regencivics.earth/uoYdLjIIoDZIndLO.webp";
 
   return (
     <PageBackground
       backgroundImage={bgImage}
-      mobileBackgroundImage="https://assets.regencivics.earth/uoYdLjIIoDZIndLO.webp" // Seamless mobile background
+      mobileBackgroundImage={mobileBgImage}
       blurPlaceholder="https://assets.regencivics.earth/BgSdISTWNrtyvPRw.webp"
       mobileBlurPlaceholder="https://assets.regencivics.earth/hgJmIPplQaQKSPKg.webp"
       overlayOpacity={0.55}
       theme="forest"
       blendColor="18, 45, 28"
+      scrollWithPage={true}
       sectionOverlays={[
         { id: "hero", opacity: 0.35 },           // Hero - let image detail show through
         { id: "four-paths", opacity: 0.55 },      // Four Paths cards - moderate
@@ -219,6 +222,20 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Welcome Short Intro Video */}
+        <section className="relative py-10 md:py-14">
+          <div className="container max-w-4xl">
+            <AnimatedSection animation="fade-in">
+              <VideoPreviewCard
+                mp4Url="/images/clip-01-welcome.mp4"
+                title="Welcome to the Regenerative Renaissance"
+                playLabel="Watch Full Video"
+                comingSoon
+              />
+            </AnimatedSection>
+          </div>
+        </section>
 
         {/* Hero Section with Video */}
         <section className="relative min-h-[60vh] flex items-center py-12 md:py-16">

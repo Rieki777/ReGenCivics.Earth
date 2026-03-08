@@ -44,6 +44,10 @@ interface PageBackgroundProps {
   mobileBlurPlaceholder?: string;
   /** Vertical background position offset to hide creases (e.g., "-20%") */
   backgroundPositionY?: string;
+  /** When true, background scrolls WITH page content instead of being viewport-fixed.
+   *  Use this for pages with tall narrative backgrounds (e.g. Home) so the visual
+   *  journey reveals top-to-bottom as the user scrolls. Default is false (fixed). */
+  scrollWithPage?: boolean;
 }
 
 // ─── Theme-Specific Animated Particles ───────────────────────────────────
@@ -511,7 +515,7 @@ function SectionOverlayLayer({
             rgba(${overlayColor}, ${overlayOpacity * 0.6}) 50%,
             rgba(${overlayColor}, ${overlayOpacity * 0.65}) 70%,
             rgba(${overlayColor}, ${overlayOpacity * 0.75}) 90%,
-            rgba(${overlayColor}, 0.9) 100%
+            rgba(${overlayColor}, 1) 100%
           )`,
         }}
       />
@@ -538,6 +542,7 @@ export default function PageBackground({
   blurPlaceholder,
   mobileBlurPlaceholder,
   backgroundPositionY = "top",
+  scrollWithPage = false,
 }: PageBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
@@ -582,41 +587,6 @@ export default function PageBackground({
     }
   }, [mobileBackgroundImage]);
 
-  // Parallax scroll effect - uses transform (GPU-composited) instead of backgroundPositionY
-  // This keeps the background on the compositor thread for sharp, crisp rendering
-  useEffect(() => {
-    if (!parallax || isMobile) return;
-
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) return;
-
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          if (bgRef.current && containerRef.current) {
-            const rect = containerRef.current.getBoundingClientRect();
-            const containerHeight = containerRef.current.offsetHeight;
-            const viewportHeight = window.innerHeight;
-
-            const scrollProgress = Math.max(0, Math.min(1,
-              (viewportHeight - rect.top) / (containerHeight + viewportHeight)
-            ));
-
-            // Translate the oversize background div  -  stays GPU-composited
-            const offset = scrollProgress * parallaxSpeed * containerHeight * 0.15;
-            bgRef.current.style.transform = `translateY(${offset}px)`;
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [parallax, parallaxSpeed, isMobile]);
 
   const isLoaded = isMobile && mobileBackgroundImage ? mobileBgLoaded : bgLoaded;
   const activeImage = isMobile && mobileBackgroundImage ? mobileBackgroundImage : backgroundImage;
@@ -638,30 +608,31 @@ export default function PageBackground({
           style={{
             backgroundImage: `url(${activePlaceholder})`,
             backgroundSize: "cover",
-            backgroundPosition: `center ${backgroundPositionY || "center"}`,
+            backgroundPosition: `center ${backgroundPositionY || "top"}`,
             backgroundRepeat: "no-repeat",
-            backgroundAttachment: "scroll",
+            backgroundAttachment: scrollWithPage ? "scroll" : (isMobile ? "scroll" : "fixed"),
             filter: "blur(20px)",
             transform: "scale(1.1)", // Prevent blur edges from showing
           }}
         />
       )}
 
-      {/* Full-res background image layer  -  scroll attachment + transform parallax keeps
-          the image GPU-composited for sharp, crisp rendering on all screen densities */}
+      {/* Full-res background image layer */}
+      {/* scrollWithPage=true: image scrolls with content, revealing narrative top→bottom */}
+      {/* scrollWithPage=false (default): viewport-fixed, same view regardless of scroll position */}
       <div
         ref={bgRef}
         className={`absolute z-[2] transition-opacity duration-1000 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
         style={{
-          inset: isMobile ? "0" : "-8% 0",
+          inset: "0",
           backgroundImage: `url(${activeImage})`,
           backgroundSize: "cover",
-          backgroundPosition: `center ${backgroundPositionY || "center"}`,
+          backgroundPosition: `center ${backgroundPositionY || "top"}`,
           backgroundRepeat: "no-repeat",
-          backgroundAttachment: "scroll",
-          willChange: "transform",
+          backgroundAttachment: scrollWithPage ? "scroll" : (isMobile ? "scroll" : "fixed"),
+          willChange: "auto",
         }}
       />
 

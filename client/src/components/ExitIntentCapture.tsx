@@ -41,11 +41,11 @@ const contextConfig: Record<PageContext, {
 }> = {
   investor: {
     icon: <FileText className="w-5 h-5 text-[#7dd87d]" />,
-    headline: "Before You Go",
-    subline: "Take the investment thesis with you",
-    body: "Get our full investment thesis and fund overview sent directly to your inbox. No spam  -  just the information you need to make an informed decision.",
-    cta: "Send Me the Thesis",
-    successMessage: "We'll send you the investment thesis and keep you updated on the regenerative renaissance.",
+    headline: "Access the Investment Thesis",
+    subline: "Complete the investor intake form to continue",
+    body: "Our full investment thesis, fund structure, and financial projections are available to accredited investors who complete a short intake form. It takes less than 2 minutes.",
+    cta: "Take Me to the Form",
+    successMessage: "",
   },
   land: {
     icon: <Leaf className="w-5 h-5 text-[#7dd87d]" />,
@@ -90,7 +90,7 @@ const contextConfig: Record<PageContext, {
 };
 
 export function ExitIntentCapture() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [show, setShow] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -235,31 +235,53 @@ export function ExitIntentCapture() {
 
                 <p className="text-white/70 text-sm mb-5 leading-relaxed">{config.body}</p>
 
-                <form onSubmit={handleSubmit} className="space-y-3">
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                    <Input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
-                      required
-                    />
+                {context === 'investor' ? (
+                  <div className="flex flex-col gap-3 mt-2">
+                    <button
+                      onClick={() => {
+                        setShow(false);
+                        setLocation('/investor');
+                      }}
+                      className="w-full py-3 px-6 rounded-full bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors"
+                    >
+                      {config.cta}
+                    </button>
+                    <button
+                      onClick={() => { setShow(false); sessionStorage.setItem('exitIntentDismissed', '1'); setDismissed(true); }}
+                      className="w-full py-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+                    >
+                      Maybe later
+                    </button>
                   </div>
-                  <Button
-                    type="submit"
-                    disabled={newsletterMutation.isPending}
-                    className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] font-bold"
-                  >
-                    {newsletterMutation.isPending ? "Sending..." : config.cta}
-                  </Button>
-                </form>
+                ) : (
+                  <>
+                    <form onSubmit={handleSubmit} className="space-y-3">
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                        <Input
+                          type="email"
+                          placeholder="your@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={newsletterMutation.isPending}
+                        className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] font-bold"
+                      >
+                        {newsletterMutation.isPending ? "Sending..." : config.cta}
+                      </Button>
+                    </form>
 
-                <div className="flex items-center gap-1.5 mt-3 text-white/30 text-[10px]">
-                  <Shield className="w-3 h-3" />
-                  <span>Your email is encrypted and never shared.</span>
-                </div>
+                    <div className="flex items-center gap-1.5 mt-3 text-white/30 text-[10px]">
+                      <Shield className="w-3 h-3" />
+                      <span>Your email is encrypted and never shared.</span>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </motion.div>
