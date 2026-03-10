@@ -83,162 +83,194 @@ const badgeDefinitions: Record<string, { name: string; icon: string; description
 };
 
 // Profile Creation Form
+function ProfileTransitionAnimation() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-6">
+      <div className="relative flex flex-col items-center">
+        {/* Sprout line */}
+        <div className="w-0.5 h-12 bg-gradient-to-t from-[#7dd87d] to-transparent rounded-full animate-[growUp_0.5s_0.5s_ease-out_both]" style={{ animationFillMode: 'both' }} />
+        {/* Seed / core */}
+        <div className="w-10 h-10 bg-[#1a472a] rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(125,216,125,0.5)] animate-pulse">
+          <Sprout className="w-5 h-5 text-[#7dd87d]" />
+        </div>
+        {/* Glow ring */}
+        <div className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-[#7dd87d]/20 animate-ping" />
+      </div>
+      <div className="text-center space-y-1">
+        <p className="text-[#7dd87d] font-semibold">Profile created!</p>
+        <p className="text-white/60 text-sm">Your regenerative journey begins…</p>
+      </div>
+    </div>
+  );
+}
+
 function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
+  const [step, setStep] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayName, setDisplayName] = useState(() => sessionStorage.getItem('playerProfileDraft_displayName') ?? '');
-  const [bio, setBio] = useState(() => sessionStorage.getItem('playerProfileDraft_bio') ?? '');
+  const [role, setRole] = useState(() => sessionStorage.getItem('playerProfileDraft_role') ?? '');
+  const [soul, setSoul] = useState(() => sessionStorage.getItem('playerProfileDraft_soul') ?? '');
+  const [desires, setDesires] = useState(() => sessionStorage.getItem('playerProfileDraft_desires') ?? '');
+  const [gifts, setGifts] = useState(() => sessionStorage.getItem('playerProfileDraft_gifts') ?? '');
   const [baseAccountName, setBaseAccountName] = useState(() => sessionStorage.getItem('playerProfileDraft_baseAccountName') ?? '');
-  const [hyphaProfileUrl, setHyphaProfileUrl] = useState(() => sessionStorage.getItem('playerProfileDraft_hyphaProfileUrl') ?? '');
 
-  const handleDisplayNameChange = (val: string) => { setDisplayName(val); sessionStorage.setItem('playerProfileDraft_displayName', val); };
-  const handleBioChange = (val: string) => { setBio(val); sessionStorage.setItem('playerProfileDraft_bio', val); };
-  const handleBaseAccountChange = (val: string) => { setBaseAccountName(val); sessionStorage.setItem('playerProfileDraft_baseAccountName', val); };
-  const handleHyphaUrlChange = (val: string) => { setHyphaProfileUrl(val); sessionStorage.setItem('playerProfileDraft_hyphaProfileUrl', val); };
-
-  const clearDraft = () => {
-    ['displayName', 'bio', 'baseAccountName', 'hyphaProfileUrl'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
-  };
+  const persist = (key: string, val: string) => sessionStorage.setItem(`playerProfileDraft_${key}`, val);
+  const clearDraft = () => ['displayName', 'role', 'soul', 'desires', 'gifts', 'baseAccountName'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
 
   const createMutation = trpc.playerProfiles.create.useMutation({
     onSuccess: () => {
       clearDraft();
-      toast.success('Profile created successfully!');
-      onSuccess();
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setIsTransitioning(false);
+        toast.success('Profile created!');
+        onSuccess();
+      }, 1600);
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to create profile');
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!displayName.trim()) {
-      toast.error('Please enter a display name');
-      return;
-    }
+  const handleSubmit = () => {
+    if (!displayName.trim()) { toast.error('Please enter a display name'); return; }
     createMutation.mutate({
       displayName: displayName.trim(),
-      bio: bio.trim() || undefined,
+      bio: JSON.stringify({ role, soul, desires, gifts }),
       baseAccountName: baseAccountName.trim() || undefined,
-      hyphaProfileUrl: hyphaProfileUrl.trim() || undefined,
     });
   };
-  
+
+  if (isTransitioning) return <ProfileTransitionAnimation />;
+
+  // Progress bar
+  const ProgressBar = () => (
+    <div className="flex items-center gap-2 mb-6">
+      {[1, 2, 3].map(s => (
+        <div key={s} className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${step >= s ? 'bg-[#7dd87d]' : 'bg-[#1a472a]/10'}`} />
+      ))}
+      <span className="text-xs text-[#1a472a]/70 whitespace-nowrap">Step {step} of 3</span>
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="text-sm font-medium text-[#1a472a] mb-2 block">Display Name *</label>
-        <Input
-          value={displayName}
-          onChange={(e) => handleDisplayNameChange(e.target.value)}
-          placeholder="Your player name"
-          className="border-[#1a472a]/20"
-          required
-        />
-      </div>
-      
-      <div>
-        <label className="text-sm font-medium text-[#1a472a] mb-2 block">Bio</label>
-        <Textarea
-          value={bio}
-          onChange={(e) => handleBioChange(e.target.value)}
-          placeholder="Tell us about yourself and your regenerative journey..."
-          className="border-[#1a472a]/20 min-h-[100px]"
-        />
-      </div>
-      
-      <div className="bg-[#f0ebe3] p-4 rounded-lg space-y-4">
-        <div className="flex items-center gap-2 text-[#1a472a]">
-          <Wallet className="w-5 h-5 text-[#7dd87d]" />
-          <span className="font-medium">Link Your Base Blockchain Account</span>
-          <Badge variant="outline" className="text-xs text-[#1a472a]/80 border-[#1a472a]/40">Optional</Badge>
-        </div>
-        <p className="text-sm text-[#1a472a]/90">
-          Connect your Base blockchain account to verify your on-chain identity and track your RVOICE/RGEN tokens.
-        </p>
-        
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <label className="text-sm text-[#1a472a]/90">Base Blockchain Account</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button type="button" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
-                  <HelpCircle className="w-4 h-4" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-0" align="start">
-                <div className="p-3 border-b border-[#7dd87d]/20">
-                  <h4 className="font-semibold text-[#1a472a] text-sm">Where do I find this?</h4>
-                </div>
-                <div className="p-3">
-                  <img 
-                    src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png" 
-                    alt="Hypha profile showing account address with copy icon"
-                    className="w-full rounded-lg border border-[#1a472a]/10 mb-3"
-                  loading="lazy" />
-                  <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
-                    <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
-                    <li>Look at the top right of the page</li>
-                    <li>Find your account address (e.g., 0xaAaF...354e)</li>
-                    <li>Click the <strong>copy icon</strong> next to your address</li>
-                    <li>Paste it here!</li>
-                  </ol>
-                </div>
-              </PopoverContent>
-            </Popover>
+    <div className="space-y-4">
+      <ProgressBar />
+
+      {/* Step 1 — Who Are You? */}
+      {step === 1 && (
+        <div className="space-y-5">
+          <div>
+            <label className="text-sm font-semibold text-[#1a472a] mb-2 block">Your Name *</label>
+            <Input value={displayName} onChange={e => { setDisplayName(e.target.value); persist('displayName', e.target.value); }} placeholder="Your player name" className="border-[#1a472a]/20" />
           </div>
-          <Input
-            value={baseAccountName}
-            onChange={(e) => handleBaseAccountChange(e.target.value)}
-            placeholder="e.g., 0xaAaF...354e"
-            className="border-[#1a472a]/20 font-mono"
-          />
+          <div>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your role in this renaissance?</label>
+            <p className="text-xs text-[#1a472a]/70 mb-2">e.g. Land steward, investor, builder, artist…</p>
+            <Textarea value={role} onChange={e => { setRole(e.target.value); persist('role', e.target.value); }} placeholder="Land steward, investor, builder, artist…" className="border-[#1a472a]/20 min-h-[70px]" />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your soul's mission?</label>
+            <p className="text-xs text-[#1a472a]/70 mb-2">The deeper calling that brought you here…</p>
+            <Textarea value={soul} onChange={e => { setSoul(e.target.value); persist('soul', e.target.value); }} placeholder="The deeper calling that brought you here…" className="border-[#1a472a]/20 min-h-[70px]" />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you looking to get from this ecosystem?</label>
+            <p className="text-xs text-[#1a472a]/70 mb-2">What would make this worth your time and energy?</p>
+            <Textarea value={desires} onChange={e => { setDesires(e.target.value); persist('desires', e.target.value); }} placeholder="What would make this worth your time and energy?" className="border-[#1a472a]/20 min-h-[70px]" />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What would you like to offer the ecosystem?</label>
+            <p className="text-xs text-[#1a472a]/70 mb-2">Skills, resources, wisdom, connections…</p>
+            <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className="border-[#1a472a]/20 min-h-[70px]" />
+          </div>
+          <Button onClick={() => { if (!displayName.trim()) { toast.error('Please enter a display name'); return; } setStep(2); }} className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold">
+            Continue <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
-        
-        <div>
-          <label className="text-sm text-[#1a472a]/90 mb-1 block">Hypha Profile URL</label>
-          <Input
-            value={hyphaProfileUrl}
-            onChange={(e) => handleHyphaUrlChange(e.target.value)}
-            placeholder="https://hypha.earth/profile/yourname"
-            className="border-[#1a472a]/20"
-          />
+      )}
+
+      {/* Step 2 — Link Hypha Account (optional) */}
+      {step === 2 && (
+        <div className="space-y-5">
+          <div className="bg-[#f0ebe3] p-4 rounded-lg space-y-4">
+            <div className="flex items-center gap-2 text-[#1a472a]">
+              <Wallet className="w-5 h-5 text-[#7dd87d]" />
+              <span className="font-medium">Link Your Base Blockchain Account</span>
+              <Badge variant="outline" className="text-xs text-[#1a472a]/80 border-[#1a472a]/40">Optional</Badge>
+            </div>
+            <p className="text-sm text-[#1a472a]/90">Connect your Base blockchain account to verify your on-chain identity and track your RVOICE/RGEN tokens.</p>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <label className="text-sm text-[#1a472a]/90">Base Blockchain Account</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button type="button" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
+                      <HelpCircle className="w-4 h-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0" align="start">
+                    <div className="p-3 border-b border-[#7dd87d]/20">
+                      <h4 className="font-semibold text-[#1a472a] text-sm">Where do I find this?</h4>
+                    </div>
+                    <div className="p-3">
+                      <img src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png" alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" loading="lazy" />
+                      <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
+                        <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
+                        <li>Look at the top right of the page</li>
+                        <li>Find your account address (e.g., 0xaAaF…354e)</li>
+                        <li>Click the <strong>copy icon</strong> next to your address</li>
+                        <li>Paste it here!</li>
+                      </ol>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Input value={baseAccountName} onChange={e => { setBaseAccountName(e.target.value); persist('baseAccountName', e.target.value); }} placeholder="e.g., 0xaAaF…354e" className="border-[#1a472a]/20 font-mono" />
+            </div>
+            <a href="https://app.hypha.earth/en/network" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-[#7dd87d] hover:underline">
+              Create a Hypha account <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setStep(1)} className="flex-1 border-[#1a472a]/20 text-[#1a472a]">← Back</Button>
+            <Button onClick={() => setStep(3)} className="flex-1 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold">
+              Continue <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+          <button onClick={() => setStep(3)} className="w-full text-center text-sm text-[#1a472a]/70 hover:text-[#1a472a] underline">
+            Skip for now →
+          </button>
         </div>
-        
-        <a 
-          href="https://app.hypha.earth/en/network"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-sm text-[#7dd87d] hover:underline"
-        >
-          Create a Hypha account <ExternalLink className="w-3 h-3" />
-        </a>
-      </div>
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
-        disabled={createMutation.isPending}
-      >
-        {createMutation.isPending ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Creating Profile...
-          </>
-        ) : (
-          <>
-            <User className="w-4 h-4 mr-2" />
-            Create Player Profile
-          </>
-        )}
-      </Button>
-    </form>
+      )}
+
+      {/* Step 3 — Review & Create */}
+      {step === 3 && (
+        <div className="space-y-5">
+          <div className="bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-xl p-4 space-y-3">
+            <p className="text-xs text-[#1a472a]/70 uppercase tracking-wider font-semibold">Your Profile Preview</p>
+            <p className="text-lg font-bold text-[#1a472a]">{displayName || 'Your Name'}</p>
+            {role && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Role</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{role}</p></div>}
+            {soul && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Soul's Mission</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{soul}</p></div>}
+            {desires && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Seeking</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{desires}</p></div>}
+            {gifts && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Gifts to Offer</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{gifts}</p></div>}
+            {baseAccountName && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Base Account</p><p className="text-sm font-mono text-[#1a472a]/90 mt-0.5">{baseAccountName}</p></div>}
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setStep(2)} className="flex-1 border-[#1a472a]/20 text-[#1a472a]">← Back</Button>
+            <Button onClick={handleSubmit} className="flex-1 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold" disabled={createMutation.isPending}>
+              {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating…</> : <>Looks good — create my profile</>}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
 // Link Base Account Dialog
 function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
   const [baseAccountName, setBaseAccountName] = useState('');
-  const [hyphaProfileUrl, setHyphaProfileUrl] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   
   const linkMutation = trpc.playerProfiles.linkBaseAccount.useMutation({
@@ -260,7 +292,6 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
     }
     linkMutation.mutate({
       baseAccountName: baseAccountName.trim(),
-      hyphaProfileUrl: hyphaProfileUrl.trim() || undefined,
     });
   };
   
@@ -317,15 +348,6 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
               placeholder="e.g., 0xaAaF...354e"
               className="font-mono"
               required
-            />
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium mb-1 block">Hypha Profile URL</label>
-            <Input
-              value={hyphaProfileUrl}
-              onChange={(e) => setHyphaProfileUrl(e.target.value)}
-              placeholder="https://hypha.earth/profile/yourname"
             />
           </div>
           
@@ -410,13 +432,27 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }
       </div>
       
       <CardContent className="p-6 space-y-6">
-        {/* Bio */}
-        {profile.bio && (
-          <div>
-            <h3 className="text-sm font-medium text-[#1a472a]/60 mb-2">About</h3>
-            <p className="text-[#1a472a]">{profile.bio}</p>
-          </div>
-        )}
+        {/* Bio — structured soul questions or plain text fallback */}
+        {profile.bio && (() => {
+          let parsed: { role?: string; soul?: string; desires?: string; gifts?: string } | null = null;
+          try { parsed = JSON.parse(profile.bio); } catch { /* plain text */ }
+          if (parsed && (parsed.role || parsed.soul || parsed.desires || parsed.gifts)) {
+            return (
+              <div className="space-y-3">
+                {parsed.role && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Role</p><p className="text-[#1a472a]">{parsed.role}</p></div>}
+                {parsed.soul && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Soul's Mission</p><p className="text-[#1a472a]">{parsed.soul}</p></div>}
+                {parsed.desires && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Seeking</p><p className="text-[#1a472a]">{parsed.desires}</p></div>}
+                {parsed.gifts && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider font-semibold mb-0.5">Gifts to Offer</p><p className="text-[#1a472a]">{parsed.gifts}</p></div>}
+              </div>
+            );
+          }
+          return (
+            <div>
+              <h3 className="text-sm font-medium text-[#1a472a]/60 mb-2">About</h3>
+              <p className="text-[#1a472a]">{profile.bio}</p>
+            </div>
+          );
+        })()}
         
         {/* Token Balances */}
         <div className="grid grid-cols-2 gap-4">
@@ -508,17 +544,6 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }
                 </div>
                 <CheckCircle2 className="w-5 h-5 text-green-500" />
               </div>
-              
-              {profile.hyphaProfileUrl && (
-                <a 
-                  href={profile.hyphaProfileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-[#7dd87d] hover:underline text-sm"
-                >
-                  View Hypha Profile <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
               
               {profile.walletAddress && (
                 <div className="flex items-center gap-2">
@@ -1687,7 +1712,7 @@ export default function PlayerProfile() {
                     Create Your Player Profile
                   </CardTitle>
                   <CardDescription>
-                    Set up your profile to start earning badges and tracking contributions
+                    Your profile here and in Hypha is how you earn tokens and track contributions
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
