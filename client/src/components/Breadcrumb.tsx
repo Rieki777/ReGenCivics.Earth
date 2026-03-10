@@ -73,7 +73,7 @@ export function Breadcrumb({ currentLabel, className = "" }: BreadcrumbProps) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className={`flex items-center gap-1.5 text-xs text-white/40 overflow-x-auto scrollbar-hide ${className}`}
+      className={`flex items-center gap-1.5 text-xs text-white/65 overflow-x-auto scrollbar-hide ${className}`}
     >
       <Link href="/" className="hover:text-white/60 transition-colors flex-shrink-0">
         <Home className="w-3.5 h-3.5" />

@@ -177,7 +177,7 @@ export default function Apply() {
       <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
         <Card className="max-w-md p-8 text-center">
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Login Required</h2>
-          <p className="text-[#1a472a]/70 mb-6">
+          <p className="text-[#1a472a]/85 mb-6">
             You need to be logged in to submit an application.
           </p>
           <Button
@@ -201,7 +201,7 @@ export default function Apply() {
           <h1 className="text-4xl font-bold text-[#1a472a] mb-2">
             Apply for Next Season
           </h1>
-          <p className="text-[#1a472a]/70">
+          <p className="text-[#1a472a]/85">
             Join the ReGen Civics Alliance
           </p>
         </div>
@@ -416,7 +416,7 @@ export default function Apply() {
                 {/* Coordinate display + manual entry */}
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <Label htmlFor="latitude" className="text-xs text-[#1a472a]/70">Latitude</Label>
+                    <Label htmlFor="latitude" className="text-xs text-[#1a472a]/85">Latitude</Label>
                     <Input
                       id="latitude"
                       type="number"
@@ -428,7 +428,7 @@ export default function Apply() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="longitude" className="text-xs text-[#1a472a]/70">Longitude</Label>
+                    <Label htmlFor="longitude" className="text-xs text-[#1a472a]/85">Longitude</Label>
                     <Input
                       id="longitude"
                       type="number"
@@ -441,7 +441,7 @@ export default function Apply() {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <Label htmlFor="country" className="text-xs text-[#1a472a]/70">Country</Label>
+                  <Label htmlFor="country" className="text-xs text-[#1a472a]/85">Country</Label>
                   <Input
                     id="country"
                     value={formData.country}
@@ -464,13 +464,13 @@ export default function Apply() {
                         );
                       }
                     }}
-                    className="text-sm text-[#4a7c59] hover:text-[#1a472a] underline flex items-center gap-1"
+                    className="text-sm text-[#336644] hover:text-[#1a472a] underline flex items-center gap-1"
                   >
                     <MapPin className="w-3 h-3" /> Use my current location
                   </button>
                 </div>
                 {formData.latitude && formData.longitude && (
-                  <p className="text-xs text-[#4a7c59] mt-2 flex items-center gap-1">
+                  <p className="text-xs text-[#336644] mt-2 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
                     Location pinned at {formData.latitude}, {formData.longitude}
                     {formData.country && ` (${formData.country})`}
@@ -642,7 +642,7 @@ export default function Apply() {
                       className={`px-4 py-2 rounded-full border-2 transition-all capitalize ${
                         (formData.mixedUse || []).includes(use)
                           ? "border-[#7dd87d] bg-[#7dd87d]/20 text-[#1a472a]"
-                          : "border-[#1a472a]/20 bg-white text-[#1a472a]/70 hover:border-[#7dd87d]/50"
+                          : "border-[#1a472a]/20 bg-white text-[#1a472a]/85 hover:border-[#7dd87d]/50"
                       }`}
                     >
                       {use}
@@ -894,7 +894,7 @@ export default function Apply() {
                 <p className="text-[#1a472a] font-medium mb-2">
                   Ready to submit?
                 </p>
-                <p className="text-[#1a472a]/70 text-sm">
+                <p className="text-[#1a472a]/85 text-sm">
                   By submitting this application, you agree to participate in the ReGen Civics next Season and commit to the time requirements outlined in the program.
                 </p>
               </div>
@@ -918,7 +918,7 @@ export default function Apply() {
                 variant="outline"
                 onClick={saveDraft}
                 disabled={isLoading}
-                className="border-[#7dd87d] text-[#4a7c59] w-full sm:w-auto"
+                className="border-[#7dd87d] text-[#336644] w-full sm:w-auto"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save Draft

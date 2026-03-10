@@ -322,9 +322,9 @@ function DualProgressBar({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1">
             <TrendingUp className="w-3 h-3 text-[#4a7c59]" />
-            <span className="text-[#1a472a]/70">Total Value</span>
+            <span className="text-[#1a472a]/85">Total Value</span>
           </div>
-          <span className="text-[#4a7c59] font-medium">{symbol}{totalValue.toLocaleString()}</span>
+          <span className="text-[#336644] font-medium">{symbol}{totalValue.toLocaleString()}</span>
         </div>
         <div className="h-3 bg-[#1a472a]/10 rounded-full overflow-hidden relative">
           {showProposed && proposedTotal > totalValue && (
@@ -351,7 +351,7 @@ function DualProgressBar({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1">
             <DollarSign className="w-3 h-3 text-amber-600" />
-            <span className="text-[#1a472a]/70">Cash, Crypto, etc.</span>
+            <span className="text-[#1a472a]/85">Cash, Crypto, etc.</span>
           </div>
           <span className="text-amber-600 font-medium">{symbol}{financialValue.toLocaleString()}</span>
         </div>
@@ -420,7 +420,7 @@ function RoleCard({
           <h4 className="font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
             {role.title}
           </h4>
-          <p className="text-sm text-[#1a472a]/70 mt-1">{role.description}</p>
+          <p className="text-sm text-[#1a472a]/85 mt-1">{role.description}</p>
         </div>
         <Badge className="bg-purple-100 text-purple-700 flex-shrink-0">
           <Briefcase className="w-3 h-3 mr-1" />
@@ -446,8 +446,8 @@ function RoleCard({
       
       {/* Total Value */}
       <div className="flex items-center justify-between mb-3 py-2 border-t border-b border-[#1a472a]/10">
-        <span className="text-sm text-[#1a472a]/70">Total Value:</span>
-        <span className="font-bold text-[#4a7c59]">{symbol}{role.totalValue.toLocaleString()}</span>
+        <span className="text-sm text-[#1a472a]/85">Total Value:</span>
+        <span className="font-bold text-[#336644]">{symbol}{role.totalValue.toLocaleString()}</span>
       </div>
       
       {/* Skills */}
@@ -599,7 +599,7 @@ function ProjectDetailModal({
               ))}
             </div>
             
-            <div className="flex items-center gap-2 text-sm text-[#1a472a]/70">
+            <div className="flex items-center gap-2 text-sm text-[#1a472a]/85">
               <Calendar className="w-4 h-4" />
               <span>Crowd Pooling deadline: <strong>{project.deadline}</strong></span>
             </div>
@@ -730,8 +730,8 @@ function ProjectDetailModal({
           <TabsContent value="roles" className="space-y-4">
             {project.openRoles && project.openRoles.length > 0 ? (
               <>
-                <p className="text-sm text-[#1a472a]/70">
-                  These roles are open for contributors. Click "Add to Proposal" to copy the role details 
+                <p className="text-sm text-[#1a472a]/85">
+                  These roles are open for contributors. Click "Add to Proposal" to copy the role details
                   to your clipboard, then paste into the Crowd Pooling Tool. Or apply directly through the DAO.
                 </p>
                 <div className="space-y-4">
@@ -761,7 +761,7 @@ function ProjectDetailModal({
               <ol className="space-y-3 text-sm text-[#1a472a]/80">
                 <li className="flex items-start gap-2">
                   <span className="w-6 h-6 rounded-full bg-[#7dd87d] text-[#1a472a] flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
-                  <span>Use the <Link href="/crowd-pooling" className="text-[#4a7c59] underline">Crowd Pooling Tool</Link> to calculate your contribution value</span>
+                  <span>Use the <Link href="/crowd-pooling" className="text-[#336644] underline">Crowd Pooling Tool</Link> to calculate your contribution value</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="w-6 h-6 rounded-full bg-[#7dd87d] text-[#1a472a] flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
@@ -1062,7 +1062,7 @@ export default function CrowdPoolingProjects() {
                   {project.location}
                 </div>
                 
-                <p className="text-sm text-[#1a472a]/70 mb-4 line-clamp-2">
+                <p className="text-sm text-[#1a472a]/85 mb-4 line-clamp-2">
                   {project.description}
                 </p>
                 

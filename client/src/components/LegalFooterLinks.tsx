@@ -7,7 +7,7 @@ import { Link } from "wouter";
 
 export function LegalFooterLinks() {
   return (
-    <div className="flex flex-wrap justify-center gap-3 sm:gap-4 text-xs text-white/40 mt-3">
+    <div className="flex flex-wrap justify-center gap-3 sm:gap-4 text-xs text-white/65 mt-3">
       <Link href="/risk-disclosure" className="hover:text-white/60 transition-colors">
         Risk Disclosure
       </Link>

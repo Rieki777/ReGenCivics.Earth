@@ -282,7 +282,7 @@ export default function InvestorForm() {
               </p>
               
               <div className="bg-[#f0ebe3] rounded-xl p-4 mb-6">
-                <p className="text-[#1a472a]/70 text-sm mb-2">
+                <p className="text-[#1a472a]/85 text-sm mb-2">
                   You'll receive our <strong>Investment Memo</strong> shortly.
                 </p>
                 <p className="text-[#7dd87d] font-semibold text-sm">
@@ -500,7 +500,7 @@ export default function InvestorForm() {
                           />
                           <Label htmlFor="isAccreditedInvestor" className="text-[#1a472a] cursor-pointer text-sm leading-relaxed">
                             <span className="font-semibold text-[#1a472a]">I am an accredited investor</span>
-                            <span className="block text-xs text-[#1a472a]/70 mt-1">
+                            <span className="block text-xs text-[#1a472a]/85 mt-1">
                               As defined by applicable securities regulations in my jurisdiction.
                             </span>
                           </Label>
@@ -515,7 +515,7 @@ export default function InvestorForm() {
                           />
                           <Label htmlFor="understandsRisks" className="text-[#1a472a] cursor-pointer text-sm leading-relaxed">
                             <span className="font-semibold text-[#1a472a]">I understand the risks</span>
-                            <span className="block text-xs text-[#1a472a]/70 mt-1">
+                            <span className="block text-xs text-[#1a472a]/85 mt-1">
                               I understand that investments in regenerative land projects and early-stage ventures carry significant risk, including potential loss of principal.
                             </span>
                           </Label>
@@ -535,7 +535,7 @@ export default function InvestorForm() {
                                 href="/risk-disclosure" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-[#4a7c59] underline hover:text-[#7dd87d] font-medium"
+                                className="text-[#336644] underline hover:text-[#7dd87d] font-medium"
                               >
                                 View Risk Disclosures
                               </a>

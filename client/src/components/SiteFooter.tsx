@@ -26,7 +26,7 @@ export default function SiteFooter() {
               ReGen Civics
             </span>
           </div>
-          <p className="text-white/50 text-xs max-w-sm leading-relaxed">
+          <p className="text-white/70 text-xs max-w-sm leading-relaxed">
             An Infinite Game for the Regenerative Renaissance.
             Healthier lands, healthier people, increasing real world value.
           </p>
@@ -212,7 +212,7 @@ export default function SiteFooter() {
 
         {/* Bottom row: Copyright */}
         <div className="border-t border-white/10 pt-4 text-center">
-          <p className="text-white/40 text-xs">
+          <p className="text-white/65 text-xs">
             &copy; {new Date().getFullYear()}{" "}
             <a
               href="https://creativecommons.org/licenses/by-sa/4.0/"
@@ -224,7 +224,7 @@ export default function SiteFooter() {
             </a>{" "}
             ReGen Civics Alliance. Growing the ReGenerative Renaissance.
           </p>
-          <p className="text-white/30 text-[10px] mt-1">
+          <p className="text-white/60 text-[10px] mt-1">
             This site does not constitute financial advice. Please review our{" "}
             <Link href="/risk-disclosure" className="underline hover:text-white/50">
               risk disclosures

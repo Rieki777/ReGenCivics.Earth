@@ -25,7 +25,7 @@ function SignInCTA() {
       <h3 className="text-lg font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
         Track Your Contributions
       </h3>
-      <p className="text-[#1a472a]/70 text-sm mb-4">
+      <p className="text-[#1a472a]/85 text-sm mb-4">
         Sign in to save your contributions and track your impact across projects
       </p>
       <Button
@@ -95,9 +95,9 @@ export default function CrowdPooling() {
             >
               Pool Resources for Your Land Project
             </h1>
-            <p className="text-[#1a472a]/70 max-w-xl mx-auto">
-              This tool helps land projects aggregate contributions from multiple community members. 
-              Each contributor fills out their own form, and the project can combine all contributions 
+            <p className="text-[#1a472a]/85 max-w-xl mx-auto">
+              This tool helps land projects aggregate contributions from multiple community members.
+              Each contributor fills out their own form, and the project can combine all contributions
               to show the total pooled resources.
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function CrowdPooling() {
                 <p className="mb-2">
                   <strong>How to use this tool:</strong>
                 </p>
-                <ol className="list-decimal list-inside space-y-1 text-[#1a472a]/70">
+                <ol className="list-decimal list-inside space-y-1 text-[#1a472a]/85">
                   <li>Enter your project name and target funding amount</li>
                   <li>Add your immediate contributions (land, money, equipment, etc.)</li>
                   <li>Add your future value commitments (roles you will fill)</li>
@@ -200,7 +200,7 @@ export default function CrowdPooling() {
               <h3 className="text-xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                 Ready to Submit Your Contribution?
               </h3>
-              <p className="text-[#1a472a]/70 text-sm max-w-lg mx-auto">
+              <p className="text-[#1a472a]/85 text-sm max-w-lg mx-auto">
                 Take your project contributions straight to the project's DAO during their Crowd Pooling game.
               </p>
             </div>
@@ -224,7 +224,7 @@ export default function CrowdPooling() {
               </Link>
             </div>
             
-            <p className="text-center text-xs text-[#1a472a]/50 mt-3">
+            <p className="text-center text-xs text-[#1a472a]/70 mt-3">
               Click "View Projects Crowd Pooling" to see the list of projects currently accepting contributions
             </p>
           </div>
@@ -237,8 +237,8 @@ export default function CrowdPooling() {
                 The Philosophy of Crowd Pooling
               </h3>
             </div>
-            <p className="text-[#1a472a]/70 text-sm mb-4">
-              Watch this introduction video to understand the deeper philosophy behind the Crowd Pooling process 
+            <p className="text-[#1a472a]/85 text-sm mb-4">
+              Watch this introduction video to understand the deeper philosophy behind the Crowd Pooling process
               and how it transforms the way communities fund and launch regenerative projects.
             </p>
             <div className="aspect-video rounded-xl overflow-hidden bg-[#1a472a]/10">
