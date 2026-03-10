@@ -599,7 +599,7 @@ export function ContributionCalculator() {
         {/* Tips */}
         <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 mb-6">
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <Info className="w-5 h-5 text-amber-800 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-amber-800">
               <p className="font-bold mb-1">Remember:</p>
               <p>All proposals will ultimately be decided by the Voice holders in the space. Use this estimate as a starting point for your contribution proposal.</p>
@@ -678,7 +678,7 @@ export function ContributionCalculator() {
       {/* Warning Disclaimer */}
       <div className="mb-6 bg-amber-50 rounded-xl p-4 border border-amber-200">
         <div className="flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <Sparkles className="w-5 h-5 text-amber-800 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm text-amber-800 mb-3">
               <strong>CALCULATOR WILL BE EVOLVED BY PROPOSALS</strong> It's impossible to fully quantify the intangible, but to acknowledge contributions we must try. While this tool is far from perfect, if we all use the same one it will give more equitable results - and we can use the game to evolve our tool together!
@@ -687,7 +687,7 @@ export function ContributionCalculator() {
               href="https://app.hypha.earth/en/dho/regen-games/agreements/select-create-action"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white text-sm font-medium rounded-lg transition-colors"
             >
               <Send className="w-4 h-4" />
               Submit Proposal to Improve Calculator

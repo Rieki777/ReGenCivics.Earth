@@ -32,7 +32,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
           onClick={() => handleModeChange('game')}
           className={`px-7 py-3 rounded-xl font-bold text-base transition-all ${
             activeMode === 'game'
-              ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+              ? 'bg-purple-700 text-white shadow-lg shadow-purple-700/30'
               : 'bg-[#1a472a]/60 border-2 border-purple-500/40 text-purple-400 hover:border-purple-500/60'
           }`}
         >
@@ -870,7 +870,7 @@ export default function Governance() {
                 <p className="text-purple-400 font-bold mb-2">Game Governance</p>
                 <p className="text-white/70 text-sm">Designed for active community participation. The 3% decay rule ensures governance always belongs to those who are currently playing and contributing.</p>
                 <a href="https://app.hypha.earth/en/dho/regen-games/agreements" target="_blank" rel="noopener noreferrer" className="inline-block mt-3">
-                  <Button size="sm" className="bg-purple-500 text-white hover:bg-purple-600 font-bold">
+                  <Button size="sm" className="bg-purple-700 text-white hover:bg-purple-800 font-bold">
                     Explore Game Governance &rarr;
                   </Button>
                 </a>

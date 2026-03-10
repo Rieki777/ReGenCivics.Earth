@@ -741,7 +741,7 @@ function LiquidityPoolVisual() {
             onClick={() => setStep(i)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               step === i
-                ? "bg-[#4a9f9f] text-[#1a472a]"
+                ? "bg-[#4a9f9f] text-[#0d2818]"
                 : "bg-white/10 text-white/60 hover:bg-white/20"
             }`}
           >

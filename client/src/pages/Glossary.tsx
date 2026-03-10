@@ -304,12 +304,12 @@ export default function Glossary() {
                       <h3 className="text-white font-bold text-base mb-1" style={{ fontFamily: "var(--font-display)" }}>
                         {entry.term}
                       </h3>
-                      <span className="text-[#7dd87d]/50 text-[10px] uppercase tracking-wider font-bold">
+                      <span className="text-[#7dd87d] text-[10px] uppercase tracking-wider font-bold">
                         {entry.category}
                       </span>
                     </div>
                   </div>
-                  <p className="text-white/60 text-sm leading-relaxed mt-2">
+                  <p className="text-white/70 text-sm leading-relaxed mt-2">
                     {entry.definition}
                   </p>
                   {entry.relatedLink && (

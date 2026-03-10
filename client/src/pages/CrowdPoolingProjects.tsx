@@ -313,7 +313,7 @@ function DualProgressBar({
       {label && (
         <div className="flex items-center justify-between text-xs">
           <span className="font-medium text-[#1a472a]">{label}</span>
-          <span className="text-[#1a472a]/60">{symbol}{targetAmount.toLocaleString()} goal</span>
+          <span className="text-[#1a472a]/80">{symbol}{targetAmount.toLocaleString()} goal</span>
         </div>
       )}
       
@@ -339,7 +339,7 @@ function DualProgressBar({
           />
         </div>
         {showProposed && proposedTotal > totalValue && (
-          <p className="text-xs text-[#7dd87d]/80 flex items-center gap-1">
+          <p className="text-xs text-[#336644] flex items-center gap-1">
             <span className="w-2 h-2 bg-[#7dd87d]/40 rounded-full inline-block" />
             +{symbol}{(proposedTotal - totalValue).toLocaleString()} proposed
           </p>
@@ -431,15 +431,15 @@ function RoleCard({
       {/* Role Details */}
       <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
         <div className="bg-[#f8f5f0] rounded-lg p-2 text-center">
-          <p className="text-[#1a472a]/60">Weeks</p>
+          <p className="text-[#1a472a]/80">Weeks</p>
           <p className="font-bold text-[#1a472a]">{role.weeks}</p>
         </div>
         <div className="bg-[#f8f5f0] rounded-lg p-2 text-center">
-          <p className="text-[#1a472a]/60">Hrs/Week</p>
+          <p className="text-[#1a472a]/80">Hrs/Week</p>
           <p className="font-bold text-[#1a472a]">{role.hoursPerWeek}</p>
         </div>
         <div className="bg-[#f8f5f0] rounded-lg p-2 text-center">
-          <p className="text-[#1a472a]/60">{symbol}/Hour</p>
+          <p className="text-[#1a472a]/80">{symbol}/Hour</p>
           <p className="font-bold text-[#1a472a]">{role.hourlyRate}</p>
         </div>
       </div>
@@ -452,7 +452,7 @@ function RoleCard({
       
       {/* Skills */}
       <div className="mb-3">
-        <p className="text-xs text-[#1a472a]/60 mb-1">Required Skills:</p>
+        <p className="text-xs text-[#1a472a]/80 mb-1">Required Skills:</p>
         <div className="flex flex-wrap gap-1">
           {role.skills.map((skill, i) => (
             <Badge key={i} variant="secondary" className="text-xs bg-[#7dd87d]/10 text-[#1a472a]">
@@ -569,12 +569,12 @@ function ProjectDetailModal({
               
               <div className="mt-3 pt-3 border-t border-[#1a472a]/10 grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-[#1a472a]/60">Accepted Contributors</span>
+                  <span className="text-[#1a472a]/80">Accepted Contributors</span>
                   <p className="font-medium text-[#1a472a]">{project.contributors}</p>
                 </div>
                 <div>
-                  <span className="text-[#1a472a]/60">Pending Proposals</span>
-                  <p className="font-medium text-[#7dd87d]">{project.pendingContributors}</p>
+                  <span className="text-[#1a472a]/80">Pending Proposals</span>
+                  <p className="font-medium text-[#1a472a]">{project.pendingContributors}</p>
                 </div>
               </div>
             </div>
@@ -617,19 +617,19 @@ function ProjectDetailModal({
                   </h3>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-[#1a472a]/60">Land Size</p>
+                      <p className="text-[#1a472a]/80">Land Size</p>
                       <p className="font-medium text-[#1a472a]">{project.applicationData.landSize}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Land Status</p>
+                      <p className="text-[#1a472a]/80">Land Status</p>
                       <p className="font-medium text-[#1a472a]">{project.applicationData.landStatus}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Legal Structure</p>
+                      <p className="text-[#1a472a]/80">Legal Structure</p>
                       <p className="font-medium text-[#1a472a]">{project.applicationData.legalStructure}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Current Phase</p>
+                      <p className="text-[#1a472a]/80">Current Phase</p>
                       <p className="font-medium text-[#1a472a]">{project.applicationData.currentPhase}</p>
                     </div>
                   </div>
@@ -643,15 +643,15 @@ function ProjectDetailModal({
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <p className="text-[#1a472a]/60">Governance Model</p>
+                      <p className="text-[#1a472a]/80">Governance Model</p>
                       <p className="text-[#1a472a]">{project.applicationData.governanceModel}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Membership Model</p>
+                      <p className="text-[#1a472a]/80">Membership Model</p>
                       <p className="text-[#1a472a]">{project.applicationData.membershipModel}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Team Size</p>
+                      <p className="text-[#1a472a]/80">Team Size</p>
                       <p className="text-[#1a472a]">{project.applicationData.teamSize} core members</p>
                     </div>
                   </div>
@@ -665,19 +665,19 @@ function ProjectDetailModal({
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <p className="text-[#1a472a]/60">Housing Plans</p>
+                      <p className="text-[#1a472a]/80">Housing Plans</p>
                       <p className="text-[#1a472a]">{project.applicationData.housingPlans}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Food Systems</p>
+                      <p className="text-[#1a472a]/80">Food Systems</p>
                       <p className="text-[#1a472a]">{project.applicationData.foodSystems}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Water Systems</p>
+                      <p className="text-[#1a472a]/80">Water Systems</p>
                       <p className="text-[#1a472a]">{project.applicationData.waterSystems}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Energy Systems</p>
+                      <p className="text-[#1a472a]/80">Energy Systems</p>
                       <p className="text-[#1a472a]">{project.applicationData.energySystems}</p>
                     </div>
                   </div>
@@ -691,11 +691,11 @@ function ProjectDetailModal({
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <p className="text-[#1a472a]/60">Education Programs</p>
+                      <p className="text-[#1a472a]/80">Education Programs</p>
                       <p className="text-[#1a472a]">{project.applicationData.educationPrograms}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Community Engagement</p>
+                      <p className="text-[#1a472a]/80">Community Engagement</p>
                       <p className="text-[#1a472a]">{project.applicationData.communityEngagement}</p>
                     </div>
                   </div>
@@ -709,15 +709,15 @@ function ProjectDetailModal({
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div>
-                      <p className="text-[#1a472a]/60">Impact Metrics</p>
+                      <p className="text-[#1a472a]/80">Impact Metrics</p>
                       <p className="text-[#1a472a]">{project.applicationData.impactMetrics}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Challenges</p>
+                      <p className="text-[#1a472a]/80">Challenges</p>
                       <p className="text-[#1a472a]">{project.applicationData.challenges}</p>
                     </div>
                     <div>
-                      <p className="text-[#1a472a]/60">Timeline</p>
+                      <p className="text-[#1a472a]/80">Timeline</p>
                       <p className="text-[#1a472a]">{project.applicationData.timeline}</p>
                     </div>
                   </div>
@@ -749,7 +749,7 @@ function ProjectDetailModal({
             ) : (
               <div className="text-center py-8">
                 <Briefcase className="w-12 h-12 text-[#1a472a]/20 mx-auto mb-3" />
-                <p className="text-[#1a472a]/60">No open roles at this time</p>
+                <p className="text-[#1a472a]/80">No open roles at this time</p>
               </div>
             )}
           </TabsContent>
@@ -975,7 +975,7 @@ export default function CrowdPoolingProjects() {
               </div>
               <div>
                 <h3 className="font-medium text-[#1a472a] text-sm">Browse Projects</h3>
-                <p className="text-xs text-[#1a472a]/60">Click on any project to see full details and open roles</p>
+                <p className="text-xs text-[#1a472a]/80">Click on any project to see full details and open roles</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -984,7 +984,7 @@ export default function CrowdPoolingProjects() {
               </div>
               <div>
                 <h3 className="font-medium text-[#1a472a] text-sm">Create Your Proposal</h3>
-                <p className="text-xs text-[#1a472a]/60">Use the Crowd Pooling Tool to calculate your contribution</p>
+                <p className="text-xs text-[#1a472a]/80">Use the Crowd Pooling Tool to calculate your contribution</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -993,7 +993,7 @@ export default function CrowdPoolingProjects() {
               </div>
               <div>
                 <h3 className="font-medium text-[#1a472a] text-sm">Submit to Project(s)</h3>
-                <p className="text-xs text-[#1a472a]/60">Submit your proposal for project review and acceptance</p>
+                <p className="text-xs text-[#1a472a]/80">Submit your proposal for project review and acceptance</p>
               </div>
             </div>
           </div>
@@ -1004,7 +1004,7 @@ export default function CrowdPoolingProjects() {
           {dbLoading && (
             <div className="col-span-full flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-[#4a7c59]" />
-              <span className="ml-2 text-[#1a472a]/60">Loading projects...</span>
+              <span className="ml-2 text-[#1a472a]/80">Loading projects...</span>
             </div>
           )}
           {allProjects.map((project: any) => (
@@ -1057,7 +1057,7 @@ export default function CrowdPoolingProjects() {
                 <h3 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
                   {project.name}
                 </h3>
-                <div className="flex items-center gap-1 text-sm text-[#1a472a]/60 mb-3">
+                <div className="flex items-center gap-1 text-sm text-[#1a472a]/80 mb-3">
                   <MapPin className="w-3 h-3" />
                   {project.location}
                 </div>
@@ -1081,12 +1081,12 @@ export default function CrowdPoolingProjects() {
                 </div>
                 
                 {/* Stats */}
-                <div className="flex items-center justify-between text-xs text-[#1a472a]/60 mb-3">
+                <div className="flex items-center justify-between text-xs text-[#1a472a]/80 mb-3">
                   <div className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
                     {project.contributors} accepted
                     {project.pendingContributors > 0 && (
-                      <span className="text-[#7dd87d]">+{project.pendingContributors} pending</span>
+                      <span className="text-[#336644]">+{project.pendingContributors} pending</span>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
