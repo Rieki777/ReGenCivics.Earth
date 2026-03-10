@@ -728,6 +728,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
   const [countryFilter, setCountryFilter] = useState("");
   const [meetingFreqFilter, setMeetingFreqFilter] = useState<string>("");
   const [dietaryFilter, setDietaryFilter] = useState<string>("");
+  const [showFilters, setShowFilters] = useState(false);
   const orbitAngleRef = useRef(0);
   const orbitAnimRef = useRef<number | null>(null);
 
@@ -1207,49 +1208,68 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                     className="w-full bg-white/10 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
                   />
                 </div>
-                {/* Country filter */}
-                <div className="mt-2">
-                  <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
-                </div>
-                {/* Meeting Frequency filter */}
-                <select
-                  value={meetingFreqFilter}
-                  onChange={(e) => setMeetingFreqFilter(e.target.value)}
-                  className="mt-2 text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                {/* Filters toggle */}
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="mt-2 flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full px-3 py-1.5 transition-colors w-full justify-between"
                 >
-                  <option value="">All Frequencies</option>
-                  <option value="everyday">Everyday</option>
-                  <option value="2_3x_week">2–3× / week</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="2_3x_month">2–3× / month</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="2_3x_year">2–3× / year</option>
-                  <option value="yearly_plus">Yearly or less</option>
-                </select>
-                {/* Dietary filter */}
-                <select
-                  value={dietaryFilter}
-                  onChange={(e) => setDietaryFilter(e.target.value)}
-                  className="mt-2 text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
-                >
-                  <option value="">All Diets</option>
-                  <option value="vegan">Vegan</option>
-                  <option value="vegetarian">Vegetarian</option>
-                  <option value="plant_based">Plant-Based</option>
-                  <option value="pescatarian">Pescatarian</option>
-                  <option value="omnivore">Omnivore</option>
-                  <option value="animal_based">Animal-Based</option>
-                  <option value="keto">Keto</option>
-                  <option value="no_shared_diets">No Shared Diets</option>
-                </select>
-                {/* Clear filters */}
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="mt-2 text-xs text-[#7dd87d] hover:text-white flex items-center gap-1"
-                  >
-                    <X className="w-3 h-3" /> Clear all filters
-                  </button>
+                  <span className="flex items-center gap-1.5">
+                    <Filter className="w-3.5 h-3.5" />
+                    Filters
+                  </span>
+                  {hasActiveFilters && !showFilters && (
+                    <span className="bg-[#7dd87d] text-[#1a472a] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {[countryFilter, meetingFreqFilter, dietaryFilter].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+                {showFilters && (
+                  <div className="mt-2 p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
+                    <div>
+                      <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Country</p>
+                      <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
+                    </div>
+                    <div>
+                      <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Community Engagement</p>
+                      <select
+                        value={meetingFreqFilter}
+                        onChange={(e) => setMeetingFreqFilter(e.target.value)}
+                        className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                      >
+                        <option value="">All Community Engagement</option>
+                        <option value="everyday">Everyday</option>
+                        <option value="2_3x_week">2–3× / week</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="2_3x_month">2–3× / month</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="2_3x_year">2–3× / year</option>
+                        <option value="yearly_plus">Yearly or less</option>
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Diet</p>
+                      <select
+                        value={dietaryFilter}
+                        onChange={(e) => setDietaryFilter(e.target.value)}
+                        className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                      >
+                        <option value="">All Diets</option>
+                        <option value="vegan">Vegan</option>
+                        <option value="vegetarian">Vegetarian</option>
+                        <option value="plant_based">Plant-Based</option>
+                        <option value="pescatarian">Pescatarian</option>
+                        <option value="omnivore">Omnivore</option>
+                        <option value="animal_based">Animal-Based</option>
+                        <option value="keto">Keto</option>
+                        <option value="no_shared_diets">No Shared Diets</option>
+                      </select>
+                    </div>
+                    {hasActiveFilters && (
+                      <button onClick={clearFilters} className="text-xs text-[#7dd87d] hover:text-white flex items-center gap-1">
+                        <X className="w-3 h-3" /> Clear all filters
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="flex-1 overflow-y-auto p-2 space-y-2 globe-sidebar-scroll">
@@ -1383,45 +1403,66 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
             />
           </div>
-          <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
-          {/* Meeting Frequency filter */}
-          <select
-            value={meetingFreqFilter}
-            onChange={(e) => setMeetingFreqFilter(e.target.value)}
-            className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer"
+          {/* Filters toggle — mobile */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full px-3 py-1.5 transition-colors"
           >
-            <option value="">All Frequencies</option>
-            <option value="everyday">Everyday</option>
-            <option value="2_3x_week">2–3× / week</option>
-            <option value="weekly">Weekly</option>
-            <option value="2_3x_month">2–3× / month</option>
-            <option value="monthly">Monthly</option>
-            <option value="2_3x_year">2–3× / year</option>
-            <option value="yearly_plus">Yearly or less</option>
-          </select>
-          {/* Dietary filter */}
-          <select
-            value={dietaryFilter}
-            onChange={(e) => setDietaryFilter(e.target.value)}
-            className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer"
-          >
-            <option value="">All Diets</option>
-            <option value="vegan">Vegan</option>
-            <option value="vegetarian">Vegetarian</option>
-            <option value="plant_based">Plant-Based</option>
-            <option value="pescatarian">Pescatarian</option>
-            <option value="omnivore">Omnivore</option>
-            <option value="animal_based">Animal-Based</option>
-            <option value="keto">Keto</option>
-            <option value="no_shared_diets">No Shared Diets</option>
-          </select>
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="text-xs text-[#7dd87d] hover:text-white flex items-center gap-1"
-            >
-              <X className="w-3 h-3" /> Clear all filters
-            </button>
+            <Filter className="w-3.5 h-3.5" />
+            Filters
+            {hasActiveFilters && !showFilters && (
+              <span className="bg-[#7dd87d] text-[#1a472a] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {[countryFilter, meetingFreqFilter, dietaryFilter].filter(Boolean).length}
+              </span>
+            )}
+          </button>
+          {showFilters && (
+            <div className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
+              <div>
+                <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Country</p>
+                <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
+              </div>
+              <div>
+                <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Community Engagement</p>
+                <select
+                  value={meetingFreqFilter}
+                  onChange={(e) => setMeetingFreqFilter(e.target.value)}
+                  className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                >
+                  <option value="">All Community Engagement</option>
+                  <option value="everyday">Everyday</option>
+                  <option value="2_3x_week">2–3× / week</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="2_3x_month">2–3× / month</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="2_3x_year">2–3× / year</option>
+                  <option value="yearly_plus">Yearly or less</option>
+                </select>
+              </div>
+              <div>
+                <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Diet</p>
+                <select
+                  value={dietaryFilter}
+                  onChange={(e) => setDietaryFilter(e.target.value)}
+                  className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                >
+                  <option value="">All Diets</option>
+                  <option value="vegan">Vegan</option>
+                  <option value="vegetarian">Vegetarian</option>
+                  <option value="plant_based">Plant-Based</option>
+                  <option value="pescatarian">Pescatarian</option>
+                  <option value="omnivore">Omnivore</option>
+                  <option value="animal_based">Animal-Based</option>
+                  <option value="keto">Keto</option>
+                  <option value="no_shared_diets">No Shared Diets</option>
+                </select>
+              </div>
+              {hasActiveFilters && (
+                <button onClick={clearFilters} className="text-xs text-[#7dd87d] hover:text-white flex items-center gap-1">
+                  <X className="w-3 h-3" /> Clear all filters
+                </button>
+              )}
+            </div>
           )}
         </div>
 

@@ -127,7 +127,7 @@ export default function ReGenGuide() {
     <>
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-2 left-2 sm:left-auto sm:right-4 z-[9999] sm:w-[380px] max-h-[60vh] sm:max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-[#7dd87d]/30 bg-[#0a2314]">
+        <div className="fixed bottom-20 right-2 left-2 sm:right-auto sm:left-4 z-[9999] sm:w-[380px] max-h-[60vh] sm:max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-[#7dd87d]/30 bg-[#0a2314]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] border-b border-[#7dd87d]/20">
             <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export default function ReGenGuide() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-4 right-4 z-[9999] flex items-center justify-center shadow-lg transition-all duration-300 btn-press
+        className={`fixed bottom-4 left-4 z-[9999] flex items-center justify-center shadow-lg transition-all duration-300 btn-press
           w-14 h-14 rounded-full
           sm:w-auto sm:h-auto sm:px-4 sm:py-3 sm:rounded-full sm:gap-2
           ${

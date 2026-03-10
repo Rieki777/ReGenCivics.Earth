@@ -284,6 +284,37 @@ export default function Blog() {
         </div>
       </section>
 
+      {/* Featured Overview Video */}
+      <section className="py-12 px-4 bg-[#0d2818]/40">
+        <div className="container mx-auto max-w-3xl">
+          <AnimatedSection animation="slide-up">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-[#7dd87d]/20 px-3 py-1 rounded-full mb-3 border border-[#7dd87d]/30">
+                <Play className="w-4 h-4 text-[#7dd87d]" />
+                <span className="text-[#7dd87d] text-sm font-medium">Start Here</span>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+                A Conversation with a Land Steward
+              </h2>
+              <p className="text-white/70 text-base max-w-xl mx-auto">
+                A grounded overview of ReGen Civics from the perspective of someone stewarding a land project.
+              </p>
+            </div>
+            <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-[#7dd87d]/20"
+                 style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/Rbwb2I7RdFM"
+                title="ReGen Civics Overview - Land Steward Perspective"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
       {/* How-To's Section */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-5xl">
