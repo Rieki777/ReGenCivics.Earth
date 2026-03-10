@@ -33,7 +33,7 @@ export default function OnePagerPlayer() {
               <p className="text-sm text-[#7dd87d]">The Infinite Game</p>
             </div>
           </div>
-          <div className="text-right text-xs text-[#1a472a]/60">
+          <div className="text-right text-xs text-[#1a472a]/80">
             <p>regencivics.earth/game</p>
             <p>play@regencivics.earth</p>
           </div>
@@ -74,7 +74,7 @@ export default function OnePagerPlayer() {
                   <div className="w-5 h-5 rounded-full bg-[#4a7c59] text-white flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">{item.step}</div>
                   <div>
                     <p className="text-[10px] font-bold text-[#1a472a]">{item.title}</p>
-                    <p className="text-[9px] text-[#1a472a]/60">{item.desc}</p>
+                    <p className="text-[9px] text-[#1a472a]/80">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -98,7 +98,7 @@ export default function OnePagerPlayer() {
                   <span className="text-sm flex-shrink-0">{item.icon}</span>
                   <div>
                     <p className="text-[10px] font-bold text-[#1a472a]">{item.name}</p>
-                    <p className="text-[9px] text-[#1a472a]/60">{item.desc}</p>
+                    <p className="text-[9px] text-[#1a472a]/80">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -120,7 +120,7 @@ export default function OnePagerPlayer() {
             <div key={i} className="bg-[#f0f7f0] p-2 rounded text-center">
               <span className="text-xl block mb-1">{item.icon}</span>
               <p className="text-[10px] font-bold text-[#1a472a]">{item.title}</p>
-              <p className="text-[9px] text-[#1a472a]/60">{item.desc}</p>
+              <p className="text-[9px] text-[#1a472a]/80">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -129,7 +129,7 @@ export default function OnePagerPlayer() {
           <Sparkles className="w-5 h-5 text-[#d4a574]" />
           Seasons
         </h2>
-        <p className="text-xs text-[#1a472a]/70 mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+        <p className="text-xs text-[#1a472a]/85 mb-3" style={{ fontFamily: 'var(--font-body)' }}>
           The game runs in seasons aligned with natural cycles. Each season introduces new quests, 
           challenges, and rewards. Season 3 begins in 2026.
         </p>

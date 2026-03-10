@@ -41,7 +41,7 @@ export default function OnePagerLand() {
               <p className="text-sm text-[#4a7c59]">Land Projects Program</p>
             </div>
           </div>
-          <div className="text-right text-xs text-[#1a472a]/60">
+          <div className="text-right text-xs text-[#1a472a]/80">
             <p>regencivics.earth/land</p>
             <p>info@regencivics.earth</p>
           </div>
@@ -97,14 +97,14 @@ export default function OnePagerLand() {
             <div className="space-y-3">
               <div className="bg-[#f8f5f0] p-2.5 rounded-lg">
                 <p className="text-xs font-bold text-[#1a472a] mb-1">Mature Projects</p>
-                <p className="text-[10px] text-[#1a472a]/70 leading-relaxed">
+                <p className="text-[10px] text-[#1a472a]/85 leading-relaxed">
                   Existing communities with land, team, and track record. Ready for economic infrastructure, 
                   token systems, and scaling support.
                 </p>
               </div>
               <div className="bg-[#f8f5f0] p-2.5 rounded-lg">
                 <p className="text-xs font-bold text-[#1a472a] mb-1">Early-Stage Projects</p>
-                <p className="text-[10px] text-[#1a472a]/70 leading-relaxed">
+                <p className="text-[10px] text-[#1a472a]/85 leading-relaxed">
                   Visionary teams with land access and regenerative plans. Need funding, structure, 
                   and mentorship to launch.
                 </p>
@@ -129,7 +129,7 @@ export default function OnePagerLand() {
           ].map((item, i) => (
             <div key={i} className="bg-[#f0f7f0] p-2 rounded">
               <p className="text-[10px] font-bold text-[#1a472a] mb-0.5">{item.title}</p>
-              <p className="text-[9px] text-[#1a472a]/70 leading-relaxed">{item.desc}</p>
+              <p className="text-[9px] text-[#1a472a]/85 leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -152,7 +152,7 @@ export default function OnePagerLand() {
                 <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-[#4a7c59] text-white flex items-center justify-center text-[10px] md:text-xs font-bold">
                   {item.step}
                 </div>
-                <p className="text-[9px] md:text-[10px] text-[#1a472a]/70 mt-1 text-center">{item.label}</p>
+                <p className="text-[9px] md:text-[10px] text-[#1a472a]/85 mt-1 text-center">{item.label}</p>
               </div>
               {i < 4 && <div className="flex-1 h-0.5 bg-[#7dd87d]/40 mt-[-12px]" />}
             </div>

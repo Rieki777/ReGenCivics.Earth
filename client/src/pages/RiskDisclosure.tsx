@@ -234,7 +234,7 @@ export default function RiskDisclosure() {
             <p className="text-white/70 text-sm leading-relaxed">This page is provided for informational purposes only and does not constitute an offer to sell or a solicitation of an offer to buy any securities. Any such offer would only be made pursuant to a confidential private placement memorandum to accredited investors in compliance with applicable securities laws, including Regulation D under the Securities Act of 1933.</p>
             <p className="text-white/70 text-sm leading-relaxed">Past performance does not guarantee future results. Projected returns are estimates based on industry benchmarks and portfolio analysis and may not be achieved. This investment involves substantial risk, including the possible loss of principal. Forward-looking statements involve risks and uncertainties; actual results may differ materially.</p>
             <p className="text-white/70 text-sm leading-relaxed">Investment in ReGen Civics Alliance is limited to accredited investors as defined by applicable securities laws. This document does not provide tax, legal, or financial advice. Investors should consult their own advisors before making any investment decision.</p>
-            <p className="text-white/50 text-xs italic mt-3">Market data sources: Mordor Intelligence (2026), Bain & Company (2025), AgFunder News (2024), Rockefeller Foundation (2024), USDA Economic Research Service, NCREIF Farmland Property Index, BCG (2025), Forbes/Analysts (2025), Global Wellness Institute, Precedence Research, Global Sustainable Investment Review.</p>
+            <p className="text-white/60 text-xs italic mt-3">Market data sources: Mordor Intelligence (2026), Bain & Company (2025), AgFunder News (2024), Rockefeller Foundation (2024), USDA Economic Research Service, NCREIF Farmland Property Index, BCG (2025), Forbes/Analysts (2025), Global Wellness Institute, Precedence Research, Global Sustainable Investment Review.</p>
           </div>
 
           <h2 className="text-xl font-bold text-[#7dd87d] mt-10 mb-4" style={{ fontFamily: 'var(--font-display)' }}>Investor Acknowledgment</h2>
@@ -260,7 +260,7 @@ export default function RiskDisclosure() {
             </ul>
           </div>
 
-          <p className="text-white/50 text-xs mt-8 italic">
+          <p className="text-white/60 text-xs mt-8 italic">
             This Risk Disclosure does not constitute legal, tax, or investment advice. Consult qualified professionals before investing.
           </p>
       </div>
