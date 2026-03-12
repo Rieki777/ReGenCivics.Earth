@@ -53,7 +53,7 @@ export default function AMABanner() {
           <span className="font-semibold text-[#7dd87d]">Live AMA:</span>{" "}
           <span className="font-medium">{ama.projectName}</span> with{" "}
           <span className="text-white">{ama.hostName}</span>
-          {" "}&mdash; {dateLabel} at {ama.time}
+          {" "}: {dateLabel} at {ama.time}
         </p>
         <div className="flex items-center gap-2 flex-shrink-0">
           {ama.forumThreadUrl && (

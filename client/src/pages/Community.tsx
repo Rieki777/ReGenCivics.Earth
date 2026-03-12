@@ -23,6 +23,7 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
+import AMABanner from "@/components/AMABanner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PageTransition, ScrollRevealMotion, HoverCard, FloatElement } from "@/components/PageTransition";
 import { motion } from "framer-motion";
@@ -171,6 +172,7 @@ export default function Community() {
     <PageTransition>
     <div className="min-h-screen bg-[#f8f5f0]">
       <SEO {...pageSEO.community} />
+      <AMABanner />
       <BackButton />
 
       {/* Hero Section */}
