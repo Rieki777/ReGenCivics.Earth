@@ -890,8 +890,8 @@ export default function Governance() {
             </p>
             <div className="flex justify-center mb-8">
               <img
-                src="https://assets.regencivics.earth/Earned%20Through%20Quests%20(1).png"
-                alt="RCVoice vs RGVoice  -  Two Tokens Coordinating Systemic Regeneration"
+                src="/images/governance/rcvoice-vs-rgvoice.png"
+                alt="RCVoice vs RGVoice: Two Tokens Coordinating Systemic Regeneration"
                 className="w-full rounded-xl shadow-2xl"
                 loading="lazy"
               />

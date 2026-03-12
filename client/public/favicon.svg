@@ -1,25 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Dark forest green circle -->
-  <circle cx="50" cy="50" r="50" fill="#1a3a1f"/>
-
-  <!-- Massive arc wings filling the circle -->
-  <path d="M 49,64 L 49,22 A 48 48 0 0 0 6,60 Z" fill="#FFD700"/>
-  <path d="M 51,64 L 51,22 A 48 48 0 0 1 94,60 Z" fill="#FFD700"/>
-  <!-- Wing inner feather layer for depth -->
-  <path d="M 49,64 L 49,28 A 40 40 0 0 0 12,62 Z" fill="#c8982a" opacity="0.38"/>
-  <path d="M 51,64 L 51,28 A 40 40 0 0 1 88,62 Z" fill="#c8982a" opacity="0.38"/>
-
-  <!-- Body: tall single oval, head merged in -->
-  <ellipse cx="50" cy="57" rx="7" ry="16" fill="#FFD700"/>
-
-  <!-- Flame crest: 3 spikes for phoenix character -->
-  <polygon points="50,41 47,26 50,15 53,26" fill="#FFD700"/>
-  <polygon points="45,43 43,30 45,24 47,30" fill="#FFD700" opacity="0.85"/>
-  <polygon points="55,43 57,30 55,24 53,30" fill="#FFD700" opacity="0.85"/>
-
-  <!-- Fan tail: wide wedge polygon, unmistakably a tail -->
-  <polygon points="43,73 57,73 70,94 30,94" fill="#FFD700"/>
-
-  <!-- Eye -->
-  <circle cx="53" cy="50" r="2.5" fill="#1a3a1f"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 10 84 80">
+  <!-- Seeds of Life: 7 interlocking circles -->
+  <!-- Center circle -->
+  <circle cx="50" cy="50" r="20" fill="rgba(125,216,125,0.25)" stroke="#FFD700" stroke-width="2"/>
+  <!-- Right -->
+  <circle cx="70" cy="50" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <!-- Lower-right -->
+  <circle cx="60" cy="67.32" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <!-- Lower-left -->
+  <circle cx="40" cy="67.32" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <!-- Left -->
+  <circle cx="30" cy="50" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <!-- Upper-left -->
+  <circle cx="40" cy="32.68" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <!-- Upper-right -->
+  <circle cx="60" cy="32.68" r="20" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <!-- Center accent dot -->
+  <circle cx="50" cy="50" r="4" fill="#7dd87d"/>
 </svg>
