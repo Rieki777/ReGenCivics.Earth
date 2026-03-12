@@ -1,7 +1,7 @@
-import { and, desc, eq, gt, isNull, like, ne, or } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, like, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1908,6 +1908,20 @@ export async function deleteCustomTemplate(templateKey: string): Promise<void> {
 // Forum Helpers
 // ==========================================
 
+export async function createForumCategory(data: { name: string; slug: string; description?: string; icon?: string; color?: string; sortOrder?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const [result] = await db.insert(forumCategories).values({
+    name: data.name,
+    slug: data.slug,
+    description: data.description ?? null,
+    icon: data.icon ?? null,
+    color: data.color ?? null,
+    sortOrder: data.sortOrder ?? 0,
+  });
+  return (result as any).insertId as number;
+}
+
 export async function listForumCategories() {
   const db = await getDb();
   if (!db) return [];
@@ -1943,7 +1957,7 @@ export async function getForumPost(id: number) {
   return row || null;
 }
 
-export async function createForumPost(data: { categoryId: number; authorId: number; title: string; content: string; tags?: string[]; postType?: string; isPinned?: number; threadStage?: string; chainId?: number }) {
+export async function createForumPost(data: { categoryId: number; authorId: number; title: string; content: string; tags?: string[]; postType?: string; isPinned?: number; threadStage?: string; chainId?: number; bioregionId?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const [result] = await db.insert(forumPosts).values({
@@ -1958,6 +1972,7 @@ export async function createForumPost(data: { categoryId: number; authorId: numb
     lastReplyBy: data.authorId,
     threadStage: data.threadStage || null,
     chainId: data.chainId || null,
+    bioregionId: data.bioregionId || null,
   });
   return result.insertId;
 }
@@ -2090,6 +2105,16 @@ export async function deleteForumReply(id: number) {
       await db.update(forumPosts).set({ replyCount: post.replyCount - 1 }).where(eq(forumPosts.id, reply.postId));
     }
   }
+}
+
+export async function incrementReplyTriedThis(replyId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(forumReplies)
+    .set({ triedThis: sql`${forumReplies.triedThis} + 1` })
+    .where(eq(forumReplies.id, replyId));
+  const [updated] = await db.select({ triedThis: forumReplies.triedThis }).from(forumReplies).where(eq(forumReplies.id, replyId)).limit(1);
+  return updated?.triedThis ?? 0;
 }
 
 // ==========================================
@@ -2671,4 +2696,47 @@ export async function getRecentForumPostsForDigest(): Promise<{ title: string; c
     .orderBy(desc(forumPosts.replyCount))
     .limit(10);
   return rows;
+}
+
+// ─── C9: Knowledge Map ────────────────────────────────────────────────────────
+export async function listKnowledgeMapEntries(categoryId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const query = categoryId
+    ? db.select().from(knowledgeMapEntries).where(eq(knowledgeMapEntries.categoryId, categoryId))
+    : db.select().from(knowledgeMapEntries);
+  return query.orderBy(knowledgeMapEntries.sortOrder, knowledgeMapEntries.createdAt);
+}
+
+export async function listPendingKnowledgeMapSuggestions() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(knowledgeMapEntries)
+    .where(eq(knowledgeMapEntries.suggestedByAI, 1))
+    .orderBy(knowledgeMapEntries.createdAt);
+}
+
+export async function addKnowledgeMapEntry(data: InsertKnowledgeMapEntry) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const [result] = await db.insert(knowledgeMapEntries).values(data);
+  return (result as any).insertId as number;
+}
+
+export async function approveKnowledgeMapEntry(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(knowledgeMapEntries).set({ approvedAt: new Date() }).where(eq(knowledgeMapEntries.id, id));
+}
+
+export async function deleteKnowledgeMapEntry(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(knowledgeMapEntries).where(eq(knowledgeMapEntries.id, id));
+}
+
+export async function reorderKnowledgeMapEntry(id: number, sortOrder: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(knowledgeMapEntries).set({ sortOrder }).where(eq(knowledgeMapEntries.id, id));
 }

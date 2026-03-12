@@ -72,6 +72,7 @@ const AdminKanban = lazy(() => import("@/components/AdminKanban").then(m => ({ d
 const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then(m => ({ default: m.ActivityTimeline })));
 const AdminAnalyticsLazy = lazy(() => import("@/components/AdminAnalytics").then(m => ({ default: m.AdminAnalytics })));
 import { AdminImageStudio } from "@/components/AdminImageStudio";
+import KnowledgeMapAdminPanel from "@/components/KnowledgeMapAdminPanel";
 
 const ADMIN_PASSWORD = "333";
 
@@ -2612,7 +2613,7 @@ function ProjectConnectionsAdmin() {
                   <span className="font-semibold">#{c.postAId}</span>
                   <span className="text-[#1a472a]/40 mx-2">{c.connectionType === "needs_each_other" ? "needs" : "similar to"}</span>
                   <span className="font-semibold">#{c.postBId}</span>
-                  {c.note && <span className="text-[#1a472a]/50 ml-2 text-xs">— {c.note}</span>}
+                  {c.note && <span className="text-[#1a472a]/50 ml-2 text-xs">: {c.note}</span>}
                 </div>
                 <Button
                   size="sm"
@@ -4721,6 +4722,7 @@ function AdminDashboard() {
               <JoinRequestsAdminPanel />
               <ProjectConnectionsAdmin />
               <GlossaryAdminPanel />
+              <KnowledgeMapAdminPanel />
             </div>
           </TabsContent>
 

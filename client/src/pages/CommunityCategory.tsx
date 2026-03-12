@@ -5,7 +5,7 @@
 import { Link, useLocation, useParams } from "wouter";
 import {
   MessageCircle, ArrowLeft, Plus, Eye, Clock, Heart,
-  ChevronRight, Pin, Lock, UserPlus, BookOpen, Users
+  ChevronRight, Pin, Lock, UserPlus, BookOpen, Users, MapPin
 } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import { useState, useMemo } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
 import { motion } from "framer-motion";
+import { NewsletterSignupInline } from "@/components/NewsletterSignup";
+import KnowledgeMapPanel from "@/components/KnowledgeMapPanel";
 
 function timeAgo(date: Date | string): string {
   const now = new Date();
@@ -201,6 +203,7 @@ export default function CommunityCategory() {
 
       {/* Thread List */}
       <section className="container px-4 max-w-4xl mx-auto py-6">
+        {category && <KnowledgeMapPanel categoryId={category.id} categoryName={category.name} />}
         {postsLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
@@ -276,11 +279,17 @@ export default function CommunityCategory() {
                           const hasStage = !!(post as any).threadStage;
                           return (
                             <>
-                              {(post.postType || hasStage || parsedTags.length > 0) && (
+                              {(post.postType || hasStage || parsedTags.length > 0 || (post as any).bioregionName) && (
                                 <div className="flex flex-wrap gap-1 mb-1">
                                   {post.postType && <PostTypeBadge postType={post.postType} />}
                                   {hasStage && <ThreadStageBadge stage={(post as any).threadStage} />}
                                   {parsedTags.map(t => <PostTagBadge key={t} tag={t} />)}
+                                  {(post as any).bioregionName && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-100 text-teal-800 border border-teal-200">
+                                      <MapPin className="w-2.5 h-2.5" />
+                                      {(post as any).bioregionName}
+                                    </span>
+                                  )}
                                 </div>
                               )}
                             </>
@@ -316,6 +325,16 @@ export default function CommunityCategory() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Newsletter CTA */}
+      <section className="container px-4 max-w-4xl mx-auto pb-10">
+        <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
+          <p className="text-white/70 text-sm font-medium mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+            Stay updated: get the ReGen Civics digest in your inbox
+          </p>
+          <NewsletterSignupInline />
+        </div>
       </section>
     </div>
     </PageTransition>

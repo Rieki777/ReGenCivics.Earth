@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BackButton } from "@/components/BackButton";
+import { BioregionSelect } from "@/components/BioregionSelect";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -73,6 +74,7 @@ export default function CommunityNewPost() {
   const [isThreadChain, setIsThreadChain] = useState(false);
   const [threadStage, setThreadStage] = useState<ThreadStage>("idea");
   const [chainId, setChainId] = useState<string>("");
+  const [bioregionId, setBioregionId] = useState<number | null>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const handleMarkdownShortcuts = useMarkdownShortcuts(contentRef, content, setContent);
 
@@ -131,6 +133,7 @@ export default function CommunityNewPost() {
       postType: postType !== "discussion" ? postType : undefined,
       threadStage: isThreadChain ? threadStage : undefined,
       chainId: isThreadChain && chainId.trim() ? parseInt(chainId.trim()) : undefined,
+      bioregionId: bioregionId ?? undefined,
     });
     // Attachments: uploadedFiles will be displayed in the post
   };
@@ -426,6 +429,22 @@ export default function CommunityNewPost() {
                 );
               })}
             </div>
+          </div>
+
+          {/* C17: Bioregion tag (optional) */}
+          <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
+            <Label className="text-[#1a472a] font-bold text-sm mb-1 block" style={{ fontFamily: 'var(--font-display)' }}>
+              Bioregion Tag <span className="text-[#1a472a]/40 font-normal text-xs ml-1">(optional)</span>
+            </Label>
+            <p className="text-xs text-[#1a472a]/50 mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+              Tag this post to a bioregion so others in that area can find it.
+            </p>
+            <BioregionSelect
+              value={bioregionId}
+              onChange={setBioregionId}
+              placeholder="Search bioregions..."
+              variant="light"
+            />
           </div>
 
           {/* Submit */}

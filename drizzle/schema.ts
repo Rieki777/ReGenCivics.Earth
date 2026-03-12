@@ -1234,6 +1234,8 @@ export const forumPosts = mysqlTable("forumPosts", {
   // C8: Thread chain fields
   threadStage: varchar("threadStage", { length: 32 }), // "idea" | "experiment" | "result"
   chainId: int("chainId"), // links posts in same chain (ID of the original "idea" post)
+  // C17: Bioregional tagging
+  bioregionId: int("bioregionId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1557,3 +1559,19 @@ export const glossaryTerms = mysqlTable("glossary_terms", {
 });
 export type GlossaryTerm = typeof glossaryTerms.$inferSelect;
 export type InsertGlossaryTerm = typeof glossaryTerms.$inferInsert;
+
+// ─── C9: Knowledge Map ────────────────────────────────────────────────────────
+export const knowledgeMapEntries = mysqlTable("knowledge_map_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  categoryId: int("categoryId").notNull(),
+  postId: int("postId"),                                   // optional link to forum post
+  title: varchar("title", { length: 255 }).notNull(),
+  summary: text("summary"),
+  url: varchar("url", { length: 500 }),                    // fallback if not a post
+  sortOrder: int("sortOrder").default(0).notNull(),
+  suggestedByAI: tinyint("suggestedByAI").default(0).notNull(),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type KnowledgeMapEntry = typeof knowledgeMapEntries.$inferSelect;
+export type InsertKnowledgeMapEntry = typeof knowledgeMapEntries.$inferInsert;

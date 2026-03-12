@@ -22,6 +22,7 @@ import { useState, useMemo, useEffect } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
+import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PageTransition, ScrollRevealMotion, HoverCard, FloatElement } from "@/components/PageTransition";
 import { motion } from "framer-motion";
@@ -367,6 +368,16 @@ export default function Community() {
             </div>
           </div>
         </div>
+
+        {/* Newsletter CTA */}
+        <ScrollRevealMotion>
+          <div className="mt-6 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
+            <h3 className="text-white/80 text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              Get the Weekly Digest
+            </h3>
+            <NewsletterSignupInline />
+          </div>
+        </ScrollRevealMotion>
       </section>
 
 

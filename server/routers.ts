@@ -16,7 +16,7 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections } from "../drizzle/schema";
+import { forumPosts, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "./db";
 
@@ -311,24 +311,74 @@ export const appRouter = router({
           if (input.status === "approved") {
             try {
               const cats = await db.listForumCategories();
-              const activeProjectsCat = cats.find(c => c.slug === "active-projects");
+              let activeProjectsCat = cats.find(c => c.slug === "active-projects");
+
+              // Auto-create the category if it doesn't exist
+              if (!activeProjectsCat) {
+                const catId = await db.createForumCategory({
+                  name: "Active Projects",
+                  slug: "active-projects",
+                  description: "Land projects approved by ReGen Civics. Follow updates, ask questions, and connect with the teams.",
+                  sortOrder: 99,
+                });
+                activeProjectsCat = { id: catId, slug: "active-projects", name: "Active Projects" } as any;
+              }
+
               if (activeProjectsCat) {
-                const projectType = updatedApp.projectType === "early_stage" ? "early-stage" : (updatedApp.projectType || "regenerative");
-                const threadContent = `${updatedApp.projectName} is a ${projectType} project based in ${updatedApp.location || "an undisclosed location"}.
+                const typeLabel = updatedApp.projectType === "early_stage" ? "early-stage" : "mature";
+                const landStatusLabel: Record<string, string> = { owned: "owned", leased: "leased", committed: "committed to purchase", seeking: "seeking land" };
 
-**What we are building:** ${updatedApp.vision || "Details coming soon."}
+                // Build rich community metrics line
+                const metrics: string[] = [];
+                if (updatedApp.projectSizeHectares) metrics.push(`${updatedApp.projectSizeHectares} hectares`);
+                if (updatedApp.currentPeopleCount) metrics.push(`${updatedApp.currentPeopleCount} people currently`);
+                if (updatedApp.intendedPeopleCount) metrics.push(`${updatedApp.intendedPeopleCount} intended`);
 
-**Current stage:** ${updatedApp.status}
+                // Build mixed use label
+                let mixedUseStr = "";
+                try {
+                  const mu = JSON.parse(updatedApp.mixedUse ?? "[]");
+                  if (Array.isArray(mu) && mu.length) mixedUseStr = mu.join(", ");
+                } catch { /* ignore */ }
 
-**What we need:** ${updatedApp.fundingNeeds || "To be announced."}
+                const threadContent = [
+                  `**${updatedApp.projectName}** is a ${typeLabel} regenerative land project based in ${updatedApp.location}${updatedApp.country ? `, ${updatedApp.country}` : ""}.`,
+                  "",
+                  `**Vision**`,
+                  updatedApp.vision,
+                  "",
+                  `**Land status:** ${landStatusLabel[updatedApp.landStatus] ?? updatedApp.landStatus}`,
+                  metrics.length ? `**Scale:** ${metrics.join(" | ")}` : "",
+                  mixedUseStr ? `**Uses:** ${mixedUseStr}` : "",
+                  updatedApp.meetingFrequency ? `**Community gathering:** ${updatedApp.meetingFrequency.replace(/_/g, " ")}` : "",
+                  "",
+                  `**Regenerative practices**`,
+                  updatedApp.regenerativePractices,
+                  "",
+                  `**Governance approach**`,
+                  updatedApp.governanceApproach,
+                  "",
+                  `**Community engagement**`,
+                  updatedApp.communityEngagement,
+                  "",
+                  `**Team:** ${updatedApp.teamDescription} (${updatedApp.teamSize} people)`,
+                  "",
+                  `**Current funding:** ${updatedApp.currentFunding || "Not disclosed"}`,
+                  `**Funding needs:** ${updatedApp.fundingNeeds}`,
+                  "",
+                  updatedApp.timeCommitment ? `**Time commitment:** ${updatedApp.timeCommitment}` : "",
+                  updatedApp.websiteUrl ? `**Website:** ${updatedApp.websiteUrl}` : "",
+                  "",
+                  `---`,
+                  `Follow this thread for updates from the team. Ask questions, offer support, or share resources below.`,
+                  "",
+                  `[Apply to support this project](/apply) | [View on map](/map)`,
+                ].filter(l => l !== null && l !== undefined && !(l === "" && false)).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
-Follow this thread for updates from the team and join the conversation.
-
-[Apply to support this project](/apply) [View on map](/map)`;
                 await db.createForumPost({
                   categoryId: activeProjectsCat.id,
                   authorId: 1,
-                  title: `${updatedApp.projectName} - ${updatedApp.location || "Active Project"}`,
+                  title: `${updatedApp.projectName} - ${updatedApp.location}`,
                   content: threadContent,
                   isPinned: 1,
                   postType: "discussion",
@@ -1065,7 +1115,8 @@ Follow this thread for updates from the team and join the conversation.
         hyphaProfileUrl: z.string().optional(),
         walletAddress: z.string().optional(),
         dreamingOf: z.string().optional(),
-        bioregion: z.string().optional(), // plain text for now
+        bioregion: z.string().optional(), // plain text for now (legacy, unused)
+        bioregionId: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Check if user already has a profile
@@ -1091,6 +1142,7 @@ Follow this thread for updates from the team and join the conversation.
           isVerified: 0,
           isActive: 1,
           ...(input.dreamingOf ? { dreamingOf: input.dreamingOf } : {}),
+          ...(input.bioregionId != null ? { bioregionId: input.bioregionId } : {}),
         });
         return { id, success: true };
       }),
@@ -3025,13 +3077,20 @@ Follow this thread for updates from the team and join the conversation.
       }))
       .query(async ({ input }) => {
         const posts = await db.listForumPosts(input.categoryId, input.limit, input.offset);
+        // Pre-fetch bioregions for name lookup
+        const db2 = await getDb();
+        const allBioregions = db2 ? await db2.select().from(bioregions) : [];
         // Enrich with author info
         const enriched = await Promise.all(posts.map(async (post) => {
           const author = await db.getUserById(post.authorId);
+          const bioregionName = post.bioregionId
+            ? (allBioregions.find(b => b.id === post.bioregionId)?.name ?? null)
+            : null;
           return {
             ...post,
             authorName: author?.name || 'Anonymous',
             authorAvatar: null,
+            bioregionName,
           };
         }));
         return enriched;
@@ -3109,6 +3168,7 @@ Follow this thread for updates from the team and join the conversation.
         postType: z.enum(["discussion", "case_study", "seeking_team"]).optional(),
         threadStage: z.enum(["idea", "experiment", "result"]).optional(),
         chainId: z.number().optional(),
+        bioregionId: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Auto-apply #lesson tag when post type is case_study
@@ -3125,6 +3185,7 @@ Follow this thread for updates from the team and join the conversation.
           postType: input.postType,
           threadStage: input.threadStage,
           chainId: input.chainId,
+          bioregionId: input.bioregionId,
         });
         // Fire-and-forget image generation -- don't block mutation response
         generateImage({
@@ -3279,6 +3340,31 @@ Follow this thread for updates from the team and join the conversation.
       .mutation(async ({ ctx, input }) => {
         await db.upsertUserProfile(ctx.user.id, input);
         return { success: true };
+      }),
+
+    // Increment "I tried this" counter on a reply (auth required)
+    incrementTriedThis: protectedProcedure
+      .input(z.object({ replyId: z.number() }))
+      .mutation(async ({ input }) => {
+        const count = await db.incrementReplyTriedThis(input.replyId);
+        return { count };
+      }),
+
+    // C17: Posts filtered by bioregion
+    postsByBioregion: publicProcedure
+      .input(z.object({ bioregionId: z.number(), limit: z.number().default(50) }))
+      .query(async ({ input }) => {
+        const db2 = await getDb();
+        if (!db2) return [];
+        const posts = await db2.select().from(forumPosts)
+          .where(eq(forumPosts.bioregionId, input.bioregionId))
+          .orderBy(forumPosts.createdAt)
+          .limit(input.limit);
+        const enriched = await Promise.all(posts.map(async (post) => {
+          const author = await db.getUserById(post.authorId);
+          return { ...post, authorName: author?.name || 'Anonymous' };
+        }));
+        return enriched;
       }),
   }),
 
@@ -4450,6 +4536,15 @@ Guidelines:
       }),
   }),
 
+  // ─── C1: Bioregions ─────────────────────────────────────────────────────────
+  bioregions: router({
+    list: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(bioregions).orderBy(bioregions.name);
+    }),
+  }),
+
   // ─── C13: Glossary ──────────────────────────────────────────────────────────
   glossary: router({
     list: publicProcedure.query(async () => {
@@ -4491,6 +4586,124 @@ Guidelines:
         return { id };
       }),
   }),
+
+  // ─── C9: Knowledge Map ───────────────────────────────────────────────────────
+  knowledgeMap: router({
+    // Public: list approved entries for a category
+    listByCategory: publicProcedure
+      .input(z.object({ categoryId: z.number() }))
+      .query(async ({ input }) => {
+        const entries = await db.listKnowledgeMapEntries(input.categoryId);
+        return entries.filter(e => e.approvedAt !== null);
+      }),
+
+    // Admin: list all entries (including pending AI suggestions)
+    listAll: adminProcedure.query(async () => {
+      return db.listKnowledgeMapEntries();
+    }),
+
+    pendingSuggestions: adminProcedure.query(async () => {
+      return db.listPendingKnowledgeMapSuggestions();
+    }),
+
+    // Admin: manually add an entry
+    add: adminProcedure
+      .input(z.object({
+        categoryId: z.number(),
+        title: z.string().min(1),
+        summary: z.string().optional(),
+        postId: z.number().optional(),
+        url: z.string().optional(),
+        sortOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await db.addKnowledgeMapEntry({
+          categoryId: input.categoryId,
+          title: input.title,
+          summary: input.summary ?? null,
+          postId: input.postId ?? null,
+          url: input.url ?? null,
+          sortOrder: input.sortOrder ?? 0,
+          suggestedByAI: 0,
+          approvedAt: new Date(),
+        });
+        return { id };
+      }),
+
+    // Admin: approve an AI suggestion
+    approve: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.approveKnowledgeMapEntry(input.id);
+        return { ok: true };
+      }),
+
+    // Admin: delete an entry
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteKnowledgeMapEntry(input.id);
+        return { ok: true };
+      }),
+
+    // Admin: reorder
+    reorder: adminProcedure
+      .input(z.object({ id: z.number(), sortOrder: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.reorderKnowledgeMapEntry(input.id, input.sortOrder);
+        return { ok: true };
+      }),
+
+    // Admin: trigger Claude to scan posts in a category and suggest entries
+    suggestFromAI: adminProcedure
+      .input(z.object({ categoryId: z.number(), categoryName: z.string() }))
+      .mutation(async ({ input }) => {
+        const posts = await db.listForumPosts(input.categoryId, 20, 0);
+        if (!posts.length) return { suggested: 0 };
+
+        const postList = posts.slice(0, 15).map(p =>
+          `- ID ${p.id}: "${p.title}" (${p.replyCount} replies, ${p.viewCount} views)`
+        ).join("\n");
+
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "user" as const,
+              content: `You are a knowledge curator for a regenerative land project community forum. Given a list of forum posts in the "${input.categoryName}" category, identify the 3-5 most valuable, evergreen threads that belong in a "Knowledge Map" — a pinned index of essential reading for newcomers.\n\nRecent posts:\n${postList}\n\nReturn a JSON array only (no markdown, no commentary):\n[{"title":"...", "summary":"...(1-2 sentences)", "postId": <number>}]`,
+            },
+          ],
+          maxTokens: 800,
+        });
+
+        let suggestions: { title: string; summary: string; postId: number }[] = [];
+        const rawContent = response.choices?.[0]?.message?.content ?? "";
+        try {
+          const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+          suggestions = JSON.parse(cleaned);
+        } catch {
+          return { suggested: 0 };
+        }
+
+        let count = 0;
+        for (const s of suggestions) {
+          if (s.postId && s.title) {
+            await db.addKnowledgeMapEntry({
+              categoryId: input.categoryId,
+              title: s.title,
+              summary: s.summary ?? null,
+              postId: s.postId,
+              url: null,
+              sortOrder: count,
+              suggestedByAI: 1,
+              approvedAt: null,
+            });
+            count++;
+          }
+        }
+        return { suggested: count };
+      }),
+  }),
+
 
 });
 export type AppRouter = typeof appRouter;

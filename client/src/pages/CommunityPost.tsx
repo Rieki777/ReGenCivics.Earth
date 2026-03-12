@@ -3,10 +3,10 @@
  * Shows a single thread with all replies, like functionality, and reply form
  */
 import { Link, useLocation, useParams } from "wouter";
-import { 
+import {
   MessageCircle, ArrowLeft, Heart, Eye, Clock, Send,
   ChevronRight, Pin, Lock, Loader2, Trash2, CornerDownRight,
-  AlertCircle, Flag, Shield, User, Globe2, Languages
+  AlertCircle, Flag, Shield, User, Globe2, Languages, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -170,6 +170,26 @@ export default function CommunityPost() {
       toast.error(err.message || "Failed to delete reply");
     },
   });
+
+  // "I tried this" optimistic counts: replyId -> count
+  const [triedThisCounts, setTriedThisCounts] = useState<Record<number, number>>({});
+
+  const incrementTriedThisMutation = trpc.forum.incrementTriedThis.useMutation({
+    onSuccess: (data, variables) => {
+      setTriedThisCounts(prev => ({ ...prev, [variables.replyId]: data.count }));
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to record. Try again");
+    },
+  });
+
+  const handleTriedThis = (replyId: number) => {
+    if (!isAuthenticated) {
+      window.location.href = getLoginUrl();
+      return;
+    }
+    incrementTriedThisMutation.mutate({ replyId });
+  };
 
   // Focus reply textarea when replying to someone
   useEffect(() => {
@@ -458,7 +478,7 @@ export default function CommunityPost() {
                             <ForumMarkdown content={reply.content} />
                           )}
                         </div>
-                        <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <button
                             onClick={() => handleLikeReply(reply.id)}
                             className={`flex items-center gap-1 text-xs transition-colors ${
@@ -470,6 +490,24 @@ export default function CommunityPost() {
                             <Heart className={`w-3 h-3 ${likes?.likedReplies?.includes(reply.id) ? 'fill-current' : ''}`} />
                             <span>{likes?.replyLikes?.[reply.id] || 0}</span>
                           </button>
+                          {(() => {
+                            const triedCount = triedThisCounts[reply.id] ?? reply.triedThis ?? 0;
+                            return (
+                              <button
+                                onClick={() => handleTriedThis(reply.id)}
+                                disabled={incrementTriedThisMutation.isPending && incrementTriedThisMutation.variables?.replyId === reply.id}
+                                className={`flex items-center gap-1 text-xs border rounded px-2 py-0.5 transition-colors ${
+                                  triedCount > 0
+                                    ? 'text-green-700 border-green-300 font-semibold'
+                                    : 'text-green-600 border-green-200 hover:text-green-700 hover:border-green-400'
+                                }`}
+                                title="Mark that you tried this"
+                              >
+                                <Check className="w-3 h-3" />
+                                I tried this{triedCount > 0 ? ` (${triedCount})` : ''}
+                              </button>
+                            );
+                          })()}
                           {isAuthenticated && post.isLocked !== 1 && (
                             <button
                               onClick={() => {

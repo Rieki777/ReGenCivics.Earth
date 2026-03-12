@@ -70,9 +70,11 @@ import { getLoginUrl } from '@/const';
 import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
 import { DigestPreferences } from "@/components/DigestPreferences";
+import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { WelcomeAboardQuests } from "@/components/WelcomeAboardQuests";
 import { QuestStartPopup, flagShowQuestPrompt } from "@/components/QuestStartPopup";
 import { DiscoverTab } from "@/components/DiscoverTab";
+import { BioregionSelect } from "@/components/BioregionSelect";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -84,6 +86,19 @@ const badgeDefinitions: Record<string, { name: string; icon: string; description
   'connector': { name: 'Connector', icon: '🔗', description: 'Brought new members to the community', color: 'bg-pink-500' },
   'verified': { name: 'Verified Player', icon: '✓', description: 'Identity verified on-chain', color: 'bg-green-500' },
 };
+
+// Small helper used in the Step 3 review to display the selected bioregion name
+function BioregionPreviewRow({ bioregionId }: { bioregionId: number }) {
+  const { data: bioregions = [] } = trpc.bioregions.list.useQuery();
+  const name = bioregions.find((b) => b.id === bioregionId)?.name;
+  if (!name) return null;
+  return (
+    <div>
+      <p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Bioregion</p>
+      <p className="text-sm text-[#1a472a]/90 mt-0.5">{name}</p>
+    </div>
+  );
+}
 
 // Profile Creation Form
 function ProfileTransitionAnimation() {
@@ -116,11 +131,14 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
   const [desires, setDesires] = useState(() => sessionStorage.getItem('playerProfileDraft_desires') ?? '');
   const [gifts, setGifts] = useState(() => sessionStorage.getItem('playerProfileDraft_gifts') ?? '');
   const [dreamingOf, setDreamingOf] = useState(() => sessionStorage.getItem('playerProfileDraft_dreamingOf') ?? '');
-  const [bioregion, setBioregion] = useState(() => sessionStorage.getItem('playerProfileDraft_bioregion') ?? '');
+  const [bioregionId, setBioregionId] = useState<number | null>(() => {
+    const saved = sessionStorage.getItem('playerProfileDraft_bioregionId');
+    return saved ? Number(saved) : null;
+  });
   const [baseAccountName, setBaseAccountName] = useState(() => sessionStorage.getItem('playerProfileDraft_baseAccountName') ?? '');
 
   const persist = (key: string, val: string) => sessionStorage.setItem(`playerProfileDraft_${key}`, val);
-  const clearDraft = () => ['displayName', 'role', 'soul', 'desires', 'gifts', 'dreamingOf', 'bioregion', 'baseAccountName'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
+  const clearDraft = () => ['displayName', 'role', 'soul', 'desires', 'gifts', 'dreamingOf', 'bioregionId', 'baseAccountName'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
 
   const createMutation = trpc.playerProfiles.create.useMutation({
     onSuccess: () => {
@@ -145,7 +163,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
       bio: JSON.stringify({ role, soul, desires, gifts }),
       baseAccountName: baseAccountName.trim() || undefined,
       dreamingOf: dreamingOf.trim() || undefined,
-      bioregion: bioregion.trim() || undefined,
+      bioregionId: bioregionId ?? undefined,
     });
   };
 
@@ -198,7 +216,15 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion do you call home? <span className="text-[#1a472a]/50 font-normal">(optional)</span></label>
-            <Input value={bioregion} onChange={e => { setBioregion(e.target.value); persist('bioregion', e.target.value); }} placeholder="e.g. Pacific Northwest, Daintree, Celtic Rainforest..." className="border-[#1a472a]/20" />
+            <BioregionSelect
+              value={bioregionId}
+              onChange={(id) => {
+                setBioregionId(id);
+                sessionStorage.setItem('playerProfileDraft_bioregionId', id != null ? String(id) : '');
+              }}
+              placeholder="Search bioregions…"
+              variant="light"
+            />
           </div>
           <Button onClick={() => { if (!displayName.trim()) { toast.error('Please enter a display name'); return; } setStep(2); }} className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold">
             Continue <ArrowRight className="w-4 h-4 ml-2" />
@@ -271,7 +297,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
             {desires && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Seeking</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{desires}</p></div>}
             {gifts && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Gifts to Offer</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{gifts}</p></div>}
             {dreamingOf && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Dreaming of</p><p className="text-sm text-[#1a472a]/90 mt-0.5 italic">"{dreamingOf}"</p></div>}
-            {bioregion && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Bioregion</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{bioregion}</p></div>}
+            {bioregionId != null && <BioregionPreviewRow bioregionId={bioregionId} />}
             {baseAccountName && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Base Account</p><p className="text-sm font-mono text-[#1a472a]/90 mt-0.5">{baseAccountName}</p></div>}
           </div>
           <div className="flex gap-3">
@@ -608,7 +634,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }
 function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpdate: () => void }) {
   const [collab, setCollab] = useState<string>(profile?.collaborationStatus ?? "");
   const [dreaming, setDreaming] = useState<string>(profile?.dreamingOf ?? "");
-  const [bioregion, setBioregion] = useState<string>((profile as any)?.bioregion ?? "");
+  const [bioregionId, setBioregionId] = useState<number | null>((profile as any)?.bioregionId ?? null);
 
   const utils = trpc.useUtils();
   const updateMut = trpc.playerProfiles.update.useMutation({
@@ -624,6 +650,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
     updateMut.mutate({
       collaborationStatus: collab || null,
       dreamingOf: dreaming || undefined,
+      bioregionId: bioregionId,
     });
   };
 
@@ -669,11 +696,11 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
 
       <div className="space-y-1.5">
         <label className="text-white/60 text-xs">What bioregion do you call home?</label>
-        <input
-          value={bioregion}
-          onChange={(e) => setBioregion(e.target.value)}
-          placeholder="e.g. Pacific Northwest, Daintree, Celtic Rainforest..."
-          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#7dd87d]/40"
+        <BioregionSelect
+          value={bioregionId}
+          onChange={setBioregionId}
+          placeholder="Search bioregions…"
+          variant="dark"
         />
       </div>
 
@@ -2110,6 +2137,19 @@ export default function PlayerProfile() {
                   <AnimatedSection animation="slide-up">
                     <div id="wallet-section">
                     <OrgClaimSection userId={user!.id} questsCompleted={profile?.questsCompleted ?? undefined} />
+                    </div>
+                  </AnimatedSection>
+                  <AnimatedSection animation="slide-up">
+                    <div className="glass-panel p-5 rounded-xl">
+                      <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                        Stay in the Loop
+                      </h2>
+                      <p className="text-white/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+                        Get the ReGen Civics digest — news, quests, and community updates in your inbox.
+                      </p>
+                      <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
+                        <NewsletterSignupInline />
+                      </div>
                     </div>
                   </AnimatedSection>
                   {user?.role === 'admin' && (
