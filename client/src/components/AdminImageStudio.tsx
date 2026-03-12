@@ -25,6 +25,7 @@ export function AdminImageStudio() {
   const [keys, setKeys] = useState<string[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<{ publicUrl: string; replaced: number } | null>(null);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const generateMut = trpc.imageStudio.generateVariations.useMutation({
@@ -64,6 +65,13 @@ export function AdminImageStudio() {
     setError(null);
     const oldFilename = mode === "edit" && editUrl ? editUrl.split("/").pop() : undefined;
     applyMut.mutate({ selectedKey: keys[selected], allKeys: keys, contentType, title: title.trim(), oldFilename });
+  };
+
+  const handleCopy = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(result.publicUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const isGenerating = generateMut.isPending;
@@ -236,11 +244,16 @@ export function AdminImageStudio() {
             <CheckCircle className="w-4 h-4 text-[#7dd87d]" />
             Image applied successfully
           </div>
-          <div className="font-mono text-xs text-[#1a472a]/70 break-all flex items-center gap-1">
-            {result.publicUrl}
-            <a href={result.publicUrl} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
-              <ExternalLink className="w-3 h-3 text-[#7dd87d]" />
-            </a>
+          <div className="font-mono text-xs text-[#1a472a]/70 break-all flex items-center gap-2 flex-wrap">
+            <span className="break-all">{result.publicUrl}</span>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <a href={result.publicUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-3 h-3 text-[#7dd87d]" />
+              </a>
+              <button onClick={handleCopy} className="text-xs px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white/70 transition-colors">
+                {copied ? 'Copied!' : 'Copy URL'}
+              </button>
+            </div>
           </div>
           {result.replaced > 0 && (
             <div className="text-xs text-[#1a472a]/60">

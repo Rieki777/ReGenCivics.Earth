@@ -22,9 +22,24 @@ interface RoleSubmission {
   fullName: string | null;
   status: string;
   pathType: string;
-  formData?: any;
-  createdAt: Date;
-  updatedAt: Date;
+  // Flat fields from generalInquiries schema
+  roleArchetypes: string | null;
+  roleInterest: string | null;
+  whyIdeal: string | null;
+  cvWebsite: string | null;
+  additionalNotes: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+function parseRoleArchetypes(value: string | null | undefined): string[] {
+  try { return JSON.parse(value ?? '[]') ?? []; } catch { return []; }
+}
+
+function safeDate(date: Date | string | null | undefined): Date {
+  if (!date) return new Date(0);
+  if (date instanceof Date) return date;
+  return new Date(date.replace ? date.replace(' ', 'T') : date);
 }
 
 const roleArchetypes = [
@@ -57,10 +72,7 @@ export function RoleSubmissionsView() {
   const roleSubmissions = useMemo(() => {
     return allInquiries
       .filter((inquiry: any) => inquiry.pathType === "role")
-      .map((inquiry: any) => ({
-        ...inquiry,
-        formData: inquiry.formData ? JSON.parse(inquiry.formData) : {},
-      }));
+      .map((inquiry: any) => inquiry as RoleSubmission);
   }, [allInquiries]);
 
   // Filter submissions
@@ -73,8 +85,8 @@ export function RoleSubmissionsView() {
 
       const matchesStatus = !statusFilter || submission.status === statusFilter;
 
-      const matchesRole = !roleFilter || 
-        (submission.formData?.roleArchetypes?.includes(roleFilter));
+      const matchesRole = !roleFilter ||
+        parseRoleArchetypes(submission.roleArchetypes).includes(roleFilter);
 
       return matchesSearch && matchesStatus && matchesRole;
     });
@@ -102,9 +114,9 @@ export function RoleSubmissionsView() {
       s.email,
       s.fullName || "N/A",
       s.status,
-      s.formData?.roleArchetypes?.join(", ") || "N/A",
-      new Date(s.createdAt).toLocaleDateString(),
-      new Date(s.updatedAt).toLocaleDateString(),
+      parseRoleArchetypes(s.roleArchetypes).join(", ") || "N/A",
+      safeDate(s.createdAt).toLocaleDateString(),
+      safeDate(s.updatedAt).toLocaleDateString(),
     ]);
 
     const csv = [headers, ...rows].map((row) => row.map((cell: any) => `"${cell}"`).join(",")).join("\n");
@@ -257,7 +269,7 @@ export function RoleSubmissionsView() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
-                          {submission.formData?.roleArchetypes?.slice(0, 2).map((role: string) => {
+                          {parseRoleArchetypes(submission.roleArchetypes).slice(0, 2).map((role: string) => {
                             const roleData = roleArchetypes.find((r) => r.id === role);
                             return (
                               <Badge key={role} className={roleData?.color || "bg-gray-100 text-gray-800"}>
@@ -265,13 +277,13 @@ export function RoleSubmissionsView() {
                               </Badge>
                             );
                           })}
-                          {submission.formData?.roleArchetypes?.length > 2 && (
-                            <Badge variant="outline">+{submission.formData.roleArchetypes.length - 2}</Badge>
+                          {parseRoleArchetypes(submission.roleArchetypes).length > 2 && (
+                            <Badge variant="outline">+{parseRoleArchetypes(submission.roleArchetypes).length - 2}</Badge>
                           )}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-xs text-gray-500">
-                        {formatDistanceToNow(new Date(submission.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(safeDate(submission.createdAt), { addSuffix: true })}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Button
@@ -329,20 +341,20 @@ export function RoleSubmissionsView() {
                     <div>
                       <label className="text-xs font-semibold text-gray-600 uppercase">Applied</label>
                       <p className="text-sm font-medium mt-1">
-                        {new Date(selectedSubmission.createdAt).toLocaleDateString()}
+                        {safeDate(selectedSubmission.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="details" className="space-y-4">
-                  {selectedSubmission.formData && Object.keys(selectedSubmission.formData).length > 0 ? (
+                  {(selectedSubmission.roleArchetypes || selectedSubmission.roleInterest || selectedSubmission.whyIdeal || selectedSubmission.cvWebsite || selectedSubmission.additionalNotes) ? (
                     <div className="space-y-3">
-                      {selectedSubmission.formData.roleArchetypes && (
+                      {selectedSubmission.roleArchetypes && parseRoleArchetypes(selectedSubmission.roleArchetypes).length > 0 && (
                         <div>
                           <label className="text-xs font-semibold text-gray-600 uppercase">Interested Roles</label>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {selectedSubmission.formData.roleArchetypes.map((role: string) => {
+                            {parseRoleArchetypes(selectedSubmission.roleArchetypes).map((role: string) => {
                               const roleData = roleArchetypes.find((r) => r.id === role);
                               return (
                                 <Badge key={role} className={roleData?.color || "bg-gray-100 text-gray-800"}>
@@ -353,36 +365,36 @@ export function RoleSubmissionsView() {
                           </div>
                         </div>
                       )}
-                      {selectedSubmission.formData.roleInterest && (
+                      {selectedSubmission.roleInterest && (
                         <div>
                           <label className="text-xs font-semibold text-gray-600 uppercase">Role Interest</label>
-                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.formData.roleInterest}</p>
+                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.roleInterest}</p>
                         </div>
                       )}
-                      {selectedSubmission.formData.whyIdeal && (
+                      {selectedSubmission.whyIdeal && (
                         <div>
                           <label className="text-xs font-semibold text-gray-600 uppercase">Why Ideal</label>
-                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.formData.whyIdeal}</p>
+                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.whyIdeal}</p>
                         </div>
                       )}
-                      {selectedSubmission.formData.cvWebsite && (
+                      {selectedSubmission.cvWebsite && (
                         <div>
                           <label className="text-xs font-semibold text-gray-600 uppercase">CV / Website</label>
                           <a
-                            href={selectedSubmission.formData.cvWebsite}
+                            href={selectedSubmission.cvWebsite}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-[#4a7c59] hover:underline flex items-center gap-1 mt-1"
                           >
-                            {selectedSubmission.formData.cvWebsite}
+                            {selectedSubmission.cvWebsite}
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         </div>
                       )}
-                      {selectedSubmission.formData.additionalNotes && (
+                      {selectedSubmission.additionalNotes && (
                         <div>
                           <label className="text-xs font-semibold text-gray-600 uppercase">Additional Notes</label>
-                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.formData.additionalNotes}</p>
+                          <p className="text-sm mt-1 text-gray-700">{selectedSubmission.additionalNotes}</p>
                         </div>
                       )}
                     </div>
@@ -399,11 +411,11 @@ export function RoleSubmissionsView() {
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 uppercase">Created</label>
-                      <p className="text-xs mt-1">{new Date(selectedSubmission.createdAt).toLocaleString()}</p>
+                      <p className="text-xs mt-1">{safeDate(selectedSubmission.createdAt).toLocaleString()}</p>
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 uppercase">Updated</label>
-                      <p className="text-xs mt-1">{new Date(selectedSubmission.updatedAt).toLocaleString()}</p>
+                      <p className="text-xs mt-1">{safeDate(selectedSubmission.updatedAt).toLocaleString()}</p>
                     </div>
                   </div>
                 </TabsContent>
