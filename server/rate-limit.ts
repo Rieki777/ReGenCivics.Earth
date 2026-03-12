@@ -14,8 +14,8 @@ interface RateLimitEntry {
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Configuration
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour window
-const MAX_SUBMISSIONS_PER_WINDOW = 33; // 33 submissions per hour per IP
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute window
+const MAX_SUBMISSIONS_PER_WINDOW = 7; // 7 submissions per 15 minutes per IP
 
 // Cleanup old entries every 10 minutes
 setInterval(() => {
@@ -77,7 +77,7 @@ export function checkRateLimit(
 
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
-      message: `You've reached the maximum number of submissions (${MAX_SUBMISSIONS_PER_WINDOW} per hour). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
+      message: `You've reached the maximum number of submissions (${MAX_SUBMISSIONS_PER_WINDOW} per 15 minutes). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
     });
   }
 

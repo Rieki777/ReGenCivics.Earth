@@ -492,6 +492,14 @@ export const playerProfiles = mysqlTable("player_profiles", {
   dreamingOf: text("dreamingOf"),                  // Open text: what are you dreaming of building?
   bioregionId: int("bioregionId"),                 // References bioregions(id)
 
+  // Location (Phase 4 — coordinate-based with privacy controls)
+  locationLat: double("locationLat"),
+  locationLng: double("locationLng"),
+  locationPrecision: mysqlEnum("locationPrecision", ["exact", "city", "region", "hidden"]).default("region"),
+  locationLabel: varchar("locationLabel", { length: 255 }),
+  locationNomadic: tinyint("locationNomadic").default(0).notNull(),
+  locationEarth: tinyint("locationEarth").default(0).notNull(),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1479,6 +1487,18 @@ export const bioregions = mysqlTable("bioregions", {
 export type Bioregion = typeof bioregions.$inferSelect;
 export type InsertBioregion = typeof bioregions.$inferInsert;
 
+// ─── User Bioregions ──────────────────────────────────────────────────────────
+export const userBioregions = mysqlTable("user_bioregions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),       // References playerProfiles(userId)
+  bioregionId: int("bioregionId").notNull(), // References bioregions(id)
+  isPrimary: tinyint("isPrimary").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserBioregion = typeof userBioregions.$inferSelect;
+export type InsertUserBioregion = typeof userBioregions.$inferInsert;
+
 // ─── Gifts ────────────────────────────────────────────────────────────────────
 export const gifts = mysqlTable("gifts", {
   id: int("id").autoincrement().primaryKey(),
@@ -1583,3 +1603,25 @@ export const siteSettings = mysqlTable("site_settings", {
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 export type SiteSetting = typeof siteSettings.$inferSelect;
+
+// ─── Custom Game Inquiries (waitlist form for /custom-games) ──────────────────
+export const customGameInquiries = mysqlTable("custom_game_inquiries", {
+  id: int("id").autoincrement().primaryKey(),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  projectName: varchar("project_name", { length: 255 }).notNull(),
+  websiteOrSocial: varchar("website_or_social", { length: 500 }),
+  landStatus: varchar("land_status", { length: 100 }).notNull(),
+  communityStage: varchar("community_stage", { length: 100 }).notNull(),
+  primaryGoal: text("primary_goal").notNull(),
+  timeline: varchar("timeline", { length: 100 }).notNull(),
+  budgetConfirmed: tinyint("budget_confirmed").default(0).notNull(),
+  referralSource: varchar("referral_source", { length: 255 }),
+  additionalNotes: text("additional_notes"),
+  status: varchar("status", { length: 50 }).default("waitlist").notNull(),
+  internalNotes: text("internal_notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CustomGameInquiry = typeof customGameInquiries.$inferSelect;
+export type InsertCustomGameInquiry = typeof customGameInquiries.$inferInsert;

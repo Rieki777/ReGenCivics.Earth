@@ -50,6 +50,12 @@ pids
 coverage/
 *.lcov
 
+# Lighthouse audit reports
+lighthouse-reports/
+
+# CSV data files (may contain real user data)
+scripts/data/*.csv
+
 # nyc test coverage
 .nyc_output
 

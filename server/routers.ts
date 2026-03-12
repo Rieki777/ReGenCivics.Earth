@@ -16,7 +16,7 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries } from "../drizzle/schema";
+import { forumPosts, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "./db";
 
@@ -78,6 +78,7 @@ export const appRouter = router({
         location: z.string().min(1),
       }))
       .mutation(async ({ ctx, input }) => {
+        checkRateLimit(ctx, "apply_create");
         const applicationId = await db.createApplication({
           userId: ctx.user.id,
           status: "draft",
@@ -1160,6 +1161,13 @@ export const appRouter = router({
         collaborationStatus: z.string().nullable().optional(),
         dreamingOf: z.string().optional(),
         bioregionId: z.number().nullable().optional(),
+        // Location fields
+        locationLat: z.number().nullable().optional(),
+        locationLng: z.number().nullable().optional(),
+        locationPrecision: z.enum(["exact", "city", "region", "hidden"]).optional(),
+        locationLabel: z.string().max(255).nullable().optional(),
+        locationNomadic: z.number().optional(),
+        locationEarth: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const profile = await db.getPlayerProfileByUserId(ctx.user.id);
@@ -1178,7 +1186,33 @@ export const appRouter = router({
           ...(input.collaborationStatus !== undefined && { collaborationStatus: input.collaborationStatus }),
           ...(input.dreamingOf !== undefined && { dreamingOf: input.dreamingOf }),
           ...(input.bioregionId !== undefined && { bioregionId: input.bioregionId }),
+          ...(input.locationLat !== undefined && { locationLat: input.locationLat }),
+          ...(input.locationLng !== undefined && { locationLng: input.locationLng }),
+          ...(input.locationPrecision !== undefined && { locationPrecision: input.locationPrecision }),
+          ...(input.locationLabel !== undefined && { locationLabel: input.locationLabel }),
+          ...(input.locationNomadic !== undefined && { locationNomadic: input.locationNomadic }),
+          ...(input.locationEarth !== undefined && { locationEarth: input.locationEarth }),
         });
+
+        // Auto-award Welcome Aboard badge when all 10 quests are complete
+        if (input.questsCompleted !== undefined) {
+          const WELCOME_ABOARD_IDS = Array.from({ length: 10 }, (_, i) => `welcome-aboard-${i + 1}`);
+          const completed: string[] = (() => {
+            try { return JSON.parse(input.questsCompleted ?? "[]"); } catch { return []; }
+          })();
+          const allDone = WELCOME_ABOARD_IDS.every((id) => completed.includes(id));
+          if (allDone) {
+            const fresh = await db.getPlayerProfileByUserId(ctx.user.id);
+            const badges: string[] = (() => {
+              try { return JSON.parse(fresh?.badges ?? "[]"); } catch { return []; }
+            })();
+            if (!badges.includes("welcome_aboard")) {
+              badges.push("welcome_aboard");
+              await db.updatePlayerProfile(profile.id, { badges: JSON.stringify(badges) });
+            }
+          }
+        }
+
         return { success: true };
       }),
 
@@ -3102,12 +3136,19 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const post = await db.getForumPost(input.id);
         if (!post) throw new TRPCError({ code: 'NOT_FOUND', message: 'Post not found' });
-        const author = await db.getUserById(post.authorId);
-        const category = await db.listForumCategories().then(cats => cats.find(c => c.id === post.categoryId));
+        const [author, authorProfile, category] = await Promise.all([
+          db.getUserById(post.authorId),
+          db.getPlayerProfileByUserId(post.authorId),
+          db.listForumCategories().then(cats => cats.find(c => c.id === post.categoryId)),
+        ]);
+        const authorBadges: string[] = (() => {
+          try { return JSON.parse(authorProfile?.badges ?? "[]"); } catch { return []; }
+        })();
         return {
           ...post,
           authorName: author?.name || 'Anonymous',
-          authorAvatar: null,
+          authorAvatar: authorProfile?.avatarUrl || null,
+          authorBadges,
           categoryName: category?.name || 'Unknown',
           categorySlug: category?.slug || 'general',
         };
@@ -3119,11 +3160,18 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const replies = await db.listForumReplies(input.postId);
         const enriched = await Promise.all(replies.map(async (reply) => {
-          const author = await db.getUserById(reply.authorId);
+          const [author, authorProfile] = await Promise.all([
+            db.getUserById(reply.authorId),
+            db.getPlayerProfileByUserId(reply.authorId),
+          ]);
+          const authorBadges: string[] = (() => {
+            try { return JSON.parse(authorProfile?.badges ?? "[]"); } catch { return []; }
+          })();
           return {
             ...reply,
             authorName: author?.name || 'Anonymous',
-            authorAvatar: null,
+            authorAvatar: authorProfile?.avatarUrl || null,
+            authorBadges,
           };
         }));
         return enriched;
@@ -3930,6 +3978,49 @@ export const appRouter = router({
 
   // ─── Org Claims ───────────────────────────────────────────────────────────
   orgClaims: router({
+    // Search land projects and alliance orgs by name
+    search: publicProcedure
+      .input(z.object({ q: z.string() }))
+      .query(async ({ input }) => {
+        const { q } = input;
+        if (!q || q.length < 2) return [];
+        const ALLIANCE_ORGS_LIST = [
+          { id: "hypha", name: "Hypha DAO" },
+          { id: "seeds", name: "SEEDS" },
+          { id: "nestr", name: "Nestr.io" },
+          { id: "kinship_earth", name: "Kinship Earth" },
+          { id: "open_future", name: "Open Future Coalition" },
+          { id: "united_planet", name: "UP.Game (United Planet)" },
+          { id: "gaia_biolab", name: "Gaia Union BioLab" },
+          { id: "closer", name: "Closer.earth" },
+          { id: "oasa", name: "OASA.earth" },
+          { id: "planetary_party", name: "Planetary Party" },
+          { id: "dao_universe", name: "DAO Universe Club" },
+          { id: "desa", name: "DESA" },
+          { id: "permatours", name: "Permatours" },
+          { id: "maptio", name: "Maptio" },
+          { id: "local_scale", name: "LocalScale" },
+        ];
+        const landProjects = await db.searchApplications(q);
+        const allianceOrgs = ALLIANCE_ORGS_LIST.filter(o =>
+          o.name.toLowerCase().includes(q.toLowerCase())
+        );
+        return [
+          ...landProjects.map(p => ({
+            id: String(p.id),
+            name: p.projectName ?? "",
+            location: p.location ?? null,
+            type: "land_project" as const,
+          })),
+          ...allianceOrgs.map(o => ({
+            id: o.id,
+            name: o.name,
+            location: null as string | null,
+            type: "alliance_org" as const,
+          })),
+        ];
+      }),
+
     // Any authenticated user can claim an org (pending admin approval)
     claim: protectedProcedure
       .input(z.object({
@@ -4611,8 +4702,72 @@ Guidelines:
     list: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return db.select().from(bioregions).orderBy(bioregions.name);
+      // Only return approved bioregions to the public
+      return db.select().from(bioregions).where(eq(bioregions.approved, 1)).orderBy(bioregions.name);
     }),
+
+    suggest: protectedProcedure
+      .input(z.object({ name: z.string().min(2).max(200) }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await getDb();
+        if (!d) return { success: false };
+        // Check for duplicate (case-insensitive) before inserting
+        const existing = await d.select({ id: bioregions.id })
+          .from(bioregions)
+          .where(eq(bioregions.name, input.name))
+          .limit(1);
+        if (existing.length > 0) return { success: false, reason: "exists" };
+        await d.insert(bioregions).values({
+          name: input.name,
+          source: "community",
+          approved: 0,
+          submittedBy: ctx.user.id,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // ─── User Bioregions (multi-bioregion selection) ────────────────────────────
+  userBioregions: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const d = await getDb();
+      if (!d) return [];
+      return d.select({ bioregionId: userBioregions.bioregionId, isPrimary: userBioregions.isPrimary })
+              .from(userBioregions)
+              .where(eq(userBioregions.userId, ctx.user.id));
+    }),
+
+    update: protectedProcedure
+      .input(z.object({
+        bioregionIds: z.array(z.number()),
+        primaryBioregionId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await getDb();
+        if (!d) return { success: false };
+        // Delete all existing rows for this user
+        await d.delete(userBioregions).where(eq(userBioregions.userId, ctx.user.id));
+        // Insert new rows
+        if (input.bioregionIds.length > 0) {
+          await d.insert(userBioregions).values(
+            input.bioregionIds.map(bid => ({
+              userId: ctx.user.id,
+              bioregionId: bid,
+              isPrimary: bid === (input.primaryBioregionId ?? input.bioregionIds[0]) ? 1 : 0,
+            }))
+          );
+          // Keep playerProfiles.bioregionId in sync with the primary
+          const primaryId = input.primaryBioregionId ?? input.bioregionIds[0];
+          await d.update(playerProfiles)
+            .set({ bioregionId: primaryId })
+            .where(eq(playerProfiles.userId, ctx.user.id));
+        } else {
+          await d.update(playerProfiles)
+            .set({ bioregionId: null as any })
+            .where(eq(playerProfiles.userId, ctx.user.id));
+        }
+        return { success: true };
+      }),
   }),
 
   // ─── C13: Glossary ──────────────────────────────────────────────────────────
@@ -4774,6 +4929,77 @@ Guidelines:
       }),
   }),
 
+  // ─── Custom Game Inquiries (waitlist for /custom-games) ──────────────────────
+  customGameInquiries: router({
+    submit: publicProcedure
+      .input(z.object({
+        fullName: z.string().min(1).max(255),
+        email: z.string().email().max(255),
+        projectName: z.string().min(1).max(255),
+        websiteOrSocial: z.string().max(500).optional(),
+        landStatus: z.string().min(1).max(100),
+        communityStage: z.string().min(1).max(100),
+        primaryGoal: z.string().min(1),
+        timeline: z.string().min(1).max(100),
+        budgetConfirmed: z.boolean(),
+        referralSource: z.string().max(255).optional(),
+        additionalNotes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        checkRateLimit(ctx, "custom_game_waitlist");
+        const drizzle = await getDb();
+        if (!drizzle) return { success: false };
+        await drizzle.insert(customGameInquiries).values({
+          fullName: input.fullName,
+          email: input.email,
+          projectName: input.projectName,
+          websiteOrSocial: input.websiteOrSocial ?? null,
+          landStatus: input.landStatus,
+          communityStage: input.communityStage,
+          primaryGoal: input.primaryGoal,
+          timeline: input.timeline,
+          budgetConfirmed: input.budgetConfirmed ? 1 : 0,
+          referralSource: input.referralSource ?? null,
+          additionalNotes: input.additionalNotes ?? null,
+          status: "waitlist",
+        });
+        await notifyOwner({ title: "New Custom Game Waitlist Submission", content: `From: ${input.fullName} (${input.email})\nProject: ${input.projectName}\nLand Status: ${input.landStatus}\nTimeline: ${input.timeline}\nGoal: ${input.primaryGoal}` });
+        return { success: true };
+      }),
+
+    list: adminProcedure
+      .input(z.object({
+        status: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const drizzle = await getDb();
+        if (!drizzle) return [];
+        const rows = await drizzle
+          .select()
+          .from(customGameInquiries)
+          .orderBy(sql`createdAt DESC`);
+        if (input?.status) {
+          return rows.filter((r) => r.status === input.status);
+        }
+        return rows;
+      }),
+
+    updateStatus: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.string().min(1).max(50),
+        internalNotes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const drizzle = await getDb();
+        if (!drizzle) return { success: false };
+        await drizzle
+          .update(customGameInquiries)
+          .set({ status: input.status, internalNotes: input.internalNotes ?? null })
+          .where(eq(customGameInquiries.id, input.id));
+        return { success: true };
+      }),
+  }),
 
 });
 export type AppRouter = typeof appRouter;

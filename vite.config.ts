@@ -1,9 +1,9 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
-import { defineConfig } from "vite";
+import { defineConfig, type UserConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ mode }): UserConfig => ({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -33,8 +33,10 @@ export default defineConfig({
       },
     },
   },
+  // Drop console.log / debugger statements in production builds
+  esbuild: mode === "production" ? { drop: ["console", "debugger"] } : undefined,
   server: {
     host: true,
     allowedHosts: ["localhost", "127.0.0.1"],
   },
-});
+}));
