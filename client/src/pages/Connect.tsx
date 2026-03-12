@@ -1,6 +1,6 @@
 /**
  * Connect Form - Catch-all Routing Form with 7 Pathways
- * Based on the Tripetto form structure
+ * Writes to Railway MySQL via trpc.generalInquiries.submit and trpc.newsletter.subscribe
  */
 
 import { useState, useEffect } from "react";

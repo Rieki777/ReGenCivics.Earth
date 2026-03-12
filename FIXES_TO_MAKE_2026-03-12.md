@@ -58,49 +58,31 @@ Sign out of `regencivics.earth` and sign back in with your Google account. The `
 
 ---
 
-## Fix 51 — `/investmentform` Uses Tripetto (Not Wired to DB or Admin)
+## Fix 51 + 52 — Remove All Tripetto Forms
 
 **Status:** CODED — needs deploy
 
-**Symptom:** The `/investmentform` page loads a Tripetto Studio embed (third-party form service). Submissions go to Tripetto's servers — they do NOT appear in `/admin`, the DB, or anywhere else in the site.
+**What Tripetto was:** An early prototype approach using an external third-party form service. Submissions went to Tripetto's servers and never touched the Railway DB, admin dashboard, or any site logic. Not used anymore. Everything is now handled with native tRPC forms writing directly to Railway MySQL.
 
-**Root cause:** `client/src/pages/InvestmentForm.tsx` uses a hardcoded Tripetto JWT token (`eyJhbGci...`) to load an external form widget. This was an early prototype approach.
+**What was removed:**
 
-**The correct page already exists:** `/investor` (InvestorForm.tsx) is the full investor journey form, properly wired to `trpc.investorInquiries.submit` → Railway MySQL `investor_inquiries` table → visible in `/admin` → triggers welcome email + drip sequence.
+- `client/src/pages/InvestmentForm.tsx` — gutted to a deprecation stub. Route `/investmentform` now redirects to `/investor` (the real DB-backed investor form).
+- `client/src/pages/Form.tsx` — gutted to a deprecation stub. Route `/form` now redirects to `/connect` (the real DB-backed contact/newsletter form).
+- `client/src/components/NewsletterSignup.tsx` — "Subscribe" button changed from `/form` to `/connect` directly.
+- `client/src/App.tsx` — lazy imports for both Tripetto pages removed. Redirect routes added.
+- `client/src/pages/Connect.tsx` — removed stale "Based on Tripetto form structure" comment in the file header.
 
-**What was done:** `/investmentform` now redirects to `/investor` in App.tsx. The `InvestmentForm` lazy import removed. No internal links pointed to this route so no other files needed updating.
+The two stub files (`Form.tsx`, `InvestmentForm.tsx`) can be deleted from the repo once you push. They contain no code that runs.
 
-**Files changed:** `client/src/App.tsx`
-
-`client/src/pages/InvestmentForm.tsx` is now dead code and can optionally be deleted.
-
----
-
-## Fix 52 — `/form` Uses Tripetto (Not Wired to DB or Admin)
-
-**Status:** CODED — needs deploy
-
-**Symptom:** The `/form` page (`client/src/pages/Form.tsx`) is also a Tripetto embed — different token, different form definition. Submissions do not appear anywhere in the site's DB or admin.
-
-**What is this form?** It appears to be a general/catch-all form that predates the `/connect` page. Check if it's still linked anywhere:
-
-```bash
-grep -rn '"/form"\|href.*"/form"' client/src/ public/
-```
-
-**What was done:** `/form` redirected to `/connect` in App.tsx. `NewsletterSignup.tsx` updated to link directly to `/connect` (it was the only internal caller of `/form`). The Tripetto `Form` component import removed from App.tsx.
-
-**Files changed:** `client/src/App.tsx`, `client/src/components/NewsletterSignup.tsx`
-
-The `client/src/pages/Form.tsx` file itself is now dead code and can be deleted, but this is optional.
+**Files changed:** `client/src/App.tsx`, `client/src/components/NewsletterSignup.tsx`, `client/src/pages/Form.tsx`, `client/src/pages/InvestmentForm.tsx`, `client/src/pages/Connect.tsx`
 
 ---
 
-## Fix 53 — Confirm All Active Form → DB Wiring
+## Fix 53 — All Active Forms Now Wired to DB
 
-**Status:** VERIFIED (for reference)
+**Status:** VERIFIED
 
-The following forms are correctly wired to Railway MySQL and will appear in `/admin` once Fix 50 (admin role) is resolved:
+Every form on the site writes to Railway MySQL via tRPC and will appear in `/admin` once Fix 50 (admin role) is resolved:
 
 | Route | Component | tRPC endpoint | DB table | Admin tab |
 |---|---|---|---|---|
@@ -109,7 +91,7 @@ The following forms are correctly wired to Railway MySQL and will appear in `/ad
 | `/connect` | Connect.tsx | `generalInquiries.submit` | `general_inquiries` | Inquiries |
 | `/connect` | Connect.tsx | `newsletter.subscribe` | `newsletter_subscribers` | Newsletter |
 
-The two Tripetto pages (`/investmentform`, `/form`) are the only ones NOT wired to the DB.
+No Tripetto embeds remain anywhere in the codebase.
 
 ---
 
