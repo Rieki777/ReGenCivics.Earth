@@ -69,9 +69,9 @@ export default function KnowledgeMapAdminPanel() {
             onChange={e => setSuggestCatId(Number(e.target.value))}
             className="flex-1 bg-[#1a2e1a] border border-[#7dd87d]/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60"
           >
-            <option value={0}>Select category…</option>
+            <option value={0} className="bg-[#1a2e1a] text-white">Select category…</option>
             {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id} className="bg-[#1a2e1a] text-white">{c.name}</option>
             ))}
           </select>
           <Button
@@ -138,9 +138,9 @@ export default function KnowledgeMapAdminPanel() {
             onChange={e => setForm(f => ({ ...f, categoryId: Number(e.target.value) }))}
             className="col-span-2 bg-[#1a2e1a] border border-[#7dd87d]/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60"
           >
-            <option value={0}>Select category…</option>
+            <option value={0} className="bg-[#1a2e1a] text-white">Select category…</option>
             {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id} className="bg-[#1a2e1a] text-white">{c.name}</option>
             ))}
           </select>
           <Input

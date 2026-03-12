@@ -1263,14 +1263,14 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                         onChange={(e) => setMeetingFreqFilter(e.target.value)}
                         className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
                       >
-                        <option value="">All Community Engagement</option>
-                        <option value="everyday">Everyday</option>
-                        <option value="2_3x_week">2–3× / week</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="2_3x_month">2–3× / month</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="2_3x_year">2–3× / year</option>
-                        <option value="yearly_plus">Yearly or less</option>
+                        <option value="" className="bg-[#1a472a] text-white">All Community Engagement</option>
+                        <option value="everyday" className="bg-[#1a472a] text-white">Everyday</option>
+                        <option value="2_3x_week" className="bg-[#1a472a] text-white">2–3× / week</option>
+                        <option value="weekly" className="bg-[#1a472a] text-white">Weekly</option>
+                        <option value="2_3x_month" className="bg-[#1a472a] text-white">2–3× / month</option>
+                        <option value="monthly" className="bg-[#1a472a] text-white">Monthly</option>
+                        <option value="2_3x_year" className="bg-[#1a472a] text-white">2–3× / year</option>
+                        <option value="yearly_plus" className="bg-[#1a472a] text-white">Yearly or less</option>
                       </select>
                     </div>
                     <div>
@@ -1280,15 +1280,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                         onChange={(e) => setDietaryFilter(e.target.value)}
                         className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
                       >
-                        <option value="">All Diets</option>
-                        <option value="vegan">Vegan</option>
-                        <option value="vegetarian">Vegetarian</option>
-                        <option value="plant_based">Plant-Based</option>
-                        <option value="pescatarian">Pescatarian</option>
-                        <option value="omnivore">Omnivore</option>
-                        <option value="animal_based">Animal-Based</option>
-                        <option value="keto">Keto</option>
-                        <option value="no_shared_diets">No Shared Diets</option>
+                        <option value="" className="bg-[#1a472a] text-white">All Diets</option>
+                        <option value="vegan" className="bg-[#1a472a] text-white">Vegan</option>
+                        <option value="vegetarian" className="bg-[#1a472a] text-white">Vegetarian</option>
+                        <option value="plant_based" className="bg-[#1a472a] text-white">Plant-Based</option>
+                        <option value="pescatarian" className="bg-[#1a472a] text-white">Pescatarian</option>
+                        <option value="omnivore" className="bg-[#1a472a] text-white">Omnivore</option>
+                        <option value="animal_based" className="bg-[#1a472a] text-white">Animal-Based</option>
+                        <option value="keto" className="bg-[#1a472a] text-white">Keto</option>
+                        <option value="no_shared_diets" className="bg-[#1a472a] text-white">No Shared Diets</option>
                       </select>
                     </div>
                     {hasActiveFilters && (
@@ -1456,14 +1456,14 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                   onChange={(e) => setMeetingFreqFilter(e.target.value)}
                   className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
                 >
-                  <option value="">All Community Engagement</option>
-                  <option value="everyday">Everyday</option>
-                  <option value="2_3x_week">2–3× / week</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="2_3x_month">2–3× / month</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="2_3x_year">2–3× / year</option>
-                  <option value="yearly_plus">Yearly or less</option>
+                  <option value="" className="bg-[#1a472a] text-white">All Community Engagement</option>
+                  <option value="everyday" className="bg-[#1a472a] text-white">Everyday</option>
+                  <option value="2_3x_week" className="bg-[#1a472a] text-white">2–3× / week</option>
+                  <option value="weekly" className="bg-[#1a472a] text-white">Weekly</option>
+                  <option value="2_3x_month" className="bg-[#1a472a] text-white">2–3× / month</option>
+                  <option value="monthly" className="bg-[#1a472a] text-white">Monthly</option>
+                  <option value="2_3x_year" className="bg-[#1a472a] text-white">2–3× / year</option>
+                  <option value="yearly_plus" className="bg-[#1a472a] text-white">Yearly or less</option>
                 </select>
               </div>
               <div>
@@ -1473,15 +1473,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                   onChange={(e) => setDietaryFilter(e.target.value)}
                   className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
                 >
-                  <option value="">All Diets</option>
-                  <option value="vegan">Vegan</option>
-                  <option value="vegetarian">Vegetarian</option>
-                  <option value="plant_based">Plant-Based</option>
-                  <option value="pescatarian">Pescatarian</option>
-                  <option value="omnivore">Omnivore</option>
-                  <option value="animal_based">Animal-Based</option>
-                  <option value="keto">Keto</option>
-                  <option value="no_shared_diets">No Shared Diets</option>
+                  <option value="" className="bg-[#1a472a] text-white">All Diets</option>
+                  <option value="vegan" className="bg-[#1a472a] text-white">Vegan</option>
+                  <option value="vegetarian" className="bg-[#1a472a] text-white">Vegetarian</option>
+                  <option value="plant_based" className="bg-[#1a472a] text-white">Plant-Based</option>
+                  <option value="pescatarian" className="bg-[#1a472a] text-white">Pescatarian</option>
+                  <option value="omnivore" className="bg-[#1a472a] text-white">Omnivore</option>
+                  <option value="animal_based" className="bg-[#1a472a] text-white">Animal-Based</option>
+                  <option value="keto" className="bg-[#1a472a] text-white">Keto</option>
+                  <option value="no_shared_diets" className="bg-[#1a472a] text-white">No Shared Diets</option>
                 </select>
               </div>
               {hasActiveFilters && (

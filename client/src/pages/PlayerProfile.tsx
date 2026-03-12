@@ -1000,8 +1000,8 @@ function OrgClaimSection({ userId, questsCompleted }: { userId: number; questsCo
             onChange={e => setClaimOrgId(e.target.value)}
             className="w-full bg-white/10 border border-white/20 text-white rounded-lg px-3 py-2 text-sm"
           >
-            <option value="">Select {claimType === "land_project" ? "a land project" : "an alliance org"}…</option>
-            {orgOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            <option value="" className="bg-[#1a3a1f] text-white">Select {claimType === "land_project" ? "a land project" : "an alliance org"}…</option>
+            {orgOptions.map(o => <option key={o.id} value={o.id} className="bg-[#1a3a1f] text-white">{o.name}</option>)}
           </select>
           <button
             disabled={!claimOrgId || claimMutation.isPending}

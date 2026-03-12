@@ -41,10 +41,10 @@ const contextConfig: Record<PageContext, {
 }> = {
   investor: {
     icon: <FileText className="w-5 h-5 text-[#7dd87d]" />,
-    headline: "Access the Investment Thesis",
-    subline: "Complete the investor intake form to continue",
-    body: "Our full investment thesis, fund structure, and financial projections are available to accredited investors who complete a short intake form. It takes less than 2 minutes.",
-    cta: "Take Me to the Form",
+    headline: "Explore the Investment Opportunity",
+    subline: "View the full investment thesis and fund details",
+    body: "See the full investment thesis, fund structure, and how to get involved.",
+    cta: "View Investment Details",
     successMessage: "",
   },
   land: {
@@ -238,13 +238,10 @@ export function ExitIntentCapture() {
                 {context === 'investor' ? (
                   <div className="flex flex-col gap-3 mt-2">
                     <button
-                      onClick={() => {
-                        setShow(false);
-                        setLocation('/investor');
-                      }}
+                      onClick={() => { window.location.href = '/investor'; setShow(false); }}
                       className="w-full py-3 px-6 rounded-full bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors"
                     >
-                      {config.cta}
+                      View Investment Details
                     </button>
                     <button
                       onClick={() => { setShow(false); sessionStorage.setItem('exitIntentDismissed', '1'); setDismissed(true); }}
