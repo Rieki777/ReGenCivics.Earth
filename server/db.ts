@@ -2015,6 +2015,16 @@ export async function listForumChainPosts(limit = 50, offset = 0) {
     .offset(offset);
 }
 
+export async function listForumPostsByType(postType: string, limit = 50, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(forumPosts)
+    .where(eq(forumPosts.postType, postType))
+    .orderBy(desc(forumPosts.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
 export async function listForumReplies(postId: number) {
   const db = await getDb();
   if (!db) return [];

@@ -3177,6 +3177,29 @@ export const appRouter = router({
         return enriched;
       }),
 
+    // Get posts by postType (e.g. "seeking_team", "case_study")
+    postsByType: publicProcedure
+      .input(z.object({
+        postType: z.enum(["case_study", "seeking_team"]),
+        limit: z.number().max(100).default(50),
+        offset: z.number().default(0),
+      }))
+      .query(async ({ input }) => {
+        const posts = await db.listForumPostsByType(input.postType, input.limit, input.offset);
+        const enriched = await Promise.all(posts.map(async (post) => {
+          const author = await db.getUserById(post.authorId);
+          const cats = await db.listForumCategories();
+          const category = cats.find(c => c.id === post.categoryId);
+          return {
+            ...post,
+            authorName: author?.name || 'Anonymous',
+            categorySlug: category?.slug || 'general',
+            categoryName: category?.name || 'Unknown',
+          };
+        }));
+        return enriched;
+      }),
+
     // Get all thread-chain posts (any post with threadStage set)
     chainFeed: publicProcedure
       .input(z.object({ limit: z.number().max(100).default(50), offset: z.number().default(0) }))

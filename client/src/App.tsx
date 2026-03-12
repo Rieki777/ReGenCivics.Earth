@@ -79,6 +79,7 @@ const CommunityPost = lazy(() => import("./pages/CommunityPost"));
 const CommunityNewPost = lazy(() => import("./pages/CommunityNewPost"));
 const CommunityTagFilter = lazy(() => import("./pages/CommunityTagFilter"));
 const CommunityChains = lazy(() => import("./pages/CommunityChains"));
+const CommunitySeekingTeam = lazy(() => import("./pages/CommunitySeekingTeam"));
 const QuestSuggestions = lazy(() => import("./pages/QuestSuggestions"));
 const UserForumProfile = lazy(() => import("./pages/UserForumProfile"));
 const AdminModeration = lazy(() => import("./pages/AdminModeration"));
@@ -151,6 +152,7 @@ function Router() {
         <Route path={"/community/new"} component={CommunityNewPost} />
         <Route path={"/community/tag/:tag"} component={CommunityTagFilter} />
         <Route path={"/community/chains"} component={CommunityChains} />
+        <Route path={"/community/seeking-team"} component={CommunitySeekingTeam} />
         <Route path={"/community/lessons"}>{() => <Redirect to="/community/tag/lesson" />}</Route>
         <Route path={"/community/seeking-support"}>{() => <Redirect to="/community/tag/seeking-support" />}</Route>
         <Route path={"/community/offering-support"}>{() => <Redirect to="/community/tag/offering-support" />}</Route>

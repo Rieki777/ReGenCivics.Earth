@@ -382,6 +382,12 @@ export default function Community() {
               Thread Chains
             </span>
           </Link>
+          <Link href="/community/seeking-team">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f3e8ff] border border-[#a855f7]/20 text-[#7e22ce] text-sm font-medium hover:border-[#a855f7]/50 transition-colors cursor-pointer">
+              <Users className="w-3.5 h-3.5" />
+              Seeking Team
+            </span>
+          </Link>
         </div>
 
         {/* Community Guidelines */}
