@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { isNewsletterSubscribed, markNewsletterSubscribed } from "@/utils/newsletter";
 
 export default function NewsletterSignup() {
   return (
@@ -42,10 +43,13 @@ export default function NewsletterSignup() {
  */
 export function NewsletterSignupInline({ className = "" }: { className?: string }) {
   const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
+  const [subscribed, setSubscribed] = useState(() => isNewsletterSubscribed());
 
   const subscribeMutation = trpc.newsletter.subscribe.useMutation({
-    onSuccess: () => setSubscribed(true),
+    onSuccess: () => {
+      markNewsletterSubscribed();
+      setSubscribed(true);
+    },
   });
 
   function handleSubmit(e: React.FormEvent) {

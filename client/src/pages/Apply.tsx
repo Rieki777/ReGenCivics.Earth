@@ -15,6 +15,7 @@ import { getLoginUrl } from "@/const";
 import { MapView } from "@/components/Map";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { BackButton } from "@/components/BackButton";
+import { BannerDisplay } from "@/components/BannerDisplay";
 
 type UploadedFile = {
   name: string;
@@ -177,7 +178,7 @@ export default function Apply() {
       <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
         <Card className="max-w-md p-8 text-center">
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Login Required</h2>
-          <p className="text-[#1a472a]/85 mb-6">
+          <p className="text-[#1a472a] mb-6">
             You need to be logged in to submit an application.
           </p>
           <Button
@@ -195,13 +196,14 @@ export default function Apply() {
 
   return (
     <div className="min-h-screen bg-[#f0ebe3] py-12">
+      <BannerDisplay bannerKey="apply-banner" />
       <div className="container max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[#1a472a] mb-2">
             Apply for Next Season
           </h1>
-          <p className="text-[#1a472a]/85">
+          <p className="text-[#1a472a]">
             Join the ReGen Civics Alliance
           </p>
         </div>
@@ -264,7 +266,7 @@ export default function Apply() {
                     <SelectItem value="mature">Mature</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-[#1a472a]/60 mt-1">
+                <p className="text-sm text-[#1a472a]/80 mt-1">
                   Early stage: Just past land acquisition. Mature: Established and ready for funding.
                 </p>
               </div>
@@ -286,7 +288,7 @@ export default function Apply() {
                   <MapPin className="w-4 h-4 text-[#4a7c59]" />
                   Pin Your Project on the Map
                 </Label>
-                <p className="text-sm text-[#1a472a]/60 mb-3">
+                <p className="text-sm text-[#1a472a]/80 mb-3">
                   Click on the map to place your project pin, or enter coordinates manually below.
                   Your project will appear on our interactive globe map!
                 </p>
@@ -416,7 +418,7 @@ export default function Apply() {
                 {/* Coordinate display + manual entry */}
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <Label htmlFor="latitude" className="text-xs text-[#1a472a]/85">Latitude</Label>
+                    <Label htmlFor="latitude" className="text-xs text-[#1a472a]">Latitude</Label>
                     <Input
                       id="latitude"
                       type="number"
@@ -428,7 +430,7 @@ export default function Apply() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="longitude" className="text-xs text-[#1a472a]/85">Longitude</Label>
+                    <Label htmlFor="longitude" className="text-xs text-[#1a472a]">Longitude</Label>
                     <Input
                       id="longitude"
                       type="number"
@@ -441,7 +443,7 @@ export default function Apply() {
                   </div>
                 </div>
                 <div className="mb-3">
-                  <Label htmlFor="country" className="text-xs text-[#1a472a]/85">Country</Label>
+                  <Label htmlFor="country" className="text-xs text-[#1a472a]">Country</Label>
                   <Input
                     id="country"
                     value={formData.country}
@@ -520,7 +522,7 @@ export default function Apply() {
               {/* Project Size with Bidirectional Conversion */}
               <div>
                 <Label className="text-base font-semibold text-[#1a472a]">Project Size</Label>
-                <p className="text-sm text-[#1a472a]/60 mb-2">Enter in either hectares or acres - the other will auto-calculate.</p>
+                <p className="text-sm text-[#1a472a]/80 mb-2">Enter in either hectares or acres - the other will auto-calculate.</p>
                 <div className="grid grid-cols-2 gap-4 mt-1">
                   <div>
                     <Label htmlFor="projectSizeHectares" className="text-sm">Hectares</Label>
@@ -553,7 +555,7 @@ export default function Apply() {
                     />
                   </div>
                 </div>
-                <p className="text-xs text-[#1a472a]/60 mt-2">
+                <p className="text-xs text-[#1a472a]/80 mt-2">
                   1 hectare = 2.471 acres | 1 acre = 0.4047 hectares
                 </p>
               </div>
@@ -561,7 +563,7 @@ export default function Apply() {
               {/* Current Community Size */}
               <div className="border border-[#1a472a]/20 rounded-lg p-4 bg-[#f8f5f0]">
                 <Label className="text-base font-semibold text-[#1a472a]">Current Community Size</Label>
-                <p className="text-sm text-[#1a472a]/60 mb-3">How many people and households currently live on the project?</p>
+                <p className="text-sm text-[#1a472a]/80 mb-3">How many people and households currently live on the project?</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="currentPeopleCount" className="text-sm">People</Label>
@@ -593,7 +595,7 @@ export default function Apply() {
               {/* Intended Full Community Size */}
               <div className="border border-[#1a472a]/20 rounded-lg p-4 bg-[#f8f5f0]">
                 <Label className="text-base font-semibold text-[#1a472a]">Intended Full Community Size</Label>
-                <p className="text-sm text-[#1a472a]/60 mb-3">What is your target community size at full capacity?</p>
+                <p className="text-sm text-[#1a472a]/80 mb-3">What is your target community size at full capacity?</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="intendedPeopleCount" className="text-sm">People</Label>
@@ -625,7 +627,7 @@ export default function Apply() {
               {/* Mixed Use Selection */}
               <div>
                 <Label className="text-base">Mixed Use (Select all that apply)</Label>
-                <p className="text-sm text-[#1a472a]/60 mb-3">What types of land use does your project include?</p>
+                <p className="text-sm text-[#1a472a]/80 mb-3">What types of land use does your project include?</p>
                 <div className="flex flex-wrap gap-3">
                   {["residential", "commercial", "industrial", "agricultural", "educational", "recreational"].map((use) => (
                     <button
@@ -642,7 +644,7 @@ export default function Apply() {
                       className={`px-4 py-2 rounded-full border-2 transition-all capitalize ${
                         (formData.mixedUse || []).includes(use)
                           ? "border-[#7dd87d] bg-[#7dd87d]/20 text-[#1a472a]"
-                          : "border-[#1a472a]/20 bg-white text-[#1a472a]/85 hover:border-[#7dd87d]/50"
+                          : "border-[#1a472a]/20 bg-white text-[#1a472a] hover:border-[#7dd87d]/50"
                       }`}
                     >
                       {use}
@@ -656,7 +658,7 @@ export default function Apply() {
                 <Label htmlFor="meetingFrequency" className="text-base font-semibold text-[#1a472a]">
                   Meeting Frequency
                 </Label>
-                <p className="text-sm text-[#1a472a]/60">How often does your core community gather in person?</p>
+                <p className="text-sm text-[#1a472a]/80">How often does your core community gather in person?</p>
                 <Select
                   value={formData.meetingFrequency}
                   onValueChange={(v) => updateField("meetingFrequency", v)}
@@ -756,7 +758,7 @@ export default function Apply() {
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-[#1a472a]/60">Select all that apply to your community. This helps prospective members find aligned communities.</p>
+                <p className="text-sm text-[#1a472a]/80">Select all that apply to your community. This helps prospective members find aligned communities.</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { value: "vegan", label: "Vegan" },
@@ -862,7 +864,7 @@ export default function Apply() {
                   placeholder="https://youtube.com/..."
                   className="mt-1"
                 />
-                <p className="text-sm text-[#1a472a]/60 mt-1">
+                <p className="text-sm text-[#1a472a]/80 mt-1">
                   Optional: Share a video introducing your project
                 </p>
               </div>
@@ -894,7 +896,7 @@ export default function Apply() {
                 <p className="text-[#1a472a] font-medium mb-2">
                   Ready to submit?
                 </p>
-                <p className="text-[#1a472a]/85 text-sm">
+                <p className="text-[#1a472a] text-sm">
                   By submitting this application, you agree to participate in the ReGen Civics next Season and commit to the time requirements outlined in the program.
                 </p>
               </div>

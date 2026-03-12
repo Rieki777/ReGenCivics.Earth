@@ -64,6 +64,7 @@ This project uses a structured delivery pipeline via the ln- skills (in ~/.claud
 - Community-first — language and tools should feel welcoming, not gatekeeping
 - Lean operations — practical and sustainable over complex and impressive
 - Regenerative values — the work should embody healing, reciprocity, long-term thinking
+- **Maximum autonomy** — Rye is holding a lot. Do as much as possible without asking. Only surface tasks to Rye when there is literally no way to proceed without human input. When a `[HUMAN]` step is unavoidable, complete everything else first, then ask for only the minimal required input. Try things before asking permission. Prefer attempting and reporting over asking whether to attempt.
 
 ## About Rye
 Founder, movement builder, tool designer. Engagement will be extremely diverse — writing, fundraising, game design, code, strategy, community comms. All of it. See `C:\Users\taren\Documents\Claude\about-me.md` for full context.

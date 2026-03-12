@@ -96,9 +96,14 @@ export default function CrowdPooling() {
               Pool Resources for Your Land Project
             </h1>
             <p className="text-[#1a472a]/85 max-w-xl mx-auto">
-              This tool helps land projects aggregate contributions from multiple community members.
-              Each contributor fills out their own form, and the project can combine all contributions
-              to show the total pooled resources.
+              Crowd Pooling lets you contribute directly to land projects at a scale that works for you.
+              Set your budget, pick your projects, and see exactly how your contribution compounds with others.
+            </p>
+            <p className="mt-3 text-[#1a472a]/70 text-sm max-w-xl mx-auto">
+              Looking to browse active campaigns?{" "}
+              <Link href="/crowd-pooling-projects" className="text-[#4a7c59] font-medium hover:underline">
+                View Land Project Campaigns →
+              </Link>
             </p>
           </div>
 

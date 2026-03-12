@@ -963,6 +963,18 @@ export default function CrowdPoolingProjects() {
 
       {/* Main Content */}
       <main className="container py-8 md:py-12">
+        {/* Explanatory callout */}
+        <div className="bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-xl px-5 py-4 mb-6 text-sm text-[#1a472a] flex items-center gap-3">
+          <Leaf className="w-4 h-4 text-[#4a7c59] flex-shrink-0" />
+          <span>
+            These are land projects currently raising through crowd pooling.{" "}
+            Want to run the numbers on your contribution?{" "}
+            <Link href="/crowd-pooling" className="font-medium text-[#4a7c59] hover:underline">
+              Open the Crowd Pooling Calculator →
+            </Link>
+          </span>
+        </div>
+
         {/* How It Works */}
         <div className="bg-white rounded-2xl p-6 mb-8 shadow-sm">
           <h2 className="text-lg font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>

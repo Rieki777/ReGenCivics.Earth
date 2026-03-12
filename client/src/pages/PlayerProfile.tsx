@@ -919,15 +919,10 @@ const ALLIANCE_ORGS = [
 
 const WELCOME_ABOARD_IDS = Array.from({ length: 10 }, (_, i) => `welcome-aboard-${i + 1}`);
 
-function OrgClaimSection({ userId, questsCompleted }: { userId: number; questsCompleted?: string }) {
+function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string }) {
   const [claimType, setClaimType] = useState<"land_project" | "alliance_org">("land_project");
   const [claimOrgId, setClaimOrgId] = useState("");
   const [showClaimForm, setShowClaimForm] = useState(false);
-
-  const completedQuests: string[] = (() => {
-    try { return JSON.parse(questsCompleted || "[]"); } catch { return []; }
-  })();
-  const allQuestsDone = WELCOME_ABOARD_IDS.every(id => completedQuests.includes(id));
 
   const { data: claims, refetch: refetchClaims } = trpc.orgClaims.mine.useQuery();
   const { data: joinRequests, refetch: refetchJoinRequests } = trpc.projectJoinRequests.myRequests.useQuery();
@@ -962,23 +957,14 @@ function OrgClaimSection({ userId, questsCompleted }: { userId: number; questsCo
         </div>
         <button
           onClick={() => setShowClaimForm(v => !v)}
-          disabled={!allQuestsDone}
-          title={allQuestsDone ? undefined : "Complete all 10 Welcome Aboard Quests to unlock claiming"}
-          className="text-xs px-3 py-1.5 rounded-lg bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="text-xs px-3 py-1.5 rounded-lg bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/30 transition-colors"
         >
           + Claim Org
         </button>
       </div>
 
-      {/* Claim gate notice */}
-      {!allQuestsDone && (
-        <div className="bg-[#d4a574]/10 border border-[#d4a574]/20 rounded-xl px-4 py-3 text-[#d4a574] text-xs">
-          Complete all 10 Welcome Aboard Quests to unlock the ability to claim stewardship of a project or org.
-        </div>
-      )}
-
       {/* Claim form */}
-      {showClaimForm && allQuestsDone && (
+      {showClaimForm && (
         <div className="bg-white/10 rounded-xl p-4 space-y-3 border border-white/20">
           <p className="text-white/80 text-sm font-medium">Claim stewardship of an existing project or org</p>
           <div className="flex gap-2">
@@ -2080,16 +2066,30 @@ export default function PlayerProfile() {
               {/* Quests tab */}
               {activeTab === "quests" && (
                 <AnimatedSection animation="slide-up">
-                  <div className="space-y-6">
-                    <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
-                    {/* Legacy quest log */}
-                    <div className="glass-panel p-6 rounded-xl">
-                      <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-[#7dd87d]" /> Other Completed Quests
-                      </h2>
-                      <QuestsTab profile={profile} />
-                    </div>
-                  </div>
+                  {(() => {
+                    const completedQuestsList: string[] = (() => {
+                      try { return JSON.parse(profile.questsCompleted || "[]"); } catch { return []; }
+                    })();
+                    const allWelcomeDone = WELCOME_ABOARD_IDS.every(id => completedQuestsList.includes(id));
+                    const hasCompleted = completedQuestsList.length > 0;
+                    return (
+                      <div className="space-y-6">
+                        {/* Completed quests first if any exist */}
+                        {hasCompleted && (
+                          <div className="glass-panel p-6 rounded-xl">
+                            <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                              <BookOpen className="w-4 h-4 text-[#7dd87d]" /> Completed Quests
+                            </h2>
+                            <QuestsTab profile={profile} />
+                          </div>
+                        )}
+                        {/* Welcome Aboard quests: show if not all done, or if no completed quests yet */}
+                        {(!allWelcomeDone || !hasCompleted) && (
+                          <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </AnimatedSection>
               )}
 

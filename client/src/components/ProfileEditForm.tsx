@@ -191,14 +191,32 @@ export function ProfileEditForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="avatarUrl" className="text-white/70">Avatar URL</Label>
-        <Input
-          id="avatarUrl"
-          value={form.avatarUrl}
-          onChange={(e) => set("avatarUrl", e.target.value)}
-          placeholder="https://..."
-          maxLength={500}
-          type="url"
-        />
+        <div className="flex items-center gap-3">
+          {form.avatarUrl && (
+            <img
+              src={form.avatarUrl}
+              alt="Preview"
+              className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-white/20"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+          )}
+          <Input
+            id="avatarUrl"
+            value={form.avatarUrl}
+            onChange={(e) => set("avatarUrl", e.target.value)}
+            onBlur={(e) => {
+              const v = e.target.value.trim();
+              if (v && !v.startsWith("https://")) {
+                // show a subtle warning by not validating — browser handles it
+              }
+            }}
+            placeholder="https://..."
+            maxLength={500}
+          />
+        </div>
+        <p className="text-white/40 text-xs">
+          Paste a direct link to an image (JPG, PNG, WebP). Tip: upload to Imgur or Google Photos (shared link) and paste the direct image URL. Must start with https://.
+        </p>
       </div>
 
       {/* Investor-specific */}

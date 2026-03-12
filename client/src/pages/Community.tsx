@@ -24,6 +24,7 @@ import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import AMABanner from "@/components/AMABanner";
+import { BannerDisplay } from "@/components/BannerDisplay";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { PageTransition, ScrollRevealMotion, HoverCard, FloatElement } from "@/components/PageTransition";
 import { motion } from "framer-motion";
@@ -173,6 +174,7 @@ export default function Community() {
     <div className="min-h-screen bg-[#f8f5f0]">
       <SEO {...pageSEO.community} />
       <AMABanner />
+      <BannerDisplay bannerKey="community-banner" />
       <BackButton />
 
       {/* Hero Section */}

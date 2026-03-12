@@ -647,7 +647,16 @@ function EntityCard({
                 onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1 text-xs bg-[#7dd87d] text-[#1a472a] px-3 py-1.5 rounded-full font-semibold hover:bg-[#6bc86b] transition-colors"
               >
-                {entity.type === "organization" ? "Work with ReGens" : "Live in Community"}
+                {entity.type === "organization" ? "Work with ReGens" : "Apply"}
+              </a>
+            )}
+            {entity.type === "land_project" && !entity.inactive && (
+              <a
+                href="/community/land-projects"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-xs border border-white/30 text-white/70 px-3 py-1.5 rounded-full font-medium hover:bg-white/10 transition-colors"
+              >
+                Forum
               </a>
             )}
           </div>
