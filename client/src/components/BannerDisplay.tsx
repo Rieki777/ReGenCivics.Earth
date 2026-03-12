@@ -3,10 +3,10 @@
  * Displays editable banners on home pages with markdown support
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Streamdown } from 'streamdown';
+import { renderInlineMarkdown } from '@/components/BlogInlineMarkdown';
 
 interface BannerDisplayProps {
   bannerKey: string;
@@ -33,7 +33,7 @@ export function BannerDisplay({ bannerKey, className = '' }: BannerDisplayProps)
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
           <div className="flex-1">
             <div className="text-sm sm:text-base font-semibold">
-              <Streamdown>{banner.content}</Streamdown>
+              {renderInlineMarkdown(banner.content)}
             </div>
           </div>
           

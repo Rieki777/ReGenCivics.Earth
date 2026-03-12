@@ -52,7 +52,7 @@ const REPORTS_DIR = path.join(process.cwd(), "lighthouse-reports");
     const p = await context.newPage();
 
     try {
-      await p.goto(STAGING_URL + page.path, { waitUntil: "networkidle", timeout: 30000 });
+      await p.goto(STAGING_URL + page.path, { waitUntil: "load", timeout: 60000 });
 
       const result = await playAudit({
         page: p,

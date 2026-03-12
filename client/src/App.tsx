@@ -11,7 +11,7 @@ import { TaoSpinner } from "./components/TaoSpinner";
 import { TaoErrorState } from "./components/TaoErrorState";
 import CookieConsent from "./components/CookieConsent";
 import AnalyticsLoader from "./components/AnalyticsLoader";
-import ReGenGuide from "./components/ReGenGuide";
+const ReGenGuide = lazy(() => import("./components/ReGenGuide"));
 import AMABanner from "./components/AMABanner";
 import SiteFooter from "./components/SiteFooter";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -247,7 +247,7 @@ function App() {
           {!adminMode && <CookieConsent />}
           <AnalyticsLoader />
           <ScrollToTop />
-          {!adminMode && <ReGenGuide />}
+          {!adminMode && <Suspense fallback={null}><ReGenGuide /></Suspense>}
           {!adminMode && <AppInner />}
           {!adminMode && <ExitIntentCapture />}
           {!adminMode && <CommandPalette />}
