@@ -77,7 +77,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Make Friends and Support",
     tagline: "New here? Someone needs you. Already settled in? Someone needs you too.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "https://regencivics.earth/community/make-friends",
+    forumUrl: "/community/c/make-friends",
     about:
       "The Regenerative Renaissance is not built by isolated individuals. It is built by people who find each other. This quest is simple: reach out to someone in the ReGen Civics community you have not connected with before. Welcome a newcomer. Answer a question someone left unanswered. Respond to an origin story that moved you. Introduce yourself to someone whose project interests you. You do not need a reason beyond genuine curiosity and care. A community that notices its members and reaches toward them is a community worth belonging to.",
     steps: [
@@ -92,7 +92,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Pledge Your Gift",
     tagline: "What do you bring to the Regenerative Renaissance?",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "https://regencivics.earth/community/pledge-gift",
+    forumUrl: "/community/c/pledge-gift",
     about:
       "The Regenerative Renaissance needs every gift, not just farmers and ecologists, but storytellers, coders, musicians, healers, teachers, lawyers, cooks, architects, parents, and elders. This quest invites you into a moment of genuine self-inquiry: What is the unique gift you carry? What would you contribute if you knew it was needed and valued? You do not need to have it fully figured out. A direction, an intention, a question you are following, all of these count. Writing it down and sharing it with a community who cares is itself a powerful act.",
     steps: [
@@ -138,7 +138,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Refer a Land Project",
     tagline: "Know someone stewarding land? Bring them in.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "https://regencivics.earth/community/refer-land",
+    forumUrl: "/community/c/refer-land",
     about:
       "The ReGen Civics Alliance is only as strong as the land it is rooted in. Land projects, farms, forests, rewilding initiatives, food forests, regenerative homesteads: these are not just projects. They are places where healing is actively happening. They are the heart of what we are building together. If you know someone doing this work, this quest is an invitation to bridge them in. A single introduction can ripple out in ways neither of you can predict.",
     steps: [
