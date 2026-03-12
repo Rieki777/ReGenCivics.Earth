@@ -12,7 +12,7 @@
  * - Project/org images on entity cards
  */
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { MapPin, Leaf, Building2, ExternalLink, Globe, ChevronDown, ChevronUp, Sprout, Search, AlertCircle, Filter, X } from "lucide-react";
+import { MapPin, Leaf, Building2, ExternalLink, Globe, ChevronDown, ChevronUp, Sprout, Search, AlertCircle, Filter, X, MessageCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 // Entity types for the map
@@ -73,6 +73,7 @@ export interface MapEntity {
   isGlobal?: boolean; // true for entities that orbit the globe
   meetingFrequency?: string;
   dietaryPatterns?: string[]; // parsed from JSON
+  forumThreadUrl?: string;
 }
 
 // Hard-coded Season 1 Land Projects with real coordinates from slide deck
@@ -625,6 +626,15 @@ function EntityCard({
                 <ExternalLink className="w-3 h-3" /> Website
               </a>
             )}
+            {entity.forumThreadUrl && (
+              <a
+                href={entity.forumThreadUrl}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-xs text-[#7dd87d] hover:text-[#9fe89f] underline"
+              >
+                <MessageCircle className="w-3 h-3" /> Forum thread
+              </a>
+            )}
             {entity.url && entity.inactive && (
               <span className="inline-flex items-center gap-1 text-xs text-white/30 line-through cursor-not-allowed">
                 <ExternalLink className="w-3 h-3" /> Website (offline)
@@ -734,6 +744,19 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
 
   // Fetch applicant data from the database
   const { data: applicantData } = trpc.applications.mapData.useQuery();
+  const { data: activeProjectThreads } = trpc.forum.activeProjectThreads.useQuery(undefined, { staleTime: 300_000 });
+
+  // Build a lowercase-name → post-id lookup for forum thread links
+  const threadByName = useMemo(() => {
+    if (!activeProjectThreads) return new Map<string, number>();
+    const m = new Map<string, number>();
+    for (const t of activeProjectThreads) {
+      // Thread title format: "Project Name - Location"
+      const key = t.title.split(" - ")[0].toLowerCase().trim();
+      m.set(key, t.id);
+    }
+    return m;
+  }, [activeProjectThreads]);
 
   // Convert applicant data to MapEntity format
   const applicantEntities: MapEntity[] = useMemo(() => {
@@ -755,8 +778,12 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
       dietaryPatterns: app.dietaryPatterns
         ? (() => { try { return JSON.parse(app.dietaryPatterns); } catch { return []; } })()
         : undefined,
+      forumThreadUrl: (() => {
+        const postId = threadByName.get(app.name.toLowerCase().trim());
+        return postId ? `/community/post/${postId}` : undefined;
+      })(),
     }));
-  }, [applicantData]);
+  }, [applicantData, threadByName]);
 
   // Combine all entities
   const allEntities = useMemo(() => {

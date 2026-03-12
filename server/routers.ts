@@ -3158,6 +3158,15 @@ export const appRouter = router({
         return enriched;
       }),
 
+    // Get all active-project forum threads (for Map pin links)
+    activeProjectThreads: publicProcedure.query(async () => {
+      const cats = await db.listForumCategories();
+      const cat = cats.find(c => c.slug === "active-projects");
+      if (!cat) return [];
+      const posts = await db.listForumPosts(cat.id, 200, 0);
+      return posts.map(p => ({ id: p.id, title: p.title }));
+    }),
+
     // Get all posts in a chain (by chainId — returns the idea root + all experiment/result posts linked to it)
     chainPosts: publicProcedure
       .input(z.object({ chainId: z.number() }))
