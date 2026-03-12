@@ -53,14 +53,17 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
       refetchImages();
       setUploadCaption('');
     },
+    onError: (err) => setError(err.message || 'Upload failed'),
   });
 
   const deleteMutation = trpc.campaigns.deleteImage.useMutation({
     onSuccess: () => refetchImages(),
+    onError: (err) => setError(err.message || 'Delete failed'),
   });
 
   const setCoverMutation = trpc.campaigns.setCoverImage.useMutation({
     onSuccess: () => refetchImages(),
+    onError: (err) => setError(err.message || 'Failed to set cover image'),
   });
 
   const handleFiles = useCallback(
@@ -257,7 +260,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
         <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
           <X className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto">
+          <button onClick={() => setError(null)} className="ml-auto" aria-label="Dismiss error">
             <X className="w-3 h-3" />
           </button>
         </div>

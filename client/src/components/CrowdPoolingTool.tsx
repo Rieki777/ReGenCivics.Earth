@@ -171,12 +171,14 @@ export default function CrowdPoolingTool() {
       toast.success('Saved contribution deleted');
       savedContributionsQuery.refetch();
     },
+    onError: (err) => toast.error(err.message || 'Failed to delete'),
   });
   const setDefaultContribution = trpc.savedContributions.setDefault.useMutation({
     onSuccess: () => {
       toast.success('Set as default contribution form');
       savedContributionsQuery.refetch();
     },
+    onError: (err) => toast.error(err.message || 'Failed to update default'),
   });
   
   // Load from URL params on mount

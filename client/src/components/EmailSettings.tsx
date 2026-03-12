@@ -1015,6 +1015,7 @@ function BulkEmailSender() {
                         <button
                           onClick={() => handleRemoveRecipient(r.email)}
                           className="text-red-400 hover:text-red-600 transition-colors"
+                          aria-label={`Remove ${r.email}`}
                         >
                           <XCircle className="w-4 h-4" />
                         </button>

@@ -52,6 +52,9 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
       analytics.newsletterSignup();
       setSubscribed(true);
     },
+    onError: () => {
+      // Silently fail — newsletter signup errors should not interrupt the user
+    },
   });
 
   function handleSubmit(e: React.FormEvent) {

@@ -178,6 +178,9 @@ export function WelcomeAboardQuests({ profile, onUpdate }: WelcomeAboardQuestsPr
       utils.playerProfiles.me.invalidate();
       onUpdate();
     },
+    onError: () => {
+      // Quest toggle failed silently — user can retry
+    },
   });
 
   const toggleQuest = (questId: string) => {
