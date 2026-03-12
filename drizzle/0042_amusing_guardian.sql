@@ -47,80 +47,14 @@ CREATE TABLE IF NOT EXISTS `project_connections` (
 	CONSTRAINT `project_connections_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_fp_tags_042;
-CREATE PROCEDURE add_fp_tags_042()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forumPosts' AND COLUMN_NAME = 'tags'
-  ) THEN
-    ALTER TABLE `forumPosts` ADD `tags` text;
-  END IF;
-END;
-CALL add_fp_tags_042();
-DROP PROCEDURE IF EXISTS add_fp_tags_042;
+ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `tags` text;
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_fp_posttype_042;
-CREATE PROCEDURE add_fp_posttype_042()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forumPosts' AND COLUMN_NAME = 'postType'
-  ) THEN
-    ALTER TABLE `forumPosts` ADD `postType` text;
-  END IF;
-END;
-CALL add_fp_posttype_042();
-DROP PROCEDURE IF EXISTS add_fp_posttype_042;
+ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `postType` text;
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_fp_threadstage_042;
-CREATE PROCEDURE add_fp_threadstage_042()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forumPosts' AND COLUMN_NAME = 'threadStage'
-  ) THEN
-    ALTER TABLE `forumPosts` ADD `threadStage` varchar(32);
-  END IF;
-END;
-CALL add_fp_threadstage_042();
-DROP PROCEDURE IF EXISTS add_fp_threadstage_042;
+ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `threadStage` varchar(32);
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_fp_chainid_042;
-CREATE PROCEDURE add_fp_chainid_042()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forumPosts' AND COLUMN_NAME = 'chainId'
-  ) THEN
-    ALTER TABLE `forumPosts` ADD `chainId` int;
-  END IF;
-END;
-CALL add_fp_chainid_042();
-DROP PROCEDURE IF EXISTS add_fp_chainid_042;
+ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `chainId` int;
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_fp_bioregionid_042;
-CREATE PROCEDURE add_fp_bioregionid_042()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forumPosts' AND COLUMN_NAME = 'bioregionId'
-  ) THEN
-    ALTER TABLE `forumPosts` ADD `bioregionId` int;
-  END IF;
-END;
-CALL add_fp_bioregionid_042();
-DROP PROCEDURE IF EXISTS add_fp_bioregionid_042;
+ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `bioregionId` int;
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_fr_triedthis_042;
-CREATE PROCEDURE add_fr_triedthis_042()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forumReplies' AND COLUMN_NAME = 'triedThis'
-  ) THEN
-    ALTER TABLE `forumReplies` ADD `triedThis` tinyint NOT NULL DEFAULT 0;
-  END IF;
-END;
-CALL add_fr_triedthis_042();
-DROP PROCEDURE IF EXISTS add_fr_triedthis_042;
+ALTER TABLE `forumReplies` ADD COLUMN IF NOT EXISTS `triedThis` tinyint NOT NULL DEFAULT 0;

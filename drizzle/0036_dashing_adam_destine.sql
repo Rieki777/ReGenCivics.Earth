@@ -69,39 +69,20 @@ CREATE TABLE IF NOT EXISTS `scheduled_emails` (
 	CONSTRAINT `scheduled_emails_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS `_rc_migrate_0036_alters`;
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `path` enum('investor','land_project','ally','player');
 --> statement-breakpoint
-CREATE PROCEDURE `_rc_migrate_0036_alters`()
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='path') THEN
-    ALTER TABLE `userProfiles` ADD `path` enum('investor','land_project','ally','player');
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='onboardingComplete') THEN
-    ALTER TABLE `userProfiles` ADD `onboardingComplete` tinyint DEFAULT 0 NOT NULL;
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='investmentRange') THEN
-    ALTER TABLE `userProfiles` ADD `investmentRange` varchar(255);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='projectName') THEN
-    ALTER TABLE `userProfiles` ADD `projectName` varchar(255);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='projectUrl') THEN
-    ALTER TABLE `userProfiles` ADD `projectUrl` varchar(500);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='organizationName') THEN
-    ALTER TABLE `userProfiles` ADD `organizationName` varchar(255);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='questInterests') THEN
-    ALTER TABLE `userProfiles` ADD `questInterests` text;
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='displayName') THEN
-    ALTER TABLE `userProfiles` ADD `displayName` varchar(255);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='userProfiles' AND COLUMN_NAME='avatarUrl') THEN
-    ALTER TABLE `userProfiles` ADD `avatarUrl` varchar(500);
-  END IF;
-END
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `onboardingComplete` tinyint NOT NULL DEFAULT 0;
 --> statement-breakpoint
-CALL `_rc_migrate_0036_alters`();
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `investmentRange` varchar(255);
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS `_rc_migrate_0036_alters`;
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `projectName` varchar(255);
+--> statement-breakpoint
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `projectUrl` varchar(500);
+--> statement-breakpoint
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `organizationName` varchar(255);
+--> statement-breakpoint
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `questInterests` text;
+--> statement-breakpoint
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `displayName` varchar(255);
+--> statement-breakpoint
+ALTER TABLE `userProfiles` ADD COLUMN IF NOT EXISTS `avatarUrl` varchar(500);

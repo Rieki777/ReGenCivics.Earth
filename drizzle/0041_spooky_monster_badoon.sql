@@ -45,67 +45,12 @@ CREATE TABLE IF NOT EXISTS `upcoming_amas` (
 	CONSTRAINT `upcoming_amas_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_campaigns_img_url_041;
-CREATE PROCEDURE add_campaigns_img_url_041()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'campaigns' AND COLUMN_NAME = 'generatedImageUrl'
-  ) THEN
-    ALTER TABLE `campaigns` ADD `generatedImageUrl` varchar(512);
-  END IF;
-END;
-CALL add_campaigns_img_url_041();
-DROP PROCEDURE IF EXISTS add_campaigns_img_url_041;
+ALTER TABLE `campaigns` ADD COLUMN IF NOT EXISTS `generatedImageUrl` varchar(512);
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_forumposts_img_url_041;
-CREATE PROCEDURE add_forumposts_img_url_041()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'forumPosts' AND COLUMN_NAME = 'generatedImageUrl'
-  ) THEN
-    ALTER TABLE `forumPosts` ADD `generatedImageUrl` varchar(512);
-  END IF;
-END;
-CALL add_forumposts_img_url_041();
-DROP PROCEDURE IF EXISTS add_forumposts_img_url_041;
+ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `generatedImageUrl` varchar(512);
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_collab_status_041;
-CREATE PROCEDURE add_collab_status_041()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'player_profiles' AND COLUMN_NAME = 'collaborationStatus'
-  ) THEN
-    ALTER TABLE `player_profiles` ADD `collaborationStatus` text;
-  END IF;
-END;
-CALL add_collab_status_041();
-DROP PROCEDURE IF EXISTS add_collab_status_041;
+ALTER TABLE `player_profiles` ADD COLUMN IF NOT EXISTS `collaborationStatus` text;
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_dreaming_of_041;
-CREATE PROCEDURE add_dreaming_of_041()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'player_profiles' AND COLUMN_NAME = 'dreamingOf'
-  ) THEN
-    ALTER TABLE `player_profiles` ADD `dreamingOf` text;
-  END IF;
-END;
-CALL add_dreaming_of_041();
-DROP PROCEDURE IF EXISTS add_dreaming_of_041;
+ALTER TABLE `player_profiles` ADD COLUMN IF NOT EXISTS `dreamingOf` text;
 --> statement-breakpoint
-DROP PROCEDURE IF EXISTS add_bioregion_id_041;
-CREATE PROCEDURE add_bioregion_id_041()
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'player_profiles' AND COLUMN_NAME = 'bioregionId'
-  ) THEN
-    ALTER TABLE `player_profiles` ADD `bioregionId` int;
-  END IF;
-END;
-CALL add_bioregion_id_041();
-DROP PROCEDURE IF EXISTS add_bioregion_id_041;
+ALTER TABLE `player_profiles` ADD COLUMN IF NOT EXISTS `bioregionId` int;
