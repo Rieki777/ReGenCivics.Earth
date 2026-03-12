@@ -356,6 +356,28 @@ export default function Community() {
           </Link>
         </ScrollRevealMotion>
 
+        {/* Tag filter shortcuts */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Link href="/community/lessons">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#fef3c7] border border-[#d97706]/20 text-[#92400e] text-sm font-medium hover:border-[#d97706]/50 transition-colors cursor-pointer">
+              <BookOpen className="w-3.5 h-3.5" />
+              #lesson
+            </span>
+          </Link>
+          <Link href="/community/seeking-support">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#dbeafe] border border-[#3b82f6]/20 text-[#1e40af] text-sm font-medium hover:border-[#3b82f6]/50 transition-colors cursor-pointer">
+              <Heart className="w-3.5 h-3.5" />
+              #seeking-support
+            </span>
+          </Link>
+          <Link href="/community/offering-support">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#dcfce7] border border-[#16a34a]/20 text-[#166534] text-sm font-medium hover:border-[#16a34a]/50 transition-colors cursor-pointer">
+              <Users className="w-3.5 h-3.5" />
+              #offering-support
+            </span>
+          </Link>
+        </div>
+
         {/* Community Guidelines */}
         <div className="mt-6 bg-[#f0f7f0] rounded-xl p-5 border border-[#7dd87d]/20">
           <div className="flex items-start gap-3">

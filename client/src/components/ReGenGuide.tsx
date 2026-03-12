@@ -9,9 +9,9 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 const PATH_WELCOMES: Record<string, string> = {
-  investor: "Welcome back! I'm your personal ReGen Guide, here to help you navigate the Fund — whether that's exploring the investment thesis, understanding the seasonal accelerator, or figuring out your next step. What's on your mind?",
-  land_project: "Welcome back! Glad you're here. I'm your guide for everything on the land project journey — showcasing your work, connecting with investors, or making the most of the accelerator. Where would you like to start?",
-  ally: "Welcome back! I'm here to help you find where your organisation fits in the ReGen Civics ecosystem — whether that's understanding alliance partnerships, the value exchange model, or how to get involved. What would you like to explore?",
+  investor: "Welcome back! I'm your personal ReGen Guide, here to help you navigate the Fund: exploring the investment thesis, understanding the seasonal accelerator, or figuring out your next step. What's on your mind?",
+  land_project: "Welcome back! Glad you're here. I'm your guide for everything on the land project journey: showcasing your work, connecting with investors, or making the most of the accelerator. Where would you like to start?",
+  ally: "Welcome back! I'm here to help you find where your organisation fits in the ReGen Civics ecosystem: understanding alliance partnerships, the value exchange model, or how to get involved. What would you like to explore?",
   player: "Welcome back, Player! I'm your guide to Quests, the Infinite Game, and all the ways you can contribute and co-create in the regenerative movement. What would you like to know?",
 };
 
@@ -26,7 +26,7 @@ export default function ReGenGuide() {
   const welcomeMessage =
     userPath && PATH_WELCOMES[userPath]
       ? PATH_WELCOMES[userPath]
-      : "Hi! I'm Your ReGen Guide — here to help you find your footing in the regenerative ecosystem. Whether you're curious about the Fund, the Infinite Game, or just figuring out where you fit, I've got you. What would you like to explore?";
+      : "Hi! I'm Your ReGen Guide, here to help you find your footing in the regenerative ecosystem. Whether you're curious about the Fund, the Infinite Game, or just figuring out where you fit, I've got you. What would you like to explore?";
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -111,7 +111,7 @@ export default function ReGenGuide() {
             updated[updated.length - 1] = {
               ...last,
               content:
-                "Sorry, I ran into a hiccup. Please try again in a moment — or visit /schedule to book a live session with the team.",
+                "Sorry, I ran into a hiccup. Please try again in a moment. Visit /schedule to book a live session with the team.",
             };
           }
           return updated;

@@ -4669,7 +4669,7 @@ Guidelines:
           messages: [
             {
               role: "user" as const,
-              content: `You are a knowledge curator for a regenerative land project community forum. Given a list of forum posts in the "${input.categoryName}" category, identify the 3-5 most valuable, evergreen threads that belong in a "Knowledge Map" — a pinned index of essential reading for newcomers.\n\nRecent posts:\n${postList}\n\nReturn a JSON array only (no markdown, no commentary):\n[{"title":"...", "summary":"...(1-2 sentences)", "postId": <number>}]`,
+              content: `You are a knowledge curator for a regenerative land project community forum. Given a list of forum posts in the "${input.categoryName}" category, identify the 3-5 most valuable, evergreen threads that belong in a "Knowledge Map" (a pinned index of essential reading for newcomers).\n\nRecent posts:\n${postList}\n\nReturn a JSON array only (no markdown, no commentary):\n[{"title":"...", "summary":"...(1-2 sentences)", "postId": <number>}]`,
             },
           ],
           maxTokens: 800,

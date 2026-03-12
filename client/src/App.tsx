@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch, useLocation } from "wouter";
+import { Route, Switch, Redirect, useLocation } from "wouter";
 import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -149,6 +149,9 @@ function Router() {
         <Route path={"/community/post/:id"} component={CommunityPost} />
         <Route path={"/community/new"} component={CommunityNewPost} />
         <Route path={"/community/tag/:tag"} component={CommunityTagFilter} />
+        <Route path={"/community/lessons"}>{() => <Redirect to="/community/tag/lesson" />}</Route>
+        <Route path={"/community/seeking-support"}>{() => <Redirect to="/community/tag/seeking-support" />}</Route>
+        <Route path={"/community/offering-support"}>{() => <Redirect to="/community/tag/offering-support" />}</Route>
         <Route path={"/community/quests"} component={QuestSuggestions} />
         <Route path={"/community/user/:id"} component={UserForumProfile} />
         <Route path={"/admin/moderation"} component={AdminModeration} />

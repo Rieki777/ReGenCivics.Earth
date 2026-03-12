@@ -2145,7 +2145,7 @@ export default function PlayerProfile() {
                         Stay in the Loop
                       </h2>
                       <p className="text-white/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
-                        Get the ReGen Civics digest — news, quests, and community updates in your inbox.
+                        Get the ReGen Civics digest: news, quests, and community updates in your inbox.
                       </p>
                       <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
                         <NewsletterSignupInline />
