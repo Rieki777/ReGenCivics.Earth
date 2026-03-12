@@ -1,6 +1,6 @@
 /**
  * Newsletter Signup Component
- * Compact CTA button that links to /form for newsletter signup
+ * Compact CTA button that links to /connect for newsletter signup
  * Heading and description are provided by the parent component
  *
  * Also exports NewsletterSignupInline for embeddable direct-subscribe widget (C12).
@@ -18,8 +18,8 @@ import { analytics } from "@/lib/analytics";
 export default function NewsletterSignup() {
   return (
     <div className="text-center">
-      {/* CTA Button - Links to /form */}
-      <Link href="/form">
+      {/* CTA Button - Links to /connect */}
+      <Link href="/connect">
         <Button
           className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold px-8 py-6 h-auto text-lg transition-all hover:scale-105"
           style={{ fontFamily: 'var(--font-accent)' }}

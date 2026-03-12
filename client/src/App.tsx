@@ -33,8 +33,7 @@ function isAdminRoute(path: string) {
 const Home = lazy(() => import("./pages/Home"));
 const Quest = lazy(() => import("./pages/Quest"));
 const Opportunity = lazy(() => import("./pages/Opportunity"));
-const Form = lazy(() => import("./pages/Form"));
-const InvestmentForm = lazy(() => import("./pages/InvestmentForm"));
+// Form and InvestmentForm removed — both routes redirect to /connect and /investor respectively
 const Socials = lazy(() => import("./pages/Socials"));
 const Seasons = lazy(() => import("./pages/Seasons"));
 const Schedule = lazy(() => import("./pages/Schedule"));
@@ -105,7 +104,7 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path={"/"} component={Home} />
-        <Route path={"/form"} component={Form} />
+        <Route path={"/form"}>{() => { window.location.replace('/connect'); return null; }}</Route>
         <Route path={"/quest"} component={Quest} />
         <Route path={"/fund"} component={Fund} />
         <Route path={"/land"} component={Land} />
@@ -114,7 +113,8 @@ function Router() {
         <Route path={"/opportunity"} component={Opportunity} />        <Route path={"/governance"} component={Governance} />
         <Route path={"/tokenomics"} component={Tokenomics} />
         <Route path={"/loi"} component={LOI} />
-        <Route path={"/404"} component={NotFound} />       <Route path={"/investmentform"} component={InvestmentForm} />
+        <Route path={"/404"} component={NotFound} />
+        <Route path={"/investmentform"}>{() => { window.location.replace('/investor'); return null; }}</Route>
         <Route path={"/socials"} component={Socials} />
         <Route path={"/seasons"} component={Seasons} />
         <Route path={"/schedule"} component={Schedule} />
