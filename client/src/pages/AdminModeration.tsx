@@ -8,27 +8,106 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "wouter";
-import { useState } from "react";
-import { 
-  Shield, Users, Flag, Ban, ArrowLeft, Plus, 
-  Trash2, Check, X, AlertTriangle, Eye, Clock
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import {
+  Shield, Users, Flag, Ban, ArrowLeft, Plus,
+  Trash2, Check, X, AlertTriangle, Eye, Clock, Lock
 } from "lucide-react";
+
+const MODERATION_PASSWORD = "222";
+
+function PasswordGate({ onAuthenticated }: { onAuthenticated: () => void }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === MODERATION_PASSWORD) {
+      localStorage.setItem("moderation_authenticated", "true");
+      onAuthenticated();
+    } else {
+      setError(true);
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center p-4">
+      <Card className={`w-full max-w-sm bg-white/95 backdrop-blur ${isShaking ? 'animate-bounce' : ''}`}>
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-3">
+            <Lock className="w-10 h-10 text-[#1a472a]" />
+          </div>
+          <CardTitle className="text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
+            Moderation Access
+          </CardTitle>
+          <CardDescription>
+            Enter the password to access the moderation panel
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError(false);
+                }}
+                className={`text-center text-lg ${error ? 'border-red-500 focus:ring-red-500' : 'border-[#1a472a]/30 focus:ring-[#7dd87d]'}`}
+              />
+              {error && (
+                <p className="text-red-500 text-sm mt-2 text-center">
+                  Incorrect password. Please try again.
+                </p>
+              )}
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
+            >
+              Access Moderation Panel
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 type Tab = 'reports' | 'moderators' | 'bans';
 
 export default function AdminModeration() {
-  const { user, isAuthenticated } = useAuth();
-  const [, navigate] = useLocation();
+  const { user, isAuthenticated: userAuthenticated } = useAuth();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('reports');
+
+  useEffect(() => {
+    const auth = localStorage.getItem("moderation_authenticated");
+    if (auth === "true") {
+      setIsAuthenticated(true);
+    }
+  }, []);
   const [reportFilter, setReportFilter] = useState<string | undefined>('pending');
   const [newModUserId, setNewModUserId] = useState('');
   const [banUserId, setBanUserId] = useState('');
   const [banReason, setBanReason] = useState('');
   const [banDays, setBanDays] = useState('');
 
-  // Check admin access
-  if (!isAuthenticated || user?.role !== 'admin') {
+  // Check password gate first
+  if (!isAuthenticated) {
+    return <PasswordGate onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
+
+  // Check admin role access
+  if (!userAuthenticated || user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
         <div className="text-center">

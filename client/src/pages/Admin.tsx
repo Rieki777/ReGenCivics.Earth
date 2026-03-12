@@ -63,14 +63,13 @@ import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { toast } from "sonner";
 import { EmailTemplateSelector, emailTemplates } from "@/components/EmailTemplateSelector";
 import { RoleSubmissionsView } from "@/components/RoleSubmissionsView";
-// AdminAnalytics lazy-loaded below
+import { AdminAnalytics } from "@/components/AdminAnalytics";
 import { EmailSettings } from "@/components/EmailSettings";
 import { LOIManager } from "@/components/LOIManager";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
 import { AdminBannerEditor } from "@/components/AdminBannerEditor";
 const AdminKanban = lazy(() => import("@/components/AdminKanban").then(m => ({ default: m.AdminKanban })));
 const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then(m => ({ default: m.ActivityTimeline })));
-const AdminAnalyticsLazy = lazy(() => import("@/components/AdminAnalytics").then(m => ({ default: m.AdminAnalytics })));
 import { AdminImageStudio } from "@/components/AdminImageStudio";
 import KnowledgeMapAdminPanel from "@/components/KnowledgeMapAdminPanel";
 
@@ -4720,9 +4719,7 @@ function AdminDashboard() {
           {/* Analytics Tab */}
           <TabsContent value="analytics">
             <div className="space-y-6">
-              <Suspense fallback={<div className="flex items-center justify-center py-20 text-[#1a472a]/50">Loading analytics…</div>}>
-                <AdminAnalyticsLazy />
-              </Suspense>
+              <AdminAnalytics />
             </div>
           </TabsContent>
 
