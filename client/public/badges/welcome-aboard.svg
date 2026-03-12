@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4a574"/>
+      <stop offset="50%" stop-color="#f0c070"/>
+      <stop offset="100%" stop-color="#d4a574"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d5a3d"/>
+      <stop offset="100%" stop-color="#1a472a"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#d4a574" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <!-- Outer ring -->
+  <circle cx="60" cy="60" r="58" fill="url(#ring)" filter="url(#shadow)"/>
+  <!-- Inner circle -->
+  <circle cx="60" cy="60" r="50" fill="url(#glow)"/>
+  <!-- Inner ring accent -->
+  <circle cx="60" cy="60" r="50" fill="none" stroke="#d4a574" stroke-width="1" stroke-opacity="0.4"/>
+  <!-- Leaf emoji text -->
+  <text x="60" y="68" text-anchor="middle" font-size="32" font-family="serif">🌿</text>
+  <!-- "WELCOME ABOARD" text -->
+  <text x="60" y="98" text-anchor="middle" font-size="8.5" font-family="Georgia, serif" font-weight="bold" letter-spacing="1.5" fill="#f0c070" text-transform="uppercase">WELCOME ABOARD</text>
+</svg>
