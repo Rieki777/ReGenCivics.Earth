@@ -14,6 +14,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { isNewsletterSubscribed, markNewsletterSubscribed } from "@/utils/newsletter";
+import { analytics } from "@/lib/analytics";
 
 type PageContext = "investor" | "land" | "alliance" | "game" | "community" | "default";
 
@@ -167,6 +168,7 @@ export function ExitIntentCapture() {
   const newsletterMutation = trpc.newsletter.subscribe.useMutation({
     onSuccess: () => {
       markNewsletterSubscribed();
+      analytics.newsletterSignup();
       setSubmitted(true);
       toast.success(config.successMessage);
     },

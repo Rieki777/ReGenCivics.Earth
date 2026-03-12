@@ -8,6 +8,7 @@ import Navigation from "./components/Navigation";
 import { MycelialBackground } from "./components/MycelialBackground";
 import { StructuredData } from "./components/StructuredData";
 import { TaoSpinner } from "./components/TaoSpinner";
+import { TaoErrorState } from "./components/TaoErrorState";
 import CookieConsent from "./components/CookieConsent";
 import AnalyticsLoader from "./components/AnalyticsLoader";
 import ReGenGuide from "./components/ReGenGuide";
@@ -17,7 +18,11 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { ExitIntentCapture } from "./components/ExitIntentCapture";
 import CommandPalette from "./components/CommandPalette";
+import { SiteTour } from "./components/SiteTour";
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
+import { useAuth } from "./_core/hooks/useAuth";
+import { useEffect } from "react";
+import { useLocation as useWouterLocation } from "wouter";
 
 // Routes that bypass site chrome (nav, footer, background effects)
 const ADMIN_ROUTES = ["/admin", "/admin/"];
@@ -177,6 +182,22 @@ function Router() {
 //   to keep consistent foreground/background color across components
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
+/** Handles returnTo redirect after login: if sessionStorage has a saved path, redirect there once authed */
+function ReturnToHandler() {
+  const { isAuthenticated, loading } = useAuth();
+  const [, setLocation] = useWouterLocation();
+
+  useEffect(() => {
+    if (loading || !isAuthenticated) return;
+    const returnTo = sessionStorage.getItem("returnTo");
+    if (!returnTo || returnTo === "/" || returnTo.startsWith("/login")) return;
+    sessionStorage.removeItem("returnTo");
+    setLocation(returnTo);
+  }, [isAuthenticated, loading, setLocation]);
+
+  return null;
+}
+
 function AppInner() {
   useGlobalScrollReveal();
   return null;
@@ -186,8 +207,24 @@ function App() {
   const [location] = useLocation();
   const adminMode = isAdminRoute(location);
 
+  // Maintenance mode — toggle VITE_MAINTENANCE_MODE=true in Railway env vars before risky deploys
+  if (import.meta.env.VITE_MAINTENANCE_MODE === "true") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a1a0a]">
+        <TaoSpinner size={72} showQuote={false} fullPage={false} className="mb-6" />
+        <p
+          className="text-[#d4a574] text-lg font-light tracking-wide mt-2"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          We're tending the garden. Back shortly.
+        </p>
+        <p className="text-[#7a9e7a]/50 text-sm mt-3">regencivics.earth</p>
+      </div>
+    );
+  }
+
   return (
-    <ErrorBoundary>
+    <ErrorBoundary fallback={<TaoErrorState />}>
       <ThemeProvider defaultTheme="dark" switchable>
         <TooltipProvider>
           <Toaster />
@@ -214,6 +251,8 @@ function App() {
           {!adminMode && <AppInner />}
           {!adminMode && <ExitIntentCapture />}
           {!adminMode && <CommandPalette />}
+          {!adminMode && <SiteTour />}
+          <ReturnToHandler />
           <ServiceWorkerRegister />
         </TooltipProvider>
       </ThemeProvider>

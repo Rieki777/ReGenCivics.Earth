@@ -28,6 +28,12 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
+  // Save current path so we can return after login
+  const currentPath = window.location.pathname + window.location.search;
+  if (currentPath && currentPath !== "/" && !currentPath.startsWith("/login")) {
+    sessionStorage.setItem("returnTo", currentPath);
+  }
+
   window.location.href = getLoginUrl();
 };
 

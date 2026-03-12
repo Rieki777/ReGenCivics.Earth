@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, CheckCircle, Circle, ExternalLink, Star } from 
 import { trpc } from "@/lib/trpc";
 import { WELCOME_ABOARD_QUESTS } from "@/data/welcomeAboardQuests";
 import { SharePanel } from "@/components/SharePanel";
+import { analytics } from "@/lib/analytics";
 
 interface WelcomeAboardQuestsProps {
   profile: any;
@@ -102,20 +103,24 @@ function QuestCard({
                 <Star className="w-3 h-3" />
                 {quest.reward}
               </span>
-              <a
-                href={quest.forumUrl}
-                target={quest.forumUrl.startsWith("http") ? "_blank" : undefined}
-                rel={quest.forumUrl.startsWith("http") ? "noopener noreferrer" : undefined}
-                className="inline-flex items-center gap-1 text-[#7dd87d] text-xs hover:underline"
-              >
-                Go to forum post
-                <ExternalLink className="w-3 h-3" />
-              </a>
-              <SharePanel
-                questTitle={quest.title}
-                questTagline={quest.tagline}
-                forumUrl={quest.forumUrl}
-              />
+              {quest.forumUrl && (
+                <a
+                  href={quest.forumUrl}
+                  target={quest.forumUrl.startsWith("http") ? "_blank" : undefined}
+                  rel={quest.forumUrl.startsWith("http") ? "noopener noreferrer" : undefined}
+                  className="inline-flex items-center gap-1 text-[#7dd87d] text-xs hover:underline"
+                >
+                  Join the discussion
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {quest.forumUrl && (
+                <SharePanel
+                  questTitle={quest.title}
+                  questTagline={quest.tagline}
+                  forumUrl={quest.forumUrl}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -180,6 +185,10 @@ export function WelcomeAboardQuests({ profile, onUpdate }: WelcomeAboardQuestsPr
     const next = isCompleted
       ? completed.filter((id) => id !== questId)
       : [...completed, questId];
+    if (!isCompleted) {
+      const quest = WELCOME_ABOARD_QUESTS.find((q) => q.id === questId);
+      analytics.questCompleted(questId, quest?.title ?? questId);
+    }
     updateMut.mutate({ questsCompleted: JSON.stringify(next) });
   };
 

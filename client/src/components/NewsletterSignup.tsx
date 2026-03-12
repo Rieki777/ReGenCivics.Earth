@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Mail, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { isNewsletterSubscribed, markNewsletterSubscribed } from "@/utils/newsletter";
+import { analytics } from "@/lib/analytics";
 
 export default function NewsletterSignup() {
   return (
@@ -48,6 +49,7 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
   const subscribeMutation = trpc.newsletter.subscribe.useMutation({
     onSuccess: () => {
       markNewsletterSubscribed();
+      analytics.newsletterSignup();
       setSubscribed(true);
     },
   });
