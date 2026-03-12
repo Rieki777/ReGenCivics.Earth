@@ -1,33 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Dark green circle background -->
-  <circle cx="50" cy="50" r="50" fill="#1a472a"/>
+  <!-- Dark forest green circle -->
+  <circle cx="50" cy="50" r="50" fill="#1a3a1f"/>
 
-  <!-- Left wing — sweeping arc up-left, bold fill -->
-  <path d="M50 62 C44 54,28 48,18 38 C24 42,32 50,38 56 C30 46,20 36,16 22 C22 32,32 44,42 52 C34 38,28 24,30 12 C34 26,40 42,44 54Z" fill="#FFD700"/>
-  <!-- Right wing — mirror -->
-  <path d="M50 62 C56 54,72 48,82 38 C76 42,68 50,62 56 C70 46,80 36,84 22 C78 32,68 44,58 52 C66 38,72 24,70 12 C66 26,60 42,56 54Z" fill="#FFD700"/>
-  <!-- Wing depth shading -->
-  <path d="M50 62 C46 56,34 52,24 44 C30 48,38 54,44 58Z" fill="#d4a574" opacity="0.55"/>
-  <path d="M50 62 C54 56,66 52,76 44 C70 48,62 54,56 58Z" fill="#d4a574" opacity="0.55"/>
+  <!-- Massive arc wings filling the circle -->
+  <path d="M 49,64 L 49,22 A 48 48 0 0 0 6,60 Z" fill="#FFD700"/>
+  <path d="M 51,64 L 51,22 A 48 48 0 0 1 94,60 Z" fill="#FFD700"/>
+  <!-- Wing inner feather layer for depth -->
+  <path d="M 49,64 L 49,28 A 40 40 0 0 0 12,62 Z" fill="#c8982a" opacity="0.38"/>
+  <path d="M 51,64 L 51,28 A 40 40 0 0 1 88,62 Z" fill="#c8982a" opacity="0.38"/>
 
-  <!-- Central body -->
-  <ellipse cx="50" cy="58" rx="5" ry="9" fill="#FFD700"/>
-  <!-- Neck -->
-  <ellipse cx="50" cy="47" rx="3.5" ry="5" fill="#FFD700"/>
-  <!-- Head -->
-  <ellipse cx="50" cy="41" rx="4" ry="4" fill="#FFD700"/>
-  <!-- Head crest -->
-  <path d="M48 38 C49 33,51 31,52 34 C51 36,50 38,49 39Z" fill="#FFD700"/>
-  <path d="M50 31 C51.5 27,53 26,53.5 29 C52 31,51 33,50 35Z" fill="#d4a574"/>
+  <!-- Body: tall single oval, head merged in -->
+  <ellipse cx="50" cy="57" rx="7" ry="16" fill="#FFD700"/>
 
-  <!-- Tail feathers -->
-  <line x1="47" y1="67" x2="38" y2="87" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
-  <line x1="50" y1="68" x2="50" y2="90" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
-  <line x1="53" y1="67" x2="62" y2="87" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
-  <line x1="45" y1="68" x2="34" y2="89" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
-  <line x1="55" y1="68" x2="66" y2="89" stroke="#d4a574" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  <!-- Flame crest: 3 spikes for phoenix character -->
+  <polygon points="50,41 47,26 50,15 53,26" fill="#FFD700"/>
+  <polygon points="45,43 43,30 45,24 47,30" fill="#FFD700" opacity="0.85"/>
+  <polygon points="55,43 57,30 55,24 53,30" fill="#FFD700" opacity="0.85"/>
+
+  <!-- Fan tail: wide wedge polygon, unmistakably a tail -->
+  <polygon points="43,73 57,73 70,94 30,94" fill="#FFD700"/>
 
   <!-- Eye -->
-  <circle cx="51.5" cy="40" r="1.5" fill="#1a472a"/>
-  <circle cx="52" cy="39.5" r="0.5" fill="#FFD700"/>
+  <circle cx="53" cy="50" r="2.5" fill="#1a3a1f"/>
 </svg>
