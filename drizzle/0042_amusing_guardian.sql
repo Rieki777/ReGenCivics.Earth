@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `digests` (
+CREATE TABLE `digests` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`generatedAt` timestamp NOT NULL DEFAULT (now()),
 	`periodStart` varchar(32) NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `digests` (
 	CONSTRAINT `digests_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS `glossary_terms` (
+CREATE TABLE `glossary_terms` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`term` varchar(255) NOT NULL,
 	`definition` text NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `glossary_terms` (
 	CONSTRAINT `glossary_terms_term_unique` UNIQUE(`term`)
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS `knowledge_map_entries` (
+CREATE TABLE `knowledge_map_entries` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`categoryId` int NOT NULL,
 	`postId` int,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `knowledge_map_entries` (
 	CONSTRAINT `knowledge_map_entries_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS `project_connections` (
+CREATE TABLE `project_connections` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`postAId` int NOT NULL,
 	`postBId` int NOT NULL,
@@ -47,14 +47,14 @@ CREATE TABLE IF NOT EXISTS `project_connections` (
 	CONSTRAINT `project_connections_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `tags` text;
+ALTER TABLE `forumPosts` ADD `tags` text;
 --> statement-breakpoint
-ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `postType` text;
+ALTER TABLE `forumPosts` ADD `postType` text;
 --> statement-breakpoint
-ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `threadStage` varchar(32);
+ALTER TABLE `forumPosts` ADD `threadStage` varchar(32);
 --> statement-breakpoint
-ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `chainId` int;
+ALTER TABLE `forumPosts` ADD `chainId` int;
 --> statement-breakpoint
-ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `bioregionId` int;
+ALTER TABLE `forumPosts` ADD `bioregionId` int;
 --> statement-breakpoint
-ALTER TABLE `forumReplies` ADD COLUMN IF NOT EXISTS `triedThis` tinyint NOT NULL DEFAULT 0;
+ALTER TABLE `forumReplies` ADD `triedThis` tinyint NOT NULL DEFAULT 0;

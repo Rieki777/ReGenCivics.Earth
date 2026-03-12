@@ -281,6 +281,13 @@
       "when": 1773275918364,
       "tag": "0041_spooky_monster_badoon",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1773285409941,
+      "tag": "0042_amusing_guardian",
+      "breakpoints": true
     }
   ]
 }

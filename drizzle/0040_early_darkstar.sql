@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `player_contributions` (
+CREATE TABLE `player_contributions` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`profileId` int NOT NULL,
 	`userId` int NOT NULL,
@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS `player_contributions` (
 	CONSTRAINT `player_contributions_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-ALTER TABLE `applications` ADD COLUMN IF NOT EXISTS `meetingFrequency` enum('everyday','2_3x_week','weekly','2_3x_month','monthly','2_3x_year','yearly_plus');
+ALTER TABLE `applications` ADD `meetingFrequency` enum('everyday','2_3x_week','weekly','2_3x_month','monthly','2_3x_year','yearly_plus');
 --> statement-breakpoint
-ALTER TABLE `applications` ADD COLUMN IF NOT EXISTS `dietaryPatterns` text;
+ALTER TABLE `applications` ADD `dietaryPatterns` text;
 --> statement-breakpoint
-ALTER TABLE `player_profiles` ADD COLUMN IF NOT EXISTS `emailDigestFrequency` enum('never','weekly','monthly','seasonal') DEFAULT 'monthly' NOT NULL;
+ALTER TABLE `player_profiles` ADD `emailDigestFrequency` enum('never','weekly','monthly','seasonal') DEFAULT 'monthly' NOT NULL;

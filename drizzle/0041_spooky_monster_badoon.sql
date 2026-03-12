@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `bioregions` (
+CREATE TABLE `bioregions` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`name` text NOT NULL,
 	`slug` varchar(255),
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `bioregions` (
 	CONSTRAINT `bioregions_slug_unique` UNIQUE(`slug`)
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS `gifts` (
+CREATE TABLE `gifts` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`userId` int NOT NULL,
 	`type` varchar(64) NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `gifts` (
 	CONSTRAINT `gifts_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS `needs` (
+CREATE TABLE `needs` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`userId` int NOT NULL,
 	`type` varchar(64) NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `needs` (
 	CONSTRAINT `needs_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS `upcoming_amas` (
+CREATE TABLE `upcoming_amas` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`projectName` varchar(255) NOT NULL,
 	`hostName` varchar(255) NOT NULL,
@@ -45,12 +45,12 @@ CREATE TABLE IF NOT EXISTS `upcoming_amas` (
 	CONSTRAINT `upcoming_amas_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-ALTER TABLE `campaigns` ADD COLUMN IF NOT EXISTS `generatedImageUrl` varchar(512);
+ALTER TABLE `campaigns` ADD `generatedImageUrl` varchar(512);
 --> statement-breakpoint
-ALTER TABLE `forumPosts` ADD COLUMN IF NOT EXISTS `generatedImageUrl` varchar(512);
+ALTER TABLE `forumPosts` ADD `generatedImageUrl` varchar(512);
 --> statement-breakpoint
-ALTER TABLE `player_profiles` ADD COLUMN IF NOT EXISTS `collaborationStatus` text;
+ALTER TABLE `player_profiles` ADD `collaborationStatus` text;
 --> statement-breakpoint
-ALTER TABLE `player_profiles` ADD COLUMN IF NOT EXISTS `dreamingOf` text;
+ALTER TABLE `player_profiles` ADD `dreamingOf` text;
 --> statement-breakpoint
-ALTER TABLE `player_profiles` ADD COLUMN IF NOT EXISTS `bioregionId` int;
+ALTER TABLE `player_profiles` ADD `bioregionId` int;
