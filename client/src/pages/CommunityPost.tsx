@@ -57,6 +57,43 @@ function getInitials(name: string): string {
 
 // Markdown rendering is now handled by ForumMarkdown component
 
+const STAGE_LABELS: Record<string, string> = { idea: "Idea", experiment: "Experiment", result: "Result" };
+const STAGE_ORDER = ["idea", "experiment", "result"];
+
+function ChainNav({ postId, chainId, currentStage }: { postId: number; chainId: number; currentStage: string }) {
+  const { data: chainPosts } = trpc.forum.chainPosts.useQuery({ chainId }, { staleTime: 60_000 });
+  if (!chainPosts || chainPosts.length <= 1) return null;
+
+  return (
+    <div className="mb-4 bg-[#f0f7f0] border border-[#7dd87d]/25 rounded-xl px-4 py-3">
+      <p className="text-[#4a7c59] text-xs font-semibold uppercase tracking-wide mb-2">Thread Chain</p>
+      <div className="flex items-center gap-2 flex-wrap">
+        {STAGE_ORDER.map((stage, i) => {
+          const match = chainPosts.find(p => p.threadStage === stage);
+          if (!match) return null;
+          const isCurrent = match.id === postId;
+          return (
+            <span key={stage} className="flex items-center gap-1.5">
+              {i > 0 && <span className="text-[#4a7c59]/30 text-xs">→</span>}
+              {isCurrent ? (
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#1a472a] text-[#7dd87d]">
+                  {STAGE_LABELS[stage]}
+                </span>
+              ) : (
+                <Link href={`/community/post/${match.id}`}>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-[#7dd87d]/30 text-[#4a7c59] hover:border-[#7dd87d] transition-colors cursor-pointer">
+                    {STAGE_LABELS[stage]}
+                  </span>
+                </Link>
+              )}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function CommunityPost() {
   const { id } = useParams<{ id: string }>();
   const postId = parseInt(id || '0');
@@ -290,10 +327,31 @@ export default function CommunityPost() {
             <span className="text-white/80 truncate max-w-[200px]">{post.title}</span>
           </div>
 
+          {/* Type + stage badges */}
+          {(post.postType && post.postType !== 'discussion' || post.threadStage) && (
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              {post.postType === 'case_study' && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#fef3c7] text-[#92400e]">Case Study</span>
+              )}
+              {post.postType === 'seeking_team' && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ede9fe] text-[#5b21b6]">Seeking Team</span>
+              )}
+              {post.threadStage === 'idea' && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#dcfce7] text-[#166534]">Idea</span>
+              )}
+              {post.threadStage === 'experiment' && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#dbeafe] text-[#1e40af]">Experiment</span>
+              )}
+              {post.threadStage === 'result' && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#fef3c7] text-[#92400e]">Result</span>
+              )}
+            </div>
+          )}
+
           <div className="flex items-start gap-2">
             {post.isPinned === 1 && <Pin className="w-4 h-4 text-[#d4a574] mt-1.5 flex-shrink-0" />}
             {post.isLocked === 1 && <Lock className="w-4 h-4 text-white/40 mt-1.5 flex-shrink-0" />}
-            <h1 
+            <h1
               className="text-xl md:text-2xl font-bold text-white"
               style={{ fontFamily: 'var(--font-display)' }}
             >
@@ -412,6 +470,11 @@ export default function CommunityPost() {
 
         {/* Related Projects (C15) */}
         {postId > 0 && <ProjectConnectionsPanel postId={postId} />}
+
+        {/* Thread Chain Navigation (C8) */}
+        {post.threadStage && (post.chainId || post.id) && (
+          <ChainNav postId={post.id} chainId={post.chainId ?? post.id} currentStage={post.threadStage} />
+        )}
 
         {/* Replies */}
         {repliesLoading ? (

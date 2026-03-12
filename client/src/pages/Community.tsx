@@ -356,7 +356,7 @@ export default function Community() {
           </Link>
         </ScrollRevealMotion>
 
-        {/* Tag filter shortcuts */}
+        {/* Tag filter and chain shortcuts */}
         <div className="mt-6 flex flex-wrap gap-2">
           <Link href="/community/lessons">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#fef3c7] border border-[#d97706]/20 text-[#92400e] text-sm font-medium hover:border-[#d97706]/50 transition-colors cursor-pointer">
@@ -374,6 +374,12 @@ export default function Community() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#dcfce7] border border-[#16a34a]/20 text-[#166534] text-sm font-medium hover:border-[#16a34a]/50 transition-colors cursor-pointer">
               <Users className="w-3.5 h-3.5" />
               #offering-support
+            </span>
+          </Link>
+          <Link href="/community/chains">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ede9fe] border border-[#7c3aed]/20 text-[#5b21b6] text-sm font-medium hover:border-[#7c3aed]/50 transition-colors cursor-pointer">
+              <TrendingUp className="w-3.5 h-3.5" />
+              Thread Chains
             </span>
           </Link>
         </div>

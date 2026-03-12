@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNull, like, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNotNull, isNull, like, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings } from "../drizzle/schema";
@@ -1995,6 +1995,24 @@ export async function listForumPostsByTag(tag: string, limit = 50, offset = 0) {
       return false;
     }
   });
+}
+
+export async function listForumPostsByChainId(chainId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(forumPosts)
+    .where(or(eq(forumPosts.id, chainId), eq(forumPosts.chainId, chainId)))
+    .orderBy(forumPosts.createdAt);
+}
+
+export async function listForumChainPosts(limit = 50, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(forumPosts)
+    .where(isNotNull(forumPosts.threadStage))
+    .orderBy(desc(forumPosts.createdAt))
+    .limit(limit)
+    .offset(offset);
 }
 
 export async function listForumReplies(postId: number) {

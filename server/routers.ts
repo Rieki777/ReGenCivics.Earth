@@ -3158,6 +3158,44 @@ export const appRouter = router({
         return enriched;
       }),
 
+    // Get all posts in a chain (by chainId — returns the idea root + all experiment/result posts linked to it)
+    chainPosts: publicProcedure
+      .input(z.object({ chainId: z.number() }))
+      .query(async ({ input }) => {
+        const posts = await db.listForumPostsByChainId(input.chainId);
+        const enriched = await Promise.all(posts.map(async (post) => {
+          const author = await db.getUserById(post.authorId);
+          const cats = await db.listForumCategories();
+          const category = cats.find(c => c.id === post.categoryId);
+          return {
+            ...post,
+            authorName: author?.name || 'Anonymous',
+            categorySlug: category?.slug || 'general',
+            categoryName: category?.name || 'Unknown',
+          };
+        }));
+        return enriched;
+      }),
+
+    // Get all thread-chain posts (any post with threadStage set)
+    chainFeed: publicProcedure
+      .input(z.object({ limit: z.number().max(100).default(50), offset: z.number().default(0) }))
+      .query(async ({ input }) => {
+        const posts = await db.listForumChainPosts(input.limit, input.offset);
+        const enriched = await Promise.all(posts.map(async (post) => {
+          const author = await db.getUserById(post.authorId);
+          const cats = await db.listForumCategories();
+          const category = cats.find(c => c.id === post.categoryId);
+          return {
+            ...post,
+            authorName: author?.name || 'Anonymous',
+            categorySlug: category?.slug || 'general',
+            categoryName: category?.name || 'Unknown',
+          };
+        }));
+        return enriched;
+      }),
+
     // Create a new post (auth required)
     createPost: protectedProcedure
       .input(z.object({
