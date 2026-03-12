@@ -152,7 +152,13 @@ const sectorOptions = [
 
 export default function InvestorForm() {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<InvestorFormData>(initialFormData);
+  const savedEmail = localStorage.getItem('investor_email') ?? '';
+  const savedName = localStorage.getItem('investor_name') ?? '';
+  const [formData, setFormData] = useState<InvestorFormData>({
+    ...initialFormData,
+    email: savedEmail,
+    fullName: savedName,
+  });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
   const [, setLocation] = useLocation();
@@ -338,6 +344,13 @@ export default function InvestorForm() {
             Learn about the $1 Trillion Opportunity in Regenerative Land Projects
           </div>
         </div>
+
+        {/* Welcome back banner for returning investors */}
+        {(savedEmail || savedName) && (
+          <div className="mb-6 bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-xl px-4 py-3 text-sm text-[#7dd87d]">
+            Welcome back{savedName ? `, ${savedName}` : ""}. Your information has been pre-filled from your last visit. You can update it before resubmitting.
+          </div>
+        )}
 
         {/* Progress Steps */}
         <div className="mb-8">
