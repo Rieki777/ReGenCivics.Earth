@@ -95,8 +95,39 @@ function BufferSettingsPanel() {
   const [testing, setTesting] = useState(false);
   const [profileResults, setProfileResults] = useState<Array<{ id: string; service: string; service_username: string; formatted_username?: string }> | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
+  const [newToken, setNewToken] = useState("");
+  const [savingToken, setSavingToken] = useState(false);
+  const [tokenSaved, setTokenSaved] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
 
   const getProfiles = trpc.admin.broadcast.getBufferProfiles.useQuery(undefined, { enabled: false });
+
+  async function saveToken() {
+    if (!newToken.trim()) return;
+    setSavingToken(true);
+    setTokenError(null);
+    setTokenSaved(false);
+    try {
+      const res = await fetch("/api/admin/buffer/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ token: newToken.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        setTokenError(data.error ?? "Failed to save token");
+      } else {
+        setTokenSaved(true);
+        setNewToken("");
+        setTimeout(() => setTokenSaved(false), 3000);
+      }
+    } catch (err) {
+      setTokenError(String(err));
+    } finally {
+      setSavingToken(false);
+    }
+  }
 
   function saveFarcasterHandle(v: string) {
     setFarcasterHandle(v);
@@ -142,14 +173,24 @@ function BufferSettingsPanel() {
         {/* Buffer */}
         <div className="space-y-3">
           <Label className="text-[#1a472a] font-semibold">Buffer Connection</Label>
+          <p className="text-xs text-[#1a472a]/60">Token expires yearly. Paste a new one below to update it. Get it at buffer.com → Settings → Developers → Access Token.</p>
           <div className="flex flex-wrap items-center gap-3">
             <Input
               type="password"
-              value="••••••••••••••••"
-              readOnly
-              placeholder="Set BUFFER_ACCESS_TOKEN in .env"
-              className="max-w-xs border-[#1a472a]/20 bg-[#f5f9f5] text-[#1a472a]/60 font-mono text-sm"
+              value={newToken}
+              onChange={e => setNewToken(e.target.value)}
+              placeholder="Paste new Buffer access token…"
+              className="max-w-xs border-[#1a472a]/20 focus:border-[#1a472a] font-mono text-sm"
             />
+            <Button
+              variant="outline"
+              onClick={saveToken}
+              disabled={savingToken || !newToken.trim()}
+              className="border-[#1a472a]/30 text-[#1a472a]"
+            >
+              {savingToken ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              {tokenSaved ? "Saved!" : "Save Token"}
+            </Button>
             <Button
               variant="outline"
               onClick={testConnection}
@@ -160,6 +201,16 @@ function BufferSettingsPanel() {
               Test Connection
             </Button>
           </div>
+          {tokenError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {tokenError}
+            </p>
+          )}
+          {tokenSaved && (
+            <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+              Token saved. Click "Test Connection" to verify.
+            </p>
+          )}
           {testError && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               {testError}

@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import { sdk } from "../_core/sdk";
 import { ENV } from "../_core/env";
+import { getSiteSetting, setSiteSetting } from "../db";
 
 const router = express.Router();
 
@@ -20,13 +21,15 @@ async function requireAdmin(req: Request, res: Response, next: NextFunction): Pr
   }
 }
 
-function getToken(): string | null {
-  return ENV.bufferAccessToken || null;
+// DB-stored token takes precedence over env var
+async function getToken(): Promise<string | null> {
+  const dbToken = await getSiteSetting("buffer_access_token");
+  return dbToken || ENV.bufferAccessToken || null;
 }
 
 // GET /api/admin/buffer/profiles
 router.get("/profiles", requireAdmin, async (_req: Request, res: Response): Promise<void> => {
-  const token = getToken();
+  const token = await getToken();
   if (!token) {
     res.status(503).json({ error: "Buffer not configured" });
     return;
@@ -47,9 +50,25 @@ router.get("/profiles", requireAdmin, async (_req: Request, res: Response): Prom
   }
 });
 
+// POST /api/admin/buffer/token — save a new access token to the DB
+router.post("/token", requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  const { token } = req.body as { token?: string };
+  if (!token || typeof token !== "string" || token.trim().length < 10) {
+    res.status(400).json({ error: "A valid token is required" });
+    return;
+  }
+  try {
+    await setSiteSetting("buffer_access_token", token.trim());
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("[Buffer] token save error:", err);
+    res.status(500).json({ error: "Failed to save token" });
+  }
+});
+
 // POST /api/admin/buffer/post
 router.post("/post", requireAdmin, async (req: Request, res: Response): Promise<void> => {
-  const token = getToken();
+  const token = await getToken();
   if (!token) {
     res.status(503).json({ error: "Buffer not configured" });
     return;

@@ -1575,3 +1575,11 @@ export const knowledgeMapEntries = mysqlTable("knowledge_map_entries", {
 });
 export type KnowledgeMapEntry = typeof knowledgeMapEntries.$inferSelect;
 export type InsertKnowledgeMapEntry = typeof knowledgeMapEntries.$inferInsert;
+
+// ─── Site Settings (admin-updatable key/value store) ─────────────────────────
+export const siteSettings = mysqlTable("site_settings", {
+  key: varchar("key", { length: 128 }).primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type SiteSetting = typeof siteSettings.$inferSelect;
