@@ -1,7 +1,7 @@
 import { and, desc, eq, gt, isNull, like, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1943,7 +1943,7 @@ export async function getForumPost(id: number) {
   return row || null;
 }
 
-export async function createForumPost(data: { categoryId: number; authorId: number; title: string; content: string }) {
+export async function createForumPost(data: { categoryId: number; authorId: number; title: string; content: string; tags?: string[]; postType?: string; isPinned?: number; threadStage?: string; chainId?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const [result] = await db.insert(forumPosts).values({
@@ -1951,10 +1951,35 @@ export async function createForumPost(data: { categoryId: number; authorId: numb
     authorId: data.authorId,
     title: data.title,
     content: data.content,
+    tags: data.tags && data.tags.length > 0 ? JSON.stringify(data.tags) : null,
+    postType: data.postType || null,
+    isPinned: data.isPinned ?? 0,
     lastReplyAt: new Date(),
     lastReplyBy: data.authorId,
+    threadStage: data.threadStage || null,
+    chainId: data.chainId || null,
   });
   return result.insertId;
+}
+
+export async function listForumPostsByTag(tag: string, limit = 50, offset = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(forumPosts)
+    .where(like(forumPosts.tags, `%${tag}%`))
+    .orderBy(desc(forumPosts.createdAt))
+    .limit(limit)
+    .offset(offset);
+  // Filter accurately since LIKE may over-match
+  return rows.filter(row => {
+    if (!row.tags) return false;
+    try {
+      const tags = JSON.parse(row.tags);
+      return Array.isArray(tags) && tags.includes(tag);
+    } catch {
+      return false;
+    }
+  });
 }
 
 export async function listForumReplies(postId: number) {
@@ -2535,5 +2560,115 @@ export async function searchApplications(query: string) {
       )
     )
     .limit(20);
+  return rows;
+}
+
+// ─── C15: Project Connections ─────────────────────────────────────────────────
+
+export async function getConnectionsForPost(postId: number): Promise<ProjectConnection[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(projectConnections)
+    .where(or(eq(projectConnections.postAId, postId), eq(projectConnections.postBId, postId)));
+}
+
+export async function getAllProjectConnections(): Promise<ProjectConnection[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(projectConnections).orderBy(desc(projectConnections.createdAt));
+}
+
+export async function createProjectConnection(data: InsertProjectConnection): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(projectConnections).values(data);
+  return result.insertId;
+}
+
+export async function deleteProjectConnection(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(projectConnections).where(eq(projectConnections.id, id));
+}
+
+// ─── C13: Glossary Terms ──────────────────────────────────────────────────────
+
+export async function getApprovedGlossaryTerms(): Promise<GlossaryTerm[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(glossaryTerms).where(eq(glossaryTerms.status, "approved")).orderBy(glossaryTerms.term);
+}
+
+export async function getAllGlossaryTerms(): Promise<GlossaryTerm[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(glossaryTerms).orderBy(glossaryTerms.term);
+}
+
+export async function approveGlossaryTerm(id: number, approvedBy: number, definition?: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(glossaryTerms).set({
+    status: "approved",
+    approvedAt: new Date(),
+    approvedBy,
+    ...(definition ? { definition } : {}),
+  }).where(eq(glossaryTerms.id, id));
+}
+
+export async function rejectGlossaryTerm(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(glossaryTerms).set({ status: "rejected" }).where(eq(glossaryTerms.id, id));
+}
+
+export async function addGlossaryTerm(data: InsertGlossaryTerm): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(glossaryTerms).values(data);
+  return result.insertId;
+}
+
+export async function getGlossaryTermByName(term: string): Promise<GlossaryTerm | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(glossaryTerms).where(eq(glossaryTerms.term, term)).limit(1);
+  return rows[0] || null;
+}
+
+// ─── C12: Digests ─────────────────────────────────────────────────────────────
+
+export async function saveDigest(data: { periodStart: string; periodEnd: string; contentMd: string; forumPostId?: number }): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(digests).values({
+    periodStart: data.periodStart,
+    periodEnd: data.periodEnd,
+    contentMd: data.contentMd,
+    forumPostId: data.forumPostId || null,
+  });
+  return result.insertId;
+}
+
+export async function getLatestDigest(): Promise<Digest | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(digests).orderBy(desc(digests.generatedAt)).limit(1);
+  return rows[0] || null;
+}
+
+export async function getRecentForumPostsForDigest(): Promise<{ title: string; content: string; replyCount: number; viewCount: number }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const rows = await db.select({
+    title: forumPosts.title,
+    content: forumPosts.content,
+    replyCount: forumPosts.replyCount,
+    viewCount: forumPosts.viewCount,
+  }).from(forumPosts)
+    .where(gt(forumPosts.createdAt, weekAgo))
+    .orderBy(desc(forumPosts.replyCount))
+    .limit(10);
   return rows;
 }

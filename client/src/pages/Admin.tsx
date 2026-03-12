@@ -51,7 +51,10 @@ import {
   RefreshCw,
   Send,
   Clock,
+  Radio,
+  BookOpen,
 } from "lucide-react";
+import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
 import { trpc } from "@/lib/trpc";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { Link } from "wouter";
@@ -68,6 +71,7 @@ import { AdminBannerEditor } from "@/components/AdminBannerEditor";
 const AdminKanban = lazy(() => import("@/components/AdminKanban").then(m => ({ default: m.AdminKanban })));
 const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then(m => ({ default: m.ActivityTimeline })));
 const AdminAnalyticsLazy = lazy(() => import("@/components/AdminAnalytics").then(m => ({ default: m.AdminAnalytics })));
+import { AdminImageStudio } from "@/components/AdminImageStudio";
 
 const ADMIN_PASSWORD = "333";
 
@@ -78,6 +82,124 @@ function getAgeInfo(createdAt: string | Date): { label: string; color: string; b
   if (ageH < 24) return { label: `${Math.round(ageH)}h ago`, color: 'text-green-700', bg: 'bg-green-50 border-green-200', isOverdue: false };
   if (ageH < 48) return { label: `${Math.floor(ageH / 24)}d ago`, color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200', isOverdue: false };
   return { label: `${Math.floor(ageH / 24)}d  -  overdue`, color: 'text-red-700', bg: 'bg-red-50 border-red-200', isOverdue: true };
+}
+
+// ─── Buffer Settings Panel ────────────────────────────────────────────────────
+const LS_FARCASTER_KEY = "admin_farcaster_handle";
+
+function BufferSettingsPanel() {
+  const [farcasterHandle, setFarcasterHandle] = useState<string>(() => {
+    try { return localStorage.getItem(LS_FARCASTER_KEY) ?? ""; } catch { return ""; }
+  });
+  const [testing, setTesting] = useState(false);
+  const [profileResults, setProfileResults] = useState<Array<{ id: string; service: string; service_username: string; formatted_username?: string }> | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  const getProfiles = trpc.admin.broadcast.getBufferProfiles.useQuery(undefined, { enabled: false });
+
+  function saveFarcasterHandle(v: string) {
+    setFarcasterHandle(v);
+    try { localStorage.setItem(LS_FARCASTER_KEY, v); } catch {}
+  }
+
+  async function testConnection() {
+    setTesting(true);
+    setTestError(null);
+    setProfileResults(null);
+    try {
+      const result = await getProfiles.refetch();
+      if (result.data) {
+        setProfileResults(result.data);
+      } else if (result.error) {
+        setTestError(result.error.message);
+      }
+    } catch (err) {
+      setTestError(String(err));
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  const serviceLabels: Record<string, string> = {
+    twitter: "X / Twitter",
+    linkedin: "LinkedIn",
+    facebook: "Facebook",
+    instagram: "Instagram",
+    bluesky: "Bluesky",
+  };
+
+  return (
+    <Card className="bg-white border-2 border-[#1a472a]/10">
+      <CardHeader>
+        <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: "var(--font-display)" }}>
+          <Radio className="w-5 h-5" />
+          Broadcast Settings
+        </CardTitle>
+        <CardDescription>Configure Buffer and Farcaster for social posting</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Buffer */}
+        <div className="space-y-3">
+          <Label className="text-[#1a472a] font-semibold">Buffer Connection</Label>
+          <div className="flex flex-wrap items-center gap-3">
+            <Input
+              type="password"
+              value="••••••••••••••••"
+              readOnly
+              placeholder="Set BUFFER_ACCESS_TOKEN in .env"
+              className="max-w-xs border-[#1a472a]/20 bg-[#f5f9f5] text-[#1a472a]/60 font-mono text-sm"
+            />
+            <Button
+              variant="outline"
+              onClick={testConnection}
+              disabled={testing}
+              className="border-[#1a472a]/30 text-[#1a472a]"
+            >
+              {testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Test Connection
+            </Button>
+          </div>
+          {testError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {testError}
+            </p>
+          )}
+          {profileResults && profileResults.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {profileResults.map(p => (
+                <span
+                  key={p.id}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1a472a]/10 text-[#1a472a] text-xs font-medium"
+                >
+                  <span className="capitalize">{serviceLabels[p.service.toLowerCase()] ?? p.service}</span>
+                  <span className="text-[#1a472a]/60">{p.formatted_username ?? p.service_username}</span>
+                </span>
+              ))}
+            </div>
+          )}
+          {profileResults && profileResults.length === 0 && (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              Connected, but no profiles found. Add channels in your Buffer account.
+            </p>
+          )}
+        </div>
+
+        {/* Farcaster */}
+        <div className="space-y-2">
+          <Label className="text-[#1a472a] font-semibold">Farcaster Handle (display only)</Label>
+          <Input
+            value={farcasterHandle}
+            onChange={e => saveFarcasterHandle(e.target.value)}
+            placeholder="@handle.eth"
+            className="max-w-xs border-[#1a472a]/20 focus:border-[#1a472a]"
+          />
+          <p className="text-xs text-[#1a472a]/60">
+            Farcaster posting opens Warpcast in a new tab. No API key needed.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // ─── Email History Panel ───────────────────────────────────────────────────────
@@ -2085,6 +2207,124 @@ function ScheduledEmailsManager() {
   );
 }
 
+// ─── Admin AMA Panel ───────────────────────────────────────────────────────────
+function AdminAMAPanel() {
+  const utils = trpc.useUtils();
+  const { data: amas, isLoading } = trpc.amas.list.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    projectName: "",
+    hostName: "",
+    date: "",
+    time: "",
+    timezone: "America/New_York",
+    forumThreadUrl: "",
+  });
+
+  const createMut = trpc.amas.create.useMutation({
+    onSuccess: () => {
+      utils.amas.list.invalidate();
+      setShowForm(false);
+      setForm({ projectName: "", hostName: "", date: "", time: "", timezone: "America/New_York", forumThreadUrl: "" });
+      toast.success("AMA created");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const toggleMut = trpc.amas.setActive.useMutation({ onSuccess: () => utils.amas.list.invalidate() });
+  const deleteMut = trpc.amas.delete.useMutation({ onSuccess: () => utils.amas.list.invalidate() });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Calendar className="w-4 h-4 text-[#7dd87d]" /> Upcoming AMAs
+        </CardTitle>
+        <CardDescription>Manage live Ask Me Anything sessions shown in the site banner.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white/50" />}
+        {!isLoading && amas && amas.length === 0 && (
+          <p className="text-white/40 text-sm">No AMAs scheduled.</p>
+        )}
+        {amas?.map(ama => (
+          <div key={ama.id} className="flex items-start gap-3 p-3 bg-white/4 rounded-xl border border-white/8">
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-white text-sm">{ama.projectName}</p>
+              <p className="text-white/55 text-xs">{ama.date} at {ama.time} ({ama.timezone})</p>
+              <p className="text-white/45 text-xs">Host: {ama.hostName}</p>
+              {ama.forumThreadUrl && (
+                <a href={ama.forumThreadUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[#7dd87d]/70 hover:text-[#7dd87d] underline">
+                  Forum thread
+                </a>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => toggleMut.mutate({ id: ama.id, isActive: !ama.isActive })}
+                className={`text-xs px-2 py-1 rounded-full border ${ama.isActive ? "bg-[#7dd87d]/15 text-[#5ab85a] border-[#7dd87d]/25" : "bg-white/5 text-white/40 border-white/15"}`}
+              >
+                {ama.isActive ? "Active" : "Inactive"}
+              </button>
+              <button
+                onClick={() => { if (confirm("Delete this AMA?")) deleteMut.mutate({ id: ama.id }); }}
+                className="text-white/25 hover:text-red-400 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {showForm ? (
+          <div className="bg-white/4 border border-white/12 rounded-xl p-4 space-y-3">
+            <p className="text-white/70 text-sm font-semibold">Schedule AMA</p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-white/60 text-xs">Project Name</Label>
+                <Input value={form.projectName} onChange={e => setForm(f => ({ ...f, projectName: e.target.value }))} placeholder="Amora Costa Rica" className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/60 text-xs">Host Name</Label>
+                <Input value={form.hostName} onChange={e => setForm(f => ({ ...f, hostName: e.target.value }))} placeholder="Maria Santos" className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/60 text-xs">Date (YYYY-MM-DD)</Label>
+                <Input value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} placeholder="2026-04-26" className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/60 text-xs">Time</Label>
+                <Input value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} placeholder="11:00 AM EST" className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/60 text-xs">Timezone</Label>
+                <Input value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/60 text-xs">Forum Thread URL (optional)</Label>
+                <Input value={form.forumThreadUrl} onChange={e => setForm(f => ({ ...f, forumThreadUrl: e.target.value }))} placeholder="https://..." className="mt-1" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => createMut.mutate({ ...form, forumThreadUrl: form.forumThreadUrl || undefined })}
+                disabled={!form.projectName || !form.date || !form.time || createMut.isPending}
+              >
+                {createMut.isPending ? "Creating..." : "Create AMA"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </div>
+        ) : (
+          <Button size="sm" variant="outline" onClick={() => setShowForm(true)} className="flex items-center gap-1">
+            <Plus className="w-3.5 h-3.5" /> Schedule AMA
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Org Claims Admin Panel ────────────────────────────────────────────────────
 function OrgClaimsAdminPanel() {
   const utils = trpc.useUtils();
@@ -2298,6 +2538,210 @@ function getInvestorPriority(investor: any): { score: number; label: string; col
   return { score, label: 'Low', color: 'bg-gray-100 text-gray-500 border-gray-200' };
 }
 
+// ─── C15: Project Connections Admin Panel ─────────────────────────────────────
+function ProjectConnectionsAdmin() {
+  const utils = trpc.useUtils();
+  const { data: connections, isLoading } = trpc.projectConnections.listAll.useQuery();
+  const [postAId, setPostAId] = useState("");
+  const [postBId, setPostBId] = useState("");
+  const [connType, setConnType] = useState<"needs_each_other" | "similar">("needs_each_other");
+  const [note, setNote] = useState("");
+
+  const createMutation = trpc.projectConnections.create.useMutation({
+    onSuccess: () => {
+      setPostAId(""); setPostBId(""); setNote("");
+      utils.projectConnections.listAll.invalidate();
+    },
+  });
+  const deleteMutation = trpc.projectConnections.delete.useMutation({
+    onSuccess: () => utils.projectConnections.listAll.invalidate(),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-[#1a472a] flex items-center gap-2">
+          <Handshake className="w-5 h-5" />
+          Project Cross-Links
+        </CardTitle>
+        <CardDescription>Link forum threads as "Needs Each Other" or "Similar Projects" (C15)</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 items-end">
+          <div>
+            <Label className="text-xs text-[#1a472a]/60 mb-1 block">Post A ID</Label>
+            <Input type="number" value={postAId} onChange={e => setPostAId(e.target.value)} placeholder="e.g. 12" className="border-[#e8e4de]" />
+          </div>
+          <div>
+            <Label className="text-xs text-[#1a472a]/60 mb-1 block">Post B ID</Label>
+            <Input type="number" value={postBId} onChange={e => setPostBId(e.target.value)} placeholder="e.g. 34" className="border-[#e8e4de]" />
+          </div>
+          <div>
+            <Label className="text-xs text-[#1a472a]/60 mb-1 block">Type</Label>
+            <Select value={connType} onValueChange={(v) => setConnType(v as "needs_each_other" | "similar")}>
+              <SelectTrigger className="border-[#e8e4de] text-[#1a472a]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="needs_each_other">Needs Each Other</SelectItem>
+                <SelectItem value="similar">Similar Project</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            onClick={() => createMutation.mutate({ postAId: parseInt(postAId), postBId: parseInt(postBId), connectionType: connType, note: note || undefined })}
+            disabled={!postAId || !postBId || createMutation.isPending}
+            className="bg-[#4a7c59] hover:bg-[#3a6449] text-white"
+          >
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+            Link
+          </Button>
+        </div>
+        <div>
+          <Label className="text-xs text-[#1a472a]/60 mb-1 block">Note (optional)</Label>
+          <Input value={note} onChange={e => setNote(e.target.value)} placeholder="Describe the connection..." className="border-[#e8e4de]" />
+        </div>
+
+        {isLoading ? (
+          <p className="text-sm text-[#1a472a]/50">Loading...</p>
+        ) : connections && connections.length > 0 ? (
+          <div className="space-y-2 mt-2">
+            {connections.map(c => (
+              <div key={c.id} className="flex items-center justify-between p-2 rounded-lg bg-[#f8f5f0] border border-[#e8e4de]">
+                <div className="text-sm text-[#1a472a]">
+                  <span className="font-semibold">#{c.postAId}</span>
+                  <span className="text-[#1a472a]/40 mx-2">{c.connectionType === "needs_each_other" ? "needs" : "similar to"}</span>
+                  <span className="font-semibold">#{c.postBId}</span>
+                  {c.note && <span className="text-[#1a472a]/50 ml-2 text-xs">— {c.note}</span>}
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => deleteMutation.mutate({ id: c.id })}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 w-7 p-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-[#1a472a]/40 italic">No connections yet.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── C13: Glossary Admin Panel ────────────────────────────────────────────────
+function GlossaryAdminPanel() {
+  const utils = trpc.useUtils();
+  const { data: terms, isLoading } = trpc.glossary.listAll.useQuery();
+  const [newTerm, setNewTerm] = useState("");
+  const [newDef, setNewDef] = useState("");
+  const [newSource, setNewSource] = useState("");
+  const [editDefs, setEditDefs] = useState<Record<number, string>>({});
+
+  const approveMutation = trpc.glossary.approve.useMutation({ onSuccess: () => utils.glossary.listAll.invalidate() });
+  const rejectMutation = trpc.glossary.reject.useMutation({ onSuccess: () => utils.glossary.listAll.invalidate() });
+  const addMutation = trpc.glossary.add.useMutation({
+    onSuccess: () => { setNewTerm(""); setNewDef(""); setNewSource(""); utils.glossary.listAll.invalidate(); },
+  });
+
+  const proposed = (terms || []).filter(t => t.status === "proposed");
+  const approved = (terms || []).filter(t => t.status === "approved");
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-[#1a472a] flex items-center gap-2">
+          <BookOpen className="w-5 h-5" />
+          Glossary Admin
+        </CardTitle>
+        <CardDescription>Review AI-proposed terms and manage the community glossary (C13)</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {/* Add manually */}
+        <div className="p-3 rounded-lg bg-[#f8f5f0] border border-[#e8e4de] space-y-2">
+          <p className="text-xs font-bold text-[#1a472a] uppercase tracking-wide">Add Term Manually</p>
+          <Input value={newTerm} onChange={e => setNewTerm(e.target.value)} placeholder="Term name" className="border-[#e8e4de]" />
+          <Textarea value={newDef} onChange={e => setNewDef(e.target.value)} placeholder="Definition" rows={2} className="border-[#e8e4de] resize-none" />
+          <Input value={newSource} onChange={e => setNewSource(e.target.value)} placeholder="Source thread URL (optional)" className="border-[#e8e4de]" />
+          <Button
+            onClick={() => addMutation.mutate({ term: newTerm, definition: newDef, sourceThreadUrl: newSource || undefined })}
+            disabled={!newTerm || !newDef || addMutation.isPending}
+            className="bg-[#4a7c59] hover:bg-[#3a6449] text-white"
+          >
+            {addMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+            Add to Glossary
+          </Button>
+        </div>
+
+        {/* Proposed terms */}
+        {proposed.length > 0 && (
+          <div>
+            <p className="text-xs font-bold text-[#1a472a] uppercase tracking-wide mb-2">Proposed by AI ({proposed.length})</p>
+            <div className="space-y-2">
+              {proposed.map(t => (
+                <div key={t.id} className="p-3 rounded-lg border border-amber-200 bg-amber-50 space-y-2">
+                  <p className="font-bold text-[#1a472a] text-sm">{t.term}</p>
+                  <Textarea
+                    value={editDefs[t.id] ?? t.definition}
+                    onChange={e => setEditDefs(prev => ({ ...prev, [t.id]: e.target.value }))}
+                    rows={2}
+                    className="border-[#e8e4de] bg-white resize-none text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => approveMutation.mutate({ id: t.id, definition: editDefs[t.id] })}
+                      disabled={approveMutation.isPending}
+                      className="bg-[#4a7c59] hover:bg-[#3a6449] text-white h-7 text-xs px-3"
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => rejectMutation.mutate({ id: t.id })}
+                      disabled={rejectMutation.isPending}
+                      className="border-red-200 text-red-600 hover:bg-red-50 h-7 text-xs px-3"
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Approved terms */}
+        {approved.length > 0 && (
+          <div>
+            <p className="text-xs font-bold text-[#1a472a] uppercase tracking-wide mb-2">Approved ({approved.length})</p>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {approved.map(t => (
+                <div key={t.id} className="flex items-start justify-between p-2 rounded bg-[#f8f5f0] border border-[#e8e4de]">
+                  <div>
+                    <p className="font-semibold text-[#1a472a] text-xs">{t.term}</p>
+                    <p className="text-[#1a472a]/50 text-xs line-clamp-1">{t.definition}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isLoading && <p className="text-sm text-[#1a472a]/40">Loading glossary...</p>}
+        {!isLoading && (terms || []).length === 0 && (
+          <p className="text-sm text-[#1a472a]/40 italic">No terms yet. AI will propose terms weekly based on forum activity.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [investorSearch, setInvestorSearch] = useState('');
@@ -2327,7 +2771,7 @@ function AdminDashboard() {
     const TAB_KEYS: Record<string, string> = {
       '1': 'overview', '2': 'applications', '3': 'investors',
       '4': 'alliance', '5': 'live', '6': 'create', '7': 'other',
-      '8': 'kanban', '9': 'settings',
+      '8': 'broadcast', '9': 'kanban',
     };
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
@@ -2743,14 +3187,21 @@ function AdminDashboard() {
               <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Crowd Pooling</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="newsletter" 
+            <TabsTrigger
+              value="newsletter"
               className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Mail className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Newsletter</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
+              value="broadcast"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+            >
+              <Radio className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Broadcast</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="analytics" 
               className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
@@ -2777,6 +3228,13 @@ function AdminDashboard() {
             >
               <Settings className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Settings</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="images"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+            >
+              <span className="mr-1 md:mr-2">🖼️</span>
+              <span className="hidden sm:inline">Images</span>
             </TabsTrigger>
           </TabsList>
 
@@ -4202,6 +4660,11 @@ function AdminDashboard() {
             </Card>
           </TabsContent>
 
+          {/* Broadcast Tab */}
+          <TabsContent value="broadcast">
+            <AdminBroadcastPanel />
+          </TabsContent>
+
           {/* Analytics Tab */}
           <TabsContent value="analytics">
             <div className="space-y-6">
@@ -4248,13 +4711,21 @@ function AdminDashboard() {
           {/* Settings Tab */}
           <TabsContent value="settings">
             <div className="space-y-6">
+              <BufferSettingsPanel />
               <NotificationPreferences />
               <ReviewerEmailManager />
               <EmailSettings />
               <ScheduledEmailsManager />
+              <AdminAMAPanel />
               <OrgClaimsAdminPanel />
               <JoinRequestsAdminPanel />
+              <ProjectConnectionsAdmin />
+              <GlossaryAdminPanel />
             </div>
+          </TabsContent>
+
+          <TabsContent value="images">
+            <AdminImageStudio />
           </TabsContent>
         </Tabs>
       </div>

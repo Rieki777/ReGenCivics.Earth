@@ -5,7 +5,7 @@
 import { Link, useLocation, useParams } from "wouter";
 import {
   MessageCircle, ArrowLeft, Plus, Eye, Clock, Heart,
-  ChevronRight, Pin, Lock, UserPlus
+  ChevronRight, Pin, Lock, UserPlus, BookOpen, Users
 } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,63 @@ function timeAgo(date: Date | string): string {
 
 function getInitials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+const TAG_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  lesson: { label: "#lesson", color: "#92400e", bg: "#fef3c7" },
+  "seeking-support": { label: "#seeking-support", color: "#1e40af", bg: "#dbeafe" },
+  "offering-support": { label: "#offering-support", color: "#166534", bg: "#dcfce7" },
+};
+
+const POST_TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  case_study: { label: "Case Study", color: "#92400e", bg: "#fef3c7" },
+  seeking_team: { label: "Seeking Team", color: "#5b21b6", bg: "#ede9fe" },
+  discussion: { label: "Discussion", color: "#1a472a", bg: "#dcfce7" },
+};
+
+const THREAD_STAGE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  idea: { label: "Idea", color: "#166534", bg: "#dcfce7" },
+  experiment: { label: "Experiment", color: "#1e40af", bg: "#dbeafe" },
+  result: { label: "Result", color: "#92400e", bg: "#fef3c7" },
+};
+
+function ThreadStageBadge({ stage }: { stage: string }) {
+  const style = THREAD_STAGE_STYLES[stage];
+  if (!style) return null;
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+      style={{ color: style.color, backgroundColor: style.bg }}
+    >
+      {style.label}
+    </span>
+  );
+}
+
+function PostTagBadge({ tag }: { tag: string }) {
+  const style = TAG_STYLES[tag];
+  if (!style) return null;
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+      style={{ color: style.color, backgroundColor: style.bg }}
+    >
+      {style.label}
+    </span>
+  );
+}
+
+function PostTypeBadge({ postType }: { postType: string }) {
+  const style = POST_TYPE_STYLES[postType];
+  if (!style || postType === "discussion") return null;
+  return (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+      style={{ color: style.color, backgroundColor: style.bg }}
+    >
+      {style.label}
+    </span>
+  );
 }
 
 export default function CommunityCategory() {
@@ -183,8 +240,13 @@ export default function CommunityCategory() {
             {posts.map((post, index) => (
               <AnimatedSection key={post.id} delay={index * 0.03}>
                 <Link href={`/community/post/${post.id}`}>
-                  <div className="bg-white rounded-xl p-4 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-sm transition-all duration-200 cursor-pointer group">
-                    <div className="flex items-start gap-3">
+                  <div className="bg-white rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-sm transition-all duration-200 cursor-pointer group">
+                    {post.generatedImageUrl && (
+                      <div className="w-full h-32 overflow-hidden">
+                        <img src={post.generatedImageUrl} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                      </div>
+                    )}
+                    <div className="flex items-start gap-3 p-4">
                       {/* Author Avatar */}
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#4a7c59] to-[#7dd87d] flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
                         {getInitials(post.authorName || 'A')}
@@ -199,14 +261,32 @@ export default function CommunityCategory() {
                           {post.isLocked === 1 && (
                             <Lock className="w-3 h-3 text-[#1a472a]/40 flex-shrink-0" />
                           )}
-                          <h3 
+                          <h3
                             className="font-semibold text-[#1a472a] text-sm md:text-base group-hover:text-[#4a7c59] transition-colors truncate"
                             style={{ fontFamily: 'var(--font-display)' }}
                           >
                             {post.title}
                           </h3>
                         </div>
-                        
+
+                        {/* Post type, thread stage, and tag badges */}
+                        {(() => {
+                          let parsedTags: string[] = [];
+                          try { parsedTags = post.tags ? JSON.parse(post.tags) : []; } catch { /* ignore */ }
+                          const hasStage = !!(post as any).threadStage;
+                          return (
+                            <>
+                              {(post.postType || hasStage || parsedTags.length > 0) && (
+                                <div className="flex flex-wrap gap-1 mb-1">
+                                  {post.postType && <PostTypeBadge postType={post.postType} />}
+                                  {hasStage && <ThreadStageBadge stage={(post as any).threadStage} />}
+                                  {parsedTags.map(t => <PostTagBadge key={t} tag={t} />)}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+
                         {/* Preview of content */}
                         <p className="text-[#1a472a]/50 text-xs line-clamp-1 mb-1.5" style={{ fontFamily: 'var(--font-body)' }}>
                           {post.content.replace(/[#*_~`]/g, '').slice(0, 120)}

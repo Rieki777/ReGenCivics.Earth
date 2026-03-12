@@ -1,76 +1,69 @@
-# CLAUDE.md
+# regen-civics — Project Context for Claude
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## What This Project Is
+regen-civics is a **fund and an in-real-life game** for supporting regenerative land projects and the Regenerative Renaissance — a movement to heal ourselves, our earth, our communities, and our bioregions. We create quests and games that help people heal, and in doing so build new financial, economic, and governance systems that support and network land projects across the movement.
 
-## Rye's Preferences
+**Current priorities:**
+1. Website — getting it up and polished
+2. Fundraising — raising funds for the regen-civics fund
+3. Incubator — attracting quality land projects to apply for the next season
 
-- **File uploads**: When Rye uploads files (CSVs, images, docs, etc.), handle moving them to the correct project location automatically. Never give manual Finder/Explorer instructions -- just do it and confirm where they landed.
-- **Writing style**: Never use em-dashes or other common LLM text patterns (e.g. "Certainly!", "Great question!", filler affirmations, overly formal transitions). Write plainly and directly.
+**Stage:** Active / building — running incubator seasons, fundraising live
 
-## Commands
+## Team
+Community of contributors. Distributed, non-hierarchical, movement-style. Rye leads and holds the vision.
 
-```bash
-# Development
-pnpm dev           # Start dev server (Express + Vite HMR on port 3000)
-pnpm build         # Build client (Vite) + server (esbuild) to dist/
-pnpm start         # Run production build
+## Tech Approach
+Mixed — some code, some not. This is part software project, part community organizing infrastructure, part game design. Solutions should be practical and accessible, not just technically elegant.
 
-# Type checking & formatting
-pnpm check         # TypeScript type check (no emit)
-pnpm format        # Prettier format all files
+## Tech Stack (code portions)
+- [CUSTOMIZE: Frontend — e.g., Next.js, React, plain HTML]
+- [CUSTOMIZE: Backend — e.g., Node.js, Python, Webflow, no-code]
+- [CUSTOMIZE: Database / CMS — e.g., Supabase, Airtable, Notion]
+- [CUSTOMIZE: Hosting — e.g., Railway, Vercel, Netlify]
+- Google Workspace (Docs, Sheets, Drive, Gmail) — primary collaboration layer
+- GitHub — code versioning and issues
 
-# Testing (server-side only via Vitest)
-pnpm test                                  # Run all tests
-pnpm vitest run server/campaign.test.ts    # Run a single test file
+## Repository Structure
+[CUSTOMIZE: brief description of folders, e.g.:]
+- `src/` or `app/` — main application code
+- `docs/` — documentation, game specs, incubator materials
+- `public/` or `static/` — assets, images, website files
 
-# Database
-pnpm db:push       # Generate + apply Drizzle migrations
-```
+## Conventions
+- [CUSTOMIZE: language/framework style guide if applicable]
+- [CUSTOMIZE: commit style, e.g., conventional commits]
+- Plain language in all docs — written for community members, not just developers
 
-## Environment Setup
+## Core Concepts (read before writing any content)
 
-Copy `.env.example` to `.env`. Required vars:
-- `DATABASE_URL` — MySQL connection string
-- `JWT_SECRET` — session signing key
-- `OWNER_OPEN_ID` — your Google user ID, grants admin role
-- `VITE_APP_ID` — app identifier (e.g. `regen-civics`)
-- `REDIS_URL` — for caching and rate limiting
+- `CONTEXT_THE_TWO_GAMES.md` — **essential context on the Fund vs. Game distinction.** Read this before writing anything about governance, finance, tokens ($RCivics vs $ReGen), or the two-sided structure of ReGen Civics. The Fund (RCVoice / $RCivics) is anchored in the old Game; the Game (RGVoice / $ReGen) is anchored in the new Games. They work together as two sides of a bridge. This distinction shapes all copy, posts, and design decisions.
 
-Optional: `RESEND_API_KEY` (email), AWS S3/R2 vars (file storage), Google/Apple OAuth vars.
+## Planning Documents (read before implementing)
 
-## Architecture
+These files define all outstanding work for this project. Always check them before starting any implementation:
 
-This is a full-stack TypeScript monorepo with three layers:
+- `FIXES_TO_MAKE_2026-03-11.md` — **current** fixes doc (2026-03-11). Start here for active fixes.
+- `UPGRADE_TASKS_2026-03-10.md` — master checklist of implementation tasks (Tasks 1–20 + forum pointer).
+- `FIXES_TO_MAKE_2026-03-10.md` — previous fixes log (Fixes 1–14, archived 2026-03-10).
+- `FORUM_UPGRADES_2026-03-10.md` — forum content overhaul and Welcome Aboard Quests spec. Includes quest card UI, seed scripts, UX entry points, and forum URL mapping.
+- `ReGenCivics_WelcomeAboard_Brief.md` — full content brief for the Welcome Aboard Quests: all 10 quest cards, forum post bodies, seed comments, and implementation plan.
 
-```
-client/src/    # React 19 SPA (Vite, Tailwind v4, wouter routing)
-server/        # Express + tRPC API server (tsx in dev, esbuild in prod)
-shared/        # Types and constants shared between client and server
-drizzle/       # MySQL schema and migration SQL files
-```
+When implementing forum features or quest cards, read `FORUM_UPGRADES_2026-03-10.md` and `ReGenCivics_WelcomeAboard_Brief.md` in full before writing any code.
 
-**Server entry**: `server/_core/index.ts` — registers middleware, OAuth routes, tRPC, and Vite/static serving.
+## Installed Skills (ln- pipeline)
+This project uses a structured delivery pipeline via the ln- skills (in ~/.claude/skills/):
+- `ln-1000-pipeline-orchestrator` — kick off full feature delivery
+- `ln-200-scope-decomposer` — break down large features or projects
+- `ln-210-epic-coordinator` / `ln-220-story-coordinator` — planning phases
+- `ln-400-story-executor` / `ln-401-task-executor` — implementation
+- `ln-500-story-quality-gate` — quality check before shipping
 
-**tRPC setup**: All API routes are defined in `server/routers.ts` and mounted at `/api/trpc`. Three procedure types:
-- `publicProcedure` — no auth required
-- `protectedProcedure` — requires valid session cookie (JWT)
-- `adminProcedure` — requires `user.role === 'admin'`
+## Key Constraints
+- Accessibility matters — outputs must work for people outside tech circles
+- Community-first — language and tools should feel welcoming, not gatekeeping
+- Lean operations — practical and sustainable over complex and impressive
+- Regenerative values — the work should embody healing, reciprocity, long-term thinking
 
-**Auth flow**: `server/_core/sdk.ts` handles JWT session creation/verification via `jose`. `server/_core/context.ts` attaches the authenticated user to every tRPC request. OAuth (Google/Apple) routes live in `server/_core/oauth.ts`.
-
-**Database**: Drizzle ORM with MySQL2. All DB operations are in `server/db.ts` (single large file of query functions). Schema is in `drizzle/schema.ts`. The DB connection is lazily initialized so local tooling works without a live DB.
-
-**Client routing**: `wouter` for client-side routing. All pages are lazy-loaded via `React.lazy()` in `client/src/App.tsx`.
-
-**Path aliases**:
-- `@/` → `client/src/`
-- `@shared/` → `shared/`
-- `@assets/` → `attached_assets/`
-
-**Caching**: Redis-backed cache via `server/cache.ts` and `server/cachedQueries.ts`. Cache is initialized in `server/cacheInit.ts`.
-
-**File storage**: S3-compatible (AWS or Cloudflare R2) via `server/storage.ts`.
-
-**Email**: Resend API via `server/_core/email.ts`. Webhook handler in `server/webhooks/resend.ts`.
-
-**Deployment**: Railway (`railway.toml`, `nixpacks.toml`). Build output goes to `dist/public` (client) and `dist/index.js` (server).
+## About Rye
+Founder, movement builder, tool designer. Engagement will be extremely diverse — writing, fundraising, game design, code, strategy, community comms. All of it. See `C:\Users\taren\Documents\Claude\about-me.md` for full context.

@@ -24,6 +24,38 @@ import { PageTransition } from "@/components/PageTransition";
 import { FileUploadInput } from "@/components/FileUploadInput";
 import { toast } from "sonner";
 
+type PostTag = "lesson" | "seeking-support" | "offering-support";
+type PostType = "discussion" | "case_study" | "seeking_team";
+type ThreadStage = "idea" | "experiment" | "result";
+
+const SEEKING_TEAM_TEMPLATE = `Project name or working title:
+
+What stage you are at (idea / prototype / active / scaling):
+
+What you are building (2-3 sentences):
+
+Roles you are looking for:
+
+Skills or experience that would help:
+
+Time commitment (hours/week, duration):
+
+How to express interest (reply here / DM / email):`;
+
+const CASE_STUDY_TEMPLATE = `What we tried:
+
+
+What worked:
+
+
+What did not work:
+
+
+What we would do differently:
+
+
+Resources and links:`;
+
 export default function CommunityNewPost() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
@@ -36,6 +68,11 @@ export default function CommunityNewPost() {
   const [categoryId, setCategoryId] = useState<string>(preselectedCategory || "");
   const [showPreview, setShowPreview] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [selectedTags, setSelectedTags] = useState<PostTag[]>([]);
+  const [postType, setPostType] = useState<PostType>("discussion");
+  const [isThreadChain, setIsThreadChain] = useState(false);
+  const [threadStage, setThreadStage] = useState<ThreadStage>("idea");
+  const [chainId, setChainId] = useState<string>("");
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const handleMarkdownShortcuts = useMarkdownShortcuts(contentRef, content, setContent);
 
@@ -50,6 +87,27 @@ export default function CommunityNewPost() {
       toast.error(err.message || "Failed to create thread");
     },
   });
+
+  function handlePostTypeChange(newType: PostType) {
+    setPostType(newType);
+    if (newType === "seeking_team" && content === "") {
+      setContent(SEEKING_TEAM_TEMPLATE);
+    } else if (newType === "case_study" && content === "") {
+      setContent(CASE_STUDY_TEMPLATE);
+    } else if (newType === "seeking_team" && (content === CASE_STUDY_TEMPLATE)) {
+      setContent(SEEKING_TEAM_TEMPLATE);
+    } else if (newType === "case_study" && (content === SEEKING_TEAM_TEMPLATE)) {
+      setContent(CASE_STUDY_TEMPLATE);
+    } else if (newType === "discussion" && (content === SEEKING_TEAM_TEMPLATE || content === CASE_STUDY_TEMPLATE)) {
+      setContent("");
+    }
+  }
+
+  function toggleTag(tag: PostTag) {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  }
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -69,6 +127,10 @@ export default function CommunityNewPost() {
       categoryId: parseInt(categoryId),
       title: title.trim(),
       content: content.trim(),
+      tags: selectedTags.length > 0 ? selectedTags : undefined,
+      postType: postType !== "discussion" ? postType : undefined,
+      threadStage: isThreadChain ? threadStage : undefined,
+      chainId: isThreadChain && chainId.trim() ? parseInt(chainId.trim()) : undefined,
     });
     // Attachments: uploadedFiles will be displayed in the post
   };
@@ -151,6 +213,105 @@ export default function CommunityNewPost() {
             </Select>
           </div>
 
+          {/* Post Type */}
+          <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
+            <Label className="text-[#1a472a] font-bold text-sm mb-2 block" style={{ fontFamily: 'var(--font-display)' }}>
+              Post Type
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {([
+                { value: "discussion", label: "Discussion" },
+                { value: "case_study", label: "Case Study" },
+                { value: "seeking_team", label: "Seeking Team" },
+              ] as { value: PostType; label: string }[]).map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handlePostTypeChange(opt.value)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                    postType === opt.value
+                      ? "bg-[#4a7c59] text-white border-[#4a7c59]"
+                      : "bg-white text-[#4a7c59] border-[#4a7c59]/30 hover:border-[#4a7c59]"
+                  }`}
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {postType === "seeking_team" && (
+              <p className="text-xs text-[#1a472a]/50 mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+                A structured template will be pre-filled in the content field.
+              </p>
+            )}
+            {postType === "case_study" && (
+              <p className="text-xs text-[#1a472a]/50 mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+                A case study template will be pre-filled. The #lesson tag will be applied automatically.
+              </p>
+            )}
+          </div>
+
+          {/* Thread Chain (Discussion only) */}
+          {postType === "discussion" && (
+            <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
+              <Label className="text-[#1a472a] font-bold text-sm mb-2 block" style={{ fontFamily: 'var(--font-display)' }}>
+                Thread Chain (Optional)
+              </Label>
+              <label className="flex items-center gap-2 cursor-pointer mb-3">
+                <input
+                  type="checkbox"
+                  checked={isThreadChain}
+                  onChange={e => setIsThreadChain(e.target.checked)}
+                  className="accent-[#4a7c59]"
+                />
+                <span className="text-[#1a472a]/70 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+                  This is part of a thread chain (Idea to Experiment to Result)
+                </span>
+              </label>
+              {isThreadChain && (
+                <div className="space-y-3 pl-6">
+                  <div>
+                    <p className="text-[#1a472a]/60 text-xs mb-2" style={{ fontFamily: 'var(--font-body)' }}>Stage:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {([
+                        { value: "idea" as ThreadStage, label: "Idea", emoji: "Seed", color: "#166534", bg: "#dcfce7" },
+                        { value: "experiment" as ThreadStage, label: "Experiment", emoji: "Flask", color: "#1e40af", bg: "#dbeafe" },
+                        { value: "result" as ThreadStage, label: "Result", emoji: "Leaf", color: "#92400e", bg: "#fef3c7" },
+                      ]).map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setThreadStage(opt.value)}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
+                          style={threadStage === opt.value
+                            ? { backgroundColor: opt.bg, color: opt.color, borderColor: opt.color }
+                            : { backgroundColor: "white", color: "#1a472a", borderColor: "#e8e4de" }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {threadStage !== "idea" && (
+                    <div>
+                      <label className="text-[#1a472a]/60 text-xs mb-1 block" style={{ fontFamily: 'var(--font-body)' }}>
+                        Linking to chain (post ID of the original Idea, optional):
+                      </label>
+                      <Input
+                        type="number"
+                        value={chainId}
+                        onChange={e => setChainId(e.target.value)}
+                        placeholder="e.g. 42"
+                        className="border-[#e8e4de] focus:border-[#7dd87d] text-[#1a472a] max-w-[120px]"
+                        style={{ fontFamily: 'var(--font-body)' }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Title */}
           <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
             <Label className="text-[#1a472a] font-bold text-sm mb-2 block" style={{ fontFamily: 'var(--font-display)' }}>
@@ -221,6 +382,49 @@ export default function CommunityNewPost() {
             <div className="flex items-center justify-between mt-1">
               <MarkdownHints />
               <p className="text-[10px] text-[#1a472a]/30">{content.length}/10,000</p>
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
+            <Label className="text-[#1a472a] font-bold text-sm mb-2 block" style={{ fontFamily: 'var(--font-display)' }}>
+              Tags (Optional)
+            </Label>
+            <div className="space-y-2">
+              {([
+                { tag: "lesson" as PostTag, label: "#lesson", description: "This post documents a real-world insight or learning", color: "#92400e", bg: "#fef3c7" },
+                { tag: "seeking-support" as PostTag, label: "#seeking-support", description: "I need help, feedback, or expertise", color: "#1e40af", bg: "#dbeafe" },
+                { tag: "offering-support" as PostTag, label: "#offering-support", description: "I have something to offer or want to help", color: "#166534", bg: "#dcfce7" },
+              ]).map(({ tag, label, description, color, bg }) => {
+                const isChecked = selectedTags.includes(tag) || (tag === "lesson" && postType === "case_study");
+                const isDisabled = tag === "lesson" && postType === "case_study";
+                return (
+                  <label
+                    key={tag}
+                    className={`flex items-start gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${isChecked ? "bg-[#f8f5f0]" : "hover:bg-[#f8f5f0]/50"} ${isDisabled ? "opacity-70" : ""}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={isDisabled}
+                      onChange={() => !isDisabled && toggleTag(tag)}
+                      className="mt-0.5 accent-[#4a7c59]"
+                    />
+                    <span className="flex-1">
+                      <span
+                        className="inline-block px-2 py-0.5 rounded-full text-xs font-bold mr-2"
+                        style={{ color, backgroundColor: bg }}
+                      >
+                        {label}
+                      </span>
+                      <span className="text-[#1a472a]/60 text-xs" style={{ fontFamily: 'var(--font-body)' }}>
+                        {description}
+                        {isDisabled && " (auto-applied for Case Study)"}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
             </div>
           </div>
 

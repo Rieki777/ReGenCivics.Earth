@@ -70,6 +70,9 @@ import { getLoginUrl } from '@/const';
 import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
 import { DigestPreferences } from "@/components/DigestPreferences";
+import { WelcomeAboardQuests } from "@/components/WelcomeAboardQuests";
+import { QuestStartPopup, flagShowQuestPrompt } from "@/components/QuestStartPopup";
+import { DiscoverTab } from "@/components/DiscoverTab";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -112,10 +115,12 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
   const [soul, setSoul] = useState(() => sessionStorage.getItem('playerProfileDraft_soul') ?? '');
   const [desires, setDesires] = useState(() => sessionStorage.getItem('playerProfileDraft_desires') ?? '');
   const [gifts, setGifts] = useState(() => sessionStorage.getItem('playerProfileDraft_gifts') ?? '');
+  const [dreamingOf, setDreamingOf] = useState(() => sessionStorage.getItem('playerProfileDraft_dreamingOf') ?? '');
+  const [bioregion, setBioregion] = useState(() => sessionStorage.getItem('playerProfileDraft_bioregion') ?? '');
   const [baseAccountName, setBaseAccountName] = useState(() => sessionStorage.getItem('playerProfileDraft_baseAccountName') ?? '');
 
   const persist = (key: string, val: string) => sessionStorage.setItem(`playerProfileDraft_${key}`, val);
-  const clearDraft = () => ['displayName', 'role', 'soul', 'desires', 'gifts', 'baseAccountName'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
+  const clearDraft = () => ['displayName', 'role', 'soul', 'desires', 'gifts', 'dreamingOf', 'bioregion', 'baseAccountName'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
 
   const createMutation = trpc.playerProfiles.create.useMutation({
     onSuccess: () => {
@@ -124,6 +129,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
       setTimeout(() => {
         setIsTransitioning(false);
         toast.success('Profile created!');
+        flagShowQuestPrompt();
         onSuccess();
       }, 1600);
     },
@@ -138,6 +144,8 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
       displayName: displayName.trim(),
       bio: JSON.stringify({ role, soul, desires, gifts }),
       baseAccountName: baseAccountName.trim() || undefined,
+      dreamingOf: dreamingOf.trim() || undefined,
+      bioregion: bioregion.trim() || undefined,
     });
   };
 
@@ -183,6 +191,14 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What would you like to offer the ecosystem?</label>
             <p className="text-xs text-[#1a472a]/70 mb-2">Skills, resources, wisdom, connections…</p>
             <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className="border-[#1a472a]/20 min-h-[70px]" />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you dreaming of building or becoming? <span className="text-[#1a472a]/50 font-normal">(optional)</span></label>
+            <Textarea value={dreamingOf} onChange={e => { setDreamingOf(e.target.value); persist('dreamingOf', e.target.value); }} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals rather than harms..." className="border-[#1a472a]/20 min-h-[60px]" />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion do you call home? <span className="text-[#1a472a]/50 font-normal">(optional)</span></label>
+            <Input value={bioregion} onChange={e => { setBioregion(e.target.value); persist('bioregion', e.target.value); }} placeholder="e.g. Pacific Northwest, Daintree, Celtic Rainforest..." className="border-[#1a472a]/20" />
           </div>
           <Button onClick={() => { if (!displayName.trim()) { toast.error('Please enter a display name'); return; } setStep(2); }} className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold">
             Continue <ArrowRight className="w-4 h-4 ml-2" />
@@ -254,12 +270,14 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
             {soul && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Soul's Mission</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{soul}</p></div>}
             {desires && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Seeking</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{desires}</p></div>}
             {gifts && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Gifts to Offer</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{gifts}</p></div>}
+            {dreamingOf && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Dreaming of</p><p className="text-sm text-[#1a472a]/90 mt-0.5 italic">"{dreamingOf}"</p></div>}
+            {bioregion && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Bioregion</p><p className="text-sm text-[#1a472a]/90 mt-0.5">{bioregion}</p></div>}
             {baseAccountName && <div><p className="text-[10px] text-[#1a472a]/70 uppercase tracking-wider">Base Account</p><p className="text-sm font-mono text-[#1a472a]/90 mt-0.5">{baseAccountName}</p></div>}
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setStep(2)} className="flex-1 border-[#1a472a]/20 text-[#1a472a]">← Back</Button>
             <Button onClick={handleSubmit} className="flex-1 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold" disabled={createMutation.isPending}>
-              {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating…</> : <>Looks good — create my profile</>}
+              {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating…</> : <>Looks good, create my profile</>}
             </Button>
           </div>
         </div>
@@ -411,16 +429,28 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }
               <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
                 {profile.displayName}
               </h2>
-              {profile.isVerified ? (
-                <Badge className="bg-green-500/20 text-green-300 border-green-500/30 mt-1">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Verified Player
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-white/60 border-white/30 mt-1">
-                  Unverified
-                </Badge>
-              )}
+              <div className="flex items-center gap-2 flex-wrap mt-1">
+                {profile.isVerified ? (
+                  <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    Verified Player
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-white/60 border-white/30">
+                    Unverified
+                  </Badge>
+                )}
+                {profile.collaborationStatus === "seeking_collaborators" && (
+                  <Badge className="bg-[#d4a574]/20 text-[#d4a574] border-[#d4a574]/30 text-[10px]">
+                    Seeking collaborators
+                  </Badge>
+                )}
+                {profile.collaborationStatus === "looking_to_join" && (
+                  <Badge className="bg-[#7dd87d]/20 text-[#7dd87d] border-[#7dd87d]/30 text-[10px]">
+                    Looking to join
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
           {isOwner && (
@@ -574,6 +604,258 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }
   );
 }
 
+// ─── Collaboration + Dreaming-Of Settings Panel ──────────────────────────────
+function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpdate: () => void }) {
+  const [collab, setCollab] = useState<string>(profile?.collaborationStatus ?? "");
+  const [dreaming, setDreaming] = useState<string>(profile?.dreamingOf ?? "");
+  const [bioregion, setBioregion] = useState<string>((profile as any)?.bioregion ?? "");
+
+  const utils = trpc.useUtils();
+  const updateMut = trpc.playerProfiles.update.useMutation({
+    onSuccess: () => {
+      utils.playerProfiles.me.invalidate();
+      onUpdate();
+      toast.success("Settings saved");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleSave = () => {
+    updateMut.mutate({
+      collaborationStatus: collab || null,
+      dreamingOf: dreaming || undefined,
+    });
+  };
+
+  return (
+    <div className="glass-panel p-6 rounded-xl space-y-5">
+      <h2 className="text-base font-bold text-white flex items-center gap-2">
+        <UsersIcon className="w-4 h-4 text-[#7dd87d]" /> Collaboration
+      </h2>
+
+      <div className="space-y-2">
+        <p className="text-white/60 text-xs">Collaboration status</p>
+        <div className="flex gap-2 flex-wrap">
+          {[
+            { value: "", label: "Not set" },
+            { value: "seeking_collaborators", label: "Seeking collaborators" },
+            { value: "looking_to_join", label: "Looking to join" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setCollab(opt.value)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                collab === opt.value
+                  ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
+                  : "bg-white/5 text-white/60 border-white/15 hover:bg-white/10"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-white/60 text-xs">What are you dreaming of building or becoming?</label>
+        <textarea
+          value={dreaming}
+          onChange={(e) => setDreaming(e.target.value)}
+          placeholder="A food forest in the highlands, a new form of school, a way of living that heals rather than harms..."
+          rows={2}
+          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#7dd87d]/40"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-white/60 text-xs">What bioregion do you call home?</label>
+        <input
+          value={bioregion}
+          onChange={(e) => setBioregion(e.target.value)}
+          placeholder="e.g. Pacific Northwest, Daintree, Celtic Rainforest..."
+          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#7dd87d]/40"
+        />
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={updateMut.isPending}
+        className="px-5 py-2 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#6bc96b] transition-colors disabled:opacity-50"
+      >
+        {updateMut.isPending ? "Saving..." : "Save"}
+      </button>
+    </div>
+  );
+}
+
+// ─── Gifts + Needs Panel ─────────────────────────────────────────────────────
+const GIFT_NEED_TYPES = [
+  { value: "skill", label: "Skill" },
+  { value: "resource", label: "Resource" },
+  { value: "time", label: "Time" },
+  { value: "knowledge", label: "Knowledge" },
+  { value: "land", label: "Land" },
+  { value: "capital", label: "Capital" },
+] as const;
+
+type GiftNeedType = "skill" | "resource" | "time" | "knowledge" | "land" | "capital";
+
+function GiftsNeedsPanel() {
+  const utils = trpc.useUtils();
+  const { data, isLoading } = trpc.marketplace.myEntries.useQuery();
+
+  const [showGiftForm, setShowGiftForm] = useState(false);
+  const [showNeedForm, setShowNeedForm] = useState(false);
+  const [giftType, setGiftType] = useState<GiftNeedType>("skill");
+  const [giftDesc, setGiftDesc] = useState("");
+  const [needType, setNeedType] = useState<GiftNeedType>("skill");
+  const [needDesc, setNeedDesc] = useState("");
+
+  const invalidate = () => utils.marketplace.myEntries.invalidate();
+
+  const addGift = trpc.marketplace.addGift.useMutation({
+    onSuccess: () => { invalidate(); setGiftDesc(""); setShowGiftForm(false); toast.success("Gift added"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const removeGift = trpc.marketplace.removeGift.useMutation({ onSuccess: invalidate });
+  const addNeed = trpc.marketplace.addNeed.useMutation({
+    onSuccess: () => { invalidate(); setNeedDesc(""); setShowNeedForm(false); toast.success("Need added"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const removeNeed = trpc.marketplace.removeNeed.useMutation({ onSuccess: invalidate });
+
+  if (isLoading) return <div className="glass-panel p-6 rounded-xl"><TaoSpinner size={32} /></div>;
+
+  const myGifts = data?.gifts ?? [];
+  const myNeeds = data?.needs ?? [];
+
+  return (
+    <div className="glass-panel p-6 rounded-xl space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <Heart className="w-4 h-4 text-[#7dd87d]" /> Gifts + Needs
+        </h2>
+        <Link href="/marketplace" className="text-xs text-[#7dd87d]/70 hover:text-[#7dd87d] underline">
+          View marketplace
+        </Link>
+      </div>
+      <p className="text-white/50 text-xs -mt-2">
+        Share what you offer and what you are looking for. Shown in the community marketplace.
+      </p>
+
+      {/* Gifts */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-white/70 text-xs font-semibold uppercase tracking-wider">Offering</p>
+          {!showGiftForm && (
+            <button
+              onClick={() => setShowGiftForm(true)}
+              className="flex items-center gap-1 text-xs text-[#7dd87d]/70 hover:text-[#7dd87d]"
+            >
+              <Plus className="w-3 h-3" /> Add gift
+            </button>
+          )}
+        </div>
+        {myGifts.map(g => (
+          <div key={g.id} className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2.5">
+            <span className="text-[10px] bg-[#7dd87d]/15 text-[#5ab85a] border border-[#7dd87d]/25 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">{g.type}</span>
+            <span className="text-white/75 text-sm flex-1">{g.description}</span>
+            <button onClick={() => removeGift.mutate({ id: g.id })} className="text-white/25 hover:text-white/60 flex-shrink-0 mt-0.5">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ))}
+        {showGiftForm && (
+          <div className="bg-white/4 border border-white/12 rounded-xl p-3 space-y-2">
+            <select
+              value={giftType}
+              onChange={e => setGiftType(e.target.value as GiftNeedType)}
+              className="w-full bg-white/5 border border-white/10 text-white/80 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+            >
+              {GIFT_NEED_TYPES.map(t => <option key={t.value} value={t.value} className="bg-[#1a2f1a]">{t.label}</option>)}
+            </select>
+            <textarea
+              value={giftDesc}
+              onChange={e => setGiftDesc(e.target.value)}
+              placeholder="Describe what you can offer..."
+              rows={2}
+              maxLength={500}
+              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/30 resize-none focus:outline-none focus:border-[#7dd87d]/40"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => addGift.mutate({ type: giftType, description: giftDesc })}
+                disabled={!giftDesc.trim() || addGift.isPending}
+                className="text-xs px-3 py-1.5 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold disabled:opacity-50"
+              >
+                {addGift.isPending ? "Adding..." : "Add"}
+              </button>
+              <button onClick={() => setShowGiftForm(false)} className="text-xs px-3 py-1.5 rounded-lg bg-white/8 text-white/60">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Needs */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-white/70 text-xs font-semibold uppercase tracking-wider">Looking for</p>
+          {!showNeedForm && (
+            <button
+              onClick={() => setShowNeedForm(true)}
+              className="flex items-center gap-1 text-xs text-[#d4a574]/70 hover:text-[#d4a574]"
+            >
+              <Plus className="w-3 h-3" /> Add need
+            </button>
+          )}
+        </div>
+        {myNeeds.map(n => (
+          <div key={n.id} className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2.5">
+            <span className="text-[10px] bg-[#d4a574]/15 text-[#b8843d] border border-[#d4a574]/25 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">{n.type}</span>
+            <span className="text-white/75 text-sm flex-1">{n.description}</span>
+            <button onClick={() => removeNeed.mutate({ id: n.id })} className="text-white/25 hover:text-white/60 flex-shrink-0 mt-0.5">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ))}
+        {showNeedForm && (
+          <div className="bg-white/4 border border-white/12 rounded-xl p-3 space-y-2">
+            <select
+              value={needType}
+              onChange={e => setNeedType(e.target.value as GiftNeedType)}
+              className="w-full bg-white/5 border border-white/10 text-white/80 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+            >
+              {GIFT_NEED_TYPES.map(t => <option key={t.value} value={t.value} className="bg-[#1a2f1a]">{t.label}</option>)}
+            </select>
+            <textarea
+              value={needDesc}
+              onChange={e => setNeedDesc(e.target.value)}
+              placeholder="Describe what you are looking for..."
+              rows={2}
+              maxLength={500}
+              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/30 resize-none focus:outline-none focus:border-[#d4a574]/40"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => addNeed.mutate({ type: needType, description: needDesc })}
+                disabled={!needDesc.trim() || addNeed.isPending}
+                className="text-xs px-3 py-1.5 rounded-lg bg-[#d4a574] text-[#1a2f0a] font-semibold disabled:opacity-50"
+              >
+                {addNeed.isPending ? "Adding..." : "Add"}
+              </button>
+              <button onClick={() => setShowNeedForm(false)} className="text-xs px-3 py-1.5 rounded-lg bg-white/8 text-white/60">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Org Claim + Steward Dashboard ─────────────────────────────────────────
 const LAND_PROJECTS = [
   { id: "la_tierra", name: "La Tierra", location: "Costa Rica" },
@@ -608,10 +890,17 @@ const ALLIANCE_ORGS = [
   { id: "local_scale", name: "LocalScale" },
 ];
 
-function OrgClaimSection({ userId }: { userId: number }) {
+const WELCOME_ABOARD_IDS = Array.from({ length: 10 }, (_, i) => `welcome-aboard-${i + 1}`);
+
+function OrgClaimSection({ userId, questsCompleted }: { userId: number; questsCompleted?: string }) {
   const [claimType, setClaimType] = useState<"land_project" | "alliance_org">("land_project");
   const [claimOrgId, setClaimOrgId] = useState("");
   const [showClaimForm, setShowClaimForm] = useState(false);
+
+  const completedQuests: string[] = (() => {
+    try { return JSON.parse(questsCompleted || "[]"); } catch { return []; }
+  })();
+  const allQuestsDone = WELCOME_ABOARD_IDS.every(id => completedQuests.includes(id));
 
   const { data: claims, refetch: refetchClaims } = trpc.orgClaims.mine.useQuery();
   const { data: joinRequests, refetch: refetchJoinRequests } = trpc.projectJoinRequests.myRequests.useQuery();
@@ -646,14 +935,23 @@ function OrgClaimSection({ userId }: { userId: number }) {
         </div>
         <button
           onClick={() => setShowClaimForm(v => !v)}
-          className="text-xs px-3 py-1.5 rounded-lg bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/30 transition-colors"
+          disabled={!allQuestsDone}
+          title={allQuestsDone ? undefined : "Complete all 10 Welcome Aboard Quests to unlock claiming"}
+          className="text-xs px-3 py-1.5 rounded-lg bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           + Claim Org
         </button>
       </div>
 
+      {/* Claim gate notice */}
+      {!allQuestsDone && (
+        <div className="bg-[#d4a574]/10 border border-[#d4a574]/20 rounded-xl px-4 py-3 text-[#d4a574] text-xs">
+          Complete all 10 Welcome Aboard Quests to unlock the ability to claim stewardship of a project or org.
+        </div>
+      )}
+
       {/* Claim form */}
-      {showClaimForm && (
+      {showClaimForm && allQuestsDone && (
         <div className="bg-white/10 rounded-xl p-4 space-y-3 border border-white/20">
           <p className="text-white/80 text-sm font-medium">Claim stewardship of an existing project or org</p>
           <div className="flex gap-2">
@@ -890,7 +1188,7 @@ const CAPITAL_TYPES = [
 type CapitalType = typeof CAPITAL_TYPES[number]["value"];
 
 // ─── Contributions Tab ───────────────────────────────────────────────────────
-function ContributionsTab() {
+function ContributionsTab({ walletAddress, onLinkWallet }: { walletAddress?: string | null; onLinkWallet?: () => void }) {
   const { data: contributions, isLoading, refetch } = trpc.playerContributions.list.useQuery();
   const [showForm, setShowForm] = useState(false);
   const [capitalType, setCapitalType] = useState<CapitalType>("financial");
@@ -938,6 +1236,37 @@ function ContributionsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Blockchain callout */}
+      <div className="bg-white/5 border border-dashed border-white/15 rounded-xl p-4 space-y-3">
+        <p className="text-white/60 text-xs font-medium uppercase tracking-wide">On-Chain Tracking</p>
+        <div className="space-y-2">
+          <div className="flex items-start gap-3 bg-[#8b5cf6]/8 border border-[#8b5cf6]/20 rounded-lg px-3 py-2.5">
+            <div className="w-2 h-2 rounded-full bg-[#8b5cf6] mt-1.5 flex-shrink-0" />
+            <div>
+              <p className="text-white/80 text-xs font-medium">Hypha DAO</p>
+              <p className="text-white/50 text-xs">Governance votes, proposals, role assignments, and payouts are recorded here.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 bg-[#3b82f6]/8 border border-[#3b82f6]/20 rounded-lg px-3 py-2.5">
+            <div className="w-2 h-2 rounded-full bg-[#3b82f6] mt-1.5 flex-shrink-0" />
+            <div>
+              <p className="text-white/80 text-xs font-medium">Base Blockchain</p>
+              <p className="text-white/50 text-xs">$ReGen and $RCivics transactions, badge mints, and verifiable contributions live here.</p>
+            </div>
+          </div>
+        </div>
+        {walletAddress ? (
+          <p className="text-[#7dd87d] text-xs">Hypha account linked: {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}</p>
+        ) : (
+          <button
+            onClick={onLinkWallet}
+            className="text-[#7dd87d] text-xs hover:underline"
+          >
+            Link your Hypha account to track on-chain contributions
+          </button>
+        )}
+      </div>
+
       {/* Summary bar */}
       {contributions && contributions.length > 0 && (
         <div className="glass-panel rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
@@ -1234,73 +1563,6 @@ function QuestsTab({ profile }: { profile: any }) {
         ))}
       </div>
     </div>
-  );
-}
-
-const SOCIAL_QUEST_DISMISSED_KEY = 'regen_social_quest_dismissed';
-
-function SocialShareQuestCard() {
-  const [dismissed, setDismissed] = useState(() =>
-    localStorage.getItem(SOCIAL_QUEST_DISMISSED_KEY) === '1'
-  );
-
-  function dismiss() {
-    localStorage.setItem(SOCIAL_QUEST_DISMISSED_KEY, '1');
-    setDismissed(true);
-  }
-
-  const shareText = `I'm playing the Infinite Game with @ReGenCivics  -  building regenerative civilizations through quests, land projects, and collective governance. Join me! 🌱 regencivics.earth`;
-  const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-
-  if (dismissed) return null;
-
-  return (
-    <AnimatedSection animation="slide-up">
-      <div className="relative glass-panel p-5 rounded-xl border border-[#d4a574]/30 bg-gradient-to-r from-[#d4a574]/10 to-[#ffd700]/5">
-        <button
-          onClick={dismiss}
-          className="absolute top-3 right-3 text-white/40 hover:text-white/70 transition-colors"
-          aria-label="Dismiss"
-        >
-          <X className="w-4 h-4" />
-        </button>
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#d4a574]/20 border border-[#d4a574]/40 flex items-center justify-center shrink-0">
-            <Share2 className="w-5 h-5 text-[#d4a574]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-white font-semibold text-sm">Share Your ReGen Civics Story</h3>
-              <span className="text-[10px] bg-[#d4a574]/20 text-[#d4a574] px-2 py-0.5 rounded-full font-medium border border-[#d4a574]/30">
-                Quest
-              </span>
-            </div>
-            <p className="text-white/60 text-xs mb-3">
-              Tell your network you're part of the Regenerative Renaissance. Earn{' '}
-              <span className="text-[#7dd87d] font-medium">1 RVoice</span> +{' '}
-              <span className="text-[#ffd700] font-medium">33 ReGen tokens</span> when you share.
-            </p>
-            <div className="flex items-center gap-2">
-              <a
-                href={shareUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 bg-[#d4a574] hover:bg-[#c4955f] text-[#1a472a] text-xs font-bold px-4 py-2 rounded-lg transition-colors"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                Share on X / Twitter
-              </a>
-              <button
-                onClick={dismiss}
-                className="text-white/40 hover:text-white/60 text-xs transition-colors"
-              >
-                Not now
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </AnimatedSection>
   );
 }
 
@@ -1618,7 +1880,11 @@ export default function PlayerProfile() {
   const { data: profile, isLoading: profileLoading, refetch } = trpc.playerProfiles.me.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
+  const _validTabs: ProfileTab[] = ["overview", "submissions", "quests", "contributions", "settings"];
+  const _tabParam = new URLSearchParams(window.location.search).get("tab") as ProfileTab | null;
+  const [activeTab, setActiveTab] = useState<ProfileTab>(
+    _tabParam && _validTabs.includes(_tabParam) ? _tabParam : "overview"
+  );
 
   const syncTokensMutation = trpc.playerProfiles.syncTokens.useMutation({
     onSuccess: () => {
@@ -1723,6 +1989,12 @@ export default function PlayerProfile() {
           ) : (
             // Has profile  -  tabbed layout
             <div className="space-y-0">
+              <QuestStartPopup onNavigateToQuests={() => {
+                setActiveTab("quests");
+                const url = new URL(window.location.href);
+                url.searchParams.set("tab", "quests");
+                window.history.replaceState({}, "", url.toString());
+              }} />
               {/* Tab nav */}
               <AnimatedSection animation="slide-up">
                 <div className="flex gap-1 bg-white/5 border border-white/10 rounded-2xl p-1 mb-6 overflow-x-auto scrollbar-none">
@@ -1732,7 +2004,12 @@ export default function PlayerProfile() {
                     return (
                       <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("tab", tab.id);
+                          window.history.replaceState({}, "", url.toString());
+                        }}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-1 justify-center ${
                           active
                             ? "bg-[#1a472a] text-white shadow-sm border border-[#7dd87d]/20"
@@ -1759,7 +2036,10 @@ export default function PlayerProfile() {
                       syncIsPending={syncTokensMutation.isPending}
                     />
                   </AnimatedSection>
-                  <SocialShareQuestCard />
+                  <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
+                  <AnimatedSection animation="slide-up">
+                    <DiscoverTab />
+                  </AnimatedSection>
                 </div>
               )}
 
@@ -1773,11 +2053,15 @@ export default function PlayerProfile() {
               {/* Quests tab */}
               {activeTab === "quests" && (
                 <AnimatedSection animation="slide-up">
-                  <div className="glass-panel p-6 rounded-xl">
-                    <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-[#7dd87d]" /> Quest Log
-                    </h2>
-                    <QuestsTab profile={profile} />
+                  <div className="space-y-6">
+                    <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
+                    {/* Legacy quest log */}
+                    <div className="glass-panel p-6 rounded-xl">
+                      <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-[#7dd87d]" /> Other Completed Quests
+                      </h2>
+                      <QuestsTab profile={profile} />
+                    </div>
                   </div>
                 </AnimatedSection>
               )}
@@ -1792,7 +2076,13 @@ export default function PlayerProfile() {
                     <p className="text-white/50 text-sm mb-5">
                       Record contributions across the 8 forms of capital. Self-reported values can be verified by admins.
                     </p>
-                    <ContributionsTab />
+                    <ContributionsTab
+                      walletAddress={profile?.walletAddress}
+                      onLinkWallet={() => {
+                        setActiveTab("settings");
+                        setTimeout(() => document.getElementById("wallet-section")?.scrollIntoView({ behavior: "smooth" }), 100);
+                      }}
+                    />
                   </div>
                 </AnimatedSection>
               )}
@@ -1812,7 +2102,15 @@ export default function PlayerProfile() {
                     <DigestPreferences currentFrequency={(profile as any).emailDigestFrequency || 'monthly'} />
                   </AnimatedSection>
                   <AnimatedSection animation="slide-up">
-                    <OrgClaimSection userId={user!.id} />
+                    <CollaborationSettingsPanel profile={profile} onUpdate={() => refetch()} />
+                  </AnimatedSection>
+                  <AnimatedSection animation="slide-up">
+                    <GiftsNeedsPanel />
+                  </AnimatedSection>
+                  <AnimatedSection animation="slide-up">
+                    <div id="wallet-section">
+                    <OrgClaimSection userId={user!.id} questsCompleted={profile?.questsCompleted ?? undefined} />
+                    </div>
                   </AnimatedSection>
                   {user?.role === 'admin' && (
                     <AnimatedSection animation="slide-up">

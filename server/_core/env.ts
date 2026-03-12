@@ -16,4 +16,11 @@ export const ENV = {
   appUrl: process.env.APP_URL ?? "http://localhost:3000",
   // AI
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
+  // Cloudflare Workers AI image generation
+  imageGenWorkerUrl: process.env.IMAGE_GEN_WORKER_URL ?? "",
+  imageGenSecret: process.env.IMAGE_GEN_SECRET ?? "",
+  // Buffer social media scheduling
+  bufferAccessToken: process.env.BUFFER_ACCESS_TOKEN ?? "",
+  // Farcaster
+  farcasterHandle: process.env.FARCASTER_HANDLE ?? "",
 };

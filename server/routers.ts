@@ -14,6 +14,11 @@ import { invokeLLM } from "./_core/llm";
 import { CHAT_SYSTEM_PROMPT } from "./_core/oauth";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "./bannerHelpers";
 import { adminProcedure } from "./_core/trpc";
+import { ENV } from "./_core/env";
+import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
+import { forumPosts, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections } from "../drizzle/schema";
+import { eq, sql } from "drizzle-orm";
+import { getDb } from "./db";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -301,8 +306,40 @@ export const appRouter = router({
           } catch (e) {
             console.warn("Failed to send notification:", e);
           }
+
+          // Auto-create forum thread in Active Projects category on approval
+          if (input.status === "approved") {
+            try {
+              const cats = await db.listForumCategories();
+              const activeProjectsCat = cats.find(c => c.slug === "active-projects");
+              if (activeProjectsCat) {
+                const projectType = updatedApp.projectType === "early_stage" ? "early-stage" : (updatedApp.projectType || "regenerative");
+                const threadContent = `${updatedApp.projectName} is a ${projectType} project based in ${updatedApp.location || "an undisclosed location"}.
+
+**What we are building:** ${updatedApp.vision || "Details coming soon."}
+
+**Current stage:** ${updatedApp.status}
+
+**What we need:** ${updatedApp.fundingNeeds || "To be announced."}
+
+Follow this thread for updates from the team and join the conversation.
+
+[Apply to support this project](/apply) [View on map](/map)`;
+                await db.createForumPost({
+                  categoryId: activeProjectsCat.id,
+                  authorId: 1,
+                  title: `${updatedApp.projectName} - ${updatedApp.location || "Active Project"}`,
+                  content: threadContent,
+                  isPinned: 1,
+                  postType: "discussion",
+                });
+              }
+            } catch (e) {
+              console.warn("Failed to auto-create forum thread for approved project:", e);
+            }
+          }
         }
-        
+
         return { success: true };
       }),
 
@@ -1027,6 +1064,8 @@ export const appRouter = router({
         baseAccountName: z.string().optional(),
         hyphaProfileUrl: z.string().optional(),
         walletAddress: z.string().optional(),
+        dreamingOf: z.string().optional(),
+        bioregion: z.string().optional(), // plain text for now
       }))
       .mutation(async ({ ctx, input }) => {
         // Check if user already has a profile
@@ -1034,7 +1073,7 @@ export const appRouter = router({
         if (existing) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "You already have a player profile" });
         }
-        
+
         const id = await db.createPlayerProfile({
           userId: ctx.user.id,
           displayName: input.displayName,
@@ -1051,6 +1090,7 @@ export const appRouter = router({
           rgenBalance: 0,
           isVerified: 0,
           isActive: 1,
+          ...(input.dreamingOf ? { dreamingOf: input.dreamingOf } : {}),
         });
         return { id, success: true };
       }),
@@ -1064,13 +1104,17 @@ export const appRouter = router({
         baseAccountName: z.string().optional(),
         hyphaProfileUrl: z.string().optional(),
         walletAddress: z.string().optional(),
+        questsCompleted: z.string().optional(), // JSON array of quest IDs
+        collaborationStatus: z.string().nullable().optional(),
+        dreamingOf: z.string().optional(),
+        bioregionId: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const profile = await db.getPlayerProfileByUserId(ctx.user.id);
         if (!profile) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });
         }
-        
+
         await db.updatePlayerProfile(profile.id, {
           displayName: input.displayName,
           bio: input.bio,
@@ -1078,6 +1122,10 @@ export const appRouter = router({
           baseAccountName: input.baseAccountName,
           hyphaProfileUrl: input.hyphaProfileUrl,
           walletAddress: input.walletAddress,
+          questsCompleted: input.questsCompleted,
+          ...(input.collaborationStatus !== undefined && { collaborationStatus: input.collaborationStatus }),
+          ...(input.dreamingOf !== undefined && { dreamingOf: input.dreamingOf }),
+          ...(input.bioregionId !== undefined && { bioregionId: input.bioregionId }),
         });
         return { success: true };
       }),
@@ -2212,6 +2260,14 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const campaignId = await db.createCampaign(ctx.user.id, input);
+        // Fire-and-forget image generation — don't block mutation response
+        generateImage({
+          contentType: "campaign",
+          contentId: campaignId,
+          contextText: `${input.title}. ${(input.description ?? "").slice(0, 200)}`,
+        }).then(({ url }) =>
+          getDb().then(d => d?.update(campaignsTable).set({ generatedImageUrl: url }).where(eq(campaignsTable.id, campaignId)))
+        ).catch(err => console.error(`Image gen failed for campaign ${campaignId}:`, err));
         return { id: campaignId, success: true };
       }),
 
@@ -2709,6 +2765,95 @@ export const appRouter = router({
         await db.updateNotificationPreferences(input);
         return { success: true };
       }),
+
+    // ─── Broadcast sub-router ────────────────────────────────────────────────
+    broadcast: router({
+      // Get connected Buffer profiles
+      getBufferProfiles: adminProcedure.query(async () => {
+        const token = ENV.bufferAccessToken;
+        if (!token) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Buffer not configured" });
+        }
+        const response = await fetch(
+          `https://api.bufferapp.com/1/profiles.json?access_token=${encodeURIComponent(token)}`
+        );
+        if (!response.ok) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch Buffer profiles" });
+        }
+        const profiles = await response.json() as Array<{
+          id: string;
+          service: string;
+          service_username: string;
+          formatted_username?: string;
+        }>;
+        return profiles;
+      }),
+
+      // Post to Buffer channels
+      postToBuffer: adminProcedure
+        .input(z.object({
+          text: z.string().min(1).max(500),
+          link: z.string().url().optional(),
+          profileIds: z.array(z.string()).min(1),
+          scheduledAt: z.string().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const token = ENV.bufferAccessToken;
+          if (!token) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Buffer not configured" });
+          }
+
+          const results: Array<{ profileId: string; success: boolean; updateId?: string; error?: string }> = [];
+
+          for (const profileId of input.profileIds) {
+            try {
+              const params = new URLSearchParams();
+              params.append("access_token", token);
+              params.append("profile_ids[]", profileId);
+              params.append("text", input.text);
+              if (input.link) params.append("media[link]", input.link);
+              if (input.scheduledAt) {
+                params.append("scheduled_at", input.scheduledAt);
+                params.append("now", "false");
+              } else {
+                params.append("now", "true");
+              }
+
+              const response = await fetch("https://api.bufferapp.com/1/updates/create.json", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: params.toString(),
+              });
+
+              if (!response.ok) {
+                const errText = await response.text();
+                results.push({ profileId, success: false, error: errText });
+              } else {
+                const data = await response.json() as {
+                  updates?: Array<{ id?: string }>;
+                  update?: { id?: string };
+                };
+                const updateId =
+                  data.update?.id ??
+                  (Array.isArray(data.updates) && data.updates[0]?.id ? data.updates[0].id : undefined);
+                results.push({ profileId, success: true, updateId });
+              }
+            } catch (err) {
+              results.push({ profileId, success: false, error: String(err) });
+            }
+          }
+
+          return { results };
+        }),
+
+      // Build a Farcaster compose intent URL
+      farcasterIntent: adminProcedure
+        .input(z.object({ text: z.string().min(1).max(320) }))
+        .mutation(async ({ input }) => {
+          const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(input.text)}`;
+          return { url };
+        }),
+    }),
   }),
 
   // Letter of Intent (LOI) router
@@ -2934,20 +3079,61 @@ export const appRouter = router({
         return { ...counts, ...userLikes };
       }),
 
+    // Get posts by tag (cross-category)
+    getTaggedPosts: publicProcedure
+      .input(z.object({
+        tag: z.enum(["lesson", "seeking-support", "offering-support"]),
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+      }))
+      .query(async ({ input }) => {
+        const posts = await db.listForumPostsByTag(input.tag, input.limit, input.offset);
+        const enriched = await Promise.all(posts.map(async (post) => {
+          const author = await db.getUserById(post.authorId);
+          return {
+            ...post,
+            authorName: author?.name || 'Anonymous',
+            authorAvatar: null,
+          };
+        }));
+        return enriched;
+      }),
+
     // Create a new post (auth required)
     createPost: protectedProcedure
       .input(z.object({
         categoryId: z.number(),
         title: z.string().min(3).max(300),
         content: z.string().min(10).max(10000),
+        tags: z.array(z.enum(["lesson", "seeking-support", "offering-support"])).optional(),
+        postType: z.enum(["discussion", "case_study", "seeking_team"]).optional(),
+        threadStage: z.enum(["idea", "experiment", "result"]).optional(),
+        chainId: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Auto-apply #lesson tag when post type is case_study
+        let tags = input.tags || [];
+        if (input.postType === "case_study" && !tags.includes("lesson")) {
+          tags = [...tags, "lesson"];
+        }
         const postId = await db.createForumPost({
           categoryId: input.categoryId,
           authorId: ctx.user.id,
           title: input.title,
           content: input.content,
+          tags,
+          postType: input.postType,
+          threadStage: input.threadStage,
+          chainId: input.chainId,
         });
+        // Fire-and-forget image generation -- don't block mutation response
+        generateImage({
+          contentType: "forum",
+          contentId: postId,
+          contextText: `${input.title}. ${input.content.slice(0, 150)}`,
+        }).then(({ url }) =>
+          getDb().then(d => d?.update(forumPosts).set({ generatedImageUrl: url }).where(eq(forumPosts.id, postId)))
+        ).catch(err => console.error(`Image gen failed for forum post ${postId}:`, err));
         return { id: postId };
       }),
 
@@ -3737,6 +3923,98 @@ ${contextBlock || "No specific context provided."}
       }),
   }),
 
+  // ─── Admin Image Studio ───────────────────────────────────────────────────
+  imageStudio: router({
+    generateVariations: adminProcedure
+      .input(z.object({
+        mode: z.enum(["create", "edit"]),
+        contentType: z.enum(["forum", "quest", "campaign", "blog", "video", "profile", "default"]),
+        title: z.string().min(1).max(300),
+        description: z.string().max(500).optional(),
+        editUrl: z.string().optional(),
+        editPrompt: z.string().max(300).optional(),
+        count: z.number().min(1).max(4).default(4),
+      }))
+      .mutation(async ({ input }) => {
+        const promptTitle = input.mode === "edit" && input.editPrompt
+          ? `${input.title}: ${input.editPrompt}`
+          : input.title;
+        const contextText = buildImagePrompt(input.contentType, promptTitle, input.description);
+        const jobs = Array.from({ length: input.count }, (_, i) =>
+          generateImage({
+            contentType: input.contentType,
+            contentId: `studio-${Date.now()}-${i}`,
+            contextText,
+            temp: true,
+          })
+        );
+        const results = await Promise.all(jobs);
+        return { variations: results.map(r => r.url), keys: results.map(r => r.key) };
+      }),
+
+    applyVariation: adminProcedure
+      .input(z.object({
+        selectedKey: z.string(),
+        allKeys: z.array(z.string()),
+        contentType: z.enum(["forum", "quest", "campaign", "blog", "video", "profile", "default"]),
+        title: z.string().min(1).max(300),
+        oldFilename: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const slug = input.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+        const ts = new Date().toISOString().replace(/[-:T]/g, "-").slice(0, 19);
+        const newKey = `generated/${ts}-${input.contentType}-${slug}.png`;
+        const publicBase = "https://assets.regencivics.earth/";
+
+        // Call the worker to promote: copy selected to permanent key, delete all temps
+        const workerUrl = (await import("./_core/env")).ENV.imageGenWorkerUrl;
+        const secret = (await import("./_core/env")).ENV.imageGenSecret;
+        if (!workerUrl || !secret) throw new Error("Image gen not configured");
+
+        const promoteRes = await fetch(`${workerUrl}/promote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${secret}` },
+          body: JSON.stringify({ selectedKey: input.selectedKey, allKeys: input.allKeys, newKey }),
+        });
+        if (!promoteRes.ok) {
+          const detail = await promoteRes.text();
+          throw new Error(`Worker promote failed: ${promoteRes.status} ${detail}`);
+        }
+
+        const publicUrl = `${publicBase}${newKey}`;
+        let replaced = 0;
+
+        if (input.oldFilename) {
+          const d = await getDb();
+          if (d) {
+            const likeVal = `%${input.oldFilename}%`;
+            const fRes = await d.execute(sql`UPDATE forumPosts SET generatedImageUrl = ${publicUrl} WHERE generatedImageUrl LIKE ${likeVal}`) as any;
+            const cRes = await d.execute(sql`UPDATE campaigns SET generatedImageUrl = ${publicUrl} WHERE generatedImageUrl LIKE ${likeVal}`) as any;
+            replaced = (fRes?.affectedRows ?? 0) + (cRes?.affectedRows ?? 0);
+          }
+        }
+
+        return { publicUrl, replaced };
+      }),
+
+    findUsages: adminProcedure
+      .input(z.object({ filename: z.string().min(1) }))
+      .query(async ({ input }) => {
+        const d = await getDb();
+        if (!d) return { usages: [] };
+        const like = `%${input.filename}%`;
+        const forumRows = await d.execute(sql`SELECT id, title FROM forumPosts WHERE generatedImageUrl LIKE ${like}`) as any;
+        const campaignRows = await d.execute(sql`SELECT id, title FROM campaigns WHERE generatedImageUrl LIKE ${like}`) as any;
+        const forumArr: any[] = Array.isArray(forumRows) ? forumRows : (forumRows?.rows ?? []);
+        const campaignArr: any[] = Array.isArray(campaignRows) ? campaignRows : (campaignRows?.rows ?? []);
+        const usages = [
+          ...forumArr.map((r: any) => ({ source: "forum", id: String(r.id), title: r.title })),
+          ...campaignArr.map((r: any) => ({ source: "campaign", id: String(r.id), title: r.title })),
+        ];
+        return { usages };
+      }),
+  }),
+
   // ─── Player Contributions ─────────────────────────────────────────────────
   playerContributions: router({
     list: protectedProcedure.query(async ({ ctx }) => {
@@ -3863,5 +4141,356 @@ Guidelines:
         return { content };
       }),
   }),
+
+  // ─── Marketplace (Gifts / Needs registry) ──────────────────────────────────
+  marketplace: router({
+    // List all active gift+need pairs, optionally filtered by category or bioregionId
+    list: publicProcedure
+      .input(z.object({
+        category: z.string().optional(),
+        bioregionId: z.number().optional(),
+        collaborationStatus: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const d = await getDb();
+        if (!d) return { items: [] };
+
+        const allGifts = await d.select().from(gifts).where(eq(gifts.isActive, 1));
+        const allNeeds = await d.select().from(needs).where(eq(needs.isActive, 1));
+
+        // Collect unique userIds
+        const userIds = Array.from(new Set([
+          ...allGifts.map(g => g.userId),
+          ...allNeeds.map(n => n.userId),
+        ]));
+
+        if (userIds.length === 0) return { items: [] };
+
+        // Load userProfiles (for display: displayName, avatarUrl, location)
+        // and playerProfiles (for collaboration data: collaborationStatus, dreamingOf, bioregionId)
+        const [userProfileList, playerProfileList] = await Promise.all([
+          Promise.all(userIds.map(uid => db.getUserProfile(uid).catch(() => null))),
+          Promise.all(userIds.map(uid => db.getPlayerProfileByUserId(uid).catch(() => null))),
+        ]);
+
+        const userProfileMap = new Map(
+          userProfileList
+            .filter((p): p is NonNullable<typeof p> => p !== null)
+            .map(p => [p.userId, p])
+        );
+        const playerProfileMap = new Map(
+          (playerProfileList.filter(Boolean) as NonNullable<typeof playerProfileList[number]>[])
+            .filter(p => p.userId != null)
+            .map(p => [p.userId as number, p])
+        );
+
+        // Build per-user items
+        let items = userIds
+          .map(uid => {
+            const up = userProfileMap.get(uid);
+            const pp = playerProfileMap.get(uid);
+            const userGifts = allGifts.filter(g => g.userId === uid);
+            const userNeeds = allNeeds.filter(n => n.userId === uid);
+            if (userGifts.length === 0 && userNeeds.length === 0) return null;
+            return {
+              userId: uid,
+              displayName: up?.displayName ?? pp?.displayName ?? "Community Member",
+              avatarUrl: up?.avatarUrl ?? pp?.avatarUrl ?? null,
+              location: up?.location ?? null,
+              collaborationStatus: pp?.collaborationStatus ?? null,
+              dreamingOf: pp?.dreamingOf ?? null,
+              bioregionId: pp?.bioregionId ?? null,
+              gifts: userGifts.map(g => ({ id: g.id, type: g.type, description: g.description })),
+              needs: userNeeds.map(n => ({ id: n.id, type: n.type, description: n.description })),
+            };
+          })
+          .filter((x): x is NonNullable<typeof x> => x !== null);
+
+        // Apply filters
+        if (input?.category) {
+          items = items.filter(item =>
+            item.gifts.some(g => g.type === input.category) ||
+            item.needs.some(n => n.type === input.category)
+          );
+        }
+        if (input?.bioregionId) {
+          items = items.filter(item => item.bioregionId === input.bioregionId);
+        }
+        if (input?.collaborationStatus) {
+          items = items.filter(item => item.collaborationStatus === input.collaborationStatus);
+        }
+
+        return { items };
+      }),
+
+    // Add a gift for the current user
+    addGift: protectedProcedure
+      .input(z.object({
+        type: z.enum(["skill", "resource", "time", "knowledge", "land", "capital"]),
+        description: z.string().min(1).max(500),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await getDb();
+        if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await d.insert(gifts).values({ userId: ctx.user.id, type: input.type, description: input.description });
+        return { success: true };
+      }),
+
+    // Remove a gift (must own it)
+    removeGift: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await getDb();
+        if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [row] = await d.select().from(gifts).where(eq(gifts.id, input.id));
+        if (!row || row.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+        await d.delete(gifts).where(eq(gifts.id, input.id));
+        return { success: true };
+      }),
+
+    // Add a need for the current user
+    addNeed: protectedProcedure
+      .input(z.object({
+        type: z.enum(["skill", "resource", "time", "knowledge", "land", "capital"]),
+        description: z.string().min(1).max(500),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await getDb();
+        if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await d.insert(needs).values({ userId: ctx.user.id, type: input.type, description: input.description });
+        return { success: true };
+      }),
+
+    // Remove a need (must own it)
+    removeNeed: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const d = await getDb();
+        if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const [row] = await d.select().from(needs).where(eq(needs.id, input.id));
+        if (!row || row.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+        await d.delete(needs).where(eq(needs.id, input.id));
+        return { success: true };
+      }),
+
+    // Get current user's own gifts+needs (for profile management)
+    myEntries: protectedProcedure.query(async ({ ctx }) => {
+      const d = await getDb();
+      if (!d) return { gifts: [], needs: [] };
+      const myGifts = await d.select().from(gifts).where(eq(gifts.userId, ctx.user.id));
+      const myNeeds = await d.select().from(needs).where(eq(needs.userId, ctx.user.id));
+      return { gifts: myGifts, needs: myNeeds };
+    }),
+  }),
+
+  // ─── Upcoming AMAs ──────────────────────────────────────────────────────────
+  amas: router({
+    // Get the next upcoming active AMA (public)
+    getNext: publicProcedure.query(async () => {
+      const d = await getDb();
+      if (!d) return null;
+      const rows = await d.select().from(upcomingAmas).where(eq(upcomingAmas.isActive, 1));
+      if (rows.length === 0) return null;
+      // Sort by date and return the soonest
+      const sorted = rows.sort((a, b) => a.date.localeCompare(b.date));
+      return sorted[0];
+    }),
+
+    // List all active AMAs
+    list: publicProcedure.query(async () => {
+      const d = await getDb();
+      if (!d) return [];
+      const rows = await d.select().from(upcomingAmas).where(eq(upcomingAmas.isActive, 1));
+      return rows.sort((a, b) => a.date.localeCompare(b.date));
+    }),
+
+    // Admin: create AMA
+    create: adminProcedure
+      .input(z.object({
+        projectName: z.string().min(1).max(255),
+        hostName: z.string().min(1).max(255),
+        date: z.string(),
+        time: z.string(),
+        timezone: z.string(),
+        forumThreadUrl: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const d = await getDb();
+        if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await d.insert(upcomingAmas).values({
+          projectName: input.projectName,
+          hostName: input.hostName,
+          date: input.date,
+          time: input.time,
+          timezone: input.timezone,
+          forumThreadUrl: input.forumThreadUrl,
+        });
+        return { success: true };
+      }),
+
+    // Admin: toggle active
+    setActive: adminProcedure
+      .input(z.object({ id: z.number(), isActive: z.boolean() }))
+      .mutation(async ({ input }) => {
+        const d = await getDb();
+        if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await d.update(upcomingAmas).set({ isActive: input.isActive ? 1 : 0 }).where(eq(upcomingAmas.id, input.id));
+        return { success: true };
+      }),
+
+    // Admin: delete AMA
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const d = await getDb();
+        if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        await d.delete(upcomingAmas).where(eq(upcomingAmas.id, input.id));
+        return { success: true };
+      }),
+  }),
+
+  // Discovery router — personalized recommendations for members
+  discovery: router({
+    getRecommendations: protectedProcedure.query(async ({ ctx }) => {
+      const d = await getDb();
+      if (!d) return { nearbyPeople: [], dreamingAlikes: [], myGifts: [] };
+
+      // Get current user's player profile for bioregionId and dreamingOf
+      const myProfile = await db.getPlayerProfileByUserId(ctx.user.id);
+      // Get current user's gifts
+      const myGifts = myProfile
+        ? await d.select().from(gifts).where(eq(gifts.userId, ctx.user.id))
+        : [];
+
+      // 1. Nearby people: other playerProfiles with same bioregionId (if set)
+      let nearbyPeople: { userId: number | null; displayName: string; avatarUrl: string | null; dreamingOf: string | null; bioregionId: number | null }[] = [];
+      if (myProfile?.bioregionId) {
+        const nearby = await d
+          .select()
+          .from(playerProfiles)
+          .where(eq(playerProfiles.bioregionId, myProfile.bioregionId))
+          .limit(7);
+        nearbyPeople = nearby
+          .filter(p => p.userId !== ctx.user.id)
+          .slice(0, 6)
+          .map(p => ({
+            userId: p.userId,
+            displayName: p.displayName,
+            avatarUrl: p.avatarUrl,
+            dreamingOf: p.dreamingOf,
+            bioregionId: p.bioregionId,
+          }));
+      }
+
+      // 2. Dreaming alikes: profiles with overlapping dreamingOf keywords
+      let dreamingAlikes: { userId: number | null; displayName: string; avatarUrl: string | null; dreamingOf: string | null }[] = [];
+      if (myProfile?.dreamingOf) {
+        const keywords = myProfile.dreamingOf
+          .toLowerCase()
+          .split(/\s+/)
+          .filter(w => w.length > 4);
+        if (keywords.length > 0) {
+          const allProfiles = await d.select().from(playerProfiles).limit(100);
+          dreamingAlikes = allProfiles
+            .filter(p => p.userId !== ctx.user.id && p.dreamingOf)
+            .filter(p => keywords.some(kw => p.dreamingOf!.toLowerCase().includes(kw)))
+            .slice(0, 6)
+            .map(p => ({
+              userId: p.userId,
+              displayName: p.displayName,
+              avatarUrl: p.avatarUrl,
+              dreamingOf: p.dreamingOf,
+            }));
+        }
+      }
+
+      return {
+        nearbyPeople,
+        dreamingAlikes,
+        myGifts: myGifts.map(g => ({ type: g.type, description: g.description })),
+      };
+    }),
+  }),
+
+  // ─── C15: Project Connections ───────────────────────────────────────────────
+  projectConnections: router({
+    forPost: publicProcedure
+      .input(z.object({ postId: z.number() }))
+      .query(async ({ input }) => {
+        return db.getConnectionsForPost(input.postId);
+      }),
+
+    listAll: adminProcedure.query(async () => {
+      return db.getAllProjectConnections();
+    }),
+
+    create: adminProcedure
+      .input(z.object({
+        postAId: z.number(),
+        postBId: z.number(),
+        connectionType: z.enum(["needs_each_other", "similar"]),
+        note: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createProjectConnection({
+          postAId: input.postAId,
+          postBId: input.postBId,
+          connectionType: input.connectionType,
+          note: input.note || null,
+          createdBy: ctx.user.id,
+        });
+        return { id };
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteProjectConnection(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // ─── C13: Glossary ──────────────────────────────────────────────────────────
+  glossary: router({
+    list: publicProcedure.query(async () => {
+      return db.getApprovedGlossaryTerms();
+    }),
+
+    listAll: adminProcedure.query(async () => {
+      return db.getAllGlossaryTerms();
+    }),
+
+    approve: adminProcedure
+      .input(z.object({ id: z.number(), definition: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.approveGlossaryTerm(input.id, ctx.user.id, input.definition);
+        return { success: true };
+      }),
+
+    reject: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.rejectGlossaryTerm(input.id);
+        return { success: true };
+      }),
+
+    add: adminProcedure
+      .input(z.object({
+        term: z.string().min(1),
+        definition: z.string().min(1),
+        sourceThreadUrl: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await db.addGlossaryTerm({
+          term: input.term,
+          definition: input.definition,
+          sourceThreadUrl: input.sourceThreadUrl || null,
+          status: "approved",
+          approvedAt: new Date(),
+        });
+        return { id };
+      }),
+  }),
+
 });
 export type AppRouter = typeof appRouter;

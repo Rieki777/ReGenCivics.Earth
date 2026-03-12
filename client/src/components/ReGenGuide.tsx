@@ -178,14 +178,14 @@ export default function ReGenGuide() {
               ? "bg-white/10 border border-white/20 text-white/60 hover:text-white"
               : "bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] shadow-[0_0_20px_rgba(125,216,125,0.4)]"
           }`}
-        aria-label={isOpen ? "Close ReGen Guide" : "Open ReGen Guide"}
+        aria-label={isOpen ? "Close Your ReGen Guide" : "Open Your ReGen Guide"}
       >
         {isOpen ? (
           <X className="w-6 h-6" />
         ) : (
           <>
             <MessageCircle className="w-6 h-6" />
-            <span className="hidden sm:inline text-sm font-semibold">ReGen Guide</span>
+            <span className="hidden sm:inline text-sm font-semibold">Your ReGen Guide</span>
           </>
         )}
       </button>

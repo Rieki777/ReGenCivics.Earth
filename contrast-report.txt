@@ -1,0 +1,534 @@
+
+╔══════════════════════════════════════════════════════════╗
+║         CONTRAST AUDIT — regencivics.earth               ║
+║  2026-03-10 20:31:51  https://regencivics.earth  ║
+╚══════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     34 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .max-w-sm
+       contrast: 6.11:1  (need 7:1:1)  fg:#bac8bf  bg:#1a472a
+     → div:nth-child(1) > h4
+       contrast: 6.05:1  (need 7:1:1)  fg:#7dd87d  bg:#1a472a
+     … and 31 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/profile
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     36 elements affected
+     → #radix-_r_2_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#6bc86b\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 33 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/apply
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     34 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .max-w-sm
+       contrast: 6.11:1  (need 7:1:1)  fg:#bac8bf  bg:#1a472a
+     → div:nth-child(1) > h4
+       contrast: 6.05:1  (need 7:1:1)  fg:#7dd87d  bg:#1a472a
+     … and 31 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/community
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     36 elements affected
+     → #radix-_r_6_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#6bc86b\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 33 more
+
+⚠️  https://regencivics.earth/community/new — ERROR: page.addScriptTag: TypeError: Failed to set the 'text' property on 'HTMLScriptElement': This document requires 'TrustedScript' assignment.
+    at addScriptContent (eval at evaluate (:290:30), <anonymous>:4:19)
+    at UtilityScript.evaluate (<anonymous>:292:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/fund
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     36 elements affected
+     → #radix-_r_0_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → div:nth-child(5) > .sm\:flex-row.flex-col.gap-3 > a[href$="investor"] > .bg-amber-400.h...
+       contrast: 6.16:1  (need 7:1:1)  fg:#1a472a  bg:#ffb900
+     … and 33 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/quest
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     45 elements affected
+     → #radix-_r_2_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].dark\:hover\:bg-accent\/50.has-\[\>svg\]\:px-3
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .inline-block.px-5.py-2
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 42 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     12 elements affected
+     → .text-left.md\:text-4xl > .text-\[\#7dd87d\]
+       contrast: 1.75:1  (need 3:1:1)  fg:#7dd87d  bg:#ffffff
+     → .text-left.mt-2.text-\[\#1a472a\]\/70
+       contrast: 4.48:1  (need 4.5:1:1)  fg:#5f7e6a  bg:#ffffff
+     → .p-8.border-3.border-\[\#7dd87d\]\/30 > .md\:text-3xl.text-2xl > .text-\[\#7dd87d\]
+       contrast: 1.75:1  (need 3:1:1)  fg:#7dd87d  bg:#ffffff
+     … and 9 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/play
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     36 elements affected
+     → #radix-_r_0_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → #radix-_r_2_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 33 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/governance
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     38 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#c49060\]
+       contrast: 4.76:1  (need 7:1:1)  fg:#1a472a  bg:#d4a574
+     → .shadow-\[\#d4a574\]\/30
+       contrast: 4.76:1  (need 7:1:1)  fg:#1a472a  bg:#d4a574
+     … and 35 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/tokenomics
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     43 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .px-5.bg-\[\#7dd87d\].mb-6 > span
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → a[href$="loi"] > .hover\:bg-\[\#6bc76b\].has-\[\>svg\]\:px-4.px-8
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 40 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     2 elements affected
+     → .hover\:bg-\[\#3a8f8f\]
+       contrast: 3.11:1  (need 4.5:1:1)  fg:#ffffff  bg:#4a9f9f
+     → .bg-\[\#1a472a\] > .text-white\/50.text-xs
+       contrast: 3.94:1  (need 4.5:1:1)  fg:#8da394  bg:#1a472a
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/team
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     53 elements affected
+     → .py-2.bg-\[\#7dd87d\][href$="team"]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .bg-\[\#1a472a\]\/60 > .hover\:bg-\[\#6bc86b\].py-3.px-6
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 50 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/seasons
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     43 elements affected
+     → #radix-_r_4_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .z-10.container.relative > .flex-wrap.gap-4.justify-center > a[href$="schedule"] > .px-...
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 40 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/map
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     36 elements affected
+     → a[href$="map"]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .border-\[\#4a7c59\]\/20.border-t.p-3 > .hover\:bg-\[\#6bc86b\].block[href$="apply"]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 33 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/calculator
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     44 elements affected
+     → #radix-_r_2_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:text-\[\#1a472a\].hover\:bg-\[\#9de89d\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → strong
+       contrast: 6.84:1  (need 7:1:1)  fg:#973c00  bg:#fffbeb
+     … and 41 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     17 elements affected
+     → .mb-4.gap-3.flex > .flex-1 > p
+       contrast: 3.42:1  (need 4.5:1:1)  fg:#76917f  bg:#ffffff
+     → div:nth-child(1) > .space-y-1 > .gap-1.flex.items-center > label
+       contrast: 3.42:1  (need 4.5:1:1)  fg:#76917f  bg:#ffffff
+     → div:nth-child(1) > .space-y-1 > .italic.text-\[\#1a472a\]\/40
+       contrast: 2.15:1  (need 4.5:1:1)  fg:#a3b5aa  bg:#ffffff
+     … and 14 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/blog
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     35 elements affected
+     → #radix-_r_6_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .max-w-sm
+       contrast: 6.11:1  (need 7:1:1)  fg:#bac8bf  bg:#1a472a
+     … and 32 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/land
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     36 elements affected
+     → #radix-_r_0_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .sm\:w-auto.hover\:bg-\[\#6bc86b\].px-8
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 33 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/ally
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     36 elements affected
+     → #radix-_r_0_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].bg-\[\#7dd87d\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .bg-cyan-400.hover\:bg-cyan-300.sm\:w-auto
+       contrast: 5.86:1  (need 7:1:1)  fg:#1a472a  bg:#00d3f2
+     … and 33 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/opportunity
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     37 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → label[for="isAccreditedInvestor"] > .text-\[\#1a472a\]\/85.block.mt-1
+       contrast: 6.01:1  (need 7:1:1)  fg:#3a6046  bg:#f0ebe3
+     → label[for="understandsRisks"] > .text-\[\#1a472a\]\/85.block.mt-1
+       contrast: 6.01:1  (need 7:1:1)  fg:#3a6046  bg:#f0ebe3
+     … and 34 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     1 element affected
+     → .mt-4 > span
+       contrast: 3.09:1  (need 4.5:1:1)  fg:#e17100  bg:#fffbeb
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/connect
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     34 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .max-w-sm
+       contrast: 6.11:1  (need 7:1:1)  fg:#bac8bf  bg:#1a472a
+     → div:nth-child(1) > h4
+       contrast: 6.05:1  (need 7:1:1)  fg:#7dd87d  bg:#1a472a
+     … and 31 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/investor
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     37 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → label[for="isAccreditedInvestor"] > .text-\[\#1a472a\]\/85.block.mt-1
+       contrast: 6.01:1  (need 7:1:1)  fg:#3a6046  bg:#f0ebe3
+     → label[for="understandsRisks"] > .text-\[\#1a472a\]\/85.block.mt-1
+       contrast: 6.01:1  (need 7:1:1)  fg:#3a6046  bg:#f0ebe3
+     … and 34 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     1 element affected
+     → .mt-4 > span
+       contrast: 3.09:1  (need 4.5:1:1)  fg:#e17100  bg:#fffbeb
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/crowd-pooling
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     45 elements affected
+     → #radix-_r_2_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].bg-\[\#7dd87d\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → ol > li:nth-child(2)
+       contrast: 6.82:1  (need 7:1:1)  fg:#3c634a  bg:#ffffff
+     … and 42 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     4 elements affected
+     → a[rel="noopener noreferrer"][target="_blank"] > .text-primary-foreground.hover\:bg-\[\#...
+       contrast: 1.85:1  (need 4.5:1:1)  fg:#060d06  bg:#1a472a
+     → a[href$="calculator"] > .hover\:border-\[\#7dd87d\].cursor-pointer.bg-white > .text-\[\...
+       contrast: 3.42:1  (need 4.5:1:1)  fg:#76917f  bg:#ffffff
+     → a:nth-child(2) > .hover\:border-\[\#7dd87d\].cursor-pointer.bg-white > .text-\[\#1a472a...
+       contrast: 3.42:1  (need 4.5:1:1)  fg:#76917f  bg:#ffffff
+     … and 1 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/crowd-pooling-projects
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     59 elements affected
+     → #radix-_r_2_
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#9de89d\].hover\:text-\[\#1a472a\].dark\:hover\:bg-accent\/50
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → a[href$="crowd-pooling"] > .hover\:bg-\[\#6cc86c\].sm\:w-auto.w-full
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     … and 56 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     6 elements affected
+     → .is-revealed.hover\:border-\[\#7dd87d\].hover\:shadow-xl:nth-child(1) > .p-5 > .mb-4:nt...
+       contrast: 3.2:1  (need 4.5:1:1)  fg:#e17100  bg:#ffffff
+     → .is-revealed.hover\:border-\[\#7dd87d\].hover\:shadow-xl:nth-child(1) > .p-5 > .mb-4:nt...
+       contrast: 1.86:1  (need 4.5:1:1)  fg:#feae07  bg:#ffffff
+     → .is-revealed.hover\:border-\[\#7dd87d\].hover\:shadow-xl:nth-child(1) > .p-5 > .flex-co...
+       contrast: 1.15:1  (need 4.5:1:1)  fg:#f1eee7  bg:#ffffff
+     … and 3 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/one-pager/land
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     38 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#6bc86b\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .text-white\/70.mb-2
+       contrast: 6.11:1  (need 7:1:1)  fg:#bac8bf  bg:#1a472a
+     … and 35 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     7 elements affected
+     → .md\:gap-2.gap-1.flex-1:nth-child(1) > .flex-col.items-center.flex > .md\:text-\[10px\]...
+       contrast: 4.48:1  (need 4.5:1:1)  fg:#5f7e6a  bg:#ffffff
+     → .md\:gap-2.gap-1.flex-1:nth-child(2) > .flex-col.items-center.flex > .md\:text-\[10px\]...
+       contrast: 4.48:1  (need 4.5:1:1)  fg:#5f7e6a  bg:#ffffff
+     → .md\:gap-2.gap-1.flex-1:nth-child(3) > .flex-col.items-center.flex > .md\:text-\[10px\]...
+       contrast: 4.48:1  (need 4.5:1:1)  fg:#5f7e6a  bg:#ffffff
+     … and 4 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/one-pager/alliance
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     38 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#6bc86b\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .text-white\/70.mb-2
+       contrast: 6.11:1  (need 7:1:1)  fg:#bac8bf  bg:#1a472a
+     … and 35 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     12 elements affected
+     → .bg-\[\#f0f7f0\].p-3.rounded-lg:nth-child(1) > .text-\[\#1a472a\]\/70.leading-relaxed.t...
+       contrast: 4.27:1  (need 4.5:1:1)  fg:#5a7c65  bg:#f0f7f0
+     → .bg-\[\#f0f7f0\].p-3.rounded-lg:nth-child(2) > .text-\[\#1a472a\]\/70.leading-relaxed.t...
+       contrast: 4.27:1  (need 4.5:1:1)  fg:#5a7c65  bg:#f0f7f0
+     → .bg-\[\#f0f7f0\].p-3.rounded-lg:nth-child(3) > .text-\[\#1a472a\]\/70.leading-relaxed.t...
+       contrast: 4.27:1  (need 4.5:1:1)  fg:#5a7c65  bg:#f0f7f0
+     … and 9 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/one-pager/player
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     41 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .hover\:bg-\[\#6bc86b\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .bg-green-100 > .text-\[10px\].font-bold
+       contrast: 6.49:1  (need 7:1:1)  fg:#016630  bg:#dcfce7
+     … and 38 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     11 elements affected
+     → .bg-\[\#f0f7f0\].p-2.text-center:nth-child(1) > .text-\[\#1a472a\]\/60.text-\[9px\]
+       contrast: 3.33:1  (need 4.5:1:1)  fg:#708d79  bg:#f0f7f0
+     → .bg-\[\#f0f7f0\].p-2.text-center:nth-child(2) > .text-\[\#1a472a\]\/60.text-\[9px\]
+       contrast: 3.33:1  (need 4.5:1:1)  fg:#708d79  bg:#f0f7f0
+     → .bg-\[\#f0f7f0\].p-2.text-center:nth-child(3) > .text-\[\#1a472a\]\/60.text-\[9px\]
+       contrast: 3.33:1  (need 4.5:1:1)  fg:#708d79  bg:#f0f7f0
+     … and 8 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/terms-of-use
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     36 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → section:nth-child(11) > .uppercase
+       contrast: 6.49:1  (need 7:1:1)  fg:#9ea9a3  bg:#0d2818
+     → section:nth-child(12) > .uppercase
+       contrast: 6.49:1  (need 7:1:1)  fg:#9ea9a3  bg:#0d2818
+     … and 33 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/privacy-policy
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     33 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .max-w-sm
+       contrast: 6.11:1  (need 7:1:1)  fg:#bac8bf  bg:#1a472a
+     → div:nth-child(1) > h4
+       contrast: 6.05:1  (need 7:1:1)  fg:#7dd87d  bg:#1a472a
+     … and 30 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/risk-disclosure
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     35 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → .mt-8.italic.text-white\/50
+       contrast: 4.91:1  (need 7:1:1)  fg:#86938b  bg:#0d2818
+     → .max-w-sm
+       contrast: 6.11:1  (need 7:1:1)  fg:#bac8bf  bg:#1a472a
+     … and 32 more
+
+  🟠 [SERIOUS] color-contrast
+     Ensures the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds
+     1 element affected
+     → .italic.text-white\/50.mt-3
+       contrast: 4.43:1  (need 4.5:1:1)  fg:#8a9b90  bg:#143821
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄  https://regencivics.earth/glossary
+
+  🟠 [SERIOUS] color-contrast-enhanced
+     Ensures the contrast between foreground and background colors meets WCAG 2 AAA enhanced contrast ratio thresholds
+     37 elements affected
+     → .hover\:text-\[\#1a472a\]
+       contrast: 6.05:1  (need 7:1:1)  fg:#1a472a  bg:#7dd87d
+     → div:nth-child(1) > .p-5.hover\:border-\[\#7dd87d\]\/20.rounded-xl > .items-start.justif...
+       contrast: 5.26:1  (need 7:1:1)  fg:#7dd87d  bg:#255035
+     → div:nth-child(2) > .p-5.hover\:border-\[\#7dd87d\]\/20.rounded-xl > .items-start.justif...
+       contrast: 5.26:1  (need 7:1:1)  fg:#7dd87d  bg:#255035
+     … and 34 more
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Pages scanned:        29
+  Pages with issues:    28
+  Pages clean:          0
+  Total violations:     39
+  Total elements:       1165
+
+  Most common issues (by element count):
+    🟠 color-contrast-enhanced: 1091 elements across 28 page(s)
+    🟠 color-contrast: 74 elements across 11 page(s)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HOW TO FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Most issues trace to two root causes in client/src/index.css:
+
+  1. --muted-foreground is too light against --input background.
+     Fix: darken --muted-foreground so contrast ratio ≥ 4.5:1.
+     Light mode suggestion:
+       --muted-foreground: oklch(0.40 0.02 85);  /* was ~0.60 */
+
+  2. Opacity modifiers on labels (text-[#1a472a]/70) drop contrast.
+     Fix: bump to /90 or full opacity on all form label text.
+
+  Run this script again after fixes to verify all pages pass.

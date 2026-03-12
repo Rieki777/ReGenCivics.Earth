@@ -11,6 +11,7 @@ import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { Link } from "wouter";
 import { PageTransition } from "@/components/PageTransition";
+import { trpc } from "@/lib/trpc";
 
 interface GlossaryEntry {
   term: string;
@@ -211,8 +212,26 @@ export default function Glossary() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
+  const { data: dbTerms } = trpc.glossary.list.useQuery();
+
+  // Merge static entries with DB-approved terms (DB terms take precedence if same term name)
+  const allEntries = useMemo(() => {
+    const dbSet = new Set((dbTerms || []).map(t => t.term.toLowerCase()));
+    const staticFiltered = sortedEntries.filter(e => !dbSet.has(e.term.toLowerCase()));
+    const dbMapped: GlossaryEntry[] = (dbTerms || []).map(t => ({
+      term: t.term,
+      definition: t.definition,
+      category: "Community Terms",
+      relatedLink: t.sourceThreadUrl || undefined,
+      relatedLabel: t.sourceThreadUrl ? "Source thread" : undefined,
+    }));
+    return [...dbMapped, ...staticFiltered].sort((a, b) => a.term.localeCompare(b.term));
+  }, [dbTerms]);
+
+  const allCategories = useMemo(() => Array.from(new Set(allEntries.map(e => e.category))), [allEntries]);
+
   const filtered = useMemo(() => {
-    return sortedEntries.filter((entry) => {
+    return allEntries.filter((entry) => {
       const matchesSearch =
         !search ||
         entry.term.toLowerCase().includes(search.toLowerCase()) ||
@@ -220,7 +239,7 @@ export default function Glossary() {
       const matchesCategory = !activeCategory || entry.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [search, activeCategory]);
+  }, [search, activeCategory, allEntries]);
 
   return (
     <PageTransition>
@@ -268,9 +287,9 @@ export default function Glossary() {
                     : "bg-white/5 text-white/75 hover:bg-white/10 hover:text-white/90"
                 }`}
               >
-                All ({sortedEntries.length})
+                All ({allEntries.length})
               </button>
-              {categories.map((cat) => (
+              {allCategories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}

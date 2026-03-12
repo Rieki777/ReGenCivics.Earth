@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ForumMarkdown, MarkdownHints } from "@/components/ForumMarkdown";
 import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownToolbar";
+import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
 
 function timeAgo(date: Date | string): string {
   const now = new Date();
@@ -388,6 +389,9 @@ export default function CommunityPost() {
             </div>
           </div>
         </AnimatedSection>
+
+        {/* Related Projects (C15) */}
+        {postId > 0 && <ProjectConnectionsPanel postId={postId} />}
 
         {/* Replies */}
         {repliesLoading ? (

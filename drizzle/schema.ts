@@ -487,6 +487,11 @@ export const playerProfiles = mysqlTable("player_profiles", {
   // Email digest preferences
   emailDigestFrequency: mysqlEnum("emailDigestFrequency", ["never", "weekly", "monthly", "seasonal"]).default("monthly").notNull(),
 
+  // Profile layer (Phase 3)
+  collaborationStatus: text("collaborationStatus"), // null | "seeking_collaborators" | "looking_to_join"
+  dreamingOf: text("dreamingOf"),                  // Open text: what are you dreaming of building?
+  bioregionId: int("bioregionId"),                 // References bioregions(id)
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -819,6 +824,7 @@ export const campaigns = mysqlTable("campaigns", {
   adminNotes: text("adminNotes"), // Admin review notes
   reviewedBy: int("reviewedBy"), // Admin who reviewed
   reviewedAt: timestamp("reviewedAt"),
+  generatedImageUrl: varchar("generatedImageUrl", { length: 512 }), // AI-generated card image
 });
 
 export type Campaign = typeof campaigns.$inferSelect;
@@ -1222,6 +1228,12 @@ export const forumPosts = mysqlTable("forumPosts", {
   replyCount: int("replyCount").default(0).notNull(),
   lastReplyAt: timestamp("lastReplyAt"),
   lastReplyBy: int("lastReplyBy"),
+  generatedImageUrl: varchar("generatedImageUrl", { length: 512 }), // AI-generated banner image
+  tags: text("tags"), // JSON array: ["lesson", "seeking-support", "offering-support"]
+  postType: text("postType"), // "discussion" | "case_study" | "seeking_team"
+  // C8: Thread chain fields
+  threadStage: varchar("threadStage", { length: 32 }), // "idea" | "experiment" | "result"
+  chainId: int("chainId"), // links posts in same chain (ID of the original "idea" post)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1237,6 +1249,7 @@ export const forumReplies = mysqlTable("forumReplies", {
   authorId: int("authorId").notNull(),
   content: text("content").notNull(),
   parentReplyId: int("parentReplyId"), // for nested replies
+  triedThis: tinyint("triedThis").default(0).notNull(), // "I tried this" follow-up flag
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1447,3 +1460,100 @@ export const orgClaims = mysqlTable("org_claims", {
 export type OrgClaim = typeof orgClaims.$inferSelect;
 export type InsertOrgClaim = typeof orgClaims.$inferInsert;
 export type InsertEmailToken = typeof emailTokens.$inferInsert;
+
+// ─── Bioregions ───────────────────────────────────────────────────────────────
+export const bioregions = mysqlTable("bioregions", {
+  id: int("id").autoincrement().primaryKey(),
+  name: text("name").notNull(),
+  slug: varchar("slug", { length: 255 }).unique(),
+  realm: text("realm"),
+  subrealm: text("subrealm"),
+  source: varchar("source", { length: 64 }), // "one_earth" | "community"
+  approved: tinyint("approved").default(1).notNull(),
+  submittedBy: int("submittedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Bioregion = typeof bioregions.$inferSelect;
+export type InsertBioregion = typeof bioregions.$inferInsert;
+
+// ─── Gifts ────────────────────────────────────────────────────────────────────
+export const gifts = mysqlTable("gifts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: varchar("type", { length: 64 }).notNull(), // "skill" | "resource" | "time" | "knowledge" | "land" | "capital"
+  description: text("description").notNull(),
+  isActive: tinyint("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Gift = typeof gifts.$inferSelect;
+export type InsertGift = typeof gifts.$inferInsert;
+
+// ─── Needs ────────────────────────────────────────────────────────────────────
+export const needs = mysqlTable("needs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: varchar("type", { length: 64 }).notNull(), // "skill" | "resource" | "time" | "knowledge" | "land" | "capital"
+  description: text("description").notNull(),
+  isActive: tinyint("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Need = typeof needs.$inferSelect;
+export type InsertNeed = typeof needs.$inferInsert;
+
+// ─── Upcoming AMAs ────────────────────────────────────────────────────────────
+export const upcomingAmas = mysqlTable("upcoming_amas", {
+  id: int("id").autoincrement().primaryKey(),
+  projectName: varchar("projectName", { length: 255 }).notNull(),
+  hostName: varchar("hostName", { length: 255 }).notNull(),
+  date: varchar("date", { length: 32 }).notNull(),        // "2026-04-26"
+  time: varchar("time", { length: 64 }).notNull(),        // "11:00 AM EST"
+  timezone: varchar("timezone", { length: 64 }).notNull(),
+  forumThreadUrl: text("forumThreadUrl"),
+  isActive: tinyint("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UpcomingAma = typeof upcomingAmas.$inferSelect;
+export type InsertUpcomingAma = typeof upcomingAmas.$inferInsert;
+
+// ─── C15: Project Connections ─────────────────────────────────────────────────
+export const projectConnections = mysqlTable("project_connections", {
+  id: int("id").autoincrement().primaryKey(),
+  postAId: int("postAId").notNull(),
+  postBId: int("postBId").notNull(),
+  connectionType: varchar("connectionType", { length: 32 }).notNull(), // "needs_each_other" | "similar"
+  note: text("note"),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProjectConnection = typeof projectConnections.$inferSelect;
+export type InsertProjectConnection = typeof projectConnections.$inferInsert;
+
+// ─── C12: Digests ─────────────────────────────────────────────────────────────
+export const digests = mysqlTable("digests", {
+  id: int("id").autoincrement().primaryKey(),
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  periodStart: varchar("periodStart", { length: 32 }).notNull(),
+  periodEnd: varchar("periodEnd", { length: 32 }).notNull(),
+  contentMd: text("contentMd").notNull(),
+  forumPostId: int("forumPostId"),
+  sentAt: timestamp("sentAt"),
+});
+export type Digest = typeof digests.$inferSelect;
+
+// ─── C13: Glossary Terms ──────────────────────────────────────────────────────
+export const glossaryTerms = mysqlTable("glossary_terms", {
+  id: int("id").autoincrement().primaryKey(),
+  term: varchar("term", { length: 255 }).notNull().unique(),
+  definition: text("definition").notNull(),
+  sourceThreadUrl: text("sourceThreadUrl"),
+  proposedAt: timestamp("proposedAt").defaultNow().notNull(),
+  approvedAt: timestamp("approvedAt"),
+  approvedBy: int("approvedBy"),
+  status: varchar("status", { length: 32 }).default("proposed").notNull(), // "proposed" | "approved" | "rejected"
+});
+export type GlossaryTerm = typeof glossaryTerms.$inferSelect;
+export type InsertGlossaryTerm = typeof glossaryTerms.$inferInsert;

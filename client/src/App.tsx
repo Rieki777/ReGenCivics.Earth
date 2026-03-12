@@ -11,6 +11,7 @@ import { TaoSpinner } from "./components/TaoSpinner";
 import CookieConsent from "./components/CookieConsent";
 import AnalyticsLoader from "./components/AnalyticsLoader";
 import ReGenGuide from "./components/ReGenGuide";
+import AMABanner from "./components/AMABanner";
 import SiteFooter from "./components/SiteFooter";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
@@ -76,6 +77,7 @@ const Community = lazy(() => import("./pages/Community"));
 const CommunityCategory = lazy(() => import("./pages/CommunityCategory"));
 const CommunityPost = lazy(() => import("./pages/CommunityPost"));
 const CommunityNewPost = lazy(() => import("./pages/CommunityNewPost"));
+const CommunityTagFilter = lazy(() => import("./pages/CommunityTagFilter"));
 const QuestSuggestions = lazy(() => import("./pages/QuestSuggestions"));
 const UserForumProfile = lazy(() => import("./pages/UserForumProfile"));
 const AdminModeration = lazy(() => import("./pages/AdminModeration"));
@@ -84,6 +86,7 @@ const Tokenomics = lazy(() => import("./pages/Tokenomics"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
 const ReGenGames = lazy(() => import("./pages/ReGenGames"));
 const CustomGames = lazy(() => import("./pages/CustomGames"));
+const Marketplace = lazy(() => import("./pages/Marketplace"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -144,13 +147,16 @@ function Router() {
         <Route path={"/community"} component={Community} />
         <Route path={"/community/c/:slug"} component={CommunityCategory} />
         <Route path={"/community/post/:id"} component={CommunityPost} />
-        <Route path={"/community/new"} component={CommunityNewPost} />        <Route path={"/community/quests"} component={QuestSuggestions} />
+        <Route path={"/community/new"} component={CommunityNewPost} />
+        <Route path={"/community/tag/:tag"} component={CommunityTagFilter} />
+        <Route path={"/community/quests"} component={QuestSuggestions} />
         <Route path={"/community/user/:id"} component={UserForumProfile} />
         <Route path={"/admin/moderation"} component={AdminModeration} />
 <Route path={"/glossary"} component={Glossary} />
         <Route path={"/newsletter"} component={Newsletter} />
         <Route path={"/regen-games"} component={ReGenGames} />
         <Route path={"/custom-games"} component={CustomGames} />
+        <Route path={"/marketplace"} component={Marketplace} />
         <Route path="/404" component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
@@ -188,6 +194,7 @@ function App() {
             </a>
           )}
           {!adminMode && <MycelialBackground />}
+          {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
           <main id="main-content">
             <Router />

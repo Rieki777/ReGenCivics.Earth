@@ -25,7 +25,12 @@ export function ProfileEditForm() {
 
   const [form, setForm] = useState({
     displayName: "",
-    bio: "",
+    // Structured soul questions (stored as JSON in bio)
+    role: "",
+    soul: "",
+    desires: "",
+    gifts: "",
+    legacyBio: "",  // fallback for pre-structured bio plain text
     location: "",
     avatarUrl: "",
     investmentRange: "",
@@ -37,9 +42,15 @@ export function ProfileEditForm() {
 
   useEffect(() => {
     if (!profile) return;
+    let parsed: { role?: string; soul?: string; desires?: string; gifts?: string } | null = null;
+    try { parsed = JSON.parse(profile.bio ?? ""); } catch { /* plain text bio */ }
     setForm({
       displayName: profile.displayName ?? "",
-      bio: profile.bio ?? "",
+      role: parsed?.role ?? "",
+      soul: parsed?.soul ?? "",
+      desires: parsed?.desires ?? "",
+      gifts: parsed?.gifts ?? "",
+      legacyBio: (!parsed && profile.bio) ? profile.bio : "",
       location: profile.location ?? "",
       avatarUrl: profile.avatarUrl ?? "",
       investmentRange: profile.investmentRange ?? "",
@@ -68,9 +79,12 @@ export function ProfileEditForm() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const bioValue = (form.role || form.soul || form.desires || form.gifts)
+      ? JSON.stringify({ role: form.role, soul: form.soul, desires: form.desires, gifts: form.gifts })
+      : form.legacyBio || undefined;
     update.mutate({
       displayName: form.displayName || undefined,
-      bio: form.bio || undefined,
+      bio: bioValue,
       location: form.location || undefined,
       avatarUrl: form.avatarUrl || undefined,
       investmentRange: form.investmentRange || undefined,
@@ -115,15 +129,64 @@ export function ProfileEditForm() {
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="bio" className="text-white/70">Bio / About</Label>
-        <Textarea
-          id="bio"
-          value={form.bio}
-          onChange={(e) => set("bio", e.target.value)}
-          placeholder="Tell the community about yourself"
-          rows={3}
-        />
+      {/* Structured soul questions — stored as JSON in bio field */}
+      <div className="space-y-3">
+        <p className="text-white/70 text-sm font-medium">About You</p>
+        {form.legacyBio ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="legacyBio" className="text-white/60 text-xs">Bio</Label>
+            <Textarea
+              id="legacyBio"
+              value={form.legacyBio}
+              onChange={(e) => set("legacyBio", e.target.value)}
+              placeholder="Tell the community about yourself"
+              rows={3}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              <Label htmlFor="role" className="text-white/60 text-xs">Your role in this renaissance</Label>
+              <Input
+                id="role"
+                value={form.role}
+                onChange={(e) => set("role", e.target.value)}
+                placeholder="Land steward, investor, builder, artist..."
+                maxLength={255}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="soul" className="text-white/60 text-xs">Your soul's mission</Label>
+              <Textarea
+                id="soul"
+                value={form.soul}
+                onChange={(e) => set("soul", e.target.value)}
+                placeholder="The deeper calling that brought you here..."
+                rows={2}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="desires" className="text-white/60 text-xs">What are you seeking?</Label>
+              <Textarea
+                id="desires"
+                value={form.desires}
+                onChange={(e) => set("desires", e.target.value)}
+                placeholder="What would make this worth your time and energy?"
+                rows={2}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="gifts" className="text-white/60 text-xs">Gifts you bring</Label>
+              <Textarea
+                id="gifts"
+                value={form.gifts}
+                onChange={(e) => set("gifts", e.target.value)}
+                placeholder="Skills, resources, wisdom, connections..."
+                rows={2}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="space-y-1.5">

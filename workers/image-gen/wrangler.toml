@@ -1,0 +1,13 @@
+name = "regen-civics-image-gen"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+[ai]
+binding = "AI"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "regen-civics-assets"
+
+# AUTH_SECRET is set via: npx wrangler secret put AUTH_SECRET
+# Never put secrets in [vars] — that would commit them to source control

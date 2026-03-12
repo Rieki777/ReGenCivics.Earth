@@ -458,7 +458,14 @@ export default function Navigation() {
                     <User className="w-5 h-5 mr-3 text-[#7dd87d]" />
                     <span style={{ fontFamily: 'var(--font-accent)' }}>My Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
+                    className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                    onClick={() => window.location.href = '/profile?tab=quests'}
+                  >
+                    <BookOpen className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                    <span style={{ fontFamily: 'var(--font-accent)' }}>Personal Quests</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                     onClick={() => window.location.href = '/profile?tab=contributions'}
                   >
@@ -767,6 +774,15 @@ export default function Navigation() {
                     >
                       <User className="w-4 h-4" />
                       Player Profile
+                    </Link>
+                    <Link
+                      href="/profile?tab=quests"
+                      className="flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all text-white/70 hover:bg-[#7dd87d]/20 hover:text-white"
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <BookOpen className="w-4 h-4 text-[#7dd87d]" />
+                      Personal Quests
                     </Link>
                   </div>
                 )}

@@ -175,6 +175,8 @@ export default function CrowdPoolingCampaigns() {
                         campaignName={campaign.title}
                         mode="card"
                       />
+                    ) : (campaign as any).generatedImageUrl ? (
+                      <img src={(campaign as any).generatedImageUrl} alt={campaign.title} className="w-full h-full object-cover" loading="lazy" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Leaf className="w-16 h-16 text-white/35" />

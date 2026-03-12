@@ -1,5 +1,7 @@
 import "dotenv/config";
 import * as Sentry from "@sentry/node";
+import { runDigestJob } from "../jobs/digestJob";
+import { runGlossaryJob } from "../jobs/glossaryJob";
 if (process.env.SENTRY_DSN) {
   Sentry.init({ dsn: process.env.SENTRY_DSN, tracesSampleRate: 0.1 });
 }
@@ -19,6 +21,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
+import bufferRouter from "../routes/buffer";
+import farcasterRouter from "../routes/farcaster";
 import * as db from "../db";
 import { sendEmail } from "./email";
 import { cspMiddleware, securityHeadersMiddleware, rateLimitMiddleware } from "./security";
@@ -142,6 +146,9 @@ async function startServer() {
   registerTrackingRoutes(app);
   // Resend webhook routes
   registerResendWebhookRoutes(app);
+  // Admin Buffer + Farcaster routes
+  app.use('/api/admin/buffer', bufferRouter);
+  app.use('/api/admin/farcaster', farcasterRouter);
   // tRPC API
   app.use(
     "/api/trpc",
@@ -209,3 +216,19 @@ async function processScheduledEmails() {
 
 // Run every minute
 setInterval(processScheduledEmails, 60_000);
+
+// ─── Weekly digest job ───────────────────────────────────────────────────────
+setTimeout(async () => {
+  try { await runDigestJob(); } catch (e) { console.error("[DigestJob] Error:", e); }
+  setInterval(async () => {
+    try { await runDigestJob(); } catch (e) { console.error("[DigestJob] Error:", e); }
+  }, 7 * 24 * 60 * 60 * 1000);
+}, 60 * 1000); // first run after 1 minute
+
+// ─── Weekly glossary job ─────────────────────────────────────────────────────
+setTimeout(async () => {
+  try { await runGlossaryJob(); } catch (e) { console.error("[GlossaryJob] Error:", e); }
+  setInterval(async () => {
+    try { await runGlossaryJob(); } catch (e) { console.error("[GlossaryJob] Error:", e); }
+  }, 7 * 24 * 60 * 60 * 1000);
+}, 90 * 1000); // first run after 90 seconds (staggered after digest)
