@@ -25,6 +25,8 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { SEO, pageSEO } from '@/components/SEO';
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import AMABanner from "@/components/AMABanner";
+import { PageWrapper } from "@/components/PageWrapper";
 
 
 
@@ -255,7 +257,9 @@ export default function Schedule() {
   };
 
   return (
+    <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
+      <AMABanner />
       <BackButton />
       <SEO {...pageSEO.schedule} />
       
@@ -641,5 +645,6 @@ export default function Schedule() {
       {/* Related Content */}
       <RelatedContent pages={relatedContentMap.schedule.pages} blog={relatedContentMap.schedule.blog} />
     </div>
+    </PageWrapper>
   );
 }

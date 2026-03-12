@@ -16,6 +16,7 @@ import { MapView } from "@/components/Map";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { BackButton } from "@/components/BackButton";
 import { BannerDisplay } from "@/components/BannerDisplay";
+import { PageWrapper } from "@/components/PageWrapper";
 
 type UploadedFile = {
   name: string;
@@ -195,6 +196,7 @@ export default function Apply() {
   const isLoading = createMutation.isPending || updateMutation.isPending || submitMutation.isPending;
 
   return (
+    <PageWrapper>
     <div className="min-h-screen bg-[#f0ebe3] py-12">
       <BannerDisplay bannerKey="apply-banner" />
       <div className="container max-w-4xl">
@@ -963,5 +965,6 @@ export default function Apply() {
         </Card>
       </div>
     </div>
+    </PageWrapper>
   );
 }

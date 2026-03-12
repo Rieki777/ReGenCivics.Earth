@@ -10,6 +10,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 import { SEO } from "@/components/SEO";
+import { PageWrapper } from "@/components/PageWrapper";
 import {
   ArrowRight,
   Coins,
@@ -897,6 +898,7 @@ export default function Tokenomics() {
   ];
 
   return (
+    <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818]">
       <SEO
         title="$RCivics Tokenomics | ReGen Civics"
@@ -1408,5 +1410,6 @@ export default function Tokenomics() {
         </div>
       </section>
     </div>
+    </PageWrapper>
   );
 }

@@ -18,6 +18,7 @@ import { blogPosts, getFeaturedPost } from '@/data/blogPosts';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
+import { PageWrapper } from "@/components/PageWrapper";
 
 // How-To video categories
 const howToCategories = [
@@ -246,8 +247,9 @@ export default function Blog() {
   };
 
   return (
+    <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
-      <SEO 
+      <SEO
         title="Blog: Stories & Updates | ReGen Civics"
         description="Stories, insights, and updates from our journey toward a regenerative civilization."
         url="https://regencivics.earth/blog"
@@ -632,5 +634,6 @@ export default function Blog() {
         </div>
       </section>
     </div>
+    </PageWrapper>
   );
 }

@@ -8,6 +8,7 @@ import { TaoSpinner } from "@/components/TaoSpinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { PageWrapper } from "@/components/PageWrapper";
 
 const CATEGORIES = [
   { value: "", label: "All categories" },
@@ -48,6 +49,7 @@ export default function Marketplace() {
   if (isLoading) return <TaoSpinner fullPage size={72} />;
 
   return (
+    <PageWrapper>
     <div className="min-h-screen pt-24 pb-16 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -216,5 +218,6 @@ export default function Marketplace() {
         )}
       </div>
     </div>
+    </PageWrapper>
   );
 }

@@ -51,6 +51,7 @@ import {
   TrendingUp,
   Building2,
   RefreshCw,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,6 +76,10 @@ import { WelcomeAboardQuests } from "@/components/WelcomeAboardQuests";
 import { QuestStartPopup, flagShowQuestPrompt } from "@/components/QuestStartPopup";
 import { DiscoverTab } from "@/components/DiscoverTab";
 import { BioregionSelect } from "@/components/BioregionSelect";
+import { BioregionMultiSelect } from "@/components/BioregionMultiSelect";
+import { LocationPicker, LocationDisplay, type LocationData } from "@/components/LocationPicker";
+import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -209,6 +214,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What would you like to offer the ecosystem?</label>
             <p className="text-xs text-[#1a472a]/70 mb-2">Skills, resources, wisdom, connections…</p>
             <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className="border-[#1a472a]/20 min-h-[70px]" />
+            <p className="text-xs text-[#1a472a]/50 mt-1.5">Your gifts and needs will be added to the <a href="/marketplace" className="underline hover:text-[#1a472a]/80">Gifts + Needs Marketplace</a>, where others in the network can find and connect with you.</p>
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you dreaming of building or becoming? <span className="text-[#1a472a]/50 font-normal">(optional)</span></label>
@@ -444,13 +450,12 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }
       <div className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-[#7dd87d] flex items-center justify-center border-4 border-white/20">
-              {profile.avatarUrl ? (
-                <img src={profile.avatarUrl} alt={profile.displayName} className="w-full h-full rounded-full object-cover" loading="lazy" />
-              ) : (
-                <User className="w-10 h-10 text-[#1a472a]" />
-              )}
-            </div>
+            <BadgeRingAvatar
+              avatarUrl={profile.avatarUrl}
+              displayName={profile.displayName}
+              badges={badges}
+              size={80}
+            />
             <div>
               <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
                 {profile.displayName}
@@ -634,12 +639,34 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }
 function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpdate: () => void }) {
   const [collab, setCollab] = useState<string>(profile?.collaborationStatus ?? "");
   const [dreaming, setDreaming] = useState<string>(profile?.dreamingOf ?? "");
-  const [bioregionId, setBioregionId] = useState<number | null>((profile as any)?.bioregionId ?? null);
+  const [bioregionIds, setBioregionIds] = useState<number[]>([]);
+  const [locationData, setLocationData] = useState<LocationData>({
+    lat: profile?.locationLat ?? null,
+    lng: profile?.locationLng ?? null,
+    precision: profile?.locationPrecision ?? "region",
+    label: profile?.locationLabel ?? "",
+    nomadic: Boolean(profile?.locationNomadic),
+    earth: Boolean(profile?.locationEarth),
+  });
+
+  // Load saved bioregions from the junction table
+  const { data: savedBioregions = [] } = trpc.userBioregions.list.useQuery();
+  React.useEffect(() => {
+    if (savedBioregions.length > 0) {
+      setBioregionIds(savedBioregions.map((b: any) => b.bioregionId));
+    } else if (profile?.bioregionId) {
+      setBioregionIds([profile.bioregionId]);
+    }
+  }, [savedBioregions, profile?.bioregionId]);
 
   const utils = trpc.useUtils();
   const updateMut = trpc.playerProfiles.update.useMutation({
+    onError: (e) => toast.error(e.message),
+  });
+  const updateBioregionsMut = trpc.userBioregions.update.useMutation({
     onSuccess: () => {
       utils.playerProfiles.me.invalidate();
+      utils.userBioregions.list.invalidate();
       onUpdate();
       toast.success("Settings saved");
     },
@@ -650,7 +677,17 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
     updateMut.mutate({
       collaborationStatus: collab || null,
       dreamingOf: dreaming || undefined,
-      bioregionId: bioregionId,
+      bioregionId: bioregionIds[0] ?? null,
+      locationLat: locationData.lat,
+      locationLng: locationData.lng,
+      locationPrecision: locationData.precision,
+      locationLabel: locationData.label || null,
+      locationNomadic: locationData.nomadic ? 1 : 0,
+      locationEarth: locationData.earth ? 1 : 0,
+    });
+    updateBioregionsMut.mutate({
+      bioregionIds,
+      primaryBioregionId: bioregionIds[0],
     });
   };
 
@@ -695,21 +732,30 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-white/60 text-xs">What bioregion do you call home?</label>
-        <BioregionSelect
-          value={bioregionId}
-          onChange={setBioregionId}
-          placeholder="Search bioregions…"
+        <label className="text-white/60 text-xs">What bioregions do you call home? <span className="opacity-50">(select multiple)</span></label>
+        <BioregionMultiSelect
+          values={bioregionIds}
+          onChange={setBioregionIds}
+          placeholder="Add a bioregion…"
+          variant="dark"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-white/60 text-xs">Location</label>
+        <LocationPicker
+          value={locationData}
+          onChange={setLocationData}
           variant="dark"
         />
       </div>
 
       <button
         onClick={handleSave}
-        disabled={updateMut.isPending}
+        disabled={updateMut.isPending || updateBioregionsMut.isPending}
         className="px-5 py-2 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#6bc96b] transition-colors disabled:opacity-50"
       >
-        {updateMut.isPending ? "Saving..." : "Save"}
+        {updateMut.isPending || updateBioregionsMut.isPending ? "Saving..." : "Save"}
       </button>
     </div>
   );
@@ -884,21 +930,6 @@ function GiftsNeedsPanel() {
 }
 
 // ─── Org Claim + Steward Dashboard ─────────────────────────────────────────
-const LAND_PROJECTS = [
-  { id: "la_tierra", name: "La Tierra", location: "Costa Rica" },
-  { id: "starseed", name: "StarSeed Village", location: "Guatemala" },
-  { id: "nyx", name: "The Nyx", location: "Bali, Indonesia" },
-  { id: "neighbourgood", name: "Our NeighbourGood", location: "New Zealand" },
-  { id: "highland_lake", name: "Highland Lake CampUS", location: "NC, USA" },
-  { id: "liminal", name: "Liminal Village", location: "Italy" },
-  { id: "heartland", name: "Heartland Retreat", location: "California, USA" },
-  { id: "tdf", name: "Traditional Dream Factory", location: "Portugal" },
-  { id: "ubuntu", name: "Ubuntu", location: "Various" },
-  { id: "finca_sagrada", name: "Finca Sagrada", location: "Latin America" },
-  { id: "tabi", name: "Tabi", location: "Various" },
-  { id: "tioga", name: "Tioga", location: "Various" },
-  { id: "lala_gardens", name: "LaLa Gardens Cooperative", location: "Various" },
-];
 const ALLIANCE_ORGS = [
   { id: "hypha", name: "Hypha DAO" },
   { id: "seeds", name: "SEEDS" },
@@ -933,9 +964,13 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
     onSuccess: () => refetchJoinRequests(),
   });
 
+  const { data: mapApps = [] } = trpc.applications.mapData.useQuery();
+
   const approvedClaims = claims?.filter(c => c.status === 'approved') ?? [];
   const pendingClaims = claims?.filter(c => c.status === 'pending') ?? [];
-  const orgOptions = claimType === "land_project" ? LAND_PROJECTS : ALLIANCE_ORGS;
+  const orgOptions = claimType === "land_project"
+    ? mapApps.map((a: any) => ({ id: String(a.id), name: a.name ?? a.projectName ?? "", location: a.location }))
+    : ALLIANCE_ORGS;
   const selectedOrg = orgOptions.find(o => o.id === claimOrgId);
 
   const stewardUpdateMutation = trpc.applications.stewardUpdate.useMutation({
@@ -1201,9 +1236,23 @@ const CAPITAL_TYPES = [
 type CapitalType = typeof CAPITAL_TYPES[number]["value"];
 
 // ─── Contributions Tab ───────────────────────────────────────────────────────
-function ContributionsTab({ walletAddress, onLinkWallet }: { walletAddress?: string | null; onLinkWallet?: () => void }) {
+function ContributionsTab({
+  walletAddress,
+  onLinkWallet,
+  rgenBalance,
+  rvoiceBalance,
+  lastTokenSync,
+}: {
+  walletAddress?: string | null;
+  onLinkWallet?: () => void;
+  rgenBalance?: number | null;
+  rvoiceBalance?: number | null;
+  lastTokenSync?: string | null;
+}) {
   const { data: contributions, isLoading, refetch } = trpc.playerContributions.list.useQuery();
+  const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery();
   const [showForm, setShowForm] = useState(false);
+  const [showManualLog, setShowManualLog] = useState(false);
   const [capitalType, setCapitalType] = useState<CapitalType>("financial");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -1279,6 +1328,90 @@ function ContributionsTab({ walletAddress, onLinkWallet }: { walletAddress?: str
           </button>
         )}
       </div>
+
+      {/* Token Stats Row */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-[#7dd87d]/8 border border-[#7dd87d]/20 rounded-xl p-4">
+          <p className="text-white/50 text-xs mb-1">💚 $ReGen Balance</p>
+          <p className="text-2xl font-bold text-[#7dd87d]">{rgenBalance != null && rgenBalance !== 0 ? rgenBalance.toLocaleString() : "--"}</p>
+          <p className="text-white/30 text-xs mt-1">RGEN</p>
+        </div>
+        <div className="bg-[#d4a574]/8 border border-[#d4a574]/20 rounded-xl p-4">
+          <p className="text-white/50 text-xs mb-1">🗳 RGVoice</p>
+          <p className="text-2xl font-bold text-[#d4a574]">{rvoiceBalance != null && rvoiceBalance !== 0 ? rvoiceBalance.toLocaleString() : "--"}</p>
+          <p className="text-white/30 text-xs mt-1">Voting weight</p>
+        </div>
+      </div>
+
+      {/* Calculator Hub */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
+        <h3 className="text-white/80 text-sm font-semibold flex items-center gap-2">
+          🧮 Your Calculations
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/calculator">
+            <div className="bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-[#7dd87d]/5 rounded-xl p-4 cursor-pointer transition-all text-center group">
+              <div className="text-2xl mb-2">🧮</div>
+              <p className="text-white text-xs font-semibold group-hover:text-[#7dd87d] transition-colors">Contribution Calculator</p>
+              <p className="text-white/40 text-xs mt-1">Estimate your 8 capital contributions</p>
+              <p className="text-[#7dd87d]/70 text-xs mt-2 font-medium">Open →</p>
+            </div>
+          </Link>
+          <Link href="/crowd-pooling">
+            <div className="bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-[#7dd87d]/5 rounded-xl p-4 cursor-pointer transition-all text-center group">
+              <div className="text-2xl mb-2">🌊</div>
+              <p className="text-white text-xs font-semibold group-hover:text-[#7dd87d] transition-colors">Crowd Pooling Tool</p>
+              <p className="text-white/40 text-xs mt-1">Pool capital for your land project</p>
+              <p className="text-[#7dd87d]/70 text-xs mt-2 font-medium">Open →</p>
+            </div>
+          </Link>
+        </div>
+        {savedCalcs.length > 0 && (
+          <div>
+            <p className="text-white/50 text-xs font-medium mb-2 uppercase tracking-wide">Saved Calculations</p>
+            <div className="space-y-2">
+              {savedCalcs.slice(0, 3).map((calc: any) => (
+                <div key={calc.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-white text-xs font-medium truncate">{calc.name || "Untitled Calculation"}</p>
+                    {calc.projectName && <p className="text-white/40 text-xs truncate">{calc.projectName}</p>}
+                  </div>
+                  <Link href={`/calculator?savedId=${calc.id}`}>
+                    <span className="text-[#7dd87d]/70 text-xs hover:text-[#7dd87d] whitespace-nowrap">Edit →</span>
+                  </Link>
+                </div>
+              ))}
+              {savedCalcs.length > 3 && (
+                <Link href="/calculator">
+                  <p className="text-white/40 text-xs text-center hover:text-white/60 transition-colors">+ {savedCalcs.length - 3} more</p>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Self-Reported Contributions section header */}
+      <div>
+        <button
+          onClick={() => setShowManualLog(!showManualLog)}
+          className="w-full flex items-center justify-between py-2 text-white/60 hover:text-white/80 transition-colors text-sm font-medium"
+        >
+          <span className="flex items-center gap-2">
+            <Leaf className="w-4 h-4" /> Self-Reported Contributions
+            {contributions && contributions.length > 0 && (
+              <span className="text-[#7dd87d] text-xs">({contributions.length})</span>
+            )}
+          </span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${showManualLog ? "rotate-180" : ""}`} />
+        </button>
+        {!showManualLog && (
+          <p className="text-white/30 text-xs">Contributions logged here can be verified by admins. For quantified contributions, use the calculator above.</p>
+        )}
+      </div>
+
+      {showManualLog && (
+      <div className="space-y-4">
 
       {/* Summary bar */}
       {contributions && contributions.length > 0 && (
@@ -1509,6 +1642,8 @@ function ContributionsTab({ walletAddress, onLinkWallet }: { walletAddress?: str
           })}
         </div>
       )}
+      </div>
+      )}
     </div>
   );
 }
@@ -1690,7 +1825,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
   const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string; type: "land_project" | "alliance_org" } | null>(null);
   const claimMutation = trpc.orgClaims.claim.useMutation();
 
-  const { data: searchResults } = trpc.applications.search.useQuery(
+  const { data: searchResults } = trpc.orgClaims.search.useQuery(
     { q: searchQuery },
     { enabled: searchQuery.length > 2 }
   );
@@ -1752,11 +1887,14 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
               {searchResults.map((result: any) => (
                 <button
                   key={result.id}
-                  onClick={() => { setSelectedOrg({ id: String(result.id), name: result.projectName, type: "land_project" }); setSearchQuery(result.projectName); }}
+                  onClick={() => { setSelectedOrg({ id: result.id, name: result.name, type: result.type }); setSearchQuery(result.name); }}
                   className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors"
                 >
-                  <p className="text-white text-sm font-medium">{result.projectName}</p>
-                  <p className="text-white/40 text-xs">{result.location} · Land Project</p>
+                  <p className="text-white text-sm font-medium">{result.name}</p>
+                  <p className="text-white/40 text-xs">
+                    {result.location ? `${result.location} · ` : ""}
+                    {result.type === "land_project" ? "Land Project" : "Alliance Org"}
+                  </p>
                 </button>
               ))}
             </div>
@@ -2039,32 +2177,37 @@ export default function PlayerProfile() {
 
               {/* Overview tab */}
               {activeTab === "overview" && (
-                <div className="space-y-6">
-                  <AnimatedSection animation="slide-up">
-                    <ProfileCard
-                      profile={profile}
-                      isOwner={true}
-                      onUpdate={() => refetch()}
-                      onSyncTokens={() => syncTokensMutation.mutate()}
-                      syncIsPending={syncTokensMutation.isPending}
-                    />
-                  </AnimatedSection>
-                  <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
-                  <AnimatedSection animation="slide-up">
-                    <DiscoverTab />
-                  </AnimatedSection>
-                </div>
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/40 text-sm">Something went quiet here. Try refreshing.</div>}>
+                  <div className="space-y-6">
+                    <AnimatedSection animation="slide-up">
+                      <ProfileCard
+                        profile={profile}
+                        isOwner={true}
+                        onUpdate={() => refetch()}
+                        onSyncTokens={() => syncTokensMutation.mutate()}
+                        syncIsPending={syncTokensMutation.isPending}
+                      />
+                    </AnimatedSection>
+                    <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
+                    <AnimatedSection animation="slide-up">
+                      <DiscoverTab />
+                    </AnimatedSection>
+                  </div>
+                </ErrorBoundary>
               )}
 
               {/* Submissions tab */}
               {activeTab === "submissions" && (
-                <div className="mt-6">
-                  <SubmissionsTab />
-                </div>
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/40 text-sm">Something went quiet here. Try refreshing.</div>}>
+                  <div className="mt-6">
+                    <SubmissionsTab />
+                  </div>
+                </ErrorBoundary>
               )}
 
               {/* Quests tab */}
               {activeTab === "quests" && (
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/40 text-sm">Something went quiet here. Try refreshing.</div>}>
                 <AnimatedSection animation="slide-up">
                   {(() => {
                     const completedQuestsList: string[] = (() => {
@@ -2091,10 +2234,12 @@ export default function PlayerProfile() {
                     );
                   })()}
                 </AnimatedSection>
+                </ErrorBoundary>
               )}
 
               {/* Contributions tab */}
               {activeTab === "contributions" && (
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/40 text-sm">Something went quiet here. Try refreshing.</div>}>
                 <AnimatedSection animation="slide-up">
                   <div className="glass-panel p-6 rounded-xl">
                     <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
@@ -2109,9 +2254,13 @@ export default function PlayerProfile() {
                         setActiveTab("settings");
                         setTimeout(() => document.getElementById("wallet-section")?.scrollIntoView({ behavior: "smooth" }), 100);
                       }}
+                      rgenBalance={profile?.rgenBalance}
+                      rvoiceBalance={profile?.rvoiceBalance}
+                      lastTokenSync={profile?.lastTokenSync instanceof Date ? profile.lastTokenSync.toISOString() : (profile?.lastTokenSync ?? null)}
                     />
                   </div>
                 </AnimatedSection>
+                </ErrorBoundary>
               )}
 
               {/* Settings tab */}

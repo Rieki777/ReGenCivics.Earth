@@ -30,13 +30,14 @@ import TreasuryDashboard from "@/components/TreasuryDashboard";
 import { SocialLinks } from "@/components/SocialLinks";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { SEO } from "@/components/SEO";
+import { SEO, pageSEO } from "@/components/SEO";
 import { JsonLD, schemas } from "@/components/JsonLD";
 import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { LazyImage } from "@/components/LazyImage";
 import InvestorJourney from "@/components/InvestorJourney";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import { PageWrapper } from "@/components/PageWrapper";
 
 // Collapsible section component
 function CollapsibleSection({
@@ -118,6 +119,7 @@ export default function Fund() {
   };
 
   return (
+    <PageWrapper>
     <PageBackground
       backgroundImage="https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp"
       mobileBackgroundImage="https://assets.regencivics.earth/AxJkbpktjcGvTnJs.webp"
@@ -135,11 +137,7 @@ export default function Fund() {
         { id: "cta", opacity: 0.55 },               // Call to action
       ]}
     >
-      <SEO
-        title="Fund the Renaissance - Land-Backed Regenerative Investments"
-        description="Land-backed investments in systemic regeneration. A community-governed venture fund directing resources to regenerative land projects."
-        url="/fund"
-      />
+      <SEO {...pageSEO.fund} />
       <JsonLD data={schemas.investmentFund()} />
 
       {/* Fund Status Banner */}
@@ -634,5 +632,6 @@ export default function Fund() {
       {/* Related Content */}
       <RelatedContent pages={relatedContentMap.fund.pages} blog={relatedContentMap.fund.blog} />
     </PageBackground>
+    </PageWrapper>
   );
 }

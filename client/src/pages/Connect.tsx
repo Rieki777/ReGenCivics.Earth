@@ -22,6 +22,7 @@ import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { BackButton } from "@/components/BackButton";
+import { PageWrapper } from "@/components/PageWrapper";
 
 // Path types matching the database enum
 type PathType = "land_partner" | "create_with_regens" | "alliance" | "finance" | "live" | "role" | "something_else";
@@ -1222,6 +1223,7 @@ export default function Connect() {
   
   // Form screen
   return (
+    <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
       {/* Header */}
       <div className="py-8">
@@ -1335,5 +1337,6 @@ export default function Connect() {
         </div>
       </div>
     </div>
+    </PageWrapper>
   );
 }

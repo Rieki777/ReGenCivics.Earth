@@ -13,6 +13,7 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO } from "@/components/SEO";
 import { CalculatorWeightsSheet } from "@/components/CalculatorWeightsSheet";
 import { BackButton } from "@/components/BackButton";
+import { PageWrapper } from "@/components/PageWrapper";
 
 // Sign In CTA Component
 function SignInCTA() {
@@ -39,8 +40,9 @@ function SignInCTA() {
 
 export default function Calculator() {
   return (
+    <PageWrapper>
     <div className="min-h-screen bg-[#f8f5f0]">
-      <SEO 
+      <SEO
         title="Contribution Calculator | ReGen Civics"
         description="Calculate the value of your contributions across the 8 Forms of Capital. An experimental tool for quantifying impact in the ReGen Game."
         image="https://assets.regencivics.earth/ocDzkDHpivHtGCWo.jpg"
@@ -148,5 +150,6 @@ export default function Calculator() {
         </div>
       </section>
     </div>
+    </PageWrapper>
   );
 }

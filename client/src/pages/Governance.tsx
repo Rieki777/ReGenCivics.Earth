@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 import { useEffect, useRef, useState } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { PageWrapper } from "@/components/PageWrapper";
 
 // Fund vs Game RCVoice Toggle Component
 function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game') => void }) {
@@ -711,6 +712,7 @@ function EarthDayCountdown() {
 
 export default function Governance() {
   return (
+    <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818]">
       <BackButton />
       
@@ -1233,5 +1235,6 @@ export default function Governance() {
         </div>
       </section>
     </div>
+    </PageWrapper>
   );
 }

@@ -44,6 +44,7 @@ import { ProgressiveOnboarding, useIsReturnVisitor } from "@/components/Progress
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { ImagePreloader } from "@/components/ImagePreloader";
 import { trpc } from "@/lib/trpc";
+import { PageWrapper } from "@/components/PageWrapper";
 
 // Path card data
 const pathCards = [
@@ -168,6 +169,7 @@ export default function Home() {
   const mobileBgImage = "https://assets.regencivics.earth/uoYdLjIIoDZIndLO.webp";
 
   return (
+    <PageWrapper>
     <PageBackground
       backgroundImage={bgImage}
       mobileBackgroundImage={mobileBgImage}
@@ -651,5 +653,6 @@ export default function Home() {
       </div>
       )}
     </PageBackground>
+    </PageWrapper>
   );
 }
