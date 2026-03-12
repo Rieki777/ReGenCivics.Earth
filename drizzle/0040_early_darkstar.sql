@@ -1,4 +1,4 @@
-CREATE TABLE `player_contributions` (
+CREATE TABLE IF NOT EXISTS `player_contributions` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`profileId` int NOT NULL,
 	`userId` int NOT NULL,
@@ -15,6 +15,41 @@ CREATE TABLE `player_contributions` (
 	CONSTRAINT `player_contributions_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-ALTER TABLE `applications` ADD `meetingFrequency` enum('everyday','2_3x_week','weekly','2_3x_month','monthly','2_3x_year','yearly_plus');--> statement-breakpoint
-ALTER TABLE `applications` ADD `dietaryPatterns` text;--> statement-breakpoint
-ALTER TABLE `player_profiles` ADD `emailDigestFrequency` enum('never','weekly','monthly','seasonal') DEFAULT 'monthly' NOT NULL;
+DROP PROCEDURE IF EXISTS add_meeting_frequency_040;
+CREATE PROCEDURE add_meeting_frequency_040()
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'applications' AND COLUMN_NAME = 'meetingFrequency'
+  ) THEN
+    ALTER TABLE `applications` ADD `meetingFrequency` enum('everyday','2_3x_week','weekly','2_3x_month','monthly','2_3x_year','yearly_plus');
+  END IF;
+END;
+CALL add_meeting_frequency_040();
+DROP PROCEDURE IF EXISTS add_meeting_frequency_040;
+--> statement-breakpoint
+DROP PROCEDURE IF EXISTS add_dietary_patterns_040;
+CREATE PROCEDURE add_dietary_patterns_040()
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'applications' AND COLUMN_NAME = 'dietaryPatterns'
+  ) THEN
+    ALTER TABLE `applications` ADD `dietaryPatterns` text;
+  END IF;
+END;
+CALL add_dietary_patterns_040();
+DROP PROCEDURE IF EXISTS add_dietary_patterns_040;
+--> statement-breakpoint
+DROP PROCEDURE IF EXISTS add_email_digest_freq_040;
+CREATE PROCEDURE add_email_digest_freq_040()
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'player_profiles' AND COLUMN_NAME = 'emailDigestFrequency'
+  ) THEN
+    ALTER TABLE `player_profiles` ADD `emailDigestFrequency` enum('never','weekly','monthly','seasonal') DEFAULT 'monthly' NOT NULL;
+  END IF;
+END;
+CALL add_email_digest_freq_040();
+DROP PROCEDURE IF EXISTS add_email_digest_freq_040;
