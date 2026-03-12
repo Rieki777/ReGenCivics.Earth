@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { SEO } from "@/components/SEO";
+import { SEO, pageSEO } from "@/components/SEO";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -852,11 +852,7 @@ export default function CrowdPoolingProjects() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f8f5f0] to-[#f0ebe0]">
-      <SEO 
-        title="Crowd Pooling Projects - ReGen Civics"
-        description="Discover regenerative land projects seeking contributions. Browse open roles, view project details, and submit your proposal."
-        keywords="crowd pooling, regenerative projects, land contributions, community investment"
-      />
+      <SEO {...pageSEO.crowdPoolingProjects} />
       
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-[#1a472a] to-[#2d5a3d] text-white py-12 md:py-16 px-4 overflow-hidden">

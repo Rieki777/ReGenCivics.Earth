@@ -73,6 +73,117 @@ const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then
 import { AdminImageStudio } from "@/components/AdminImageStudio";
 import KnowledgeMapAdminPanel from "@/components/KnowledgeMapAdminPanel";
 
+// ─── Admin: Custom Game Waitlist ──────────────────────────────────────────────
+function AdminCustomGameWaitlist() {
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const { data: inquiries, refetch } = trpc.customGameInquiries.list.useQuery({});
+  const updateMut = trpc.customGameInquiries.updateStatus.useMutation({ onSuccess: () => refetch() });
+
+  const filtered = (inquiries ?? []).filter(
+    (i: any) => statusFilter === "all" || i.status === statusFilter
+  );
+
+  const STATUS_COLORS: Record<string, string> = {
+    waitlist: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    intro_scheduled: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    in_progress: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+    declined: "bg-red-500/20 text-red-300 border-red-500/30",
+    completed: "bg-green-500/20 text-green-300 border-green-500/30",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-white">Custom Game Waitlist</h2>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm"
+        >
+          <option value="all">All</option>
+          <option value="waitlist">Waitlist</option>
+          <option value="intro_scheduled">Intro Scheduled</option>
+          <option value="in_progress">In Progress</option>
+          <option value="declined">Declined</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      {!filtered.length && (
+        <p className="text-white/40 text-sm py-8 text-center">No submissions yet.</p>
+      )}
+
+      <div className="space-y-3">
+        {filtered.map((inq: any) => (
+          <div
+            key={inq.id}
+            className="bg-white/5 border border-white/10 rounded-xl overflow-hidden"
+          >
+            <div
+              className="p-4 cursor-pointer hover:bg-white/8 transition-colors"
+              onClick={() => setExpanded(expanded === inq.id ? null : inq.id)}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-white text-sm">{inq.fullName}</p>
+                  <a href={`mailto:${inq.email}`} className="text-[#7dd87d] text-xs hover:underline">{inq.email}</a>
+                  <p className="text-white/60 text-xs mt-0.5">{inq.projectName}{inq.websiteOrSocial && <a href={inq.websiteOrSocial} target="_blank" rel="noopener noreferrer" className="ml-2 text-[#7dd87d] hover:underline text-[10px]">↗ site</a>}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[inq.status] ?? "bg-white/10 text-white/60 border-white/10"}`}>
+                    {inq.status}
+                  </span>
+                  <span className="text-white/40 text-xs">{inq.timeline}</span>
+                  {inq.budgetConfirmed ? <span className="text-green-400 text-xs">✓ Budget</span> : <span className="text-red-400 text-xs">✗ Budget</span>}
+                </div>
+              </div>
+
+              {expanded === inq.id && (
+                <div className="mt-4 space-y-3 border-t border-white/10 pt-3">
+                  <div>
+                    <p className="text-white/50 text-xs font-medium mb-1">Land Status</p>
+                    <p className="text-white/80 text-sm">{inq.landStatus}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/50 text-xs font-medium mb-1">Community Stage</p>
+                    <p className="text-white/80 text-sm">{inq.communityStage}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/50 text-xs font-medium mb-1">Primary Goal</p>
+                    <p className="text-white/80 text-sm leading-relaxed">{inq.primaryGoal}</p>
+                  </div>
+                  {inq.additionalNotes && (
+                    <div>
+                      <p className="text-white/50 text-xs font-medium mb-1">Additional Notes</p>
+                      <p className="text-white/70 text-sm">{inq.additionalNotes}</p>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 pt-2">
+                    <label className="text-white/50 text-xs">Status:</label>
+                    <select
+                      value={inq.status}
+                      onChange={(e) => updateMut.mutate({ id: inq.id, status: e.target.value })}
+                      className="bg-white/5 border border-white/20 rounded px-2 py-1 text-white text-xs"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <option value="waitlist">Waitlist</option>
+                      <option value="intro_scheduled">Intro Scheduled</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="declined">Declined</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const ADMIN_PASSWORD = "333";
 
 // ─── Utility: age / response-time indicator ───────────────────────────────────
@@ -3287,6 +3398,13 @@ function AdminDashboard() {
               <span className="mr-1 md:mr-2">🖼️</span>
               <span className="hidden sm:inline">Images</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="custom-games"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+            >
+              <span className="mr-1 md:mr-2">🎮</span>
+              <span className="hidden sm:inline">Custom Games</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -4788,6 +4906,10 @@ function AdminDashboard() {
 
           <TabsContent value="images">
             <AdminImageStudio />
+          </TabsContent>
+
+          <TabsContent value="custom-games">
+            <AdminCustomGameWaitlist />
           </TabsContent>
         </Tabs>
       </div>

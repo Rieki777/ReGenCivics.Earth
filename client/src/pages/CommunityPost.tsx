@@ -25,6 +25,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { ForumMarkdown, MarkdownHints } from "@/components/ForumMarkdown";
 import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownToolbar";
 import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
+import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 
 function timeAgo(date: Date | string): string {
   const now = new Date();
@@ -368,9 +369,12 @@ export default function CommunityPost() {
           <div className="bg-white rounded-xl border border-[#e8e4de] overflow-hidden mb-6">
             {/* Post Header */}
             <div className="px-4 md:px-6 pt-4 md:pt-5 flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4a7c59] to-[#7dd87d] flex items-center justify-center flex-shrink-0 text-white text-sm font-bold">
-                {getInitials(post.authorName || 'A')}
-              </div>
+              <BadgeRingAvatar
+                avatarUrl={post.authorAvatar}
+                displayName={post.authorName}
+                badges={post.authorBadges}
+                size={40}
+              />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Link href={`/community/user/${post.authorId}`} className="font-semibold text-[#1a472a] text-sm hover:text-[#4a7c59] transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
@@ -507,9 +511,12 @@ export default function CommunityPost() {
                       {isNested && (
                         <CornerDownRight className="w-4 h-4 text-[#4a7c59]/30 flex-shrink-0 mt-1" />
                       )}
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4a7c59]/80 to-[#7dd87d]/80 flex items-center justify-center flex-shrink-0 text-white text-[10px] font-bold">
-                        {getInitials(reply.authorName || 'A')}
-                      </div>
+                      <BadgeRingAvatar
+                        avatarUrl={reply.authorAvatar}
+                        displayName={reply.authorName}
+                        badges={reply.authorBadges}
+                        size={32}
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold text-[#1a472a] text-xs" style={{ fontFamily: 'var(--font-display)' }}>

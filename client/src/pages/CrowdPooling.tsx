@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import CrowdPoolingTool from "@/components/CrowdPoolingTool";
-import { SEO } from "@/components/SEO";
+import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 
 // Sign In CTA Component
@@ -44,11 +44,7 @@ export default function CrowdPooling() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f8f5f0] to-[#f0ebe0]">
-      <SEO 
-        title="Crowd Pooling Tool - ReGen Civics"
-        description="Pool capital from multiple contributors for your land project. Track immediate contributions and future value commitments."
-        keywords="crowd pooling, land project funding, community capital, regenerative finance"
-      />
+      <SEO {...pageSEO.crowdPooling} />
       
       {/* Header with Background Image */}
       <header className="relative bg-[#1a472a] text-white py-4 px-4 sticky top-0 z-50 overflow-hidden">
