@@ -42,6 +42,7 @@ Allow: /
 User-agent: YouBot
 Allow: /
 
-# Disallow admin/internal paths (none currently, but placeholder)
-# Disallow: /admin/
-# Disallow: /api/
+# Disallow admin and API paths from all crawlers
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/

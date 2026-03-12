@@ -335,10 +335,12 @@ body: { text: string }
 Environment variables to add:
 
 ```env
-BUFFER_ACCESS_TOKEN=your_token_here
-FARCASTER_HANDLE=@rieki.eth          # optional, for display
-FARCASTER_API_KEY=                   # optional, for direct posting
+BUFFER_ACCESS_TOKEN=your_token_here   # [HUMAN] requires Buffer account setup first
+FARCASTER_HANDLE=@rieki.eth           # skip until Farcaster account exists
+FARCASTER_API_KEY=                    # optional, for direct posting — skip for now
 ```
+
+> **Railway env var status (2026-03-12):** All core variables are set in Railway production. `BUFFER_ACCESS_TOKEN` is pending Buffer account creation (see Setup Steps below). `FARCASTER_HANDLE` is skipped — no account yet. All other variables confirmed.
 
 #### 5. Farcaster Notes
 
@@ -3143,23 +3145,17 @@ All confirmation emails (Apply form, Newsletter, Investor form, Custom Game Wait
 
 ### Current State
 
-`resend` is installed. Email sending is wired in the codebase. The domain `regencivics.earth` may or may not have the required DNS records configured for Resend's sending infrastructure.
+✅ **VERIFIED (2026-03-12)** — `regencivics.earth` is confirmed verified in the Resend dashboard. SPF, DKIM, and DMARC records are in place. Steps 1-3 below are complete. Only Claude Code steps remain.
+
+`resend` is installed. Email sending is wired in the codebase. The domain `regencivics.earth` DNS records are confirmed configured for Resend's sending infrastructure.
 
 ### What to Build
 
-**[COWORK] Step 1: Check Resend domain verification status**
+~~**[COWORK] Step 1: Check Resend domain verification status**~~ ✅ Done — `regencivics.earth` verified.
 
-Cowork navigates to `resend.com/domains` in Chrome, logs into the Resend dashboard, and checks whether `regencivics.earth` has verified SPF, DKIM, and DMARC records. Reports status back.
+~~**[HUMAN] Step 2: Add DNS records if needed**~~ ✅ Done — records already in place.
 
-**[HUMAN] Step 2: Add DNS records if needed**
-
-If verification is incomplete, Resend provides exact DNS record values to add (a TXT record for SPF, two CNAME records for DKIM, a TXT record for DMARC). These must be added in the domain registrar (wherever `regencivics.earth` DNS is managed). Takes approximately 5 minutes. Cowork will surface the exact values to paste.
-
-> "DNS step needed: Add these records to `regencivics.earth` in your registrar. Let me know when done and I'll verify propagation." [Cowork waits and verifies using MXToolbox while working on other parallelizable tasks.]
-
-**[COWORK] Step 3: Verify propagation**
-
-Navigate to `mxtoolbox.com/SuperTool.aspx`, run SPF, DKIM, and DMARC checks for `regencivics.earth`. Confirm all pass.
+~~**[COWORK] Step 3: Verify propagation**~~ ✅ Done — domain verified in Resend dashboard.
 
 **[CLAUDE CODE] Step 4: Verify sender domain in codebase**
 
