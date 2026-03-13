@@ -1,0 +1,172 @@
+/**
+ * HowItWorks - Interactive step-by-step flow showing how ReGen Civics works.
+ * Animated, mobile-first, with expandable steps and a visual progress indicator.
+ */
+import { useState } from "react";
+import { 
+  Sprout, Users, Coins, Globe, ArrowRight, ChevronDown,
+  Leaf, Handshake, Target, TrendingUp
+} from "lucide-react";
+import { AnimatedSection } from "@/components/AnimatedSection";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+
+const steps = [
+  {
+    number: "01",
+    title: "Land Projects Apply",
+    summary: "Regenerative land projects join through our seasonal accelerator program.",
+    detail: "Projects go through a curated selection process during each Season. We evaluate ecological potential, team strength, community impact, and financial viability. Selected projects receive mentorship, governance tools, and access to the alliance network.",
+    icon: Sprout,
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-400/20",
+    borderColor: "border-emerald-400/30",
+  },
+  {
+    number: "02",
+    title: "Alliance Partners Support",
+    summary: "Organizations contribute expertise, technology, and services to strengthen projects.",
+    detail: "Alliance partners provide the infrastructure regenerative projects need: legal frameworks, regenerative agriculture consulting, renewable energy systems, construction expertise, and governance tools. Partners exchange services for equity and $RCivics tokens.",
+    icon: Handshake,
+    color: "text-violet-400",
+    bgColor: "bg-violet-400/20",
+    borderColor: "border-violet-400/30",
+  },
+  {
+    number: "03",
+    title: "Investors Fund the Portfolio",
+    summary: "Accredited investors gain diversified exposure to the regenerative land economy.",
+    detail: "The ReGen Civics Fund pools capital across a curated portfolio of land projects and alliance organizations. This diversified approach reduces risk while maximizing systemic impact. Minimum investment is $250,000.",
+    icon: Coins,
+    color: "text-amber-400",
+    bgColor: "bg-amber-400/20",
+    borderColor: "border-amber-400/30",
+  },
+  {
+    number: "04",
+    title: "Players Grow the Game",
+    summary: "Anyone can play the Infinite Game, completing quests that heal land and community.",
+    detail: "The Infinite Game is open to everyone. Complete quests focused on personal health, community building, and ecological restoration. Earn tokens, build your regenerative portfolio, and contribute to a movement that grows stronger with every player.",
+    icon: Target,
+    color: "text-rose-400",
+    bgColor: "bg-rose-400/20",
+    borderColor: "border-rose-400/30",
+  },
+  {
+    number: "05",
+    title: "Value Flows Back",
+    summary: "As projects thrive, value returns to investors, players, and the land itself.",
+    detail: "Healthy land appreciates. Thriving communities generate economic activity. Alliance services create recurring revenue. This creates a positive feedback loop where ecological regeneration drives financial returns, and financial returns fund more regeneration.",
+    icon: TrendingUp,
+    color: "text-[#7dd87d]",
+    bgColor: "bg-[#7dd87d]/20",
+    borderColor: "border-[#7dd87d]/30",
+  },
+];
+
+export default function HowItWorks() {
+  const [expandedStep, setExpandedStep] = useState<number | null>(null);
+
+  return (
+    <section className="relative py-12 md:py-16">
+      <div className="container max-w-4xl">
+        <AnimatedSection animation="fade-in" className="text-center mb-10">
+          <h2
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 text-shadow-strong"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            How It Works
+          </h2>
+          <p
+            className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Five interconnected steps powering the regenerative renaissance
+          </p>
+        </AnimatedSection>
+
+        {/* Steps */}
+        <div className="relative">
+          {/* Vertical connecting line */}
+          <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px bg-gradient-to-b from-emerald-400/50 via-amber-400/50 to-[#7dd87d]/50 hidden md:block" />
+
+          <div className="space-y-4">
+            {steps.map((step, idx) => {
+              const Icon = step.icon;
+              const isExpanded = expandedStep === idx;
+
+              return (
+                <AnimatedSection key={idx} animation="slide-up" delay={idx * 100}>
+                  <button
+                    onClick={() => setExpandedStep(isExpanded ? null : idx)}
+                    className="w-full text-left"
+                  >
+                    <div
+                      className={`glass-panel glass-panel-interactive p-5 md:p-6 ${step.borderColor} ${
+                        isExpanded ? "scale-[1.01] shadow-lg" : ""
+                      }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Step number + icon */}
+                        <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                          <div
+                            className={`w-12 h-12 md:w-14 md:h-14 rounded-full ${step.bgColor} flex items-center justify-center transition-transform ${
+                              isExpanded ? "scale-110" : ""
+                            }`}
+                          >
+                            <Icon className={`w-6 h-6 md:w-7 md:h-7 ${step.color}`} />
+                          </div>
+                          <span className={`text-xs font-bold ${step.color} opacity-60`}>
+                            {step.number}
+                          </span>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 pt-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3
+                              className={`text-lg md:text-xl font-bold text-white`}
+                              style={{ fontFamily: "var(--font-display)" }}
+                            >
+                              {step.title}
+                            </h3>
+                            <ChevronDown
+                              className={`w-5 h-5 ${step.color} flex-shrink-0 transition-transform ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+                          <p className="text-white/70 text-sm md:text-base mt-1 leading-relaxed">
+                            {step.summary}
+                          </p>
+
+                          {/* Expanded detail */}
+                          {isExpanded && (
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                              <p className="text-white/60 text-sm leading-relaxed">
+                                {step.detail}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                </AnimatedSection>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <AnimatedSection animation="fade-in" delay={600} className="text-center mt-8">
+          <Link href="/seasons">
+            <Button className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-base py-3 px-8 h-auto font-bold btn-press">
+              Start Your Journey <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </Link>
+        </AnimatedSection>
+      </div>
+    </section>
+  );
+}
