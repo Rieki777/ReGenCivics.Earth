@@ -206,3 +206,80 @@ DB error: Unknown column 'open_id' in 'field list'
 ### WAITING ON YOU before Claude Code can proceed
 
 Any new fixes that require knowing your Railway `OWNER_OPEN_ID` or confirming DB state (user IDs, row counts) are blocked until you run the scripts above and share the output.
+
+---
+
+## Fix 57 — Session 3 Comprehensive Polish (2026-03-12)
+
+**Status:** DONE — all changes pushed to origin/main
+
+### What was done
+
+**Fix 56:** `openId` column name fix in admin DB scripts (committed earlier)
+
+**Fix 30-6a (Dead Component Cleanup):**
+- Deleted 13 confirmed-dead components (never imported anywhere): ChakraScrollAnimation, EnhancedAnimations, LandscapeAnimation, MoreAnimations, OrganicAnimations, SeasonalBackground, PulsingGlow, FloatingLeaves, FlipCard, PageLoadingSpinner, CalendarBooking, SemanticEnhancements, HeroIllustration
+- NOTE: 15 components were initially incorrectly flagged as dead and then restored (GoogleTranslate, LanguageSwitcher, AnimatedSection, SocialLinks, SeedOfLifeSpinner, PageBackground, PageTransition, AnimalPopulationInfographic, FoodProductionInfographic, HowItWorks, AutoplayVideo, ParallaxSection, ReadingProgress, TypewriterText, VideoPreviewCard)
+
+**Fix 30-4g (prefers-reduced-motion):**
+- Added global `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; ... } }` to index.css
+- Covers all Tailwind animate-* classes and custom transitions site-wide
+
+**Fix 30-1c (Image loading):**
+- Added `loading="lazy"` to all img tags missing the attribute (AdminCampaignApproval, AdminImageStudio, AuthDialog, LazyImage default)
+
+**Fix 30-1f (Unused dependencies):**
+- Removed: three, next-themes, isomorphic-dompurify, jspdf-autotable, @hookform/resolvers, axios, tailwindcss-animate, @builder.io/vite-plugin-jsx-loc
+
+**Fix 30-6e (.env.example):**
+- Created `.env.example` documenting all 20 environment variables
+
+**Fix 30-2c (ARIA labels):**
+- Added aria-label to 5 icon-only buttons: CommandPalette close, AdminAIAssistant close, Admin keyboard shortcuts close, Admin search clear, CampaignImageGallery close
+
+### What's still pending (needs Rye)
+
+| Fix | What | Why blocked |
+|-----|------|-------------|
+| Fix 22 | Run `seed-quest-comments.ts` | Needs Railway DB access + RYE_USER_ID |
+| Fix 27/54 | Run CSV import scripts | Needs Railway DB access |
+| Fix 28 | Per-page OG images | Needs image uploads to CDN first |
+| Fix 35 | Resend domain authentication | DNS records in domain registrar |
+| Fix 37 | OG preview validation | Browser test (Facebook Debugger, Twitter Card) |
+| Fix 38 | Cross-browser smoke test | Safari + Firefox browser test |
+| Fix 50 | Run fix-admin-role.ts + update Railway OWNER_OPEN_ID | Needs Railway DB + dashboard access |
+
+### All codeable fixes confirmed done
+
+After this session, a full audit confirms Fixes 1-56 are all implemented in code:
+- Quest golden glow + SharePanel + card flip (Fix 1) ✓
+- Admin broadcast panel (Fix 2) ✓ 
+- ProfileEditForm blockchain callout (Fix 3) ✓
+- Forum tabs + DiscoverTab (Fix 4) ✓
+- orgClaims.search autocomplete (Fix 5) ✓
+- Multi-bioregion selection (Fix 6) ✓
+- Badge system + QuestBadges (Fix 7) ✓
+- ContributionCalculator hub in profile (Fix 8) ✓
+- CrowdPooling explanatory header (Fix 9) ✓
+- Completed quests shown at top (Fix 10) ✓
+- Apply page readability (Fix 11) ✓
+- PageSkeleton component (Fix 12) ✓
+- Newsletter re-prompt suppression (Fix 13) ✓
+- Quest card forum links (Fix 14) ✓
+- Avatar URL tooltip (Fix 15) ✓
+- TaoSpinner ~70 quotes (Fix 16) ✓
+- AdminRoles crash fix (Fix 17) ✓
+- Banner system (Fix 18) ✓
+- Analytics dashboard import (Fix 19) ✓
+- Admin moderation password gate (Fix 20) ✓
+- AdminImageStudio copy URL (Fix 21) ✓
+- LocationPicker in profile (Fix 26) ✓
+- Map button "Apply" + Forum link (Fix 25) ✓
+- Investor form gating (Fix 24) ✓
+- orgClaims.search covers alliance orgs (Fix 5/23) ✓
+- Rate limiting (Fix 32) ✓
+- Security headers (Fix 33) ✓
+- Sitemap + structured data (Fix 34) ✓
+- Analytics event tracking (Fix 36) ✓
+- Branded 404 + TaoErrorState (Fix 39) ✓
+- Maintenance mode flag (Fix 40) ✓
