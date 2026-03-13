@@ -111,3 +111,6 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Claude Code skill packages
+*.skill

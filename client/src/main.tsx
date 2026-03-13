@@ -18,7 +18,23 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { GoogleTranslateProvider } from "@/components/GoogleTranslate";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Keep data fresh for 60s — prevents redundant refetches on tab switch / navigation
+      staleTime: 60_000,
+      // Keep unused query data in cache for 5 minutes
+      gcTime: 5 * 60_000,
+      // Don't retry on 4xx errors (auth failures, not-found) — only on network errors
+      retry: (failureCount, error: unknown) => {
+        if (error instanceof Error && error.message.includes("UNAUTHORIZED")) return false;
+        if (error instanceof Error && error.message.includes("FORBIDDEN")) return false;
+        if (error instanceof Error && error.message.includes("NOT_FOUND")) return false;
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;

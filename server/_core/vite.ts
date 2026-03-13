@@ -64,7 +64,19 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Vite hashes all asset filenames (e.g. index-abc123.js), so it's safe to
+  // cache them for 1 year. HTML is excluded (served via the catch-all below
+  // with no-cache so deploys are picked up immediately).
+  app.use(express.static(distPath, {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders(res, filePath) {
+      // Don't cache HTML files — they must always reflect the latest deploy
+      if (filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache");
+      }
+    },
+  }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
