@@ -149,6 +149,25 @@ async function startServer() {
   // Admin Buffer + Farcaster routes
   app.use('/api/admin/buffer', bufferRouter);
   app.use('/api/admin/farcaster', farcasterRouter);
+  // Cache-control for slow-changing tRPC GET endpoints (public, read-only data)
+  const CACHED_TRPC_PREFIXES: Array<{ prefix: string; maxAge: number }> = [
+    { prefix: "/api/trpc/forum.listCategories", maxAge: 300 },      // 5 min — forum categories change rarely
+    { prefix: "/api/trpc/glossary.list", maxAge: 3600 },            // 1 hr  — glossary is static
+    { prefix: "/api/trpc/seasons.list", maxAge: 3600 },             // 1 hr  — seasons change rarely
+    { prefix: "/api/trpc/applications.mapData", maxAge: 120 },      // 2 min — map data is near-real-time
+    { prefix: "/api/trpc/system.getPublicStats", maxAge: 300 },     // 5 min — dashboard stats
+    { prefix: "/api/trpc/orgClaims.list", maxAge: 600 },            // 10 min — org list
+  ];
+  app.use("/api/trpc", (req, res, next) => {
+    if (req.method === "GET") {
+      const match = CACHED_TRPC_PREFIXES.find(({ prefix }) => req.originalUrl.startsWith(prefix));
+      if (match) {
+        res.setHeader("Cache-Control", `public, max-age=${match.maxAge}, stale-while-revalidate=${match.maxAge * 2}`);
+      }
+    }
+    next();
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",

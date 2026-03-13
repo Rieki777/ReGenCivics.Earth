@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double } from "drizzle-orm/mysql-core";
+import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -32,7 +32,7 @@ export type InsertUser = typeof users.$inferInsert;
 export const applications = mysqlTable("applications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  
+
   // Application Status
   status: mysqlEnum("status", [
     "draft",
@@ -103,7 +103,10 @@ export const applications = mysqlTable("applications", {
   submittedAt: timestamp("submittedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  userIdIdx: index("applications_userId_idx").on(t.userId),
+  statusIdx: index("applications_status_idx").on(t.status),
+}));
 
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
@@ -1246,7 +1249,10 @@ export const forumPosts = mysqlTable("forumPosts", {
   bioregionId: int("bioregionId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  categoryIdIdx: index("forumPosts_categoryId_idx").on(t.categoryId),
+  authorIdIdx: index("forumPosts_authorId_idx").on(t.authorId),
+}));
 export type ForumPost = typeof forumPosts.$inferSelect;
 
 /**
@@ -1262,7 +1268,10 @@ export const forumReplies = mysqlTable("forumReplies", {
   triedThis: tinyint("triedThis").default(0).notNull(), // "I tried this" follow-up flag
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  postIdIdx: index("forumReplies_postId_idx").on(t.postId),
+  authorIdIdx: index("forumReplies_authorId_idx").on(t.authorId),
+}));
 export type ForumReply = typeof forumReplies.$inferSelect;
 
 /**

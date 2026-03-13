@@ -121,10 +121,13 @@ function OceanParticles() {
       opacity: 0.1 + Math.random() * 0.3,
     }))
   );
+  const lightrays = useMemo(() => particles.filter(p => p.type === "lightray"), [particles]);
+  const fish = useMemo(() => particles.filter(p => p.type === "fish"), [particles]);
+  const bubbles = useMemo(() => particles.filter(p => p.type === "bubble-tiny"), [particles]);
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-      {particles.filter(p => p.type === "lightray").map((p) => (
+      {lightrays.map((p) => (
         <div
           key={p.id}
           className="absolute animate-light-ray"
@@ -140,7 +143,7 @@ function OceanParticles() {
           }}
         />
       ))}
-      {particles.filter(p => p.type === "fish").map((p) => (
+      {fish.map((p) => (
         <div
           key={p.id}
           className="absolute animate-swimming-fish"
@@ -157,7 +160,7 @@ function OceanParticles() {
           }}
         />
       ))}
-      {particles.filter(p => p.type === "bubble-tiny").map((p) => (
+      {bubbles.map((p) => (
         <div
           key={p.id}
           className="absolute rounded-full animate-tiny-rise"
@@ -191,10 +194,12 @@ function GardenParticles() {
       drift: -40 + Math.random() * 80,
     }))
   );
+  const butterflies = useMemo(() => particles.filter(p => p.type === "butterfly"), [particles]);
+  const pollen = useMemo(() => particles.filter(p => p.type === "pollen"), [particles]);
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-      {particles.filter(p => p.type === "butterfly").map((p) => (
+      {butterflies.map((p) => (
         <div
           key={p.id}
           className="absolute animate-butterfly"
@@ -212,7 +217,7 @@ function GardenParticles() {
           }}
         />
       ))}
-      {particles.filter(p => p.type === "pollen").map((p) => (
+      {pollen.map((p) => (
         <div
           key={p.id}
           className="absolute rounded-full animate-pollen-drift"
@@ -247,9 +252,12 @@ function SkyParticles() {
     }))
   );
 
+  const clouds = useMemo(() => particles.filter(p => p.type === "cloud"), [particles]);
+  const energies = useMemo(() => particles.filter(p => p.type === "energy"), [particles]);
+
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-      {particles.filter(p => p.type === "cloud").map((p) => (
+      {clouds.map((p) => (
         <div
           key={p.id}
           className="absolute animate-cloud-drift"
@@ -265,7 +273,7 @@ function SkyParticles() {
           }}
         />
       ))}
-      {particles.filter(p => p.type === "energy").map((p) => (
+      {energies.map((p) => (
         <div
           key={p.id}
           className="absolute rounded-full animate-energy-pulse"
@@ -300,10 +308,12 @@ function MagicParticles() {
       drift: -50 + Math.random() * 100,
     }))
   );
+  const sparkles = useMemo(() => particles.filter(p => p.type === "sparkle"), [particles]);
+  const trails = useMemo(() => particles.filter(p => p.type === "magic-trail"), [particles]);
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-      {particles.filter(p => p.type === "sparkle").map((p) => (
+      {sparkles.map((p) => (
         <div
           key={p.id}
           className="absolute animate-sparkle"
@@ -320,7 +330,7 @@ function MagicParticles() {
           }}
         />
       ))}
-      {particles.filter(p => p.type === "magic-trail").map((p) => (
+      {trails.map((p) => (
         <div
           key={p.id}
           className="absolute animate-magic-trail"

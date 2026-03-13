@@ -2102,11 +2102,15 @@ export async function getUserForumLikes(userId: number, postId: number) {
 export async function getForumCategoryPostCounts() {
   const db = await getDb();
   if (!db) return {} as Record<number, number>;
-  
-  const posts = await db.select().from(forumPosts);
+
+  const rows = await db
+    .select({ categoryId: forumPosts.categoryId, count: sql<number>`count(*)` })
+    .from(forumPosts)
+    .groupBy(forumPosts.categoryId);
+
   const counts: Record<number, number> = {};
-  for (const post of posts) {
-    counts[post.categoryId] = (counts[post.categoryId] || 0) + 1;
+  for (const row of rows) {
+    counts[row.categoryId] = Number(row.count);
   }
   return counts;
 }
