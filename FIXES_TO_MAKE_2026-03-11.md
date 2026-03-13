@@ -3887,3 +3887,1136 @@ lighthouse-reports/
 ### Priority
 
 **Blocking** -- this is a ship gate. No production deploy until this passes.
+
+
+
+---
+
+## Fix 50: Seeds of Life Favicon
+
+**Type:** Asset + build script
+
+### Goal
+
+Replace the current placeholder favicon with the Seeds of Life sacred geometry mark: a 7-circle geometric pattern (central circle + 6 surrounding petals) rendered as a crisp SVG, then exported to all required PNG sizes and an `.ico` bundle.
+
+### What to Build
+
+`[CLAUDE CODE]`
+
+**1. Create `client/public/favicon.svg`**
+
+Seven-circle geometry: one central circle, six petals arranged at 0/60/120/180/240/300 degrees. All circles same radius, petal centres offset by one radius. Use `fill="none"` stroke-only style in a deep forest green (`#1a3d2b`) or white depending on background. ViewBox `0 0 100 100`. Minimum 2px stroke-width for legibility at small sizes.
+
+**2. Create `scripts/generate-favicon.ts`**
+
+```ts
+import sharp from 'sharp';
+import { readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+
+const SVG_PATH = join(process.cwd(), 'client/public/favicon.svg');
+const OUT_DIR = join(process.cwd(), 'client/public');
+
+const svgBuffer = readFileSync(SVG_PATH);
+
+const sizes = [16, 32, 48, 192, 512];
+
+async function main() {
+  for (const size of sizes) {
+    await sharp(svgBuffer)
+      .resize(size, size)
+      .png()
+      .toFile(join(OUT_DIR, `favicon-${size}.png`));
+    console.log(`Generated favicon-${size}.png`);
+  }
+
+  // Generate apple-touch-icon
+  await sharp(svgBuffer).resize(180, 180).png().toFile(join(OUT_DIR, 'apple-touch-icon.png'));
+  console.log('Generated apple-touch-icon.png');
+}
+
+main().catch(err => { console.error(err); process.exit(1); });
+```
+
+Run: `npm install --save-dev sharp` if not already installed, then `npx tsx scripts/generate-favicon.ts`.
+
+**3. Generate `.ico` bundle**
+
+```bash
+npx png-to-ico client/public/favicon-16.png client/public/favicon-32.png client/public/favicon-48.png > client/public/favicon.ico
+```
+
+Install if needed: `npm install --save-dev png-to-ico`
+
+**4. Update `client/index.html`**
+
+Replace existing favicon `<link>` tags with:
+
+```html
+<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+```
+
+### Files to Create / Modify
+
+| File | Change |
+|------|--------|
+| `client/public/favicon.svg` | New -- Seeds of Life SVG |
+| `scripts/generate-favicon.ts` | New -- PNG generation script |
+| `client/public/favicon-16.png` | Generated |
+| `client/public/favicon-32.png` | Generated |
+| `client/public/favicon-48.png` | Generated |
+| `client/public/favicon-192.png` | Generated |
+| `client/public/favicon-512.png` | Generated |
+| `client/public/apple-touch-icon.png` | Generated |
+| `client/public/favicon.ico` | Generated multi-size bundle |
+| `client/index.html` | Updated `<link>` tags |
+
+### Verify
+
+`[COWORK]` Open the site in Chrome. Check browser tab -- confirm the Seeds of Life mark appears. Check DevTools > Application > Manifest -- confirm all icon sizes registered.
+
+### Priority
+
+Low-medium -- brand polish. Do after core feature fixes.
+
+---
+
+## Fix 51: Schema Expansion -- meetingFrequency + dietaryPatterns
+
+**Type:** Schema migration + tRPC + UI
+
+### Goal
+
+Add two new entity/applicant fields: `meetingFrequency` (how often a land project or alliance partner meets, enum) and `dietaryPatterns` (comma-separated or JSON array of dietary approaches practiced at the project). Update schema, tRPC router, Apply.tsx form, and GlobeMap.tsx filter/entity card.
+
+### What to Build
+
+`[CLAUDE CODE]`
+
+**1. Schema (`server/drizzle/schema.ts` or the correct schema file)**
+
+```ts
+meetingFrequency: mysqlEnum('meetingFrequency', [
+  'weekly', 'biweekly', 'monthly', 'quarterly', 'as-needed'
+]).default('monthly'),
+
+dietaryPatterns: text('dietaryPatterns'), // JSON array stored as string, e.g. '["vegan","omnivore"]'
+```
+
+Add these to the `applications` or `entities` table as appropriate (check schema for the right table).
+
+**2. Run migration**
+
+`[HUMAN]` Rye must run `pnpm db:push` from the project root while connected to Railway DB (Railway dashboard or via Railway CLI). Claude Code cannot access the live database.
+
+**3. Update tRPC router**
+
+Add `meetingFrequency` and `dietaryPatterns` to the input schema in `server/routers/applications.ts` (or whichever router owns entity submissions). Use `z.enum([...]).optional()` and `z.string().optional()` respectively.
+
+**4. Update Apply.tsx**
+
+- Step 2: Add "Meeting frequency" select dropdown with the 5 enum options
+- Step 3: Add "Dietary patterns at your project" multi-select or checkbox group (vegan, vegetarian, omnivore, raw, gluten-free, local-only, other)
+- Wire both fields into the form submission payload
+
+**5. Update GlobeMap.tsx**
+
+- Entity card: display `meetingFrequency` and `dietaryPatterns` when present
+- Filter panel: add "Meeting frequency" and "Dietary patterns" filter dropdowns that filter the visible entities
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `server/drizzle/schema.ts` | Add two new columns |
+| `server/routers/applications.ts` | Add fields to input zod schema |
+| `client/src/pages/Apply.tsx` | Add fields to Steps 2 + 3 |
+| `client/src/pages/GlobeMap.tsx` | Entity card + filter dropdowns |
+
+### Verify
+
+`[CLAUDE CODE]` Run `pnpm check` -- zero TypeScript errors. `[COWORK]` Fill out Apply form; confirm new fields present and submittable. Check entity card on GlobeMap -- confirm fields display.
+
+### Priority
+
+Medium -- enhances project discoverability on the map.
+
+---
+
+## Fix 52: Investor Session Persistence via localStorage
+
+**Type:** Frontend state persistence
+
+### Goal
+
+Once a user has completed and submitted the investor verification form, the platform should remember that across sessions. They should not see the investor form again on reload or return visit. Also: the ExitIntentCapture popup should not show its email-capture prompt to verified investors on investor-related pages.
+
+Note: Fix 24 adds a localStorage submission gate on the form itself. This fix extends that to cover cross-page suppression.
+
+### What to Build
+
+`[CLAUDE CODE]`
+
+**1. `InvestorForm.tsx` -- set flag on success**
+
+In the form submission success callback, after the confirmation UI appears:
+
+```ts
+localStorage.setItem('investor_verified', 'true');
+```
+
+**2. `Opportunity.tsx` -- skip form for returning investors**
+
+At component mount, before rendering the form:
+
+```ts
+const investorVerified = localStorage.getItem('investor_verified') === 'true';
+if (investorVerified) {
+  // Skip form, show investor content directly or a "Welcome back" message
+}
+```
+
+**3. `ExitIntentCapture.tsx` -- suppress on investor pages for verified investors**
+
+Add a check at the top of the component:
+
+```ts
+const isInvestorPage = window.location.pathname.includes('/investor') ||
+  window.location.pathname.includes('/opportunity') ||
+  window.location.pathname.includes('/fund');
+
+const investorVerified = localStorage.getItem('investor_verified') === 'true';
+
+if (isInvestorPage && investorVerified) return null;
+```
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `client/src/components/InvestorForm.tsx` | Set `investor_verified` on success |
+| `client/src/pages/Opportunity.tsx` | Check localStorage flag on mount |
+| `client/src/components/ExitIntentCapture.tsx` | Suppress on investor pages for verified users |
+
+### Verify
+
+`[COWORK]` Submit investor form. Reload page -- form should not reappear. Navigate to `/fund` or `/opportunity` -- ExitIntent popup should not fire. Clear localStorage manually, reload -- form should appear again.
+
+### Priority
+
+Medium -- reduces friction for returning investors.
+
+---
+
+## Fix 53: Legacy CSV Backup Migration to Live DB
+
+**Type:** Migration script (data)
+
+### Goal
+
+Apply the CSV backup files (users + applications tables) to the live Railway database using an idempotent import script. Uses `INSERT IGNORE` so re-runs are safe.
+
+### What to Build
+
+`[CLAUDE CODE]` Create `scripts/migrate-csv.ts`:
+
+```ts
+/**
+ * migrate-csv.ts -- Import legacy CSV backup data into live DB.
+ * Tables: users, applications
+ * Usage: DATABASE_URL=<url> npx tsx scripts/migrate-csv.ts
+ */
+import { parse } from 'csv-parse/sync';
+import * as fs from 'fs';
+import * as path from 'path';
+import mysql from 'mysql2/promise';
+
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) { console.error('DATABASE_URL required'); process.exit(1); }
+
+async function importTable(conn: mysql.Connection, csvPath: string, tableName: string) {
+  const content = fs.readFileSync(csvPath, 'utf-8');
+  const rows = parse(content, { columns: true, skip_empty_lines: true });
+  let inserted = 0, skipped = 0;
+  for (const row of rows) {
+    const cols = Object.keys(row);
+    const placeholders = cols.map(() => '?').join(', ');
+    const values = cols.map(c => row[c] === '' ? null : row[c]);
+    try {
+      await conn.execute(
+        `INSERT IGNORE INTO \`${tableName}\` (${cols.map(c => `\`${c}\``).join(', ')}) VALUES (${placeholders})`,
+        values
+      );
+      inserted++;
+    } catch (err: any) {
+      console.error(`  ${tableName} row error:`, err.message);
+      skipped++;
+    }
+  }
+  console.log(`${tableName}: ${inserted} inserted, ${skipped} skipped.`);
+}
+
+async function main() {
+  const conn = await mysql.createConnection(DATABASE_URL!);
+  const dataDir = path.join(process.cwd(), 'scripts/data');
+
+  await importTable(conn, path.join(dataDir, 'users_backup.csv'), 'users');
+  await importTable(conn, path.join(dataDir, 'applications_backup.csv'), 'applications');
+
+  await conn.end();
+  console.log('Migration complete.');
+}
+
+main().catch(err => { console.error(err); process.exit(1); });
+```
+
+Install dependency if needed: `npm install csv-parse`
+
+`[HUMAN]` Rye must:
+1. Ensure `scripts/data/users_backup.csv` and `scripts/data/applications_backup.csv` exist
+2. Run: `DATABASE_URL=<railway-url> npx tsx scripts/migrate-csv.ts` from the project root
+3. Railway DB URL is in Railway dashboard > Variables
+
+### Files to Create
+
+| File | Change |
+|------|--------|
+| `scripts/migrate-csv.ts` | New -- idempotent CSV-to-DB migration |
+
+### Verify
+
+`[HUMAN]` Check Railway DB via Railway's database viewer or a SQL query after running the script. Confirm row counts match CSV row counts.
+
+### Priority
+
+High -- restores historical data that has not yet been imported.
+
+---
+
+## Fix 54: ExitIntentCapture -- Investor-Context Rewrite
+
+**Type:** Frontend UX
+
+### Goal
+
+When `ExitIntentCapture` fires on an investor-related page (fund, opportunity, investor), it should not show the default email-capture form. Instead it should show a targeted message that redirects to the investor onboarding path.
+
+### What to Build
+
+`[CLAUDE CODE]`
+
+In `ExitIntentCapture.tsx`, detect investor context by route:
+
+```ts
+const isInvestorContext =
+  window.location.pathname.startsWith('/fund') ||
+  window.location.pathname.startsWith('/opportunity') ||
+  window.location.pathname.startsWith('/investor');
+```
+
+When `isInvestorContext` is true, render an alternate modal content block:
+
+**Headline:** "Before you go -- the Fund is open."
+
+**Body:** "ReGen Civics is actively raising from aligned investors. If you are ready to put capital to work in regenerative land projects, the path starts here."
+
+**CTA button:** "Learn About Investing" -- routes to `/investor` (not an email form)
+
+**Dismiss text:** "Not right now"
+
+Do not show this variant if `localStorage.getItem('investor_verified') === 'true'` (see Fix 52).
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `client/src/components/ExitIntentCapture.tsx` | Add investor-context branch with redirect CTA |
+
+### Verify
+
+`[COWORK]` Navigate to `/fund`, wait for exit intent trigger (move cursor toward browser chrome), confirm new investor modal appears. Click "Learn About Investing" -- confirm routes to `/investor`. Confirm default email-capture modal still appears on non-investor pages.
+
+### Priority
+
+Medium -- improves investor conversion path.
+
+---
+
+## Fix 55: PageBackground -- Remove JS Parallax, Use CSS Fixed Attachment
+
+**Type:** Frontend performance + visual
+
+### Goal
+
+The current `PageBackground.tsx` uses a `useEffect` scroll listener to create parallax. This is janky on mobile, causes layout jank, and hurts Lighthouse scores. Replace with CSS `background-attachment: fixed` on desktop and `scroll` on mobile. Fix the overlay opacity.
+
+### What to Build
+
+`[CLAUDE CODE]`
+
+In `PageBackground.tsx`:
+
+**Remove:**
+- The `useEffect` that listens to scroll events
+- Any `transform: translateY()` or inline style that changes on scroll
+- The `inset: "-8% 0"` negative inset (this was compensating for the parallax offset)
+
+**Replace with:**
+
+```tsx
+const isMobile = window.innerWidth < 768; // or use existing mobile detection hook
+
+// Background image div:
+<div
+  style={{
+    position: 'fixed', // or 'absolute' depending on layout
+    inset: '0',
+    backgroundImage: `url(${bgImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: isMobile ? 'scroll' : 'fixed',
+    opacity: overlayOpacity ?? 1,
+  }}
+/>
+```
+
+**Overlay opacity:** Make sure the overlay `opacity` is respected at 100% (value `1`) when no explicit value is passed. Check that the `rgba()` background color on the overlay div does not double-multiply with an `opacity` prop.
+
+**Home page exception:** The home page hero uses scroll-based parallax intentionally via a different mechanism. Confirm `PageBackground` is NOT used on the home hero section, or pass a `disableFixed` prop for that case.
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `client/src/components/PageBackground.tsx` | Remove scroll useEffect; apply CSS background-attachment |
+
+### Verify
+
+`[COWORK]` Navigate to `/community` or `/game`. Scroll slowly -- background should shift subtly on desktop (CSS parallax) and be static on mobile. No jank. Run Lighthouse -- confirm no layout shift from background.
+
+### Priority
+
+Medium -- performance + visual quality.
+
+---
+
+## Fix 56: Remove SiteTour; Update ReGen Guide to Pill Button
+
+**Type:** Frontend UI
+
+**Note:** This supersedes Fix 23. Fix 23 added SiteTour globally; this fix removes it. ReGen Guide replaces it as the persistent help entry point.
+
+### Goal
+
+Remove the SiteTour component entirely from App.tsx (it adds JS overhead and was replaced by ReGen Guide). Update the floating ReGen Guide button to be a pill with text on desktop and an icon-only circle on mobile.
+
+### What to Build
+
+`[CLAUDE CODE]`
+
+**1. `App.tsx`**
+
+Remove:
+```ts
+import SiteTour from './components/SiteTour';
+// ...
+<SiteTour />
+```
+
+If `SiteTour.tsx` itself is unused by anything else, delete it or leave it for now (do not delete if uncertain about references).
+
+**2. `ReGenGuide.tsx`**
+
+Update the floating button:
+
+```tsx
+// Desktop (sm and up): pill button
+<button className="hidden sm:flex items-center gap-2 rounded-full px-4 py-2 bg-forest-green text-white text-sm font-medium shadow-lg hover:shadow-xl transition-all">
+  <GuideIcon className="w-4 h-4" />
+  <span>ReGen Guide</span>
+</button>
+
+// Mobile: icon-only circle
+<button className="flex sm:hidden items-center justify-center w-12 h-12 rounded-full bg-forest-green text-white shadow-lg hover:shadow-xl transition-all">
+  <GuideIcon className="w-5 h-5" />
+</button>
+```
+
+Keep the existing click behavior (opens guide panel/modal). Only the visual treatment changes.
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `client/src/App.tsx` | Remove SiteTour import + JSX |
+| `client/src/components/ReGenGuide.tsx` | Pill on desktop, icon circle on mobile |
+
+### Verify
+
+`[COWORK]` Load the site. Confirm no SiteTour overlay fires on first visit. On desktop, confirm floating button shows "ReGen Guide" with text. On mobile (DevTools device simulator), confirm icon-only circle.
+
+### Priority
+
+Medium -- cleans up tech debt, polishes UI.
+
+---
+
+## Fix 57: VideoPreviewCard -- Wire YouTube URL
+
+**Type:** Frontend (content wiring)
+
+### Goal
+
+The `VideoPreviewCard` component and its usage in `Home.tsx` are scaffolded but have a `comingSoon` placeholder. Once Rye provides the YouTube video URL, remove the placeholder and wire in the real embed.
+
+### What to Build
+
+`[HUMAN]` Rye must provide the YouTube video URL for the home page preview video.
+
+`[CLAUDE CODE]` Once URL is provided:
+
+1. In `Home.tsx`, update the `VideoPreviewCard` usage:
+   - Remove `comingSoon` prop (or set to `false`)
+   - Set `videoUrl` to the provided YouTube URL
+   - Update `thumbnailUrl` if a custom thumbnail is needed
+
+2. In `VideoPreviewCard.tsx`, ensure the component handles a real URL:
+   - On click/play, embed the YouTube iframe or open in lightbox
+   - Remove any "Coming Soon" overlay or badge
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `client/src/pages/Home.tsx` | Wire real YouTube URL, remove comingSoon |
+| `client/src/components/VideoPreviewCard.tsx` | Remove placeholder state once URL is live |
+
+### Verify
+
+`[COWORK]` Click the video preview on the home page. Confirm video plays (YouTube embed or lightbox). Confirm no "Coming Soon" text visible.
+
+### Priority
+
+Low -- blocked on Rye providing the YouTube URL. Do not implement until URL is confirmed.
+
+---
+
+## Fix 58: Hero Background Image Generation
+
+**Type:** Asset generation (nano-banana-pro)
+
+### Goal
+
+Generate two composite hero background images for the home page -- desktop and mobile formats -- using the nano-banana-pro image generation skill. These replace any placeholder or stock images currently used for the home page hero.
+
+### What to Build
+
+`[CLAUDE CODE]` Use the `nano-banana-pro` skill to generate:
+
+**Desktop hero** (`4096 x 8192px`, landscape-to-portrait scroll):
+5-scene composite: regenerative land, bioregional community, token/governance, quest/game, and renaissance vision. Deep nature tones, cinematic, painterly. No text overlays. Render as `hero-bg-desktop.webp`.
+
+**Mobile hero** (`1536 x 6144px`, vertical scroll):
+Same 5-scene narrative but cropped/recomposed for portrait orientation. Render as `hero-bg-mobile.webp`.
+
+Save both to: `client/public/`
+
+**Update `Home.tsx`:**
+
+```tsx
+const isMobile = useIsMobile(); // existing hook
+const bgImage = isMobile ? '/hero-bg-mobile.webp' : '/hero-bg-desktop.webp';
+
+// In the hero section background:
+backgroundImage: `url(${bgImage})`,
+backgroundAttachment: 'scroll', // Home page uses scroll, not fixed (see Fix 55)
+```
+
+### Files to Create / Modify
+
+| File | Change |
+|------|--------|
+| `client/public/hero-bg-desktop.webp` | New -- generated via nano-banana-pro |
+| `client/public/hero-bg-mobile.webp` | New -- generated via nano-banana-pro |
+| `client/src/pages/Home.tsx` | Update bgImage to use new files |
+
+### Verify
+
+`[COWORK]` Load the home page. Confirm hero background displays the generated imagery on both desktop and mobile. Confirm scroll-parallax effect is preserved.
+
+### Priority
+
+Medium -- significant visual impact for first impressions.
+
+---
+
+## Fix 59: My Submissions Tab + Entity Claiming in PlayerProfile
+
+**Type:** Frontend + tRPC backend
+
+### Goal
+
+Add a "My Submissions" tab to `PlayerProfile.tsx` so players can see all forms they have submitted: investor inquiries, project applications, and calculator saves. Also add an entity claiming UI where players can search for and claim organisations or land projects in the Alliance as their own.
+
+### What to Build
+
+`[CLAUDE CODE]`
+
+**1. New Submissions tab in `PlayerProfile.tsx`**
+
+Add "My Submissions" to the tab list. In the tab render block, add `<SubmissionsTab profile={profile} />`.
+
+Create `SubmissionsTab` (can be in the same file or a new `client/src/components/SubmissionsTab.tsx`):
+
+```tsx
+function SubmissionsTab({ profile }: { profile: any }) {
+  return (
+    <div className="space-y-6">
+      <SubmissionsSection title="Investor Inquiries" endpoint="investorInquiries.mine" />
+      <SubmissionsSection title="Project Applications" endpoint="applications.mine" />
+      <OrgClaimsSection />
+    </div>
+  );
+}
+```
+
+**2. `SubmissionsSection` component**
+
+Fetches submissions from the given tRPC endpoint and renders them as `SubmissionCard` components.
+
+**3. `SubmissionCard` component**
+
+Shows: submission date, type, status, and a link to edit/view the saved record.
+
+Status color helper:
+```ts
+function statusColor(status: string): string {
+  switch (status) {
+    case 'approved': return 'text-green-600';
+    case 'pending': case 'new': return 'text-yellow-600';
+    case 'rejected': return 'text-red-600';
+    default: return 'text-gray-500';
+  }
+}
+```
+
+**4. tRPC endpoints**
+
+In `server/routers/investorInquiries.ts` (or general_inquiries router), add:
+
+```ts
+mine: protectedProcedure.query(({ ctx }) => {
+  return ctx.db.select().from(generalInquiries).where(eq(generalInquiries.userId, ctx.session.user.id));
+}),
+```
+
+In `server/routers/applications.ts`, add:
+
+```ts
+mine: protectedProcedure.query(({ ctx }) => {
+  return ctx.db.select().from(applications).where(eq(applications.userId, ctx.session.user.id));
+}),
+
+search: publicProcedure.input(z.object({ id: z.number().optional() })).query(({ input, ctx }) => {
+  if (!input.id) return null;
+  return ctx.db.select().from(applications).where(eq(applications.id, input.id)).limit(1);
+}),
+```
+
+**5. `?id=` param in Apply.tsx**
+
+At mount, read `new URLSearchParams(window.location.search).get('id')`. If present, fetch the application via `applications.search` and pre-fill the form.
+
+**6. `?savedId=` param in Calculator.tsx**
+
+Same pattern -- read `savedId` from URL and pre-load a saved calculation if found.
+
+**7. `OrgClaimsSection` -- entity claiming UI**
+
+A section within the Submissions tab where players can claim ownership of an organisation or land project:
+- Search input that queries `entities.search` (a public tRPC endpoint)
+- Select from results
+- Submit claim (creates an `orgClaim` record for admin review)
+- Admin reviews pending claims in a new `OrgClaimsSection` in AdminDashboard
+
+Claiming tRPC (add to `server/routers/entities.ts`):
+
+```ts
+claim: protectedProcedure.input(z.object({ entityId: z.number(), message: z.string().optional() })).mutation(async ({ input, ctx }) => {
+  return ctx.db.insert(orgClaims).values({
+    userId: ctx.session.user.id,
+    entityId: input.entityId,
+    message: input.message ?? null,
+    status: 'pending',
+    createdAt: new Date(),
+  });
+}),
+```
+
+Add `orgClaims` table to schema if it does not exist.
+
+`[HUMAN]` Run `pnpm db:push` after schema changes.
+
+### Files to Create / Modify
+
+| File | Change |
+|------|--------|
+| `client/src/pages/PlayerProfile.tsx` | Add Submissions tab, embed SubmissionsTab component |
+| `client/src/components/SubmissionsTab.tsx` | New -- section + card components |
+| `server/routers/investorInquiries.ts` | Add `mine` endpoint |
+| `server/routers/applications.ts` | Add `mine` + `search` endpoints |
+| `client/src/pages/Apply.tsx` | Read `?id=` param, pre-fill form |
+| `client/src/pages/Calculator.tsx` | Read `?savedId=` param |
+| `server/drizzle/schema.ts` | Add `orgClaims` table if not exists |
+| `server/routers/entities.ts` | Add `claim` mutation + `search` public endpoint |
+
+### Verify
+
+`[CLAUDE CODE]` `pnpm check` -- zero errors. `[COWORK]` Log in, navigate to Profile > My Submissions. Confirm investor inquiries and applications render. Submit a claim for a test entity. Confirm it appears in the admin claims panel.
+
+### Priority
+
+Medium -- important for player empowerment and Alliance curation.
+
+---
+
+## Fix 60: Live Blockchain Token Balance Sync
+
+**Type:** Backend service + tRPC + frontend
+
+### Goal
+
+Replace the admin-only `syncTokens` procedure with a self-service blockchain sync. Players can refresh their own token balances from the Base blockchain directly. Rate-limited to once per 5 minutes. Admins retain a force-sync bypass.
+
+### What to Build
+
+`[CLAUDE CODE]`
+
+**1. Create `server/blockchain.ts`**
+
+```ts
+const BASE_RPC = process.env.BASE_RPC_URL ?? 'https://mainnet.base.org';
+const RGVOICE_CONTRACT = '0x4d848b3f2d74d1d2f6c75c55d0751dab8fc7d707';
+const REGEN_CONTRACT = '0x4e617cd113364193d215d107add6fa50418aa2e4';
+const ERC20_BALANCE_OF = '0x70a08231';
+const ERC1155_BALANCE_OF = '0x00fdd58e';
+
+function padAddress(address: string): string {
+  return address.replace('0x', '').padStart(64, '0');
+}
+
+async function ethCall(contract: string, data: string): Promise<string> {
+  const res = await fetch(BASE_RPC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0', method: 'eth_call', id: 1,
+      params: [{ to: contract, data }, 'latest'],
+    }),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message);
+  return json.result;
+}
+
+export async function fetchTokenBalances(walletAddress: string): Promise<{ rvoice: number; rgen: number }> {
+  const addr = padAddress(walletAddress);
+
+  // RGVoice: try ERC-20 first
+  let rvoiceHex = await ethCall(RGVOICE_CONTRACT, ERC20_BALANCE_OF + addr).catch(() => null);
+  if (!rvoiceHex || rvoiceHex === '0x') {
+    // Fallback: ERC-1155 balanceOf(address, tokenId=1)
+    const tokenId = '1'.padStart(64, '0');
+    rvoiceHex = await ethCall(RGVOICE_CONTRACT, ERC1155_BALANCE_OF + addr + tokenId).catch(() => '0x0');
+  }
+
+  const rgenHex = await ethCall(REGEN_CONTRACT, ERC20_BALANCE_OF + addr).catch(() => '0x0');
+
+  const toNumber = (hex: string) => hex && hex !== '0x' ? Number(BigInt(hex)) / 1e18 : 0;
+  return { rvoice: toNumber(rvoiceHex ?? '0x0'), rgen: toNumber(rgenHex) };
+}
+```
+
+**2. Add tRPC procedures**
+
+In the player profiles or tokens router:
+
+```ts
+syncTokenBalances: protectedProcedure.mutation(async ({ ctx }) => {
+  const profile = await ctx.db.select().from(playerProfiles)
+    .where(eq(playerProfiles.userId, ctx.session.user.id)).limit(1);
+
+  if (!profile[0]?.walletAddress) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No wallet address on file' });
+
+  const lastSync = profile[0].lastTokenSync ? new Date(profile[0].lastTokenSync).getTime() : 0;
+  const fiveMinutes = 5 * 60 * 1000;
+  if (Date.now() - lastSync < fiveMinutes) {
+    throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Token sync rate-limited. Try again in 5 minutes.' });
+  }
+
+  const { rvoice, rgen } = await fetchTokenBalances(profile[0].walletAddress);
+  await ctx.db.update(playerProfiles).set({
+    rvoiceBalance: rvoice,
+    rgenBalance: rgen,
+    lastTokenSync: new Date(),
+  }).where(eq(playerProfiles.userId, ctx.session.user.id));
+
+  return { rvoice, rgen };
+}),
+
+adminSyncTokens: adminProcedure.input(z.object({ userId: z.number() })).mutation(async ({ input, ctx }) => {
+  const profile = await ctx.db.select().from(playerProfiles)
+    .where(eq(playerProfiles.userId, input.userId)).limit(1);
+  if (!profile[0]?.walletAddress) throw new TRPCError({ code: 'BAD_REQUEST', message: 'No wallet address' });
+  const { rvoice, rgen } = await fetchTokenBalances(profile[0].walletAddress);
+  await ctx.db.update(playerProfiles).set({ rvoiceBalance: rvoice, rgenBalance: rgen, lastTokenSync: new Date() })
+    .where(eq(playerProfiles.userId, input.userId));
+  return { rvoice, rgen };
+}),
+```
+
+Add `lastTokenSync` datetime column to `playerProfiles` schema if not present.
+
+`[HUMAN]` Run `pnpm db:push` after schema changes.
+
+**3. Update `PlayerProfile.tsx`**
+
+Auto-sync on mount (if balances are stale by 10+ minutes):
+
+```ts
+const { mutate: syncTokens, isLoading: syncing } = trpc.syncTokenBalances.useMutation();
+
+useEffect(() => {
+  const lastSync = profile.lastTokenSync ? new Date(profile.lastTokenSync).getTime() : 0;
+  if (Date.now() - lastSync > 10 * 60 * 1000) {
+    syncTokens();
+  }
+}, []);
+```
+
+Add "Refresh balances" button in the token display section:
+
+```tsx
+<button
+  onClick={() => syncTokens()}
+  disabled={syncing}
+  className="flex items-center gap-1 text-sm text-forest-green"
+>
+  <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+  {syncing ? 'Syncing...' : 'Refresh balances'}
+</button>
+```
+
+### Files to Create / Modify
+
+| File | Change |
+|------|--------|
+| `server/blockchain.ts` | New -- pure-fetch eth_call helper |
+| `server/routers/playerProfiles.ts` | Add `syncTokenBalances` + `adminSyncTokens` |
+| `server/drizzle/schema.ts` | Add `lastTokenSync` column if missing |
+| `client/src/pages/PlayerProfile.tsx` | Auto-sync useEffect + Refresh button |
+
+### Verify
+
+`[CLAUDE CODE]` `pnpm check` -- zero errors. `[COWORK]` Navigate to player profile with a wallet address on file. Confirm token balances display. Click "Refresh balances" -- spinner appears, balances update. Click again within 5 minutes -- confirm rate-limit error message appears.
+
+### Priority
+
+High -- core feature for the ReGen Game token economy.
+
+---
+
+## Fix 61: Forum Content Overhaul + Welcome Aboard Quests
+
+**Type:** Frontend component + seed scripts + data files
+
+### Goal
+
+Implement the full Welcome Aboard Quests system and refresh all existing Gathering Grove forum content. This is a 7-part implementation based on `FORUM_UPGRADES_2026-03-10.md` and `ReGenCivics_WelcomeAboard_Brief.md`.
+
+### Key Constraints (Apply to All Parts)
+
+- Remove ALL em-dashes from every string before writing to DB or UI. Replace ` -- ` or ` - ` in text; restructure any sentence that relied on an em-dash. No exceptions.
+- No AI-isms: no "delve into", "it's worth noting", "in conclusion", "game-changing", "let's explore"
+- Q10 forum link must point to `https://regencivics.earth/community/quests` (not `/dream-quest`)
+
+---
+
+### Part A: Quest Card UI
+
+`[CLAUDE CODE]`
+
+**Create `client/src/components/QuestCard.tsx`**
+
+Interface:
+
+```ts
+interface QuestCardProps {
+  number: number;
+  title: string;
+  tagline: string;
+  reward: string;
+  forumUrl: string;
+  about: string;
+  steps: string[];
+  bonus?: string;
+  completed?: boolean;
+  onToggleComplete?: () => void;
+}
+```
+
+Two zones per card:
+
+**Always visible:**
+- Quest number badge (Q1, Q2...)
+- Title
+- Tagline (one line)
+- Reward badge: "33 $ReGen + 0.1 RGVoice"
+- "Go to forum post" button (opens `forumUrl` in new tab)
+- Completed checkmark if `completed === true`
+
+**Collapsible (chevron toggle, closed by default):**
+- Label: "About this quest"
+- Full `about` description
+- Numbered `steps` list
+- `bonus` line if present
+
+**Create `client/src/data/welcomeAboardQuests.ts`**
+
+Array of 10 quest objects populated from `ReGenCivics_WelcomeAboard_Brief.md` Section 2. Quest forum URLs:
+
+| Quest | Forum URL |
+|-------|-----------|
+| Q1 | `/community/feedback` |
+| Q2 | `/community/origin-story` |
+| Q3 | `/community/regen-act` |
+| Q4 | `/community/bioregion` |
+| Q5 | `/community/make-friends` |
+| Q6 | `/community/pledge-gift` |
+| Q7 | `/community/foundations` |
+| Q8 | `/community/refer-org` |
+| Q9 | `/community/refer-land` |
+| Q10 | `https://regencivics.earth/community/quests` ← absolute URL override |
+
+---
+
+### Part B: UX Entry Points
+
+`[CLAUDE CODE]`
+
+**Create `client/src/components/QuestStartPopup.tsx`**
+
+One-time modal after a player completes their profile for the first time:
+- Check `localStorage.getItem('hasSeenQuestPrompt')` on render -- if `'true'`, return null
+- On dismiss (X or "View Quests" button): `localStorage.setItem('hasSeenQuestPrompt', 'true')`
+- "View Quests" button routes to `/profile?tab=quests`
+- Warm welcome copy: invite player into the Welcome Aboard Quests series
+
+**Profile area link:**
+
+In `PlayerProfile.tsx` header or sidebar, add a persistent "Personal Quests" link that sets `?tab=quests`.
+
+**Nav menu entry:**
+
+In the nav component (check `client/src/components/Nav.tsx` or equivalent), add "Personal Quests" as an authenticated-user-only nav item that routes to `/profile?tab=quests`.
+
+---
+
+### Part C: Series Header in Quests Tab
+
+`[CLAUDE CODE]`
+
+At the top of the Quests tab in `PlayerProfile.tsx`, above the quest cards, render:
+
+```tsx
+<div className="mb-6 p-4 rounded-lg bg-forest-green/5 border border-forest-green/20">
+  <h2 className="text-lg font-semibold text-forest-green">Welcome Aboard Quests</h2>
+  <p className="text-sm text-gray-600 mt-1">Ten ways to root yourself in the Regenerative Renaissance.</p>
+  <p className="text-sm text-gray-500 mt-2">
+    Complete all 10 to earn 330 $ReGen + 1 RGVoice total.
+    Each quest is worth 33 $ReGen + 0.1 RGVoice.
+    You can claim after completing all 10.
+  </p>
+</div>
+```
+
+---
+
+### Part D: Forum Post Rewrites (8 Existing Posts)
+
+`[CLAUDE CODE]`
+
+**Create `scripts/data/forum-posts.ts`**
+
+Exported array: `{ slug: string; title: string; body: string }[]`
+
+The 8 rewritten post bodies are defined in the Community Forum Content document (Gathering Grove rewrites section). Pull them from that document. Apply all constraints: no em-dashes, no AI-isms.
+
+**Create `scripts/seed-forum-posts.ts`**
+
+Updates the bodies of the 8 existing Gathering Grove forum posts in the DB:
+
+```ts
+// Usage: npx tsx scripts/seed-forum-posts.ts [--dry-run]
+```
+
+Must support `--dry-run` flag that prints all posts to console without writing to DB.
+
+---
+
+### Part E: Pre-Population Thread Stubs (40 Threads)
+
+`[CLAUDE CODE]`
+
+**Create `scripts/data/forum-threads.ts`**
+
+Exported array: `{ topicSlug: string; title: string; body: string; authorNote?: string }[]`
+
+40 thread stubs across 9 topic areas from the Community Forum Content document. Same constraints.
+
+**Create `scripts/seed-forum-threads.ts`**
+
+Inserts 40 stubs into the DB. Must support `--dry-run`.
+
+---
+
+### Part F: Quest Forum Posts + Seed Comments (10 Posts)
+
+`[CLAUDE CODE]`
+
+**Create `scripts/seed-quest-forum-posts.ts`**
+
+1. Creates 10 dedicated forum posts (one per quest) at the URLs defined in Part A
+2. Adds 3 seed comments per post from `ReGenCivics_WelcomeAboard_Brief.md` Section 3
+3. Seed comments marked as EXAMPLE; posted from admin/moderator account
+4. Quest 10 completion CTA links to `https://regencivics.earth/community/quests`
+
+Must support `--dry-run`. Use fictional example usernames from the brief as comment author display names.
+
+---
+
+### Part G: Em-Dash Audit
+
+`[CLAUDE CODE]`
+
+After all content is written, run:
+
+```bash
+grep -r " -- \|--\|—" client/src/ server/ scripts/data/ --include="*.ts" --include="*.tsx" | grep -v node_modules | grep -v ".git"
+```
+
+Any match is a bug. Fix before committing.
+
+---
+
+### Part H: PlayerProfile -- URL Param Tab Handling
+
+`[CLAUDE CODE]`
+
+Per `ReGenCivics_WelcomeAboard_Brief.md` Section 4:
+
+In `PlayerProfile.tsx`, add URL param reading so `?tab=quests` loads the Quests tab directly:
+
+```ts
+const searchParams = new URLSearchParams(window.location.search);
+const tabParam = searchParams.get('tab') as ProfileTab | null;
+const validTabs: ProfileTab[] = ['overview', 'quests', 'contributions', 'settings', 'submissions'];
+const [activeTab, setActiveTab] = useState<ProfileTab>(
+  tabParam && validTabs.includes(tabParam) ? tabParam : 'overview'
+);
+```
+
+Also sync URL on tab click:
+
+```ts
+onClick={() => {
+  setActiveTab(tab.id);
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', tab.id);
+  window.history.replaceState({}, '', url.toString());
+}}
+```
+
+---
+
+### Files to Create / Modify
+
+| Action | File | Description |
+|--------|------|-------------|
+| CREATE | `client/src/components/QuestCard.tsx` | Collapsible quest card |
+| CREATE | `client/src/data/welcomeAboardQuests.ts` | 10 quest data objects |
+| MODIFY | `client/src/pages/PlayerProfile.tsx` | URL param tab; series header; WelcomeAboardQuests; QuestStartPopup; Personal Quests link |
+| CREATE | `client/src/components/QuestStartPopup.tsx` | One-time popup after profile setup |
+| MODIFY | `client/src/components/Nav.tsx` | "Personal Quests" nav item (authenticated) |
+| CREATE | `scripts/seed-forum-posts.ts` | Updates 8 existing post bodies |
+| CREATE | `scripts/data/forum-posts.ts` | Post body data |
+| CREATE | `scripts/seed-forum-threads.ts` | Inserts 40 thread stubs |
+| CREATE | `scripts/data/forum-threads.ts` | Thread stub data |
+| CREATE | `scripts/seed-quest-forum-posts.ts` | 10 quest forum posts + seed comments |
+
+### Verify
+
+`[CLAUDE CODE]` `pnpm check` -- zero TypeScript errors. Em-dash grep returns zero matches.
+
+`[COWORK]`:
+1. Navigate to `/profile?tab=quests` -- Quests tab loads directly
+2. Quest cards render, expand/collapse on click
+3. Q1-Q9 forum buttons open correct relative URLs; Q10 opens `https://regencivics.earth/community/quests`
+4. `QuestStartPopup` appears on first profile completion, not again on reload
+5. "Personal Quests" appears in nav (authenticated) and in profile header
+6. Run `npx tsx scripts/seed-forum-posts.ts --dry-run` -- prints 8 posts, no error
+7. Run `npx tsx scripts/seed-forum-threads.ts --dry-run` -- prints 40 threads, no error
+8. Run `npx tsx scripts/seed-quest-forum-posts.ts --dry-run` -- prints 10 quest posts, no error
+
+`[HUMAN]` After dry-run confirms output, run each seed script against the live DB:
+```
+DATABASE_URL=<railway-url> npx tsx scripts/seed-forum-posts.ts
+DATABASE_URL=<railway-url> npx tsx scripts/seed-forum-threads.ts
+DATABASE_URL=<railway-url> npx tsx scripts/seed-quest-forum-posts.ts
+```
+
+### Priority
+
+High -- core player onboarding experience and forum activation.
+
+---
+
+## Fix 62: Handoff Breakdown -- New Fixes (50-61)
+
+**Type:** Meta / planning
+
+### Handoff Table -- Fix 50-61
+
+| Fix | Description | COWORK Validation | HUMAN Step |
+|-----|-------------|-------------------|------------|
+| Fix 50 | Generate Seeds of Life SVG favicon; build PNG sizes + .ico via `generate-favicon.ts` | Check browser tab for Seeds of Life mark; check DevTools Manifest | -- |
+| Fix 51 | Add `meetingFrequency` + `dietaryPatterns` to schema; update tRPC + Apply.tsx + GlobeMap | Apply form shows new fields; entity card displays them on map | Run `pnpm db:push` against Railway DB |
+| Fix 52 | Set `investor_verified` in localStorage on form submit; suppress re-display across pages | Submit investor form, reload, confirm no re-prompt on investor pages | -- |
+| Fix 53 | Create `scripts/migrate-csv.ts`; run idempotent CSV-to-DB migration | -- | Place CSVs in `scripts/data/`; run `DATABASE_URL=<url> npx tsx scripts/migrate-csv.ts` |
+| Fix 54 | ExitIntentCapture investor-context rewrite: redirect CTA instead of email form | Trigger exit intent on `/fund`; confirm investor redirect modal | -- |
+| Fix 55 | PageBackground: remove JS scroll listener; use `background-attachment: fixed` on desktop | Scroll on `/community`; no jank, CSS parallax active on desktop | -- |
+| Fix 56 | Remove SiteTour from App.tsx; update ReGen Guide to pill+text on desktop, icon on mobile | Confirm no tour fires; confirm pill button on desktop, circle on mobile | -- |
+| Fix 57 | Wire YouTube URL into VideoPreviewCard on Home.tsx; remove `comingSoon` | Click video on home page; confirm it plays | Provide YouTube URL |
+| Fix 58 | Generate hero background images via nano-banana-pro (desktop + mobile); update Home.tsx | Load home page; confirm hero imagery on desktop and mobile | -- |
+| Fix 59 | My Submissions tab in PlayerProfile; `SubmissionsTab`, `SubmissionsSection`, `SubmissionCard`; `OrgClaimsSection`; new tRPC endpoints | Profile > My Submissions shows inquiries + applications; claim flow works | Run `pnpm db:push` if `orgClaims` table added |
+| Fix 60 | Create `server/blockchain.ts`; self-service `syncTokenBalances` (5-min rate-limit); auto-sync + Refresh button in PlayerProfile | Refresh balances button syncs; rate-limit fires on repeat click | Run `pnpm db:push` if `lastTokenSync` column added |
+| Fix 61 | Forum content overhaul + Welcome Aboard Quests (Parts A-H): QuestCard, WelcomeAboardQuests, QuestStartPopup, URL tab params, seed scripts | Quest cards render in profile; popup fires once; seed scripts pass dry-run; Q10 URL correct | Run 3 seed scripts against live DB; `pnpm db:push` if schema changes needed |
+
+`[COWORK]` After Claude Code signals completion on any Fix above: run the COWORK validation step in a browser. Capture a screenshot as evidence. If validation fails, report failure back to Claude Code with the screenshot.
+
+`[HUMAN]` Steps flagged above that require Rye:
+1. **Fix 51:** `pnpm db:push` after schema changes (Railway DB access required)
+2. **Fix 53:** Copy CSV backups to `scripts/data/`; run migration script with Railway `DATABASE_URL`
+3. **Fix 57:** Provide YouTube video URL before Claude Code can implement
+4. **Fix 59:** `pnpm db:push` if `orgClaims` table is new
+5. **Fix 60:** `pnpm db:push` if `lastTokenSync` column is new
+6. **Fix 61:** Run 3 seed scripts against live DB after dry-run confirms output
+
+### Priority
+
+Medium -- no code changes, required for Cowork + Claude Code handoff protocol.

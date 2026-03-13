@@ -5,16 +5,23 @@
 import { SeedOfLifeSpinner } from "./SeedOfLifeSpinner";
 import { useLocation } from "wouter";
 
+interface TaoErrorStateLink {
+  label: string;
+  href: string;
+}
+
 interface TaoErrorStateProps {
   message?: string;
   subtext?: string;
   showCTAs?: boolean;
+  extraLinks?: TaoErrorStateLink[];
 }
 
 export function TaoErrorState({
   message = "When we think things are broken, ponder the TAO...",
   subtext,
   showCTAs = true,
+  extraLinks,
 }: TaoErrorStateProps) {
   const [, setLocation] = useLocation();
 
@@ -44,6 +51,15 @@ export function TaoErrorState({
           >
             Visit Community
           </button>
+          {extraLinks?.map((link) => (
+            <button
+              key={link.href}
+              onClick={() => setLocation(link.href)}
+              className="px-5 py-2.5 bg-[#7dd87d]/10 border border-[#7dd87d]/20 text-[#7dd87d]/80 rounded-lg text-sm hover:border-[#7dd87d]/40 transition-colors"
+            >
+              {link.label}
+            </button>
+          ))}
         </div>
       )}
     </div>

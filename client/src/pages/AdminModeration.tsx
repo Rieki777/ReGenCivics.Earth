@@ -88,6 +88,11 @@ export default function AdminModeration() {
   const { user, isAuthenticated: userAuthenticated } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('reports');
+  const [reportFilter, setReportFilter] = useState<string | undefined>('pending');
+  const [newModUserId, setNewModUserId] = useState('');
+  const [banUserId, setBanUserId] = useState('');
+  const [banReason, setBanReason] = useState('');
+  const [banDays, setBanDays] = useState('');
 
   useEffect(() => {
     const auth = localStorage.getItem("moderation_authenticated");
@@ -95,34 +100,13 @@ export default function AdminModeration() {
       setIsAuthenticated(true);
     }
   }, []);
-  const [reportFilter, setReportFilter] = useState<string | undefined>('pending');
-  const [newModUserId, setNewModUserId] = useState('');
-  const [banUserId, setBanUserId] = useState('');
-  const [banReason, setBanReason] = useState('');
-  const [banDays, setBanDays] = useState('');
 
-  // Check password gate first
-  if (!isAuthenticated) {
-    return <PasswordGate onAuthenticated={() => setIsAuthenticated(true)} />;
-  }
+  const isAuthorized = isAuthenticated && userAuthenticated && user?.role === 'admin';
 
-  // Check admin role access
-  if (!userAuthenticated || user?.role !== 'admin') {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
-        <div className="text-center">
-          <Shield className="w-16 h-16 text-red-400/40 mx-auto mb-4" />
-          <h2 className="text-white/60 text-lg mb-2">Access Denied</h2>
-          <p className="text-white/40 text-sm mb-4">Admin access required for moderation tools.</p>
-          <Link href="/community" className="text-[#7dd87d] hover:underline text-sm">Back to Forum</Link>
-        </div>
-      </div>
-    );
-  }
-
-  const reportsQuery = trpc.moderation.reports.useQuery({ status: reportFilter });
-  const moderatorsQuery = trpc.moderation.moderators.useQuery();
-  const bannedUsersQuery = trpc.moderation.bannedUsers.useQuery();
+  // All hooks must be at top -- use `enabled` to prevent API calls when not authorized
+  const reportsQuery = trpc.moderation.reports.useQuery({ status: reportFilter }, { enabled: isAuthorized });
+  const moderatorsQuery = trpc.moderation.moderators.useQuery(undefined, { enabled: isAuthorized });
+  const bannedUsersQuery = trpc.moderation.bannedUsers.useQuery(undefined, { enabled: isAuthorized });
 
   const updateReportMutation = trpc.moderation.updateReport.useMutation({
     onSuccess: () => reportsQuery.refetch(),
@@ -139,6 +123,24 @@ export default function AdminModeration() {
   const unbanMutation = trpc.moderation.unbanUser.useMutation({
     onSuccess: () => bannedUsersQuery.refetch(),
   });
+
+  // Conditional returns AFTER all hooks
+  if (!isAuthenticated) {
+    return <PasswordGate onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
+
+  if (!userAuthenticated || user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="w-16 h-16 text-red-400/40 mx-auto mb-4" />
+          <h2 className="text-white/60 text-lg mb-2">Access Denied</h2>
+          <p className="text-white/40 text-sm mb-4">Admin access required for moderation tools.</p>
+          <Link href="/community" className="text-[#7dd87d] hover:underline text-sm">Back to Forum</Link>
+        </div>
+      </div>
+    );
+  }
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
     { key: 'reports', label: 'Reports', icon: <Flag className="w-4 h-4" />, count: reportsQuery.data?.length },

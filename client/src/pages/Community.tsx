@@ -23,6 +23,7 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
+import { isNewsletterSubscribed } from "@/utils/newsletter";
 import AMABanner from "@/components/AMABanner";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -68,6 +69,7 @@ export default function Community() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [alreadySubscribed] = useState(() => isNewsletterSubscribed());
   const { t } = useLanguage();
 
   // Track forum visit so ProgressiveOnboarding can show the "Back to Forum" card
@@ -413,7 +415,7 @@ export default function Community() {
             <h3 className="text-white/80 text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
               Get the Weekly Digest
             </h3>
-            <NewsletterSignupInline />
+            {!alreadySubscribed && <NewsletterSignupInline />}
           </div>
         </ScrollRevealMotion>
       </section>

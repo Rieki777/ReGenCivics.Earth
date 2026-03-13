@@ -258,7 +258,6 @@ export default function Navigation() {
                 >
                   <span className="text-lg mr-3">🎮</span>
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Custom Land Games</span>
-                  <span className="ml-auto text-[9px] bg-[#d4a574]/30 text-[#d4a574] px-1.5 py-0.5 rounded-full">Soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 <DropdownMenuItem
@@ -759,7 +758,6 @@ export default function Navigation() {
                     >
                       <span className="text-lg">🎮</span>
                       Custom Land Games
-                      <span className="ml-auto text-[9px] bg-[#d4a574]/30 text-[#d4a574] px-1.5 py-0.5 rounded-full">Soon</span>
                     </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
                     <Link

@@ -1,5 +1,5 @@
 /**
- * Custom Games for Land Projects  -  Coming Soon teaser page
+ * Custom Games for Land Projects
  * Route: /custom-games
  */
 
@@ -14,8 +14,36 @@ import { CustomGameWaitlistForm } from "@/components/CustomGameWaitlistForm";
 import { Gamepad2, Sparkles, ArrowRight, Map, Users, Sprout, X } from "lucide-react";
 import { PageWrapper } from "@/components/PageWrapper";
 
+const FEATURE_CARDS = [
+  {
+    icon: Users,
+    title: "Foundations for Building with Others",
+    desc: "Shared values, rituals, and culture infrastructure so your community has a living foundation, not just a website.",
+    detail: "We help you articulate and encode the values, rituals, and culture practices that will hold your community together through the hard parts. This becomes the living foundation that new members enter into from day one.",
+  },
+  {
+    icon: Gamepad2,
+    title: "Clear Agreements, Roles, and Decision-Making",
+    desc: "Custom governance flows for your project: who decides what, how disputes are resolved, how new members join.",
+    detail: "We design the decision-making architecture specific to your project. Who has a say, how conflicts get resolved, how new members move from visitor to contributor to core team. Built for real communities, not boardrooms.",
+  },
+  {
+    icon: Map,
+    title: "Custom Website per Community Persona",
+    desc: "Residents, investors, business owners, and core team each get their own entry path, onboarding journey, and dashboard view.",
+    detail: "Different people arrive at your project with different needs and questions. We build persona-specific entry points so each type of visitor gets the right welcome, the right information, and the right next step.",
+  },
+  {
+    icon: Sprout,
+    title: "Quest System per Persona",
+    desc: "Role-specific quests that guide each person from arrival through deep contribution.",
+    detail: "Stop doing manual onboarding one person at a time. Quests guide each persona through the journey from curious visitor to active contributor, tracking completion and rewarding the milestones that matter to your project.",
+  },
+];
+
 export default function CustomGames() {
   const [showForm, setShowForm] = useState(false);
+  const [expandedCard, setExpandedCard] = useState<number | null>(null);
 
   return (
     <PageWrapper>
@@ -32,11 +60,6 @@ export default function CustomGames() {
       {/* Hero */}
       <section className="container mx-auto px-4 py-16 md:py-24 text-center">
         <AnimatedSection animation="fade-in">
-          <Badge className="mb-6 bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/40 text-sm px-4 py-1">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 inline" />
-            Coming Soon
-          </Badge>
-
           <h1
             className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
             style={{ fontFamily: "var(--font-display)" }}
@@ -80,35 +103,29 @@ export default function CustomGames() {
           >
             What you'll get
           </h2>
-          <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              {
-                icon: Gamepad2,
-                title: "Custom Quest System",
-                desc: "Your own quests tailored to your land project's values and milestones.",
-              },
-              {
-                icon: Users,
-                title: "Community Engagement",
-                desc: "Tools to engage your community through gamified contribution tracking.",
-              },
-              {
-                icon: Map,
-                title: "Your Own Map",
-                desc: "A living map of your land, projects, and alliance connections.",
-              },
-            ].map((item) => {
+          <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {FEATURE_CARDS.map((item, idx) => {
               const Icon = item.icon;
+              const isExpanded = expandedCard === idx;
               return (
                 <div
                   key={item.title}
-                  className="bg-white/5 border border-[#7dd87d]/20 rounded-2xl p-6 text-center hover:bg-white/10 transition-colors"
+                  className="bg-white/5 border border-[#7dd87d]/20 rounded-2xl p-6 hover:bg-white/10 transition-colors"
                 >
-                  <div className="w-12 h-12 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-12 h-12 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mb-4">
                     <Icon className="w-6 h-6 text-[#7dd87d]" />
                   </div>
                   <h3 className="font-bold text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-white/60">{item.desc}</p>
+                  <p className="text-sm text-white/70">{item.desc}</p>
+                  {isExpanded && (
+                    <p className="text-sm text-white/60 mt-3 leading-relaxed">{item.detail}</p>
+                  )}
+                  <button
+                    onClick={() => setExpandedCard(isExpanded ? null : idx)}
+                    className="mt-3 text-xs text-[#7dd87d] hover:text-[#7dd87d]/80 transition-colors"
+                  >
+                    {isExpanded ? "Show less" : "Learn more"}
+                  </button>
                 </div>
               );
             })}
@@ -145,8 +162,8 @@ export default function CustomGames() {
               <Sprout className="w-4 h-4 mr-2" />
               Join Waitlist
             </Button>
-            <p className="text-white/40 text-xs">
-              We'll reach out within 5 business days to schedule an intro conversation.
+            <p className="text-white/50 text-xs">
+              We take on 3-5 projects per season. Outreach-to-kickoff typically takes 5 business days.
             </p>
           </div>
         </AnimatedSection>

@@ -19,6 +19,7 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
 import { motion } from "framer-motion";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
+import { isNewsletterSubscribed } from "@/utils/newsletter";
 import KnowledgeMapPanel from "@/components/KnowledgeMapPanel";
 
 function timeAgo(date: Date | string): string {
@@ -101,6 +102,7 @@ export default function CommunityCategory() {
   const { slug } = useParams<{ slug: string }>();
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  const [alreadySubscribed] = useState(() => isNewsletterSubscribed());
 
   const { data: category, isLoading: catLoading } = trpc.forum.categoryBySlug.useQuery(
     { slug: slug || '' },
@@ -114,10 +116,37 @@ export default function CommunityCategory() {
 
   const isLoading = catLoading || postsLoading;
 
-  // Redirect non-authenticated users to the community gate page
+  // Soft gate for unauthenticated users -- show an inline join prompt instead of hard redirect
   if (!isAuthenticated) {
-    window.location.href = '/community';
-    return null;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-24 text-center">
+        <div className="max-w-md space-y-4">
+          <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
+            Join to participate in this forum
+          </h2>
+          <p className="text-white/60 text-sm">
+            Create a free account to read and reply to forum discussions, share your land project, and connect with the ReGen Civics community.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <button
+              onClick={() => {
+                sessionStorage.setItem("returnTo", window.location.pathname);
+                window.location.href = '/connect';
+              }}
+              className="px-6 py-3 rounded-lg bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#7dd87d]/90 transition-colors"
+            >
+              Create Account
+            </button>
+            <button
+              onClick={() => { window.location.href = '/community'; }}
+              className="px-6 py-3 rounded-lg border border-[#7dd87d]/40 text-[#7dd87d] hover:border-[#7dd87d]/70 transition-colors"
+            >
+              Back to Community
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (catLoading) {
@@ -333,7 +362,7 @@ export default function CommunityCategory() {
           <p className="text-white/70 text-sm font-medium mb-3" style={{ fontFamily: 'var(--font-display)' }}>
             Stay updated: get the ReGen Civics digest in your inbox
           </p>
-          <NewsletterSignupInline />
+          {!alreadySubscribed && <NewsletterSignupInline />}
         </div>
       </section>
     </div>

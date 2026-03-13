@@ -18,7 +18,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { ExitIntentCapture } from "./components/ExitIntentCapture";
 import CommandPalette from "./components/CommandPalette";
-import { SiteTour } from "./components/SiteTour";
+
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useEffect } from "react";
@@ -246,12 +246,12 @@ function App() {
           {!adminMode && <SiteFooter />}
           {!adminMode && <CookieConsent />}
           <AnalyticsLoader />
-          <ScrollToTop />
+          {!adminMode && <ScrollToTop />}
           {!adminMode && <Suspense fallback={null}><ReGenGuide /></Suspense>}
           {!adminMode && <AppInner />}
           {!adminMode && <ExitIntentCapture />}
           {!adminMode && <CommandPalette />}
-          {!adminMode && <SiteTour />}
+          {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           <ReturnToHandler />
           <ServiceWorkerRegister />
         </TooltipProvider>

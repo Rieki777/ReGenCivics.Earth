@@ -140,7 +140,7 @@ export function TaoSpinner({
             }`}
             style={{ fontFamily: "var(--font-accent)" }}
           >
-            Tao Te Ching
+            Wise Sage
           </p>
         </div>
       )}

@@ -11,19 +11,21 @@ import { Cookie, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
-const CONSENT_KEY = "regen-civics-cookie-consent";
-const CONSENT_VERSION = "1"; // Bump to re-prompt after policy changes
+const CONSENT_KEY = "rc_cookie_consent";
+const CONSENT_EXPIRY_MS = 365 * 24 * 60 * 60 * 1000; // 1 year
 const MANAGE_COOKIES_EVENT = "regen-manage-cookies";
 
 type ConsentStatus = "accepted" | "declined" | null;
 
 function getStoredConsent(): ConsentStatus {
   try {
-    const stored = localStorage.getItem(CONSENT_KEY);
-    if (!stored) return null;
-    const parsed = JSON.parse(stored);
-    if (parsed.version !== CONSENT_VERSION) return null;
-    return parsed.status as ConsentStatus;
+    const val = localStorage.getItem(CONSENT_KEY);
+    if (!val) return null;
+    const ts = parseInt(val.split(":")[0], 10);
+    const status = val.split(":")[1] as "accepted" | "declined";
+    if (!ts || !status) return null;
+    if (Date.now() - ts > CONSENT_EXPIRY_MS) return null; // re-prompt after 1 year
+    return status;
   } catch {
     return null;
   }
@@ -31,14 +33,7 @@ function getStoredConsent(): ConsentStatus {
 
 function storeConsent(status: "accepted" | "declined") {
   try {
-    localStorage.setItem(
-      CONSENT_KEY,
-      JSON.stringify({
-        status,
-        version: CONSENT_VERSION,
-        timestamp: new Date().toISOString(),
-      })
-    );
+    localStorage.setItem(CONSENT_KEY, `${Date.now()}:${status}`);
   } catch {
     // localStorage unavailable, silently fail
   }
