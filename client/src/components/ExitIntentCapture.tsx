@@ -43,10 +43,10 @@ const contextConfig: Record<PageContext, {
 }> = {
   investor: {
     icon: <FileText className="w-5 h-5 text-[#7dd87d]" />,
-    headline: "Explore the Investment Opportunity",
-    subline: "View the full investment thesis and fund details",
-    body: "See the full investment thesis, fund structure, and how to get involved.",
-    cta: "View Investment Details",
+    headline: "Before you go — the Fund is open.",
+    subline: "ReGen Civics is actively raising",
+    body: "ReGen Civics is actively raising from aligned investors. If you are ready to put capital to work in regenerative land projects, the path starts here.",
+    cta: "Learn About Investing",
     successMessage: "",
   },
   land: {
@@ -247,13 +247,13 @@ export function ExitIntentCapture() {
                       onClick={() => { window.location.href = '/investor'; setShow(false); }}
                       className="w-full py-3 px-6 rounded-full bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors"
                     >
-                      View Investment Details
+                      Learn About Investing
                     </button>
                     <button
                       onClick={() => { setShow(false); sessionStorage.setItem('exitIntentDismissed', '1'); setDismissed(true); }}
                       className="w-full py-2 text-xs text-white/40 hover:text-white/60 transition-colors"
                     >
-                      Maybe later
+                      Not right now
                     </button>
                   </div>
                 ) : (

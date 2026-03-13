@@ -21,7 +21,10 @@ import * as mysql from "mysql2/promise";
 // Add the IDs of real applications you want to KEEP (all others will be deleted).
 // Run diagnose-applications.ts first to find your real IDs.
 const KEEP_IDS: number[] = [
-  // e.g. 1, 2, 3
+  930001,   // Aquarella (Daniel Morningstar)
+  1110001,  // Living University Network draft (francois)
+  1140001,  // Living University Network draft (francois)
+  1230001,  // Living University Network submitted (francois)
 ];
 // ─────────────────────────────────────────────────────────────────────────────
 

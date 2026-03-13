@@ -252,7 +252,7 @@ export const appRouter = router({
     updateStatus: protectedProcedure
       .input(z.object({
         id: z.number(),
-        status: z.enum(["draft", "submitted", "under_review", "approved", "rejected", "changes_requested"]),
+        status: z.enum(["draft", "submitted", "under_review", "approved", "active", "inactive", "rejected", "changes_requested"]),
       }))
       .mutation(async ({ ctx, input }) => {
         if (ctx.user.role !== "admin") {
@@ -411,7 +411,7 @@ export const appRouter = router({
       // Only show submitted/under_review/approved applications with location data
       return allApps
         .filter((app: any) => 
-          ["submitted", "under_review", "approved"].includes(app.status) &&
+          ["submitted", "under_review", "approved", "active"].includes(app.status) &&
           app.latitude && app.longitude
         )
         .map((app: any) => ({
@@ -439,7 +439,8 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         const allApps = await db.getApplicationsByStatus('submitted');
         const approvedApps = await db.getApplicationsByStatus('approved');
-        const combined = [...allApps, ...approvedApps];
+        const activeApps = await db.getApplicationsByStatus('active');
+        const combined = [...allApps, ...approvedApps, ...activeApps];
         
         let filtered = combined;
         if (input.search && input.search.trim()) {

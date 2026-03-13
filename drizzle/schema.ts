@@ -39,6 +39,8 @@ export const applications = mysqlTable("applications", {
     "submitted",
     "under_review",
     "approved",
+    "active",
+    "inactive",
     "rejected",
     "changes_requested"
   ]).default("draft").notNull(),
@@ -1634,3 +1636,20 @@ export const customGameInquiries = mysqlTable("custom_game_inquiries", {
 });
 export type CustomGameInquiry = typeof customGameInquiries.$inferSelect;
 export type InsertCustomGameInquiry = typeof customGameInquiries.$inferInsert;
+
+// ─── Alliance Organisations ────────────────────────────────────────────────────
+// Registry of alliance partner organisations. Mirrors the hardcoded list in
+// Connect.tsx but stored in DB so they can have forum threads, status, etc.
+export const organisations = mysqlTable("organisations", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: varchar("orgId", { length: 100 }).notNull().unique(), // short slug, e.g. "hypha", "seeds"
+  name: varchar("name", { length: 255 }).notNull(),
+  url: varchar("url", { length: 500 }),
+  description: text("description"),
+  // forumPostId links to the forum thread in the active-organisations category
+  forumPostId: int("forumPostId"),
+  status: mysqlEnum("status", ["active", "inactive", "pending"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Organisation = typeof organisations.$inferSelect;
+export type InsertOrganisation = typeof organisations.$inferInsert;

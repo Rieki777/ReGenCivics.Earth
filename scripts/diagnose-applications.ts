@@ -29,23 +29,23 @@ async function main() {
 
   // List all submitted / under_review / approved applications
   const [realApps] = await conn.execute(
-    "SELECT id, projectName, contactEmail, status, createdAt FROM applications WHERE status IN ('submitted','under_review','approved','accepted','active') ORDER BY id ASC"
+    "SELECT a.id, a.projectName, a.status, a.createdAt, u.email FROM applications a LEFT JOIN users u ON a.userId = u.id WHERE a.status IN ('submitted','under_review','approved','accepted','active') ORDER BY a.id ASC"
   ) as any;
 
   console.log(`\n=== Submitted / Active Applications (${realApps.length} total) ===`);
   for (const app of realApps) {
-    console.log(`  id=${app.id}  status=${app.status}  name="${app.projectName}"  email=${app.contactEmail}  created=${app.createdAt}`);
+    console.log(`  id=${app.id}  status=${app.status}  name="${app.projectName}"  email=${app.email}  created=${app.createdAt}`);
   }
 
   // Also list drafts with a project name (potential real data)
   const [drafts] = await conn.execute(
-    "SELECT id, projectName, contactEmail, status, createdAt FROM applications WHERE status = 'draft' AND projectName IS NOT NULL AND projectName != 'Untitled Project' AND projectName != '' ORDER BY id ASC LIMIT 20"
+    "SELECT a.id, a.projectName, a.status, a.createdAt, u.email FROM applications a LEFT JOIN users u ON a.userId = u.id WHERE a.status = 'draft' AND a.projectName IS NOT NULL AND a.projectName != 'Untitled Project' AND a.projectName != '' ORDER BY a.id ASC LIMIT 20"
   ) as any;
 
   if (drafts.length > 0) {
     console.log(`\n=== Named Drafts (${drafts.length} shown, max 20) ===`);
     for (const app of drafts) {
-      console.log(`  id=${app.id}  name="${app.projectName}"  email=${app.contactEmail}  created=${app.createdAt}`);
+      console.log(`  id=${app.id}  name="${app.projectName}"  email=${app.email}  created=${app.createdAt}`);
     }
   }
 
