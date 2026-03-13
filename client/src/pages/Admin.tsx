@@ -111,7 +111,7 @@ function AdminCustomGameWaitlist() {
       </div>
 
       {!filtered.length && (
-        <p className="text-white/40 text-sm py-8 text-center">No submissions yet.</p>
+        <p className="text-white/75 text-sm py-8 text-center">No submissions yet.</p>
       )}
 
       <div className="space-y-3">
@@ -128,13 +128,13 @@ function AdminCustomGameWaitlist() {
                 <div>
                   <p className="font-semibold text-white text-sm">{inq.fullName}</p>
                   <a href={`mailto:${inq.email}`} className="text-[#7dd87d] text-xs hover:underline">{inq.email}</a>
-                  <p className="text-white/60 text-xs mt-0.5">{inq.projectName}{inq.websiteOrSocial && <a href={inq.websiteOrSocial} target="_blank" rel="noopener noreferrer" className="ml-2 text-[#7dd87d] hover:underline text-[10px]">↗ site</a>}</p>
+                  <p className="text-white/80 text-sm mt-0.5">{inq.projectName}{inq.websiteOrSocial && <a href={inq.websiteOrSocial} target="_blank" rel="noopener noreferrer" className="ml-2 text-[#7dd87d] hover:underline text-xs">↗ site</a>}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[inq.status] ?? "bg-white/10 text-white/60 border-white/10"}`}>
                     {inq.status}
                   </span>
-                  <span className="text-white/40 text-xs">{inq.timeline}</span>
+                  <span className="text-white/80 text-sm">{inq.timeline}</span>
                   {inq.budgetConfirmed ? <span className="text-green-400 text-xs">✓ Budget</span> : <span className="text-red-400 text-xs">✗ Budget</span>}
                 </div>
               </div>
@@ -142,25 +142,25 @@ function AdminCustomGameWaitlist() {
               {expanded === inq.id && (
                 <div className="mt-4 space-y-3 border-t border-white/10 pt-3">
                   <div>
-                    <p className="text-white/50 text-xs font-medium mb-1">Land Status</p>
-                    <p className="text-white/80 text-sm">{inq.landStatus}</p>
+                    <p className="text-white/75 text-sm font-medium mb-1">Land Status</p>
+                    <p className="text-white/90 text-sm">{inq.landStatus}</p>
                   </div>
                   <div>
-                    <p className="text-white/50 text-xs font-medium mb-1">Community Stage</p>
-                    <p className="text-white/80 text-sm">{inq.communityStage}</p>
+                    <p className="text-white/75 text-sm font-medium mb-1">Community Stage</p>
+                    <p className="text-white/90 text-sm">{inq.communityStage}</p>
                   </div>
                   <div>
-                    <p className="text-white/50 text-xs font-medium mb-1">Primary Goal</p>
-                    <p className="text-white/80 text-sm leading-relaxed">{inq.primaryGoal}</p>
+                    <p className="text-white/75 text-sm font-medium mb-1">Primary Goal</p>
+                    <p className="text-white/90 text-sm leading-relaxed">{inq.primaryGoal}</p>
                   </div>
                   {inq.additionalNotes && (
                     <div>
-                      <p className="text-white/50 text-xs font-medium mb-1">Additional Notes</p>
-                      <p className="text-white/70 text-sm">{inq.additionalNotes}</p>
+                      <p className="text-white/75 text-sm font-medium mb-1">Additional Notes</p>
+                      <p className="text-white/90 text-sm">{inq.additionalNotes}</p>
                     </div>
                   )}
                   <div className="flex items-center gap-3 pt-2">
-                    <label className="text-white/50 text-xs">Status:</label>
+                    <label className="text-white/75 text-sm">Status:</label>
                     <select
                       value={inq.status}
                       onChange={(e) => updateMut.mutate({ id: inq.id, status: e.target.value })}
@@ -1683,7 +1683,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
               <Send className="w-4 h-4" />
               Send email to {selectedItems.size} selected contact{selectedItems.size !== 1 ? 's' : ''}
             </p>
-            <button onClick={() => setShowBulkEmail(false)} className="text-blue-400 hover:text-blue-700">
+            <button onClick={() => setShowBulkEmail(false)} className="text-blue-400 hover:text-blue-700" aria-label="Close bulk email panel">
               <X className="w-4 h-4" />
             </button>
           </div>

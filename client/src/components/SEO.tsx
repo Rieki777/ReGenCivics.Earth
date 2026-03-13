@@ -118,28 +118,28 @@ export const pageSEO = {
   },
   game: {
     title: 'The Game: How ReGen Civics Works',
-    description: 'Discover how the ReGen Civics game works. Learn about our token system, governance model, contribution tracking, and how you can earn while regenerating the planet.',
+    description: 'An infinite game -- no finish line, no winners, just a growing civilization we\'re building together. Here\'s how the ReGen Civics game works.',
     keywords: 'regenerative game, token economy, DAO governance, contribution tracking, regenerative tokens, impact rewards',
     image: 'https://assets.regencivics.earth/ocDzkDHpivHtGCWo.jpg',
     url: '/game'
   },
   quest: {
     title: 'Quests: Regenerative Actions & Rewards',
-    description: 'Complete quests to earn tokens and contribute to the Regenerative Renaissance. From gut health to food forests, each quest heals a different aspect of reality.',
+    description: 'Quests are how you participate. Each one moves healing into the world -- your body, your land, your community. Earn rewards doing the work that actually matters.',
     keywords: 'regenerative quests, impact actions, earn tokens, food forest, gut health, regenerative lifestyle, sustainable living',
     image: 'https://assets.regencivics.earth/kdpmqczDwXGfwTIK.jpg',
     url: '/quest'
   },
   team: {
     title: 'Team: Join Our Dynamic Organization',
-    description: 'Meet the ReGen Civics team and discover how to join our dynamic, self-organizing community. Find your Regenerative Ikigai and contribute to the movement.',
+    description: 'A distributed team working to make the Regenerative Renaissance real. Meet the people behind ReGen Civics.',
     keywords: 'regenerative team, join DAO, regenerative ikigai, impact careers, sustainable jobs, regenerative organization',
     image: 'https://assets.regencivics.earth/PPEoXqTcNBKerkDe.jpg',
     url: '/team'
   },
   opportunity: {
     title: 'Investment Opportunity: Regenerative Land Fund',
-    description: 'Invest in the future of regenerative land projects. ReGen Civics offers a diversified portfolio approach to impact investing with land-backed security.',
+    description: 'For accredited investors ready to put capital to work in the regenerative transition. Here\'s the investment opportunity inside ReGen Civics.',
     keywords: 'regenerative investment, impact fund, land investment, sustainable investing, ESG investment, regenerative agriculture investment',
     image: 'https://assets.regencivics.earth/GUIluaYPZOUiwyLA.jpg',
     url: '/opportunity'
@@ -153,7 +153,7 @@ export const pageSEO = {
   },
   apply: {
     title: 'Apply: Land Project Application | ReGen Civics',
-    description: 'Apply to join the ReGen Civics ecosystem. Submit your regenerative land project for consideration in our portfolio and gain access to funding, governance tools, and alliance support.',
+    description: 'Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 3 applications open 2026.',
     keywords: 'land project application, regenerative project funding, ecovillage application, sustainable land development, regenerative community application',
     image: 'https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg',
     url: '/apply'
@@ -167,28 +167,28 @@ export const pageSEO = {
   },
   connect: {
     title: 'Connect With Us | ReGen Civics',
-    description: 'Get in touch with the ReGen Civics team. Whether you are an investor, land project, alliance partner, or player, we would love to hear from you.',
+    description: 'Get in touch with the ReGen Civics team. Whether you\'re an investor, land project, alliance partner, or player -- we want to hear from you.',
     keywords: 'contact regenerative fund, impact investing contact, regenerative community, partnership inquiry',
     image: '/og/connect.png',
     url: '/connect'
   },
   map: {
     title: 'Global Project Map | ReGen Civics',
-    description: 'Explore regenerative land projects and alliance organizations worldwide on our interactive globe. See where the Regenerative Renaissance is taking root.',
+    description: 'Land projects, alliance orgs, and players mapped across the world. See where regeneration is happening right now.',
     keywords: 'regenerative projects map, ecovillage locations, sustainable communities, global regeneration, land project directory',
     image: '/og/map.png',
     url: '/map'
   },
   fund: {
     title: 'The ReGen Civics Fund | Regenerative Land Investment',
-    description: 'Invest in regenerative land projects through the ReGen Civics Fund. Pool capital with aligned investors to finance the Regenerative Renaissance.',
+    description: 'ReGen Civics runs a venture fund for regenerative land projects. Real land, diversified portfolio, community governed. Season 3 opens in 2026.',
     keywords: 'regenerative fund, land investment, impact fund, regenerative capital, crowd-pooling, land project funding',
     image: '/og/fund.png',
     url: '/fund'
   },
   crowdPooling: {
     title: 'Crowd Pooling Tool | ReGen Civics',
-    description: 'Calculate your crowd pooling contribution and see how your capital compounds with others to fund regenerative land projects.',
+    description: 'Pool capital with aligned investors to fund regenerative land projects. Coordinated impact, land-backed, and community governed.',
     keywords: 'crowd pooling, regenerative investing, pool capital, land project funding, collaborative investment',
     image: '/og/crowd-pooling.png',
     url: '/crowd-pooling'
@@ -237,10 +237,52 @@ export const pageSEO = {
   },
   community: {
     title: 'Community Forum | ReGen Civics',
-    description: 'Join the ReGen Civics community discussion. Share ideas, connect with fellow regenerators, discuss land projects, investment strategies, and governance tools.',
+    description: 'The ReGen Civics forum. Where players, investors, land stewards, and builders connect, coordinate, and tell the truth.',
     keywords: 'regenerative community forum, impact investing discussion, ecovillage community, regenerative economy discussion, land project forum',
     image: '/og/community.png',
     url: '/community'
+  },
+  land: {
+    title: 'Land Projects | ReGen Civics',
+    description: 'Real land projects doing the hard work of regenerating soil, water, community, and local economy. These are the projects we\'re backing.',
+    keywords: 'regenerative land projects, ecovillages, sustainable farms, land-backed investment',
+    image: 'https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg',
+    url: '/land'
+  },
+  ally: {
+    title: 'Alliance Organizations | ReGen Civics',
+    description: 'The alliance organizations co-creating the Regenerative Renaissance alongside ReGen Civics. A network built on shared values, not just shared logos.',
+    keywords: 'regenerative alliance, partner organizations, regenerative network',
+    image: 'https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg',
+    url: '/ally'
+  },
+  play: {
+    title: 'Players | ReGen Civics',
+    description: 'The players inside ReGen Civics. Contributors, builders, and healers doing quests and co-creating the new civilization one action at a time.',
+    keywords: 'regenerative players, contributors, regenerative community members',
+    image: 'https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg',
+    url: '/play'
+  },
+  blog: {
+    title: 'Blog | ReGen Civics',
+    description: 'Writings from the ReGen Civics community. Strategy, stories from land projects, game design notes, and updates from the movement.',
+    keywords: 'regenerative blog, land project stories, regenerative renaissance writing',
+    image: 'https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg',
+    url: '/blog'
+  },
+  governance: {
+    title: 'Governance | ReGen Civics',
+    description: 'Voice-based governance rooted in land and contribution. How ReGen Civics makes decisions, and who has a say.',
+    keywords: 'regenerative governance, DAO, voice tokens, community governance',
+    image: 'https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg',
+    url: '/governance'
+  },
+  calculator: {
+    title: 'Contribution Calculator | ReGen Civics',
+    description: 'Run the numbers on your crowd pooling contribution and see how your capital compounds with others to fund regenerative land projects.',
+    keywords: 'contribution calculator, crowd pooling calculator, regenerative investment calculator',
+    image: 'https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg',
+    url: '/calculator'
   }
 };
 

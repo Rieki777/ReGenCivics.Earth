@@ -907,6 +907,15 @@ export default function Tokenomics() {
       />
       <BackButton />
 
+      {/* ── $ReGen Caveat Note ── */}
+      <div className="container px-4 pt-8">
+        <div className="max-w-4xl mx-auto border-l-4 border-[#7dd87d]/60 bg-[#7dd87d]/10 rounded-r-xl px-5 py-4">
+          <p className="text-white/90 text-sm leading-relaxed">
+            <strong className="text-[#7dd87d]">A note on $ReGen:</strong> This page focuses on $RCivics, which has the clearest design so far. $ReGen, the token for the Infinite Game, is intentionally less specified here. How $ReGen evolves is something the Game community governs together over time. As that work matures, this page will reflect it.
+          </p>
+        </div>
+      </div>
+
       {/* ── Hero ── */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden pt-16">
         <FlowingParticles />

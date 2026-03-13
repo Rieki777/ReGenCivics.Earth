@@ -3,7 +3,7 @@
  * Uses streaming SSE for real-time word-by-word responses.
  */
 import { useState, useCallback, useRef } from "react";
-import { MessageCircle, X, Sparkles } from "lucide-react";
+import { X, Sparkles } from "lucide-react";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -14,6 +14,13 @@ const PATH_WELCOMES: Record<string, string> = {
   ally: "Welcome back! I'm here to help you find where your organisation fits in the ReGen Civics ecosystem: understanding alliance partnerships, the value exchange model, or how to get involved. What would you like to explore?",
   player: "Welcome back, Player! I'm your guide to Quests, the Infinite Game, and all the ways you can contribute and co-create in the regenerative movement. What would you like to know?",
 };
+
+const STARTER_PROMPTS = [
+  "How does the ReGen Civics fund work?",
+  "What are quests and how do I earn rewards?",
+  "How do I invest or contribute?",
+  "What is the difference between the 4 paths?",
+];
 
 export default function ReGenGuide() {
   const { user } = useAuth();
@@ -155,6 +162,21 @@ export default function ReGenGuide() {
             </button>
           </div>
 
+          {/* Starter prompts - shown when conversation is fresh */}
+          {messages.length <= 1 && (
+            <div className="px-3 pt-3 pb-1 flex flex-wrap gap-1.5">
+              {STARTER_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => handleSendMessage(prompt)}
+                  className="text-xs px-2.5 py-1 rounded-full bg-[#1a472a]/60 border border-[#7dd87d]/30 text-[#7dd87d]/80 hover:border-[#7dd87d]/60 hover:text-[#7dd87d] transition-colors"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Chat Body */}
           <AIChatBox
             messages={messages}
@@ -170,22 +192,23 @@ export default function ReGenGuide() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-4 left-4 z-[9999] flex items-center justify-center shadow-lg transition-all duration-300 btn-press
-          w-14 h-14 rounded-full
-          sm:w-auto sm:h-auto sm:px-4 sm:py-3 sm:rounded-full sm:gap-2
+        className={`fixed bottom-6 left-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all duration-200 font-medium text-sm btn-press
           ${
             isOpen
-              ? "bg-white/10 border border-white/20 text-white/60 hover:text-white"
-              : "bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] shadow-[0_0_20px_rgba(125,216,125,0.4)]"
+              ? "bg-[#1a472a] border border-[#7dd87d]/40 text-[#7dd87d]/60 hover:text-[#7dd87d]"
+              : "bg-[#1a472a] border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#1e5533] hover:border-[#7dd87d]/70 hover:shadow-xl"
           }`}
-        aria-label={isOpen ? "Close Your ReGen Guide" : "Open Your ReGen Guide"}
+        aria-label={isOpen ? "Close guide" : "Show Me Around"}
       >
         {isOpen ? (
-          <X className="w-6 h-6" />
+          <>
+            <X className="w-4 h-4" />
+            <span className="hidden sm:inline">Close</span>
+          </>
         ) : (
           <>
-            <MessageCircle className="w-6 h-6" />
-            <span className="hidden sm:inline text-sm font-semibold">Your ReGen Guide</span>
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">Show Me Around</span>
           </>
         )}
       </button>

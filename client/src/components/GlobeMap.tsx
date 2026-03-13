@@ -650,13 +650,14 @@ function EntityCard({
                 {entity.type === "organization" ? "Work with ReGens" : "Apply"}
               </a>
             )}
-            {entity.type === "land_project" && !entity.inactive && (
+            {entity.type === "land_project" && !entity.inactive && !entity.forumThreadUrl && (
               <a
-                href="/community/land-projects"
+                href="/community"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs border border-white/30 text-white/70 px-3 py-1.5 rounded-full font-medium hover:bg-white/10 transition-colors"
+                title="Forum space coming soon for this project"
+                className="inline-flex items-center gap-1 text-xs border border-white/20 text-white/40 px-3 py-1.5 rounded-full font-medium cursor-default pointer-events-none"
               >
-                Forum
+                <MessageCircle className="w-3 h-3" /> Forum (coming soon)
               </a>
             )}
           </div>

@@ -131,10 +131,11 @@ export default function Socials() {
             <span className="font-medium">Back to Home</span>
           </Link>
           <div className="flex items-center gap-2">
-            <img 
-              src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png" 
-              alt="ReGen Civics" 
+            <img
+              src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png"
+              alt="ReGen Civics"
               className="w-8 h-8 object-contain"
+              loading="lazy"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}

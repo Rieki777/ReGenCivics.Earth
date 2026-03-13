@@ -237,20 +237,14 @@ export const appRouter = router({
       }),
 
     // Admin: Get all applications
-    list: protectedProcedure.query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    list: adminProcedure.query(async () => {
       return db.getAllApplications();
     }),
 
     // Admin: Get applications by status
-    listByStatus: protectedProcedure
+    listByStatus: adminProcedure
       .input(z.object({ status: z.string() }))
-      .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-        }
+      .query(async ({ input }) => {
         return db.getApplicationsByStatus(input.status);
       }),
 

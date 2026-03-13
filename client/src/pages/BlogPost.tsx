@@ -82,11 +82,14 @@ export default function BlogPost() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
-      <SEO 
+      <SEO
         title={pageTitle}
-        description={post.excerpt}
+        description={post.excerpt || post.content?.substring(0, 155)}
         url={pageUrl}
         image={post.image}
+        type="article"
+        author={post.author}
+        publishedTime={post.date}
       />
       
       {/* Reading Progress Bar */}

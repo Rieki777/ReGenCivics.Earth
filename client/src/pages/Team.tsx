@@ -378,7 +378,7 @@ export default function Team() {
           </p>
           
           <p className="text-base text-white/60 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Over 150 people have helped build this infrastructure. No single face is more important than another, so we list none. Want to see one real human? Check out the <a href="https://youtu.be/U5ZTTy0SCaA" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline hover:text-[#6bc86b]">quick explainer from our Catalyst</a>.
+            Over 150 people have helped build this infrastructure. No single face is more important than another, so we list none.
           </p>
           
           <a 

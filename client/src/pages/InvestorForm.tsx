@@ -160,6 +160,7 @@ export default function InvestorForm() {
     fullName: savedName,
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
   const [, setLocation] = useLocation();
   
@@ -188,6 +189,10 @@ export default function InvestorForm() {
       localStorage.setItem('investor_email', formData.email);
       localStorage.setItem('investor_name', formData.fullName);
       setIsSubmitted(true);
+    },
+    onError: (err) => {
+      setSubmitError(err?.message || "Submission failed. Please try again.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     },
   });
 
@@ -222,6 +227,7 @@ export default function InvestorForm() {
   };
 
   const handleSubmit = async () => {
+    setSubmitError(null);
     submitMutation.mutate({
       fullName: formData.fullName,
       email: formData.email,
@@ -963,6 +969,12 @@ export default function InvestorForm() {
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
+              <>
+              {submitError && (
+                <div className="mb-3 bg-red-900/30 border border-red-500/40 rounded-lg p-3 text-sm text-red-400">
+                  {submitError}
+                </div>
+              )}
               <Button
                 onClick={handleSubmit}
                 disabled={submitMutation.isPending}
@@ -981,6 +993,7 @@ export default function InvestorForm() {
                   </>
                 )}
               </Button>
+              </>
             )}
           </div>
         </Card>

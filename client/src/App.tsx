@@ -225,7 +225,7 @@ function App() {
 
   return (
     <ErrorBoundary fallback={<TaoErrorState />}>
-      <ThemeProvider defaultTheme="dark" switchable>
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           {!adminMode && <StructuredData />}

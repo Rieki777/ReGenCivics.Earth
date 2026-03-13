@@ -97,6 +97,7 @@ export default function Apply() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [applicationId, setApplicationId] = useState<number | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const utils = trpc.useUtils();
   const createMutation = trpc.applications.create.useMutation();
@@ -159,9 +160,16 @@ export default function Apply() {
   };
 
   const handleSubmit = async () => {
-    const id = await saveDraft();
-    await submitMutation.mutateAsync({ id });
-    navigate("/apply/success");
+    setSubmitError(null);
+    try {
+      const id = await saveDraft();
+      await submitMutation.mutateAsync({ id });
+      navigate("/apply/success");
+    } catch (err: any) {
+      const msg = err?.message || "Submission failed. Please try again.";
+      setSubmitError(msg);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   if (authLoading) {
@@ -902,6 +910,13 @@ export default function Apply() {
                   By submitting this application, you agree to participate in the ReGen Civics next Season and commit to the time requirements outlined in the program.
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* Submit error summary */}
+          {submitError && (
+            <div className="mt-6 bg-red-900/30 border border-red-500/40 rounded-lg p-3 text-sm text-red-400">
+              {submitError}
             </div>
           )}
 

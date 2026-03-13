@@ -41,11 +41,46 @@ export function BioregionMultiSelect({
   const [searchValue, setSearchValue] = useState("");
   const [suggestPending, setSuggestPending] = useState(false);
   const [suggestDone, setSuggestDone] = useState(false);
+  const [geoDetecting, setGeoDetecting] = useState(false);
+  const [geoSuggestions, setGeoSuggestions] = useState<typeof bioregions>([]);
+  const [geoDenied, setGeoDenied] = useState(false);
   const { data: bioregions = [], isLoading } = trpc.bioregions.list.useQuery();
   const suggestMut = trpc.bioregions.suggest.useMutation({
     onSuccess: () => { setSuggestDone(true); setSuggestPending(false); },
     onError: () => setSuggestPending(false),
   });
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) { setGeoDenied(true); return; }
+    setGeoDetecting(true);
+    setGeoDenied(false);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const data = await res.json();
+          const terms = [
+            data.address?.county,
+            data.address?.state,
+            data.address?.region,
+            data.address?.country,
+          ].filter(Boolean).map((t: string) => t.toLowerCase());
+          const matches = bioregions
+            .filter((b) => terms.some((term) => b.name.toLowerCase().includes(term)))
+            .slice(0, 5);
+          setGeoSuggestions(matches);
+        } catch {
+          setGeoSuggestions([]);
+        }
+        setGeoDetecting(false);
+      },
+      () => { setGeoDenied(true); setGeoDetecting(false); }
+    );
+  };
 
   const selectedBioregions = bioregions.filter((b) => values.includes(b.id));
   const visibleChips = selectedBioregions.slice(0, maxVisible);
@@ -95,6 +130,51 @@ export function BioregionMultiSelect({
           {overflowCount > 0 && (
             <span className={cn(chipClass, "opacity-60")}>+{overflowCount} more</span>
           )}
+        </div>
+      )}
+
+      {/* Geo-detect button + suggestions */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleDetectLocation}
+          disabled={geoDetecting}
+          className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors disabled:opacity-50 ${
+            variant === "dark"
+              ? "border-[#7dd87d]/30 text-[#7dd87d]/70 hover:text-[#7dd87d] hover:border-[#7dd87d]/60"
+              : "border-[#1a472a]/20 text-[#1a472a]/60 hover:text-[#1a472a] hover:border-[#1a472a]/40"
+          }`}
+          aria-label="Detect my bioregion from location"
+        >
+          <MapPin className="w-3 h-3" />
+          {geoDetecting ? "Detecting..." : "Detect my bioregion"}
+        </button>
+        {geoDenied && (
+          <span className="text-xs text-red-400/70">Location denied. Search by name below.</span>
+        )}
+      </div>
+      {geoSuggestions.length > 0 && (
+        <div className="space-y-1">
+          <p className={`text-xs ${variant === "dark" ? "text-white/50" : "text-[#1a472a]/50"}`}>Suggested:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {geoSuggestions.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => handleToggle(b.id)}
+                className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  values.includes(b.id)
+                    ? "bg-[#7dd87d] border-[#7dd87d] text-[#1a472a] font-medium"
+                    : variant === "dark"
+                    ? "bg-[#1a472a]/40 border-[#7dd87d]/30 text-[#7dd87d]/80 hover:border-[#7dd87d]/60"
+                    : "bg-[#1a472a]/10 border-[#1a472a]/20 text-[#1a472a] hover:border-[#1a472a]/40"
+                }`}
+              >
+                {values.includes(b.id) && <Check className="w-2.5 h-2.5" />}
+                {b.name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

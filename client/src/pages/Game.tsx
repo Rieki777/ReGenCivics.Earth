@@ -197,6 +197,7 @@ function PhilosophyCard({
 }
 
 export default function Game() {
+  const [whatIsGameOpen, setWhatIsGameOpen] = useState(false);
   const [whyOpen, setWhyOpen] = useState(false);
   const [infiniteOpen, setInfiniteOpen] = useState(false);
   const [seedsOpen, setSeedsOpen] = useState(false);
@@ -263,6 +264,89 @@ export default function Game() {
           </div>
         </div>
       </ParallaxSection>
+
+      {/* So what's the Game? */}
+      <AnimatedSection>
+        <section className="py-16 md:py-20 bg-[#f0ebe3] border-b border-[#1a472a]/10">
+          <div className="container px-4 max-w-5xl mx-auto">
+            <h2
+              className="text-3xl md:text-4xl font-bold text-[#1a472a] mb-6"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              So what's the Game?
+            </h2>
+
+            {/* Teaser line */}
+            <p className="text-lg text-[#1a472a]/80 leading-relaxed mb-4">
+              The simplest way I can describe what's happening here is we're co-creating an infinite game to do the thing.
+            </p>
+
+            {/* Collapsible body */}
+            <Collapsible open={whatIsGameOpen} onOpenChange={setWhatIsGameOpen}>
+              <CollapsibleContent className="overflow-hidden transition-all duration-300">
+                <div className="space-y-4 text-[#1a472a]/80 leading-relaxed">
+                  <p>
+                    What do I mean "the thing"? Let's start here as it's the most important. The "thing" is creating a civilization that's a healthy, joyful, fulfilling and magical place to raise children. To raise ourselves. That's "The Thing" and the thing about the thing is there's no right answer. But there are a LOT better answers than the dominant way we're doing this as a society.
+                  </p>
+                  <p>
+                    The thing is hard, the thing is monumental, and it's necessary. Nobody knows the absolute right way to do it, and there isn't one. So, we need to try and have thousands of viable options to choose. Because if we can't choose the story in which we raise ourselves, we aren't choosing anything meaningful.
+                  </p>
+                  <p className="font-semibold text-[#1a472a]">So if it's so important, why call it a Game?</p>
+                  <p>
+                    There's so many layers to this, but let me stay at the surface. Surface level: we need it to be a Game in design so that it's simple for people to participate. Because the old Games are taking everyone's time. So, it needs to be extremely easy to participate, and designing it like a Game helps us consider that lens.
+                  </p>
+                  <p>
+                    Second, why not make it fun! Authentically fulfilling and fun to be part of co-creating regenerative civilizations. It's the best game. Which brings us to part 3: it's the best game to play.
+                  </p>
+                  <p className="font-semibold text-[#1a472a]">The Infinite Part</p>
+                  <p>
+                    This is the best part. My role is not to be the founder, owner, CEO, etc. of this vital piece of community infrastructure. My role is simply to get the Game started then make myself obsolete as quickly as we can while still supporting the healthy development of the Game. Much like the pattern for raising healthy children.
+                  </p>
+                  <p className="font-semibold text-[#1a472a]">Finally, there are 2 parts to this.</p>
+                  <p>
+                    Much of what we're doing is building bridges from one Game, the Dominant Game, to a growing diversity of new Games. We approach this by mastering the economic systems of the old Game and the New Game simultaneously.
+                  </p>
+                  <p>
+                    That's why we have 2 distinct spaces. A fund that's deeply rooted in the old Game, and a "regen game" deeply rooted in a growing diversity of new Games. Think of it as 2 sides of a chasm.
+                  </p>
+                  <p>
+                    Part of our Game is then creating a bigger and better bridge so that the growing number of people ready for these realities can safely, joyfully, and easily, hopefully with a bit of awe and wonder, walk across the bridge into the new worlds.
+                  </p>
+                  <p>
+                    Now this is not without doing the work. By "the work" I mean the inner work. This is where Quests come in. To help us co-create a growing number of "Mini Games" on doing the inner and outer work of healing so that we can become better players in the Game.
+                  </p>
+                  <p>
+                    The Fund is designed to be deeply rooted in the old Games, working to master that Game through using the most powerful coordination structures, ensuring we have the capability to coordinate in that Game. The ReGen Game is a continuation of the work started in SEEDS back in 2017: taking almost a decade of learning and weaving it into this new structure.
+                  </p>
+
+                  {/* Images */}
+                  <div className="grid md:grid-cols-2 gap-4 mt-6">
+                    <img
+                      src="/game-infinite-forest.jpg"
+                      alt="A dreamlike regenerative forest village at dusk"
+                      className="w-full rounded-2xl object-cover"
+                      loading="lazy"
+                    />
+                    <img
+                      src="/game-bridge-worlds.jpg"
+                      alt="Two worlds connected by a bridge of light"
+                      className="w-full rounded-2xl object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+
+              <CollapsibleTrigger asChild>
+                <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#1a472a] hover:text-[#4a7c59] transition-colors">
+                  {whatIsGameOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {whatIsGameOpen ? "Show less" : "Read more about the Infinite Game"}
+                </button>
+              </CollapsibleTrigger>
+            </Collapsible>
+          </div>
+        </section>
+      </AnimatedSection>
 
       {/* Watch the Overview Section */}
       <section className="py-12 md:py-16 bg-gradient-to-b from-[#1a472a] to-[#2d5a3e]">

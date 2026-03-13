@@ -12,8 +12,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Sun, Moon, Search } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
+import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search } from "lucide-react";
 import { Drawer } from "vaul";
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -30,7 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SOCIAL_LINKS } from "@/components/SocialLinks";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 // Prefetch a route chunk on hover  -  import() is cached by the module system
 const prefetch = (path: string) => {
@@ -61,7 +59,6 @@ export default function Navigation() {
   const [mobileSeasonsOpen, setMobileSeasonsOpen] = useState(false);
   const [mobileSocialsOpen, setMobileSocialsOpen] = useState(false);
   const { user, isAuthenticated, loading, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
 
@@ -411,17 +408,6 @@ export default function Navigation() {
             </DropdownMenu>
 
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full text-[#7dd87d] hover:bg-white/10 transition-colors"
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
-            {/* Language Switcher */}
-            <LanguageSwitcher compact />
 
             {/* Notification Bell */}
             {isAuthenticated && user && <NotificationBell />}
@@ -515,7 +501,7 @@ export default function Navigation() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-white p-2"
+            className="md:hidden text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={() => setMobileMenuOpen(true)}
             aria-label="Open menu"
             aria-expanded={mobileMenuOpen}
@@ -551,10 +537,6 @@ export default function Navigation() {
             <div className="flex-1 overflow-y-auto">
             <div className="flex flex-col gap-1 p-3">
 
-              {/* Language Switcher - Mobile */}
-              <div className="px-4 py-2">
-                <LanguageSwitcher />
-              </div>
 
               {/* 4 Paths Dropdown - Mobile */}
               <div className="flex flex-col">

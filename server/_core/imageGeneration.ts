@@ -43,12 +43,15 @@ export function buildImagePrompt(
 }
 
 export async function generateImage(options: GenerateImageOptions): Promise<GenerateImageResponse> {
-  const workerUrl = ENV.imageGenWorkerUrl;
+  const rawUrl = ENV.imageGenWorkerUrl;
   const secret = ENV.imageGenSecret;
 
-  if (!workerUrl || !secret) {
-    throw new Error("Image generation not configured: set IMAGE_GEN_WORKER_URL and IMAGE_GEN_SECRET env vars");
+  if (!rawUrl || !secret) {
+    throw new Error("Image generation not configured: set IMAGE_GEN_WORKER_URL (full URL with https://) and IMAGE_GEN_SECRET env vars");
   }
+
+  // Guard against missing protocol (env var set without https://)
+  const workerUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
 
   const response = await fetch(workerUrl, {
     method: "POST",

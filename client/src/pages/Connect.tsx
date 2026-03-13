@@ -219,6 +219,7 @@ export default function Connect() {
   const [step, setStep] = useState<"select" | "form" | "success">("select");
   const [selectedPath, setSelectedPath] = useState<PathType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   // Form data
   const [email, setEmail] = useState("");
@@ -345,6 +346,8 @@ export default function Connect() {
     onError: (error) => {
       console.error("Submission error:", error);
       setIsSubmitting(false);
+      setSubmitError(error?.message || "Submission failed. Please try again.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     },
   });
   
@@ -365,7 +368,7 @@ export default function Connect() {
   
   const handleSubmit = async () => {
     if (!selectedPath || !email) return;
-    
+    setSubmitError(null);
     setIsSubmitting(true);
     
     submitMutation.mutate({
@@ -1311,6 +1314,13 @@ export default function Connect() {
                 </div>
               </div>
               
+              {/* Submit error summary */}
+              {submitError && (
+                <div className="bg-red-900/30 border border-red-500/40 rounded-lg p-3 text-sm text-red-400">
+                  {submitError}
+                </div>
+              )}
+
               {/* Submit Button */}
               <div className="pt-4">
                 <Button

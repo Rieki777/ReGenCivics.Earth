@@ -37,7 +37,12 @@ export function AdminImageStudio() {
       setError(null);
     },
     onError(err) {
-      setError(err.message);
+      const msg = err.message;
+      if (msg.includes("Failed to parse URL") || msg.includes("not configured") || msg.includes("IMAGE_GEN")) {
+        setError("Image generation is not configured. Check that IMAGE_GEN_WORKER_URL is set in Railway (full URL with https://) and the Cloudflare Worker is deployed.");
+      } else {
+        setError(msg);
+      }
     },
   });
 
@@ -49,7 +54,12 @@ export function AdminImageStudio() {
       setSelected(null);
     },
     onError(err) {
-      setError(err.message);
+      const msg = err.message;
+      if (msg.includes("Failed to parse URL") || msg.includes("not configured") || msg.includes("IMAGE_GEN")) {
+        setError("Image generation is not configured. Check that IMAGE_GEN_WORKER_URL is set in Railway (full URL with https://) and the Cloudflare Worker is deployed.");
+      } else {
+        setError(msg);
+      }
     },
   });
 
