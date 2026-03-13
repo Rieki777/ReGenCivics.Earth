@@ -88,7 +88,7 @@ export function AuthDialog({
         <div className="flex flex-col items-center gap-2 p-6 pt-10">
           {logo ? (
             <div className="w-14 h-14 bg-[#1a472a] rounded-xl border border-[#7dd87d]/20 flex items-center justify-center mb-1">
-              <img src={logo} alt="Dialog graphic" className="w-9 h-9 rounded-md" />
+              <img src={logo} alt="Dialog graphic" className="w-9 h-9 rounded-md" loading="lazy" />
             </div>
           ) : (
             <div className="w-12 h-12 bg-[#1a472a] rounded-full border border-[#7dd87d]/30 flex items-center justify-center mb-1">

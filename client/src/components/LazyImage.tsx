@@ -44,6 +44,7 @@ export function LazyImage({ src, alt, className = "", aspect, placeholder, style
         alt={alt}
         className={`${className} transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0 absolute inset-0 w-full h-full"}`}
         style={style}
+        loading="lazy"
         onLoad={() => setLoaded(true)}
         {...rest}
       />
