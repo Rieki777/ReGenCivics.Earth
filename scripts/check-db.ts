@@ -25,14 +25,14 @@ async function main() {
 
   // --- Users ---
   const [users] = await conn.execute<any[]>(
-    "SELECT id, email, role, open_id, created_at FROM users ORDER BY created_at DESC LIMIT 20"
+    "SELECT id, email, role, openId, createdAt FROM users ORDER BY createdAt DESC LIMIT 20"
   );
   console.log("=== USERS (most recent first) ===");
   if (users.length === 0) {
     console.log("  (no users found)");
   } else {
     users.forEach((u) =>
-      console.log(`  id=${u.id}  role=${u.role}  email=${u.email}  open_id=${u.open_id}`)
+      console.log(`  id=${u.id}  role=${u.role}  email=${u.email}  openId=${u.openId}`)
     );
   }
 

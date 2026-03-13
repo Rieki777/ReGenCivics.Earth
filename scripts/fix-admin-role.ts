@@ -36,8 +36,9 @@ async function main() {
   console.log("✅  Connected to DB.\n");
 
   // Find user by email
+  // Note: column name is openId (camelCase) as defined in drizzle/schema.ts
   const [rows] = await conn.execute<any[]>(
-    "SELECT id, email, role, open_id FROM users WHERE email = ?",
+    "SELECT id, email, role, openId FROM users WHERE email = ?",
     [TARGET_EMAIL]
   );
 
@@ -53,11 +54,11 @@ async function main() {
   console.log(`  id:      ${user.id}`);
   console.log(`  email:   ${user.email}`);
   console.log(`  role:    ${user.role}`);
-  console.log(`  open_id: ${user.open_id}`);
+  console.log(`  openId:  ${user.openId}`);
 
   if (user.role === "admin") {
     console.log("\n✅  User already has role='admin'. No change needed.");
-    console.log(`\n👉  Set OWNER_OPEN_ID in Railway to: ${user.open_id}`);
+    console.log(`\n👉  Set OWNER_OPEN_ID in Railway to: ${user.openId}`);
     await conn.end();
     return;
   }
@@ -65,7 +66,7 @@ async function main() {
   // Update to admin
   await conn.execute("UPDATE users SET role = 'admin' WHERE id = ?", [user.id]);
   console.log(`\n✅  Updated role to 'admin' for user id=${user.id}`);
-  console.log(`\n👉  Now set OWNER_OPEN_ID in Railway to: ${user.open_id}`);
+  console.log(`\n👉  Now set OWNER_OPEN_ID in Railway to: ${user.openId}`);
   console.log("    This ensures future logins keep you as admin automatically.\n");
 
   await conn.end();
