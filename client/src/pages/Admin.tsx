@@ -3059,7 +3059,7 @@ function AdminDashboard() {
           <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-[#1a472a]">Keyboard Shortcuts</h3>
-              <button onClick={() => setShowShortcuts(false)} className="text-[#1a472a]/40 hover:text-[#1a472a]"><X className="w-4 h-4" /></button>
+              <button onClick={() => setShowShortcuts(false)} aria-label="Close keyboard shortcuts" className="text-[#1a472a]/40 hover:text-[#1a472a]"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-2">
               {SHORTCUTS.map(s => (
@@ -3157,7 +3157,7 @@ function AdminDashboard() {
               className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
             {globalSearch && (
-              <button onClick={() => setGlobalSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/40 hover:text-[#1a472a]">
+              <button onClick={() => setGlobalSearch('')} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/40 hover:text-[#1a472a]">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}

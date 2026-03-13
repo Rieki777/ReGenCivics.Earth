@@ -184,6 +184,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
         </button>
         <button
           onClick={() => setOpen(false)}
+          aria-label="Close AI assistant"
           className="text-white/60 hover:text-white p-1 rounded transition-colors"
         >
           <X className="w-4 h-4" />
