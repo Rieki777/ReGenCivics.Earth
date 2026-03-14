@@ -120,6 +120,8 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
           <img
             src={imgError ? questImageFallback(quest.id, slug!) : imgUrl}
             alt={`Quest ${quest.id}: ${quest.title}`}
+            width={640}
+            height={360}
             className="w-full h-full object-cover"
             onError={() => setImgError(true)}
             loading="lazy"
@@ -767,8 +769,8 @@ export default function Quest() {
           <div className="max-w-3xl mx-auto">
             <div className="bg-white p-8 rounded-2xl border-3 border-[#7dd87d]/30 shadow-lg text-center">
               <div className="flex justify-center gap-4 mb-6">
-                <img src="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png" alt="$Regen Token" className="w-16 h-16 object-contain" loading="lazy" />
-                <img src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png" alt="RGVoice Token" className="w-16 h-16 object-contain" loading="lazy" />
+                <img src="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png" alt="$Regen Token" width={64} height={64} className="w-16 h-16 object-contain" loading="lazy" decoding="async" />
+                <img src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png" alt="RGVoice Token" width={64} height={64} className="w-16 h-16 object-contain" loading="lazy" decoding="async" />
               </div>
               <h2 
                 className="text-2xl md:text-3xl font-bold mb-4 text-[#1a472a]"

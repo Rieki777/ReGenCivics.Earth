@@ -425,6 +425,8 @@ export default function Community() {
                                 <img
                                   src={meta.image}
                                   alt={projectName}
+                                  width={800}
+                                  height={500}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   loading="lazy"
                                   decoding="async"
@@ -480,6 +482,8 @@ export default function Community() {
                 <img
                   src="/community/alliance-orgs-banner.png"
                   alt="Alliance organisations"
+                  width={800}
+                  height={200}
                   className="w-full h-full object-cover"
                   loading="lazy"
                   decoding="async"

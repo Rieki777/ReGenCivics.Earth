@@ -152,6 +152,8 @@ export function SeasonalQuestFeed() {
                     <img
                       src={`/quest-images/seasonal/${quest.id}.webp`}
                       alt={quest.title}
+                      width={640}
+                      height={480}
                       className="w-full h-full object-cover"
                       loading="lazy"
                       decoding="async"

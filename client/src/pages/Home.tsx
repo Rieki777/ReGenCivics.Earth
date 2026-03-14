@@ -442,15 +442,21 @@ export default function Home() {
               <img
                 src="https://assets.regencivics.earth/zfElEQNBAtFioaGj.jpg"
                 alt="Impact metrics: Acres under regeneration, community members supported, biodiversity restored"
+                width={1200}
+                height={675}
                 className="hidden md:block w-full rounded-xl shadow-2xl"
                 loading="lazy"
+                decoding="async"
               />
               {/* Mobile version - portrait layout optimized for phone screens */}
               <img
                 src="https://assets.regencivics.earth/FfLefvCNHfDcTYUt.png"
                 alt="Impact metrics: Acres under regeneration, community members supported, biodiversity restored"
+                width={800}
+                height={1200}
                 className="block md:hidden w-full rounded-xl shadow-2xl"
                 loading="lazy"
+                decoding="async"
               />
             </AnimatedSection>
           </div>
