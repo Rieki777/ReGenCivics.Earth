@@ -597,6 +597,31 @@ export default function PageBackground({
     }
   }, [mobileBackgroundImage]);
 
+  // JS parallax — translates background at parallaxSpeed so it moves slower than content.
+  // Only runs on desktop when parallax=true and scrollWithPage=false.
+  // Uses requestAnimationFrame + translateY for GPU-accelerated smooth scroll on all browsers
+  // including iOS Safari (which breaks background-attachment: fixed).
+  useEffect(() => {
+    if (!parallax || scrollWithPage || isMobile) return;
+    let ticking = false;
+    const update = () => {
+      if (!bgRef.current) return;
+      bgRef.current.style.transform = `translateY(${window.scrollY * (1 - parallaxSpeed)}px)`;
+      ticking = false;
+    };
+    const handler = () => {
+      if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+      }
+    };
+    update();
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handler);
+      if (bgRef.current) bgRef.current.style.transform = "";
+    };
+  }, [parallax, scrollWithPage, isMobile, parallaxSpeed]);
 
   const isLoaded = isMobile && mobileBackgroundImage ? mobileBgLoaded : bgLoaded;
   const activeImage = isMobile && mobileBackgroundImage ? mobileBackgroundImage : backgroundImage;
@@ -620,7 +645,7 @@ export default function PageBackground({
             backgroundSize: "cover",
             backgroundPosition: `center ${backgroundPositionY || "top"}`,
             backgroundRepeat: "no-repeat",
-            backgroundAttachment: scrollWithPage ? "scroll" : (isMobile ? "scroll" : "fixed"),
+            backgroundAttachment: "scroll",
             filter: "blur(20px)",
             transform: "scale(1.1)", // Prevent blur edges from showing
           }}
@@ -628,8 +653,8 @@ export default function PageBackground({
       )}
 
       {/* Full-res background image layer */}
-      {/* scrollWithPage=true: image scrolls with content, revealing narrative top→bottom */}
-      {/* scrollWithPage=false (default): viewport-fixed, same view regardless of scroll position */}
+      {/* scrollWithPage=true: image scrolls 1:1 with content */}
+      {/* scrollWithPage=false + parallax=true (default): JS translateY creates smooth depth parallax */}
       <div
         ref={bgRef}
         className={`absolute z-[2] transition-opacity duration-1000 ${
@@ -641,8 +666,8 @@ export default function PageBackground({
           backgroundSize: "cover",
           backgroundPosition: `center ${backgroundPositionY || "top"}`,
           backgroundRepeat: "no-repeat",
-          backgroundAttachment: scrollWithPage ? "scroll" : (isMobile ? "scroll" : "fixed"),
-          willChange: "auto",
+          backgroundAttachment: "scroll",
+          willChange: parallax && !scrollWithPage && !isMobile ? "transform" : "auto",
         }}
       />
 

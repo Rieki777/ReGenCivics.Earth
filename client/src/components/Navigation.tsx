@@ -215,7 +215,7 @@ export default function Navigation() {
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/quest'}
                 >
-                  <span className="text-lg mr-3">⛰️</span>
+                  <span className="text-lg mr-3">🌲</span>
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Explore Quests</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
@@ -670,7 +670,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <span className="text-lg">⛰️</span>
+                      <span className="text-lg">🌲</span>
                       Explore Quests
                     </Link>
                     <Link 

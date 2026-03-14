@@ -129,7 +129,6 @@ export default function Fund() {
       theme="ocean"
       blendColor="12, 42, 48"
       overlayColor="12, 42, 48"
-      scrollWithPage={true}
       sectionOverlays={[
         { id: "hero", opacity: 0.35 },            // Hero - let image detail show through
         { id: "problem", opacity: 0.55 },          // Problem statement
