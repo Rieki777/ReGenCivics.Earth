@@ -1,4 +1,4 @@
-import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double } from "drizzle-orm/mysql-core";
+import { index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -1300,12 +1300,15 @@ export const forumReports = mysqlTable("forumReports", {
   replyId: int("replyId"),
   reason: mysqlEnum("reason", ["spam", "harassment", "inappropriate", "misinformation", "other"]).notNull(),
   details: text("details"),
+  // Two-level flagging: soft = community majority can hide; hard = requires admin review
+  severity: mysqlEnum("severity", ["soft", "hard"]).default("soft").notNull(),
   status: mysqlEnum("status", ["pending", "reviewed", "dismissed", "actioned"]).default("pending").notNull(),
   reviewedBy: int("reviewedBy"),
   reviewedAt: timestamp("reviewedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ForumReport = typeof forumReports.$inferSelect;
+export type InsertForumReport = typeof forumReports.$inferInsert;
 
 /**
  * Forum Moderators table
@@ -1659,3 +1662,56 @@ export const organisations = mysqlTable("organisations", {
 });
 export type Organisation = typeof organisations.$inferSelect;
 export type InsertOrganisation = typeof organisations.$inferInsert;
+
+// ─── Quest Completions ────────────────────────────────────────────────────────
+// Records when a player completes a quest and submits an artifact.
+export const questCompletions = mysqlTable("quest_completions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  questId: varchar("questId", { length: 100 }).notNull(),   // e.g. "quest-0"
+  questTitle: varchar("questTitle", { length: 255 }).notNull(),
+  // Artifact submitted by the player (photo URL, written reflection, etc.)
+  artifactType: mysqlEnum("artifactType", ["photo", "text", "link", "video"]).default("text").notNull(),
+  artifactUrl: varchar("artifactUrl", { length: 1000 }),
+  artifactText: text("artifactText"),
+  caption: varchar("caption", { length: 500 }),
+  // Visibility: public shows in community feed, private stays in journal
+  visibility: mysqlEnum("visibility", ["public", "private"]).default("public").notNull(),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type QuestCompletion = typeof questCompletions.$inferSelect;
+export type InsertQuestCompletion = typeof questCompletions.$inferInsert;
+
+// ─── Active Quest Signals ─────────────────────────────────────────────────────
+// "I'm doing this" — a lightweight signal that a player is currently on a quest.
+// Expires after 90 days or when the user removes it.
+export const activeQuestSignals = mysqlTable("active_quest_signals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  questTitle: varchar("questTitle", { length: 255 }).notNull(),
+  note: varchar("note", { length: 500 }),                   // optional short note
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),               // default: startedAt + 90 days
+  isActive: tinyint("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ActiveQuestSignal = typeof activeQuestSignals.$inferSelect;
+export type InsertActiveQuestSignal = typeof activeQuestSignals.$inferInsert;
+
+// ─── Entity RSS Feeds ─────────────────────────────────────────────────────────
+// RSS / Atom feeds associated with a land project or organisation.
+export const entityRssFeeds = mysqlTable("entity_rss_feeds", {
+  id: int("id").autoincrement().primaryKey(),
+  entityType: mysqlEnum("entityType", ["land_project", "organisation"]).notNull(),
+  entityId: varchar("entityId", { length: 100 }).notNull(), // project slug or orgId
+  feedUrl: varchar("feedUrl", { length: 1000 }).notNull(),
+  label: varchar("label", { length: 255 }),                 // e.g. "Blog", "Newsletter"
+  lastFetchedAt: timestamp("lastFetchedAt"),
+  isActive: tinyint("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EntityRssFeed = typeof entityRssFeeds.$inferSelect;
+export type InsertEntityRssFeed = typeof entityRssFeeds.$inferInsert;
+
