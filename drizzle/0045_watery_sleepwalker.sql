@@ -1,0 +1,1 @@
+ALTER TABLE `org_claims` ADD `rssPromptDismissed` tinyint DEFAULT 0 NOT NULL;

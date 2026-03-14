@@ -1485,6 +1485,8 @@ export const orgClaims = mysqlTable("org_claims", {
   submittedAt: timestamp("submittedAt").defaultNow().notNull(),
   reviewedAt: timestamp("reviewedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  // Tracks whether the steward has dismissed the one-time RSS setup popup
+  rssPromptDismissed: tinyint("rssPromptDismissed").default(0).notNull(),
 });
 
 export type OrgClaim = typeof orgClaims.$inferSelect;
