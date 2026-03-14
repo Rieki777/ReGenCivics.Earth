@@ -177,6 +177,7 @@ export default function Land() {
       overlayOpacity={0.65}
       theme="garden"
       blendColor="22, 50, 30"
+      scrollWithPage={true}
       sectionOverlays={[
         { id: "hero", opacity: 0.30 },             // Hero - let image detail show through
         { id: "problem", opacity: 0.55 },           // Problem overview
