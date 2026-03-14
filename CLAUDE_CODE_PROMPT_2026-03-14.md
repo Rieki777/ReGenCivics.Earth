@@ -27,7 +27,9 @@ ReGen Civics is a fund and in-real-life game for regenerative land projects and 
 
 ## Your primary reference document
 
-**`FIXES_TO_MAKE_2026-03-13.md`** — this is the master task list. Every fix has a number, status, and full implementation spec. Read it before starting any work.
+**`FIXES_TO_MAKE_2026-03-14.md`** — new fixes for this session (Fix 96-99: performance optimization, lazy loading, bundle splitting, image compression). Read this first.
+
+**`FIXES_TO_MAKE_2026-03-13.md`** — master task list for all prior fixes. Pending items from this doc are listed in the "Still pending" section below.
 
 Also needed:
 - `QUEST_MASTER_SHEET.md` — full quest content and philosophy (referenced by Fix 76 and 77)
