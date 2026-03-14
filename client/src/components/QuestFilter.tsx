@@ -243,21 +243,21 @@ export function QuestFilter({ onFilterChange, activeFilters }: QuestFilterProps)
 
 // Quest metadata for filtering
 export const QUEST_METADATA: Record<string, { category: QuestCategory; difficulty: QuestDifficulty; time: QuestTime; experience: string; element: QuestElement }> = {
-  "quest-0":       { category: "inner-work", difficulty: "beginner",     time: "medium", experience: "One-time ceremony, 2-4 hours",            element: "fire" },
-  "quest-1":       { category: "healing",    difficulty: "beginner",     time: "long",   experience: "Weekend practice, 3-5 hours",             element: "fire" },
-  "quest-2":       { category: "nature",     difficulty: "beginner",     time: "medium", experience: "Solo afternoon, 1-2 hours",               element: "earth" },
-  "quest-3":       { category: "nature",     difficulty: "intermediate", time: "long",   experience: "Ongoing daily practice",                  element: "earth" },
-  "quest-4":       { category: "inner-work", difficulty: "intermediate", time: "long",   experience: "Group adventure, 2-4 hours, repeatable",  element: "earth" },
-  "quest-5":       { category: "community",  difficulty: "advanced",     time: "long",   experience: "Weekend dreaming, 3-5 hours",             element: "water" },
-  "quest-6":       { category: "community",  difficulty: "intermediate", time: "medium", experience: "Ceremony with your beloved",              element: "water" },
-  "quest-7":       { category: "nature",     difficulty: "beginner",     time: "medium", experience: "Community gathering, half day",           element: "water" },
-  "quest-8":       { category: "inner-work", difficulty: "advanced",     time: "long",   experience: "Solo or group walk, 2-4 hours",          element: "earth" },
-  "quest-9":       { category: "nature",     difficulty: "intermediate", time: "medium", experience: "Solo ceremony, full day",                element: "fire" },
-  "quest-10":      { category: "community",  difficulty: "beginner",     time: "quick",  experience: "Slow walk, 1-2 hours",                    element: "air" },
-  "quest-11":      { category: "community",  difficulty: "intermediate", time: "medium", experience: "30-day practice",                         element: "water" },
-  "quest-12":      { category: "inner-work", difficulty: "intermediate", time: "medium", experience: "Group project, ongoing",                  element: "water" },
-  "quest-13":      { category: "healing",    difficulty: "beginner",     time: "long",   experience: "Breathwork session, 2-3 hours",           element: "air" },
-  "food-foresting":{ category: "nature",     difficulty: "beginner",     time: "medium", experience: "Group adventure, 2-4 hours, repeatable",  element: "earth" },
+  "quest-0":       { category: "inner-work", difficulty: "beginner",     time: "medium", experience: "A half-day to start, a lifetime to master", element: "fire"  },
+  "quest-1":       { category: "healing",    difficulty: "beginner",     time: "long",   experience: "One hour outside, recurring practice",       element: "earth" },
+  "quest-2":       { category: "nature",     difficulty: "beginner",     time: "medium", experience: "A weekend immersion",                         element: "water" },
+  "quest-3":       { category: "nature",     difficulty: "intermediate", time: "long",   experience: "Ongoing, seasonal rhythm",                    element: "earth" },
+  "quest-4":       { category: "inner-work", difficulty: "intermediate", time: "long",   experience: "A day of deep presence",                      element: "earth" },
+  "quest-5":       { category: "community",  difficulty: "advanced",     time: "long",   experience: "An evening ritual",                           element: "air"   },
+  "quest-6":       { category: "community",  difficulty: "intermediate", time: "medium", experience: "A ceremony or gathering",                     element: "water" },
+  "quest-7":       { category: "nature",     difficulty: "beginner",     time: "medium", experience: "A few hours with others",                     element: "fire"  },
+  "quest-8":       { category: "inner-work", difficulty: "advanced",     time: "long",   experience: "A morning walk",                              element: "earth" },
+  "quest-9":       { category: "nature",     difficulty: "intermediate", time: "medium", experience: "A retreat or guided journey",                 element: "water" },
+  "quest-10":      { category: "community",  difficulty: "beginner",     time: "quick",  experience: "A short daily practice",                      element: "air"   },
+  "quest-11":      { category: "community",  difficulty: "intermediate", time: "medium", experience: "A community session",                         element: "air"   },
+  "quest-12":      { category: "inner-work", difficulty: "intermediate", time: "medium", experience: "An afternoon of exploration",                 element: "air"   },
+  "quest-13":      { category: "healing",    difficulty: "beginner",     time: "long",   experience: "24-48 hours of intentional practice",         element: "fire"  },
+  "food-foresting":{ category: "nature",     difficulty: "beginner",     time: "medium", experience: "Ongoing, seasonal rhythm",                    element: "earth" },
 };
 
 // Helper function to filter quests

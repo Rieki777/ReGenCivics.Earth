@@ -300,15 +300,14 @@ function QuestAnimationVideo() {
             ) : (
               <video
                 ref={videoRef}
+                src="https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4"
                 loop
                 muted
                 playsInline
                 preload="metadata"
                 className="w-full h-auto"
                 onError={() => setVideoError(true)}
-              >
-                <source src="https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4" type="video/mp4" />
-              </video>
+              />
             )}
           </div>
         </AnimatedSection>

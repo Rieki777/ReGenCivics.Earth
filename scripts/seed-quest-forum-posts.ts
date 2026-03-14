@@ -40,11 +40,25 @@ async function main() {
   const catId: number = cats[0]?.id;
   if (!catId) throw new Error("No suitable forum category found. Run seed-forum.mjs first.");
 
-  // Look up admin user
-  const [admins] = await conn.execute(
-    "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+  // Ensure team author exists
+  const [existingTeamUsers] = await conn.execute(
+    "SELECT id FROM users WHERE email = 'team@regencivics.earth' LIMIT 1"
   ) as any;
-  const adminId: number = admins[0]?.id ?? 1;
+
+  let TEAM_USER_ID: number;
+  if (existingTeamUsers.length > 0) {
+    TEAM_USER_ID = existingTeamUsers[0].id;
+    console.log(`Using existing team user id=${TEAM_USER_ID}`);
+  } else {
+    const [insertRes] = await conn.execute(
+      "INSERT INTO users (openId, name, email, role) VALUES (?, ?, ?, 'admin')",
+      ["team@regencivics.earth", "ReGen Civics Team", "team@regencivics.earth"]
+    ) as any;
+    TEAM_USER_ID = insertRes.insertId;
+    console.log(`Created team user id=${TEAM_USER_ID}`);
+  }
+
+  const adminId = TEAM_USER_ID;
 
   let postsCreated = 0;
   let commentsCreated = 0;

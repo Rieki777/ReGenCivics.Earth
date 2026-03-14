@@ -1158,7 +1158,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 orgType: claimType,
                 orgId: selectedOrg.id,
                 orgName: selectedOrg.name,
-                formData,
+                formData: formData as Record<string, unknown> | undefined,
               });
             }}
             className="w-full py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#6bc86b] transition-colors"
@@ -1380,7 +1380,7 @@ function RssFeedManager() {
         <p className="text-white/30 text-xs">No RSS feeds connected yet.</p>
       ) : (
         <div className="space-y-2">
-          {feedsQuery.data?.map((feed) => (
+          {feedsQuery.data?.map((feed: any) => (
             <div key={feed.id} className="flex items-center justify-between bg-[#1a472a]/20 border border-white/5 rounded-lg px-3 py-2">
               <div className="min-w-0">
                 <p className="text-white/80 text-xs font-medium truncate">{feed.label}</p>
@@ -1632,7 +1632,7 @@ function ContributionsTab({
                 <div key={calc.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-white text-xs font-medium truncate">{calc.name || "Untitled Calculation"}</p>
-                    {calc.projectName && <p className="text-white/40 text-xs truncate">{calc.projectName}</p>}
+                    {calc.projectName && <p className="text-white/60 text-xs truncate">{calc.projectName}</p>}
                   </div>
                   <Link href={`/calculator?savedId=${calc.id}`}>
                     <span className="text-[#7dd87d]/70 text-xs hover:text-[#7dd87d] whitespace-nowrap">Edit →</span>
@@ -1641,7 +1641,7 @@ function ContributionsTab({
               ))}
               {savedCalcs.length > 3 && (
                 <Link href="/calculator">
-                  <p className="text-white/40 text-xs text-center hover:text-white/60 transition-colors">+ {savedCalcs.length - 3} more</p>
+                  <p className="text-white/60 text-xs text-center hover:text-white/80 transition-colors">+ {savedCalcs.length - 3} more</p>
                 </Link>
               )}
             </div>
@@ -1864,7 +1864,7 @@ function ContributionsTab({
                         )}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {item.projectName && (
-                            <span className="text-white/40 text-xs">{item.projectName}</span>
+                            <span className="text-white/60 text-xs">{item.projectName}</span>
                           )}
                           {item.estimatedValue && item.estimatedValue > 0 && (
                             <span className="text-[#d4a574] text-xs font-medium">${item.estimatedValue.toLocaleString()}</span>
@@ -1874,12 +1874,12 @@ function ContributionsTab({
                               href={item.evidenceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-white/40 hover:text-[#7dd87d] text-xs flex items-center gap-0.5 transition-colors"
+                              className="text-white/60 hover:text-[#7dd87d] text-xs flex items-center gap-0.5 transition-colors"
                             >
                               <ExternalLink className="w-3 h-3" /> evidence
                             </a>
                           )}
-                          <span className="text-white/25 text-xs ml-auto">
+                          <span className="text-white/50 text-xs ml-auto">
                             {new Date(item.createdAt).toLocaleDateString()}
                           </span>
                         </div>
@@ -1887,7 +1887,7 @@ function ContributionsTab({
                       <button
                         onClick={() => deleteMutation.mutate({ id: item.id })}
                         disabled={deleteMutation.isPending}
-                        className="opacity-0 group-hover/row:opacity-100 text-white/30 hover:text-red-400 transition-all p-1 shrink-0"
+                        className="opacity-0 group-hover/row:opacity-100 text-white/50 hover:text-red-400 transition-all p-1 shrink-0"
                         aria-label="Delete contribution"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -2383,7 +2383,7 @@ function QuestJournal({ userId }: { userId: number }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {completionsQuery.data?.map((completion) => (
+          {completionsQuery.data?.map((completion: any) => (
             <div
               key={completion.id}
               className="bg-[#1a472a]/30 border border-white/10 rounded-xl p-4 space-y-2"

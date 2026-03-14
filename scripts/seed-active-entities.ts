@@ -17,12 +17,11 @@
  * Prerequisites:
  *   - pnpm db:push run (organisations table must exist)
  *   - DATABASE_URL loaded in env
- *   - RYE_USER_ID set to admin user's DB id
  *
  * Usage:
  *   npx tsx scripts/seed-active-entities.ts [--dry-run]
- *   $Env:RYE_USER_ID=1; npx tsx scripts/seed-active-entities.ts --dry-run
- *   $Env:RYE_USER_ID=1; npx tsx scripts/seed-active-entities.ts
+ *   npx tsx scripts/seed-active-entities.ts --dry-run
+ *   npx tsx scripts/seed-active-entities.ts
  */
 
 import mysql from "mysql2/promise";
@@ -30,7 +29,6 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const DRY_RUN = process.argv.includes("--dry-run");
-const RYE_USER_ID = parseInt(process.env.RYE_USER_ID ?? "1", 10);
 
 // ── Land Projects ─────────────────────────────────────────────────────────────
 // Source: client/src/pages/Connect.tsx landProjects array
@@ -72,15 +70,6 @@ const LAND_PROJECTS = [
     status: "active" as const,
   },
   {
-    id: "highland_lake",
-    name: "Highland Lake CampUS",
-    location: "NC, USA",
-    country: "United States",
-    focus: "ReFi and ReGov incubator on 100 to 120 acres",
-    websiteUrl: null,
-    status: "active" as const,
-  },
-  {
     id: "liminal",
     name: "Liminal Village",
     location: "Italy",
@@ -108,47 +97,11 @@ const LAND_PROJECTS = [
     status: "active" as const,
   },
   {
-    id: "ubuntu",
-    name: "Ubuntu",
-    location: "Various",
-    country: null,
-    focus: "Community-led regeneration",
-    websiteUrl: null,
-    status: "active" as const,
-  },
-  {
     id: "finca_sagrada",
     name: "Finca Sagrada",
-    location: "Latin America",
-    country: null,
+    location: "Ecuador",
+    country: "Ecuador",
     focus: "Biodynamic community farm",
-    websiteUrl: null,
-    status: "active" as const,
-  },
-  {
-    id: "tabi",
-    name: "Tabi",
-    location: "Various",
-    country: null,
-    focus: "Regenerative land project",
-    websiteUrl: null,
-    status: "active" as const,
-  },
-  {
-    id: "tioga",
-    name: "Tioga",
-    location: "Various",
-    country: null,
-    focus: "Ecological restoration",
-    websiteUrl: null,
-    status: "active" as const,
-  },
-  {
-    id: "lala_gardens",
-    name: "LaLa Gardens Cooperative",
-    location: "Various",
-    country: null,
-    focus: "Cooperative garden community",
     websiteUrl: null,
     status: "active" as const,
   },
@@ -276,12 +229,34 @@ async function main() {
 
   const conn = await mysql.createConnection(dbUrl);
   console.log(DRY_RUN ? "DRY RUN — no writes\n" : "LIVE RUN — writing to DB\n");
-  console.log(`Using RYE_USER_ID = ${RYE_USER_ID} for authorship\n`);
+
+  // Ensure team author exists
+  const [existingTeamUsers] = await conn.execute(
+    "SELECT id FROM users WHERE email = 'team@regencivics.earth' LIMIT 1"
+  ) as any;
+
+  let TEAM_USER_ID: number;
+  if (existingTeamUsers.length > 0) {
+    TEAM_USER_ID = existingTeamUsers[0].id;
+    console.log(`Using existing team user id=${TEAM_USER_ID}`);
+  } else if (!DRY_RUN) {
+    const [insertRes] = await conn.execute(
+      "INSERT INTO users (openId, name, email, role) VALUES (?, ?, ?, 'admin')",
+      ["team@regencivics.earth", "ReGen Civics Team", "team@regencivics.earth"]
+    ) as any;
+    TEAM_USER_ID = insertRes.insertId;
+    console.log(`Created team user id=${TEAM_USER_ID}`);
+  } else {
+    TEAM_USER_ID = 0;
+    console.log("[DRY RUN] Would create team user");
+  }
+
+  console.log(`Using TEAM_USER_ID = ${TEAM_USER_ID} for authorship\n`);
 
   try {
-    await seedLandProjects(conn);
+    await seedLandProjects(conn, TEAM_USER_ID);
     await seedOrganisations(conn);
-    await seedOrgForumThreads(conn);
+    await seedOrgForumThreads(conn, TEAM_USER_ID);
     console.log("\nAll done. Next step: run seed-land-project-threads.ts to create land project forum threads.");
   } finally {
     await conn.end();
@@ -290,7 +265,7 @@ async function main() {
 
 // ── Land Projects ─────────────────────────────────────────────────────────────
 
-async function seedLandProjects(conn: mysql.Connection) {
+async function seedLandProjects(conn: mysql.Connection, TEAM_USER_ID: number) {
   console.log("=== Land Projects ===\n");
   let created = 0;
   let skipped = 0;
@@ -331,7 +306,7 @@ async function seedLandProjects(conn: mysql.Connection) {
           timeCommitment, fundingNeeds, websiteUrl, additionalNotes, submittedAt
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
         [
-          RYE_USER_ID,
+          TEAM_USER_ID,
           project.status,
           project.name,
           "early_stage",
@@ -395,7 +370,7 @@ async function seedOrganisations(conn: mysql.Connection) {
 
 // ── Org Forum Threads ─────────────────────────────────────────────────────────
 
-async function seedOrgForumThreads(conn: mysql.Connection) {
+async function seedOrgForumThreads(conn: mysql.Connection, TEAM_USER_ID: number) {
   console.log("=== Alliance Organisation Forum Threads ===\n");
 
   // Ensure active-organisations category exists
@@ -449,7 +424,7 @@ async function seedOrgForumThreads(conn: mysql.Connection) {
     if (!DRY_RUN) {
       const [res] = await conn.execute(
         "INSERT INTO forumPosts (categoryId, authorId, title, content, isPinned) VALUES (?, ?, ?, ?, 1)",
-        [categoryId, RYE_USER_ID, title, org.forumBody]
+        [categoryId, TEAM_USER_ID, title, org.forumBody]
       ) as any;
       const postId = res.insertId;
 

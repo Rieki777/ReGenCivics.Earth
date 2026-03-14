@@ -1,16 +1,23 @@
 /**
  * Quest qualifier mappings.
- * Maps quest IDs to land projects and orgs that list this quest
- * as a qualification or entry requirement for their space.
+ * Maps quest IDs to land projects and orgs that support or sponsor each quest.
  *
- * NOTE: These are placeholder entries. Rye should confirm which
- * land projects and orgs want to be listed before launch.
+ * NOTE: These are example qualifiers -- confirm with Rye before launch.
  */
 export const QUEST_QUALIFIERS: Record<string, string[]> = {
-  "quest-0": ["Finca Sagrada", "Liminal Village"],
-  "quest-1": ["Finca Sagrada"],
-  "quest-2": ["Finca Sagrada"],
-  "quest-3": ["Finca Sagrada", "Traditional Dream Factory", "StarSeed Village"],
-  "food-foresting": ["Finca Sagrada", "Heartland Collective"],
-  "quest-10": ["Hypha DAO", "SEEDS", "Nestr.io"],
+  "quest-0":       ["Traditional Dream Factory"],
+  "quest-1":       ["Liminal Village", "StarSeed Village"],
+  "quest-2":       ["Finca Sagrada"],
+  "quest-3":       ["Heartland Collective", "Traditional Dream Factory"],
+  "quest-4":       ["Liminal Village"],
+  "quest-5":       ["StarSeed Village"],
+  "quest-6":       [],
+  "quest-7":       ["Heartland Collective"],
+  "quest-8":       ["Finca Sagrada", "Traditional Dream Factory"],
+  "quest-9":       [],
+  "quest-10":      [],
+  "quest-11":      [],
+  "quest-12":      ["Liminal Village"],
+  "quest-13":      ["Nyx"],
+  "food-foresting": [],
 };

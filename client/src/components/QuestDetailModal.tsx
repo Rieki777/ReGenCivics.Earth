@@ -1,5 +1,6 @@
-import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, Printer } from "lucide-react";
+import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, FileDown, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface QuestStep {
   step: number;
@@ -217,23 +218,31 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
           <div className="flex flex-wrap gap-3 mt-4">
             <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full text-sm">
               <Coins className="w-4 h-4 text-[#7dd87d]" />
-              <span>+{quest.rewards.regen} $ReGen</span>
-              <span
-                title="ReGen tokens are earned by completing quests. They represent your stake in the regenerative economy we're building together. More value is co-created as the game grows."
-                className="cursor-help opacity-60 hover:opacity-100 transition-opacity"
-              >
-                <Info className="w-3.5 h-3.5" />
-              </span>
+              <span>+{quest.rewards.regen}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-0.5 cursor-help">
+                    $ReGen <Info className="w-3.5 h-3.5 text-[#7dd87d]/60" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[200px] text-xs">
+                  $ReGen tokens are earned by completing quests and track your regenerative contributions.
+                </TooltipContent>
+              </Tooltip>
             </div>
             <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full text-sm">
               <Vote className="w-4 h-4 text-[#7dd87d]" />
-              <span>+{quest.rewards.rvoice} RGVoice</span>
-              <span
-                title="RGVoice gives you a vote in how the ReGen Civics game evolves — proposals, quests, and governance decisions."
-                className="cursor-help opacity-60 hover:opacity-100 transition-opacity"
-              >
-                <Info className="w-3.5 h-3.5" />
-              </span>
+              <span>+{quest.rewards.rvoice}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-0.5 cursor-help">
+                    RGVoice <Info className="w-3.5 h-3.5 text-[#7dd87d]/60" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[200px] text-xs">
+                  RGVoice tokens represent your governance voting weight in the ReGen Civics Game.
+                </TooltipContent>
+              </Tooltip>
             </div>
             <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full text-sm">
               <Clock className="w-4 h-4" />
@@ -298,7 +307,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
             {quest.steps.length === 1 && quest.steps[0].title === "Details Coming Soon" ? (
               <div className="text-center py-4">
                 <p className="text-sm text-gray-500 mb-4">Full guide coming soon. Download the field guide PDF for now.</p>
-                {QUEST_PDF_SLUGS[quest.id] && (
+                {QUEST_PDF_SLUGS[quest.id] ? (
                   <a
                     href={`/quest-guides/${QUEST_PDF_SLUGS[quest.id]}.pdf`}
                     download
@@ -306,6 +315,15 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
                   >
                     <Download className="w-4 h-4" />
                     Download Field Guide
+                  </a>
+                ) : (
+                  <a
+                    href={`/quest-guides/quest-${String(quest.id.replace('quest-', '')).padStart(2, '0')}-${quest.title?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}.pdf`}
+                    download
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] rounded-lg hover:bg-[#7dd87d]/30 transition-all text-sm"
+                  >
+                    <FileDown className="w-4 h-4" />
+                    Download Quest Guide (PDF)
                   </a>
                 )}
               </div>

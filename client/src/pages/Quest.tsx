@@ -29,6 +29,7 @@ import { EpicQuestSection } from "@/components/EpicQuestSection";
 import { SeasonalQuestFeed } from "@/components/SeasonalQuestFeed";
 import { QuestArcMap } from "@/components/QuestArcMap";
 import { useHemisphere } from "@/hooks/useHemisphere";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 // setHemisphereOverride is used in SeasonalQuestFeed directly
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.png to this path
@@ -313,6 +314,9 @@ function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers
               Quest {quest.id}: {quest.title}
             </h4>
             <p className="text-xs text-[#1a472a]/70">{quest.subtitle}</p>
+            {QUEST_METADATA[questId]?.experience && (
+              <p className="text-[10px] italic text-[#4a7c59]/80 mt-0.5">{QUEST_METADATA[questId].experience}</p>
+            )}
           </div>
         </div>
 
@@ -326,28 +330,32 @@ function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers
 
         <div className="flex items-center gap-2 text-xs mb-2">
           <span className="flex items-center gap-1 px-2 py-0.5 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">
-            +{quest.reward.regen} $ReGen
-            <span
-              title="ReGen tokens are earned by completing quests. They represent your stake in the regenerative economy we're building together. More value is co-created as the game grows."
-              className="cursor-help opacity-50 hover:opacity-100 transition-opacity"
-            >
-              <Info className="w-3 h-3" />
-            </span>
+            +{quest.reward.regen}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center gap-0.5 cursor-help">
+                  $ReGen <Info className="w-3 h-3 text-[#7dd87d]/60" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[200px] text-xs">
+                $ReGen tokens are earned by completing quests and track your regenerative contributions.
+              </TooltipContent>
+            </Tooltip>
           </span>
           <span className="flex items-center gap-1 px-2 py-0.5 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold">
-            +{quest.reward.rvoice} RGVoice
-            <span
-              title="RGVoice gives you a vote in how the ReGen Civics game evolves — proposals, quests, and governance decisions."
-              className="cursor-help opacity-50 hover:opacity-100 transition-opacity"
-            >
-              <Info className="w-3 h-3" />
-            </span>
+            +{quest.reward.rvoice}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center gap-0.5 cursor-help">
+                  RGVoice <Info className="w-3 h-3 text-[#7dd87d]/60" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[200px] text-xs">
+                RGVoice tokens represent your governance voting weight in the ReGen Civics Game.
+              </TooltipContent>
+            </Tooltip>
           </span>
         </div>
-
-        {QUEST_METADATA[questId]?.experience && (
-          <p className="text-xs text-[#4a7c59] mb-2 font-medium">{QUEST_METADATA[questId].experience}</p>
-        )}
 
         <p className="text-xs text-[#1a472a]/60 italic mb-3">
           <strong>Deliverable:</strong> {quest.deliverable}

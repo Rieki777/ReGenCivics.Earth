@@ -483,9 +483,16 @@ Intermittent fasting, extended fasting, the relationship between rest and renewa
 
 ## Part 4: Seasonal Quests — New Additions to the Site
 
-These 18 quests are not yet on the site. They need to be added as seasonal quest cards in the appropriate season of the carousel, or in an "Anytime" section for those that run year-round. Each will get: a card face (title + one-line hook), a flipped card (story + how-to steps + deliverable), and a PDF guide.
+These 18 quests are not yet on the site. They need to be added INSIDE the existing seasonal carousel tabs, appearing after the current quests in each season. They are not a separate section — they extend the existing Spring, Summer, Fall, and Winter tabs.
 
-The existing site has seasonal carousels for Spring, Summer, Fall, and Winter. "Anytime" quests can live in a new persistent section or be distributed across seasons — Rye to confirm preferred display approach.
+**Carousel placement:**
+- Spring tab: after quests 1, 2, 3 → add Healing the Five Bodies, Study Natural Hygiene, ReGen Financial Systems
+- Summer tab: after quests 5, 6, 7 → add Friendship with a Free Animal, Your Honey Moon, Singing to Your Food Forest, Animal Spirit Totems
+- Fall tab: after quests 8, 9, 9b → add Future Casting, Eating Sunlight, Becoming Trauma Informed
+- Winter tab: after quests 10, 11, 12 → add Write a Children's Book, Make a Song for the ReGeneration, Recreate Your Personal Cycles
+- New Anytime tab: Decrease Expenses/Increase Joy, Hermetic Seal, Start a Friend Pool, Present Parenting, The Fifth Agreement
+
+Each card needs: title, subtitle, rewards (TBD, placeholder 111 $ReGen + 1 RVoice), time, deliverable, description, and a hero image. Image prompts are in Fix 90.
 
 ---
 

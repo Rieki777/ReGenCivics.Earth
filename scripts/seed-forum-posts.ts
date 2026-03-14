@@ -719,11 +719,25 @@ async function main() {
     console.log("Forum cleared.\n");
   }
 
-  // Look up admin user
-  const [admins] = await conn.execute(
-    "SELECT id FROM users WHERE role = 'admin' LIMIT 1"
+  // Ensure team author exists
+  const [existingTeamUsers] = await conn.execute(
+    "SELECT id FROM users WHERE email = 'team@regencivics.earth' LIMIT 1"
   ) as any;
-  const adminId: number = admins[0]?.id ?? 1;
+
+  let TEAM_USER_ID: number;
+  if (existingTeamUsers.length > 0) {
+    TEAM_USER_ID = existingTeamUsers[0].id;
+    console.log(`Using existing team user id=${TEAM_USER_ID}`);
+  } else {
+    const [insertRes] = await conn.execute(
+      "INSERT INTO users (openId, name, email, role) VALUES (?, ?, ?, 'admin')",
+      ["team@regencivics.earth", "ReGen Civics Team", "team@regencivics.earth"]
+    ) as any;
+    TEAM_USER_ID = insertRes.insertId;
+    console.log(`Created team user id=${TEAM_USER_ID}`);
+  }
+
+  const adminId = TEAM_USER_ID;
 
   let postsCreated = 0;
   let commentsCreated = 0;
@@ -1068,6 +1082,20 @@ What agreements did you discover you were already living under? What do you want
   }
 
   const EPIC_QUEST_POSTS: { tier: string; title: string; body: string }[] = [
+    // Intro post
+    {
+      tier: "intro",
+      title: "EPIC Quests -- Long-form challenges for committed regenerators",
+      body: `EPIC Quests are multi-month commitments. They are not for everyone, and that is intentional.
+
+They come in three tiers: Easy, Hard, and Expert. Easy mode still requires real coordination and commitment. Hard mode involves transforming land, buildings, or communities. Expert mode is the long game: settlement design, systemic change, civilisation-level work.
+
+These quests are designed primarily for land stewards, community builders, and dedicated practitioners who are ready to take on something that will stretch them. But anyone with the drive and the right circumstances can attempt one.
+
+Check the [Quest page](/quests) for the full EPIC Quest section, with all tiers laid out. Come back here to share your progress, ask questions, and connect with others working on similar challenges.
+
+What are you considering attempting?`,
+    },
     // Easy Mode
     {
       tier: "easy",

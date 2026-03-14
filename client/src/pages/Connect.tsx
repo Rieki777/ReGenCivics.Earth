@@ -433,8 +433,6 @@ export default function Connect() {
       case "create_with_regens":
         return (
           <div className="space-y-6">
-      <SEO {...pageSEO.connect} />
-      <BackButton fallbackPath="/connect" label="Back to Connect" inline />
             <div>
               <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 Which Alliance Organization(s) do you want to connect with?
@@ -1227,10 +1225,12 @@ export default function Connect() {
   // Form screen
   return (
     <PageWrapper>
+    <SEO {...pageSEO.connect} />
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
       {/* Header */}
       <div className="py-8">
         <div className="container">
+          <BackButton fallbackPath="/connect" label="Back to Connect" inline />
           <button
             onClick={() => setStep("select")}
             className="flex items-center gap-2 text-[#7dd87d] hover:text-white mb-4 transition-colors"

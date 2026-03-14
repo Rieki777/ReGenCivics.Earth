@@ -1473,6 +1473,522 @@ That single command clears all old posts and re-seeds everything fresh.
 
 ---
 
+## Fix 86 — URGENT: Site-wide color regression — cards showing light backgrounds instead of dark green (Critical)
+
+**Status:** PENDING — DO THIS FIRST before any other fix
+
+**What broke:** A recent build broke the color scheme site-wide. Confirmed broken on at least two pages:
+
+1. **Dashboard ("Welcome Back" page):** Card backgrounds changed from rich dark green (`#1a472a`) to pale/washed-out. Forest background image is desaturated.
+2. **Quest page (`/quest`):** The seasonal background is rendering as plain white. The quote block and "What's alive this Spring" section both show on a white/off-white background with no seasonal theming. The hemisphere detection still works ("Detected: Northern hemisphere. Not right? Switch.") but the background it should set is not rendering at all.
+
+**The correct appearance:**
+- Dashboard: rich dark green cards (`#1a472a`) with white text, vivid forest background image
+- Quest page: seasonal gradient or background color (green-tinted for spring, warm for summer/fall, cool for winter) behind all content sections, NOT plain white
+
+**Screenshots:**
+- Dashboard broken: pale card backgrounds, washed-out forest background
+- Dashboard correct: rich dark green cards, strong contrast, dark background with white text
+- Quest broken: white/off-white page background, no seasonal color, quote block floating on white
+- Quest correct: seasonal background color behind all content
+
+**Likely culprits — check in this order:**
+
+### 1. Check git diff immediately
+
+Run `git diff HEAD~1` or `git log --oneline -5` then `git diff <last-good-commit>` to see exactly what CSS/component changes were made in the last commit. This will pinpoint the regression fast.
+
+### 2. Fix 78 (readability audit) may have over-corrected
+
+Fix 78 targeted "light text on light backgrounds." If it ran and changed dark-background classes thinking they were light, it could have flipped `bg-[#1a472a]` or `bg-[#0d2818]` to `bg-white` or `bg-gray-100`. Check:
+- `client/src/pages/Dashboard.tsx` or the equivalent home/welcome page
+- Any component with card classes: look for `bg-white` or `bg-gray-*` that should be `bg-[#1a472a]` or `bg-[#1a472a]/90`
+
+### 3. Fix 83 (Connect forms dark backgrounds) may have changed a shared CSS class
+
+Fix 83 changed `bg-white/95` to `bg-[#1a472a]/90` on form containers. If it accidentally modified a shared class or a global stylesheet instead of scoping to Connect.tsx, that change could have cascaded. Check `client/src/index.css` and any shared Tailwind config for unexpected overwrites.
+
+### 4. CSS variable or Tailwind config change
+
+Check `tailwind.config.ts` and `client/src/index.css` for any changes to:
+- Custom color definitions (`--card-bg`, `--background`, or similar CSS variables)
+- Any `@layer base` or `@layer components` rules that set background colors globally
+- Dark mode config (`darkMode: 'class'` vs `darkMode: 'media'`) — if this changed, the site might now be responding to OS dark/light mode preference instead of always using the dark theme
+
+### 5. If the cause is dark mode detection
+
+If Tailwind's `darkMode` setting changed to `'media'`, the site would render differently based on the user's OS preference. The fix is to revert to `darkMode: 'class'` in `tailwind.config.ts` and ensure the root element has the `dark` class applied (or remove dark mode variants entirely if the site has only one theme).
+
+### The fix
+
+Once the cause is identified, revert only the lines that caused the regression. Do NOT re-run Fix 78 or Fix 83 as part of this fix — revert the damage first, then those fixes can be re-applied more carefully.
+
+**Target card background value (correct):** `bg-[#1a472a]` or `bg-[#1a472a]/90` with `text-white`
+
+**Files most likely affected:**
+- `client/src/pages/Quest.tsx` — the seasonal background is set here, look for where `useHemisphere()` result is used to apply a background class or gradient. That className is likely now resolving to nothing or white.
+- `client/src/pages/Dashboard.tsx` — the "Welcome Back" page card backgrounds
+- `client/src/hooks/useHemisphere.ts` — if this hook changed, the season value it returns may no longer match the CSS class names expected by Quest.tsx
+- `client/src/index.css` — check for any global background overrides
+- `tailwind.config.ts` — check if dynamic class names (e.g. `bg-spring`, `bg-season-spring`) were added but are now being purged by Tailwind's content scanner
+
+**Tailwind purge note:** If the seasonal background classes are constructed dynamically (e.g. `` `bg-${season}` ``), Tailwind's JIT compiler will NOT include them because it can't see the full class name at build time. All dynamic Tailwind classes must be safelisted in `tailwind.config.ts` under `safelist`, or replaced with full static class names in a lookup object:
+```ts
+const seasonBg = {
+  spring: 'bg-[#e8f5e9]',
+  summer: 'bg-[#fff8e1]',
+  fall: 'bg-[#fbe9e7]',
+  winter: 'bg-[#e3f2fd]',
+}
+```
+This is a very common Tailwind gotcha and is likely the root cause of the quest page background disappearing.
+
+**No DB changes. No `pnpm db:push`. Just CSS/component revert.**
+
+---
+
+## Fix 87 — Quest page: fix 4-button stack in bottom-right corner + replace trophy icon with path icon (Medium)
+
+**Status:** PENDING
+
+**What's broken:** There are now 4 separate fixed-position elements all landing in the same bottom-right corner of the quest page, stacking on top of each other:
+
+1. A green circle notification/profile button (person icon with badge showing "0")
+2. A "Friends" or community shortcut button (partially visible behind the tracker)
+3. The quest progress tracker pill (`🏆 0/15` with progress bar)
+4. The back-to-top arrow button
+
+All 4 are fighting for `fixed bottom-* right-4` and the result is an unusable pile. Every one of them needs to be identified and given its own `bottom-*` value so they form a clean vertical stack with breathing room between each.
+
+### Part A: Audit all fixed bottom-right elements on Quest.tsx
+
+Search the codebase for all components rendered in Quest.tsx and its child components that use `fixed` positioning with `right-4` or `right-*`. Find each one and its current `bottom-*` value. The four elements likely live in:
+
+- `client/src/components/QuestProgressTracker.tsx` (the tracker pill)
+- `client/src/components/ScrollToTop.tsx` or inline in `Quest.tsx` (back to top)
+- `client/src/components/NotificationBell.tsx` or similar (the green circle with badge)
+- `client/src/components/FriendsButton.tsx` or similar (the "Fr..." button)
+
+### Part B: Stack them cleanly with consistent spacing
+
+Assign each a distinct `bottom-*` value, stacking upward from the bottom. Use 14px (`bottom-4`) as the base and add ~56px per item (accounting for button height + gap):
+
+```tsx
+// 1. Quest tracker pill — stays at the very bottom
+className="fixed bottom-4 right-4 z-40"
+
+// 2. Back to top — one step above tracker
+className="fixed bottom-16 right-4 z-40"
+
+// 3. Friends / community button — one step above that
+className="fixed bottom-[6.5rem] right-4 z-40"
+
+// 4. Notification / profile button — top of the stack
+className="fixed bottom-40 right-4 z-40"
+```
+
+Adjust the exact values after verifying the actual rendered heights. The goal is a clean column of buttons with roughly 8-12px gap between each, none overlapping.
+
+If any of these buttons only appear on the quest page, scope the `bottom-*` override to Quest.tsx rather than the component itself, to avoid affecting other pages.
+
+### Part C: Replace trophy icon with path/trail icon
+
+**File:** `client/src/components/QuestProgressTracker.tsx`
+
+**Current:** `<Trophy className="w-4 h-4" />` (or 🏆 emoji)
+
+**Replace with:** `<Footprints className="w-4 h-4" />` from lucide-react. If `Footprints` isn't in the installed version, check for `Route`, `Navigation`, or `MapPin` as fallbacks — run a quick import check first.
+
+Update any tooltip or aria-label from "Quest Leaderboard" / "Trophy" to "Your Quest Journey" or "Quest Progress."
+
+**No DB changes. No `pnpm db:push`.**
+
+---
+
+## Fix 88 — Quest page: remove hardcoded land project quest tags + add steward endorsement system (Medium)
+
+**Status:** PENDING
+
+**What's wrong:** Quest cards currently show hardcoded land project badges like "Finca Sagrada" and "Traditional Dream Factory" as if those orgs have endorsed or required those quests. These associations were seeded as placeholder data and should not appear as real endorsements. Land project stewards have not actually chosen them.
+
+### Part A: Remove all hardcoded quest-to-land-project associations
+
+Find where these badge associations live in the codebase. Look for:
+- `questQualifiers.ts` or similar data file with hardcoded org-to-quest mappings
+- Any `QUEST_METADATA` entries with org name strings
+- Any seed data that inserts quest-org relationships
+
+Remove all hardcoded entries. The badges should show nothing (or a faint "No endorsements yet" state) until a steward actively adds their project.
+
+### Part B: Build the steward endorsement UI (Wave 4 — after pnpm db:push)
+
+Land project and alliance org stewards (users with an approved `orgClaims` record) should be able to:
+
+1. Visit their entity's profile or admin panel
+2. See a list of all quests with checkboxes
+3. Check quests they want to endorse or require for applicants
+4. Save their selections
+
+This requires a new DB table:
+
+```ts
+export const questEndorsements = mysqlTable("questEndorsements", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: varchar("orgId", { length: 255 }).notNull(),
+  orgType: mysqlEnum("orgType", ["land_project", "alliance_org"]).notNull(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  endorsementType: mysqlEnum("endorsementType", ["recommended", "required"]).default("recommended").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+})
+```
+
+Add this to `drizzle/schema.ts` with the next `pnpm db:push` run.
+
+**tRPC endpoints needed:**
+- `quest.getEndorsementsForQuest(questId)` — public, returns list of orgs that endorse this quest
+- `quest.setQuestEndorsements(orgId, questIds[], endorsementType)` — protected, steward-only
+
+**Quest card display:** After the DB work, each card shows real endorsement badges dynamically from `getEndorsementsForQuest`. Until a quest is endorsed by anyone, show nothing.
+
+**Files to check/change:**
+- `drizzle/schema.ts` (new table — needs `pnpm db:push`)
+- `server/routers/quest.ts` or similar
+- `client/src/data/questQualifiers.ts` (remove hardcoded data immediately, Part A)
+- `client/src/components/QuestCard.tsx` (remove hardcoded badges)
+
+**Part A (remove hardcoding) = no DB needed, do now.**
+**Part B (steward UI + dynamic badges) = needs `pnpm db:push`, Wave 4.**
+
+---
+
+## Fix 89 — Quest page: expand "Why Quests?" dropdown with arc + philosophy content from master sheet (Medium)
+
+**Status:** PENDING
+
+**What's there now:** The "Why Quests?" collapsible section has 5 simple icon boxes (Heal Ourselves, Grow & Learn Together, Distribute Ownership, Co-Create the Game, Regenerate Relationships) with one-line descriptions. Good structure, thin on depth.
+
+**What to add:** Below the 5 boxes, add a second expandable layer inside the same collapsible with richer narrative drawn from `QUEST_MASTER_SHEET.md` Parts 1 and 2. This gives people who want more context a way to go deeper without cluttering the page for people who don't.
+
+### Structure
+
+The expanded "Why Quests?" section should have two tiers:
+
+**Tier 1 — current** (always shown when the accordion is open):
+The 5 icon boxes as they are.
+
+**Tier 2 — new** (shown below the 5 boxes, either always or behind a second "Read the Arc" toggle):
+Three collapsible panels, each drawing from the master sheet:
+
+**Panel 1: The Arc — How All Quests Connect**
+Draw from `QUEST_MASTER_SHEET.md` Part 2. Short version for the panel:
+
+> We begin with Fire. Before we can build anything new we have to be willing to let go of the old.
+>
+> Then we add life to our bodies. The Potions Quest changes the information processing in all three minds: gut, heart, and head.
+>
+> Then we plant. The Food Foresting quest, done after Potions, seeds the earth with the expanded ecosystem of our own body.
+>
+> From there, the quests move outward. From personal vitality into relationship, communication, and community. The NVC Quest (Quest 10) bridges individual healing into collective co-creation.
+>
+> The seasonal quests deepen and diversify. The EPIC Quests are acts of collective transformation.
+
+**Panel 2: What the Tokens Mean**
+Draw from `QUEST_MASTER_SHEET.md` Part 1:
+
+> $ReGen tokens are earned by completing quests and contributing to the mission. They represent your participation in building a regenerative civilization. As the game grows, so do the opportunities for the tokens to carry value.
+>
+> RGVoice tokens give you a say in the governance of the game itself — so the Game is always governed by those who are playing it.
+
+**Panel 3: Quests as Qualifiers**
+Draw from `QUEST_MASTER_SHEET.md` Part 2 — qualifier section:
+
+> Land projects and alliance organizations can require that applicants complete certain quests before applying to join or contribute. This ensures applicants have genuine lived experience with regenerative practices, builds a shared language across the community, and distributes tokens to people doing real work before they enter governance roles.
+>
+> Example: voting rights in a DAO might require 5 quests + 1 seasonal quest. Land project stewardship might require Quest 4 (Food Foresting) + Quest 3 (Healing Whole) + any 2 others.
+
+### Implementation
+
+**File:** `client/src/pages/Quest.tsx` — find the "Why Quests?" accordion component (likely `QuestWhySection`, `WhyQuestsAccordion`, or inline JSX in the Quest page).
+
+Add the three panels below the existing 5 boxes. Each panel should be:
+- A subtle divider line above
+- A small heading (e.g. "The Arc" / "The Tokens" / "Quests as Qualifiers")
+- 2-4 short paragraphs of prose
+- No lists or bullets — this is narrative, not a feature breakdown
+- Text color: `text-[#1a472a]` or `text-[#2d6a4f]` on the light background
+
+The panels can all be visible at once (no nested accordion needed) since they're already inside the outer "Why Quests?" collapsible. Just well-spaced sections with clear headings.
+
+**No DB changes. No `pnpm db:push`.**
+
+---
+
+## Fix 90 — Quest page: add 18 new seasonal quests to existing season carousels + generate card images (High)
+
+**Status:** PENDING
+
+**Context:** The 18 new seasonal quests from `QUEST_MASTER_SHEET.md` Part 4 need to be added as full quest cards inside the existing season tabs (Spring, Summer, Fall, Winter, and a new Anytime tab). They appear AFTER the existing quests in each season — not in a separate section.
+
+**Carousel placement:**
+- Spring tab: existing quests 1, 2, 3 → then add: Healing the Five Bodies, Study Natural Hygiene, ReGen Financial Systems
+- Summer tab: existing quests 5, 6, 7 → then add: Friendship with a Free Animal, Your Honey Moon, Singing to Your Food Forest, Animal Spirit Totems
+- Fall tab: existing quests 8, 9, 9b → then add: Future Casting, Eating Sunlight, Becoming Trauma Informed
+- Winter tab: existing quests 10, 11, 12 → then add: Write a Children's Book, Make a Song for the ReGeneration, Recreate Your Personal Cycles
+- New Anytime tab: Decrease Expenses/Increase Joy, Hermetic Seal, Start a Friend Pool, Present Parenting, The Fifth Agreement
+
+### Card data required for each new quest
+
+Each card needs the same fields as existing cards. Add to `client/src/data/seasonalQuestsData.ts`:
+
+```ts
+{
+  id: "healing-five-bodies",          // slug-style ID
+  title: "Healing the Five Bodies",
+  subtitle: "Soul, Body, Heart, Mind, Spirit",
+  season: "spring",
+  rewards: { regen: 111, rvoice: 1 }, // placeholder — Rye to confirm
+  time: "Ongoing practice",
+  deliverable: "A documented daily and seasonal practice tending all five layers",
+  description: "Most healing traditions recognize multiple layers of the human being...",
+  storyCard: "...",                    // from QUEST_MASTER_SHEET Part 4
+  image: "/quest-images/seasonal/healing-five-bodies.png",
+  element: "fire",                     // elemental category — adjust per quest
+}
+```
+
+Use the content from `QUEST_MASTER_SHEET.md` Part 4 for each quest's `description` and `storyCard` fields. Token rewards are marked TBD until Rye confirms — use 111 $ReGen + 1 RVoice as placeholder for all new quests.
+
+### Images
+
+Generate one hero image per new seasonal quest using the same photorealistic style as the existing Spring quest card images (close-up photography of nature, hands, food, people in natural settings). Save to `public/quest-images/seasonal/`. Suggested prompts per quest are in the table below:
+
+| Quest | Image prompt |
+|---|---|
+| Healing the Five Bodies | Person meditating in soft layered light in a forest clearing, peaceful and radiant |
+| Study Natural Hygiene | Hands cupping clean spring water in bright forest sunlight, vibrant greenery |
+| ReGen Financial Systems | Hands exchanging handmade tokens at a colorful outdoor farmers market |
+| Friendship with a Free Animal | Person sitting still in summer forest while a wild deer approaches and makes eye contact |
+| Your Honey Moon | Golden honeycomb close-up with raw honey dripping, wildflower meadow behind |
+| Singing to Your Food Forest | Person singing with arms open wide in a lush food forest, morning light |
+| Animal Spirit Totems | Person in ceremony surrounded by symbolic animal imagery from their bioregion |
+| Future Casting | Person in meditation with soft visions of a lush regenerative future city floating around them |
+| Eating Sunlight | Hands picking fresh berries directly from a bush in golden autumn light |
+| Becoming Trauma Informed | Two people in deep compassionate conversation by warm firelight |
+| Write a Children's Book | Elder and child writing together in a cozy firelit room, colorful illustrations visible |
+| Make a Song for the ReGeneration | Person playing guitar by a fire with a small community gathered around |
+| Recreate Your Personal Cycles | Person lying in a meadow at night under a full moon, journal open, stars above |
+| Decrease Expenses, Increase Joy | Simple joyful meal being cooked at home, garden visible through the window |
+| Hermetic Seal | Person in focused creative work surrounded by glowing vitality and symbols of energy |
+| Start a Friend Pool | Group of friends sharing food and resources at a community table, warmth and laughter |
+| Present Parenting | Parent and young child fully present together in nature, eyes meeting, total attention |
+| The Fifth Agreement | Open book with warm light and symbolic imagery of new agreements being made |
+
+**No DB changes. No `pnpm db:push`.**
+
+---
+
+## Fix 91 — Forum community page partially rendering in Russian (High)
+
+**Status:** PENDING
+
+**Symptom:** Visiting `/community` shows a mix of English and Russian. The following elements appear in Russian:
+- Page badge: "Форум сообщества" (should be "Community Forum")
+- Main title: "Роща встреч" (should be "Grove of Gatherings" or the configured English title)
+- Stats: "97 темы · 11 разделы" (should be "97 threads · 11 categories")
+- Primary CTA button: "Начать обсуждение" (should be "Start a Discussion")
+- Search placeholder: "Поиск по темам..." (should be "Search topics...")
+
+The subtitle and footer stats remained in English, so this is not a full browser-level translation -- it is either (a) hardcoded Russian strings inside the component or (b) an i18n library auto-detecting a Russian locale from the browser.
+
+**Root causes to check, in order:**
+
+1. **Hardcoded Russian strings in the component** -- search `client/src/` for any of the Cyrillic strings above (`Роща встреч`, `Форум сообщества`, `Начать обсуждение`, `Поиск по темам`). If found, replace with the intended English copy.
+
+2. **i18n / locale library** -- check if the project uses `i18next`, `react-intl`, or any locale detection library. If a locale JSON file for Russian (`ru.json`) exists and is being loaded, remove or disable it. Ensure the default locale is always `en`.
+
+3. **Browser auto-translate bled into the bundle** -- unlikely to cause static string changes, but if the component fetches any title or label from an external API or DB field that stored Russian text, trace the data source.
+
+**Fix:**
+
+- Grep the codebase for Cyrillic characters: `grep -r '[А-Яа-яЁё]' client/src/` and `grep -r '[А-Яа-яЁё]' server/`
+- Replace every found string with the correct English version
+- If an i18n config exists, lock the locale to `en` and remove the Russian locale bundle
+- All UI strings in `Community.tsx`, `ForumHeader.tsx`, or equivalent should be plain English literals -- not pulled from a locale file
+
+**Files likely affected:** `client/src/pages/Community.tsx`, `client/src/components/forum/ForumHeader.tsx` (or equivalent), any `i18n/` or `locales/` folder
+
+**No DB changes needed.**
+
+---
+
+## Fix 92 — Community page: land project and org card images broken (High)
+
+**Status:** PENDING
+
+**Symptom:** Land project cards on `/community` show broken image placeholders. The alt text is visible ("Tioga", "LaLa Gardens Cooperative") but no actual image renders. This is the map-tile fallback from Fix 70 -- the generated hero images either were never saved or their paths don't match what the component expects.
+
+**Fix:**
+
+1. Check what image path the community component expects for each card. Look in `Community.tsx` or the equivalent component rendering the Earth section cards for the `img src` value.
+2. Check whether those files actually exist in `public/` (or wherever static assets are served from).
+3. If the files don't exist: use a temporary placeholder approach until images are generated. Options in order of preference:
+   - Inline `onError` fallback on each `<img>`: `onError={(e) => { e.currentTarget.src = '/images/placeholder-landscape.jpg' }}`
+   - Or replace broken `<img>` tags with a styled div showing the location tag + project name on a gradient background that matches the project's region color
+4. Once images are generated and saved to the correct path, the `<img src>` tags will resolve automatically.
+5. Log a note in the code: all card images should live at `public/images/community/[slug].jpg` so future additions know where to put them.
+
+**No DB changes needed.**
+
+---
+
+## Fix 93 — Forum seed scripts: change post author to "ReGen Civics Team" (High)
+
+**Status:** PENDING -- script changes only, re-seed after
+
+**Symptom:** Forum posts seeded by scripts show Rye's personal name ("Rieki Cordon") as the author. Seeded content should show a neutral team identity.
+
+**Fix:**
+
+1. Check whether a "ReGen Civics Team" user already exists in the `users` table. If not, create one as part of the seed script:
+   ```ts
+   // At the top of each seed script, ensure the team user exists
+   const TEAM_EMAIL = 'team@regencivics.earth'
+   let [teamUser] = await db.select().from(users).where(eq(users.email, TEAM_EMAIL)).limit(1)
+   if (!teamUser) {
+     const [result] = await db.insert(users).values({
+       email: TEAM_EMAIL,
+       username: 'ReGen Civics Team',
+       displayName: 'ReGen Civics Team',
+       // any other required fields with sensible defaults
+     })
+     teamUser = { id: result.insertId, ...  }
+   }
+   const TEAM_USER_ID = teamUser.id
+   ```
+2. Replace all `userId: RYE_USER_ID` (or `userId: 1` or whatever the current hardcoded value is) with `userId: TEAM_USER_ID` in every seeded post and reply insertion.
+3. Apply to: `scripts/seed-forum-posts.ts`, `scripts/seed-land-project-threads.ts`, `scripts/seed-quest-forum-posts.ts`, and any other seed scripts that insert forum content.
+4. The `$Env:RYE_USER_ID` env var will no longer be needed for seeding posts -- remove references to it from seed scripts (but keep it if it's used elsewhere, like for setting application owners).
+
+**Re-seed command (Rye runs after this ships):**
+```powershell
+npx tsx scripts/seed-forum-posts.ts --reset
+```
+
+**No DB schema changes needed.**
+
+---
+
+## Fix 94 — Community page: location corrections + remove inactive project cards and threads (High)
+
+**Status:** PENDING
+
+**Two parts:**
+
+### Part A: Location corrections
+
+The following land projects have wrong locations in the community component data and/or seed scripts:
+
+| Project | Current (wrong) | Correct |
+|---|---|---|
+| Finca Sagrada | (unknown) | Ecuador |
+| Liminal Village | (unknown) | Italy |
+
+Find wherever these location strings are set -- likely in `Connect.tsx` hardcoded data, `seed-active-entities.ts`, or a `landProjects` array -- and update to the correct values.
+
+### Part B: Remove inactive projects
+
+The following land projects are no longer active and should be removed from:
+- The community page cards (Earth section)
+- Any seeded forum threads for these projects
+- Any hardcoded arrays in `Connect.tsx`, `Community.tsx`, or related components
+
+**Projects to remove:**
+- Ubuntu
+- Tioga
+- Tabi
+- LaLa Gardens Cooperative
+- Highland Lake
+
+**In seed scripts:** Filter the seeded projects list to exclude these five names. If there is an `isActive` flag, set it to `false` for these. If it's a hardcoded array, remove their entries.
+
+**In forum seed scripts:** Remove any threads, posts, or replies seeded for these projects. If using `--reset`, they simply won't be re-inserted.
+
+**In community component data:** Remove from any hardcoded arrays so their cards don't appear.
+
+**Do NOT delete anything from the DB directly** -- the `--reset` seed flag handles cleanup on re-seed. Code changes handle the component data.
+
+**No DB schema changes needed.**
+
+---
+
+## Fix 95 — Community page: collapsible section accordion (High)
+
+**Status:** PENDING
+
+**Context:** The `/community` page currently shows all sections at once -- land project cards, org cards, forum categories, and more -- in one long scroll. When a user first arrives they should see clean section headings and choose what to open, not wade through everything.
+
+**Design spec:**
+
+Each major section on the community page becomes a collapsible accordion panel:
+
+| Section | Default state | Heading text |
+|---|---|---|
+| Earth -- Land Projects | Collapsed | "🌍 Earth — Land Projects" |
+| Alliance Orgs | Collapsed | "🤝 Alliance Organizations" |
+| Forum Categories | Collapsed | "💬 Forum" |
+| Quests + Seasonal | Collapsed (if present) | "⚡ Active Quests" |
+| Any other major section | Collapsed | (use existing section title) |
+
+**Implementation:**
+
+Use Radix UI `Accordion` (already in the project via shadcn) or a simple `useState` toggle if Radix isn't already imported in this file. Prefer Radix for consistency.
+
+```tsx
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+
+// In Community.tsx:
+<Accordion type="multiple" defaultValue={[]}>
+  <AccordionItem value="earth">
+    <AccordionTrigger className="text-xl font-semibold">
+      🌍 Earth — Land Projects
+    </AccordionTrigger>
+    <AccordionContent>
+      {/* existing land project cards grid */}
+    </AccordionContent>
+  </AccordionItem>
+
+  <AccordionItem value="alliance">
+    <AccordionTrigger className="text-xl font-semibold">
+      🤝 Alliance Organizations
+    </AccordionTrigger>
+    <AccordionContent>
+      {/* existing org cards grid */}
+    </AccordionContent>
+  </AccordionItem>
+
+  <AccordionItem value="forum">
+    <AccordionTrigger className="text-xl font-semibold">
+      💬 Forum
+    </AccordionTrigger>
+    <AccordionContent>
+      {/* existing forum category list */}
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>
+```
+
+- `type="multiple"` allows more than one section open at a time
+- `defaultValue={[]}` starts all collapsed
+- Existing section subtitles ("Land project spaces. Where the work is rooted.") move inside the AccordionTrigger or appear as a small paragraph just below the trigger heading before the content expands
+- Keep the overall page hero/intro section outside the accordion (it should always be visible)
+- Style the accordion triggers to match the site's existing section header style
+
+**Files affected:** `client/src/pages/Community.tsx` (primary), possibly `client/src/components/community/` subcomponents
+
+**No DB changes needed.**
+
+---
+
 ## Final Handoff Breakdown (2026-03-13 — complete)
 
 ### YOU (Rye) — must do before Claude Code can proceed on these
@@ -1482,13 +1998,23 @@ That single command clears all old posts and re-seeds everything fresh.
 | `pnpm db:push` | Fix 68 (orgClaims), Fix 73 (entityRssFeeds + orgClaims.rssPromptDismissed), Fix 74 (forumReports.severity), Fix 77 (questCompletions + activeQuestSignals) — do all in one push | `pnpm db:push` |
 | Run `seed-active-entities.ts` | Fix 68 — populates land project + org records | `$Env:RYE_USER_ID=1; npx tsx scripts/seed-active-entities.ts --dry-run` then live |
 | Finish editing QUEST_MASTER_SHEET.md | Fix 76 PDFs, Fix 77 improvement 6 story card text, Fix 77 seasonalQuestsData.ts + epicQuestsData.ts content | Edit in workspace |
-| Re-seed forum posts | Fix 85 — clears all old posts and replies, re-seeds with fixed links + 18 new seasonal quest posts + EPIC Quest threads | `npx tsx scripts/seed-forum-posts.ts --reset` |
+| Re-seed forum posts | Fix 85 + Fix 93 — clears all old posts and replies, re-seeds with fixed links, team author, + 18 new seasonal quest posts + EPIC Quest threads | `npx tsx scripts/seed-forum-posts.ts --reset` |
 | `git add -A && git commit && git push` | Deploy all coded fixes | After verifying locally |
 
 ### CLAUDE CODE — ready to build now (no DB push needed)
 
 All fixes marked PENDING that don't touch the DB schema can be started immediately:
 
+Fix 86 — URGENT FIRST: color regression on landing/dashboard page (do before anything else)
+Fix 87 — Quest page: fix 4-button pile-up in bottom-right + change trophy to path icon
+Fix 88 Part A — Remove hardcoded land project quest tags from cards (no DB needed)
+Fix 89 — Expand "Why Quests?" dropdown with arc + philosophy content
+Fix 90 — Add 18 new seasonal quests to existing season carousels + generate images
+Fix 91 — URGENT: fix Russian language strings on /community page
+Fix 92 — Fix broken land project/org card images on /community
+Fix 93 — Update all forum seed scripts: author = "ReGen Civics Team"
+Fix 94 — Location corrections (Finca Sagrada = Ecuador, Liminal Village = Italy) + remove inactive project cards/threads (Ubuntu, Tioga, Tabi, LaLa Gardens, Highland Lake)
+Fix 95 — Community page: wrap all major sections in collapsible accordion panels
 Fix 79, 80, 81, 82, 83, 84, 85 — pure UI/frontend/script changes, no schema dependency
 Fix 78 Part A — targeted readability fixes in known files
 Fix 78 Part B — audit script (no DB needed)

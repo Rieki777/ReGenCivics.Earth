@@ -4116,7 +4116,7 @@ export const appRouter = router({
         orgId: z.string().min(1),
         orgName: z.string().min(1),
         // Detailed form data — land project or alliance org variant
-        formData: z.record(z.unknown()).optional(),
+        formData: z.record(z.string(), z.unknown()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const id = await db.createOrgClaim({
@@ -5114,7 +5114,8 @@ Guidelines:
         isPublic: z.boolean().default(true),
       }))
       .mutation(async ({ ctx, input }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         await db.insert(questCompletions).values({
           userId: ctx.user.id,
           questId: input.questId,
@@ -5136,7 +5137,8 @@ Guidelines:
     recentCompletions: publicProcedure
       .input(z.object({ limit: z.number().default(20) }))
       .query(async ({ input }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         const completions = await db
           .select({
             id: questCompletions.id,
@@ -5160,7 +5162,8 @@ Guidelines:
 
     spotlight: publicProcedure
       .query(async () => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         const results = await db
           .select({
             id: questCompletions.id,
@@ -5184,7 +5187,8 @@ Guidelines:
 
     activeCountPerQuest: publicProcedure
       .query(async () => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         const rows = await db
           .select({
             questId: activeQuestSignals.questId,
@@ -5202,7 +5206,8 @@ Guidelines:
 
     myActiveQuests: protectedProcedure
       .query(async ({ ctx }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         const rows = await db
           .select({ questId: activeQuestSignals.questId })
           .from(activeQuestSignals)
@@ -5213,7 +5218,8 @@ Guidelines:
     signalActive: protectedProcedure
       .input(z.object({ questId: z.string(), questTitle: z.string() }))
       .mutation(async ({ ctx, input }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 90);
         // Check if already exists
@@ -5242,7 +5248,8 @@ Guidelines:
     clearActive: protectedProcedure
       .input(z.object({ questId: z.string() }))
       .mutation(async ({ ctx, input }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         await db.update(activeQuestSignals)
           .set({ isActive: 0 })
           .where(sql`${activeQuestSignals.userId} = ${ctx.user.id} AND ${activeQuestSignals.questId} = ${input.questId}`);
@@ -5251,7 +5258,8 @@ Guidelines:
 
     myCompletions: protectedProcedure
       .query(async ({ ctx }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         return db
           .select()
           .from(questCompletions)
@@ -5262,7 +5270,8 @@ Guidelines:
     updateNote: protectedProcedure
       .input(z.object({ completionId: z.number(), note: z.string().max(2000) }))
       .mutation(async ({ ctx, input }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         await db.update(questCompletions)
           .set({ artifactText: input.note })
           .where(sql`${questCompletions.id} = ${input.completionId} AND ${questCompletions.userId} = ${ctx.user.id}`);
@@ -5274,7 +5283,8 @@ Guidelines:
     // List feeds for the user's approved claimed entity
     list: protectedProcedure
       .query(async ({ ctx }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         // Find the user's approved claim
         const claim = await db
           .select()
@@ -5295,7 +5305,8 @@ Guidelines:
         label: z.string().max(255).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         // Verify approved claim ownership
         const claim = await db
           .select()
@@ -5316,7 +5327,8 @@ Guidelines:
     remove: protectedProcedure
       .input(z.object({ feedId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         // Verify ownership via approved claim
         const claim = await db
           .select()
@@ -5332,7 +5344,8 @@ Guidelines:
 
     dismissPrompt: protectedProcedure
       .mutation(async ({ ctx }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         await db.update(orgClaims)
           .set({ rssPromptDismissed: 1 })
           .where(sql`${orgClaims.userId} = ${ctx.user.id} AND ${orgClaims.status} = 'approved'`);
@@ -5341,7 +5354,8 @@ Guidelines:
 
     checkPrompt: protectedProcedure
       .query(async ({ ctx }) => {
-        const db = getDb();
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
         const claim = await db
           .select({ id: orgClaims.id, orgName: orgClaims.orgName, rssPromptDismissed: orgClaims.rssPromptDismissed })
           .from(orgClaims)

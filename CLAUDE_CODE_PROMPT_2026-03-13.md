@@ -38,6 +38,37 @@ Also needed:
 
 ### Wave 1 — Quick wins (no DB, no new components)
 
+**Fix 91** — Forum /community page: remove Russian language strings
+- Grep the entire codebase for Cyrillic characters: `grep -rn '[А-Яа-яЁё]' client/src/ server/`
+- Any found strings should be replaced with the correct English copy:
+  - "Форум сообщества" → "Community Forum"
+  - "Роща встреч" → the configured English title (check what it should be in the component)
+  - Stats in Russian → ensure they are rendered from English-language template strings
+  - "Начать обсуждение" → "Start a Discussion"
+  - "Поиск по темам..." → "Search topics..."
+- If an i18n library is present (i18next, react-intl, etc.) and a Russian locale file exists, remove it and lock the default locale to `en`
+- All UI strings in the Community/Forum components should be plain English literals
+- Full spec in Fix 91
+
+**Fix 92** — Community page: fix broken land project/org card images
+- Find the `<img>` tags in the Earth section cards in `Community.tsx` (or equivalent)
+- Add an `onError` fallback: `onError={(e) => { e.currentTarget.src = '/images/placeholder-landscape.jpg' }}`
+- Check if a placeholder image exists at that path; if not, use an inline gradient fallback div instead
+- All card images should live at `public/images/community/[slug].jpg` -- add a comment noting this convention
+- Full spec in Fix 92
+
+**Fix 93** — Forum seed scripts: author = "ReGen Civics Team"
+- In each seed script (`seed-forum-posts.ts`, `seed-land-project-threads.ts`, `seed-quest-forum-posts.ts`, any others), add a lookup-or-create block for a `team@regencivics.earth` user at the top
+- Replace all hardcoded `userId: 1` or `userId: RYE_USER_ID` with `userId: TEAM_USER_ID` for seeded posts
+- Full spec in Fix 93
+
+**Fix 94** — Community data: location corrections + remove inactive projects
+- Finca Sagrada location: set to "Ecuador" (find in `Connect.tsx`, `Community.tsx`, or seed scripts)
+- Liminal Village location: set to "Italy"
+- Remove the following from all hardcoded arrays AND from seed script data: Ubuntu, Tioga, Tabi, LaLa Gardens Cooperative, Highland Lake
+- These should not appear in community cards or have forum threads seeded for them
+- Full spec in Fix 94
+
 **Fix 85** — Regenerate forum seed scripts (links + new quest posts)
 - Find the forum seed script(s) in `scripts/` (e.g. `seed-forum-posts.ts`)
 - Convert all bare URLs to markdown links: `[descriptive text](https://full-url)`
@@ -93,6 +124,15 @@ Also needed:
 ---
 
 ### Wave 2 — UI fixes (no DB)
+
+**Fix 95** — Community page: wrap all major sections in collapsible accordion panels
+- File: `client/src/pages/Community.tsx`
+- Use Radix UI `Accordion` (already in the project via shadcn): `import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'`
+- Wrap each major section (Earth/Land Projects, Alliance Orgs, Forum, any others) in `<AccordionItem>` with descriptive trigger headings
+- `type="multiple"` so multiple sections can be open, `defaultValue={[]}` so all start collapsed
+- Keep the page hero/intro section outside the accordion (always visible)
+- Existing section subtitles move inside the content or appear as a small line below the trigger heading
+- Full spec in Fix 95
 
 **Fix 83** — /connect forms: dark backgrounds + back button
 - File: `client/src/pages/Connect.tsx`, possibly `client/src/components/BackButton.tsx`

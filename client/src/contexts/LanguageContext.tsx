@@ -21,7 +21,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         return stored as Language;
       }
     }
-    return detectLanguage();
+    return 'en';
   });
 
   const setLanguage = useCallback((lang: Language) => {

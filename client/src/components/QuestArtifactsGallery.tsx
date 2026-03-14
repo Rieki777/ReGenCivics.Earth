@@ -101,7 +101,7 @@ export function QuestArtifactsGallery() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {completions.data?.map((c) => (
+                    {completions.data?.map((c: any) => (
                       <div key={c.id} className="flex gap-3">
                         <Avatar name={c.displayName} url={c.avatarUrl} />
                         <div className="flex-1 min-w-0">
