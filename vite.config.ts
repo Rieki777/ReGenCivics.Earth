@@ -24,14 +24,38 @@ export default defineConfig(({ mode }): UserConfig => ({
     reportCompressedSize: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "react-vendor": ["react", "react-dom"],
-          router: ["wouter"],
-          "trpc-vendor": ["@trpc/client", "@trpc/react-query", "@tanstack/react-query"],
-          icons: ["lucide-react"],
-          "framer-motion": ["framer-motion"],
-          recharts: ["recharts"],
-          streamdown: ["streamdown"],
+        // Function-based manualChunks is more reliable than object syntax for node_modules
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) return;
+          // React core — split first so it caches independently of app code
+          if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) return 'react-vendor';
+          // Routing
+          if (id.includes('/wouter/')) return 'router';
+          // tRPC + data fetching
+          if (id.includes('/@trpc/') || id.includes('/@tanstack/')) return 'trpc-vendor';
+          // Icons — large, changes rarely
+          if (id.includes('/lucide-react/')) return 'icons';
+          // Animation
+          if (id.includes('/framer-motion/')) return 'framer-motion';
+          // Charts
+          if (id.includes('/recharts/') || id.includes('/victory-') || id.includes('/d3-')) return 'recharts';
+          // Markdown / code rendering — very heavy, lazy-loaded pages only
+          if (id.includes('/streamdown/') || id.includes('/mermaid/') || id.includes('/shiki/')) return 'streamdown';
+          // Radix UI — used across the whole app, benefits from caching separately
+          if (id.includes('/@radix-ui/')) return 'radix-ui';
+          // Utility libs
+          if (
+            id.includes('/superjson/') ||
+            id.includes('/zod/') ||
+            id.includes('/clsx/') ||
+            id.includes('/tailwind-merge/') ||
+            id.includes('/class-variance-authority/') ||
+            id.includes('/cmdk/')
+          ) return 'utils';
+          // Error monitoring — load last
+          if (id.includes('/@sentry/')) return 'sentry';
+          // Heavy visualizations — only on Map/Chains pages
+          if (id.includes('/cytoscape') || id.includes('/globe.gl/') || id.includes('/three/')) return 'visualization';
         },
       },
     },
