@@ -1,4 +1,4 @@
-import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download } from "lucide-react";
+import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface QuestStep {
@@ -442,13 +442,21 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
 
         {/* Footer */}
         <div className="p-4 border-t bg-gray-50 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            className="order-3 sm:order-1"
-          >
-            Close
-          </Button>
+          <div className="flex items-center gap-2 order-3 sm:order-1">
+            <Button variant="ghost" onClick={onClose}>
+              Close
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[#1a472a]/50 hover:text-[#1a472a] gap-1.5 print:hidden"
+              onClick={() => window.print()}
+              title="Print this quest guide"
+            >
+              <Printer className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs">Print</span>
+            </Button>
+          </div>
           <div className="flex flex-col sm:flex-row gap-2 order-1 sm:order-2">
             {/* Start Quest Button - Links to video, disabled if no video */}
             <Button
