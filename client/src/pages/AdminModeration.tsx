@@ -89,6 +89,7 @@ export default function AdminModeration() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('reports');
   const [reportFilter, setReportFilter] = useState<string | undefined>('pending');
+  const [severityFilter, setSeverityFilter] = useState<"all" | "soft" | "hard">("all");
   const [newModUserId, setNewModUserId] = useState('');
   const [banUserId, setBanUserId] = useState('');
   const [banReason, setBanReason] = useState('');
@@ -195,6 +196,27 @@ export default function AdminModeration() {
         {/* Reports Tab */}
         {activeTab === 'reports' && (
           <div>
+            {/* Severity filter */}
+            <div className="flex gap-2 mb-3">
+              {(["all", "soft", "hard"] as const).map((sev) => (
+                <button
+                  key={sev}
+                  onClick={() => setSeverityFilter(sev)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    severityFilter === sev
+                      ? sev === "hard"
+                        ? "bg-red-500 text-white"
+                        : sev === "soft"
+                        ? "bg-amber-500 text-white"
+                        : "bg-white/20 text-white"
+                      : "bg-white/5 text-white/50 hover:bg-white/10"
+                  }`}
+                >
+                  {sev === "all" ? "All" : sev === "soft" ? "🖐 Tend to" : "🚩 Hard Stop"}
+                </button>
+              ))}
+            </div>
+
             <div className="flex gap-2 mb-4">
               {['pending', 'reviewed', 'actioned', 'dismissed', undefined].map((status) => (
                 <button
@@ -211,20 +233,30 @@ export default function AdminModeration() {
               ))}
             </div>
 
+            {(() => {
+              const displayedReports = (reportsQuery.data ?? []).filter(
+                (r) => severityFilter === "all" || (r as any).severity === severityFilter
+              );
+              return (
             <div className="space-y-3">
               {reportsQuery.isLoading ? (
                 <div className="text-white/40 text-center py-8">Loading reports...</div>
-              ) : reportsQuery.data?.length === 0 ? (
+              ) : displayedReports.length === 0 ? (
                 <div className="text-center py-12">
                   <Check className="w-12 h-12 text-[#7dd87d]/40 mx-auto mb-3" />
                   <p className="text-white/50">No {reportFilter || ''} reports</p>
                 </div>
               ) : (
-                reportsQuery.data?.map((report) => (
+                displayedReports.map((report) => (
                   <div key={report.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
+                          {(report as any).severity === "hard" ? (
+                            <span className="text-xs font-semibold text-red-400 bg-red-400/10 px-2 py-0.5 rounded-full">🚩 Hard Stop</span>
+                          ) : (
+                            <span className="text-xs font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full">🖐 Tend to</span>
+                          )}
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                             report.reason === 'spam' ? 'bg-yellow-500/20 text-yellow-400' :
                             report.reason === 'harassment' ? 'bg-red-500/20 text-red-400' :
@@ -277,6 +309,8 @@ export default function AdminModeration() {
                 ))
               )}
             </div>
+              );
+            })()}
           </div>
         )}
 

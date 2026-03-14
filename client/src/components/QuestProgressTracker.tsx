@@ -270,6 +270,7 @@ export function QuestProgressTracker() {
       {/* Floating Progress Button */}
       <button
         onClick={() => setIsOpen(true)}
+        title="Your experiences"
         className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 group"
       >
         <Trophy className="w-5 h-5" />

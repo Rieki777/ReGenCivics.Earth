@@ -209,6 +209,19 @@ export default function CommunityPost() {
     },
   });
 
+  // Flag dropdown state
+  const [showFlagMenu, setShowFlagMenu] = useState(false);
+  const [showReplyFlagMenu, setShowReplyFlagMenu] = useState<number | null>(null);
+
+  const submitReportMutation = trpc.moderation.submitReport.useMutation({
+    onSuccess: () => {
+      toast.success("Report submitted. Moderators will review it.");
+    },
+    onError: () => {
+      toast.error("Failed to submit report. Please try again.");
+    },
+  });
+
   // "I tried this" optimistic counts: replyId -> count
   const [triedThisCounts, setTriedThisCounts] = useState<Record<number, number>>({});
 
@@ -394,15 +407,43 @@ export default function CommunityPost() {
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {isAuthenticated && (
-                  <button
-                    onClick={() => {
-                      toast.info('Report submitted. Our moderators will review it.');
-                    }}
-                    className="text-[#1a472a]/30 hover:text-orange-500 p-1 transition-colors"
-                    title="Report post"
-                  >
-                    <Flag className="w-4 h-4" />
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowFlagMenu(!showFlagMenu)}
+                      className="flex items-center gap-1 text-[#1a472a]/30 hover:text-amber-500 p-1 transition-colors"
+                      title="Flag this content"
+                    >
+                      <Flag className="w-3.5 h-3.5" />
+                    </button>
+                    {showFlagMenu && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowFlagMenu(false)} />
+                        <div className="absolute right-0 bottom-full mb-1 z-20 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl w-52 py-1 overflow-hidden">
+                          <p className="text-white/40 text-xs px-3 py-2 border-b border-white/10">Flag this content</p>
+                          <button
+                            onClick={() => {
+                              submitReportMutation.mutate({ postId: post.id, reason: "inappropriate", severity: "soft" });
+                              setShowFlagMenu(false);
+                            }}
+                            className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
+                          >
+                            <p className="text-amber-300 text-sm font-medium">🖐 Tend to</p>
+                            <p className="text-white/50 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
+                          </button>
+                          <button
+                            onClick={() => {
+                              submitReportMutation.mutate({ postId: post.id, reason: "inappropriate", severity: "hard" });
+                              setShowFlagMenu(false);
+                            }}
+                            className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
+                          >
+                            <p className="text-red-400 text-sm font-medium">🚩 Hard Stop</p>
+                            <p className="text-white/50 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
                 {canDeletePost && (
                   <button
@@ -597,6 +638,45 @@ export default function CommunityPost() {
                             >
                               <Trash2 className="w-3 h-3" />
                             </button>
+                          )}
+                          {isAuthenticated && (
+                            <div className="relative">
+                              <button
+                                onClick={() => setShowReplyFlagMenu(showReplyFlagMenu === reply.id ? null : reply.id)}
+                                className="text-[#1a472a]/20 hover:text-amber-500 text-xs flex items-center gap-1 transition-colors"
+                                title="Flag this reply"
+                              >
+                                <Flag className="w-3 h-3" />
+                              </button>
+                              {showReplyFlagMenu === reply.id && (
+                                <>
+                                  <div className="fixed inset-0 z-10" onClick={() => setShowReplyFlagMenu(null)} />
+                                  <div className="absolute right-0 bottom-full mb-1 z-20 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl w-52 py-1 overflow-hidden">
+                                    <p className="text-white/40 text-xs px-3 py-2 border-b border-white/10">Flag this reply</p>
+                                    <button
+                                      onClick={() => {
+                                        submitReportMutation.mutate({ replyId: reply.id, reason: "inappropriate", severity: "soft" });
+                                        setShowReplyFlagMenu(null);
+                                      }}
+                                      className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
+                                    >
+                                      <p className="text-amber-300 text-sm font-medium">🖐 Tend to</p>
+                                      <p className="text-white/50 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        submitReportMutation.mutate({ replyId: reply.id, reason: "inappropriate", severity: "hard" });
+                                        setShowReplyFlagMenu(null);
+                                      }}
+                                      className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
+                                    >
+                                      <p className="text-red-400 text-sm font-medium">🚩 Hard Stop</p>
+                                      <p className="text-white/50 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           )}
                           {language !== 'en' && !translatedReplies[reply.id] && (
                             <button

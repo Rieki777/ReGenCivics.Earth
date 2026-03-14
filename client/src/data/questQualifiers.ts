@@ -9,6 +9,7 @@
 export const QUEST_QUALIFIERS: Record<string, string[]> = {
   "quest-0": ["Finca Sagrada", "Liminal Village"],
   "quest-1": ["Finca Sagrada"],
+  "quest-2": ["Finca Sagrada"],
   "quest-3": ["Finca Sagrada", "Traditional Dream Factory", "StarSeed Village"],
   "food-foresting": ["Finca Sagrada", "Heartland Collective"],
   "quest-10": ["Hypha DAO", "SEEDS", "Nestr.io"],

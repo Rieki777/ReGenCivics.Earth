@@ -16,7 +16,7 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, forumReplies, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions } from "../drizzle/schema";
+import { forumPosts, forumReplies, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals } from "../drizzle/schema";
 import { eq, sql, gt, count } from "drizzle-orm";
 import { getDb } from "./db";
 
@@ -3561,6 +3561,45 @@ export const appRouter = router({
         const voted = await db.toggleQuestVote(ctx.user.id, input.suggestionId);
         return { voted };
       }),
+
+    // List the authenticated user's quest completions (their journal)
+    myCompletions: protectedProcedure.query(async ({ ctx }) => {
+      return db.getQuestCompletionsForUser(ctx.user.id);
+    }),
+
+    // Log a new quest completion
+    logCompletion: protectedProcedure
+      .input(z.object({
+        questId: z.string().min(1).max(100),
+        questTitle: z.string().min(1).max(255),
+        isPublic: z.boolean().default(true),
+        artifactUrl: z.string().max(1000).optional(),
+        artifactText: z.string().max(10000).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createQuestCompletion({
+          userId: ctx.user.id,
+          questId: input.questId,
+          questTitle: input.questTitle,
+          artifactType: "text",
+          artifactUrl: input.artifactUrl ?? null,
+          artifactText: input.artifactText ?? null,
+          caption: null,
+          visibility: input.isPublic ? "public" : "private",
+        });
+        return { id };
+      }),
+
+    // Update the note (artifactText) on a completion
+    updateNote: protectedProcedure
+      .input(z.object({
+        completionId: z.number(),
+        note: z.string().max(10000),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateQuestCompletionNote(input.completionId, ctx.user.id, input.note);
+        return { ok: true };
+      }),
   }),
 
   // Translation
@@ -3662,6 +3701,27 @@ export const appRouter = router({
 
   // Admin moderation
   moderation: router({
+    // Submit a report (any authenticated user)
+    submitReport: protectedProcedure
+      .input(z.object({
+        postId: z.number().optional(),
+        replyId: z.number().optional(),
+        reason: z.enum(["spam", "harassment", "inappropriate", "misinformation", "other"]).default("inappropriate"),
+        details: z.string().max(500).optional(),
+        severity: z.enum(["soft", "hard"]).default("soft"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createForumReport({
+          reporterId: ctx.user.id,
+          postId: input.postId,
+          replyId: input.replyId,
+          reason: input.reason,
+          details: input.details,
+          severity: input.severity,
+        });
+        return { success: true };
+      }),
+
     // List reports (admin/mod only)
     reports: protectedProcedure
       .input(z.object({ status: z.string().optional() }))
@@ -5037,6 +5097,175 @@ Guidelines:
           .update(customGameInquiries)
           .set({ status: input.status, internalNotes: input.internalNotes ?? null })
           .where(eq(customGameInquiries.id, input.id));
+        return { success: true };
+      }),
+  }),
+
+  // Quest router - completions, active signals, and social proof
+  quest: router({
+    logCompletion: protectedProcedure
+      .input(z.object({
+        questId: z.string(),
+        questTitle: z.string(),
+        artifactType: z.enum(["photo", "text", "link", "video"]).default("text"),
+        artifactUrl: z.string().optional(),
+        artifactText: z.string().optional(),
+        caption: z.string().max(500).optional(),
+        isPublic: z.boolean().default(true),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = getDb();
+        await db.insert(questCompletions).values({
+          userId: ctx.user.id,
+          questId: input.questId,
+          questTitle: input.questTitle,
+          artifactType: input.artifactType,
+          artifactUrl: input.artifactUrl,
+          artifactText: input.artifactText,
+          caption: input.caption,
+          visibility: input.isPublic ? "public" : "private",
+          completedAt: new Date(),
+        });
+        // Also clear any active quest signal for this quest
+        await db.delete(activeQuestSignals).where(
+          sql`userId = ${ctx.user.id} AND questId = ${input.questId}`
+        );
+        return { success: true };
+      }),
+
+    recentCompletions: publicProcedure
+      .input(z.object({ limit: z.number().default(20) }))
+      .query(async ({ input }) => {
+        const db = getDb();
+        const completions = await db
+          .select({
+            id: questCompletions.id,
+            questId: questCompletions.questId,
+            questTitle: questCompletions.questTitle,
+            artifactUrl: questCompletions.artifactUrl,
+            artifactText: questCompletions.artifactText,
+            caption: questCompletions.caption,
+            completedAt: questCompletions.completedAt,
+            userId: questCompletions.userId,
+            displayName: playerProfiles.displayName,
+            avatarUrl: playerProfiles.avatarUrl,
+          })
+          .from(questCompletions)
+          .leftJoin(playerProfiles, eq(questCompletions.userId, playerProfiles.userId))
+          .where(eq(questCompletions.visibility, "public"))
+          .orderBy(sql`${questCompletions.completedAt} DESC`)
+          .limit(input.limit);
+        return completions;
+      }),
+
+    spotlight: publicProcedure
+      .query(async () => {
+        const db = getDb();
+        const results = await db
+          .select({
+            id: questCompletions.id,
+            questId: questCompletions.questId,
+            questTitle: questCompletions.questTitle,
+            artifactUrl: questCompletions.artifactUrl,
+            artifactText: questCompletions.artifactText,
+            caption: questCompletions.caption,
+            completedAt: questCompletions.completedAt,
+            userId: questCompletions.userId,
+            displayName: playerProfiles.displayName,
+            avatarUrl: playerProfiles.avatarUrl,
+          })
+          .from(questCompletions)
+          .leftJoin(playerProfiles, eq(questCompletions.userId, playerProfiles.userId))
+          .where(sql`${questCompletions.visibility} = 'public' AND ${questCompletions.artifactUrl} IS NOT NULL`)
+          .orderBy(sql`${questCompletions.completedAt} DESC`)
+          .limit(1);
+        return results[0] ?? null;
+      }),
+
+    activeCountPerQuest: publicProcedure
+      .query(async () => {
+        const db = getDb();
+        const rows = await db
+          .select({
+            questId: activeQuestSignals.questId,
+            count: count(),
+          })
+          .from(activeQuestSignals)
+          .where(eq(activeQuestSignals.isActive, 1))
+          .groupBy(activeQuestSignals.questId);
+        const result: Record<string, number> = {};
+        for (const row of rows) {
+          result[row.questId] = Number(row.count);
+        }
+        return result;
+      }),
+
+    myActiveQuests: protectedProcedure
+      .query(async ({ ctx }) => {
+        const db = getDb();
+        const rows = await db
+          .select({ questId: activeQuestSignals.questId })
+          .from(activeQuestSignals)
+          .where(sql`${activeQuestSignals.userId} = ${ctx.user.id} AND ${activeQuestSignals.isActive} = 1`);
+        return rows.map(r => r.questId);
+      }),
+
+    signalActive: protectedProcedure
+      .input(z.object({ questId: z.string(), questTitle: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = getDb();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 90);
+        // Check if already exists
+        const existing = await db
+          .select({ id: activeQuestSignals.id })
+          .from(activeQuestSignals)
+          .where(sql`${activeQuestSignals.userId} = ${ctx.user.id} AND ${activeQuestSignals.questId} = ${input.questId}`)
+          .limit(1);
+        if (existing.length > 0) {
+          await db.update(activeQuestSignals)
+            .set({ isActive: 1, expiresAt })
+            .where(sql`${activeQuestSignals.userId} = ${ctx.user.id} AND ${activeQuestSignals.questId} = ${input.questId}`);
+        } else {
+          await db.insert(activeQuestSignals).values({
+            userId: ctx.user.id,
+            questId: input.questId,
+            questTitle: input.questTitle,
+            startedAt: new Date(),
+            expiresAt,
+            isActive: 1,
+          });
+        }
+        return { success: true };
+      }),
+
+    clearActive: protectedProcedure
+      .input(z.object({ questId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = getDb();
+        await db.update(activeQuestSignals)
+          .set({ isActive: 0 })
+          .where(sql`${activeQuestSignals.userId} = ${ctx.user.id} AND ${activeQuestSignals.questId} = ${input.questId}`);
+        return { success: true };
+      }),
+
+    myCompletions: protectedProcedure
+      .query(async ({ ctx }) => {
+        const db = getDb();
+        return db
+          .select()
+          .from(questCompletions)
+          .where(eq(questCompletions.userId, ctx.user.id))
+          .orderBy(sql`${questCompletions.completedAt} DESC`);
+      }),
+
+    updateNote: protectedProcedure
+      .input(z.object({ completionId: z.number(), note: z.string().max(2000) }))
+      .mutation(async ({ ctx, input }) => {
+        const db = getDb();
+        await db.update(questCompletions)
+          .set({ artifactText: input.note })
+          .where(sql`${questCompletions.id} = ${input.completionId} AND ${questCompletions.userId} = ${ctx.user.id}`);
         return { success: true };
       }),
   }),

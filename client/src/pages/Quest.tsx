@@ -15,7 +15,8 @@ import { ParallaxSection } from "@/components/ParallaxSection";
 import { QuestProgressTracker, QuestProgressProvider, QuestCompletionBadge, MarkCompleteButton } from "@/components/QuestProgressTracker";
 import { QuestDetailModal, questDetailsData } from "@/components/QuestDetailModal";
 import { QuestBadges } from "@/components/QuestBadges";
-import { QuestLeaderboard } from "@/components/QuestLeaderboard";
+import { QuestArtifactsGallery } from "@/components/QuestArtifactsGallery";
+import { trpc } from "@/lib/trpc";
 import { QuestFilter, QuestCategory, QuestDifficulty, QuestTime, QuestElement, QUEST_METADATA } from "@/components/QuestFilter";
 import { QUEST_QUALIFIERS } from "@/data/questQualifiers";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -269,7 +270,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 // Original quest IDs (0–12) get gold shimmer; future quests get green shimmer
 const ORIGINAL_QUEST_IDS = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12]);
 
-function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean }) {
+function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean }) {
   const Icon = quest.icon;
   const hasDetails = questDetailsData[`quest-${quest.id}`];
   const questId = `quest-${quest.id}`;
@@ -370,6 +371,28 @@ function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow }: { quest: ty
             )}
           </div>
         )}
+
+        {/* Active players pill and I'm on this quest toggle */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {(activePlayers ?? 0) > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+              🌿 {activePlayers} in the field
+            </span>
+          )}
+          {isAuthenticated && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleActive?.(); }}
+              className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                isActive
+                  ? "bg-[#4a7c59] text-white"
+                  : "bg-[#1a472a]/10 text-[#1a472a] hover:bg-[#1a472a]/20"
+              }`}
+            >
+              <Leaf className={`w-3.5 h-3.5 ${isActive ? "fill-current" : ""}`} />
+              {isActive ? "In the field" : "I'm on this quest"}
+            </button>
+          )}
+        </div>
 
         {/* How to Complete Section */}
         <div className="mt-3 pt-3 border-t border-[#1a472a]/10">
@@ -552,6 +575,7 @@ export default function Quest() {
   const [whyQuestsExpanded, setWhyQuestsExpanded] = useState(false);
   const [showQuestArc, setShowQuestArc] = useState(false);
   const { currentSeason, loading: hemisphereLoading } = useHemisphere();
+  const { isAuthenticated: user } = useAuth();
   const hasEntered = typeof localStorage !== 'undefined' && localStorage.getItem("regen_game_entered") === "true";
   const [showIntro, setShowIntro] = useState(!hasEntered);
   const featuredQuestRef = useRef<HTMLDivElement>(null);
@@ -577,6 +601,17 @@ export default function Quest() {
     time: QuestTime;
     element: QuestElement;
   }>({ category: "all", difficulty: "all", time: "all", element: "all" });
+
+  // Quest activity queries
+  const activeCountsQuery = trpc.quest.activeCountPerQuest.useQuery();
+  const myActiveQuestsQuery = trpc.quest.myActiveQuests.useQuery(undefined, { enabled: !!user });
+  const spotlightQuery = trpc.quest.spotlight.useQuery();
+
+  const myActiveQuestIds = new Set(myActiveQuestsQuery.data ?? []);
+  const activeCountsData = activeCountsQuery.data ?? {};
+
+  const signalActive = trpc.quest.signalActive.useMutation({ onSettled: () => myActiveQuestsQuery.refetch() });
+  const clearActive = trpc.quest.clearActive.useMutation({ onSettled: () => myActiveQuestsQuery.refetch() });
 
   // Filter function for quests
   const shouldShowQuest = (questId: string) => {
@@ -645,6 +680,40 @@ export default function Quest() {
           <p className="text-white/80 max-w-2xl mx-auto mb-8">
             An ever-growing and ever-changing list of Quests curated by the active members of the ReGen Civics Alliance.
           </p>
+
+          {/* Quest Spotlight - improvement 18 */}
+          {spotlightQuery.data && (
+            <div className="mt-4 mb-2 max-w-lg mx-auto bg-[#1a472a]/40 border border-[#7dd87d]/20 rounded-xl p-4 text-left flex gap-3 items-start">
+              <div className="w-8 h-8 rounded-full bg-[#4a7c59] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                {spotlightQuery.data.displayName?.charAt(0).toUpperCase() ?? "?"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="text-white/80 text-xs font-semibold">{spotlightQuery.data.displayName ?? "A player"}</span>
+                  <span className="text-[#7dd87d] text-xs bg-[#4a7c59]/30 px-2 py-0.5 rounded-full">
+                    {spotlightQuery.data.questTitle}
+                  </span>
+                  <span className="text-white/30 text-xs">From the Field</span>
+                </div>
+                {(spotlightQuery.data.caption || spotlightQuery.data.artifactText) && (
+                  <p className="text-white/60 text-xs italic line-clamp-2">
+                    "{spotlightQuery.data.caption ?? spotlightQuery.data.artifactText}"
+                  </p>
+                )}
+                {spotlightQuery.data.artifactUrl && (
+                  <a
+                    href={spotlightQuery.data.artifactUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#7dd87d] text-xs mt-1 inline-flex items-center gap-1 hover:underline"
+                  >
+                    View artifact <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Button
               size="lg"
@@ -947,7 +1016,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.spring.length}>
             {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} />
             ))}
           </QuestCarousel>
           {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -972,7 +1041,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.summer.length}>
             {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} />
             ))}
           </QuestCarousel>
           {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -997,7 +1066,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.fall.length}>
             {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} />
             ))}
           </QuestCarousel>
           {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -1022,7 +1091,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.winter.length}>
             {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} />
             ))}
           </QuestCarousel>
           {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -1143,7 +1212,7 @@ export default function Quest() {
       {/* Quest Progress Tracker - Floating Button */}
       <QuestProgressTracker />
       <QuestBadges />
-      <QuestLeaderboard />
+      <QuestArtifactsGallery />
 
       {/* Quest Detail Modal */}
       <QuestDetailModal 

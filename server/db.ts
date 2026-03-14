@@ -1,7 +1,7 @@
 import { and, desc, eq, gt, isNotNull, isNull, like, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2153,7 +2153,7 @@ export async function incrementReplyTriedThis(replyId: number): Promise<number> 
 // Forum Moderation Helpers
 // ==========================================
 
-export async function createForumReport(data: { reporterId: number; postId?: number; replyId?: number; reason: string; details?: string }) {
+export async function createForumReport(data: { reporterId: number; postId?: number; replyId?: number; reason: string; details?: string; severity?: "soft" | "hard" }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const [result] = await db.insert(forumReports).values({
@@ -2162,6 +2162,7 @@ export async function createForumReport(data: { reporterId: number; postId?: num
     replyId: data.replyId || null,
     reason: data.reason as any,
     details: data.details || null,
+    severity: (data.severity || "soft") as any,
   });
   return result.insertId;
 }
@@ -2838,3 +2839,29 @@ export async function setSiteSetting(key: string, value: string): Promise<void> 
   await db.insert(siteSettings).values({ key, value })
     .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
 }
+
+// ─── Quest Completions ────────────────────────────────────────────────────────
+
+export async function getQuestCompletionsForUser(userId: number): Promise<QuestCompletion[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(questCompletions)
+    .where(eq(questCompletions.userId, userId))
+    .orderBy(desc(questCompletions.completedAt));
+}
+
+export async function createQuestCompletion(data: InsertQuestCompletion): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(questCompletions).values(data);
+  return (result as any).insertId as number;
+}
+
+export async function updateQuestCompletionNote(id: number, userId: number, note: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(questCompletions)
+    .set({ artifactText: note })
+    .where(and(eq(questCompletions.id, id), eq(questCompletions.userId, userId)));
+}
+
