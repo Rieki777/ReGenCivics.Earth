@@ -16,13 +16,19 @@ import { QuestProgressTracker, QuestProgressProvider, QuestCompletionBadge, Mark
 import { QuestDetailModal, questDetailsData } from "@/components/QuestDetailModal";
 import { QuestBadges } from "@/components/QuestBadges";
 import { QuestLeaderboard } from "@/components/QuestLeaderboard";
-import { QuestFilter, QuestCategory, QuestDifficulty, QuestTime, QUEST_METADATA } from "@/components/QuestFilter";
+import { QuestFilter, QuestCategory, QuestDifficulty, QuestTime, QuestElement, QUEST_METADATA } from "@/components/QuestFilter";
 import { QUEST_QUALIFIERS } from "@/data/questQualifiers";
 import { SocialLinks } from "@/components/SocialLinks";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { QuestCarousel } from "@/components/QuestCarousel";
+import { QuestGameIntro } from "@/components/QuestGameIntro";
+import { EpicQuestSection } from "@/components/EpicQuestSection";
+import { SeasonalQuestFeed } from "@/components/SeasonalQuestFeed";
+import { QuestArcMap } from "@/components/QuestArcMap";
+import { useHemisphere } from "@/hooks/useHemisphere";
+// setHemisphereOverride is used in SeasonalQuestFeed directly
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.png to this path
 const QUEST_IMG_BASE = "https://assets.regencivics.earth/quests";
@@ -263,7 +269,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 // Original quest IDs (0–12) get gold shimmer; future quests get green shimmer
 const ORIGINAL_QUEST_IDS = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12]);
 
-function QuestCard({ quest, colorClass, onOpenDetails }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void }) {
+function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean }) {
   const Icon = quest.icon;
   const hasDetails = questDetailsData[`quest-${quest.id}`];
   const questId = `quest-${quest.id}`;
@@ -308,6 +314,12 @@ function QuestCard({ quest, colorClass, onOpenDetails }: { quest: typeof questDa
             <p className="text-xs text-[#1a472a]/70">{quest.subtitle}</p>
           </div>
         </div>
+
+        {isGreatNow && (
+          <div className="mb-2">
+            <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Great for right now</span>
+          </div>
+        )}
 
         <p className="text-sm text-[#1a472a]/80 mb-3">{quest.description}</p>
 
@@ -523,9 +535,25 @@ function Quest0FlipCard() {
 
 const QUEST_VISIT_KEY = 'regen_civics_quest_visit_count';
 
+const QUEST_BEST_SEASONS: Record<string, string[]> = {
+  "quest-2": ["spring", "fall"],
+  "quest-3": ["spring"],
+  "quest-4": ["spring", "summer"],
+  "quest-7": ["summer", "fall"],
+  "quest-8": ["summer", "fall"],
+  "quest-9": ["summer"],
+  "quest-0": ["any"],
+  "quest-1": ["any"],
+  "quest-10": ["any"],
+};
+
 export default function Quest() {
   const [selectedQuest, setSelectedQuest] = useState<string | null>(null);
   const [whyQuestsExpanded, setWhyQuestsExpanded] = useState(false);
+  const [showQuestArc, setShowQuestArc] = useState(false);
+  const { currentSeason, loading: hemisphereLoading } = useHemisphere();
+  const hasEntered = typeof localStorage !== 'undefined' && localStorage.getItem("regen_game_entered") === "true";
+  const [showIntro, setShowIntro] = useState(!hasEntered);
   const featuredQuestRef = useRef<HTMLDivElement>(null);
   const [isQuestReturnVisitor, setIsQuestReturnVisitor] = useState(false);
   
@@ -547,7 +575,8 @@ export default function Quest() {
     category: QuestCategory;
     difficulty: QuestDifficulty;
     time: QuestTime;
-  }>({ category: "all", difficulty: "all", time: "all" });
+    element: QuestElement;
+  }>({ category: "all", difficulty: "all", time: "all", element: "all" });
 
   // Filter function for quests
   const shouldShowQuest = (questId: string) => {
@@ -556,6 +585,7 @@ export default function Quest() {
     if (filters.category !== "all" && metadata.category !== filters.category) return false;
     if (filters.difficulty !== "all" && metadata.difficulty !== filters.difficulty) return false;
     if (filters.time !== "all" && metadata.time !== filters.time) return false;
+    if (filters.element !== "all" && metadata.element !== filters.element) return false;
     return true;
   };
   
@@ -569,6 +599,12 @@ export default function Quest() {
   
   return (
     <QuestProgressProvider>
+    {showIntro && (
+      <QuestGameIntro onEnter={() => {
+        localStorage.setItem("regen_game_entered", "true");
+        setShowIntro(false);
+      }} />
+    )}
     <div className="min-h-screen bg-[#faf6f1]">
       <SEO {...pageSEO.quest} />
       
@@ -609,18 +645,47 @@ export default function Quest() {
           <p className="text-white/80 max-w-2xl mx-auto mb-8">
             An ever-growing and ever-changing list of Quests curated by the active members of the ReGen Civics Alliance.
           </p>
-          <Button
-            size="lg"
-            className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
-            style={{ fontFamily: 'var(--font-accent)' }}
-            onClick={() => {
-              window.open('https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution', '_blank');
-            }}
-          >
-            Join the ReGen Game Space <ExternalLink className="ml-2 w-4 h-4" />
-          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button
+              size="lg"
+              className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+              style={{ fontFamily: 'var(--font-accent)' }}
+              onClick={() => {
+                window.open('https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution', '_blank');
+              }}
+            >
+              Join the ReGen Game Space <ExternalLink className="ml-2 w-4 h-4" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-xl border-2 border-white/40 text-white hover:bg-white/10"
+              style={{ fontFamily: 'var(--font-accent)' }}
+              onClick={() => setShowQuestArc(!showQuestArc)}
+            >
+              <GitBranch className="mr-2 w-4 h-4" />
+              {showQuestArc ? "Hide Quest Arc" : "View Quest Arc"}
+            </Button>
+          </div>
         </AnimatedSection>
       </section>
+
+      {/* Quest Arc Map */}
+      {showQuestArc && (
+        <section className="py-8 bg-[#faf6f1] border-b border-[#1a472a]/10">
+          <div className="container">
+            <div className="max-w-4xl mx-auto">
+              <h2
+                className="text-xl font-bold text-[#1a472a] mb-4 text-center"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Quest Arc — the full journey at a glance
+              </h2>
+              <QuestArcMap onSelectQuest={openQuestDetails} />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Callout Banner */}
       <section className="py-10 md:py-14 bg-gradient-to-r from-[#1a472a] via-[#2d5a3e] to-[#1a472a] relative overflow-hidden">
@@ -845,6 +910,9 @@ export default function Quest() {
         </div>
       </section>
 
+      {/* Seasonal Quest Feed */}
+      <SeasonalQuestFeed />
+
       {/* All Quests by Season - Header */}
       <section className="py-12 bg-[#f0ebe3]">
         <div className="container">
@@ -879,7 +947,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.spring.length}>
             {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} />
             ))}
           </QuestCarousel>
           {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -904,7 +972,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.summer.length}>
             {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} />
             ))}
           </QuestCarousel>
           {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -929,7 +997,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.fall.length}>
             {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} />
             ))}
           </QuestCarousel>
           {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -954,7 +1022,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.winter.length}>
             {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} />
             ))}
           </QuestCarousel>
           {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -1009,6 +1077,16 @@ export default function Quest() {
           </div>
         </div>
       </ParallaxSection>
+
+      {/* Epic Quest Section */}
+      <EpicQuestSection />
+
+      {/* Quest Journal Prompt */}
+      <div className="text-center py-8 text-[#1a472a]/60 text-sm">
+        <Link href="/profile#quest-journal" className="hover:text-[#1a472a] underline">
+          Your quest journal lives in your profile →
+        </Link>
+      </div>
 
       {/* CTA Section */}
       <section className="py-16 bg-[#7dd87d]">

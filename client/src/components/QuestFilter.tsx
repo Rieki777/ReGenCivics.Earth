@@ -4,17 +4,20 @@ import { Filter, X, Clock, Zap, Tag, ChevronDown } from "lucide-react";
 export type QuestCategory = "all" | "healing" | "nature" | "community" | "inner-work";
 export type QuestDifficulty = "all" | "beginner" | "intermediate" | "advanced";
 export type QuestTime = "all" | "quick" | "medium" | "long";
+export type QuestElement = "all" | "earth" | "water" | "fire" | "air";
 
 interface QuestFilterProps {
   onFilterChange: (filters: {
     category: QuestCategory;
     difficulty: QuestDifficulty;
     time: QuestTime;
+    element: QuestElement;
   }) => void;
   activeFilters: {
     category: QuestCategory;
     difficulty: QuestDifficulty;
     time: QuestTime;
+    element: QuestElement;
   };
 }
 
@@ -40,20 +43,29 @@ const TIME_COMMITMENTS: { value: QuestTime; label: string; description: string }
   { value: "long", label: "Extended", description: "4+ hours" },
 ];
 
+const ELEMENTS: { value: QuestElement; label: string; icon: string; color: string }[] = [
+  { value: "all", label: "All", icon: "✨", color: "bg-gray-100 text-gray-700" },
+  { value: "earth", label: "Earth", icon: "🌍", color: "bg-green-100 text-green-800" },
+  { value: "water", label: "Water", icon: "🌊", color: "bg-blue-100 text-blue-800" },
+  { value: "fire", label: "Fire", icon: "🔥", color: "bg-orange-100 text-orange-800" },
+  { value: "air", label: "Air", icon: "🍃", color: "bg-emerald-100 text-emerald-800" },
+];
+
 export function QuestFilter({ onFilterChange, activeFilters }: QuestFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState<"category" | "difficulty" | "time" | null>(null);
 
-  const hasActiveFilters = 
-    activeFilters.category !== "all" || 
-    activeFilters.difficulty !== "all" || 
-    activeFilters.time !== "all";
+  const hasActiveFilters =
+    activeFilters.category !== "all" ||
+    activeFilters.difficulty !== "all" ||
+    activeFilters.time !== "all" ||
+    activeFilters.element !== "all";
 
   const clearFilters = () => {
-    onFilterChange({ category: "all", difficulty: "all", time: "all" });
+    onFilterChange({ category: "all", difficulty: "all", time: "all", element: "all" });
   };
 
-  const updateFilter = (key: "category" | "difficulty" | "time", value: string) => {
+  const updateFilter = (key: "category" | "difficulty" | "time" | "element", value: string) => {
     onFilterChange({
       ...activeFilters,
       [key]: value
@@ -189,6 +201,29 @@ export function QuestFilter({ onFilterChange, activeFilters }: QuestFilterProps)
                 ))}
               </div>
             </div>
+
+            {/* Elemental Filter */}
+            <div>
+              <label className="text-sm font-medium text-[#1a472a] flex items-center gap-2 mb-2">
+                <span className="text-base">✨</span>
+                Element
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {ELEMENTS.map(el => (
+                  <button
+                    key={el.value}
+                    onClick={() => updateFilter("element", el.value)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      activeFilters.element === el.value
+                        ? "bg-[#4a7c59] text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {el.icon} {el.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Footer */}
@@ -206,41 +241,42 @@ export function QuestFilter({ onFilterChange, activeFilters }: QuestFilterProps)
   );
 }
 
-// Quest metadata for filtering - add this to your quest data
-export const QUEST_METADATA: Record<string, { category: QuestCategory; difficulty: QuestDifficulty; time: QuestTime; experience: string }> = {
-  "quest-0": { category: "inner-work", difficulty: "beginner", time: "medium", experience: "One-time ceremony, 2-4 hours" },
-  "quest-1": { category: "healing", difficulty: "beginner", time: "long", experience: "Weekend practice, 3-5 hours" },
-  "quest-2": { category: "nature", difficulty: "beginner", time: "medium", experience: "Solo afternoon, 1-2 hours" },
-  "quest-3": { category: "nature", difficulty: "intermediate", time: "long", experience: "Ongoing daily practice" },
-  "quest-4": { category: "inner-work", difficulty: "intermediate", time: "long", experience: "Group adventure, 2-4 hours, repeatable" },
-  "quest-5": { category: "community", difficulty: "advanced", time: "long", experience: "Weekend dreaming, 3-5 hours" },
-  "quest-6": { category: "community", difficulty: "intermediate", time: "medium", experience: "Ceremony with your beloved" },
-  "quest-7": { category: "nature", difficulty: "beginner", time: "medium", experience: "Community gathering, half day" },
-  "quest-8": { category: "inner-work", difficulty: "advanced", time: "long", experience: "Solo or group walk, 2-4 hours" },
-  "quest-9": { category: "nature", difficulty: "intermediate", time: "medium", experience: "Solo ceremony, full day" },
-  "quest-10": { category: "community", difficulty: "beginner", time: "quick", experience: "Slow walk, 1-2 hours" },
-  "quest-11": { category: "community", difficulty: "intermediate", time: "medium", experience: "30-day practice" },
-  "quest-12": { category: "inner-work", difficulty: "intermediate", time: "medium", experience: "Group project, ongoing" },
-  "quest-13": { category: "healing", difficulty: "beginner", time: "long", experience: "Breathwork session, 2-3 hours" },
-  "food-foresting": { category: "nature", difficulty: "beginner", time: "medium", experience: "Group adventure, 2-4 hours, repeatable" },
+// Quest metadata for filtering
+export const QUEST_METADATA: Record<string, { category: QuestCategory; difficulty: QuestDifficulty; time: QuestTime; experience: string; element: QuestElement }> = {
+  "quest-0":       { category: "inner-work", difficulty: "beginner",     time: "medium", experience: "One-time ceremony, 2-4 hours",            element: "fire" },
+  "quest-1":       { category: "healing",    difficulty: "beginner",     time: "long",   experience: "Weekend practice, 3-5 hours",             element: "fire" },
+  "quest-2":       { category: "nature",     difficulty: "beginner",     time: "medium", experience: "Solo afternoon, 1-2 hours",               element: "earth" },
+  "quest-3":       { category: "nature",     difficulty: "intermediate", time: "long",   experience: "Ongoing daily practice",                  element: "earth" },
+  "quest-4":       { category: "inner-work", difficulty: "intermediate", time: "long",   experience: "Group adventure, 2-4 hours, repeatable",  element: "earth" },
+  "quest-5":       { category: "community",  difficulty: "advanced",     time: "long",   experience: "Weekend dreaming, 3-5 hours",             element: "water" },
+  "quest-6":       { category: "community",  difficulty: "intermediate", time: "medium", experience: "Ceremony with your beloved",              element: "water" },
+  "quest-7":       { category: "nature",     difficulty: "beginner",     time: "medium", experience: "Community gathering, half day",           element: "water" },
+  "quest-8":       { category: "inner-work", difficulty: "advanced",     time: "long",   experience: "Solo or group walk, 2-4 hours",          element: "earth" },
+  "quest-9":       { category: "nature",     difficulty: "intermediate", time: "medium", experience: "Solo ceremony, full day",                element: "fire" },
+  "quest-10":      { category: "community",  difficulty: "beginner",     time: "quick",  experience: "Slow walk, 1-2 hours",                    element: "air" },
+  "quest-11":      { category: "community",  difficulty: "intermediate", time: "medium", experience: "30-day practice",                         element: "water" },
+  "quest-12":      { category: "inner-work", difficulty: "intermediate", time: "medium", experience: "Group project, ongoing",                  element: "water" },
+  "quest-13":      { category: "healing",    difficulty: "beginner",     time: "long",   experience: "Breathwork session, 2-3 hours",           element: "air" },
+  "food-foresting":{ category: "nature",     difficulty: "beginner",     time: "medium", experience: "Group adventure, 2-4 hours, repeatable",  element: "earth" },
 };
 
 // Helper function to filter quests
 export function filterQuests<T extends { id?: number | string }>(
   quests: T[],
-  filters: { category: QuestCategory; difficulty: QuestDifficulty; time: QuestTime },
+  filters: { category: QuestCategory; difficulty: QuestDifficulty; time: QuestTime; element?: QuestElement },
   getQuestId: (quest: T) => string
 ): T[] {
   return quests.filter(quest => {
     const questId = getQuestId(quest);
     const metadata = QUEST_METADATA[questId];
-    
+
     if (!metadata) return true; // Show quests without metadata
-    
+
     if (filters.category !== "all" && metadata.category !== filters.category) return false;
     if (filters.difficulty !== "all" && metadata.difficulty !== filters.difficulty) return false;
     if (filters.time !== "all" && metadata.time !== filters.time) return false;
-    
+    if (filters.element && filters.element !== "all" && metadata.element !== filters.element) return false;
+
     return true;
   });
 }

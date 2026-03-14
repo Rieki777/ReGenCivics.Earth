@@ -1465,12 +1465,12 @@ function ContributionsTab({
         <div className="bg-[#7dd87d]/8 border border-[#7dd87d]/20 rounded-xl p-4">
           <p className="text-white/50 text-xs mb-1">💚 $ReGen Balance</p>
           <p className="text-2xl font-bold text-[#7dd87d]">{rgenBalance != null && rgenBalance !== 0 ? rgenBalance.toLocaleString() : "--"}</p>
-          <p className="text-white/30 text-xs mt-1">RGEN</p>
+          <p className="text-white/50 text-xs mt-1">RGEN</p>
         </div>
         <div className="bg-[#d4a574]/8 border border-[#d4a574]/20 rounded-xl p-4">
           <p className="text-white/50 text-xs mb-1">🗳 RGVoice</p>
           <p className="text-2xl font-bold text-[#d4a574]">{rvoiceBalance != null && rvoiceBalance !== 0 ? rvoiceBalance.toLocaleString() : "--"}</p>
-          <p className="text-white/30 text-xs mt-1">Voting weight</p>
+          <p className="text-white/50 text-xs mt-1">Voting weight</p>
         </div>
       </div>
 
@@ -1537,7 +1537,7 @@ function ContributionsTab({
           <ChevronDown className={`w-4 h-4 transition-transform ${showManualLog ? "rotate-180" : ""}`} />
         </button>
         {!showManualLog && (
-          <p className="text-white/30 text-xs">Contributions logged here can be verified by admins. For quantified contributions, use the calculator above.</p>
+          <p className="text-white/50 text-xs">Contributions logged here can be verified by admins. For quantified contributions, use the calculator above.</p>
         )}
       </div>
 
@@ -1700,7 +1700,7 @@ function ContributionsTab({
         <div className="text-center py-12">
           <Leaf className="w-10 h-10 text-white/20 mx-auto mb-3" />
           <p className="text-white/40 text-sm">No contributions logged yet.</p>
-          <p className="text-white/30 text-xs mt-1">Use the button above to record your first contribution.</p>
+          <p className="text-white/50 text-xs mt-1">Use the button above to record your first contribution.</p>
         </div>
       ) : (
         <div className="space-y-5">
@@ -1711,7 +1711,7 @@ function ContributionsTab({
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="w-4 h-4" style={{ color: group.color }} />
                   <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">{group.label} Capital</span>
-                  <span className="text-white/30 text-xs ml-auto">
+                  <span className="text-white/50 text-xs ml-auto">
                     {group.items.filter(i => i.estimatedValue).reduce((s, i) => s + (i.estimatedValue ?? 0), 0) > 0
                       ? `$${group.items.reduce((s, i) => s + (i.estimatedValue ?? 0), 0).toLocaleString()}`
                       : ""}
@@ -1899,7 +1899,7 @@ function SubmissionCard({
           </span>
         </div>
         {subtitle && <p className="text-white/40 text-xs mt-0.5 truncate">{subtitle}</p>}
-        <p className="text-white/30 text-xs mt-0.5">Updated {new Date(updatedAt).toLocaleDateString()}</p>
+        <p className="text-white/50 text-xs mt-0.5">Updated {new Date(updatedAt).toLocaleDateString()}</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         {secondaryAction && (
@@ -2054,7 +2054,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
         </div>
       )}
       {orgClaims.length === 0 && !showClaimForm && (
-        <p className="text-white/30 text-xs text-center py-2">No claims yet. If you steward a listed project or organisation, you can claim it above.</p>
+        <p className="text-white/50 text-xs text-center py-2">No claims yet. If you steward a listed project or organisation, you can claim it above.</p>
       )}
     </div>
   );
