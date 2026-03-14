@@ -1266,6 +1266,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
             );
           })}
           <RssFeedManager />
+          <QuestEndorsementManager />
         </div>
       )}
 
@@ -1399,6 +1400,89 @@ function RssFeedManager() {
             </div>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+// All 14 core quests for the endorsement checklist
+const ALL_QUESTS = [
+  { id: "quest-0", title: "Quest 0: Fire" },
+  { id: "quest-1", title: "Potion Brewing" },
+  { id: "quest-2", title: "Saving Seeds" },
+  { id: "quest-3", title: "Healing Wholes" },
+  { id: "quest-4", title: "Dreaming Spaces of Love" },
+  { id: "quest-5", title: "Rites of Love" },
+  { id: "quest-6", title: "Healing Circles" },
+  { id: "quest-7", title: "Wild Foraging" },
+  { id: "quest-8", title: "Medicine Journey" },
+  { id: "quest-9", title: "Tree Talk" },
+  { id: "quest-10", title: "Communication Patterns" },
+  { id: "quest-11", title: "Coordination Patterns" },
+  { id: "quest-12", title: "Breathplay & Future Dreaming" },
+  { id: "quest-13", title: "Fasting" },
+];
+
+function QuestEndorsementManager() {
+  const endorsementsQuery = trpc.quest.myEndorsements.useQuery();
+  const setEndorsements = trpc.quest.setQuestEndorsements.useMutation({
+    onSuccess: () => endorsementsQuery.refetch(),
+  });
+
+  const data = endorsementsQuery.data;
+  if (!data || !data.orgId) return null;
+
+  const recommendedIds = new Set(
+    data.endorsements.filter((e: any) => e.endorsementType === "recommended").map((e: any) => e.questId)
+  );
+  const requiredIds = new Set(
+    data.endorsements.filter((e: any) => e.endorsementType === "required").map((e: any) => e.questId)
+  );
+
+  function toggleEndorsement(questId: string, type: "recommended" | "required") {
+    const current = type === "recommended" ? recommendedIds : requiredIds;
+    const updated = new Set(current);
+    if (updated.has(questId)) {
+      updated.delete(questId);
+    } else {
+      updated.add(questId);
+    }
+    setEndorsements.mutate({ questIds: Array.from(updated), endorsementType: type });
+  }
+
+  return (
+    <div className="mt-4 border-t border-white/10 pt-4">
+      <p className="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1">Quest Endorsements</p>
+      <p className="text-white/40 text-xs mb-3">
+        Mark quests as recommended or required for people applying to join your project.
+      </p>
+      <div className="space-y-1">
+        {ALL_QUESTS.map((quest) => (
+          <div key={quest.id} className="flex items-center gap-3 py-1">
+            <span className="text-white/60 text-xs flex-1">{quest.title}</span>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={recommendedIds.has(quest.id)}
+                onChange={() => toggleEndorsement(quest.id, "recommended")}
+                className="w-3 h-3 accent-[#7dd87d]"
+              />
+              <span className="text-[#7dd87d] text-xs">Rec</span>
+            </label>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={requiredIds.has(quest.id)}
+                onChange={() => toggleEndorsement(quest.id, "required")}
+                className="w-3 h-3 accent-amber-400"
+              />
+              <span className="text-amber-400 text-xs">Req</span>
+            </label>
+          </div>
+        ))}
+      </div>
+      {setEndorsements.isPending && (
+        <p className="text-white/30 text-xs mt-2">Saving...</p>
       )}
     </div>
   );

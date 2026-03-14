@@ -150,6 +150,7 @@ export default function Ally() {
       theme="sky"
       blendColor="15, 40, 45"
       overlayColor="15, 40, 45"
+      scrollWithPage={true}
       sectionOverlays={[
         { id: "hero", opacity: 0.30 },             // Hero - let image detail show through
         { id: "roles", opacity: 0.55 },             // Alliance roles

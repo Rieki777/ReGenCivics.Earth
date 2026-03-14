@@ -1717,3 +1717,16 @@ export const entityRssFeeds = mysqlTable("entity_rss_feeds", {
 export type EntityRssFeed = typeof entityRssFeeds.$inferSelect;
 export type InsertEntityRssFeed = typeof entityRssFeeds.$inferInsert;
 
+// ─── Quest Endorsements ───────────────────────────────────────────────────────
+// Stewards can mark quests as recommended or required for applicants to their org.
+export const questEndorsements = mysqlTable("questEndorsements", {
+  id: int("id").autoincrement().primaryKey(),
+  orgId: varchar("orgId", { length: 255 }).notNull(),
+  orgType: mysqlEnum("orgType", ["land_project", "alliance_org"]).notNull(),
+  questId: varchar("questId", { length: 100 }).notNull(),
+  endorsementType: mysqlEnum("endorsementType", ["recommended", "required"]).default("recommended").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type QuestEndorsement = typeof questEndorsements.$inferSelect;
+export type InsertQuestEndorsement = typeof questEndorsements.$inferInsert;
+

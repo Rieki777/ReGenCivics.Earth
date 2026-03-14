@@ -16,7 +16,7 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, forumReplies, forumCategories, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims } from "../drizzle/schema";
+import { forumPosts, forumReplies, forumCategories, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims, questEndorsements } from "../drizzle/schema";
 import { eq, sql, gt, count } from "drizzle-orm";
 import { getDb } from "./db";
 
@@ -5293,6 +5293,70 @@ Guidelines:
         await db.update(questCompletions)
           .set({ artifactText: input.note })
           .where(sql`${questCompletions.id} = ${input.completionId} AND ${questCompletions.userId} = ${ctx.user.id}`);
+        return { success: true };
+      }),
+
+    // Public: get all endorsements for a specific quest
+    getEndorsementsForQuest: publicProcedure
+      .input(z.object({ questId: z.string() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        return db
+          .select()
+          .from(questEndorsements)
+          .where(eq(questEndorsements.questId, input.questId));
+      }),
+
+    // Protected: get the calling steward's endorsements (all quests)
+    myEndorsements: protectedProcedure
+      .query(async ({ ctx }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const claim = await db
+          .select()
+          .from(orgClaims)
+          .where(sql`${orgClaims.userId} = ${ctx.user.id} AND ${orgClaims.status} = 'approved'`)
+          .limit(1);
+        if (!claim[0]) return { endorsements: [], orgId: null, orgType: null };
+        const endorsements = await db
+          .select()
+          .from(questEndorsements)
+          .where(eq(questEndorsements.orgId, claim[0].orgId));
+        return { endorsements, orgId: claim[0].orgId, orgType: claim[0].orgType };
+      }),
+
+    // Protected: set endorsements for a given type (replaces existing for that type)
+    setQuestEndorsements: protectedProcedure
+      .input(z.object({
+        questIds: z.array(z.string()),
+        endorsementType: z.enum(["recommended", "required"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const claim = await db
+          .select()
+          .from(orgClaims)
+          .where(sql`${orgClaims.userId} = ${ctx.user.id} AND ${orgClaims.status} = 'approved'`)
+          .limit(1);
+        if (!claim[0]) throw new TRPCError({ code: "FORBIDDEN", message: "No approved claim found." });
+        const orgId = claim[0].orgId;
+        const orgType = claim[0].orgType;
+        // Delete all existing endorsements of this type for this org, then re-insert
+        await db.delete(questEndorsements).where(
+          sql`${questEndorsements.orgId} = ${orgId} AND ${questEndorsements.endorsementType} = ${input.endorsementType}`
+        );
+        if (input.questIds.length > 0) {
+          await db.insert(questEndorsements).values(
+            input.questIds.map(questId => ({
+              orgId,
+              orgType,
+              questId,
+              endorsementType: input.endorsementType,
+            }))
+          );
+        }
         return { success: true };
       }),
   }),

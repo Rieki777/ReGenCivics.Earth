@@ -326,6 +326,7 @@ export default function Play() {
       overlayOpacity={0.6}
       theme="magic"
       blendColor="20, 30, 45"
+      scrollWithPage={true}
       sectionOverlays={[
         { id: "hero", opacity: 0.30 },             // Hero - let image detail show through
         { id: "why-games", opacity: 0.50 },         // Why games - let colorful art show
