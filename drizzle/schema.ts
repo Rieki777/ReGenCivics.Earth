@@ -1473,8 +1473,14 @@ export const orgClaims = mysqlTable("org_claims", {
   orgType: mysqlEnum("orgType", ["land_project", "alliance_org"]).notNull(),
   orgId: varchar("orgId", { length: 255 }).notNull(),
   orgName: varchar("orgName", { length: 255 }).notNull(),
+  // Detailed form data from the claim submission (land project fields or org fields)
+  formData: json("formData"),
+  // Admin notes written during review
+  adminNotes: text("adminNotes"),
   // Admin approves/rejects claim
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  submittedAt: timestamp("submittedAt").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

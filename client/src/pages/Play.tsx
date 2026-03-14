@@ -6,7 +6,7 @@
  */
 
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -195,6 +195,9 @@ function TokenSystemCollapsible() {
               <p className="text-white/70 text-base leading-relaxed">
                 Our in-game currency earned through every action in the game. Trade them, spend them in the bioregional marketplace, or use them to access premium game features. These tokens flow through the regenerative economy.
               </p>
+              <a href="/tokenomics" className="inline-block mt-3 text-amber-400 text-sm hover:text-amber-300 transition-colors">
+                Explore tokenomics →
+              </a>
             </div>
 
             <div className="p-5 rounded-xl bg-[#7dd87d]/5 border border-[#7dd87d]/15">
@@ -212,6 +215,9 @@ function TokenSystemCollapsible() {
               <p className="text-white/70 text-base leading-relaxed">
                 1 RGVoice token for each action. These represent your governance voice in the ReGen Civics ecosystem. They give you voting power on fund allocation, project selection, alliance governance, and the evolution of the game itself.
               </p>
+              <a href="/governance" className="inline-block mt-3 text-[#7dd87d] text-sm hover:text-[#9de89d] transition-colors">
+                Explore governance →
+              </a>
             </div>
           </div>
 
@@ -248,9 +254,74 @@ function TokenSystemCollapsible() {
               </div>
             ))}
           </div>
+
+          <div className="mt-4 flex gap-4 text-sm justify-center">
+            <a href="/tokenomics" className="text-amber-400 hover:text-amber-300 transition-colors">
+              Explore tokenomics →
+            </a>
+            <a href="/governance" className="text-[#7dd87d] hover:text-[#9de89d] transition-colors">
+              Explore governance →
+            </a>
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+function QuestAnimationVideo() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoError, setVideoError] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {
+              // Autoplay blocked — video stays paused, controls are available
+            });
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.25 }
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <section className="py-8 md:py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <AnimatedSection animation="fade-in">
+          <div className="rounded-2xl overflow-hidden shadow-2xl border border-[#7dd87d]/20">
+            {videoError ? (
+              <div className="w-full aspect-video bg-[#1a472a]/40 flex items-center justify-center">
+                <p className="text-white/50 text-sm">Video unavailable</p>
+              </div>
+            ) : (
+              <video
+                ref={videoRef}
+                loop
+                muted
+                playsInline
+                preload="metadata"
+                className="w-full h-auto"
+                onError={() => setVideoError(true)}
+              >
+                <source src="https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4" type="video/mp4" />
+              </video>
+            )}
+          </div>
+        </AnimatedSection>
+      </div>
+    </section>
   );
 }
 
@@ -459,24 +530,7 @@ export default function Play() {
       </section>
 
       {/* Quest Animation */}
-      <section className="py-8 md:py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <AnimatedSection animation="fade-in">
-            <div className="rounded-2xl overflow-hidden shadow-2xl border border-[#7dd87d]/20">
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
-                className="w-full h-auto"
-              >
-                <source src="https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4" type="video/mp4" />
-              </video>
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
+      <QuestAnimationVideo />
 
       {/* Token System */}
       <section className="py-12 md:py-20 px-4">

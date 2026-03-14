@@ -434,12 +434,12 @@ export default function Connect() {
         return (
           <div className="space-y-6">
       <SEO {...pageSEO.connect} />
-      <BackButton />
+      <BackButton fallbackPath="/connect" inline />
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-4 block">
+              <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 Which Alliance Organization(s) do you want to connect with?
               </Label>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-white/60 mb-4">
                 Select one or more organizations from our Alliance network. We will share your details with them.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -448,9 +448,9 @@ export default function Connect() {
                     key={org.id}
                     className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${
                       selectedOrganizations.includes(org.id)
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10 shadow-md"
-                        : "border-gray-200 hover:border-[#7dd87d]/50 bg-white"
-                    } ${org.id === "all" ? "md:col-span-2 bg-gradient-to-r from-[#7dd87d]/5 to-[#4a7c59]/5" : ""}`}
+                        ? "border-[#7dd87d] bg-[#7dd87d]/20 shadow-md"
+                        : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
+                    } ${org.id === "all" ? "md:col-span-2" : ""}`}
                     onClick={() => toggleArrayItem(selectedOrganizations, setSelectedOrganizations, org.id)}
                   >
                     <div className="flex items-start gap-3">
@@ -461,16 +461,16 @@ export default function Connect() {
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-bold text-[#1a472a]">{org.name}</p>
+                          <p className="font-bold text-white">{org.name}</p>
                           {selectedOrganizations.includes(org.id) && (
                             <Check className="w-5 h-5 text-[#7dd87d]" />
                           )}
                         </div>
                         {org.description && (
-                          <p className="text-sm text-gray-600 mt-1">{org.description}</p>
+                          <p className="text-sm text-white/70 mt-1">{org.description}</p>
                         )}
                         {org.url && (
-                          <p className="text-xs text-[#4a7c59] mt-1 flex items-center gap-1">
+                          <p className="text-xs text-[#7dd87d]/80 mt-1 flex items-center gap-1">
                             <Globe className="w-3 h-3" /> {org.url}
                           </p>
                         )}
@@ -489,17 +489,17 @@ export default function Connect() {
                   value={otherOrganization}
                   onChange={(e) => setOtherOrganization(e.target.value)}
                   placeholder="Enter organization name"
-                  className="mt-2"
+                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                 />
               </div>
             )}
             
             {/* Role Archetypes Question */}
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-4 block">
+              <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 Which role archetype(s) describe you best?
               </Label>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-white/60 mb-4">
                 Select all that resonate with how you naturally contribute.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -508,27 +508,27 @@ export default function Connect() {
                     key={role.id}
                     className={`flex flex-col p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       selectedRoles.includes(role.id)
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10"
-                        : "border-gray-200 hover:border-[#7dd87d]/50"
+                        ? "border-[#7dd87d] bg-[#7dd87d]/20"
+                        : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedRoles, setSelectedRoles, role.id)}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{role.icon}</span>
-                      <span className="font-medium text-[#1a472a] text-sm">{role.name}</span>
+                      <span className="font-medium text-white text-sm">{role.name}</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">{role.description}</p>
+                    <p className="text-xs text-white/70 mt-1">{role.description}</p>
                   </div>
                 ))}
               </div>
             </div>
-            
+
             {/* Organizational Capital Question */}
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-4 block">
+              <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 What types of organizational capital can you contribute?
               </Label>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-white/60 mb-4">
                 Select all areas where you can add value to our alliance organizations.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -537,13 +537,13 @@ export default function Connect() {
                     key={capital.id}
                     className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       organizationalCapital.includes(capital.id)
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10"
-                        : "border-gray-200 hover:border-[#7dd87d]/50"
+                        ? "border-[#7dd87d] bg-[#7dd87d]/20"
+                        : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(organizationalCapital, setOrganizationalCapital, capital.id)}
                   >
                     <span className="text-lg">{capital.icon}</span>
-                    <span className="font-medium text-[#1a472a] text-xs">{capital.name}</span>
+                    <span className="font-medium text-white text-xs">{capital.name}</span>
                   </div>
                 ))}
               </div>
@@ -551,31 +551,31 @@ export default function Connect() {
             
             {/* Value Contribution Question */}
             <div>
-              <Label htmlFor="valueContribution" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="valueContribution" className="text-lg font-semibold text-white/90">
                 What types of value do you see yourself adding to the organization?
               </Label>
-              <p className="text-sm text-gray-500 mb-2">Share your skills, experience, and what you can contribute.</p>
+              <p className="text-sm text-white/60 mb-2">Share your skills, experience, and what you can contribute.</p>
               <Textarea
                 id="valueContribution"
                 value={valueContribution}
                 onChange={(e) => setValueContribution(e.target.value)}
                 placeholder="E.g., I have experience in project management and can help coordinate initiatives..."
-                className="mt-2 min-h-[100px]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
-            
+
             {/* Why Ideal Fit Question */}
             <div>
-              <Label htmlFor="whyIdealFit" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="whyIdealFit" className="text-lg font-semibold text-white/90">
                 Why would you be an ideal fit for working with our alliance organizations?
               </Label>
-              <p className="text-sm text-gray-500 mb-2">Tell us about your alignment with regenerative values and collaborative work.</p>
+              <p className="text-sm text-white/60 mb-2">Tell us about your alignment with regenerative values and collaborative work.</p>
               <Textarea
                 id="whyIdealFit"
                 value={whyIdealFit}
                 onChange={(e) => setWhyIdealFit(e.target.value)}
                 placeholder="Share what draws you to this work and how you see yourself contributing..."
-                className="mt-2 min-h-[100px]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -592,35 +592,35 @@ export default function Connect() {
                 value={organizationUrl}
                 onChange={(e) => setOrganizationUrl(e.target.value)}
                 placeholder="https://your-organization.com"
-                className="mt-2"
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
 
             {/* Organisation Role and Support - Single Combined Section */}
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-2 block">
+              <Label className="text-lg font-semibold text-white/90 mb-2 block">
                 Organisation Role and Support
               </Label>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-white/60 mb-4">
                 Select all roles and support areas that describe your organization. These will appear as tags on the global map.
               </p>
-              
+
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {orgRoleAndSupportOptions.map((option) => (
                   <div
                     key={option.id}
                     className={`flex flex-col p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       selectedOrgRoles.includes(option.id)
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10"
-                        : "border-gray-200 hover:border-[#7dd87d]/50"
+                        ? "border-[#7dd87d] bg-[#7dd87d]/20"
+                        : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedOrgRoles, setSelectedOrgRoles, option.id)}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{option.icon}</span>
-                      <span className="font-medium text-[#1a472a] text-xs">{option.name}</span>
+                      <span className="font-medium text-white text-xs">{option.name}</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{option.description}</p>
+                    <p className="text-xs text-white/70 mt-1 line-clamp-2">{option.description}</p>
                   </div>
                 ))}
               </div>
@@ -628,10 +628,10 @@ export default function Connect() {
 
             {/* Organization Scope: Local vs Global */}
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-2 block">
+              <Label className="text-lg font-semibold text-white/90 mb-2 block">
                 Is your organization location-based or global?
               </Label>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-white/60 mb-3">
                 Location-based organizations appear pinned on the map. Global organizations orbit the globe as satellites.
               </p>
               <div className="flex gap-3">
@@ -640,43 +640,43 @@ export default function Connect() {
                   onClick={() => setOrgScope("local")}
                   className={`flex-1 p-4 rounded-lg border-2 text-center transition-all ${
                     orgScope === "local"
-                      ? "border-[#7dd87d] bg-[#7dd87d]/10"
-                      : "border-gray-200 hover:border-[#7dd87d]/50"
+                      ? "border-[#7dd87d] bg-[#7dd87d]/20"
+                      : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                   }`}
                 >
-                  <MapPin className="w-6 h-6 mx-auto mb-1 text-[#4a7c59]" />
-                  <span className="font-semibold text-[#1a472a] text-sm block">Location-Based</span>
-                  <span className="text-xs text-gray-500">We have a physical HQ or base</span>
+                  <MapPin className="w-6 h-6 mx-auto mb-1 text-[#7dd87d]" />
+                  <span className="font-semibold text-white text-sm block">Location-Based</span>
+                  <span className="text-xs text-white/70">We have a physical HQ or base</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setOrgScope("global")}
                   className={`flex-1 p-4 rounded-lg border-2 text-center transition-all ${
                     orgScope === "global"
-                      ? "border-[#7dd87d] bg-[#7dd87d]/10"
-                      : "border-gray-200 hover:border-[#7dd87d]/50"
+                      ? "border-[#7dd87d] bg-[#7dd87d]/20"
+                      : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                   }`}
                 >
-                  <Globe className="w-6 h-6 mx-auto mb-1 text-[#4a7c59]" />
-                  <span className="font-semibold text-[#1a472a] text-sm block">Global</span>
-                  <span className="text-xs text-gray-500">We operate everywhere</span>
+                  <Globe className="w-6 h-6 mx-auto mb-1 text-[#7dd87d]" />
+                  <span className="font-semibold text-white text-sm block">Global</span>
+                  <span className="text-xs text-white/70">We operate everywhere</span>
                 </button>
               </div>
             </div>
 
             {/* Location fields (only for local scope) */}
             {orgScope === "local" && (
-              <div className="bg-[#f0f7f0] p-4 rounded-lg border border-[#4a7c59]/20">
-                <Label className="text-[#1a472a] font-semibold flex items-center gap-2 mb-2">
-                  <MapPin className="w-4 h-4 text-[#4a7c59]" />
+              <div className="bg-white/5 p-4 rounded-lg border border-white/20">
+                <Label className="text-white/90 font-semibold flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-[#7dd87d]" />
                   Pin Your Organization on the Map
                 </Label>
-                <p className="text-sm text-[#1a472a]/60 mb-3">
+                <p className="text-sm text-white/60 mb-3">
                   Your organization will appear on our interactive globe map.
                 </p>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <Label htmlFor="orgLat" className="text-xs text-[#1a472a]/70">Latitude</Label>
+                    <Label htmlFor="orgLat" className="text-xs text-white/70">Latitude</Label>
                     <Input
                       id="orgLat"
                       type="number"
@@ -684,11 +684,11 @@ export default function Connect() {
                       value={orgLatitude ?? ""}
                       onChange={(e) => setOrgLatitude(e.target.value ? parseFloat(e.target.value) : null)}
                       placeholder="e.g. 48.8566"
-                      className="mt-1"
+                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="orgLng" className="text-xs text-[#1a472a]/70">Longitude</Label>
+                    <Label htmlFor="orgLng" className="text-xs text-white/70">Longitude</Label>
                     <Input
                       id="orgLng"
                       type="number"
@@ -696,18 +696,18 @@ export default function Connect() {
                       value={orgLongitude ?? ""}
                       onChange={(e) => setOrgLongitude(e.target.value ? parseFloat(e.target.value) : null)}
                       placeholder="e.g. 2.3522"
-                      className="mt-1"
+                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                     />
                   </div>
                 </div>
                 <div className="mb-3">
-                  <Label htmlFor="orgCountry" className="text-xs text-[#1a472a]/70">Country</Label>
+                  <Label htmlFor="orgCountry" className="text-xs text-white/70">Country</Label>
                   <Input
                     id="orgCountry"
                     value={orgCountry}
                     onChange={(e) => setOrgCountry(e.target.value)}
                     placeholder="e.g. France"
-                    className="mt-1"
+                    className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                   />
                 </div>
                 <button
@@ -723,11 +723,11 @@ export default function Connect() {
                       );
                     }
                   }}
-                  className="text-sm text-[#4a7c59] hover:text-[#1a472a] underline flex items-center gap-1"
+                  className="text-sm text-[#7dd87d] hover:text-white underline flex items-center gap-1"
                 >
                   <MapPin className="w-3 h-3" /> Use my current location
                 </button>
-                <p className="text-xs text-[#1a472a]/40 mt-2">
+                <p className="text-xs text-white/40 mt-2">
                   Tip: Right-click your location on Google Maps to copy coordinates.
                 </p>
               </div>
@@ -743,23 +743,23 @@ export default function Connect() {
                   value={otherAllianceSupport}
                   onChange={(e) => setOtherAllianceSupport(e.target.value)}
                   placeholder="Enter your support category"
-                  className="mt-2"
+                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                 />
               </div>
             )}
             
             {/* Alliance Support Description */}
             <div>
-              <Label htmlFor="allianceSupportDescription" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="allianceSupportDescription" className="text-lg font-semibold text-white/90">
                 Please describe how your alliance supports land projects:
               </Label>
-              <p className="text-sm text-gray-500 mb-2">Share specific services, resources, or expertise you offer.</p>
+              <p className="text-sm text-white/60 mb-2">Share specific services, resources, or expertise you offer.</p>
               <Textarea
                 id="allianceSupportDescription"
                 value={allianceSupportDescription}
                 onChange={(e) => setAllianceSupportDescription(e.target.value)}
                 placeholder="E.g., We provide governance consulting and help land projects establish democratic decision-making structures..."
-                className="mt-2 min-h-[120px]"
+                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
             
@@ -772,7 +772,7 @@ export default function Connect() {
                 value={partnershipDescription}
                 onChange={(e) => setPartnershipDescription(e.target.value)}
                 placeholder="Share your vision for partnership..."
-                className="mt-2 min-h-[120px]"
+                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -782,10 +782,10 @@ export default function Connect() {
         return (
           <div className="space-y-6">
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-4 block">
+              <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 Which Land Project(s) would you like to live with or visit?
               </Label>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-white/60 mb-4">
                 Select one or more projects. We will send your details to the project coordinator(s).
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -794,8 +794,8 @@ export default function Connect() {
                     key={project.id}
                     className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all hover:shadow-md ${
                       selectedProjects.includes(project.id)
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10 shadow-md"
-                        : "border-gray-200 hover:border-[#7dd87d]/50 bg-white"
+                        ? "border-[#7dd87d] bg-[#7dd87d]/20 shadow-md"
+                        : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedProjects, setSelectedProjects, project.id)}
                   >
@@ -807,21 +807,21 @@ export default function Connect() {
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-bold text-[#1a472a]">{project.name}</p>
+                          <p className="font-bold text-white">{project.name}</p>
                           {selectedProjects.includes(project.id) && (
                             <Check className="w-5 h-5 text-[#7dd87d]" />
                           )}
                         </div>
                         {project.location && (
-                          <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                          <p className="text-sm text-white/70 flex items-center gap-1 mt-1">
                             <MapPin className="w-3 h-3" /> {project.location}
                           </p>
                         )}
                         {project.size && project.id !== "other" && (
-                          <p className="text-xs text-gray-500 mt-1">{project.size}</p>
+                          <p className="text-xs text-white/60 mt-1">{project.size}</p>
                         )}
                         {project.focus && project.id !== "other" && (
-                          <p className="text-xs text-[#4a7c59] font-medium mt-1 bg-[#7dd87d]/20 px-2 py-0.5 rounded-full inline-block">
+                          <p className="text-xs text-[#7dd87d] font-medium mt-1 bg-[#7dd87d]/20 px-2 py-0.5 rounded-full inline-block">
                             {project.focus}
                           </p>
                         )}
@@ -840,17 +840,17 @@ export default function Connect() {
                   value={otherProject}
                   onChange={(e) => setOtherProject(e.target.value)}
                   placeholder="Enter project name"
-                  className="mt-2"
+                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                 />
               </div>
             )}
             
             {/* Role Archetypes Question */}
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-4 block">
+              <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 Which role archetype(s) describe you best?
               </Label>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-white/60 mb-4">
                 Select all that resonate with how you naturally contribute.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -859,27 +859,27 @@ export default function Connect() {
                     key={role.id}
                     className={`flex flex-col p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       selectedRoles.includes(role.id)
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10"
-                        : "border-gray-200 hover:border-[#7dd87d]/50"
+                        ? "border-[#7dd87d] bg-[#7dd87d]/20"
+                        : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedRoles, setSelectedRoles, role.id)}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{role.icon}</span>
-                      <span className="font-medium text-[#1a472a] text-sm">{role.name}</span>
+                      <span className="font-medium text-white text-sm">{role.name}</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">{role.description}</p>
+                    <p className="text-xs text-white/70 mt-1">{role.description}</p>
                   </div>
                 ))}
               </div>
             </div>
-            
+
             {/* 9 Forms of Capital Question */}
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-4 block">
+              <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 What types of capital would you like to bring to the project?
               </Label>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-white/60 mb-4">
                 Select all forms of capital you can contribute.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -888,16 +888,16 @@ export default function Connect() {
                     key={capital.id}
                     className={`flex flex-col p-3 rounded-lg border-2 cursor-pointer transition-all overflow-hidden ${
                       selectedCapitalTypes.includes(capital.id)
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10"
-                        : "border-gray-200 hover:border-[#7dd87d]/50"
+                        ? "border-[#7dd87d] bg-[#7dd87d]/20"
+                        : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedCapitalTypes, setSelectedCapitalTypes, capital.id)}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{capital.icon}</span>
-                      <span className="font-medium text-[#1a472a] text-sm">{capital.name}</span>
+                      <span className="font-medium text-white text-sm">{capital.name}</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 break-words">{capital.description}</p>
+                    <p className="text-xs text-white/70 mt-1 break-words">{capital.description}</p>
                   </div>
                 ))}
               </div>
@@ -905,31 +905,31 @@ export default function Connect() {
             
             {/* Value Contribution Question */}
             <div>
-              <Label htmlFor="valueContribution" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="valueContribution" className="text-lg font-semibold text-white/90">
                 What types of value do you see yourself adding to the land project?
               </Label>
-              <p className="text-sm text-gray-500 mb-2">Share your skills, experience, and what you can contribute.</p>
+              <p className="text-sm text-white/60 mb-2">Share your skills, experience, and what you can contribute.</p>
               <Textarea
                 id="valueContribution"
                 value={valueContribution}
                 onChange={(e) => setValueContribution(e.target.value)}
                 placeholder="E.g., I have 5 years of permaculture experience and can help design food forests..."
-                className="mt-2 min-h-[100px]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
-            
+
             {/* Why Ideal Fit Question */}
             <div>
-              <Label htmlFor="whyIdealFit" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="whyIdealFit" className="text-lg font-semibold text-white/90">
                 Why would you be an ideal fit for this community?
               </Label>
-              <p className="text-sm text-gray-500 mb-2">Tell us about your alignment with regenerative living and community values.</p>
+              <p className="text-sm text-white/60 mb-2">Tell us about your alignment with regenerative living and community values.</p>
               <Textarea
                 id="whyIdealFit"
                 value={whyIdealFit}
                 onChange={(e) => setWhyIdealFit(e.target.value)}
                 placeholder="Share what draws you to community living and how you see yourself contributing..."
-                className="mt-2 min-h-[100px]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -946,11 +946,11 @@ export default function Connect() {
                     <Briefcase className="w-5 h-5 text-[#1a472a]" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs text-[#4a7c59] font-medium uppercase tracking-wide mb-1">Applying for Role</p>
-                    <h3 className="text-lg font-bold text-[#1a472a]">{prefilledRole.title}</h3>
-                    <p className="text-sm text-[#4a7c59] mt-1">{prefilledRole.circle}</p>
+                    <p className="text-xs text-[#7dd87d] font-medium uppercase tracking-wide mb-1">Applying for Role</p>
+                    <h3 className="text-lg font-bold text-white">{prefilledRole.title}</h3>
+                    <p className="text-sm text-[#7dd87d] mt-1">{prefilledRole.circle}</p>
                     {prefilledRole.purpose && (
-                      <p className="text-sm text-gray-600 mt-2">{prefilledRole.purpose}</p>
+                      <p className="text-sm text-white/70 mt-2">{prefilledRole.purpose}</p>
                     )}
                   </div>
                   <Check className="w-6 h-6 text-[#7dd87d]" />
@@ -959,7 +959,7 @@ export default function Connect() {
             )}
             
             <div>
-              <Label className="text-lg font-semibold text-[#1a472a] mb-4 block">
+              <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 Which role archetype(s) describe you best?
               </Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -968,13 +968,13 @@ export default function Connect() {
                     key={role.id}
                     className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                       selectedRoles.includes(role.id)
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10"
-                        : "border-gray-200 hover:border-[#7dd87d]/50"
+                        ? "border-[#7dd87d] bg-[#7dd87d]/20"
+                        : "border-white/20 bg-white/10 hover:border-[#7dd87d]/50"
                     }`}
                     onClick={() => toggleArrayItem(selectedRoles, setSelectedRoles, role.id)}
                   >
                     <span className="text-2xl">{role.icon}</span>
-                    <span className="font-medium text-[#1a472a]">{role.name}</span>
+                    <span className="font-medium text-white">{role.name}</span>
                   </div>
                 ))}
               </div>
@@ -989,50 +989,50 @@ export default function Connect() {
                 value={roleInterest}
                 onChange={(e) => setRoleInterest(e.target.value)}
                 placeholder="Describe the role(s) you are interested in..."
-                className="mt-2 min-h-[100px]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
             
             <div>
-              <Label htmlFor="whyIdeal" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="whyIdeal" className="text-lg font-semibold text-white/90">
                 Why would you be ideal for this role?
               </Label>
-              <p className="text-sm text-gray-500 mb-2">Share your relevant experience, skills, and what makes you a great fit.</p>
+              <p className="text-sm text-white/60 mb-2">Share your relevant experience, skills, and what makes you a great fit.</p>
               <Textarea
                 id="whyIdeal"
                 value={whyIdeal}
                 onChange={(e) => setWhyIdeal(e.target.value)}
                 placeholder="Tell us about your background, relevant experience, and why you're passionate about this role..."
-                className="mt-2 min-h-[120px]"
+                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
             
             <div>
-              <Label htmlFor="seasonDeliverables" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="seasonDeliverables" className="text-lg font-semibold text-white/90">
                 What do you intend to deliver over the next season?
               </Label>
-              <p className="text-sm text-gray-500 mb-2">Describe specific outcomes, projects, or contributions you plan to make.</p>
+              <p className="text-sm text-white/60 mb-2">Describe specific outcomes, projects, or contributions you plan to make.</p>
               <Textarea
                 id="seasonDeliverables"
                 value={seasonDeliverables}
                 onChange={(e) => setSeasonDeliverables(e.target.value)}
                 placeholder="E.g., Complete 3 community workshops, develop a permaculture curriculum, coordinate 2 volunteer events..."
-                className="mt-2 min-h-[120px]"
+                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
             
             <div>
-              <Label htmlFor="cvWebsite" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="cvWebsite" className="text-lg font-semibold text-white/90">
                 CV, Portfolio, or Website (Optional)
               </Label>
-              <p className="text-sm text-gray-500 mb-2">Share a link to your CV, portfolio, LinkedIn, or personal website.</p>
+              <p className="text-sm text-white/60 mb-2">Share a link to your CV, portfolio, LinkedIn, or personal website.</p>
               <Input
                 id="cvWebsite"
                 type="url"
                 value={cvWebsite}
                 onChange={(e) => setCvWebsite(e.target.value)}
                 placeholder="https://linkedin.com/in/yourprofile or your website URL"
-                className="mt-2"
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -1042,7 +1042,7 @@ export default function Connect() {
         return (
           <div className="space-y-6">
             <div>
-              <Label htmlFor="uniqueContribution" className="text-lg font-semibold text-[#1a472a]">
+              <Label htmlFor="uniqueContribution" className="text-lg font-semibold text-white/90">
                 Tell us more! What unique way would you like to contribute?
               </Label>
               <Textarea
@@ -1050,7 +1050,7 @@ export default function Connect() {
                 value={uniqueContribution}
                 onChange={(e) => setUniqueContribution(e.target.value)}
                 placeholder="Share your unique ideas and how you would like to contribute..."
-                className="mt-2 min-h-[150px]"
+                className="mt-2 min-h-[150px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -1258,15 +1258,15 @@ export default function Connect() {
       {/* Form Content */}
       <div className="container py-4 md:py-8 pb-16">
         <div className="max-w-2xl mx-auto">
-          <div className="rounded-2xl border-2 border-[#7dd87d]/30 bg-white/95 backdrop-blur-sm shadow-xl overflow-hidden">
+          <div className="rounded-2xl border-2 border-[#7dd87d]/30 bg-[#1a472a]/90 backdrop-blur-sm shadow-xl overflow-hidden">
             <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8 overflow-x-hidden">
               {/* Path-specific fields */}
               {renderPathFields()}
               
               {/* Common fields */}
-              <div className="border-t pt-8 space-y-6">
-                <h3 className="text-lg font-semibold text-[#1a472a]">Contact Information</h3>
-                
+              <div className="border-t border-white/20 pt-8 space-y-6">
+                <h3 className="text-lg font-semibold text-white/90">Contact Information</h3>
+
                 <div>
                   <Label htmlFor="fullName">Your Name (Optional)</Label>
                   <Input
@@ -1274,10 +1274,10 @@ export default function Connect() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your name"
-                    className="mt-2"
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="email">Best Email to Reach You *</Label>
                   <Input
@@ -1286,11 +1286,11 @@ export default function Connect() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="mt-2"
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="notes">Additional Notes (Optional)</Label>
                   <Textarea
@@ -1298,17 +1298,17 @@ export default function Connect() {
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
                     placeholder="Anything else you would like to share..."
-                    className="mt-2"
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Checkbox
                     id="newsletter"
                     checked={newsletterOptIn}
                     onCheckedChange={(checked) => setNewsletterOptIn(checked as boolean)}
                   />
-                  <Label htmlFor="newsletter" className="text-sm text-gray-600 cursor-pointer">
+                  <Label htmlFor="newsletter" className="text-sm text-white/70 cursor-pointer">
                     Subscribe to our newsletter for updates on the ReGenerative Renaissance
                   </Label>
                 </div>

@@ -3210,6 +3210,14 @@ export const appRouter = router({
       return posts.map(p => ({ id: p.id, title: p.title }));
     }),
 
+    activeOrganisationThreads: publicProcedure.query(async () => {
+      const cats = await db.listForumCategories();
+      const cat = cats.find(c => c.slug === "active-organisations");
+      if (!cat) return [];
+      const posts = await db.listForumPosts(cat.id, 200, 0);
+      return posts.map(p => ({ id: p.id, title: p.title }));
+    }),
+
     // Get all posts in a chain (by chainId — returns the idea root + all experiment/result posts linked to it)
     chainPosts: publicProcedure
       .input(z.object({ chainId: z.number() }))
@@ -4022,6 +4030,8 @@ export const appRouter = router({
         orgType: z.enum(["land_project", "alliance_org"]),
         orgId: z.string().min(1),
         orgName: z.string().min(1),
+        // Detailed form data — land project or alliance org variant
+        formData: z.record(z.unknown()).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const id = await db.createOrgClaim({
@@ -4029,6 +4039,7 @@ export const appRouter = router({
           orgType: input.orgType,
           orgId: input.orgId,
           orgName: input.orgName,
+          formData: input.formData ?? null,
         });
         return { id };
       }),
@@ -4043,22 +4054,30 @@ export const appRouter = router({
       return db.getAllOrgClaims();
     }),
 
-    // Admin: approve or reject a claim
+    // Admin: approve a claim
     approve: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const claim = await db.updateOrgClaimStatus(input.id, 'approved');
+      .input(z.object({
+        id: z.number(),
+        adminNotes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const claim = await db.updateOrgClaimStatus(input.id, 'approved', input.adminNotes);
         if (claim) {
           // Route all pending join requests for this org to the new steward
           await db.routeJoinRequestsToSteward(claim.orgId, claim.userId);
+          // Auto-create the forum thread for this entity if it doesn't exist yet
+          await db.ensureEntityForumThread(claim.orgType, claim.orgName, ctx.user.id);
         }
         return { ok: true };
       }),
 
     reject: adminProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({
+        id: z.number(),
+        adminNotes: z.string().optional(),
+      }))
       .mutation(async ({ input }) => {
-        await db.updateOrgClaimStatus(input.id, 'rejected');
+        await db.updateOrgClaimStatus(input.id, 'rejected', input.adminNotes);
         return { ok: true };
       }),
 
@@ -4070,7 +4089,7 @@ export const appRouter = router({
         orgId: z.string().min(1),
         orgName: z.string().min(1),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const id = await db.createOrgClaim({
           userId: input.userId,
           orgType: input.orgType,
@@ -4080,6 +4099,7 @@ export const appRouter = router({
         const claim = await db.updateOrgClaimStatus(id, 'approved');
         if (claim) {
           await db.routeJoinRequestsToSteward(claim.orgId, claim.userId);
+          await db.ensureEntityForumThread(claim.orgType, claim.orgName, ctx.user.id);
         }
         return { id, ok: true };
       }),

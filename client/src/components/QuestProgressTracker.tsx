@@ -218,6 +218,7 @@ export function MarkCompleteButton({ questId, size = "sm" }: { questId: string; 
   }
   
   if (isCompleted && canCompleteAgain) {
+    const experiencedLabel = count === 1 ? "Experienced 1" : count === 2 ? "Experienced 2" : `Experienced ${count}`;
     return (
       <div className="flex items-center gap-2">
         <button
@@ -228,7 +229,7 @@ export function MarkCompleteButton({ questId, size = "sm" }: { questId: string; 
           className={`flex items-center ${sizeClasses} bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold hover:bg-[#6bc86b] transition-colors`}
         >
           <RotateCcw className="w-4 h-4" />
-          <span>Complete Again ({count}/{displayMax})</span>
+          <span>{experiencedLabel}</span>
         </button>
         <button
           onClick={(e) => {
@@ -253,7 +254,7 @@ export function MarkCompleteButton({ questId, size = "sm" }: { questId: string; 
       className={`flex items-center ${sizeClasses} bg-[#1a472a] text-white rounded-full font-semibold hover:bg-[#2d5a3d] transition-colors`}
     >
       <Check className="w-4 h-4" />
-      <span>Mark Complete</span>
+      <span>I've done this</span>
     </button>
   );
 }

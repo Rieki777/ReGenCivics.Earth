@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon } from "lucide-react";
+import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon, Info } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { Link } from "wouter";
 import { ParallaxSection } from "@/components/ParallaxSection";
@@ -17,6 +17,7 @@ import { QuestDetailModal, questDetailsData } from "@/components/QuestDetailModa
 import { QuestBadges } from "@/components/QuestBadges";
 import { QuestLeaderboard } from "@/components/QuestLeaderboard";
 import { QuestFilter, QuestCategory, QuestDifficulty, QuestTime, QUEST_METADATA } from "@/components/QuestFilter";
+import { QUEST_QUALIFIERS } from "@/data/questQualifiers";
 import { SocialLinks } from "@/components/SocialLinks";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO, pageSEO } from "@/components/SEO";
@@ -311,13 +312,52 @@ function QuestCard({ quest, colorClass, onOpenDetails }: { quest: typeof questDa
         <p className="text-sm text-[#1a472a]/80 mb-3">{quest.description}</p>
 
         <div className="flex items-center gap-2 text-xs mb-2">
-          <span className="px-2 py-0.5 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">+{quest.reward.regen} $Regen</span>
-          <span className="px-2 py-0.5 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold">+{quest.reward.rvoice} RGVoice</span>
+          <span className="flex items-center gap-1 px-2 py-0.5 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">
+            +{quest.reward.regen} $ReGen
+            <span
+              title="ReGen tokens are earned by completing quests. They represent your stake in the regenerative economy we're building together. More value is co-created as the game grows."
+              className="cursor-help opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <Info className="w-3 h-3" />
+            </span>
+          </span>
+          <span className="flex items-center gap-1 px-2 py-0.5 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold">
+            +{quest.reward.rvoice} RGVoice
+            <span
+              title="RGVoice gives you a vote in how the ReGen Civics game evolves — proposals, quests, and governance decisions."
+              className="cursor-help opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <Info className="w-3 h-3" />
+            </span>
+          </span>
         </div>
+
+        {QUEST_METADATA[questId]?.experience && (
+          <p className="text-xs text-[#4a7c59] mb-2 font-medium">{QUEST_METADATA[questId].experience}</p>
+        )}
 
         <p className="text-xs text-[#1a472a]/60 italic mb-3">
           <strong>Deliverable:</strong> {quest.deliverable}
         </p>
+
+        {/* Qualifier badges */}
+        {QUEST_QUALIFIERS[questId] && QUEST_QUALIFIERS[questId].length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {QUEST_QUALIFIERS[questId].slice(0, 2).map((org) => (
+              <span key={org} className="text-[10px] px-2 py-0.5 bg-[#7dd87d]/20 text-[#1a472a] rounded-full border border-[#7dd87d]/30">
+                🌱 {org}
+              </span>
+            ))}
+            {QUEST_QUALIFIERS[questId].length > 2 && (
+              <span
+                className="text-[10px] px-2 py-0.5 bg-[#7dd87d]/20 text-[#1a472a] rounded-full border border-[#7dd87d]/30 cursor-help"
+                title={QUEST_QUALIFIERS[questId].slice(2).map(o => `🌱 ${o}`).join(", ")}
+              >
+                🌱 +{QUEST_QUALIFIERS[questId].length - 2} more
+              </span>
+            )}
+          </div>
+        )}
 
         {/* How to Complete Section */}
         <div className="mt-3 pt-3 border-t border-[#1a472a]/10">
@@ -369,12 +409,17 @@ function QuestCard({ quest, colorClass, onOpenDetails }: { quest: typeof questDa
         <div className="flex items-center justify-between mt-2 pt-3 border-t border-[#1a472a]/10">
           <MarkCompleteButton questId={questId} size="sm" />
           {hasDetails ? (
-            <p className="text-xs text-[#4a7c59] flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-              <Sparkles className="w-3 h-3" />
-              View guide
+            <p className="text-xs text-[#4a7c59] flex items-center gap-1 opacity-40 group-hover:opacity-80 transition-opacity">
+              <RotateCcw className="w-3 h-3" />
+              tap to explore
             </p>
-          ) : quest.id >= 4 && (
+          ) : quest.id >= 4 ? (
             <p className="text-xs text-[#1a472a]/50 italic">Details coming soon</p>
+          ) : (
+            <p className="text-xs text-[#4a7c59] flex items-center gap-1 opacity-40 group-hover:opacity-80 transition-opacity">
+              <RotateCcw className="w-3 h-3" />
+              tap to explore
+            </p>
           )}
         </div>
       </div>

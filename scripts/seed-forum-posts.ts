@@ -14,6 +14,7 @@
 import * as mysql from "mysql2/promise";
 
 const DRY_RUN = process.argv.includes("--dry-run");
+const CLEAR_FIRST = process.argv.includes("--clear");
 
 // ─── Part A: Anchor Posts ─────────────────────────────────────────────────────
 
@@ -416,7 +417,7 @@ Your voice helps us build something extraordinary together.`,
   {
     categorySlug: "resources-learning",
     title: "Foundational Series Watch Party: Questions and Reactions",
-    body: `For people watching the Foundational Series video playlist: share what surprised you, what confirmed something you already knew, and what questions came up. Watch the series here: youtube.com/playlist?list=PL3Xi8vZSmBTStS0BoFItW8389HJLypX0E
+    body: `For people watching the Foundational Series video playlist: share what surprised you, what confirmed something you already knew, and what questions came up. Watch the series here: [Foundational Series playlist](https://www.youtube.com/playlist?list=PL3Xi8vZSmBTStS0BoFItW8389HJLypX0E)
 
 This is a place to process and discuss together.`,
   },
@@ -706,11 +707,13 @@ async function main() {
 
   const conn = await mysql.createConnection(dbUrl);
 
-  // Wipe existing forum content before seeding fresh
-  console.log("Clearing existing forum posts and replies...");
-  await conn.execute("DELETE FROM forumReplies");
-  await conn.execute("DELETE FROM forumPosts");
-  console.log("Forum cleared.\n");
+  // Optionally wipe existing forum content (pass --clear to enable)
+  if (CLEAR_FIRST) {
+    console.log("Clearing existing forum posts and replies...");
+    await conn.execute("DELETE FROM forumReplies");
+    await conn.execute("DELETE FROM forumPosts");
+    console.log("Forum cleared.\n");
+  }
 
   // Look up admin user
   const [admins] = await conn.execute(
@@ -870,6 +873,289 @@ async function main() {
         [postId, adminId, commentBody]
       );
       commentsCreated++;
+    }
+  }
+
+  // ── Part D: Seasonal Quest Posts ─────────────────────────────────────────
+
+  console.log("\n=== Part D: Seasonal Quest Posts ===");
+
+  const SEASONAL_QUEST_POSTS: { season: string; title: string; body: string }[] = [
+    // Spring
+    {
+      season: "spring",
+      title: "Seasonal Quest: Healing the Five Bodies",
+      body: `Most healing traditions recognize multiple layers of who we are: Soul, Physical, Emotional, Mental, and Spiritual. This quest invites you to design a daily and seasonal practice that tends to all five, with both masculine and feminine lenses.
+
+What practice are you building? What has surprised you about working with all five bodies at once?`,
+    },
+    {
+      season: "spring",
+      title: "Seasonal Quest: Study Natural Hygiene",
+      body: `Natural hygiene is the tradition that argues human health is created by clean air, pure water, vital foods, rest, sunlight, and right relationship. Spend one month studying this tradition and documenting how your understanding of your own body shifts.
+
+What are you discovering? What contradicts what you were taught?`,
+    },
+    {
+      season: "spring",
+      title: "Seasonal Quest: Launch a Community Currency",
+      body: `Research existing community currencies (SEEDS, Sarafu, Bristol Pound, BerkShares). Design and help coordinate the launch of a currency for your community or bioregion. Document the design process and the launch.
+
+What currency are you drawing inspiration from? What does your community need that money doesn't provide?`,
+    },
+    // Summer
+    {
+      season: "summer",
+      title: "Seasonal Quest: Friendship with a Free Animal",
+      body: `Build a genuine friendship with a wild or semi-wild animal. Not taming. A real friendship built on mutual trust, where the animal chooses to be in relationship with you. Document the relationship as it develops.
+
+What animal have you chosen to build a relationship with? What are you learning about attention and patience?`,
+    },
+    {
+      season: "summer",
+      title: "Seasonal Quest: Your Honey Moon",
+      body: `For one full moon cycle, reduce your diet to primarily raw honey and bee pollen, supplemented with water, herbal teas, and small amounts of whole foods as needed. Document what changes in your body, mind, mood, and clarity over the lunar cycle.
+
+What are you noticing in the first days of the practice?`,
+    },
+    {
+      season: "summer",
+      title: "Seasonal Quest: Singing to Your Food Forest",
+      body: `Plants respond to sound. Develop a regular practice of singing to your garden, food forest, or the woods near you. Invent songs. Use songs you know. Document what it does to your relationship to the land and to yourself.
+
+What are you singing? What has changed in how you relate to the plants you tend?`,
+    },
+    {
+      season: "summer",
+      title: "Seasonal Quest: Animal Spirit Totems and Bioregional Clan",
+      body: `Research the animals, plants, fungi, and elements most significant in your bioregion. Identify which ones you feel most called to. Learn about them deeply and create something that expresses this connection.
+
+Which animals or plants are you drawn to? What are you discovering about your bioregional identity?`,
+    },
+    // Fall
+    {
+      season: "fall",
+      title: "Seasonal Quest: Future Casting",
+      body: `Travel forward in time to a thriving regenerative future. Experience it fully. Come back and write a sensory, specific story of a real day in that future. Share your account so together we build a living collective vision of what we are moving toward.
+
+What did you see in your future? What surprised you about where life had gone?`,
+    },
+    {
+      season: "fall",
+      title: "Seasonal Quest: Eating Sunlight",
+      body: `For one full month, eat at least one item daily that goes directly from a living plant into your mouth with no processing, cooking, or storage in between. Document what you notice about the difference.
+
+What are you eating directly from the source? What does it feel like to close that loop?`,
+    },
+    {
+      season: "fall",
+      title: "Seasonal Quest: Becoming Trauma Informed",
+      body: `Watch [Gabor Mate's trauma masterclass](https://www.youtube.com/playlist?list=PL3Xi8vZSmBTRlD8Dnx6a16yeBTaSxKNdS) in full. Apply what you learn to your understanding of yourself, your family history, and the communities you are part of. Write a reflection on how this changes your understanding and practice.
+
+What shifted for you in watching this? What does this change about how you show up in your work?`,
+    },
+    // Winter
+    {
+      season: "winter",
+      title: "Seasonal Quest: Write a Children's Book",
+      body: `Write a children's book about a day in the life of a regenerative civilization. Not a utopian lecture. A story. What does a child experience in a world where food grows everywhere and communities are designed around flourishing?
+
+What story are you telling? Share your drafts and we'll help you make it real.`,
+    },
+    {
+      season: "winter",
+      title: "Seasonal Quest: Make a Song for the ReGeneration",
+      body: `Write and record a song about regeneration for our shared Hymns for the ReGeneration album. It does not need to be polished. It needs to be real. Any instrument, any genre, any length.
+
+What are you making? Share your song here and in the audio threads.`,
+    },
+    {
+      season: "winter",
+      title: "Seasonal Quest: Recreate Your Personal Cycles",
+      body: `Study the natural cycles that govern life: lunar, solar, seasonal, circadian, the 13-moon calendar. Map your own energy across at least one full lunar cycle and design a personal calendar that aligns with natural rhythms.
+
+What cycles are you working with? What did you discover about when your energy is strongest?`,
+    },
+    // Anytime
+    {
+      season: "anytime",
+      title: "Anytime Quest: Decrease Expenses, Increase Joy",
+      body: `Track your spending for one month. Identify purchases that did not actually increase your joy or wellbeing. Replace at least three of them with alternatives that cost less and feel better.
+
+What are you discovering about your spending? What did you replace and how did it feel?`,
+    },
+    {
+      season: "anytime",
+      title: "Anytime Quest: Hermetic Seal",
+      body: `A period of conscious redirection of sexual energy into creative work, projects, healing, or spiritual practice. An experiment in energy direction, not a moral judgment. Document what changes in your focus, creativity, and vitality.
+
+What are you channeling this energy toward? What is opening up as a result?`,
+    },
+    {
+      season: "anytime",
+      title: "Anytime Quest: Start a Friend Pool",
+      body: `Gather 3 to 10 friends and pool some resources toward meeting your group's shared needs. A shared grocery run, a skill swap circle, a tool library, or a shared savings fund. Practice collective resource management at a small scale.
+
+What kind of pool did you start? How did you set up the agreements?`,
+    },
+    {
+      season: "anytime",
+      title: "Anytime Quest: Present Parenting",
+      body: `If you have a child in the first three years of life, this is an invitation to prioritize presence over productivity. Whatever it takes, give your child at least 8 hours per day of genuine attentive presence. This is a Hero Quest: significant, demanding, and deeply meaningful.
+
+What systems and support are you building to make this possible? What are you observing in your child and yourself?`,
+    },
+    {
+      season: "anytime",
+      title: "Anytime Quest: The Fifth Agreement",
+      body: `Read [The Fifth Agreement](https://www.donmiguelruiz.com/the-fifth-agreement/) by Don Miguel Ruiz and Don Jose Ruiz. Join the monthly book club on the forum to discuss how it applies to the Regenerative Renaissance. Then share your perspective as an article, video, or voice recording.
+
+What agreements did you discover you were already living under? What do you want to change?`,
+    },
+  ];
+
+  // We'll put seasonal quest posts in the "quests-gameplay" category
+  const [questsCats] = await conn.execute(
+    "SELECT id FROM forumCategories WHERE slug = 'quests-gameplay' LIMIT 1"
+  ) as any;
+  const questsCatId: number = questsCats[0]?.id;
+
+  if (questsCatId) {
+    for (const sPost of SEASONAL_QUEST_POSTS) {
+      const [existing] = await conn.execute(
+        "SELECT id FROM forumPosts WHERE title = ? LIMIT 1",
+        [sPost.title]
+      ) as any;
+
+      if (existing.length > 0) {
+        console.log(`Skipped (exists): ${sPost.title}`);
+      } else {
+        const [res] = await conn.execute(
+          "INSERT INTO forumPosts (categoryId, authorId, title, content, isPinned) VALUES (?, ?, ?, ?, 0)",
+          [questsCatId, adminId, sPost.title, sPost.body]
+        ) as any;
+        postsCreated++;
+        console.log(`Created seasonal quest post #${res.insertId}: ${sPost.title}`);
+      }
+    }
+  } else {
+    console.warn("Skipped seasonal quest posts: quests-gameplay category not found");
+  }
+
+  // ── Part E: EPIC Quest Posts ──────────────────────────────────────────────
+
+  console.log("\n=== Part E: EPIC Quest Posts ===");
+
+  // Create epic-quests category if it doesn't exist
+  let epicCatId: number | null = null;
+  const [epicCats] = await conn.execute(
+    "SELECT id FROM forumCategories WHERE slug = 'epic-quests' LIMIT 1"
+  ) as any;
+
+  if (epicCats.length > 0) {
+    epicCatId = epicCats[0].id;
+  } else {
+    const [epicCatRes] = await conn.execute(
+      "INSERT INTO forumCategories (slug, name, description, sortOrder) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)",
+      ["epic-quests", "Epic Quests", "Collective transformation acts. These quests change landscapes.", 99]
+    ) as any;
+    epicCatId = epicCatRes.insertId;
+    console.log(`Created epic-quests category #${epicCatId}`);
+  }
+
+  const EPIC_QUEST_POSTS: { tier: string; title: string; body: string }[] = [
+    // Easy Mode
+    {
+      tier: "easy",
+      title: "EPIC Quest (Easy): Block Food Forest",
+      body: `Coordinate the overnight transformation of a street in your city. Host an event where neighbours each bring potted plants, fruit trees, and garden beds, and together you redesign a street as a forest garden for a day.
+
+Who is interested in coordinating something like this in their city? Share your location and let's connect people who are ready to do this together.`,
+    },
+    {
+      tier: "easy",
+      title: "EPIC Quest (Easy): Networked Community Garden",
+      body: `Coordinate with neighbours for each household to offer some space on their property for a collective garden. Multiple small plots connected into one shared network. Or adopt a vacant lot. Design the shared governance from the start.
+
+What does your neighbourhood look like for this kind of coordination? What governance model are you considering?`,
+    },
+    {
+      tier: "easy",
+      title: "EPIC Quest (Easy): Bioregional Currency Launch",
+      body: `Design and launch a community currency for your neighbourhood or bioregion. Host a launch party. Invite people to transact in it. Document the design, the launch, and the first real uses.
+
+What currencies are you researching? What does your community's economy need that existing systems are not providing?`,
+    },
+    // Hard Mode
+    {
+      tier: "hard",
+      title: "EPIC Quest (Hard): Cornfield to Cloud Forest",
+      body: `Transform a conventional agricultural field into a functioning food forest ecosystem. Full documentation from start to finish: soil testing, design, planting plan, community involvement, and before and after.
+
+Where is the land? What is the timeline? Who else needs to be involved for this to work?`,
+    },
+    {
+      tier: "hard",
+      title: "EPIC Quest (Hard): Pasture to Paradise",
+      body: `Transform degraded pasture land into a diverse, productive, thriving food forest and wildlife habitat. A multi-year project. Document the whole arc.
+
+What is the land like now? What does the final vision look like? Who is stewarding it?`,
+    },
+    {
+      tier: "hard",
+      title: "EPIC Quest (Hard): HOA to Village",
+      body: `Transform a conventional homeowners association into a functioning village with shared resources, governance, food production, and care networks. Document the governance design and the transition process.
+
+What HOA or neighbourhood community are you working with? What is the biggest obstacle to making this shift?`,
+    },
+    {
+      tier: "hard",
+      title: "EPIC Quest (Hard): Retreat Center",
+      body: `Design and build a retreat center on or near a land project in the network. The center serves as a base for quests, ceremonies, community gatherings, and healing work.
+
+What land are you working with? What design principles are guiding the center? Who is the community it will serve?`,
+    },
+    {
+      tier: "hard",
+      title: "EPIC Quest (Hard): Golf Course Transformation",
+      body: `Coordinate the transformation of a golf course into a food forest, wildlife corridor, or community land project. This requires coalition building with local government and community groups. Document everything.
+
+What golf course are you working with? What coalition do you need to build? What is the timeline?`,
+    },
+    {
+      tier: "hard",
+      title: "EPIC Quest (Hard): Apartment Building Transformation",
+      body: `Transform a conventional apartment building into a regenerative living community with shared food growing, governance, and mutual support. Document the process and the agreements.
+
+What building or housing community are you working with? What does the governance model look like?`,
+    },
+    // Expert Mode
+    {
+      tier: "expert",
+      title: "EPIC Quest (Expert): Startup Town",
+      body: `Coordinate the design and establishment of a new settlement built from the ground up on regenerative principles. Land access, governance design, food systems, energy systems, waste systems, cultural life. The long game. Document every step.
+
+Where is this happening? Who is the founding group? What is the land situation? This thread is for serious conversations about building new settlements from scratch.`,
+    },
+  ];
+
+  if (epicCatId) {
+    for (const ePost of EPIC_QUEST_POSTS) {
+      const [existing] = await conn.execute(
+        "SELECT id FROM forumPosts WHERE title = ? LIMIT 1",
+        [ePost.title]
+      ) as any;
+
+      if (existing.length > 0) {
+        console.log(`Skipped (exists): ${ePost.title}`);
+      } else {
+        const [res] = await conn.execute(
+          "INSERT INTO forumPosts (categoryId, authorId, title, content, isPinned) VALUES (?, ?, ?, ?, 0)",
+          [epicCatId, adminId, ePost.title, ePost.body]
+        ) as any;
+        postsCreated++;
+        console.log(`Created EPIC quest post #${res.insertId}: ${ePost.title}`);
+      }
     }
   }
 

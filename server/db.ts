@@ -2586,12 +2586,62 @@ export async function getAllOrgClaims(): Promise<OrgClaim[]> {
   return db.select().from(orgClaims).orderBy(desc(orgClaims.createdAt));
 }
 
-export async function updateOrgClaimStatus(id: number, status: 'pending' | 'approved' | 'rejected'): Promise<OrgClaim | null> {
+export async function updateOrgClaimStatus(
+  id: number,
+  status: 'pending' | 'approved' | 'rejected',
+  adminNotes?: string,
+): Promise<OrgClaim | null> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(orgClaims).set({ status }).where(eq(orgClaims.id, id));
+  const updates: Record<string, unknown> = { status, reviewedAt: new Date() };
+  if (adminNotes !== undefined) updates.adminNotes = adminNotes;
+  await db.update(orgClaims).set(updates as any).where(eq(orgClaims.id, id));
   const rows = await db.select().from(orgClaims).where(eq(orgClaims.id, id)).limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * Ensure a forum thread exists for a land project or alliance org.
+ * Called on claim approval. Idempotent — safe to call multiple times.
+ * Checks by title in the relevant category, creates if missing.
+ */
+export async function ensureEntityForumThread(
+  entityType: 'land_project' | 'alliance_org',
+  entityName: string,
+  authorId: number,
+): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const categorySlug = entityType === 'land_project' ? 'active-projects' : 'active-organisations';
+  const cats = await db.select().from(forumCategories).where(eq(forumCategories.slug, categorySlug)).limit(1);
+  if (!cats.length) return null;
+  const categoryId = cats[0].id;
+
+  // Check if a thread with this title already exists in the category
+  const existing = await db.select({ id: forumPosts.id })
+    .from(forumPosts)
+    .where(and(eq(forumPosts.categoryId, categoryId), eq(forumPosts.title, entityName)))
+    .limit(1);
+  if (existing.length) return existing[0].id;
+
+  // Create the thread
+  const typeLabel = entityType === 'land_project' ? 'land project' : 'organisation';
+  const content = `## ${entityName}\n\nThis is the community space for ${entityName}. Use this thread to ask questions, share updates, explore collaboration, and connect with others who are involved.\n\nIf you work with ${entityName}, introduce yourself below.`;
+
+  const [result] = await db.insert(forumPosts).values({
+    categoryId,
+    authorId,
+    title: entityName,
+    content,
+    isPinned: 1,
+    isLocked: 0,
+    viewCount: 0,
+    replyCount: 0,
+    lastReplyAt: new Date(),
+    lastReplyBy: authorId,
+  });
+  return (result as any).insertId ?? null;
 }
 
 export async function getInvestorInquiryByUserId(userId: number) {

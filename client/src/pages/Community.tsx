@@ -79,6 +79,7 @@ export default function Community() {
 
   const { data: categories, isLoading } = trpc.forum.categories.useQuery();
   const { data: landProjectThreads } = trpc.forum.activeProjectThreads.useQuery();
+  const { data: organisationThreads } = trpc.forum.activeOrganisationThreads.useQuery();
 
   const filteredCategories = useMemo(() => {
     if (!categories) return [];
@@ -366,6 +367,39 @@ export default function Community() {
                   </Link>
                 );
               })}
+            </div>
+          )}
+        </div>
+
+        {/* Alliance Organisation Spaces */}
+        <div className="mt-8">
+          <h2 className="text-lg font-bold text-[#1a472a] mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+            Alliance Organisations
+          </h2>
+          {!organisationThreads || organisationThreads.length === 0 ? (
+            <p className="text-[#1a472a]/50 text-sm bg-white rounded-xl p-4 border border-[#e8e4de]">
+              Organisation spaces will appear here as partners join the alliance.
+            </p>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {organisationThreads.map((thread: { id: number; title: string }) => (
+                <Link key={thread.id} href={`/community/post/${thread.id}`}>
+                  <div className="bg-white rounded-xl p-4 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all cursor-pointer group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-[#d4a574]/15 flex items-center justify-center flex-shrink-0">
+                        <Handshake className="w-4 h-4 text-[#4a7c59]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-[#4a7c59] transition-colors">
+                          {thread.title}
+                        </p>
+                        <p className="text-[#1a472a]/50 text-xs">Visit Forum</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
         </div>

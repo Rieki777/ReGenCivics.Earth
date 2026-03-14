@@ -112,11 +112,24 @@ interface ForumMarkdownProps {
   className?: string;
 }
 
+/**
+ * Convert bare URLs to markdown links so they render as clickable links.
+ * Skips URLs already inside a markdown link [text](url) or angle-bracket <url>.
+ */
+function linkifyBareUrls(text: string): string {
+  // Match bare URLs: http(s):// or www. not already inside []() or <>
+  return text.replace(
+    /(?<!\]\(|<)(https?:\/\/[^\s\)\]>]+)/g,
+    (url) => `[${url}](${url})`
+  );
+}
+
 export function ForumMarkdown({ content, className = '' }: ForumMarkdownProps) {
+  const processed = linkifyBareUrls(content);
   return (
     <div className={`forum-markdown ${className}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-        {content}
+        {processed}
       </ReactMarkdown>
     </div>
   );

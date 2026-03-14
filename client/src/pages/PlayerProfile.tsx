@@ -950,15 +950,50 @@ const ALLIANCE_ORGS = [
 
 const WELCOME_ABOARD_IDS = Array.from({ length: 10 }, (_, i) => `welcome-aboard-${i + 1}`);
 
+// Land project claim form fields
+interface LandProjectFormData {
+  yourRole: string;
+  landStatus: string;
+  communityStage: string;
+  annualBudget: string;
+  governanceModel: string;
+  website: string;
+  whyClaimNow: string;
+}
+
+// Alliance org claim form fields
+interface AllianceOrgFormData {
+  yourRole: string;
+  website: string;
+  orgDescription: string;
+  collaborationInterest: string;
+}
+
+const EMPTY_LAND_FORM: LandProjectFormData = {
+  yourRole: "", landStatus: "", communityStage: "",
+  annualBudget: "", governanceModel: "", website: "", whyClaimNow: "",
+};
+const EMPTY_ORG_FORM: AllianceOrgFormData = {
+  yourRole: "", website: "", orgDescription: "", collaborationInterest: "",
+};
+
 function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string }) {
   const [claimType, setClaimType] = useState<"land_project" | "alliance_org">("land_project");
   const [claimOrgId, setClaimOrgId] = useState("");
   const [showClaimForm, setShowClaimForm] = useState(false);
+  const [landForm, setLandForm] = useState<LandProjectFormData>(EMPTY_LAND_FORM);
+  const [orgForm, setOrgForm] = useState<AllianceOrgFormData>(EMPTY_ORG_FORM);
 
   const { data: claims, refetch: refetchClaims } = trpc.orgClaims.mine.useQuery();
   const { data: joinRequests, refetch: refetchJoinRequests } = trpc.projectJoinRequests.myRequests.useQuery();
   const claimMutation = trpc.orgClaims.claim.useMutation({
-    onSuccess: () => { refetchClaims(); setShowClaimForm(false); setClaimOrgId(""); },
+    onSuccess: () => {
+      refetchClaims();
+      setShowClaimForm(false);
+      setClaimOrgId("");
+      setLandForm(EMPTY_LAND_FORM);
+      setOrgForm(EMPTY_ORG_FORM);
+    },
   });
   const updateRequestMutation = trpc.projectJoinRequests.updateStatus.useMutation({
     onSuccess: () => refetchJoinRequests(),
@@ -1002,20 +1037,24 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
       {showClaimForm && (
         <div className="bg-white/10 rounded-xl p-4 space-y-3 border border-white/20">
           <p className="text-white/80 text-sm font-medium">Claim stewardship of an existing project or org</p>
+
+          {/* Type toggle */}
           <div className="flex gap-2">
             <button
-              onClick={() => setClaimType("land_project")}
+              onClick={() => { setClaimType("land_project"); setClaimOrgId(""); }}
               className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${claimType === "land_project" ? "bg-[#7dd87d] text-[#1a472a]" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
             >
               Land Project
             </button>
             <button
-              onClick={() => setClaimType("alliance_org")}
+              onClick={() => { setClaimType("alliance_org"); setClaimOrgId(""); }}
               className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${claimType === "alliance_org" ? "bg-[#7dd87d] text-[#1a472a]" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
             >
               Alliance Org
             </button>
           </div>
+
+          {/* Org selector */}
           <select
             value={claimOrgId}
             onChange={e => setClaimOrgId(e.target.value)}
@@ -1024,11 +1063,103 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
             <option value="" className="bg-[#1a3a1f] text-white">Select {claimType === "land_project" ? "a land project" : "an alliance org"}…</option>
             {orgOptions.map(o => <option key={o.id} value={o.id} className="bg-[#1a3a1f] text-white">{o.name}</option>)}
           </select>
+
+          {/* Land project detail fields */}
+          {claimType === "land_project" && claimOrgId && (
+            <div className="space-y-2 pt-1">
+              <p className="text-white/50 text-xs">Tell us about your role and the project:</p>
+              <input
+                value={landForm.yourRole}
+                onChange={e => setLandForm(f => ({ ...f, yourRole: e.target.value }))}
+                placeholder="Your role (e.g. co-founder, steward, project lead)"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                value={landForm.landStatus}
+                onChange={e => setLandForm(f => ({ ...f, landStatus: e.target.value }))}
+                placeholder="Land status (e.g. owned, leased, in negotiation)"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                value={landForm.communityStage}
+                onChange={e => setLandForm(f => ({ ...f, communityStage: e.target.value }))}
+                placeholder="Community stage (e.g. forming, established, 3 years running)"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                value={landForm.annualBudget}
+                onChange={e => setLandForm(f => ({ ...f, annualBudget: e.target.value }))}
+                placeholder="Rough annual budget range (optional)"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                value={landForm.governanceModel}
+                onChange={e => setLandForm(f => ({ ...f, governanceModel: e.target.value }))}
+                placeholder="Governance model (e.g. sociocracy, consensus, steward)"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                value={landForm.website}
+                onChange={e => setLandForm(f => ({ ...f, website: e.target.value }))}
+                placeholder="Project website (optional)"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+              />
+              <textarea
+                value={landForm.whyClaimNow}
+                onChange={e => setLandForm(f => ({ ...f, whyClaimNow: e.target.value }))}
+                placeholder="Why are you claiming this listing now? What would you like to do with it?"
+                rows={3}
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm resize-none"
+              />
+            </div>
+          )}
+
+          {/* Alliance org detail fields */}
+          {claimType === "alliance_org" && claimOrgId && (
+            <div className="space-y-2 pt-1">
+              <p className="text-white/50 text-xs">Tell us about your role and this organisation:</p>
+              <input
+                value={orgForm.yourRole}
+                onChange={e => setOrgForm(f => ({ ...f, yourRole: e.target.value }))}
+                placeholder="Your role (e.g. co-founder, community manager, ambassador)"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+              />
+              <input
+                value={orgForm.website}
+                onChange={e => setOrgForm(f => ({ ...f, website: e.target.value }))}
+                placeholder="Organisation website"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+              />
+              <textarea
+                value={orgForm.orgDescription}
+                onChange={e => setOrgForm(f => ({ ...f, orgDescription: e.target.value }))}
+                placeholder="Brief description of what this org does and your connection to it"
+                rows={2}
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm resize-none"
+              />
+              <textarea
+                value={orgForm.collaborationInterest}
+                onChange={e => setOrgForm(f => ({ ...f, collaborationInterest: e.target.value }))}
+                placeholder="What kind of collaboration are you hoping to find here?"
+                rows={2}
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm resize-none"
+              />
+            </div>
+          )}
+
           <button
             disabled={!claimOrgId || claimMutation.isPending}
             onClick={() => {
               if (!selectedOrg) return;
-              claimMutation.mutate({ orgType: claimType, orgId: selectedOrg.id, orgName: selectedOrg.name });
+              const formData = claimType === "land_project"
+                ? (Object.values(landForm).some(v => v) ? landForm : undefined)
+                : (Object.values(orgForm).some(v => v) ? orgForm : undefined);
+              claimMutation.mutate({
+                orgType: claimType,
+                orgId: selectedOrg.id,
+                orgName: selectedOrg.name,
+                formData,
+              });
             }}
             className="w-full py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#6bc86b] transition-colors"
           >

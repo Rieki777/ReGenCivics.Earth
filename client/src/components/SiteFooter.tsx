@@ -137,6 +137,11 @@ export default function SiteFooter() {
                   Governance
                 </Link>
               </li>
+              <li>
+                <Link href="/tokenomics" className="text-white/60 hover:text-white transition-colors text-xs">
+                  Tokenomics
+                </Link>
+              </li>
             </ul>
           </div>
 
