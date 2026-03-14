@@ -1,0 +1,10 @@
+@echo off
+set DATABASE_URL=mysql://root:RAILWAY_PASSWORD_REDACTED@nozomi.proxy.rlwy.net:46413/railway
+echo Starting at %TIME% >> remaining-imports-log.txt
+echo === General Inquiries === >> remaining-imports-log.txt
+npx tsx scripts/import-general-inquiries.ts >> remaining-imports-log.txt 2>&1
+echo === Video Suggestions === >> remaining-imports-log.txt
+npx tsx scripts/import-video-suggestions.ts >> remaining-imports-log.txt 2>&1
+echo === Tripetto Inquiries === >> remaining-imports-log.txt
+npx tsx scripts/import-tripetto-inquiries.ts >> remaining-imports-log.txt 2>&1
+echo Finished at %TIME% >> remaining-imports-log.txt

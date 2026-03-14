@@ -37,7 +37,7 @@ const markdownComponents: Components = {
         href={href}
         target={isExternal ? '_blank' : undefined}
         rel={isExternal ? 'noopener noreferrer' : undefined}
-        className="text-[#7dd87d] underline hover:opacity-80 transition-opacity"
+        className="text-[#7dd87d] underline hover:text-white transition-colors"
       >
         {children}
       </a>

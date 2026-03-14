@@ -1,17 +1,19 @@
 /**
  * seed-quest-comments.ts — Seeds 3 comments per Welcome Aboard quest forum post.
  *
- * Usage: DATABASE_URL=... RYE_USER_ID=1 npx tsx scripts/seed-quest-comments.ts
+ * Usage: DATABASE_URL=... RYE_USER_ID=1 npx tsx scripts/seed-quest-comments.ts [--reset]
  *
  * - Finds each quest forum post by title (creates the post if missing)
  * - Inserts 3 seed comments per post from persona voices
  * - Uses INSERT IGNORE to be idempotent on re-runs
  * - Assigns comments to the Rye user ID (default 1)
+ * - Pass --reset to delete all forumReplies + forumPosts before seeding
  */
 import mysql from "mysql2/promise";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const RYE_USER_ID = parseInt(process.env.RYE_USER_ID ?? "1", 10);
+const RESET = process.argv.includes("--reset");
 
 if (!DATABASE_URL) {
   console.error("DATABASE_URL environment variable is required.");
@@ -311,6 +313,15 @@ function daysAgo(n: number): Date {
 
 async function main() {
   const conn = await mysql.createConnection(DATABASE_URL!);
+
+  // Optionally wipe existing forum content before re-seeding
+  if (RESET) {
+    console.log("Resetting forum posts...");
+    await conn.execute("DELETE FROM forumReplies");
+    await conn.execute("DELETE FROM forumPosts");
+    console.log("Forum cleared.");
+  }
+
   let postsCreated = 0;
   let commentsInserted = 0;
   let commentsSkipped = 0;

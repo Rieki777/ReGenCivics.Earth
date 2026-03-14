@@ -224,6 +224,76 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     estimatedTime: "2-4 weeks reading, ongoing practice",
     element: "air",
   },
+
+  // ─── New quests added Fix 90 ────────────────────────────────────────────────
+  // These quests have new IDs distinct from the entries above.
+  // Quests whose IDs already exist above (healing-five-bodies, study-natural-hygiene,
+  // friendship-free-animal, singing-food-forest, animal-spirit-totems, future-casting,
+  // eating-sunlight, becoming-trauma-informed, write-childrens-book, recreate-personal-cycles,
+  // hermetic-seal, start-friend-pool, present-parenting) are already represented above.
+
+  // Spring
+  {
+    id: "regen-financial-systems",
+    title: "ReGen Financial Systems",
+    season: "spring",
+    tagline: "Money as a regenerative tool.",
+    description:
+      "This quest is about understanding how money can flow regeneratively. Learn about gift economies, mutual credit, and community currencies, then make one concrete change to how you use money.",
+    deliverable: "A personal financial system map showing one regenerative shift you have made.",
+    estimatedTime: "Weekend workshop or 2-week self-directed",
+    element: "air",
+  },
+
+  // Summer
+  {
+    id: "your-honey-moon",
+    title: "Your Honey Moon",
+    season: "summer",
+    tagline: "A month of sweetness.",
+    description:
+      "For one full moon cycle, practice bringing sweetness into every day. This might be honey in your tea, a kind word, a moment of beauty. Document your practice.",
+    deliverable: "A documented practice of one act of sweetness or beauty per day for a lunar month.",
+    estimatedTime: "One full moon cycle",
+    element: "water",
+  },
+
+  // Winter
+  {
+    id: "make-song-regeneration",
+    title: "Make a Song for the ReGeneration",
+    season: "winter",
+    tagline: "Music as medicine.",
+    description:
+      "Music carries what words alone cannot. Write and record a song for the regenerative movement. It can be simple or complex, personal or political. Offer it to the community.",
+    deliverable: "A recorded song (any style, any length) offered to the community.",
+    estimatedTime: "One to three weeks",
+    element: "fire",
+  },
+
+  // Anytime
+  {
+    id: "decrease-expenses-increase-joy",
+    title: "Decrease Expenses, Increase Joy",
+    season: "any",
+    tagline: "Elegant simplicity.",
+    description:
+      "Voluntary simplicity and regenerative abundance are not opposites. This quest challenges you to find one area where spending less opens up more life.",
+    deliverable: "A written report on one expense you eliminated and how your joy changed.",
+    estimatedTime: "One month experiment",
+    element: "air",
+  },
+  {
+    id: "the-fifth-agreement",
+    title: "The Fifth Agreement",
+    season: "any",
+    tagline: "Skepticism as wisdom.",
+    description:
+      "Based on Don Miguel Ruiz's work, the Fifth Agreement is: be skeptical but learn to listen. This quest is an invitation to study and practice this agreement in your relationships.",
+    deliverable: "A written reflection on how the Fifth Agreement is changing your relationships.",
+    estimatedTime: "2-4 week reading and reflection",
+    element: "air",
+  },
 ];
 
 export type { SeasonalQuest as default };

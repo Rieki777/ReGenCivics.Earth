@@ -1,0 +1,2 @@
+Starting applications import at  9:02:50.12 
+Applications import complete: 343 inserted, 0 skipped.

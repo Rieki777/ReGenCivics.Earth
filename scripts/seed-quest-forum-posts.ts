@@ -1,7 +1,10 @@
 /**
  * Seed script: creates 10 quest forum posts with 3 seed comments each.
  * Usage:
- *   npx ts-node scripts/seed-quest-forum-posts.ts [--dry-run]
+ *   npx ts-node scripts/seed-quest-forum-posts.ts [--dry-run] [--reset]
+ *
+ *   --reset  Delete all forumReplies + forumPosts, then re-seed everything fresh.
+ *   --dry-run  Show what would happen without writing to the DB.
  *
  * Requires DATABASE_URL env var pointing to your MySQL connection string.
  */
@@ -10,6 +13,7 @@ import * as mysql from "mysql2/promise";
 import { QUEST_FORUM_POSTS } from "./data/quest-forum-posts";
 
 const DRY_RUN = process.argv.includes("--dry-run");
+const RESET = process.argv.includes("--reset");
 
 async function main() {
   if (DRY_RUN) {
@@ -32,6 +36,14 @@ async function main() {
   if (!dbUrl) throw new Error("DATABASE_URL env var is required");
 
   const conn = await mysql.createConnection(dbUrl);
+
+  // Optionally wipe existing forum content before re-seeding
+  if (RESET) {
+    console.log("Resetting forum posts...");
+    await conn.execute("DELETE FROM forumReplies");
+    await conn.execute("DELETE FROM forumPosts");
+    console.log("Forum cleared.");
+  }
 
   // Look up the "quests-gameplay" category (or any suitable default category)
   const [cats] = await conn.execute(

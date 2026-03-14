@@ -1492,7 +1492,15 @@ That single command clears all old posts and re-seeds everything fresh.
 - Quest broken: white/off-white page background, no seasonal color, quote block floating on white
 - Quest correct: seasonal background color behind all content
 
-**Updated observation (2026-03-13 screenshot):** As of the latest build, the 4 large persona cards at the bottom of the dashboard (Investors, Land Projects, Alliance Partners, ReGen Players) appear to have the correct dark treatment. The regression is concentrated in the **"Pick Up Where You Left Off" row** at the top -- those 4 navigation cards (Journey Quests, Back to the Forum, Seasonal Accelerator, Book a Discovery Call) are rendering with a light/glassy background instead of dark green. Start debugging there first. The component likely has a name like `QuickNavCard`, `ResumeCard`, or similar -- look for whatever renders the "PICK UP WHERE YOU LEFT OFF" section in `Dashboard.tsx`.
+**Updated observation (2026-03-13 screenshot, corrected):** ALL 8 cards on the dashboard are showing white backgrounds -- both the "Pick Up Where You Left Off" row AND the 4 large persona cards (Investors, Land Projects, Alliance Partners, ReGen Players). The card bodies are white, and text is rendering in white or near-white with a drop shadow to stay legible. The cards are NOT dark green. The forest background image behind the cards is visible and looks fine -- this is a card-level background color issue only.
+
+**Most likely root cause: dark/light mode class mismatch.** The site was designed to always render in "dark" mode (dark green cards, white text). If Tailwind's `darkMode` is set to `'class'`, it requires a `.dark` class on the `<html>` or `<body>` element to activate dark-mode styles. If that class is no longer being applied, all `dark:` prefixed styles stop working -- cards fall back to their light-mode defaults (white), and white text becomes invisible against white backgrounds, requiring shadow hacks to show at all.
+
+**Check these first:**
+1. Open browser DevTools on the live page. Inspect `<html>` -- does it have a `class="dark"` attribute? It should.
+2. If not: find where the `dark` class is added in the codebase. Look in `main.tsx`, `App.tsx`, or a theme provider. It likely used to call `document.documentElement.classList.add('dark')` and that call got removed or conditionally blocked.
+3. If `darkMode: 'media'` is in `tailwind.config.ts`, change it back to `darkMode: 'class'` and re-add the unconditional `document.documentElement.classList.add('dark')` call.
+4. Do NOT add a user-facing light/dark toggle -- the site has one theme and it should always be dark.
 
 **Likely culprits — check in this order:**
 

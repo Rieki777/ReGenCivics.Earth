@@ -1,0 +1,1 @@
+﻿import mysql from 'mysql2/promise'; import * as dotenv from 'dotenv'; dotenv.config(); const conn = await mysql.createConnection(process.env.DATABASE_URL); const [rows] = await conn.execute('SELECT DISTINCT projectName FROM applications WHERE projectName IS NOT NULL LIMIT 30'); rows.forEach(r => console.log(r.projectName)); await conn.end();

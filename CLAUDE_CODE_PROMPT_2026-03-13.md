@@ -38,6 +38,15 @@ Also needed:
 
 ### Wave 1 — Quick wins (no DB, no new components)
 
+**Fix 86 — URGENT, DO THIS FIRST: All dashboard cards showing white instead of dark green**
+- Every card on the dashboard (both the "Pick Up Where You Left Off" row and the 4 large persona cards) has a white background. Text is white-on-white with drop shadows to compensate. This is a dark mode class regression.
+- **Step 1:** Open browser DevTools, inspect `<html>`. Does it have `class="dark"`? If not, that is the bug.
+- **Step 2:** Find where the `dark` class is applied. Search for `classList.add('dark')` or `document.documentElement.className` in `main.tsx`, `App.tsx`, or any theme provider component.
+- **Step 3:** If the call was removed or is now conditional, restore it as an unconditional call on app load: `document.documentElement.classList.add('dark')`
+- **Step 4:** Check `tailwind.config.ts` -- if `darkMode` is set to `'media'`, change it to `'class'`
+- **Step 5:** Do NOT add a light/dark toggle. The site has one theme and should always be dark.
+- Full spec in Fix 86
+
 **Fix 91** — Forum /community page: remove Russian language strings
 - Grep the entire codebase for Cyrillic characters: `grep -rn '[А-Яа-яЁё]' client/src/ server/`
 - Any found strings should be replaced with the correct English copy:

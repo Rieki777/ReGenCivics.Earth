@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext } from "react";
-import { Trophy, Coins, Vote, CheckCircle2, Circle, Sparkles, X, Check, RotateCcw } from "lucide-react";
+import { Footprints, Coins, Vote, CheckCircle2, Circle, Sparkles, X, Check, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface QuestProgress {
@@ -270,10 +270,11 @@ export function QuestProgressTracker() {
       {/* Floating Progress Button */}
       <button
         onClick={() => setIsOpen(true)}
-        title="Your experiences"
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 group"
+        aria-label="Your quest journey"
+        title="Your quest journey"
+        className="fixed bottom-4 right-4 z-40 bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 group"
       >
-        <Trophy className="w-5 h-5" />
+        <Footprints className="w-5 h-5" />
         <span className="font-semibold">{progress.completedQuests.length}/{ALL_QUESTS.length}</span>
         <div className="w-16 h-2 bg-white/30 rounded-full overflow-hidden">
           <div 
@@ -297,7 +298,7 @@ export function QuestProgressTracker() {
               </button>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                  <Trophy className="w-6 h-6" />
+                  <Footprints className="w-6 h-6" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">Quest Progress</h2>

@@ -726,9 +726,29 @@ export default function Quest() {
                     </div>
                   </div>
                 </div>
+
+                <div className="mt-6">
+                  <hr className="border-[#1a472a]/20 my-6" />
+                  <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">The Arc</h4>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">We begin with Fire. Before we can build anything new we have to be willing to let go of the old.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Then we add life to our bodies. The Potions Quest changes the information processing in all three minds: gut, heart, and head.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Then we plant. The Food Foresting quest, done after Potions, seeds the earth with the expanded ecosystem of our own body.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">From there, the quests move outward. From personal vitality into relationship, communication, and community. The NVC Quest (Quest 10) bridges individual healing into collective co-creation.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The seasonal quests deepen and diversify. The EPIC Quests are acts of collective transformation.</p>
+
+                  <hr className="border-[#1a472a]/20 my-6" />
+                  <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">What the Tokens Mean</h4>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">$ReGen tokens are earned by completing quests and contributing to the mission. They represent your participation in building a regenerative civilization. As the game grows, so do the opportunities for the tokens to carry value.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">RGVoice tokens give you a say in the governance of the game itself, so the Game is always governed by those who are playing it.</p>
+
+                  <hr className="border-[#1a472a]/20 my-6" />
+                  <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">Quests as Qualifiers</h4>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Land projects and alliance organizations can require that applicants complete certain quests before applying to join or contribute. This ensures applicants have genuine lived experience with regenerative practices, builds a shared language across the community, and distributes tokens to people doing real work before they enter governance roles.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">For example: voting rights in a DAO might require 5 quests plus 1 seasonal quest. Land project stewardship might require Quest 4 (Food Foresting) plus Quest 3 (Healing Wholes) plus any 2 others.</p>
+                </div>
               </div>
             )}
-            
+
             <div className="bg-[#1a472a] text-white p-6 rounded-xl text-center">
               <p className="text-lg italic mb-2">
                 "To focus on regeneration & healing is to focus on growing our shared potential."
