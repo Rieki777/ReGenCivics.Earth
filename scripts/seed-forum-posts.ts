@@ -954,7 +954,7 @@ Which animals or plants are you drawn to? What are you discovering about your bi
     {
       season: "fall",
       title: "Seasonal Quest: Future Casting",
-      body: `Travel forward in time to a thriving regenerative future. Experience it fully. Come back and write a sensory, specific story of a real day in that future. Share your account so together we build a living collective vision of what we are moving toward.
+      body: `Travel forward in time to a regenerative future. Experience it fully. Come back and write a sensory, specific story of a real day in that future. Share your account so together we build a living collective vision of what we are moving toward.
 
 What did you see in your future? What surprised you about where life had gone?`,
     },

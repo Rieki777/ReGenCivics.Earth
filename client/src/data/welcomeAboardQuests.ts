@@ -124,7 +124,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     reward: "33 $ReGen + 0.1 RGVoice",
     forumUrl: "/community/alliance-partners",
     about:
-      "Behind every thriving land project is a web of support: legal advisors, infrastructure builders, seed banks, water engineers, permaculture educators, carbon verifiers, funding facilitators, and more. Land cannot regenerate in isolation; it needs a whole ecosystem of expertise and care around it. These are the Organisation Projects. This quest asks you to look at your network and ask: who is doing the enabling work? Invite them in. Every organisation that joins strengthens the conditions for land to heal.",
+      "Behind every healthy land project is a web of support: legal advisors, infrastructure builders, seed banks, water engineers, permaculture educators, carbon verifiers, funding facilitators, and more. Land cannot regenerate in isolation; it needs a whole ecosystem of expertise and care around it. These are the Organisation Projects. This quest asks you to look at your network and ask: who is doing the enabling work? Invite them in. Every organisation that joins strengthens the conditions for land to heal.",
     steps: [
       "Share the ReGen Civics site (regencivics.earth) with any organisations that support land projects in a regenerative way: legal, infrastructure, education, funding, technology, ecological services, and more.",
       "Comment in the forum post below: share who you reached out to and/or link to a social media post inviting organisations to join.",

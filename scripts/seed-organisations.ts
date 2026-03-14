@@ -30,7 +30,7 @@ const ORGS = [
   { orgId: "united_planet",   name: "UP.Game (United Planet)",    url: "up.game",                             description: "An immersive redesign game for regenerative solutions and collective intelligence." },
   { orgId: "gaia_biolab",     name: "Gaia Union BioLab",          url: "gaia-union.com/biolab",               description: "Bio-integral regenerative initiatives bridging science and earth-based practice." },
   { orgId: "closer",          name: "Closer.earth",               url: "closer.earth",                        description: "Operating system for regenerative communities and intentional living." },
-  { orgId: "oasa",            name: "OASA.earth",                 url: "oasa.earth",                          description: "Operating system for regenerative civilisation — tools, governance, and community design." },
+  { orgId: "oasa",            name: "OASA.earth",                 url: "oasa.earth",                          description: "Operating system for regenerative civilisation: tools, governance, and community design." },
   { orgId: "planetary_party", name: "Planetary Party",            url: "planetaryparty.co",                   description: "Bioregional gatherings weaving culture, ecology, and community." },
   { orgId: "dao_universe",    name: "DAO Universe Club",          url: "daouniverse.club",                    description: "Community for visionary DAO founders building decentralised futures." },
   { orgId: "desa",            name: "DESA",                       url: "desa.earth",                          description: "Land discovery, acquisition, and legal support for regenerative projects." },

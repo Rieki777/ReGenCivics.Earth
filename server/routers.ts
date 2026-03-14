@@ -3423,6 +3423,7 @@ export const appRouter = router({
         replyId: z.number().optional(),
         reason: z.enum(['spam', 'harassment', 'inappropriate', 'misinformation', 'other']),
         details: z.string().max(1000).optional(),
+        severity: z.enum(['soft', 'hard']).default('soft'),
       }))
       .mutation(async ({ ctx, input }) => {
         const id = await db.createForumReport({
@@ -3431,6 +3432,7 @@ export const appRouter = router({
           replyId: input.replyId,
           reason: input.reason,
           details: input.details,
+          severity: input.severity,
         });
         return { id };
       }),

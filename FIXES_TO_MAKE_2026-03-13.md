@@ -334,8 +334,8 @@ Finca Sagrada, Liminal Village, Traditional Dream Factory, Heartland Retreat, St
 | Fix 69 | Forum content quality audit on all seeded copy | IN PROGRESS |
 | Fix 70 | Community card redesign + image generation for land project and org cards | IN PROGRESS |
 | Fix 72 | Fire + Air sections on /community | PENDING |
-| Fix 73 | RSS feed integration | PENDING |
-| Fix 74 | Two-level content flagging | PENDING |
+| Fix 73 | RSS feed integration | CODED |
+| Fix 74 | Two-level content flagging | CODED |
 | Fix 75 | Community pulse strip + welcome card | PENDING |
 
 ### WAITING ON YOU before Claude Code can proceed
@@ -384,7 +384,7 @@ Finca Sagrada, Liminal Village, Traditional Dream Factory, Heartland Retreat, St
 
 ## Fix 73 — RSS feed integration for entity forum spaces (Medium)
 
-**Status:** PENDING
+**Status:** CODED
 
 **Context:** Land project stewards and alliance org reps can connect RSS feeds (blogs, Substack, social media) to their forum thread. Once connected, new items auto-post as replies, attributed to "Automated update from [feed name]".
 
@@ -450,7 +450,7 @@ Store dismissal in `orgClaims.rssPromptDismissed` (tinyint, default 0) so it per
 
 ## Fix 74 — Two-level content flagging (Medium)
 
-**Status:** PENDING
+**Status:** CODED
 
 **Context:** Forum posts and replies can be flagged at two levels (per `COMMUNITY_SPACE_DESIGN_2026.md`):
 
@@ -535,8 +535,8 @@ Once a user has posted at least once, the card does not appear.
 | Fix 70 | Community card layout redesign + image generation | IN PROGRESS |
 | Fix 71 | Resend DNS check | DONE |
 | Fix 72 | Fire + Air sections on /community + `air-conversations` category | PENDING |
-| Fix 73 | RSS feed schema + steward UI + poll-rss-feeds.ts | PENDING |
-| Fix 74 | Two-level flagging schema + UI + admin tabs | PENDING |
+| Fix 73 | RSS feed schema + steward UI + poll-rss-feeds.ts | CODED |
+| Fix 74 | Two-level flagging schema + UI + admin tabs | CODED |
 | Fix 75 | Community pulse strip + welcome card | PENDING |
 
 ### Suggested execution order for Rye

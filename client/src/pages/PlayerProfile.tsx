@@ -2273,30 +2273,41 @@ function SubmissionsTab() {
   );
 }
 
+// ─── NoteField ────────────────────────────────────────────────────────────────
+// Auto-saves on blur via quest.updateNote mutation.
+function NoteField({ completionId, initialNote }: { completionId: number; initialNote: string }) {
+  const [value, setValue] = useState(initialNote);
+  const updateNote = trpc.quest.updateNote.useMutation();
+
+  function handleBlur() {
+    if (value !== initialNote) {
+      updateNote.mutate({ completionId, note: value });
+    }
+  }
+
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={handleBlur}
+      rows={2}
+      placeholder="Add a private note about this experience..."
+      className="w-full mt-2 text-sm text-white/80 bg-white/5 border border-white/10 rounded p-2 resize-none placeholder:text-white/30 focus:outline-none focus:border-[#7dd87d]/50"
+    />
+  );
+}
+
 // ─── Quest Journal ────────────────────────────────────────────────────────────
 function QuestJournal({ userId }: { userId: number }) {
   const completionsQuery = trpc.quest.myCompletions.useQuery();
-  const updateNote = trpc.quest.updateNote.useMutation();
   const logCompletion = trpc.quest.logCompletion.useMutation({
     onSuccess: () => completionsQuery.refetch(),
   });
 
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [noteText, setNoteText] = useState("");
   const [showLogForm, setShowLogForm] = useState(false);
   const [newQuestId, setNewQuestId] = useState("");
   const [newQuestTitle, setNewQuestTitle] = useState("");
   const [newArtifactUrl, setNewArtifactUrl] = useState("");
-
-  function startEdit(id: number, current: string) {
-    setEditingId(id);
-    setNoteText(current);
-  }
-
-  function saveNote(completionId: number) {
-    updateNote.mutate({ completionId, note: noteText });
-    setEditingId(null);
-  }
 
   function handleLogCompletion() {
     if (!newQuestId.trim()) return;
@@ -2318,10 +2329,12 @@ function QuestJournal({ userId }: { userId: number }) {
 
   return (
     <div id="quest-journal" className="mt-8">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
-          Quest Journal
-        </h3>
+      <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+        <BookOpen className="w-5 h-5 text-[#7dd87d]" />
+        Quest Journal
+      </h3>
+
+      <div className="flex justify-end mb-3">
         <button
           onClick={() => setShowLogForm(!showLogForm)}
           className="text-xs text-[#7dd87d] border border-[#7dd87d]/40 px-3 py-1.5 rounded-full hover:bg-[#7dd87d]/10 transition-colors"
@@ -2374,85 +2387,27 @@ function QuestJournal({ userId }: { userId: number }) {
       {completionsQuery.isLoading ? (
         <p className="text-white/40 text-sm py-4">Loading journal...</p>
       ) : completionsQuery.data?.length === 0 ? (
-        <div className="bg-[#1a472a]/20 border border-white/5 rounded-xl p-6 text-center">
-          <p className="text-white/40 text-sm">No quest completions yet.</p>
-          <p className="text-white/30 text-xs mt-1">
-            Complete a quest and log it here, or visit{" "}
-            <a href="/quest" className="text-[#7dd87d] underline">the Quest page</a>.
-          </p>
-        </div>
+        <p className="text-white/50 text-sm">No quest completions yet. <a href="/quest" className="text-[#7dd87d] hover:underline">Explore quests →</a></p>
       ) : (
         <div className="space-y-3">
           {completionsQuery.data?.map((completion: any) => (
-            <div
-              key={completion.id}
-              className="bg-[#1a472a]/30 border border-white/10 rounded-xl p-4 space-y-2"
-            >
+            <div key={completion.id} className="bg-[#1a472a]/40 rounded-lg p-4 border border-white/10">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[#7dd87d] text-xs font-semibold bg-[#4a7c59]/30 px-2 py-0.5 rounded-full">
-                    {completion.questTitle}
-                  </span>
-                  <span className="text-white/30 text-xs">{formatDate(completion.completedAt)}</span>
-                  {completion.visibility === "private" && (
-                    <span className="text-white/30 text-xs">Private</span>
-                  )}
+                <div>
+                  <p className="text-white font-medium text-sm">{completion.questTitle}</p>
+                  <p className="text-white/50 text-xs mt-0.5">{formatDate(completion.completedAt)}</p>
                 </div>
                 {completion.artifactUrl && (
-                  <a
-                    href={completion.artifactUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#7dd87d] text-xs hover:underline flex-shrink-0"
-                  >
-                    Artifact
-                  </a>
+                  <a href={completion.artifactUrl} target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] text-xs hover:underline shrink-0">View artifact →</a>
                 )}
               </div>
-
-              {editingId === completion.id ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    rows={3}
-                    className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d] resize-none"
-                    placeholder="Your notes, reflections, or observations..."
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveNote(completion.id)}
-                      className="text-xs bg-[#7dd87d] text-[#1a472a] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#6bc96b] transition-colors"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="text-xs text-white/50 px-3 py-1.5 rounded-lg hover:text-white transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  {completion.artifactText ? (
-                    <p className="text-white/60 text-sm italic">{completion.artifactText}</p>
-                  ) : (
-                    <p className="text-white/30 text-sm italic">No notes yet.</p>
-                  )}
-                  <button
-                    onClick={() => startEdit(completion.id, completion.artifactText ?? "")}
-                    className="text-xs text-[#7dd87d]/70 hover:text-[#7dd87d] mt-1 transition-colors"
-                  >
-                    {completion.artifactText ? "Edit note" : "Add a note"}
-                  </button>
-                </div>
-              )}
+              <NoteField completionId={completion.id} initialNote={completion.artifactText ?? ''} />
             </div>
           ))}
         </div>
       )}
+
+      <p className="mt-4 text-white/40 text-xs">Complete quests on the <a href="/quest" className="text-[#7dd87d] hover:underline">/quest page</a> to add entries here.</p>
     </div>
   );
 }

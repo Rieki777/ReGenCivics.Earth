@@ -101,18 +101,18 @@ export const seasonalQuestsData: SeasonalQuest[] = [
   // Fall
   {
     id: "future-casting",
-    title: "Future Casting — Collective Time Travel",
+    title: "Future Casting: Collective Time Travel",
     season: "fall",
     tagline: "Where are we actually heading? Go see.",
     description:
-      "Do a guided meditation or solo journey in which you travel forward in time to a thriving regenerative future. Experience it fully: what does it look like, smell like, taste like, feel like? Come back and write your account. Not a wish list. A sensory, specific story of a real day in that future. Share it with the community.",
+      "Do a guided meditation or solo journey in which you travel forward in time to a regenerative future. Experience it fully: what does it look like, smell like, taste like, feel like? Come back and write your account. Not a wish list. A sensory, specific story of a real day in that future. Share it with the community.",
     deliverable: "A written account of a day in a regenerative future, shared to help build our collective vision.",
     estimatedTime: "One journey session, plus writing time",
     element: "air",
   },
   {
     id: "eating-sunlight",
-    title: "Eating Sunlight — Plant to Mouth for One Month",
+    title: "Eating Sunlight: Plant to Mouth for One Month",
     season: "fall",
     tagline: "What does alive food actually feel like?",
     description:
@@ -182,7 +182,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
   },
   {
     id: "hermetic-seal",
-    title: "Hermetic Seal — Transmuting Sexual Energy",
+    title: "Hermetic Seal: Transmuting Sexual Energy",
     season: "any",
     tagline: "What becomes possible when you redirect your most potent energy?",
     description:
@@ -204,7 +204,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
   },
   {
     id: "present-parenting",
-    title: "Present Parenting — The First Three Years",
+    title: "Present Parenting: The First Three Years",
     season: "any",
     tagline: "The most important years. Show up for them.",
     description:
