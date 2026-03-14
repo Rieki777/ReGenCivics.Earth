@@ -195,9 +195,7 @@ function TokenSystemCollapsible() {
               <p className="text-white/70 text-base leading-relaxed">
                 Our in-game currency earned through every action in the game. Trade them, spend them in the bioregional marketplace, or use them to access premium game features. These tokens flow through the regenerative economy.
               </p>
-              <a href="/tokenomics" className="inline-block mt-3 text-amber-400 text-sm hover:text-amber-300 transition-colors">
-                Explore tokenomics →
-              </a>
+              <Link href="/tokenomics" className="inline-block mt-3 text-[#7dd87d] hover:text-white underline text-sm">Explore tokenomics →</Link>
             </div>
 
             <div className="p-5 rounded-xl bg-[#7dd87d]/5 border border-[#7dd87d]/15">
@@ -215,9 +213,7 @@ function TokenSystemCollapsible() {
               <p className="text-white/70 text-base leading-relaxed">
                 1 RGVoice token for each action. These represent your governance voice in the ReGen Civics ecosystem. They give you voting power on fund allocation, project selection, alliance governance, and the evolution of the game itself.
               </p>
-              <a href="/governance" className="inline-block mt-3 text-[#7dd87d] text-sm hover:text-[#9de89d] transition-colors">
-                Explore governance →
-              </a>
+              <Link href="/governance" className="inline-block mt-3 text-[#7dd87d] hover:text-white underline text-sm">Explore governance →</Link>
             </div>
           </div>
 
@@ -255,13 +251,9 @@ function TokenSystemCollapsible() {
             ))}
           </div>
 
-          <div className="mt-4 flex gap-4 text-sm justify-center">
-            <a href="/tokenomics" className="text-amber-400 hover:text-amber-300 transition-colors">
-              Explore tokenomics →
-            </a>
-            <a href="/governance" className="text-[#7dd87d] hover:text-[#9de89d] transition-colors">
-              Explore governance →
-            </a>
+          <div className="mt-4 text-center text-sm text-white/60">
+            <Link href="/tokenomics" className="text-[#7dd87d] hover:text-white underline mr-4">Tokenomics</Link>
+            <Link href="/governance" className="text-[#7dd87d] hover:text-white underline">Governance</Link>
           </div>
         </div>
       )}
@@ -289,7 +281,7 @@ function QuestAnimationVideo() {
           }
         });
       },
-      { threshold: 0.25 }
+      { threshold: 0.3 }
     );
 
     observer.observe(video);

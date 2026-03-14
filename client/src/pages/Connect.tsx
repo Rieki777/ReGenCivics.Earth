@@ -434,7 +434,7 @@ export default function Connect() {
         return (
           <div className="space-y-6">
       <SEO {...pageSEO.connect} />
-      <BackButton fallbackPath="/connect" inline />
+      <BackButton fallbackPath="/connect" label="Back to Connect" inline />
             <div>
               <Label className="text-lg font-semibold text-white/90 mb-4 block">
                 Which Alliance Organization(s) do you want to connect with?
@@ -483,7 +483,7 @@ export default function Connect() {
             
             {selectedOrganizations.includes("other") && (
               <div>
-                <Label htmlFor="otherOrg">Which other organization would you like to connect with?</Label>
+                <Label htmlFor="otherOrg" className="text-white/90">Which other organization would you like to connect with?</Label>
                 <Input
                   id="otherOrg"
                   value={otherOrganization}
@@ -585,7 +585,7 @@ export default function Connect() {
         return (
           <div className="space-y-6">
             <div>
-              <Label htmlFor="orgUrl">Best link to explore your organization?</Label>
+              <Label htmlFor="orgUrl" className="text-white/90">Best link to explore your organization?</Label>
               <Input
                 id="orgUrl"
                 type="url"
@@ -737,7 +737,7 @@ export default function Connect() {
             
             {selectedOrgRoles.includes("Other") && (
               <div>
-                <Label htmlFor="otherAllianceSupport">Please describe your other support category:</Label>
+                <Label htmlFor="otherAllianceSupport" className="text-white/90">Please describe your other support category:</Label>
                 <Input
                   id="otherAllianceSupport"
                   value={otherAllianceSupport}
@@ -764,7 +764,7 @@ export default function Connect() {
             </div>
             
             <div>
-              <Label htmlFor="partnership">
+              <Label htmlFor="partnership" className="text-white/90">
                 Tell us more about how our partnership will help create a diversity of Regenerative Cultures!
               </Label>
               <Textarea
@@ -834,7 +834,7 @@ export default function Connect() {
             
             {selectedProjects.includes("other") && (
               <div>
-                <Label htmlFor="otherProject">Which other project are you interested in?</Label>
+                <Label htmlFor="otherProject" className="text-white/90">Which other project are you interested in?</Label>
                 <Input
                   id="otherProject"
                   value={otherProject}
@@ -981,7 +981,7 @@ export default function Connect() {
             </div>
             
             <div>
-              <Label htmlFor="roleInterest">
+              <Label htmlFor="roleInterest" className="text-white/90">
                 What role(s) are you expressing interest in? If they do not exist on the site, you can make one up here.
               </Label>
               <Textarea
@@ -1268,7 +1268,7 @@ export default function Connect() {
                 <h3 className="text-lg font-semibold text-white/90">Contact Information</h3>
 
                 <div>
-                  <Label htmlFor="fullName">Your Name (Optional)</Label>
+                  <Label htmlFor="fullName" className="text-white/90">Your Name (Optional)</Label>
                   <Input
                     id="fullName"
                     value={fullName}
@@ -1279,7 +1279,7 @@ export default function Connect() {
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Best Email to Reach You *</Label>
+                  <Label htmlFor="email" className="text-white/90">Best Email to Reach You *</Label>
                   <Input
                     id="email"
                     type="email"
@@ -1292,7 +1292,7 @@ export default function Connect() {
                 </div>
 
                 <div>
-                  <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                  <Label htmlFor="notes" className="text-white/90">Additional Notes (Optional)</Label>
                   <Textarea
                     id="notes"
                     value={additionalNotes}

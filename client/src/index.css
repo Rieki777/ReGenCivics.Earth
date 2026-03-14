@@ -143,6 +143,18 @@
 :root:not(.dark) .glass-panel h4 {
   color: #1a472a;
 }
+/* Fix: inputs/textareas inside glass-panel get white text in light mode (bg becomes near-white) */
+:root:not(.dark) .glass-panel input,
+:root:not(.dark) .glass-panel textarea,
+:root:not(.dark) .glass-panel select {
+  color: #1a472a !important;
+  background: rgba(26, 71, 42, 0.06) !important;
+  border-color: rgba(26, 71, 42, 0.25) !important;
+}
+:root:not(.dark) .glass-panel input::placeholder,
+:root:not(.dark) .glass-panel textarea::placeholder {
+  color: rgba(26, 71, 42, 0.35) !important;
+}
 :root:not(.dark) .text-shadow-strong {
   text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8), 0 2px 8px rgba(255, 255, 255, 0.5);
 }

@@ -4,11 +4,11 @@
  * Design: Enchanted forest storybook theme, playful and welcoming
  */
 import { Link, useLocation } from "wouter";
-import { 
-  MessageCircle, Sprout, Coins, Handshake, Scale, BookOpen, 
+import {
+  MessageCircle, Sprout, Coins, Handshake, Scale, BookOpen,
   UserPlus, Lightbulb, ArrowRight, Plus, Users, Eye, Clock,
   Leaf, Sparkles, TrendingUp, Search, Trees, Vote, Gamepad2,
-  Heart
+  Heart, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +103,22 @@ export default function Community() {
     { id: "quest-4", title: "Quest 4: Food Foresting", subtitle: "Seed the land with what you want to grow", href: "/quest" },
     { id: "quest-10", title: "Quest 10: NVC", subtitle: "The bridge from healing into community", href: "/quest" },
   ];
+
+  const PROJECT_META: Record<string, { image: string; location?: string }> = {
+    "Finca Sagrada": { image: "/community/finca-sagrada.png", location: "Costa Rica" },
+    "Liminal Village": { image: "/community/liminal-village.png", location: "Wales, UK" },
+    "Traditional Dream Factory": { image: "/community/traditional-dream-factory.png", location: "Portugal" },
+    "Heartland Collective": { image: "/community/heartland-collective.png", location: "USA" },
+    "StarSeed Village": { image: "/community/starseed-village.png" },
+    "The Nyx": { image: "/community/nyx.png" },
+    "NeighbourGood": { image: "/community/neighbourgood.png", location: "South Africa" },
+    "La Tierra": { image: "/community/la-tierra.png" },
+    "Highland Lake CampUS": { image: "/community/highland-lake-campus.png" },
+    "Ubuntu": { image: "/community/ubuntu.png", location: "Africa" },
+    "Tabi": { image: "/community/tabi.png" },
+    "Tioga": { image: "/community/tioga.png", location: "Sierra Nevada, USA" },
+    "LaLa Gardens Cooperative": { image: "/community/lala-gardens.png" },
+  };
 
   // Members-only gate: show branded sign-in page for non-authenticated visitors
   if (!isAuthenticated) {
@@ -399,18 +415,37 @@ export default function Community() {
             <div className="grid sm:grid-cols-2 gap-3">
               {landProjectThreads.map((thread: { id: number; title: string }) => {
                 const projectName = thread.title.replace(/ - Land Project Forum$/, "");
+                const meta = PROJECT_META[projectName];
                 return (
                   <Link key={thread.id} href={`/community/post/${thread.id}`}>
-                    <div className="bg-white rounded-xl p-4 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all cursor-pointer group">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#7dd87d]/15 flex items-center justify-center flex-shrink-0">
-                          <MessageCircle className="w-4 h-4 text-[#4a7c59]" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-[#4a7c59] transition-colors">
+                    <div className="bg-white rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all cursor-pointer group">
+                      {/* Image header */}
+                      <div className="h-28 bg-[#4a7c59]/10 relative overflow-hidden">
+                        {meta?.image ? (
+                          <img
+                            src={meta.image}
+                            alt={projectName}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Trees className="w-10 h-10 text-[#4a7c59]/30" />
+                          </div>
+                        )}
+                        {meta?.location && (
+                          <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/45 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
+                            <MapPin className="w-2.5 h-2.5" />
+                            {meta.location}
+                          </div>
+                        )}
+                      </div>
+                      {/* Text row */}
+                      <div className="px-4 py-3 flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors">
                             {projectName}
                           </p>
-                          <p className="text-[#1a472a]/50 text-xs">Visit Forum</p>
+                          <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
                         </div>
                         <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>
@@ -430,6 +465,20 @@ export default function Community() {
           <p className="text-[#1a472a]/60 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
             Alliance organisations. Networks and partners moving together.
           </p>
+          {/* Section banner */}
+          <div className="h-24 rounded-xl overflow-hidden mb-3 relative bg-[#1a472a]/10">
+            <img
+              src="/community/alliance-orgs-banner.png"
+              alt="Alliance organisations"
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1a472a]/60 to-transparent flex items-center px-4">
+              <span className="text-white font-semibold text-sm" style={{ fontFamily: 'var(--font-display)' }}>
+                Alliance Partner Spaces
+              </span>
+            </div>
+          </div>
           {!organisationThreads || organisationThreads.length === 0 ? (
             <p className="text-[#1a472a]/50 text-sm bg-white rounded-xl p-4 border border-[#e8e4de]">
               Organisation spaces will appear here as partners join the alliance.
@@ -447,7 +496,7 @@ export default function Community() {
                         <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-[#4a7c59] transition-colors">
                           {thread.title}
                         </p>
-                        <p className="text-[#1a472a]/50 text-xs">Visit Forum</p>
+                        <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
                       </div>
                       <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all flex-shrink-0" />
                     </div>

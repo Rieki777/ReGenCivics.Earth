@@ -6,7 +6,11 @@
  * Part C: Quest seed content seeded into relevant threads
  *
  * Usage:
- *   npx ts-node scripts/seed-forum-posts.ts [--dry-run]
+ *   npx tsx scripts/seed-forum-posts.ts [--dry-run] [--reset]
+ *
+ *   --reset  Delete all forumReplies + forumPosts, then re-seed everything fresh.
+ *            This is the standard workflow for a clean re-seed.
+ *   --dry-run  Show what would happen without writing to the DB.
  *
  * Requires DATABASE_URL env var pointing to your MySQL connection string.
  */
@@ -14,7 +18,7 @@
 import * as mysql from "mysql2/promise";
 
 const DRY_RUN = process.argv.includes("--dry-run");
-const CLEAR_FIRST = process.argv.includes("--clear");
+const CLEAR_FIRST = process.argv.includes("--clear") || process.argv.includes("--reset");
 
 // ─── Part A: Anchor Posts ─────────────────────────────────────────────────────
 

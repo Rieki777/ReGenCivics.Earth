@@ -46,7 +46,7 @@ async function main() {
   } else {
     if (!DRY_RUN) {
       const [res] = await conn.execute(
-        "INSERT INTO forumCategories (slug, name, description, `order`) VALUES ('active-projects', 'Land Project Spaces', 'Forum spaces for each active land project in the ReGen Civics network.', 99)"
+        "INSERT INTO forumCategories (slug, name, description, sortOrder) VALUES ('active-projects', 'Land Project Spaces', 'Forum spaces for each active land project in the ReGen Civics network.', 99)"
       ) as any;
       categoryId = res.insertId;
       console.log(`Created category 'active-projects': id=${categoryId}`);
