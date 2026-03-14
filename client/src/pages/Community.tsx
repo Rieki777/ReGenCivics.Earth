@@ -117,14 +117,14 @@ export default function Community() {
 
   // Card images live at public/images/community/[slug].jpg
   const PROJECT_META: Record<string, { image: string; location?: string }> = {
-    "Finca Sagrada": { image: "/community/finca-sagrada.png", location: "Ecuador" },
-    "Liminal Village": { image: "/community/liminal-village.png", location: "Italy" },
-    "Traditional Dream Factory": { image: "/community/traditional-dream-factory.png", location: "Portugal" },
-    "Heartland Collective": { image: "/community/heartland-collective.png", location: "USA" },
-    "StarSeed Village": { image: "/community/starseed-village.png" },
-    "The Nyx": { image: "/community/nyx.png" },
-    "NeighbourGood": { image: "/community/neighbourgood.png", location: "South Africa" },
-    "La Tierra": { image: "/community/la-tierra.png" },
+    "Finca Sagrada": { image: "/community/finca-sagrada.webp", location: "Ecuador" },
+    "Liminal Village": { image: "/community/liminal-village.webp", location: "Italy" },
+    "Traditional Dream Factory": { image: "/community/traditional-dream-factory.webp", location: "Portugal" },
+    "Heartland Collective": { image: "/community/heartland-collective.webp", location: "USA" },
+    "StarSeed Village": { image: "/community/starseed-village.webp" },
+    "The Nyx": { image: "/community/nyx.webp" },
+    "NeighbourGood": { image: "/community/neighbourgood.webp", location: "South Africa" },
+    "La Tierra": { image: "/community/la-tierra.webp" },
   };
 
   // Members-only gate: show branded sign-in page for non-authenticated visitors

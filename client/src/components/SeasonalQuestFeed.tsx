@@ -147,6 +147,18 @@ export function SeasonalQuestFeed() {
                   key={quest.id}
                   className={`${colors.bg} border ${colors.border} rounded-2xl p-5 shadow-sm flex flex-col gap-3`}
                 >
+                  {/* Hero image */}
+                  <div className="h-32 -mx-5 -mt-5 mb-1 overflow-hidden rounded-t-2xl bg-[#1a472a]/10">
+                    <img
+                      src={`/quest-images/seasonal/${quest.id}.webp`}
+                      alt={quest.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+
                   {/* Season pill */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
