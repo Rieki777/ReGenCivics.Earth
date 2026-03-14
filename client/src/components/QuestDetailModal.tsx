@@ -12,6 +12,7 @@ interface QuestDetails {
   title: string;
   subtitle: string;
   description: string;
+  storyCard?: string; // 3-4 sentence narrative, shown at top of modal in italics
   rewards: { regen: number; rvoice: number };
   deliverable: string;
   estimatedTime: string;
@@ -44,6 +45,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     title: "Quest 0: Fire",
     subtitle: "Transforming Passion into Purpose",
     description: "Discover and articulate what truly lights you up. This foundational quest helps you connect with your inner fire and understand what drives you to create positive change in the world.",
+    storyCard: "Before we can build anything new we have to be willing to let go of the old. Fire transmutes instantly. Stories, maladaptations, and perspectives that no longer serve us can be released in a single ceremony if we are willing. As our world gets more immersed in effective and personalized propaganda, Fire offers a different path: discerning truth directly, from our own relationship to ourselves and to life.",
     rewards: { regen: 111, rvoice: 1 },
     deliverable: "A video/article sharing your fire and passion",
     estimatedTime: "2-4 hours",
@@ -70,6 +72,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     title: "Quest 1: Potions",
     subtitle: "Healing Modalities",
     description: "Make a healing potion to connect your gut to the ancient wisdom of your bioregion and home.",
+    storyCard: "The Potions Quest introduces us to the world of living fermented foods, medicinal preparations, and the microbiome. Our gut has neurons and is considered by many researchers to be a second brain. When we add living microbiology to our system, we are literally changing the information processing happening in all three of our minds: gut, heart, and head. That's why we call these potions, as they have the ability to transform how we think, see, and relate to our world.",
     rewards: { regen: 111, rvoice: 1 },
     deliverable: "A 'Showcasing my Potions' video/article",
     estimatedTime: "3-5 hours",
@@ -95,6 +98,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     title: "Quest 2: Seeds",
     subtitle: "Planting Abundance",
     description: "Connect with the power of seeds - both literal and metaphorical. This quest explores how small beginnings can create massive positive change.",
+    storyCard: "The Seeds quest builds the practice of saving, documenting, and swapping seeds. We become participants in the oldest continuous human technology: the preservation of genetic diversity through care and attention. Every seed saved is a vote for biodiversity, for local food sovereignty, and for a future where communities feed themselves from their own land.",
     rewards: { regen: 22, rvoice: 1 },
     deliverable: "Adding seeds to swap in your LocalScale profile",
     estimatedTime: "1-2 hours",
@@ -119,6 +123,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     title: "Quest 3: Healing Whole",
     subtitle: "Holistic Wellness",
     description: "This quest is all about creating spaces of deep healing in our Earth. Where a 'seed of abundance' will sprout forth from.",
+    storyCard: "The Healing Whole quest is about creating spaces of deep healing in our Earth, digging holes, composting, working with fungi, building the soil microbiome that will receive our seeds and our food. The soil becomes a literal extension of our digestive system. What we put into the ground, we eventually put into ourselves. Healing the soil and healing our bodies are the same act.",
     rewards: { regen: 111, rvoice: 1 },
     deliverable: "Showcasing my Healing Whole video/article",
     estimatedTime: "3-5 hours",
@@ -136,6 +141,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     title: "Food Foresting: Being Human Again",
     subtitle: "Turning Earth into a Food Forest",
     description: "Go out with your friends and family and plant seeds for fruit trees in public spaces, parks, forests, and anywhere nature can thrive. This quest is all about turning our planet into a food forest where hunger is no longer relevant.",
+    storyCard: "When we do the Food Foresting quest after the Potions quest, we hold fruit seeds in our mouths for several minutes before planting them. The saliva that now coats those seeds carries a vastly richer diversity of microbial life than it did before. We are literally seeding the Earth with the expanded ecosystem of our own body. Our DNA, our biology, our relationship to the land, encoded in every seed we plant.",
     rewards: { regen: 33, rvoice: 1 },
     deliverable: "A <3 min video and/or written article",
     estimatedTime: "2-4 hours",
@@ -152,6 +158,33 @@ export const questDetailsData: Record<string, QuestDetails> = {
       "Choose species that will thrive without maintenance",
       "Make it a celebration - bring snacks, music, joy",
       "Mark locations so you can return and check on your trees"
+    ]
+  },
+  "quest-10": {
+    id: "quest-10",
+    title: "Quest 10: NVC",
+    subtitle: "Nonviolent Communication",
+    description: "Learn and practice Nonviolent Communication, the framework that bridges personal healing into collective co-creation. This is the language of needs, not judgments.",
+    storyCard: "Quest 10 teaches us to speak from needs rather than judgments, to hear others without taking their pain as an attack, and to coordinate meeting shared needs together. This is the bridge from individual healing into collective co-creation. Every governance system, every community, every partnership becomes more functional when the people inside it know how to communicate in this way.",
+    rewards: { regen: 111, rvoice: 1 },
+    deliverable: "A written reflection, video, or recorded conversation showing your NVC practice",
+    estimatedTime: "1-2 hours initial, ongoing practice",
+    steps: [
+      { step: 1, title: "Take the NVC course", description: "Find the recommended NVC materials and watch the attached course. Online courses, Rosenberg's books, and free recordings of his workshops are all valid starting points." },
+      { step: 2, title: "Practice the four components", description: "Observation, Feeling, Need, Request. Apply them in your daily conversations. Start with low-stakes situations before bringing them into high-stakes ones." },
+      { step: 3, title: "Find a practice partner", description: "NVC practiced alone is limited. Find someone else to study and practice with. Many cities have NVC practice circles, or find a partner in our forum." },
+      { step: 4, title: "Apply in a real situation", description: "Bring NVC into a genuine conflict or tension in your life. Not to win. To connect." },
+      { step: 5, title: "Reflect and share", description: "Write or record a reflection on what you learned. What shifted? Where did it get hard? What would you tell someone just starting?" },
+      { step: 6, title: "Attend or host a community session", description: "The forum will have regular NVC discussion threads. Participate. If there isn't a session happening, start one." }
+    ],
+    resources: [
+      { title: "NVC Academy", url: "https://nvctraining.com" },
+      { title: "Gabor Mate on trauma and communication", url: "https://www.youtube.com/playlist?list=PL3Xi8vZSmBTRlD8Dnx6a16yeBTaSxKNdS" }
+    ],
+    tips: [
+      "The hardest part is distinguishing observations from evaluations. Practice this first.",
+      "\"I feel like you don't care about me\" is not a feeling. It's an interpretation. \"I feel hurt and lonely\" is a feeling.",
+      "Gratitude is also NVC. Practice expressing gratitude in terms of what needs were met."
     ]
   }
 };
@@ -249,6 +282,13 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
               </a>
             </div>
           )}
+          {/* Story card */}
+          {quest.storyCard && (
+            <div className="mb-6 bg-[#f0ebe3] border border-[#d4a574]/30 rounded-xl px-5 py-4">
+              <p className="text-sm italic text-[#1a472a]/80 leading-relaxed">{quest.storyCard}</p>
+            </div>
+          )}
+
           {/* Steps */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-[#1a472a] mb-4 flex items-center gap-2">
