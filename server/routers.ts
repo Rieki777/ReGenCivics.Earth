@@ -16,7 +16,7 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, forumReplies, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals } from "../drizzle/schema";
+import { forumPosts, forumReplies, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims } from "../drizzle/schema";
 import { eq, sql, gt, count } from "drizzle-orm";
 import { getDb } from "./db";
 
@@ -5267,6 +5267,88 @@ Guidelines:
           .set({ artifactText: input.note })
           .where(sql`${questCompletions.id} = ${input.completionId} AND ${questCompletions.userId} = ${ctx.user.id}`);
         return { success: true };
+      }),
+  }),
+
+  rssFeed: router({
+    // List feeds for the user's approved claimed entity
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        const db = getDb();
+        // Find the user's approved claim
+        const claim = await db
+          .select()
+          .from(orgClaims)
+          .where(sql`${orgClaims.userId} = ${ctx.user.id} AND ${orgClaims.status} = 'approved'`)
+          .limit(1);
+        if (!claim[0]) return [];
+        return db
+          .select()
+          .from(entityRssFeeds)
+          .where(sql`${entityRssFeeds.entityId} = ${claim[0].orgId} AND ${entityRssFeeds.isActive} = 1`)
+          .orderBy(sql`${entityRssFeeds.createdAt} DESC`);
+      }),
+
+    add: protectedProcedure
+      .input(z.object({
+        feedUrl: z.string().url(),
+        label: z.string().max(255).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = getDb();
+        // Verify approved claim ownership
+        const claim = await db
+          .select()
+          .from(orgClaims)
+          .where(sql`${orgClaims.userId} = ${ctx.user.id} AND ${orgClaims.status} = 'approved'`)
+          .limit(1);
+        if (!claim[0]) throw new TRPCError({ code: "FORBIDDEN", message: "No approved claim found." });
+        await db.insert(entityRssFeeds).values({
+          entityType: claim[0].orgType === "land_project" ? "land_project" : "organisation",
+          entityId: claim[0].orgId,
+          feedUrl: input.feedUrl,
+          label: input.label ?? "Feed",
+          isActive: 1,
+        });
+        return { success: true };
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({ feedId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = getDb();
+        // Verify ownership via approved claim
+        const claim = await db
+          .select()
+          .from(orgClaims)
+          .where(sql`${orgClaims.userId} = ${ctx.user.id} AND ${orgClaims.status} = 'approved'`)
+          .limit(1);
+        if (!claim[0]) throw new TRPCError({ code: "FORBIDDEN", message: "No approved claim found." });
+        await db.update(entityRssFeeds)
+          .set({ isActive: 0 })
+          .where(sql`${entityRssFeeds.id} = ${input.feedId} AND ${entityRssFeeds.entityId} = ${claim[0].orgId}`);
+        return { success: true };
+      }),
+
+    dismissPrompt: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const db = getDb();
+        await db.update(orgClaims)
+          .set({ rssPromptDismissed: 1 })
+          .where(sql`${orgClaims.userId} = ${ctx.user.id} AND ${orgClaims.status} = 'approved'`);
+        return { success: true };
+      }),
+
+    checkPrompt: protectedProcedure
+      .query(async ({ ctx }) => {
+        const db = getDb();
+        const claim = await db
+          .select({ id: orgClaims.id, orgName: orgClaims.orgName, rssPromptDismissed: orgClaims.rssPromptDismissed })
+          .from(orgClaims)
+          .where(sql`${orgClaims.userId} = ${ctx.user.id} AND ${orgClaims.status} = 'approved'`)
+          .limit(1);
+        if (!claim[0] || claim[0].rssPromptDismissed) return null;
+        return { claimId: claim[0].id, orgName: claim[0].orgName };
       }),
   }),
 

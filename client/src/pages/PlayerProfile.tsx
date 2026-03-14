@@ -1265,6 +1265,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
               </div>
             );
           })}
+          <RssFeedManager />
         </div>
       )}
 
@@ -1272,6 +1273,132 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
         <p className="text-white/40 text-sm text-center py-2">
           Steward a land project or alliance org to see join requests here.
         </p>
+      )}
+    </div>
+  );
+}
+
+function RssFeedManager() {
+  const feedsQuery = trpc.rssFeed.list.useQuery();
+  const addFeed = trpc.rssFeed.add.useMutation({ onSuccess: () => feedsQuery.refetch() });
+  const removeFeed = trpc.rssFeed.remove.useMutation({ onSuccess: () => feedsQuery.refetch() });
+  const promptQuery = trpc.rssFeed.checkPrompt.useQuery();
+  const dismissPrompt = trpc.rssFeed.dismissPrompt.useMutation({ onSuccess: () => promptQuery.refetch() });
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [feedUrl, setFeedUrl] = useState("");
+  const [feedLabel, setFeedLabel] = useState("");
+  const [showRssPrompt, setShowRssPrompt] = useState(true);
+
+  function handleAdd() {
+    if (!feedUrl.trim()) return;
+    addFeed.mutate({ feedUrl: feedUrl.trim(), label: feedLabel.trim() || undefined });
+    setFeedUrl("");
+    setFeedLabel("");
+    setShowAddForm(false);
+  }
+
+  function handleDismissPrompt() {
+    dismissPrompt.mutate();
+    setShowRssPrompt(false);
+  }
+
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-white/80 text-sm font-semibold">RSS Feeds</h4>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="text-xs text-[#7dd87d] border border-[#7dd87d]/40 px-3 py-1 rounded-full hover:bg-[#7dd87d]/10 transition-colors"
+        >
+          + Add feed
+        </button>
+      </div>
+
+      {/* One-time RSS setup prompt */}
+      {showRssPrompt && promptQuery.data && (
+        <div className="bg-[#1a472a]/40 border border-[#7dd87d]/20 rounded-xl p-4 mb-4">
+          <p className="text-white/80 text-sm font-medium mb-1">
+            Your {promptQuery.data.orgName} space is live.
+          </p>
+          <p className="text-white/60 text-xs mb-3">
+            Connect an RSS feed so your forum thread automatically reflects updates from your blog, Substack, or social media.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setShowAddForm(true); handleDismissPrompt(); }}
+              className="text-xs bg-[#7dd87d] text-[#1a472a] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#6bc96b] transition-colors"
+            >
+              Add RSS Feed
+            </button>
+            <button
+              onClick={handleDismissPrompt}
+              className="text-xs text-white/40 hover:text-white/70 px-3 py-1.5 transition-colors"
+            >
+              Skip for now
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Add feed form */}
+      {showAddForm && (
+        <div className="bg-[#1a472a]/30 border border-white/10 rounded-xl p-4 mb-4 space-y-3">
+          <input
+            type="url"
+            placeholder="Feed URL (RSS, Atom, or Substack)"
+            value={feedUrl}
+            onChange={(e) => setFeedUrl(e.target.value)}
+            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
+          />
+          <input
+            type="text"
+            placeholder="Label (e.g. Blog, Newsletter)"
+            value={feedLabel}
+            onChange={(e) => setFeedLabel(e.target.value)}
+            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleAdd}
+              disabled={!feedUrl.trim() || addFeed.isPending}
+              className="text-xs bg-[#7dd87d] text-[#1a472a] font-semibold px-4 py-2 rounded-lg hover:bg-[#6bc96b] disabled:opacity-50 transition-colors"
+            >
+              {addFeed.isPending ? "Adding..." : "Add feed"}
+            </button>
+            <button onClick={() => setShowAddForm(false)} className="text-xs text-white/40 hover:text-white/70 px-3 py-2 transition-colors">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Feed list */}
+      {feedsQuery.isLoading ? (
+        <p className="text-white/30 text-xs">Loading feeds...</p>
+      ) : feedsQuery.data?.length === 0 ? (
+        <p className="text-white/30 text-xs">No RSS feeds connected yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {feedsQuery.data?.map((feed) => (
+            <div key={feed.id} className="flex items-center justify-between bg-[#1a472a]/20 border border-white/5 rounded-lg px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-white/80 text-xs font-medium truncate">{feed.label}</p>
+                <p className="text-white/30 text-xs truncate">{feed.feedUrl}</p>
+                {feed.lastFetchedAt && (
+                  <p className="text-white/20 text-xs">Last fetched: {new Date(feed.lastFetchedAt).toLocaleDateString()}</p>
+                )}
+              </div>
+              <button
+                onClick={() => removeFeed.mutate({ feedId: feed.id })}
+                className="text-white/30 hover:text-red-400 text-xs ml-3 flex-shrink-0 transition-colors"
+                title="Remove feed"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
