@@ -4,7 +4,7 @@
  * Content sourced from SEEDS Quest knowledge base
  */
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
@@ -28,9 +28,9 @@ import { QuestGameIntro } from "@/components/QuestGameIntro";
 import { EpicQuestSection } from "@/components/EpicQuestSection";
 import { SeasonalQuestFeed } from "@/components/SeasonalQuestFeed";
 import { QuestArcMap } from "@/components/QuestArcMap";
-import { useHemisphere } from "@/hooks/useHemisphere";
+import { useHemisphere, setHemisphereOverride } from "@/hooks/useHemisphere";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-// setHemisphereOverride is used in SeasonalQuestFeed directly
+import { questData, QUEST_BEST_SEASONS, SEASON_HERO } from "@/data/questData";
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.png to this path
 const QUEST_IMG_BASE = "https://assets.regencivics.earth/quests";
@@ -43,181 +43,7 @@ function questImageFallback(id: number, slug: string) {
   return `/images/quests/quest-${String(id).padStart(2, '0')}-${slug}.png`;
 }
 
-// Quest data organized by season
-const questData = {
-  intro: {
-    id: 0,
-    slug: "fire",
-    title: "Quest 0: Fire",
-    subtitle: "Transforming the Stories That No Longer Serve Us",
-    description: "Introduction to Quests, background, and intention setting for this journey. An invitation to burn the stories that are no longer serving you to make room for new stories to emerge.",
-    reward: { regen: 111, rvoice: 1 },
-    icon: Flame,
-    color: "from-orange-500/20 to-amber-500/20",
-    borderColor: "border-orange-500/50",
-    iconBg: "bg-orange-500",
-    deliverable: "A 3-7 minute video sharing who you are and why you're here",
-  },
-  spring: [
-    {
-      id: 1,
-      slug: "potion-brewing",
-      title: "Potion Brewing",
-      subtitle: "Diversifying Our Inner Soils",
-      description: "Focus on our Microbiomes & Guts, Fungi Kingdom, Bacteria Kingdom, and Soil Kingdoms. Heal our relationship to the foundations of life.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: Droplets,
-      deliverable: "A 'Showcasing my Potions' video/article",
-      focus: "Microbiomes, Fungi, Bacteria, Soil",
-    },
-    {
-      id: 2,
-      slug: "saving-seeds",
-      title: "Saving Seeds",
-      subtitle: "Sovereignty & Co-Evolution",
-      description: "Growing plants that know us, and consciously evolving alongside the plants that nourish us.",
-      reward: { regen: 22, rvoice: 1 },
-      icon: Sprout,
-      deliverable: "Adding seeds to swap in your LocalScale profile",
-      focus: "Plant Kingdom",
-    },
-    {
-      id: 3,
-      slug: "healing-wholes",
-      title: "Healing Wholes",
-      subtitle: "Food Abundance",
-      description: "Gardening our bioregions and homesteads. Healing our relationship to plants & extending our inner-soils to relate directly with our bioregions.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: TreeDeciduous,
-      deliverable: "'Showcasing my Healing Whole' video/article",
-      focus: "Bioregion, Gardens",
-    },
-  ],
-  summer: [
-    {
-      id: 4,
-      slug: "dreaming-spaces-of-love",
-      title: "Dreaming Spaces of Love",
-      subtitle: "Family Homesteads",
-      description: "Designing, dreaming, and co-creating our ideal homes, gardens, and life intended to meet all our needs. A 'Kins Domain' for your family of life.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: HomeIcon,
-      deliverable: "'Map of my current/future Space of Love' video/picture",
-      focus: "Family, Home, Gardens",
-    },
-    {
-      id: 5,
-      slug: "rites-of-love",
-      title: "Rites of Love",
-      subtitle: "We are the Land",
-      description: "Marrying the Earth and your beloved, remembering we're one with our Spaces of Love, and other Sacred Rites to connect with Earth.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: Heart,
-      deliverable: "Video/article or... Get Married!",
-      focus: "Love, Partnership, Earth Connection",
-    },
-    {
-      id: 6,
-      slug: "healing-circles",
-      title: "Healing Circles",
-      subtitle: "Community Gathering",
-      description: "Gathering in natural spaces with 10+ other humans to swap & practice healing modalities. Share whatever modality you're most aligned with.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: Users,
-      deliverable: "'How we gathered, what we learned' video/article",
-      focus: "Community, Healing, Touch",
-    },
-  ],
-  fall: [
-    {
-      id: 7,
-      slug: "wild-foraging",
-      title: "Wild Foraging",
-      subtitle: "Deep Nourishment",
-      description: "Foraging mushrooms, medicinal herbs, berries & tree magic. Eating sunlight and enjoying food plant-to-mouth while attuning to our ideal diets.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: Apple,
-      deliverable: "'What did I harvest and what did I do with it?' video/article",
-      focus: "Foraging, Wild Foods, Nutrition",
-    },
-    {
-      id: 8,
-      slug: "medicine-journey",
-      title: "Medicine Journey",
-      subtitle: "Inner Exploration",
-      description: "A guided journey into the depths of consciousness, exploring the medicine within and around us.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: Circle,
-      deliverable: "Reflection on your medicine journey",
-      focus: "Consciousness, Healing, Spirit",
-    },
-    {
-      id: 9,
-      slug: "tree-talk",
-      title: "Tree Talk",
-      subtitle: "Forest Communication",
-      description: "Learning to communicate with and understand the wisdom of trees. Deepening our relationship with the forest.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: TreeDeciduous,
-      deliverable: "'My conversation with trees' video/article",
-      focus: "Trees, Nature, Communication",
-    },
-  ],
-  winter: [
-    {
-      id: 10,
-      slug: "communication-patterns",
-      title: "Communication Patterns",
-      subtitle: "How We Relate",
-      description: "Exploring and improving our patterns of communication. Learning to listen deeply and speak authentically.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: MessageSquare,
-      deliverable: "Reflection on communication patterns",
-      focus: "Communication, Relationships",
-    },
-    {
-      id: 11,
-      slug: "coordination-patterns",
-      title: "Coordination Patterns",
-      subtitle: "How We Organize",
-      description: "Understanding how we coordinate as groups. Exploring governance, decision-making, and collective action.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: GitBranch,
-      deliverable: "Analysis of coordination patterns",
-      focus: "Governance, Organization",
-    },
-    {
-      id: 12,
-      slug: "breathplay-future-dreaming",
-      title: "Breathplay & Future Dreaming",
-      subtitle: "Visioning Together",
-      description: "Using breathwork to access expanded states and dream into the future we want to create together.",
-      reward: { regen: 111, rvoice: 1 },
-      icon: Wind,
-      deliverable: "Vision board or future dreaming video",
-      focus: "Breathwork, Visioning",
-    },
-  ],
-  routine: {
-    id: 13,
-    title: "Fasting",
-    subtitle: "Regenerative Ikigai",
-    description: "What is your role? Discovering your unique purpose through the practice of fasting and reflection.",
-    reward: { regen: 111, rvoice: 1 },
-    icon: Brain,
-    deliverable: "'My Regenerative Ikigai' reflection",
-    focus: "Purpose, Role, Fasting",
-  },
-  featured: {
-    title: "Food Foresting",
-    subtitle: "Being Human Again",
-    description: "Go out with your friends and family and plant seeds for fruiting plants in public spaces, parks, forests, and anywhere nature can thrive. This quest is all about turning our planet into a food forest where hunger is no longer relevant. Document your adventure and share what you planted, where, and the joy of being human again.",
-    reward: { regen: 33, rvoice: 1 },
-    icon: Sparkles,
-    deliverable: "A <3 min video and/or written article",
-    focus: "Bioregion, Food Forest, Community",
-  },
-};
+// Quest data is imported from @/data/questData (extracted for code-splitting)
 
 // Sign In CTA Component
 function SignInCTA() {
@@ -271,7 +97,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 // Original quest IDs (0–12) get gold shimmer; future quests get green shimmer
 const ORIGINAL_QUEST_IDS = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12]);
 
-function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean }) {
+const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean }) {
   const Icon = quest.icon;
   const hasDetails = questDetailsData[`quest-${quest.id}`];
   const questId = `quest-${quest.id}`;
@@ -322,7 +148,9 @@ function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers
 
         {isGreatNow && (
           <div className="mb-2">
-            <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Great for right now</span>
+            <span className="text-[10px] bg-[#7dd87d]/20 text-[#7dd87d] px-1.5 py-0.5 rounded-full">
+              Good for right now
+            </span>
           </div>
         )}
 
@@ -468,7 +296,7 @@ function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers
       </div>
     </div>
   );
-}
+});
 
 // Quest 0 Flip Card Component
 function Quest0FlipCard() {
@@ -566,23 +394,13 @@ function Quest0FlipCard() {
 
 const QUEST_VISIT_KEY = 'regen_civics_quest_visit_count';
 
-const QUEST_BEST_SEASONS: Record<string, string[]> = {
-  "quest-2": ["spring", "fall"],
-  "quest-3": ["spring"],
-  "quest-4": ["spring", "summer"],
-  "quest-7": ["summer", "fall"],
-  "quest-8": ["summer", "fall"],
-  "quest-9": ["summer"],
-  "quest-0": ["any"],
-  "quest-1": ["any"],
-  "quest-10": ["any"],
-};
+// QUEST_BEST_SEASONS and SEASON_HERO are imported from @/data/questData
 
 export default function Quest() {
   const [selectedQuest, setSelectedQuest] = useState<string | null>(null);
   const [whyQuestsExpanded, setWhyQuestsExpanded] = useState(false);
   const [showQuestArc, setShowQuestArc] = useState(false);
-  const { currentSeason, loading: hemisphereLoading } = useHemisphere();
+  const { currentSeason, hemisphere, loading: hemisphereLoading } = useHemisphere();
   const { isAuthenticated: user } = useAuth();
   const hasEntered = typeof localStorage !== 'undefined' && localStorage.getItem("regen_game_entered") === "true";
   const [showIntro, setShowIntro] = useState(!hasEntered);
@@ -611,9 +429,9 @@ export default function Quest() {
   }>({ category: "all", difficulty: "all", time: "all", element: "all" });
 
   // Quest activity queries
-  const activeCountsQuery = trpc.quest.activeCountPerQuest.useQuery();
-  const myActiveQuestsQuery = trpc.quest.myActiveQuests.useQuery(undefined, { enabled: !!user });
-  const spotlightQuery = trpc.quest.spotlight.useQuery();
+  const activeCountsQuery = trpc.quest.activeCountPerQuest.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const myActiveQuestsQuery = trpc.quest.myActiveQuests.useQuery(undefined, { enabled: !!user, staleTime: 5 * 60 * 1000 });
+  const spotlightQuery = trpc.quest.spotlight.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
 
   const myActiveQuestIds = new Set(myActiveQuestsQuery.data ?? []);
   const activeCountsData = activeCountsQuery.data ?? {};
@@ -664,9 +482,16 @@ export default function Quest() {
       </div>
 
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] text-white">
+      <section
+        className="py-16 text-white"
+        style={{
+          background: hemisphereLoading
+            ? "linear-gradient(to bottom, #1a472a, #2d5a3d)"
+            : (SEASON_HERO[currentSeason]?.gradient ?? "linear-gradient(to bottom, #1a472a, #2d5a3d)"),
+        }}
+      >
         <AnimatedSection animation="fade-in" className="container text-center">
-          <div 
+          <div
             className="inline-block px-5 py-2 mb-6 rounded-full bg-[#7dd87d] text-[#1a472a]"
             style={{ fontFamily: 'var(--font-accent)' }}
           >
@@ -685,9 +510,41 @@ export default function Quest() {
           <p className="text-2xl font-bold text-[#7dd87d] mb-8">
             Our current answer... Quests!
           </p>
-          <p className="text-white/80 max-w-2xl mx-auto mb-8">
+          <p className="text-white/80 max-w-2xl mx-auto mb-4">
             An ever-growing and ever-changing list of Quests curated by the active members of the ReGen Civics Alliance.
           </p>
+
+          {/* Seasonal tagline + hemisphere toggle */}
+          {!hemisphereLoading && (
+            <div className="flex flex-col items-center gap-2 mb-8">
+              <p className="text-white/60 text-sm italic">
+                {SEASON_HERO[currentSeason]?.tagline}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setHemisphereOverride("northern"); window.location.reload(); }}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                    hemisphere === "northern"
+                      ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
+                      : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
+                  }`}
+                >
+                  🌍 Northern
+                </button>
+                <button
+                  onClick={() => { setHemisphereOverride("southern"); window.location.reload(); }}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                    hemisphere === "southern"
+                      ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
+                      : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
+                  }`}
+                >
+                  🌎 Southern
+                </button>
+              </div>
+            </div>
+          )}
+          {hemisphereLoading && <div className="mb-8" />}
 
           {/* Quest Spotlight - improvement 18 */}
           {spotlightQuery.data && (

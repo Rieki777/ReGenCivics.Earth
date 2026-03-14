@@ -16,7 +16,7 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, forumReplies, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims } from "../drizzle/schema";
+import { forumPosts, forumReplies, forumCategories, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims } from "../drizzle/schema";
 import { eq, sql, gt, count } from "drizzle-orm";
 import { getDb } from "./db";
 
@@ -3219,28 +3219,44 @@ export const appRouter = router({
     }),
 
     activeAirThreads: publicProcedure.query(async () => {
-      const cats = await db.listForumCategories();
-      const cat = cats.find(c => c.slug === "air-conversations");
-      if (!cat) return [];
-      const posts = await db.listForumPosts(cat.id, 200, 0);
-      return posts.map(p => ({ id: p.id, title: p.title }));
+      const drizzle = await getDb();
+      if (!drizzle) return [];
+      const cat = await drizzle.select({ id: forumCategories.id })
+        .from(forumCategories)
+        .where(eq(forumCategories.slug, 'air-conversations'))
+        .limit(1);
+      if (!cat[0]) return [];
+      return drizzle.select({
+        id: forumPosts.id,
+        title: forumPosts.title,
+        replyCount: forumPosts.replyCount,
+        viewCount: forumPosts.viewCount,
+        createdAt: forumPosts.createdAt,
+      })
+        .from(forumPosts)
+        .where(eq(forumPosts.categoryId, cat[0].id))
+        .orderBy(sql`${forumPosts.createdAt} DESC`)
+        .limit(10);
     }),
 
     communityPulse: publicProcedure.query(async () => {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const db2 = await getDb();
-      if (!db2) return { playersPostedThisWeek: 0, newThreadsThisWeek: 0 };
-      const [postCountResult] = await db2
-        .select({ value: count() })
+      const drizzle = await getDb();
+      if (!drizzle) return { posts7d: 0, replies7d: 0, activeMembers: 0 };
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const [postsResult] = await drizzle
+        .select({ count: count() })
         .from(forumPosts)
-        .where(gt(forumPosts.createdAt, sevenDaysAgo));
-      const [replyCountResult] = await db2
-        .select({ value: count() })
+        .where(sql`${forumPosts.createdAt} >= ${sevenDaysAgo}`);
+      const [repliesResult] = await drizzle
+        .select({ count: count() })
         .from(forumReplies)
-        .where(gt(forumReplies.createdAt, sevenDaysAgo));
-      const newThreadsThisWeek = postCountResult?.value ?? 0;
-      const playersPostedThisWeek = newThreadsThisWeek + (replyCountResult?.value ?? 0);
-      return { playersPostedThisWeek, newThreadsThisWeek };
+        .where(sql`${forumReplies.createdAt} >= ${sevenDaysAgo}`);
+      return {
+        posts7d: Number(postsResult?.count ?? 0),
+        replies7d: Number(repliesResult?.count ?? 0),
+        activeMembers: 0,
+      };
     }),
 
     // Get all posts in a chain (by chainId — returns the idea root + all experiment/result posts linked to it)

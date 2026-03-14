@@ -5,7 +5,11 @@
 
 export function MycelialBackground() {
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30">
+    <div
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30"
+      aria-hidden="true"
+      style={{ willChange: 'opacity' }}
+    >
       <svg 
         className="w-full h-full" 
         viewBox="0 0 1920 1080" 

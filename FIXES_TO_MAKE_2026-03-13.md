@@ -1492,6 +1492,8 @@ That single command clears all old posts and re-seeds everything fresh.
 - Quest broken: white/off-white page background, no seasonal color, quote block floating on white
 - Quest correct: seasonal background color behind all content
 
+**Updated observation (2026-03-13 screenshot):** As of the latest build, the 4 large persona cards at the bottom of the dashboard (Investors, Land Projects, Alliance Partners, ReGen Players) appear to have the correct dark treatment. The regression is concentrated in the **"Pick Up Where You Left Off" row** at the top -- those 4 navigation cards (Journey Quests, Back to the Forum, Seasonal Accelerator, Book a Discovery Call) are rendering with a light/glassy background instead of dark green. Start debugging there first. The component likely has a name like `QuickNavCard`, `ResumeCard`, or similar -- look for whatever renders the "PICK UP WHERE YOU LEFT OFF" section in `Dashboard.tsx`.
+
 **Likely culprits — check in this order:**
 
 ### 1. Check git diff immediately

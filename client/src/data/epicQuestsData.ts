@@ -1,105 +1,124 @@
 /**
- * EPIC Quests — from QUEST_MASTER_SHEET Part 5.
- * These are collective transformation acts, not individual practices.
+ * EPIC Quests data — long-form challenges for committed regenerators.
  * Rendered in EpicQuestSection.tsx at the bottom of the /quest page.
+ * Placeholder content; will be updated from QUEST_MASTER_SHEET Part 5.
  */
+
+export type EpicTier = "easy" | "hard" | "expert";
+export type EpicElement = "earth" | "water" | "fire" | "air";
 
 export interface EpicQuest {
   id: string;
   title: string;
-  tier: "easy" | "hard" | "expert";
+  tier: EpicTier;
+  tagline: string;
   description: string;
-  deliverable: string;
+  duration: string;
+  commitment: string;
+  regenReward: number;
+  element: EpicElement;
 }
 
-export const epicQuestsData: EpicQuest[] = [
-  // Easy Mode
+export const EPIC_QUESTS: EpicQuest[] = [
+  // Easy tier
   {
-    id: "block-food-forest",
-    title: "Block Food Forest",
+    id: "epic-forest-keeper",
+    title: "Forest Keeper",
     tier: "easy",
+    tagline: "Tend a patch of wild land for one season",
     description:
-      "Coordinate the overnight transformation of a street in your city. Host an event where neighbours each bring potted plants, fruit trees, and garden beds, and together redesign a street as a forest garden for a day. Document the process and the response from people passing by.",
-    deliverable: "A documented event with before and after, shared with the community.",
+      "Commit to visiting, observing, and tending a specific patch of land every week for one full season. Document what you find and what changes.",
+    duration: "3 months",
+    commitment: "Weekly visits",
+    regenReward: 100,
+    element: "earth",
   },
   {
-    id: "networked-community-garden",
-    title: "Networked Community Garden",
+    id: "epic-water-steward",
+    title: "Water Steward",
     tier: "easy",
+    tagline: "Map and protect a local water source",
     description:
-      "Coordinate with neighbours for each household to offer some space on their property for a collective garden. Multiple small plots connected into one shared network, or adopt a vacant lot. Design the shared governance from the start. Document the process.",
-    deliverable: "A running networked garden with documented governance agreements.",
+      "Identify a local spring, stream, or water body. Monitor its health monthly, clear blockages, and bring at least one other person into stewardship.",
+    duration: "3 months",
+    commitment: "Monthly monitoring",
+    regenReward: 100,
+    element: "water",
   },
   {
-    id: "bioregional-currency-launch",
-    title: "Bioregional Currency Launch",
+    id: "epic-community-weaver",
+    title: "Community Weaver",
     tier: "easy",
+    tagline: "Host 4 gatherings in 4 months",
     description:
-      "Design and launch a community currency for your neighbourhood or bioregion. Host a launch party. Invite people to transact in it. Document the design, the launch, and the first real uses.",
-    deliverable: "A launched currency, a launch event, and documentation of the first real uses.",
+      "Host one meaningful gathering per month around food, land, healing, or community building. Each one must include at least 5 people.",
+    duration: "4 months",
+    commitment: "Monthly gatherings",
+    regenReward: 120,
+    element: "fire",
   },
 
-  // Hard Mode
+  // Hard tier
   {
-    id: "cornfield-to-cloud-forest",
-    title: "Cornfield to Cloud Forest",
+    id: "epic-food-forest",
+    title: "Food Forest Builder",
     tier: "hard",
+    tagline: "Plant and establish a food forest",
     description:
-      "Transform a conventional agricultural field into a functioning food forest ecosystem. Full documentation from start to finish: soil testing, design, planting plan, community involvement, and before and after.",
-    deliverable:
-      "A fully documented transformation with before and after evidence of ecosystem change.",
+      "Design, plant, and maintain a food forest with at least 20 plants including canopy, understory, and ground cover layers. Document each stage.",
+    duration: "6 months",
+    commitment: "Weekly tending",
+    regenReward: 300,
+    element: "earth",
   },
   {
-    id: "pasture-to-paradise",
-    title: "Pasture to Paradise",
+    id: "epic-land-guardian",
+    title: "Land Guardian",
     tier: "hard",
+    tagline: "Take formal stewardship of a piece of land",
     description:
-      "Transform degraded pasture land into a diverse, productive, thriving food forest and wildlife habitat. Multi-year project. Document the whole arc, from the first assessment through establishment to the first harvests.",
-    deliverable:
-      "A multi-year documented transformation showing measurable ecological improvement.",
+      "Enter a formal stewardship agreement with a land project, community garden, or wild space. Commit to active care and regular documentation for 6 months.",
+    duration: "6 months",
+    commitment: "Weekly active stewardship",
+    regenReward: 350,
+    element: "earth",
   },
   {
-    id: "hoa-to-village",
-    title: "HOA to Village",
+    id: "epic-healing-practitioner",
+    title: "Healing Practitioner",
     tier: "hard",
+    tagline: "Facilitate healing for your community",
     description:
-      "Transform a conventional homeowners association into a functioning village with shared resources, governance, food production, and care networks. Document the governance design and the transition process.",
-    deliverable: "A running village commons with documented governance and shared systems.",
-  },
-  {
-    id: "retreat-center",
-    title: "Retreat Center",
-    tier: "hard",
-    description:
-      "Design and build a retreat center on or near a land project in the network. The center serves as a base for quests, ceremonies, community gatherings, and healing work. Document the design and construction process.",
-    deliverable: "A functioning retreat center, documented from design through first event.",
-  },
-  {
-    id: "golf-course",
-    title: "Golf Course",
-    tier: "hard",
-    description:
-      "Coordinate the transformation of a golf course into a food forest, wildlife corridor, or community land project. This requires coalition building with local government and community groups. Document everything from initial outreach through transformation.",
-    deliverable:
-      "A transformed site with full documentation of the coalition-building and transition process.",
-  },
-  {
-    id: "apartment-building",
-    title: "Apartment Building",
-    tier: "hard",
-    description:
-      "Transform a conventional apartment building into a regenerative living community with shared food growing, governance, and mutual support. Document the process and the agreements that make it work.",
-    deliverable: "A running regenerative apartment community with documented governance and shared systems.",
+      "Lead or co-lead a structured healing program for a group of at least 6 people over 3 months. Include somatic, relational, or land-based practices.",
+    duration: "3 months",
+    commitment: "Weekly facilitation",
+    regenReward: 280,
+    element: "water",
   },
 
-  // Expert Mode
+  // Expert tier
   {
-    id: "startup-town",
-    title: "Startup Town",
+    id: "epic-land-project",
+    title: "Land Project Initiator",
     tier: "expert",
+    tagline: "Start or formally join a land project",
     description:
-      "Coordinate the design and establishment of a new settlement built from the ground up on regenerative principles. Land access, governance design, food systems, energy systems, waste systems, cultural life. This is the long game. Document every step from land access through first permanent residents.",
-    deliverable:
-      "A settlement with permanent residents, documented from the first conversations through establishment.",
+      "Initiate a land-based project or formally join an existing one as a core team member. Apply to the ReGen Civics incubator and complete a full season.",
+    duration: "12 months",
+    commitment: "Full commitment",
+    regenReward: 1000,
+    element: "earth",
+  },
+  {
+    id: "epic-bioregional-mapping",
+    title: "Bioregional Mapper",
+    tier: "expert",
+    tagline: "Create a living map of your bioregion",
+    description:
+      "Produce a comprehensive living map of your bioregion: water systems, food networks, land projects, indigenous territories, and regenerative initiatives.",
+    duration: "6 months",
+    commitment: "Deep research and fieldwork",
+    regenReward: 600,
+    element: "air",
   },
 ];

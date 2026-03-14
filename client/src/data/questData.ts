@@ -1,0 +1,233 @@
+/**
+ * Quest static data — extracted from Quest.tsx for code-splitting.
+ */
+import {
+  Flame, Droplets, Sprout, TreeDeciduous, HomeIcon, Heart, Users,
+  Apple, Circle, MessageSquare, GitBranch, Wind, Brain, Sparkles,
+} from "lucide-react";
+
+export const questData = {
+  intro: {
+    id: 0,
+    slug: "fire",
+    title: "Quest 0: Fire",
+    subtitle: "Transforming the Stories That No Longer Serve Us",
+    description:
+      "Introduction to Quests, background, and intention setting for this journey. An invitation to burn the stories that are no longer serving you to make room for new stories to emerge.",
+    reward: { regen: 111, rvoice: 1 },
+    icon: Flame,
+    color: "from-orange-500/20 to-amber-500/20",
+    borderColor: "border-orange-500/50",
+    iconBg: "bg-orange-500",
+    deliverable: "A 3-7 minute video sharing who you are and why you're here",
+  },
+  spring: [
+    {
+      id: 1,
+      slug: "potion-brewing",
+      title: "Potion Brewing",
+      subtitle: "Diversifying Our Inner Soils",
+      description:
+        "Focus on our Microbiomes & Guts, Fungi Kingdom, Bacteria Kingdom, and Soil Kingdoms. Heal our relationship to the foundations of life.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: Droplets,
+      deliverable: "A 'Showcasing my Potions' video/article",
+      focus: "Microbiomes, Fungi, Bacteria, Soil",
+    },
+    {
+      id: 2,
+      slug: "saving-seeds",
+      title: "Saving Seeds",
+      subtitle: "Sovereignty & Co-Evolution",
+      description:
+        "Growing plants that know us, and consciously evolving alongside the plants that nourish us.",
+      reward: { regen: 22, rvoice: 1 },
+      icon: Sprout,
+      deliverable: "Adding seeds to swap in your LocalScale profile",
+      focus: "Plant Kingdom",
+    },
+    {
+      id: 3,
+      slug: "healing-wholes",
+      title: "Healing Wholes",
+      subtitle: "Food Abundance",
+      description:
+        "Gardening our bioregions and homesteads. Healing our relationship to plants & extending our inner-soils to relate directly with our bioregions.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: TreeDeciduous,
+      deliverable: "'Showcasing my Healing Whole' video/article",
+      focus: "Bioregion, Gardens",
+    },
+  ],
+  summer: [
+    {
+      id: 4,
+      slug: "dreaming-spaces-of-love",
+      title: "Dreaming Spaces of Love",
+      subtitle: "Family Homesteads",
+      description:
+        "Designing, dreaming, and co-creating our ideal homes, gardens, and life intended to meet all our needs. A 'Kins Domain' for your family of life.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: HomeIcon,
+      deliverable: "'Map of my current/future Space of Love' video/picture",
+      focus: "Family, Home, Gardens",
+    },
+    {
+      id: 5,
+      slug: "rites-of-love",
+      title: "Rites of Love",
+      subtitle: "We are the Land",
+      description:
+        "Marrying the Earth and your beloved, remembering we're one with our Spaces of Love, and other Sacred Rites to connect with Earth.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: Heart,
+      deliverable: "Video/article or... Get Married!",
+      focus: "Love, Partnership, Earth Connection",
+    },
+    {
+      id: 6,
+      slug: "healing-circles",
+      title: "Healing Circles",
+      subtitle: "Community Gathering",
+      description:
+        "Gathering in natural spaces with 10+ other humans to swap & practice healing modalities. Share whatever modality you're most aligned with.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: Users,
+      deliverable: "'How we gathered, what we learned' video/article",
+      focus: "Community, Healing, Touch",
+    },
+  ],
+  fall: [
+    {
+      id: 7,
+      slug: "wild-foraging",
+      title: "Wild Foraging",
+      subtitle: "Deep Nourishment",
+      description:
+        "Foraging mushrooms, medicinal herbs, berries & tree magic. Eating sunlight and enjoying food plant-to-mouth while attuning to our ideal diets.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: Apple,
+      deliverable: "'What did I harvest and what did I do with it?' video/article",
+      focus: "Foraging, Wild Foods, Nutrition",
+    },
+    {
+      id: 8,
+      slug: "medicine-journey",
+      title: "Medicine Journey",
+      subtitle: "Inner Exploration",
+      description:
+        "A guided journey into the depths of consciousness, exploring the medicine within and around us.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: Circle,
+      deliverable: "Reflection on your medicine journey",
+      focus: "Consciousness, Healing, Spirit",
+    },
+    {
+      id: 9,
+      slug: "tree-talk",
+      title: "Tree Talk",
+      subtitle: "Forest Communication",
+      description:
+        "Learning to communicate with and understand the wisdom of trees. Deepening our relationship with the forest.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: TreeDeciduous,
+      deliverable: "'My conversation with trees' video/article",
+      focus: "Trees, Nature, Communication",
+    },
+  ],
+  winter: [
+    {
+      id: 10,
+      slug: "communication-patterns",
+      title: "Communication Patterns",
+      subtitle: "How We Relate",
+      description:
+        "Exploring and improving our patterns of communication. Learning to listen deeply and speak authentically.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: MessageSquare,
+      deliverable: "Reflection on communication patterns",
+      focus: "Communication, Relationships",
+    },
+    {
+      id: 11,
+      slug: "coordination-patterns",
+      title: "Coordination Patterns",
+      subtitle: "How We Organize",
+      description:
+        "Understanding how we coordinate as groups. Exploring governance, decision-making, and collective action.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: GitBranch,
+      deliverable: "Analysis of coordination patterns",
+      focus: "Governance, Organization",
+    },
+    {
+      id: 12,
+      slug: "breathplay-future-dreaming",
+      title: "Breathplay & Future Dreaming",
+      subtitle: "Visioning Together",
+      description:
+        "Using breathwork to access expanded states and dream into the future we want to create together.",
+      reward: { regen: 111, rvoice: 1 },
+      icon: Wind,
+      deliverable: "Vision board or future dreaming video",
+      focus: "Breathwork, Visioning",
+    },
+  ],
+  routine: {
+    id: 13,
+    title: "Fasting",
+    subtitle: "Regenerative Ikigai",
+    description:
+      "What is your role? Discovering your unique purpose through the practice of fasting and reflection.",
+    reward: { regen: 111, rvoice: 1 },
+    icon: Brain,
+    deliverable: "'My Regenerative Ikigai' reflection",
+    focus: "Purpose, Role, Fasting",
+  },
+  featured: {
+    title: "Food Foresting",
+    subtitle: "Being Human Again",
+    description:
+      "Go out with your friends and family and plant seeds for fruiting plants in public spaces, parks, forests, and anywhere nature can thrive. This quest is all about turning our planet into a food forest where hunger is no longer relevant. Document your adventure and share what you planted, where, and the joy of being human again.",
+    reward: { regen: 33, rvoice: 1 },
+    icon: Sparkles,
+    deliverable: "A <3 min video and/or written article",
+    focus: "Bioregion, Food Forest, Community",
+  },
+};
+
+export const QUEST_BEST_SEASONS: Record<string, string[]> = {
+  "quest-0": ["summer"],
+  "quest-1": ["spring", "summer", "fall"],
+  "quest-2": ["spring", "summer"],
+  "quest-3": ["spring"],
+  "quest-4": ["summer"],
+  "quest-5": ["winter"],
+  "quest-6": ["summer"],
+  "quest-7": ["any"],
+  "quest-8": ["summer", "fall"],
+  "quest-9": ["summer"],
+  "quest-10": ["spring", "fall"],
+  "quest-11": ["any"],
+  "quest-12": ["spring", "summer"],
+  "quest-13": ["winter", "spring"],
+};
+
+export const SEASON_HERO: Record<string, { gradient: string; tagline: string }> = {
+  spring: {
+    gradient: "linear-gradient(to bottom, #1a472a, #2d6a4f)",
+    tagline: "Spring is a good time to plant",
+  },
+  summer: {
+    gradient: "linear-gradient(to bottom, #1a472a, #40916c)",
+    tagline: "Summer calls for action",
+  },
+  fall: {
+    gradient: "linear-gradient(to bottom, #2d3a1e, #52400a)",
+    tagline: "Autumn is the season of harvest",
+  },
+  winter: {
+    gradient: "linear-gradient(to bottom, #0d1b2a, #1a2f4a)",
+    tagline: "Winter is for reflection",
+  },
+};

@@ -1191,6 +1191,31 @@ Where is this happening? Who is the founding group? What is the land situation? 
     }
   }
 
+  // ── Part F: Air Conversations category ───────────────────────────────────────
+
+  console.log("\n=== Part F: Air Conversations category ===");
+
+  const [existingAirCats] = await conn.execute(
+    "SELECT id FROM forumCategories WHERE slug = 'air-conversations' LIMIT 1"
+  ) as any;
+
+  if (existingAirCats.length > 0) {
+    console.log(`air-conversations category already exists (#${existingAirCats[0].id})`);
+  } else {
+    const [airCatRes] = await conn.execute(
+      "INSERT INTO forumCategories (slug, name, description, icon, color, sortOrder) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)",
+      [
+        "air-conversations",
+        "Air Conversations",
+        "Open threads for hard conversations, future visions, and ideas that need space to breathe.",
+        "Wind",
+        "#c084fc",
+        10,
+      ]
+    ) as any;
+    console.log(`Created air-conversations category #${airCatRes.insertId}`);
+  }
+
   await conn.end();
   console.log(`\nDone. Posts created: ${postsCreated}, Comments added: ${commentsCreated}`);
 }

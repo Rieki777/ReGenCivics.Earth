@@ -87,11 +87,12 @@ export default function Community() {
     try { localStorage.setItem('regen_visited_forum', 'true'); } catch { /* ignore */ }
   }, []);
 
-  const { data: categories, isLoading } = trpc.forum.categories.useQuery();
-  const { data: landProjectThreads } = trpc.forum.activeProjectThreads.useQuery();
-  const { data: organisationThreads } = trpc.forum.activeOrganisationThreads.useQuery();
-  const { data: airThreads, isLoading: airLoading } = trpc.forum.activeAirThreads.useQuery();
-  const { data: pulseData } = trpc.forum.communityPulse.useQuery();
+  const FIVE_MIN = 5 * 60 * 1000;
+  const { data: categories, isLoading } = trpc.forum.categories.useQuery(undefined, { staleTime: FIVE_MIN });
+  const { data: landProjectThreads } = trpc.forum.activeProjectThreads.useQuery(undefined, { staleTime: FIVE_MIN });
+  const { data: organisationThreads } = trpc.forum.activeOrganisationThreads.useQuery(undefined, { staleTime: FIVE_MIN });
+  const { data: airThreads, isLoading: airLoading } = trpc.forum.activeAirThreads.useQuery(undefined, { staleTime: FIVE_MIN });
+  const { data: pulseData } = trpc.forum.communityPulse.useQuery(undefined, { staleTime: FIVE_MIN });
 
   const filteredCategories = useMemo(() => {
     if (!categories) return [];
@@ -295,44 +296,23 @@ export default function Community() {
       </section>
 
       {/* Community Pulse Strip */}
-      <section className="container px-4 max-w-4xl mx-auto py-3 border-b border-[#e8e4de] -mt-4 mb-4">
-        <p className="text-[#1a472a]/70 text-sm text-center" style={{ fontFamily: 'var(--font-body)' }}>
-          {pulseData && (pulseData.playersPostedThisWeek > 0 || pulseData.newThreadsThisWeek > 0)
-            ? `${pulseData.playersPostedThisWeek} ${pulseData.playersPostedThisWeek === 1 ? 'player' : 'players'} posted this week · ${pulseData.newThreadsThisWeek} new ${pulseData.newThreadsThisWeek === 1 ? 'thread' : 'threads'}`
-            : 'Community is warming up'}
-        </p>
-      </section>
+      <div className="flex items-center gap-6 px-4 py-2 bg-[#7dd87d]/10 border-y border-[#7dd87d]/20 text-sm text-white/70">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
+          {pulseData?.posts7d ?? 0} posts this week
+        </span>
+        <span>{pulseData?.replies7d ?? 0} replies</span>
+        <span className="ml-auto text-xs text-white/40">Live community activity</span>
+      </div>
 
-      {/* Welcome Card (shown to unauthenticated users) */}
-      {!isAuthenticated && (
-        <section className="container px-4 max-w-4xl mx-auto mb-6">
-          <div className="bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-xl p-6">
-            <h3 className="font-bold text-[#1a472a] text-base mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-              New to ReGen Civics?
-            </h3>
-            <p className="text-[#1a472a]/70 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
-              Start here: introduce yourself, share what brought you to the regen movement, and find your first quest.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link href="/quest">
-                <span className="text-[#4a7c59] text-sm font-medium hover:text-[#1a472a] transition-colors cursor-pointer flex items-center gap-1">
-                  Welcome Aboard Quests <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </Link>
-              <Link href="/forum/welcome-aboard">
-                <span className="text-[#4a7c59] text-sm font-medium hover:text-[#1a472a] transition-colors cursor-pointer flex items-center gap-1">
-                  Introduce yourself <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </Link>
-              <Link href="/profile">
-                <span className="text-[#4a7c59] text-sm font-medium hover:text-[#1a472a] transition-colors cursor-pointer flex items-center gap-1">
-                  Set up your profile <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Welcome Card */}
+      <div className="mx-4 mt-4 p-4 rounded-xl bg-[#1a472a]/40 border border-[#7dd87d]/20">
+        <h3 className="text-[#7dd87d] font-semibold text-base mb-1">Welcome to the Community Space</h3>
+        <p className="text-white/70 text-sm">
+          This is where land projects and regenerative orgs host their forum spaces. Join a conversation,
+          share a quest completion, or ask a question in the quest threads.
+        </p>
+      </div>
 
       {/* Categories Grid + Section Panels */}
       <section className="container px-4 max-w-4xl mx-auto pb-16">
@@ -446,6 +426,8 @@ export default function Community() {
                                   src={meta.image}
                                   alt={projectName}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  loading="lazy"
+                                  decoding="async"
                                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                 />
                               ) : (
@@ -499,6 +481,8 @@ export default function Community() {
                   src="/community/alliance-orgs-banner.png"
                   alt="Alliance organisations"
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#1a472a]/60 to-transparent flex items-center px-4">
