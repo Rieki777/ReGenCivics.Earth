@@ -16,8 +16,8 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions } from "../drizzle/schema";
-import { eq, sql } from "drizzle-orm";
+import { forumPosts, forumReplies, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions } from "../drizzle/schema";
+import { eq, sql, gt, count } from "drizzle-orm";
 import { getDb } from "./db";
 
 export const appRouter = router({
@@ -3216,6 +3216,31 @@ export const appRouter = router({
       if (!cat) return [];
       const posts = await db.listForumPosts(cat.id, 200, 0);
       return posts.map(p => ({ id: p.id, title: p.title }));
+    }),
+
+    activeAirThreads: publicProcedure.query(async () => {
+      const cats = await db.listForumCategories();
+      const cat = cats.find(c => c.slug === "air-conversations");
+      if (!cat) return [];
+      const posts = await db.listForumPosts(cat.id, 200, 0);
+      return posts.map(p => ({ id: p.id, title: p.title }));
+    }),
+
+    communityPulse: publicProcedure.query(async () => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const db2 = await getDb();
+      if (!db2) return { playersPostedThisWeek: 0, newThreadsThisWeek: 0 };
+      const [postCountResult] = await db2
+        .select({ value: count() })
+        .from(forumPosts)
+        .where(gt(forumPosts.createdAt, sevenDaysAgo));
+      const [replyCountResult] = await db2
+        .select({ value: count() })
+        .from(forumReplies)
+        .where(gt(forumReplies.createdAt, sevenDaysAgo));
+      const newThreadsThisWeek = postCountResult?.value ?? 0;
+      const playersPostedThisWeek = newThreadsThisWeek + (replyCountResult?.value ?? 0);
+      return { playersPostedThisWeek, newThreadsThisWeek };
     }),
 
     // Get all posts in a chain (by chainId — returns the idea root + all experiment/result posts linked to it)

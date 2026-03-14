@@ -80,6 +80,8 @@ export default function Community() {
   const { data: categories, isLoading } = trpc.forum.categories.useQuery();
   const { data: landProjectThreads } = trpc.forum.activeProjectThreads.useQuery();
   const { data: organisationThreads } = trpc.forum.activeOrganisationThreads.useQuery();
+  const { data: airThreads, isLoading: airLoading } = trpc.forum.activeAirThreads.useQuery();
+  const { data: pulseData } = trpc.forum.communityPulse.useQuery();
 
   const filteredCategories = useMemo(() => {
     if (!categories) return [];
@@ -95,6 +97,12 @@ export default function Community() {
     if (!categories) return 0;
     return categories.reduce((sum, c) => sum + (c.postCount || 0), 0);
   }, [categories]);
+
+  const fireQuestData = [
+    { id: "quest-0", title: "Quest 0: Fire", subtitle: "Letting burn what no longer serves", href: "/quest" },
+    { id: "quest-4", title: "Quest 4: Food Foresting", subtitle: "Seed the land with what you want to grow", href: "/quest" },
+    { id: "quest-10", title: "Quest 10: NVC", subtitle: "The bridge from healing into community", href: "/quest" },
+  ];
 
   // Members-only gate: show branded sign-in page for non-authenticated visitors
   if (!isAuthenticated) {
@@ -264,6 +272,46 @@ export default function Community() {
         </div>
       </section>
 
+      {/* Community Pulse Strip */}
+      <section className="container px-4 max-w-4xl mx-auto py-3 border-b border-[#e8e4de] -mt-4 mb-4">
+        <p className="text-[#1a472a]/70 text-sm text-center" style={{ fontFamily: 'var(--font-body)' }}>
+          {pulseData && (pulseData.playersPostedThisWeek > 0 || pulseData.newThreadsThisWeek > 0)
+            ? `${pulseData.playersPostedThisWeek} ${pulseData.playersPostedThisWeek === 1 ? 'player' : 'players'} posted this week · ${pulseData.newThreadsThisWeek} new ${pulseData.newThreadsThisWeek === 1 ? 'thread' : 'threads'}`
+            : 'Community is warming up'}
+        </p>
+      </section>
+
+      {/* Welcome Card (shown to unauthenticated users) */}
+      {!isAuthenticated && (
+        <section className="container px-4 max-w-4xl mx-auto mb-6">
+          <div className="bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-xl p-6">
+            <h3 className="font-bold text-[#1a472a] text-base mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+              New to ReGen Civics?
+            </h3>
+            <p className="text-[#1a472a]/70 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+              Start here: introduce yourself, share what brought you to the regen movement, and find your first quest.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/quest">
+                <span className="text-[#4a7c59] text-sm font-medium hover:text-[#1a472a] transition-colors cursor-pointer flex items-center gap-1">
+                  Welcome Aboard Quests <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
+              <Link href="/forum/welcome-aboard">
+                <span className="text-[#4a7c59] text-sm font-medium hover:text-[#1a472a] transition-colors cursor-pointer flex items-center gap-1">
+                  Introduce yourself <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
+              <Link href="/profile">
+                <span className="text-[#4a7c59] text-sm font-medium hover:text-[#1a472a] transition-colors cursor-pointer flex items-center gap-1">
+                  Set up your profile <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Categories Grid */}
       <section className="container px-4 max-w-4xl mx-auto pb-16">
         {isLoading ? (
@@ -295,7 +343,7 @@ export default function Community() {
                   <div className="bg-white rounded-xl p-4 md:p-5 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div className="flex items-start gap-3 md:gap-4">
                       {/* Category Icon */}
-                      <div 
+                      <div
                         className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
                         style={{ backgroundColor: `${category.color}20`, color: category.color || '#4a7c59' }}
                       >
@@ -305,7 +353,7 @@ export default function Community() {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 
+                          <h3
                             className="font-bold text-[#1a472a] text-base md:text-lg group-hover:text-[#4a7c59] transition-colors truncate"
                             style={{ fontFamily: 'var(--font-display)' }}
                           >
@@ -319,8 +367,8 @@ export default function Community() {
 
                       {/* Stats */}
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <Badge 
-                          variant="secondary" 
+                        <Badge
+                          variant="secondary"
                           className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-xs"
                         >
                           {category.postCount || 0} {(category.postCount || 0) === 1 ? 'thread' : 'threads'}
@@ -335,11 +383,14 @@ export default function Community() {
           </div>
         )}
 
-        {/* Land Project Spaces */}
+        {/* Earth: Land Project Spaces */}
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-[#1a472a] mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-            Land Project Spaces
+          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+            🌍 Earth
           </h2>
+          <p className="text-[#1a472a]/60 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+            Land project spaces. Where the work is rooted.
+          </p>
           {!landProjectThreads || landProjectThreads.length === 0 ? (
             <p className="text-[#1a472a]/50 text-sm bg-white rounded-xl p-4 border border-[#e8e4de]">
               Land project spaces will appear here as projects join the alliance.
@@ -371,11 +422,14 @@ export default function Community() {
           )}
         </div>
 
-        {/* Alliance Organisation Spaces */}
+        {/* Water: Alliance Organisation Spaces */}
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-[#1a472a] mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-            Alliance Organisations
+          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+            🌊 Water
           </h2>
+          <p className="text-[#1a472a]/60 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+            Alliance organisations. Networks and partners moving together.
+          </p>
           {!organisationThreads || organisationThreads.length === 0 ? (
             <p className="text-[#1a472a]/50 text-sm bg-white rounded-xl p-4 border border-[#e8e4de]">
               Organisation spaces will appear here as partners join the alliance.
@@ -404,32 +458,87 @@ export default function Community() {
           )}
         </div>
 
-        {/* Quest Suggestions CTA */}
-        <ScrollRevealMotion>
-          <Link href="/community/quests">
-            <div className="mt-6 bg-gradient-to-r from-[#1a472a] to-[#2d5a3f] rounded-xl p-5 border border-[#7dd87d]/30 hover:border-[#7dd87d]/60 transition-all cursor-pointer group overflow-hidden relative">
-              <div className="absolute top-2 right-2 opacity-20">
-                <FloatElement amplitude={5} duration={3}>
-                  <Sparkles className="w-8 h-8 text-[#7dd87d]" />
-                </FloatElement>
+        {/* Fire: Quests and Challenges */}
+        <div className="mt-8 bg-amber-50/50 rounded-2xl p-5 border border-amber-200/40">
+          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+            🔥 Fire
+          </h2>
+          <p className="text-[#1a472a]/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+            Quests and challenges. Where regeneration gets real.
+          </p>
+          <div className="bg-amber-100/60 rounded-xl p-4 mb-4 flex items-center justify-between gap-3">
+            <p className="text-amber-900/80 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+              Looking for your next quest? The game is on.
+            </p>
+            <Link href="/quest">
+              <span className="text-amber-700 text-sm font-semibold hover:text-amber-900 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1">
+                Explore Quests <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {fireQuestData.map((quest) => (
+              <div key={quest.id} className="bg-white rounded-xl p-4 border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all group">
+                <p className="font-semibold text-[#1a472a] text-sm mb-1 group-hover:text-amber-800 transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
+                  {quest.title}
+                </p>
+                <p className="text-[#1a472a]/50 text-xs mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+                  {quest.subtitle}
+                </p>
+                <Link href={quest.href}>
+                  <span className="inline-flex items-center gap-1 text-amber-700 text-xs font-medium hover:text-amber-900 transition-colors cursor-pointer">
+                    Join the Quest <ArrowRight className="w-3 h-3" />
+                  </span>
+                </Link>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0">
-                  <Lightbulb className="w-5 h-5 text-[#7dd87d]" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-white text-base mb-0.5" style={{ fontFamily: 'var(--font-display)' }}>
-                    Suggest the Next Quest
-                  </h3>
-                  <p className="text-white/60 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
-                    Submit quest ideas and vote for your favorites. Community-driven questing!
-                  </p>
-                </div>
-                <ArrowRight className="w-5 h-5 text-[#7dd87d] group-hover:translate-x-1 transition-transform" />
-              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Air: Hard Conversations */}
+        <div className="mt-8 bg-slate-50/50 rounded-2xl p-5 border border-slate-200/40">
+          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+            🍃 Air
+          </h2>
+          <p className="text-[#1a472a]/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+            Some things need to move. This is where we say the hard thing, clear what's stagnant, and make space for what comes next.
+          </p>
+          {airLoading ? (
+            <p className="text-[#1a472a]/40 text-sm">Loading...</p>
+          ) : !airThreads || airThreads.length === 0 ? (
+            <div className="flex items-center justify-between gap-3 bg-white rounded-xl p-4 border border-slate-200/60">
+              <p className="text-[#1a472a]/50 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+                No threads yet. Be the first to clear the air.
+              </p>
+              <Link href="/forum/air-conversations">
+                <span className="text-slate-600 text-sm font-medium hover:text-slate-800 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1">
+                  Start a thread <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
             </div>
-          </Link>
-        </ScrollRevealMotion>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {airThreads.map((thread: { id: number; title: string }) => (
+                <Link key={thread.id} href={`/community/post/${thread.id}`}>
+                  <div className="bg-white rounded-xl p-4 border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="w-4 h-4 text-slate-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-slate-700 transition-colors">
+                          {thread.title}
+                        </p>
+                        <p className="text-[#1a472a]/50 text-xs">Join the conversation</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Tag filter and chain shortcuts */}
         <div className="mt-6 flex flex-wrap gap-2">
