@@ -8,7 +8,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon, Info } from "lucide-react";
+import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon, Info, Map } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { Link } from "wouter";
 import { ParallaxSection } from "@/components/ParallaxSection";
@@ -18,7 +18,6 @@ import { QuestBadges } from "@/components/QuestBadges";
 import { QuestArtifactsGallery } from "@/components/QuestArtifactsGallery";
 import { trpc } from "@/lib/trpc";
 import { QuestFilter, QuestCategory, QuestDifficulty, QuestTime, QuestElement, QUEST_METADATA } from "@/components/QuestFilter";
-import { QUEST_QUALIFIERS } from "@/data/questQualifiers";
 import { SocialLinks } from "@/components/SocialLinks";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO, pageSEO } from "@/components/SEO";
@@ -31,6 +30,7 @@ import { QuestArcMap } from "@/components/QuestArcMap";
 import { useHemisphere, setHemisphereOverride } from "@/hooks/useHemisphere";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { questData, QUEST_BEST_SEASONS, SEASON_HERO } from "@/data/questData";
+import { seasonalQuestsData } from "@/data/seasonalQuestsData";
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.png to this path
 const QUEST_IMG_BASE = "https://assets.regencivics.earth/quests";
@@ -97,7 +97,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 // Original quest IDs (0–12) get gold shimmer; future quests get green shimmer
 const ORIGINAL_QUEST_IDS = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12]);
 
-const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean }) {
+const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated, endorsements }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean, endorsements?: Array<{ orgId: string; endorsementType: "recommended" | "required" }> }) {
   const Icon = quest.icon;
   const hasDetails = questDetailsData[`quest-${quest.id}`];
   const questId = `quest-${quest.id}`;
@@ -191,20 +191,27 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
           <strong>Deliverable:</strong> {quest.deliverable}
         </p>
 
-        {/* Qualifier badges */}
-        {QUEST_QUALIFIERS[questId] && QUEST_QUALIFIERS[questId].length > 0 && (
+        {/* Endorsement badges from DB */}
+        {endorsements && endorsements.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {QUEST_QUALIFIERS[questId].slice(0, 2).map((org) => (
-              <span key={org} className="text-[10px] px-2 py-0.5 bg-[#7dd87d]/20 text-[#1a472a] rounded-full border border-[#7dd87d]/30">
-                🌱 {org}
+            {endorsements.slice(0, 2).map((e) => (
+              <span
+                key={`${e.orgId}-${e.endorsementType}`}
+                className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                  e.endorsementType === "required"
+                    ? "bg-amber-100 text-amber-800 border-amber-300"
+                    : "bg-[#7dd87d]/20 text-[#1a472a] border-[#7dd87d]/30"
+                }`}
+              >
+                {e.endorsementType === "required" ? "⭐ Required by" : "🌱 Recommended by"} {e.orgId}
               </span>
             ))}
-            {QUEST_QUALIFIERS[questId].length > 2 && (
+            {endorsements.length > 2 && (
               <span
                 className="text-[10px] px-2 py-0.5 bg-[#7dd87d]/20 text-[#1a472a] rounded-full border border-[#7dd87d]/30 cursor-help"
-                title={QUEST_QUALIFIERS[questId].slice(2).map(o => `🌱 ${o}`).join(", ")}
+                title={endorsements.slice(2).map(e => `${e.endorsementType === "required" ? "Required" : "Recommended"} by ${e.orgId}`).join(", ")}
               >
-                🌱 +{QUEST_QUALIFIERS[questId].length - 2} more
+                +{endorsements.length - 2} more
               </span>
             )}
           </div>
@@ -434,9 +441,20 @@ export default function Quest() {
   const activeCountsQuery = trpc.quest.activeCountPerQuest.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const myActiveQuestsQuery = trpc.quest.myActiveQuests.useQuery(undefined, { enabled: !!user, staleTime: 5 * 60 * 1000 });
   const spotlightQuery = trpc.quest.spotlight.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const allEndorsementsQuery = trpc.quest.allEndorsements.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
 
   const myActiveQuestIds = new Set(myActiveQuestsQuery.data ?? []);
   const activeCountsData = activeCountsQuery.data ?? {};
+
+  // Build map: questId → endorsements array
+  const endorsementsMap = React.useMemo(() => {
+    const map: Record<string, Array<{ orgId: string; endorsementType: "recommended" | "required" }>> = {};
+    for (const e of (allEndorsementsQuery.data ?? [])) {
+      if (!map[e.questId]) map[e.questId] = [];
+      map[e.questId].push({ orgId: e.orgId, endorsementType: e.endorsementType as "recommended" | "required" });
+    }
+    return map;
+  }, [allEndorsementsQuery.data]);
 
   const signalActive = trpc.quest.signalActive.useMutation({ onSettled: () => myActiveQuestsQuery.refetch() });
   const clearActive = trpc.quest.clearActive.useMutation({ onSettled: () => myActiveQuestsQuery.refetch() });
@@ -599,7 +617,7 @@ export default function Quest() {
               style={{ fontFamily: 'var(--font-accent)' }}
               onClick={() => setShowQuestArc(!showQuestArc)}
             >
-              <GitBranch className="mr-2 w-4 h-4" />
+              <Map className="mr-2 w-4 h-4" />
               {showQuestArc ? "Hide Quest Arc" : "View Quest Arc"}
             </Button>
           </div>
@@ -615,7 +633,7 @@ export default function Quest() {
                 className="text-xl font-bold text-[#1a472a] mb-4 text-center"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Quest Arc — the full journey at a glance
+                Quest Arc for the Rites of Passage: full journey!
               </h2>
               <QuestArcMap onSelectQuest={openQuestDetails} />
             </div>
@@ -673,6 +691,12 @@ export default function Quest() {
             
             {whyQuestsExpanded && (
               <div className="bg-white p-8 rounded-2xl border-3 border-[#7dd87d]/30 shadow-lg mb-8 animate-in slide-in-from-top-2 duration-300">
+                <p className="text-xl text-[#1a472a] font-bold leading-relaxed mb-2 text-center">
+                  What if healing ourselves and the Earth is actually a fun and Infinite Game?
+                </p>
+                <p className="text-base text-[#1a472a]/80 leading-relaxed mb-6 text-center">
+                  We are co-creating a new economic and financial system built on top of this question, distributing tokens throughout our movement while doing tasks that heal ourselves, our communities, our bioregions, and our Earth. Which, when you look closely, are all the same thing.
+                </p>
                 <p className="text-lg text-[#1a472a]/80 leading-relaxed mb-6 text-center">
                   The Rites of Passage Quests are designed to help us transition into a growing diversity of regenerative realities by helping us:
                 </p>
@@ -763,39 +787,7 @@ export default function Quest() {
         </div>
       </section>
 
-      {/* Token Rewards Callout - Links to Game Page */}
-      <section className="py-12 bg-[#d4e8d4]">
-        <div className="container">
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white p-8 rounded-2xl border-3 border-[#7dd87d]/30 shadow-lg text-center">
-              <div className="flex justify-center gap-4 mb-6">
-                <img src="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png" alt="$Regen Token" width={64} height={64} className="w-16 h-16 object-contain" loading="lazy" decoding="async" />
-                <img src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png" alt="RGVoice Token" width={64} height={64} className="w-16 h-16 object-contain" loading="lazy" decoding="async" />
-              </div>
-              <h2 
-                className="text-2xl md:text-3xl font-bold mb-4 text-[#1a472a]"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                Earn Tokens, Gain <span className="text-[#7dd87d]">Voice</span>
-              </h2>
-              <p className="text-[#1a472a]/70 mb-6">
-                Complete quests to earn $Regen tokens and RGVoice governance tokens. Learn how the token system works and how to participate in the Infinite Game.
-              </p>
-              <Link href="/game">
-                <Button
-                  size="lg"
-                  className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
-                  style={{ fontFamily: 'var(--font-accent)' }}
-                >
-                  <SeedOfLifeIcon className="mr-2 w-5 h-5" size={20} />
-                  Learn More
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Token info is shown on quest cards — removed duplicate callout per Fix 110-C */}
 
       {/* Quest 0 - Starting Point */}
       <section className="py-16">
@@ -841,7 +833,7 @@ export default function Quest() {
                 </ul>
               </div>
               <div className="flex items-center gap-4 text-sm mb-4">
-                <span className="px-3 py-1 bg-[#7dd87d]/50 text-[#1a472a] rounded-full font-bold">+33 $Regen</span>
+                <span className="px-3 py-1 bg-[#7dd87d]/50 text-[#1a472a] rounded-full font-bold">+111 $Regen</span>
                 <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-bold">+1 RGVoice</span>
               </div>
               {/* Mark Complete Button */}
@@ -903,7 +895,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.spring.length}>
             {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} />
             ))}
           </QuestCarousel>
           {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -928,7 +920,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.summer.length}>
             {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} />
             ))}
           </QuestCarousel>
           {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -953,7 +945,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.fall.length}>
             {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} />
             ))}
           </QuestCarousel>
           {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -978,12 +970,55 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.winter.length}>
             {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} />
             ))}
           </QuestCarousel>
           {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
             <p className="text-center text-white/70 py-8">No quests match your current filters</p>
           )}
+        </div>
+      </ParallaxSection>
+
+      {/* Anytime Quests Section */}
+      <ParallaxSection
+        imageSrc="https://assets.regencivics.earth/kdpmqczDwXGfwTIK.jpg"
+        overlay="rgba(13, 28, 20, 0.80)"
+      >
+        <div className="container">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-14 h-14 rounded-full bg-[#4a7c59] flex items-center justify-center shadow-lg">
+              <Sparkles className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
+                Anytime Quests
+              </h3>
+              <p className="text-[#7dd87d] font-medium">No season required. Do these whenever you are ready.</p>
+            </div>
+          </div>
+          <QuestCarousel totalCount={seasonalQuestsData.filter(q => q.season === "any").length}>
+            {seasonalQuestsData.filter(q => q.season === "any").map((quest) => (
+              <div key={quest.id} className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 border border-[#7dd87d]/20 hover:border-[#7dd87d]/50 hover:shadow-xl transition-all duration-200 cursor-pointer min-w-0">
+                <div className="mb-3">
+                  <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-[#7dd87d]/20 text-[#1a472a] mb-2">
+                    {quest.element ?? "any"}
+                  </span>
+                  <h4 className="font-bold text-[#1a472a] text-base leading-snug" style={{ fontFamily: 'var(--font-display)' }}>
+                    {quest.title}
+                  </h4>
+                  {quest.tagline && (
+                    <p className="text-[#4a7c59] text-xs italic mt-0.5">{quest.tagline}</p>
+                  )}
+                </div>
+                <p className="text-[#1a472a]/70 text-sm line-clamp-3 mb-3">{quest.description}</p>
+                {quest.deliverable && (
+                  <p className="text-xs text-[#4a7c59] font-medium">
+                    🌱 {quest.deliverable}
+                  </p>
+                )}
+              </div>
+            ))}
+          </QuestCarousel>
         </div>
       </ParallaxSection>
 

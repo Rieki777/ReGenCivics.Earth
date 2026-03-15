@@ -66,6 +66,18 @@ function timeAgo(date: Date | string): string {
   return `${months}mo ago`;
 }
 
+// Static card images for land projects — augmented at runtime with DB data
+const STATIC_PROJECT_META: Record<string, { image: string; location?: string }> = {
+  "Finca Sagrada": { image: "/community/finca-sagrada.webp", location: "Ecuador" },
+  "Liminal Village": { image: "/community/liminal-village.webp", location: "Italy" },
+  "Traditional Dream Factory": { image: "/community/traditional-dream-factory.webp", location: "Portugal" },
+  "Heartland Collective": { image: "/community/heartland-collective.webp", location: "USA" },
+  "StarSeed Village": { image: "/community/starseed-village.webp" },
+  "The Nyx": { image: "/community/nyx.webp" },
+  "NeighbourGood": { image: "/community/neighbourgood.webp", location: "South Africa" },
+  "La Tierra": { image: "/community/la-tierra.webp" },
+};
+
 // Projects that are no longer active in the alliance
 const REMOVED_PROJECTS = new Set([
   "Ubuntu",
@@ -93,6 +105,7 @@ export default function Community() {
   const { data: organisationThreads } = trpc.forum.activeOrganisationThreads.useQuery(undefined, { staleTime: FIVE_MIN });
   const { data: airThreads, isLoading: airLoading } = trpc.forum.activeAirThreads.useQuery(undefined, { staleTime: FIVE_MIN });
   const { data: pulseData } = trpc.forum.communityPulse.useQuery(undefined, { staleTime: FIVE_MIN });
+  const { data: activeLandProjectsData } = trpc.community.activeLandProjects.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
 
   const filteredCategories = useMemo(() => {
     if (!categories) return [];
@@ -115,17 +128,19 @@ export default function Community() {
     { id: "quest-10", title: "Quest 10: NVC", subtitle: "The bridge from healing into community", href: "/quest" },
   ];
 
-  // Card images live at public/images/community/[slug].jpg
-  const PROJECT_META: Record<string, { image: string; location?: string }> = {
-    "Finca Sagrada": { image: "/community/finca-sagrada.webp", location: "Ecuador" },
-    "Liminal Village": { image: "/community/liminal-village.webp", location: "Italy" },
-    "Traditional Dream Factory": { image: "/community/traditional-dream-factory.webp", location: "Portugal" },
-    "Heartland Collective": { image: "/community/heartland-collective.webp", location: "USA" },
-    "StarSeed Village": { image: "/community/starseed-village.webp" },
-    "The Nyx": { image: "/community/nyx.webp" },
-    "NeighbourGood": { image: "/community/neighbourgood.webp", location: "South Africa" },
-    "La Tierra": { image: "/community/la-tierra.webp" },
-  };
+  // Merge DB location data into PROJECT_META (DB location overrides static if present)
+  const PROJECT_META: Record<string, { image: string; location?: string; websiteUrl?: string }> = useMemo(() => {
+    const merged: Record<string, { image: string; location?: string; websiteUrl?: string }> = { ...STATIC_PROJECT_META };
+    for (const p of (activeLandProjectsData ?? [])) {
+      const existing = merged[p.projectName];
+      merged[p.projectName] = {
+        image: existing?.image ?? "",
+        location: p.location || p.country || existing?.location,
+        websiteUrl: p.websiteUrl ?? undefined,
+      };
+    }
+    return merged;
+  }, [activeLandProjectsData]);
 
   // Members-only gate: show branded sign-in page for non-authenticated visitors
   if (!isAuthenticated) {
@@ -245,7 +260,7 @@ export default function Community() {
           </p>
 
           {/* Stats bar */}
-          <div className="flex items-center justify-center gap-6 text-white/70 text-sm mb-6">
+          <div className="flex items-center justify-center gap-6 text-white/90 text-sm mb-6">
             <div className="flex items-center gap-1.5">
               <MessageCircle className="w-4 h-4" />
               <span>{totalPosts} {totalPosts === 1 ? t('forum.thread') : t('forum.threads')}</span>
@@ -296,19 +311,19 @@ export default function Community() {
       </section>
 
       {/* Community Pulse Strip */}
-      <div className="flex items-center gap-6 px-4 py-2 bg-[#7dd87d]/10 border-y border-[#7dd87d]/20 text-sm text-white/70">
+      <div className="flex items-center gap-6 px-4 py-2 bg-[#7dd87d]/25 border-y border-[#7dd87d]/30 text-sm text-[#1a472a]">
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
           {pulseData?.posts7d ?? 0} posts this week
         </span>
         <span>{pulseData?.replies7d ?? 0} replies</span>
-        <span className="ml-auto text-xs text-white/40">Live community activity</span>
+        <span className="ml-auto text-xs text-[#4a7c59]/70">Live community activity</span>
       </div>
 
       {/* Welcome Card */}
-      <div className="mx-4 mt-4 p-4 rounded-xl bg-[#1a472a]/40 border border-[#7dd87d]/20">
-        <h3 className="text-[#7dd87d] font-semibold text-base mb-1">Welcome to the Community Space</h3>
-        <p className="text-white/70 text-sm">
+      <div className="mx-4 mt-4 p-4 rounded-xl bg-[#f0f7f0] border border-[#7dd87d]/30">
+        <h3 className="text-[#1a472a] font-semibold text-base mb-1">Welcome to the Community Space</h3>
+        <p className="text-[#4a7c59] text-sm">
           This is where land projects and regenerative orgs host their forum spaces. Join a conversation,
           share a quest completion, or ask a question in the quest threads.
         </p>
@@ -673,10 +688,13 @@ export default function Community() {
 
         {/* Newsletter CTA */}
         <ScrollRevealMotion>
-          <div className="mt-6 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
-            <h3 className="text-white/80 text-sm font-semibold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-              Get the Weekly Digest
+          <div className="mt-6 p-6 rounded-2xl border border-[#7dd87d]/30 bg-[#7dd87d]/10">
+            <h3 className="text-[#1a472a] font-bold text-lg flex items-center gap-2 mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+              🌿 Get the Weekly Digest
             </h3>
+            <p className="text-[#4a7c59] text-sm mt-1 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+              Stay updated with the best conversations from the week.
+            </p>
             {!alreadySubscribed && <NewsletterSignupInline />}
           </div>
         </ScrollRevealMotion>

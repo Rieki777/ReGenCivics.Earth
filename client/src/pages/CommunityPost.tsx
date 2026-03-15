@@ -168,6 +168,17 @@ export default function CommunityPost() {
     { enabled: postId > 0 }
   );
 
+  // Detect if this is a land project or alliance org forum space
+  const isEntitySpace = post?.categorySlug === 'active-projects' || post?.categorySlug === 'active-organisations';
+  const entityOrgName = post?.title
+    ?.replace(/ - Land Project Forum$/, '')
+    ?.replace(/ - Alliance Organisation Forum$/, '')
+    ?.replace(/ - Alliance Forum$/, '') ?? '';
+  const { data: orgEndorsements } = trpc.quest.getEndorsementsByOrgName.useQuery(
+    { orgName: entityOrgName },
+    { enabled: isEntitySpace && !!entityOrgName, staleTime: 10 * 60 * 1000 }
+  );
+
   const createReplyMutation = trpc.forum.createReply.useMutation({
     onSuccess: () => {
       setReplyContent("");
@@ -320,7 +331,8 @@ export default function CommunityPost() {
     );
   }
 
-  const canDeletePost = user && (user.id === post.authorId || user.role === 'admin');
+  const isAdminOrSuper = user?.role === 'admin' || user?.role === 'superadmin';
+  const canDeletePost = user && (user.id === post.authorId || isAdminOrSuper);
 
   return (
     <PageTransition>
@@ -516,6 +528,32 @@ export default function CommunityPost() {
         {/* Related Projects (C15) */}
         {postId > 0 && <ProjectConnectionsPanel postId={postId} />}
 
+        {/* Quest Endorsements (Fix 107) — shown on land project and alliance org forum spaces */}
+        {isEntitySpace && orgEndorsements && orgEndorsements.length > 0 && (
+          <div className="mb-4 bg-[#f0f7f0] border border-[#7dd87d]/25 rounded-xl px-4 py-4">
+            <p className="text-[#4a7c59] text-xs font-semibold uppercase tracking-wide mb-3">
+              Quest Endorsements
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {orgEndorsements.map((e) => (
+                <span
+                  key={`${e.questId}-${e.endorsementType}`}
+                  className={`text-xs px-2.5 py-1 rounded-full border ${
+                    e.endorsementType === 'required'
+                      ? 'bg-amber-100 text-amber-800 border-amber-300'
+                      : 'bg-[#7dd87d]/20 text-[#1a472a] border-[#7dd87d]/30'
+                  }`}
+                >
+                  {e.endorsementType === 'required' ? '⭐ Required:' : '🌱 Recommended:'} {e.questId.replace('quest-', 'Quest ')}
+                </span>
+              ))}
+            </div>
+            <p className="text-[#4a7c59]/60 text-[10px] mt-2">
+              {entityOrgName} endorses these quests for their applicants and community members.
+            </p>
+          </div>
+        )}
+
         {/* Thread Chain Navigation (C8) */}
         {post.threadStage && (post.chainId || post.id) && (
           <ChainNav postId={post.id} chainId={post.chainId ?? post.id} currentStage={post.threadStage} />
@@ -542,7 +580,7 @@ export default function CommunityPost() {
               Replies ({replies.length})
             </h3>
             {replies.map((reply, index) => {
-              const canDeleteReply = user && (user.id === reply.authorId || user.role === 'admin');
+              const canDeleteReply = user && (user.id === reply.authorId || isAdminOrSuper);
               const isNested = !!reply.parentReplyId;
               
               return (

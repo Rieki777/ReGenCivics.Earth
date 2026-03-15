@@ -16,7 +16,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "superadmin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -1729,4 +1729,15 @@ export const questEndorsements = mysqlTable("questEndorsements", {
 });
 export type QuestEndorsement = typeof questEndorsements.$inferSelect;
 export type InsertQuestEndorsement = typeof questEndorsements.$inferInsert;
+
+// ─── Blog Post Edits ──────────────────────────────────────────────────────────
+// Superadmin content overrides for static blog posts (keyed by slug).
+export const blogEdits = mysqlTable("blogEdits", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  content: text("content").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BlogEdit = typeof blogEdits.$inferSelect;
+export type InsertBlogEdit = typeof blogEdits.$inferInsert;
 

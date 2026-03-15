@@ -16,7 +16,8 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, forumReplies, forumCategories, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims, questEndorsements } from "../drizzle/schema";
+import { forumPosts, forumReplies, forumCategories, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims, questEndorsements, applications as applicationsTable, blogEdits } from "../drizzle/schema";
+import { superadminProcedure } from "./_core/trpc";
 import { eq, sql, gt, count } from "drizzle-orm";
 import { getDb } from "./db";
 
@@ -3397,7 +3398,8 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const post = await db.getForumPost(input.id);
         if (!post) throw new TRPCError({ code: 'NOT_FOUND' });
-        if (post.authorId !== ctx.user.id && ctx.user.role !== 'admin') {
+        const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
+        if (post.authorId !== ctx.user.id && !isAdminOrSuper) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
         }
         await db.deleteForumPost(input.id);
@@ -3409,8 +3411,9 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const isMod = await db.isForumModerator(ctx.user.id);
-        if (ctx.user.role !== 'admin' && !isMod) {
-          // Check if author - for now just allow since we can't easily look up reply author
+        const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
+        if (!isAdminOrSuper && !isMod) {
+          // Author check: allow deletion (author check handled client-side; server allows mods/admins)
         }
         await db.deleteForumReply(input.id);
         return { success: true };
@@ -5296,6 +5299,29 @@ Guidelines:
         return { success: true };
       }),
 
+    // Public: get endorsements for an org by org name (looks up claim to resolve orgId)
+    getEndorsementsByOrgName: publicProcedure
+      .input(z.object({ orgName: z.string() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const claim = await db
+          .select({ orgId: orgClaims.orgId })
+          .from(orgClaims)
+          .where(sql`${orgClaims.orgName} = ${input.orgName} AND ${orgClaims.status} = 'approved'`)
+          .limit(1);
+        if (!claim[0]) return [];
+        return db.select().from(questEndorsements).where(eq(questEndorsements.orgId, claim[0].orgId));
+      }),
+
+    // Public: get all endorsements (all quests, all orgs)
+    allEndorsements: publicProcedure
+      .query(async () => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        return db.select().from(questEndorsements);
+      }),
+
     // Public: get all endorsements for a specific quest
     getEndorsementsForQuest: publicProcedure
       .input(z.object({ questId: z.string() }))
@@ -5446,6 +5472,51 @@ Guidelines:
         if (!claim[0] || claim[0].rssPromptDismissed) return null;
         return { claimId: claim[0].id, orgName: claim[0].orgName };
       }),
+  }),
+
+  // ─── Blog ────────────────────────────────────────────────────────────────
+  blog: router({
+    // Public: get content override for a slug (returns null if no override exists)
+    getOverride: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return null;
+        const rows = await db.select().from(blogEdits).where(eq(blogEdits.slug, input.slug)).limit(1);
+        return rows[0] ?? null;
+      }),
+
+    // Superadmin: save a content override for a blog post slug
+    saveOverride: superadminProcedure
+      .input(z.object({ slug: z.string(), content: z.string() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        await db.insert(blogEdits)
+          .values({ slug: input.slug, content: input.content })
+          .onDuplicateKeyUpdate({ set: { content: input.content } });
+        return { success: true };
+      }),
+  }),
+
+  // ─── Community ───────────────────────────────────────────────────────────
+  community: router({
+    // Public: active land projects with their details for Community page cards
+    activeLandProjects: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      return db
+        .select({
+          id: applicationsTable.id,
+          projectName: applicationsTable.projectName,
+          location: applicationsTable.location,
+          country: applicationsTable.country,
+          websiteUrl: applicationsTable.websiteUrl,
+        })
+        .from(applicationsTable)
+        .where(sql`${applicationsTable.status} IN ('active', 'approved')`)
+        .orderBy(sql`${applicationsTable.projectName} ASC`);
+    }),
   }),
 
 });

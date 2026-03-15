@@ -425,6 +425,39 @@ Your voice helps us build something extraordinary together.`,
 
 This is a place to process and discuss together.`,
   },
+  // Fix 107 Part B: Contributions discussion thread
+  {
+    categorySlug: "quests-gameplay",
+    title: "Tracking Your Contributions to the Regenerative Renaissance",
+    body: `If you have been contributing to a regenerative mission and haven't been fully compensated, your contributions didn't disappear. They are part of what we are building here.
+
+ReGen Civics is building the infrastructure to account for those contributions — not as a retroactive payment system, but as something more interesting: a shared record of what the movement has already put in, visible and available to all of us, backing the tokens we are distributing now.
+
+**Every form of capital counts:**
+
+- **Social capital** — relationships, networks, trust you built
+- **Material capital** — tools, equipment, land improvements, physical infrastructure
+- **Financial capital** — money invested or donated
+- **Living capital** — ecological restoration, food forests, soil health, biodiversity
+- **Intellectual capital** — research, documentation, writing, design, code
+- **Experiential capital** — knowledge passed on, mentorship, facilitation, training
+- **Spiritual capital** — ceremonies, cultural practices, the intangible things that hold communities together
+- **Cultural capital** — art, music, stories, identity, meaning
+
+For every $ReGen token we give out, we receive an equal amount of value pooled here in documented contributions. This is what backs the token — not speculation, but the actual work the movement has done and continues to do.
+
+**To bring your contributions in:**
+
+1. **Count them.** Use the [8 Forms of Capital calculator](https://docs.google.com/spreadsheets/d/1Z6V3DSRHpA7fIjE2JYi4L5L2-vH6TbOIYKXHYJp_mHY/) to map what you contributed and give it a rough value.
+2. **Write your proposal here.** Share what you're counting, what forms of capital it falls under, and how you're thinking about the value. The community helps refine proposals before formal submission.
+3. **Submit through [Hypha](https://hypha.earth).** Once your proposal is shaped, you bring it to Hypha's DAO tools for community review and token distribution on approval.
+
+This thread is also where to discuss the broader question: how do we value what the Regenerative Renaissance has collectively produced? What proposals do you think the community should prioritize? What forms of capital are hardest to quantify?
+
+If you contributed to SEEDS, Regen Network, Hypha, or other regenerative projects before finding ReGen Civics — those contributions count here too. Bring them.
+
+Learn more about the full framework on the [/game page](/game#seeds-legacy).`,
+  },
 ];
 
 // ─── Part C: Quest Seed Content ───────────────────────────────────────────────

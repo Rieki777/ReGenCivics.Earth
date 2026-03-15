@@ -669,24 +669,51 @@ export default function Game() {
         </div>
       </section>
 
-      {/* SEEDS Legacy Contribution Section */}
+      {/* Contributions to the Regenerative Renaissance */}
       <section id="seeds-legacy" className="py-12 bg-gradient-to-br from-amber-50 to-orange-50 border-y-4 border-amber-400">
         <div className="container px-4">
           <div className="max-w-4xl mx-auto">
             <AnimatedSection animation="slide-up" className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 rounded-full mb-4">
                 <span className="text-2xl">🌱</span>
-                <span className="text-amber-700 font-semibold">SEEDS Journey Contributors</span>
+                <span className="text-amber-700 font-semibold">Contributions to the Regenerative Renaissance</span>
               </div>
-              <h2 
+              <h2
                 className="text-2xl md:text-3xl font-bold text-[#1a472a] mb-4"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
-                Your SEEDS Contributions Live On!
+                Your contributions to the Regenerative Renaissance can be tracked here.
               </h2>
-              <p className="text-[#1a472a]/80 max-w-2xl mx-auto">
-                If you participated in the SEEDS journey, or the broader journey of the Regenerative Renaissance, your investments of financial or other capital can be recognized and replicated in the ReGen Game.
-              </p>
+              <div className="text-[#1a472a]/80 max-w-2xl mx-auto space-y-4 text-left">
+                <p>
+                  If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural.
+                </p>
+                <p>
+                  As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is not just the tokens — it's that your contributions become part of the shared record of the Regenerative Renaissance. Visible. Valued. Available to the movement.
+                </p>
+                <p>
+                  For every token we give out, we receive an equal amount of value pooled here. Our collective contributions are the real value backing our tokens.
+                </p>
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                  💛 If you contributed to SEEDS or other regenerative projects before finding ReGen Civics, those contributions count here too.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+                <a
+                  href="https://docs.google.com/spreadsheets/d/1Z6V3DSRHpA7fIjE2JYi4L5L2-vH6TbOIYKXHYJp_mHY/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors font-medium text-sm"
+                >
+                  📊 Use the 8 Forms of Capital calculator
+                </a>
+                <a
+                  href="/community/forum/contributions-discussion"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1a472a] text-white rounded-xl hover:bg-[#2d5a3d] transition-colors font-medium text-sm"
+                >
+                  💬 Join the discussion and start crafting your proposal
+                </a>
+              </div>
             </AnimatedSection>
             
             <div className="bg-white p-6 md:p-8 rounded-2xl border-3 border-amber-400 shadow-lg">

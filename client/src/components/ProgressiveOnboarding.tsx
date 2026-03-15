@@ -104,6 +104,10 @@ function PersonalizedCards() {
     enabled: !!user,
     staleTime: 300_000,
   });
+  const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 300_000,
+  });
 
   const hasVisitedForum =
     typeof window !== 'undefined' &&
@@ -128,6 +132,8 @@ function PersonalizedCards() {
     catch { return []; }
   })();
 
+  const isInvestor = profile.path === 'investor' || !!investorInquiry;
+
   if (profile.path) {
     cards.push({ id: 'journey-quests', title: 'Journey Quests', subtitle: 'Welcome to the Journey Quests', href: '/profile#quests', image: '/images/return-cards/journey-quests.png', accentColor: '#7dd87d', icon: Map });
   }
@@ -143,7 +149,8 @@ function PersonalizedCards() {
   if (profile.path === 'land_project') {
     cards.push({ id: 'accelerator', title: 'Seasonal Accelerator', subtitle: 'Grow your project', href: '/apply', image: '/images/return-cards/accelerator.png', accentColor: '#34d399', icon: Zap });
   }
-  if (completedQuests.length === 0 && !(profile as any).investorFormSubmitted) {
+  // Discovery Call: investors only (Rye is only taking calls from investors)
+  if (isInvestor) {
     cards.push({ id: 'schedule', title: 'Book a Discovery Call', subtitle: 'Talk with the team', href: '/schedule', image: '/images/return-cards/schedule.png', accentColor: '#f472b6', icon: CalendarDays });
   }
 
@@ -190,6 +197,22 @@ function PersonalizedCards() {
 }
 
 export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () => void }) {
+  const { user } = useAuth();
+  const { data: profile } = trpc.userProfiles.getMe.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
+  const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
+  const { data: myClaims } = trpc.orgClaims.mine.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
+  const { data: myApplications } = trpc.applications.myApplications.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
+  const { data: myCompletions } = trpc.quest.myCompletions.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
+
+  const userPaths = {
+    fund: profile?.path === 'investor' || !!investorInquiry,
+    land: profile?.path === 'land_project'
+      || !!(myClaims?.some((c: any) => c.entityType === 'land_project' && c.status === 'approved'))
+      || !!(myApplications?.some((a: any) => a.status === 'approved' || a.status === 'active')),
+    ally: !!(myClaims?.some((c: any) => c.entityType === 'organisation' && c.status === 'approved')),
+    play: !!(myCompletions && myCompletions.length > 0),
+  };
+
   return (
     <div className="min-h-[85vh] flex flex-col items-center justify-center py-8 px-4">
       <AnimatedSection animation="fade-in">
@@ -217,8 +240,14 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
             <AnimatedSection key={card.id} animation="slide-up" delay={index * 80}>
               <Link href={card.href}>
                 <div
-                  className={`glass-panel p-4 md:p-5 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} cursor-pointer overflow-hidden`}
+                  className={`relative glass-panel p-4 md:p-5 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} cursor-pointer overflow-hidden`}
                 >
+                  {/* YOUR PATH badge */}
+                  {userPaths[card.id as keyof typeof userPaths] && (
+                    <span className="absolute top-2 right-2 bg-[#7dd87d] text-[#0d2818] text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide z-10">
+                      Your Path
+                    </span>
+                  )}
                   {/* Card image */}
                   <div className="mb-3 h-24 md:h-32 flex items-center justify-center">
                     <PathCardImage

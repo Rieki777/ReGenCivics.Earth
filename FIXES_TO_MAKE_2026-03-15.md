@@ -39,7 +39,7 @@ Use the dark version (Logo A) in the footer since the footer is dark-background.
 
 ## Fix 104 — Quest card endorsement badges from DB (Medium)
 
-**Status:** PENDING
+**Status:** DONE — 2026-03-15
 
 **Context:** Fix 100 shipped the steward endorsement UI. Now quest cards should show live endorsement badges pulled from the DB instead of using empty `questQualifiers.ts`.
 
@@ -74,7 +74,7 @@ Then in Quest.tsx group by questId and show org names as badges on cards.
 
 ## Fix 105 — Community page: show real land project data from DB (Medium)
 
-**Status:** PENDING — seed-active-entities.ts has been run, DB is populated
+**Status:** DONE — 2026-03-15. Added `community.activeLandProjects` tRPC endpoint; Community.tsx merges DB location/country/websiteUrl into PROJECT_META at runtime. Note: `applications` table has no `imageUrl` column so images remain static in STATIC_PROJECT_META.
 
 **Context:** The Community page currently shows land projects from a hardcoded array in `Community.tsx`. Now that `seed-active-entities.ts` has been run, the DB has real project records in the `applications` table. The page should pull from DB via tRPC.
 
@@ -109,7 +109,7 @@ Then update `Community.tsx` to use `trpc.community.activeLandProjects.useQuery()
 
 ## Fix 106 — Fix quest card "N in the field" display (Low)
 
-**Status:** PENDING — verify it shows real numbers
+**Status:** DONE — 2026-03-15. Verified: `activePlayers` flows correctly from `activeCountsData[questId]` to QuestCard and renders `🌿 N in the field` pill when N > 0. No code changes needed.
 
 **Context:** The `activePlayers` count is being passed to QuestCards from `activeCountsQuery`. Verify it's displaying correctly. If no one has used "I'm doing this" yet, counts will be 0. That's fine. Just confirm it renders correctly and isn't showing stale or broken values.
 
@@ -121,7 +121,7 @@ Check: `client/src/pages/Quest.tsx` around `activeCountsData`.
 
 ## Fix 107 — Steward listing: show endorsements on project/org pages (Low)
 
-**Status:** PENDING — low priority, after Fix 104
+**Status:** DONE — 2026-03-15. Added `quest.getEndorsementsByOrgName` endpoint; CommunityPost.tsx detects entity forum spaces by `categorySlug` and shows endorsed quests in a panel.
 
 **Context:** When viewing a land project's community profile or forum space, show which quests they've endorsed. Pull from `questEndorsements` table using the project's orgId.
 
@@ -143,14 +143,14 @@ Use the QUEST_MASTER_SHEET.md as source content for each quest.
 
 ### CLAUDE CODE — remaining in priority order
 
-| Fix | Task | Priority |
-|---|---|---|
-| Fix 102 | Footer logo (after Rye saves logos) | Medium |
-| Fix 104 | Quest card endorsement badges from DB | Medium |
-| Fix 105 | Community page: real land projects from DB | Medium |
-| Fix 106 | Verify "N in the field" displays correctly | Low |
-| Fix 107 | Endorsements on project pages | Low |
-| Fix 76A | Quest PDF field guides | Low |
+| Fix | Task | Priority | Status |
+|---|---|---|---|
+| Fix 102 | Footer logo (after Rye saves logos) | Medium | PENDING — blocked on Rye |
+| Fix 104 | Quest card endorsement badges from DB | Medium | DONE |
+| Fix 105 | Community page: real land projects from DB | Medium | DONE |
+| Fix 106 | Verify "N in the field" displays correctly | Low | DONE (verified) |
+| Fix 107 | Endorsements on project pages | Low | DONE |
+| Fix 76A | Quest PDF field guides | Low | PENDING |
 
 ### RYE — actions needed
 

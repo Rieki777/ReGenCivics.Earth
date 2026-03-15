@@ -7,7 +7,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowRight,
   Coins,
@@ -163,6 +163,20 @@ export default function Home() {
     enabled: !!user,
     staleTime: 300_000,
   });
+
+  // Fix 109 Step 7: idle-preload most likely next routes after home page settles
+  useEffect(() => {
+    const preload = () => {
+      import('./Quest');
+      import('./Community');
+      import('./Play');
+    };
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(preload, { timeout: 3000 });
+    } else {
+      setTimeout(preload, 2000);
+    }
+  }, []);
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
   const bgImage = "https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp";

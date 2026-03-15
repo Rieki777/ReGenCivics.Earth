@@ -111,7 +111,7 @@ export function SiteTour() {
       {/* Floating trigger button */}
       <button
         onClick={() => { setOpen(true); analytics.siteTourOpened(); }}
-        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all duration-200 font-medium text-sm
+        className={`fixed bottom-[72px] right-4 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all duration-200 font-medium text-sm
           bg-[#1a472a] border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#1e5533] hover:border-[#7dd87d]/70 hover:shadow-xl
           ${open ? "opacity-0 pointer-events-none" : "opacity-100"}`}
         aria-label="Open site tour"

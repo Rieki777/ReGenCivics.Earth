@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useParams, useLocation } from 'wouter';
-import { Calendar, Clock, ArrowLeft, User, Rocket, Compass, Play, Share2, List, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, ArrowLeft, User, Rocket, Compass, Play, Share2, List, ChevronDown, ChevronUp, Pencil, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { SEO } from '@/components/SEO';
@@ -15,6 +15,9 @@ import { AnimalPopulationInfographic } from '@/components/AnimalPopulationInfogr
 import { BackButton } from "@/components/BackButton";
 import { renderInlineMarkdown } from "@/components/BlogInlineMarkdown";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
@@ -22,12 +25,33 @@ export default function BlogPost() {
   const post = getBlogPost(params.slug || '');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [tocOpen, setTocOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editContent, setEditContent] = useState('');
+
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'superadmin';
+
+  const { data: override, refetch: refetchOverride } = trpc.blog.getOverride.useQuery(
+    { slug: params.slug || '' },
+    { enabled: !!params.slug, staleTime: 5 * 60 * 1000 }
+  );
+  const saveOverride = trpc.blog.saveOverride.useMutation({
+    onSuccess: () => {
+      toast.success('Post saved.');
+      setEditMode(false);
+      refetchOverride();
+    },
+    onError: (e) => toast.error(e.message || 'Failed to save'),
+  });
+
+  // The displayed content: override from DB takes precedence over static
+  const activeContent = override?.content ?? post?.content ?? '';
   
   // Extract headers for table of contents
   const tableOfContents = useMemo(() => {
     if (!post) return [];
     const headers: { level: number; text: string; id: string }[] = [];
-    const paragraphs = post.content.split('\n\n');
+    const paragraphs = activeContent.split('\n\n');
     
     paragraphs.forEach((paragraph) => {
       if (paragraph.startsWith('## ')) {
@@ -42,8 +66,8 @@ export default function BlogPost() {
     });
     
     return headers;
-  }, [post]);
-  
+  }, [post, activeContent]);
+
   // Track scroll progress
   useEffect(() => {
     const handleScroll = () => {
@@ -174,11 +198,13 @@ export default function BlogPost() {
       {/* Hero Section */}
       <section className="relative min-h-[50vh] flex items-end overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src={post.image} 
+          <img
+            src={post.image}
             alt={post.title}
             className="w-full h-full object-cover"
             loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#1a472a] via-[#1a472a]/60 to-transparent" />
         </div>
@@ -257,13 +283,51 @@ export default function BlogPost() {
       {/* Content */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">
+          {/* Superadmin edit controls */}
+          {isSuperAdmin && !editMode && (
+            <div className="flex justify-end mb-4">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+                onClick={() => { setEditContent(activeContent); setEditMode(true); }}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Edit Post
+              </Button>
+            </div>
+          )}
+          {isSuperAdmin && editMode && (
+            <div className="mb-6">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full h-[60vh] bg-black/30 text-white/90 border border-white/20 rounded-xl p-4 text-sm font-mono resize-y focus:outline-none focus:border-[#7dd87d]/50"
+                placeholder="Post content (markdown)..."
+              />
+              <div className="flex gap-2 mt-3 justify-end">
+                <Button size="sm" variant="ghost" className="text-white/60 hover:text-white" onClick={() => setEditMode(false)}>
+                  <X className="w-3.5 h-3.5 mr-1" /> Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#6bc86b]"
+                  onClick={() => saveOverride.mutate({ slug: params.slug || '', content: editContent })}
+                  disabled={saveOverride.isPending}
+                >
+                  <Save className="w-3.5 h-3.5 mr-1" />
+                  {saveOverride.isPending ? 'Saving…' : 'Save'}
+                </Button>
+              </div>
+            </div>
+          )}
           <AnimatedSection animation="fade-in">
             <article className="prose prose-lg prose-invert max-w-none">
-              <div 
+              <div
                 className="text-white/80 leading-relaxed space-y-6"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
-                {post.content.split('\n\n').map((paragraph, index) => {
+                {activeContent.split('\n\n').map((paragraph, index) => {
                   // Handle special component markers
                   if (paragraph.trim() === '[FOOD_PRODUCTION_INFOGRAPHIC]') {
                     return <FoodProductionInfographic key={index} />;
