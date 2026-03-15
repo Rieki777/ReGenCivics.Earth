@@ -63,12 +63,17 @@ function truncate(text: string, maxChars: number) {
   return text.slice(0, maxChars).trimEnd() + "...";
 }
 
-export function SeasonalQuestFeed() {
+interface SeasonalQuestFeedProps {
+  /** Override the auto-detected season (e.g. when user clicks a season tab below) */
+  forceSeason?: Season;
+}
+
+export function SeasonalQuestFeed({ forceSeason }: SeasonalQuestFeedProps = {}) {
   const { currentSeason, hemisphere, loading } = useHemisphere();
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
 
-  const season: Season = loading ? "spring" : currentSeason;
+  const season: Season = forceSeason ?? (loading ? "spring" : currentSeason);
   const colors = SEASON_COLORS[season] ?? SEASON_COLORS.spring;
   const tagline = SEASON_TAGLINES[season] ?? SEASON_TAGLINES.spring;
 
@@ -148,7 +153,7 @@ export function SeasonalQuestFeed() {
                   className={`${colors.bg} border ${colors.border} rounded-2xl p-5 shadow-sm flex flex-col gap-3`}
                 >
                   {/* Hero image */}
-                  <div className="h-32 -mx-5 -mt-5 mb-1 overflow-hidden rounded-t-2xl bg-[#1a472a]/10">
+                  <div className={`h-32 -mx-5 -mt-5 mb-1 overflow-hidden rounded-t-2xl ${colors.bg} flex items-center justify-center`}>
                     <img
                       src={`/quest-images/seasonal/${quest.id}.webp`}
                       alt={quest.title}
@@ -157,7 +162,17 @@ export function SeasonalQuestFeed() {
                       className="w-full h-full object-cover"
                       loading="lazy"
                       decoding="async"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      onError={(e) => {
+                        const img = e.currentTarget as HTMLImageElement;
+                        img.style.display = 'none';
+                        const parent = img.parentElement;
+                        if (parent && !parent.querySelector('.img-fallback')) {
+                          const fallback = document.createElement('div');
+                          fallback.className = `img-fallback w-full h-full flex items-center justify-center opacity-40`;
+                          fallback.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>`;
+                          parent.appendChild(fallback);
+                        }
+                      }}
                     />
                   </div>
 

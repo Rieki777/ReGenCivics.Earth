@@ -12,6 +12,7 @@ export interface SeasonalQuest {
   deliverable: string;
   estimatedTime: string;
   element: "earth" | "water" | "fire" | "air";
+  reward?: { regen: number; rvoice: number };
 }
 
 export const seasonalQuestsData: SeasonalQuest[] = [
@@ -26,6 +27,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A documented daily practice tending all five bodies, with reflections on what you noticed.",
     estimatedTime: "Ongoing practice, at least one month",
     element: "fire",
+    reward: { regen: 144, rvoice: 1 },
   },
   {
     id: "study-natural-hygiene",
@@ -37,6 +39,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A written reflection on your key learnings and how your health practices shifted.",
     estimatedTime: "One month practice",
     element: "earth",
+    reward: { regen: 111, rvoice: 1 },
   },
   {
     id: "community-currency",
@@ -48,6 +51,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A launched currency, a documented design process, and a short video or write-up of the event.",
     estimatedTime: "2-3 months",
     element: "water",
+    reward: { regen: 333, rvoice: 1 },
   },
 
   // Summer
@@ -62,6 +66,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
       "A documented account of the relationship as it developed, with reflections on attention, patience, and non-human intelligence.",
     estimatedTime: "Ongoing, minimum one season",
     element: "earth",
+    reward: { regen: 111, rvoice: 1 },
   },
   {
     id: "honey-moon",
@@ -73,6 +78,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A written or recorded account of the full lunar cycle, shared with the community.",
     estimatedTime: "One lunar cycle (28-29 days)",
     element: "fire",
+    reward: { regen: 144, rvoice: 1 },
   },
   {
     id: "singing-food-forest",
@@ -85,6 +91,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
       "A recording or video of you singing to your garden, and a reflection on what changed.",
     estimatedTime: "Daily practice, one month",
     element: "air",
+    reward: { regen: 77, rvoice: 1 },
   },
   {
     id: "animal-spirit-totems",
@@ -96,6 +103,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A piece of art, ceremony, or written account expressing your bioregional identity.",
     estimatedTime: "2-4 weeks of research and creation",
     element: "air",
+    reward: { regen: 111, rvoice: 1 },
   },
 
   // Fall
@@ -109,6 +117,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A written account of a day in a regenerative future, shared to help build our collective vision.",
     estimatedTime: "One journey session, plus writing time",
     element: "air",
+    reward: { regen: 77, rvoice: 1 },
   },
   {
     id: "eating-sunlight",
@@ -120,6 +129,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A documented month of plant-to-mouth eating, with observations on what changed.",
     estimatedTime: "One month daily practice",
     element: "earth",
+    reward: { regen: 99, rvoice: 1 },
   },
   {
     id: "becoming-trauma-informed",
@@ -131,6 +141,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A written reflection on how trauma-informed understanding changes your perspective and practice.",
     estimatedTime: "One week of watching, ongoing integration",
     element: "water",
+    reward: { regen: 111, rvoice: 1 },
   },
 
   // Winter
@@ -144,6 +155,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A completed children's book, shared with the community.",
     estimatedTime: "2-6 weeks of writing and illustration",
     element: "air",
+    reward: { regen: 177, rvoice: 1 },
   },
   {
     id: "make-a-song",
@@ -155,6 +167,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A recorded song, shared with the community.",
     estimatedTime: "Hours to weeks depending on your process",
     element: "fire",
+    reward: { regen: 111, rvoice: 1 },
   },
   {
     id: "recreate-personal-cycles",
@@ -166,6 +179,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A documented personal cycle map and a one-month reflection on living by it.",
     estimatedTime: "One month of tracking, one month of practice",
     element: "earth",
+    reward: { regen: 111, rvoice: 1 },
   },
 
   // Anytime
@@ -179,6 +193,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A short video or written account of your before and after.",
     estimatedTime: "One month of tracking",
     element: "earth",
+    reward: { regen: 77, rvoice: 1 },
   },
   {
     id: "hermetic-seal",
@@ -190,6 +205,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A reflection on what changed in your focus, creativity, and vitality during the practice.",
     estimatedTime: "Minimum two weeks, one lunar cycle recommended",
     element: "fire",
+    reward: { regen: 144, rvoice: 1 },
   },
   {
     id: "start-friend-pool",
@@ -201,6 +217,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A documented account of your pool: how you set it up, your agreements, and what you learned.",
     estimatedTime: "Ongoing, start small",
     element: "water",
+    reward: { regen: 111, rvoice: 1 },
   },
   {
     id: "present-parenting",
@@ -212,6 +229,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A documented reflection on the practice, challenges, and what you observed.",
     estimatedTime: "3 years (ongoing commitment)",
     element: "earth",
+    reward: { regen: 444, rvoice: 1 },
   },
   {
     id: "fifth-agreement",
@@ -223,6 +241,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A reflection shared with the community: what you want others in this game to understand from your reading.",
     estimatedTime: "2-4 weeks reading, ongoing practice",
     element: "air",
+    reward: { regen: 99, rvoice: 1 },
   },
 
   // ─── New quests added Fix 90 ────────────────────────────────────────────────
@@ -243,6 +262,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A personal financial system map showing one regenerative shift you have made.",
     estimatedTime: "Weekend workshop or 2-week self-directed",
     element: "air",
+    reward: { regen: 333, rvoice: 1 },
   },
 
   // Summer
@@ -256,6 +276,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A documented practice of one act of sweetness or beauty per day for a lunar month.",
     estimatedTime: "One full moon cycle",
     element: "water",
+    reward: { regen: 144, rvoice: 1 },
   },
 
   // Winter
@@ -269,6 +290,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A recorded song (any style, any length) offered to the community.",
     estimatedTime: "One to three weeks",
     element: "fire",
+    reward: { regen: 111, rvoice: 1 },
   },
 
   // Anytime
@@ -282,6 +304,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A written report on one expense you eliminated and how your joy changed.",
     estimatedTime: "One month experiment",
     element: "air",
+    reward: { regen: 77, rvoice: 1 },
   },
   {
     id: "the-fifth-agreement",
@@ -293,6 +316,22 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     deliverable: "A written reflection on how the Fifth Agreement is changing your relationships.",
     estimatedTime: "2-4 week reading and reflection",
     element: "air",
+    reward: { regen: 99, rvoice: 1 },
+  },
+
+  // Ringing Cedars — Wave 1.6
+  {
+    id: "ringing-cedars",
+    title: "The Ringing Cedars",
+    season: "any",
+    tagline: "Ancient wisdom for a regenerative world.",
+    description:
+      "Read the Ringing Cedars of Russia series by Vladimir Megre — 10 books carrying an unbroken thread of knowledge about how humans once lived in genuine harmony with the Earth. Read with a regenerative lens: notice how her people organized communities, tended land, raised children, and thought about the long arc of civilization. Post a reflection in the forum after each book. Claim your tokens when you finish.",
+    deliverable:
+      "One forum post per book reflecting through a regenerative lens. Claim tokens once at the end (33 $ReGen + 1 RGVoice per book; full series: 333 $ReGen + 10 RGVoice + cedar tree badge).",
+    estimatedTime: "Self-paced — one book is 4-10 hours; full series over weeks or months",
+    element: "air",
+    reward: { regen: 33, rvoice: 1 },
   },
 ];
 

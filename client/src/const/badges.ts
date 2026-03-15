@@ -52,6 +52,15 @@ export const BADGE_DEFS: BadgeDef[] = [
     ringColor: "#c084fc",
     ringGradient: "linear-gradient(135deg, #c084fc, #e9d5ff, #c084fc)",
   },
+  {
+    id: "cedar_keeper",
+    name: "Cedar Keeper",
+    description: "Completed all 10 Ringing Cedars books",
+    tier: "gold",
+    icon: "🌲",
+    ringColor: "#5a7a3a",
+    ringGradient: "linear-gradient(135deg, #5a7a3a, #8ab45a, #5a7a3a)",
+  },
 ];
 
 const TIER_PRIORITY: BadgeTier[] = ["platinum", "gold", "silver", "bronze"];

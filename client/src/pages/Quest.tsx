@@ -409,6 +409,7 @@ export default function Quest() {
   const [selectedQuest, setSelectedQuest] = useState<string | null>(null);
   const [whyQuestsExpanded, setWhyQuestsExpanded] = useState(false);
   const [showQuestArc, setShowQuestArc] = useState(false);
+  const [activeSeasonFilter, setActiveSeasonFilter] = useState<"spring" | "summer" | "fall" | "winter" | null>(null);
   const { currentSeason, hemisphere, loading: hemisphereLoading } = useHemisphere();
   const { isAuthenticated: user } = useAuth();
   const hasEntered = typeof localStorage !== 'undefined' && localStorage.getItem("regen_game_entered") === "true";
@@ -859,12 +860,12 @@ export default function Quest() {
       </section>
 
       {/* Seasonal Quest Feed */}
-      <SeasonalQuestFeed />
+      <SeasonalQuestFeed forceSeason={activeSeasonFilter ?? undefined} />
 
       {/* All Quests by Season - Header */}
       <section className="py-12 bg-[#f0ebe3]">
         <div className="container">
-          <h2 
+          <h2
             className="text-3xl md:text-4xl font-bold mb-4 text-[#1a472a] text-center"
             style={{ fontFamily: 'var(--font-display)' }}
           >
@@ -873,6 +874,27 @@ export default function Quest() {
           <p className="text-center text-[#1a472a]/70 max-w-2xl mx-auto mb-6">
             Quests can be done at any time and in any order. Feel free to do them multiple times (earning rewards up to 3x) and skip those that don't call to you for now. <strong>A key focus is having fun!</strong>
           </p>
+          {/* Season filter tabs — selecting one updates "What's Alive" above */}
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            {(["spring", "summer", "fall", "winter"] as const).map((s) => {
+              const labels: Record<string, string> = { spring: "🌱 Spring", summer: "☀️ Summer", fall: "🍂 Fall", winter: "❄️ Winter" };
+              const active = activeSeasonFilter === s;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setActiveSeasonFilter(active ? null : s)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all border ${
+                    active
+                      ? "bg-[#1a472a] text-white border-[#1a472a]"
+                      : "bg-white text-[#1a472a] border-[#1a472a]/20 hover:border-[#1a472a]/50"
+                  }`}
+                  style={{ fontFamily: 'var(--font-accent)' }}
+                >
+                  {labels[s]}
+                </button>
+              );
+            })}
+          </div>
           <div className="flex justify-center">
             <QuestFilter activeFilters={filters} onFilterChange={setFilters} />
           </div>
@@ -880,7 +902,7 @@ export default function Quest() {
       </section>
 
       {/* Spring Quests Section */}
-      <ParallaxSection imageSrc="https://assets.regencivics.earth/HqkwLOeDYdCpbwla.jpg">
+      <ParallaxSection imageSrc="/backgrounds/quest-spring-baked.webp">
         <div className="container">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-14 h-14 rounded-full bg-[#4a7c59] flex items-center justify-center shadow-lg">
@@ -905,7 +927,7 @@ export default function Quest() {
       </ParallaxSection>
 
       {/* Summer Quests Section */}
-      <ParallaxSection imageSrc="https://assets.regencivics.earth/hSCSMzfMvNBVNdFX.jpg">
+      <ParallaxSection imageSrc="/backgrounds/quest-summer-baked.webp">
         <div className="container">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-14 h-14 rounded-full bg-[#2e7d32] flex items-center justify-center shadow-lg">
@@ -930,7 +952,7 @@ export default function Quest() {
       </ParallaxSection>
 
       {/* Fall Quests Section */}
-      <ParallaxSection imageSrc="https://assets.regencivics.earth/ZhVLJNePNkZErikp.jpg">
+      <ParallaxSection imageSrc="/backgrounds/quest-fall-baked.webp">
         <div className="container">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-14 h-14 rounded-full bg-[#d4a574] flex items-center justify-center shadow-lg">
@@ -955,7 +977,7 @@ export default function Quest() {
       </ParallaxSection>
 
       {/* Winter Quests Section */}
-      <ParallaxSection imageSrc="https://assets.regencivics.earth/TdRIxUeJvpmoVwvP.jpg">
+      <ParallaxSection imageSrc="/backgrounds/quest-winter-baked.webp">
         <div className="container">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-14 h-14 rounded-full bg-[#8b7355] flex items-center justify-center shadow-lg">
@@ -981,8 +1003,7 @@ export default function Quest() {
 
       {/* Anytime Quests Section */}
       <ParallaxSection
-        imageSrc="https://assets.regencivics.earth/kdpmqczDwXGfwTIK.jpg"
-        overlay="rgba(13, 28, 20, 0.80)"
+        imageSrc="/backgrounds/quest-anytime-baked.webp"
       >
         <div className="container">
           <div className="flex items-center gap-3 mb-8">
@@ -1024,45 +1045,75 @@ export default function Quest() {
 
       {/* Routine Quest Section */}
       <ParallaxSection
-        imageSrc="https://assets.regencivics.earth/kdpmqczDwXGfwTIK.jpg"
+        imageSrc="/backgrounds/quest-anytime-baked.webp"
         className="py-20"
-        overlay="rgba(26, 71, 42, 0.75)"
       >
         <div className="container">
           {/* Section Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-4">
             <div className="inline-flex items-center gap-3 mb-4 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-[#7dd87d]/30">
-              <Brain className="w-6 h-6 text-[#7dd87d]" />
-              <span className="text-[#7dd87d] font-semibold">Daily Practice</span>
+              <RotateCcw className="w-5 h-5 text-[#7dd87d]" />
+              <span className="text-[#7dd87d] font-semibold">Repeatable Quests</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
               Routine <span className="text-[#7dd87d]">Quests</span>
             </h2>
-            <p className="text-white/80 max-w-2xl mx-auto">
-              Build lasting habits through regular actions that compound into transformative change
+            <p className="text-white/70 text-lg max-w-xl mx-auto">
+              These quests reward you every time. No limit.
             </p>
           </div>
-          
-          {/* Routine Quest Card */}
-          <div className="max-w-lg mx-auto">
-            <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-14 h-14 rounded-full bg-[#7dd87d] flex items-center justify-center flex-shrink-0">
-                  <Brain className="w-7 h-7 text-[#1a472a]" />
+
+          {/* Two-card grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mt-10">
+            {/* Food Foresting */}
+            <div className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4">
+              <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
+                <RotateCcw className="w-3 h-3" /> Repeatable
+              </span>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-[#7dd87d] flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-6 h-6 text-[#1a472a]" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>
-                    Quest 13: {questData.routine.title}
+                  <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                    {questData.featured.title}
                   </h4>
-                  <p className="text-sm text-white/70">{questData.routine.subtitle}</p>
+                  <p className="text-sm text-white/60">{questData.featured.subtitle}</p>
                 </div>
               </div>
-              <p className="text-white/80 mb-6">
+              <p className="text-white/80 text-sm leading-relaxed flex-1">
+                {questData.featured.description}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="px-3 py-1 bg-[#7dd87d]/30 text-[#7dd87d] rounded-full font-semibold text-sm">+{questData.featured.reward.regen} $ReGen</span>
+                <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold text-sm">+{questData.featured.reward.rvoice} RGVoice</span>
+                <span className="text-white/40 text-xs ml-1">per completion</span>
+              </div>
+            </div>
+
+            {/* Fasting */}
+            <div className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4">
+              <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
+                <RotateCcw className="w-3 h-3" /> Repeatable
+              </span>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-[#7dd87d] flex items-center justify-center flex-shrink-0">
+                  <Brain className="w-6 h-6 text-[#1a472a]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                    Quest 13: {questData.routine.title}
+                  </h4>
+                  <p className="text-sm text-white/60">{questData.routine.subtitle} &mdash; {questData.routine.minimumTime}</p>
+                </div>
+              </div>
+              <p className="text-white/80 text-sm leading-relaxed flex-1">
                 {questData.routine.description}
               </p>
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1.5 bg-[#7dd87d]/30 text-[#7dd87d] rounded-full font-semibold text-sm">+{questData.routine.reward.regen} $Regen</span>
-                <span className="px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold text-sm">+{questData.routine.reward.rvoice} RGVoice</span>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="px-3 py-1 bg-[#7dd87d]/30 text-[#7dd87d] rounded-full font-semibold text-sm">+{questData.routine.reward.regen} $ReGen</span>
+                <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold text-sm">+{questData.routine.reward.rvoice} RGVoice</span>
+                <span className="text-white/40 text-xs ml-1">per completion</span>
               </div>
             </div>
           </div>

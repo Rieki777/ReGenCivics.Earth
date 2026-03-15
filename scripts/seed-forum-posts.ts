@@ -458,6 +458,23 @@ If you contributed to SEEDS, Regen Network, Hypha, or other regenerative project
 
 Learn more about the full framework on the [/game page](/game#seeds-legacy).`,
   },
+  {
+    categorySlug: "quests-gameplay",
+    title: "The Ringing Cedars Series — Reading Circle",
+    body: `This thread is for everyone working through the Ringing Cedars of Russia book series — whether you're on Book 1 or Book 9.
+
+The series follows Anastasia, a woman living in the Siberian wilderness whose family preserved an unbroken lineage of knowledge about how to live in genuine relationship with the Earth. Her family is the last to carry this thread. The books are her attempt to pass it on.
+
+What makes this relevant to ReGen Civics: the series is packed with detailed, specific thinking about how communities organized themselves before and outside of industrial civilization. Settlement patterns. Governance. Seed wisdom. Child development. Relationship to land. These are practical descriptions of what a different kind of civilization actually looked like from the inside.
+
+The series sparked a real movement. Hundreds of settlements in Russia and the Baltics formed around the wisdom in these pages. Millions of people changed how they live. They even changed laws in Russia.
+
+After each book, come here and share: what sparked for you? What are you sitting with? What might you carry into your own practice or project? You don't need to agree with everything. Just bring what's real.
+
+**Free PDFs (all 10 books, English + Spanish + Russian):** https://icedrive.net/s/PxAyCa5kSGaT4224Yw7i63B1hBhB
+
+**Quest rewards:** 33 $ReGen + 1 RGVoice per book read. Complete all 10 books and earn 333 $ReGen + 10 RGVoice + the cedar tree badge. One claim only — finish what you plan to read before claiming.`,
+  },
 ];
 
 // ─── Part C: Quest Seed Content ───────────────────────────────────────────────

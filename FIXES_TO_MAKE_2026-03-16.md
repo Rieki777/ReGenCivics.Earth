@@ -27,25 +27,32 @@ This document continues from `FIXES_TO_MAKE_2026-03-15.md` and `FIXES_TO_MAKE_20
 
 ---
 
+### DONE THIS SESSION (2026-03-16 continued)
+
+| Fix | Task | Status |
+|---|---|---|
+| Wave 1.5 | Token rebalancing — questData.ts + seasonalQuestsData.ts + QuestDetailModal.tsx | DONE |
+| Wave 1.6 | Ringing Cedars quest added to seasonalQuestsData.ts + cedar_keeper badge + forum thread | DONE |
+| Wave 2.6 | Two blog posts added: claim-your-land-project + your-seeds-contributions-live-on | DONE |
+| Fix 102 | Footer logo — logos found in place, SiteFooter.tsx updated to use regencivics-logo-light.png | DONE |
+| Fix 101 | scripts/bake-overlays.ts written (Rye to run: npx tsx scripts/bake-overlays.ts) | SCRIPT DONE |
+| Fix 110-F item 1 | Quest story cards added for all 14 quests in QuestDetailModal.tsx | DONE |
+| Fix 110-F item 3 | EPIC quests replaced with official content from QUEST_MASTER_SHEET Part 5 | DONE |
+
+---
+
 ### STILL PENDING — Claude Code
 
 | Fix | Task | Priority | Notes |
 |---|---|---|---|
-| Fix 102 | Footer logo | Medium | Blocked on Rye saving logo files |
 | Fix 76A | Quest PDF field guides | Low | Use /pdf skill, source: QUEST_MASTER_SHEET.md |
-| Wave 1.5 | Token rebalancing — update all $ReGen values | High | Use TOKEN_REBALANCING_PROPOSAL.md |
-| Wave 1.6 | Ringing Cedars quest + forum thread + cedar badge | High | Use QUEST_RINGING_CEDARS_DRAFT.md |
-| Fix 101 | Restore parallax backgrounds with baked overlays | High | Write scripts/bake-overlays.ts using sharp |
-| Wave 2.6 | Two blog posts added to site | Medium | BLOG_CLAIM_YOUR_PROJECT.md + BLOG_SEEDS_CONTRIBUTIONS.md |
 | Fix 110-C Part 1 | Start Your Journey cards in a 2-up/3-up grid | Low | Journey cards not found in current code — may be unimplemented |
-| Fix 110-F item 1 | Wire up quest story card details from QUEST_MASTER_SHEET.md | Medium | questDetailsData.ts needs populating |
-| Fix 110-F item 3 | EPIC quests section: add official EPIC quest content from QUEST_MASTER_SHEET.md Part 5 | Medium | |
 
 ### RYE — actions needed
 
 | Task | Command / Action |
 |---|---|
-| Save logos | Put `regencivics-logo-dark.png` and `regencivics-logo-light.png` in `client/public/images/logos/` |
-| Re-run seed-forum-posts | `npx tsx scripts/seed-forum-posts.ts --reset` (now includes contributions discussion thread) |
+| Bake overlay images | `npx tsx scripts/bake-overlays.ts` then update imageSrc refs (script prints the mapping) |
+| Re-run seed-forum-posts | `npx tsx scripts/seed-forum-posts.ts --reset` (now includes Ringing Cedars thread) |
 | Confirm quest qualifier data | Review questQualifiers.ts with stewards before re-enabling |
 | UptimeRobot setup | Set up free uptime monitor at uptimerobot.com to ping `/health` every 5 minutes |

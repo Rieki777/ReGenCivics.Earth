@@ -1059,6 +1059,132 @@ The regenerative renaissance needs strong foundations. These four pillars ensure
     tags: ['Investment', 'Land Projects', 'Due Diligence', 'Evaluation Criteria', 'Foundation'],
     featured: false,
     isVideo: false
+  },
+  {
+    id: 'claim-your-land-project-or-organisation',
+    slug: 'claim-your-land-project-or-organisation',
+    title: 'Your Space Is Waiting — How to Claim Your Land Project or Organisation',
+    excerpt: 'If you have been part of a ReGen Civics incubator season, or if your organisation has partnered with us before, your project is already on the site. Here is how to claim it.',
+    content: `If you have been part of a ReGen Civics incubator season, or if your organisation has partnered with us before, your project is already on the site. What is not yet connected is you — the person behind it, with the keys to your space.
+
+Claiming your project or organisation does a few things. It gives you a presence in our community space. It connects your profile to your project's forum thread, so you can host conversations and answer questions directly. And it opens up the steward tools: endorsing quests for your applicants, sharing updates, and eventually receiving applications from people who want to work with you.
+
+Here is how to do it.
+
+## Step 1: Create your player profile
+
+If you do not already have an account on [regencivics.earth](https://regencivics.earth), start there. Create an account using the email you want associated with your project. Your player profile is where your claim will live.
+
+## Step 2: Go to your profile and find the claim option
+
+Once you are logged in, open your player profile (top right corner of the nav, or your name/avatar). Look for a section called "Claim a Project or Organisation." Select whether you are claiming a land project or an alliance organisation.
+
+## Step 3: Fill out the claim form
+
+**For land projects**, the form asks for the same kind of information as the incubator application: your land status, your community stage, what your project is working on, and how you want to show up in the network. This is how we verify the claim and fill out your project's public profile.
+
+**For alliance organisations**, the form is simpler: your role, your org's website, what you do, and what kinds of collaboration you are looking for.
+
+Your claim goes into a review queue. It does not go live immediately.
+
+## Step 4: Wait for approval
+
+We review each claim to confirm the connection between the person and the project. Once approved, your profile is connected to your project's space. You will get a notification when it goes through.
+
+## Step 5: You are in
+
+After approval, your project page in the community space is yours. You can post updates, respond to community questions in your forum thread, and manage your quest endorsements from your profile.
+
+If you want to update your project's description, location, or other details after claiming, you will be able to do that from your profile too.
+
+## Questions?
+
+Post in the [Community Forum](https://regencivics.earth/community) or reply to this post. We are here and actively reviewing claims.
+
+---
+
+*This is a living network. Every project that claims its space makes the whole thing more real. We are glad you are here.*`,
+    author: 'ReGen Civics Team',
+    date: 'Mar 14, 2026',
+    readTime: '4 min read',
+    image: 'https://assets.regencivics.earth/yFrwKokjZNoFvXuz.jpg',
+    tags: ['How-To', 'Land Projects', 'Organisations', 'Community', 'Stewardship'],
+    featured: false,
+    isVideo: false
+  },
+  {
+    id: 'your-seeds-contributions-live-on',
+    slug: 'your-seeds-contributions-live-on',
+    title: 'Your SEEDS Contributions Live On — And Here Is How to Bring Them Home',
+    excerpt: 'If you spent years contributing to SEEDS, Hypha, or other regenerative projects and were never fully compensated — your contributions did not disappear. Here is how to bring them home.',
+    content: `If you spent years contributing to SEEDS, to Hypha, to Regen Network, to local food systems, to governance experiments, to community currencies — and you were never fully compensated for that work — your contributions did not disappear.
+
+They are part of the foundation of what we are building now.
+
+ReGen Civics is building the infrastructure to account for that. Not as a retroactive payment system. As something more interesting: a shared record of what the movement has already put in, visible and available to all of us, backing the tokens we are distributing now.
+
+## What we mean by contributions
+
+We are not only talking about financial contributions. We are working with the eight forms of capital:
+
+**Social capital** — relationships, networks, trust you built
+
+**Material capital** — tools, equipment, land improvements, physical infrastructure
+
+**Financial capital** — money invested or donated
+
+**Living capital** — ecological restoration, food forests, soil health, biodiversity
+
+**Intellectual capital** — research, documentation, writing, design, code
+
+**Experiential capital** — knowledge passed on, mentorship, facilitation, training
+
+**Spiritual capital** — ceremonies, cultural practices, the intangible things that hold communities together
+
+**Cultural capital** — art, music, stories, identity, meaning
+
+If you gave any of these things to a regenerative mission without being fully compensated, that is the kind of contribution we want to account for.
+
+## How it works
+
+The token is called $ReGen. For every $ReGen token we give out, we are committed to receiving an equal amount of value pooled here in documented contributions. This is what backs the token — not speculation, not promises, but the actual work the movement has already done and continues to do.
+
+To bring your contributions in, you make a historical proposal. You document what you contributed, across which forms of capital, and submit that for community review. Once reviewed and accepted, those contributions are recorded in the ReGen Civics ecosystem and you receive $ReGen tokens representing them.
+
+The process runs through Hypha's DAO tools at [hypha.earth](https://hypha.earth), which handle the proposal structure and the governance of token distribution.
+
+## How to start
+
+**Step 1: Count your contributions.** Use the 8 Forms of Capital calculator to map what you contributed and give it a rough value. The calculator helps you think through categories you might not have counted: time, relationships, ecological work, and more. [Open the calculator here](/calculator).
+
+**Step 2: Write your proposal.** Come to the [forum thread](/community) for contributions discussion. Read what others are writing, share your own thinking, and refine your proposal together. This is not a bureaucratic process — it is a community conversation about how we value each other's work.
+
+**Step 3: Submit through Hypha.** Once your proposal is shaped, you bring it to [hypha.earth](https://hypha.earth) for community review. The ReGen Civics community votes on proposals and $ReGen tokens are distributed on approval.
+
+**Step 4: Your contributions live here.** After approval, your contributions become part of the shared record. They are accessible, visible, and they back the tokens circulating in the movement. Your work becomes part of the foundation.
+
+## A note on SEEDS specifically
+
+If you were active in the SEEDS ecosystem and accumulated SEEDS tokens or contribution records there, those reflect real work and real relationships. SEEDS had its own accounting for many of these contributions, and we are working on how to recognize that history here.
+
+If you have SEEDS contribution records you want to bring into ReGen Civics, bring them to the forum thread. We will figure out the best path together.
+
+## What this is building toward
+
+Every token we give out should be backed by something real. Not promises. Not projected future value. The actual work, relationships, knowledge, land stewardship, and culture that people in this movement have been building for years.
+
+When the token has that backing, it means something. When you hold $ReGen, you are holding a piece of a shared record of what this movement has built together. That is what we are creating.
+
+Come to the forum. Bring your contributions. They have always been worth something. Now we are building the infrastructure to say so out loud.
+
+[Join the discussion in the forum](/community)`,
+    author: 'ReGen Civics Team',
+    date: 'Mar 14, 2026',
+    readTime: '6 min read',
+    image: 'https://assets.regencivics.earth/oOytrvQMLUZiZzfH.jpg',
+    tags: ['Tokens', 'Contributions', 'SEEDS', 'Regenerative Economics', '8 Forms of Capital', 'Hypha', 'History'],
+    featured: false,
+    isVideo: false
   }
 ];
 

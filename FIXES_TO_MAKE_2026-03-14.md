@@ -1165,14 +1165,43 @@ Several seasonal quests are displaying placeholder or broken images. Check all q
 
 ---
 
+### Fix 110-G: Routine Quests carousel
+
+Add a dedicated "Routine Quests" carousel section to the Quest page. This is separate from the seasonal carousels (Spring/Summer/Fall/Winter) and from the Anytime carousel.
+
+**What it is:** Routine quests are quests that pay out tokens every time you complete them, with no limit or cap. Unlike standard quests (which pay once per completion cycle) or seasonal quests (which pay once per season), Routine quests are designed to reward ongoing practice indefinitely.
+
+**Quests that belong here:**
+- Food Foresting (Quest 4 on the site) — 111 $ReGen per completion
+- Fasting (Quest 13 on the site) — update: minimum delivery is now a 3-day fast (previously 24 hours)
+
+**UI spec:**
+- Add a new carousel section labeled "Routine Quests" that appears on the Quest page, separate from and after the seasonal carousels and Anytime section
+- Display a subtitle or label beneath the section header: "These quests reward you every time. No limit."
+- Cards in this carousel should have a visual treatment that distinguishes them from seasonal and one-time quests (e.g., a small "Repeatable" badge or a subtle looping icon)
+- The Fasting quest card minimum time text should read "3-day fast minimum" (not "24-hour fast" or similar)
+
+**Data changes needed:**
+- In `questData.ts` (or equivalent), flag Food Foresting and Fasting as `isRoutine: true` (or equivalent field)
+- Update Fasting quest description to reflect 3-day minimum: cross-reference `QUEST_MASTER_SHEET.md` Part 3 (Quest 13) for the updated story card, steps, and deliverable text
+- Confirm Food Foresting quest shows 111 $ReGen (not 33 $ReGen)
+
+**What does NOT belong in Routine:** Epic quests, Fire quests, and all seasonal/Anytime quests are not routine. Only Food Foresting and Fasting should appear in this carousel for now.
+
+---
+
 **No DB changes. No `pnpm db:push`.**
 
-**Files affected:** `client/src/pages/Quest.tsx`, `client/src/data/seasonalQuestsData.ts`, `client/src/data/questDetailsData.ts` (or equivalent story card data), `client/src/components/QuestArcMap.tsx`, any floating button components, `client/src/components/WhyQuests.tsx` or equivalent accordion component.
+**Files affected:** `client/src/pages/Quest.tsx`, `client/src/data/seasonalQuestsData.ts`, `client/src/data/questData.ts`, `client/src/data/questDetailsData.ts` (or equivalent story card data), `client/src/components/QuestArcMap.tsx`, any floating button components, `client/src/components/WhyQuests.tsx` or equivalent accordion component.
 
 **Verification:** After implementing, check that:
 - No buttons overlap in the bottom right at any viewport size
 - Every seasonal quest that appears in "What's Alive" also appears in its season's carousel tab
 - The Anytime section appears after the Winter section with its own parallax background
+- A "Routine Quests" carousel appears with Food Foresting and Fasting as the two cards
+- "These quests reward you every time. No limit." label appears under the Routine Quests header
+- Fasting quest card shows "3-day fast minimum" (not 24 hours)
+- Food Foresting shows 111 $ReGen reward
 - "Start Your Journey" cards are displayed side by side (minimum 2 per row on desktop)
 - "Earn Tokens" box is no longer visible in the Why Quests dropdown
 - Why Quests dropdown has the full Arc narrative from the master sheet

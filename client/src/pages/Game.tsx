@@ -229,8 +229,7 @@ export default function Game() {
 
       {/* Hero Section */}
       <ParallaxSection
-        imageSrc="https://assets.regencivics.earth/ocDzkDHpivHtGCWo.jpg"
-        overlay="rgba(26, 71, 42, 0.85)"
+        imageSrc="/backgrounds/game-seeds-intro-baked.webp"
         className="min-h-[60vh]"
       >
         <div className="container flex flex-col items-center justify-center h-full text-center px-4">
@@ -1086,8 +1085,7 @@ export default function Game() {
 
       {/* Infinite Game Philosophy Section */}
       <ParallaxSection
-        imageSrc="https://assets.regencivics.earth/LbIXEUcDdcOLOHmP.jpg"
-        overlay="rgba(26, 71, 42, 0.9)"
+        imageSrc="/backgrounds/game-seeds-legacy-baked.webp"
       >
         <div className="container py-16 px-4">
           <div className="text-center mb-12">

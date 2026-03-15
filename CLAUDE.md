@@ -67,5 +67,13 @@ This project uses a structured delivery pipeline via the ln- skills (in ~/.claud
 - Regenerative values — the work should embody healing, reciprocity, long-term thinking
 - **Maximum autonomy** — Rye is holding a lot. Do as much as possible without asking. Only surface tasks to Rye when there is literally no way to proceed without human input. When a `[HUMAN]` step is unavoidable, complete everything else first, then ask for only the minimal required input. Try things before asking permission. Prefer attempting and reporting over asking whether to attempt.
 
+## Writing Rules (apply to ALL user-facing copy)
+- **No em-dashes** anywhere. Use commas, periods, or rewrite the sentence.
+- **No AI word patterns:** no "delve", "tapestry", "foster", "leverage", "it's worth noting", "in conclusion", "embark on", "vibrant", "crucial", "groundbreaking", "transformative journey", "testament to", "beacon of"
+- **No contrast-framing:** never write "This is not X, this is Y." Define things by what they are, not by negating something else.
+- **No rhetorical question openers:** don't introduce sections with "What if we could...?" or "Have you ever wondered...?"
+- **No passive inspiration:** phrases like "join us on this journey" or "be part of something bigger" are vague filler. Say something specific instead.
+- **Voice:** direct, grounded, specific. Write as if a thoughtful person inside the regen movement wrote it. First person is fine. Contractions are fine. Short sentences are fine.
+
 ## About Rye
 Founder, movement builder, tool designer. Engagement will be extremely diverse — writing, fundraising, game design, code, strategy, community comms. All of it. See `C:\Users\taren\Documents\Claude\about-me.md` for full context.

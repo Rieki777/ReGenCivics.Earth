@@ -128,15 +128,10 @@ const landProjects = [
   { id: "starseed", name: "StarSeed Village", location: "Guatemala", size: "385 acres", focus: "Regenerative community" },
   { id: "nyx", name: "The Nyx", location: "Bali, Indonesia", size: "5 acres", focus: "Co-living & creative residency" },
   { id: "neighbourgood", name: "Our NeighbourGood", location: "New Zealand", size: "100+ acres", focus: "Ecovillage" },
-  { id: "highland_lake", name: "Highland Lake CampUS", location: "NC, USA", size: "100-120 acres", focus: "ReFi/ReGov incubator" },
   { id: "liminal", name: "Liminal Village", location: "Italy", size: "Various", focus: "Regenerative eco-village" },
   { id: "heartland", name: "Heartland Retreat", location: "California, USA", size: "Various", focus: "Eco-healing sanctuary" },
   { id: "tdf", name: "Traditional Dream Factory", location: "Portugal", size: "Various", focus: "Web3 regenerative village" },
-  { id: "ubuntu", name: "Ubuntu", location: "Various", size: "Various", focus: "Community-led regeneration" },
-  { id: "finca_sagrada", name: "Finca Sagrada", location: "Latin America", size: "Various", focus: "Biodynamic community farm" },
-  { id: "tabi", name: "Tabi", location: "Various", size: "Various", focus: "Regenerative land project" },
-  { id: "tioga", name: "Tioga", location: "Various", size: "Various", focus: "Ecological restoration" },
-  { id: "lala_gardens", name: "LaLa Gardens Cooperative", location: "Various", size: "Various", focus: "Cooperative garden community" },
+  { id: "finca_sagrada", name: "Finca Sagrada", location: "Ecuador", size: "Various", focus: "Biodynamic community farm" },
   { id: "other", name: "OTHER - Specify below", location: "", size: "", focus: "" },
 ];
 

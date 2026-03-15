@@ -41,7 +41,7 @@ export const questData = {
       subtitle: "Sovereignty & Co-Evolution",
       description:
         "Growing plants that know us, and consciously evolving alongside the plants that nourish us.",
-      reward: { regen: 22, rvoice: 1 },
+      reward: { regen: 111, rvoice: 1 },
       icon: Sprout,
       deliverable: "Adding seeds to swap in your LocalScale profile",
       focus: "Plant Kingdom",
@@ -53,7 +53,7 @@ export const questData = {
       subtitle: "Food Abundance",
       description:
         "Gardening our bioregions and homesteads. Healing our relationship to plants & extending our inner-soils to relate directly with our bioregions.",
-      reward: { regen: 111, rvoice: 1 },
+      reward: { regen: 144, rvoice: 1 },
       icon: TreeDeciduous,
       deliverable: "'Showcasing my Healing Whole' video/article",
       focus: "Bioregion, Gardens",
@@ -79,7 +79,7 @@ export const questData = {
       subtitle: "We are the Land",
       description:
         "Marrying the Earth and your beloved, remembering we're one with our Spaces of Love, and other Sacred Rites to connect with Earth.",
-      reward: { regen: 111, rvoice: 1 },
+      reward: { regen: 99, rvoice: 1 },
       icon: Heart,
       deliverable: "Video/article or... Get Married!",
       focus: "Love, Partnership, Earth Connection",
@@ -91,7 +91,7 @@ export const questData = {
       subtitle: "Community Gathering",
       description:
         "Gathering in natural spaces with 10+ other humans to swap & practice healing modalities. Share whatever modality you're most aligned with.",
-      reward: { regen: 111, rvoice: 1 },
+      reward: { regen: 144, rvoice: 1 },
       icon: Users,
       deliverable: "'How we gathered, what we learned' video/article",
       focus: "Community, Healing, Touch",
@@ -117,7 +117,7 @@ export const questData = {
       subtitle: "Inner Exploration",
       description:
         "A guided journey into the depths of consciousness, exploring the medicine within and around us.",
-      reward: { regen: 111, rvoice: 1 },
+      reward: { regen: 222, rvoice: 1 },
       icon: Circle,
       deliverable: "Reflection on your medicine journey",
       focus: "Consciousness, Healing, Spirit",
@@ -129,7 +129,7 @@ export const questData = {
       subtitle: "Forest Communication",
       description:
         "Learning to communicate with and understand the wisdom of trees. Deepening our relationship with the forest.",
-      reward: { regen: 111, rvoice: 1 },
+      reward: { regen: 99, rvoice: 1 },
       icon: TreeDeciduous,
       deliverable: "'My conversation with trees' video/article",
       focus: "Trees, Nature, Communication",
@@ -143,7 +143,7 @@ export const questData = {
       subtitle: "How We Relate",
       description:
         "Exploring and improving our patterns of communication. Learning to listen deeply and speak authentically.",
-      reward: { regen: 111, rvoice: 1 },
+      reward: { regen: 177, rvoice: 1 },
       icon: MessageSquare,
       deliverable: "Reflection on communication patterns",
       focus: "Communication, Relationships",
@@ -155,7 +155,7 @@ export const questData = {
       subtitle: "How We Organize",
       description:
         "Understanding how we coordinate as groups. Exploring governance, decision-making, and collective action.",
-      reward: { regen: 111, rvoice: 1 },
+      reward: { regen: 177, rvoice: 1 },
       icon: GitBranch,
       deliverable: "Analysis of coordination patterns",
       focus: "Governance, Organization",
@@ -178,21 +178,24 @@ export const questData = {
     title: "Fasting",
     subtitle: "Regenerative Ikigai",
     description:
-      "What is your role? Discovering your unique purpose through the practice of fasting and reflection.",
-    reward: { regen: 111, rvoice: 1 },
+      "Discover your unique purpose through the practice of fasting and deep reflection. Minimum: a 3-day fast. Return to this quest whenever you need to reset and rediscover your role in the regenerative movement.",
+    reward: { regen: 77, rvoice: 1 },
     icon: Brain,
     deliverable: "'My Regenerative Ikigai' reflection",
     focus: "Purpose, Role, Fasting",
+    isRoutine: true,
+    minimumTime: "3-day fast minimum",
   },
   featured: {
     title: "Food Foresting",
     subtitle: "Being Human Again",
     description:
       "Go out with your friends and family and plant seeds for fruiting plants in public spaces, parks, forests, and anywhere nature can thrive. This quest is all about turning our planet into a food forest where hunger is no longer relevant. Document your adventure and share what you planted, where, and the joy of being human again.",
-    reward: { regen: 33, rvoice: 1 },
+    reward: { regen: 111, rvoice: 1 },
     icon: Sparkles,
     deliverable: "A <3 min video and/or written article",
     focus: "Bioregion, Food Forest, Community",
+    isRoutine: true,
   },
 };
 

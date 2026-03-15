@@ -158,13 +158,65 @@ export default function HowItWorks() {
           </div>
         </div>
 
-        {/* CTA */}
-        <AnimatedSection animation="fade-in" delay={600} className="text-center mt-8">
-          <Link href="/seasons">
-            <Button className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-base py-3 px-8 h-auto font-bold btn-press">
-              Start Your Journey <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+        {/* Start Your Journey Cards */}
+        <AnimatedSection animation="fade-in" delay={600} className="mt-10">
+          <h3
+            className="text-center text-white/80 text-base font-semibold mb-5 uppercase tracking-wider"
+            style={{ fontFamily: 'var(--font-accent)' }}
+          >
+            Start Your Journey
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                icon: Sprout,
+                title: "Play Quests",
+                description: "Heal yourself and the Earth through guided regenerative quests. Earn $ReGen tokens.",
+                href: "/quest",
+                color: "text-[#7dd87d]",
+                bg: "bg-[#7dd87d]/10 hover:bg-[#7dd87d]/20",
+                border: "border-[#7dd87d]/30 hover:border-[#7dd87d]/60",
+              },
+              {
+                icon: Globe,
+                title: "Join the Network",
+                description: "Connect with land projects, alliance orgs, and regenerators in your bioregion.",
+                href: "/community",
+                color: "text-emerald-300",
+                bg: "bg-emerald-500/10 hover:bg-emerald-500/20",
+                border: "border-emerald-500/30 hover:border-emerald-500/60",
+              },
+              {
+                icon: Handshake,
+                title: "Invest or Partner",
+                description: "Put capital to work in regenerative land projects, or bring your org into the alliance.",
+                href: "/connect",
+                color: "text-amber-300",
+                bg: "bg-amber-500/10 hover:bg-amber-500/20",
+                border: "border-amber-500/30 hover:border-amber-500/60",
+              },
+            ].map((card) => (
+              <Link key={card.href} href={card.href}>
+                <div className={`flex flex-col gap-3 p-5 rounded-2xl border transition-all cursor-pointer ${card.bg} ${card.border}`}>
+                  <card.icon className={`w-7 h-7 ${card.color}`} />
+                  <div>
+                    <h4
+                      className="font-bold text-white text-base mb-1"
+                      style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                      {card.title}
+                    </h4>
+                    <p className="text-white/60 text-sm leading-relaxed">
+                      {card.description}
+                    </p>
+                  </div>
+                  <span className={`flex items-center gap-1 text-xs font-semibold ${card.color} mt-auto`}>
+                    Get started <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </AnimatedSection>
       </div>
     </section>

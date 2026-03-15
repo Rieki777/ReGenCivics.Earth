@@ -5,7 +5,6 @@
  */
 
 import { Link } from "wouter";
-import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
 import { resetCookieConsent } from "@/components/CookieConsent";
 import { Cookie, Mail } from "lucide-react";
@@ -18,13 +17,11 @@ export default function SiteFooter() {
         {/* Top row: Logo + Tagline */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <SeedOfLifeIcon className="w-7 h-7 text-[#7dd87d]" size={28} />
-            <span
-              className="text-white font-bold text-lg"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              ReGen Civics
-            </span>
+            <img
+              src="/images/logos/regencivics-logo-light.png"
+              alt="ReGen Civics"
+              className="h-10 w-auto"
+            />
           </div>
           <p className="text-white/70 text-xs max-w-sm leading-relaxed">
             An Infinite Game for the Regenerative Renaissance.
