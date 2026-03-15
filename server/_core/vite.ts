@@ -13,9 +13,14 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true as const,
   };
 
+  const projectRoot = path.resolve(import.meta.dirname, "../..");
+  const clientRoot = path.join(projectRoot, "client");
+  const configPath = path.join(projectRoot, "vite.config.ts");
+
   const vite = await createViteServer({
     ...viteConfig,
-    configFile: false,
+    configFile: configPath,
+    root: clientRoot,
     server: serverOptions,
     appType: "custom",
   });
