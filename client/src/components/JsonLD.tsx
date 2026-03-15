@@ -24,7 +24,7 @@ export const schemas = {
     "@type": "Organization",
     name: "ReGen Civics",
     url: "https://regencivics.earth",
-    logo: "https://assets.regencivics.earth/DUOLILquhPlWMUAF.png",
+    logo: "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.png",
     description:
       "ReGen Civics is a regenerative investment fund and infinite game connecting investors, land projects, alliance partners, and players in the regenerative renaissance.",
     sameAs: [

@@ -132,7 +132,7 @@ export default function Socials() {
           </Link>
           <div className="flex items-center gap-2">
             <img
-              src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png"
+              src="/images/logos/regencivics-logo-dark-transparent-rounded.png"
               alt="ReGen Civics"
               className="w-8 h-8 object-contain"
               loading="lazy"

@@ -91,15 +91,15 @@ export default function Navigation() {
             href="/"
             className="flex items-center gap-2 text-[#7dd87d] hover:text-[#9de89d] transition-colors"
           >
-            <img 
-              src="https://assets.regencivics.earth/DUOLILquhPlWMUAF.png" 
-              alt="ReGen Civics" 
+            <img
+              src="/images/logos/regencivics-logo-dark-transparent-rounded.png"
+              alt="ReGen Civics"
               className="w-10 h-10 object-contain md:hidden"
               loading="eager"
             />
-            <img 
-              src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png" 
-              alt="ReGen Civics" 
+            <img
+              src="/images/logos/regencivics-logo-dark-transparent-rounded.png"
+              alt="ReGen Civics"
               className="w-10 h-10 object-contain hidden md:block"
               loading="eager"
             />

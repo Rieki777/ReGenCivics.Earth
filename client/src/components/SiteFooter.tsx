@@ -18,9 +18,9 @@ export default function SiteFooter() {
         <div className="flex flex-col items-center text-center mb-6">
           <div className="flex items-center gap-2 mb-2">
             <img
-              src="/images/logos/regencivics-logo-light.png"
+              src="/images/logos/regencivics-logo-dark-transparent-rounded.png"
               alt="ReGen Civics"
-              className="h-10 w-auto"
+              className="h-14 w-14 object-contain"
             />
           </div>
           <p className="text-white/70 text-xs max-w-sm leading-relaxed">

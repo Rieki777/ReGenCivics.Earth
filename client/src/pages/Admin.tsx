@@ -3077,7 +3077,7 @@ function AdminDashboard() {
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3 md:gap-4">
-              <img src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png" alt="ReGen Civics" className="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" loading="lazy" />
+              <img src="/images/logos/regencivics-logo-dark-transparent-rounded.png" alt="ReGen Civics" className="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" loading="lazy" />
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-xl md:text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
