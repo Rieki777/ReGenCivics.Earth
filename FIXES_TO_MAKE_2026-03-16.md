@@ -45,8 +45,8 @@ This document continues from `FIXES_TO_MAKE_2026-03-15.md` and `FIXES_TO_MAKE_20
 
 | Fix | Task | Priority | Notes |
 |---|---|---|---|
-| Fix 76A | Quest PDF field guides | Low | Use /pdf skill, source: QUEST_MASTER_SHEET.md |
-| Fix 110-C Part 1 | Start Your Journey cards in a 2-up/3-up grid | Low | Journey cards not found in current code — may be unimplemented |
+| ~~Fix 76A~~ | ~~Quest PDF field guides~~ | Low | **DONE 2026-03-14** — 9 remaining PDFs generated (quests 5-13); QUEST_PDF_SLUGS updated in QuestDetailModal.tsx |
+| ~~Fix 110-C Part 1~~ | ~~Start Your Journey cards in a 2-up/3-up grid~~ | Low | **DONE** — HowItWorks.tsx already has 3-up responsive grid (grid-cols-1 sm:grid-cols-2 lg:grid-cols-3) |
 
 ### RYE — actions needed
 

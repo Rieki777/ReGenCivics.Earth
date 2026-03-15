@@ -30,7 +30,16 @@ const QUEST_PDF_SLUGS: Record<string, string> = {
   "quest-2": "quest-02-seeds",
   "quest-3": "quest-03-healing-wholes",
   "food-foresting": "quest-04-food-foresting",
+  "quest-4": "quest-05-dreaming-spaces",
+  "quest-5": "quest-06-rites-of-love",
+  "quest-6": "quest-07-healing-circles",
+  "quest-7": "quest-08-wild-foraging",
+  "quest-8": "quest-09-medicine-journey",
+  "quest-9": "quest-09b-tree-talk",
   "quest-10": "quest-10-nvc",
+  "quest-11": "quest-11-coordination-patterns",
+  "quest-12": "quest-12-breathplay",
+  "quest-13": "quest-13-fasting",
 };
 
 interface QuestDetailModalProps {
