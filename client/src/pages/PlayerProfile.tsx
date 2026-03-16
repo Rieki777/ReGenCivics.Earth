@@ -221,7 +221,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
             <Textarea value={dreamingOf} onChange={e => { setDreamingOf(e.target.value); persist('dreamingOf', e.target.value); }} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals rather than harms..." className="border-[#1a472a]/20 min-h-[60px]" />
           </div>
           <div>
-            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion do you call home? <span className="text-[#1a472a]/50 font-normal">(optional)</span></label>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion(s) do you call home? <span className="text-[#1a472a]/50 font-normal">(optional)</span></label>
             <BioregionSelect
               value={bioregionId}
               onChange={(id) => {
@@ -721,7 +721,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-white/60 text-xs">What are you dreaming of building or becoming?</label>
+        <label className="text-white/60 text-xs">What are you dreaming of creating or becoming?</label>
         <textarea
           value={dreaming}
           onChange={(e) => setDreaming(e.target.value)}
@@ -732,7 +732,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-white/60 text-xs">What bioregions do you call home? <span className="opacity-50">(select multiple)</span></label>
+        <label className="text-white/60 text-xs">What bioregion(s) do you call home? <span className="opacity-50">(may select multiple)</span></label>
         <BioregionMultiSelect
           values={bioregionIds}
           onChange={setBioregionIds}
@@ -1163,7 +1163,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
             }}
             className="w-full py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#6bc86b] transition-colors"
           >
-            {claimMutation.isPending ? "Submitting…" : "Submit Claim (pending admin approval)"}
+            {claimMutation.isPending ? "Submitting…" : "Submit Claim"}
           </button>
         </div>
       )}
@@ -1655,7 +1655,7 @@ function ContributionsTab({
             <div className="w-2 h-2 rounded-full bg-[#3b82f6] mt-1.5 flex-shrink-0" />
             <div>
               <p className="text-white/80 text-xs font-medium">Base Blockchain</p>
-              <p className="text-white/50 text-xs">$ReGen and $RCivics transactions, badge mints, and verifiable contributions live here.</p>
+              <p className="text-white/50 text-xs">$ReGen and $RCivics transactions, token mints, and verifiable contributions live here.</p>
             </div>
           </div>
         </div>
@@ -1676,12 +1676,12 @@ function ContributionsTab({
         <div className="bg-[#7dd87d]/8 border border-[#7dd87d]/20 rounded-xl p-4">
           <p className="text-white/50 text-xs mb-1">💚 $ReGen Balance</p>
           <p className="text-2xl font-bold text-[#7dd87d]">{rgenBalance != null && rgenBalance !== 0 ? rgenBalance.toLocaleString() : "--"}</p>
-          <p className="text-white/50 text-xs mt-1">RGEN</p>
+          <p className="text-white/50 text-xs mt-1">Currency</p>
         </div>
         <div className="bg-[#d4a574]/8 border border-[#d4a574]/20 rounded-xl p-4">
-          <p className="text-white/50 text-xs mb-1">🗳 RGVoice</p>
+          <p className="text-white/50 text-xs mb-1">🗳 RGVoice / Voice Weight</p>
           <p className="text-2xl font-bold text-[#d4a574]">{rvoiceBalance != null && rvoiceBalance !== 0 ? rvoiceBalance.toLocaleString() : "--"}</p>
-          <p className="text-white/50 text-xs mt-1">Voting weight</p>
+          <p className="text-white/50 text-xs mt-1">Voice Weight</p>
         </div>
       </div>
 
@@ -1695,7 +1695,7 @@ function ContributionsTab({
             <div className="bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-[#7dd87d]/5 rounded-xl p-4 cursor-pointer transition-all text-center group">
               <div className="text-2xl mb-2">🧮</div>
               <p className="text-white text-xs font-semibold group-hover:text-[#7dd87d] transition-colors">Contribution Calculator</p>
-              <p className="text-white/40 text-xs mt-1">Estimate your 8 capital contributions</p>
+              <p className="text-white/40 text-xs mt-1">Estimate your contribution using the 8 forms of capital - save your contributions here</p>
               <p className="text-[#7dd87d]/70 text-xs mt-2 font-medium">Open →</p>
             </div>
           </Link>
@@ -1703,7 +1703,7 @@ function ContributionsTab({
             <div className="bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-[#7dd87d]/5 rounded-xl p-4 cursor-pointer transition-all text-center group">
               <div className="text-2xl mb-2">🌊</div>
               <p className="text-white text-xs font-semibold group-hover:text-[#7dd87d] transition-colors">Crowd Pooling Tool</p>
-              <p className="text-white/40 text-xs mt-1">Pool capital for your land project</p>
+              <p className="text-white/40 text-xs mt-1">Create your FULL VALUE proposal for a Land Project - save your proposals here</p>
               <p className="text-[#7dd87d]/70 text-xs mt-2 font-medium">Open →</p>
             </div>
           </Link>
@@ -1748,7 +1748,7 @@ function ContributionsTab({
           <ChevronDown className={`w-4 h-4 transition-transform ${showManualLog ? "rotate-180" : ""}`} />
         </button>
         {!showManualLog && (
-          <p className="text-white/50 text-xs">Contributions logged here can be verified by admins. For quantified contributions, use the calculator above.</p>
+          <p className="text-white/50 text-xs">Contributions logged here can be verified by admins. For more quantified contributions, use the calculator above.</p>
         )}
       </div>
 
@@ -1833,7 +1833,7 @@ function ContributionsTab({
             <input
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Designed brand identity for La Tierra"
+              placeholder="e.g. Designed brand identity for ReGen Civics"
               className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
             />
           </div>
@@ -1868,7 +1868,7 @@ function ContributionsTab({
               <input
                 value={projectName}
                 onChange={e => setProjectName(e.target.value)}
-                placeholder="e.g. La Tierra"
+                placeholder="e.g. ReGen Civics"
                 className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
               />
             </div>
@@ -2028,7 +2028,7 @@ function QuestsTab({ profile }: { profile: any }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-white/50 text-xs">{completed.length} quest{completed.length !== 1 ? "s" : ""} completed</p>
+        <p className="text-white/50 text-xs">{completed.length} quest(s) completed</p>
         <a href="/quest" className="text-[#7dd87d] text-xs hover:underline flex items-center gap-1">
           Find more <ArrowRight className="w-3 h-3" />
         </a>
@@ -2303,7 +2303,7 @@ function SubmissionsTab() {
         emptyAction={{ label: "Apply Now", href: "/apply" }}
       />
       <SubmissionsSection
-        title="Crowd-Pooling Campaigns"
+        title="Incubator Season Campaigns"
         icon={Layers}
         items={campaigns}
         renderItem={(campaign: any) => (
@@ -2546,7 +2546,7 @@ export default function PlayerProfile() {
       <BackButton />
       <SEO 
         title="Player Profile | ReGen Civics"
-        description="Create your player profile and connect your Base blockchain account to track your contributions and badges."
+        description="Create your player profile and connect your Base blockchain account to track your contributions and tokens."
         url="https://regencivics.earth/profile"
       />
       
@@ -2565,7 +2565,7 @@ export default function PlayerProfile() {
               </h1>
               
               <p className="text-xl text-white/80 max-w-2xl mx-auto">
-                Track your contributions, earn badges, and connect your Base blockchain account to verify your on-chain identity.
+                Track your contributions, earn tokens, and connect your Base blockchain account to verify your on-chain identity.
               </p>
             </div>
           </AnimatedSection>
@@ -2584,10 +2584,10 @@ export default function PlayerProfile() {
                     <User className="w-8 h-8 text-[#7dd87d]" />
                   </div>
                   <CardTitle className="text-2xl text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                    Sign In to Create Your Profile
+                    Join the ReGen Civics Game
                   </CardTitle>
                   <CardDescription>
-                    Join the ReGen Civics game and start tracking your contributions
+                    Create your player profile to track your contributions, earn tokens, and connect with the regenerative movement.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
@@ -2803,7 +2803,7 @@ export default function PlayerProfile() {
               How the <span className="text-[#7dd87d]">Game</span> Works
             </h2>
             
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-4 gap-6">
               <Card className="bg-white/10 backdrop-blur-sm border-[#7dd87d]/20">
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 bg-[#7dd87d] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -2836,6 +2836,18 @@ export default function PlayerProfile() {
                   <h3 className="text-white font-semibold mb-2">3. Earn Tokens</h3>
                   <p className="text-white/60 text-sm">
                     Complete quests, contribute to projects, and earn tokens for your contributions
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 backdrop-blur-sm border-[#7dd87d]/20">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-[#7dd87d] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <UsersIcon className="w-6 h-6 text-[#1a472a]" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">4. Co-Create</h3>
+                  <p className="text-white/60 text-sm">
+                    Be part of designing the financial and economic systems of our present and future
                   </p>
                 </CardContent>
               </Card>
