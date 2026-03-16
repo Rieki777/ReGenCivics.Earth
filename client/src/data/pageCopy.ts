@@ -1,0 +1,148 @@
+export const pageCopy = {
+  calculator: {
+    seo: {
+      title: "Contribution Calculator | ReGen Civics",
+      description: "Calculate the value of your contributions across the 8 Forms of Capital. An experimental tool for quantifying impact in the ReGen Game.",
+    },
+    heading: "Contribution Calculator",
+    subtext: "Estimate the value of your contributions across the 8 Forms of Capital",
+    experimental: {
+      title: "Experimental Tool",
+      body: "This calculator is experimental and figures provided here aren't guaranteed rewards, just a helpful tool we're playing with. The values are estimates to help you think through your contributions holistically.",
+    },
+    footer: {
+      heading: "Ready to Submit Your Contribution?",
+      body: "Once you've calculated your contribution value, submit a proposal on Hypha.",
+      submitLabel: "Submit Proposal on Hypha",
+      learnMoreLabel: "Learn More About the Game",
+      signInBody: "Sign in to save your calculations and track your contributions",
+      signInButton: "Sign In to Track Progress",
+    },
+  },
+  crowdPooling: {
+    heading: "Land projects need more than money... Create a proposal showing all the value you bring!",
+    subtext: "Crowd Pooling lets you contribute directly to land projects at a scale that works for you. Set your budget, pick your projects, and see exactly how your contribution compounds with others.",
+    browseCampaigns: "Looking to browse active campaigns?",
+    browseCampaignsLink: "View Land Project Campaigns →",
+    benefits: {
+      heading: "Why Crowd Pooling?",
+      items: [
+        {
+          title: "Reduce Financial Burden",
+          body: "Dramatically reduce the perceived financial funding needed by recognizing all forms of capital, not just money.",
+        },
+        {
+          title: "Unlock Hidden Assets",
+          body: "Access assets that could never have been bought, like land that's not for sale but wants to be part of your vision.",
+        },
+        {
+          title: "Equal Contributions",
+          body: "Create a process from the start for everyone to bring an equal contribution over time, regardless of their financial situation.",
+        },
+        {
+          title: "Regenerative Foundations",
+          body: "Build the diverse foundations for a regenerative economic system from the very onset of your project.",
+        },
+      ],
+    },
+    howTo: [
+      "Enter the project name you're applying to and target total value amount",
+      "Add your immediate contributions (land, money, equipment, etc.)",
+      "Add your future value commitments (roles you will fill)",
+      "Download your PDF contribution summary",
+      "Share your summary with land projects and aggregate all contributions",
+    ],
+    submit: {
+      heading: "Ready to Submit Your Contribution?",
+      body: "Take your project contributions straight to the project's during their Crowd Pooling game.",
+      submitLabel: "Submit Proposal to Projects",
+      viewProjectsLabel: "View Projects Crowd Pooling",
+      footer: "Click \"View Projects Actively Crowd Pooling\" to see the list of projects currently accepting contributions",
+    },
+    philosophy: {
+      heading: "The Philosophy of Crowd Pooling",
+      body: "Watch this introduction video to understand the deeper philosophy behind the Crowd Pooling process and how it transforms the way communities fund and launch regenerative projects.",
+    },
+    related: [
+      {
+        heading: "Contribution Calculator",
+        body: "Calculate a contribution value across the 8 forms of capital",
+      },
+      {
+        heading: "Learn About Games & Quests",
+        body: "Discover how to play the Infinite Game and earn tokens for your contributions",
+      },
+    ],
+    signIn: {
+      heading: "Track Your Contributions",
+      body: "Sign in to save your contributions and track your impact across projects",
+      button: "Sign In to Get Started",
+    },
+  },
+  crowdPoolingProjects: {
+    hero: {
+      label: "Crowd Pooling Projects",
+      heading: "Support Regenerative Land Projects",
+      subtext: "Contribute what projects actually need: land, equipment, skills, time, knowledge, and financial resources",
+      CTAs: {
+        createProposal: "Create Your Proposal",
+        compareProjects: "Compare Projects",
+        listProject: "List Your Project (Coming Soon)",
+      },
+    },
+    callout: {
+      text: "These are land projects currently raising through crowd pooling. Want to run the numbers on your contribution?",
+      link: "Open the Crowd Pooling Calculator →",
+    },
+    howItWorks: {
+      heading: "How It Works",
+      steps: [
+        { title: "Browse Projects", body: "Click on any project to see full details and open roles" },
+        { title: "Create Your Proposal", body: "Use the Crowd Pooling Tool to calculate your contribution" },
+        { title: "Submit to Project(s)", body: "Submit your proposal for project review and acceptance" },
+      ],
+    },
+    CTA: {
+      heading: "Want Your Project Listed Here?",
+      body: "If you are a land project looking to crowd pool contributions from your community, apply to join the ReGen Civics alliance and get access to our Crowd Pooling platform.",
+      applyLabel: "Apply for Season 2",
+      joinSessionLabel: "Join Open Session",
+    },
+  },
+  game: {
+    hero: {
+      badge: "The Infinite Game",
+      heading: "Play the Infinite Game",
+      subtext: "An infinite - and as serious as life itself - Game where we co-create regenerative civilizations together. No winners & losers, just players committed to continually creating a more beautiful, engaging, and regenerative reality; together.",
+      cta: "🧙 Start Your Quest",
+      ctaLink: "/quest",
+    },
+    whatsTheGame: {
+      heading: "So what's the Game?",
+      teaser: "One simple way to describe what's happening here is 'we're co-creating an infinite game to do the thing' - which of course we'll need to explain each part of this...",
+      readMore: {
+        open: "Read more about the Infinite Game",
+        close: "Show less",
+      },
+    },
+  },
+  quest: {
+    hero: {
+      badge: "🧙 Welcome to the Quest",
+      heading: "The Rites of Passage",
+      line1: "What are joyful, playful, productive, and regenerative ways to participate in co-creating more beautiful civilizations together?",
+      line2: "Our current answer... Quests!",
+      line3: "A dynamic list of Quests created and curated by all of us!",
+      hemisphere: {
+        northern: "🌍 Northern",
+        southern: "🌎 Southern",
+      },
+      seasonalTagline: "Seasonal quests are a gentle suggestion for timing based on hemisphere.",
+    },
+    announcement: "UNDER CONSTRUCTION: Quests are in pre-launch mode! You can start questing now and help work out any kinks and co-create the flow while we get ready for a full launch.",
+    questArcButton: {
+      expand: "View Rits of Passage Quest Arc",
+      collapse: "Hide Quest Arc",
+    },
+  },
+};

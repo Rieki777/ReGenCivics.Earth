@@ -31,6 +31,7 @@ import { useHemisphere, setHemisphereOverride } from "@/hooks/useHemisphere";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { questData, QUEST_BEST_SEASONS, SEASON_HERO } from "@/data/questData";
 import { seasonalQuestsData } from "@/data/seasonalQuestsData";
+import { pageCopy } from "@/data/pageCopy";
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.png to this path
 const QUEST_IMG_BASE = "https://assets.regencivics.earth/quests";
@@ -494,7 +495,7 @@ export default function Quest() {
       <div className="bg-gradient-to-r from-[#7dd87d] via-[#5cb85c] to-[#7dd87d] py-3 px-4 text-center">
         <p className="text-[#1a472a] font-medium flex items-center justify-center gap-2 flex-wrap">
           <Sparkles className="w-5 h-5" />
-          <span>UNDER CONSTRUCTION: Quests are in pre-launch mode! You can start questing now and help work out any kinks and co-create the flow while we get ready for a full launch.</span>
+          <span>{pageCopy.quest.announcement}</span>
           <Sparkles className="w-5 h-5" />
         </p>
         <div className="flex items-center justify-center mt-2">
@@ -516,30 +517,29 @@ export default function Quest() {
             className="inline-block px-5 py-2 mb-6 rounded-full bg-[#7dd87d] text-[#1a472a]"
             style={{ fontFamily: 'var(--font-accent)' }}
           >
-            🧙 Welcome to the Quest
+            {pageCopy.quest.hero.badge}
           </div>
           <h1 
             className="text-4xl md:text-6xl font-bold mb-6"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            The Rites of{" "}
-            <span className="text-[#7dd87d]">Passage</span>
+            {pageCopy.quest.hero.heading}
           </h1>
           <p className="text-xl text-white/90 max-w-3xl mx-auto mb-4 leading-relaxed">
-            What are joyful, playful, productive, and regenerative ways to participate in co-creating more beautiful civilizations together?
+            {pageCopy.quest.hero.line1}
           </p>
           <p className="text-2xl font-bold text-[#7dd87d] mb-8">
-            Our current answer... Quests!
+            {pageCopy.quest.hero.line2}
           </p>
           <p className="text-white/80 max-w-2xl mx-auto mb-4">
-            A dynamic list of Quests created and curated by all of us!
+            {pageCopy.quest.hero.line3}
           </p>
 
           {/* Seasonal tagline + hemisphere toggle */}
           {!hemisphereLoading && (
             <div className="flex flex-col items-center gap-2 mb-8">
               <p className="text-white/60 text-sm italic">
-                {SEASON_HERO[currentSeason]?.tagline}
+                {pageCopy.quest.hero.seasonalTagline}
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -550,7 +550,7 @@ export default function Quest() {
                       : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
                   }`}
                 >
-                  🌍 Northern
+                  {pageCopy.quest.hero.hemisphere.northern}
                 </button>
                 <button
                   onClick={() => { setHemisphereOverride("southern"); window.location.reload(); }}
@@ -560,7 +560,7 @@ export default function Quest() {
                       : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
                   }`}
                 >
-                  🌎 Southern
+                  {pageCopy.quest.hero.hemisphere.southern}
                 </button>
               </div>
             </div>
@@ -619,7 +619,7 @@ export default function Quest() {
               onClick={() => setShowQuestArc(!showQuestArc)}
             >
               <Map className="mr-2 w-4 h-4" />
-              {showQuestArc ? "Hide Quest Arc" : "View Rits of Passage Quest Arc"}
+              {showQuestArc ? pageCopy.quest.questArcButton.collapse : pageCopy.quest.questArcButton.expand}
             </Button>
           </div>
         </AnimatedSection>

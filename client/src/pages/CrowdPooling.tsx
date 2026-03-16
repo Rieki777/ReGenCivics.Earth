@@ -12,6 +12,7 @@ import { getLoginUrl } from "@/const";
 import CrowdPoolingTool from "@/components/CrowdPoolingTool";
 import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
+import { pageCopy } from "@/data/pageCopy";
 
 // Sign In CTA Component
 function SignInCTA() {
@@ -23,17 +24,17 @@ function SignInCTA() {
     <div className="mt-8 bg-white rounded-2xl p-6 border border-[#7dd87d]/30 shadow-sm text-center">
       <BackButton />
       <h3 className="text-lg font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-        Track Your Contributions
+        {pageCopy.crowdPooling.signIn.heading}
       </h3>
       <p className="text-[#1a472a]/85 text-sm mb-4">
-        Sign in to save your contributions and track your impact across projects
+        {pageCopy.crowdPooling.signIn.body}
       </p>
       <Button
         className="bg-[#1a472a] hover:bg-[#2d5a3d]"
         onClick={() => window.location.href = getLoginUrl()}
       >
         <LogIn className="w-4 h-4 mr-2" />
-        Sign In to Get Started
+        {pageCopy.crowdPooling.signIn.button}
       </Button>
     </div>
   );
@@ -89,16 +90,15 @@ export default function CrowdPooling() {
               className="text-3xl md:text-4xl font-bold text-[#1a472a] mb-4"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Pool Resources for Your Land Project
+              {pageCopy.crowdPooling.heading}
             </h1>
             <p className="text-[#1a472a]/85 max-w-xl mx-auto">
-              Crowd Pooling lets you contribute directly to land projects at a scale that works for you.
-              Set your budget, pick your projects, and see exactly how your contribution compounds with others.
+              {pageCopy.crowdPooling.subtext}
             </p>
             <p className="mt-3 text-[#1a472a]/70 text-sm max-w-xl mx-auto">
-              Looking to browse active campaigns?{" "}
+              {pageCopy.crowdPooling.browseCampaigns}{" "}
               <Link href="/crowd-pooling-projects" className="text-[#4a7c59] font-medium hover:underline">
-                View Land Project Campaigns →
+                {pageCopy.crowdPooling.browseCampaignsLink}
               </Link>
             </p>
           </div>
@@ -111,7 +111,7 @@ export default function CrowdPooling() {
             >
               <h2 className="text-xl font-bold flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
                 <Sparkles className="w-5 h-5 text-[#7dd87d]" />
-                Why Crowd Pooling?
+                {pageCopy.crowdPooling.benefits.heading}
               </h2>
               {benefitsExpanded ? (
                 <ChevronUp className="w-5 h-5 text-[#7dd87d]" />
@@ -122,53 +122,21 @@ export default function CrowdPooling() {
             
             {benefitsExpanded && (
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                      <DollarSign className="w-5 h-5 text-[#7dd87d]" />
+                {pageCopy.crowdPooling.benefits.items.map((item, idx) => {
+                  const icons = [DollarSign, Unlock, Scale, Leaf];
+                  const Icon = icons[idx] || Leaf;
+                  return (
+                    <div key={item.title} className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
+                          <Icon className="w-5 h-5 text-[#7dd87d]" />
+                        </div>
+                        <h3 className="font-bold">{item.title}</h3>
+                      </div>
+                      <p className="text-white/80 text-sm">{item.body}</p>
                     </div>
-                    <h3 className="font-bold">Reduce Financial Burden</h3>
-                  </div>
-                  <p className="text-white/80 text-sm">
-                    Dramatically reduce the perceived financial funding needed by recognizing all forms of capital, not just money.
-                  </p>
-                </div>
-                
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                      <Unlock className="w-5 h-5 text-[#7dd87d]" />
-                    </div>
-                    <h3 className="font-bold">Unlock Hidden Assets</h3>
-                  </div>
-                  <p className="text-white/80 text-sm">
-                    Access assets that could never have been bought, like land that was not for sale but wanted to be part of your vision.
-                  </p>
-                </div>
-                
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                      <Scale className="w-5 h-5 text-[#7dd87d]" />
-                    </div>
-                    <h3 className="font-bold">Equal Contributions</h3>
-                  </div>
-                  <p className="text-white/80 text-sm">
-                    Create a process from the start for everyone to bring an equal contribution over time, regardless of their financial situation.
-                  </p>
-                </div>
-                
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                      <Leaf className="w-5 h-5 text-[#7dd87d]" />
-                    </div>
-                    <h3 className="font-bold">Regenerative Foundations</h3>
-                  </div>
-                  <p className="text-white/80 text-sm">
-                    Build the diverse foundations for a regenerative economic system from the very onset of your project.
-                  </p>
-                </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -182,11 +150,9 @@ export default function CrowdPooling() {
                   <strong>How to use this tool:</strong>
                 </p>
                 <ol className="list-decimal list-inside space-y-1 text-[#1a472a]/85">
-                  <li>Enter your project name and target funding amount</li>
-                  <li>Add your immediate contributions (land, money, equipment, etc.)</li>
-                  <li>Add your future value commitments (roles you will fill)</li>
-                  <li>Download your PDF contribution summary</li>
-                  <li>Share the tool link with other contributors to aggregate all contributions</li>
+                  {pageCopy.crowdPooling.howTo.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
                 </ol>
               </div>
             </div>
@@ -199,10 +165,10 @@ export default function CrowdPooling() {
           <div className="mt-8 bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 rounded-2xl p-6 border border-[#7dd87d]/30">
             <div className="text-center mb-4">
               <h3 className="text-xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                Ready to Submit Your Contribution?
-              </h3>
-              <p className="text-[#1a472a]/85 text-sm max-w-lg mx-auto">
-                Take your project contributions straight to the project's DAO during their Crowd Pooling game.
+                  {pageCopy.crowdPooling.submit.heading}
+                </h3>
+                <p className="text-[#1a472a]/85 text-sm max-w-lg mx-auto">
+                  {pageCopy.crowdPooling.submit.body}
               </p>
             </div>
             
@@ -214,19 +180,19 @@ export default function CrowdPooling() {
               >
                 <Button className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:w-auto">
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  Submit Proposal to DAO
+                  {pageCopy.crowdPooling.submit.submitLabel}
                 </Button>
               </a>
               <Link href="/crowd-pooling-projects">
                 <Button variant="outline" className="border-[#1a472a]/30 w-full sm:w-auto">
                   <Users className="w-4 h-4 mr-2" />
-                  View Projects Crowd Pooling
+                  {pageCopy.crowdPooling.submit.viewProjectsLabel}
                 </Button>
               </Link>
             </div>
             
             <p className="text-center text-xs text-[#1a472a]/70 mt-3">
-              Click "View Projects Crowd Pooling" to see the list of projects currently accepting contributions
+              {pageCopy.crowdPooling.submit.footer}
             </p>
           </div>
 
@@ -257,17 +223,17 @@ export default function CrowdPooling() {
           <div className="mt-8 grid md:grid-cols-2 gap-4">
             <Link href="/calculator">
               <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/30 hover:border-[#7dd87d] transition-colors cursor-pointer">
-                <h3 className="font-bold text-[#1a472a] mb-2">Contribution Calculator</h3>
+                <h3 className="font-bold text-[#1a472a] mb-2">{pageCopy.crowdPooling.related[0].heading}</h3>
                 <p className="text-sm text-[#1a472a]/60">
-                  Calculate your individual contribution value across 8 forms of capital
+                  {pageCopy.crowdPooling.related[0].body}
                 </p>
               </div>
             </Link>
             <Link href="/blog/introducing-games-and-quests">
               <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/30 hover:border-[#7dd87d] transition-colors cursor-pointer">
-                <h3 className="font-bold text-[#1a472a] mb-2">Learn About Games & Quests</h3>
+                <h3 className="font-bold text-[#1a472a] mb-2">{pageCopy.crowdPooling.related[1].heading}</h3>
                 <p className="text-sm text-[#1a472a]/60">
-                  Discover how to play the Infinite Game and earn tokens through contribution
+                  {pageCopy.crowdPooling.related[1].body}
                 </p>
               </div>
             </Link>

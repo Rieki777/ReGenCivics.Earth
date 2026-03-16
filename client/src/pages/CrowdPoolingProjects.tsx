@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SEO, pageSEO } from "@/components/SEO";
+import { pageCopy } from "@/data/pageCopy";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -874,17 +875,17 @@ export default function CrowdPoolingProjects() {
               className="text-3xl md:text-5xl font-bold mb-4"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Support Regenerative Land Projects
+              {pageCopy.crowdPoolingProjects.hero.heading}
             </h1>
             <p className="text-white/80 text-base md:text-lg mb-8">
-              Contribute what projects actually need: land, equipment, skills, time, and financial resources
+              {pageCopy.crowdPoolingProjects.hero.subtext}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
               <Link href="/crowd-pooling">
                 <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] w-full sm:w-auto">
                   <FileText className="w-4 h-4 mr-2" />
-                  Create Your Proposal
+                  {pageCopy.crowdPoolingProjects.hero.CTAs.createProposal}
                 </Button>
               </Link>
               <Link href="/compare-projects">

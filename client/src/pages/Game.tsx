@@ -50,6 +50,7 @@ import GlobeMap from "@/components/GlobeMap";
 import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import { pageCopy } from "@/data/pageCopy";
 // Calculator moved to separate page at /calculator
 
 // Game Way Card Component
@@ -235,19 +236,18 @@ export default function Game() {
         <div className="container flex flex-col items-center justify-center h-full text-center px-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#7dd87d]/20 rounded-full mb-6">
             <SeedOfLifeIcon className="w-5 h-5 text-[#7dd87d]" size={20} />
-            <span className="text-[#7dd87d] font-semibold">The Infinite Game</span>
+            <span className="text-[#7dd87d] font-semibold">{pageCopy.game.hero.badge}</span>
           </div>
           
           <h1 
             className="text-4xl md:text-6xl font-bold text-white mb-6"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Play the<br />
-            <span className="text-[#7dd87d]">Infinite Game</span>
+            {pageCopy.game.hero.heading}
           </h1>
           
           <p className="text-xl text-white/90 max-w-2xl mb-8 leading-relaxed">
-            An infinite - and as serious as life itself - Game where we co-create regenerative civilizations together. No winners &amp; losers, just players committed to continually creating a more beautiful, engaging, and regenerative reality; together.
+            {pageCopy.game.hero.subtext}
           </p>
           
           <div className="flex flex-wrap gap-4 justify-center">
@@ -257,7 +257,7 @@ export default function Game() {
                 className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                <span className="mr-2">🧙</span> Start Your Quest
+                {pageCopy.game.hero.cta}
               </Button>
             </Link>
           </div>
@@ -373,7 +373,7 @@ export default function Game() {
               <CollapsibleTrigger asChild>
                 <button className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#1a472a] hover:text-[#4a7c59] transition-colors">
                   {whatIsGameOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  {whatIsGameOpen ? "Show less" : "Read more about the Infinite Game"}
+                  {whatIsGameOpen ? pageCopy.game.whatsTheGame.readMore.close : pageCopy.game.whatsTheGame.readMore.open}
                 </button>
               </CollapsibleTrigger>
             </Collapsible>

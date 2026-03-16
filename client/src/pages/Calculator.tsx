@@ -14,6 +14,7 @@ import { SEO } from "@/components/SEO";
 import { CalculatorWeightsSheet } from "@/components/CalculatorWeightsSheet";
 import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
+import { pageCopy } from "@/data/pageCopy";
 
 // Sign In CTA Component
 function SignInCTA() {
@@ -24,7 +25,7 @@ function SignInCTA() {
   return (
     <div className="mt-8 pt-6 border-t border-white/20">
       <BackButton />
-      <p className="text-white/70 mb-4">Sign in to save your calculations and track your contributions</p>
+      <p className="text-white/70 mb-4">{pageCopy.calculator.footer.signInBody}</p>
       <Button
         size="lg"
         className="rounded-xl bg-white hover:bg-white/90 text-[#1a472a]"
@@ -32,7 +33,7 @@ function SignInCTA() {
         onClick={() => window.location.href = getLoginUrl()}
       >
         <Users className="mr-2 w-5 h-5" />
-        Sign In to Track Progress
+        {pageCopy.calculator.footer.signInButton}
       </Button>
     </div>
   );
@@ -43,8 +44,8 @@ export default function Calculator() {
     <PageWrapper>
     <div className="min-h-screen bg-[#f8f5f0]">
       <SEO
-        title="Contribution Calculator | ReGen Civics"
-        description="Calculate the value of your contributions across the 8 Forms of Capital. An experimental tool for quantifying impact in the ReGen Game."
+        title={pageCopy.calculator.seo.title}
+        description={pageCopy.calculator.seo.description}
         image="https://assets.regencivics.earth/ocDzkDHpivHtGCWo.jpg"
       />
       
@@ -67,10 +68,10 @@ export default function Calculator() {
                 className="text-3xl md:text-4xl font-bold text-white"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
-                Contribution Calculator
+                {pageCopy.calculator.heading}
               </h1>
               <p className="text-white/70">
-                Estimate the value of your contributions across the 8 Forms of Capital
+                {pageCopy.calculator.subtext}
               </p>
             </div>
           </div>
@@ -85,9 +86,9 @@ export default function Calculator() {
               <AlertTriangle className="w-5 h-5 text-amber-900" />
             </div>
             <div>
-              <h3 className="font-bold text-amber-900 mb-1">Experimental Tool</h3>
+              <h3 className="font-bold text-amber-900 mb-1">{pageCopy.calculator.experimental.title}</h3>
               <p className="text-amber-800 text-sm">
-                This calculator is experimental and figures provided here aren't guaranteed rewards, just a helpful tool we're playing with. The values are estimates to help you think through your contributions holistically.
+                {pageCopy.calculator.experimental.body}
               </p>
               <div className="mt-3">
                 <CalculatorWeightsSheet />
@@ -114,10 +115,10 @@ export default function Calculator() {
             className="text-2xl md:text-3xl font-bold text-white mb-4"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Ready to Submit Your Contribution?
+            {pageCopy.calculator.footer.heading}
           </h2>
           <p className="text-white/70 max-w-2xl mx-auto mb-6">
-            Once you've calculated your contribution value, submit a proposal on Hypha.
+            {pageCopy.calculator.footer.body}
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <a 
@@ -130,7 +131,7 @@ export default function Calculator() {
                 className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                Submit Proposal on Hypha
+                {pageCopy.calculator.footer.submitLabel}
               </Button>
             </a>
             <Link href="/game">
@@ -140,7 +141,7 @@ export default function Calculator() {
                 className="rounded-xl border-2 border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/20"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                Learn More About the Game
+                {pageCopy.calculator.footer.learnMoreLabel}
               </Button>
             </Link>
           </div>
