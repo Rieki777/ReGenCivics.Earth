@@ -247,7 +247,7 @@ export default function Game() {
           </h1>
           
           <p className="text-xl text-white/90 max-w-2xl mb-8 leading-relaxed">
-            An infinite game where we co-create regenerative civilizations together. No winners, no losers, just players committed to continually creating a more beautiful, engaging, and regenerative Game; together.
+            An infinite - and as serious as life itself - Game where we co-create regenerative civilizations together. No winners &amp; losers, just players committed to continually creating a more beautiful, engaging, and regenerative reality; together.
           </p>
           
           <div className="flex flex-wrap gap-4 justify-center">
@@ -277,7 +277,7 @@ export default function Game() {
 
             {/* Teaser line */}
             <p className="text-lg text-[#1a472a]/80 leading-relaxed mb-4">
-              The simplest way I can describe what's happening here is we're co-creating an infinite game to do the thing.
+              One simple way to describe what's happening here is "we're co-creating an infinite game to do the thing" - which of course we'll need to explain each part of this...
             </p>
 
             {/* Collapsible body */}
@@ -285,37 +285,71 @@ export default function Game() {
               <CollapsibleContent className="overflow-hidden transition-all duration-300">
                 <div className="space-y-4 text-[#1a472a]/80 leading-relaxed">
                   <p>
-                    What do I mean "the thing"? Let's start here as it's the most important. The "thing" is creating a civilization that's a healthy, joyful, fulfilling and magical place to raise children. To raise ourselves. That's "The Thing" and the thing about the thing is there's no right answer. But there are a LOT better answers than the dominant way we're doing this as a society.
+                    What do we mean "the thing"? Let's start here as it's the most important. The "thing" is creating a civilization that's a healthy, joyful, fulfilling and magical place to raise ourselves and our children.
                   </p>
                   <p>
-                    The thing is hard, the thing is monumental, and it's necessary. Nobody knows the absolute right way to do it, and there isn't one. So, we need to try and have thousands of viable options to choose. Because if we can't choose the story in which we raise ourselves, we aren't choosing anything meaningful.
+                    That's "The Thing" and the thing about the thing is there's no right answer. But there are a LOT better answers than the dominant way we're doing this as a society...
+                  </p>
+                  <p>
+                    The thing is hard, the thing is monumental... and it's necessary. Nobody knows the absolute right way to do it, and there isn't one. So, we need to try and have thousands of viable options to learn from and choose between.
+                  </p>
+                  <p>
+                    Because if we can't choose the story in which we raise ourselves, we aren't choosing anything meaningful.
                   </p>
                   <p className="font-semibold text-[#1a472a]">So if it's so important, why call it a Game?</p>
                   <p>
-                    There's so many layers to this, but let me stay at the surface. Surface level: we need it to be a Game in design so that it's simple for people to participate. Because the old Games are taking everyone's time. So, it needs to be extremely easy to participate, and designing it like a Game helps us consider that lens.
+                    There's so many layers to this, let's start with the surface. We need to design from the point of view of a Game so that it's simple for people to participate.
                   </p>
                   <p>
-                    Second, why not make it fun! Authentically fulfilling and fun to be part of co-creating regenerative civilizations. It's the best game. Which brings us to part 3: it's the best game to play.
+                    Because the old Games (corporatism, nationalism, capitalism, etc) are taking everyone's time. So, it needs to be extremely easy to participate, and designing it like a Game helps us consider that lens.
+                  </p>
+                  <p>
+                    Second, why not make it as fun as possible?!
+                  </p>
+                  <p>
+                    Authentically fulfilling and fun to be part of co-creating regenerative civilizations. In our opinion, it's the best Game to play. Which brings us to part 3: it's the best Game to play.
                   </p>
                   <p className="font-semibold text-[#1a472a]">The Infinite Part</p>
                   <p>
-                    This is the best part. My role is not to be the founder, owner, CEO, etc. of this vital piece of community infrastructure. My role is simply to get the Game started then make myself obsolete as quickly as we can while still supporting the healthy development of the Game. Much like the pattern for raising healthy children.
+                    This is the best part. The Game is continually redesigned by and for the players! The catalysts that are forming ReGen Civics are not the founders, owners, C-Suite, etc. of this vital piece of community infrastructure.
                   </p>
-                  <p className="font-semibold text-[#1a472a]">Finally, there are 2 parts to this.</p>
+                  <p>
+                    Our roles are simply to get the Game started then make ourselves obsolete as quickly as we can while still supporting the healthy development of the Game.
+                  </p>
+                  <p>
+                    Much like the pattern for raising healthy children.
+                  </p>
+                  <p>
+                    In this way we continually evolve the Game to better serve us and the goal of co-creating a growing diversity of regenerative realities, villages, projects, etc.
+                  </p>
+                  <p>
+                    This is why we call it an "Ifinite Game".
+                  </p>
+                  <p className="font-semibold text-[#1a472a]">There are 2 main parts to this.</p>
                   <p>
                     Much of what we're doing is building bridges from one Game, the Dominant Game, to a growing diversity of new Games. We approach this by mastering the economic systems of the old Game and the New Game simultaneously.
                   </p>
                   <p>
-                    That's why we have 2 distinct spaces. A fund that's deeply rooted in the old Game, and a "regen game" deeply rooted in a growing diversity of new Games. Think of it as 2 sides of a chasm.
+                    That's why we have 2 distinct spaces.
                   </p>
                   <p>
-                    Part of our Game is then creating a bigger and better bridge so that the growing number of people ready for these realities can safely, joyfully, and easily, hopefully with a bit of awe and wonder, walk across the bridge into the new worlds.
+                    The ReGen Civics Fund is designed to be deeply rooted in the old Games, working to master that Game through using the most powerful coordination structures, ensuring we have the capability to coordinate in that Game.
                   </p>
                   <p>
-                    Now this is not without doing the work. By "the work" I mean the inner work. This is where Quests come in. To help us co-create a growing number of "Mini Games" on doing the inner and outer work of healing so that we can become better players in the Game.
+                    The ReGen Game is a continuation of the work started in SEEDS back in 2017: taking almost a decade of learning and weaving it into this new structure to help us co-create a growing number of new financial and economic systems better suited for Regenerative Civilizations.
                   </p>
                   <p>
-                    The Fund is designed to be deeply rooted in the old Games, working to master that Game through using the most powerful coordination structures, ensuring we have the capability to coordinate in that Game. The ReGen Game is a continuation of the work started in SEEDS back in 2017: taking almost a decade of learning and weaving it into this new structure.
+                    Think of these two spaces as the 2 foundations of a bridge crossing a chasm.
+                  </p>
+                  <p>
+                    Part of our Game is then creating a bigger and better bridge so that the growing number of people ready for these realities can safely, joyfully, easily, and hopefully with a bit of awe and wonder, walk across the bridge into the new worlds.
+                  </p>
+                  <p className="font-semibold text-[#1a472a]">Quests!</p>
+                  <p>
+                    Now this is not without doing the work. By "the work" we mean the inner work. This is where Quests come in. To help us co-create a growing number of "Mini Games" on doing the inner and outer work of healing so that we can become better players in the Game.
+                  </p>
+                  <p>
+                    In this way we can see ourselves as "Athletes in the Infinite Game of Systemic Regeneration" and Quests help strengthen us and improve our abilities.
                   </p>
 
                   {/* Images */}
@@ -358,7 +392,7 @@ export default function Game() {
               Watch the <span className="text-[#7dd87d]">Overview</span>
             </h2>
             <p className="text-white/70 text-base md:text-lg mb-6 max-w-xl mx-auto">
-              A quick overview of the ReGen Civics Infinite Game and how you can participate in the ReGenerative Renaissance.
+              A quick overview and how you can participate
             </p>
             <AutoplayVideo
               videoId="C9U0JTsqKv8"
@@ -448,7 +482,7 @@ export default function Game() {
               <div>
                 <div className="mb-3 flex items-center gap-1.5 px-3 py-1.5 bg-amber-400/20 text-amber-400 rounded-full text-xs font-bold w-fit">
                   <Star className="w-3 h-3" />
-                  Epic Quest: Corn to Paradise
+                  Epic Quest: Cornfield to Hemp to Ecovillage
                 </div>
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-amber-400/30">
                   <video
@@ -546,7 +580,7 @@ export default function Game() {
                     </div>
                   </div>
                   <p className="text-sm text-[#1a472a]/70 mb-4 text-left">
-                    Begin your journey by burning the stories that no longer serve you. Create a 3-7 minute video sharing who you are and why you're here.
+                    Begin your journey by burning the stories that no longer serve you. Create a 2-3 minute video sharing who you are and why you're here.
                   </p>
                   <div className="flex items-center gap-2 mb-4">
                     <span className="px-3 py-1 bg-[#7dd87d]/20 text-[#1a472a] rounded-full text-xs font-bold">+111 $Regen</span>
@@ -605,7 +639,7 @@ export default function Game() {
                 <TreeDeciduous className="w-7 h-7 text-white" />
               </div>
               <h3 className="font-bold text-[#1a472a] text-lg mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
-                Live in Community
+                Join a Community
               </h3>
               <p className="text-[#1a472a]/70 text-sm mb-4 text-center">
                 Join a regenerative land project and experience community living firsthand.
@@ -681,17 +715,23 @@ export default function Game() {
                 className="text-2xl md:text-3xl font-bold text-[#1a472a] mb-4"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
-                Your contributions to the Regenerative Renaissance can be tracked here.
+                Your contributions to creating a more healthy and beautiful world can be tracked here.
               </h2>
               <div className="text-[#1a472a]/80 max-w-2xl mx-auto space-y-4 text-left">
                 <p>
-                  If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural.
+                  If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural!
                 </p>
                 <p>
-                  As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is not just the tokens — it's that your contributions become part of the shared record of the Regenerative Renaissance. Visible. Valued. Available to the movement.
+                  As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is not just the tokens, it's to form an ecosystem that represents us all, that helps us coordinate, raise capital, and move together as a whole.
                 </p>
                 <p>
-                  For every token we give out, we receive an equal amount of value pooled here. Our collective contributions are the real value backing our tokens.
+                  For every token we give out, we receive an equal amount of value pooled here - so as you claim tokens you offer up your contribution to the whole. This could be in the form of a video on the lessons you learned (starting a community garden for example) or free access to tools and templates you've created.
+                </p>
+                <p className="font-medium text-[#1a472a]">
+                  If you have something of value for the movement, we want to track it, share it, and coordinate new civilizations with it.
+                </p>
+                <p>
+                  Our collective contributions are the real value backing our tokens.
                 </p>
                 <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
                   💛 If you contributed to SEEDS or other regenerative projects before finding ReGen Civics, those contributions count here too.
@@ -729,7 +769,7 @@ export default function Game() {
                     <h4 className="font-bold text-[#1a472a]">Financial Contributions</h4>
                   </div>
                   <p className="text-sm text-[#1a472a]/80 mb-3">
-                    Make a proposal showing how much USD value you contributed to SEEDS.
+                    Make a proposal showing how much USD value you contributed to SEEDS or our movement.
                   </p>
                   <div className="bg-white p-3 rounded-lg border border-amber-300">
                     <p className="text-sm font-semibold text-amber-700">
@@ -871,7 +911,7 @@ export default function Game() {
                         </div>
                         <div>
                           <h4 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Contribution Calculator</h4>
-                          <p className="text-sm text-[#1a472a]/70">Estimate your contribution value across all 8 forms of capital</p>
+                          <p className="text-sm text-[#1a472a]/70">Estimate your contribution value across all 8 forms of capital using our calculator!</p>
                         </div>
                       </div>
                       <ArrowRight className="w-6 h-6 text-[#4a7c59] group-hover:translate-x-2 transition-transform" />
@@ -899,7 +939,7 @@ export default function Game() {
                   {tokenSystemOpen ? <ChevronUp className="w-6 h-6 inline ml-2 text-[#7dd87d]" /> : <ChevronDown className="w-6 h-6 inline ml-2 text-[#7dd87d] animate-bounce" />}
                 </h2>
                 <p className="text-white/70 max-w-2xl mx-auto">
-                  Two complementary spaces, each with their own governance and utility tokens. Both are earned through contributions, giving tokens to those who add value.
+                  Two complementary spaces, each with their own governance and utility/currency tokens. Both are earned through contributions, giving tokens to those who add value.
                 </p>
               </div>
             </CollapsibleTrigger>
@@ -915,7 +955,7 @@ export default function Game() {
                 </h3>
               </div>
               <p className="text-white/60 text-sm max-w-xl mx-auto">
-                Play quests, earn tokens, and grow your voice in the regenerative movement
+                Explore quests, share your gifts, earn tokens, and grow your voice in the regenerative renaissance!
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -923,23 +963,25 @@ export default function Game() {
                 iconSrc="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png"
                 title="RGVoice"
                 subtitle="Game Governance Token"
-                description="RGVoice represents how much 'weight your voice carries' in game decisions. The more you contribute, the wiser your decisions become."
+                description="RGVoice represents how much 'weight your voice carries' in game decisions. We believe that the more you contribute, the wiser your decisions become."
                 features={[
                   "Complete Quests to earn RGVoice tokens",
                   "More RGVoice = more powerful votes on proposals",
-                  "Non-tradable, earned through direct experience"
+                  "Non-tradable, earned through direct experience",
+                  "Can delegate another player to represent you"
                 ]}
                 color="border-purple-500/50"
               />
               <TokenInfoCard
                 iconSrc="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png"
-                title="$Regen"
+                title="$ReGen"
                 subtitle="Game Utility Token"
-                description="$Regen is our tradable utility token representing economic participation in the game."
+                description="$ReGen is our tradable utility token representing economic participation in the Game."
                 features={[
-                  "Earn +22 to +111 $Regen per quest",
-                  "Complete quests multiple times (up to 3x)",
-                  "Tradable with other players"
+                  "Earn $ReGen per quest",
+                  "Create historical and current contribution proposals",
+                  "Help grow our movement",
+                  "Tradable with other players & secondary markets when available"
                 ]}
                 color="border-[#7dd87d]/50"
               />
@@ -968,7 +1010,7 @@ export default function Game() {
                 features={[
                   "Council 40% / Others 20% each at launch",
                   "Vote on investment decisions & proposals",
-                  "Non-tradable, tied to your contributions"
+                  "Non-tradable, can delegate to other members"
                 ]}
                 ctaLink="/governance"
                 ctaLabel="Explore Governance Model"
@@ -978,10 +1020,10 @@ export default function Game() {
                 iconSrc="https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.png"
                 title="$RCivics"
                 subtitle="Rewards & Returns Token"
-                description="$RCivics is your claim on fund returns. Success fees and portfolio rewards are distributed proportionally to $RCivics holders - separate from governance voice."
+                description="$RCivics is your claim on fund returns. Portfolio distributions are sent proportionally to $RCivics holders - separate from governance voice."
                 features={[
                   "Acquired through investment or equity swap",
-                  "Proportional claim on success fees & returns",
+                  "Proportional claim on returns",
                   "Tradable on secondary markets when available"
                 ]}
                 ctaLink="/governance"
@@ -1096,7 +1138,7 @@ export default function Game() {
               The Infinite Game Philosophy
             </h2>
             <p className="text-white/70 max-w-2xl mx-auto">
-              Unlike finite games played to win, infinite games are played for the purpose of continuing the play.
+              Unlike finite games played to win, infinite games are played for the purpose of continually improving the quality of play.
             </p>
           </div>
           
@@ -1104,7 +1146,7 @@ export default function Game() {
             <PhilosophyCard
               icon={Infinity}
               title="No End Goal"
-              description="The game continues as long as players want to play. Success is measured by the continuation and evolution of the game itself."
+              description="The Game continues as long as players want to play. Success is measured by the continuation and evolution of the Game itself."
             />
             <PhilosophyCard
               icon={Users}
@@ -1114,7 +1156,7 @@ export default function Game() {
             <PhilosophyCard
               icon={Layers}
               title="Rules Can Change"
-              description="Players collectively evolve the rules through governance. The game adapts to serve the players, not the other way around."
+              description="Players collectively evolve the rules through governance. The Game adapts to serve the players, not the other way around."
             />
           </div>
           
@@ -1519,7 +1561,7 @@ export default function Game() {
             Ready to Play?
           </h2>
           <p className="text-white/70 max-w-2xl mx-auto mb-8">
-            Join thousands of regenerative magicians around the world who are co-creating more beautiful civilizations together.
+            Join regenerative magicians around the world who are co-creating more beautiful civilizations together!
           </p>
           
           <div className="flex flex-wrap gap-4 justify-center mb-12">
@@ -1539,7 +1581,7 @@ export default function Game() {
                 className="rounded-xl border-2 border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/20"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                Apply for Season 3 <ArrowRight className="ml-2 w-4 h-4" />
+                Apply for the Next Season → <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
             <Link href="/governance">
@@ -1549,7 +1591,7 @@ export default function Game() {
                 className="rounded-xl border-2 border-[#d4a574]/60 text-[#d4a574] hover:bg-[#d4a574]/10"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                <span className="mr-2">🌳</span> How We Govern
+                <span className="mr-2">🌳</span> Explore How We Govern
               </Button>
             </Link>
           </div>

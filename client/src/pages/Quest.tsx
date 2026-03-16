@@ -494,7 +494,7 @@ export default function Quest() {
       <div className="bg-gradient-to-r from-[#7dd87d] via-[#5cb85c] to-[#7dd87d] py-3 px-4 text-center">
         <p className="text-[#1a472a] font-medium flex items-center justify-center gap-2 flex-wrap">
           <Sparkles className="w-5 h-5" />
-          <span>UNDER CONSTRUCTION: Quests are almost live! Follow our social media channels to know when you can start questing!</span>
+          <span>UNDER CONSTRUCTION: Quests are in pre-launch mode! You can start questing now and help work out any kinks and co-create the flow while we get ready for a full launch.</span>
           <Sparkles className="w-5 h-5" />
         </p>
         <div className="flex items-center justify-center mt-2">
@@ -526,13 +526,13 @@ export default function Quest() {
             <span className="text-[#7dd87d]">Passage</span>
           </h1>
           <p className="text-xl text-white/90 max-w-3xl mx-auto mb-4 leading-relaxed">
-            What are fun, magical, playful, productive, and regenerative ways to actively participate in creating more beautiful civilizations together?
+            What are joyful, playful, productive, and regenerative ways to participate in co-creating more beautiful civilizations together?
           </p>
           <p className="text-2xl font-bold text-[#7dd87d] mb-8">
             Our current answer... Quests!
           </p>
           <p className="text-white/80 max-w-2xl mx-auto mb-4">
-            An ever-growing and ever-changing list of Quests curated by the active members of the ReGen Civics Alliance.
+            A dynamic list of Quests created and curated by all of us!
           </p>
 
           {/* Seasonal tagline + hemisphere toggle */}
@@ -619,7 +619,7 @@ export default function Quest() {
               onClick={() => setShowQuestArc(!showQuestArc)}
             >
               <Map className="mr-2 w-4 h-4" />
-              {showQuestArc ? "Hide Quest Arc" : "View Quest Arc"}
+              {showQuestArc ? "Hide Quest Arc" : "View Rits of Passage Quest Arc"}
             </Button>
           </div>
         </AnimatedSection>
@@ -693,10 +693,10 @@ export default function Quest() {
             {whyQuestsExpanded && (
               <div className="bg-white p-8 rounded-2xl border-3 border-[#7dd87d]/30 shadow-lg mb-8 animate-in slide-in-from-top-2 duration-300">
                 <p className="text-xl text-[#1a472a] font-bold leading-relaxed mb-2 text-center">
-                  What if healing ourselves and the Earth is actually a fun and Infinite Game?
+                  What if healing ourselves and the Earth is actually a playful and Infinite Game?
                 </p>
                 <p className="text-base text-[#1a472a]/80 leading-relaxed mb-6 text-center">
-                  We are co-creating a new economic and financial system built on top of this question, distributing tokens throughout our movement while doing tasks that heal ourselves, our communities, our bioregions, and our Earth. Which, when you look closely, are all the same thing.
+                  We are co-creating a new economic and financial system built on top of this question, distributing tokens (our own currency) throughout our movement while doing quests that heal ourselves, our communities, our bioregions, and our Earth. Which, when you look closely, are all the same thing.
                 </p>
                 <p className="text-lg text-[#1a472a]/80 leading-relaxed mb-6 text-center">
                   The Rites of Passage Quests are designed to help us transition into a growing diversity of regenerative realities by helping us:
@@ -719,7 +719,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Grow & Learn Together</h3>
-                      <p className="text-sm text-[#1a472a]/70">Share our journey and insights with our communities</p>
+                      <p className="text-sm text-[#1a472a]/70">Share our journey and insights with each other & our communities</p>
                     </div>
                   </div>
                   
@@ -729,7 +729,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Distribute Ownership</h3>
-                      <p className="text-sm text-[#1a472a]/70">Earn tokens and gain voice in governing the Game</p>
+                      <p className="text-sm text-[#1a472a]/70">Earn currency tokens and gain voice in governing the Game</p>
                     </div>
                   </div>
                   
@@ -739,7 +739,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Co-Create the Game</h3>
-                      <p className="text-sm text-[#1a472a]/70">Constantly redesigned by all of us together</p>
+                      <p className="text-sm text-[#1a472a]/70">Constantly redesigned by all of us together - to better serve our growing needs</p>
                     </div>
                   </div>
                   
@@ -758,15 +758,17 @@ export default function Quest() {
                   <hr className="border-[#1a472a]/20 my-6" />
                   <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">The Arc</h4>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">We begin with Fire. Before we can build anything new we have to be willing to let go of the old.</p>
-                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Then we add life to our bodies. The Potions Quest changes the information processing in all three minds: gut, heart, and head.</p>
-                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Then we plant. The Food Foresting quest, done after Potions, seeds the earth with the expanded ecosystem of our own body.</p>
-                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">From there, the quests move outward. From personal vitality into relationship, communication, and community. The NVC Quest (Quest 10) bridges individual healing into collective co-creation.</p>
-                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The seasonal quests deepen and diversify. The EPIC Quests are acts of collective transformation.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Next we focus on our physical health - the healthier we are - the more capable we bcome.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The Potions Quest adds diversity and intelligence to our bodies and changes the information processing in all three minds; our gut, heart, and head.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Then we extend our internal intelligence to the soil around us through saving seeds and making healing wholes and growing food connected to ourselves.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The Food Foresting quest, done after Potions, seeds the earth with the expanded ecosystem of our own body and moves us closer to a world of healthy food abundance.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">From there, the quests move outward. From personal vitality into relationships, communication, creation, community, and so much more.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The seasonal quests are something you can do in a few days while the EPIC Quests are acts of collective transformation and require years of dedication.</p>
 
                   <hr className="border-[#1a472a]/20 my-6" />
                   <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">What the Tokens Mean</h4>
-                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">$ReGen tokens are earned by completing quests and contributing to the mission. They represent your participation in building a regenerative civilization. As the game grows, so do the opportunities for the tokens to carry value.</p>
-                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">RGVoice tokens give you a say in the governance of the game itself, so the Game is always governed by those who are playing it.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">$ReGen tokens are earned by completing quests and contributing to the mission. They represent your participation in building a regenerative civilization. As the Game grows, so do the opportunities for the tokens to carry value.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">RGVoice tokens give you a say in the governance of the Game itself, so the Game is always governed by those who are playing it.</p>
 
                   <hr className="border-[#1a472a]/20 my-6" />
                   <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">Quests as Qualifiers</h4>
@@ -852,7 +854,7 @@ export default function Quest() {
           <div className="max-w-4xl mx-auto">
             <div className="bg-white p-8 rounded-2xl border-2 border-[#7dd87d]/30 shadow-lg">
               <p className="text-lg text-[#1a472a]/90 leading-relaxed text-center italic">
-                "Each Quest focuses on playfully healing one aspect of our reality. Starting with our Gut and digestion - a core to our health and energy levels - and moving through relationships with plants, animals, our community, language, love and each other. As we journey through the quests we heal ourselves, our cells and our Earth (which we are but cells of)."
+                "Each Quest focuses on healing one aspect of our reality. Starting with our Gut and digestion (and how that extends into our soils) - a core to our health and energy levels - and moving through relationships with plants, animals, our community, language, love and each other. As we journey through the quests we heal ourselves, our cells and our Earth (which we are but cells of)."
               </p>
             </div>
           </div>
@@ -872,7 +874,7 @@ export default function Quest() {
             All Quests by <span className="text-[#7dd87d]">Season</span>
           </h2>
           <p className="text-center text-[#1a472a]/70 max-w-2xl mx-auto mb-6">
-            Quests can be done at any time and in any order. Feel free to do them multiple times (earning rewards up to 3x) and skip those that don't call to you for now. <strong>A key focus is having fun!</strong>
+            Quests can be done at any time and in any order - the seasonal framing is a gentle suggestion. <strong>A key focus is growing and having fun!</strong>
           </p>
           {/* Season filter tabs — selecting one updates "What's Alive" above */}
           <div className="flex flex-wrap justify-center gap-2 mb-6">
@@ -937,7 +939,7 @@ export default function Quest() {
               <h3 className="text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                 Summer Quests
               </h3>
-              <p className="text-[#2e7d32] font-medium">Season of Abundance</p>
+              <p className="text-[#2e7d32] font-medium">Season of Adventure</p>
             </div>
           </div>
           <QuestCarousel totalCount={questData.summer.length}>
@@ -1140,7 +1142,7 @@ export default function Quest() {
             Ready to Begin Your Quest?
           </h2>
           <p className="text-xl text-[#1a472a]/80 mb-8 max-w-2xl mx-auto">
-            Join the ReGen Game Space and start earning tokens while healing yourself and our world
+            Join the ReGen Game Space to be able to claim tokens while healing yourself and our world
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-6">
             <Button
