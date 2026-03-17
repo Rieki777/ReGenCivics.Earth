@@ -355,13 +355,13 @@ export default function Game() {
                   {/* Images */}
                   <div className="grid md:grid-cols-2 gap-4 mt-6">
                     <img
-                      src="/game-infinite-forest.jpg"
+                      src="/game-infinite-forest.webp"
                       alt="A dreamlike regenerative forest village at dusk"
                       className="w-full rounded-2xl object-cover"
                       loading="lazy"
                     />
                     <img
-                      src="/game-bridge-worlds.jpg"
+                      src="/game-bridge-worlds.webp"
                       alt="Two worlds connected by a bridge of light"
                       className="w-full rounded-2xl object-cover"
                       loading="lazy"

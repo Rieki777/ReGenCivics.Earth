@@ -41,7 +41,7 @@ function questImageUrl(id: number, slug: string) {
 }
 
 function questImageFallback(id: number, slug: string) {
-  return `/images/quests/quest-${String(id).padStart(2, '0')}-${slug}.png`;
+  return `/images/quests/quest-${String(id).padStart(2, '0')}-${slug}.webp`;
 }
 
 // Quest data is imported from @/data/questData (extracted for code-splitting)

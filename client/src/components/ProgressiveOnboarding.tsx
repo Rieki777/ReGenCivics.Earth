@@ -135,23 +135,23 @@ function PersonalizedCards() {
   const isInvestor = profile.path === 'investor' || !!investorInquiry;
 
   if (profile.path) {
-    cards.push({ id: 'journey-quests', title: 'Journey Quests', subtitle: 'Welcome to the Journey Quests', href: '/profile#quests', image: '/images/return-cards/journey-quests.png', accentColor: '#7dd87d', icon: Map });
+    cards.push({ id: 'journey-quests', title: 'Journey Quests', subtitle: 'Welcome to the Journey Quests', href: '/profile#quests', image: '/images/return-cards/journey-quests.webp', accentColor: '#7dd87d', icon: Map });
   }
   if (completedQuests.length > 0 && completedQuests.length < 12) {
-    cards.push({ id: 'next-quest', title: 'Continue Your Quest', subtitle: `Quest ${completedQuests.length + 1} of 12 awaits`, href: '/quest', image: '/images/return-cards/next-quest.png', accentColor: '#fbbf24', icon: Compass });
+    cards.push({ id: 'next-quest', title: 'Continue Your Quest', subtitle: `Quest ${completedQuests.length + 1} of 12 awaits`, href: '/quest', image: '/images/return-cards/next-quest.webp', accentColor: '#fbbf24', icon: Compass });
   }
   if (hasVisitedForum) {
-    cards.push({ id: 'community', title: 'Back to the Forum', subtitle: 'Continue the conversation', href: '/community', image: '/images/return-cards/community.png', accentColor: '#60a5fa', icon: MessageSquare });
+    cards.push({ id: 'community', title: 'Back to the Forum', subtitle: 'Continue the conversation', href: '/community', image: '/images/return-cards/community.webp', accentColor: '#60a5fa', icon: MessageSquare });
   }
   if (profile.path === 'investor' && (profile as any).investorFormSubmitted) {
-    cards.push({ id: 'opportunity', title: 'Investor Dashboard', subtitle: 'View the opportunity', href: '/opportunity', image: '/images/return-cards/opportunity.png', accentColor: '#a78bfa', icon: TrendingUp });
+    cards.push({ id: 'opportunity', title: 'Investor Dashboard', subtitle: 'View the opportunity', href: '/opportunity', image: '/images/return-cards/opportunity.webp', accentColor: '#a78bfa', icon: TrendingUp });
   }
   if (profile.path === 'land_project') {
-    cards.push({ id: 'accelerator', title: 'Seasonal Accelerator', subtitle: 'Grow your project', href: '/apply', image: '/images/return-cards/accelerator.png', accentColor: '#34d399', icon: Zap });
+    cards.push({ id: 'accelerator', title: 'Seasonal Accelerator', subtitle: 'Grow your project', href: '/apply', image: '/images/return-cards/accelerator.webp', accentColor: '#34d399', icon: Zap });
   }
   // Discovery Call: investors only (Rye is only taking calls from investors)
   if (isInvestor) {
-    cards.push({ id: 'schedule', title: 'Book a Discovery Call', subtitle: 'Talk with the team', href: '/schedule', image: '/images/return-cards/schedule.png', accentColor: '#f472b6', icon: CalendarDays });
+    cards.push({ id: 'schedule', title: 'Book a Discovery Call', subtitle: 'Talk with the team', href: '/schedule', image: '/images/return-cards/schedule.webp', accentColor: '#f472b6', icon: CalendarDays });
   }
 
   if (cards.length === 0) return null;

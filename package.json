@@ -15,7 +15,8 @@
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "seed:forum": "tsx scripts/seed-forum-posts.ts",
-    "seed:forum:reset": "tsx scripts/seed-forum-posts.ts --reset"
+    "seed:forum:reset": "tsx scripts/seed-forum-posts.ts --reset",
+    "optimize:images": "node scripts/optimize-images.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

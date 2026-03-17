@@ -63,10 +63,10 @@ interface ImagePreloaderProps {
 }
 
 export function ImagePreloader({ children, images = HOME_IMAGES, loading = false }: ImagePreloaderProps) {
-  const imagesLoaded = useImagePreload(images);
-  const ready = imagesLoaded && !loading;
+  // Preload images in the background — don't block render
+  useImagePreload(images);
 
-  if (!ready) {
+  if (loading) {
     return <TaoSpinner fullPage size={80} />;
   }
 
