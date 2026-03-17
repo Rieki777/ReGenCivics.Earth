@@ -891,7 +891,7 @@ export default function CrowdPoolingProjects() {
               <Link href="/compare-projects">
                 <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 w-full sm:w-auto">
                   <Target className="w-4 h-4 mr-2" />
-                  Compare Projects
+                  {pageCopy.crowdPoolingProjects.hero.CTAs.compareProjects}
                 </Button>
               </Link>
               <Button 
@@ -901,7 +901,7 @@ export default function CrowdPoolingProjects() {
                 onClick={() => toast.info("Project listing is coming soon! Contact us to learn more.")}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                List Your Project (Coming Soon)
+                {pageCopy.crowdPoolingProjects.hero.CTAs.listProject}
               </Button>
             </div>
           </div>
@@ -964,10 +964,9 @@ export default function CrowdPoolingProjects() {
         <div className="bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-xl px-5 py-4 mb-6 text-sm text-[#1a472a] flex items-center gap-3">
           <Leaf className="w-4 h-4 text-[#4a7c59] flex-shrink-0" />
           <span>
-            These are land projects currently raising through crowd pooling.{" "}
-            Want to run the numbers on your contribution?{" "}
+            {pageCopy.crowdPoolingProjects.callout.text}{" "}
             <Link href="/crowd-pooling" className="font-medium text-[#4a7c59] hover:underline">
-              Open the Crowd Pooling Calculator →
+              {pageCopy.crowdPoolingProjects.callout.link}
             </Link>
           </span>
         </div>
@@ -975,7 +974,7 @@ export default function CrowdPoolingProjects() {
         {/* How It Works */}
         <div className="bg-white rounded-2xl p-6 mb-8 shadow-sm">
           <h2 className="text-lg font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            How It Works
+            {pageCopy.crowdPoolingProjects.howItWorks.heading}
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
             <div className="flex items-start gap-3">
@@ -983,8 +982,8 @@ export default function CrowdPoolingProjects() {
                 <span className="text-[#1a472a] font-bold text-sm">1</span>
               </div>
               <div>
-                <h3 className="font-medium text-[#1a472a] text-sm">Browse Projects</h3>
-                <p className="text-xs text-[#1a472a]/80">Click on any project to see full details and open roles</p>
+                <h3 className="font-medium text-[#1a472a] text-sm">{pageCopy.crowdPoolingProjects.howItWorks.steps[0].title}</h3>
+                <p className="text-xs text-[#1a472a]/80">{pageCopy.crowdPoolingProjects.howItWorks.steps[0].body}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -992,8 +991,8 @@ export default function CrowdPoolingProjects() {
                 <span className="text-[#1a472a] font-bold text-sm">2</span>
               </div>
               <div>
-                <h3 className="font-medium text-[#1a472a] text-sm">Create Your Proposal</h3>
-                <p className="text-xs text-[#1a472a]/80">Use the Crowd Pooling Tool to calculate your contribution</p>
+                <h3 className="font-medium text-[#1a472a] text-sm">{pageCopy.crowdPoolingProjects.howItWorks.steps[1].title}</h3>
+                <p className="text-xs text-[#1a472a]/80">{pageCopy.crowdPoolingProjects.howItWorks.steps[1].body}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -1001,8 +1000,8 @@ export default function CrowdPoolingProjects() {
                 <span className="text-[#1a472a] font-bold text-sm">3</span>
               </div>
               <div>
-                <h3 className="font-medium text-[#1a472a] text-sm">Submit to Project(s)</h3>
-                <p className="text-xs text-[#1a472a]/80">Submit your proposal for project review and acceptance</p>
+                <h3 className="font-medium text-[#1a472a] text-sm">{pageCopy.crowdPoolingProjects.howItWorks.steps[2].title}</h3>
+                <p className="text-xs text-[#1a472a]/80">{pageCopy.crowdPoolingProjects.howItWorks.steps[2].body}</p>
               </div>
             </div>
           </div>

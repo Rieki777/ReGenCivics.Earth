@@ -63,6 +63,18 @@ export const pageCopy = {
       heading: "The Philosophy of Crowd Pooling",
       body: "Watch this introduction video to understand the deeper philosophy behind the Crowd Pooling process and how it transforms the way communities fund and launch regenerative projects.",
     },
+    toolIntro: {
+      title: "Community Capital Pooling",
+      subheading: "Crowd pooling lets you contribute directly to projects with money, land, skills, time, and knowledge.",
+    },
+    howToUse: {
+      heading: "How to use this tool:",
+      steps: [
+        "Enter the project and target value",
+        "Add contributions (land, money, equipment, skills, roles)",
+        "Download your summary and share it with projects",
+      ],
+    },
     related: [
       {
         heading: "Contribution Calculator",
@@ -102,6 +114,11 @@ export const pageCopy = {
         { title: "Submit to Project(s)", body: "Submit your proposal for project review and acceptance" },
       ],
     },
+    tableCopy: {
+      funding: "Funding Progress",
+      accepted: "accepted",
+      contributors: "Contributors",
+    },
     CTA: {
       heading: "Want Your Project Listed Here?",
       body: "If you are a land project looking to crowd pool contributions from your community, apply to join the ReGen Civics alliance and get access to our Crowd Pooling platform.",
@@ -124,6 +141,35 @@ export const pageCopy = {
         open: "Read more about the Infinite Game",
         close: "Show less",
       },
+    },
+    overview: {
+      heading: "Watch the Overview",
+      subtext: "A quick overview and how you can participate",
+      playLabel: "Watch the Overview",
+    },
+    callout: {
+      heading: "What if healing ourselves and our Earth is a fun and Infinite Game?",
+      subline: "Let's make it so!",
+    },
+    contributions: {
+      heading: "Contributions to the Regenerative Renaissance",
+      bodyHeading: "Your contributions to creating a more healthy and beautiful world can be tracked here.",
+      bullets: [
+        "If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural!",
+        "As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is not just the tokens, it's to form an ecosystem that represents us all, that helps us coordinate, raise capital, and move together as a whole.",
+        "For every token we give out, we receive an equal amount of value pooled here - so as you claim tokens you offer up your contribution to the whole.",
+        "If you have something of value for the movement, we want to track it, share it, and coordinate new civilizations with it.",
+        "Our collective contributions are the real value backing our tokens.",
+      ],
+      highlighted: "💛 If you contributed to SEEDS or other regenerative projects before finding ReGen Civics, those contributions count here too.",
+      buttons: {
+        calculator: "📊 Use the 8 Forms of Capital calculator",
+        discussion: "💬 Join the discussion and start crafting your proposal",
+      },
+    },
+    joinMovement: {
+      text: "Not sure which path is right for you?",
+      button: "Explore All Paths",
     },
   },
   quest: {

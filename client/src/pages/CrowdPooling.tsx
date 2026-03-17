@@ -70,7 +70,7 @@ export default function CrowdPooling() {
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-[#7dd87d]" />
             <span className="font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-              Crowd Pooling Tool
+              {pageCopy.crowdPooling.toolIntro.title}
             </span>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function CrowdPooling() {
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-4 rounded-full bg-[#7dd87d]/20 text-[#1a472a]">
               <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">Community Capital Pooling</span>
+              <span className="text-sm font-medium">{pageCopy.crowdPooling.toolIntro.title}</span>
             </div>
             <h1 
               className="text-3xl md:text-4xl font-bold text-[#1a472a] mb-4"
@@ -100,6 +100,9 @@ export default function CrowdPooling() {
               <Link href="/crowd-pooling-projects" className="text-[#4a7c59] font-medium hover:underline">
                 {pageCopy.crowdPooling.browseCampaignsLink}
               </Link>
+            </p>
+            <p className="text-[#1a472a]/80 text-sm max-w-xl mx-auto mt-2">
+              {pageCopy.crowdPooling.toolIntro.subheading}
             </p>
           </div>
 
@@ -201,12 +204,11 @@ export default function CrowdPooling() {
             <div className="flex items-center gap-2 mb-4">
               <Play className="w-5 h-5 text-[#4a7c59]" />
               <h3 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                The Philosophy of Crowd Pooling
+                {pageCopy.crowdPooling.philosophy.heading}
               </h3>
             </div>
             <p className="text-[#1a472a]/85 text-sm mb-4">
-              Watch this introduction video to understand the deeper philosophy behind the Crowd Pooling process
-              and how it transforms the way communities fund and launch regenerative projects.
+              {pageCopy.crowdPooling.philosophy.body}
             </p>
             <div className="aspect-video rounded-xl overflow-hidden bg-[#1a472a]/10">
               <iframe

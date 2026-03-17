@@ -389,17 +389,17 @@ export default function Game() {
               className="text-2xl md:text-4xl font-bold text-white mb-3"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Watch the <span className="text-[#7dd87d]">Overview</span>
+              {pageCopy.game.overview.heading}
             </h2>
             <p className="text-white/70 text-base md:text-lg mb-6 max-w-xl mx-auto">
-              A quick overview and how you can participate
+              {pageCopy.game.overview.subtext}
             </p>
             <AutoplayVideo
               videoId="C9U0JTsqKv8"
               title="ReGen Civics Overview"
               thumbnailUrl="https://assets.regencivics.earth/NnpPOudclSlFoAuh.png"
               thumbnailAlt="Watch the ReGen Civics Overview"
-              playLabel="Watch the Overview"
+              playLabel={pageCopy.game.overview.playLabel}
             />
           </div>
         </div>
@@ -417,15 +417,13 @@ export default function Game() {
               className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1a472a] leading-snug"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              What if healing ourselves and our Earth is a{' '}
-              <span className="text-[#2d5a3e] font-extrabold">fun</span> <span className="text-[#4a7c59]">and</span>{' '}
-              <span className="text-[#1a472a] font-extrabold">Infinite Game</span>?
+              {pageCopy.game.callout.heading}
             </p>
             <p 
               className="text-xl md:text-2xl font-semibold text-[#1a472a] mt-4"
               style={{ fontFamily: 'var(--font-accent)' }}
             >
-              Let's make it so!
+              {pageCopy.game.callout.subline}
             </p>
           </AnimatedSection>
         </div>
@@ -691,11 +689,11 @@ export default function Game() {
           {/* Additional CTA */}
           <div className="text-center mt-10">
             <p className="text-[#1a472a]/60 text-sm mb-4">
-              Not sure which path is right for you?
+              {pageCopy.game.joinMovement.text}
             </p>
             <Link href="/connect">
               <Button variant="outline" className="border-2 border-[#1a472a] text-[#1a472a] hover:bg-[#1a472a] hover:text-white rounded-xl">
-                Explore All Paths <Compass className="w-4 h-4 ml-2" />
+                {pageCopy.game.joinMovement.button} <Compass className="w-4 h-4 ml-2" />
               </Button>
             </Link>
           </div>
@@ -744,13 +742,13 @@ export default function Game() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors font-medium text-sm"
                 >
-                  📊 Use the 8 Forms of Capital calculator
+                  {pageCopy.game.contributions.buttons.calculator}
                 </a>
                 <a
                   href="/community/forum/contributions-discussion"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1a472a] text-white rounded-xl hover:bg-[#2d5a3d] transition-colors font-medium text-sm"
                 >
-                  💬 Join the discussion and start crafting your proposal
+                  {pageCopy.game.contributions.buttons.discussion}
                 </a>
               </div>
             </AnimatedSection>
