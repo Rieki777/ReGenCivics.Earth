@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { BackButton } from "@/components/BackButton";
+import { markNewsletterSubscribed } from "@/utils/newsletter";
 
 // Form data type
 interface InvestorFormData {
@@ -150,6 +151,16 @@ const sectorOptions = [
 ];
 
 export default function InvestorForm() {
+  const [, setLocation] = useLocation();
+
+  // Already verified — skip the form and go straight to /opportunity
+  useEffect(() => {
+    const alreadyVerified =
+      localStorage.getItem('investor_verified') === 'true' ||
+      sessionStorage.getItem('investor_verified') === 'true';
+    if (alreadyVerified) setLocation('/opportunity');
+  }, [setLocation]);
+
   const [step, setStep] = useState(1);
   const savedEmail = localStorage.getItem('investor_email') ?? '';
   const savedName = localStorage.getItem('investor_name') ?? '';
@@ -161,7 +172,6 @@ export default function InvestorForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
-  const [, setLocation] = useLocation();
   
   // Auto-redirect to /opportunity after submission
   useEffect(() => {
@@ -176,6 +186,7 @@ export default function InvestorForm() {
   }, [isSubmitted, redirectCountdown, setLocation]);
 
   const newsletterMutation = trpc.newsletter.subscribe.useMutation({
+    onSuccess: () => markNewsletterSubscribed(),
     onError: () => console.warn("Failed to subscribe to newsletter"),
   });
   

@@ -22,6 +22,7 @@ import { Link } from "wouter";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
+import { markNewsletterSubscribed } from "@/utils/newsletter";
 
 // Path types matching the database enum
 type PathType = "land_partner" | "create_with_regens" | "alliance" | "finance" | "live" | "role" | "something_else";
@@ -297,6 +298,7 @@ export default function Connect() {
   }, []);
   
   const newsletterMutation = trpc.newsletter.subscribe.useMutation({
+    onSuccess: () => markNewsletterSubscribed(),
     onError: () => console.warn("Failed to subscribe to newsletter"),
   });
   
