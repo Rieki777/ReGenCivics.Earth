@@ -257,7 +257,7 @@ Consider the full spectrum:
 - **Spiritual Capital**: Meaning, purpose, connection to something greater
 - **Cultural Capital**: Traditions, stories, shared practices
 
-Now the group can visualize a much fuller extent of the resources they share together. Suddenly, the person who "only" brings deep community connections is recognized as wealthy. The elder who "only" brings decades of wisdom is seen as a crucial resource.
+Now the group can visualize a much fuller extent of the resources they share together. Suddenly, the person who "only" brings deep community connections is recognized as wealthy. The elder who "only" brings decades of wisdom is seen as a vital resource.
 
 ## 3. POTENTIAL: Dreams Made Visible
 
@@ -1063,9 +1063,9 @@ The regenerative renaissance needs strong foundations. These four pillars ensure
   {
     id: 'claim-your-land-project-or-organisation',
     slug: 'claim-your-land-project-or-organisation',
-    title: 'Your Space Is Waiting — How to Claim Your Land Project or Organisation',
+    title: 'Your Space Is Waiting: How to Claim Your Land Project or Organisation',
     excerpt: 'If you have been part of a ReGen Civics incubator season, or if your organisation has partnered with us before, your project is already on the site. Here is how to claim it.',
-    content: `If you have been part of a ReGen Civics incubator season, or if your organisation has partnered with us before, your project is already on the site. What is not yet connected is you — the person behind it, with the keys to your space.
+    content: `If you have been part of a ReGen Civics incubator season, or if your organisation has partnered with us before, your project is already on the site. What is not yet connected is you, the person behind it, with the keys to your space.
 
 Claiming your project or organisation does a few things. It gives you a presence in our community space. It connects your profile to your project's forum thread, so you can host conversations and answer questions directly. And it opens up the steward tools: endorsing quests for your applicants, sharing updates, and eventually receiving applications from people who want to work with you.
 
@@ -1115,9 +1115,9 @@ Post in the [Community Forum](https://regencivics.earth/community) or reply to t
   {
     id: 'your-seeds-contributions-live-on',
     slug: 'your-seeds-contributions-live-on',
-    title: 'Your SEEDS Contributions Live On — And Here Is How to Bring Them Home',
-    excerpt: 'If you spent years contributing to SEEDS, Hypha, or other regenerative projects and were never fully compensated — your contributions did not disappear. Here is how to bring them home.',
-    content: `If you spent years contributing to SEEDS, to Hypha, to Regen Network, to local food systems, to governance experiments, to community currencies — and you were never fully compensated for that work — your contributions did not disappear.
+    title: 'Your SEEDS Contributions Live On: Here Is How to Bring Them Home',
+    excerpt: 'If you spent years contributing to SEEDS, Hypha, or other regenerative projects and were never fully compensated, your contributions did not disappear. Here is how to bring them home.',
+    content: `If you spent years contributing to SEEDS, to Hypha, to Regen Network, to local food systems, to governance experiments, to community currencies, and you were never fully compensated for that work, your contributions did not disappear.
 
 They are part of the foundation of what we are building now.
 
@@ -1127,27 +1127,27 @@ ReGen Civics is building the infrastructure to account for that. Not as a retroa
 
 We are not only talking about financial contributions. We are working with the eight forms of capital:
 
-**Social capital** — relationships, networks, trust you built
+**Social capital:** relationships, networks, trust you built
 
-**Material capital** — tools, equipment, land improvements, physical infrastructure
+**Material capital:** tools, equipment, land improvements, physical infrastructure
 
-**Financial capital** — money invested or donated
+**Financial capital:** money invested or donated
 
-**Living capital** — ecological restoration, food forests, soil health, biodiversity
+**Living capital:** ecological restoration, food forests, soil health, biodiversity
 
-**Intellectual capital** — research, documentation, writing, design, code
+**Intellectual capital:** research, documentation, writing, design, code
 
-**Experiential capital** — knowledge passed on, mentorship, facilitation, training
+**Experiential capital:** knowledge passed on, mentorship, facilitation, training
 
-**Spiritual capital** — ceremonies, cultural practices, the intangible things that hold communities together
+**Spiritual capital:** ceremonies, cultural practices, the intangible things that hold communities together
 
-**Cultural capital** — art, music, stories, identity, meaning
+**Cultural capital:** art, music, stories, identity, meaning
 
 If you gave any of these things to a regenerative mission without being fully compensated, that is the kind of contribution we want to account for.
 
 ## How it works
 
-The token is called $ReGen. For every $ReGen token we give out, we are committed to receiving an equal amount of value pooled here in documented contributions. This is what backs the token — not speculation, not promises, but the actual work the movement has already done and continues to do.
+The token is called $ReGen. For every $ReGen token we give out, we are committed to receiving an equal amount of value pooled here in documented contributions. This is what backs the token: not speculation, not promises, but the actual work the movement has already done and continues to do.
 
 To bring your contributions in, you make a historical proposal. You document what you contributed, across which forms of capital, and submit that for community review. Once reviewed and accepted, those contributions are recorded in the ReGen Civics ecosystem and you receive $ReGen tokens representing them.
 
@@ -1157,7 +1157,7 @@ The process runs through Hypha's DAO tools at [hypha.earth](https://hypha.earth)
 
 **Step 1: Count your contributions.** Use the 8 Forms of Capital calculator to map what you contributed and give it a rough value. The calculator helps you think through categories you might not have counted: time, relationships, ecological work, and more. [Open the calculator here](/calculator).
 
-**Step 2: Write your proposal.** Come to the [forum thread](/community) for contributions discussion. Read what others are writing, share your own thinking, and refine your proposal together. This is not a bureaucratic process — it is a community conversation about how we value each other's work.
+**Step 2: Write your proposal.** Come to the [forum thread](/community) for contributions discussion. Read what others are writing, share your own thinking, and refine your proposal together. This is not a bureaucratic process. It is a community conversation about how we value each other's work.
 
 **Step 3: Submit through Hypha.** Once your proposal is shaped, you bring it to [hypha.earth](https://hypha.earth) for community review. The ReGen Civics community votes on proposals and $ReGen tokens are distributed on approval.
 

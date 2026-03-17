@@ -51,7 +51,7 @@ const taoQuotes = [
   { text: "The quieter you become, the more you are able to hear.", attribution: "Rumi" },
   { text: "Wherever you are, and whatever you do, be in love.", attribution: "Rumi" },
   // Robin Wall Kimmerer
-  { text: "The earth does not belong to us — we belong to the earth.", attribution: "Robin Wall Kimmerer" },
+  { text: "The earth does not belong to us. We belong to the earth.", attribution: "Robin Wall Kimmerer" },
   { text: "Abundance is a consequence of gratitude.", attribution: "Robin Wall Kimmerer" },
   { text: "In some Native languages the land is alive and breathing, for the simple reason that it is.", attribution: "Robin Wall Kimmerer" },
   { text: "What would it mean to be native to a place, to belong to it the way the trees belong to the forest floor?", attribution: "Robin Wall Kimmerer" },
@@ -65,15 +65,15 @@ const taoQuotes = [
   { text: "When you plant lettuce, if it does not grow well, you do not blame the lettuce. You look for the reason.", attribution: "Thich Nhat Hanh" },
   // Joanna Macy
   { text: "The most radical thing any of us can do at this time in history is to be fully present to what is happening in the world.", attribution: "Joanna Macy" },
-  { text: "To be alive in this beautiful, self-organizing universe — to notice this — is the biggest gift of all.", attribution: "Joanna Macy" },
-  { text: "Don't be afraid of the darkness. It is not the absence of light — it is the womb of what is to come.", attribution: "Joanna Macy" },
+  { text: "To be alive in this beautiful, self-organizing universe, to notice this, is the biggest gift of all.", attribution: "Joanna Macy" },
+  { text: "Don't be afraid of the darkness. It is not the absence of light. It is the womb of what is to come.", attribution: "Joanna Macy" },
   // African and Andean proverbs
   { text: "A person is a person through other persons.", attribution: "African proverb" },
   { text: "If you want to go fast, go alone. If you want to go far, go together.", attribution: "African proverb" },
   { text: "The land is a mirror. What we give, it reflects back.", attribution: "Andean proverb" },
   { text: "We do not inherit the earth from our ancestors; we borrow it from our children.", attribution: "Proverb" },
   // Celtic / Earth-based
-  { text: "A seed knows it will become a tree — even though it has never seen one.", attribution: "Celtic wisdom" },
+  { text: "A seed knows it will become a tree, even though it has never seen one.", attribution: "Celtic wisdom" },
   { text: "The forest answers the question you bring to it.", attribution: "Celtic wisdom" },
   { text: "In every walk with nature, one receives far more than they seek.", attribution: "John Muir" },
   // Hopi and other Indigenous
