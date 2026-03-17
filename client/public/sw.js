@@ -4,7 +4,7 @@
  * Strategy: Cache-first for assets, network-first for API calls
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `regen-civics-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `regen-civics-runtime-${CACHE_VERSION}`;
 const API_CACHE = `regen-civics-api-${CACHE_VERSION}`;

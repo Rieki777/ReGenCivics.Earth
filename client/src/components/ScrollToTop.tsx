@@ -4,7 +4,6 @@
  */
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp } from "lucide-react";
 
 export function ScrollToTop() {
@@ -30,21 +29,17 @@ export function ScrollToTop() {
   };
 
   return (
-    <AnimatePresence>
-      {showButton && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 20 }}
-          transition={{ duration: 0.2 }}
-          onClick={scrollToTop}
-          className="fixed bottom-[128px] right-4 z-40 w-11 h-11 rounded-full bg-[#1a472a]/80 backdrop-blur-sm border border-[#7dd87d]/40 text-[#7dd87d] shadow-lg hover:bg-[#1a472a] hover:border-[#7dd87d]/60 transition-colors flex items-center justify-center"
-          aria-label="Scroll to top"
-          title="Back to top"
-        >
-          <ArrowUp className="w-5 h-5" />
-        </motion.button>
-      )}
-    </AnimatePresence>
+    <button
+      onClick={scrollToTop}
+      className={`fixed bottom-[128px] right-4 z-40 w-11 h-11 rounded-full bg-[#1a472a]/80 backdrop-blur-sm border border-[#7dd87d]/40 text-[#7dd87d] shadow-lg hover:bg-[#1a472a] hover:border-[#7dd87d]/60 transition-all duration-200 flex items-center justify-center ${
+        showButton
+          ? "opacity-100 scale-100 translate-y-0"
+          : "opacity-0 scale-75 translate-y-5 pointer-events-none"
+      }`}
+      aria-label="Scroll to top"
+      title="Back to top"
+    >
+      <ArrowUp className="w-5 h-5" />
+    </button>
   );
 }

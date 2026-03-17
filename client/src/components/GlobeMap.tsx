@@ -876,9 +876,9 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         }
 
         const globe = new Globe(targetEl)
-          .globeImageUrl("//unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
-          .bumpImageUrl("//unpkg.com/three-globe/example/img/earth-topology.png")
-          .backgroundImageUrl("//unpkg.com/three-globe/example/img/night-sky.png")
+          .globeImageUrl("/globe/earth-blue-marble.jpg")
+          .bumpImageUrl("/globe/earth-topology.png")
+          .backgroundImageUrl("/globe/night-sky.png")
           .showAtmosphere(true)
           .atmosphereColor("#4a7c59")
           .atmosphereAltitude(0.25)

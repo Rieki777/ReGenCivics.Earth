@@ -5,7 +5,6 @@
  * Messaging adapts to the current page context.
  */
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, FileText, Shield, Leaf, Handshake, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,12 +93,22 @@ const contextConfig: Record<PageContext, {
 export function ExitIntentCapture() {
   const [location, setLocation] = useLocation();
   const [show, setShow] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   const context = getPageContext(location);
   const config = contextConfig[context];
+
+  // Two-step show: mount first, then trigger CSS transition
+  useEffect(() => {
+    if (show) {
+      requestAnimationFrame(() => setVisible(true));
+    } else {
+      setVisible(false);
+    }
+  }, [show]);
 
   useEffect(() => {
     const wasDismissed = sessionStorage.getItem("exitIntentDismissed");
@@ -160,7 +169,8 @@ export function ExitIntentCapture() {
   }, [triggerModal, dismissed]);
 
   const handleDismiss = () => {
-    setShow(false);
+    setVisible(false);
+    setTimeout(() => setShow(false), 300);
     setDismissed(true);
     sessionStorage.setItem("exitIntentDismissed", "true");
   };
@@ -183,114 +193,110 @@ export function ExitIntentCapture() {
     newsletterMutation.mutate({ email, source: "exit_intent" });
   };
 
+  if (!show && !dismissed) return null;
+  if (!show) return null;
+
   return (
-    <AnimatePresence>
-      {show && !dismissed && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+    <div
+      className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-opacity duration-300 ${
+        visible ? "opacity-100" : "opacity-0"
+      }`}
+      onClick={handleDismiss}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      <div
+        className={`relative bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 max-w-md w-full shadow-2xl transition-all duration-300 ${
+          visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-5"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
           onClick={handleDismiss}
+          className="absolute top-3 right-3 text-white/40 hover:text-white/70 transition-colors"
+          aria-label="Close"
         >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <X className="w-5 h-5" />
+        </button>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="relative bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 max-w-md w-full shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={handleDismiss}
-              className="absolute top-3 right-3 text-white/40 hover:text-white/70 transition-colors"
-              aria-label="Close"
+        {submitted ? (
+          <div className="text-center py-4">
+            <SeedOfLifeIcon className="w-12 h-12 text-[#7dd87d] mx-auto mb-4" size={48} />
+            <h3
+              className="text-white text-lg font-bold mb-2"
+              style={{ fontFamily: "var(--font-display)" }}
             >
-              <X className="w-5 h-5" />
-            </button>
-
-            {submitted ? (
-              <div className="text-center py-4">
-                <SeedOfLifeIcon className="w-12 h-12 text-[#7dd87d] mx-auto mb-4" size={48} />
+              Check Your Inbox
+            </h3>
+            <p className="text-white/60 text-sm">{config.successMessage}</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
+                {config.icon}
+              </div>
+              <div>
                 <h3
-                  className="text-white text-lg font-bold mb-2"
+                  className="text-white text-lg font-bold"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Check Your Inbox
+                  {config.headline}
                 </h3>
-                <p className="text-white/60 text-sm">{config.successMessage}</p>
+                <p className="text-white/50 text-xs">{config.subline}</p>
+              </div>
+            </div>
+
+            <p className="text-white/70 text-sm mb-5 leading-relaxed">{config.body}</p>
+
+            {context === 'investor' ? (
+              <div className="flex flex-col gap-3 mt-2">
+                <button
+                  onClick={() => { window.location.href = '/investor'; setShow(false); }}
+                  className="w-full py-3 px-6 rounded-full bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors"
+                >
+                  Learn About Investing
+                </button>
+                <button
+                  onClick={() => { setShow(false); sessionStorage.setItem('exitIntentDismissed', '1'); setDismissed(true); }}
+                  className="w-full py-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+                >
+                  Not right now
+                </button>
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                    {config.icon}
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                      required
+                    />
                   </div>
-                  <div>
-                    <h3
-                      className="text-white text-lg font-bold"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      {config.headline}
-                    </h3>
-                    <p className="text-white/50 text-xs">{config.subline}</p>
-                  </div>
+                  <Button
+                    type="submit"
+                    disabled={newsletterMutation.isPending}
+                    className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] font-bold"
+                  >
+                    {newsletterMutation.isPending ? "Sending..." : config.cta}
+                  </Button>
+                </form>
+
+                <div className="flex items-center gap-1.5 mt-3 text-white/30 text-[10px]">
+                  <Shield className="w-3 h-3" />
+                  <span>Your email is encrypted and never shared.</span>
                 </div>
-
-                <p className="text-white/70 text-sm mb-5 leading-relaxed">{config.body}</p>
-
-                {context === 'investor' ? (
-                  <div className="flex flex-col gap-3 mt-2">
-                    <button
-                      onClick={() => { window.location.href = '/investor'; setShow(false); }}
-                      className="w-full py-3 px-6 rounded-full bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors"
-                    >
-                      Learn About Investing
-                    </button>
-                    <button
-                      onClick={() => { setShow(false); sessionStorage.setItem('exitIntentDismissed', '1'); setDismissed(true); }}
-                      className="w-full py-2 text-xs text-white/40 hover:text-white/60 transition-colors"
-                    >
-                      Not right now
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <form onSubmit={handleSubmit} className="space-y-3">
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                        <Input
-                          type="email"
-                          placeholder="your@email.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
-                          required
-                        />
-                      </div>
-                      <Button
-                        type="submit"
-                        disabled={newsletterMutation.isPending}
-                        className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] font-bold"
-                      >
-                        {newsletterMutation.isPending ? "Sending..." : config.cta}
-                      </Button>
-                    </form>
-
-                    <div className="flex items-center gap-1.5 mt-3 text-white/30 text-[10px]">
-                      <Shield className="w-3 h-3" />
-                      <span>Your email is encrypted and never shared.</span>
-                    </div>
-                  </>
-                )}
               </>
             )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
