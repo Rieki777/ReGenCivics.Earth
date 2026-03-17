@@ -4,7 +4,6 @@
  */
 import { Link } from "wouter";
 import { ArrowRight, BookOpen } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface RelatedPage {
   href: string;
@@ -38,12 +37,10 @@ export function RelatedContent({ pages, blog, className = "" }: RelatedContentPr
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pages.map((page, i) => (
-            <motion.div
+            <div
               key={page.href}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.4 }}
+              data-reveal="up"
+              data-reveal-delay={String(i * 100)}
             >
               <Link href={page.href}>
                 <div className="group p-5 rounded-xl bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-white/8 transition-all cursor-pointer h-full">
@@ -65,15 +62,13 @@ export function RelatedContent({ pages, blog, className = "" }: RelatedContentPr
                   </div>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))}
 
           {blog && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: pages.length * 0.1, duration: 0.4 }}
+            <div
+              data-reveal="up"
+              data-reveal-delay={String(pages.length * 100)}
             >
               <Link href={`/blog/${blog.slug}`}>
                 <div className="group p-5 rounded-xl bg-[#7dd87d]/5 border border-[#7dd87d]/20 hover:border-[#7dd87d]/40 hover:bg-[#7dd87d]/10 transition-all cursor-pointer h-full">
@@ -95,7 +90,7 @@ export function RelatedContent({ pages, blog, className = "" }: RelatedContentPr
                   </div>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           )}
         </div>
       </div>

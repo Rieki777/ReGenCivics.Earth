@@ -1,13 +1,16 @@
 /**
  * Service Worker for ReGen Civics
  * Caches static assets and enables offline browsing
- * Strategy: Cache-first for assets, network-first for API calls
+ * Strategy: Cache-first for assets, stale-while-revalidate for API calls
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `regen-civics-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `regen-civics-runtime-${CACHE_VERSION}`;
 const API_CACHE = `regen-civics-api-${CACHE_VERSION}`;
+
+// API cache TTL: 5 minutes
+const API_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // Assets to cache on install (critical path)
 const CRITICAL_ASSETS = [
@@ -35,31 +38,31 @@ const CACHEABLE_EXTENSIONS = [
   '.ico',
 ];
 
-// API endpoints to cache (with TTL)
-const CACHEABLE_API_ENDPOINTS = [
-  '/api/trpc/blog.getPosts',
-  '/api/trpc/opportunities.list',
-  '/api/trpc/applications.getPublic',
+// API endpoint prefixes to cache with stale-while-revalidate
+const CACHEABLE_API_PREFIXES = [
+  '/api/trpc/blog.',
+  '/api/trpc/opportunities.',
+  '/api/trpc/applications.',
+  '/api/trpc/forum.',
+  '/api/trpc/quests.',
+  '/api/trpc/players.',
+  '/api/trpc/landProjects.',
+  '/api/trpc/community.',
 ];
+
+function isCacheableApi(pathname) {
+  return CACHEABLE_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 /**
  * Install event - cache critical assets
  */
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
-  
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching critical assets');
-      return cache.addAll(CRITICAL_ASSETS).catch((error) => {
-        console.warn('[SW] Failed to cache some critical assets:', error);
-        // Don't fail the install if some assets are missing
-        return Promise.resolve();
-      });
+      return cache.addAll(CRITICAL_ASSETS).catch(() => Promise.resolve());
     })
   );
-  
-  // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 });
 
@@ -67,20 +70,16 @@ self.addEventListener('install', (event) => {
  * Activate event - clean up old caches
  */
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
-  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // Delete old caches
           if (
             cacheName !== CACHE_NAME &&
             cacheName !== RUNTIME_CACHE &&
             cacheName !== API_CACHE &&
             cacheName.startsWith('regen-civics-')
           ) {
-            console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
           return Promise.resolve();
@@ -88,8 +87,6 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  
-  // Claim all clients immediately
   self.clients.claim();
 });
 
@@ -99,32 +96,76 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  
+
   // Skip cross-origin requests
-  if (url.origin !== location.origin) {
-    return;
-  }
-  
+  if (url.origin !== location.origin) return;
+
   // Skip non-GET requests
-  if (request.method !== 'GET') {
+  if (request.method !== 'GET') return;
+
+  // Cacheable API endpoints — stale-while-revalidate
+  if (url.pathname.startsWith('/api/trpc/') && isCacheableApi(url.pathname)) {
+    return event.respondWith(staleWhileRevalidate(request, API_CACHE));
+  }
+
+  // Other API requests — network only (auth, mutations, etc.)
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
-  
-  // API requests - network-first with cache fallback
-  if (url.pathname.startsWith('/api/trpc/')) {
-    return event.respondWith(networkFirstStrategy(request, API_CACHE));
-  }
-  
-  // Static assets - cache-first with network fallback
+
+  // Static assets — cache-first with network fallback
   if (isStaticAsset(url.pathname)) {
     return event.respondWith(cacheFirstStrategy(request, RUNTIME_CACHE));
   }
-  
-  // HTML pages - network-first with cache fallback
+
+  // HTML pages — network-first with cache fallback
   if (request.headers.get('accept')?.includes('text/html')) {
     return event.respondWith(networkFirstStrategy(request, RUNTIME_CACHE));
   }
 });
+
+/**
+ * Stale-while-revalidate: serve cached immediately, fetch fresh in background.
+ * Respects TTL — don't serve stale data older than API_CACHE_TTL_MS.
+ */
+function staleWhileRevalidate(request, cacheName) {
+  return caches.open(cacheName).then((cache) => {
+    return cache.match(request).then((cachedResponse) => {
+      const fetchPromise = fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            // Store response with timestamp header
+            const headers = new Headers(networkResponse.headers);
+            headers.set('sw-cached-at', Date.now().toString());
+            const responseToCache = new Response(networkResponse.clone().body, {
+              status: networkResponse.status,
+              statusText: networkResponse.statusText,
+              headers,
+            });
+            cache.put(request, responseToCache);
+          }
+          return networkResponse;
+        })
+        .catch(() => null);
+
+      if (cachedResponse) {
+        // Check TTL
+        const cachedAt = parseInt(cachedResponse.headers.get('sw-cached-at') || '0', 10);
+        const isStale = cachedAt && (Date.now() - cachedAt > API_CACHE_TTL_MS);
+
+        if (!isStale) {
+          // Serve cache, revalidate in background
+          return cachedResponse;
+        }
+        // Expired — wait for fresh response, fall back to stale if network fails
+        return fetchPromise.then((fresh) => fresh || cachedResponse);
+      }
+
+      // No cache — wait for network
+      return fetchPromise.then((fresh) => fresh || new Response('Offline', { status: 503 }));
+    });
+  });
+}
 
 /**
  * Cache-first strategy: Try cache first, fallback to network
@@ -132,47 +173,27 @@ self.addEventListener('fetch', (event) => {
  */
 function cacheFirstStrategy(request, cacheName) {
   return caches.match(request).then((response) => {
-    if (response) {
-      console.log('[SW] Cache hit:', request.url);
-      return response;
-    }
-    
-    console.log('[SW] Cache miss, fetching:', request.url);
+    if (response) return response;
+
     return fetch(request)
       .then((response) => {
-        // Only cache successful responses
         if (!response || response.status !== 200 || response.type === 'error') {
           return response;
         }
-        
-        // Clone the response before caching
         const responseToCache = response.clone();
-        caches.open(cacheName).then((cache) => {
-          cache.put(request, responseToCache);
-        });
-        
+        caches.open(cacheName).then((cache) => cache.put(request, responseToCache));
         return response;
       })
       .catch(() => {
-        // Return offline page or cached response
-        console.log('[SW] Fetch failed, returning offline response:', request.url);
         return caches.match(request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          
-          // Return offline page for HTML requests
+          if (cachedResponse) return cachedResponse;
           if (request.headers.get('accept')?.includes('text/html')) {
             return caches.match('/');
           }
-          
-          // Return a generic offline response
           return new Response('Offline - Resource not available', {
             status: 503,
             statusText: 'Service Unavailable',
-            headers: new Headers({
-              'Content-Type': 'text/plain',
-            }),
+            headers: new Headers({ 'Content-Type': 'text/plain' }),
           });
         });
       });
@@ -181,45 +202,26 @@ function cacheFirstStrategy(request, cacheName) {
 
 /**
  * Network-first strategy: Try network first, fallback to cache
- * Best for: API calls, HTML pages
+ * Best for: HTML pages
  */
 function networkFirstStrategy(request, cacheName) {
   return fetch(request)
     .then((response) => {
-      // Only cache successful responses
-      if (!response || response.status !== 200) {
-        return response;
-      }
-      
-      // Clone the response before caching
+      if (!response || response.status !== 200) return response;
       const responseToCache = response.clone();
-      caches.open(cacheName).then((cache) => {
-        cache.put(request, responseToCache);
-      });
-      
+      caches.open(cacheName).then((cache) => cache.put(request, responseToCache));
       return response;
     })
     .catch(() => {
-      // Fallback to cache
-      console.log('[SW] Network request failed, checking cache:', request.url);
       return caches.match(request).then((response) => {
-        if (response) {
-          console.log('[SW] Returning cached response:', request.url);
-          return response;
-        }
-        
-        // Return offline page for HTML requests
+        if (response) return response;
         if (request.headers.get('accept')?.includes('text/html')) {
           return caches.match('/');
         }
-        
-        // Return a generic offline response
         return new Response('Offline - Unable to fetch resource', {
           status: 503,
           statusText: 'Service Unavailable',
-          headers: new Headers({
-            'Content-Type': 'text/plain',
-          }),
+          headers: new Headers({ 'Content-Type': 'text/plain' }),
         });
       });
     });
@@ -239,7 +241,7 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
+
   if (event.data && event.data.type === 'CLEAR_CACHE') {
     caches.keys().then((cacheNames) => {
       return Promise.all(
