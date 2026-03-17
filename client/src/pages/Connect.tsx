@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -1068,11 +1067,7 @@ export default function Connect() {
           </div>
           
           <div className="container relative z-10 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <div data-reveal>
               {/* Logo */}
               <div className="mb-6">
                 <img 
@@ -1099,7 +1094,7 @@ export default function Connect() {
               <p className="text-sm text-[#7dd87d]/60 mt-4" style={{ fontFamily: 'var(--font-accent)' }}>
                 If more than one applies, feel free to fill out this form multiple times.
               </p>
-            </motion.div>
+            </div>
           </div>
         </div>
         
@@ -1109,16 +1104,12 @@ export default function Connect() {
             {paths.map((path, index) => {
               const Icon = path.icon;
               return (
-                <motion.div
+                <div
                   key={path.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  data-reveal
+                  className="cursor-pointer group relative overflow-hidden rounded-2xl border-2 border-[#7dd87d]/30 bg-white/10 backdrop-blur-sm hover:bg-white/15 hover:border-[#7dd87d]/60 hover:shadow-2xl hover:shadow-[#7dd87d]/20 hover:-translate-y-1 transition-all duration-300 p-6"
+                  onClick={() => handlePathSelect(path.id)}
                 >
-                  <div
-                    className="cursor-pointer group relative overflow-hidden rounded-2xl border-2 border-[#7dd87d]/30 bg-white/10 backdrop-blur-sm hover:bg-white/15 hover:border-[#7dd87d]/60 hover:shadow-2xl hover:shadow-[#7dd87d]/20 hover:-translate-y-1 transition-all duration-300 p-6"
-                    onClick={() => handlePathSelect(path.id)}
-                  >
                     {/* Subtle gradient overlay on hover */}
                     <div className={`absolute inset-0 bg-gradient-to-br ${path.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl`} />
                     
@@ -1144,8 +1135,7 @@ export default function Connect() {
                         <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
-                  </div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
@@ -1173,12 +1163,7 @@ export default function Connect() {
           <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#7dd87d]/15 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#ffd700]/10 rounded-full blur-3xl" />
         </div>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-lg w-full relative z-10"
-        >
+        <div className="max-w-lg w-full relative z-10">
           <div className="rounded-2xl border-2 border-[#7dd87d]/40 bg-white/10 backdrop-blur-sm p-8 md:p-12 text-center">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#7dd87d] to-[#4a7c59] flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <Check className="w-10 h-10 text-white" />
@@ -1212,11 +1197,11 @@ export default function Connect() {
                 </Button>
               </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
-  
+
   // Form screen
   return (
     <PageWrapper>

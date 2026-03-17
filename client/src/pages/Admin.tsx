@@ -58,7 +58,6 @@ import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
 import { trpc } from "@/lib/trpc";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { Link } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { toast } from "sonner";
 import { EmailTemplateSelector, emailTemplates } from "@/components/EmailTemplateSelector";
@@ -690,11 +689,7 @@ function PasswordGate({ onAuthenticated }: { onAuthenticated: () => void }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={isShaking ? "animate-shake" : ""}
-      >
+      <div className={isShaking ? "animate-shake" : ""}>
         <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm border-2 border-[#7dd87d]/30">
           <CardHeader className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#1a472a] flex items-center justify-center">
@@ -736,7 +731,7 @@ function PasswordGate({ onAuthenticated }: { onAuthenticated: () => void }) {
             </form>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }

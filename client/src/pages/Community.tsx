@@ -28,8 +28,7 @@ import { isNewsletterSubscribed } from "@/utils/newsletter";
 import AMABanner from "@/components/AMABanner";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PageTransition, ScrollRevealMotion, HoverCard, FloatElement } from "@/components/PageTransition";
-import { motion } from "framer-motion";
+import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
 
 // Icon mapping for categories
 const iconMap: Record<string, React.ReactNode> = {
@@ -161,11 +160,7 @@ export default function Community() {
             <Trees className="w-20 h-20 text-[#7dd87d]" />
           </div>
           <div className="container relative z-10 px-4 max-w-lg mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <div data-reveal>
               <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/30">
                 <SeedOfLifeIcon className="w-4 h-4 text-[#7dd87d]" />
                 <span className="text-[#7dd87d] text-sm font-medium" style={{ fontFamily: 'var(--font-accent)' }}>
@@ -211,7 +206,7 @@ export default function Community() {
                   <div className="text-white/50 text-xs">To Join</div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </section>
       </div>

@@ -17,7 +17,6 @@ import {
   Compass, Zap, Target, Star
 } from "lucide-react";
 import { Link } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
 
 const QUEST_CATEGORIES = [
   { value: 'regeneration', label: 'Regeneration', icon: '🌱' },
@@ -90,11 +89,7 @@ export default function QuestSuggestions() {
         </div>
 
         <div className="max-w-3xl mx-auto text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <div data-reveal>
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/30">
               <Compass className="w-4 h-4 text-[#7dd87d]" />
               <span className="text-[#7dd87d] text-sm font-medium" style={{ fontFamily: 'var(--font-accent)' }}>
@@ -127,19 +122,13 @@ export default function QuestSuggestions() {
                 {t('auth.loginToPost')}
               </a>
             )}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Submission Form */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.section
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="px-4 pb-8 overflow-hidden"
-          >
+      {showForm && (
+          <section className="px-4 pb-8 overflow-hidden">
             <div className="max-w-2xl mx-auto bg-white/5 backdrop-blur-sm border border-[#7dd87d]/30 rounded-2xl p-6">
               <h3 className="text-lg font-bold text-[#7dd87d] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 Share Your Quest Idea
@@ -208,9 +197,8 @@ export default function QuestSuggestions() {
                 </div>
               </div>
             </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
+          </section>
+      )}
 
       {/* Sort Controls */}
       <section className="px-4 pb-4">
@@ -279,11 +267,9 @@ export default function QuestSuggestions() {
               const catInfo = QUEST_CATEGORIES.find(c => c.value === suggestion.category);
 
               return (
-                <motion.div
+                <div
                   key={suggestion.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  data-reveal
                   className="bg-white/5 hover:bg-white/8 border border-white/10 rounded-xl p-4 md:p-5 transition-all group"
                 >
                   <div className="flex gap-3 md:gap-4">
@@ -335,7 +321,7 @@ export default function QuestSuggestions() {
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               );
             })
           )}

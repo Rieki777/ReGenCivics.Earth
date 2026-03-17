@@ -40,7 +40,6 @@ import {
   FileCheck
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
-import { motion, AnimatePresence } from "framer-motion";
 import { BackButton } from "@/components/BackButton";
 
 // Form data type
@@ -269,21 +268,12 @@ export default function InvestorForm() {
       <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] flex items-center justify-center p-4">
       <SEO {...pageSEO.investorForm} />
       <BackButton fallbackPath="/fund" />
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-lg w-full"
-        >
+        <div className="max-w-lg w-full">
           <Card className="bg-white/95 backdrop-blur-sm border-4 border-[#7dd87d] shadow-2xl">
             <CardContent className="pt-12 pb-8 text-center">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#7dd87d] to-[#4a7c59] flex items-center justify-center"
-              >
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#7dd87d] to-[#4a7c59] flex items-center justify-center">
                 <CheckCircle2 className="w-12 h-12 text-white" />
-              </motion.div>
+              </div>
               
               <h2 className="text-3xl font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 Thank You, {formData.fullName.split(' ')[0]}!
@@ -323,7 +313,7 @@ export default function InvestorForm() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -394,14 +384,7 @@ export default function InvestorForm() {
 
         {/* Form Card */}
         <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
+          <div key={step}>
               {/* Step 1: Contact Information */}
               {step === 1 && (
                 <>
@@ -943,8 +926,7 @@ export default function InvestorForm() {
                   </CardContent>
                 </>
               )}
-            </motion.div>
-          </AnimatePresence>
+            </div>
 
           {/* Navigation */}
           <div className="flex justify-between items-center p-6 bg-[#f0ebe3] border-t border-[#1a472a]/10">

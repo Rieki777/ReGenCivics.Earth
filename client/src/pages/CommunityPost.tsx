@@ -20,7 +20,6 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
-import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ForumMarkdown, MarkdownHints } from "@/components/ForumMarkdown";
 import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownToolbar";

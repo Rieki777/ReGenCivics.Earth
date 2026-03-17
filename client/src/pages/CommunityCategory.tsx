@@ -17,7 +17,6 @@ import { getLoginUrl } from "@/const";
 import { useState, useMemo } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
-import { motion } from "framer-motion";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { isNewsletterSubscribed } from "@/utils/newsletter";
 import KnowledgeMapPanel from "@/components/KnowledgeMapPanel";
