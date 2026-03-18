@@ -80,6 +80,14 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         checkRateLimit(ctx, "apply_create");
+
+        // One-per-user guard: prevent duplicate applications
+        const existing = await db.getApplicationsByUserId(ctx.user.id);
+        if (existing.length > 0) {
+          // Return the existing application instead of creating a duplicate
+          return existing[0];
+        }
+
         const applicationId = await db.createApplication({
           userId: ctx.user.id,
           status: "draft",
@@ -237,9 +245,14 @@ export const appRouter = router({
         return application;
       }),
 
-    // Admin: Get all applications
+    // Admin: Get all non-draft applications (submitted, under_review, approved, active, etc.)
     list: adminProcedure.query(async () => {
       return db.getAllApplications();
+    }),
+
+    // Admin: Get draft applications separately
+    listDrafts: adminProcedure.query(async () => {
+      return db.getDraftApplications();
     }),
 
     // Admin: Get applications by status

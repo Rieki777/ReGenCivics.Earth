@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/Users/taren/Downloads/regen-civics-clean/client/src/components/*.tsx)",
+      "Bash(du -sh /c/Users/taren/Downloads/regen-civics-clean/node_modules/.pnpm/globe.gl*)",
+      "Bash(du -sh /c/Users/taren/Downloads/regen-civics-clean/node_modules/.pnpm/framer-motion* /c/Users/taren/Downloads/regen-civics-clean/node_modules/.pnpm/recharts* /c/Users/taren/Downloads/regen-civics-clean/node_modules/.pnpm/@radix-ui*)",
+      "Bash(node scripts/optimize-images.mjs)",
+      "Bash(grep -rn \"framer-motion\\\\|from ''framer-motion''\" client/src/components/ client/src/pages/ --include=\"*.tsx\" -l)"
+    ]
+  }
+}

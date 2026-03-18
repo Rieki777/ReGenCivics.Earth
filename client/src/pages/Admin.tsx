@@ -98,14 +98,14 @@ function AdminCustomGameWaitlist() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm"
+          className="bg-[#1a472a] border border-white/30 rounded-lg px-3 py-1.5 text-white text-sm"
         >
-          <option value="all">All</option>
-          <option value="waitlist">Waitlist</option>
-          <option value="intro_scheduled">Intro Scheduled</option>
-          <option value="in_progress">In Progress</option>
-          <option value="declined">Declined</option>
-          <option value="completed">Completed</option>
+          <option value="all" className="bg-[#1a472a] text-white">All</option>
+          <option value="waitlist" className="bg-[#1a472a] text-white">Waitlist</option>
+          <option value="intro_scheduled" className="bg-[#1a472a] text-white">Intro Scheduled</option>
+          <option value="in_progress" className="bg-[#1a472a] text-white">In Progress</option>
+          <option value="declined" className="bg-[#1a472a] text-white">Declined</option>
+          <option value="completed" className="bg-[#1a472a] text-white">Completed</option>
         </select>
       </div>
 
@@ -163,7 +163,7 @@ function AdminCustomGameWaitlist() {
                     <select
                       value={inq.status}
                       onChange={(e) => updateMut.mutate({ id: inq.id, status: e.target.value })}
-                      className="bg-white/5 border border-white/20 rounded px-2 py-1 text-white text-xs"
+                      className="bg-[#1a472a] border border-white/30 rounded px-2 py-1 text-white text-xs"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <option value="waitlist">Waitlist</option>
@@ -282,7 +282,7 @@ function BufferSettingsPanel() {
         {/* Buffer */}
         <div className="space-y-3">
           <Label className="text-[#1a472a] font-semibold">Buffer Connection</Label>
-          <p className="text-xs text-[#1a472a]/60">Token expires yearly. Paste a new one below to update it. Get it at buffer.com → Settings → Developers → Access Token.</p>
+          <p className="text-xs text-[#1a472a]/80">Token expires yearly. Paste a new one below to update it. Get it at buffer.com → Settings → Developers → Access Token.</p>
           <div className="flex flex-wrap items-center gap-3">
             <Input
               type="password"
@@ -333,7 +333,7 @@ function BufferSettingsPanel() {
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1a472a]/10 text-[#1a472a] text-xs font-medium"
                 >
                   <span className="capitalize">{serviceLabels[p.service.toLowerCase()] ?? p.service}</span>
-                  <span className="text-[#1a472a]/60">{p.formatted_username ?? p.service_username}</span>
+                  <span className="text-[#1a472a]/80">{p.formatted_username ?? p.service_username}</span>
                 </span>
               ))}
             </div>
@@ -354,7 +354,7 @@ function BufferSettingsPanel() {
             placeholder="@handle.eth"
             className="max-w-xs border-[#1a472a]/20 focus:border-[#1a472a]"
           />
-          <p className="text-xs text-[#1a472a]/60">
+          <p className="text-xs text-[#1a472a]/80">
             Farcaster posting opens Warpcast in a new tab. No API key needed.
           </p>
         </div>
@@ -375,7 +375,7 @@ function EmailHistoryPanel({ email }: { email: string }) {
     <div className="border-t border-[#1a472a]/10 pt-4">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-xs text-[#1a472a]/60 hover:text-[#1a472a] transition-colors w-full"
+        className="flex items-center gap-2 text-xs text-[#1a472a]/80 hover:text-[#1a472a] transition-colors w-full"
       >
         <Mail className="w-3.5 h-3.5" />
         <span className="font-medium">Email History</span>
@@ -384,14 +384,14 @@ function EmailHistoryPanel({ email }: { email: string }) {
       </button>
       {open && (
         <div className="mt-2 space-y-2">
-          {isLoading && <p className="text-xs text-[#1a472a]/40 py-2">Loading…</p>}
+          {isLoading && <p className="text-xs text-[#1a472a]/65 py-2">Loading…</p>}
           {!isLoading && !logs?.length && (
-            <p className="text-xs text-[#1a472a]/40 py-2">No emails sent to this contact yet.</p>
+            <p className="text-xs text-[#1a472a]/65 py-2">No emails sent to this contact yet.</p>
           )}
           {logs?.map((log: any) => (
             <div key={log.id} className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 text-xs">
               <p className="font-medium text-[#1a472a] truncate">{log.subject}</p>
-              <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px] text-[#1a472a]/50">
+              <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#1a472a]/70">
                 <span>{new Date(log.sentAt).toLocaleString()}</span>
                 <span className={
                   log.status === 'delivered' ? 'text-green-600 font-medium' :
@@ -400,7 +400,7 @@ function EmailHistoryPanel({ email }: { email: string }) {
                 }>{log.status}</span>
                 {log.openedAt && <span className="text-blue-500">· opened</span>}
                 {log.clickedAt && <span className="text-purple-500">· clicked</span>}
-                {log.template && <span className="text-[#4a7c59]/60">template: {log.template}</span>}
+                {log.template && <span className="text-[#4a7c59]/80">template: {log.template}</span>}
               </div>
             </div>
           ))}
@@ -431,16 +431,16 @@ function ContactNotesPanel({ contactType, contactId }: { contactType: string; co
 
   return (
     <div className="border-t border-[#1a472a]/10 pt-4 space-y-3">
-      <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide flex items-center gap-1.5">
+      <p className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wide flex items-center gap-1.5">
         <MessageSquare className="w-3.5 h-3.5" />
         Internal Notes {notes?.length ? `(${notes.length})` : ''}
       </p>
-      {isLoading && <p className="text-xs text-[#1a472a]/40">Loading…</p>}
+      {isLoading && <p className="text-xs text-[#1a472a]/65">Loading…</p>}
       {notes?.map((note: any) => (
         <div key={note.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
           <div className="flex-1 min-w-0">
             <p className="text-xs text-[#1a472a] whitespace-pre-wrap">{note.note}</p>
-            <p className="text-[10px] text-[#1a472a]/40 mt-1">
+            <p className="text-xs text-[#1a472a]/65 mt-1">
               {note.authorName} · {new Date(note.createdAt).toLocaleString()}
             </p>
           </div>
@@ -501,7 +501,7 @@ function ReminderPanel({ contactType, contactId }: { contactType: string; contac
 
   return (
     <div className="border-t border-[#1a472a]/10 pt-4 space-y-2">
-      <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide flex items-center gap-1.5">
+      <p className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wide flex items-center gap-1.5">
         <Clock className="w-3.5 h-3.5" />
         Reminders {reminders.length > 0 ? `(${reminders.length})` : ''}
       </p>
@@ -565,7 +565,7 @@ function AssigneeSelect({ contactType, contactId }: { contactType: string; conta
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-[#1a472a]/60 shrink-0">Assigned to:</span>
+      <span className="text-xs text-[#1a472a]/80 shrink-0">Assigned to:</span>
       <Select value={currentAssignee || 'unassigned'} onValueChange={handleChange}>
         <SelectTrigger className="h-7 text-xs flex-1 max-w-[160px]">
           <SelectValue placeholder="Unassigned" />
@@ -611,7 +611,7 @@ function ContactTagsPanel({ contactType, contactId }: { contactType: string; con
 
   return (
     <div className="border-t border-[#1a472a]/10 pt-4 space-y-2">
-      <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide">Tags</p>
+      <p className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wide">Tags</p>
       <div className="flex flex-wrap gap-1.5">
         {tags?.map((t: any) => (
           <span
@@ -619,7 +619,7 @@ function ContactTagsPanel({ contactType, contactId }: { contactType: string; con
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7dd87d]/20 border border-[#4a7c59]/30 text-xs text-[#1a472a]"
           >
             {t.tag}
-            <button onClick={() => removeTag.mutate({ id: t.id })} className="text-[#1a472a]/40 hover:text-red-500">
+            <button onClick={() => removeTag.mutate({ id: t.id })} className="text-[#1a472a]/65 hover:text-red-500">
               <X className="w-2.5 h-2.5" />
             </button>
           </span>
@@ -631,7 +631,7 @@ function ContactTagsPanel({ contactType, contactId }: { contactType: string; con
             key={pt}
             type="button"
             onClick={() => handleAdd(pt)}
-            className="px-2 py-0.5 text-[10px] rounded-full bg-gray-100 hover:bg-[#7dd87d]/20 border border-gray-200 text-gray-600 hover:text-[#1a472a] transition-colors"
+            className="px-2 py-0.5 text-xs rounded-full bg-gray-100 hover:bg-[#7dd87d]/20 border border-gray-200 text-gray-600 hover:text-[#1a472a] transition-colors"
           >
             + {pt}
           </button>
@@ -751,12 +751,12 @@ function StatsCard({ title, value, icon: Icon, color, description, onClick, link
       <CardContent className="p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
-            <p className="text-xs md:text-sm text-[#1a472a]/60 mb-1 break-words">{title}</p>
+            <p className="text-xs md:text-sm text-[#1a472a]/80 mb-1 break-words">{title}</p>
             <p className="text-2xl md:text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
               {value}
             </p>
             {description && (
-              <p className="text-xs text-[#1a472a]/50 mt-1 break-words">{description}</p>
+              <p className="text-xs text-[#1a472a]/70 mt-1 break-words">{description}</p>
             )}
           </div>
           <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${color} flex items-center justify-center flex-shrink-0 ml-2`}>
@@ -1064,7 +1064,7 @@ function ReviewerEmailManager() {
                       {reviewer.name || reviewer.email}
                     </p>
                     {reviewer.name && (
-                      <p className="text-sm text-[#1a472a]/60">{reviewer.email}</p>
+                      <p className="text-sm text-[#1a472a]/80">{reviewer.email}</p>
                     )}
                     <div className="flex flex-wrap gap-1 mt-1">
                       {reviewer.notifyApplications === 1 && (
@@ -1084,7 +1084,7 @@ function ReviewerEmailManager() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleToggleActive(reviewer.id, reviewer.isActive === 1)}
-                    className="text-[#1a472a]/60 hover:text-[#1a472a]"
+                    className="text-[#1a472a]/80 hover:text-[#1a472a]"
                   >
                     {reviewer.isActive ? 'Disable' : 'Enable'}
                   </Button>
@@ -1105,7 +1105,7 @@ function ReviewerEmailManager() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-[#1a472a]/50">
+          <div className="text-center py-8 text-[#1a472a]/70">
             <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p>No reviewer emails configured</p>
             <p className="text-sm mt-1">Add reviewers to receive notifications when applications are submitted</p>
@@ -1137,7 +1137,7 @@ function NewsletterSubscribersList() {
   
   if (!subscribers || subscribers.length === 0) {
     return (
-      <div className="text-center py-8 text-[#1a472a]/50">
+      <div className="text-center py-8 text-[#1a472a]/70">
         <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
         <p>No newsletter subscribers yet</p>
         <p className="text-sm mt-1">Subscribers will appear here when people sign up</p>
@@ -1148,7 +1148,7 @@ function NewsletterSubscribersList() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#1a472a]/10">
-        <p className="text-sm text-[#1a472a]/60">
+        <p className="text-sm text-[#1a472a]/80">
           {subscribers.length} subscriber{subscribers.length !== 1 ? 's' : ''}
         </p>
       </div>
@@ -1163,7 +1163,7 @@ function NewsletterSubscribersList() {
             </div>
             <div>
               <p className="font-medium text-[#1a472a]">{subscriber.email}</p>
-              <p className="text-xs text-[#1a472a]/50">
+              <p className="text-xs text-[#1a472a]/70">
                 Subscribed {new Date(subscriber.createdAt).toLocaleDateString()}
                 {subscriber.source && ` via ${subscriber.source}`}
               </p>
@@ -1374,7 +1374,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
 
   if (filteredInquiries.length === 0) {
     return (
-      <div className="text-center py-8 text-[#1a472a]/50">
+      <div className="text-center py-8 text-[#1a472a]/70">
         <Icon className="w-12 h-12 mx-auto mb-4 opacity-30" />
         <p>No {config.label.toLowerCase()} inquiries yet</p>
       </div>
@@ -1417,13 +1417,13 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
       <div className="p-4 border-b border-[#1a472a]/10 bg-[#f0ebe3]/30">
         {/* Search Row */}
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65" />
           <input
             type="text"
             placeholder={`Search ${config.label.toLowerCase()} by name, email, or message...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
           />
         </div>
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -1462,7 +1462,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                       </button>
                       
                       <div className="border-t border-[#1a472a]/10 my-2" />
-                      <p className="px-3 py-1 text-xs text-[#1a472a]/50 font-medium">
+                      <p className="px-3 py-1 text-xs text-[#1a472a]/70 font-medium">
                         Filter by {pathType === 'live' ? 'Land Project' : 'Organization'}:
                       </p>
                       {projectList.map((project) => {
@@ -1484,7 +1484,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     </div>
                     <button
                       onClick={() => setShowFilterDropdown(false)}
-                      className="w-full text-center py-2 text-xs text-[#1a472a]/50 hover:bg-[#f0ebe3] border-t border-[#1a472a]/10"
+                      className="w-full text-center py-2 text-xs text-[#1a472a]/70 hover:bg-[#f0ebe3] border-t border-[#1a472a]/10"
                     >
                       Close
                     </button>
@@ -1498,7 +1498,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-[#1a472a]/60 hover:text-[#1a472a]"
+                className="text-[#1a472a]/80 hover:text-[#1a472a]"
                 onClick={clearFilter}
               >
                 <X className="w-4 h-4 mr-1" />
@@ -1515,7 +1515,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 onCheckedChange={selectAll}
                 id="select-all"
               />
-              <Label htmlFor="select-all" className="text-xs text-[#1a472a]/60 cursor-pointer">
+              <Label htmlFor="select-all" className="text-xs text-[#1a472a]/80 cursor-pointer">
                 Select All
               </Label>
             </div>
@@ -1545,7 +1545,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                   {projectList && (
                     <>
                       <div className="border-t border-[#1a472a]/10 my-2" />
-                      <p className="px-3 py-1 text-xs text-[#1a472a]/50 font-medium">
+                      <p className="px-3 py-1 text-xs text-[#1a472a]/70 font-medium">
                         Export by {pathType === 'live' ? 'Land Project' : 'Alliance Organization'}:
                       </p>
                       {projectList.map((project) => {
@@ -1569,7 +1569,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 </div>
                 <button
                   onClick={() => setShowExportDropdown(false)}
-                  className="w-full text-center py-2 text-xs text-[#1a472a]/50 hover:bg-[#f0ebe3] border-t border-[#1a472a]/10"
+                  className="w-full text-center py-2 text-xs text-[#1a472a]/70 hover:bg-[#f0ebe3] border-t border-[#1a472a]/10"
                 >
                   Close
                 </button>
@@ -1657,7 +1657,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
             <Button
               variant="ghost"
               size="sm"
-              className="text-[#1a472a]/60"
+              className="text-[#1a472a]/80"
               onClick={() => {
                 setSelectedItems(new Set());
                 setShowBulkActions(false);
@@ -1790,13 +1790,13 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-[#1a472a]">{inquiry.fullName || 'Anonymous'}</p>
                         {inquiry.location && (
-                          <span className="text-xs text-[#1a472a]/50 flex items-center">
+                          <span className="text-xs text-[#1a472a]/70 flex items-center">
                             <MapPin className="w-3 h-3 mr-1" />
                             {inquiry.location}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-[#1a472a]/60">{inquiry.email}</p>
+                      <p className="text-sm text-[#1a472a]/80">{inquiry.email}</p>
                       
                       {/* Show key info based on path type */}
                       <div className="flex flex-wrap gap-1.5 mt-2">
@@ -1843,13 +1843,13 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     {(() => {
                       const age = getAgeInfo(inquiry.createdAt);
                       return (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${age.bg} ${age.color}`}>
+                        <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${age.bg} ${age.color}`}>
                           {age.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
                           {age.label}
                         </span>
                       );
                     })()}
-                    <ChevronRight className="w-4 h-4 text-[#1a472a]/30" />
+                    <ChevronRight className="w-4 h-4 text-[#1a472a]/55" />
                   </div>
                 </div>
               </div>
@@ -1862,7 +1862,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                   </div>
                   <div>
                     <span className="text-[#1a472a]">{inquiry.fullName || 'Anonymous'}</span>
-                    <p className="text-sm font-normal text-[#1a472a]/60">{config.label}</p>
+                    <p className="text-sm font-normal text-[#1a472a]/80">{config.label}</p>
                   </div>
                 </DialogTitle>
               </DialogHeader>
@@ -1871,23 +1871,23 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Contact Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Email</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Email</p>
                     <p className="text-[#1a472a]">{inquiry.email}</p>
                   </div>
                   {inquiry.location && (
                     <div>
-                      <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Location</p>
+                      <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Location</p>
                       <p className="text-[#1a472a]">{inquiry.location}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Status</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Status</p>
                     <Badge className={`${inquiry.status === 'pending' || inquiry.status === 'new' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'} border`}>
                       {inquiry.status}
                     </Badge>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Submitted</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Submitted</p>
                     <p className="text-[#1a472a]">{new Date(inquiry.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
@@ -1895,7 +1895,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Selected Projects/Orgs */}
                 {selectedProjects.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Selected Land Projects</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Selected Land Projects</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedProjects.map((proj: string) => (
                         <Badge key={proj} className="bg-green-100 text-green-800 border-green-200">
@@ -1908,7 +1908,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 
                 {selectedOrgs.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Selected Alliance Organizations</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Selected Alliance Organizations</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedOrgs.map((org: string) => (
                         <Badge key={org} className="bg-purple-100 text-purple-800 border-purple-200">
@@ -1921,7 +1921,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 
                 {roleArchetypes.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Role Archetypes</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Role Archetypes</p>
                     <div className="flex flex-wrap gap-2">
                       {roleArchetypes.map((role: string) => (
                         <Badge key={role} className="bg-amber-100 text-amber-800 border-amber-200">
@@ -1934,7 +1934,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 
                 {contributionTypes.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Contribution Types</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Contribution Types</p>
                     <div className="flex flex-wrap gap-2">
                       {contributionTypes.map((type: string) => (
                         <Badge key={type} className="bg-blue-100 text-blue-800 border-blue-200">
@@ -2014,7 +2014,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Role Interest */}
                 {inquiry.roleInterest && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Role Interest</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Role Interest</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4">
                       <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.roleInterest}</p>
                     </div>
@@ -2024,7 +2024,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Unique Contribution (Something Else path) */}
                 {inquiry.uniqueContribution && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Unique Contribution</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Unique Contribution</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4">
                       <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.uniqueContribution}</p>
                     </div>
@@ -2038,7 +2038,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     if (capitals.length > 0) {
                       return (
                         <div>
-                          <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Forms of Capital to Contribute</p>
+                          <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Forms of Capital to Contribute</p>
                           <div className="flex flex-wrap gap-2">
                             {capitals.map((cap: string) => (
                               <Badge key={cap} className="bg-teal-100 text-teal-800 border-teal-200 capitalize">
@@ -2060,7 +2060,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     if (orgCaps.length > 0) {
                       return (
                         <div>
-                          <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Organizational Capital</p>
+                          <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Organizational Capital</p>
                           <div className="flex flex-wrap gap-2">
                             {orgCaps.map((cap: string) => (
                               <Badge key={cap} className="bg-indigo-100 text-indigo-800 border-indigo-200 capitalize">
@@ -2082,7 +2082,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                     if (categories.length > 0) {
                       return (
                         <div>
-                          <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Alliance Support Categories</p>
+                          <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Alliance Support Categories</p>
                           <div className="flex flex-wrap gap-2">
                             {categories.map((cat: string) => (
                               <Badge key={cat} className="bg-violet-100 text-violet-800 border-violet-200 capitalize">
@@ -2100,7 +2100,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Alliance Support Description */}
                 {inquiry.allianceSupportDescription && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">How Alliance Supports Land Projects</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">How Alliance Supports Land Projects</p>
                     <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
                       <p className="text-violet-900 whitespace-pre-wrap">{inquiry.allianceSupportDescription}</p>
                     </div>
@@ -2110,7 +2110,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Other Alliance Support */}
                 {inquiry.otherAllianceSupport && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Other Support Category</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Other Support Category</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4">
                       <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.otherAllianceSupport}</p>
                     </div>
@@ -2120,7 +2120,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Value Contribution */}
                 {inquiry.valueContribution && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Value Contribution</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Value Contribution</p>
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                       <p className="text-emerald-900 whitespace-pre-wrap">{inquiry.valueContribution}</p>
                     </div>
@@ -2130,7 +2130,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Why Ideal Fit */}
                 {inquiry.whyIdealFit && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Why They Would Be an Ideal Fit</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Why They Would Be an Ideal Fit</p>
                     <div className="bg-sky-50 border border-sky-200 rounded-lg p-4">
                       <p className="text-sky-900 whitespace-pre-wrap">{inquiry.whyIdealFit}</p>
                     </div>
@@ -2140,7 +2140,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* Message/Notes */}
                 {(inquiry.message || formData.additionalNotes) && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Message</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Message</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4">
                       <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.message || formData.additionalNotes}</p>
                     </div>
@@ -2150,7 +2150,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 {/* All Form Data */}
                 {Object.keys(formData).length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">All Form Data</p>
+                    <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">All Form Data</p>
                     <div className="bg-[#f0ebe3] rounded-lg p-4 overflow-x-auto">
                       <pre className="text-xs text-[#1a472a]/70">
                         {JSON.stringify(formData, null, 2)}
@@ -2176,7 +2176,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                 <AssigneeSelect contactType="inquiry" contactId={inquiry.id} />
                 {/* Status update row */}
                 <div className="w-full flex items-center gap-2">
-                  <span className="text-xs text-[#1a472a]/60 shrink-0">Update status:</span>
+                  <span className="text-xs text-[#1a472a]/80 shrink-0">Update status:</span>
                   <Select
                     value={inquiry.status}
                     onValueChange={(newStatus: any) => {
@@ -2201,7 +2201,7 @@ function InquirySection({ pathType, inquiries }: { pathType: string; inquiries: 
                   </Select>
                 </div>
                 {/* Navigation indicator */}
-                <div className="w-full flex items-center justify-between text-xs text-[#1a472a]/50">
+                <div className="w-full flex items-center justify-between text-xs text-[#1a472a]/70">
                   <span>Inquiry {currentIndex + 1} of {filteredInquiries.length}</span>
                   <div className="flex gap-2">
                     {currentIndex > 0 && (
@@ -2317,18 +2317,18 @@ function ScheduledEmailsManager() {
         <CardDescription>{pending.length} pending</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && <p className="text-sm text-[#1a472a]/40">Loading…</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/65">Loading…</p>}
         {!isLoading && scheduled?.length === 0 && (
-          <p className="text-sm text-[#1a472a]/40">No scheduled emails. Use "Send Later" when composing to schedule.</p>
+          <p className="text-sm text-[#1a472a]/65">No scheduled emails. Use "Send Later" when composing to schedule.</p>
         )}
         {pending.length > 0 && (
           <div className="space-y-2 mb-4">
-            <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide">Pending</p>
+            <p className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wide">Pending</p>
             {pending.map((s: any) => (
               <div key={s.id} className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-[#1a472a] truncate">{s.subject}</p>
-                  <p className="text-xs text-[#1a472a]/60">To: {s.recipientName || s.recipientEmail} · {new Date(s.scheduledFor).toLocaleString()}</p>
+                  <p className="text-xs text-[#1a472a]/80">To: {s.recipientName || s.recipientEmail} · {new Date(s.scheduledFor).toLocaleString()}</p>
                 </div>
                 <Button
                   size="sm"
@@ -2345,12 +2345,12 @@ function ScheduledEmailsManager() {
         )}
         {past.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide">History</p>
+            <p className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wide">History</p>
             {past.slice(0, 10).map((s: any) => (
               <div key={s.id} className="flex items-center gap-3 p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-[#1a472a]/70 truncate">{s.subject}</p>
-                  <p className="text-xs text-[#1a472a]/40">
+                  <p className="text-xs text-[#1a472a]/65">
                     To: {s.recipientName || s.recipientEmail} ·
                     <span className={s.status === 'sent' ? 'text-green-600' : s.status === 'cancelled' ? 'text-gray-500' : 'text-red-500'}> {s.status}</span>
                   </p>
@@ -2401,14 +2401,14 @@ function AdminAMAPanel() {
       <CardContent className="space-y-4">
         {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white/50" />}
         {!isLoading && amas && amas.length === 0 && (
-          <p className="text-white/40 text-sm">No AMAs scheduled.</p>
+          <p className="text-white/70 text-sm">No AMAs scheduled.</p>
         )}
         {amas?.map(ama => (
           <div key={ama.id} className="flex items-start gap-3 p-3 bg-white/4 rounded-xl border border-white/8">
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-white text-sm">{ama.projectName}</p>
-              <p className="text-white/55 text-xs">{ama.date} at {ama.time} ({ama.timezone})</p>
-              <p className="text-white/45 text-xs">Host: {ama.hostName}</p>
+              <p className="text-white/75 text-xs">{ama.date} at {ama.time} ({ama.timezone})</p>
+              <p className="text-white/70 text-xs">Host: {ama.hostName}</p>
               {ama.forumThreadUrl && (
                 <a href={ama.forumThreadUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[#7dd87d]/70 hover:text-[#7dd87d] underline">
                   Forum thread
@@ -2418,13 +2418,13 @@ function AdminAMAPanel() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => toggleMut.mutate({ id: ama.id, isActive: !ama.isActive })}
-                className={`text-xs px-2 py-1 rounded-full border ${ama.isActive ? "bg-[#7dd87d]/15 text-[#5ab85a] border-[#7dd87d]/25" : "bg-white/5 text-white/40 border-white/15"}`}
+                className={`text-xs px-2 py-1 rounded-full border ${ama.isActive ? "bg-[#7dd87d]/15 text-[#5ab85a] border-[#7dd87d]/25" : "bg-white/5 text-white/70 border-white/15"}`}
               >
                 {ama.isActive ? "Active" : "Inactive"}
               </button>
               <button
                 onClick={() => { if (confirm("Delete this AMA?")) deleteMut.mutate({ id: ama.id }); }}
-                className="text-white/25 hover:text-red-400 transition-colors"
+                className="text-white/65 hover:text-red-400 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -2509,16 +2509,16 @@ function OrgClaimsAdminPanel() {
         <CardDescription>Review requests from users claiming stewardship of land projects or alliance orgs</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && <p className="text-sm text-[#1a472a]/40">Loading…</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/65">Loading…</p>}
         {!isLoading && !claims?.length && (
-          <p className="text-sm text-[#1a472a]/40">No stewardship claims yet.</p>
+          <p className="text-sm text-[#1a472a]/65">No stewardship claims yet.</p>
         )}
         <div className="space-y-3 mb-4">
           {claims?.map((claim: any) => (
             <div key={claim.id} className="flex items-center justify-between p-3 rounded-lg border border-[#1a472a]/10 bg-[#f8f5f0]">
               <div>
                 <p className="font-medium text-[#1a472a] text-sm">{claim.orgName}</p>
-                <p className="text-xs text-[#1a472a]/50">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId} · ID: {claim.orgId}</p>
+                <p className="text-xs text-[#1a472a]/70">{claim.orgType === 'land_project' ? 'Land Project' : 'Alliance Org'} · User #{claim.userId} · ID: {claim.orgId}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={
@@ -2558,7 +2558,7 @@ function OrgClaimsAdminPanel() {
             <div className="mt-3 space-y-3 p-4 bg-[#f0f7f0] rounded-lg border border-[#7dd87d]/20">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-[#1a472a]/60 mb-1 block">User ID</label>
+                  <label className="text-xs text-[#1a472a]/80 mb-1 block">User ID</label>
                   <input
                     type="number"
                     value={assignForm.userId}
@@ -2568,7 +2568,7 @@ function OrgClaimsAdminPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[#1a472a]/60 mb-1 block">Org Type</label>
+                  <label className="text-xs text-[#1a472a]/80 mb-1 block">Org Type</label>
                   <select
                     value={assignForm.orgType}
                     onChange={e => setAssignForm(f => ({ ...f, orgType: e.target.value as any }))}
@@ -2579,7 +2579,7 @@ function OrgClaimsAdminPanel() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-[#1a472a]/60 mb-1 block">Org ID (slug or DB ID)</label>
+                  <label className="text-xs text-[#1a472a]/80 mb-1 block">Org ID (slug or DB ID)</label>
                   <input
                     value={assignForm.orgId}
                     onChange={e => setAssignForm(f => ({ ...f, orgId: e.target.value }))}
@@ -2588,7 +2588,7 @@ function OrgClaimsAdminPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-[#1a472a]/60 mb-1 block">Org Display Name</label>
+                  <label className="text-xs text-[#1a472a]/80 mb-1 block">Org Display Name</label>
                   <input
                     value={assignForm.orgName}
                     onChange={e => setAssignForm(f => ({ ...f, orgName: e.target.value }))}
@@ -2632,9 +2632,9 @@ function JoinRequestsAdminPanel() {
         <CardDescription>All requests submitted via /connect to join a land project or alliance org</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && <p className="text-sm text-[#1a472a]/40">Loading…</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/65">Loading…</p>}
         {!isLoading && !requests?.length && (
-          <p className="text-sm text-[#1a472a]/40">No join requests yet.</p>
+          <p className="text-sm text-[#1a472a]/65">No join requests yet.</p>
         )}
         <div className="space-y-2 max-h-80 overflow-y-auto">
           {requests?.map((req: any) => (
@@ -2642,7 +2642,7 @@ function JoinRequestsAdminPanel() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-[#1a472a]">{req.submitterName}</p>
-                  <p className="text-xs text-[#1a472a]/50">{req.submitterEmail}</p>
+                  <p className="text-xs text-[#1a472a]/70">{req.submitterEmail}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-[#1a472a]/70 font-medium">{req.targetName}</p>
@@ -2652,7 +2652,7 @@ function JoinRequestsAdminPanel() {
                 </div>
               </div>
               {req.submitterMessage && (
-                <p className="mt-1.5 text-xs text-[#1a472a]/60 italic border-t border-[#1a472a]/10 pt-1.5">"{req.submitterMessage}"</p>
+                <p className="mt-1.5 text-xs text-[#1a472a]/80 italic border-t border-[#1a472a]/10 pt-1.5">"{req.submitterMessage}"</p>
               )}
               {!req.stewardUserId && (
                 <p className="mt-1 text-xs text-amber-600">No steward assigned  -  approve an org claim to route this</p>
@@ -2726,15 +2726,15 @@ function ProjectConnectionsAdmin() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 items-end">
           <div>
-            <Label className="text-xs text-[#1a472a]/60 mb-1 block">Post A ID</Label>
+            <Label className="text-xs text-[#1a472a]/80 mb-1 block">Post A ID</Label>
             <Input type="number" value={postAId} onChange={e => setPostAId(e.target.value)} placeholder="e.g. 12" className="border-[#e8e4de]" />
           </div>
           <div>
-            <Label className="text-xs text-[#1a472a]/60 mb-1 block">Post B ID</Label>
+            <Label className="text-xs text-[#1a472a]/80 mb-1 block">Post B ID</Label>
             <Input type="number" value={postBId} onChange={e => setPostBId(e.target.value)} placeholder="e.g. 34" className="border-[#e8e4de]" />
           </div>
           <div>
-            <Label className="text-xs text-[#1a472a]/60 mb-1 block">Type</Label>
+            <Label className="text-xs text-[#1a472a]/80 mb-1 block">Type</Label>
             <Select value={connType} onValueChange={(v) => setConnType(v as "needs_each_other" | "similar")}>
               <SelectTrigger className="border-[#e8e4de] text-[#1a472a]">
                 <SelectValue />
@@ -2755,21 +2755,21 @@ function ProjectConnectionsAdmin() {
           </Button>
         </div>
         <div>
-          <Label className="text-xs text-[#1a472a]/60 mb-1 block">Note (optional)</Label>
+          <Label className="text-xs text-[#1a472a]/80 mb-1 block">Note (optional)</Label>
           <Input value={note} onChange={e => setNote(e.target.value)} placeholder="Describe the connection..." className="border-[#e8e4de]" />
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-[#1a472a]/50">Loading...</p>
+          <p className="text-sm text-[#1a472a]/70">Loading...</p>
         ) : connections && connections.length > 0 ? (
           <div className="space-y-2 mt-2">
             {connections.map(c => (
               <div key={c.id} className="flex items-center justify-between p-2 rounded-lg bg-[#f8f5f0] border border-[#e8e4de]">
                 <div className="text-sm text-[#1a472a]">
                   <span className="font-semibold">#{c.postAId}</span>
-                  <span className="text-[#1a472a]/40 mx-2">{c.connectionType === "needs_each_other" ? "needs" : "similar to"}</span>
+                  <span className="text-[#1a472a]/65 mx-2">{c.connectionType === "needs_each_other" ? "needs" : "similar to"}</span>
                   <span className="font-semibold">#{c.postBId}</span>
-                  {c.note && <span className="text-[#1a472a]/50 ml-2 text-xs">: {c.note}</span>}
+                  {c.note && <span className="text-[#1a472a]/70 ml-2 text-xs">: {c.note}</span>}
                 </div>
                 <Button
                   size="sm"
@@ -2783,7 +2783,7 @@ function ProjectConnectionsAdmin() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-[#1a472a]/40 italic">No connections yet.</p>
+          <p className="text-sm text-[#1a472a]/65 italic">No connections yet.</p>
         )}
       </CardContent>
     </Card>
@@ -2882,7 +2882,7 @@ function GlossaryAdminPanel() {
                 <div key={t.id} className="flex items-start justify-between p-2 rounded bg-[#f8f5f0] border border-[#e8e4de]">
                   <div>
                     <p className="font-semibold text-[#1a472a] text-xs">{t.term}</p>
-                    <p className="text-[#1a472a]/50 text-xs line-clamp-1">{t.definition}</p>
+                    <p className="text-[#1a472a]/70 text-xs line-clamp-1">{t.definition}</p>
                   </div>
                 </div>
               ))}
@@ -2890,9 +2890,9 @@ function GlossaryAdminPanel() {
           </div>
         )}
 
-        {isLoading && <p className="text-sm text-[#1a472a]/40">Loading glossary...</p>}
+        {isLoading && <p className="text-sm text-[#1a472a]/65">Loading glossary...</p>}
         {!isLoading && (terms || []).length === 0 && (
-          <p className="text-sm text-[#1a472a]/40 italic">No terms yet. AI will propose terms weekly based on forum activity.</p>
+          <p className="text-sm text-[#1a472a]/65 italic">No terms yet. AI will propose terms weekly based on forum activity.</p>
         )}
       </CardContent>
     </Card>
@@ -2904,6 +2904,7 @@ function AdminDashboard() {
   const [investorSearch, setInvestorSearch] = useState('');
   const [appSearch, setAppSearch] = useState('');
   const [investorStatusFilter, setInvestorStatusFilter] = useState<string>('all');
+  const [showDrafts, setShowDrafts] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [aiSelectedContact, setAiSelectedContact] = useState<{ email?: string; name?: string } | null>(null);
   const [globalSearch, setGlobalSearch] = useState('');
@@ -2946,6 +2947,7 @@ function AdminDashboard() {
 
   // Fetch all data
   const { data: applications, isLoading: loadingApps } = trpc.applications.list.useQuery();
+  const { data: draftApplications } = trpc.applications.listDrafts.useQuery();
   const { data: investors, isLoading: loadingInvestors } = trpc.investorInquiries.list.useQuery();
   const { data: inquiries, isLoading: loadingInquiries } = trpc.generalInquiries.list.useQuery();
 
@@ -3054,7 +3056,7 @@ function AdminDashboard() {
           <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-[#1a472a]">Keyboard Shortcuts</h3>
-              <button onClick={() => setShowShortcuts(false)} aria-label="Close keyboard shortcuts" className="text-[#1a472a]/40 hover:text-[#1a472a]"><X className="w-4 h-4" /></button>
+              <button onClick={() => setShowShortcuts(false)} aria-label="Close keyboard shortcuts" className="text-[#1a472a]/65 hover:text-[#1a472a]"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-2">
               {SHORTCUTS.map(s => (
@@ -3140,7 +3142,7 @@ function AdminDashboard() {
       <div className="bg-white border-b border-[#1a472a]/10">
         <div className="container px-4 py-2.5">
           <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/40 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65 pointer-events-none" />
             <input
               type="text"
               data-global-search
@@ -3149,54 +3151,54 @@ function AdminDashboard() {
               onChange={(e) => { setGlobalSearch(e.target.value); setGlobalSearchOpen(true); }}
               onFocus={() => setGlobalSearchOpen(true)}
               onBlur={() => setTimeout(() => setGlobalSearchOpen(false), 200)}
-              className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
             {globalSearch && (
-              <button onClick={() => setGlobalSearch('')} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/40 hover:text-[#1a472a]">
+              <button onClick={() => setGlobalSearch('')} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/65 hover:text-[#1a472a]">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
             {globalSearchOpen && globalResults && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#1a472a]/20 rounded-xl shadow-xl z-50 overflow-hidden">
                 {globalResults.investors.length === 0 && globalResults.applications.length === 0 && globalResults.inquiries.length === 0 ? (
-                  <p className="p-4 text-sm text-[#1a472a]/40 text-center">No results for "{globalSearch}"</p>
+                  <p className="p-4 text-sm text-[#1a472a]/65 text-center">No results for "{globalSearch}"</p>
                 ) : (
                   <div className="divide-y divide-[#1a472a]/10">
                     {globalResults.investors.length > 0 && (
                       <div>
-                        <p className="px-3 py-1.5 text-[10px] font-semibold text-[#1a472a]/50 uppercase tracking-wide bg-amber-50">Investors</p>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-amber-50">Investors</p>
                         {globalResults.investors.map((i: any) => (
                           <button key={i.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
                             onClick={() => { setInvestorSearch(i.email || i.fullName); setActiveTab('investors'); setGlobalSearch(''); }}>
                             <TrendingUp className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{i.fullName}</span>
-                            <span className="text-xs text-[#1a472a]/50 truncate">{i.email}</span>
+                            <span className="text-xs text-[#1a472a]/70 truncate">{i.email}</span>
                           </button>
                         ))}
                       </div>
                     )}
                     {globalResults.applications.length > 0 && (
                       <div>
-                        <p className="px-3 py-1.5 text-[10px] font-semibold text-[#1a472a]/50 uppercase tracking-wide bg-green-50">Projects</p>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-green-50">Projects</p>
                         {globalResults.applications.map((a: any) => (
                           <button key={a.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
                             onClick={() => { setAppSearch(a.projectName || a.contactName); setActiveTab('applications'); setGlobalSearch(''); }}>
                             <Sprout className="w-3.5 h-3.5 text-[#4a7c59] flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{a.projectName || a.contactName}</span>
-                            <span className="text-xs text-[#1a472a]/50">{a.location}</span>
+                            <span className="text-xs text-[#1a472a]/70">{a.location}</span>
                           </button>
                         ))}
                       </div>
                     )}
                     {globalResults.inquiries.length > 0 && (
                       <div>
-                        <p className="px-3 py-1.5 text-[10px] font-semibold text-[#1a472a]/50 uppercase tracking-wide bg-purple-50">Inquiries</p>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-purple-50">Inquiries</p>
                         {globalResults.inquiries.map((i: any) => (
                           <button key={i.id} className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2"
                             onClick={() => { setActiveTab(i.pathType || 'live'); setGlobalSearch(''); }}>
                             <MessageSquare className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{i.fullName || i.email}</span>
-                            <span className="text-xs text-[#1a472a]/50">{i.pathType?.replace(/_/g, ' ')}</span>
+                            <span className="text-xs text-[#1a472a]/70">{i.pathType?.replace(/_/g, ' ')}</span>
                           </button>
                         ))}
                       </div>
@@ -3275,7 +3277,7 @@ function AdminDashboard() {
           <TabsList className="bg-white border-2 border-[#1a472a]/10 p-1 flex flex-wrap h-auto gap-1 overflow-x-auto max-w-full">
             <TabsTrigger 
               value="overview" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Overview</span>
@@ -3283,119 +3285,119 @@ function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="applications" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Sprout className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden md:inline">Projects</span> ({stats.totalApplications})
             </TabsTrigger>
             <TabsTrigger 
               value="investors" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <TrendingUp className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden md:inline">Investors</span> ({stats.totalInvestors})
             </TabsTrigger>
             <TabsTrigger 
               value="loi" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden md:inline">LOIs</span>
             </TabsTrigger>
             <TabsTrigger 
               value="alliance" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Handshake className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden md:inline">Alliance</span> ({inquiriesByPath.alliance || 0})
             </TabsTrigger>
             <TabsTrigger 
               value="create" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Palette className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden md:inline">Create</span> ({inquiriesByPath.create || 0})
             </TabsTrigger>
             <TabsTrigger 
               value="live" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <HomeIcon className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden md:inline">Live</span> ({inquiriesByPath.live || 0})
             </TabsTrigger>
             <TabsTrigger 
               value="role" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <UserCheck className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden md:inline">Roles</span> ({inquiriesByPath.role || 0})
             </TabsTrigger>
             <TabsTrigger 
               value="other" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <HelpCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden md:inline">Other</span> ({(inquiriesByPath.other || 0) + (inquiriesByPath.learn || 0) + (inquiriesByPath.finance || 0)})
             </TabsTrigger>
             <TabsTrigger 
               value="crowdpooling" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Crowd Pooling</span>
             </TabsTrigger>
             <TabsTrigger
               value="newsletter"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Mail className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Newsletter</span>
             </TabsTrigger>
             <TabsTrigger
               value="broadcast"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Radio className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Broadcast</span>
             </TabsTrigger>
             <TabsTrigger
               value="analytics" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <TrendingUp className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
             <TabsTrigger 
               value="banners" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Sparkles className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Banners</span>
             </TabsTrigger>
             <TabsTrigger
               value="kanban"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Filter className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Kanban</span>
             </TabsTrigger>
             <TabsTrigger
               value="settings"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <Settings className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
             <TabsTrigger
               value="images"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <span className="mr-1 md:mr-2">🖼️</span>
               <span className="hidden sm:inline">Images</span>
             </TabsTrigger>
             <TabsTrigger
               value="custom-games"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
             >
               <span className="mr-1 md:mr-2">🎮</span>
               <span className="hidden sm:inline">Custom Games</span>
@@ -3668,7 +3670,7 @@ function AdminDashboard() {
                           .slice(0, 5);
                         
                         if (sorted.length === 0) {
-                          return <p className="text-sm text-[#1a472a]/50">No project interests yet</p>;
+                          return <p className="text-sm text-[#1a472a]/70">No project interests yet</p>;
                         }
                         
                         return sorted.map(([projectId, count]) => {
@@ -3777,7 +3779,7 @@ function AdminDashboard() {
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="font-semibold text-[#1a472a]">{app.projectName}</p>
-                                <p className="text-sm text-[#1a472a]/60">{app.location}</p>
+                                <p className="text-sm text-[#1a472a]/80">{app.location}</p>
                               </div>
                               <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300">
                                 {app.status}
@@ -3787,7 +3789,7 @@ function AdminDashboard() {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-8 text-center text-[#1a472a]/50">
+                      <div className="p-8 text-center text-[#1a472a]/70">
                         <Sprout className="w-12 h-12 mx-auto mb-4 opacity-30" />
                         <p>No applications yet</p>
                       </div>
@@ -3819,7 +3821,7 @@ function AdminDashboard() {
                               </div>
                               <div>
                                 <p className="text-2xl font-bold text-[#1a472a]">{count}</p>
-                                <p className="text-xs text-[#1a472a]/60">{config.label}</p>
+                                <p className="text-xs text-[#1a472a]/80">{config.label}</p>
                               </div>
                             </div>
                           </div>
@@ -3843,7 +3845,10 @@ function AdminDashboard() {
                       Project Applications
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      {applications?.length || 0} total · {applications?.filter((a: any) => a.status === 'submitted').length || 0} awaiting review
+                      {applications?.length || 0} submitted · {applications?.filter((a: any) => a.status === 'submitted').length || 0} awaiting review
+                      {(draftApplications?.length || 0) > 0 && (
+                        <span className="text-[#1a472a]/70"> · {draftApplications?.length} draft{draftApplications?.length !== 1 ? 's' : ''}</span>
+                      )}
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
@@ -3868,17 +3873,17 @@ function AdminDashboard() {
                 </div>
                 {/* Search */}
                 <div className="relative mt-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/40" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65" />
                   <input
                     type="text"
                     placeholder="Search by project name, location, or vision..."
                     value={appSearch}
                     onChange={(e) => setAppSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
                   />
                 </div>
                 {filteredApps.length !== (applications?.length || 0) && (
-                  <p className="text-xs text-[#1a472a]/50 pt-1">
+                  <p className="text-xs text-[#1a472a]/70 pt-1">
                     Showing {filteredApps.length} of {applications?.length || 0} applications
                   </p>
                 )}
@@ -3899,7 +3904,7 @@ function AdminDashboard() {
                                 </div>
                                 <div>
                                   <p className="font-semibold text-[#1a472a]">{app.projectName}</p>
-                                  <p className="text-sm text-[#1a472a]/60">{app.location}</p>
+                                  <p className="text-sm text-[#1a472a]/80">{app.location}</p>
                                   
                                   {/* Project Metrics - Key Stats */}
                                   <div className="flex flex-wrap gap-2 mt-2">
@@ -3948,7 +3953,7 @@ function AdminDashboard() {
                                 }>
                                   {app.status?.replace(/_/g, ' ')}
                                 </Badge>
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${ageApp.bg} ${ageApp.color}`}>
+                                <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${ageApp.bg} ${ageApp.color}`}>
                                   {ageApp.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
                                   {app.submittedAt ? ageApp.label : 'Draft'}
                                 </span>
@@ -4132,9 +4137,41 @@ function AdminDashboard() {
                     })}
                   </div>
                 ) : (
-                  <div className="p-8 text-center text-[#1a472a]/50">
+                  <div className="p-8 text-center text-[#1a472a]/70">
                     <Sprout className="w-12 h-12 mx-auto mb-4 opacity-30" />
                     <p>No project applications yet</p>
+                  </div>
+                )}
+
+                {/* Drafts section — collapsed by default */}
+                {(draftApplications?.length || 0) > 0 && (
+                  <div className="border-t border-[#1a472a]/10">
+                    <button
+                      onClick={() => setShowDrafts(!showDrafts)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-sm text-[#1a472a]/80 hover:bg-[#f0ebe3]/30 transition-colors"
+                    >
+                      <span className="font-medium">
+                        {draftApplications?.length} incomplete draft{draftApplications?.length !== 1 ? 's' : ''} (not yet submitted)
+                      </span>
+                      <span className="text-xs">{showDrafts ? '▲ Hide' : '▼ Show'}</span>
+                    </button>
+                    {showDrafts && (
+                      <div className="divide-y divide-[#1a472a]/10 bg-[#f9f7f4]/50">
+                        {draftApplications?.map((app: any) => (
+                          <div key={app.id} className="p-4 flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-full bg-[#1a472a]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Sprout className="w-4 h-4 text-[#1a472a]/70" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-[#1a472a]/80 text-sm">{app.projectName || 'Unnamed project'}</p>
+                              <p className="text-xs text-[#1a472a]/70">{app.location || 'No location'} · Started {new Date(app.createdAt).toLocaleDateString()}</p>
+                              {app.vision && <p className="text-xs text-[#1a472a]/70 mt-1 line-clamp-1">{app.vision}</p>}
+                            </div>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 flex-shrink-0">draft</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -4181,14 +4218,14 @@ function AdminDashboard() {
                 {/* Search & Filter Row */}
                 <div className="flex flex-col sm:flex-row gap-2 pt-3">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/40" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65" />
                     <input
                       type="text"
                       data-search-input
                       placeholder="Search by name, email, range, or org..."
                       value={investorSearch}
                       onChange={(e) => setInvestorSearch(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+                      className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
                     />
                   </div>
                   <Select value={investorStatusFilter} onValueChange={setInvestorStatusFilter}>
@@ -4208,7 +4245,7 @@ function AdminDashboard() {
                   </Select>
                 </div>
                 {filteredInvestors.length !== (investors?.length || 0) && (
-                  <p className="text-xs text-[#1a472a]/50 pt-1">
+                  <p className="text-xs text-[#1a472a]/70 pt-1">
                     Showing {filteredInvestors.length} of {investors?.length || 0} investors
                   </p>
                 )}
@@ -4216,7 +4253,7 @@ function AdminDashboard() {
               <CardContent className="p-0">
                 {investors && investors.length > 0 ? (
                   filteredInvestors.length === 0 ? (
-                    <div className="p-8 text-center text-[#1a472a]/50">
+                    <div className="p-8 text-center text-[#1a472a]/70">
                       <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
                       <p>No investors match your search</p>
                       <button onClick={() => { setInvestorSearch(''); setInvestorStatusFilter('all'); }} className="text-[#7dd87d] text-sm mt-2 hover:underline">
@@ -4236,7 +4273,7 @@ function AdminDashboard() {
                                 </div>
                                 <div>
                                   <p className="font-semibold text-[#1a472a]">{investor.fullName}</p>
-                                  <p className="text-sm text-[#1a472a]/60">{investor.email}</p>
+                                  <p className="text-sm text-[#1a472a]/80">{investor.email}</p>
                                   <div className="flex flex-wrap gap-2 mt-2">
                                     {investor.investmentRange && (
                                       <Badge variant="outline" className="text-xs">
@@ -4270,7 +4307,7 @@ function AdminDashboard() {
                                 {(() => {
                                   const age = getAgeInfo(investor.createdAt);
                                   return (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${age.bg} ${age.color}`}>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${age.bg} ${age.color}`}>
                                       {age.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
                                       {age.label}
                                     </span>
@@ -4279,17 +4316,17 @@ function AdminDashboard() {
                                 {(() => {
                                   const p = getInvestorPriority(investor);
                                   return (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${p.color}`} title={`Priority score: ${p.score}`}>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${p.color}`} title={`Priority score: ${p.score}`}>
                                       {p.label} priority
                                     </span>
                                   );
                                 })()}
                                 {duplicateInvestorEmails.has(investor.email) && (
-                                  <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-[10px]">
+                                  <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs">
                                     Duplicate email
                                   </Badge>
                                 )}
-                                <ChevronRight className="w-4 h-4 text-[#1a472a]/30" />
+                                <ChevronRight className="w-4 h-4 text-[#1a472a]/55" />
                               </div>
                             </div>
                           </div>
@@ -4302,7 +4339,7 @@ function AdminDashboard() {
                               </div>
                               <div>
                                 <span className="text-[#1a472a]">{investor.fullName}</span>
-                                <p className="text-sm font-normal text-[#1a472a]/60">Investor Inquiry</p>
+                                <p className="text-sm font-normal text-[#1a472a]/80">Investor Inquiry</p>
                               </div>
                             </DialogTitle>
                           </DialogHeader>
@@ -4311,13 +4348,13 @@ function AdminDashboard() {
                             {/* Contact Info */}
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Email</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Email</p>
                                 <a href={`mailto:${investor.email}`} className="text-[#4a7c59] hover:underline break-all">
                                   {investor.email}
                                 </a>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Status</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Status</p>
                                 <Badge className={
                                   investor.status === 'new' || investor.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
                                   investor.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
@@ -4330,12 +4367,12 @@ function AdminDashboard() {
                                 </Badge>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Submitted</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Submitted</p>
                                 <p className="text-[#1a472a]">{new Date(investor.createdAt).toLocaleString()}</p>
                               </div>
                               {investor.organization && (
                                 <div>
-                                  <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Organization</p>
+                                  <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Organization</p>
                                   <p className="text-[#1a472a]">{investor.organization}</p>
                                 </div>
                               )}
@@ -4375,7 +4412,7 @@ function AdminDashboard() {
                             {/* Primary Interest */}
                             {investor.primaryInterest && (
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Primary Interest</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Primary Interest</p>
                                 <Badge className="bg-green-100 text-green-800 border-green-200 capitalize">
                                   {investor.primaryInterest?.replace(/_/g, ' ')}
                                 </Badge>
@@ -4385,7 +4422,7 @@ function AdminDashboard() {
                             {/* Motivation */}
                             {investor.motivation && (
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Motivation</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Motivation</p>
                                 <div className="bg-[#f0ebe3] rounded-lg p-4">
                                   <p className="text-[#1a472a] whitespace-pre-wrap">{investor.motivation}</p>
                                 </div>
@@ -4395,7 +4432,7 @@ function AdminDashboard() {
                             {/* Experience */}
                             {investor.experience && (
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Investment Experience</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Investment Experience</p>
                                 <div className="bg-[#f0ebe3] rounded-lg p-4">
                                   <p className="text-[#1a472a] whitespace-pre-wrap">{investor.experience}</p>
                                 </div>
@@ -4405,7 +4442,7 @@ function AdminDashboard() {
                             {/* Questions */}
                             {investor.questions && (
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Questions</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Questions</p>
                                 <div className="bg-[#f0ebe3] rounded-lg p-4">
                                   <p className="text-[#1a472a] whitespace-pre-wrap">{investor.questions}</p>
                                 </div>
@@ -4415,7 +4452,7 @@ function AdminDashboard() {
                             {/* How They Heard */}
                             {investor.howHeard && (
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">How They Heard About Us</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">How They Heard About Us</p>
                                 <p className="text-[#1a472a]">{investor.howHeard}</p>
                               </div>
                             )}
@@ -4437,7 +4474,7 @@ function AdminDashboard() {
                             <AssigneeSelect contactType="investor" contactId={investor.id} />
                             {/* Status update */}
                             <div className="w-full flex items-center gap-2">
-                              <span className="text-xs text-[#1a472a]/60 shrink-0">Status:</span>
+                              <span className="text-xs text-[#1a472a]/80 shrink-0">Status:</span>
                               <Select
                                 value={investor.status}
                                 onValueChange={(newStatus: any) => {
@@ -4497,7 +4534,7 @@ function AdminDashboard() {
                   </div>
                   )
                 ) : (
-                  <div className="p-8 text-center text-[#1a472a]/50">
+                  <div className="p-8 text-center text-[#1a472a]/70">
                     <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-30" />
                     <p>No investor inquiries yet</p>
                     <p className="text-xs mt-2">Investor inquiries will appear here when submitted</p>
@@ -4608,7 +4645,7 @@ function AdminDashboard() {
                                 </div>
                                 <div>
                                   <p className="font-semibold text-[#1a472a]">{inquiry.fullName}</p>
-                                  <p className="text-sm text-[#1a472a]/60">{inquiry.email}</p>
+                                  <p className="text-sm text-[#1a472a]/80">{inquiry.email}</p>
                                   <Badge variant="outline" className="mt-1 text-xs capitalize">
                                     {inquiry.pathType?.replace(/_/g, ' ') || 'General'}
                                   </Badge>
@@ -4629,11 +4666,11 @@ function AdminDashboard() {
                                 }>
                                   {inquiry.status?.replace(/_/g, ' ')}
                                 </Badge>
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${ageOther.bg} ${ageOther.color}`}>
+                                <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${ageOther.bg} ${ageOther.color}`}>
                                   {ageOther.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
                                   {ageOther.label}
                                 </span>
-                                <ChevronRight className="w-4 h-4 text-[#1a472a]/30" />
+                                <ChevronRight className="w-4 h-4 text-[#1a472a]/55" />
                               </div>
                             </div>
                           </div>
@@ -4646,7 +4683,7 @@ function AdminDashboard() {
                               </div>
                               <div>
                                 <span className="text-[#1a472a]">{inquiry.fullName}</span>
-                                <p className="text-sm font-normal text-[#1a472a]/60 capitalize">{inquiry.pathType?.replace(/_/g, ' ') || 'General'} Inquiry</p>
+                                <p className="text-sm font-normal text-[#1a472a]/80 capitalize">{inquiry.pathType?.replace(/_/g, ' ') || 'General'} Inquiry</p>
                               </div>
                             </DialogTitle>
                           </DialogHeader>
@@ -4655,11 +4692,11 @@ function AdminDashboard() {
                             {/* Contact Info */}
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Email</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Email</p>
                                 <a href={`mailto:${inquiry.email}`} className="text-[#4a7c59] hover:underline">{inquiry.email}</a>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Status</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Status</p>
                                 <Badge className={
                                   inquiry.status === 'new' || inquiry.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
                                   inquiry.status === 'contacted' ? 'bg-blue-100 text-blue-800 border-blue-200' :
@@ -4670,12 +4707,12 @@ function AdminDashboard() {
                                 </Badge>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Submitted</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Submitted</p>
                                 <p className="text-[#1a472a]">{new Date(inquiry.createdAt).toLocaleString()}</p>
                               </div>
                               {inquiry.location && (
                                 <div>
-                                  <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide">Location</p>
+                                  <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide">Location</p>
                                   <p className="text-[#1a472a]">{inquiry.location}</p>
                                 </div>
                               )}
@@ -4684,7 +4721,7 @@ function AdminDashboard() {
                             {/* Message */}
                             {inquiry.message && (
                               <div>
-                                <p className="text-xs font-medium text-[#1a472a]/50 uppercase tracking-wide mb-2">Message</p>
+                                <p className="text-xs font-medium text-[#1a472a]/70 uppercase tracking-wide mb-2">Message</p>
                                 <div className="bg-[#f0ebe3] rounded-lg p-4">
                                   <p className="text-[#1a472a] whitespace-pre-wrap">{inquiry.message}</p>
                                 </div>
@@ -4701,7 +4738,7 @@ function AdminDashboard() {
                           <DialogFooter className="flex-col gap-3">
                             <AssigneeSelect contactType="general_inquiry" contactId={inquiry.id} />
                             <div className="w-full flex items-center gap-2">
-                              <span className="text-xs text-[#1a472a]/60 shrink-0">Status:</span>
+                              <span className="text-xs text-[#1a472a]/80 shrink-0">Status:</span>
                               <Select
                                 value={inquiry.status}
                                 onValueChange={(newStatus: any) => {
@@ -4754,7 +4791,7 @@ function AdminDashboard() {
                     );
                   })}
                   {(!inquiries || inquiries.filter((i: any) => ['other', 'learn', 'finance'].includes(i.pathType)).length === 0) && (
-                    <div className="p-8 text-center text-[#1a472a]/50">
+                    <div className="p-8 text-center text-[#1a472a]/70">
                       <HelpCircle className="w-12 h-12 mx-auto mb-4 opacity-30" />
                       <p>No other inquiries yet</p>
                     </div>
@@ -4871,7 +4908,7 @@ function AdminDashboard() {
                 <CardDescription>Drag cards between columns to update status</CardDescription>
               </CardHeader>
               <CardContent>
-                <Suspense fallback={<div className="flex items-center justify-center py-20 text-[#1a472a]/50">Loading board…</div>}>
+                <Suspense fallback={<div className="flex items-center justify-center py-20 text-[#1a472a]/70">Loading board…</div>}>
                   <AdminKanban
                     investors={investors || []}
                     inquiries={inquiries || []}

@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNotNull, isNull, like, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion } from "../drizzle/schema";
@@ -158,9 +158,30 @@ export async function getApplicationsByUserId(userId: number) {
 export async function getAllApplications() {
   const db = await getDb();
   if (!db) return [];
-  
+
+  // Exclude drafts from the admin review queue
   return db.select().from(applications)
+    .where(ne(applications.status, "draft"))
     .orderBy(desc(applications.submittedAt));
+}
+
+export async function getDraftApplications() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(applications)
+    .where(eq(applications.status, "draft"))
+    .orderBy(desc(applications.updatedAt));
+}
+
+export async function deleteStaleApplicationDrafts(olderThanDays = 30): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+  const result = await db.delete(applications)
+    .where(and(eq(applications.status, "draft"), lt(applications.updatedAt, cutoff)));
+  return (result[0] as any).affectedRows ?? 0;
 }
 
 export async function getApplicationsByStatus(status: string) {

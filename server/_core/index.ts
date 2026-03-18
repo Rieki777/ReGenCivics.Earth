@@ -2,6 +2,7 @@ import "dotenv/config";
 import * as Sentry from "@sentry/node";
 import { runDigestJob } from "../jobs/digestJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
+import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
 if (process.env.SENTRY_DSN) {
   Sentry.init({ dsn: process.env.SENTRY_DSN, tracesSampleRate: 0.1 });
 }
@@ -256,3 +257,11 @@ setTimeout(async () => {
     try { await runGlossaryJob(); } catch (e) { console.error("[GlossaryJob] Error:", e); }
   }, 7 * 24 * 60 * 60 * 1000);
 }, 90 * 1000); // first run after 90 seconds (staggered after digest)
+
+// ─── Daily draft cleanup job ──────────────────────────────────────────────────
+setTimeout(async () => {
+  try { await runDraftCleanupJob(); } catch (e) { console.error("[DraftCleanup] Error:", e); }
+  setInterval(async () => {
+    try { await runDraftCleanupJob(); } catch (e) { console.error("[DraftCleanup] Error:", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 120 * 1000); // first run after 2 minutes (staggered)
