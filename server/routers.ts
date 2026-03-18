@@ -3405,6 +3405,24 @@ export const appRouter = router({
         return { liked };
       }),
 
+    // Update a post (author or admin)
+    updatePost: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().min(1).max(300),
+        content: z.string().min(1).max(50000),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const post = await db.getForumPost(input.id);
+        if (!post) throw new TRPCError({ code: 'NOT_FOUND' });
+        const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
+        if (post.authorId !== ctx.user.id && !isAdminOrSuper) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to edit this post' });
+        }
+        await db.updateForumPost(input.id, { title: input.title, content: input.content });
+        return { success: true };
+      }),
+
     // Delete a post (author or admin)
     deletePost: protectedProcedure
       .input(z.object({ id: z.number() }))

@@ -2136,6 +2136,12 @@ export async function getForumCategoryPostCounts() {
   return counts;
 }
 
+export async function updateForumPost(id: number, data: { title: string; content: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(forumPosts).set({ title: data.title, content: data.content }).where(eq(forumPosts.id, id));
+}
+
 export async function deleteForumPost(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

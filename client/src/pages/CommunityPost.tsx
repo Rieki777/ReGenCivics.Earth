@@ -6,7 +6,7 @@ import { Link, useLocation, useParams } from "wouter";
 import {
   MessageCircle, ArrowLeft, Heart, Eye, Clock, Send,
   ChevronRight, Pin, Lock, Loader2, Trash2, CornerDownRight,
-  AlertCircle, Flag, Shield, User, Globe2, Languages, Check
+  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +102,9 @@ export default function CommunityPost() {
   const [replyContent, setReplyContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'post' | 'reply'; id: number } | null>(null);
+  const [editingPost, setEditingPost] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
   const replyRef = useRef<HTMLTextAreaElement>(null);
   const handleReplyShortcuts = useMarkdownShortcuts(replyRef, replyContent, setReplyContent);
   const utils = trpc.useUtils();
@@ -216,6 +219,17 @@ export default function CommunityPost() {
     },
     onError: (err) => {
       toast.error(err.message || "Failed to delete reply");
+    },
+  });
+
+  const updatePostMutation = trpc.forum.updatePost.useMutation({
+    onSuccess: () => {
+      utils.forum.postById.invalidate({ id: postId });
+      toast.success("Post updated");
+      setEditingPost(false);
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to update post");
     },
   });
 
@@ -456,6 +470,15 @@ export default function CommunityPost() {
                     )}
                   </div>
                 )}
+                {canDeletePost && !editingPost && (
+                  <button
+                    onClick={() => { setEditTitle(post.title); setEditContent(post.content); setEditingPost(true); }}
+                    className="text-[#4a7c59] hover:text-[#1a472a] p-1 transition-colors"
+                    title="Edit post"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                )}
                 {canDeletePost && (
                   <button
                     onClick={() => setDeleteTarget({ type: 'post', id: post.id })}
@@ -468,16 +491,49 @@ export default function CommunityPost() {
               </div>
             </div>
 
-            {/* Post Content */}
+            {/* Post Content / Edit Form */}
+            {editingPost ? (
+              <div className="px-4 md:px-6 py-4 space-y-3">
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-sm font-semibold bg-white border border-[#7dd87d]/40 rounded-lg text-[#1a472a] focus:outline-none focus:border-[#7dd87d]"
+                  placeholder="Post title..."
+                />
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  rows={16}
+                  className="w-full px-3 py-2 text-sm font-mono bg-white border border-[#7dd87d]/40 rounded-lg text-[#1a472a] resize-y focus:outline-none focus:border-[#7dd87d]"
+                  placeholder="Post content (markdown supported)..."
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => setEditingPost(false)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#1a472a]/60 hover:text-[#1a472a] border border-[#1a472a]/20 rounded-lg transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" /> Cancel
+                  </button>
+                  <button
+                    onClick={() => updatePostMutation.mutate({ id: post.id, title: editTitle, content: editContent })}
+                    disabled={updatePostMutation.isPending}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-[#1a472a] text-white rounded-lg hover:bg-[#2d5a3d] transition-colors disabled:opacity-60"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    {updatePostMutation.isPending ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            ) : (
             <div className="px-4 md:px-6 py-4 text-[#1a472a]/80 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
               {translatedPost ? (
                 <div>
                   <div className="mb-2 px-2 py-1 bg-[#f0f7f0] rounded text-xs text-[#4a7c59] inline-flex items-center gap-1">
                     <Languages className="w-3 h-3" />
                     Translated to {language.toUpperCase()}
-                    <button 
+                    <button
                       onClick={() => setTranslatedPost(null)}
-                      className="ml-2 text-[#1a472a]/50 hover:text-[#1a472a] underline"
+                      className="ml-2 text-[#1a472a]/70 hover:text-[#1a472a] underline"
                     >
                       Show original
                     </button>
@@ -488,6 +544,7 @@ export default function CommunityPost() {
                 <ForumMarkdown content={post.content} />
               )}
             </div>
+            )}
 
             {/* Post Actions */}
             <div className="px-4 md:px-6 pb-4 flex items-center gap-4 border-t border-[#e8e4de] pt-3">

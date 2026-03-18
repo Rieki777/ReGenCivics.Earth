@@ -260,8 +260,8 @@ export default function Blog() {
       <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://assets.regencivics.earth/HLqyyIzLDuYQyaHt.jpg"
-            alt="ReGen Civics Community"
+            src="/game-bridge-worlds.webp"
+            alt="ReGen Civics: Bridging Worlds"
             className="w-full h-full object-cover"
             loading="eager"
             fetchPriority="high"

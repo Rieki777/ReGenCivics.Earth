@@ -1115,17 +1115,23 @@ Post in the [Community Forum](https://regencivics.earth/community) or reply to t
   {
     id: 'your-seeds-contributions-live-on',
     slug: 'your-seeds-contributions-live-on',
-    title: 'Your SEEDS Contributions Live On: Here Is How to Bring Them Home',
-    excerpt: 'If you spent years contributing to SEEDS, Hypha, or other regenerative projects and were never fully compensated, your contributions did not disappear. Here is how to bring them home.',
-    content: `If you spent years contributing to SEEDS, to Hypha, to Regen Network, to local food systems, to governance experiments, to community currencies, and you were never fully compensated for that work, your contributions did not disappear.
+    title: 'Your SEEDS Contributions Live On',
+    excerpt: 'If you spent years contributing to SEEDS, Hypha, or other regenerative projects and were never fully compensated, your contributions could live on in ReGen Civics.',
+    content: `If you spent years contributing to SEEDS, to Hypha, to local food systems, to regenerative governance experiments, to community currencies, and other critical infrastructure to our Regenerative Renaissance and you were never fully compensated for that work, your contributions could live on in ReGen Civics.
 
-They are part of the foundation of what we are building now.
+This post is specific to our roots in SEEDS. You can watch a quick mini-documentary on SEEDS here if you haven't seen it yet.
 
-ReGen Civics is building the infrastructure to account for that. Not as a retroactive payment system. As something more interesting: a shared record of what the movement has already put in, visible and available to all of us, backing the tokens we are distributing now.
+[Short Documentary](https://youtu.be/h2K_f-E4hJM?si=rd6TuSc-qyVUSwCU)
 
-## What we mean by contributions
+This is all part of the foundations of what we are building now, and we intend to start by recognizing and inviting those foundations in.
 
-We are not only talking about financial contributions. We are working with the eight forms of capital:
+ReGen Civics is building the infrastructure to account for all these unaccounted and historical contributions. Something like a shared record of what the movement has already put in, visible and available to all of us, backing the tokens we are distributing now. This way we can collectively raise funds, donations, investments, etc. that recognize all of us.
+
+## What do we mean by contributions?
+
+We are not only talking about financial contributions (though they are the easiest to track!)
+
+We work with the eight forms of capital:
 
 **Social capital:** relationships, networks, trust you built
 
@@ -1139,45 +1145,60 @@ We are not only talking about financial contributions. We are working with the e
 
 **Experiential capital:** knowledge passed on, mentorship, facilitation, training
 
-**Spiritual capital:** ceremonies, cultural practices, the intangible things that hold communities together
+**Spiritual capital:** ceremonies, spiritual practices, trauma work, deep healing, the intangible things that hold communities together
 
 **Cultural capital:** art, music, stories, identity, meaning
 
-If you gave any of these things to a regenerative mission without being fully compensated, that is the kind of contribution we want to account for.
+If you gave any of these things to the regenerative mission ReGen Civics is serving without being fully compensated, that is the kind of contribution we want to account for.
+
+If it aligns with our mission and you want to join us in going forward, we want to acknowledge your past!
+
+We've created a 3rd draft calculator to try and quantify these contributions. Use the calculator and give suggestions on how to evolve it here:
+
+[Calculator](/calculator)
 
 ## How it works
 
-The token is called $ReGen. For every $ReGen token we give out, we are committed to receiving an equal amount of value pooled here in documented contributions. This is what backs the token: not speculation, not promises, but the actual work the movement has already done and continues to do.
+The token is called $ReGen. For every $ReGen token we give out, we are committed to receiving an equal amount of value pooled here in documented contributions. This is what backs the token: not speculation, not promises, but the actual work the movement has already done and continues to do, tracked on-chain for all investors, donors, etc. to see.
 
 To bring your contributions in, you make a historical proposal. You document what you contributed, across which forms of capital, and submit that for community review. Once reviewed and accepted, those contributions are recorded in the ReGen Civics ecosystem and you receive $ReGen tokens representing them.
 
-The process runs through Hypha's DAO tools at [hypha.earth](https://hypha.earth), which handle the proposal structure and the governance of token distribution.
+The process runs through Hypha's DAO tools at [hypha.earth](https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution), which handle the proposal structure and the governance of token distribution.
 
 ## How to start
 
-**Step 1: Count your contributions.** Use the 8 Forms of Capital calculator to map what you contributed and give it a rough value. The calculator helps you think through categories you might not have counted: time, relationships, ecological work, and more. [Open the calculator here](/calculator).
+**Step 1: Count your contributions.** Use the 8 Forms of Capital calculator to map what you contributed and give it a rough value. The calculator helps you think through categories you might not have counted: relationships, ecological work, and more. [Open the calculator here](/calculator).
 
-**Step 2: Write your proposal.** Come to the [forum thread](/community) for contributions discussion. Read what others are writing, share your own thinking, and refine your proposal together. This is not a bureaucratic process. It is a community conversation about how we value each other's work.
+For all value you're claiming you need to provide proof of impact (what was delivered, if it's financial value you need to show how much you spent and provide your SEEDS account, that 12 character account name, in your proposal for verification that you didn't sell or spend your Seeds that you bought).
 
-**Step 3: Submit through Hypha.** Once your proposal is shaped, you bring it to [hypha.earth](https://hypha.earth) for community review. The ReGen Civics community votes on proposals and $ReGen tokens are distributed on approval.
+**Step 2: Write your proposal.** Come to the [forum thread for contributions discussion](/community/post/560). Read what others are writing, share your own thinking, and refine your proposal together. Join the community conversation about how we value each other's work. Once you're confident with your proposal...
 
-**Step 4: Your contributions live here.** After approval, your contributions become part of the shared record. They are accessible, visible, and they back the tokens circulating in the movement. Your work becomes part of the foundation.
+**Step 3: Submit through Hypha.** Once your proposal is shaped, you bring it to [hypha.earth](https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution) for community review. The ReGen Civics community votes on proposals and $ReGen tokens are distributed on approval.
+
+**Step 4: Your contributions live here.** After approval, your contributions become part of the shared record. They are accessible, visible, and they back the tokens circulating in the movement. Your work becomes part of the foundation and as we grow your value grows with us. Welcome to the team!
+
+[!WARNING]
+Our ecosystem is rooted in trust. Without that we have nothing. So, we have zero tolerance for fraud. If your claim isn't verified on chain, or you attempt to misrepresent your contributions, your claim will be denied and you'll lose your opportunity to claim again and be banned from ReGen Civics.
 
 ## A note on SEEDS specifically
 
-If you were active in the SEEDS ecosystem and accumulated SEEDS tokens or contribution records there, those reflect real work and real relationships. SEEDS had its own accounting for many of these contributions, and we are working on how to recognize that history here.
+If you were active in the SEEDS ecosystem and accumulated SEEDS tokens or contribution records there, those reflect real work and real relationships.
 
-If you have SEEDS contribution records you want to bring into ReGen Civics, bring them to the forum thread. We will figure out the best path together.
+SEEDS has its own accounting for many of these contributions, and we are working on how to recognize that history here. SEEDS is still running and will have its own relaunch and count its own history again. We're just doubling down on that because we want to recognize and acknowledge where we come from!
+
+Important note: We won't be replicating or accounting for Campaign Distributions (if you got seeds through a campaign proposal) as those were given out on the expectation that you would do things, not that you have already done them. If you went ahead and fulfilled the agreements for that campaign (you did the thing, planted the community garden, set up the local food hub, etc.) then use "the thing" as your contribution.
+
+If you have SEEDS contribution records you want to bring into ReGen Civics, bring them to the [forum thread](/community/post/560). We will figure out the best path together.
 
 ## What this is building toward
 
-Every token we give out should be backed by something real. Not promises. Not projected future value. The actual work, relationships, knowledge, land stewardship, and culture that people in this movement have been building for years.
+Every token we give out should be backed by something real that our movement values. Not promises. Not projected future value. The actual work, relationships, knowledge, land stewardship, and culture that people in this movement have been building for years.
 
-When the token has that backing, it means something. When you hold $ReGen, you are holding a piece of a shared record of what this movement has built together. That is what we are creating.
+When the token has that backing, it means something. When you hold $ReGen, you are holding a piece of a shared record of what this movement has built together. That is what we are co-creating.
 
 Come to the forum. Bring your contributions. They have always been worth something. Now we are building the infrastructure to say so out loud.
 
-[Join the discussion in the forum](/community)`,
+[Join the contributions discussion](/community/post/560)`,
     author: 'ReGen Civics Team',
     date: 'Mar 14, 2026',
     readTime: '6 min read',

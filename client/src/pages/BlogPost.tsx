@@ -29,7 +29,7 @@ export default function BlogPost() {
   const [editContent, setEditContent] = useState('');
 
   const { user } = useAuth();
-  const isSuperAdmin = user?.role === 'superadmin';
+  const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'admin';
 
   const { data: override, refetch: refetchOverride } = trpc.blog.getOverride.useQuery(
     { slug: params.slug || '' },
@@ -283,13 +283,15 @@ export default function BlogPost() {
       {/* Content */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">
-          {/* Superadmin edit controls */}
+          {/* Admin edit controls */}
           {isSuperAdmin && !editMode && (
-            <div className="flex justify-end mb-4">
+            <div className="flex items-center justify-between mb-6 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+              <span className="text-amber-400 text-xs font-semibold flex items-center gap-1.5">
+                <Pencil className="w-3.5 h-3.5" /> Admin
+              </span>
               <Button
                 size="sm"
-                variant="outline"
-                className="gap-1.5 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+                className="gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40"
                 onClick={() => { setEditContent(activeContent); setEditMode(true); }}
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -298,11 +300,14 @@ export default function BlogPost() {
             </div>
           )}
           {isSuperAdmin && editMode && (
-            <div className="mb-6">
+            <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+              <p className="text-amber-400 text-xs font-semibold mb-3 flex items-center gap-1.5">
+                <Pencil className="w-3.5 h-3.5" /> Editing post — markdown supported
+              </p>
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full h-[60vh] bg-black/30 text-white/90 border border-white/20 rounded-xl p-4 text-sm font-mono resize-y focus:outline-none focus:border-[#7dd87d]/50"
+                className="w-full h-[60vh] bg-black/40 text-white/90 border border-white/20 rounded-xl p-4 text-sm font-mono resize-y focus:outline-none focus:border-[#7dd87d]/50"
                 placeholder="Post content (markdown)..."
               />
               <div className="flex gap-2 mt-3 justify-end">
@@ -311,12 +316,12 @@ export default function BlogPost() {
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#6bc86b]"
+                  className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#6bc86b] font-semibold"
                   onClick={() => saveOverride.mutate({ slug: params.slug || '', content: editContent })}
                   disabled={saveOverride.isPending}
                 >
                   <Save className="w-3.5 h-3.5 mr-1" />
-                  {saveOverride.isPending ? 'Saving…' : 'Save'}
+                  {saveOverride.isPending ? 'Saving…' : 'Save Post'}
                 </Button>
               </div>
             </div>

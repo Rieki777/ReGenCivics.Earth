@@ -745,7 +745,7 @@ export default function Game() {
                   {pageCopy.game.contributions.buttons.calculator}
                 </a>
                 <a
-                  href="/community/forum/contributions-discussion"
+                  href="/community/post/560"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1a472a] text-white rounded-xl hover:bg-[#2d5a3d] transition-colors font-medium text-sm"
                 >
                   {pageCopy.game.contributions.buttons.discussion}
