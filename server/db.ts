@@ -1943,6 +1943,18 @@ export async function createForumCategory(data: { name: string; slug: string; de
   return (result as any).insertId as number;
 }
 
+export async function updateForumCategory(id: number, data: { name?: string; description?: string; icon?: string; color?: string; sortOrder?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.update(forumCategories).set(data).where(eq(forumCategories.id, id));
+}
+
+export async function deleteForumCategory(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.delete(forumCategories).where(eq(forumCategories.id, id));
+}
+
 export async function listForumCategories() {
   const db = await getDb();
   if (!db) return [];

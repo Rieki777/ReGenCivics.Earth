@@ -3104,6 +3104,45 @@ export const appRouter = router({
       return categories.map(c => ({ ...c, postCount: counts[c.id] || 0 }));
     }),
 
+    // Admin: create a new forum category
+    createCategory: adminProcedure
+      .input(z.object({
+        name: z.string().min(1).max(100),
+        slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+        description: z.string().max(500).optional(),
+        icon: z.string().max(50).optional(),
+        color: z.string().max(20).optional(),
+        sortOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await db.createForumCategory(input);
+        return { id };
+      }),
+
+    // Admin: update a forum category
+    updateCategory: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().min(1).max(100).optional(),
+        description: z.string().max(500).optional(),
+        icon: z.string().max(50).optional(),
+        color: z.string().max(20).optional(),
+        sortOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updateForumCategory(id, data);
+        return { success: true };
+      }),
+
+    // Admin: delete a forum category
+    deleteCategory: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteForumCategory(input.id);
+        return { success: true };
+      }),
+
     // Get a single category by slug
     categoryBySlug: publicProcedure
       .input(z.object({ slug: z.string() }))
@@ -3251,6 +3290,48 @@ export const appRouter = router({
         .where(eq(forumPosts.categoryId, cat[0].id))
         .orderBy(sql`${forumPosts.createdAt} DESC`)
         .limit(10);
+    }),
+
+    activeQuestThreads: publicProcedure.query(async () => {
+      const drizzle = await getDb();
+      if (!drizzle) return [];
+      const cat = await drizzle.select({ id: forumCategories.id })
+        .from(forumCategories)
+        .where(eq(forumCategories.slug, 'quests-gameplay'))
+        .limit(1);
+      if (!cat[0]) return [];
+      return drizzle.select({
+        id: forumPosts.id,
+        title: forumPosts.title,
+        replyCount: forumPosts.replyCount,
+        viewCount: forumPosts.viewCount,
+        createdAt: forumPosts.createdAt,
+      })
+        .from(forumPosts)
+        .where(eq(forumPosts.categoryId, cat[0].id))
+        .orderBy(sql`${forumPosts.createdAt} DESC`)
+        .limit(20);
+    }),
+
+    activeAlliancePartnerThreads: publicProcedure.query(async () => {
+      const drizzle = await getDb();
+      if (!drizzle) return [];
+      const cat = await drizzle.select({ id: forumCategories.id })
+        .from(forumCategories)
+        .where(eq(forumCategories.slug, 'alliance-partners'))
+        .limit(1);
+      if (!cat[0]) return [];
+      return drizzle.select({
+        id: forumPosts.id,
+        title: forumPosts.title,
+        replyCount: forumPosts.replyCount,
+        viewCount: forumPosts.viewCount,
+        createdAt: forumPosts.createdAt,
+      })
+        .from(forumPosts)
+        .where(eq(forumPosts.categoryId, cat[0].id))
+        .orderBy(sql`${forumPosts.createdAt} DESC`)
+        .limit(20);
     }),
 
     communityPulse: publicProcedure.query(async () => {

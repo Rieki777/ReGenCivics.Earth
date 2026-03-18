@@ -6,20 +6,19 @@
 import { Link, useLocation } from "wouter";
 import {
   MessageCircle, Sprout, Coins, Handshake, Scale, BookOpen,
-  UserPlus, Lightbulb, ArrowRight, Plus, Users, Eye, Clock,
+  UserPlus, Lightbulb, ArrowRight, Plus, Users,
   Leaf, Sparkles, TrendingUp, Search, Trees, Vote, Gamepad2,
-  Heart, MapPin
+  Heart, MapPin, Pencil, Trash2, X, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -27,7 +26,6 @@ import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { isNewsletterSubscribed } from "@/utils/newsletter";
 import AMABanner from "@/components/AMABanner";
 import { BannerDisplay } from "@/components/BannerDisplay";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
 
 // Icon mapping for categories
@@ -91,7 +89,39 @@ export default function Community() {
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [alreadySubscribed] = useState(() => isNewsletterSubscribed());
-  const { t } = useLanguage();
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const sectionPanelRef = useRef<HTMLDivElement>(null);
+
+  const handleSectionClick = (id: string) => {
+    const next = activeSection === id ? null : id;
+    setActiveSection(next);
+    if (next) {
+      // Slight delay so the panel renders before scrolling
+      setTimeout(() => {
+        sectionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  };
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+
+  // Admin category management state
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState("");
+  const [editCategoryDesc, setEditCategoryDesc] = useState("");
+  const [showCreateCategory, setShowCreateCategory] = useState<string | null>(null);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatSlug, setNewCatSlug] = useState("");
+  const [newCatDesc, setNewCatDesc] = useState("");
+  const utils = trpc.useUtils();
+  const createCategoryMutation = trpc.forum.createCategory.useMutation({
+    onSuccess: () => { utils.forum.categories.invalidate(); setShowCreateCategory(null); setNewCatName(""); setNewCatSlug(""); setNewCatDesc(""); },
+  });
+  const updateCategoryMutation = trpc.forum.updateCategory.useMutation({
+    onSuccess: () => { utils.forum.categories.invalidate(); setEditingCategoryId(null); },
+  });
+  const deleteCategoryMutation = trpc.forum.deleteCategory.useMutation({
+    onSuccess: () => { utils.forum.categories.invalidate(); },
+  });
 
   // Track forum visit so ProgressiveOnboarding can show the "Back to Forum" card
   useEffect(() => {
@@ -103,29 +133,35 @@ export default function Community() {
   const { data: landProjectThreads } = trpc.forum.activeProjectThreads.useQuery(undefined, { staleTime: FIVE_MIN });
   const { data: organisationThreads } = trpc.forum.activeOrganisationThreads.useQuery(undefined, { staleTime: FIVE_MIN });
   const { data: airThreads, isLoading: airLoading } = trpc.forum.activeAirThreads.useQuery(undefined, { staleTime: FIVE_MIN });
+  const { data: questThreads } = trpc.forum.activeQuestThreads.useQuery(undefined, { staleTime: FIVE_MIN });
+  const { data: alliancePartnerThreads } = trpc.forum.activeAlliancePartnerThreads.useQuery(undefined, { staleTime: FIVE_MIN });
   const { data: pulseData } = trpc.forum.communityPulse.useQuery(undefined, { staleTime: FIVE_MIN });
   const { data: activeLandProjectsData } = trpc.community.activeLandProjects.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
 
+  // Slugs shown in dedicated section panels — exclude from General list
+  const SECTION_SLUGS = new Set([
+    'quests-gameplay', 'alliance-partners', 'air-conversations',
+    'active-projects', 'active-organisations', 'land-projects',
+  ]);
+
   const filteredCategories = useMemo(() => {
     if (!categories) return [];
-    if (!searchQuery.trim()) return categories;
+    const base = categories.filter(c => !SECTION_SLUGS.has(c.slug));
+    if (!searchQuery.trim()) return base;
     const q = searchQuery.toLowerCase();
-    return categories.filter(c =>
+    return base.filter(c =>
       c.name.toLowerCase().includes(q) ||
       (c.description && c.description.toLowerCase().includes(q))
     );
   }, [categories, searchQuery]);
 
+  // The land-projects category to display under Earth
+  const landProjectCategory = useMemo(() => categories?.find(c => c.slug === 'land-projects'), [categories]);
+
   const totalPosts = useMemo(() => {
     if (!categories) return 0;
     return categories.reduce((sum, c) => sum + (c.postCount || 0), 0);
   }, [categories]);
-
-  const fireQuestData = [
-    { id: "quest-0", title: "Quest 0: Fire", subtitle: "Letting burn what no longer serves", href: "/quest" },
-    { id: "quest-4", title: "Quest 4: Food Foresting", subtitle: "Seed the land with what you want to grow", href: "/quest" },
-    { id: "quest-10", title: "Quest 10: NVC", subtitle: "The bridge from healing into community", href: "/quest" },
-  ];
 
   // Merge DB location data into PROJECT_META (DB location overrides static if present)
   const PROJECT_META: Record<string, { image: string; location?: string; websiteUrl?: string }> = useMemo(() => {
@@ -239,7 +275,7 @@ export default function Community() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/30">
             <SeedOfLifeIcon className="w-4 h-4 text-[#7dd87d]" />
             <span className="text-[#7dd87d] text-sm font-medium" style={{ fontFamily: 'var(--font-accent)' }}>
-              {t('forum.title')}
+              Community Forum
             </span>
           </div>
 
@@ -247,7 +283,7 @@ export default function Community() {
             className="text-3xl md:text-5xl font-bold text-white mb-3"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            {t('forum.subtitle')}
+            Gathering Grove
           </h1>
           <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-6" style={{ fontFamily: 'var(--font-body)' }}>
             Where regenerators connect, share wisdom, and grow together.
@@ -258,11 +294,11 @@ export default function Community() {
           <div className="flex items-center justify-center gap-6 text-white/90 text-sm mb-6">
             <div className="flex items-center gap-1.5">
               <MessageCircle className="w-4 h-4" />
-              <span>{totalPosts} {totalPosts === 1 ? t('forum.thread') : t('forum.threads')}</span>
+              <span>{totalPosts} {totalPosts === 1 ? 'thread' : 'threads'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Users className="w-4 h-4" />
-              <span>{categories?.length || 0} {t('forum.topics')}</span>
+              <span>{categories?.length || 0} topics</span>
             </div>
           </div>
 
@@ -275,7 +311,7 @@ export default function Community() {
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                {t('forum.startDiscussion')}
+                Start a Discussion
               </Button>
             ) : (
               <Button
@@ -296,7 +332,7 @@ export default function Community() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
           <Input
-            placeholder={t('forum.searchTopics')}
+            placeholder="Search topics..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-white border-[#4a7c59]/20 rounded-xl focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
@@ -324,313 +360,558 @@ export default function Community() {
         </p>
       </div>
 
-      {/* Categories Grid + Section Panels */}
+      {/* 5-Section Cards + Expandable Panels */}
       <section className="container px-4 max-w-4xl mx-auto pb-16">
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white rounded-xl p-5 animate-pulse">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-200" />
-                  <div className="flex-1">
-                    <div className="h-5 bg-gray-200 rounded w-1/3 mb-2" />
-                    <div className="h-4 bg-gray-100 rounded w-2/3" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : filteredCategories.length === 0 ? (
-          <div className="text-center py-12">
-            <MessageCircle className="w-12 h-12 text-[#4a7c59]/30 mx-auto mb-3" />
-            <p className="text-[#1a472a]/60" style={{ fontFamily: 'var(--font-body)' }}>
-              {searchQuery ? 'No topics match your search.' : 'No categories yet. Check back soon!'}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredCategories.map((category, index) => (
-              <AnimatedSection key={category.id} delay={index * 0.05}>
-                <Link href={`/community/c/${category.slug}`}>
-                  <div className="bg-white rounded-xl p-4 md:p-5 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div className="flex items-start gap-3 md:gap-4">
-                      {/* Category Icon */}
-                      <div
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
-                        style={{ backgroundColor: `${category.color}20`, color: category.color || '#4a7c59' }}
-                      >
-                        {iconMap[category.icon || 'MessageCircle'] || <MessageCircle className="w-5 h-5" />}
-                      </div>
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3
-                            className="font-bold text-[#1a472a] text-base md:text-lg group-hover:text-[#4a7c59] transition-colors truncate"
-                            style={{ fontFamily: 'var(--font-display)' }}
-                          >
-                            {category.name}
-                          </h3>
-                        </div>
-                        <p className="text-[#1a472a]/60 text-sm line-clamp-2" style={{ fontFamily: 'var(--font-body)' }}>
-                          {category.description}
-                        </p>
-                      </div>
+        {/* ── Section Cards ───────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 mt-6">
 
-                      {/* Stats */}
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <Badge
-                          variant="secondary"
-                          className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-xs"
-                        >
-                          {category.postCount || 0} {(category.postCount || 0) === 1 ? 'thread' : 'threads'}
-                        </Badge>
-                        <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all" />
+          {/* General */}
+          <button
+            onClick={() => handleSectionClick('general')}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'general' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]" />
+            <img src="/game-infinite-forest.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="text-2xl mb-1">🌿</div>
+              <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>General</p>
+              <p className="text-white/60 text-xs">Open Topics</p>
+            </div>
+            {activeSection === 'general' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#7dd87d]" />}
+          </button>
+
+          {/* Earth */}
+          <button
+            onClick={() => handleSectionClick('earth')}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'earth' ? 'ring-2 ring-[#d4a574] shadow-lg shadow-[#d4a574]/20' : 'hover:shadow-md'}`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-[#3d2b1f] to-[#5c3d2e]" />
+            <img src="/community/finca-sagrada.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="text-2xl mb-1">🌍</div>
+              <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Earth</p>
+              <p className="text-white/60 text-xs">Land Projects</p>
+            </div>
+            {activeSection === 'earth' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#d4a574]" />}
+          </button>
+
+          {/* Water */}
+          <button
+            onClick={() => handleSectionClick('water')}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'water' ? 'ring-2 ring-[#60a5fa] shadow-lg shadow-[#60a5fa]/20' : 'hover:shadow-md'}`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a5f] to-[#2d5a7f]" />
+            <img src="/community/liminal-village.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:opacity-45 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="text-2xl mb-1">🌊</div>
+              <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Water</p>
+              <p className="text-white/60 text-xs">Alliance Partners</p>
+            </div>
+            {activeSection === 'water' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#60a5fa]" />}
+          </button>
+
+          {/* Fire */}
+          <button
+            onClick={() => handleSectionClick('fire')}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'fire' ? 'ring-2 ring-[#fb923c] shadow-lg shadow-[#fb923c]/20' : 'hover:shadow-md'}`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-[#7c2d12] to-[#9a3412]" />
+            <img src="/earned-through-quests.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:opacity-45 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="text-2xl mb-1">🔥</div>
+              <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Fire</p>
+              <p className="text-white/60 text-xs">Quests &amp; Challenges</p>
+            </div>
+            {activeSection === 'fire' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#fb923c]" />}
+          </button>
+
+          {/* Air */}
+          <button
+            onClick={() => handleSectionClick('air')}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group col-span-2 sm:col-span-1 ${activeSection === 'air' ? 'ring-2 ring-slate-400 shadow-lg shadow-slate-400/20' : 'hover:shadow-md'}`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-[#374151] to-[#4b5563]" />
+            <img src="/blog-hero-bridging-worlds.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="text-2xl mb-1">🍃</div>
+              <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Air</p>
+              <p className="text-white/60 text-xs">Hard Conversations</p>
+            </div>
+            {activeSection === 'air' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-400" />}
+          </button>
+
+        </div>
+
+        {/* ── Expandable Section Panels ────────────────────────────────── */}
+        <div ref={sectionPanelRef} />
+
+        {/* GENERAL panel */}
+        {activeSection === 'general' && (
+          <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">🌿</span>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>General — Open Topics</h2>
+            </div>
+            <p className="text-[#1a472a]/60 text-sm mb-4">Introductions, resources, governance, and open conversations.</p>
+
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-[#f8f5f0] rounded-xl p-5 animate-pulse">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gray-200" />
+                      <div className="flex-1">
+                        <div className="h-5 bg-gray-200 rounded w-1/3 mb-2" />
+                        <div className="h-4 bg-gray-100 rounded w-2/3" />
                       </div>
                     </div>
                   </div>
-                </Link>
-              </AnimatedSection>
-            ))}
+                ))}
+              </div>
+            ) : filteredCategories.length === 0 ? (
+              <div className="text-center py-12">
+                <MessageCircle className="w-12 h-12 text-[#4a7c59]/30 mx-auto mb-3" />
+                <p className="text-[#1a472a]/60" style={{ fontFamily: 'var(--font-body)' }}>
+                  {searchQuery ? 'No topics match your search.' : 'No categories yet. Check back soon!'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredCategories.map((category, index) => (
+                  <AnimatedSection key={category.id} delay={index * 0.05}>
+                    {editingCategoryId === category.id ? (
+                      <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/50">
+                        <input
+                          className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]"
+                          value={editCategoryName}
+                          onChange={e => setEditCategoryName(e.target.value)}
+                          placeholder="Category name"
+                        />
+                        <input
+                          className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]"
+                          value={editCategoryDesc}
+                          onChange={e => setEditCategoryDesc(e.target.value)}
+                          placeholder="Description (optional)"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => updateCategoryMutation.mutate({ id: category.id, name: editCategoryName, description: editCategoryDesc })}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Save
+                          </button>
+                          <button
+                            onClick={() => setEditingCategoryId(null)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" /> Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-xl p-4 md:p-5 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all duration-200 group">
+                        <div className="flex items-start gap-3 md:gap-4">
+                          <Link href={`/community/c/${category.slug}`} className="flex items-start gap-3 md:gap-4 flex-1 min-w-0 cursor-pointer">
+                            <div
+                              className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
+                              style={{ backgroundColor: `${category.color}20`, color: category.color || '#4a7c59' }}
+                            >
+                              {iconMap[category.icon || 'MessageCircle'] || <MessageCircle className="w-5 h-5" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3
+                                className="font-bold text-[#1a472a] text-base md:text-lg group-hover:text-[#4a7c59] transition-colors truncate"
+                                style={{ fontFamily: 'var(--font-display)' }}
+                              >
+                                {category.name}
+                              </h3>
+                              <p className="text-[#1a472a]/60 text-sm line-clamp-2" style={{ fontFamily: 'var(--font-body)' }}>
+                                {category.description}
+                              </p>
+                            </div>
+                          </Link>
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <Badge variant="secondary" className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-xs">
+                              {category.postCount || 0} {(category.postCount || 0) === 1 ? 'thread' : 'threads'}
+                            </Badge>
+                            {isAdmin ? (
+                              <div className="flex gap-1 mt-1">
+                                <button
+                                  onClick={() => { setEditingCategoryId(category.id); setEditCategoryName(category.name); setEditCategoryDesc(category.description || ""); }}
+                                  className="p-1 rounded hover:bg-[#f0f7f0] text-[#4a7c59]/60 hover:text-[#4a7c59] transition-colors"
+                                  title="Edit category"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => { if (confirm(`Delete "${category.name}"? This cannot be undone.`)) deleteCategoryMutation.mutate({ id: category.id }); }}
+                                  className="p-1 rounded hover:bg-red-50 text-red-400/60 hover:text-red-500 transition-colors"
+                                  title="Delete category"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </AnimatedSection>
+                ))}
+              </div>
+            )}
+
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-[#e8e4de]">
+                {showCreateCategory === 'general' ? (
+                  <div className="bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
+                    <p className="text-[#1a472a] text-sm font-semibold mb-3">New Category</p>
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug (auto-generated)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <div className="flex gap-2">
+                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
+                      <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowCreateCategory('general')} className="flex items-center gap-1.5 text-sm text-[#4a7c59] hover:text-[#1a472a] transition-colors">
+                    <Plus className="w-4 h-4" /> Add category to General
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Accordion: major community sections */}
-        <Accordion type="multiple" defaultValue={[]} className="mt-8 space-y-4">
+        {/* EARTH panel */}
+        {activeSection === 'earth' && (
+          <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">🌍</span>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Earth — Land Projects</h2>
+            </div>
+            <p className="text-[#1a472a]/60 text-sm mb-4">Land project spaces. Where the work is rooted.</p>
 
-          {/* Earth: Land Project Spaces */}
-          <AccordionItem
-            value="earth-projects"
-            className="bg-white border border-[#e8e4de] rounded-xl overflow-hidden"
-          >
-            <AccordionTrigger className="px-5 py-4 text-[#1a472a] text-base font-bold hover:no-underline hover:bg-[#f0f7f0]/60 transition-colors [&[data-state=open]]:bg-[#f0f7f0]/60">
-              <span style={{ fontFamily: 'var(--font-display)' }}>
-                🌍 Earth — Land Projects
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-5 pb-5">
-              <p className="text-[#1a472a]/60 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
-                Land project spaces. Where the work is rooted.
-              </p>
-              {!landProjectThreads || landProjectThreads.length === 0 ? (
-                <p className="text-[#1a472a]/50 text-sm bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
-                  Land project spaces will appear here as projects join the alliance.
-                </p>
-              ) : (
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {landProjectThreads
-                    .filter((thread: { id: number; title: string }) => {
-                      const projectName = thread.title.replace(/ - Land Project Forum$/, "");
-                      return !REMOVED_PROJECTS.has(projectName);
-                    })
-                    .map((thread: { id: number; title: string }) => {
-                      const projectName = thread.title.replace(/ - Land Project Forum$/, "");
-                      const meta = PROJECT_META[projectName];
-                      return (
-                        <Link key={thread.id} href={`/community/post/${thread.id}`}>
-                          <div className="bg-[#f8f5f0] rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all cursor-pointer group">
-                            {/* Image header */}
-                            <div className="h-28 bg-[#4a7c59]/10 relative overflow-hidden">
-                              {meta?.image ? (
-                                <img
-                                  src={meta.image}
-                                  alt={projectName}
-                                  width={800}
-                                  height={500}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  loading="lazy"
-                                  decoding="async"
-                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Trees className="w-10 h-10 text-[#4a7c59]/30" />
-                                </div>
-                              )}
-                              {meta?.location && (
-                                <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/45 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
-                                  <MapPin className="w-2.5 h-2.5" />
-                                  {meta.location}
-                                </div>
-                              )}
-                            </div>
-                            {/* Text row */}
-                            <div className="px-4 py-3 flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors">
-                                  {projectName}
-                                </p>
-                                <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
-                              </div>
-                              <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all flex-shrink-0" />
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                </div>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Water: Alliance Organisation Spaces */}
-          <AccordionItem
-            value="water-orgs"
-            className="bg-white border border-[#e8e4de] rounded-xl overflow-hidden"
-          >
-            <AccordionTrigger className="px-5 py-4 text-[#1a472a] text-base font-bold hover:no-underline hover:bg-[#f0f7f0]/60 transition-colors [&[data-state=open]]:bg-[#f0f7f0]/60">
-              <span style={{ fontFamily: 'var(--font-display)' }}>
-                🌊 Water — Alliance Organisations
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-5 pb-5">
-              <p className="text-[#1a472a]/60 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
-                Alliance organisations. Networks and partners moving together.
-              </p>
-              {/* Section banner */}
-              <div className="h-24 rounded-xl overflow-hidden mb-3 relative bg-[#1a472a]/10">
-                <img
-                  src="/community/alliance-orgs-banner.png"
-                  alt="Alliance organisations"
-                  width={800}
-                  height={200}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#1a472a]/60 to-transparent flex items-center px-4">
-                  <span className="text-white font-semibold text-sm" style={{ fontFamily: 'var(--font-display)' }}>
-                    Alliance Partner Spaces
-                  </span>
-                </div>
+            {/* General land projects category card */}
+            {landProjectCategory && (
+              <div className="mb-4">
+                <Link href="/community/c/land-projects">
+                  <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#d4a574]/50 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#d4a574]/15 flex items-center justify-center flex-shrink-0">
+                      <Trees className="w-5 h-5 text-[#5c3d2e]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#5c3d2e] transition-colors">Land Project General</p>
+                      <p className="text-[#1a472a]/50 text-xs line-clamp-1">{landProjectCategory.description || 'General discussion space for land projects'}</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                  </div>
+                </Link>
               </div>
-              {!organisationThreads || organisationThreads.length === 0 ? (
-                <p className="text-[#1a472a]/50 text-sm bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
-                  Organisation spaces will appear here as partners join the alliance.
+            )}
+
+            {/* Individual land project spaces */}
+            {!landProjectThreads || landProjectThreads.filter((t: { id: number; title: string }) => !REMOVED_PROJECTS.has(t.title.replace(/ - Land Project Forum$/, ""))).length === 0 ? (
+              <p className="text-[#1a472a]/50 text-sm bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
+                Land project spaces will appear here as projects join the alliance.
+              </p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-3">
+                {landProjectThreads
+                  .filter((thread: { id: number; title: string }) => {
+                    const projectName = thread.title.replace(/ - Land Project Forum$/, "");
+                    return !REMOVED_PROJECTS.has(projectName);
+                  })
+                  .map((thread: { id: number; title: string }) => {
+                    const projectName = thread.title.replace(/ - Land Project Forum$/, "");
+                    const meta = PROJECT_META[projectName];
+                    return (
+                      <Link key={thread.id} href={`/community/post/${thread.id}`}>
+                        <div className="bg-[#f8f5f0] rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#d4a574]/40 hover:shadow-md transition-all cursor-pointer group">
+                          <div className="h-28 bg-[#4a7c59]/10 relative overflow-hidden">
+                            {meta?.image ? (
+                              <img
+                                src={meta.image}
+                                alt={projectName}
+                                width={800}
+                                height={500}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Trees className="w-10 h-10 text-[#4a7c59]/30" />
+                              </div>
+                            )}
+                            {meta?.location && (
+                              <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/45 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
+                                <MapPin className="w-2.5 h-2.5" />
+                                {meta.location}
+                              </div>
+                            )}
+                          </div>
+                          <div className="px-4 py-3 flex items-center justify-between">
+                            <div>
+                              <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors">
+                                {projectName}
+                              </p>
+                              <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
+                            </div>
+                            <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+              </div>
+            )}
+
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-[#e8e4de]">
+                <button onClick={() => setShowCreateCategory(showCreateCategory === 'earth' ? null : 'earth')} className="flex items-center gap-1.5 text-sm text-[#4a7c59] hover:text-[#1a472a] transition-colors">
+                  <Plus className="w-4 h-4" /> Add category under Earth
+                </button>
+                {showCreateCategory === 'earth' && (
+                  <div className="mt-3 bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <div className="flex gap-2">
+                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
+                      <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* WATER panel */}
+        {activeSection === 'water' && (
+          <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">🌊</span>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Water — Alliance Partners</h2>
+            </div>
+            <p className="text-[#1a472a]/60 text-sm mb-4">Alliance organisations. Networks and partners moving together.</p>
+
+            {!organisationThreads || organisationThreads.length === 0 ? (
+              <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
+                <p className="text-[#1a472a]/50 text-sm mb-3">
+                  Alliance partner spaces will appear here as organisations join.
                 </p>
-              ) : (
+                <Link href="/community/c/alliance-partners">
+                  <span className="inline-flex items-center gap-1 text-[#4a7c59] text-sm font-semibold hover:text-[#1a472a] transition-colors cursor-pointer">
+                    Browse Alliance Partners <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
                 <div className="grid sm:grid-cols-2 gap-3">
                   {organisationThreads.map((thread: { id: number; title: string }) => (
                     <Link key={thread.id} href={`/community/post/${thread.id}`}>
-                      <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#60a5fa]/40 hover:shadow-md transition-all cursor-pointer group">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#d4a574]/15 flex items-center justify-center flex-shrink-0">
-                            <Handshake className="w-4 h-4 text-[#4a7c59]" />
+                          <div className="w-9 h-9 rounded-full bg-[#60a5fa]/15 flex items-center justify-center flex-shrink-0">
+                            <Handshake className="w-4 h-4 text-[#1e3a5f]" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-[#4a7c59] transition-colors">
+                            <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-[#1e3a5f] transition-colors">
                               {thread.title}
                             </p>
                             <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                          <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#60a5fa] group-hover:translate-x-1 transition-all flex-shrink-0" />
                         </div>
                       </div>
                     </Link>
                   ))}
                 </div>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Fire: Quests and Challenges */}
-          <AccordionItem
-            value="fire-quests"
-            className="bg-amber-50/80 border border-amber-200/60 rounded-xl overflow-hidden"
-          >
-            <AccordionTrigger className="px-5 py-4 text-[#1a472a] text-base font-bold hover:no-underline hover:bg-amber-100/60 transition-colors [&[data-state=open]]:bg-amber-100/60">
-              <span style={{ fontFamily: 'var(--font-display)' }}>
-                🔥 Fire — Quests and Challenges
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-5 pb-5">
-              <p className="text-[#1a472a]/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
-                Quests and challenges. Where regeneration gets real.
-              </p>
-              <div className="bg-amber-100/60 rounded-xl p-4 mb-4 flex items-center justify-between gap-3">
-                <p className="text-amber-900/80 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
-                  Looking for your next quest? The game is on.
-                </p>
-                <Link href="/quest">
-                  <span className="text-amber-700 text-sm font-semibold hover:text-amber-900 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1">
-                    Explore Quests <ArrowRight className="w-3.5 h-3.5" />
+                <Link href="/community/c/alliance-partners">
+                  <span className="inline-flex items-center gap-1 text-[#4a7c59] text-sm font-semibold hover:text-[#1a472a] transition-colors cursor-pointer mt-2">
+                    View all in Alliance Partners <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </Link>
               </div>
-              <div className="grid sm:grid-cols-3 gap-3">
-                {fireQuestData.map((quest) => (
-                  <div key={quest.id} className="bg-white rounded-xl p-4 border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all group">
-                    <p className="font-semibold text-[#1a472a] text-sm mb-1 group-hover:text-amber-800 transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
-                      {quest.title}
-                    </p>
-                    <p className="text-[#1a472a]/50 text-xs mb-3" style={{ fontFamily: 'var(--font-body)' }}>
-                      {quest.subtitle}
-                    </p>
-                    <Link href={quest.href}>
-                      <span className="inline-flex items-center gap-1 text-amber-700 text-xs font-medium hover:text-amber-900 transition-colors cursor-pointer">
-                        Join the Quest <ArrowRight className="w-3 h-3" />
-                      </span>
-                    </Link>
+            )}
+
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-[#e8e4de]">
+                <button onClick={() => setShowCreateCategory(showCreateCategory === 'water' ? null : 'water')} className="flex items-center gap-1.5 text-sm text-[#4a7c59] hover:text-[#1a472a] transition-colors">
+                  <Plus className="w-4 h-4" /> Add category under Water
+                </button>
+                {showCreateCategory === 'water' && (
+                  <div className="mt-3 bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <div className="flex gap-2">
+                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
+                      <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
+                    </div>
                   </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* FIRE panel */}
+        {activeSection === 'fire' && (
+          <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">🔥</span>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Fire — Quests and Challenges</h2>
+            </div>
+            <p className="text-[#1a472a]/60 text-sm mb-4">Quests and challenges. Where regeneration gets real.</p>
+
+            <div className="bg-amber-100/60 rounded-xl p-4 mb-4 flex items-center justify-between gap-3">
+              <p className="text-amber-900/80 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+                Looking for your next quest? The game is on.
+              </p>
+              <Link href="/quest">
+                <span className="text-amber-700 text-sm font-semibold hover:text-amber-900 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1">
+                  Explore Quests <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </Link>
+            </div>
+
+            {!questThreads || questThreads.length === 0 ? (
+              <div className="bg-white rounded-xl p-4 border border-amber-200/60 text-center">
+                <p className="text-[#1a472a]/50 text-sm mb-3">Quest threads will appear here as they're created.</p>
+                <Link href="/community/c/quests-gameplay">
+                  <span className="inline-flex items-center gap-1 text-amber-700 text-sm font-semibold hover:text-amber-900 transition-colors cursor-pointer">
+                    Browse Quests &amp; Gameplay <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {questThreads.map((thread: { id: number; title: string; replyCount: number }) => (
+                  <Link key={thread.id} href={`/community/post/${thread.id}`}>
+                    <div className="bg-white rounded-xl p-4 border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <Gamepad2 className="w-4 h-4 text-amber-700" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-amber-800 transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
+                          {thread.title}
+                        </p>
+                        <p className="text-[#1a472a]/50 text-xs">{thread.replyCount} {thread.replyCount === 1 ? 'reply' : 'replies'}</p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-amber-400/60 group-hover:text-amber-600 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                    </div>
+                  </Link>
+                ))}
+                <Link href="/community/c/quests-gameplay">
+                  <span className="inline-flex items-center gap-1 text-amber-700 text-sm font-semibold hover:text-amber-900 transition-colors cursor-pointer mt-2">
+                    View all quest threads <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </Link>
+              </div>
+            )}
+
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-amber-200/60">
+                <button onClick={() => setShowCreateCategory(showCreateCategory === 'fire' ? null : 'fire')} className="flex items-center gap-1.5 text-sm text-amber-700 hover:text-amber-900 transition-colors">
+                  <Plus className="w-4 h-4" /> Add category under Fire
+                </button>
+                {showCreateCategory === 'fire' && (
+                  <div className="mt-3 bg-amber-50 rounded-xl p-4 border border-amber-200/60">
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-amber-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <div className="flex gap-2">
+                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
+                      <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* AIR panel */}
+        {activeSection === 'air' && (
+          <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">🍃</span>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Air — Hard Conversations</h2>
+            </div>
+            <p className="text-[#1a472a]/60 text-sm mb-4">
+              Some things need to move. This is where we say the hard thing, clear what's stagnant, and make space for what comes next.
+            </p>
+
+            {airLoading ? (
+              <p className="text-[#1a472a]/40 text-sm">Loading...</p>
+            ) : !airThreads || airThreads.length === 0 ? (
+              <div className="flex items-center justify-between gap-3 bg-[#f8f5f0] rounded-xl p-4 border border-slate-200/60">
+                <p className="text-[#1a472a]/50 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+                  No threads yet. Be the first to clear the air.
+                </p>
+                <Link href="/community/c/air-conversations">
+                  <span className="text-slate-600 text-sm font-medium hover:text-slate-800 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1">
+                    Start a thread <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-3">
+                {airThreads.map((thread: { id: number; title: string }) => (
+                  <Link key={thread.id} href={`/community/post/${thread.id}`}>
+                    <div className="bg-[#f8f5f0] rounded-xl p-4 border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                          <MessageCircle className="w-4 h-4 text-slate-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-slate-700 transition-colors">
+                            {thread.title}
+                          </p>
+                          <p className="text-[#1a472a]/50 text-xs">Join the conversation</p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                      </div>
+                    </div>
+                  </Link>
                 ))}
               </div>
-            </AccordionContent>
-          </AccordionItem>
+            )}
 
-          {/* Air: Hard Conversations */}
-          <AccordionItem
-            value="air-conversations"
-            className="bg-slate-50/80 border border-slate-200/60 rounded-xl overflow-hidden"
-          >
-            <AccordionTrigger className="px-5 py-4 text-[#1a472a] text-base font-bold hover:no-underline hover:bg-slate-100/60 transition-colors [&[data-state=open]]:bg-slate-100/60">
-              <span style={{ fontFamily: 'var(--font-display)' }}>
-                🍃 Air — Hard Conversations
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-5 pb-5">
-              <p className="text-[#1a472a]/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
-                Some things need to move. This is where we say the hard thing, clear what's stagnant, and make space for what comes next.
-              </p>
-              {airLoading ? (
-                <p className="text-[#1a472a]/40 text-sm">Loading...</p>
-              ) : !airThreads || airThreads.length === 0 ? (
-                <div className="flex items-center justify-between gap-3 bg-white rounded-xl p-4 border border-slate-200/60">
-                  <p className="text-[#1a472a]/50 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
-                    No threads yet. Be the first to clear the air.
-                  </p>
-                  <Link href="/forum/air-conversations">
-                    <span className="text-slate-600 text-sm font-medium hover:text-slate-800 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1">
-                      Start a thread <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {airThreads.map((thread: { id: number; title: string }) => (
-                    <Link key={thread.id} href={`/community/post/${thread.id}`}>
-                      <div className="bg-white rounded-xl p-4 border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                            <MessageCircle className="w-4 h-4 text-slate-500" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-slate-700 transition-colors">
-                              {thread.title}
-                            </p>
-                            <p className="text-[#1a472a]/50 text-xs">Join the conversation</p>
-                          </div>
-                          <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-
-        </Accordion>
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t border-slate-200/60">
+                <button onClick={() => setShowCreateCategory(showCreateCategory === 'air' ? null : 'air')} className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 transition-colors">
+                  <Plus className="w-4 h-4" /> Add category under Air
+                </button>
+                {showCreateCategory === 'air' && (
+                  <div className="mt-3 bg-slate-50 rounded-xl p-4 border border-slate-200/60">
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-slate-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <div className="flex gap-2">
+                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-600 text-white text-xs font-semibold rounded-lg hover:bg-slate-700 transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
+                      <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tag filter and chain shortcuts */}
         <div className="mt-6 flex flex-wrap gap-2">
@@ -672,10 +953,10 @@ export default function Community() {
             <Leaf className="w-5 h-5 text-[#4a7c59] flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="font-bold text-[#1a472a] text-sm mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-                {t('forum.guidelines')}
+                Community Guidelines
               </h3>
               <p className="text-[#1a472a]/70 text-xs leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
-                {t('forum.guidelinesText')}
+                Be kind, be honest, be regenerative. Share what you know, ask what you don't. Every voice matters here.
               </p>
             </div>
           </div>
@@ -693,8 +974,8 @@ export default function Community() {
             {!alreadySubscribed && <NewsletterSignupInline />}
           </div>
         </ScrollRevealMotion>
-      </section>
 
+      </section>
 
     </div>
     </PageTransition>
