@@ -140,7 +140,7 @@ export default function Community() {
 
   // Slugs shown in dedicated section panels — exclude from General list
   const SECTION_SLUGS = new Set([
-    'quests-gameplay', 'alliance-partners', 'air-conversations',
+    'quests-gameplay', 'epic-quests', 'alliance-partners', 'air-conversations',
     'active-projects', 'active-organisations', 'land-projects',
   ]);
 
@@ -805,7 +805,7 @@ export default function Community() {
               </Link>
 
               {/* Epic Quests */}
-              <Link href="/quest">
+              <Link href="/community/c/epic-quests">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
                   <img src="/images/quests/quest-08-medicine-journey.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
