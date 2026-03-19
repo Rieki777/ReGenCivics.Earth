@@ -48,7 +48,7 @@ export function PathCardImage({ cardId, image, activatedImage, title, accentColo
         src={activatedImage}
         alt={`${title} - activated`}
         className="path-card-img path-card-img-activated"
-        loading="eager"
+        loading="lazy"
         decoding="async"
         draggable={false}
       />

@@ -5,13 +5,18 @@
  * Shows a "Watch Full Video" play-button callout overlay.
  * On click, opens the full YouTube video URL in a new tab.
  * If youtubeUrl is not yet provided, shows a "Coming Soon" badge instead.
+ *
+ * Performance: skips video autoplay on slow/save-data connections.
  */
 
+import { useEffect, useRef } from "react";
 import { Play, ExternalLink } from "lucide-react";
 
 interface VideoPreviewCardProps {
   /** Path or URL to the short MP4 preview clip */
   mp4Url: string;
+  /** Static poster image shown before video loads (and on slow connections) */
+  posterUrl?: string;
   /** URL to the full YouTube (or other) video — opens in new tab on click */
   youtubeUrl?: string;
   /** Card title shown above the play button overlay */
@@ -26,6 +31,7 @@ interface VideoPreviewCardProps {
 
 export default function VideoPreviewCard({
   mp4Url,
+  posterUrl,
   youtubeUrl,
   title,
   playLabel = "Watch Full Video",
@@ -33,6 +39,19 @@ export default function VideoPreviewCard({
   className = "",
 }: VideoPreviewCardProps) {
   const isClickable = !comingSoon && !!youtubeUrl;
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    // Skip autoplay on slow or data-saving connections
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (conn && (conn.saveData || conn.effectiveType === "2g" || conn.effectiveType === "slow-2g")) {
+      video.remove();
+      return;
+    }
+    video.play().catch(() => {/* autoplay blocked — poster shows instead */});
+  }, []);
 
   const handleClick = () => {
     if (isClickable) {
@@ -42,14 +61,15 @@ export default function VideoPreviewCard({
 
   return (
     <div className={`relative w-full overflow-hidden rounded-xl ${className}`} style={{ aspectRatio: "16/9" }}>
-      {/* Autoplay MP4 — muted, loops, no controls */}
+      {/* Autoplay MP4 — muted, loops, no controls. preload=none saves ~4MB on slow connections. */}
       <video
+        ref={videoRef}
         src={mp4Url}
-        autoPlay
+        poster={posterUrl}
         muted
         loop
         playsInline
-        preload="auto"
+        preload="none"
         className="absolute inset-0 w-full h-full object-cover"
         aria-hidden="true"
       />

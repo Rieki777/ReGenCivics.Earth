@@ -1,10 +1,14 @@
-import * as Sentry from "@sentry/react";
+// Sentry is deferred until after page load — it's non-essential for rendering
 if (import.meta.env.VITE_SENTRY_DSN) {
-  Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    tracesSampleRate: 0.1,
-    integrations: [Sentry.browserTracingIntegration()],
-  });
+  window.addEventListener("load", () => {
+    import("@sentry/react").then((Sentry) => {
+      Sentry.init({
+        dsn: import.meta.env.VITE_SENTRY_DSN,
+        tracesSampleRate: 0.1,
+        integrations: [Sentry.browserTracingIntegration()],
+      });
+    });
+  }, { once: true });
 }
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
