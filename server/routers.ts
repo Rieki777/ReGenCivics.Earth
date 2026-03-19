@@ -2248,19 +2248,13 @@ export const appRouter = router({
       }).optional())
       .query(async ({ input }) => {
         const campaignList = await db.listCampaigns(input?.status, input?.search);
-        // Enrich each campaign with its cover image for card display
-        const enriched = await Promise.all(
-          campaignList.map(async (c) => {
-            const images = await db.getCampaignImages(c.id);
-            const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
-            return {
-              ...c,
-              coverImage,
-              imageCount: images.length,
-            };
-          })
-        );
-        return enriched;
+        // Batch-fetch all images in one query (eliminates N+1)
+        const imagesMap = await db.getCampaignImagesForMany(campaignList.map(c => c.id));
+        return campaignList.map((c) => {
+          const images = imagesMap[c.id] ?? [];
+          const coverImage = images.find(img => img.isCover === 1) || images[0] || null;
+          return { ...c, coverImage, imageCount: images.length };
+        });
       }),
 
     // Get a single campaign by ID
@@ -3162,9 +3156,11 @@ export const appRouter = router({
         // Pre-fetch bioregions for name lookup
         const db2 = await getDb();
         const allBioregions = db2 ? await db2.select().from(bioregions) : [];
-        // Enrich with author info
-        const enriched = await Promise.all(posts.map(async (post) => {
-          const author = await db.getUserById(post.authorId);
+        // Batch-fetch all authors in one query (eliminates N+1)
+        const authorIds = posts.map(p => p.authorId);
+        const authorsMap = await db.getUsersByIds(authorIds);
+        const enriched = posts.map((post) => {
+          const author = authorsMap[post.authorId];
           const bioregionName = post.bioregionId
             ? (allBioregions.find(b => b.id === post.bioregionId)?.name ?? null)
             : null;
@@ -3174,7 +3170,7 @@ export const appRouter = router({
             authorAvatar: null,
             bioregionName,
           };
-        }));
+        });
         return enriched;
       }),
 
@@ -3207,11 +3203,18 @@ export const appRouter = router({
       .input(z.object({ postId: z.number() }))
       .query(async ({ input }) => {
         const replies = await db.listForumReplies(input.postId);
-        const enriched = await Promise.all(replies.map(async (reply) => {
-          const [author, authorProfile] = await Promise.all([
-            db.getUserById(reply.authorId),
-            db.getPlayerProfileByUserId(reply.authorId),
-          ]);
+        // Batch-fetch all authors in one query (eliminates N+1)
+        const authorIds = replies.map(r => r.authorId);
+        const [authorsMap, playerProfiles] = await Promise.all([
+          db.getUsersByIds(authorIds),
+          Promise.all([...new Set(authorIds)].map(id => db.getPlayerProfileByUserId(id).catch(() => null))),
+        ]);
+        const profilesMap = Object.fromEntries(
+          [...new Set(authorIds)].map((id, i) => [id, playerProfiles[i]])
+        );
+        const enriched = replies.map((reply) => {
+          const author = authorsMap[reply.authorId];
+          const authorProfile = profilesMap[reply.authorId];
           const authorBadges: string[] = (() => {
             try { return JSON.parse(authorProfile?.badges ?? "[]"); } catch { return []; }
           })();
@@ -3221,7 +3224,7 @@ export const appRouter = router({
             authorAvatar: authorProfile?.avatarUrl || null,
             authorBadges,
           };
-        }));
+        });
         return enriched;
       }),
 
@@ -3243,15 +3246,12 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         const posts = await db.listForumPostsByTag(input.tag, input.limit, input.offset);
-        const enriched = await Promise.all(posts.map(async (post) => {
-          const author = await db.getUserById(post.authorId);
-          return {
-            ...post,
-            authorName: author?.name || 'Anonymous',
-            authorAvatar: null,
-          };
+        const authorsMap = await db.getUsersByIds(posts.map(p => p.authorId));
+        return posts.map((post) => ({
+          ...post,
+          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+          authorAvatar: null,
         }));
-        return enriched;
       }),
 
     // Get all active-project forum threads (for Map pin links)
@@ -3362,18 +3362,19 @@ export const appRouter = router({
       .input(z.object({ chainId: z.number() }))
       .query(async ({ input }) => {
         const posts = await db.listForumPostsByChainId(input.chainId);
-        const enriched = await Promise.all(posts.map(async (post) => {
-          const author = await db.getUserById(post.authorId);
-          const cats = await db.listForumCategories();
+        const [authorsMap, cats] = await Promise.all([
+          db.getUsersByIds(posts.map(p => p.authorId)),
+          db.listForumCategories(),
+        ]);
+        return posts.map((post) => {
           const category = cats.find(c => c.id === post.categoryId);
           return {
             ...post,
-            authorName: author?.name || 'Anonymous',
+            authorName: authorsMap[post.authorId]?.name || 'Anonymous',
             categorySlug: category?.slug || 'general',
             categoryName: category?.name || 'Unknown',
           };
-        }));
-        return enriched;
+        });
       }),
 
     // Get posts by postType (e.g. "seeking_team", "case_study")
@@ -3385,18 +3386,19 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         const posts = await db.listForumPostsByType(input.postType, input.limit, input.offset);
-        const enriched = await Promise.all(posts.map(async (post) => {
-          const author = await db.getUserById(post.authorId);
-          const cats = await db.listForumCategories();
+        const [authorsMap, cats] = await Promise.all([
+          db.getUsersByIds(posts.map(p => p.authorId)),
+          db.listForumCategories(),
+        ]);
+        return posts.map((post) => {
           const category = cats.find(c => c.id === post.categoryId);
           return {
             ...post,
-            authorName: author?.name || 'Anonymous',
+            authorName: authorsMap[post.authorId]?.name || 'Anonymous',
             categorySlug: category?.slug || 'general',
             categoryName: category?.name || 'Unknown',
           };
-        }));
-        return enriched;
+        });
       }),
 
     // Get all thread-chain posts (any post with threadStage set)
@@ -3404,18 +3406,19 @@ export const appRouter = router({
       .input(z.object({ limit: z.number().max(100).default(50), offset: z.number().default(0) }))
       .query(async ({ input }) => {
         const posts = await db.listForumChainPosts(input.limit, input.offset);
-        const enriched = await Promise.all(posts.map(async (post) => {
-          const author = await db.getUserById(post.authorId);
-          const cats = await db.listForumCategories();
+        const [authorsMap, cats] = await Promise.all([
+          db.getUsersByIds(posts.map(p => p.authorId)),
+          db.listForumCategories(),
+        ]);
+        return posts.map((post) => {
           const category = cats.find(c => c.id === post.categoryId);
           return {
             ...post,
-            authorName: author?.name || 'Anonymous',
+            authorName: authorsMap[post.authorId]?.name || 'Anonymous',
             categorySlug: category?.slug || 'general',
             categoryName: category?.name || 'Unknown',
           };
-        }));
-        return enriched;
+        });
       }),
 
     // Create a new post (auth required)
@@ -3642,11 +3645,8 @@ export const appRouter = router({
           .where(eq(forumPosts.bioregionId, input.bioregionId))
           .orderBy(forumPosts.createdAt)
           .limit(input.limit);
-        const enriched = await Promise.all(posts.map(async (post) => {
-          const author = await db.getUserById(post.authorId);
-          return { ...post, authorName: author?.name || 'Anonymous' };
-        }));
-        return enriched;
+        const authorsMap = await db.getUsersByIds(posts.map(p => p.authorId));
+        return posts.map((post) => ({ ...post, authorName: authorsMap[post.authorId]?.name || 'Anonymous' }));
       }),
   }),
 
@@ -3661,11 +3661,8 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         const suggestions = await db.listQuestSuggestions(input.sortBy, input.limit, input.offset);
-        const enriched = await Promise.all(suggestions.map(async (s) => {
-          const author = await db.getUserById(s.authorId);
-          return { ...s, authorName: author?.name || 'Anonymous' };
-        }));
-        return enriched;
+        const authorsMap = await db.getUsersByIds(suggestions.map(s => s.authorId));
+        return suggestions.map((s) => ({ ...s, authorName: authorsMap[s.authorId]?.name || 'Anonymous' }));
       }),
 
     // Get user's votes
@@ -3867,11 +3864,8 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN' });
         }
         const reports = await db.listForumReports(input.status);
-        const enriched = await Promise.all(reports.map(async (r) => {
-          const reporter = await db.getUserById(r.reporterId);
-          return { ...r, reporterName: reporter?.name || 'Unknown' };
-        }));
-        return enriched;
+        const authorsMap = await db.getUsersByIds(reports.map(r => r.reporterId));
+        return reports.map((r) => ({ ...r, reporterName: authorsMap[r.reporterId]?.name || 'Unknown' }));
       }),
 
     // Update report status
@@ -3895,11 +3889,8 @@ export const appRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN' });
       }
       const mods = await db.listForumModerators();
-      const enriched = await Promise.all(mods.map(async (m) => {
-        const user = await db.getUserById(m.userId);
-        return { ...m, userName: user?.name || 'Unknown', userEmail: user?.email || '' };
-      }));
-      return enriched;
+      const usersMap = await db.getUsersByIds(mods.map(m => m.userId));
+      return mods.map((m) => ({ ...m, userName: usersMap[m.userId]?.name || 'Unknown', userEmail: usersMap[m.userId]?.email || '' }));
     }),
 
     // Add moderator (admin only)
@@ -3960,12 +3951,9 @@ export const appRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN' });
       }
       const bans = await db.listBannedUsers();
-      const enriched = await Promise.all(bans.map(async (b) => {
-        const user = await db.getUserById(b.userId);
-        const bannedByUser = await db.getUserById(b.bannedBy);
-        return { ...b, userName: user?.name || 'Unknown', bannedByName: bannedByUser?.name || 'Unknown' };
-      }));
-      return enriched;
+      const allIds = bans.flatMap(b => [b.userId, b.bannedBy]);
+      const usersMap = await db.getUsersByIds(allIds);
+      return bans.map((b) => ({ ...b, userName: usersMap[b.userId]?.name || 'Unknown', bannedByName: usersMap[b.bannedBy]?.name || 'Unknown' }));
     }),
   }),
   banners: router({

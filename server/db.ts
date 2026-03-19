@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion } from "../drizzle/schema";
@@ -101,6 +101,15 @@ export async function getUserById(id: number) {
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUsersByIds(ids: number[]): Promise<Record<number, typeof users.$inferSelect>> {
+  if (ids.length === 0) return {};
+  const db = await getDb();
+  if (!db) return {};
+  const unique = [...new Set(ids)];
+  const rows = await db.select().from(users).where(inArray(users.id, unique));
+  return Object.fromEntries(rows.map(u => [u.id, u]));
 }
 
 // ============================================
@@ -1233,10 +1242,25 @@ export async function addCampaignImage(data: {
 export async function getCampaignImages(campaignId: number): Promise<CampaignImage[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   return await db.select().from(campaignImages)
     .where(eq(campaignImages.campaignId, campaignId))
     .orderBy(desc(campaignImages.isCover), campaignImages.sortOrder);
+}
+
+export async function getCampaignImagesForMany(campaignIds: number[]): Promise<Record<number, CampaignImage[]>> {
+  if (campaignIds.length === 0) return {};
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db.select().from(campaignImages)
+    .where(inArray(campaignImages.campaignId, [...new Set(campaignIds)]))
+    .orderBy(desc(campaignImages.isCover), campaignImages.sortOrder);
+  const result: Record<number, CampaignImage[]> = {};
+  for (const row of rows) {
+    if (!result[row.campaignId]) result[row.campaignId] = [];
+    result[row.campaignId].push(row);
+  }
+  return result;
 }
 
 export async function getCampaignCoverImage(campaignId: number): Promise<CampaignImage | null> {
