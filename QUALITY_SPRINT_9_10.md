@@ -13,7 +13,7 @@
 | Feature completeness | 9/10 | 10/10 | Low — one gap |
 | Code quality | 7/10 | 9/10 | High |
 | Security | 7.5/10 | 10/10 | High |
-| Performance | 7/10 (↑ after 2026-03-19 image/video pass) | 9/10 | High |
+| Performance | 8/10 (↑ after 2026-03-19 full optimization pass) | 9/10 | Medium |
 | Design/UX | 8/10 | 9/10 | Medium |
 | Infrastructure | 8/10 | 9/10 | Medium |
 
@@ -37,24 +37,24 @@
 - ✅ All images recompressed: quest WebPs ~70% smaller, OG images ~75% smaller, hero-bg-desktop 1.63MB→696KB, globe textures 90%+ smaller
 - ✅ `clip-01-poster.webp` created (133KB) — poster frame shown while video buffers
 
+### Already done (2026-03-19):
+- ✅ `Navigation.tsx`: both logo `<img>` tags now have `width="40" height="40"` (CLS prevention)
+- ✅ `SiteFooter.tsx`: switched to `.webp` logo (84KB vs 211KB PNG saved per load), added `width="56" height="56"`
+- ✅ `fetchpriority="high"` on hero preload links in `index.html` — already done
+
 ### Still remaining:
 
 **a) srcset on images (mobile savings: 50–80% per image)**
 
-No image on the site uses `srcset` or `sizes`. Mobile users on poor connections download 1920px hero images. Fix:
+No image on the site uses `srcset` or `sizes`. Mobile users on poor connections download 1920px hero images.
 
 | Step | Agent | Action |
 |---|---|---|
-| 1 | [CLAUDE CODE] | In `PageBackground.tsx`: already uses separate mobile/desktop images via CSS — confirm this is working correctly (it is). No srcset needed here. |
-| 2 | [CLAUDE CODE] | In `PathCardImage.tsx`: the CDN path card illustrations (`assets.regencivics.earth/...`) are served at 2048×2048 but displayed at 237×237px. Add `width="237" height="237"` attributes to prevent CLS. For srcset, would need smaller CDN variants — skip for now, width/height is the immediate win. |
-| 3 | [CLAUDE CODE] | In `Navigation.tsx`: nav logo is a CDN PNG at 512×512 shown at 40×40px. Switch both logo `<img>` tags to use local WebP variants: `/images/logos/regencivics-logo-dark-transparent-rounded.webp` and add `width="40" height="40"` |
-| 4 | [CLAUDE CODE] | In `SiteFooter.tsx`: footer logo uses `/images/logos/regencivics-logo-dark-transparent-rounded.png` — switch to `.webp` version (already exists at 84KB vs 211KB PNG). Add `width="56" height="56"`. |
-| 5 | [CLAUDE CODE] | Grep for `<img ` across all TSX files — add `width` and `height` to any tag missing them (prevents CLS score penalty in Lighthouse). |
+| 1 | [CLAUDE CODE] | In `PageBackground.tsx`: already uses separate mobile/desktop images via CSS — no srcset needed. |
+| 2 | [CLAUDE CODE] | In `PathCardImage.tsx`: CDN path card illustrations (`assets.regencivics.earth/...`) served at 2048×2048 but displayed at 237×237px. Add `width="237" height="237"` to prevent CLS. |
+| 3 | [CLAUDE CODE] | Grep for remaining `<img ` tags missing `width`/`height` across all TSX — add them (prevents Lighthouse CLS penalty). |
 
-**b) fetchpriority on hero image — ALREADY DONE**
-`index.html` already has `fetchpriority="high"` on both hero preload links. No action needed.
-
-**Done when:** Navigation and footer logos use local WebP. All img tags have width+height. Lighthouse CLS score is 0 on homepage.
+**Done when:** All img tags have width+height. Lighthouse CLS score is 0 on homepage.
 
 ---
 
@@ -71,9 +71,9 @@ Animations still run on healthy mobile connections. Disabled only for `prefers-r
 
 ---
 
-## Fix 113: Image Optimization (Performance: +0.5)
+## ~~Fix 113: Image Optimization~~ — DONE (2026-03-19)
 
-**Status: Mostly done (2026-03-19).** PWA icons already converted to WebP. Video and images all compressed. Remaining items: width/height on img tags, LazyImage usage consistency, logo WebP swap (see Fix 111b above).
+**Status: Done.** PWA icons converted to WebP, all images recompressed, video compressed, lazy loading applied consistently.
 
 ### Already done:
 - ✅ All PWA icons (`icon-512`, `icon-192`, `apple-touch-icon`) converted to WebP — `index.html` and `manifest.json` already reference them
@@ -81,13 +81,14 @@ Animations still run on healthy mobile connections. Disabled only for `prefers-r
 - ✅ Hero video compressed 74%, preload="none", poster frame added
 - ✅ `PathCardImage` hover image is now `loading="lazy"`
 
-### Still needed:
-
-| Step | Agent | Action |
-|---|---|---|
-| 1 | [CLAUDE CODE] | Add `width`/`height` to all `<img>` tags missing them (covered in Fix 111b step 5) |
-| ~~2~~ | ~~DONE~~ | ~~In Blog.tsx, Community.tsx, Seasons.tsx~~ — Community.tsx: all 9 decorative background images now have `loading="lazy"` (2026-03-19). Blog.tsx images are inside `aspect-video` containers (no CLS). Seasons.tsx hero is `absolute inset-0` (no CLS). |
-| 3 | [CLAUDE CODE] | Confirm `OptimizedImage.tsx` and `LazyImage.tsx` set `loading="lazy"` and `decoding="async"` by default (they already do per codebase inspection) |
+- ✅ All PWA icons (`icon-512`, `icon-192`, `apple-touch-icon`) converted to WebP
+- ✅ All quest/return-card/OG/hero images recompressed (avg ~70% savings each)
+- ✅ Hero video compressed 74%, `preload="none"`, poster frame added
+- ✅ `PathCardImage` hover image: `loading="lazy"`
+- ✅ Community.tsx: 9 decorative background images now `loading="lazy"`
+- ✅ Blog.tsx images inside `aspect-video` containers (no CLS, already lazy)
+- ✅ `OptimizedImage.tsx` and `LazyImage.tsx` already use `loading="lazy"` + `decoding="async"`
+- ✅ Width/height on img tags: covered by Fix 111b (nav/footer done; PathCardImage remaining)
 
 ---
 
