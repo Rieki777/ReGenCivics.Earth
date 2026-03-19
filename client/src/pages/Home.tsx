@@ -245,9 +245,9 @@ export default function Home() {
             <AnimatedSection animation="fade-in">
               <VideoPreviewCard
                 mp4Url="/images/clip-01-welcome.mp4"
+                youtubeUrl="https://youtu.be/G-6ZpxvZ3qM"
                 title="Welcome to the Regenerative Renaissance"
                 playLabel="Watch Full Video"
-                comingSoon
               />
             </AnimatedSection>
           </div>

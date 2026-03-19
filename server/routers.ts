@@ -5600,8 +5600,8 @@ Guidelines:
         return rows[0] ?? null;
       }),
 
-    // Superadmin: save a content override for a blog post slug
-    saveOverride: superadminProcedure
+    // Admin: save a content override for a blog post slug
+    saveOverride: adminProcedure
       .input(z.object({ slug: z.string(), content: z.string() }))
       .mutation(async ({ input }) => {
         const db = await getDb();
