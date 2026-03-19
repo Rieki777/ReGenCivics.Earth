@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface Node {
   x: number;
@@ -16,11 +17,13 @@ interface Node {
 }
 
 export default function MyceliumAnimation() {
+  const skipAnim = useReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const nodesRef = useRef<Node[]>([]);
 
   useEffect(() => {
+    if (skipAnim) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -151,6 +154,8 @@ export default function MyceliumAnimation() {
       }
     };
   }, []);
+
+  if (skipAnim) return null;
 
   return (
     <canvas

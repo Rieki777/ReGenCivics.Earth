@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface ParallaxSectionProps {
   imageSrc: string;
@@ -7,12 +8,13 @@ interface ParallaxSectionProps {
   overlay?: string;
 }
 
-export function ParallaxSection({ 
-  imageSrc, 
-  children, 
+export function ParallaxSection({
+  imageSrc,
+  children,
   className = "",
   overlay
 }: ParallaxSectionProps) {
+  const skipAnim = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
 
   return (
@@ -23,9 +25,9 @@ export function ParallaxSection({
       {/* Fixed Background with CSS-only parallax - no JavaScript needed */}
       <div 
         className="absolute inset-0 z-0"
-        style={{ 
+        style={{
           backgroundImage: `url(${imageSrc})`,
-          backgroundAttachment: "fixed",
+          backgroundAttachment: skipAnim ? "scroll" : "fixed",
           backgroundPosition: "center",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat"

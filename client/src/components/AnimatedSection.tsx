@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 type AnimationType = 'fade-in' | 'slide-up' | 'slide-left' | 'slide-right' | 'scale-in' | 'blur-in';
 
@@ -23,6 +24,7 @@ export function AnimatedSection({
   staggerChildren = false,
   staggerDelay = 100,
 }: AnimatedSectionProps) {
+  const skipAnim = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -48,6 +50,8 @@ export function AnimatedSection({
   }, [threshold]);
 
   const getInitialStyles = (): React.CSSProperties => {
+    if (skipAnim) return {};
+
     const base: React.CSSProperties = {
       transition: `all 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms`,
     };
@@ -108,6 +112,7 @@ export function StaggeredContainer({
   className = '',
   itemClassName = '',
 }: StaggeredContainerProps) {
+  const skipAnim = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -133,6 +138,8 @@ export function StaggeredContainer({
   }, []);
 
   const getItemStyles = (index: number): React.CSSProperties => {
+    if (skipAnim) return {};
+
     const delay = baseDelay + index * staggerDelay;
     const base: React.CSSProperties = {
       transition: `all 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms`,

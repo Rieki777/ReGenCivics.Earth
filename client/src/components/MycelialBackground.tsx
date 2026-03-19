@@ -2,8 +2,12 @@
  * MycelialBackground Component
  * Creates a subtle light green mycelium thread pattern that connects across pages
  */
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export function MycelialBackground() {
+  const skipAnim = useReducedMotion();
+  if (skipAnim) return null;
+
   return (
     <div
       className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30"

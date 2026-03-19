@@ -94,12 +94,16 @@ export default function Navigation() {
             <img
               src="https://assets.regencivics.earth/DUOLILquhPlWMUAF.png"
               alt="ReGen Civics"
+              width="40"
+              height="40"
               className="w-10 h-10 object-contain md:hidden"
               loading="eager"
             />
             <img
               src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png"
               alt="ReGen Civics"
+              width="40"
+              height="40"
               className="w-10 h-10 object-contain hidden md:block"
               loading="eager"
             />

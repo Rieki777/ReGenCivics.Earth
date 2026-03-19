@@ -10,9 +10,20 @@
  * data-reveal-delay: ms integer
  */
 import { useEffect } from "react";
+import { useReducedMotion } from "./useReducedMotion";
 
 export function useGlobalScrollReveal() {
+  const skipAnim = useReducedMotion();
+
   useEffect(() => {
+    // When reduced motion is preferred, reveal all elements immediately
+    if (skipAnim) {
+      document.querySelectorAll("[data-reveal]").forEach((el) =>
+        el.classList.add("is-revealed")
+      );
+      return;
+    }
+
     const style = document.createElement("style");
     style.textContent = `
       [data-reveal] {

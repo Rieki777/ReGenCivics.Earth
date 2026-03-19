@@ -18,8 +18,10 @@ export default function SiteFooter() {
         <div className="flex flex-col items-center text-center mb-6">
           <div className="flex items-center gap-2 mb-2">
             <img
-              src="/images/logos/regencivics-logo-dark-transparent-rounded.png"
+              src="/images/logos/regencivics-logo-dark-transparent-rounded.webp"
               alt="ReGen Civics"
+              width="56"
+              height="56"
               className="h-14 w-14 object-contain"
             />
           </div>
