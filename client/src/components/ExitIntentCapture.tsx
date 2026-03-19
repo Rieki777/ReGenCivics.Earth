@@ -5,7 +5,7 @@
  * Messaging adapts to the current page context.
  */
 import { useState, useEffect, useCallback } from "react";
-import { X, Mail, FileText, Shield, Leaf, Handshake, Gamepad2 } from "lucide-react";
+import { X, Mail, FileText, Shield, Leaf, Handshake, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
@@ -65,7 +65,7 @@ const contextConfig: Record<PageContext, {
     successMessage: "Welcome to the alliance network! We'll reach out about partnership opportunities.",
   },
   game: {
-    icon: <Gamepad2 className="w-5 h-5 text-[#7dd87d]" />,
+    icon: <Map className="w-5 h-5 text-[#7dd87d]" />,
     headline: "Play the Infinite Game",
     subline: "Get quest updates and community news",
     body: "Be the first to know about new quests, community challenges, and ways to earn rewards while regenerating your local ecosystem.",

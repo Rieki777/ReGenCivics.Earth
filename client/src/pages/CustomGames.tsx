@@ -11,7 +11,7 @@ import { SEO } from "@/components/SEO";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { BackButton } from "@/components/BackButton";
 import { CustomGameWaitlistForm } from "@/components/CustomGameWaitlistForm";
-import { Gamepad2, Sparkles, ArrowRight, Map, Users, Sprout, X } from "lucide-react";
+import { Sparkles, ArrowRight, Map, Users, Sprout, X } from "lucide-react";
 import { PageWrapper } from "@/components/PageWrapper";
 
 const FEATURE_CARDS = [
@@ -22,7 +22,7 @@ const FEATURE_CARDS = [
     detail: "We help you articulate and encode the values, rituals, and culture practices that will hold your community together through the hard parts. This becomes the living foundation that new members enter into from day one.",
   },
   {
-    icon: Gamepad2,
+    icon: Map,
     title: "Clear Agreements, Roles, and Decision-Making",
     desc: "Custom governance flows for your project: who decides what, how disputes are resolved, how new members join.",
     detail: "We design the decision-making architecture specific to your project. Who has a say, how conflicts get resolved, how new members move from visitor to contributor to core team. Built for real communities, not boardrooms.",

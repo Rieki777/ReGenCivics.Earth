@@ -369,7 +369,7 @@ export default function Community() {
           {/* General */}
           <button
             onClick={() => handleSectionClick('general')}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'general' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group col-span-2 sm:col-span-1 ${activeSection === 'general' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]" />
             <img src="/game-infinite-forest.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -420,7 +420,7 @@ export default function Community() {
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'fire' ? 'ring-2 ring-[#fb923c] shadow-lg shadow-[#fb923c]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#7c2d12] to-[#9a3412]" />
-            <img src="/earned-through-quests.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:opacity-45 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <img src="/images/quests/quest-00-fire.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-45 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="text-2xl mb-1">🔥</div>
@@ -433,7 +433,7 @@ export default function Community() {
           {/* Air */}
           <button
             onClick={() => handleSectionClick('air')}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group col-span-2 sm:col-span-1 ${activeSection === 'air' ? 'ring-2 ring-slate-400 shadow-lg shadow-slate-400/20' : 'hover:shadow-md'}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'air' ? 'ring-2 ring-slate-400 shadow-lg shadow-slate-400/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#374151] to-[#4b5563]" />
             <img src="/blog-hero-bridging-worlds.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -778,51 +778,57 @@ export default function Community() {
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Quests and challenges. Where regeneration gets real.</p>
 
-            <div className="bg-amber-100/60 rounded-xl p-4 mb-4 flex items-center justify-between gap-3">
-              <p className="text-amber-900/80 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
-                Looking for your next quest? The game is on.
-              </p>
-              <Link href="/quest">
-                <span className="text-amber-700 text-sm font-semibold hover:text-amber-900 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1">
-                  Explore Quests <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              </Link>
-            </div>
+            <div className="grid grid-cols-2 gap-3">
 
-            {!questThreads || questThreads.length === 0 ? (
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 text-center">
-                <p className="text-[#1a472a]/50 text-sm mb-3">Quest threads will appear here as they're created.</p>
-                <Link href="/community/c/quests-gameplay">
-                  <span className="inline-flex items-center gap-1 text-amber-700 text-sm font-semibold hover:text-amber-900 transition-colors cursor-pointer">
-                    Browse Quests &amp; Gameplay <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {questThreads.map((thread: { id: number; title: string; replyCount: number }) => (
-                  <Link key={thread.id} href={`/community/post/${thread.id}`}>
-                    <div className="bg-white rounded-xl p-4 border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                        <Gamepad2 className="w-4 h-4 text-amber-700" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-amber-800 transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
-                          {thread.title}
-                        </p>
-                        <p className="text-[#1a472a]/50 text-xs">{thread.replyCount} {thread.replyCount === 1 ? 'reply' : 'replies'}</p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-amber-400/60 group-hover:text-amber-600 group-hover:translate-x-1 transition-all flex-shrink-0" />
-                    </div>
-                  </Link>
-                ))}
-                <Link href="/community/c/quests-gameplay">
-                  <span className="inline-flex items-center gap-1 text-amber-700 text-sm font-semibold hover:text-amber-900 transition-colors cursor-pointer mt-2">
-                    View all quest threads <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </Link>
-              </div>
-            )}
+              {/* Rites of Passage */}
+              <Link href="/community/c/quests-gameplay">
+                <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-05-rites-of-love.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Rites of Passage</p>
+                    <p className="text-white/60 text-xs">Quests 1–13</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* All Quests */}
+              <Link href="/quest">
+                <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-00-fire.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>All Quests</p>
+                    <p className="text-white/60 text-xs">Browse the full list</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Epic Quests */}
+              <Link href="/quest">
+                <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-08-medicine-journey.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Epic Quests</p>
+                    <p className="text-white/60 text-xs">Long-form challenges</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* General Discussion */}
+              <Link href="/community/c/quests-gameplay">
+                <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-01-potion-brewing.webp" alt="" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>General Discussion</p>
+                    <p className="text-white/60 text-xs">Quest talk, new ideas</p>
+                  </div>
+                </div>
+              </Link>
+
+            </div>
 
             {isAdmin && (
               <div className="mt-4 pt-4 border-t border-amber-200/60">
@@ -971,7 +977,14 @@ export default function Community() {
             <p className="text-[#4a7c59] text-sm mt-1 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
               Stay updated with the best conversations from the week.
             </p>
-            {!alreadySubscribed && <NewsletterSignupInline />}
+            {alreadySubscribed ? (
+              <p className="text-[#4a7c59] text-xs flex items-center gap-1.5">
+                ✓ You're subscribed.{" "}
+                <a href="/connect" className="underline underline-offset-2 hover:text-[#1a472a] transition-colors">Manage preferences</a>
+              </p>
+            ) : (
+              <NewsletterSignupInline />
+            )}
           </div>
         </ScrollRevealMotion>
 

@@ -4,7 +4,7 @@
  */
 import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Search, ArrowRight, Leaf, Coins, Users, Gamepad2, BookOpen, Calendar, FileText, Shield, Globe, HelpCircle } from "lucide-react";
+import { Search, ArrowRight, Leaf, Coins, Users, Map, BookOpen, Calendar, FileText, Shield, Globe, HelpCircle } from "lucide-react";
 import {
   CommandDialog,
   CommandInput,
@@ -30,8 +30,8 @@ const searchItems: { group: string; items: SearchItem[] }[] = [
       { label: "Investors / Fund", href: "/fund", keywords: "invest fund money capital returns", icon: <Coins className="w-4 h-4" /> },
       { label: "Land Projects", href: "/land", keywords: "land projects ecovillage farm regenerative", icon: <Leaf className="w-4 h-4" /> },
       { label: "Alliance Partners", href: "/ally", keywords: "alliance partner organization ngo", icon: <Users className="w-4 h-4" /> },
-      { label: "Players", href: "/play", keywords: "play player game tokens", icon: <Gamepad2 className="w-4 h-4" /> },
-      { label: "Game Overview", href: "/game", keywords: "game infinite quests tokens mechanics", icon: <Gamepad2 className="w-4 h-4" /> },
+      { label: "Players", href: "/play", keywords: "play player game tokens", icon: <Map className="w-4 h-4" /> },
+      { label: "Game Overview", href: "/game", keywords: "game infinite quests tokens mechanics", icon: <Map className="w-4 h-4" /> },
       { label: "Investment Thesis", href: "/opportunity", keywords: "opportunity invest thesis memorandum", icon: <FileText className="w-4 h-4" /> },
     ],
   },
@@ -49,7 +49,7 @@ const searchItems: { group: string; items: SearchItem[] }[] = [
   {
     group: "Game & Tools",
     items: [
-      { label: "Start Questing", href: "/quest", keywords: "quest mission task earn tokens", icon: <Gamepad2 className="w-4 h-4" /> },
+      { label: "Start Questing", href: "/quest", keywords: "quest mission task earn tokens", icon: <Map className="w-4 h-4" /> },
       { label: "Crowd Pooling", href: "/crowd-pooling", keywords: "crowd pool calculator contribute", icon: <Coins className="w-4 h-4" /> },
       { label: "Crowd Pool Campaigns", href: "/crowd-pooling-campaigns", keywords: "campaigns active crowd pool", icon: <Coins className="w-4 h-4" /> },
       { label: "Contribution Calculator", href: "/calculator", keywords: "calculator contribution 8 forms capital", icon: <Coins className="w-4 h-4" /> },

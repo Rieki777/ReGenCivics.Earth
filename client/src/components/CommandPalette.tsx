@@ -7,7 +7,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Command } from "cmdk";
 import { useLocation } from "wouter";
 import {
-  Coins, Sprout, Handshake, Heart, Gamepad2, Users, Calendar,
+  Coins, Sprout, Handshake, Heart, Users, Calendar,
   BookOpen, Globe, FileText, Shield, AlertTriangle, Map, MessageCircle,
   Layers, Search, X,
 } from "lucide-react";
@@ -32,7 +32,7 @@ const PAGES: PageEntry[] = [
   { label: "Letter of Intent", description: "Secure your investor spot", href: "/loi", icon: <FileText className="w-4 h-4 text-[#7dd87d]" />, group: "Invest" },
   { label: "Investor Form", description: "Submit investor interest", href: "/investor", icon: <Coins className="w-4 h-4 text-[#ffd700]" />, group: "Invest" },
   // Play
-  { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Gamepad2 className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
+  { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <span className="text-sm">🧙</span>, group: "Play" },
   { label: "Crowd Pool Campaigns", description: "Browse active campaigns", href: "/crowd-pooling-projects", icon: <Users className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   // Community

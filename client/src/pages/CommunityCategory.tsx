@@ -361,7 +361,14 @@ export default function CommunityCategory() {
           <p className="text-white/70 text-sm font-medium mb-3" style={{ fontFamily: 'var(--font-display)' }}>
             Stay updated: get the ReGen Civics digest in your inbox
           </p>
-          {!alreadySubscribed && <NewsletterSignupInline />}
+          {alreadySubscribed ? (
+            <p className="text-white/50 text-xs flex items-center gap-1.5">
+              ✓ You're subscribed.{" "}
+              <a href="/connect" className="underline underline-offset-2 hover:text-white/80 transition-colors">Manage preferences</a>
+            </p>
+          ) : (
+            <NewsletterSignupInline />
+          )}
         </div>
       </section>
     </div>
