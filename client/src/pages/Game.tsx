@@ -232,6 +232,7 @@ export default function Game() {
       <ParallaxSection
         imageSrc="/backgrounds/game-seeds-intro-baked.webp"
         className="min-h-[60vh]"
+        overlay="rgba(5, 28, 12, 0.72)"
       >
         <div className="container flex flex-col items-center justify-center h-full text-center px-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#7dd87d]/20 rounded-full mb-6">
@@ -1126,6 +1127,7 @@ export default function Game() {
       {/* Infinite Game Philosophy Section */}
       <ParallaxSection
         imageSrc="/backgrounds/game-seeds-legacy-baked.webp"
+        overlay="rgba(5, 28, 12, 0.72)"
       >
         <div className="container py-16 px-4">
           <div className="text-center mb-12">
