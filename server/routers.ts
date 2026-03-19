@@ -3267,7 +3267,8 @@ export const appRouter = router({
 
     activeOrganisationThreads: publicProcedure.query(async () => {
       const cats = await db.listForumCategories();
-      const cat = cats.find(c => c.slug === "active-organisations");
+      // alliance-partners has the actual content; active-organisations is the fallback
+      const cat = cats.find(c => c.slug === "alliance-partners") ?? cats.find(c => c.slug === "active-organisations");
       if (!cat) return [];
       const posts = await db.listForumPosts(cat.id, 200, 0);
       return posts.map(p => ({ id: p.id, title: p.title }));
