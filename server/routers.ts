@@ -4262,7 +4262,14 @@ export const appRouter = router({
           orgName: input.orgName,
           formData: input.formData ?? null,
         });
-        return { id };
+        // Create (or find existing) forum thread for this entity immediately on claim.
+        // The claimant is the author so they can introduce themselves right away.
+        const forumThreadId = await db.ensureEntityForumThread(
+          input.orgType,
+          input.orgName,
+          ctx.user.id,
+        );
+        return { id, forumThreadId };
       }),
 
     // Get own claims

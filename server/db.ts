@@ -2666,8 +2666,10 @@ export async function ensureEntityForumThread(
   if (existing.length) return existing[0].id;
 
   // Create the thread
-  const typeLabel = entityType === 'land_project' ? 'land project' : 'organisation';
-  const content = `## ${entityName}\n\nThis is the community space for ${entityName}. Use this thread to ask questions, share updates, explore collaboration, and connect with others who are involved.\n\nIf you work with ${entityName}, introduce yourself below.`;
+  const isLandProject = entityType === 'land_project';
+  const content = isLandProject
+    ? `## Welcome to ${entityName}'s space in the Gathering Grove\n\nYou're the steward here. This is your project's home in the ReGen Civics community.\n\nStart by introducing yourself: who you are, what this land holds, and what you're building. People want to know the human behind the project.\n\n---\n\n*This thread was created when you claimed ${entityName}. It lives in the Land Project Spaces section of the forum.*`
+    : `## Welcome to ${entityName}'s space in the Gathering Grove\n\nYou're representing this organisation here. This is your alliance partner's home in the ReGen Civics community.\n\nStart by introducing your organisation: what it does, how it connects to the regenerative mission, and how people can get involved.\n\n---\n\n*This thread was created when you claimed ${entityName}. It lives in the Alliance Organisations section of the forum.*`;
 
   const [result] = await db.insert(forumPosts).values({
     categoryId,

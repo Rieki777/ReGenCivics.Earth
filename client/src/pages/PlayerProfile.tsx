@@ -2165,6 +2165,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string; type: "land_project" | "alliance_org" } | null>(null);
+  const [newThread, setNewThread] = useState<{ name: string; threadId: number } | null>(null);
   const claimMutation = trpc.orgClaims.claim.useMutation();
 
   const { data: searchResults } = trpc.orgClaims.search.useQuery(
@@ -2174,7 +2175,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
 
   const handleClaim = async () => {
     if (!selectedOrg) return;
-    await claimMutation.mutateAsync({
+    const result = await claimMutation.mutateAsync({
       orgType: selectedOrg.type,
       orgId: selectedOrg.id,
       orgName: selectedOrg.name,
@@ -2182,6 +2183,9 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
     setShowClaimForm(false);
     setSelectedOrg(null);
     setSearchQuery("");
+    if (result.forumThreadId) {
+      setNewThread({ name: selectedOrg.name, threadId: result.forumThreadId });
+    }
   };
 
   return (
@@ -2191,12 +2195,38 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
           <Building2 className="w-4 h-4 text-[#7dd87d]" />
           <h3 className="text-white font-semibold text-sm uppercase tracking-wider">Organisation & Land Project Claims</h3>
         </div>
-        {!showClaimForm && (
+        {!showClaimForm && !newThread && (
           <button onClick={() => setShowClaimForm(true)} className="text-[#7dd87d] text-xs font-medium hover:underline">
             + Claim a listing
           </button>
         )}
       </div>
+
+      {/* "Your space is ready" confirmation shown after a successful claim */}
+      {newThread && (
+        <div className="mb-4 rounded-xl bg-[#7dd87d]/10 border border-[#7dd87d]/40 p-4">
+          <p className="text-[#7dd87d] font-bold text-sm mb-1">🌱 Your forum space is ready</p>
+          <p className="text-white/70 text-sm mb-3">
+            Your claim for <strong className="text-white">{newThread.name}</strong> is submitted and under review.
+            Your community space in the Gathering Grove is already live. Go introduce yourself and set the tone for your space.
+          </p>
+          <div className="flex gap-2">
+            <a
+              href={`/community/post/${newThread.threadId}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#7dd87d] text-[#1a472a] text-sm font-bold hover:bg-[#6bc86b] transition-colors"
+            >
+              Go to your forum space →
+            </a>
+            <button
+              onClick={() => setNewThread(null)}
+              className="px-4 py-2 rounded-full bg-white/10 text-white/60 text-sm hover:bg-white/20 transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {orgClaims.length > 0 && (
         <div className="space-y-2 mb-4">
           {orgClaims.map((claim) => (
