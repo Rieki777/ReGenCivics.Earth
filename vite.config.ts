@@ -12,7 +12,11 @@ export default defineConfig(({ mode }): UserConfig => ({
       registerType: "autoUpdate",
       strategies: "generateSW",
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,webp,svg,woff2}"],
+        // 5 MB limit to accommodate large vendor JS chunks (visualization, streamdown)
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Exclude OG images — social crawlers always fetch fresh, no offline value
+        globPatterns: ["**/*.{js,css,html,ico,webp,svg,woff2}", "images/**/*.png"],
+        globIgnores: ["og/**", "og-default.*"],
         runtimeCaching: [
           {
             urlPattern: /\/api\//,

@@ -132,7 +132,7 @@ export default function Socials() {
           </Link>
           <div className="flex items-center gap-2">
             <img
-              src="/images/logos/regencivics-logo-dark-transparent-rounded.png"
+              src="/images/logos/regencivics-logo-dark-transparent-rounded.webp"
               alt="ReGen Civics"
               width="32"
               height="32"

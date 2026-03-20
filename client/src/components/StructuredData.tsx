@@ -14,7 +14,7 @@ const organizationSchema = {
   "name": "ReGen Civics Alliance",
   "alternateName": "ReGen Civics",
   "url": BASE_URL,
-  "logo": "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.png",
+  "logo": "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp",
   "description": "A venture fund and alliance helping regenerative land projects succeed through capital, governance tools, and a supportive network.",
   "foundingDate": "2023",
   "sameAs": [
