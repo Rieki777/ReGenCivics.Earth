@@ -46,7 +46,6 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO, pageSEO } from "@/components/SEO";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
-import GlobeMap from "@/components/GlobeMap";
 import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";

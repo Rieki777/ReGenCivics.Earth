@@ -109,4 +109,39 @@ export const schemas = {
     eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
   }),
+
+  /** BlogPosting — for individual blog post pages. Enables Google Article rich results. */
+  blogPosting: (post: {
+    title: string;
+    excerpt: string;
+    author: string;
+    date: string;
+    image: string;
+    url: string;
+    tags?: string[];
+  }) => ({
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.date,
+    dateModified: post.date,
+    author: {
+      "@type": "Person",
+      name: post.author,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "ReGen Civics",
+      url: "https://regencivics.earth",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp",
+      },
+    },
+    image: post.image.startsWith("http") ? post.image : `https://regencivics.earth${post.image}`,
+    url: post.url,
+    mainEntityOfPage: { "@type": "WebPage", "@id": post.url },
+    keywords: post.tags?.join(", "),
+  }),
 };

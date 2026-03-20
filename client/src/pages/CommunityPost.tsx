@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { BackButton } from "@/components/BackButton";
+import { SEO } from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -352,6 +353,13 @@ export default function CommunityPost() {
   return (
     <PageTransition>
     <div className="min-h-screen bg-[#f8f5f0]">
+      <SEO
+        title={`${post.title} | ReGen Civics Community`}
+        description={post.content?.slice(0, 155) || `A forum post by ${post.authorName} in the ReGen Civics community.`}
+        url={`/community/post/${post.id}`}
+        type="article"
+        author={post.authorName}
+      />
       <BackButton />
 
       {/* Header */}

@@ -1,10 +1,11 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, adminProcedure, superadminProcedure, router } from "./_core/trpc";
 import { sanitizeInput } from "./_core/security";
 import { z } from "zod";
 import * as db from "./db";
+import { getDb } from "./db";
 import { TRPCError } from "@trpc/server";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
@@ -14,17 +15,45 @@ import { notifyIfEnabled, getNotificationTypeForPath } from "./notify-with-prefs
 import { invokeLLM } from "./_core/llm";
 import { CHAT_SYSTEM_PROMPT } from "./_core/oauth";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "./bannerHelpers";
-import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
+import { SignJWT, jwtVerify } from "jose";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, forumReplies, forumCategories, postReactions, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims, questEndorsements, applications as applicationsTable, blogEdits, questSuggestions, bannedEmails, applicationEvents, adminNotifications } from "../drizzle/schema";
-import { superadminProcedure } from "./_core/trpc";
-import { eq, sql, gt, count } from "drizzle-orm";
-import { getDb } from "./db";
+import { forumPosts, forumReplies, forumCategories, postReactions, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims, questEndorsements, applications as applicationsTable, blogEdits, questSuggestions, bannedEmails, applicationEvents, adminNotifications, newsletterSubscribers } from "../drizzle/schema";
+import { eq, sql, gt, count, like, or } from "drizzle-orm";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+
+  // Global site search — searches forum posts and campaigns by keyword
+  globalSearch: router({
+    query: publicProcedure
+      .input(z.object({ q: z.string().min(2).max(100) }))
+      .query(async ({ input }) => {
+        const term = `%${input.q}%`;
+        const dbConn = await getDb();
+        if (!dbConn) return { forumPosts: [], campaigns: [] };
+
+        const [forumResults, campaignResults] = await Promise.all([
+          dbConn.select({ id: forumPosts.id, title: forumPosts.title })
+            .from(forumPosts)
+            .where(or(like(forumPosts.title, term), like(forumPosts.content, term)))
+            .limit(5),
+          dbConn.select({ id: campaignsTable.id, title: campaignsTable.title })
+            .from(campaignsTable)
+            .where(or(
+              like(campaignsTable.title, term),
+              like(campaignsTable.description, term),
+            ))
+            .limit(5),
+        ]);
+
+        return {
+          forumPosts: forumResults.map(r => ({ id: r.id, title: r.title ?? '', url: `/community/post/${r.id}` })),
+          campaigns: campaignResults.map(r => ({ id: r.id, title: r.title ?? '', url: `/crowd-pooling-projects/${r.id}` })),
+        };
+      }),
+  }),
 
   // File upload router
   files: router({
@@ -177,7 +206,7 @@ export const appRouter = router({
         // Verify user is an approved steward for this application (orgId is the application ID as string)
         const claims = await db.getOrgClaimsByUser(ctx.user.id);
         const approvedClaim = claims.find(
-          (c: any) => c.orgId === String(input.applicationId) && c.status === 'approved'
+          (c) => c.orgId === String(input.applicationId) && c.status === 'approved'
         );
         if (!approvedClaim && ctx.user.role !== 'admin') {
           throw new TRPCError({ code: "FORBIDDEN", message: "You are not the approved steward for this listing" });
@@ -194,6 +223,7 @@ export const appRouter = router({
     submit: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        checkRateLimit(ctx, "application_submit");
         const application = await db.getApplicationById(input.id);
         if (!application) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
@@ -440,11 +470,11 @@ export const appRouter = router({
       const allApps = await db.getAllApplications();
       // Only show submitted/under_review/approved applications with location data
       return allApps
-        .filter((app: any) => 
-          ["submitted", "under_review", "approved", "active"].includes(app.status) &&
+        .filter((app) =>
+          ["submitted", "under_review", "approved", "active"].includes(app.status ?? '') &&
           app.latitude && app.longitude
         )
-        .map((app: any) => ({
+        .map((app) => ({
           id: app.id,
           name: app.projectName,
           type: app.projectType,
@@ -475,14 +505,14 @@ export const appRouter = router({
         let filtered = combined;
         if (input.search && input.search.trim()) {
           const q = input.search.toLowerCase();
-          filtered = combined.filter((app: any) => 
+          filtered = combined.filter((app) =>
             app.projectName?.toLowerCase().includes(q) ||
             app.contactName?.toLowerCase().includes(q) ||
             app.location?.toLowerCase().includes(q)
           );
         }
-        
-        return filtered.map((app: any) => ({
+
+        return filtered.map((app) => ({
           id: app.id,
           projectName: app.projectName || '',
           contactName: app.contactName || '',
@@ -1012,7 +1042,7 @@ export const appRouter = router({
         if (input.data.inquiryTypes !== undefined) updateData.inquiryTypes = JSON.stringify(input.data.inquiryTypes);
         if (input.data.isActive !== undefined) updateData.isActive = input.data.isActive ? 1 : 0;
         
-        await db.updateReviewerEmail(input.id, updateData as any);
+        await db.updateReviewerEmail(input.id, updateData as Parameters<typeof db.updateReviewerEmail>[1]);
         return { success: true };
       }),
 
@@ -2041,7 +2071,7 @@ export const appRouter = router({
 
   // Newsletter Subscribers router
   newsletter: router({
-    // Subscribe to newsletter (public - no login required)
+    // Subscribe to newsletter — creates pending subscriber (isActive=0) and sends confirmation email
     subscribe: publicProcedure
       .input(z.object({
         email: z.string().email(),
@@ -2054,29 +2084,74 @@ export const appRouter = router({
           email: input.email,
           name: input.name || null,
           source: input.source,
-          isActive: 1,
+          isActive: 0, // pending email confirmation (GDPR double opt-in)
         });
-        return { id: subscriberId, success: true };
+
+        // Sign a 24h confirmation JWT and send email (best-effort)
+        try {
+          const secret = new TextEncoder().encode(ENV.cookieSecret);
+          const token = await new SignJWT({ email: input.email, purpose: 'newsletter-confirm' })
+            .setProtectedHeader({ alg: 'HS256' })
+            .setExpirationTime('24h')
+            .sign(secret);
+          const confirmUrl = `${ENV.appUrl}/newsletter/confirm?token=${encodeURIComponent(token)}`;
+          const { sendEmail } = await import("./_core/email");
+          await sendEmail({
+            to: input.email,
+            subject: 'Confirm your ReGen Civics newsletter subscription',
+            html: `
+              <h2>Welcome to the ReGen Civics newsletter!</h2>
+              <p>Click the button below to confirm your subscription and stay informed about the Regenerative Renaissance.</p>
+              <p style="margin: 24px 0;">
+                <a href="${confirmUrl}" style="background:#1a472a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
+                  Confirm Subscription
+                </a>
+              </p>
+              <p style="color:#888;font-size:13px;">This link expires in 24 hours. If you didn't sign up, you can safely ignore this email.</p>
+            `,
+          });
+        } catch {
+          // Email failure is non-fatal — subscriber record is created, admin can manually activate
+        }
+
+        return { id: subscriberId, success: true, pendingConfirmation: true };
       }),
 
-    // Get all newsletter subscribers (password protected admin page)
-    list: publicProcedure.query(async () => {
+    // Confirm newsletter subscription via email link (public)
+    confirm: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .mutation(async ({ input }) => {
+        try {
+          const secret = new TextEncoder().encode(ENV.cookieSecret);
+          const { payload } = await jwtVerify(input.token, secret);
+          if (payload.purpose !== 'newsletter-confirm' || typeof payload.email !== 'string') {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid confirmation token' });
+          }
+          await db.activateNewsletterSubscriber(payload.email);
+          return { success: true };
+        } catch (err) {
+          if (err instanceof TRPCError) throw err;
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Confirmation link is invalid or has expired' });
+        }
+      }),
+
+    // Get all newsletter subscribers (admin only)
+    list: adminProcedure.query(async () => {
       return db.getAllNewsletterSubscribers();
     }),
 
-    // Admin: Get active newsletter subscribers
-    listActive: protectedProcedure.query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
+    // Admin: Get active newsletter subscribers (admin only)
+    listActive: adminProcedure.query(async () => {
       return db.getActiveNewsletterSubscribers();
     }),
 
-    // Unsubscribe from newsletter (public)
+    // Unsubscribe from newsletter (public — rate limited to prevent email enumeration)
     unsubscribe: publicProcedure
       .input(z.object({ email: z.string().email() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
+        checkRateLimit(ctx, "newsletter_unsubscribe");
         await db.unsubscribeNewsletter(input.email);
+        // Always return success to prevent email enumeration
         return { success: true };
       }),
 
@@ -2085,10 +2160,8 @@ export const appRouter = router({
       if (!ctx.user.email) return { subscribed: false };
       const dbConn = await getDb();
       if (!dbConn) return { subscribed: false };
-      const { newsletterSubscribers: tbl } = await import("../drizzle/schema");
-      const { eq } = await import("drizzle-orm");
-      const rows = await dbConn.select({ id: tbl.id }).from(tbl)
-        .where(eq(tbl.email, ctx.user.email)).limit(1);
+      const rows = await dbConn.select({ id: newsletterSubscribers.id }).from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.email, ctx.user.email)).limit(1);
       return { subscribed: rows.length > 0 };
     }),
   }),
@@ -2948,8 +3021,8 @@ export const appRouter = router({
       const allInvestors = await db.getAllInvestorInquiries();
       const allInquiries = await db.getAllGeneralInquiries();
 
-      const newInvestorCount = allInvestors.filter((i: any) => i.status === 'new' || !i.status).length;
-      const pendingInquiryCount = allInquiries.filter((i: any) => i.status === 'new' || i.status === 'pending').length;
+      const newInvestorCount = allInvestors.filter((i) => i.status === 'new' || !i.status).length;
+      const pendingInquiryCount = allInquiries.filter((i) => i.status === 'new' || i.status === 'pending').length;
 
       return {
         totalApplications: appStats?.totalApplications ?? 0,
@@ -4795,9 +4868,13 @@ ${contextBlock || "No specific context provided."}
           const d = await getDb();
           if (d) {
             const likeVal = `%${input.oldFilename}%`;
-            const fRes = await d.execute(sql`UPDATE forumPosts SET generatedImageUrl = ${publicUrl} WHERE generatedImageUrl LIKE ${likeVal}`) as any;
-            const cRes = await d.execute(sql`UPDATE campaigns SET generatedImageUrl = ${publicUrl} WHERE generatedImageUrl LIKE ${likeVal}`) as any;
-            replaced = (fRes?.affectedRows ?? 0) + (cRes?.affectedRows ?? 0);
+            const fRes = await d.update(forumPosts)
+              .set({ generatedImageUrl: publicUrl })
+              .where(like(forumPosts.generatedImageUrl, likeVal));
+            const cRes = await d.update(campaignsTable)
+              .set({ generatedImageUrl: publicUrl })
+              .where(like(campaignsTable.generatedImageUrl, likeVal));
+            replaced = ((fRes as any)?.rowsAffected ?? 0) + ((cRes as any)?.rowsAffected ?? 0);
           }
         }
 
@@ -4809,14 +4886,16 @@ ${contextBlock || "No specific context provided."}
       .query(async ({ input }) => {
         const d = await getDb();
         if (!d) return { usages: [] };
-        const like = `%${input.filename}%`;
-        const forumRows = await d.execute(sql`SELECT id, title FROM forumPosts WHERE generatedImageUrl LIKE ${like}`) as any;
-        const campaignRows = await d.execute(sql`SELECT id, title FROM campaigns WHERE generatedImageUrl LIKE ${like}`) as any;
-        const forumArr: any[] = Array.isArray(forumRows) ? forumRows : (forumRows?.rows ?? []);
-        const campaignArr: any[] = Array.isArray(campaignRows) ? campaignRows : (campaignRows?.rows ?? []);
+        const likeVal = `%${input.filename}%`;
+        const forumRows = await d.select({ id: forumPosts.id, title: forumPosts.title })
+          .from(forumPosts)
+          .where(like(forumPosts.generatedImageUrl, likeVal));
+        const campaignRows = await d.select({ id: campaignsTable.id, title: campaignsTable.title })
+          .from(campaignsTable)
+          .where(like(campaignsTable.generatedImageUrl, likeVal));
         const usages = [
-          ...forumArr.map((r: any) => ({ source: "forum", id: String(r.id), title: r.title })),
-          ...campaignArr.map((r: any) => ({ source: "campaign", id: String(r.id), title: r.title })),
+          ...forumRows.map(r => ({ source: "forum", id: String(r.id), title: r.title })),
+          ...campaignRows.map(r => ({ source: "campaign", id: String(r.id), title: r.title })),
         ];
         return { usages };
       }),

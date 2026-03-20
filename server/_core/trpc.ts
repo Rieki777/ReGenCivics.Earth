@@ -53,9 +53,11 @@ const requireUser = t.middleware(async opts => {
   });
 });
 
-export const protectedProcedure = t.procedure.use(requireUser);
+// Chain CSRF protection into all authenticated procedures so mutations on
+// protected/admin/superadmin endpoints are also validated.
+export const protectedProcedure = t.procedure.use(csrfProtection).use(requireUser);
 
-export const adminProcedure = t.procedure.use(
+export const adminProcedure = t.procedure.use(csrfProtection).use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
@@ -72,7 +74,7 @@ export const adminProcedure = t.procedure.use(
   }),
 );
 
-export const superadminProcedure = t.procedure.use(
+export const superadminProcedure = t.procedure.use(csrfProtection).use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 

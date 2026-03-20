@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SEO, pageSEO } from "@/components/SEO";
+import { JsonLD, schemas } from "@/components/JsonLD";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileUpload } from "@/components/FileUpload";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Save, MapPin, Map as MapIcon, HelpCircle } from "lucide-react";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { MapView } from "@/components/Map";
@@ -58,6 +59,15 @@ type FormData = {
   documents: UploadedFile[];
 };
 
+const LS_KEY = 'regen_apply_draft';
+
+function loadDraft(): Partial<FormData> | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 const INITIAL_FORM_DATA: FormData = {
   projectName: "",
   projectType: "",
@@ -95,9 +105,26 @@ export default function Apply() {
   const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
+  const [formData, setFormData] = useState<FormData>(() => {
+    const draft = loadDraft();
+    return draft ? { ...INITIAL_FORM_DATA, ...draft } : INITIAL_FORM_DATA;
+  });
+  const [draftRestored, setDraftRestored] = useState(() => loadDraft() !== null);
   const [applicationId, setApplicationId] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Autosave to localStorage (debounced 800ms) — docs/files excluded to avoid quota issues
+  const lsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (lsTimerRef.current) clearTimeout(lsTimerRef.current);
+    lsTimerRef.current = setTimeout(() => {
+      try {
+        const { documents: _docs, ...rest } = formData;
+        localStorage.setItem(LS_KEY, JSON.stringify(rest));
+      } catch { /* storage quota exceeded — ignore */ }
+    }, 800);
+    return () => { if (lsTimerRef.current) clearTimeout(lsTimerRef.current); };
+  }, [formData]);
 
   const utils = trpc.useUtils();
   const createMutation = trpc.applications.create.useMutation();
@@ -164,6 +191,7 @@ export default function Apply() {
     try {
       const id = await saveDraft();
       await submitMutation.mutateAsync({ id });
+      try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
       navigate("/apply/success");
     } catch (err: any) {
       const msg = err?.message || "Submission failed. Please try again.";
@@ -176,6 +204,12 @@ export default function Apply() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
       <SEO {...pageSEO.apply} />
+      <JsonLD data={schemas.faqPage([
+        { question: "Who can apply to ReGen Civics?", answer: "Any regenerative land project — ecovillages, food forests, intentional communities, regenerative farms — can apply. Projects at any stage are welcome." },
+        { question: "When do applications open?", answer: "Season 2 applications are currently being reviewed. Season 3 opens in 2026. Sign up to be notified when the next round opens." },
+        { question: "Is there a fee to apply?", answer: "No. There is no fee to apply to the ReGen Civics program." },
+        { question: "How long does the application process take?", answer: "The review process typically takes 4–8 weeks after submission. You will be notified by email of the decision." },
+      ])} />
       <BackButton />
         <Loader2 className="w-8 h-8 animate-spin text-[#4a7c59]" />
       </div>
@@ -244,6 +278,24 @@ export default function Apply() {
 
         {/* Form Steps */}
         <Card className="p-8 bg-white">
+          {/* Draft restored banner */}
+          {draftRestored && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[#4a7c59]/30 bg-[#f0f7f0] px-4 py-3 text-sm text-[#1a472a]">
+              <span>Draft restored from your last session.</span>
+              <button
+                type="button"
+                className="text-xs underline opacity-70 hover:opacity-100"
+                onClick={() => {
+                  setFormData(INITIAL_FORM_DATA);
+                  try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+                  setDraftRestored(false);
+                }}
+              >
+                Clear &amp; start over
+              </button>
+            </div>
+          )}
+
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="space-y-6">

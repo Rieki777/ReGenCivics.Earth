@@ -68,6 +68,8 @@ export default defineConfig(({ mode }): UserConfig => ({
     target: "es2020",
     cssMinify: true,
     reportCompressedSize: false,
+    // Ensure <link rel="modulepreload"> is injected for all entry chunks (polyfill for Safari < 17)
+    modulePreload: { polyfill: true },
     rollupOptions: {
       output: {
         // Function-based manualChunks is more reliable than object syntax for node_modules
@@ -75,8 +77,12 @@ export default defineConfig(({ mode }): UserConfig => ({
           if (!id.includes('node_modules')) return;
           // React core — split first so it caches independently of app code
           if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) return 'react-vendor';
-          // Routing
-          if (id.includes('/wouter/')) return 'router';
+          // Routing — intentionally NOT split into its own chunk.
+          // Wouter in a separate chunk causes a React 19 init order error:
+          // "Cannot set properties of undefined (setting 'Activity')"
+          // because react-vendor hasn't finished initializing when wouter loads.
+          // Keeping wouter in the main bundle ensures React is fully ready first.
+          // if (id.includes('/wouter/')) return 'router';
           // tRPC + data fetching
           if (id.includes('/@trpc/') || id.includes('/@tanstack/')) return 'trpc-vendor';
           // Icons — large, changes rarely

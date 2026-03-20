@@ -2,8 +2,8 @@
  * Map Page - Full-screen interactive globe map
  * Shows all land projects, alliance organizations, and applicants
  */
-import { Suspense } from "react";
-import GlobeMap from "@/components/GlobeMap";
+import { Suspense, lazy } from "react";
+const GlobeMap = lazy(() => import("@/components/GlobeMap"));
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { BannerDisplay } from "@/components/BannerDisplay";

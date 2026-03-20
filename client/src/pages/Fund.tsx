@@ -140,6 +140,13 @@ export default function Fund() {
     >
       <SEO {...pageSEO.fund} />
       <JsonLD data={schemas.investmentFund()} />
+      <JsonLD data={schemas.faqPage([
+        { question: "What is the ReGen Civics Alliance Fund?", answer: "The ReGen Civics Alliance Fund is a venture fund investing in regenerative land projects globally. It pools capital from accredited investors to back projects that heal soil, water, community, and local economy." },
+        { question: "Who can invest in the ReGen Civics Fund?", answer: "The fund is open to accredited investors who meet the eligibility criteria. Submit a Letter of Intent to begin the process." },
+        { question: "What is the minimum investment?", answer: "Minimum investment details are shared during the investor qualification process. Contact the team to discuss your allocation." },
+        { question: "How is the fund governed?", answer: "The fund uses voice-based governance rooted in land contributions. Token holders participate in key decisions through the ReGen Civics governance model." },
+        { question: "What types of land projects does the fund support?", answer: "The fund backs early-stage and mature regenerative land projects including ecovillages, food forests, regenerative farms, and intentional communities with demonstrated community engagement." },
+      ])} />
 
       {/* Fund Status Banner */}
       <div className="bg-gradient-to-r from-[#d4a574] via-[#ffd700] to-[#d4a574] border-b-2 border-[#ffd700]/50 shadow-[0_4px_15px_rgba(255,215,0,0.3)]">

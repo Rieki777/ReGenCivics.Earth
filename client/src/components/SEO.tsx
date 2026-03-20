@@ -16,7 +16,7 @@ interface SEOProps {
   publishedTime?: string;
 }
 
-const BASE_URL = 'https://www.regencivics.earth';
+const BASE_URL = 'https://regencivics.earth';
 const DEFAULT_IMAGE = 'https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg';
 const SITE_NAME = 'ReGen Civics Alliance';
 

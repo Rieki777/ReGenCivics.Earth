@@ -63,6 +63,20 @@ async function startServer() {
     }
   }));
 
+  // Request/response logging (structured, Railway-friendly)
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on("finish", () => {
+      const ms = Date.now() - start;
+      const level = res.statusCode >= 500 ? "err" : res.statusCode >= 400 ? "wrn" : "inf";
+      // Skip noisy health checks and static assets from logs
+      if (req.path !== "/health" && !req.path.startsWith("/assets/")) {
+        console.log(`[${level}] ${req.method} ${req.path} ${res.statusCode} ${ms}ms`);
+      }
+    });
+    next();
+  });
+
   // Security middleware
   app.use(cspMiddleware);
   app.use(securityHeadersMiddleware);
@@ -70,7 +84,7 @@ async function startServer() {
   
   // Rate limiting on public endpoints
   app.use('/api/trpc/newsletter.subscribe', rateLimitMiddleware(15 * 60 * 1000, 5));
-  app.use('/api/trpc/application.submit', rateLimitMiddleware(60 * 60 * 1000, 10));
+  app.use('/api/trpc/applications.submit', rateLimitMiddleware(60 * 60 * 1000, 10));
   app.use('/api/trpc/investor.submit', rateLimitMiddleware(60 * 60 * 1000, 10));
   app.use('/api/trpc/inquiry.submit', rateLimitMiddleware(60 * 60 * 1000, 10));
   app.use('/api/chat/stream', rateLimitMiddleware(60 * 1000, 20));
@@ -83,9 +97,102 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: Date.now() });
   });
 
-  // Static file endpoints
-  app.get('/sitemap.xml', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/public/sitemap.xml'));
+  // Dynamic sitemap — includes static routes + DB-driven blog/campaign/forum URLs
+  app.get('/sitemap.xml', async (_req, res) => {
+    const BASE = 'https://regencivics.earth';
+    const now = new Date().toISOString().split('T')[0];
+
+    const staticUrls: Array<{ loc: string; changefreq: string; priority: string; lastmod?: string }> = [
+      { loc: '/',                        changefreq: 'daily',   priority: '1.0' },
+      { loc: '/fund',                    changefreq: 'weekly',  priority: '0.9' },
+      { loc: '/opportunity',             changefreq: 'weekly',  priority: '0.9' },
+      { loc: '/apply',                   changefreq: 'weekly',  priority: '0.9' },
+      { loc: '/community',               changefreq: 'daily',   priority: '0.8' },
+      { loc: '/map',                     changefreq: 'weekly',  priority: '0.8' },
+      { loc: '/game',                    changefreq: 'weekly',  priority: '0.8' },
+      { loc: '/quest',                   changefreq: 'weekly',  priority: '0.8' },
+      { loc: '/land',                    changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/ally',                    changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/play',                    changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/seasons',                 changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/team',                    changefreq: 'monthly', priority: '0.6' },
+      { loc: '/schedule',                changefreq: 'weekly',  priority: '0.6' },
+      { loc: '/governance',              changefreq: 'monthly', priority: '0.6' },
+      { loc: '/tokenomics',              changefreq: 'monthly', priority: '0.6' },
+      { loc: '/glossary',                changefreq: 'monthly', priority: '0.5' },
+      { loc: '/regen-games',             changefreq: 'monthly', priority: '0.6' },
+      { loc: '/custom-games',            changefreq: 'monthly', priority: '0.5' },
+      { loc: '/marketplace',             changefreq: 'weekly',  priority: '0.6' },
+      { loc: '/crowd-pooling',           changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/crowd-pooling-projects',  changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/compare-projects',        changefreq: 'weekly',  priority: '0.5' },
+      { loc: '/calculator',              changefreq: 'monthly', priority: '0.5' },
+      { loc: '/showcase',                changefreq: 'weekly',  priority: '0.6' },
+      { loc: '/blog',                    changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/community/seeking-team',  changefreq: 'weekly',  priority: '0.5' },
+      { loc: '/community/chains',        changefreq: 'weekly',  priority: '0.5' },
+      { loc: '/community/quests',        changefreq: 'weekly',  priority: '0.5' },
+      { loc: '/connect',                 changefreq: 'monthly', priority: '0.6' },
+      { loc: '/investor',                changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/loi',                     changefreq: 'weekly',  priority: '0.7' },
+      { loc: '/one-pager/land',          changefreq: 'monthly', priority: '0.5' },
+      { loc: '/one-pager/alliance',      changefreq: 'monthly', priority: '0.5' },
+      { loc: '/one-pager/player',        changefreq: 'monthly', priority: '0.5' },
+      { loc: '/newsletter',              changefreq: 'monthly', priority: '0.5' },
+      { loc: '/risk-disclosure',         changefreq: 'monthly', priority: '0.3' },
+      { loc: '/terms-of-use',            changefreq: 'monthly', priority: '0.3' },
+      { loc: '/privacy-policy',          changefreq: 'monthly', priority: '0.3' },
+      { loc: '/disclaimers',             changefreq: 'monthly', priority: '0.3' },
+    ];
+
+    // Static blog post slugs (content is hardcoded in client/src/data/blogPosts.ts)
+    const blogSlugs = [
+      'what-makes-regen-civics-different',
+      'remembering-season-1',
+      'remembering-our-roots',
+      'regen-civics-runs-on-base',
+      'what-if-organizations-met-needs',
+      'great-american-chestnut-abundance',
+      'introducing-games-and-quests',
+      'how-to-apply-for-season-2',
+      'how-to-use-contribution-calculator',
+      'how-to-set-up-player-profile',
+      'getting-investment-through-regen-civics',
+      'what-makes-land-project-good-investment',
+      'claim-your-land-project-or-organisation',
+      'your-seeds-contributions-live-on',
+    ];
+
+    // Dynamic DB entries (best-effort — sitemap still serves if DB is down)
+    let campaignIds: number[] = [];
+    let forumPostIds: number[] = [];
+    try {
+      const campaigns = await db.listCampaigns('active');
+      campaignIds = campaigns.map((c: { id: number }) => c.id);
+    } catch { /* DB unavailable — skip dynamic campaigns */ }
+    try {
+      const posts = await db.listForumPosts(undefined, 200, 0);
+      forumPostIds = posts.map((p: { id: number }) => p.id);
+    } catch { /* DB unavailable — skip dynamic forum posts */ }
+
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/'/g, '&apos;');
+
+    const urlTag = (loc: string, changefreq: string, priority: string, lastmod = now) =>
+      `  <url><loc>${esc(BASE + loc)}</loc><lastmod>${lastmod}</lastmod><changefreq>${changefreq}</changefreq><priority>${priority}</priority></url>`;
+
+    const lines = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...staticUrls.map(u => urlTag(u.loc, u.changefreq, u.priority)),
+      ...blogSlugs.map(slug => urlTag(`/blog/${slug}`, 'monthly', '0.6')),
+      ...campaignIds.map(id => urlTag(`/crowd-pooling-projects/${id}`, 'weekly', '0.7')),
+      ...forumPostIds.map(id => urlTag(`/community/post/${id}`, 'weekly', '0.5')),
+      '</urlset>',
+    ];
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(lines.join('\n'));
   });
   app.get('/robots.txt', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/public/robots.txt'));

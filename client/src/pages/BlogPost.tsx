@@ -9,6 +9,7 @@ import { Calendar, Clock, ArrowLeft, User, Rocket, Compass, Play, Share2, List, 
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { SEO } from '@/components/SEO';
+import { JsonLD, schemas } from '@/components/JsonLD';
 import { getBlogPost, blogPosts } from '@/data/blogPosts';
 import { FoodProductionInfographic } from '@/components/FoodProductionInfographic';
 import { AnimalPopulationInfographic } from '@/components/AnimalPopulationInfographic';
@@ -117,6 +118,20 @@ export default function BlogPost() {
         author={post.author}
         publishedTime={post.date}
       />
+      <JsonLD data={schemas.blogPosting({
+        title: post.title,
+        excerpt: post.excerpt || post.content?.substring(0, 155) || '',
+        author: post.author,
+        date: post.date,
+        image: post.image,
+        url: pageUrl,
+        tags: post.tags,
+      })} />
+      <JsonLD data={schemas.breadcrumb([
+        { name: "Home", url: "https://regencivics.earth" },
+        { name: "Blog", url: "https://regencivics.earth/blog" },
+        { name: post.title, url: pageUrl },
+      ])} />
       
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-[#1a472a]/50">

@@ -21,8 +21,9 @@ import CommandPalette from "./components/CommandPalette";
 
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { useAuth } from "./_core/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation as useWouterLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 
 // Routes that bypass site chrome (nav, footer, background effects)
 const ADMIN_ROUTES = ["/admin", "/admin/"];
@@ -90,6 +91,35 @@ const AdminModeration = lazy(() => import("./pages/AdminModeration"));
 const Glossary = lazy(() => import("./pages/Glossary"));
 const Tokenomics = lazy(() => import("./pages/Tokenomics"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
+
+function NewsletterConfirm() {
+  const token = new URLSearchParams(window.location.search).get('token') || '';
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const confirmMutation = trpc.newsletter.confirm.useMutation({
+    onSuccess: () => setStatus('success'),
+    onError: () => setStatus('error'),
+  });
+  useEffect(() => { if (token) confirmMutation.mutate({ token }); else setStatus('error'); }, []);
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
+      <div className="text-center p-8 max-w-md">
+        {status === 'loading' && <p className="text-[#1a472a]">Confirming your subscription...</p>}
+        {status === 'success' && (
+          <>
+            <h1 className="text-2xl font-bold text-[#1a472a] mb-3">You're confirmed!</h1>
+            <p className="text-[#4a5568]">Welcome to the ReGen Civics newsletter. You'll receive updates about the Regenerative Renaissance.</p>
+          </>
+        )}
+        {status === 'error' && (
+          <>
+            <h1 className="text-2xl font-bold text-red-700 mb-3">Link expired or invalid</h1>
+            <p className="text-[#4a5568]">This confirmation link may have expired (24h). Please subscribe again to receive a new link.</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 const ReGenGames = lazy(() => import("./pages/ReGenGames"));
 const CustomGames = lazy(() => import("./pages/CustomGames"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
@@ -167,6 +197,7 @@ function Router() {
         <Route path={"/admin/moderation"} component={AdminModeration} />
 <Route path={"/glossary"} component={Glossary} />
         <Route path={"/newsletter"} component={Newsletter} />
+        <Route path={"/newsletter/confirm"} component={NewsletterConfirm} />
         <Route path={"/regen-games"} component={ReGenGames} />
         <Route path={"/custom-games"} component={CustomGames} />
         <Route path={"/marketplace"} component={Marketplace} />

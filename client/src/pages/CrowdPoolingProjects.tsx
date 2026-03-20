@@ -27,7 +27,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { SEO, pageSEO } from "@/components/SEO";
 import { pageCopy } from "@/data/pageCopy";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, lazy, Suspense, useMemo } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { BackButton } from "@/components/BackButton";
@@ -1161,7 +1161,7 @@ export default function CrowdPoolingProjects() {
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const realProjects = (dbProjects || []).map((p: any) => ({
+  const realProjects = useMemo(() => (dbProjects || []).map((p: any) => ({
     id: p.id + 10000,
     name: p.projectName,
     location: p.location || 'Location TBD',
@@ -1195,38 +1195,37 @@ export default function CrowdPoolingProjects() {
     },
     openRoles: [] as typeof sampleProjects[0]['openRoles'],
     isFromDatabase: true,
-  }));
+  })), [dbProjects]);
 
-  const baseProjects = realProjects.length > 0
-    ? [...realProjects, ...sampleProjects.map(p => ({ ...p, isFromDatabase: false }))]
-    : sampleProjects.map(p => ({ ...p, isFromDatabase: false }));
+  const sortedProjects = useMemo(() => {
+    const base = realProjects.length > 0
+      ? [...realProjects, ...sampleProjects.map(p => ({ ...p, isFromDatabase: false }))]
+      : sampleProjects.map(p => ({ ...p, isFromDatabase: false }));
 
-  // Apply tab filter
-  const tabFiltered = baseProjects.filter(p => {
-    if (activeTab === "active") return p.status === "active";
-    if (activeTab === "funded") return p.status === "completed" || p.status === "funded";
-    return false;
-  });
+    const tabFiltered = base.filter(p => {
+      if (activeTab === "active") return p.status === "active";
+      if (activeTab === "funded") return p.status === "completed" || p.status === "funded";
+      return false;
+    });
 
-  // Apply tag filter
-  const tagFiltered = activeTags.length === 0
-    ? tabFiltered
-    : tabFiltered.filter(p => activeTags.some(t => p.tags.includes(t)));
+    const tagFiltered = activeTags.length === 0
+      ? tabFiltered
+      : tabFiltered.filter(p => activeTags.some(t => p.tags.includes(t)));
 
-  // Apply sort
-  const sortedProjects = [...tagFiltered].sort((a, b) => {
-    switch (sortBy) {
-      case "most-funded": return (b.currentAmount / b.targetAmount) - (a.currentAmount / a.targetAmount);
-      case "most-contributors": return b.contributors - a.contributors;
-      case "ending-soon": {
-        const da = daysLeft(a.deadline) ?? 9999;
-        const db2 = daysLeft(b.deadline) ?? 9999;
-        return da - db2;
+    return [...tagFiltered].sort((a, b) => {
+      switch (sortBy) {
+        case "most-funded": return (b.currentAmount / b.targetAmount) - (a.currentAmount / a.targetAmount);
+        case "most-contributors": return b.contributors - a.contributors;
+        case "ending-soon": {
+          const da = daysLeft(a.deadline) ?? 9999;
+          const db2 = daysLeft(b.deadline) ?? 9999;
+          return da - db2;
+        }
+        case "newest": return b.id - a.id;
+        default: return 0;
       }
-      case "newest": return b.id - a.id;
-      default: return 0;
-    }
-  });
+    });
+  }, [realProjects, activeTab, activeTags, sortBy]);
 
   const toggleTag = (tag: string) => {
     setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);

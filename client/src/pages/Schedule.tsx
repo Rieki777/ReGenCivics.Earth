@@ -23,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { SEO, pageSEO } from '@/components/SEO';
+import { JsonLD, schemas } from '@/components/JsonLD';
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import AMABanner from "@/components/AMABanner";
@@ -262,6 +263,12 @@ export default function Schedule() {
       <AMABanner />
       <BackButton />
       <SEO {...pageSEO.schedule} />
+      <JsonLD data={schemas.event({
+        name: "ReGen Civics Open Community Call",
+        description: "Monthly community sessions, open calls, and events where regenerators connect, coordinate, and co-create the Regenerative Renaissance. Join investors, land stewards, and players.",
+        startDate: "2026-04-01",
+        url: "https://regencivics.earth/schedule",
+      })} />
       
       {/* Hero Section */}
       <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">

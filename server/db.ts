@@ -454,9 +454,18 @@ export async function getActiveNewsletterSubscribers() {
 export async function unsubscribeNewsletter(email: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   await db.update(newsletterSubscribers)
     .set({ isActive: 0 })
+    .where(eq(newsletterSubscribers.email, email));
+}
+
+export async function activateNewsletterSubscriber(email: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(newsletterSubscribers)
+    .set({ isActive: 1 })
     .where(eq(newsletterSubscribers.email, email));
 }
 

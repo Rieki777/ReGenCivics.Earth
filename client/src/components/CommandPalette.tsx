@@ -1,11 +1,13 @@
 /**
  * CommandPalette - Cmd+K / Ctrl+K search palette.
  * Opens on keyboard shortcut or nav search button.
- * Powered by cmdk.
+ * Powered by cmdk. Searches static pages + live blog/forum/campaign results.
  */
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Command } from "cmdk";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { blogPosts } from "@/data/blogPosts";
 import {
   Coins, Sprout, Handshake, Heart, Users, Calendar,
   BookOpen, Globe, FileText, Shield, AlertTriangle, Map, MessageCircle,
@@ -58,7 +60,30 @@ const PAGES: PageEntry[] = [
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, navigate] = useLocation();
+
+  // Debounce search query
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedQ(query), 350);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query]);
+
+  const { data: liveResults } = trpc.globalSearch.query.useQuery(
+    { q: debouncedQ },
+    { enabled: debouncedQ.length >= 2, staleTime: 30_000 }
+  );
+
+  // Blog posts filtered client-side
+  const blogResults = debouncedQ.length >= 2
+    ? blogPosts.filter(p =>
+        p.title.toLowerCase().includes(debouncedQ.toLowerCase()) ||
+        (p.excerpt ?? '').toLowerCase().includes(debouncedQ.toLowerCase())
+      ).slice(0, 4)
+    : [];
 
   const openPalette = useCallback(() => setOpen(true), []);
 
@@ -69,7 +94,7 @@ export function CommandPalette() {
         e.preventDefault();
         setOpen((o) => !o);
       }
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") { setOpen(false); setQuery(''); setDebouncedQ(''); }
     };
     // Custom event from nav search button
     const onEvent = () => setOpen(true);
@@ -83,6 +108,8 @@ export function CommandPalette() {
 
   const runCommand = (href: string) => {
     setOpen(false);
+    setQuery('');
+    setDebouncedQ('');
     navigate(href);
   };
 
@@ -94,7 +121,7 @@ export function CommandPalette() {
   return (
     <div
       className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh] px-4"
-      onClick={() => setOpen(false)}
+      onClick={() => { setOpen(false); setQuery(''); setDebouncedQ(''); }}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
@@ -109,8 +136,10 @@ export function CommandPalette() {
           <div className="flex items-center gap-3 px-4 py-3 border-b border-[#7dd87d]/20">
             <Search className="w-4 h-4 text-[#7dd87d]/60 shrink-0" />
             <Command.Input
-              placeholder="Search pages..."
+              placeholder="Search pages, blog, forum..."
               autoFocus
+              value={query}
+              onValueChange={setQuery}
               className="flex-1 bg-transparent text-white placeholder-white/30 text-sm outline-none"
             />
             <button
@@ -125,8 +154,65 @@ export function CommandPalette() {
           {/* Results */}
           <Command.List className="max-h-[60vh] overflow-y-auto py-2">
             <Command.Empty className="py-8 text-center text-white/40 text-sm">
-              No pages found.
+              No results found.
             </Command.Empty>
+
+            {/* Dynamic: Blog results */}
+            {blogResults.length > 0 && (
+              <Command.Group heading="Blog">
+                {blogResults.map((post) => (
+                  <Command.Item
+                    key={post.slug}
+                    value={`blog ${post.title}`}
+                    onSelect={() => runCommand(`/blog/${post.slug}`)}
+                    className="flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg cursor-pointer text-sm text-white/80 hover:text-white data-[selected=true]:bg-[#1a472a] data-[selected=true]:text-white transition-colors"
+                  >
+                    <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span className="flex-1 min-w-0">
+                      <span className="font-medium">{post.title}</span>
+                    </span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
+            {/* Dynamic: Forum results */}
+            {liveResults && liveResults.forumPosts.length > 0 && (
+              <Command.Group heading="Forum">
+                {liveResults.forumPosts.map((post) => (
+                  <Command.Item
+                    key={`fp-${post.id}`}
+                    value={`forum ${post.title}`}
+                    onSelect={() => runCommand(post.url)}
+                    className="flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg cursor-pointer text-sm text-white/80 hover:text-white data-[selected=true]:bg-[#1a472a] data-[selected=true]:text-white transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4 text-[#7dd87d] shrink-0" />
+                    <span className="flex-1 min-w-0">
+                      <span className="font-medium">{post.title}</span>
+                    </span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
+            {/* Dynamic: Campaign results */}
+            {liveResults && liveResults.campaigns.length > 0 && (
+              <Command.Group heading="Campaigns">
+                {liveResults.campaigns.map((c) => (
+                  <Command.Item
+                    key={`cp-${c.id}`}
+                    value={`campaign ${c.title}`}
+                    onSelect={() => runCommand(c.url)}
+                    className="flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg cursor-pointer text-sm text-white/80 hover:text-white data-[selected=true]:bg-[#1a472a] data-[selected=true]:text-white transition-colors"
+                  >
+                    <Users className="w-4 h-4 text-[#7dd87d] shrink-0" />
+                    <span className="flex-1 min-w-0">
+                      <span className="font-medium">{c.title}</span>
+                    </span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
 
             {groups.map((group) => (
               <Command.Group key={group} heading={group}>
