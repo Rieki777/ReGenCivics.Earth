@@ -69,8 +69,8 @@ describe("email features", () => {
   });
 
   describe("newsletter procedures", () => {
-    it("newsletter.list should return an array", async () => {
-      const ctx = createPublicContext();
+    it("newsletter.list should require admin access and return an array", async () => {
+      const ctx = createAdminContext();
       const caller = appRouter.createCaller(ctx);
       const subscribers = await caller.newsletter.list();
       expect(Array.isArray(subscribers)).toBe(true);

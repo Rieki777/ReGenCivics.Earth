@@ -17,7 +17,10 @@ const missing = Object.entries(REQUIRED)
   .filter(([, v]) => !v)
   .map(([k]) => k);
 
-if (missing.length > 0) {
+// Skip in test environments — tests mock DB/auth and don't need real secrets
+const isTest = process.env.VITEST !== undefined || process.env.NODE_ENV === "test";
+
+if (missing.length > 0 && !isTest) {
   console.error(`\n❌ Missing required environment variables: ${missing.join(", ")}`);
   console.error("Set these in your Railway dashboard (or .env for local dev) and restart.\n");
   process.exit(1);
