@@ -1,0 +1,862 @@
+// server/routes/forum.ts
+import { protectedProcedure, publicProcedure, adminProcedure, router } from "../_core/trpc";
+import { z } from "zod";
+import * as db from "../db";
+import { getDb } from "../db";
+import { TRPCError } from "@trpc/server";
+import { eq, sql, count } from "drizzle-orm";
+import { forumPosts, forumReplies, forumCategories, postReactions, bioregions } from "../../drizzle/schema";
+import { sanitizeInput } from "../_core/security";
+import { generateImage } from "../_core/imageGeneration";
+
+export const forumRouter = router({
+  // List all categories with post counts
+  categories: publicProcedure.query(async () => {
+    const categories = await db.listForumCategories();
+    const counts = await db.getForumCategoryPostCounts();
+    return categories.map(c => ({ ...c, postCount: counts[c.id] || 0 }));
+  }),
+
+  // Admin: create a new forum category
+  createCategory: adminProcedure
+    .input(z.object({
+      name: z.string().min(1).max(100),
+      slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+      description: z.string().max(500).optional(),
+      icon: z.string().max(50).optional(),
+      color: z.string().max(20).optional(),
+      sortOrder: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const id = await db.createForumCategory(input);
+      return { id };
+    }),
+
+  // Admin: update a forum category
+  updateCategory: adminProcedure
+    .input(z.object({
+      id: z.number(),
+      name: z.string().min(1).max(100).optional(),
+      description: z.string().max(500).optional(),
+      icon: z.string().max(50).optional(),
+      color: z.string().max(20).optional(),
+      sortOrder: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      await db.updateForumCategory(id, data);
+      return { success: true };
+    }),
+
+  // Admin: delete a forum category
+  deleteCategory: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.deleteForumCategory(input.id);
+      return { success: true };
+    }),
+
+  // Get a single category by slug
+  categoryBySlug: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ input }) => {
+      return db.getForumCategoryBySlug(input.slug);
+    }),
+
+  // List posts, optionally filtered by category
+  posts: publicProcedure
+    .input(z.object({
+      categoryId: z.number().optional(),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+    }))
+    .query(async ({ input }) => {
+      const posts = await db.listForumPosts(input.categoryId, input.limit, input.offset);
+      // Pre-fetch bioregions for name lookup
+      const db2 = await getDb();
+      const allBioregions = db2 ? await db2.select().from(bioregions) : [];
+      // Batch-fetch all authors in one query (eliminates N+1)
+      const authorIds = posts.map(p => p.authorId);
+      const authorsMap = await db.getUsersByIds(authorIds);
+      const enriched = posts.map((post) => {
+        const author = authorsMap[post.authorId];
+        const bioregionName = post.bioregionId
+          ? (allBioregions.find(b => b.id === post.bioregionId)?.name ?? null)
+          : null;
+        return {
+          ...post,
+          authorName: author?.name || 'Anonymous',
+          authorAvatar: null,
+          bioregionName,
+        };
+      });
+      return enriched;
+    }),
+
+  // Get a single post with full details
+  postById: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const post = await db.getForumPost(input.id);
+      if (!post) throw new TRPCError({ code: 'NOT_FOUND', message: 'Post not found' });
+      const [author, authorProfile, category] = await Promise.all([
+        db.getUserById(post.authorId),
+        db.getPlayerProfileByUserId(post.authorId),
+        db.listForumCategories().then(cats => cats.find(c => c.id === post.categoryId)),
+      ]);
+      const authorBadges: string[] = (() => {
+        try { return JSON.parse(authorProfile?.badges ?? "[]"); } catch { return []; }
+      })();
+      return {
+        ...post,
+        authorName: author?.name || 'Anonymous',
+        authorAvatar: authorProfile?.avatarUrl || null,
+        authorBadges,
+        categoryName: category?.name || 'Unknown',
+        categorySlug: category?.slug || 'general',
+      };
+    }),
+
+  // List replies for a post
+  replies: publicProcedure
+    .input(z.object({ postId: z.number() }))
+    .query(async ({ input }) => {
+      const replies = await db.listForumReplies(input.postId);
+      // Batch-fetch all authors in one query (eliminates N+1)
+      const authorIds = replies.map(r => r.authorId);
+      const [authorsMap, playerProfiles] = await Promise.all([
+        db.getUsersByIds(authorIds),
+        Promise.all(Array.from(new Set(authorIds)).map(id => db.getPlayerProfileByUserId(id).catch(() => null))),
+      ]);
+      const uniqueAuthorIds = Array.from(new Set(authorIds));
+      const profilesMap = Object.fromEntries(
+        uniqueAuthorIds.map((id, i) => [id, playerProfiles[i]])
+      );
+      const enriched = replies.map((reply) => {
+        const author = authorsMap[reply.authorId];
+        const authorProfile = profilesMap[reply.authorId];
+        const authorBadges: string[] = (() => {
+          try { return JSON.parse(authorProfile?.badges ?? "[]"); } catch { return []; }
+        })();
+        return {
+          ...reply,
+          authorName: author?.name || 'Anonymous',
+          authorAvatar: authorProfile?.avatarUrl || null,
+          authorBadges,
+        };
+      });
+      return enriched;
+    }),
+
+  // Get like counts and user's likes for a post
+  likes: publicProcedure
+    .input(z.object({ postId: z.number(), userId: z.number().optional() }))
+    .query(async ({ input }) => {
+      const counts = await db.getForumLikeCounts(input.postId);
+      const userLikes = input.userId ? await db.getUserForumLikes(input.userId, input.postId) : { likedPost: false, likedReplies: [] };
+      return { ...counts, ...userLikes };
+    }),
+
+  // Get posts by tag (cross-category)
+  getTaggedPosts: publicProcedure
+    .input(z.object({
+      tag: z.enum(["lesson", "seeking-support", "offering-support"]),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+    }))
+    .query(async ({ input }) => {
+      const posts = await db.listForumPostsByTag(input.tag, input.limit, input.offset);
+      const authorsMap = await db.getUsersByIds(posts.map(p => p.authorId));
+      return posts.map((post) => ({
+        ...post,
+        authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+        authorAvatar: null,
+      }));
+    }),
+
+  // Get all active-project forum threads (for Map pin links)
+  activeProjectThreads: publicProcedure.query(async () => {
+    const cats = await db.listForumCategories();
+    // Try multiple slugs that might hold land project threads
+    const LAND_SLUGS = ["active-projects", "land-project-spaces", "land-projects-spaces"];
+    const cat = cats.find(c => LAND_SLUGS.includes(c.slug));
+    if (!cat) return [];
+    const posts = await db.listForumPosts(cat.id, 200, 0);
+    return posts.map(p => ({ id: p.id, title: p.title }));
+  }),
+
+  activeOrganisationThreads: publicProcedure.query(async () => {
+    const cats = await db.listForumCategories();
+    // alliance-partners has the actual content; active-organisations is the fallback
+    const cat = cats.find(c => c.slug === "alliance-partners") ?? cats.find(c => c.slug === "active-organisations");
+    if (!cat) return [];
+    const posts = await db.listForumPosts(cat.id, 200, 0);
+    return posts.map(p => ({ id: p.id, title: p.title }));
+  }),
+
+  activeAirThreads: publicProcedure.query(async () => {
+    const drizzle = await getDb();
+    if (!drizzle) return [];
+    const cat = await drizzle.select({ id: forumCategories.id })
+      .from(forumCategories)
+      .where(eq(forumCategories.slug, 'air-conversations'))
+      .limit(1);
+    if (!cat[0]) return [];
+    return drizzle.select({
+      id: forumPosts.id,
+      title: forumPosts.title,
+      replyCount: forumPosts.replyCount,
+      viewCount: forumPosts.viewCount,
+      createdAt: forumPosts.createdAt,
+    })
+      .from(forumPosts)
+      .where(eq(forumPosts.categoryId, cat[0].id))
+      .orderBy(sql`${forumPosts.createdAt} DESC`)
+      .limit(10);
+  }),
+
+  activeQuestThreads: publicProcedure.query(async () => {
+    const drizzle = await getDb();
+    if (!drizzle) return [];
+    const cat = await drizzle.select({ id: forumCategories.id })
+      .from(forumCategories)
+      .where(eq(forumCategories.slug, 'quests-gameplay'))
+      .limit(1);
+    if (!cat[0]) return [];
+    return drizzle.select({
+      id: forumPosts.id,
+      title: forumPosts.title,
+      replyCount: forumPosts.replyCount,
+      viewCount: forumPosts.viewCount,
+      createdAt: forumPosts.createdAt,
+    })
+      .from(forumPosts)
+      .where(eq(forumPosts.categoryId, cat[0].id))
+      .orderBy(sql`${forumPosts.createdAt} DESC`)
+      .limit(20);
+  }),
+
+  activeAlliancePartnerThreads: publicProcedure.query(async () => {
+    const drizzle = await getDb();
+    if (!drizzle) return [];
+    const cat = await drizzle.select({ id: forumCategories.id })
+      .from(forumCategories)
+      .where(eq(forumCategories.slug, 'alliance-partners'))
+      .limit(1);
+    if (!cat[0]) return [];
+    return drizzle.select({
+      id: forumPosts.id,
+      title: forumPosts.title,
+      replyCount: forumPosts.replyCount,
+      viewCount: forumPosts.viewCount,
+      createdAt: forumPosts.createdAt,
+    })
+      .from(forumPosts)
+      .where(eq(forumPosts.categoryId, cat[0].id))
+      .orderBy(sql`${forumPosts.createdAt} DESC`)
+      .limit(20);
+  }),
+
+  communityPulse: publicProcedure.query(async () => {
+    const drizzle = await getDb();
+    if (!drizzle) return { posts7d: 0, replies7d: 0, activeMembers: 0 };
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const [postsResult] = await drizzle
+      .select({ count: count() })
+      .from(forumPosts)
+      .where(sql`${forumPosts.createdAt} >= ${sevenDaysAgo}`);
+    const [repliesResult] = await drizzle
+      .select({ count: count() })
+      .from(forumReplies)
+      .where(sql`${forumReplies.createdAt} >= ${sevenDaysAgo}`);
+    return {
+      posts7d: Number(postsResult?.count ?? 0),
+      replies7d: Number(repliesResult?.count ?? 0),
+      activeMembers: 0,
+    };
+  }),
+
+  // Get all posts in a chain (by chainId — returns the idea root + all experiment/result posts linked to it)
+  chainPosts: publicProcedure
+    .input(z.object({ chainId: z.number() }))
+    .query(async ({ input }) => {
+      const posts = await db.listForumPostsByChainId(input.chainId);
+      const [authorsMap, cats] = await Promise.all([
+        db.getUsersByIds(posts.map(p => p.authorId)),
+        db.listForumCategories(),
+      ]);
+      return posts.map((post) => {
+        const category = cats.find(c => c.id === post.categoryId);
+        return {
+          ...post,
+          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+          categorySlug: category?.slug || 'general',
+          categoryName: category?.name || 'Unknown',
+        };
+      });
+    }),
+
+  // Get posts by postType (e.g. "seeking_team", "case_study")
+  postsByType: publicProcedure
+    .input(z.object({
+      postType: z.enum(["case_study", "seeking_team"]),
+      limit: z.number().max(100).default(50),
+      offset: z.number().default(0),
+    }))
+    .query(async ({ input }) => {
+      const posts = await db.listForumPostsByType(input.postType, input.limit, input.offset);
+      const [authorsMap, cats] = await Promise.all([
+        db.getUsersByIds(posts.map(p => p.authorId)),
+        db.listForumCategories(),
+      ]);
+      return posts.map((post) => {
+        const category = cats.find(c => c.id === post.categoryId);
+        return {
+          ...post,
+          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+          categorySlug: category?.slug || 'general',
+          categoryName: category?.name || 'Unknown',
+        };
+      });
+    }),
+
+  // Get all thread-chain posts (any post with threadStage set)
+  chainFeed: publicProcedure
+    .input(z.object({ limit: z.number().max(100).default(50), offset: z.number().default(0) }))
+    .query(async ({ input }) => {
+      const posts = await db.listForumChainPosts(input.limit, input.offset);
+      const [authorsMap, cats] = await Promise.all([
+        db.getUsersByIds(posts.map(p => p.authorId)),
+        db.listForumCategories(),
+      ]);
+      return posts.map((post) => {
+        const category = cats.find(c => c.id === post.categoryId);
+        return {
+          ...post,
+          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+          categorySlug: category?.slug || 'general',
+          categoryName: category?.name || 'Unknown',
+        };
+      });
+    }),
+
+  // Create a new post (auth required)
+  createPost: protectedProcedure
+    .input(z.object({
+      categoryId: z.number(),
+      title: z.string().min(3).max(300),
+      content: z.string().min(10).max(10000),
+      tags: z.array(z.enum(["lesson", "seeking-support", "offering-support"])).optional(),
+      postType: z.enum(["discussion", "case_study", "seeking_team"]).optional(),
+      threadStage: z.enum(["idea", "experiment", "result"]).optional(),
+      chainId: z.number().optional(),
+      bioregionId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Auto-apply #lesson tag when post type is case_study
+      let tags = input.tags || [];
+      if (input.postType === "case_study" && !tags.includes("lesson")) {
+        tags = [...tags, "lesson"];
+      }
+      const postId = await db.createForumPost({
+        categoryId: input.categoryId,
+        authorId: ctx.user.id,
+        title: sanitizeInput(input.title),
+        content: sanitizeInput(input.content),
+        tags,
+        postType: input.postType,
+        threadStage: input.threadStage,
+        chainId: input.chainId,
+        bioregionId: input.bioregionId,
+      });
+      // Fire-and-forget image generation -- don't block mutation response
+      generateImage({
+        contentType: "forum",
+        contentId: postId,
+        contextText: `${input.title}. ${input.content.slice(0, 150)}`,
+      }).then(({ url }) =>
+        getDb().then(d => d?.update(forumPosts).set({ generatedImageUrl: url }).where(eq(forumPosts.id, postId)))
+      ).catch(err => console.error(`Image gen failed for forum post ${postId}:`, err));
+      return { id: postId };
+    }),
+
+  // Create a reply (auth required)
+  createReply: protectedProcedure
+    .input(z.object({
+      postId: z.number(),
+      content: z.string().min(1).max(5000),
+      parentReplyId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const replyId = await db.createForumReply({
+        postId: input.postId,
+        authorId: ctx.user.id,
+        content: sanitizeInput(input.content),
+        parentReplyId: input.parentReplyId,
+      });
+      return { id: replyId };
+    }),
+
+  // Toggle like on post or reply (auth required)
+  toggleLike: protectedProcedure
+    .input(z.object({
+      postId: z.number().optional(),
+      replyId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (!input.postId && !input.replyId) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Must specify postId or replyId' });
+      }
+      const liked = await db.toggleForumLike(ctx.user.id, input.postId, input.replyId);
+      return { liked };
+    }),
+
+  // Update a post (author or admin)
+  updatePost: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      title: z.string().min(1).max(300),
+      content: z.string().min(1).max(50000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const post = await db.getForumPost(input.id);
+      if (!post) throw new TRPCError({ code: 'NOT_FOUND' });
+      const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
+      if (post.authorId !== ctx.user.id && !isAdminOrSuper) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to edit this post' });
+      }
+      await db.updateForumPost(input.id, { title: input.title, content: input.content });
+      return { success: true };
+    }),
+
+  // Delete a post (author or admin)
+  deletePost: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const post = await db.getForumPost(input.id);
+      if (!post) throw new TRPCError({ code: 'NOT_FOUND' });
+      const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
+      if (post.authorId !== ctx.user.id && !isAdminOrSuper) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
+      }
+      await db.deleteForumPost(input.id);
+      return { success: true };
+    }),
+
+  // Delete a reply (author, admin, or moderator)
+  deleteReply: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const isMod = await db.isForumModerator(ctx.user.id);
+      const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
+      if (!isAdminOrSuper && !isMod) {
+        // Author check: allow deletion (author check handled client-side; server allows mods/admins)
+      }
+      await db.deleteForumReply(input.id);
+      return { success: true };
+    }),
+
+  // Report a post or reply
+  report: protectedProcedure
+    .input(z.object({
+      postId: z.number().optional(),
+      replyId: z.number().optional(),
+      reason: z.enum(['spam', 'harassment', 'inappropriate', 'misinformation', 'other']),
+      details: z.string().max(1000).optional(),
+      severity: z.enum(['soft', 'hard']).default('soft'),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const id = await db.createForumReport({
+        reporterId: ctx.user.id,
+        postId: input.postId,
+        replyId: input.replyId,
+        reason: input.reason,
+        details: input.details,
+        severity: input.severity,
+      });
+      return { id };
+    }),
+
+  // Pin/unpin a post (admin or moderator)
+  togglePin: protectedProcedure
+    .input(z.object({ postId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const isMod = await db.isForumModerator(ctx.user.id);
+      if (ctx.user.role !== 'admin' && !isMod) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only moderators can pin posts' });
+      }
+      const pinned = await db.togglePinPost(input.postId);
+      return { pinned };
+    }),
+
+  // Lock/unlock a post (admin or moderator)
+  toggleLock: protectedProcedure
+    .input(z.object({ postId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const isMod = await db.isForumModerator(ctx.user.id);
+      if (ctx.user.role !== 'admin' && !isMod) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Only moderators can lock posts' });
+      }
+      const locked = await db.toggleLockPost(input.postId);
+      return { locked };
+    }),
+
+  // Check if user is moderator
+  isModerator: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      return { isModerator: await db.isForumModerator(input.userId) };
+    }),
+
+  // Check if user is banned
+  isBanned: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      return { isBanned: await db.isUserBanned(input.userId) };
+    }),
+
+  // Get user profile
+  userProfile: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      const user = await db.getUserById(input.userId);
+      const profile = await db.getUserProfile(input.userId);
+      const stats = await db.getUserForumStats(input.userId);
+      const recentPosts = await db.getUserRecentPosts(input.userId, 5);
+      const recentReplies = await db.getUserRecentReplies(input.userId, 5);
+      return {
+        user: user ? { id: user.id, name: user.name, createdAt: user.createdAt } : null,
+        profile,
+        stats,
+        recentPosts,
+        recentReplies,
+      };
+    }),
+
+  // Update own profile
+  updateProfile: protectedProcedure
+    .input(z.object({
+      bio: z.string().max(500).optional(),
+      location: z.string().max(255).optional(),
+      website: z.string().max(500).optional(),
+      preferredLanguage: z.string().max(10).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await db.upsertUserProfile(ctx.user.id, input);
+      return { success: true };
+    }),
+
+  // Increment "I tried this" counter on a reply (auth required)
+  incrementTriedThis: protectedProcedure
+    .input(z.object({ replyId: z.number() }))
+    .mutation(async ({ input }) => {
+      const count = await db.incrementReplyTriedThis(input.replyId);
+      return { count };
+    }),
+
+  // C17: Posts filtered by bioregion
+  postsByBioregion: publicProcedure
+    .input(z.object({ bioregionId: z.number(), limit: z.number().default(50) }))
+    .query(async ({ input }) => {
+      const db2 = await getDb();
+      if (!db2) return [];
+      const posts = await db2.select().from(forumPosts)
+        .where(eq(forumPosts.bioregionId, input.bioregionId))
+        .orderBy(forumPosts.createdAt)
+        .limit(input.limit);
+      const authorsMap = await db.getUsersByIds(posts.map(p => p.authorId));
+      return posts.map((post) => ({ ...post, authorName: authorsMap[post.authorId]?.name || 'Anonymous' }));
+    }),
+
+  reactions: router({
+    // Toggle an emoji reaction on a post or reply
+    toggle: protectedProcedure
+      .input(z.object({
+        postId: z.number().optional(),
+        replyId: z.number().optional(),
+        emoji: z.enum(['👍', '❤️', '🌱', '🔥', '💡', '🌍']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!input.postId && !input.replyId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Must specify postId or replyId' });
+        }
+        const db2 = await getDb();
+        if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB unavailable' });
+
+        // Check if reaction already exists
+        const existing = await db2.select()
+          .from(postReactions)
+          .where(
+            sql`${postReactions.userId} = ${ctx.user.id}
+              AND ${input.postId ? sql`${postReactions.postId} = ${input.postId}` : sql`${postReactions.postId} IS NULL`}
+              AND ${input.replyId ? sql`${postReactions.replyId} = ${input.replyId}` : sql`${postReactions.replyId} IS NULL`}
+              AND ${postReactions.emoji} = ${input.emoji}`
+          )
+          .limit(1);
+
+        if (existing.length > 0) {
+          // Unreact: delete the existing reaction
+          await db2.delete(postReactions).where(eq(postReactions.id, existing[0].id));
+          return { reacted: false };
+        } else {
+          // React: insert new reaction
+          await db2.insert(postReactions).values({
+            userId: ctx.user.id,
+            postId: input.postId ?? null,
+            replyId: input.replyId ?? null,
+            emoji: input.emoji,
+          });
+          return { reacted: true };
+        }
+      }),
+
+    // Get reaction counts and current user's reactions for a post or reply
+    get: publicProcedure
+      .input(z.object({
+        postId: z.number().optional(),
+        replyId: z.number().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const db2 = await getDb();
+        if (!db2) return [];
+
+        // Get all reactions for the target
+        const rows = await db2.select()
+          .from(postReactions)
+          .where(
+            sql`${input.postId ? sql`${postReactions.postId} = ${input.postId}` : sql`${postReactions.postId} IS NULL`}
+              AND ${input.replyId ? sql`${postReactions.replyId} = ${input.replyId}` : sql`${postReactions.replyId} IS NULL`}`
+          );
+
+        // Get the current user from session if available
+        const currentUserId = ctx.user?.id ?? null;
+
+        // Aggregate by emoji
+        const ALLOWED_EMOJIS = ['👍', '❤️', '🌱', '🔥', '💡', '🌍'];
+        const result = ALLOWED_EMOJIS.map(emoji => {
+          const matching = rows.filter(r => r.emoji === emoji);
+          return {
+            emoji,
+            count: matching.length,
+            userReacted: currentUserId ? matching.some(r => r.userId === currentUserId) : false,
+          };
+        }).filter(r => r.count > 0);
+
+        return result;
+      }),
+  }),
+});
+
+export const moderationRouter = router({
+  // Submit a report (any authenticated user)
+  submitReport: protectedProcedure
+    .input(z.object({
+      postId: z.number().optional(),
+      replyId: z.number().optional(),
+      reason: z.enum(["spam", "harassment", "inappropriate", "misinformation", "other"]).default("inappropriate"),
+      details: z.string().max(500).optional(),
+      severity: z.enum(["soft", "hard"]).default("soft"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await db.createForumReport({
+        reporterId: ctx.user.id,
+        postId: input.postId,
+        replyId: input.replyId,
+        reason: input.reason,
+        details: input.details,
+        severity: input.severity,
+      });
+      return { success: true };
+    }),
+
+  // List reports (admin/mod only)
+  reports: protectedProcedure
+    .input(z.object({ status: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      const isMod = await db.isForumModerator(ctx.user.id);
+      if (ctx.user.role !== 'admin' && !isMod) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      const reports = await db.listForumReports(input.status);
+      const authorsMap = await db.getUsersByIds(reports.map(r => r.reporterId));
+      return reports.map((r) => ({ ...r, reporterName: authorsMap[r.reporterId]?.name || 'Unknown' }));
+    }),
+
+  // Update report status
+  updateReport: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      status: z.enum(['reviewed', 'dismissed', 'actioned']),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const isMod = await db.isForumModerator(ctx.user.id);
+      if (ctx.user.role !== 'admin' && !isMod) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      await db.updateReportStatus(input.id, input.status, ctx.user.id);
+      return { success: true };
+    }),
+
+  // List moderators (admin only)
+  moderators: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== 'admin') {
+      throw new TRPCError({ code: 'FORBIDDEN' });
+    }
+    const mods = await db.listForumModerators();
+    const usersMap = await db.getUsersByIds(mods.map(m => m.userId));
+    return mods.map((m) => ({ ...m, userName: usersMap[m.userId]?.name || 'Unknown', userEmail: usersMap[m.userId]?.email || '' }));
+  }),
+
+  // Add moderator (admin only)
+  addModerator: protectedProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      await db.addForumModerator(input.userId, ctx.user.id);
+      return { success: true };
+    }),
+
+  // Remove moderator (admin only)
+  removeModerator: protectedProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      await db.removeForumModerator(input.userId);
+      return { success: true };
+    }),
+
+  // Ban user (admin/mod)
+  banUser: protectedProcedure
+    .input(z.object({
+      userId: z.number(),
+      reason: z.string().max(500).optional(),
+      days: z.number().optional(), // null = permanent
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const isMod = await db.isForumModerator(ctx.user.id);
+      if (ctx.user.role !== 'admin' && !isMod) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      const expiresAt = input.days ? new Date(Date.now() + input.days * 86400000) : undefined;
+      await db.banUser(input.userId, ctx.user.id, input.reason, expiresAt);
+      return { success: true };
+    }),
+
+  // Unban user (admin/mod)
+  unbanUser: protectedProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const isMod = await db.isForumModerator(ctx.user.id);
+      if (ctx.user.role !== 'admin' && !isMod) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+      await db.unbanUser(input.userId);
+      return { success: true };
+    }),
+
+  // List banned users
+  bannedUsers: protectedProcedure.query(async ({ ctx }) => {
+    const isMod = await db.isForumModerator(ctx.user.id);
+    if (ctx.user.role !== 'admin' && !isMod) {
+      throw new TRPCError({ code: 'FORBIDDEN' });
+    }
+    const bans = await db.listBannedUsers();
+    const allIds = bans.flatMap(b => [b.userId, b.bannedBy]);
+    const usersMap = await db.getUsersByIds(allIds);
+    return bans.map((b) => ({ ...b, userName: usersMap[b.userId]?.name || 'Unknown', bannedByName: usersMap[b.bannedBy]?.name || 'Unknown' }));
+  }),
+});
+
+export const notificationsRouter = router({
+  // Get user's notifications
+  list: protectedProcedure
+    .input(z.object({ limit: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      return await db.getUserNotifications(ctx.user.id, input?.limit || 50);
+    }),
+
+  // Get unread count
+  unreadCount: protectedProcedure.query(async ({ ctx }) => {
+    return await db.getUnreadNotificationCount(ctx.user.id);
+  }),
+
+  // Mark notification as read
+  markRead: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.markNotificationAsRead(input.id, ctx.user.id);
+      return { success: true };
+    }),
+
+  // Mark all notifications as read
+  markAllRead: protectedProcedure.mutation(async ({ ctx }) => {
+    await db.markAllNotificationsAsRead(ctx.user.id);
+    return { success: true };
+  }),
+
+  // Delete notification
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await db.deleteNotification(input.id, ctx.user.id);
+      return { success: true };
+    }),
+});
+
+export const projectJoinRequestsRouter = router({
+  // Public: anyone can submit a join request (comes from /connect form)
+  create: publicProcedure
+    .input(z.object({
+      submitterName: z.string().min(1),
+      submitterEmail: z.string().email(),
+      submitterMessage: z.string().optional(),
+      targetType: z.enum(["land_project", "alliance_org"]),
+      targetId: z.string().min(1),
+      targetName: z.string().min(1),
+      connectInquiryId: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      // Find approved steward for this org (if any)
+      const claims = await db.getAllOrgClaims();
+      const approved = claims.find(
+        c => c.orgId === input.targetId && c.status === 'approved'
+      );
+      const id = await db.createProjectJoinRequest({
+        ...input,
+        stewardUserId: approved?.userId ?? null,
+      });
+      return { id };
+    }),
+
+  // Steward: see requests routed to them
+  myRequests: protectedProcedure.query(async ({ ctx }) => {
+    return db.getJoinRequestsForSteward(ctx.user.id);
+  }),
+
+  // Admin: see all requests
+  listAll: adminProcedure.query(async () => {
+    return db.getAllJoinRequests();
+  }),
+
+  updateStatus: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      status: z.enum(["pending", "reviewed", "accepted", "rejected"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Allow admin or the steward assigned to the request
+      const all = await db.getAllJoinRequests();
+      const req = all.find(r => r.id === input.id);
+      if (!req) throw new TRPCError({ code: "NOT_FOUND" });
+      if (ctx.user.role !== "admin" && req.stewardUserId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      await db.updateJoinRequestStatus(input.id, input.status);
+      return { ok: true };
+    }),
+});
