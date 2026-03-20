@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
+const skipIfNoDb = !process.env.DATABASE_URL;
+
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
 function createAuthContext(): TrpcContext {
@@ -42,7 +44,7 @@ function createPublicContext(): TrpcContext {
 }
 
 describe("forum.categories", () => {
-  it("returns a list of categories (public access)", async () => {
+  it.skipIf(skipIfNoDb)("returns a list of categories (public access)", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const categories = await caller.forum.categories();
@@ -58,7 +60,7 @@ describe("forum.categories", () => {
 });
 
 describe("forum.categoryBySlug", () => {
-  it("returns a category by slug", async () => {
+  it.skipIf(skipIfNoDb)("returns a category by slug", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const category = await caller.forum.categoryBySlug({ slug: "general" });
@@ -67,7 +69,7 @@ describe("forum.categoryBySlug", () => {
     expect(category!.name).toBe("General Discussion");
   });
 
-  it("returns null for non-existent slug", async () => {
+  it.skipIf(skipIfNoDb)("returns null for non-existent slug", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const category = await caller.forum.categoryBySlug({ slug: "nonexistent-slug-xyz" });
@@ -76,7 +78,7 @@ describe("forum.categoryBySlug", () => {
 });
 
 describe("forum.posts", () => {
-  it("returns posts list (public access)", async () => {
+  it.skipIf(skipIfNoDb)("returns posts list (public access)", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const posts = await caller.forum.posts({ limit: 10, offset: 0 });
@@ -91,7 +93,7 @@ describe("forum.posts", () => {
     }
   });
 
-  it("filters posts by categoryId", async () => {
+  it.skipIf(skipIfNoDb)("filters posts by categoryId", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     // Category 1 = General Discussion (has our test post)
@@ -117,7 +119,7 @@ describe("forum.createPost", () => {
     ).rejects.toThrow();
   });
 
-  it("creates a post when authenticated", async () => {
+  it.skipIf(skipIfNoDb)("creates a post when authenticated", async () => {
     const ctx = createAuthContext();
     const caller = appRouter.createCaller(ctx);
     const post = await caller.forum.createPost({
@@ -131,7 +133,7 @@ describe("forum.createPost", () => {
 });
 
 describe("forum.postById", () => {
-  it("returns a post by id", async () => {
+  it.skipIf(skipIfNoDb)("returns a post by id", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const post = await caller.forum.postById({ id: 1 });
@@ -150,7 +152,7 @@ describe("forum.postById", () => {
 });
 
 describe("forum.likes", () => {
-  it("returns like data for a post (public)", async () => {
+  it.skipIf(skipIfNoDb)("returns like data for a post (public)", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const likes = await caller.forum.likes({ postId: 1 });

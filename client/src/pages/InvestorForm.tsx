@@ -18,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -152,6 +153,8 @@ const sectorOptions = [
 
 export default function InvestorForm() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const utils = trpc.useUtils();
 
   // Already verified — skip the form and go straight to /opportunity
   useEffect(() => {
@@ -198,6 +201,10 @@ export default function InvestorForm() {
       localStorage.setItem('investor_verified', 'true');
       localStorage.setItem('investor_email', formData.email);
       localStorage.setItem('investor_name', formData.fullName);
+      // Invalidate server-side hasSubmitted check for logged-in users
+      if (user) {
+        utils.investorInquiries.hasSubmitted.invalidate();
+      }
       setIsSubmitted(true);
     },
     onError: (err) => {

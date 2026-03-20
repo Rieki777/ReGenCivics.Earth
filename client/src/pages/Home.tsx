@@ -219,25 +219,10 @@ export default function Home() {
       ) : (
       <div className="relative">
         {/* Fund Launch Announcement Banner */}
-        <div className="bg-gradient-to-r from-[#7dd87d] via-[#4a9f4a] to-[#7dd87d] text-[#1a472a] py-3 px-4 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0icmdiYSgyNiw3MSw0MiwwLjEpIi8+PC9zdmc+')] opacity-50" />
-          <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm sm:text-base font-semibold">
-            <span className="flex items-center gap-2">
-              <span className="animate-pulse">🌱</span>
-              <span>Fund Launches Late 2026 &mdash; Accepting Letters of Intent Now</span>
-            </span>
-            <span className="hidden sm:inline">|</span>
-            <div className="flex items-center gap-3">
-              <Link href="/investor" className="underline hover:no-underline font-bold flex items-center gap-1">
-                Investor Info <ArrowRight className="w-4 h-4" />
-              </Link>
-              <span className="text-[#1a472a]/60">or</span>
-              <Link href="/seasons" className="underline hover:no-underline font-bold">
-                Apply for Season 3
-              </Link>
-            </div>
-          </div>
-        </div>
+        <BannerDisplay
+          bannerKey="fund-launch-banner"
+          className="bg-gradient-to-r from-[#7dd87d] via-[#4a9f4a] to-[#7dd87d] text-[#1a472a] py-3 px-4 text-center"
+        />
 
         {/* Welcome Short Intro Video */}
         <section className="relative py-10 md:py-14">

@@ -23,8 +23,10 @@ import { PageTransition } from "@/components/PageTransition";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ForumMarkdown, MarkdownHints } from "@/components/ForumMarkdown";
 import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownToolbar";
+import { RichEditor } from "@/components/RichEditor";
 import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
+import { EmojiReactions } from "@/components/EmojiReactions";
 
 function timeAgo(date: Date | string): string {
   const now = new Date();
@@ -546,6 +548,11 @@ export default function CommunityPost() {
             </div>
             )}
 
+            {/* Emoji Reactions on post */}
+            <div className="px-4 md:px-6 pb-2">
+              <EmojiReactions postId={post.id} />
+            </div>
+
             {/* Post Actions */}
             <div className="px-4 md:px-6 pb-4 flex items-center gap-4 border-t border-[#e8e4de] pt-3">
               <button
@@ -683,6 +690,9 @@ export default function CommunityPost() {
                             <ForumMarkdown content={reply.content} />
                           )}
                         </div>
+                        {/* Emoji Reactions on reply */}
+                        <EmojiReactions replyId={reply.id} />
+
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <button
                             onClick={() => handleLikeReply(reply.id)}
@@ -825,15 +835,12 @@ export default function CommunityPost() {
                 </button>
               </div>
             )}
-            <MarkdownToolbar textareaRef={replyRef} value={replyContent} onChange={setReplyContent} compact />
-            <Textarea
-              ref={replyRef}
+            {/* compact reply editor */}
+            <RichEditor
               value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              onKeyDown={handleReplyShortcuts}
-              placeholder="Share your thoughts... (Ctrl+B for bold, Ctrl+I for italic, Ctrl+K for link)"
-              className="min-h-[100px] border-[#e8e4de] focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a] resize-none mb-3 rounded-t-none border-t-0"
-              style={{ fontFamily: 'var(--font-body)' }}
+              onChange={setReplyContent}
+              placeholder="Share your thoughts..."
+              className="min-h-[100px] text-[#1a472a] mb-3"
             />
             <div className="flex items-center justify-between">
               <MarkdownHints />

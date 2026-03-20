@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { getLoginUrl } from "@/const";
 import { useState, useMemo } from "react";
-import { 
-  ArrowUp, Sparkles, Trophy, Flame, Clock, 
+import {
+  ArrowUp, Sparkles, Trophy, Flame, Clock,
   ChevronUp, MessageCircle, Plus, X, Send,
-  Compass, Zap, Target, Star
+  Compass, Zap, Target, Star, MessageSquare
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -310,7 +310,7 @@ export default function QuestSuggestions() {
                         {suggestion.description}
                       </p>
 
-                      <div className="flex items-center gap-3 text-xs text-white/40">
+                      <div className="flex items-center gap-3 text-xs text-white/40 flex-wrap">
                         {catInfo && (
                           <span className="bg-white/10 px-2 py-0.5 rounded-full">
                             {catInfo.icon} {catInfo.label}
@@ -318,6 +318,15 @@ export default function QuestSuggestions() {
                         )}
                         <span>by {suggestion.authorName}</span>
                         <span>{new Date(suggestion.createdAt).toLocaleDateString()}</span>
+                        {suggestion.questForumThreadId && (
+                          <Link
+                            href={`/community/post/${suggestion.questForumThreadId}`}
+                            className="inline-flex items-center gap-1 text-[#7dd87d] hover:underline"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            Discussion
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>

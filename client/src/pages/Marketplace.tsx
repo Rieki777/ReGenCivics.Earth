@@ -134,6 +134,8 @@ export default function Marketplace() {
                   <img
                     src={item.avatarUrl}
                     alt={item.displayName}
+                    width="44"
+                    height="44"
                     className="w-11 h-11 rounded-full object-cover border border-white/10 flex-shrink-0"
                   />
                 ) : (

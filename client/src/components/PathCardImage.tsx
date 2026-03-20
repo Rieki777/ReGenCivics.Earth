@@ -38,6 +38,8 @@ export function PathCardImage({ cardId, image, activatedImage, title, accentColo
         src={image}
         alt={title}
         className="path-card-img path-card-img-default"
+        width="237"
+        height="237"
         loading="eager"
         decoding="async"
         draggable={false}
@@ -48,6 +50,8 @@ export function PathCardImage({ cardId, image, activatedImage, title, accentColo
         src={activatedImage}
         alt={`${title} - activated`}
         className="path-card-img path-card-img-activated"
+        width="237"
+        height="237"
         loading="lazy"
         decoding="async"
         draggable={false}

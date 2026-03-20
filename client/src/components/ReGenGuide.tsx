@@ -198,7 +198,7 @@ export default function ReGenGuide() {
               ? "bg-[#1a472a] border border-[#7dd87d]/40 text-[#7dd87d]/60 hover:text-[#7dd87d]"
               : "bg-[#1a472a] border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#1e5533] hover:border-[#7dd87d]/70 hover:shadow-xl"
           }`}
-        aria-label={isOpen ? "Close guide" : "Show Me Around"}
+        aria-label={isOpen ? "Close Your ReGen Guide" : "Your ReGen Guide"}
       >
         {isOpen ? (
           <>

@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { sanitizeInput } from "./_core/security";
 import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
@@ -16,7 +17,7 @@ import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBan
 import { adminProcedure } from "./_core/trpc";
 import { ENV } from "./_core/env";
 import { generateImage, buildImagePrompt } from "./_core/imageGeneration";
-import { forumPosts, forumReplies, forumCategories, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims, questEndorsements, applications as applicationsTable, blogEdits } from "../drizzle/schema";
+import { forumPosts, forumReplies, forumCategories, postReactions, campaigns as campaignsTable, gifts, needs, bioregions, upcomingAmas, playerProfiles, glossaryTerms, projectConnections, knowledgeMapEntries, customGameInquiries, userBioregions, questCompletions, activeQuestSignals, entityRssFeeds, orgClaims, questEndorsements, applications as applicationsTable, blogEdits, questSuggestions, bannedEmails, applicationEvents, adminNotifications } from "../drizzle/schema";
 import { superadminProcedure } from "./_core/trpc";
 import { eq, sql, gt, count } from "drizzle-orm";
 import { getDb } from "./db";
@@ -273,7 +274,22 @@ export const appRouter = router({
           throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
         }
         await db.updateApplication(input.id, { status: input.status });
-        
+
+        // Log the status change event
+        try {
+          const drizzleDb = await getDb();
+          if (drizzleDb) {
+            await drizzleDb.insert(applicationEvents).values({
+              applicationId: input.id,
+              eventType: 'status_change',
+              description: `Status changed to: ${input.status}`,
+              adminUserId: ctx.user.id,
+            });
+          }
+        } catch (e) {
+          console.warn("Failed to log application event:", e);
+        }
+
         // Notify owner of status change
         const updatedApp = await db.getApplicationById(input.id);
         if (updatedApp) {
@@ -743,6 +759,18 @@ export const appRouter = router({
     // Self-service: get own investor inquiry
     mine: protectedProcedure.query(async ({ ctx }) => {
       return db.getInvestorInquiryByUserId(ctx.user.id);
+    }),
+
+    // Self-service: check if user has already submitted
+    hasSubmitted: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.email) return { submitted: false };
+      const dbConn = await getDb();
+      if (!dbConn) return { submitted: false };
+      const { investorInquiries: tbl } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const rows = await dbConn.select({ id: tbl.id }).from(tbl)
+        .where(eq(tbl.email, ctx.user.email)).limit(1);
+      return { submitted: rows.length > 0 };
     }),
   }),
 
@@ -1329,6 +1357,81 @@ export const appRouter = router({
           lastTokenSync: new Date(),
         });
         return { rvoice: balances.rvoice, rgen: balances.rgen };
+      }),
+
+    // Self-service: force-sync own token balances (no rate limit)
+    forceSync: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+        if (!profile) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Player profile not found" });
+        }
+        if (!profile.walletAddress) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "No wallet address on profile" });
+        }
+        const { fetchTokenBalances } = await import("./blockchain");
+        const balances = await fetchTokenBalances(profile.walletAddress);
+        await db.updatePlayerProfile(profile.id, {
+          rvoiceBalance: balances.rvoice,
+          rgenBalance: balances.rgen,
+          lastTokenSync: new Date(),
+        });
+        return { rvoice: balances.rvoice, rgen: balances.rgen, cached: false };
+      }),
+
+    // Admin: Unverify a player profile
+    unverify: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ input }) => {
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        await drizzleDb.execute(sql`UPDATE player_profiles SET isVerified = 0 WHERE id = ${input.profileId}`);
+        return { success: true };
+      }),
+
+    // Admin: Ban a player (adds email to bannedEmails table)
+    banPlayer: adminProcedure
+      .input(z.object({ profileId: z.number(), reason: z.string().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const profile = await db.getPlayerProfileById(input.profileId);
+        if (profile) {
+          const rows = await drizzleDb.execute(sql`SELECT email FROM users WHERE id = ${(profile as any).userId}`);
+          const user = (rows as any)?.[0]?.[0] ?? (rows as any)?.[0];
+          const email = user?.email;
+          if (email) {
+            await drizzleDb.insert(bannedEmails).values({
+              email,
+              reason: input.reason || null,
+              bannedBy: ctx.user.id,
+            }).onDuplicateKeyUpdate({ set: { reason: input.reason || null } });
+          }
+        }
+        return { success: true };
+      }),
+
+    // Admin: Delete a profile and ban the email
+    deleteProfile: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const profile = await db.getPlayerProfileById(input.profileId);
+        if (profile) {
+          const rows = await drizzleDb.execute(sql`SELECT email FROM users WHERE id = ${(profile as any).userId}`);
+          const user = (rows as any)?.[0]?.[0] ?? (rows as any)?.[0];
+          const email = user?.email;
+          if (email) {
+            await drizzleDb.insert(bannedEmails).values({
+              email,
+              reason: 'Account deleted',
+              bannedBy: ctx.user.id,
+            }).onDuplicateKeyUpdate({ set: { reason: 'Account deleted' } });
+          }
+        }
+        await drizzleDb.execute(sql`DELETE FROM player_profiles WHERE id = ${input.profileId}`);
+        return { success: true };
       }),
 
     // Admin: Award badge
@@ -1976,6 +2079,18 @@ export const appRouter = router({
         await db.unsubscribeNewsletter(input.email);
         return { success: true };
       }),
+
+    // Self-service: check if logged-in user has already subscribed
+    hasSubscribed: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user.email) return { subscribed: false };
+      const dbConn = await getDb();
+      if (!dbConn) return { subscribed: false };
+      const { newsletterSubscribers: tbl } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const rows = await dbConn.select({ id: tbl.id }).from(tbl)
+        .where(eq(tbl.email, ctx.user.email)).limit(1);
+      return { subscribed: rows.length > 0 };
+    }),
   }),
 
   // Crowd Pooling Projects router
@@ -2817,6 +2932,36 @@ export const appRouter = router({
 
   // Admin router
   admin: router({
+    // Get aggregate admin stats for alert banner and overview
+    getStats: adminProcedure.query(async () => {
+      const drizzleDb = await getDb();
+      const [appStats] = await drizzleDb!
+        .select({
+          totalApplications: count(),
+          pendingApplications: sql<number>`SUM(CASE WHEN ${applicationsTable.status} = 'submitted' OR ${applicationsTable.status} = 'under_review' THEN 1 ELSE 0 END)`,
+          totalHectares: sql<number>`SUM(${applicationsTable.projectSizeHectares})`,
+          totalHouseholds: sql<number>`SUM(${applicationsTable.intendedHouseholdCount})`,
+          totalPeople: sql<number>`SUM(${applicationsTable.intendedPeopleCount})`,
+        })
+        .from(applicationsTable);
+
+      const allInvestors = await db.getAllInvestorInquiries();
+      const allInquiries = await db.getAllGeneralInquiries();
+
+      const newInvestorCount = allInvestors.filter((i: any) => i.status === 'new' || !i.status).length;
+      const pendingInquiryCount = allInquiries.filter((i: any) => i.status === 'new' || i.status === 'pending').length;
+
+      return {
+        totalApplications: appStats?.totalApplications ?? 0,
+        pendingApplications: Number(appStats?.pendingApplications ?? 0),
+        pendingInquiries: pendingInquiryCount,
+        newInvestors: newInvestorCount,
+        totalHectares: Number(appStats?.totalHectares ?? 0),
+        totalHouseholds: Number(appStats?.totalHouseholds ?? 0),
+        totalPeople: Number(appStats?.totalPeople ?? 0),
+      };
+    }),
+
     // Get notification preferences (admin only)
     getNotificationPreferences: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role !== "admin") {
@@ -2854,6 +2999,83 @@ export const appRouter = router({
         await db.updateNotificationPreferences(input);
         return { success: true };
       }),
+
+    // ─── Token Stats ─────────────────────────────────────────────────────────
+    getTokenStats: adminProcedure.query(async () => {
+      const drizzleDb = await getDb();
+      if (!drizzleDb) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const [stats] = await drizzleDb.execute(sql`
+        SELECT
+          COUNT(*) AS totalPlayers,
+          SUM(CASE WHEN walletAddress IS NOT NULL AND walletAddress != '' THEN 1 ELSE 0 END) AS playersWithWallet,
+          SUM(rvoiceBalance) AS totalRvoice,
+          SUM(rgenBalance) AS totalRgen,
+          SUM(CASE WHEN isVerified = 1 THEN 1 ELSE 0 END) AS verifiedPlayers
+        FROM player_profiles WHERE isActive = 1
+      `) as any;
+      const row = (stats as any)?.[0] ?? stats;
+      const topHolders = await drizzleDb.execute(sql`
+        SELECT displayName, walletAddress, rvoiceBalance, rgenBalance, isVerified
+        FROM player_profiles WHERE isActive = 1
+        ORDER BY (rvoiceBalance + rgenBalance) DESC LIMIT 10
+      `) as any;
+      return {
+        totalPlayers: Number(row?.totalPlayers ?? 0),
+        playersWithWallet: Number(row?.playersWithWallet ?? 0),
+        totalRvoice: Number(row?.totalRvoice ?? 0),
+        totalRgen: Number(row?.totalRgen ?? 0),
+        verifiedPlayers: Number(row?.verifiedPlayers ?? 0),
+        topHolders: ((topHolders as any)?.[0] ?? topHolders ?? []) as any[],
+      };
+    }),
+
+    // ─── Application Events ───────────────────────────────────────────────────
+    getApplicationEvents: adminProcedure
+      .input(z.object({ applicationId: z.number() }))
+      .query(async ({ input }) => {
+        const drizzleDb = await getDb();
+        if (!drizzleDb) return [];
+        const events = await drizzleDb.select().from(applicationEvents)
+          .where(eq(applicationEvents.applicationId, input.applicationId))
+          .orderBy(sql`${applicationEvents.createdAt} DESC`);
+        return events;
+      }),
+
+    // ─── Notifications sub-router ─────────────────────────────────────────────
+    notifications: router({
+      list: adminProcedure.query(async () => {
+        const drizzleDb = await getDb();
+        if (!drizzleDb) return [];
+        const now = new Date();
+        const rows = await drizzleDb.select().from(adminNotifications)
+          .where(sql`${adminNotifications.handledAt} IS NULL`)
+          .orderBy(sql`${adminNotifications.createdAt} DESC`);
+        return rows.filter((r: any) => !r.snoozedUntil || new Date(r.snoozedUntil) < now);
+      }),
+
+      handle: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          const drizzleDb = await getDb();
+          if (!drizzleDb) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+          await drizzleDb.update(adminNotifications)
+            .set({ handledAt: new Date() })
+            .where(eq(adminNotifications.id, input.id));
+          return { success: true };
+        }),
+
+      snooze: adminProcedure
+        .input(z.object({ id: z.number(), days: z.number().min(1).max(30) }))
+        .mutation(async ({ input }) => {
+          const drizzleDb = await getDb();
+          if (!drizzleDb) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+          const snoozedUntil = new Date(Date.now() + input.days * 24 * 60 * 60 * 1000);
+          await drizzleDb.update(adminNotifications)
+            .set({ snoozedUntil })
+            .where(eq(adminNotifications.id, input.id));
+          return { success: true };
+        }),
+    }),
 
     // ─── Broadcast sub-router ────────────────────────────────────────────────
     broadcast: router({
@@ -3207,10 +3429,11 @@ export const appRouter = router({
         const authorIds = replies.map(r => r.authorId);
         const [authorsMap, playerProfiles] = await Promise.all([
           db.getUsersByIds(authorIds),
-          Promise.all([...new Set(authorIds)].map(id => db.getPlayerProfileByUserId(id).catch(() => null))),
+          Promise.all(Array.from(new Set(authorIds)).map(id => db.getPlayerProfileByUserId(id).catch(() => null))),
         ]);
+        const uniqueAuthorIds = Array.from(new Set(authorIds));
         const profilesMap = Object.fromEntries(
-          [...new Set(authorIds)].map((id, i) => [id, playerProfiles[i]])
+          uniqueAuthorIds.map((id, i) => [id, playerProfiles[i]])
         );
         const enriched = replies.map((reply) => {
           const author = authorsMap[reply.authorId];
@@ -3442,8 +3665,8 @@ export const appRouter = router({
         const postId = await db.createForumPost({
           categoryId: input.categoryId,
           authorId: ctx.user.id,
-          title: input.title,
-          content: input.content,
+          title: sanitizeInput(input.title),
+          content: sanitizeInput(input.content),
           tags,
           postType: input.postType,
           threadStage: input.threadStage,
@@ -3472,7 +3695,7 @@ export const appRouter = router({
         const replyId = await db.createForumReply({
           postId: input.postId,
           authorId: ctx.user.id,
-          content: input.content,
+          content: sanitizeInput(input.content),
           parentReplyId: input.parentReplyId,
         });
         return { id: replyId };
@@ -3648,6 +3871,84 @@ export const appRouter = router({
         const authorsMap = await db.getUsersByIds(posts.map(p => p.authorId));
         return posts.map((post) => ({ ...post, authorName: authorsMap[post.authorId]?.name || 'Anonymous' }));
       }),
+
+    reactions: router({
+      // Toggle an emoji reaction on a post or reply
+      toggle: protectedProcedure
+        .input(z.object({
+          postId: z.number().optional(),
+          replyId: z.number().optional(),
+          emoji: z.enum(['👍', '❤️', '🌱', '🔥', '💡', '🌍']),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          if (!input.postId && !input.replyId) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Must specify postId or replyId' });
+          }
+          const db2 = await getDb();
+          if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB unavailable' });
+
+          // Check if reaction already exists
+          const existing = await db2.select()
+            .from(postReactions)
+            .where(
+              sql`${postReactions.userId} = ${ctx.user.id}
+                AND ${input.postId ? sql`${postReactions.postId} = ${input.postId}` : sql`${postReactions.postId} IS NULL`}
+                AND ${input.replyId ? sql`${postReactions.replyId} = ${input.replyId}` : sql`${postReactions.replyId} IS NULL`}
+                AND ${postReactions.emoji} = ${input.emoji}`
+            )
+            .limit(1);
+
+          if (existing.length > 0) {
+            // Unreact: delete the existing reaction
+            await db2.delete(postReactions).where(eq(postReactions.id, existing[0].id));
+            return { reacted: false };
+          } else {
+            // React: insert new reaction
+            await db2.insert(postReactions).values({
+              userId: ctx.user.id,
+              postId: input.postId ?? null,
+              replyId: input.replyId ?? null,
+              emoji: input.emoji,
+            });
+            return { reacted: true };
+          }
+        }),
+
+      // Get reaction counts and current user's reactions for a post or reply
+      get: publicProcedure
+        .input(z.object({
+          postId: z.number().optional(),
+          replyId: z.number().optional(),
+        }))
+        .query(async ({ ctx, input }) => {
+          const db2 = await getDb();
+          if (!db2) return [];
+
+          // Get all reactions for the target
+          const rows = await db2.select()
+            .from(postReactions)
+            .where(
+              sql`${input.postId ? sql`${postReactions.postId} = ${input.postId}` : sql`${postReactions.postId} IS NULL`}
+                AND ${input.replyId ? sql`${postReactions.replyId} = ${input.replyId}` : sql`${postReactions.replyId} IS NULL`}`
+            );
+
+          // Get the current user from session if available
+          const currentUserId = ctx.user?.id ?? null;
+
+          // Aggregate by emoji
+          const ALLOWED_EMOJIS = ['👍', '❤️', '🌱', '🔥', '💡', '🌍'];
+          const result = ALLOWED_EMOJIS.map(emoji => {
+            const matching = rows.filter(r => r.emoji === emoji);
+            return {
+              emoji,
+              count: matching.length,
+              userReacted: currentUserId ? matching.some(r => r.userId === currentUserId) : false,
+            };
+          }).filter(r => r.count > 0);
+
+          return result;
+        }),
+    }),
   }),
 
   // Quest Suggestions
@@ -3684,6 +3985,34 @@ export const appRouter = router({
           description: input.description,
           category: input.category,
         });
+
+        // Auto-create forum thread for this quest suggestion
+        try {
+          const drizzle = await getDb();
+          if (drizzle) {
+            const [questsGameplayCat] = await drizzle
+              .select({ id: forumCategories.id })
+              .from(forumCategories)
+              .where(eq(forumCategories.slug, 'quests-gameplay'))
+              .limit(1);
+            if (questsGameplayCat) {
+              const forumBody = `This is the discussion thread for the "${input.title}" quest. Complete the quest and share your experience here. Questions, reflections, and completions all welcome.`;
+              const forumPostId = await db.createForumPost({
+                categoryId: questsGameplayCat.id,
+                authorId: ctx.user.id,
+                title: input.title,
+                content: forumBody,
+              });
+              await drizzle
+                .update(questSuggestions)
+                .set({ questForumThreadId: forumPostId })
+                .where(eq(questSuggestions.id, id));
+            }
+          }
+        } catch (err) {
+          console.error('Failed to auto-create forum thread for quest (non-fatal):', err);
+        }
+
         return { id };
       }),
 

@@ -1,6 +1,8 @@
 // server/blockchain.ts
 // Read-only Base blockchain queries — no wallet, no signing.
 
+console.log('[blockchain] BASE_RPC:', process.env.BASE_RPC_URL ? 'custom (Alchemy)' : 'fallback (public mainnet.base.org)');
+
 const BASE_RPC         = process.env.BASE_RPC_URL          ?? "https://mainnet.base.org";
 const RGVOICE_CONTRACT = process.env.RGVOICE_TOKEN_CONTRACT ?? "0x4d848b3f2d74d1d2f6c75c55d0751dab8fc7d707";
 const REGEN_CONTRACT   = process.env.REGEN_TOKEN_CONTRACT   ?? "0x4e617cd113364193d215d107add6fa50418aa2e4";
@@ -30,9 +32,14 @@ async function ethCall(to: string, data: string): Promise<string | null> {
       signal: AbortSignal.timeout(8000),
     });
     const json = await res.json() as any;
-    if (json.error || !json.result || json.result === "0x") return null;
+    if (json.error) {
+      console.warn('[blockchain] ethCall json.error:', json.error);
+      return null;
+    }
+    if (!json.result || json.result === "0x") return null;
     return json.result as string;
-  } catch {
+  } catch (e) {
+    console.error('[blockchain] ethCall failed:', { to, error: e instanceof Error ? e.message : String(e) });
     return null;
   }
 }

@@ -266,11 +266,14 @@ export default function Schedule() {
       {/* Hero Section */}
       <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="https://assets.regencivics.earth/MnRHvgPyBDbKYbay.jpg" 
-            alt="Community Gathering" 
+          <img
+            src="https://assets.regencivics.earth/MnRHvgPyBDbKYbay.jpg"
+            alt="Community Gathering"
             className="w-full h-full object-cover"
-          loading="lazy" />
+            width="1920"
+            height="1080"
+            loading="lazy"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a]/70 via-[#1a472a]/50 to-[#1a472a]" />
         </div>
         

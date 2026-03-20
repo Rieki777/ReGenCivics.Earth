@@ -6,8 +6,16 @@
 
 import { Resend } from 'resend';
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy Resend client initialization — avoids crashing at module load when key is missing
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    // Use empty string as fallback so the constructor doesn't crash in test environments
+    // where the module is mocked. In production, RESEND_API_KEY must be set for emails to work.
+    _resend = new Resend(process.env.RESEND_API_KEY || '');
+  }
+  return _resend;
+}
 
 // Verified sender email
 const SENDER_EMAIL = 'ReGen Civics <team@regencivics.earth>';
@@ -164,7 +172,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
       processedHtml = addTrackingPixel(processedHtml, emailLogId);
     }
     
-    const response = await resend.emails.send({
+    const response = await getResend().emails.send({
       from,
       to: Array.isArray(to) ? to : [to],
       subject,
@@ -207,7 +215,7 @@ export async function testEmailConnection(): Promise<boolean> {
     console.log('[Email] Testing connection with API key:', process.env.RESEND_API_KEY?.substring(0, 10) + '...');
     
     // Send a test email to verify the API key works
-    const response = await resend.emails.send({
+    const response = await getResend().emails.send({
       from: SENDER_NOREPLY,
       to: ['delivered@resend.dev'], // Resend's test email address
       subject: 'Test Email - ReGen Civics',

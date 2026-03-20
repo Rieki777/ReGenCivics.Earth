@@ -781,7 +781,7 @@ export default function Community() {
             <div className="grid grid-cols-2 gap-3">
 
               {/* Rites of Passage */}
-              <Link href="/community/c/quests-gameplay">
+              <Link href="/community/c/rites-of-passage">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
                   <img src="/images/quests/quest-05-rites-of-love.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
@@ -793,7 +793,7 @@ export default function Community() {
               </Link>
 
               {/* All Quests */}
-              <Link href="/quest">
+              <Link href="/community/c/quests-gameplay">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
                   <img src="/images/quests/quest-00-fire.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
@@ -805,16 +805,19 @@ export default function Community() {
               </Link>
 
               {/* Epic Quests */}
-              <Link href="/community/c/epic-quests">
-                <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-08-medicine-journey.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+              <div className="relative cursor-default">
+                <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 transition-all h-36">
+                  <img src="/images/quests/quest-08-medicine-journey.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Epic Quests</p>
-                    <p className="text-white/60 text-xs">Long-form challenges</p>
+                    <p className="text-white/60 text-xs">Long-form challenges -- coming soon</p>
                   </div>
                 </div>
-              </Link>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl z-10">
+                  <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Coming Soon</span>
+                </div>
+              </div>
 
               {/* General Discussion */}
               <Link href="/community/c/quests-gameplay">
@@ -829,6 +832,17 @@ export default function Community() {
               </Link>
 
             </div>
+
+            {/* Suggest a Quest */}
+            <Link href="/community/quests" className="block border border-green-500/40 rounded-xl p-5 hover:bg-green-500/10 transition-colors group mt-3">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">💡</span>
+                <div>
+                  <h3 className="font-semibold text-white mb-1 group-hover:text-green-300 transition-colors">Suggest a Quest</h3>
+                  <p className="text-sm text-white/60">Got an idea for a quest? Propose it here -- the community votes and the best ones get built.</p>
+                </div>
+              </div>
+            </Link>
 
             {isAdmin && (
               <div className="mt-4 pt-4 border-t border-amber-200/60">

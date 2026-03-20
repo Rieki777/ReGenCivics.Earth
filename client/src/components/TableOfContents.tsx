@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { useThrottledScroll } from '@/hooks/useThrottledScroll';
 
 interface TOCSection {
   id: string;
@@ -29,26 +30,22 @@ const sections: TOCSection[] = [
 
 export function TableOfContents() {
   const [activeSection, setActiveSection] = useState<string>('');
-  const [isVisible, setIsVisible] = useState(true);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      // Find which section is currently in view
-      for (const section of sections) {
-        const element = document.getElementById(section.id);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 200 && rect.bottom >= 200) {
-            setActiveSection(section.id);
-            break;
-          }
+  const handleScroll = useCallback(() => {
+    // Find which section is currently in view
+    for (const section of sections) {
+      const element = document.getElementById(section.id);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        if (rect.top <= 200 && rect.bottom >= 200) {
+          setActiveSection(section.id);
+          break;
         }
       }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    }
   }, []);
+
+  useThrottledScroll(handleScroll);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);

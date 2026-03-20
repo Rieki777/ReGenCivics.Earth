@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { isNewsletterSubscribed, markNewsletterSubscribed } from "@/utils/newsletter";
 import { analytics } from "@/lib/analytics";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type PageContext = "investor" | "land" | "alliance" | "game" | "community" | "default";
 
@@ -98,8 +99,25 @@ export function ExitIntentCapture() {
   const [submitted, setSubmitted] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
+  const { user } = useAuth();
+
   const context = getPageContext(location);
   const config = contextConfig[context];
+
+  // Server-side check: has the user already subscribed to the newsletter?
+  const { data: subscribedData } = trpc.newsletter.hasSubscribed.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  // If server says subscribed, resync localStorage and suppress newsletter popup
+  useEffect(() => {
+    if (subscribedData?.subscribed) {
+      markNewsletterSubscribed();
+    }
+  }, [subscribedData?.subscribed]);
+
+  // Suppress popup entirely on /investor page — after all hooks
+  if (location === '/investor') return null;
 
   // Two-step show: mount first, then trigger CSS transition
   useEffect(() => {
@@ -117,17 +135,18 @@ export function ExitIntentCapture() {
 
   const triggerModal = useCallback(() => {
     if (dismissed || show || submitted) return;
-    const hasSubmitted = sessionStorage.getItem("formSubmitted");
-    if (hasSubmitted) return;
-    // Don't show newsletter modal if already subscribed
-    if (isNewsletterSubscribed() && context !== 'investor') return;
+    const hasFormSubmitted = sessionStorage.getItem("formSubmitted");
+    if (hasFormSubmitted) return;
+    // Don't show newsletter modal if already subscribed (server or local)
+    const alreadySubscribed = subscribedData?.subscribed || isNewsletterSubscribed();
+    if (alreadySubscribed && context !== 'investor') return;
     // Don't show on investor pages if the visitor already gave their email
     const investorVerified =
       localStorage.getItem('investor_verified') === 'true' ||
       sessionStorage.getItem('investor_verified') === 'true';
     if (investorVerified && context === 'investor') return;
     setShow(true);
-  }, [dismissed, show, submitted, context]);
+  }, [dismissed, show, submitted, context, subscribedData?.subscribed]);
 
   // Desktop: detect mouse leaving viewport toward top
   useEffect(() => {

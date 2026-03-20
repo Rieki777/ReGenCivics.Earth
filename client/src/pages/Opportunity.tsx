@@ -5,7 +5,7 @@
  * Design: Enchanted Forest theme with institutional finance credibility
  */
 
-import { useState, useEffect, useRef, ReactNode, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, ReactNode, lazy, Suspense, useCallback } from "react";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { TableOfContents } from "@/components/TableOfContents";
@@ -13,6 +13,12 @@ import { MobileTableOfContents } from "@/components/MobileTableOfContents";
 const AllocationCalculator = lazy(() => import("@/components/AllocationCalculator"));
 import { useLocation } from "wouter";
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useThrottledScroll } from "@/hooks/useThrottledScroll";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useCountUp } from "@/hooks/useCountUp";
+import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, 
@@ -70,14 +76,12 @@ import { SEO, pageSEO } from "@/components/SEO";
 // Fund Status Banner - minimizes on scroll
 function FundStatusBanner() {
   const [minimized, setMinimized] = useState(false);
-  
-  useEffect(() => {
-    const handleScroll = () => {
-      setMinimized(window.scrollY > 200);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+  const handleScroll = useCallback(() => {
+    setMinimized(window.scrollY > 200);
   }, []);
+
+  useThrottledScroll(handleScroll);
   
   if (minimized) {
     return (
@@ -119,29 +123,21 @@ function FundStatusBanner() {
 }
 
 // Collapsible section component with smooth animation
-function CollapsibleSection({ 
-  title, 
-  children, 
+function CollapsibleSection({
+  title,
+  children,
   defaultOpen = false,
   icon: Icon,
   id
-}: { 
-  title: string; 
-  children: ReactNode; 
+}: {
+  title: string;
+  children: ReactNode;
   defaultOpen?: boolean;
   icon?: React.ComponentType<{ className?: string }>;
   id?: string;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [contentHeight, setContentHeight] = useState<number | undefined>(undefined);
 
-  useEffect(() => {
-    if (contentRef.current) {
-      setContentHeight(contentRef.current.scrollHeight);
-    }
-  }, [isOpen, children]);
-  
   return (
     <AnimatedSection animation="slide-up" className="mb-6">
       <div id={id} className="border border-white/10 rounded-2xl overflow-hidden bg-white/[0.03] backdrop-blur-sm">
@@ -151,7 +147,7 @@ function CollapsibleSection({
         >
           <div className="flex items-center gap-3">
             {Icon && <Icon className="w-5 h-5 text-[#7dd87d]" />}
-            <h2 
+            <h2
               className="text-lg md:text-xl font-bold text-white"
               style={{ fontFamily: 'var(--font-display)' }}
             >
@@ -162,12 +158,12 @@ function CollapsibleSection({
             <ChevronDown className="w-5 h-5 text-[#7dd87d]" />
           </div>
         </button>
-        <div 
-          ref={contentRef}
-          className="transition-all duration-500 ease-in-out overflow-hidden"
-          style={{ 
-            maxHeight: isOpen ? `${contentHeight}px` : '0px',
-            opacity: isOpen ? 1 : 0
+        <div
+          style={{
+            maxHeight: isOpen ? '9999px' : '0',
+            overflow: isOpen ? 'visible' : 'hidden',
+            transition: 'max-height 300ms ease',
+            opacity: isOpen ? 1 : 0,
           }}
         >
           <div className="px-5 md:px-6 pb-6 text-white/80 leading-relaxed text-[15px] md:text-base">
@@ -275,26 +271,336 @@ function HighlightCard({ icon: Icon, title, children, accent = false }: {
 // MAIN COMPONENT
 // =============================================
 
-export default function Opportunity() {
-  const [, setLocation] = useLocation();
-  const [verified, setVerified] = useState<boolean | null>(null);
-  const [investorName, setInvestorName] = useState<string | null>(null);
+// Milestone item with IntersectionObserver reveal
+function MilestoneItem({ milestone, index }: { milestone: typeof MILESTONES[0]; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const isVerified =
-      sessionStorage.getItem('investor_verified') === 'true' ||
-      localStorage.getItem('investor_verified') === 'true';
-    if (!isVerified) {
-      setLocation('/investor');
-    } else {
-      setVerified(true);
-      const name = localStorage.getItem('investor_name');
-      if (name) setInvestorName(name);
-    }
-  }, [setLocation]);
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        obs.unobserve(el);
+      }
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
-  // Show nothing while checking verification
-  if (verified === null) {
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateX(0)' : 'translateX(-20px)',
+        transition: `all 0.5s ease ${index * 100}ms`,
+      }}
+    >
+      <div className="absolute -left-[11px] w-5 h-5 rounded-full border-2 border-[#7dd87d] bg-[#0d2818] flex items-center justify-center" style={{ top: 'auto' }}>
+        <span className="w-2 h-2 rounded-full bg-[#7dd87d]" />
+      </div>
+      <div className={`rounded-xl p-4 border ${milestone.highlight ? 'border-[#ffd700]/40 bg-[#ffd700]/5' : 'border-white/10 bg-white/5'}`}>
+        <span className={`text-xs font-bold uppercase tracking-wider ${milestone.highlight ? 'text-[#ffd700]' : 'text-[#7dd87d]'}`}>{milestone.year}</span>
+        <p className="text-white/70 text-sm mt-1">{milestone.text}</p>
+      </div>
+    </div>
+  );
+}
+
+// Magnetic LOI button
+function MagneticLOIButton() {
+  const btnRef = useRef<HTMLAnchorElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) * 0.15;
+    const dy = (e.clientY - cy) * 0.15;
+    btnRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
+  };
+
+  const handleMouseLeave = () => {
+    if (!btnRef.current) return;
+    btnRef.current.style.transform = 'translate(0, 0)';
+  };
+
+  return (
+    <a
+      ref={btnRef}
+      href="/loi"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ transition: 'transform 0.2s ease', display: 'inline-flex' }}
+      className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] font-bold px-6 py-3 rounded-xl text-base hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-shadow items-center gap-2"
+    >
+      <FileText className="w-5 h-5" />
+      Submit Letter of Intent
+    </a>
+  );
+}
+
+// MobileLOI sticky bar
+function MobileLOIBar() {
+  const [visible, setVisible] = useState(false);
+
+  const handler = useCallback(() => {
+    setVisible(window.scrollY > 400);
+  }, []);
+
+  useThrottledScroll(handler, 150);
+
+  return (
+    <div className={`fixed bottom-0 left-0 right-0 z-40 md:hidden transition-transform duration-300 ${visible ? 'translate-y-0' : 'translate-y-full'}`}>
+      <div className="bg-[#ffd700] text-[#1a1a00] px-4 py-3 flex items-center justify-between">
+        <span className="text-sm font-semibold">Ready to move forward?</span>
+        <a href="/loi" className="bg-[#1a1a00] text-[#ffd700] text-sm font-bold px-4 py-1.5 rounded-lg">Submit LOI</a>
+      </div>
+    </div>
+  );
+}
+
+// Milestones for Track Record timeline
+const MILESTONES = [
+  { year: '2017', text: 'Published the SEEDS whitepaper: a PhD-level dissertation on regenerative economic systems for the blockchain age. The intellectual foundation.' },
+  { year: '2019', text: 'Launched SEEDS: a live digital economy and governance system on the blockchain.' },
+  { year: '2020', text: 'SEEDS grows to 10,000 people across 40+ countries and 300+ organizations. Launched Hypha, the DAO and governance tooling powering the ecosystem.' },
+  { year: '2021', text: 'Launched Season 1 of ReGen Civics. The game begins.' },
+  { year: '2021-2025', text: 'Four years building relationships, refining technology, and conducting research. Preparing for the right window.' },
+  { year: '2026', text: 'Fund I opens. The window is now.', highlight: true },
+];
+
+// Count-up stat box with IntersectionObserver trigger
+function CountUpStat({ label, value, note, numericValue, suffix = '' }: {
+  label: string;
+  value: string;
+  note?: string;
+  numericValue?: number;
+  suffix?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [triggered, setTriggered] = useState(false);
+  const count = useCountUp(numericValue ?? 0, 1200, triggered && numericValue !== undefined);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setTriggered(true);
+        obs.unobserve(el);
+      }
+    }, { threshold: 0.3 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const displayValue = (triggered && numericValue !== undefined) ? `${count}${suffix}` : value;
+
+  return (
+    <div ref={ref} className="text-center p-3 md:p-4">
+      <p className="text-xs text-white/50 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-lg md:text-xl font-bold text-[#7dd87d]" style={{ fontFamily: 'var(--font-display)' }}>{displayValue}</p>
+      {note && <p className="text-[11px] text-white/40 mt-0.5">{note}</p>}
+    </div>
+  );
+}
+
+// Allocation donut chart
+const allocationData = [
+  { name: 'Land Projects', value: 60, color: '#4ade80' },
+  { name: 'Operations', value: 30, color: '#86efac' },
+  { name: 'Reserve', value: 10, color: '#bbf7d0' },
+];
+
+// Market bars with animation on IntersectionObserver
+function MarketBars() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [triggered, setTriggered] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setTriggered(true);
+        obs.unobserve(el);
+      }
+    }, { threshold: 0.2 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const items = [
+    { label: 'Urban Regeneration', value: '$2.3T', width: '23%' },
+    { label: 'Green Building', value: '$1.4T', width: '14%' },
+    { label: 'Sustainable Assets', value: '$35T+', width: '100%' },
+  ];
+
+  return (
+    <div ref={ref} className="space-y-3">
+      {items.map(item => (
+        <div key={item.label}>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-white/70">{item.label}</span>
+            <span className="text-green-400 font-medium">{item.value}</span>
+          </div>
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-green-600 to-green-400 rounded-full"
+              style={{
+                width: triggered ? item.width : '0%',
+                transition: 'width 1200ms ease-out',
+              }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Case study placeholder card
+function CaseStudyCard() {
+  return (
+    <div className="relative rounded-xl border border-white/10 bg-white/5 p-5 overflow-hidden">
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px] z-10 rounded-xl">
+        <Lock className="w-6 h-6 text-white/60 mb-2" />
+        <p className="text-white/70 text-xs text-center px-4">Full case study available after LOI submission</p>
+      </div>
+      <div className="opacity-30 select-none">
+        <p className="text-xs text-white/50 uppercase tracking-wider mb-1">Case Study</p>
+        <h4 className="font-bold text-white text-base mb-1">Regenerative Land Project (In Review)</h4>
+        <p className="text-white/60 text-xs"><MapPin className="w-3 h-3 inline mr-1" />Costa Rica</p>
+        <p className="text-white/40 text-xs mt-2">Preview only</p>
+      </div>
+    </div>
+  );
+}
+
+// LP Dispatch email signup section
+function LPDispatch() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [done, setDone] = useState(false);
+  const subscribeMutation = trpc.newsletter.subscribe.useMutation({
+    onSuccess: () => setDone(true),
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    subscribeMutation.mutate({ email, name: name || undefined, source: 'other' });
+  };
+
+  return (
+    <AnimatedSection animation="slide-up">
+      <div className="mb-10 rounded-2xl border border-[#7dd87d]/20 bg-white/[0.03] p-6 md:p-8 hover:border-[#7dd87d]/40 transition-colors group">
+        <div className="flex items-center gap-2 mb-2">
+          <Mail className="w-5 h-5 text-[#7dd87d]" />
+          <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'var(--font-display)' }}>LP Dispatch</h3>
+        </div>
+        <p className="text-white/60 text-sm mb-4">Get quarterly fund updates and co-investment opportunities.</p>
+        {done ? (
+          <p className="text-[#7dd87d] text-sm font-semibold">You are subscribed. Updates incoming.</p>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              placeholder="Your name (optional)"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#7dd87d]/50"
+            />
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#7dd87d]/50"
+            />
+            <button
+              type="submit"
+              disabled={subscribeMutation.isPending}
+              className="bg-[#7dd87d] text-[#1a472a] font-bold px-5 py-2 rounded-lg text-sm hover:bg-[#6cc86c] transition-colors whitespace-nowrap"
+            >
+              {subscribeMutation.isPending ? 'Joining...' : 'Subscribe'}
+            </button>
+          </form>
+        )}
+      </div>
+    </AnimatedSection>
+  );
+}
+
+export default function Opportunity() {
+  const [, setLocation] = useLocation();
+  const [investorName, setInvestorName] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+
+  // Server-authoritative gate: check if logged-in user has submitted
+  const { data: submittedData, isLoading: submittedLoading } = trpc.investorInquiries.hasSubmitted.useQuery(
+    undefined,
+    { enabled: !!user }
+  );
+
+  useEffect(() => {
+    const name = localStorage.getItem('investor_name');
+    if (name) setInvestorName(name);
+  }, []);
+
+  // Gate logic
+  useEffect(() => {
+    // Wait for auth to resolve
+    if (authLoading) return;
+
+    if (user) {
+      // Logged in + loading server check: do not redirect yet
+      if (submittedLoading) return;
+
+      if (submittedData?.submitted) {
+        // Server says yes: resync localStorage
+        localStorage.setItem('investor_verified', 'true');
+        sessionStorage.setItem('investor_verified', 'true');
+        return;
+      }
+
+      // Server says not submitted: check localStorage fallback
+      const localVerified =
+        sessionStorage.getItem('investor_verified') === 'true' ||
+        localStorage.getItem('investor_verified') === 'true';
+      if (!localVerified) {
+        setLocation('/investor');
+      }
+    } else {
+      // Not logged in: localStorage-only logic
+      const isVerified =
+        sessionStorage.getItem('investor_verified') === 'true' ||
+        localStorage.getItem('investor_verified') === 'true';
+      if (!isVerified) {
+        setLocation('/investor');
+      }
+    }
+  }, [user, authLoading, submittedData, submittedLoading, setLocation]);
+
+  // Show spinner while verifying
+  const isVerifying =
+    authLoading ||
+    (!!user && submittedLoading);
+
+  // Also check local storage to avoid flash
+  const localVerified =
+    typeof sessionStorage !== 'undefined' &&
+    (sessionStorage.getItem('investor_verified') === 'true' ||
+      localStorage.getItem('investor_verified') === 'true');
+
+  if (isVerifying && !localVerified) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
         <div className="text-center">
@@ -309,12 +615,11 @@ export default function Opportunity() {
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       {investorName && (
         <div className="text-center py-2 text-sm text-[#7dd87d]/70">
-          Welcome back, {investorName.split(" ")[0]} 👋
+          Welcome back, {investorName.split(" ")[0]}
         </div>
       )}
       <SEO {...pageSEO.opportunity} />
-      <TableOfContents />
-      <MobileTableOfContents />
+      {isDesktop ? <TableOfContents /> : <MobileTableOfContents />}
       
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#1a472a]/95 backdrop-blur-md border-b border-[#ffd700]/30">
@@ -382,22 +687,46 @@ export default function Opportunity() {
               </Link>
             </div>
 
+            {/* ===== ALLIANCE MARQUEE ===== */}
+            <div className="overflow-hidden whitespace-nowrap border-y border-white/10 py-2 bg-white/5 mb-6 -mx-4">
+              <div className="animate-marquee inline-block">
+                {['Hypha', 'SEEDS', 'Kinship Earth', 'Closer.earth', 'Impact Hub', 'OASA.earth', 'New Earth Summit', 'Planetary Party', 'Holomovement'].map(name => (
+                  <span key={name} className="mx-8 text-sm text-white/50">{name}</span>
+                ))}
+                {['Hypha', 'SEEDS', 'Kinship Earth', 'Closer.earth', 'Impact Hub', 'OASA.earth', 'New Earth Summit', 'Planetary Party', 'Holomovement'].map(name => (
+                  <span key={name + '2'} className="mx-8 text-sm text-white/50">{name}</span>
+                ))}
+              </div>
+            </div>
+
             {/* ===== HERO SECTION ===== */}
             <AnimatedSection animation="slide-up" delay={100}>
-              <div className="text-center mb-10">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#7dd87d]/70 mb-3">Accredited Investors Only</p>
-                <h1 
-                  className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight"
+              <div className="hero-grain relative text-center mb-10 rounded-2xl py-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-[#7dd87d]/70 mb-3 relative z-10">Accredited Investors Only</p>
+                <h1
+                  className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight relative z-10"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   The Regenerative Transition, <span className="text-[#7dd87d]">As an Asset Class</span>
                 </h1>
-                <p className="text-base md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
+                <p className="text-base md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed relative z-10">
                   A pioneering hybrid REIT + VC fund combining land-backed stability with venture growth across the full regenerative ecosystem: startup villages, regenerative communities, and the organizations rethinking housing, infrastructure, energy, governance, and other core services needed for thriving regenerative civilizations. Targeting 12-18% net IRR while financing systemic change.
                 </p>
-                <p className="text-sm text-white/50 max-w-2xl mx-auto mt-3">
+                <p className="text-sm text-white/50 max-w-2xl mx-auto mt-3 relative z-10">
                   Intention: an <strong className="text-white/70">index fund for the regenerative transition</strong>; with regenerative land and communities as a foundation, growing into a full ecosystem of services for regenerative civilizations.
                 </p>
+              </div>
+            </AnimatedSection>
+
+            {/* ===== TRACK RECORD TIMELINE ===== */}
+            <AnimatedSection animation="slide-up">
+              <div className="mb-10">
+                <h2 className="text-lg md:text-xl font-bold text-white mb-5" style={{ fontFamily: 'var(--font-display)' }}>The Track Record</h2>
+                <div className="relative pl-6 border-l border-[#7dd87d]/30 space-y-6">
+                  {MILESTONES.map((m, i) => (
+                    <MilestoneItem key={i} milestone={m} index={i} />
+                  ))}
+                </div>
               </div>
             </AnimatedSection>
 
@@ -405,10 +734,12 @@ export default function Opportunity() {
             <AnimatedSection animation="slide-up" delay={200}>
               <div className="mb-10">
                 <div className="relative rounded-2xl overflow-hidden mb-6">
-                  <img 
+                  <img
                     src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-alliance-ecosystem-LaVJzzkbc3FU9b3WSBHhgG.webp"
                     alt="The ReGen Civics Alliance ecosystem - interconnected regenerative villages, organizations, and governance infrastructure"
                     className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
+                    width="1200"
+                    height="800"
                     loading="eager"
                     fetchPriority="high"
                     decoding="async"
@@ -462,17 +793,17 @@ export default function Opportunity() {
                   </h2>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10 rounded-xl overflow-hidden">
-                  <div className="bg-[#1a472a] rounded-none"><SnapshotStat label="Fund Size Target" value="$25M-$50M" note="Fund I" /></div>
-                  <div className="bg-[#1a472a] rounded-none"><SnapshotStat label="Minimum Investment" value="$250,000" note="Accredited investors" /></div>
-                  <div className="bg-[#1a472a] rounded-none"><SnapshotStat label="Target Net IRR" value="12-18%" note="Net to LPs" /></div>
-                  <div className="bg-[#1a472a] rounded-none"><SnapshotStat label="Fund Term" value="Perpetual" note="Permanent capital vehicle" /></div>
+                  <div className="bg-[#1a472a] rounded-none"><CountUpStat label="Fund Size Target" value="$25M-$50M" note="Fund I" /></div>
+                  <div className="bg-[#1a472a] rounded-none"><CountUpStat label="Minimum Investment" value="$250,000" numericValue={250} suffix="K" note="Accredited investors" /></div>
+                  <div className="bg-[#1a472a] rounded-none"><CountUpStat label="Target Net IRR" value="12-18%" note="Net to LPs" /></div>
+                  <div className="bg-[#1a472a] rounded-none"><CountUpStat label="Fund Term" value="Perpetual" note="Permanent capital vehicle" /></div>
                 </div>
                 <div className="mt-px">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10 rounded-xl overflow-hidden">
-                    <div className="bg-[#0d2818] rounded-none"><SnapshotStat label="Asset Allocation" value="60 / 30 / 10" note="Land / Alliance / Innovation" /></div>
-                    <div className="bg-[#0d2818] rounded-none"><SnapshotStat label="Geographic Focus" value="Global" note="Multi-jurisdictional diversification" /></div>
-                    <div className="bg-[#0d2818] rounded-none"><SnapshotStat label="Fund Structure" value="Alliance" note="On-chain governance via Base" /></div>
-                    <div className="bg-[#0d2818] rounded-none"><SnapshotStat label="Status" value="Formation" note="Accepting LOIs until $20M committed" /></div>
+                    <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Asset Allocation" value="60 / 30 / 10" note="Land / Alliance / Innovation" /></div>
+                    <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Geographic Focus" value="Global" note="Multi-jurisdictional diversification" /></div>
+                    <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Fund Structure" value="Alliance" note="On-chain governance via Base" /></div>
+                    <div className="bg-[#0d2818] rounded-none"><CountUpStat label="Status" value="Formation" note="Accepting LOIs until $20M committed" /></div>
                   </div>
                 </div>
                 <div className="mt-4 pt-3 border-t border-white/10 text-center">
@@ -843,10 +1174,12 @@ export default function Opportunity() {
 
               {/* Network Effect */}
               <div className="my-6">
-                <img 
+                <img
                   src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-network-effect_bd42f6b7.jpg"
                   alt="Network effect: capital circulating within the regenerative ecosystem"
                   className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
+                  width="1200"
+                  height="800"
                   loading="lazy"
                 />
               </div>
@@ -872,30 +1205,9 @@ export default function Opportunity() {
               <p className="mb-4 text-sm">
                 We are witnessing the emergence of a new asset class at the convergence of several massive markets. While traditional metrics focus on the <strong className="text-white">$310 billion regenerative landscapes opportunity</strong> (BCG 2025), the true scope is far larger:
               </p>
-              <div className="overflow-x-auto mb-5">
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-[#7dd87d]/30">
-                      <th className="text-left py-2 px-3 text-[#7dd87d] font-semibold">Market</th>
-                      <th className="text-left py-2 px-3 text-[#7dd87d] font-semibold">Size</th>
-                      <th className="text-left py-2 px-3 text-[#7dd87d] font-semibold">Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ["Urban Regeneration", "$2.3 Trillion by 2033", "Forbes/Analysts 2025"],
-                      ["Wellness Real Estate", "$1.1 Trillion by 2029", "Global Wellness Institute"],
-                      ["Green Building", "$1.4 Trillion by 2034", "Precedence Research"],
-                      ["Sustainable Investment Assets", "$35+ Trillion", "Global Sustainable Investment Review"],
-                    ].map((row, i) => (
-                      <tr key={i} className="border-b border-white/5">
-                        <td className="py-2 px-3 text-white/80 font-medium">{row[0]}</td>
-                        <td className="py-2 px-3 text-[#7dd87d] font-bold">{row[1]}</td>
-                        <td className="py-2 px-3 text-white/50 text-xs">{row[2]}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mb-5">
+                <MarketBars />
+                <p className="text-[10px] text-white/30 mt-2">Sources: Forbes/Analysts 2025, Global Wellness Institute, Precedence Research, Global Sustainable Investment Review</p>
               </div>
               <p className="mb-5 text-sm">
                 The market for regenerative communities, eco-villages, and sustainable land development sits at the intersection of all these trends. ReGen Civics is positioned at the frontier of this emerging market, providing the infrastructure, governance tools, and capital pathways that regenerative land projects need to succeed. BCG research confirms that commercial investors can expect <strong className="text-white">15-30% IRR</strong> in regenerative landscapes.
@@ -1008,13 +1320,34 @@ export default function Opportunity() {
             <CollapsibleSection title="Investment Thesis" icon={Target} id="investment-thesis">
               {/* Three-Tier Strategy Image */}
               <div className="mb-6">
-                <img 
+                <img
                   src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-three-tier-strategy_c9173437.jpg"
                   alt="Three-tier portfolio strategy: Land Projects 60%, Alliance Organizations 30%, Innovation Fund 10%"
                   className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
+                  width="1200"
+                  height="800"
                   loading="lazy"
                 />
                 <p className="text-xs text-white/40 mt-2 text-center">Three-tier portfolio strategy balancing stability, growth, and innovation</p>
+              </div>
+
+              {/* Animated allocation donut chart */}
+              <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 bg-white/5 rounded-xl p-5 border border-white/10">
+                <PieChart width={200} height={200}>
+                  <Pie data={allocationData} cx={100} cy={100} innerRadius={60} outerRadius={90} dataKey="value" isAnimationActive>
+                    {allocationData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${value}%`} />
+                </PieChart>
+                <div className="space-y-2 flex-1">
+                  {allocationData.map((d, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                      <span className="text-white/70">{d.name}</span>
+                      <span className="ml-auto font-bold" style={{ color: d.color }}>{d.value}%</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <h3 className="text-base font-bold text-[#7dd87d] mb-3">Three-Tier Portfolio Strategy</h3>
@@ -1290,7 +1623,7 @@ export default function Opportunity() {
               <div className="bg-white/5 rounded-xl p-5 border border-white/10 mb-5">
                 <h4 className="font-bold text-white mb-1">Rieki Cordon, Catalyst</h4>
                 <p className="text-sm mb-3">
-                  Co-founder of SEEDS and Hypha, with a decade of experience building regenerative economic systems, decentralized governance frameworks, and impact-focused financial infrastructure. Led the design of novel financial tools serving 10,000+ users across regenerative communities worldwide spanning 100+ countries over a 7-year exploration in decentralized governance.
+                  Co-founder of SEEDS and Hypha, with a decade of experience building regenerative economic systems, decentralized governance frameworks, and impact-focused financial infrastructure. Led the design of novel financial tools serving 10,000+ people across regenerative communities worldwide spanning 40+ countries over a 7-year exploration in decentralized governance.
                 </p>
                 <p className="text-sm mb-2">Background in systems design, regenerative economics, and community governance. Track record of building and scaling decentralized organizations.</p>
                 <p className="text-xs text-white/50 italic">
@@ -1349,13 +1682,42 @@ export default function Opportunity() {
               </div>
 
               <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-4">
-                <h4 className="font-bold text-white text-sm mb-2">Who is the "GP"?</h4>
+                <h4 className="font-bold text-white text-sm mb-3">Who is the "GP"?</h4>
                 <p className="text-sm mb-3">The General Partner is not a single controlling entity. It's the collective governance system where:</p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-[#7dd87d]/10 rounded-lg p-2 text-center"><strong className="text-[#7dd87d]">40%</strong> <span className="text-white/70">Council of Domain Experts</span></div>
-                  <div className="bg-[#7dd87d]/10 rounded-lg p-2 text-center"><strong className="text-[#7dd87d]">20%</strong> <span className="text-white/70">Land Projects</span></div>
-                  <div className="bg-[#7dd87d]/10 rounded-lg p-2 text-center"><strong className="text-[#7dd87d]">20%</strong> <span className="text-white/70">Alliance Organizations</span></div>
-                  <div className="bg-[#7dd87d]/10 rounded-lg p-2 text-center"><strong className="text-[#7dd87d]">20%</strong> <span className="text-white/70">Investors (YOU)</span></div>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <PieChart width={160} height={160}>
+                    <Pie
+                      data={[
+                        { name: 'Council of Domain Experts', value: 40, color: '#4ade80' },
+                        { name: 'Land Projects', value: 20, color: '#86efac' },
+                        { name: 'Alliance Organizations', value: 20, color: '#bbf7d0' },
+                        { name: 'Investors (YOU)', value: 20, color: '#ffd700' },
+                      ]}
+                      cx={80} cy={80} innerRadius={45} outerRadius={75} dataKey="value" isAnimationActive
+                    >
+                      {[
+                        { name: 'Council of Domain Experts', value: 40, color: '#4ade80' },
+                        { name: 'Land Projects', value: 20, color: '#86efac' },
+                        { name: 'Alliance Organizations', value: 20, color: '#bbf7d0' },
+                        { name: 'Investors (YOU)', value: 20, color: '#ffd700' },
+                      ].map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value}%`} />
+                  </PieChart>
+                  <div className="space-y-1.5 flex-1 text-xs">
+                    {[
+                      { pct: '40%', label: 'Council of Domain Experts', color: '#4ade80' },
+                      { pct: '20%', label: 'Land Projects', color: '#86efac' },
+                      { pct: '20%', label: 'Alliance Organizations', color: '#bbf7d0' },
+                      { pct: '20%', label: 'Investors (YOU)', color: '#ffd700' },
+                    ].map((d, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                        <span style={{ color: d.color }} className="font-bold">{d.pct}</span>
+                        <span className="text-white/70">{d.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -1370,7 +1732,7 @@ export default function Opportunity() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-[#7dd87d] mt-2 font-semibold">YOU vote on how carry funds are deployed through governance proposals.</p>
+                <p className="text-xs text-yellow-400 font-semibold mt-2">YOU vote on how carry funds are deployed through governance proposals.</p>
               </div>
 
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -1445,6 +1807,35 @@ export default function Opportunity() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              {/* Comparable Funds Bar Chart */}
+              <div className="mt-5">
+                <h3 className="text-base font-bold text-[#7dd87d] mb-3">Target IRR vs Comparable Funds</h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart
+                    data={[
+                      { name: 'PE Sustainable\nReal Assets', irr: 14, color: '#86efac' },
+                      { name: 'Venture Capital', irr: 18, color: '#86efac' },
+                      { name: 'ReGen Civics\n(Target)', irr: 15, color: '#ffd700' },
+                    ]}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} />
+                    <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} unit="%" />
+                    <Tooltip formatter={(value) => `${value}% IRR`} />
+                    <Bar dataKey="irr" radius={[4, 4, 0, 0]}>
+                      {[
+                        { color: '#86efac' },
+                        { color: '#86efac' },
+                        { color: '#ffd700' },
+                      ].map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <p className="text-[10px] text-white/30 text-center mt-1">Sources: Industry benchmarks. ReGen Civics target IRR is projected, not guaranteed.</p>
               </div>
             </CollapsibleSection>
 
@@ -1564,10 +1955,12 @@ export default function Opportunity() {
             {/* ===== SECTION 9: INVESTMENT PROCESS (collapsible, default open) ===== */}
             <CollapsibleSection title="Investment Process" icon={Workflow} id="investment-process">
               <div className="mb-6">
-                <img 
+                <img
                   src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-investment-journey_e2ffa537.jpg"
                   alt="Your journey as an alliance investor"
                   className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
+                  width="1200"
+                  height="800"
                   loading="lazy"
                 />
               </div>
@@ -1771,10 +2164,12 @@ export default function Opportunity() {
             <AnimatedSection animation="slide-up">
               <div className="mb-10">
                 <div className="relative rounded-2xl overflow-hidden mb-6">
-                  <img 
+                  <img
                     src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-vision-2040_5214eaf3.jpg"
                     alt="Vision 2040: A thriving regenerative civilization with interconnected communities"
                     className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
+                    width="1920"
+                    height="1080"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0d2818]/90 via-[#0d2818]/40 to-transparent rounded-2xl" />
@@ -1833,12 +2228,7 @@ export default function Opportunity() {
                   Join the investment vehicle backing regenerative land projects and the organizations building the infrastructure for thriving communities. Submit a Letter of Intent or schedule a due diligence call.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-                  <Link href="/loi">
-                    <Button className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] font-bold px-6 py-3 rounded-xl text-base hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all">
-                      <FileText className="w-5 h-5 mr-2" />
-                      Submit Letter of Intent
-                    </Button>
-                  </Link>
+                  <MagneticLOIButton />
                   <Button
                     variant="outline"
                     className="border-2 border-[#7dd87d]/50 text-[#7dd87d] hover:bg-[#7dd87d]/10 px-6 py-3 rounded-xl text-base"
@@ -1859,6 +2249,62 @@ export default function Opportunity() {
                 </p>
               </div>
             </AnimatedSection>
+
+            {/* ===== SEC COMPLIANCE STRIP ===== */}
+            <div className="text-center py-3 border-t border-white/5 text-xs text-white/30 tracking-wider mb-6">
+              Regulation D 506(c) &nbsp;&middot;&nbsp; Accredited Investors Only &nbsp;&middot;&nbsp; SEC-Exempt Offering
+            </div>
+
+            {/* ===== DOCUMENT VAULT ===== */}
+            <AnimatedSection animation="slide-up">
+              <div className="mb-10">
+                <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>Document Vault</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <a
+                    href="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/regen-civics-investor-deck-v3_b8e3b334.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-white/5 rounded-xl p-5 border border-white/10 hover:border-[#7dd87d]/40 transition-colors flex flex-col items-center gap-3 text-center group"
+                  >
+                    <FileText className="w-8 h-8 text-[#7dd87d] group-hover:scale-110 transition-transform" />
+                    <div>
+                      <p className="font-bold text-white text-sm">Pitch Deck</p>
+                      <p className="text-white/50 text-xs">Download PDF</p>
+                    </div>
+                  </a>
+                  <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex flex-col items-center gap-3 text-center opacity-60 cursor-not-allowed">
+                    <BookOpen className="w-8 h-8 text-[#7dd87d]" />
+                    <div>
+                      <p className="font-bold text-white text-sm">Executive Summary</p>
+                      <p className="text-white/50 text-xs">Coming soon</p>
+                    </div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex flex-col items-center gap-3 text-center">
+                    <Lock className="w-8 h-8 text-white/30" />
+                    <div>
+                      <p className="font-bold text-white text-sm">Term Sheet</p>
+                      <p className="text-white/50 text-xs">Available after LOI submission</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* ===== CASE STUDY PLACEHOLDER ===== */}
+            <AnimatedSection animation="slide-up">
+              <div className="mb-10">
+                <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>Case Studies</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <CaseStudyCard />
+                  <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex items-center justify-center">
+                    <p className="text-white/40 text-sm text-center">More case studies published as fund progresses.</p>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* ===== LP DISPATCH ===== */}
+            <LPDispatch />
 
             {/* ===== ALLOCATION CALCULATOR ===== */}
             <AnimatedSection animation="slide-up">
@@ -1881,6 +2327,7 @@ export default function Opportunity() {
       </section>
 
       <ReadingProgress />
+      <MobileLOIBar />
     </div>
   );
 }

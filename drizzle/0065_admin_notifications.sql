@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS adminNotifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  type VARCHAR(50) NOT NULL,
+  entityId INT,
+  entityType VARCHAR(50),
+  message TEXT NOT NULL,
+  snoozedUntil DATETIME,
+  handledAt DATETIME,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+);

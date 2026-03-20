@@ -24,6 +24,8 @@ function AvatarCircle({ displayName, avatarUrl }: { displayName: string; avatarU
       <img
         src={avatarUrl}
         alt={displayName}
+        width="40"
+        height="40"
         className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-[#7dd87d]/30"
       />
     );

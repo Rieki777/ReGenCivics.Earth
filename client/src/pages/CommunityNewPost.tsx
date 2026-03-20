@@ -21,6 +21,7 @@ import { getLoginUrl } from "@/const";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ForumMarkdown, MarkdownHints } from "@/components/ForumMarkdown";
 import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownToolbar";
+import { RichEditor } from "@/components/RichEditor";
 import { PageTransition } from "@/components/PageTransition";
 import { FileUploadInput } from "@/components/FileUploadInput";
 import { toast } from "sonner";
@@ -368,19 +369,12 @@ export default function CommunityNewPost() {
                 )}
               </div>
             ) : (
-              <>
-                <MarkdownToolbar textareaRef={contentRef} value={content} onChange={setContent} />
-                <Textarea
-                  ref={contentRef}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  onKeyDown={handleMarkdownShortcuts}
-                  placeholder="Write your post here... Use the toolbar above or keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+K)"
-                  className="min-h-[200px] border-[#e8e4de] focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a] resize-y rounded-t-none border-t-0"
-                  style={{ fontFamily: 'var(--font-body)' }}
-                  maxLength={10000}
-                />
-              </>
+              <RichEditor
+                value={content}
+                onChange={setContent}
+                placeholder="Write your post here..."
+                className="min-h-[200px] text-[#1a472a]"
+              />
             )}
             <div className="flex items-center justify-between mt-1">
               <MarkdownHints />

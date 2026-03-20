@@ -7,6 +7,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { appRouter } from './routers';
 import type { TrpcContext } from './_core/context';
 
+const skipIfNoDb = !process.env.DATABASE_URL;
+
 // Mock notifications and emails to prevent real emails/notifications being sent during tests
 vi.mock('./_core/notification', () => ({
   notifyOwner: vi.fn().mockResolvedValue(true),
@@ -57,7 +59,7 @@ function createAuthContext(): TrpcContext {
 
 describe('Campaign Contribution System', () => {
   describe('Contribution Creation', () => {
-    it('should create a contribution for a campaign', async () => {
+    it.skipIf(skipIfNoDb)('should create a contribution for a campaign', async () => {
       const ctx = createAuthContext();
       const caller = appRouter.createCaller(ctx);
       
@@ -105,7 +107,7 @@ describe('Campaign Contribution System', () => {
       expect(contribution.success).toBe(true);
     });
     
-    it('should require valid email for contribution', async () => {
+    it.skipIf(skipIfNoDb)('should require valid email for contribution', async () => {
       const ctx = createAuthContext();
       const caller = appRouter.createCaller(ctx);
       
@@ -149,7 +151,7 @@ describe('Campaign Contribution System', () => {
   });
   
   describe('Contribution Status Updates', () => {
-    it('should allow campaign owner to accept contribution', async () => {
+    it.skipIf(skipIfNoDb)('should allow campaign owner to accept contribution', async () => {
       const ctx = createAuthContext();
       const caller = appRouter.createCaller(ctx);
       
@@ -200,7 +202,7 @@ describe('Campaign Contribution System', () => {
       expect(updated.success).toBe(true);
     });
     
-    it('should allow campaign owner to reject contribution', async () => {
+    it.skipIf(skipIfNoDb)('should allow campaign owner to reject contribution', async () => {
       const ctx = createAuthContext();
       const caller = appRouter.createCaller(ctx);
       
@@ -255,7 +257,7 @@ describe('Campaign Contribution System', () => {
   });
   
   describe('Contribution Queries', () => {
-    it('should get contributions for a campaign', async () => {
+    it.skipIf(skipIfNoDb)('should get contributions for a campaign', async () => {
       const ctx = createAuthContext();
       const caller = appRouter.createCaller(ctx);
       
@@ -313,7 +315,7 @@ describe('Campaign Contribution System', () => {
       expect(contributions.length).toBeGreaterThanOrEqual(2);
     });
     
-    it('should filter contributions by status', async () => {
+    it.skipIf(skipIfNoDb)('should filter contributions by status', async () => {
       const ctx = createAuthContext();
       const caller = appRouter.createCaller(ctx);
       

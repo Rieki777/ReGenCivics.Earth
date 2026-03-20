@@ -507,8 +507,9 @@ export default function Navigation() {
           <button
             className="md:hidden text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-nav-drawer"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -520,6 +521,7 @@ export default function Navigation() {
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[60] md:hidden" />
           <Drawer.Content
+            id="mobile-nav-drawer"
             className="fixed inset-y-0 right-0 z-[70] w-[min(85vw,320px)] bg-[#0d2818] border-l border-[#7dd87d]/20 flex flex-col overflow-hidden md:hidden focus:outline-none"
             aria-label="Mobile navigation"
           >

@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS postReactions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  postId INT NULL,
+  replyId INT NULL,
+  emoji VARCHAR(8) NOT NULL,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_reaction (userId, postId, replyId, emoji),
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (postId) REFERENCES forumPosts(id) ON DELETE CASCADE,
+  FOREIGN KEY (replyId) REFERENCES forumReplies(id) ON DELETE CASCADE
+);

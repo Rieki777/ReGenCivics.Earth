@@ -36,6 +36,32 @@
   <url><loc>https://regencivics.earth/community/quests</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
   <!-- Connect -->
   <url><loc>https://regencivics.earth/connect</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <!-- Profile -->
+  <url><loc>https://regencivics.earth/profile</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <!-- Investment form (redirects to /investor) -->
+  <url><loc>https://regencivics.earth/investmentform</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <!-- Investor journey -->
+  <url><loc>https://regencivics.earth/investor</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <!-- LOI -->
+  <url><loc>https://regencivics.earth/loi</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <!-- Apply success -->
+  <url><loc>https://regencivics.earth/apply/success</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <!-- Campaigns -->
+  <url><loc>https://regencivics.earth/crowd-pooling-projects</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://regencivics.earth/create-campaign</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <!-- Newsletter -->
+  <url><loc>https://regencivics.earth/newsletter</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <!-- Unsubscribe -->
+  <url><loc>https://regencivics.earth/unsubscribe</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <!-- One-pagers -->
+  <url><loc>https://regencivics.earth/one-pager/land</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://regencivics.earth/one-pager/alliance</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://regencivics.earth/one-pager/player</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <!-- Blog posts -->
+  <url><loc>https://regencivics.earth/blog/introducing-games-and-quests</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://regencivics.earth/blog/what-makes-regen-civics-different</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://regencivics.earth/blog/the-regenerative-renaissance</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://regencivics.earth/blog/land-projects-season-2</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <!-- Legal -->
   <url><loc>https://regencivics.earth/risk-disclosure</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>https://regencivics.earth/terms-of-use</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>

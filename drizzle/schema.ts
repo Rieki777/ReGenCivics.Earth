@@ -1,4 +1,4 @@
-import { index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double } from "drizzle-orm/mysql-core";
+import { index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -1290,6 +1290,22 @@ export const forumLikes = mysqlTable("forumLikes", {
 export type ForumLike = typeof forumLikes.$inferSelect;
 
 /**
+ * Post Reactions table
+ * Emoji reactions on forum posts and replies
+ */
+export const postReactions = mysqlTable('postReactions', {
+  id: int('id').primaryKey().autoincrement(),
+  userId: int('userId').notNull(),
+  postId: int('postId'),
+  replyId: int('replyId'),
+  emoji: varchar('emoji', { length: 8 }).notNull(),
+  createdAt: timestamp('createdAt').defaultNow(),
+}, (table) => ({
+  uniqueReaction: unique('unique_reaction').on(table.userId, table.postId, table.replyId, table.emoji),
+}));
+export type PostReaction = typeof postReactions.$inferSelect;
+
+/**
  * Forum Reports table
  * Tracks user reports on posts and replies for moderation
  */
@@ -1348,6 +1364,7 @@ export const questSuggestions = mysqlTable("questSuggestions", {
   category: varchar("category", { length: 100 }), // e.g. "regeneration", "community", "governance"
   status: mysqlEnum("status", ["open", "planned", "in_progress", "completed", "declined"]).default("open").notNull(),
   voteCount: int("voteCount").default(0).notNull(),
+  questForumThreadId: int("questForumThreadId"), // nullable: ID of the auto-created forum thread for this quest
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1740,4 +1757,41 @@ export const blogEdits = mysqlTable("blogEdits", {
 });
 export type BlogEdit = typeof blogEdits.$inferSelect;
 export type InsertBlogEdit = typeof blogEdits.$inferInsert;
+
+// ─── Banned Emails ────────────────────────────────────────────────────────────
+export const bannedEmails = mysqlTable('bannedEmails', {
+  id: int('id').primaryKey().autoincrement(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  reason: text('reason'),
+  bannedBy: int('bannedBy'),
+  bannedAt: timestamp('bannedAt').defaultNow(),
+});
+export type BannedEmail = typeof bannedEmails.$inferSelect;
+export type InsertBannedEmail = typeof bannedEmails.$inferInsert;
+
+// ─── Application Events ───────────────────────────────────────────────────────
+export const applicationEvents = mysqlTable('applicationEvents', {
+  id: int('id').primaryKey().autoincrement(),
+  applicationId: int('applicationId').notNull(),
+  eventType: mysqlEnum('eventType', ['status_change', 'email_sent', 'note_added', 'admin_action']).notNull(),
+  description: text('description').notNull(),
+  adminUserId: int('adminUserId'),
+  createdAt: timestamp('createdAt').defaultNow(),
+});
+export type ApplicationEvent = typeof applicationEvents.$inferSelect;
+export type InsertApplicationEvent = typeof applicationEvents.$inferInsert;
+
+// ─── Admin Notifications ──────────────────────────────────────────────────────
+export const adminNotifications = mysqlTable('adminNotifications', {
+  id: int('id').primaryKey().autoincrement(),
+  type: varchar('type', { length: 50 }).notNull(),
+  entityId: int('entityId'),
+  entityType: varchar('entityType', { length: 50 }),
+  message: text('message').notNull(),
+  snoozedUntil: timestamp('snoozedUntil'),
+  handledAt: timestamp('handledAt'),
+  createdAt: timestamp('createdAt').defaultNow(),
+});
+export type AdminNotification = typeof adminNotifications.$inferSelect;
+export type InsertAdminNotification = typeof adminNotifications.$inferInsert;
 

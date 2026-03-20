@@ -503,6 +503,19 @@ export default function Quest() {
         </div>
       </div>
 
+      {/* Quest Hero Image */}
+      <div className="w-full overflow-hidden" style={{ maxHeight: '480px' }}>
+        <img
+          src="/images/quests/quest-hero.webp"
+          alt="A forest path at golden hour"
+          loading="eager"
+          width={1920}
+          height={1047}
+          className="w-full object-cover"
+          style={{ objectPosition: 'center 40%' }}
+        />
+      </div>
+
       {/* Hero Section */}
       <section
         className="py-16 text-white"
@@ -692,6 +705,16 @@ export default function Quest() {
             
             {whyQuestsExpanded && (
               <div className="bg-white p-8 rounded-2xl border-3 border-[#7dd87d]/30 shadow-lg mb-8 animate-in slide-in-from-top-2 duration-300">
+                {/* Section illustration — acts */}
+                <img
+                  src="/images/quests/quest-acts.webp"
+                  alt="Hands planting a seedling into rich soil"
+                  loading="lazy"
+                  width={1920}
+                  height={1047}
+                  className="w-full rounded-xl mb-6 object-cover"
+                  style={{ maxHeight: '280px', objectPosition: 'center 60%' }}
+                />
                 <p className="text-xl text-[#1a472a] font-bold leading-relaxed mb-2 text-center">
                   What if healing ourselves and the Earth is actually a playful and Infinite Game?
                 </p>
@@ -771,6 +794,16 @@ export default function Quest() {
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">RGVoice tokens give you a say in the governance of the Game itself, so the Game is always governed by those who are playing it.</p>
 
                   <hr className="border-[#1a472a]/20 my-6" />
+                  {/* Section illustration — remembers */}
+                  <img
+                    src="/images/quests/quest-remembers.webp"
+                    alt="Aerial view of regenerative land plots connected by glowing threads"
+                    loading="lazy"
+                    width={1920}
+                    height={1047}
+                    className="w-full rounded-xl mb-6 object-cover"
+                    style={{ maxHeight: '240px', objectPosition: 'center' }}
+                  />
                   <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">Quests as Qualifiers</h4>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Land projects and alliance organizations can require that applicants complete certain quests before applying to join or contribute. This ensures applicants have genuine lived experience with regenerative practices, builds a shared language across the community, and distributes tokens to people doing real work before they enter governance roles.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">For example: voting rights in a DAO might require 5 quests plus 1 seasonal quest. Land project stewardship might require Quest 4 (Food Foresting) plus Quest 3 (Healing Wholes) plus any 2 others.</p>
@@ -1124,6 +1157,19 @@ export default function Quest() {
 
       {/* Epic Quest Section */}
       <EpicQuestSection />
+
+      {/* Suggest a Quest CTA */}
+      <section className="py-16 px-4 bg-[#f0ebe3]">
+        <div className="container">
+          <div className="max-w-2xl mx-auto mt-16 p-8 border border-green-500/30 rounded-2xl text-center">
+            <h2 className="text-2xl font-bold mb-3 text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>Got a Quest Idea?</h2>
+            <p className="text-[#1a472a]/70 mb-6 max-w-lg mx-auto">If you've discovered a practice worth spreading, propose it. The community votes -- the best ones become official quests.</p>
+            <Link href="/community/quests" className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors">
+              Suggest a Quest <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Quest Journal Prompt */}
       <div className="text-center py-8 text-[#1a472a]/60 text-sm">

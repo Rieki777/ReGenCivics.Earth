@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as db from './db';
 
+const skipIfNoDb = !process.env.DATABASE_URL;
+
 describe('LOI System', () => {
   describe('LOI Database Functions', () => {
     it('should have LOI database functions defined', () => {
@@ -11,7 +13,7 @@ describe('LOI System', () => {
       expect(db.getLetterOfIntentStats).toBeDefined();
     });
 
-    it('should calculate LOI stats correctly', async () => {
+    it.skipIf(skipIfNoDb)('should calculate LOI stats correctly', async () => {
       const stats = await db.getLetterOfIntentStats();
       
       expect(stats).toHaveProperty('totalAmount');
@@ -47,7 +49,7 @@ describe('Notification Preferences System', () => {
       expect(db.isNotificationEnabled).toBeDefined();
     });
 
-    it('should get or create default notification preferences', async () => {
+    it.skipIf(skipIfNoDb)('should get or create default notification preferences', async () => {
       const prefs = await db.getNotificationPreferences();
       
       expect(prefs).toHaveProperty('id');
@@ -67,12 +69,12 @@ describe('Notification Preferences System', () => {
       expect(typeof prefs.newsletterSignups).toBe('number');
     });
 
-    it('should check if notification types are enabled', async () => {
+    it.skipIf(skipIfNoDb)('should check if notification types are enabled', async () => {
       const isEnabled = await db.isNotificationEnabled('applicationSubmissions');
       expect(typeof isEnabled).toBe('boolean');
     });
 
-    it('should update notification preferences', async () => {
+    it.skipIf(skipIfNoDb)('should update notification preferences', async () => {
       await expect(
         db.updateNotificationPreferences({
           newsletterSignups: false,

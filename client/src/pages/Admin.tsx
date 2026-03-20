@@ -53,6 +53,8 @@ import {
   Clock,
   Radio,
   BookOpen,
+  AlignJustify,
+  Bell,
 } from "lucide-react";
 import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
 import { trpc } from "@/lib/trpc";
@@ -71,6 +73,17 @@ const AdminKanban = lazy(() => import("@/components/AdminKanban").then(m => ({ d
 const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then(m => ({ default: m.ActivityTimeline })));
 import { AdminImageStudio } from "@/components/AdminImageStudio";
 import KnowledgeMapAdminPanel from "@/components/KnowledgeMapAdminPanel";
+import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
+import { AdminApplicationsTab } from "@/components/admin/AdminApplicationsTab";
+import { AdminAnalyticsTab } from "@/components/admin/AdminAnalyticsTab";
+import { AdminNewsletterTab } from "@/components/admin/AdminNewsletterTab";
+import { AdminSettingsTab } from "@/components/admin/AdminSettingsTab";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminAlertBanner } from "@/components/admin/AdminAlertBanner";
+import { ShortcutHelpOverlay } from "@/components/admin/ShortcutHelpOverlay";
+import { BulkActionBar } from "@/components/admin/BulkActionBar";
+import { AdminNotificationCenter } from "@/components/admin/AdminNotificationCenter";
+import { AdminGovernancePanel } from "@/components/admin/AdminGovernancePanel";
 
 // ─── Admin: Custom Game Waitlist ──────────────────────────────────────────────
 function AdminCustomGameWaitlist() {
@@ -2899,6 +2912,111 @@ function GlossaryAdminPanel() {
   );
 }
 
+function truncateAddr(addr: string): string {
+  if (!addr || addr.length < 10) return addr;
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function AdminPlayersTab() {
+  const { data: players, isLoading, refetch } = trpc.playerProfiles.list.useQuery();
+  const [playerFilter, setPlayerFilter] = useState<'all' | 'verified' | 'unverified' | 'banned'>('all');
+  const verifyMut = trpc.playerProfiles.verify.useMutation({ onSuccess: () => { refetch(); toast.success('Player verified'); } });
+  const unverifyMut = trpc.playerProfiles.unverify.useMutation({ onSuccess: () => { refetch(); toast.success('Player unverified'); } });
+  const banMut = trpc.playerProfiles.banPlayer.useMutation({ onSuccess: () => { refetch(); toast.success('Player banned'); } });
+  const deleteMut = trpc.playerProfiles.deleteProfile.useMutation({ onSuccess: () => { refetch(); toast.success('Profile deleted'); } });
+  const syncMut = trpc.playerProfiles.adminSyncTokens.useMutation({ onSuccess: () => { refetch(); toast.success('Tokens synced'); } });
+
+  const filtered = (players || []).filter((p: any) => {
+    if (playerFilter === 'verified') return p.isVerified === 1;
+    if (playerFilter === 'unverified') return p.isVerified !== 1;
+    return true;
+  });
+
+  return (
+    <Card className="bg-white border-2 border-[#1a472a]/10">
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <Users className="w-5 h-5" />
+            Players ({players?.length ?? 0})
+          </CardTitle>
+          <div className="flex gap-2">
+            {(['all', 'verified', 'unverified'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setPlayerFilter(f)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${playerFilter === f ? 'bg-[#1a472a] text-white border-[#1a472a]' : 'border-[#1a472a]/20 text-[#1a472a]/70 hover:bg-[#f0ebe3]'}`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {isLoading ? (
+          <div className="p-8 text-center text-[#1a472a]/50">Loading players...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-[#1a472a]/50">No players found</div>
+        ) : (
+          <div className="divide-y divide-[#1a472a]/10">
+            {filtered.map((player: any) => (
+              <div key={player.id} className="p-4 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-semibold text-[#1a472a] text-sm">{player.displayName}</p>
+                    {player.isVerified === 1 ? (
+                      <Badge className="bg-green-100 text-green-800 border-green-200 text-[10px]">Verified</Badge>
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-[10px]">Unverified</Badge>
+                    )}
+                    {player.walletAddress ? (
+                      <span className="text-[10px] text-[#1a472a]/40 font-mono">{truncateAddr(player.walletAddress)}</span>
+                    ) : (
+                      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]">No wallet</Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#1a472a]/50 mt-0.5">
+                    RV: {player.rvoiceBalance || 0} | RG: {player.rgenBalance || 0}
+                    {player.lastTokenSync ? ` | Synced ${new Date(player.lastTokenSync).toLocaleDateString()}` : ''}
+                  </p>
+                </div>
+                <div className="flex gap-1.5 flex-wrap justify-end">
+                  {player.isVerified !== 1 ? (
+                    <button
+                      onClick={() => verifyMut.mutate({ id: player.id })}
+                      className="text-[10px] px-2 py-1 rounded border border-green-300 text-green-700 hover:bg-green-50 transition-colors"
+                    >Verify</button>
+                  ) : (
+                    <button
+                      onClick={() => unverifyMut.mutate({ profileId: player.id })}
+                      className="text-[10px] px-2 py-1 rounded border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors"
+                    >Unverify</button>
+                  )}
+                  {player.walletAddress && (
+                    <button
+                      onClick={() => syncMut.mutate({ profileId: player.id })}
+                      className="text-[10px] px-2 py-1 rounded border border-[#7dd87d] text-[#4a7c59] hover:bg-green-50 transition-colors"
+                    >Sync Tokens</button>
+                  )}
+                  <button
+                    onClick={() => { if (window.confirm('Ban this player?')) banMut.mutate({ profileId: player.id }); }}
+                    className="text-[10px] px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                  >Ban</button>
+                  <button
+                    onClick={() => { if (window.confirm('Delete this profile? This cannot be undone.')) deleteMut.mutate({ profileId: player.id }); }}
+                    className="text-[10px] px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-50 transition-colors"
+                  >Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [investorSearch, setInvestorSearch] = useState('');
@@ -2909,6 +3027,10 @@ function AdminDashboard() {
   const [aiSelectedContact, setAiSelectedContact] = useState<{ email?: string; name?: string } | null>(null);
   const [globalSearch, setGlobalSearch] = useState('');
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [compact, setCompact] = useState(() => {
+    try { return localStorage.getItem('admin_density') === 'compact'; } catch { return false; }
+  });
+  const [notifCenterOpen, setNotifCenterOpen] = useState(false);
 
   function handleAIAction(action: AdminAIAction) {
     if (action.type === "navigate" && action.tab) {
@@ -2934,7 +3056,7 @@ function AdminDashboard() {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-      if (e.key === '?') { e.preventDefault(); setShowShortcuts(s => !s); }
+      // '?' is handled by ShortcutHelpOverlay
       if (e.key === '/' ) { e.preventDefault(); (document.querySelector('[data-global-search]') as HTMLInputElement)?.focus(); }
       if (TAB_KEYS[e.key] && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
@@ -3049,26 +3171,11 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0ebe3]">
-      {/* Keyboard shortcuts modal */}
-      {showShortcuts && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowShortcuts(false)}>
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-[#1a472a]">Keyboard Shortcuts</h3>
-              <button onClick={() => setShowShortcuts(false)} aria-label="Close keyboard shortcuts" className="text-[#1a472a]/65 hover:text-[#1a472a]"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="space-y-2">
-              {SHORTCUTS.map(s => (
-                <div key={s.key} className="flex items-center justify-between text-sm">
-                  <kbd className="px-2 py-0.5 rounded bg-gray-100 border border-gray-300 font-mono text-xs">{s.key}</kbd>
-                  <span className="text-[#1a472a]/70">{s.desc}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+    <div className={`admin-root flex h-screen overflow-hidden bg-[#f0ebe3] ${compact ? 'admin-compact' : ''}`}>
+      <ShortcutHelpOverlay />
+      <AdminNotificationCenter open={notifCenterOpen} onClose={() => setNotifCenterOpen(false)} />
+      <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] text-white py-4 md:py-6">
         <div className="container px-4">
@@ -3104,15 +3211,26 @@ function AdminDashboard() {
                   <span className="hidden sm:inline">Forum </span>Moderation
                 </Button>
               </Link>
+              <button
+                onClick={() => setNotifCenterOpen(true)}
+                className="relative p-2 rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors"
+                title="Notification Center"
+              >
+                <Bell className="w-4 h-4" />
+              </button>
               <Button
                 variant="outline"
                 size="sm"
-                className="border-white/30 text-white hover:bg-white/10 text-xs"
-                onClick={() => setShowShortcuts(true)}
-                title="Keyboard shortcuts (?)"
+                className={`border-white/30 text-white hover:bg-white/10 text-xs ${compact ? 'bg-white/10' : ''}`}
+                onClick={() => {
+                  const next = !compact;
+                  setCompact(next);
+                  try { localStorage.setItem('admin_density', next ? 'compact' : 'default'); } catch {}
+                }}
+                title={compact ? 'Switch to default density' : 'Switch to compact density'}
               >
-                <HelpCircle className="w-3 h-3 md:w-4 md:h-4" />
-                <span className="hidden md:inline ml-1">Shortcuts</span>
+                <AlignJustify className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="hidden md:inline ml-1">{compact ? 'Default' : 'Compact'}</span>
               </Button>
               <Button
                 variant="outline"
@@ -3211,6 +3329,9 @@ function AdminDashboard() {
         </div>
       </div>
 
+      <AdminAlertBanner onTabChange={setActiveTab} />
+      {/* Scrollable main content */}
+      <div className="flex-1 overflow-y-auto">
       {/* Stats */}
       <div className="container py-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
@@ -3272,910 +3393,40 @@ function AdminDashboard() {
           />
         </div>
 
-        {/* Main Tabs */}
+        {/* Main Tabs - navigation is handled by AdminSidebar */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white border-2 border-[#1a472a]/10 p-1 flex flex-wrap h-auto gap-1 overflow-x-auto max-w-full">
-            <TabsTrigger 
-              value="overview" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Eye className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Overview</span>
-              <span className="sm:hidden">Home</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="applications" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Sprout className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">Projects</span> ({stats.totalApplications})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="investors" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <TrendingUp className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">Investors</span> ({stats.totalInvestors})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="loi" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <FileText className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">LOIs</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="alliance" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Handshake className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">Alliance</span> ({inquiriesByPath.alliance || 0})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="create" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Palette className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">Create</span> ({inquiriesByPath.create || 0})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="live" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <HomeIcon className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">Live</span> ({inquiriesByPath.live || 0})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="role" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <UserCheck className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">Roles</span> ({inquiriesByPath.role || 0})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="other" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <HelpCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">Other</span> ({(inquiriesByPath.other || 0) + (inquiriesByPath.learn || 0) + (inquiriesByPath.finance || 0)})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="crowdpooling" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Crowd Pooling</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="newsletter"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Mail className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Newsletter</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="broadcast"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Radio className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Broadcast</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="analytics" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <TrendingUp className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Analytics</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="banners" 
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Sparkles className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Banners</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="kanban"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Filter className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Kanban</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="settings"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <Settings className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Settings</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="images"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <span className="mr-1 md:mr-2">🖼️</span>
-              <span className="hidden sm:inline">Images</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="custom-games"
-              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white text-[#1a472a]/75 text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2"
-            >
-              <span className="mr-1 md:mr-2">🎮</span>
-              <span className="hidden sm:inline">Custom Games</span>
-            </TabsTrigger>
-          </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview">
-            <div className="space-y-6">
-              {/* Pending Items Alert */}
-              {stats.pendingReview > 0 && (
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-amber-800">
-                      {stats.pendingReview} item{stats.pendingReview !== 1 ? 's' : ''} pending review
-                    </p>
-                    <p className="text-xs text-amber-700 mt-0.5">
-                      Review and respond to keep your community engaged
-                    </p>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <Button size="sm" variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-100 text-xs"
-                      onClick={() => setActiveTab('applications')}>
-                      Applications
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-100 text-xs"
-                      onClick={() => setActiveTab('investors')}>
-                      Investors
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Today's Focus */}
-              {(() => {
-                const now = Date.now();
-                const h48 = now - 48 * 3_600_000;
-                const h24 = now - 24 * 3_600_000;
-                const overdueInvestors = (investors || []).filter((i: any) =>
-                  (!i.status || i.status === 'new') && new Date(i.createdAt).getTime() < h48
-                );
-                const overdueInquiries = (inquiries || []).filter((i: any) =>
-                  (!i.status || i.status === 'new') && new Date(i.createdAt).getTime() < h48
-                );
-                const newToday = [
-                  ...(investors || []).filter((i: any) => new Date(i.createdAt).getTime() > h24)
-                    .map((i: any) => ({ type: 'investor', name: i.fullName || i.email })),
-                  ...(applications || []).filter((a: any) => new Date(a.submittedAt || a.createdAt).getTime() > h24)
-                    .map((a: any) => ({ type: 'application', name: a.projectName || a.contactName })),
-                  ...(inquiries || []).filter((i: any) => new Date(i.createdAt).getTime() > h24)
-                    .map((i: any) => ({ type: 'inquiry', name: i.fullName || i.email })),
-                ];
-                const hasItems = overdueInvestors.length > 0 || overdueInquiries.length > 0 || newToday.length > 0;
-                if (!hasItems) return null;
-                return (
-                  <div className="bg-white border-2 border-[#1a472a]/10 rounded-xl p-4 space-y-2">
-                    <h3 className="text-sm font-semibold text-[#1a472a] flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      Today's Focus
-                    </h3>
-                    {overdueInvestors.length > 0 && (
-                      <button onClick={() => { setInvestorStatusFilter('new'); setActiveTab('investors'); }}
-                        className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors">
-                        <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-                        <span className="text-xs text-red-700">
-                          <strong>{overdueInvestors.length}</strong> investor{overdueInvestors.length !== 1 ? 's' : ''} in "new" status for 48+ hours  -  follow up now
-                        </span>
-                      </button>
-                    )}
-                    {overdueInquiries.length > 0 && (
-                      <button onClick={() => setActiveTab('live')}
-                        className="w-full text-left flex items-center gap-2 p-2 rounded-lg bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors">
-                        <AlertTriangle className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
-                        <span className="text-xs text-orange-700">
-                          <strong>{overdueInquiries.length}</strong> {overdueInquiries.length !== 1 ? 'inquiries' : 'inquiry'} waiting 48+ hours for a response
-                        </span>
-                      </button>
-                    )}
-                    {newToday.length > 0 && (
-                      <div className="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-200">
-                        <Sparkles className="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-xs text-green-700">
-                          <strong>{newToday.length}</strong> new submission{newToday.length !== 1 ? 's' : ''} in the last 24h:{' '}
-                          <span className="text-green-600">
-                            {newToday.slice(0, 3).map(n => n.name).filter(Boolean).join(', ')}
-                            {newToday.length > 3 ? ` +${newToday.length - 3} more` : ''}
-                          </span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* Quick Actions */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { label: 'Send Newsletter', icon: Mail, color: 'bg-blue-500', tab: 'newsletter' },
-                  { label: 'Review Applications', icon: FileText, color: 'bg-[#4a7c59]', tab: 'applications' },
-                  { label: 'Email Templates', icon: Sparkles, color: 'bg-purple-500', tab: 'settings' },
-                  { label: 'View Analytics', icon: TrendingUp, color: 'bg-amber-500', tab: 'analytics' },
-                ].map((action) => {
-                  const ActionIcon = action.icon;
-                  return (
-                    <button
-                      key={action.label}
-                      onClick={() => setActiveTab(action.tab)}
-                      className="p-4 rounded-xl bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 hover:shadow-md transition-all text-left group"
-                    >
-                      <div className={`w-9 h-9 rounded-lg ${action.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                        <ActionIcon className="w-5 h-5 text-white" />
-                      </div>
-                      <p className="text-sm font-semibold text-[#1a472a]">{action.label}</p>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Analytics Charts Row */}
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Submissions Over Time */}
-                <Card className="bg-white border-2 border-[#1a472a]/10">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-[#1a472a] text-base" style={{ fontFamily: 'var(--font-display)' }}>
-                      Submissions This Month
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {(() => {
-                        const now = new Date();
-                        const thisMonth = now.getMonth();
-                        const thisYear = now.getFullYear();
-                        const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
-                        const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
-                        
-                        const thisMonthApps = applications?.filter((a: any) => {
-                          const d = new Date(a.submittedAt || a.createdAt);
-                          return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-                        }).length || 0;
-                        
-                        const lastMonthApps = applications?.filter((a: any) => {
-                          const d = new Date(a.submittedAt || a.createdAt);
-                          return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
-                        }).length || 0;
-                        
-                        const thisMonthInvestors = investors?.filter((i: any) => {
-                          const d = new Date(i.createdAt);
-                          return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-                        }).length || 0;
-                        
-                        const thisMonthInquiries = inquiries?.filter((i: any) => {
-                          const d = new Date(i.createdAt);
-                          return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-                        }).length || 0;
-                        
-                        const appChange = lastMonthApps > 0 ? Math.round(((thisMonthApps - lastMonthApps) / lastMonthApps) * 100) : 0;
-                        
-                        return (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-[#1a472a]/70">Applications</span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg font-bold text-[#1a472a]">{thisMonthApps}</span>
-                                {appChange !== 0 && (
-                                  <span className={`text-xs ${appChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {appChange > 0 ? '+' : ''}{appChange}%
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-[#1a472a]/70">Investors</span>
-                              <span className="text-lg font-bold text-[#1a472a]">{thisMonthInvestors}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-[#1a472a]/70">Inquiries</span>
-                              <span className="text-lg font-bold text-[#1a472a]">{thisMonthInquiries}</span>
-                            </div>
-                            <div className="pt-2 border-t border-[#1a472a]/10">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-[#1a472a]">Total</span>
-                                <span className="text-xl font-bold text-[#7dd87d]">{thisMonthApps + thisMonthInvestors + thisMonthInquiries}</span>
-                              </div>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Conversion Funnel */}
-                <Card className="bg-white border-2 border-[#1a472a]/10">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-[#1a472a] text-base" style={{ fontFamily: 'var(--font-display)' }}>
-                      Status Breakdown
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {(() => {
-                        const pending = (applications?.filter((a: any) => a.status === 'pending').length || 0) +
-                                        (investors?.filter((i: any) => i.status === 'pending').length || 0) +
-                                        (inquiries?.filter((i: any) => i.status === 'pending' || i.status === 'new').length || 0);
-                        const reviewed = (applications?.filter((a: any) => a.status === 'reviewed' || a.status === 'in_review').length || 0) +
-                                        (investors?.filter((i: any) => i.status === 'reviewed' || i.status === 'contacted').length || 0) +
-                                        (inquiries?.filter((i: any) => i.status === 'reviewed' || i.status === 'contacted').length || 0);
-                        const total = stats.totalApplications + stats.totalInvestors + stats.totalInquiries;
-                        const reviewRate = total > 0 ? Math.round((reviewed / total) * 100) : 0;
-                        
-                        return (
-                          <>
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-[#1a472a]/70">Pending Review</span>
-                                <span className="font-medium text-yellow-600">{pending}</span>
-                              </div>
-                              <div className="w-full bg-[#f0ebe3] rounded-full h-2">
-                                <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${total > 0 ? (pending / total) * 100 : 0}%` }} />
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-[#1a472a]/70">Reviewed/Contacted</span>
-                                <span className="font-medium text-green-600">{reviewed}</span>
-                              </div>
-                              <div className="w-full bg-[#f0ebe3] rounded-full h-2">
-                                <div className="bg-green-500 h-2 rounded-full" style={{ width: `${reviewRate}%` }} />
-                              </div>
-                            </div>
-                            <div className="pt-2 border-t border-[#1a472a]/10">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-[#1a472a]/70">Review Rate</span>
-                                <span className="text-lg font-bold text-[#1a472a]">{reviewRate}%</span>
-                              </div>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Top Interests */}
-                <Card className="bg-white border-2 border-[#1a472a]/10">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-[#1a472a] text-base" style={{ fontFamily: 'var(--font-display)' }}>
-                      Top Interests
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {(() => {
-                        // Count project interests
-                        const projectCounts: Record<string, number> = {};
-                        inquiries?.forEach((inquiry: any) => {
-                          try {
-                            const formData = inquiry.formData ? JSON.parse(inquiry.formData) : {};
-                            const projects = formData.selectedProjects || [];
-                            projects.forEach((p: string) => {
-                              projectCounts[p] = (projectCounts[p] || 0) + 1;
-                            });
-                          } catch (e) {}
-                        });
-                        
-                        const sorted = Object.entries(projectCounts)
-                          .sort(([,a], [,b]) => b - a)
-                          .slice(0, 5);
-                        
-                        if (sorted.length === 0) {
-                          return <p className="text-sm text-[#1a472a]/70">No project interests yet</p>;
-                        }
-                        
-                        return sorted.map(([projectId, count]) => {
-                          const project = landProjectsList.find(p => p.id === projectId);
-                          return (
-                            <div key={projectId} className="flex items-center justify-between">
-                              <span className="text-sm text-[#1a472a]/70 truncate max-w-[150px]">
-                                {project?.name || projectId}
-                              </span>
-                              <Badge variant="outline" className="text-xs">{count}</Badge>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {/* Impact Stats - Acres and Families */}
-              <Card className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] border-0">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-white text-lg flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                    <Sparkles className="w-5 h-5 text-[#7dd87d]" />
-                    Impact Stats (All Projects Applied)
-                  </CardTitle>
-                  <CardDescription className="text-white/60">
-                    Aggregate data from all land project applications - ready for homepage display
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {(() => {
-                      // Calculate total acres and families from all applications
-                      let totalAcres = 0;
-                      let totalFamilies = 0;
-                      let totalHumans = 0;
-                      let projectCount = applications?.length || 0;
-                      
-                      applications?.forEach((app: any) => {
-                        // Parse acreage - handle various formats
-                        const acreage = app.acreage || app.landSize || '';
-                        const acreMatch = String(acreage).match(/([\d,]+\.?\d*)/)
-                        if (acreMatch) {
-                          totalAcres += parseFloat(acreMatch[1].replace(/,/g, ''));
-                        }
-                        
-                        // Parse families/humans
-                        const families = app.familyCount || app.householdCount || app.families || 0;
-                        const humans = app.memberCount || app.humanCount || app.people || 0;
-                        
-                        if (typeof families === 'number') totalFamilies += families;
-                        else if (typeof families === 'string') {
-                          const famMatch = families.match(/([\d,]+)/);
-                          if (famMatch) totalFamilies += parseInt(famMatch[1].replace(/,/g, ''));
-                        }
-                        
-                        if (typeof humans === 'number') totalHumans += humans;
-                        else if (typeof humans === 'string') {
-                          const humMatch = humans.match(/([\d,]+)/);
-                          if (humMatch) totalHumans += parseInt(humMatch[1].replace(/,/g, ''));
-                        }
-                      });
-                      
-                      return (
-                        <>
-                          <div className="bg-white/10 rounded-xl p-4 text-center">
-                            <p className="text-3xl font-bold text-[#7dd87d]">{projectCount}</p>
-                            <p className="text-white/70 text-sm">Projects Applied</p>
-                          </div>
-                          <div className="bg-white/10 rounded-xl p-4 text-center">
-                            <p className="text-3xl font-bold text-[#7dd87d]">{totalAcres.toLocaleString()}</p>
-                            <p className="text-white/70 text-sm">Total Acres</p>
-                          </div>
-                          <div className="bg-white/10 rounded-xl p-4 text-center">
-                            <p className="text-3xl font-bold text-[#7dd87d]">{totalFamilies.toLocaleString()}</p>
-                            <p className="text-white/70 text-sm">Families</p>
-                          </div>
-                          <div className="bg-white/10 rounded-xl p-4 text-center">
-                            <p className="text-3xl font-bold text-[#7dd87d]">{totalHumans.toLocaleString()}</p>
-                            <p className="text-white/70 text-sm">Humans</p>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                  <p className="text-white/50 text-xs mt-4 text-center">
-                    Note: These stats can be displayed on the homepage. Data is extracted from application forms.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <div className="grid lg:grid-cols-2 gap-6">
-                {/* Recent Applications */}
-                <Card className="bg-white border-2 border-[#1a472a]/10">
-                  <CardHeader>
-                    <CardTitle className="text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                      Recent Project Applications
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {applications && applications.length > 0 ? (
-                      <div className="divide-y divide-[#1a472a]/10">
-                        {applications.slice(0, 5).map((app: any) => (
-                          <div key={app.id} className="p-4 hover:bg-[#f0ebe3]/50">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-semibold text-[#1a472a]">{app.projectName}</p>
-                                <p className="text-sm text-[#1a472a]/80">{app.location}</p>
-                              </div>
-                              <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300">
-                                {app.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-8 text-center text-[#1a472a]/70">
-                        <Sprout className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                        <p>No applications yet</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Inquiry Summary by Type */}
-                <Card className="bg-white border-2 border-[#1a472a]/10">
-                  <CardHeader>
-                    <CardTitle className="text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                      Inquiries by Type
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      {Object.entries(pathTypeConfig).map(([key, config]) => {
-                        const Icon = config.icon;
-                        const count = inquiriesByPath[key] || 0;
-                        return (
-                          <div 
-                            key={key} 
-                            className="p-4 rounded-lg bg-[#f0ebe3] hover:bg-[#e8e3db] transition-colors cursor-pointer"
-                            onClick={() => setActiveTab(key === 'finance' || key === 'learn' ? 'other' : key)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-full ${config.color} flex items-center justify-center`}>
-                                <Icon className="w-5 h-5 text-white" />
-                              </div>
-                              <div>
-                                <p className="text-2xl font-bold text-[#1a472a]">{count}</p>
-                                <p className="text-xs text-[#1a472a]/80">{config.label}</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            <AdminOverviewTab
+              stats={stats}
+              applications={applications}
+              investors={investors}
+              inquiries={inquiries}
+              inquiriesByPath={inquiriesByPath}
+              setActiveTab={setActiveTab}
+              setInvestorStatusFilter={setInvestorStatusFilter}
+            />
           </TabsContent>
+
+
 
           {/* Project Applications Tab */}
           <TabsContent value="applications">
-            <Card className="bg-white border-2 border-[#1a472a]/10">
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                      <Sprout className="w-5 h-5 text-[#4a7c59]" />
-                      Project Applications
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      {applications?.length || 0} submitted · {applications?.filter((a: any) => a.status === 'submitted').length || 0} awaiting review
-                      {(draftApplications?.length || 0) > 0 && (
-                        <span className="text-[#1a472a]/70"> · {draftApplications?.length} draft{draftApplications?.length !== 1 ? 's' : ''}</span>
-                      )}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-[#7dd87d] text-[#1a472a] w-fit"
-                      onClick={() => exportToCSV(applications || [], 'project_applications')}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Export CSV
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-[#1a472a]/30 text-[#1a472a]"
-                      asChild
-                    >
-                      <a href="/admin/applications">Full Review Page</a>
-                    </Button>
-                  </div>
-                </div>
-                {/* Search */}
-                <div className="relative mt-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/65" />
-                  <input
-                    type="text"
-                    placeholder="Search by project name, location, or vision..."
-                    value={appSearch}
-                    onChange={(e) => setAppSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
-                  />
-                </div>
-                {filteredApps.length !== (applications?.length || 0) && (
-                  <p className="text-xs text-[#1a472a]/70 pt-1">
-                    Showing {filteredApps.length} of {applications?.length || 0} applications
-                  </p>
-                )}
-              </CardHeader>
-              <CardContent className="p-0">
-                {applications && applications.length > 0 ? (
-                  <div className="divide-y divide-[#1a472a]/10">
-                    {filteredApps.map((app: any) => {
-                      const ageApp = getAgeInfo(app.submittedAt || app.createdAt || new Date());
-                      return (
-                      <Dialog key={app.id}>
-                        <DialogTrigger asChild>
-                          <div className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                                  <Sprout className="w-5 h-5 text-[#1a472a]" />
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-[#1a472a]">{app.projectName}</p>
-                                  <p className="text-sm text-[#1a472a]/80">{app.location}</p>
-                                  
-                                  {/* Project Metrics - Key Stats */}
-                                  <div className="flex flex-wrap gap-2 mt-2">
-                                    {app.projectSizeHectares && (
-                                      <Badge variant="outline" className="text-xs bg-green-50 border-green-200">
-                                        {app.projectSizeHectares} ha ({(app.projectSizeHectares * 2.471).toFixed(0)} acres)
-                                      </Badge>
-                                    )}
-                                    {(app.currentPeopleCount || app.intendedPeopleCount) && (
-                                      <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200">
-                                        {app.currentPeopleCount || 0} → {app.intendedPeopleCount || '?'} people
-                                      </Badge>
-                                    )}
-                                    {(app.currentHouseholdCount || app.intendedHouseholdCount) && (
-                                      <Badge variant="outline" className="text-xs bg-purple-50 border-purple-200">
-                                        {app.currentHouseholdCount || 0} → {app.intendedHouseholdCount || '?'} households
-                                      </Badge>
-                                    )}
-                                    {app.mixedUse && (() => {
-                                      try {
-                                        const uses = JSON.parse(app.mixedUse);
-                                        return uses.length > 0 && (
-                                          <Badge variant="outline" className="text-xs bg-amber-50 border-amber-200 capitalize">
-                                            {uses.slice(0, 2).join(', ')}{uses.length > 2 ? ` +${uses.length - 2}` : ''}
-                                          </Badge>
-                                        );
-                                      } catch { return null; }
-                                    })()}
-                                  </div>
-                                  
-                                  {app.vision && (
-                                    <p className="text-sm text-[#1a472a]/70 mt-2 line-clamp-2">
-                                      {app.vision}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end gap-2">
-                                <Badge className={
-                                  app.status === 'submitted' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                  app.status === 'under_review' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                                  app.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
-                                  app.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
-                                  app.status === 'changes_requested' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                                  'bg-gray-100 text-gray-700 border-gray-200'
-                                }>
-                                  {app.status?.replace(/_/g, ' ')}
-                                </Badge>
-                                <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${ageApp.bg} ${ageApp.color}`}>
-                                  {ageApp.isOverdue && <Clock className="w-2.5 h-2.5 inline mr-0.5" />}
-                                  {app.submittedAt ? ageApp.label : 'Draft'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle className="text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                              {app.projectName}
-                            </DialogTitle>
-                            <DialogDescription>{app.location}</DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            {/* Key Metrics Grid */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                              {app.projectSizeHectares && (
-                                <div className="bg-green-50 p-3 rounded-lg text-center">
-                                  <p className="text-2xl font-bold text-green-700">{app.projectSizeHectares}</p>
-                                  <p className="text-xs text-green-600">Hectares ({(app.projectSizeHectares * 2.471).toFixed(0)} acres)</p>
-                                </div>
-                              )}
-                              {app.currentPeopleCount !== null && (
-                                <div className="bg-blue-50 p-3 rounded-lg text-center">
-                                  <p className="text-2xl font-bold text-blue-700">{app.currentPeopleCount}</p>
-                                  <p className="text-xs text-blue-600">Current People</p>
-                                </div>
-                              )}
-                              {app.intendedPeopleCount !== null && (
-                                <div className="bg-blue-50 p-3 rounded-lg text-center">
-                                  <p className="text-2xl font-bold text-blue-700">{app.intendedPeopleCount}</p>
-                                  <p className="text-xs text-blue-600">Target People</p>
-                                </div>
-                              )}
-                              {app.teamSize && (
-                                <div className="bg-purple-50 p-3 rounded-lg text-center">
-                                  <p className="text-2xl font-bold text-purple-700">{app.teamSize}</p>
-                                  <p className="text-xs text-purple-600">Core Team</p>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Mixed Use */}
-                            {app.mixedUse && (() => {
-                              try {
-                                const uses = JSON.parse(app.mixedUse);
-                                return uses.length > 0 && (
-                                  <div>
-                                    <Label className="text-sm font-semibold text-[#1a472a]">Land Use Types</Label>
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                      {uses.map((use: string) => (
-                                        <Badge key={use} className="bg-amber-100 text-amber-800 capitalize">{use}</Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
-                              } catch { return null; }
-                            })()}
-                            
-                            {/* Vision */}
-                            {app.vision && (
-                              <div>
-                                <Label className="text-sm font-semibold text-[#1a472a]">Vision</Label>
-                                <p className="text-sm text-[#1a472a]/80 mt-1 whitespace-pre-wrap">{app.vision}</p>
-                              </div>
-                            )}
-                            
-                            {/* Land Status */}
-                            {app.landStatus && (
-                              <div>
-                                <Label className="text-sm font-semibold text-[#1a472a]">Land Status</Label>
-                                <Badge variant="outline" className="ml-2 capitalize">{app.landStatus}</Badge>
-                              </div>
-                            )}
-                            
-                            {/* Team Description */}
-                            {app.teamDescription && (
-                              <div>
-                                <Label className="text-sm font-semibold text-[#1a472a]">Team Description</Label>
-                                <p className="text-sm text-[#1a472a]/80 mt-1 whitespace-pre-wrap">{app.teamDescription}</p>
-                              </div>
-                            )}
-                            
-                            {/* Regenerative Practices */}
-                            {app.regenerativePractices && (
-                              <div>
-                                <Label className="text-sm font-semibold text-[#1a472a]">Regenerative Practices</Label>
-                                <p className="text-sm text-[#1a472a]/80 mt-1 whitespace-pre-wrap">{app.regenerativePractices}</p>
-                              </div>
-                            )}
-                            
-                            {/* Governance */}
-                            {app.governanceApproach && (
-                              <div>
-                                <Label className="text-sm font-semibold text-[#1a472a]">Governance Approach</Label>
-                                <p className="text-sm text-[#1a472a]/80 mt-1 whitespace-pre-wrap">{app.governanceApproach}</p>
-                              </div>
-                            )}
-                            
-                            {/* Funding */}
-                            {(app.currentFunding || app.fundingNeeds) && (
-                              <div className="grid grid-cols-2 gap-4">
-                                {app.currentFunding && (
-                                  <div>
-                                    <Label className="text-sm font-semibold text-[#1a472a]">Current Funding</Label>
-                                    <p className="text-sm text-[#1a472a]/80 mt-1">{app.currentFunding}</p>
-                                  </div>
-                                )}
-                                {app.fundingNeeds && (
-                                  <div>
-                                    <Label className="text-sm font-semibold text-[#1a472a]">Funding Needs</Label>
-                                    <p className="text-sm text-[#1a472a]/80 mt-1">{app.fundingNeeds}</p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            
-                            {/* Links */}
-                            {(app.websiteUrl || app.videoUrl) && (
-                              <div className="flex gap-4">
-                                {app.websiteUrl && (
-                                  <a href={app.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-[#4a7c59] hover:underline flex items-center gap-1">
-                                    <Globe className="w-4 h-4" /> Website
-                                  </a>
-                                )}
-                                {app.videoUrl && (
-                                  <a href={app.videoUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-[#4a7c59] hover:underline flex items-center gap-1">
-                                    <ExternalLink className="w-4 h-4" /> Video
-                                  </a>
-                                )}
-                              </div>
-                            )}
-                            
-                            {/* Default Acceptance Message Template */}
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                              <p className="text-xs font-medium text-green-800 uppercase tracking-wide mb-2">Default Acceptance Message Template</p>
-                              <p className="text-sm text-green-900 leading-relaxed">
-                                Congratulations! Your project has passed our first quality check. Participation in the season is dependent on the community governance process. However, since you meet our criteria, we highly encourage you to follow along the journey regardless of whether you're selected. If you complete all the steps, you may still be eligible for joining the alliance!
-                              </p>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="mt-3 border-green-300 text-green-700 hover:bg-green-100"
-                                onClick={() => {
-                                  navigator.clipboard.writeText("Congratulations! Your project has passed our first quality check. Participation in the season is dependent on the community governance process. However, since you meet our criteria, we highly encourage you to follow along the journey regardless of whether you're selected. If you complete all the steps, you may still be eligible for joining the alliance!");
-                                  toast.success('Acceptance message copied to clipboard');
-                                }}
-                              >
-                                Copy Message
-                              </Button>
-                            </div>
-
-                            <Suspense fallback={null}><ActivityTimeline email={app.contactEmail || ''} contactType="project_application" contactId={app.id} /></Suspense>
-                            <EmailHistoryPanel email={app.contactEmail || ''} />
-                            <ContactNotesPanel contactType="project_application" contactId={app.id} />
-                            <ContactTagsPanel contactType="project_application" contactId={app.id} />
-                            <ReminderPanel contactType="project_application" contactId={app.id} />
-                          </div>
-                          <DialogFooter className="flex-col gap-2">
-                            <AssigneeSelect contactType="project_application" contactId={app.id} />
-                            <div className="flex flex-col sm:flex-row gap-2">
-                            <EmailTemplateSelector
-                              recipientEmail={app.contactEmail || ''}
-                              recipientName={app.contactName || ''}
-                              contextSubject={app.projectName}
-                              inquiryType="project"
-                              className="w-full sm:w-auto"
-                            />
-                            <Link href={`/admin/application/${app.id}`}>
-                              <Button className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:w-auto">
-                                <FileText className="w-4 h-4 mr-2" />
-                                Review Project
-                              </Button>
-                            </Link>
-                            </div>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="p-8 text-center text-[#1a472a]/70">
-                    <Sprout className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                    <p>No project applications yet</p>
-                  </div>
-                )}
-
-                {/* Drafts section — collapsed by default */}
-                {(draftApplications?.length || 0) > 0 && (
-                  <div className="border-t border-[#1a472a]/10">
-                    <button
-                      onClick={() => setShowDrafts(!showDrafts)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-sm text-[#1a472a]/80 hover:bg-[#f0ebe3]/30 transition-colors"
-                    >
-                      <span className="font-medium">
-                        {draftApplications?.length} incomplete draft{draftApplications?.length !== 1 ? 's' : ''} (not yet submitted)
-                      </span>
-                      <span className="text-xs">{showDrafts ? '▲ Hide' : '▼ Show'}</span>
-                    </button>
-                    {showDrafts && (
-                      <div className="divide-y divide-[#1a472a]/10 bg-[#f9f7f4]/50">
-                        {draftApplications?.map((app: any) => (
-                          <div key={app.id} className="p-4 flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#1a472a]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <Sprout className="w-4 h-4 text-[#1a472a]/70" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-[#1a472a]/80 text-sm">{app.projectName || 'Unnamed project'}</p>
-                              <p className="text-xs text-[#1a472a]/70">{app.location || 'No location'} · Started {new Date(app.createdAt).toLocaleDateString()}</p>
-                              {app.vision && <p className="text-xs text-[#1a472a]/70 mt-1 line-clamp-1">{app.vision}</p>}
-                            </div>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 flex-shrink-0">draft</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <AdminApplicationsTab
+              applications={applications}
+              draftApplications={draftApplications}
+              filteredApps={filteredApps}
+              appSearch={appSearch}
+              setAppSearch={setAppSearch}
+              showDrafts={showDrafts}
+              setShowDrafts={setShowDrafts}
+              ContactNotesPanel={ContactNotesPanel}
+              ContactTagsPanel={ContactTagsPanel}
+              ReminderPanel={ReminderPanel}
+              AssigneeSelect={AssigneeSelect}
+              EmailHistoryPanelComp={EmailHistoryPanel}
+            />
           </TabsContent>
 
           {/* Investor Inquiries Tab */}
@@ -4616,6 +3867,11 @@ function AdminDashboard() {
             </Card>
           </TabsContent>
 
+          {/* Players Tab */}
+          <TabsContent value="roles">
+            <AdminPlayersTab />
+          </TabsContent>
+
           {/* Other Inquiries Tab */}
           <TabsContent value="other">
             <Card className="bg-white border-2 border-[#1a472a]/10">
@@ -4811,54 +4067,9 @@ function AdminDashboard() {
 
           {/* Newsletter Tab */}
           <TabsContent value="newsletter">
-            <Card className="bg-white border-2 border-[#1a472a]/10">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                      <Mail className="w-5 h-5" />
-                      Newsletter Subscribers
-                    </CardTitle>
-                    <CardDescription>
-                      People who signed up to receive updates
-                    </CardDescription>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="border-[#1a472a]/30 text-[#1a472a]"
-                    onClick={() => {
-                      // Export newsletter subscribers as CSV
-                      const subscribers = (window as any).__newsletterSubscribers || [];
-                      if (subscribers.length === 0) {
-                        toast.error('No subscribers to export');
-                        return;
-                      }
-                      const headers = ['Email', 'Source', 'Subscribed Date'];
-                      const rows = subscribers.map((s: any) => [
-                        s.email,
-                        s.source || 'website',
-                        new Date(s.createdAt).toLocaleDateString()
-                      ]);
-                      const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-                      const blob = new Blob([csv], { type: 'text/csv' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `newsletter-subscribers-${new Date().toISOString().split('T')[0]}.csv`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                      toast.success('CSV downloaded');
-                    }}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export CSV
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <NewsletterSubscribersList />
-              </CardContent>
-            </Card>
+            <AdminNewsletterTab
+              NewsletterSubscribersListComp={NewsletterSubscribersList}
+            />
           </TabsContent>
 
           {/* Broadcast Tab */}
@@ -4868,9 +4079,7 @@ function AdminDashboard() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics">
-            <div className="space-y-6">
-              <AdminAnalytics />
-            </div>
+            <AdminAnalyticsTab />
           </TabsContent>
 
           {/* LOI Tab */}
@@ -4891,6 +4100,7 @@ function AdminDashboard() {
                 { key: 'apply-banner', label: 'Apply' },
                 { key: 'forum-banner', label: 'Forum' },
                 { key: 'fund-banner', label: 'Fund' },
+                { key: 'fund-launch-banner', label: 'Fund Launch Announcement' },
               ].map(({ key, label }) => (
                 <AdminBannerEditor key={key} bannerKey={key} title={label} />
               ))}
@@ -4921,19 +4131,16 @@ function AdminDashboard() {
 
           {/* Settings Tab */}
           <TabsContent value="settings">
-            <div className="space-y-6">
-              <BufferSettingsPanel />
-              <NotificationPreferences />
-              <ReviewerEmailManager />
-              <EmailSettings />
-              <ScheduledEmailsManager />
-              <AdminAMAPanel />
-              <OrgClaimsAdminPanel />
-              <JoinRequestsAdminPanel />
-              <ProjectConnectionsAdmin />
-              <GlossaryAdminPanel />
-              <KnowledgeMapAdminPanel />
-            </div>
+            <AdminSettingsTab
+              BufferSettingsPanelComp={BufferSettingsPanel}
+              ReviewerEmailManagerComp={ReviewerEmailManager}
+              ScheduledEmailsManagerComp={ScheduledEmailsManager}
+              AdminAMAPanelComp={AdminAMAPanel}
+              OrgClaimsAdminPanelComp={OrgClaimsAdminPanel}
+              JoinRequestsAdminPanelComp={JoinRequestsAdminPanel}
+              ProjectConnectionsAdminComp={ProjectConnectionsAdmin}
+              GlossaryAdminPanelComp={GlossaryAdminPanel}
+            />
           </TabsContent>
 
           <TabsContent value="images">
@@ -4945,6 +4152,8 @@ function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+      </div>{/* end flex-1 overflow-y-auto */}
+      </div>{/* end flex-1 flex flex-col overflow-hidden */}
 
       {/* Floating AI Assistant */}
       <AdminAIAssistant

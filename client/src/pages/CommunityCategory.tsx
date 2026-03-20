@@ -364,7 +364,9 @@ export default function CommunityCategory() {
           {alreadySubscribed ? (
             <p className="text-white/50 text-xs flex items-center gap-1.5">
               ✓ You're subscribed.{" "}
-              <a href="/connect" className="underline underline-offset-2 hover:text-white/80 transition-colors">Manage preferences</a>
+              <a href="/profile?tab=settings" className="underline underline-offset-2 hover:text-white/80 transition-colors">Manage preferences</a>
+              {" · "}
+              <a href="/connect" className="underline underline-offset-2 hover:text-white/80 transition-colors">Connect with us</a>
             </p>
           ) : (
             <NewsletterSignupInline />

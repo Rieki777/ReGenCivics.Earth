@@ -1072,11 +1072,14 @@ export default function Connect() {
             <div data-reveal>
               {/* Logo */}
               <div className="mb-6">
-                <img 
-                  src="https://assets.regencivics.earth/qtPtaaJfgElzmVAI.png" 
-                  alt="ReGen Civics" 
+                <img
+                  src="https://assets.regencivics.earth/qtPtaaJfgElzmVAI.png"
+                  alt="ReGen Civics"
                   className="w-20 h-20 md:w-24 md:h-24 mx-auto object-contain drop-shadow-lg"
-                loading="lazy" />
+                  width="96"
+                  height="96"
+                  loading="lazy"
+                />
               </div>
               
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6 border border-[#7dd87d]/30">

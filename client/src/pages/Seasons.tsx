@@ -63,11 +63,14 @@ export default function Seasons() {
       {/* Hero Section */}
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg" 
-            alt="Seasons" 
+          <img
+            src="https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg"
+            alt="Seasons"
             className="w-full h-full object-cover"
-          loading="lazy" />
+            width="1920"
+            height="1080"
+            loading="lazy"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a]/60 via-[#1a472a]/40 to-[#1a472a]" />
         </div>
         
@@ -633,6 +636,8 @@ export default function Seasons() {
               src="https://assets.regencivics.earth/YSvQAoALDuGiALPV.jpg"
               alt="Seasonal journey from assessment to abundance"
               loading="lazy"
+              width="1200"
+              height="800"
               className="w-full rounded-2xl border-4 border-[#7dd87d]/30 shadow-xl"
             />
           </div>

@@ -90,8 +90,11 @@ export default function CrowdPoolingCampaigns() {
           <img
             src="https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg"
             alt="Crowd Pooling - Community members bringing diverse resources together"
+            width="1920"
+            height="1080"
             className="w-full h-full object-cover opacity-30"
-          loading="lazy" />
+            loading="lazy"
+          />
         </div>
         
         {/* Content */}

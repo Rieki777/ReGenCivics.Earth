@@ -221,6 +221,8 @@ export default function AutoplayVideo({
             <img
               src={thumbnailUrl}
               alt={thumbnailAlt}
+              width="1280"
+              height="720"
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"

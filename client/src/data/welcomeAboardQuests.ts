@@ -154,7 +154,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Dream Up a Regenerative Quest",
     tagline: "Step from player to co-creator of the Game.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "https://regencivics.earth/community/quests",
+    forumUrl: "/community/quests",
     about:
       "Every great game is shaped by the people who play it. This quest invites you into the creative heart of ReGen Civics: imagining new quests that add value to the Regenerative Renaissance. The best quests are ones that draw on your unique gifts and life purpose, bridge multiple forms of capital (social, ecological, financial, intellectual), are inherently scalable, and are genuinely fun to play. Before brainstorming, try this: take the question to sleep with you. Let your dreaming mind offer something unexpected.",
     steps: [

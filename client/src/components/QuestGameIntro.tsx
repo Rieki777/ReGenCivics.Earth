@@ -12,29 +12,29 @@ interface QuestGameIntroProps {
 const PANELS = [
   {
     id: 0,
-    heading: "The earth is calling.",
+    heading: "Questing our way into a growing diversity of regenerative economic systems.",
     body: null as null | string,
     pulse: true,
     cta: false,
   },
   {
     id: 1,
-    heading: "Land projects need players.",
-    body: "Not spectators. People who show up, do the work, and share what they find.",
+    heading: "Acts that heal and grow you and us.",
+    body: "Every quest is something you do in the world. Regenerate your body. Build soil. Plant abundance. Read something that shifts how you see and from where you create. Each quest grows your capabilities and increases our capabilities as a movement, improving our collective health and connecting you to the living world around you. Go at your own pace. The key is thriving.",
     pulse: false,
     cta: false,
   },
   {
     id: 2,
-    heading: "Every quest you complete sends a signal.",
-    body: "You become part of a network of regenerators. The map fills in. The movement grows.",
+    heading: "Do the work. Earn the tokens.",
+    body: "When you complete a quest, you earn tokens. Both to distribute the currency of the economic system we're co-creating together, and to distribute governance voice in our Infinite Game. This is your actual share of an economy built around healing, growth, and care. Your contribution is logged. Other players see it. Land projects see it. The record builds, quest by quest, person by person. This is the foundation from which we raise investment, seek donors, and bring real financial value into the movement -- as well as build the financial systems of the future, today.",
     pulse: false,
     cta: false,
   },
   {
     id: 3,
-    heading: null as null | string,
-    body: null as null | string,
+    heading: "Our Game Remembers.",
+    body: "Quests can be qualifiers and signals. A land project might prioritize applicants who've completed the Non-Violent Communication course and the Healing Trauma Masterclass. One focused on food might look for those who've done Seed Saving, Food Foresting, and Healing Wholes. An intentional ecovillage might use the whole Rites of Passage series as its 13-quest requirement to apply. Quests are something we co-create together as tools to learn, evolve, and become better players of our Infinite Game.",
     pulse: false,
     cta: true,
   },
@@ -126,6 +126,19 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
             >
               04 / 04
             </div>
+            {panel.heading && (
+              <h2
+                className="text-3xl md:text-5xl font-bold text-white leading-tight"
+                style={{ fontFamily: "var(--font-display, serif)" }}
+              >
+                {panel.heading}
+              </h2>
+            )}
+            {panel.body && (
+              <p className="text-lg md:text-xl text-white/75 leading-relaxed max-w-xl mx-auto">
+                {panel.body}
+              </p>
+            )}
             <button
               onClick={handleEnter}
               className="px-14 py-5 rounded-full font-bold text-xl transition-colors shadow-lg shadow-[#7dd87d]/20 hover:shadow-[#7dd87d]/35"
@@ -134,11 +147,8 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
                 color: "#0a1f0f",
               }}
             >
-              Enter the Game
+              Start Your First Quest
             </button>
-            <p className="text-white/40 text-sm">
-              Everything you do from here is part of the Regenerative Renaissance.
-            </p>
           </div>
         ) : (
           <>

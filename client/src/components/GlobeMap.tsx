@@ -15,6 +15,16 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { MapPin, Leaf, Building2, ExternalLink, Globe, ChevronDown, ChevronUp, Sprout, Search, AlertCircle, Filter, X, MessageCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
+/** Escape special HTML characters to prevent XSS in innerHTML interpolation. */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Entity types for the map
 export type EntityType = "land_project" | "organization" | "applicant";
 export type FilterType = "all" | "land_project" | "organization" | "applicant";
@@ -1007,12 +1017,12 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
             }
 
             const sizeLabel = d.size ? d.size : "";
-            const tooltipText = `${d.name} - ${d.location}${sizeLabel ? " (" + sizeLabel + ")" : ""}`;
+            const tooltipText = `${escapeHtml(d.name)} - ${escapeHtml(d.location)}${sizeLabel ? " (" + escapeHtml(sizeLabel) + ")" : ""}`;
 
             // Build hover popup HTML with mini photo
             const hoverPopup = d.image
-              ? `<div class="globe-hover-popup" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:#1a472a;border:1px solid #4a7c59;border-radius:8px;padding:4px;width:120px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:100;pointer-events:none;"><img src="${d.image}" style="width:100%;height:60px;object-fit:cover;border-radius:4px;" alt="" loading="lazy" /><div style="color:white;font-size:9px;padding:3px 2px 1px;text-align:center;font-family:var(--font-display);line-height:1.2;">${d.name}</div></div>`
-              : `<div class="globe-hover-popup" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:#1a472a;border:1px solid #4a7c59;border-radius:6px;padding:4px 8px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:100;pointer-events:none;"><div style="color:white;font-size:9px;text-align:center;font-family:var(--font-display);white-space:nowrap;">${d.name}</div></div>`;
+              ? `<div class="globe-hover-popup" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:#1a472a;border:1px solid #4a7c59;border-radius:8px;padding:4px;width:120px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:100;pointer-events:none;"><img src="${escapeHtml(d.image)}" style="width:100%;height:60px;object-fit:cover;border-radius:4px;" alt="" loading="lazy" /><div style="color:white;font-size:9px;padding:3px 2px 1px;text-align:center;font-family:var(--font-display);line-height:1.2;">${escapeHtml(d.name)}</div></div>`
+              : `<div class="globe-hover-popup" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:#1a472a;border:1px solid #4a7c59;border-radius:6px;padding:4px 8px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:100;pointer-events:none;"><div style="color:white;font-size:9px;text-align:center;font-family:var(--font-display);white-space:nowrap;">${escapeHtml(d.name)}</div></div>`;
 
             el.innerHTML = `<div class="globe-tree-sprout" style="position:absolute;bottom:0;left:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.7));animation:treeSprout 0.6s ease-out ${sproutDelay}s both;" title="${tooltipText}">`
               + hoverPopup
@@ -1034,7 +1044,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
             const trunkTop = palmH * 0.45;
             const frondCenter = trunkTop - 2;
 
-            const tooltipText = `${d.name} - ${d.location}`;
+            const tooltipText = `${escapeHtml(d.name)} - ${escapeHtml(d.location)}`;
 
             // Palm trunk: curved, tapered
             // Fronds: 5-6 arching leaf shapes radiating from top
@@ -1057,8 +1067,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
 
             // Build hover popup for palm trees too
             const palmHoverPopup = d.image
-              ? `<div class="globe-hover-popup" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:#1a472a;border:1px solid #d4a574;border-radius:8px;padding:4px;width:120px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:100;pointer-events:none;"><img src="${d.image}" style="width:100%;height:60px;object-fit:cover;border-radius:4px;" alt="" loading="lazy" /><div style="color:white;font-size:9px;padding:3px 2px 1px;text-align:center;font-family:var(--font-display);line-height:1.2;">${d.name}</div></div>`
-              : `<div class="globe-hover-popup" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:#1a472a;border:1px solid #d4a574;border-radius:6px;padding:4px 8px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:100;pointer-events:none;"><div style="color:white;font-size:9px;text-align:center;font-family:var(--font-display);white-space:nowrap;">${d.name}</div></div>`;
+              ? `<div class="globe-hover-popup" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:#1a472a;border:1px solid #d4a574;border-radius:8px;padding:4px;width:120px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:100;pointer-events:none;"><img src="${escapeHtml(d.image)}" style="width:100%;height:60px;object-fit:cover;border-radius:4px;" alt="" loading="lazy" /><div style="color:white;font-size:9px;padding:3px 2px 1px;text-align:center;font-family:var(--font-display);line-height:1.2;">${escapeHtml(d.name)}</div></div>`
+              : `<div class="globe-hover-popup" style="display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;background:#1a472a;border:1px solid #d4a574;border-radius:6px;padding:4px 8px;box-shadow:0 4px 20px rgba(0,0,0,0.6);z-index:100;pointer-events:none;"><div style="color:white;font-size:9px;text-align:center;font-family:var(--font-display);white-space:nowrap;">${escapeHtml(d.name)}</div></div>`;
 
             el.innerHTML = `<div class="globe-tree-sprout" style="position:absolute;bottom:0;left:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.7));animation:treeSprout 0.6s ease-out ${sproutDelay}s both;" title="${tooltipText}">`
               + palmHoverPopup
@@ -1097,7 +1107,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           // Satellite marker (50% smaller: 40px instead of 80px)
           el.style.cssText = "cursor:pointer;transform:translate(-50%,-50%);pointer-events:auto;";
           const shortName = d.name.length > 12 ? d.name.split(" ")[0] : d.name;
-          el.innerHTML = '<div style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#87CEEB,#2563eb,#1e3a5f);box-shadow:0 0 15px rgba(135,206,235,0.6),0 0 30px rgba(135,206,235,0.3),inset 0 0 10px rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;position:relative;"><div style="position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(135,206,235,0.3);"></div><div style="color:white;font-size:7px;font-weight:700;text-align:center;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,0.8);font-family:var(--font-display);padding:2px;">' + shortName + '</div></div><div style="text-align:center;margin-top:2px;color:#87CEEB;font-size:8px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.9);white-space:nowrap;font-family:var(--font-display);">' + d.name + '</div>';
+          el.innerHTML = '<div style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#87CEEB,#2563eb,#1e3a5f);box-shadow:0 0 15px rgba(135,206,235,0.6),0 0 30px rgba(135,206,235,0.3),inset 0 0 10px rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;position:relative;"><div style="position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(135,206,235,0.3);"></div><div style="color:white;font-size:7px;font-weight:700;text-align:center;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,0.8);font-family:var(--font-display);padding:2px;">' + escapeHtml(shortName) + '</div></div><div style="text-align:center;margin-top:2px;color:#87CEEB;font-size:8px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.9);white-space:nowrap;font-family:var(--font-display);">' + escapeHtml(d.name) + '</div>';
           el.onclick = () => {
             setSelectedEntity(d);
             setSidebarOpen(true);

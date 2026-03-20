@@ -45,9 +45,9 @@ async function main() {
     console.log("Forum cleared.");
   }
 
-  // Look up the "quests-gameplay" category (or any suitable default category)
+  // Look up the "rites-of-passage" category (or any suitable default category)
   const [cats] = await conn.execute(
-    "SELECT id, slug FROM forumCategories WHERE slug IN ('quests-gameplay', 'general') ORDER BY slug DESC LIMIT 1"
+    "SELECT id, slug FROM forumCategories WHERE slug IN ('rites-of-passage', 'quests-gameplay', 'general') ORDER BY FIELD(slug, 'rites-of-passage', 'quests-gameplay', 'general') LIMIT 1"
   ) as any;
   const catId: number = cats[0]?.id;
   if (!catId) throw new Error("No suitable forum category found. Run seed-forum.mjs first.");

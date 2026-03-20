@@ -45,6 +45,8 @@ export function BadgeRingAvatar({ avatarUrl, displayName, badges, size = 40, cla
     <img
       src={avatarUrl}
       alt={displayName ?? "Player"}
+      width={size}
+      height={size}
       style={innerStyle}
       className="object-cover"
     />

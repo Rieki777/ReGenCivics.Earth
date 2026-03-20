@@ -155,6 +155,8 @@ export default function VideoEmbed({ url, title, className = '' }: VideoEmbedPro
             src={video.thumbnailUrl}
             alt={title || 'Video thumbnail'}
             className="w-full h-full object-cover"
+            width="1280"
+            height="720"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors flex items-center justify-center">

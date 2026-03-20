@@ -44,15 +44,13 @@
     
     <!-- Preconnect to critical origins (dns-prefetch implicit in preconnect) -->
     <meta http-equiv="x-dns-prefetch-control" content="on" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://assets.regencivics.earth" crossorigin />
     <link rel="preconnect" href="https://d2xsxph8kpxj0f.cloudfront.net" crossorigin />
-    
-    <!-- Non-render-blocking font loading: preload + print media trick -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Righteous&display=swap" />
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet" /></noscript>
+
+    <!-- Preload self-hosted fonts (latin subset - most used) -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/quicksand-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/nunito-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/righteous-latin.woff2" />
     
     <!-- Preload hero images for faster LCP -->
     <link rel="preload" as="image" href="https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp" fetchpriority="high" />

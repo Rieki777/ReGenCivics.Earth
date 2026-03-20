@@ -358,12 +358,16 @@ export default function Game() {
                     <img
                       src="/game-infinite-forest.webp"
                       alt="A dreamlike regenerative forest village at dusk"
+                      width="800"
+                      height="600"
                       className="w-full rounded-2xl object-cover"
                       loading="lazy"
                     />
                     <img
                       src="/game-bridge-worlds.webp"
                       alt="Two worlds connected by a bridge of light"
+                      width="800"
+                      height="600"
                       className="w-full rounded-2xl object-cover"
                       loading="lazy"
                     />
@@ -1440,6 +1444,8 @@ export default function Game() {
               <img
                 src="https://assets.regencivics.earth/LbIXEUcDdcOLOHmP.jpg"
                 alt="ReGen Game Journey Map"
+                width="1200"
+                height="800"
                 loading="lazy"
                 className="w-full rounded-2xl border-4 border-[#7dd87d]/50 shadow-2xl"
               />

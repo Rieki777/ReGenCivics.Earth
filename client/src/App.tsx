@@ -101,6 +101,7 @@ function PageLoader() {
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
+    <ErrorBoundary>
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path={"/"} component={Home} />
@@ -174,6 +175,7 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
     </Suspense>
+    </ErrorBoundary>
   );
 }
 

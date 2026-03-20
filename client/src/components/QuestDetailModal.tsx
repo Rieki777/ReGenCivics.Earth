@@ -449,8 +449,16 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
   if (!isOpen || !quest) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div 
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      role="presentation"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quest-modal-title"
         className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
@@ -458,14 +466,15 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
         <div className="bg-gradient-to-r from-[#1a472a] via-[#2e7d32] to-[#4a7c59] p-6 text-white relative">
           <button
             onClick={onClose}
+            aria-label="Close quest details"
             className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
-          
+
           <div className="pr-10">
             <p className="text-[#7dd87d] text-sm font-medium mb-1">{quest.subtitle}</p>
-            <h2 className="text-2xl font-bold mb-2">{quest.title}</h2>
+            <h2 id="quest-modal-title" className="text-2xl font-bold mb-2">{quest.title}</h2>
             <p className="text-white/80 text-sm">{quest.description}</p>
           </div>
 
@@ -725,6 +734,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
               className="text-[#1a472a]/50 hover:text-[#1a472a] gap-1.5 print:hidden"
               onClick={() => window.print()}
               title="Print this quest guide"
+              aria-label="Print quest guide"
             >
               <Printer className="w-4 h-4" />
               <span className="hidden sm:inline text-xs">Print</span>

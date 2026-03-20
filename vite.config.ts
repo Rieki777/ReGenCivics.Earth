@@ -2,9 +2,51 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { defineConfig, type UserConfig } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }): UserConfig => ({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: "autoUpdate",
+      strategies: "generateSW",
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,webp,svg,woff2}"],
+        runtimeCaching: [
+          {
+            urlPattern: /\/api\//,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "api-cache",
+              networkTimeoutSeconds: 10,
+            },
+          },
+          {
+            urlPattern: /\.(png|jpg|jpeg|webp|svg)$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "images",
+              expiration: {
+                maxAgeSeconds: 30 * 24 * 60 * 60,
+              },
+            },
+          },
+          {
+            urlPattern: /\.(woff2|woff|ttf)$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "fonts",
+              expiration: {
+                maxAgeSeconds: 365 * 24 * 60 * 60,
+              },
+            },
+          },
+        ],
+      },
+      manifest: false,
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

@@ -2,10 +2,21 @@
  * Map Page - Full-screen interactive globe map
  * Shows all land projects, alliance organizations, and applicants
  */
+import { Suspense } from "react";
 import GlobeMap from "@/components/GlobeMap";
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { BannerDisplay } from "@/components/BannerDisplay";
+
+function GlobePlaceholder() {
+  return (
+    <div
+      className="w-full bg-[#0a1f14] animate-pulse"
+      style={{ minHeight: "calc(100vh - 64px)" }}
+      aria-hidden="true"
+    />
+  );
+}
 
 export default function MapPage() {
   return (
@@ -16,7 +27,9 @@ export default function MapPage() {
         title="Global Network Map | ReGen Civics"
         description="Explore our global network of regenerative land projects and alliance organizations building regenerative societies around the world."
       />
-      <GlobeMap fullPage />
+      <Suspense fallback={<GlobePlaceholder />}>
+        <GlobeMap fullPage />
+      </Suspense>
     </>
   );
 }

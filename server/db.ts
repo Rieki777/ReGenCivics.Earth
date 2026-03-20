@@ -1,7 +1,7 @@
 import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -75,6 +75,14 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
+    // Check if email is banned before allowing sign-in/registration
+    if (values.email) {
+      const banned = await db.select().from(bannedEmails).where(eq(bannedEmails.email, values.email)).limit(1);
+      if (banned.length > 0) {
+        throw new Error("Unable to create account");
+      }
+    }
+
     await db.insert(users).values(values).onDuplicateKeyUpdate({
       set: updateSet,
     });
@@ -107,7 +115,7 @@ export async function getUsersByIds(ids: number[]): Promise<Record<number, typeo
   if (ids.length === 0) return {};
   const db = await getDb();
   if (!db) return {};
-  const unique = [...new Set(ids)];
+  const unique = Array.from(new Set(ids));
   const rows = await db.select().from(users).where(inArray(users.id, unique));
   return Object.fromEntries(rows.map(u => [u.id, u]));
 }
@@ -1253,7 +1261,7 @@ export async function getCampaignImagesForMany(campaignIds: number[]): Promise<R
   const db = await getDb();
   if (!db) return {};
   const rows = await db.select().from(campaignImages)
-    .where(inArray(campaignImages.campaignId, [...new Set(campaignIds)]))
+    .where(inArray(campaignImages.campaignId, Array.from(new Set(campaignIds))))
     .orderBy(desc(campaignImages.isCover), campaignImages.sortOrder);
   const result: Record<number, CampaignImage[]> = {};
   for (const row of rows) {

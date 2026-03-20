@@ -2,6 +2,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Globe } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { getLanguageInfo } from '@/lib/i18n';
+import { triggerGoogleTranslate, resetGoogleTranslate } from '@/components/GoogleTranslate';
 
 export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   const { language, setLanguage, languages } = useLanguage();
@@ -52,6 +53,11 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
                 key={lang.code}
                 onClick={() => {
                   setLanguage(lang.code);
+                  if (lang.code === 'en') {
+                    resetGoogleTranslate();
+                  } else {
+                    triggerGoogleTranslate(lang.code);
+                  }
                   setIsOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${

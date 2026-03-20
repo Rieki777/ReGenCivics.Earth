@@ -369,7 +369,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
               <label className="text-sm font-medium">Base Blockchain Account *</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button type="button" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
+                  <button type="button" aria-label="Help: Where to find your Base blockchain account" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
                     <HelpCircle className="w-4 h-4" />
                   </button>
                 </PopoverTrigger>
@@ -378,11 +378,14 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
                     <h4 className="font-semibold text-[#1a472a] text-sm">Where do I find this?</h4>
                   </div>
                   <div className="p-3">
-                    <img 
-                      src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png" 
+                    <img
+                      src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png"
                       alt="Hypha profile showing account address with copy icon"
+                      width="400"
+                      height="300"
                       className="w-full rounded-lg border border-[#1a472a]/10 mb-3"
-                    loading="lazy" />
+                      loading="lazy"
+                    />
                     <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
                       <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth</a></li>
                       <li>Look at the top right corner</li>
@@ -402,11 +405,14 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
           </div>
           
           <div className="bg-[#f0ebe3] border border-[#7dd87d]/30 rounded-lg p-3">
-            <img 
-              src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png" 
+            <img
+              src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png"
               alt="Hypha profile showing account address"
+              width="400"
+              height="300"
               className="w-full rounded-lg border border-[#1a472a]/10 mb-3"
-            loading="lazy" />
+              loading="lazy"
+            />
             <p className="text-sm text-[#1a472a]/70">
               <strong>Find your account:</strong> Visit <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth</a>, look at the top right, and click the copy icon next to your address.
             </p>
@@ -426,12 +432,13 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
 }
 
 // Profile Display Card
-function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }: {
+function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, onGoToSettings }: {
   profile: any;
   isOwner: boolean;
   onUpdate: () => void;
   onSyncTokens?: () => void;
   syncIsPending?: boolean;
+  onGoToSettings?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const badges: string[] = profile.badges ? JSON.parse(profile.badges) : [];
@@ -544,24 +551,14 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending }
               )}
             </div>
           ) : (
-            <p className="text-[#1a472a]/40 text-xs mt-1">
-              Add your wallet address in Settings to sync balances.
-            </p>
+            <button
+              onClick={() => onGoToSettings?.()}
+              className="text-[#4a7c59] text-xs mt-1 hover:underline underline-offset-2 transition-colors"
+            >
+              Connect wallet in Settings to sync balances
+            </button>
           )
         )}
-        
-        {/* Contribution Value */}
-        <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a9f4a]/20 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-[#7dd87d]" />
-              <span className="text-[#1a472a] font-medium">Total Contribution Value</span>
-            </div>
-            <span className="text-2xl font-bold text-[#1a472a]">
-              ${(profile.totalContributionValue || 0).toLocaleString()}
-            </span>
-          </div>
-        </div>
         
         {/* Badges */}
         {badges.length > 0 && (
@@ -2548,7 +2545,7 @@ export default function PlayerProfile() {
     _tabParam && _validTabs.includes(_tabParam) ? _tabParam : "overview"
   );
 
-  const syncTokensMutation = trpc.playerProfiles.syncTokens.useMutation({
+  const syncTokensMutation = trpc.playerProfiles.forceSync.useMutation({
     onSuccess: () => {
       utils.playerProfiles.me.invalidate();
     },
@@ -2569,7 +2566,17 @@ export default function PlayerProfile() {
 
   const isLoading = authLoading || profileLoading;
 
-  if (isLoading) return <TaoSpinner fullPage size={72} />;
+  if (isLoading) return (
+    <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] p-8">
+      <div className="animate-pulse flex space-x-4 mb-8 max-w-2xl mx-auto mt-16">
+        <div className="rounded-full bg-white/10 h-24 w-24 flex-shrink-0" />
+        <div className="flex-1 space-y-3 py-1">
+          <div className="h-4 bg-white/10 rounded w-3/4" />
+          <div className="h-4 bg-white/10 rounded w-1/2" />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
@@ -2697,10 +2704,21 @@ export default function PlayerProfile() {
                         onUpdate={() => refetch()}
                         onSyncTokens={() => syncTokensMutation.mutate()}
                         syncIsPending={syncTokensMutation.isPending}
+                        onGoToSettings={() => setActiveTab('settings')}
                       />
                     </AnimatedSection>
                     <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
-                    <QuestJournal userId={user!.id} />
+                    <div className="rounded-xl border border-green-500/20 p-6 text-center">
+                      <div className="text-3xl mb-3">🧭</div>
+                      <h3 className="font-semibold text-white mb-1">Explore Onboarding Quests</h3>
+                      <p className="text-sm text-white/60 mb-4">Complete quests to earn tokens, deepen your practice, and root yourself in the game.</p>
+                      <button
+                        onClick={() => setActiveTab('quests')}
+                        className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+                      >
+                        View Quests
+                      </button>
+                    </div>
                     <AnimatedSection animation="slide-up">
                       <DiscoverTab />
                     </AnimatedSection>
@@ -2796,7 +2814,30 @@ export default function PlayerProfile() {
                     <GiftsNeedsPanel />
                   </AnimatedSection>
                   <AnimatedSection animation="slide-up">
-                    <div id="wallet-section">
+                    <div id="wallet-section" className="glass-panel p-6 rounded-xl">
+                      <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+                        <Wallet className="w-4 h-4 text-[#7dd87d]" /> Your Base Wallet Address
+                      </h2>
+                      <p className="text-white/50 text-sm mb-4">
+                        Link your Base wallet to sync token balances and verify your on-chain identity. Your address starts with 0x.
+                      </p>
+                      {profile?.walletAddress ? (
+                        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                          <Wallet className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
+                          <code className="text-xs text-white/80 flex-1 truncate font-mono">{profile.walletAddress}</code>
+                          <span className="text-[10px] text-green-400 flex-shrink-0">Connected</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                          <span className="text-sm text-white/60">No wallet linked yet.</span>
+                          <LinkBaseAccountDialog onSuccess={() => refetch()} />
+                        </div>
+                      )}
+                    </div>
+                  </AnimatedSection>
+                  <AnimatedSection animation="slide-up">
+                    <div id="org-section">
                     <OrgClaimSection userId={user!.id} questsCompleted={profile?.questsCompleted ?? undefined} />
                     </div>
                   </AnimatedSection>

@@ -42,7 +42,7 @@ export function DigestPreferences({ currentFrequency }: Props) {
   }
 
   return (
-    <div className="glass-panel p-5 rounded-xl">
+    <div id="email-digest" className="glass-panel p-5 rounded-xl">
       <div className="flex items-center gap-2 mb-4">
         <Mail className="w-4 h-4 text-[#7dd87d]" />
         <h3 className="text-white font-semibold text-sm">Email Digest Frequency</h3>

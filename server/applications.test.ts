@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
+const skipIfNoDb = !process.env.DATABASE_URL;
+
 // Mock notifications and emails to prevent real emails being sent during tests
 vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn().mockResolvedValue(true),
@@ -41,7 +43,7 @@ describe("Application System", () => {
   const adminUserId = 999998;
 
   describe("Application Creation and Management", () => {
-    it("should create a new application as authenticated user", async () => {
+    it.skipIf(skipIfNoDb)("should create a new application as authenticated user", async () => {
       const user: AuthenticatedUser = {
         id: testUserId,
         openId: String(testUserId),
@@ -100,7 +102,7 @@ describe("Application System", () => {
       ).rejects.toThrow();
     });
 
-    it("should list user's own applications", async () => {
+    it.skipIf(skipIfNoDb)("should list user's own applications", async () => {
       const user: AuthenticatedUser = {
         id: testUserId,
         openId: String(testUserId),
@@ -140,7 +142,7 @@ describe("Application System", () => {
   });
 
   describe("Admin Permissions", () => {
-    it("should allow admin to list all applications", async () => {
+    it.skipIf(skipIfNoDb)("should allow admin to list all applications", async () => {
       const adminUser: AuthenticatedUser = {
         id: adminUserId,
         openId: String(adminUserId),
@@ -205,7 +207,7 @@ describe("Application System", () => {
   });
 
   describe("Application Workflow", () => {
-    it("should create, update, and submit an application", async () => {
+    it.skipIf(skipIfNoDb)("should create, update, and submit an application", async () => {
       const user: AuthenticatedUser = {
         id: 999997,
         openId: "999997",

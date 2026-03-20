@@ -19,7 +19,12 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { GoogleTranslateProvider } from "@/components/GoogleTranslate";
 import "./index.css";
+import { getCsrfToken, initCsrfToken } from "@/hooks/useCsrfToken";
+
+// Prime CSRF token cache early so it's available for the first mutation
+initCsrfToken();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,9 +83,15 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
+        const csrfToken = getCsrfToken();
+        const headers = new Headers(init?.headers as HeadersInit | undefined);
+        if (csrfToken) {
+          headers.set("x-csrf-token", csrfToken);
+        }
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          headers,
         });
       },
     }),
@@ -99,9 +110,11 @@ if ('serviceWorker' in navigator) {
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <App />
-      </LanguageProvider>
+      <GoogleTranslateProvider>
+        <LanguageProvider>
+          <App />
+        </LanguageProvider>
+      </GoogleTranslateProvider>
     </QueryClientProvider>
   </trpc.Provider>
 );

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { ChevronUp, Compass, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useThrottledScroll } from '@/hooks/useThrottledScroll';
 
 interface Section {
   id: string;
@@ -32,27 +33,24 @@ export function MobileTableOfContents() {
   const [currentSection, setCurrentSection] = useState<string>('');
 
   // Detect current section as user scrolls
-  useEffect(() => {
-    const handleScroll = () => {
-      let activeSection = '';
-      
-      for (const section of SECTIONS) {
-        const element = document.getElementById(section.id);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          // If section is in viewport (top half), mark as active
-          if (rect.top < window.innerHeight / 2) {
-            activeSection = section.id;
-          }
+  const handleScroll = useCallback(() => {
+    let activeSection = '';
+
+    for (const section of SECTIONS) {
+      const element = document.getElementById(section.id);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        // If section is in viewport (top half), mark as active
+        if (rect.top < window.innerHeight / 2) {
+          activeSection = section.id;
         }
       }
-      
-      setCurrentSection(activeSection);
-    };
+    }
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    setCurrentSection(activeSection);
   }, []);
+
+  useThrottledScroll(handleScroll);
 
   const handleSectionClick = (sectionId: string) => {
     const element = document.getElementById(sectionId);

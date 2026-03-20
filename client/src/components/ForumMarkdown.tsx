@@ -5,6 +5,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
+import { sanitizeForClient } from '@/utils/sanitize';
 
 const markdownComponents: Components = {
   h1: ({ children }) => (
@@ -125,7 +126,8 @@ function linkifyBareUrls(text: string): string {
 }
 
 export function ForumMarkdown({ content, className = '' }: ForumMarkdownProps) {
-  const processed = linkifyBareUrls(content);
+  const sanitized = sanitizeForClient(content);
+  const processed = linkifyBareUrls(sanitized);
   return (
     <div className={`forum-markdown ${className}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>

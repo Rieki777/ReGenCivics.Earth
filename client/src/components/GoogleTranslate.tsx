@@ -3,7 +3,7 @@
  * Replaces the custom i18n system with Google's machine translation for all page content.
  * Uses the Google Translate Element API v2.
  */
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 // Language code mapping from our internal codes to Google Translate codes
 const GOOGLE_LANG_MAP: Record<string, string> = {
@@ -50,7 +50,7 @@ function detectBrowserLanguage(): string | null {
   return GOOGLE_LANG_MAP[browserLang] || null;
 }
 
-export function GoogleTranslateProvider() {
+export function GoogleTranslateProvider({ children }: { children?: React.ReactNode }) {
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -110,6 +110,7 @@ export function GoogleTranslateProvider() {
 
   return (
     <>
+      {children}
       {/* Hidden container for Google Translate widget */}
       <div id="google_translate_element" className="hidden" />
       {/* CSS to hide Google Translate's default bar and branding */}

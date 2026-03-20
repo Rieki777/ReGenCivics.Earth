@@ -263,6 +263,8 @@ export default function Blog() {
             src="/blog-hero-bridging-worlds.webp"
             alt="ReGen Civics: Bridging Worlds"
             className="w-full h-full object-cover"
+            width="1920"
+            height="1080"
             loading="eager"
             fetchPriority="high"
             decoding="async"
@@ -353,10 +355,12 @@ export default function Blog() {
                       <Link key={post.id} href={"/blog/" + post.slug}>
                         <div className="group bg-white/5 rounded-xl overflow-hidden border border-[#7dd87d]/20 hover:border-[#7dd87d]/40 transition-all cursor-pointer">
                           <div className="aspect-video overflow-hidden relative">
-                            <img 
-                              src={post.image} 
+                            <img
+                              src={post.image}
                               alt={post.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              width="400"
+                              height="225"
                               loading="lazy"
                             />
                             {post.isVideo && (
@@ -491,10 +495,12 @@ export default function Blog() {
               <Link href={"/blog/" + featuredPost.slug}>
                 <div className="group bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-[#7dd87d]/20 hover:border-[#7dd87d]/40 transition-all duration-300 cursor-pointer">
                   <div className="aspect-[21/9] overflow-hidden relative">
-                    <img 
-                      src={featuredPost.image} 
+                    <img
+                      src={featuredPost.image}
                       alt={featuredPost.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      width="1200"
+                      height="514"
                       loading="lazy"
                     />
                     {featuredPost.isVideo && (
@@ -552,10 +558,12 @@ export default function Blog() {
                 <Link key={post.id} href={"/blog/" + post.slug}>
                   <div className="group bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-[#7dd87d]/20 hover:border-[#7dd87d]/40 transition-all duration-300 cursor-pointer h-full">
                     <div className="aspect-[16/9] overflow-hidden relative">
-                      <img 
-                        src={post.image} 
+                      <img
+                        src={post.image}
                         alt={post.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        width="800"
+                        height="450"
                         loading="lazy"
                       />
                       {post.isVideo && (

@@ -134,6 +134,8 @@ export default function Socials() {
             <img
               src="/images/logos/regencivics-logo-dark-transparent-rounded.png"
               alt="ReGen Civics"
+              width="32"
+              height="32"
               className="w-8 h-8 object-contain"
               loading="lazy"
               onError={(e) => {

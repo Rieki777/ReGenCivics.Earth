@@ -10,8 +10,9 @@ const categories = [
   { name: 'Governance & DAO', slug: 'governance-dao', description: 'Explore governance models, Hypha DAO, and decision-making frameworks.', icon: 'Vote', color: '#e8b86d', sortOrder: 4 },
   { name: 'Quests & Gameplay', slug: 'quests-gameplay', description: 'Discuss quests, seasons, achievements, and the infinite game mechanics.', icon: 'Gamepad2', color: '#c77dba', sortOrder: 5 },
   { name: 'Alliance Partners', slug: 'alliance-partners', description: 'Connect with and discuss alliance partnerships and collaborations.', icon: 'Handshake', color: '#5b9bd5', sortOrder: 6 },
-  { name: 'Introductions', slug: 'introductions', description: 'Introduce yourself to the community! Share your background and what brought you here.', icon: 'UserPlus', color: '#f0a35e', sortOrder: 7 },
-  { name: 'Resources & Learning', slug: 'resources-learning', description: 'Share articles, books, courses, and other educational resources.', icon: 'BookOpen', color: '#6b8e7b', sortOrder: 8 },
+  { name: 'Introductions', slug: 'introductions', description: 'Introduce yourself to the community! Share your background and what brought you here.', icon: 'UserPlus', color: '#f0a35e', sortOrder: 8 },
+  { name: 'Resources & Learning', slug: 'resources-learning', description: 'Share articles, books, courses, and other educational resources.', icon: 'BookOpen', color: '#6b8e7b', sortOrder: 9 },
+  { name: 'Welcome Aboard Quests', slug: 'onboarding-quests', description: 'Discussion threads for the 10 Welcome Aboard quests. Share your completions, reflections, and social posts here.', icon: 'Compass', color: '#f0a35e', sortOrder: 7 },
 ];
 
 for (const cat of categories) {

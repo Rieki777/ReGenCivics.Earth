@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as db from './db';
 
+const skipIfNoDb = !process.env.DATABASE_URL;
+
 describe('Notification Preferences System', () => {
   describe('Database Functions', () => {
     it('should have all notification preferences functions defined', () => {
@@ -10,7 +12,7 @@ describe('Notification Preferences System', () => {
       expect(db.getNotificationEmails).toBeDefined();
     });
 
-    it('should get or create default notification preferences', async () => {
+    it.skipIf(skipIfNoDb)('should get or create default notification preferences', async () => {
       const prefs = await db.getNotificationPreferences();
       
       expect(prefs).toHaveProperty('id');
@@ -45,27 +47,27 @@ describe('Notification Preferences System', () => {
       expect(typeof prefs.newsletterSignups).toBe('number');
     });
 
-    it('should check if notification types are enabled', async () => {
+    it.skipIf(skipIfNoDb)('should check if notification types are enabled', async () => {
       const isEnabled = await db.isNotificationEnabled('applicationSubmissions');
       expect(typeof isEnabled).toBe('boolean');
     });
 
-    it('should check alliance requests notification type', async () => {
+    it.skipIf(skipIfNoDb)('should check alliance requests notification type', async () => {
       const isEnabled = await db.isNotificationEnabled('allianceRequests');
       expect(typeof isEnabled).toBe('boolean');
     });
 
-    it('should check role requests notification type', async () => {
+    it.skipIf(skipIfNoDb)('should check role requests notification type', async () => {
       const isEnabled = await db.isNotificationEnabled('roleRequests');
       expect(typeof isEnabled).toBe('boolean');
     });
 
-    it('should check work with regens notification type', async () => {
+    it.skipIf(skipIfNoDb)('should check work with regens notification type', async () => {
       const isEnabled = await db.isNotificationEnabled('workWithRegens');
       expect(typeof isEnabled).toBe('boolean');
     });
 
-    it('should update notification preferences', async () => {
+    it.skipIf(skipIfNoDb)('should update notification preferences', async () => {
       await expect(
         db.updateNotificationPreferences({
           newsletterSignups: 0,
@@ -73,7 +75,7 @@ describe('Notification Preferences System', () => {
       ).resolves.not.toThrow();
     });
 
-    it('should update email routing preferences', async () => {
+    it.skipIf(skipIfNoDb)('should update email routing preferences', async () => {
       await expect(
         db.updateNotificationPreferences({
           applicationEmails: 'test@example.com, admin@example.com',
@@ -90,7 +92,7 @@ describe('Notification Preferences System', () => {
       });
     });
 
-    it('should get notification emails for a type', async () => {
+    it.skipIf(skipIfNoDb)('should get notification emails for a type', async () => {
       // First set some emails
       await db.updateNotificationPreferences({
         investorEmails: 'investor1@example.com, investor2@example.com',
@@ -105,7 +107,7 @@ describe('Notification Preferences System', () => {
       });
     });
 
-    it('should return null for empty email routing', async () => {
+    it.skipIf(skipIfNoDb)('should return null for empty email routing', async () => {
       const emails = await db.getNotificationEmails('newsletter');
       // Should be null if no custom emails are set
       expect(emails).toBeNull();

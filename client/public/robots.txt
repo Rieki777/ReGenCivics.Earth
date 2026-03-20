@@ -6,6 +6,7 @@ Allow: /
 
 # Sitemap location
 Sitemap: https://regencivics.earth/sitemap.xml
+Sitemap: https://www.regencivics.earth/sitemap.xml
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

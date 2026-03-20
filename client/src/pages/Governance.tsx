@@ -48,9 +48,11 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
             <img
               src="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png"
               alt="RCVoice Fund Token"
+              width="96"
+              height="96"
               className="w-24 h-24 object-contain flex-shrink-0"
-            loading="lazy"
-              />
+              loading="lazy"
+            />
             <div>
               <h3 className="text-2xl font-bold text-[#d4a574] mb-2">RCVoice: Fund Governance</h3>
               <p className="text-white/80 leading-relaxed">
@@ -104,9 +106,11 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
             <img
               src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png"
               alt="RGVoice Game Token"
+              width="96"
+              height="96"
               className="w-24 h-24 object-contain flex-shrink-0"
-            loading="lazy"
-              />
+              loading="lazy"
+            />
             <div>
               <h3 className="text-2xl font-bold text-purple-400 mb-2">RGVoice: Game Governance</h3>
               <p className="text-white/80 leading-relaxed">
@@ -168,9 +172,11 @@ function TwoTokensSection() {
             <img
               src="https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.png"
               alt="$RCivics Token"
+              width="48"
+              height="48"
               className="w-12 h-12 object-contain flex-shrink-0"
-            loading="lazy"
-              />
+              loading="lazy"
+            />
             <h3 className="text-xl font-bold text-[#d4a574]">$RCivics - Rewards Token</h3>
           </div>
           <p className="text-white/80 leading-relaxed">
@@ -183,9 +189,11 @@ function TwoTokensSection() {
             <img
               src="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png"
               alt="$ReGen Token"
+              width="48"
+              height="48"
               className="w-12 h-12 object-contain flex-shrink-0"
-            loading="lazy"
-              />
+              loading="lazy"
+            />
             <h3 className="text-xl font-bold text-[#7dd87d]">$ReGen - Rewards Token</h3>
           </div>
           <p className="text-white/80 leading-relaxed mb-5">
@@ -756,9 +764,11 @@ export default function Governance() {
                         <img
                           src="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png"
                           alt="RCVoice"
+                          width="40"
+                          height="40"
                           className="w-10 h-10 object-contain"
-                        loading="lazy"
-              />
+                          loading="lazy"
+                        />
                         <span className="text-[#d4a574] font-bold text-base">ReGen Civics Fund</span>
                         <span className="text-white/50 text-xs">Capital &amp; Governance</span>
                       </div>
@@ -768,9 +778,11 @@ export default function Governance() {
                         <img
                           src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png"
                           alt="RGVoice"
+                          width="40"
+                          height="40"
                           className="w-10 h-10 object-contain"
-                        loading="lazy"
-              />
+                          loading="lazy"
+                        />
                         <span className="text-purple-400 font-bold text-base">ReGen Game</span>
                         <span className="text-white/50 text-xs">Play &amp; Community</span>
                       </div>
@@ -894,6 +906,8 @@ export default function Governance() {
               <img
                 src="/images/governance/rcvoice-vs-rgvoice.webp"
                 alt="RCVoice vs RGVoice: Two Tokens Coordinating Systemic Regeneration"
+                width="1200"
+                height="675"
                 className="w-full rounded-xl shadow-2xl"
                 loading="lazy"
               />
@@ -922,6 +936,8 @@ export default function Governance() {
               <img
                 src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/governance-fund-structure-v2_688d510f.png"
                 alt="ReGen Civics Fund Governance Structure"
+                width="1200"
+                height="800"
                 className="w-full max-w-2xl rounded-xl shadow-2xl"
                 loading="lazy"
               />
@@ -996,6 +1012,8 @@ export default function Governance() {
                 <img
                   src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/governance-evolution-v2_66ad1937.png"
                   alt="ReGen Civics Governance Evolution"
+                  width="1200"
+                  height="800"
                   className="w-full rounded-xl shadow-2xl"
                   loading="lazy"
                 />
@@ -1012,6 +1030,8 @@ export default function Governance() {
                 <img
                   src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/seasonal-voting-v2_08cf1fa6.png"
                   alt="ReGen Civics Seasonal Voting Process"
+                  width="1200"
+                  height="800"
                   className="w-full rounded-xl shadow-2xl"
                   loading="lazy"
                 />

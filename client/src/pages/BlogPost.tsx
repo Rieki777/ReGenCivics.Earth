@@ -18,6 +18,8 @@ import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
@@ -340,123 +342,62 @@ export default function BlogPost() {
                   if (paragraph.trim() === '[ANIMAL_POPULATION_INFOGRAPHIC]') {
                     return <AnimalPopulationInfographic key={index} />;
                   }
-                  // Handle headings
-                  if (paragraph.startsWith('#### ')) {
+                  return null;
+                }).filter(Boolean).length > 0 ? (
+                  // If there are special markers, render block-by-block
+                  activeContent.split('\n\n').map((paragraph, index) => {
+                    if (paragraph.trim() === '[FOOD_PRODUCTION_INFOGRAPHIC]') {
+                      return <FoodProductionInfographic key={index} />;
+                    }
+                    if (paragraph.trim() === '[ANIMAL_POPULATION_INFOGRAPHIC]') {
+                      return <AnimalPopulationInfographic key={index} />;
+                    }
                     return (
-                      <h4 key={index} className="text-base font-bold text-white mt-6 mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                        {paragraph.replace('#### ', '')}
-                      </h4>
+                      <ReactMarkdown
+                        key={index}
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          ol: ({children}) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
+                          ul: ({children}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
+                          li: ({children}) => <li className="ml-2">{children}</li>,
+                          h1: ({children}) => <h1 className="text-3xl font-bold mb-4 mt-6">{children}</h1>,
+                          h2: ({children}) => <h2 className="text-2xl font-bold mb-3 mt-5 scroll-mt-24">{children}</h2>,
+                          h3: ({children}) => <h3 className="text-xl font-semibold mb-2 mt-4 scroll-mt-24">{children}</h3>,
+                          p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                          a: ({href, children}) => <a href={href} className="text-green-400 hover:text-green-300 underline">{children}</a>,
+                          blockquote: ({children}) => <blockquote className="border-l-4 border-green-500 pl-4 italic my-4 text-white/70">{children}</blockquote>,
+                          strong: ({children}) => <strong className="font-semibold">{children}</strong>,
+                          em: ({children}) => <em className="italic">{children}</em>,
+                          code: ({children}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
+                          pre: ({children}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
+                        }}
+                      >
+                        {paragraph}
+                      </ReactMarkdown>
                     );
-                  }
-                  if (paragraph.startsWith('### ')) {
-                    const text = paragraph.replace('### ', '');
-                    const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                    return (
-                      <h3 key={index} id={id} className="text-xl font-bold text-white mt-8 mb-3 scroll-mt-24" style={{ fontFamily: 'var(--font-display)' }}>
-                        {text}
-                      </h3>
-                    );
-                  }
-                  if (paragraph.startsWith('## ')) {
-                    const text = paragraph.replace('## ', '');
-                    const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                    return (
-                      <h2 key={index} id={id} className="text-2xl font-bold text-white mt-10 mb-4 scroll-mt-24" style={{ fontFamily: 'var(--font-display)' }}>
-                        {text}
-                      </h2>
-                    );
-                  }
-                  // Handle bullet lists
-                  if (paragraph.startsWith('- ')) {
-                    const items = paragraph.split('\n').filter(line => line.startsWith('- '));
-                    return (
-                      <ul key={index} className="list-disc list-inside space-y-2 ml-4">
-                        {items.map((item, i) => {
-                          const content = item.replace('- ', '');
-                          return <li key={i}>{renderInlineMarkdown(content)}</li>;
-                        })}
-                      </ul>
-                    );
-                  }
-                  // Handle numbered lists
-                  if (/^\d+\.\s/.test(paragraph)) {
-                    const items = paragraph.split('\n').filter(line => /^\d+\.\s/.test(line));
-                    return (
-                      <ol key={index} className="list-decimal list-inside space-y-2 ml-4">
-                        {items.map((item, i) => {
-                          const content = item.replace(/^\d+\.\s/, '');
-                          return <li key={i}>{renderInlineMarkdown(content)}</li>;
-                        })}
-                      </ol>
-                    );
-                  }
-                  // Handle links [text](url)
-                  if (paragraph.includes('](')) {
-                    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-                    const parts = paragraph.split(linkRegex);
-                    return (
-                      <p key={index} className="text-white/80 leading-relaxed">
-                        {parts.map((part, i) => {
-                          // Every 3rd element starting from index 1 is link text, index 2 is URL
-                          if (i % 3 === 1) {
-                            const url = parts[i + 1];
-                            const isExternal = url.startsWith('http');
-                            return isExternal ? (
-                              <a 
-                                key={i} 
-                                href={url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-[#7dd87d] underline hover:text-[#9de89d] transition-colors"
-                              >
-                                {part}
-                              </a>
-                            ) : (
-                              <Link key={i} href={url} className="text-[#7dd87d] underline hover:text-[#9de89d] transition-colors">
-                                {part}
-                              </Link>
-                            );
-                          }
-                          if (i % 3 === 2) return null; // Skip URL parts
-                          // Handle bold in remaining text
-                          if (part.includes('**')) {
-                            const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
-                            return boldParts.map((bp, j) => {
-                              if (bp.startsWith('**') && bp.endsWith('**')) {
-                                return <strong key={`${i}-${j}`} className="text-[#7dd87d]">{bp.replace(/\*\*/g, '')}</strong>;
-                              }
-                              return bp;
-                            });
-                          }
-                          return part;
-                        })}
-                      </p>
-                    );
-                  }
-                  // Handle bold-only paragraphs
-                  if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-                    return (
-                      <p key={index} className="font-semibold text-white">
-                        {paragraph.replace(/\*\*/g, '')}
-                      </p>
-                    );
-                  }
-                  // Handle paragraphs with bold text
-                  if (paragraph.includes('**')) {
-                    const parts = paragraph.split(/(\*\*[^*]+\*\*)/g);
-                    return (
-                      <p key={index}>
-                        {parts.map((part, i) => {
-                          if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={i} className="text-[#7dd87d]">{part.replace(/\*\*/g, '')}</strong>;
-                          }
-                          return part;
-                        })}
-                      </p>
-                    );
-                  }
-                  return <p key={index}>{paragraph}</p>;
-                })}
+                  })
+                ) : (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      ol: ({children}) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
+                      ul: ({children}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
+                      li: ({children}) => <li className="ml-2">{children}</li>,
+                      h1: ({children}) => <h1 className="text-3xl font-bold mb-4 mt-6">{children}</h1>,
+                      h2: ({children}) => <h2 className="text-2xl font-bold mb-3 mt-5 scroll-mt-24">{children}</h2>,
+                      h3: ({children}) => <h3 className="text-xl font-semibold mb-2 mt-4 scroll-mt-24">{children}</h3>,
+                      p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                      a: ({href, children}) => <a href={href} className="text-green-400 hover:text-green-300 underline">{children}</a>,
+                      blockquote: ({children}) => <blockquote className="border-l-4 border-green-500 pl-4 italic my-4 text-white/70">{children}</blockquote>,
+                      strong: ({children}) => <strong className="font-semibold">{children}</strong>,
+                      em: ({children}) => <em className="italic">{children}</em>,
+                      code: ({children}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
+                      pre: ({children}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
+                    }}
+                  >
+                    {activeContent}
+                  </ReactMarkdown>
+                )}
               </div>
             </article>
           </AnimatedSection>
