@@ -9,23 +9,23 @@ import { MycelialBackground } from "./components/MycelialBackground";
 import { StructuredData } from "./components/StructuredData";
 import { TaoSpinner } from "./components/TaoSpinner";
 import { TaoErrorState } from "./components/TaoErrorState";
-import CookieConsent from "./components/CookieConsent";
+const CookieConsent = lazy(() => import("./components/CookieConsent"));
 import AnalyticsLoader from "./components/AnalyticsLoader";
 const ReGenGuide = lazy(() => import("./components/ReGenGuide"));
 import AMABanner from "./components/AMABanner";
 import SiteFooter from "./components/SiteFooter";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
-import { ExitIntentCapture } from "./components/ExitIntentCapture";
-import CommandPalette from "./components/CommandPalette";
-import { ShortcutPill } from "./components/ShortcutPill";
+const ExitIntentCapture = lazy(() => import("./components/ExitIntentCapture").then(m => ({ default: m.ExitIntentCapture })));
+const CommandPalette = lazy(() => import("./components/CommandPalette"));
+const ShortcutPill = lazy(() => import("./components/ShortcutPill").then(m => ({ default: m.ShortcutPill })));
 
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useLocation as useWouterLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { OnboardingWizard } from "./components/OnboardingWizard";
+const OnboardingWizard = lazy(() => import("./components/OnboardingWizard").then(m => ({ default: m.OnboardingWizard })));
 
 // Routes that bypass site chrome (nav, footer, background effects)
 const ADMIN_ROUTES = ["/admin", "/admin/"];
@@ -239,7 +239,7 @@ function Router() {
 function OnboardingController() {
   const { user, isAuthenticated, loading } = useAuth();
   if (loading || !isAuthenticated || !user) return null;
-  return <OnboardingWizard user={user} />;
+  return <Suspense fallback={null}><OnboardingWizard user={user} /></Suspense>;
 }
 
 /** Handles returnTo redirect after login: if sessionStorage has a saved path, redirect there once authed */
@@ -304,14 +304,14 @@ function App() {
             <Router />
           </main>
           {!adminMode && <SiteFooter />}
-          {!adminMode && <CookieConsent />}
+          {!adminMode && <Suspense fallback={null}><CookieConsent /></Suspense>}
           <AnalyticsLoader />
           {!adminMode && <ScrollToTop />}
           {!adminMode && <Suspense fallback={null}><ReGenGuide /></Suspense>}
           {!adminMode && <AppInner />}
-          {!adminMode && <ExitIntentCapture />}
-          {!adminMode && <CommandPalette />}
-          {!adminMode && <ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} />}
+          {!adminMode && <Suspense fallback={null}><ExitIntentCapture /></Suspense>}
+          {!adminMode && <Suspense fallback={null}><CommandPalette /></Suspense>}
+          {!adminMode && <Suspense fallback={null}><ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} /></Suspense>}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!adminMode && <OnboardingController />}
           <ReturnToHandler />

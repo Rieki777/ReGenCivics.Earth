@@ -1741,6 +1741,116 @@ The `globeImageUrl` getter (or an object it references) is being accessed before
 - Fix 155: Steps 1-3 (prerender-node middleware, sitemap.xml route)
 - Fix 156: Steps 1-5 (ogs install, fetchLinkPreview tRPC, useLinkPreview hook, LinkPreviewCard, linkPreviews column migration)
 
+---
+
+## Fix 157: Per-Event Reminder Signup on Schedule Page
+
+**Status: DONE (frontend built 2026-03-21)**
+
+**What:** Each event on the Schedule page now has an inline "Get Reminder" form. When someone clicks it, they enter their email and get added to the newsletter_subscribers table with source="other" and name="[EVENT: Title]". Shows a success badge for 6 seconds.
+
+**Files changed:**
+- `client/src/pages/Schedule.tsx`: added Bell icon, trpc import, reminderOpenFor/reminderEmail/reminderSuccess state, submitReminder function, reminder UI in each expanded event card
+
+**Notes for future improvement:** A dedicated `eventSignups` table (with event_id, event_title columns) would give cleaner per-event analytics. For now the name field encodes the event.
+
+---
+
+## Fix 158: Live Google Calendar Subscription
+
+**Status: BLOCKED on Rye**
+
+**What:** Replace the static .ics download "Subscribe to All Events" button with a live webcal:// subscription link. This means all subscribers auto-get new/updated events without re-downloading.
+
+**The gap:** No dedicated public "ReGen Civics Events" Google Calendar exists yet. The subscribe button currently offers a static .ics download only.
+
+**Steps:**
+1. [HUMAN] Rye creates a dedicated Google Calendar named "ReGen Civics Events"
+2. [HUMAN] Makes it public: Settings > "Access permissions for events" > "Make available to public"
+3. [HUMAN] Gets the calendar ID from "Integrate calendar" section (looks like `...@group.calendar.google.com`)
+4. [HUMAN] Shares the calendar ID with Claude
+5. [CLAUDE] Update Schedule.tsx "All Events" card to add a webcal:// subscription button alongside the .ics download
+6. [CLAUDE] Update the ics file strategy: add new events to the Google Calendar; the .ics is a backup
+
+**Why it matters:** Every time a new event is added, subscribed users see it automatically. The current .ics download is a one-time snapshot.
+
+---
+
+## Fix 159: Riverside.fm + YouTube Live Streaming Workflow
+
+**Status: PLANNING (2026-03-21)**
+
+**What:** Set up a complete recording, transcription, and distribution pipeline for ReGen Civics episodes and community sessions.
+
+### Stack decision:
+- **Recording:** Riverside.fm (local track recording, AI transcription, AI Studio editing)
+- **Live streaming:** Riverside.fm streams directly to YouTube Live during recording
+- **Post-production:** Riverside AI Studio for rough cuts, transcripts, highlights
+- **Distribution:** YouTube (full recording + Rye's short overview cut), forum posts per episode, email summary via newsletter
+
+### Full workflow:
+
+**During the call:**
+1. Rye opens Riverside.fm room and shares link with guests/community
+2. Riverside streams to YouTube Live simultaneously (one toggle in Riverside settings)
+3. Each participant records locally (lossless audio, HD video)
+
+**After the call (automated via Riverside + Zapier):**
+4. Riverside AI Studio auto-transcribes within ~30 min
+5. Zapier webhook fires when transcript is ready
+6. Zapier sends auto-summary email to newsletter subscribers (source=open) with episode title, date, key topics from transcript, and YouTube link
+7. Zapier or Claude Code creates a forum post for the episode with the transcript and YouTube embed
+
+**Rye's quick overview cut:**
+8. After each episode, Rye records a 3-5 min "what happened" recap video (Riverside, no guests)
+9. Uploaded to YouTube as a second video per episode
+10. Forum post gets both links: "Full episode" and "Quick recap by Rye"
+
+**Site integration:**
+11. Each episode card on /schedule gets a "Watch Recording" link after the event passes
+12. Episode recordings page or section on site (future)
+
+### Setup steps for Rye:
+1. [HUMAN] Sign up at riverside.fm (or use existing account)
+2. [HUMAN] Connect Riverside to YouTube: Settings > Streaming > Connect YouTube
+3. [HUMAN] Create a YouTube channel for ReGen Civics if not already done
+4. [HUMAN] In Riverside: enable "Stream to YouTube Live" per room
+5. [HUMAN] Set up Zapier: Riverside "Recording Ready" trigger > Newsletter email action (or forward to Claude Code endpoint)
+6. [CLAUDE] Build `/api/webhooks/recording-ready` endpoint that receives Riverside webhook, creates forum post with episode details + YouTube link, and queues email summary
+7. [CLAUDE] Add "Watch Recording" state to Schedule event cards (shows after event date passes, links to YouTube)
+8. [CLAUDE] Add episode recordings section to Schedule page below the events list
+
+### Notes:
+- Riverside free tier: 2 hrs/month. Season 2 has 13 x 2-hour sessions = 26 hours. Need Creator or Business plan ($24-$79/mo).
+- YouTube livestream is free.
+- Zapier free tier: 100 tasks/mo. 15 episodes/year = well within free tier.
+
+---
+
+## Fix 160: Forum Agenda Suggestion Feature
+
+**Status: PLANNED (2026-03-21)**
+
+**What:** Community members can suggest agenda items for upcoming episodes directly from the Schedule page. Admin view at /admin shows compiled suggestions before each episode.
+
+### UX:
+- Each episode card on /schedule has an "Suggest Agenda Item" link (below the reminder button)
+- Link goes to a forum post thread dedicated to that episode: `/community/post/{episodeId}-agenda`
+- Community members reply with their suggested topics
+- Admin view at `/admin/episode-agenda` shows all upcoming episodes with their suggestion threads, sorted by episode date
+
+### Implementation steps:
+1. [CLAUDE] Add `episodeForumThreadId` column to a new `episodeAgendas` table (or reuse forum posts)
+2. [CLAUDE] Seed script: create one forum thread per episode in the "episodes" category
+3. [CLAUDE] Add "Suggest Agenda" button to Schedule event cards (links to the episode's thread)
+4. [CLAUDE] Admin page: `/admin/episode-agenda` — lists upcoming episodes, shows reply count and latest suggestions for each
+5. [HUMAN] Apply DB migration for episodeAgendas or forum category
+
+### Data model (simple option):
+Reuse existing forum: create a forum post per episode in a new "episodes" category. The post title = episode title, body = episode description. Community replies with agenda suggestions. Admin views the thread before each call.
+
+---
+
 ### What Rye must do (Railway DB, env vars, browser actions, approvals):
 
 | Step | Fix | What to do |
@@ -1770,4 +1880,8 @@ The `globeImageUrl` getter (or an object it references) is being accessed before
 | **Apply DB migration** | Fix 154 Step 3 | Run `0069_admin_totp.sql` in Railway after Claude Code writes it. |
 | **Prerender.io account** | Fix 155 Step 4 | Sign up at prerender.io, get token, set `PRERENDER_TOKEN=<token>` in Railway. |
 | **Prerender cache warm** | Fix 155 Step 5 | Submit main public pages to prerender.io cache after deploy. |
-| **Apply DB migration** | Fix 156 Step 6 | Run `0070_forum_link_previews.sql` in Railway (Season 3, not urgent). |
+| **Apply DB migration** | Fix 156 Step 6 | Run `0070_forum_link_previews.sql` in Railway (not urgent). |
+| **Create Google Calendar** | Fix 158 Step 1-4 | Create "ReGen Civics Events" calendar, make public, share calendar ID with Claude |
+| **Riverside.fm setup** | Fix 159 Steps 1-5 | Sign up/log in, connect YouTube, enable live streaming per room |
+| **YouTube channel** | Fix 159 Step 3 | Create/confirm ReGen Civics YouTube channel |
+| **Zapier setup** | Fix 159 Step 5 | Connect Riverside "Recording Ready" trigger to email/webhook action |

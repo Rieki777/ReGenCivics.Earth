@@ -1,0 +1,111 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//ReGen Civics//All Events//EN
+X-WR-CALNAME:ReGen Civics All Events
+X-WR-CALDESC:All ReGen Civics sessions and events
+BEGIN:VEVENT
+DTSTART:20260329T180000Z
+DTEND:20260329T200000Z
+SUMMARY:ReGen Civics Season 3 Open Access Session
+DESCRIPTION:Join us for an open introduction to Season 3!\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20260422T150000Z
+DTEND:20260422T180000Z
+SUMMARY:ReGen Civics Alliance Launch Party
+DESCRIPTION:ReGen Civics Alliance Launch Party\n\nSpeaking during the main portion is invite only. Apply to be an alliance member for an invitation. Anyone can attend and see the magic.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20260926T150000Z
+DTEND:20260926T170000Z
+SUMMARY:ReGen Civics Week 1: Selection Day
+DESCRIPTION:First steps of the ReGen Civics Incubator. Meet the selected projects\, set intentions\, and begin mapping your regenerative vision together.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261003T150000Z
+DTEND:20261003T170000Z
+SUMMARY:ReGen Civics Week 2: Incubator Overview
+DESCRIPTION:Deep dive into the incubator structure\, expectations\, and how we'll journey together over the next 13 weeks.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261010T150000Z
+DTEND:20261010T170000Z
+SUMMARY:ReGen Civics Week 3: DAO/DHO/Org Co-Creation Part 1
+DESCRIPTION:Introduction to decentralized autonomous organizations and how to structure your community.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261017T150000Z
+DTEND:20261017T170000Z
+SUMMARY:ReGen Civics Week 4: DAO/DHO/Org Co-Creation Part 2
+DESCRIPTION:Practical implementation of governance frameworks and community design.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261024T150000Z
+DTEND:20261024T170000Z
+SUMMARY:ReGen Civics Week 5: Game Guides & Economic Systems
+DESCRIPTION:Co-creating project Game Guides and kickstarting our economic systems.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261031T150000Z
+DTEND:20261031T170000Z
+SUMMARY:ReGen Civics Week 6: Intro to the ReGen Civics DHO
+DESCRIPTION:Introduction to the ReGen Civics DHO and the first steps in setting up yours.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261107T160000Z
+DTEND:20261107T180000Z
+SUMMARY:ReGen Civics Week 7: Ecosystem Map & Policies
+DESCRIPTION:Evolving our culture through ecosystem mapping and policy design.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261114T160000Z
+DTEND:20261114T180000Z
+SUMMARY:ReGen Civics Week 8: Tokenomics Part 1
+DESCRIPTION:The art and science of token-assisted land-based economies.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261121T160000Z
+DTEND:20261121T180000Z
+SUMMARY:ReGen Civics Week 9: Tokenomics Part 2
+DESCRIPTION:Practical token design for your project.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261128T160000Z
+DTEND:20261128T180000Z
+SUMMARY:ReGen Civics Week 10: Legal Structures Part 1
+DESCRIPTION:Exploring the expansive world of legal structures.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261205T160000Z
+DTEND:20261205T180000Z
+SUMMARY:ReGen Civics Week 11: Legal Structures Part 2
+DESCRIPTION:Practical considerations for land ownership and compliance.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261212T160000Z
+DTEND:20261212T180000Z
+SUMMARY:ReGen Civics Week 12: Coordination & Minimum Viable Economies
+DESCRIPTION:Creating minimum viable regenerative economies.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+BEGIN:VEVENT
+DTSTART:20261219T160000Z
+DTEND:20261219T180000Z
+SUMMARY:ReGen Civics Week 13: Season Overview & Project Updates
+DESCRIPTION:Season finale — project stewards share updates and celebrate collective achievements.\n\nZoom: https://us06web.zoom.us/j/5776315796\nMeeting ID: 577 631 5796\nPasscode: 333
+LOCATION:Online via Zoom
+END:VEVENT
+END:VCALENDAR
