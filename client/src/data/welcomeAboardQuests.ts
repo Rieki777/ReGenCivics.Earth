@@ -17,7 +17,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Share Your Experience and Give Constructive Feedback",
     tagline: "Your perspective makes the site better for everyone.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/quests-gameplay",
+    forumUrl: "/community/post/600",
     about:
       "ReGen Civics is a living project, and your experience on the site is genuinely valuable data. This quest invites you to reflect on what you felt, noticed, and imagined while exploring. What sparked curiosity? What felt confusing? What would make this a place you would want to bring your whole community into? You do not need to be a developer or designer. Your honest human experience is exactly what is needed.",
     steps: [
@@ -32,7 +32,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Write Your Regenerative Origin Story",
     tagline: "What woke you up? How did you get here?",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/general",
+    forumUrl: "/community/post/591",
     about:
       "Every person in this community arrived here through a story. A book, a conversation, a crisis, a piece of land, a moment of grief or wonder that cracked something open. This quest invites you to write that story down. Not as a polished essay, but as a genuine account: what woke you up to the regenerative path, and how did you find your way here? When we share our origin stories, we recognise each other. We remember that this is not an accident. We are all here on purpose.",
     steps: [
@@ -47,7 +47,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Do a Regenerative Act",
     tagline: "Bring the Game into the physical world.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/quests-gameplay",
+    forumUrl: "/community/post/601",
     about:
       "The most powerful quests bridge the digital and the physical. This one is simple: do one small, intentional regenerative act in the real world today. Plant something. Cook a meal with locally sourced food. Help repair something that would otherwise go to landfill. Thank a farmer. Clean up a stretch of waterway or trail. Pick up litter on your walk. Compost for the first time. Say no to single-use plastic all day. The act does not have to be grand. It has to be real, intentional, and yours. The value is in doing and in witnessing each other doing.",
     steps: [
@@ -62,7 +62,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Connect with Your Bioregion",
     tagline: "Know where you are. Know what you belong to.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/land-projects",
+    forumUrl: "/community/post/593",
     about:
       "Most of us live in places we can name but cannot truly read. We know our street address but not our watershed. We know our city but not which migratory birds pass through it each spring. We know our country but not which old-growth trees once covered the land we walk on. This quest is an invitation to research your bioregion, the living ecological community you inhabit, and share what you discover. This kind of rooted knowledge is the foundation of all genuine regenerative action. You cannot tend what you do not know.",
     steps: [
@@ -77,7 +77,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Make Friends and Support",
     tagline: "New here? Someone needs you. Already settled in? Someone needs you too.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/c/make-friends",
+    forumUrl: "/community/post/602",
     about:
       "The Regenerative Renaissance is not built by isolated individuals. It is built by people who find each other. This quest is simple: reach out to someone in the ReGen Civics community you have not connected with before. Welcome a newcomer. Answer a question someone left unanswered. Respond to an origin story that moved you. Introduce yourself to someone whose project interests you. You do not need a reason beyond genuine curiosity and care. A community that notices its members and reaches toward them is a community worth belonging to.",
     steps: [
@@ -92,7 +92,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Pledge Your Gift",
     tagline: "What do you bring to the Regenerative Renaissance?",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/c/pledge-gift",
+    forumUrl: "/community/post/603",
     about:
       "The Regenerative Renaissance needs every gift, not just farmers and ecologists, but storytellers, coders, musicians, healers, teachers, lawyers, cooks, architects, parents, and elders. This quest invites you into a moment of genuine self-inquiry: What is the unique gift you carry? What would you contribute if you knew it was needed and valued? You do not need to have it fully figured out. A direction, an intention, a question you are following, all of these count. Writing it down and sharing it with a community who cares is itself a powerful act.",
     steps: [
@@ -107,7 +107,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Explore Our Foundations",
     tagline: "11+ years of exploration, distilled into a short playlist of videos.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/resources-learning",
+    forumUrl: "/community/post/596",
     about:
       "ReGen Civics did not emerge overnight. It grew from more than a decade of asking hard questions about land, money, governance, and what healing a civilisation actually takes. This quest invites you to watch the Foundational Series: four short videos that distil that journey and illuminate the vision we are building toward together. After watching, you will understand not just what ReGen Civics is, but why it has to exist. Then share what you found with the people in your life who are also searching.",
     steps: [
@@ -122,7 +122,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Refer an Organisation Project",
     tagline: "Who helps land regenerate? Bring them too.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/alliance-partners",
+    forumUrl: "/community/post/597",
     about:
       "Behind every healthy land project is a web of support: legal advisors, infrastructure builders, seed banks, water engineers, permaculture educators, carbon verifiers, funding facilitators, and more. Land cannot regenerate in isolation; it needs a whole ecosystem of expertise and care around it. These are the Organisation Projects. This quest asks you to look at your network and ask: who is doing the enabling work? Invite them in. Every organisation that joins strengthens the conditions for land to heal.",
     steps: [
@@ -138,7 +138,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Refer a Land Project",
     tagline: "Know someone stewarding land? Bring them in.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/c/refer-land",
+    forumUrl: "/community/post/598",
     about:
       "The ReGen Civics Alliance is only as strong as the land it is rooted in. Land projects, farms, forests, rewilding initiatives, food forests, regenerative homesteads: these are not just projects. They are places where healing is actively happening. They are the heart of what we are building together. If you know someone doing this work, this quest is an invitation to bridge them in. A single introduction can ripple out in ways neither of you can predict.",
     steps: [
