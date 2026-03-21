@@ -28,5 +28,6 @@ export async function runGlossaryJob() {
     }
   } catch (e) {
     console.error("[GlossaryJob] Error:", e);
+    try { const Sentry = await import("@sentry/node"); Sentry.captureException(e, { tags: { job: "glossary" } }); } catch {}
   }
 }

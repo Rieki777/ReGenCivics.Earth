@@ -88,9 +88,11 @@ export default function Community() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [alreadySubscribed] = useState(() => isNewsletterSubscribed());
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const sectionPanelRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const handleSectionClick = (id: string) => {
     const next = activeSection === id ? null : id;
@@ -102,6 +104,12 @@ export default function Community() {
       }, 50);
     }
   };
+  // Debounce search query for post full-text search (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   // Admin category management state
@@ -137,6 +145,54 @@ export default function Community() {
   const { data: alliancePartnerThreads } = trpc.forum.activeAlliancePartnerThreads.useQuery(undefined, { staleTime: FIVE_MIN });
   const { data: pulseData } = trpc.forum.communityPulse.useQuery(undefined, { staleTime: FIVE_MIN });
   const { data: activeLandProjectsData } = trpc.community.activeLandProjects.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
+
+  // Infinite scroll for forum posts
+  const {
+    data: postsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = trpc.forum.posts.useInfiniteQuery(
+    { limit: 20 },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      staleTime: FIVE_MIN,
+    }
+  );
+
+  // IntersectionObserver for auto-loading next page
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Flatten all pages of posts for use in trending
+  const allPosts = useMemo(
+    () => postsData?.pages.flatMap((page) => page.posts) ?? [],
+    [postsData]
+  );
+
+  const trendingPosts = useMemo(
+    () => allPosts.length > 0
+      ? [...allPosts].sort((a, b) => (b.replyCount ?? 0) - (a.replyCount ?? 0)).slice(0, 3)
+      : undefined,
+    [allPosts]
+  );
+
+  // Full-text post search (only when debounced query is >= 2 chars)
+  const isSearching = debouncedSearchQuery.length >= 2;
+  const { data: searchResults, isFetching: isSearchFetching } = trpc.forum.search.useQuery(
+    { q: debouncedSearchQuery },
+    { enabled: isSearching, staleTime: 30 * 1000 }
+  );
 
   // Slugs shown in dedicated section panels — exclude from General list
   const SECTION_SLUGS = new Set([
@@ -332,13 +388,59 @@ export default function Community() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
           <Input
-            placeholder="Search topics..."
+            placeholder="Search posts and topics..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-white border-[#4a7c59]/20 rounded-xl focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
             style={{ fontFamily: 'var(--font-body)' }}
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4a7c59]/40 hover:text-[#4a7c59] transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
+
+        {/* Post search results overlay */}
+        {isSearching && (
+          <div className="mt-2 bg-white border border-[#e8e4de] rounded-xl shadow-lg overflow-hidden">
+            {isSearchFetching ? (
+              <div className="flex items-center gap-2 px-4 py-3 text-sm text-[#4a7c59]">
+                <span className="w-3 h-3 rounded-full border-2 border-[#7dd87d] border-t-transparent animate-spin" />
+                Searching...
+              </div>
+            ) : !searchResults || searchResults.length === 0 ? (
+              <div className="px-4 py-4 text-sm text-[#1a472a]/50 text-center">
+                No results found for &ldquo;{debouncedSearchQuery}&rdquo;
+              </div>
+            ) : (
+              <ul>
+                {searchResults.map((post) => (
+                  <li key={post.id}>
+                    <Link
+                      href={`/community/post/${post.id}`}
+                      className="flex items-start gap-3 px-4 py-3 hover:bg-[#f0f7f0] transition-colors border-b border-[#e8e4de] last:border-0"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      <MessageCircle className="w-4 h-4 text-[#7dd87d] flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#1a472a] truncate">{post.title}</p>
+                        <p className="text-xs text-[#4a7c59]/60 truncate">
+                          {post.categoryName} &middot; {post.authorName}
+                        </p>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-[#4a7c59]/30 flex-shrink-0 mt-0.5" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Community Pulse Strip */}
@@ -362,6 +464,36 @@ export default function Community() {
 
       {/* 5-Section Cards + Expandable Panels */}
       <section className="container px-4 max-w-4xl mx-auto pb-16">
+
+        {/* Trending This Week */}
+        {isLoading ? (
+          <div className="mb-8 mt-6">
+            <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mb-3" />
+            <div className="grid gap-2">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-[#1a472a]/10 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-2/3" />
+                  <div className="h-3 bg-gray-100 rounded w-12 ml-2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : trendingPosts && trendingPosts.length > 0 ? (
+          <div className="mb-8 mt-6">
+            <h2 className="text-lg font-bold text-[#1a472a] mb-3 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-[#7dd87d]" />
+              Trending This Week
+            </h2>
+            <div className="grid gap-2">
+              {trendingPosts.map(post => (
+                <Link key={post.id} href={`/community/post/${post.id}`} className="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-[#1a472a]/10 hover:border-[#7dd87d]/40 hover:bg-[#f0f7f0] transition-all group">
+                  <span className="text-sm font-medium text-[#1a472a] truncate group-hover:text-[#2d6a4f]">{post.title}</span>
+                  <span className="text-xs text-[#1a472a]/50 ml-2 shrink-0">{post.replyCount ?? 0} replies</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {/* ── Section Cards ───────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 mt-6">
@@ -475,11 +607,17 @@ export default function Community() {
                 ))}
               </div>
             ) : filteredCategories.length === 0 ? (
-              <div className="text-center py-12">
-                <MessageCircle className="w-12 h-12 text-[#4a7c59]/30 mx-auto mb-3" />
-                <p className="text-[#1a472a]/60" style={{ fontFamily: 'var(--font-body)' }}>
-                  {searchQuery ? 'No topics match your search.' : 'No categories yet. Check back soon!'}
+              <div className="text-center py-16">
+                <Trees className="w-16 h-16 text-[#7dd87d]/40 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[#1a472a] mb-2">The forest is quiet here</h3>
+                <p className="text-[#1a472a]/60 mb-4">
+                  {searchQuery ? 'No discussions match your search yet. Be the first to start one.' : 'No categories yet. Check back soon!'}
                 </p>
+                {searchQuery && (
+                  <Link href="/community/new">
+                    <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">Start a Discussion</Button>
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
@@ -811,7 +949,7 @@ export default function Community() {
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Epic Quests</p>
-                    <p className="text-white/60 text-xs">Long-form challenges -- coming soon</p>
+                    <p className="text-white/60 text-xs">Long-form challenges — coming soon</p>
                   </div>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl z-10">
@@ -834,12 +972,12 @@ export default function Community() {
             </div>
 
             {/* Suggest a Quest */}
-            <Link href="/community/quests" className="block border border-green-500/40 rounded-xl p-5 hover:bg-green-500/10 transition-colors group mt-3">
+            <Link href="/community/quests" className="block border-l-4 border-green-500 bg-white/5 rounded-xl p-5 hover:bg-green-500/10 transition-colors group mt-3">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">💡</span>
                 <div>
-                  <h3 className="font-semibold text-white mb-1 group-hover:text-green-300 transition-colors">Suggest a Quest</h3>
-                  <p className="text-sm text-white/60">Got an idea for a quest? Propose it here -- the community votes and the best ones get built.</p>
+                  <h3 className="font-semibold text-white mb-1 group-hover:text-green-300 transition-colors">Got an idea for a quest?</h3>
+                  <p className="text-sm text-white/60">Propose it here — the community votes and the best ones get built.</p>
                 </div>
               </div>
             </Link>
@@ -967,6 +1105,15 @@ export default function Community() {
           </Link>
         </div>
 
+        {/* Infinite scroll sentinel */}
+        <div ref={loadMoreRef} className="mt-4" aria-hidden="true" />
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center py-4 gap-2 text-sm text-[#4a7c59]">
+            <span className="w-4 h-4 rounded-full border-2 border-[#7dd87d] border-t-transparent animate-spin" />
+            Loading more posts...
+          </div>
+        )}
+
         {/* Community Guidelines */}
         <div className="mt-6 bg-[#f0f7f0] rounded-xl p-5 border border-[#7dd87d]/20">
           <div className="flex items-start gap-3">
@@ -994,7 +1141,9 @@ export default function Community() {
             {alreadySubscribed ? (
               <p className="text-[#4a7c59] text-xs flex items-center gap-1.5">
                 ✓ You're subscribed.{" "}
-                <a href="/connect" className="underline underline-offset-2 hover:text-[#1a472a] transition-colors">Manage preferences</a>
+                <a href="/profile?tab=settings" className="underline underline-offset-2 hover:text-[#1a472a] transition-colors">Manage preferences</a>
+                {" · "}
+                <a href="/connect" className="underline underline-offset-2 hover:text-[#1a472a] transition-colors">Connect with us on something specific</a>
               </p>
             ) : (
               <NewsletterSignupInline />

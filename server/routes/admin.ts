@@ -247,6 +247,21 @@ export const adminRouter = router({
         return { url };
       }),
   }),
+
+  // Audit log — immutable record of all admin actions
+  auditLog: adminProcedure
+    .input(z.object({
+      adminUserId: z.number().optional(),
+      entityType: z.string().optional(),
+      limit: z.number().min(1).max(500).optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      return db.getAdminAuditLog({
+        adminUserId: input?.adminUserId,
+        entityType: input?.entityType,
+        limit: input?.limit ?? 100,
+      });
+    }),
 });
 
 // ─── Admin AI Chat ────────────────────────────────────────────────────────────

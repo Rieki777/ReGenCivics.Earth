@@ -1,38 +1,63 @@
 /**
  * Rate Limiting for Form Submissions
- * In-memory rate limiter using a sliding window approach.
+ * Sliding-window rate limiter backed by Redis when available.
+ * Falls back to an in-memory Map when Redis is not connected.
  * Limits form submissions per IP address to prevent spam.
  */
 import { TRPCError } from "@trpc/server";
 import type { TrpcContext } from "./_core/context";
+import { redisRateLimit, isCacheAvailable } from "./cache";
 
+// Configuration
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
+const MAX_SUBMISSIONS_PER_WINDOW = 7;
+
+// ── In-memory fallback (single-process only) ─────────────────────────────────
 interface RateLimitEntry {
   timestamps: number[];
 }
+const memoryStore = new Map<string, RateLimitEntry>();
 
-// In-memory store for rate limiting (resets on server restart)
-const rateLimitStore = new Map<string, RateLimitEntry>();
-
-// Configuration
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute window
-const MAX_SUBMISSIONS_PER_WINDOW = 7; // 7 submissions per 15 minutes per IP
-
-// Cleanup old entries every 10 minutes
+// Clean up the in-memory store every 10 minutes
 setInterval(() => {
   const now = Date.now();
-  Array.from(rateLimitStore.entries()).forEach(([key, entry]) => {
+  Array.from(memoryStore.entries()).forEach(([key, entry]) => {
     entry.timestamps = entry.timestamps.filter(
       (ts: number) => now - ts < RATE_LIMIT_WINDOW_MS
     );
     if (entry.timestamps.length === 0) {
-      rateLimitStore.delete(key);
+      memoryStore.delete(key);
     }
   });
 }, 10 * 60 * 1000);
 
-/**
- * Get the client IP from the request, handling proxies
- */
+function memoryRateLimit(
+  key: string
+): { allowed: boolean; count: number; resetAt: number } {
+  const now = Date.now();
+  let entry = memoryStore.get(key);
+  if (!entry) {
+    entry = { timestamps: [] };
+    memoryStore.set(key, entry);
+  }
+
+  entry.timestamps = entry.timestamps.filter(
+    (ts) => now - ts < RATE_LIMIT_WINDOW_MS
+  );
+
+  const count = entry.timestamps.length;
+  const allowed = count < MAX_SUBMISSIONS_PER_WINDOW;
+  const oldestTs = entry.timestamps[0] ?? now;
+  const resetAt = oldestTs + RATE_LIMIT_WINDOW_MS;
+
+  if (allowed) {
+    entry.timestamps.push(now);
+  }
+
+  return { allowed, count: allowed ? count + 1 : count, resetAt };
+}
+
+// ── IP extraction ─────────────────────────────────────────────────────────────
 function getClientIp(req: TrpcContext["req"]): string {
   const forwarded = req.headers["x-forwarded-for"];
   if (typeof forwarded === "string") {
@@ -44,51 +69,50 @@ function getClientIp(req: TrpcContext["req"]): string {
   return req.socket?.remoteAddress || "unknown";
 }
 
+// ── Public API ────────────────────────────────────────────────────────────────
 /**
- * Check if a request is rate limited.
- * Returns true if the request should be allowed, throws if rate limited.
+ * Check rate limit for this IP + action combination.
+ * Throws TRPCError(TOO_MANY_REQUESTS) when the limit is exceeded.
+ * Uses Redis when available, in-memory Map otherwise.
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   ctx: TrpcContext,
   action: string = "form_submission"
-): void {
+): Promise<void> {
   const ip = getClientIp(ctx.req);
-  const key = `${ip}:${action}`;
-  const now = Date.now();
+  const key = `ratelimit:${ip}:${action}`;
 
-  let entry = rateLimitStore.get(key);
-  if (!entry) {
-    entry = { timestamps: [] };
-    rateLimitStore.set(key, entry);
+  let allowed: boolean;
+  let resetAt: number;
+
+  if (isCacheAvailable()) {
+    ({ allowed, resetAt } = await redisRateLimit(
+      key,
+      MAX_SUBMISSIONS_PER_WINDOW,
+      RATE_LIMIT_WINDOW_MS
+    ));
+  } else {
+    ({ allowed, resetAt } = memoryRateLimit(key));
   }
 
-  // Remove timestamps outside the window
-  entry.timestamps = entry.timestamps.filter(
-    (ts) => now - ts < RATE_LIMIT_WINDOW_MS
-  );
-
-  // Check if over limit
-  if (entry.timestamps.length >= MAX_SUBMISSIONS_PER_WINDOW) {
-    const oldestTimestamp = entry.timestamps[0];
-    const resetTime = new Date(oldestTimestamp + RATE_LIMIT_WINDOW_MS);
-    const minutesRemaining = Math.ceil(
-      (resetTime.getTime() - now) / (60 * 1000)
+  if (!allowed) {
+    const minutesRemaining = Math.max(
+      1,
+      Math.ceil((resetAt - Date.now()) / 60_000)
     );
-
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
       message: `You've reached the maximum number of submissions (${MAX_SUBMISSIONS_PER_WINDOW} per 15 minutes). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
     });
   }
-
-  // Record this submission
-  entry.timestamps.push(now);
 }
 
 /**
- * Get rate limit stats for monitoring (admin use)
+ * Get rate limit stats for monitoring (admin use).
+ * Returns in-memory stats only — Redis stats should be read from Redis directly.
  */
 export function getRateLimitStats(): {
+  backend: "redis" | "memory";
   totalTrackedIPs: number;
   entries: Array<{ key: string; count: number; oldestSubmission: Date }>;
 } {
@@ -99,20 +123,21 @@ export function getRateLimitStats(): {
     oldestSubmission: Date;
   }> = [];
 
-  Array.from(rateLimitStore.entries()).forEach(([key, entry]) => {
-    const activeTimestamps = entry.timestamps.filter(
+  for (const [key, entry] of Array.from(memoryStore.entries())) {
+    const active = entry.timestamps.filter(
       (ts: number) => now - ts < RATE_LIMIT_WINDOW_MS
     );
-    if (activeTimestamps.length > 0) {
+    if (active.length > 0) {
       entries.push({
         key,
-        count: activeTimestamps.length,
-        oldestSubmission: new Date(activeTimestamps[0]),
+        count: active.length,
+        oldestSubmission: new Date(active[0]),
       });
     }
-  });
+  }
 
   return {
+    backend: isCacheAvailable() ? "redis" : "memory",
     totalTrackedIPs: entries.length,
     entries,
   };

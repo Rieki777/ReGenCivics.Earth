@@ -11,12 +11,41 @@ interface EmojiReactionsProps {
 
 export function EmojiReactions({ postId, replyId }: EmojiReactionsProps) {
   const { user } = useAuth()
-  const { data: reactions, refetch } = trpc.forum.reactions.get.useQuery(
+  const utils = trpc.useUtils()
+  const { data: reactions } = trpc.forum.reactions.get.useQuery(
     { postId, replyId },
     { staleTime: 30_000 }
   )
   const toggleMutation = trpc.forum.reactions.toggle.useMutation({
-    onSuccess: () => refetch(),
+    onMutate: async ({ emoji }) => {
+      // Cancel any in-flight refetch
+      await utils.forum.reactions.get.cancel({ postId, replyId });
+      // Snapshot previous value
+      const prev = utils.forum.reactions.get.getData({ postId, replyId });
+      // Optimistically update
+      utils.forum.reactions.get.setData({ postId, replyId }, (old) => {
+        if (!old) return old;
+        return old.map(r => {
+          if (r.emoji !== emoji) return r;
+          const alreadyReacted = r.userReacted;
+          return {
+            ...r,
+            count: alreadyReacted ? Math.max(0, r.count - 1) : r.count + 1,
+            userReacted: !alreadyReacted,
+          };
+        });
+      });
+      return { prev };
+    },
+    onError: (_err, _vars, context) => {
+      // Roll back on error
+      if (context?.prev) {
+        utils.forum.reactions.get.setData({ postId, replyId }, context.prev);
+      }
+    },
+    onSettled: () => {
+      utils.forum.reactions.get.invalidate({ postId, replyId });
+    },
   })
 
   const handleReact = (emoji: string) => {

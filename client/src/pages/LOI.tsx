@@ -7,6 +7,7 @@ import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { BackButton } from "@/components/BackButton";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
+import { analytics } from "@/lib/analytics";
 
 export default function LOI() {
   const [formData, setFormData] = useState({
@@ -31,6 +32,7 @@ export default function LOI() {
 
   const submitLOI = trpc.loi.submit.useMutation({
     onSuccess: () => {
+      analytics.loiSubmitted();
       setSubmitted(true);
       setError("");
     },

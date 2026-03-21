@@ -5,7 +5,21 @@
       "Bash(du -sh /c/Users/taren/Downloads/regen-civics-clean/node_modules/.pnpm/globe.gl*)",
       "Bash(du -sh /c/Users/taren/Downloads/regen-civics-clean/node_modules/.pnpm/framer-motion* /c/Users/taren/Downloads/regen-civics-clean/node_modules/.pnpm/recharts* /c/Users/taren/Downloads/regen-civics-clean/node_modules/.pnpm/@radix-ui*)",
       "Bash(node scripts/optimize-images.mjs)",
-      "Bash(grep -rn \"framer-motion\\\\|from ''framer-motion''\" client/src/components/ client/src/pages/ --include=\"*.tsx\" -l)"
+      "Bash(grep -rn \"framer-motion\\\\|from ''framer-motion''\" client/src/components/ client/src/pages/ --include=\"*.tsx\" -l)",
+      "Bash(node -e \":*)",
+      "Read(//c/Users/taren/Downloads/regen-civics-clean/$TEMP/**)",
+      "Read(//c/Users/taren/**)",
+      "Bash(ls /c/Users/taren/AppData/Local/Temp/*.png /c/Users/taren/AppData/Local/Temp/*.jpg /c/Users/taren/AppData/Local/Temp/*.webp)",
+      "Bash(find /c/Users/taren/AppData/Local/Temp -name *.png -newer /c/Users/taren/Downloads/regen-civics-clean/client/public/og -maxdepth 2)",
+      "Bash(find /c/Users/taren -name *.png -newer /c/Users/taren/Downloads/regen-civics-clean/client/public/og/seeds-contributions.webp)",
+      "Bash(find /c/Users/taren/Downloads -name *.png -newer /c/Users/taren/Downloads/regen-civics-clean/client/public/og)",
+      "Bash(find /c/Users/taren/Downloads -name *.jpg -newer /c/Users/taren/Downloads/regen-civics-clean/client/public/og)",
+      "Bash(node scripts/optimize-seeds-og.mjs)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find /c/Users/taren/Downloads/regen-civics-clean/client/public/images -type f -exec ls -lh {})",
+      "Read(//c/Users/taren/Downloads/regen-civics-clean/**)"
     ]
   }
 }

@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch, Redirect, useLocation } from "wouter";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, ReactNode } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navigation from "./components/Navigation";
@@ -18,12 +18,14 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { ExitIntentCapture } from "./components/ExitIntentCapture";
 import CommandPalette from "./components/CommandPalette";
+import { ShortcutPill } from "./components/ShortcutPill";
 
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useLocation as useWouterLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { OnboardingWizard } from "./components/OnboardingWizard";
 
 // Routes that bypass site chrome (nav, footer, background effects)
 const ADMIN_ROUTES = ["/admin", "/admin/"];
@@ -50,6 +52,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Apply = lazy(() => import("./pages/Apply"));
 const ApplySuccess = lazy(() => import("./pages/ApplySuccess"));
+const ApplyStatus = lazy(() => import("./pages/ApplyStatus"));
 const MyApplications = lazy(() => import("./pages/MyApplications"));
 const AdminApplications = lazy(() => import("./pages/AdminApplications"));
 const AdminApplicationDetail = lazy(() => import("./pages/AdminApplicationDetail"));
@@ -68,6 +71,7 @@ const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
 const MapPage = lazy(() => import("./pages/Map"));
 const ProjectComparison = lazy(() => import("./pages/ProjectComparison"));
 const Governance = lazy(() => import("./pages/Governance"));
+const ReGenCoCreatorsGuide = lazy(() => import("./pages/ReGenCoCreatorsGuide"));
 const LOI = lazy(() => import("./pages/LOI"));
 const RiskDisclosure = lazy(() => import("./pages/RiskDisclosure"));
 const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
@@ -123,90 +127,106 @@ function NewsletterConfirm() {
 const ReGenGames = lazy(() => import("./pages/ReGenGames"));
 const CustomGames = lazy(() => import("./pages/CustomGames"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
+const Messages = lazy(() => import("./pages/Messages"));
+const MemberDirectory = lazy(() => import("./pages/MemberDirectory"));
+const CommunityGuidelines = lazy(() => import("./pages/CommunityGuidelines"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
   return <TaoSpinner size={72} fullPage={true} />;
 }
+function EB({ children }: { children: ReactNode }) {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        {children}
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
-    <ErrorBoundary>
-    <Suspense fallback={<PageLoader />}>
-      <Switch>
-        <Route path={"/"} component={Home} />
-        <Route path={"/form"}>{() => { window.location.replace('/connect'); return null; }}</Route>
-        <Route path={"/quest"} component={Quest} />
-        <Route path={"/fund"} component={Fund} />
-        <Route path={"/land"} component={Land} />
-        <Route path={"/ally"} component={Ally} />
-        <Route path={"/play"} component={Play} />
-        <Route path={"/opportunity"} component={Opportunity} />        <Route path={"/governance"} component={Governance} />
-        <Route path={"/tokenomics"} component={Tokenomics} />
-        <Route path={"/loi"} component={LOI} />
-        <Route path={"/404"} component={NotFound} />
-        <Route path={"/investmentform"}>{() => { window.location.replace('/investor'); return null; }}</Route>
-        <Route path={"/socials"} component={Socials} />
-        <Route path={"/seasons"} component={Seasons} />
-        <Route path={"/schedule"} component={Schedule} />
-        <Route path={"/team"} component={Team} />
-        <Route path={"/game"} component={Game} />
-        <Route path={"/calculator"} component={Calculator} />
-        <Route path={"/blog"} component={Blog} />
-        <Route path={"/blog/:slug"} component={BlogPost} />
-        <Route path={"/apply"} component={Apply} />
-        <Route path={"/apply/success"} component={ApplySuccess} />
-        <Route path={"/my-applications"} component={MyApplications} />
-        <Route path={"/admin/applications"} component={AdminApplications} />
-        <Route path={"/admin/application/:id"} component={AdminApplicationDetail} />
-        <Route path={"/investor"} component={InvestorJourneyForm} />
-        <Route path={"/connect"} component={Connect} />
-        <Route path={"/admin"} component={Admin} />
-        <Route path={"/showcase"} component={Showcase} />
-        <Route path={"/crowd-pooling"} component={CrowdPooling} />
-        <Route path={"/crowd-pooling-projects"} component={CrowdPoolingProjects} />
-        <Route path={"/compare-projects"} component={ProjectComparison} />
-        <Route path={"/profile"} component={PlayerProfile} />
-        <Route path={"/create-campaign"} component={CreateCampaign} />
-        <Route path={"/campaigns"}>{() => { window.location.href = '/crowd-pooling-projects'; return null; }}</Route>
-        <Route path={"/campaign/:id"} component={CampaignDetail} />
-        <Route path={"/campaign/:id/manage"} component={CampaignManage} />
-        <Route path={"/campaign/:id/analytics"} component={CampaignAnalytics} />
-        <Route path={"/map"} component={MapPage} />
-        <Route path={"/risk-disclosure"} component={RiskDisclosure} />
-        <Route path={"/terms-of-use"} component={TermsOfUse} />
-        <Route path={"/privacy-policy"} component={PrivacyPolicy} />
-        <Route path={"/disclaimers"} component={Disclaimers} />
-        <Route path={"/unsubscribe"} component={Unsubscribe} />
-        <Route path="/one-pager/land" component={OnePagerLand} />
-        <Route path="/one-pager/alliance" component={OnePagerAlliance} />
-        <Route path="/one-pager/player" component={OnePagerPlayer} />
-        <Route path={"/one-pager/:path"} component={OnePager} />
-        <Route path={"/community"} component={Community} />
-        <Route path={"/community/c/:slug"} component={CommunityCategory} />
-        <Route path={"/community/post/:id"} component={CommunityPost} />
-        <Route path={"/community/new"} component={CommunityNewPost} />
-        <Route path={"/community/tag/:tag"} component={CommunityTagFilter} />
-        <Route path={"/community/chains"} component={CommunityChains} />
-        <Route path={"/community/seeking-team"} component={CommunitySeekingTeam} />
-        <Route path={"/community/lessons"}>{() => <Redirect to="/community/tag/lesson" />}</Route>
-        <Route path={"/community/seeking-support"}>{() => <Redirect to="/community/tag/seeking-support" />}</Route>
-        <Route path={"/community/offering-support"}>{() => <Redirect to="/community/tag/offering-support" />}</Route>
-        <Route path={"/community/quests"} component={QuestSuggestions} />
-        <Route path={"/community/user/:id"} component={UserForumProfile} />
-        <Route path={"/admin/moderation"} component={AdminModeration} />
-<Route path={"/glossary"} component={Glossary} />
-        <Route path={"/newsletter"} component={Newsletter} />
-        <Route path={"/newsletter/confirm"} component={NewsletterConfirm} />
-        <Route path={"/regen-games"} component={ReGenGames} />
-        <Route path={"/custom-games"} component={CustomGames} />
-        <Route path={"/marketplace"} component={Marketplace} />
-        <Route path="/404" component={NotFound} />
-        {/* Final fallback route */}
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
-    </ErrorBoundary>
+    <Switch>
+      <Route path={"/"}><EB><Home /></EB></Route>
+      <Route path={"/form"}>{() => { window.location.replace('/connect'); return null; }}</Route>
+      <Route path={"/quest"}><EB><Quest /></EB></Route>
+      <Route path={"/fund"}><EB><Fund /></EB></Route>
+      <Route path={"/land"}><EB><Land /></EB></Route>
+      <Route path={"/ally"}><EB><Ally /></EB></Route>
+      <Route path={"/play"}><EB><Play /></EB></Route>
+      <Route path={"/opportunity"}><EB><Opportunity /></EB></Route>
+      <Route path={"/governance"}><EB><Governance /></EB></Route>
+      <Route path={"/co-creators-guide"}><EB><ReGenCoCreatorsGuide /></EB></Route>
+      <Route path={"/tokenomics"}><EB><Tokenomics /></EB></Route>
+      <Route path={"/loi"}><EB><LOI /></EB></Route>
+      <Route path={"/404"}><EB><NotFound /></EB></Route>
+      <Route path={"/investmentform"}>{() => { window.location.replace('/investor'); return null; }}</Route>
+      <Route path={"/socials"}><EB><Socials /></EB></Route>
+      <Route path={"/seasons"}><EB><Seasons /></EB></Route>
+      <Route path={"/schedule"}><EB><Schedule /></EB></Route>
+      <Route path={"/team"}><EB><Team /></EB></Route>
+      <Route path={"/game"}><EB><Game /></EB></Route>
+      <Route path={"/calculator"}><EB><Calculator /></EB></Route>
+      <Route path={"/blog"}><EB><Blog /></EB></Route>
+      <Route path={"/blog/:slug"}><EB><BlogPost /></EB></Route>
+      <Route path={"/apply"}><EB><Apply /></EB></Route>
+      <Route path={"/apply/success"}><EB><ApplySuccess /></EB></Route>
+      <Route path={"/apply/status"}><EB><ApplyStatus /></EB></Route>
+      <Route path={"/my-applications"}><EB><MyApplications /></EB></Route>
+      <Route path={"/admin/applications"}><EB><AdminApplications /></EB></Route>
+      <Route path={"/admin/application/:id"}><EB><AdminApplicationDetail /></EB></Route>
+      <Route path={"/investor"}><EB><InvestorJourneyForm /></EB></Route>
+      <Route path={"/connect"}><EB><Connect /></EB></Route>
+      <Route path={"/admin"}><EB><Admin /></EB></Route>
+      <Route path={"/showcase"}><EB><Showcase /></EB></Route>
+      <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
+      <Route path={"/crowd-pooling-projects"}><EB><CrowdPoolingProjects /></EB></Route>
+      <Route path={"/compare-projects"}><EB><ProjectComparison /></EB></Route>
+      <Route path={"/profile"}><EB><PlayerProfile /></EB></Route>
+      <Route path={"/create-campaign"}><EB><CreateCampaign /></EB></Route>
+      <Route path={"/campaigns"}>{() => { window.location.href = '/crowd-pooling-projects'; return null; }}</Route>
+      <Route path={"/campaign/:id"}><EB><CampaignDetail /></EB></Route>
+      <Route path={"/campaign/:id/manage"}><EB><CampaignManage /></EB></Route>
+      <Route path={"/campaign/:id/analytics"}><EB><CampaignAnalytics /></EB></Route>
+      <Route path={"/map"}><EB><MapPage /></EB></Route>
+      <Route path={"/risk-disclosure"}><EB><RiskDisclosure /></EB></Route>
+      <Route path={"/terms-of-use"}><EB><TermsOfUse /></EB></Route>
+      <Route path={"/privacy-policy"}><EB><PrivacyPolicy /></EB></Route>
+      <Route path={"/disclaimers"}><EB><Disclaimers /></EB></Route>
+      <Route path={"/unsubscribe"}><EB><Unsubscribe /></EB></Route>
+      <Route path="/one-pager/land"><EB><OnePagerLand /></EB></Route>
+      <Route path="/one-pager/alliance"><EB><OnePagerAlliance /></EB></Route>
+      <Route path="/one-pager/player"><EB><OnePagerPlayer /></EB></Route>
+      <Route path={"/one-pager/:path"}><EB><OnePager /></EB></Route>
+      <Route path={"/community"}><EB><Community /></EB></Route>
+      <Route path={"/community/c/:slug"}><EB><CommunityCategory /></EB></Route>
+      <Route path={"/community/post/:id"}><EB><CommunityPost /></EB></Route>
+      <Route path={"/community/new"}><EB><CommunityNewPost /></EB></Route>
+      <Route path={"/community/tag/:tag"}><EB><CommunityTagFilter /></EB></Route>
+      <Route path={"/community/chains"}><EB><CommunityChains /></EB></Route>
+      <Route path={"/community/seeking-team"}><EB><CommunitySeekingTeam /></EB></Route>
+      <Route path={"/community/members"}><EB><MemberDirectory /></EB></Route>
+      <Route path={"/community/guidelines"}><EB><CommunityGuidelines /></EB></Route>
+      <Route path={"/messages/:conversationId?"}><EB><Messages /></EB></Route>
+      <Route path={"/messages"}><EB><Messages /></EB></Route>
+      <Route path={"/community/lessons"}>{() => <Redirect to="/community/tag/lesson" />}</Route>
+      <Route path={"/community/seeking-support"}>{() => <Redirect to="/community/tag/seeking-support" />}</Route>
+      <Route path={"/community/offering-support"}>{() => <Redirect to="/community/tag/offering-support" />}</Route>
+      <Route path={"/community/quests"}><EB><QuestSuggestions /></EB></Route>
+      <Route path={"/community/user/:id"}><EB><UserForumProfile /></EB></Route>
+      <Route path={"/admin/moderation"}><EB><AdminModeration /></EB></Route>
+      <Route path={"/glossary"}><EB><Glossary /></EB></Route>
+      <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
+      <Route path={"/newsletter/confirm"}><EB><NewsletterConfirm /></EB></Route>
+      <Route path={"/regen-games"}><EB><ReGenGames /></EB></Route>
+      <Route path={"/custom-games"}><EB><CustomGames /></EB></Route>
+      <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>
+      <Route path="/404"><EB><NotFound /></EB></Route>
+      {/* Final fallback route */}
+      <Route><EB><NotFound /></EB></Route>
+    </Switch>
   );
 }
 
@@ -214,6 +234,13 @@ function Router() {
 // - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
 //   to keep consistent foreground/background color across components
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
+
+/** Renders OnboardingWizard for authenticated new users */
+function OnboardingController() {
+  const { user, isAuthenticated, loading } = useAuth();
+  if (loading || !isAuthenticated || !user) return null;
+  return <OnboardingWizard user={user} />;
+}
 
 /** Handles returnTo redirect after login: if sessionStorage has a saved path, redirect there once authed */
 function ReturnToHandler() {
@@ -273,7 +300,7 @@ function App() {
           {!adminMode && <MycelialBackground />}
           {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
-          <main id="main-content">
+          <main id="main-content" className="pb-16 md:pb-0">
             <Router />
           </main>
           {!adminMode && <SiteFooter />}
@@ -284,7 +311,9 @@ function App() {
           {!adminMode && <AppInner />}
           {!adminMode && <ExitIntentCapture />}
           {!adminMode && <CommandPalette />}
+          {!adminMode && <ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} />}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
+          {!adminMode && <OnboardingController />}
           <ReturnToHandler />
           <ServiceWorkerRegister />
         </TooltipProvider>

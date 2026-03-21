@@ -217,6 +217,42 @@ export const cacheTTL = {
 };
 
 /**
+ * Redis sliding-window rate limit check.
+ * Uses a sorted set per key — members are timestamps, scores are timestamps.
+ * Returns { allowed, count, resetAt } so callers can craft useful error messages.
+ * Falls back gracefully (allows) when Redis is unavailable.
+ */
+export async function redisRateLimit(
+  key: string,
+  maxRequests: number,
+  windowMs: number
+): Promise<{ allowed: boolean; count: number; resetAt: number }> {
+  const now = Date.now();
+  const windowStart = now - windowMs;
+  const resetAt = now + windowMs;
+
+  if (!redisClient || !isConnected) {
+    return { allowed: true, count: 0, resetAt };
+  }
+
+  try {
+    const multi = redisClient.multi();
+    multi.zRemRangeByScore(key, 0, windowStart);           // drop expired timestamps
+    multi.zAdd(key, { score: now, value: String(now) });   // record current request
+    multi.zCard(key);                                       // count active requests
+    multi.expire(key, Math.ceil(windowMs / 1000) + 1);     // auto-expire key
+
+    const results = await multi.exec();
+    const count = ((results?.[2] as unknown) as number) ?? 0;
+
+    return { allowed: count <= maxRequests, count, resetAt };
+  } catch {
+    // Redis error — fail open so rate limit never breaks the app
+    return { allowed: true, count: 0, resetAt };
+  }
+}
+
+/**
  * Shutdown cache connection
  */
 export async function shutdownCache(): Promise<void> {

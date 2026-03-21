@@ -45,6 +45,7 @@ import { BannerDisplay } from "@/components/BannerDisplay";
 import { ImagePreloader } from "@/components/ImagePreloader";
 import { trpc } from "@/lib/trpc";
 import { PageWrapper } from "@/components/PageWrapper";
+import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 
 // Path card data
 const pathCards = [
@@ -636,6 +637,15 @@ export default function Home() {
                   Both spaces work together to grow our regenerative renaissance
                 </p>
               </div>
+            </AnimatedSection>
+          </div>
+        </section>
+
+        {/* Live Community Activity */}
+        <section className="relative py-8 md:py-10">
+          <div className="container max-w-2xl">
+            <AnimatedSection animation="fade-in">
+              <LiveActivityFeed />
             </AnimatedSection>
           </div>
         </section>

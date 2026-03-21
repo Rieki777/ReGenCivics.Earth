@@ -11,13 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 import { useState } from "react";
-import { 
-  MapPin, 
-  Users, 
-  Leaf, 
-  Building2, 
-  Globe, 
-  ArrowRight, 
+import {
+  MapPin,
+  Users,
+  Leaf,
+  Building2,
+  Globe,
+  ArrowRight,
   Search,
   Filter,
   TreePine,
@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
+import { trpc } from "@/lib/trpc";
 
 // Land projects data from the opportunity page
 const landProjects = [
@@ -192,14 +193,61 @@ export default function Showcase() {
   const [locationFilter, setLocationFilter] = useState("all");
   const [focusFilter, setFocusFilter] = useState("all");
 
+  // Fetch live DB projects and merge with static data, preferring DB values for stats
+  const { data: dbProjects = [] } = trpc.community.activeLandProjects.useQuery();
+  const mergedProjects = landProjects.map((staticProject) => {
+    const match = dbProjects.find(
+      (db) =>
+        db.projectName.toLowerCase() === staticProject.name.toLowerCase() ||
+        (db.location && staticProject.location.toLowerCase().includes(db.location.toLowerCase()))
+    );
+    if (!match) return staticProject;
+    return {
+      ...staticProject,
+      name: match.projectName || staticProject.name,
+      location: match.location
+        ? match.country
+          ? `${match.location}, ${match.country}`
+          : match.location
+        : staticProject.location,
+    };
+  });
+  // Append DB projects that have no static counterpart
+  const staticNames = new Set(landProjects.map((p) => p.name.toLowerCase()));
+  const dbOnly = dbProjects
+    .filter(
+      (db) =>
+        !staticNames.has(db.projectName.toLowerCase()) &&
+        landProjects.every(
+          (s) => !db.location || !s.location.toLowerCase().includes(db.location.toLowerCase())
+        )
+    )
+    .map((db) => ({
+      id: `db-${db.id}`,
+      name: db.projectName,
+      location: db.location
+        ? db.country
+          ? `${db.location}, ${db.country}`
+          : db.location
+        : "Location TBC",
+      size: "",
+      community: "",
+      focus: [] as string[],
+      status: "active" as const,
+      description: "",
+      mixedUse: [] as string[],
+      image: "",
+    }));
+  const allProjects = [...mergedProjects, ...dbOnly];
+
   // Get unique locations for filter
-  const locations = Array.from(new Set(landProjects.map(p => p.location.split(",")[0].trim())));
-  
+  const locations = Array.from(new Set(allProjects.map(p => p.location.split(",")[0].trim())));
+
   // Get unique focus areas
-  const focusAreas = Array.from(new Set(landProjects.flatMap(p => p.focus)));
+  const focusAreas = Array.from(new Set(allProjects.flatMap(p => p.focus)));
 
   // Filter projects
-  const filteredProjects = landProjects.filter(project => {
+  const filteredProjects = allProjects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = locationFilter === "all" || project.location.includes(locationFilter);

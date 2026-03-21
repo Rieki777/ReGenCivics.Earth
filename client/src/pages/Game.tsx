@@ -1556,6 +1556,166 @@ export default function Game() {
 
       {/* Why Games Section - Moved to after Infinite Game Philosophy */}
 
+      {/* Understanding Tokens Section */}
+      <section className="py-16 bg-[#f0f7f0]">
+        <div className="container px-4">
+          <div className="max-w-4xl mx-auto">
+            <AnimatedSection animation="slide-up" className="text-center mb-10">
+              <h2
+                className="text-3xl md:text-4xl font-bold text-[#1a472a] mb-4"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Understanding Tokens
+              </h2>
+              <p className="text-[#1a472a]/70 max-w-2xl mx-auto">
+                Two types of tokens, two different purposes. Here's what each one does and how you earn it.
+              </p>
+            </AnimatedSection>
+
+            <div className="space-y-4">
+              {/* RVoice */}
+              <Collapsible>
+                <CollapsibleTrigger className="w-full">
+                  <div className="bg-white border-2 border-purple-200 rounded-2xl p-5 flex items-center justify-between hover:border-purple-400 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <Vote className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
+                          RVoice — Governance Token
+                        </h3>
+                        <p className="text-sm text-[#1a472a]/60">Earned through participation, used to vote</p>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-purple-500 group-data-[state=open]:rotate-180 transition-transform flex-shrink-0" />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="bg-white border-2 border-t-0 border-purple-200 rounded-b-2xl p-5 -mt-1">
+                    <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">
+                      RVoice represents how much weight your voice carries in decisions. The more you contribute, the more you earn, and the more your votes count. It is not transferable — it stays tied to your own participation and cannot be bought or sold.
+                    </p>
+                    <ul className="space-y-2">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                        <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                        <span>Complete quests to earn RVoice tokens</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                        <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                        <span>Vote on proposals and game decisions</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                        <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                        <span>Delegate your voting power to a trusted player</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                        <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                        <span>Not tradable — earned through direct experience only</span>
+                      </li>
+                    </ul>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* ReGen Token */}
+              <Collapsible>
+                <CollapsibleTrigger className="w-full">
+                  <div className="bg-white border-2 border-[#7dd87d]/50 rounded-2xl p-5 flex items-center justify-between hover:border-[#7dd87d] transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-12 h-12 rounded-full bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0">
+                        <Coins className="w-6 h-6 text-[#4a7c59]" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
+                          ReGen Token — Economic Token
+                        </h3>
+                        <p className="text-sm text-[#1a472a]/60">Earned through verified impact contributions</p>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-[#4a7c59] group-data-[state=open]:rotate-180 transition-transform flex-shrink-0" />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="bg-white border-2 border-t-0 border-[#7dd87d]/50 rounded-b-2xl p-5 -mt-1">
+                    <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">
+                      The ReGen Token represents a share of the regenerative economy. It is earned through verified contributions to land projects, the community, and the game. It can be used to participate in fund distributions as the ecosystem grows.
+                    </p>
+                    <ul className="space-y-2">
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                        <Sparkles className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
+                        <span>Earned per quest completed</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                        <Sparkles className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
+                        <span>Submit contribution proposals to claim historical tokens</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
+                        <Sparkles className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
+                        <span>Tradable with other players when secondary markets are available</span>
+                      </li>
+                    </ul>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* How you earn both */}
+              <Collapsible>
+                <CollapsibleTrigger className="w-full">
+                  <div className="bg-white border-2 border-amber-200 rounded-2xl p-5 flex items-center justify-between hover:border-amber-400 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <Award className="w-6 h-6 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
+                          How you earn both
+                        </h3>
+                        <p className="text-sm text-[#1a472a]/60">Multiple paths to participate and contribute</p>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-amber-500 group-data-[state=open]:rotate-180 transition-transform flex-shrink-0" />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="bg-white border-2 border-t-0 border-amber-200 rounded-b-2xl p-5 -mt-1">
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
+                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-purple-600 font-bold text-xs">V</span>
+                        </div>
+                        <span><strong className="text-[#1a472a]">Complete a quest</strong> — earn RVoice</span>
+                      </li>
+                      <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
+                        <div className="w-6 h-6 rounded-full bg-[#7dd87d]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[#4a7c59] font-bold text-xs">R</span>
+                        </div>
+                        <span><strong className="text-[#1a472a]">Fund a campaign</strong> — earn ReGen Token</span>
+                      </li>
+                      <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
+                        <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-amber-600 font-bold text-xs">+</span>
+                        </div>
+                        <span><strong className="text-[#1a472a]">Contribute a skill to a project</strong> — earn both</span>
+                      </li>
+                      <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
+                        <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-amber-600 font-bold text-xs">+</span>
+                        </div>
+                        <span><strong className="text-[#1a472a]">Participate in community sessions</strong> — earn RVoice</span>
+                      </li>
+                    </ul>
+                    <p className="text-xs text-[#1a472a]/50 mt-4 italic">
+                      Token amounts vary per quest and contribution type. No financial returns are guaranteed.
+                    </p>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-16 bg-[#1a472a]">
         <div className="container px-4 text-center">

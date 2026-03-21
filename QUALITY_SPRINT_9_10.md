@@ -1406,6 +1406,284 @@ The current detail modal is functional but sparse. Full revamp:
 
 ---
 
+## Fix 151: PWA "Download the App" — 10 Improvements + Admin Usage Tracking
+
+**What:** The "Download the App" feature (PWA install) has a fragile setup that made the site inaccessible after Rye installed it. The root cause of the site crash was a separate Vite chunk-splitting bug (React 19 / wouter — already fixed in `vite.config.ts`), but the PWA infrastructure has several problems that made recovery harder and the feature generally unreliable.
+
+**Done when:** PWA install works cleanly across Chrome desktop, Chrome Android, and iOS Safari. The service worker doesn't cache broken JS. Users see update notifications. Admin has a lightweight panel showing install and usage stats.
+
+---
+
+### 151-1: Delete the dead `public/sw.js` file (Medium)
+
+`client/public/sw.js` is a manually-written service worker with `CACHE_VERSION = 'v3'` hardcoded. VitePWA's `generateSW` strategy overwrites it every build — this file has never been served in production. It exists only to confuse future developers.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | Delete `client/public/sw.js`. It is overwritten at build time by the VitePWA-generated Workbox SW. No content from it needs to be preserved. |
+| 2 | [CLAUDE CODE] | Add a comment in `vite.config.ts` near the VitePWA config block: `// VitePWA generates sw.js at build time — do not create a manual public/sw.js, it will be overwritten` |
+
+---
+
+### 151-2: Remove duplicate SW registration (Low)
+
+`main.tsx` manually registers `/sw.js` on every page load. `ServiceWorkerRegister.tsx` also registers it. VitePWA's `registerType: "autoUpdate"` handles registration automatically. Three paths to the same registration.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `client/src/main.tsx`: remove the manual `navigator.serviceWorker.register('/sw.js')` block. VitePWA handles this. |
+| 2 | [CLAUDE CODE] | In `App.tsx` or wherever `<ServiceWorkerRegister />` is mounted: remove that component from the render tree. The VitePWA-generated SW auto-registers on load. Keep `ServiceWorkerRegister.tsx` file in place (it exports `clearServiceWorkerCache` and `forceUpdateServiceWorker` which may be used elsewhere). |
+
+---
+
+### 151-3: Wire update notification to the toast system (High)
+
+`notifyUpdate()` in `ServiceWorkerRegister.tsx` currently does `console.log('[SW] New version available')`. Users with the PWA installed never know a new version is out. This means they silently run stale code after a deploy.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `ServiceWorkerRegister.tsx`, replace `notifyUpdate()` with a real toast: import the site's existing toast system (check for `useToast` or equivalent) and call `toast({ title: "Update available", description: "Refresh to get the latest version.", action: { label: "Refresh", onClick: () => window.location.reload() } })`. If there's no toast action system, use a `window.confirm("New version available. Refresh now?")` as a fallback — still better than silent. |
+
+---
+
+### 151-4: Add PWA install prompt UI (Medium)
+
+Currently users discover the install option by accident through the browser's native prompt. Add a small contextual install button in the nav or footer that listens for `beforeinstallprompt`, holds the event, and triggers it on click. iOS Safari doesn't support `beforeinstallprompt` — show a "tap Share → Add to Home Screen" tooltip there instead.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | Create `client/src/hooks/usePWAInstall.ts`. Listens for `beforeinstallprompt`, stores the event in a ref, exposes `{ canInstall: boolean, install: () => Promise<void>, isInstalled: boolean }`. `isInstalled` checks `window.matchMedia('(display-mode: standalone)').matches`. |
+| 2 | [CLAUDE CODE] | Create `client/src/components/PWAInstallButton.tsx`. If `canInstall`, render a small "Install App" button (phone-down icon from lucide). On click, call `install()`. If iOS Safari (detect via `navigator.userAgent` — no `beforeinstallprompt` support), render a tooltip on hover/tap: "Tap the Share button → 'Add to Home Screen'". If `isInstalled`, render nothing. |
+| 3 | [CLAUDE CODE] | In `client/src/components/SiteFooter.tsx`: add `<PWAInstallButton />` in the footer links row, alongside the existing footer links. Keep it small — text link size, not a prominent button. |
+
+---
+
+### 151-5: Track install and usage events (Medium)
+
+Zero visibility into how many people install or use the PWA. Add lightweight client-side tracking using the existing analytics infrastructure (or a simple server event).
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `usePWAInstall.ts`: after a successful `install()` call (the `beforeinstallprompt` event resolves with `outcome: 'accepted'`), call a new tRPC mutation `analytics.trackEvent({ event: 'pwa_install', platform: navigator.platform })`. |
+| 2 | [CLAUDE CODE] | In `client/src/main.tsx` or `App.tsx`: on app load, check `window.matchMedia('(display-mode: standalone)').matches`. If true, call `analytics.trackEvent({ event: 'pwa_launch' })`. Debounce per session using `sessionStorage` so it fires once per session, not every navigation. |
+| 3 | [CLAUDE CODE] | In `server/routers.ts`, add `analytics.trackEvent` as a `publicProcedure` mutation: input `{ event: string, platform?: string }`. Inserts into a simple `analyticsEvents` table: `id, event, platform, createdAt`. Write migration `drizzle/0064_analytics_events.sql`. |
+| 4 | [HUMAN] | Apply migration `0064` in Railway. |
+
+---
+
+### 151-6: Scope the manifest shortcuts to admin users only (Low)
+
+`manifest.json` has shortcuts pointing to `/admin` and `/admin/applications`. A regular player who installs the app gets confusing shortcuts to admin pages they can't access.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | Remove both shortcuts from `client/public/manifest.json`. The manifest is static and can't be personalized per user, so admin shortcuts don't belong there. Admin users can bookmark `/admin` directly. |
+
+---
+
+### 151-7: Add an offline fallback page (Low)
+
+When the network fails and there's no cached route, the SW returns a plain-text "Offline - Resource not available" string. This looks broken and doesn't match the site.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | Create `client/public/offline.html`: a minimal branded HTML page (green background, ReGen Civics name, "You're offline — check your connection and try again." message, a Retry button that calls `window.location.reload()`). Match the site's dark green color scheme. No external dependencies — must work with zero network. Under 5KB. |
+| 2 | [CLAUDE CODE] | In `vite.config.ts` VitePWA workbox config, add `navigateFallback: '/offline.html'` and `navigateFallbackDenylist: [/\/api\//]` so API routes never fallback to the offline page. |
+
+---
+
+### 151-8: Fix PWA icon `purpose` entries in manifest (Low)
+
+`manifest.json` has icons marked `"purpose": "any maskable"` — both values on the same entry. The spec requires them on separate entries with separate files (the maskable version needs safe-zone padding).
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `manifest.json`, split the icon entries: one entry with `"purpose": "any"` and one with `"purpose": "maskable"` for each size. The `maskable` version uses the existing files (they already have sufficient padding based on visual inspection). |
+
+---
+
+### 151-9: Error recovery for installed PWA users (High)
+
+If a user installs the PWA and the site then crashes (as happened with the wouter chunk bug), they're stuck with a broken app and no obvious way out. Add a targeted error boundary that forces a cache-clear and reload when React fails to mount.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `client/src/main.tsx`, wrap `createRoot().render(...)` in a try/catch. If React fails to mount (catches an error), call `clearServiceWorkerCache()` (exported from `ServiceWorkerRegister.tsx`) then show a minimal inline HTML message: "Something went wrong. Clearing cache and reloading..." followed by `setTimeout(() => window.location.reload(), 2000)`. This auto-recovers PWA users after a bad deploy without requiring them to know how to clear cache manually. |
+| 2 | [CLAUDE CODE] | In `client/src/components/ErrorBoundary.tsx` (for Fix 122), add a "Clear cache and reload" button to the fallback UI. When clicked, calls `clearServiceWorkerCache()` then `window.location.reload()`. Visible in the standalone/installed PWA context where users can't easily use browser DevTools. |
+
+---
+
+### 151-10: Admin panel — PWA usage stats (Low, not prominent)
+
+A lightweight section in `/admin` to see how many people have installed and are using the PWA. Not a priority metric — just useful context.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `server/routers.ts`, add `admin.getPWAStats` query (adminProcedure): `SELECT event, COUNT(*) as count, DATE(createdAt) as date FROM analyticsEvents WHERE event IN ('pwa_install', 'pwa_launch') GROUP BY event, DATE(createdAt) ORDER BY date DESC LIMIT 30`. Returns install count and launch count per day for the last 30 days. Depends on Fix 151-5 migration being applied first. |
+| 2 | [CLAUDE CODE] | In `Admin.tsx` Analytics tab (or Overview if there's an appropriate small slot): add a collapsed `<details>` section at the bottom of the tab titled "App Installs (PWA)". Shows two numbers: "Total installs this month" and "Total launches this month" from `admin.getPWAStats`. A simple recharts `BarChart` with two series (installs vs. launches) per day. Keep it visually small — a compact chart, ~200px tall, no header prominence. This is a supporting metric, not a KPI. |
+
+---
+
+### 151-11: Rebuild and redeploy after vite.config.ts fix (Critical — Rye action)
+
+The `vite.config.ts` wouter chunk fix is already written but not deployed. The site is currently broken for any user with the old broken `router-B_qUB6fH.js` cached. A new build generates new content-hashed filenames, making the old broken file unreferenced. Workbox auto-update handles the rest.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [HUMAN] | In your Git Bash terminal, from the project folder: `git add vite.config.ts && git commit -m "fix: remove wouter router chunk to fix React 19 Activity init crash" && git push`. Railway auto-deploys on push. |
+| 2 | [HUMAN] | After deploy, visit regencivics.earth and confirm the site loads. Check DevTools > Application > Service Workers — confirm the new SW version is active. |
+
+---
+
+## Fix 152: Test Suite — 2 DB-Dependent Failures
+
+**What:** Running `pnpm test` with a real `DATABASE_URL` surfaced 2 test failures that were previously hidden because the contributions file was skipped. Both are test setup issues, not production bugs.
+
+**Done when:** `pnpm test` with `DATABASE_URL` set shows 0 failures.
+
+---
+
+### 152-1: `applications.test.ts` — "should list user's own applications" (Medium)
+
+**Symptom:** `expect(result.some((app) => app.projectName === "My Project")).toBe(true)` fails. The test creates an application then queries the user's list, but "My Project" isn't in the results.
+
+**Root cause:** Test isolation issue. The list query likely filters by `userId` from the authenticated context, but the user context between the create step and the list step doesn't match — either the created application is stored under a different userId, or the list query adds a filter the test doesn't account for.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `server/applications.test.ts` around line 140, inspect the test setup. Check: (a) what userId is used when creating "My Project", (b) what userId the list query filters by. If the create mock uses a different test user than the list query, align them. Add a `beforeEach` that ensures the same authenticated user is used throughout the test block. |
+| 2 | [CLAUDE CODE] | Run `pnpm test server/applications.test.ts` to confirm the fix passes in isolation before running the full suite. |
+
+---
+
+### 152-2: `forum.test.ts` — "forum.postById returns a post by id" (Medium)
+
+**Symptom:** `TRPCError: Post not found` at `server/routes/forum.ts:107`. The test calls `postById` with an ID that doesn't exist in the test DB.
+
+**Root cause:** The test likely uses a hardcoded post ID (e.g., `525` or a known seed ID) that may not exist in the DB during a test run, or relies on a post created in a previous test that didn't persist due to test isolation.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `server/forum.test.ts` around line 139, inspect the `postById` test. If it uses a hardcoded post ID: replace it with a dynamic ID by first creating a post in a `beforeEach`, capturing the returned ID, then using that ID in the `postById` call. If it depends on a post created in the `createPost` test block: move both tests into a single `describe` block with a shared `beforeEach` that creates the post and stores the ID. |
+| 2 | [CLAUDE CODE] | Run `pnpm test server/forum.test.ts` to confirm the fix passes in isolation. |
+
+---
+
+## Fix 153: Site Performance — Bundle Size, CDN Caching, and Visualization Crash
+
+**What:** Three compounding issues identified from a live network analysis of regencivics.earth. Page load time is ~2.2 seconds, most of it spent parsing JS. Total JS payload is 7.3 MB uncompressed across 33 files, all loading at startup. Cloudflare CDN is returning `cf-cache-status: MISS` on almost every asset. The globe visualization crashes on init with a JS runtime error.
+
+**Done when:** `streamdown` and `visualization` bundles are lazy-loaded and not part of the initial JS parse. Static assets return `cf-cache-status: HIT` for repeat visitors. The visualization crash is resolved. Initial JS parse time is reduced by roughly half.
+
+---
+
+### Fix 153-1: Lazy-load the `streamdown` and `visualization` bundles
+
+**Why:** `streamdown` (~3.1 MB uncompressed) and `visualization` (~2.3 MB, which contains the globe/3D component) together account for ~1.9 seconds of JS parse time on initial load. Neither is needed before the user scrolls to or interacts with those features.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | In `vite.config.ts`, find where these are currently bundled. Identify the source components that produce the `streamdown` and `visualization` chunks (look at `import` statements in pages that reference stream/globe functionality). |
+| 2 | [CLAUDE CODE] | Wrap those component imports in `React.lazy()` + `Suspense` at the route or section level. The globe component on the Home or Map page should be: `const GlobeVisualization = React.lazy(() => import('./components/GlobeVisualization'))` (or equivalent). Same for any stream-related component. |
+| 3 | [CLAUDE CODE] | Add a `<Suspense fallback={<div className="h-64 bg-gray-100 rounded-xl animate-pulse" />}>` wrapper around each lazy-loaded component so the rest of the page renders immediately. |
+| 4 | [CLAUDE CODE] | Run `pnpm build` and check the chunk output. Confirm `streamdown` and `visualization` no longer appear in the initial bundle (they should appear as separate async chunks only). |
+
+---
+
+### Fix 153-2: Fix the globe visualization JS crash
+
+**What:** The live network analysis found a runtime error in the visualization bundle on page load:
+```
+TypeError: Cannot read properties of undefined (reading 'Date')
+  at V2 → globeImageUrl → resetProps → constructor
+```
+
+The `globeImageUrl` getter (or an object it references) is being accessed before its data source is initialized. This crashes the globe on init and may be triggering error-retry render cycles.
+
+| Step | Agent | Action |
+|---|---|---|
+| 5 | [CLAUDE CODE] | Find the globe component file (likely `Globe.tsx`, `EarthGlobe.tsx`, or similar). Locate where `globeImageUrl` is set or where `Date` is accessed on a potentially undefined object. Add a null/undefined guard: `if (!someObject) return;` or use optional chaining (`someObject?.Date`). The constructor or `resetProps` call should not run if its data dependency isn't ready. |
+| 6 | [CLAUDE CODE] | If the globe uses a third-party lib (e.g., `globe.gl`, `three-globe`), check whether the `globeImageUrl` prop is being passed as `undefined` on the first render. If so, add a conditional render: `{imageUrl && <Globe globeImageUrl={imageUrl} />}`. This prevents the constructor from firing before the URL resolves. |
+
+---
+
+### Fix 153-3: Fix Cloudflare CDN caching (assets returning MISS)
+
+**What:** Every JS and CSS asset in `/assets/` is returning `cf-cache-status: MISS` from Cloudflare, meaning every visitor hits the origin server. The files have `Cache-Control: public, max-age=31536000, immutable` set correctly — this is a Cloudflare zone configuration problem.
+
+**Note:** This is a Cloudflare dashboard change, not a code change. Documenting here so Rye can action it.
+
+| Step | Agent | Action |
+|---|---|---|
+| 7 | [HUMAN] | Log into Cloudflare dashboard → select the `regencivics.earth` zone → go to Rules → Cache Rules. Create a new Cache Rule: match `URI Path contains /assets/`, set Cache Level to "Cache Everything", Edge Cache TTL to "1 year". Save and deploy. After the next deploy (or cache purge + first visitor), assets should return `cf-cache-status: HIT`. |
+| 8 | [HUMAN] | If using Railway + Cloudflare proxy: confirm Cloudflare is actually proxying the domain (orange cloud icon in DNS, not grey). If the cloud is grey, Cloudflare is DNS-only and not caching anything — enable proxying. |
+
+---
+
+### Fix 153-4: Tree-shake recharts (optional, lower priority)
+
+**What:** `recharts` is 537 KB uncompressed. If only a subset of chart types is used, named imports can be replaced with direct path imports to reduce the bundle.
+
+| Step | Agent | Action |
+|---|---|---|
+| 9 | [CLAUDE CODE] | Search the codebase for all `import { ... } from 'recharts'` statements. If fewer than 4-5 chart types are used total, replace each import with path-specific imports (e.g., `import LineChart from 'recharts/es6/chart/LineChart'`). If recharts is used extensively across admin and analytics, skip this — the bundle split from Fix 153-1 will have a bigger impact. |
+
+---
+
+## Fix 154: Admin 2FA (Post-Launch Security)
+
+**What:** Admin accounts have no second factor. Any admin password compromise is a full breach of the fund, applications, and player data. Adding TOTP-based 2FA (Google Authenticator / Authy compatible) closes this. Uses the `speakeasy` library for secret generation and verification.
+
+**Done when:** Admin users can enroll in 2FA by scanning a QR code. Subsequent admin logins require a valid 6-digit TOTP code. Unenrolled admins are prompted to enroll on first login after rollout.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | `pnpm add speakeasy qrcode` in the server package. |
+| 2 | [CLAUDE CODE] | In `drizzle/schema.ts`, add `totpSecret TEXT nullable` and `totpEnabled INT NOT NULL DEFAULT 0` columns to the users/admin table. Write migration `drizzle/0069_admin_totp.sql`. |
+| 3 | [HUMAN] | Apply migration `0069` in Railway. |
+| 4 | [CLAUDE CODE] | In `server/routers.ts`, add `admin.setupTotp`: generates a `speakeasy.generateSecret({ name: 'ReGen Civics Admin' })`, stores the base32 secret in the user row (`totpEnabled: 0` until verified), and returns the `otpauth_url` for QR rendering. |
+| 5 | [CLAUDE CODE] | Add `admin.verifyTotp`: takes a `token` string, reads the stored secret, calls `speakeasy.totp.verify({ secret, encoding: 'base32', token })`, and on success sets `totpEnabled: 1`. |
+| 6 | [CLAUDE CODE] | Add `admin.disableTotp`: admin-only mutation that clears `totpSecret` and sets `totpEnabled: 0`. Requires the user to enter a valid TOTP code to confirm before disabling. |
+| 7 | [CLAUDE CODE] | In the admin auth flow (wherever admin session is validated), if `totpEnabled === 1`, require a TOTP challenge step before issuing the session. If `totpEnabled === 0` and the user is an admin, show a soft banner: "2FA is not enabled on your account. Set it up in Settings." |
+| 8 | [CLAUDE CODE] | In the Admin Settings panel, add a "Two-Factor Authentication" section: shows current status (enabled/disabled), a "Set up 2FA" button that triggers `setupTotp` and renders the QR code via `<img src={qrDataUrl} />`, a 6-digit input to confirm enrollment via `verifyTotp`, and a "Disable 2FA" option (guarded by a TOTP confirmation). |
+
+---
+
+## Fix 155: SSR / Prerender for Googlebot Cold Crawl Speed
+
+**What:** The site is a pure client-side React SPA. Googlebot must execute JS to see any content, which slows indexing and cold crawl performance. The fastest path to fixing this without a full Next.js migration is adding Prerender.io middleware to Railway: it intercepts bot requests, serves a pre-rendered HTML snapshot, and passes human requests through unchanged.
+
+**Done when:** Googlebot and other crawlers receive server-rendered HTML for all public pages. Human visitors still get the SPA. Core Web Vitals scores in Google Search Console improve for crawled pages.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | `pnpm add prerender-node` in the server package. |
+| 2 | [CLAUDE CODE] | In `server/index.ts` (or wherever Express middleware is configured), add `app.use(require('prerender-node').set('prerenderToken', process.env.PRERENDER_TOKEN))` before static file serving. Prerender.io detects bots via user-agent and serves cached snapshots. |
+| 3 | [CLAUDE CODE] | Add a `sitemap.xml` route if one doesn't exist: `app.get('/sitemap.xml', ...)` returns a static sitemap with all public page URLs. Prerender.io uses this for warming the cache. |
+| 4 | [HUMAN] | Sign up for Prerender.io (free tier supports up to 250 pages/month). Get the token. Set `PRERENDER_TOKEN=<token>` in Railway env vars. |
+| 5 | [HUMAN] | After deploying, visit `https://prerender.io/cache` and submit regencivics.earth to warm the cache for the main public pages (/, /fund, /play, /quest, /land, /ally). |
+
+---
+
+## Fix 156: Forum Link Previews (Season 3)
+
+**What:** When a user pastes a URL into a forum post, there's no preview card. Every major forum platform generates Open Graph previews for pasted links. This requires a server-side proxy to fetch OG tags (avoids CORS issues) — the client cannot fetch arbitrary URLs directly.
+
+**Scope:** Season 3 feature. Do not implement until Season 2 forum is stable and active.
+
+**Done when:** Pasting a URL into a forum post body shows an inline preview card (site name, title, description, image) fetched from the link's OG tags. The preview is rendered in the post body below the link.
+
+| Step | Agent | Action |
+|---|---|---|
+| 1 | [CLAUDE CODE] | `pnpm add open-graph-scraper` in the server package. |
+| 2 | [CLAUDE CODE] | In `server/routers.ts`, add a public procedure `forum.fetchLinkPreview`: takes `{ url: string }`, validates it's an http/https URL, calls `ogs({ url })`, returns `{ title, description, image, siteName, url }`. Add a 5-second timeout. Cache results for 24 hours in a simple in-memory map (URL → preview data) to avoid re-fetching the same URL repeatedly. |
+| 3 | [CLAUDE CODE] | In the forum post editor (wherever the Tiptap or textarea editor lives), add a `useLinkPreview` hook: detects when a bare URL is pasted into the body, calls `trpc.forum.fetchLinkPreview`, and renders a `<LinkPreviewCard>` component below the editor. |
+| 4 | [CLAUDE CODE] | Build `<LinkPreviewCard>`: a rounded card with the OG image (left, fixed width), site name (small grey label), title (bold), description (2-line truncated). On click, opens the URL in a new tab. Show a skeleton while loading, nothing if the fetch fails or returns no data. |
+| 5 | [CLAUDE CODE] | Store the preview data alongside the post content: add a `linkPreviews JSON nullable` column to `forumPosts`. On post submit, save any fetched preview data into this column. On render, use the saved data rather than re-fetching on every page load. Migration: `drizzle/0070_forum_link_previews.sql`. |
+| 6 | [HUMAN] | Apply migration `0070` in Railway when ready to ship Season 3. |
+
+---
+
 ## Notes for Claude Code
 
 - **Fix all failing tests before moving to the next wave.** The test suite reported 27 pre-existing failures at the start of Wave 2. These are not acceptable to carry forward — they mask real regressions. Before completing any wave, run `pnpm test`, identify every failing test, and fix or skip (with a `// TODO:` comment explaining why) each one. A wave is not done until the test run shows 0 unexpected failures. If a test is failing because of a missing DB connection in CI, add a guard at the top of the test file (`if (!process.env.DATABASE_URL) { test.skip(...) }`) rather than letting it red-flag silently.
@@ -1425,6 +1703,18 @@ The current detail modal is functional but sparse. Full revamp:
 
 ### What Claude Code does autonomously (no Rye input needed):
 
+- Fix 152-1: Fix `applications.test.ts` list test isolation
+- Fix 152-2: Fix `forum.test.ts` postById hardcoded ID
+- Fix 151-1: Delete `client/public/sw.js` dead file + add comment in vite.config.ts
+- Fix 151-2: Remove duplicate SW registration from `main.tsx` and unmount `<ServiceWorkerRegister />`
+- Fix 151-3: Wire `notifyUpdate()` to toast system
+- Fix 151-4: Create `usePWAInstall.ts`, `PWAInstallButton.tsx`, add to footer
+- Fix 151-5 Steps 1-3: Add `analytics.trackEvent` tRPC mutation + `analyticsEvents` table migration + client-side tracking
+- Fix 151-6: Remove admin shortcuts from `manifest.json`
+- Fix 151-7: Create `offline.html`, update VitePWA `navigateFallback`
+- Fix 151-8: Fix `manifest.json` icon `purpose` entries
+- Fix 151-9: Add try/catch to `main.tsx` mount + "Clear cache and reload" to ErrorBoundary
+- Fix 151-10: Add `admin.getPWAStats` query + compact PWA stats section in Admin Analytics tab
 - Fix 141 Part A: change "Season 3" → "Season 2" in Home.tsx (one line)
 - Fix 131: rename "Show Me Around" → "Your ReGen Guide" in ReGenGuide.tsx
 - Fix 132: update QuestGameIntro.tsx PANELS with approved copy (copy confirmed by Rye, no review needed)
@@ -1444,6 +1734,12 @@ The current detail modal is functional but sparse. Full revamp:
 - Fix 133 Step 1: write check-post-links.mjs diagnostic script
 - Fixes 114-123, 125, 129: all waves 1-4 (performance, security, code quality, UX)
 - Fix 144: all 5 steps (blockchain logging, forceSync mutation, button wiring, admin sync button, startup log)
+- Fix 153-1: lazy-load `streamdown` + `visualization` bundles (React.lazy + Suspense)
+- Fix 153-2: fix globe visualization crash (null guard on `globeImageUrl` / `Date` access)
+- Fix 153-4: recharts tree-shaking (optional, evaluate bundle impact first)
+- Fix 154: all code steps (speakeasy install, schema, TOTP routes, auth flow gate, admin Settings panel)
+- Fix 155: Steps 1-3 (prerender-node middleware, sitemap.xml route)
+- Fix 156: Steps 1-5 (ogs install, fetchLinkPreview tRPC, useLinkPreview hook, LinkPreviewCard, linkPreviews column migration)
 
 ### What Rye must do (Railway DB, env vars, browser actions, approvals):
 
@@ -1466,3 +1762,12 @@ The current detail modal is functional but sparse. Full revamp:
 | Apply DB migration | Fix 143-9 Step 19 | Run application_events migration `0060` in Railway |
 | Apply DB migration | Fix 143-11 Step 26 | Run admin_notifications migration `0061` in Railway |
 | Apply DB migration | Fix 143-12 Step 29 | Run entity_notes migration `0062` in Railway |
+| Apply DB migration | Fix 151-5 Step 4 | Run analytics_events migration `0064` in Railway |
+| **Git push + redeploy** | Fix 151-11 | `git add vite.config.ts && git commit -m "fix: remove wouter router chunk to fix React 19 Activity init crash" && git push` — Railway auto-deploys. Then verify regencivics.earth loads. |
+| **Cloudflare cache rule** | Fix 153-3 Step 7 | Cloudflare dashboard → regencivics.earth zone → Rules → Cache Rules → add rule: URI path contains `/assets/`, Cache Everything, TTL 1 year. |
+| **Cloudflare proxy check** | Fix 153-3 Step 8 | Confirm DNS record for regencivics.earth has orange cloud (proxied). If grey, enable proxying. |
+| **Set env var** | General | Set `APP_BASE_URL=https://regencivics.earth` in Railway service variables. |
+| **Apply DB migration** | Fix 154 Step 3 | Run `0069_admin_totp.sql` in Railway after Claude Code writes it. |
+| **Prerender.io account** | Fix 155 Step 4 | Sign up at prerender.io, get token, set `PRERENDER_TOKEN=<token>` in Railway. |
+| **Prerender cache warm** | Fix 155 Step 5 | Submit main public pages to prerender.io cache after deploy. |
+| **Apply DB migration** | Fix 156 Step 6 | Run `0070_forum_link_previews.sql` in Railway (Season 3, not urgent). |

@@ -6,7 +6,7 @@ import { Link, useLocation, useParams } from "wouter";
 import {
   MessageCircle, ArrowLeft, Heart, Eye, Clock, Send,
   ChevronRight, Pin, Lock, Loader2, Trash2, CornerDownRight,
-  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save
+  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save, Link2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -235,6 +235,16 @@ export default function CommunityPost() {
       toast.error(err.message || "Failed to update post");
     },
   });
+
+  // Copy link state
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   // Flag dropdown state
   const [showFlagMenu, setShowFlagMenu] = useState(false);
@@ -566,8 +576,8 @@ export default function CommunityPost() {
               <button
                 onClick={handleLikePost}
                 className={`flex items-center gap-1.5 text-sm transition-colors ${
-                  likes?.likedPost 
-                    ? 'text-red-500' 
+                  likes?.likedPost
+                    ? 'text-red-500'
                     : 'text-[#1a472a]/40 hover:text-red-400'
                 }`}
               >
@@ -578,6 +588,14 @@ export default function CommunityPost() {
                 <MessageCircle className="w-4 h-4" />
                 {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
               </span>
+              <button
+                onClick={handleCopyLink}
+                className="flex items-center gap-1.5 text-xs text-[#1a472a]/50 hover:text-[#1a472a]/80 transition-colors"
+                title="Copy link to post"
+              >
+                <Link2 className="w-4 h-4" />
+                {copied ? 'Copied!' : 'Copy link'}
+              </button>
               {language !== 'en' && !translatedPost && (
                 <button
                   onClick={handleTranslatePost}

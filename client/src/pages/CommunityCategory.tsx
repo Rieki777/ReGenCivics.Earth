@@ -108,10 +108,11 @@ export default function CommunityCategory() {
     { enabled: !!slug }
   );
 
-  const { data: posts, isLoading: postsLoading } = trpc.forum.posts.useQuery(
-    { categoryId: category?.id, limit: 50, offset: 0 },
+  const { data: postsResult, isLoading: postsLoading } = trpc.forum.posts.useQuery(
+    { categoryId: category?.id, limit: 50 },
     { enabled: !!category?.id }
   );
+  const posts = postsResult?.posts;
 
   const isLoading = catLoading || postsLoading;
 

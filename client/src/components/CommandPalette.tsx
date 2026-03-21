@@ -121,14 +121,18 @@ export function CommandPalette() {
   return (
     <div
       className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh] px-4"
+      role="presentation"
       onClick={() => { setOpen(false); setQuery(''); setDebouncedQ(''); }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
 
       {/* Palette */}
       <div
         className="relative w-full max-w-lg rounded-2xl border border-[#7dd87d]/30 bg-[#0d2818] shadow-2xl overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site search"
         onClick={(e) => e.stopPropagation()}
       >
         <Command label="Search pages" className="[&_[cmdk-group-heading]]:text-[#7dd87d]/50 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2">

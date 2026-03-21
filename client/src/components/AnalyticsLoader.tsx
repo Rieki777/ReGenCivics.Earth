@@ -2,10 +2,12 @@
  * AnalyticsLoader - Conditionally loads Umami analytics based on cookie consent.
  * Only injects the analytics script when the user has accepted cookies.
  * Removes the script if the user later declines (via Manage Cookies).
+ * Also reports Core Web Vitals to Umami as custom events.
  */
 
 import { useEffect } from "react";
 import { useCookieConsent } from "./CookieConsent";
+import { onCLS, onINP, onLCP, onFCP, onTTFB } from "web-vitals";
 
 const ANALYTICS_SCRIPT_ID = "umami-analytics";
 
@@ -42,6 +44,21 @@ export default function AnalyticsLoader() {
       }
     }
   }, [hasConsented, hasDeclined]);
+
+  // Report Core Web Vitals to Umami (consent-gated)
+  useEffect(() => {
+    if (!hasConsented) return;
+    const report = (name: string, value: number) => {
+      if (typeof (window as any).umami?.track === 'function') {
+        (window as any).umami.track('web-vital', { metric: name, value: Math.round(name === 'CLS' ? value * 1000 : value) });
+      }
+    };
+    onCLS(m => report('CLS', m.value));
+    onINP(m => report('INP', m.value));
+    onLCP(m => report('LCP', m.value));
+    onFCP(m => report('FCP', m.value));
+    onTTFB(m => report('TTFB', m.value));
+  }, [hasConsented]);
 
   return null; // This is a side-effect-only component
 }

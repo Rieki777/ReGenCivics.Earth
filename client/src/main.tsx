@@ -10,6 +10,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     });
   }, { once: true });
 }
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,6 +40,19 @@ const queryClient = new QueryClient({
         if (error instanceof Error && error.message.includes("FORBIDDEN")) return false;
         if (error instanceof Error && error.message.includes("NOT_FOUND")) return false;
         return failureCount < 2;
+      },
+    },
+    mutations: {
+      onError: (error: any) => {
+        if (error?.data?.code === 'TOO_MANY_REQUESTS' || error?.message?.includes('maximum number of submissions')) {
+          // Extract time remaining from error message if possible
+          const match = error?.message?.match(/(\d+) minute/);
+          const minutes = match ? match[1] : 'a few';
+          toast.error(`The garden needs a moment to breathe. Try again in about ${minutes} minute${minutes !== '1' ? 's' : ''}.`, {
+            duration: 8000,
+            icon: '🌱',
+          });
+        }
       },
     },
   },

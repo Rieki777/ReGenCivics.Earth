@@ -50,7 +50,7 @@ export const investorInquiriesRouter = router({
       newsletterOptIn: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "investor_inquiry");
+      await checkRateLimit(ctx, "investor_inquiry");
       const inquiryId = await db.createInvestorInquiry({
         userId: ctx.user?.id || null,
         status: "new",
@@ -265,7 +265,7 @@ export const generalInquiriesRouter = router({
       newsletterOptIn: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "general_inquiry");
+      await checkRateLimit(ctx, "general_inquiry");
       const inquiryId = await db.createGeneralInquiry({
         userId: ctx.user?.id || null,
         status: "new",
@@ -401,7 +401,7 @@ export const loiRouter = router({
       referralSource: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "letter_of_intent");
+      await checkRateLimit(ctx, "letter_of_intent");
       const loiId = await db.createLetterOfIntent({
         ...input,
         phone: input.phone || null,
@@ -419,7 +419,7 @@ export const loiRouter = router({
 
       // Send confirmation email to the investor
       try {
-        const { sendEmail } = await import("../_core/email");
+        const { sendEmail, toAbsoluteUrl } = await import("../_core/email");
         await sendEmail({
           to: input.email,
           subject: "Your Letter of Intent  -  ReGen Civics",
@@ -432,7 +432,7 @@ export const loiRouter = router({
 <li>No capital moves until we reach &gt;$20M in committed LOIs  -  your pledge is non-binding until then.</li>
 </ul>
 <h3 style="color:#1a472a">Keep the momentum going</h3>
-<p>📄 <a href="https://regencivics.earth/opportunity" style="color:#4a7c59">Read the full investment opportunity</a></p>
+<p>📄 <a href="${toAbsoluteUrl('/opportunity')}" style="color:#4a7c59">Read the full investment opportunity</a></p>
 <p>📅 <a href="https://calendly.com/rieki-cordon/30min" style="color:#4a7c59">Schedule a discovery call with Rieki</a></p>
 <p style="color:#666;font-size:12px;margin-top:32px">Questions? Reply to this email or reach us at <a href="mailto:Rieki@pm.me">Rieki@pm.me</a></p>
 <p style="color:#666;font-size:12px">ReGen Civics  -  Building the coordination layer for the regenerative transition.</p>

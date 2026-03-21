@@ -11,10 +11,15 @@ import { BannerDisplay } from "@/components/BannerDisplay";
 function GlobePlaceholder() {
   return (
     <div
-      className="w-full bg-[#0a1f14] animate-pulse"
+      className="w-full bg-[#0a1f14] flex items-center justify-center"
       style={{ minHeight: "calc(100vh - 64px)" }}
-      aria-hidden="true"
-    />
+      role="status"
+      aria-label="Loading the globe"
+    >
+      <p className="text-[#7dd87d]/50 text-sm tracking-wide animate-pulse">
+        Loading the globe...
+      </p>
+    </div>
   );
 }
 

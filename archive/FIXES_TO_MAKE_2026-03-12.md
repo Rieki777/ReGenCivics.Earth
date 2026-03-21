@@ -2465,66 +2465,54 @@ Both are visible at the same time, creating confusion and visual clutter in the 
 
 ---
 
-### Fix 94: Map forum button gives 404 -- seed threads + auto-create on acceptance + Land Project Spaces section
+### Fix 94: Map forum button gives 404 -- claim-triggered threads + Land Project Spaces section
 
 **Priority:** High
-**Status:** CODED
-**File(s):** `client/src/components/GlobeMap.tsx`, `client/src/pages/Community.tsx`, seed script, application approval flow
+**Status:** IN PROGRESS
+**File(s):** `client/src/components/GlobeMap.tsx`, `client/src/pages/Community.tsx`, admin claim approval flow
 
 **Problem:** Clicking the "Forum" button for any land project on the map gives a 404 because:
 1. The static fallback `/community/land-projects` doesn't exist as a route
-2. The "active-projects" forum category has no seeded threads for existing land projects
+2. Forum threads for land projects should not be created automatically -- they are created when a steward claims a project and the claim is approved
 
-This fix has 4 parts.
+**Design decision (supersedes original Fix 94 spec):** Forum threads for land projects and organisations are NOT auto-created on acceptance or via seed scripts. A thread is only created when a player claims stewardship of a project and an admin approves that claim. This ensures every forum space has an active steward behind it. Season 1 projects need to be reclaimed before getting a thread.
+
+This fix has 3 parts.
 
 ---
 
 **Part 1: Fix the broken fallback in GlobeMap.tsx**
 
-Change the static fallback from `/community/land-projects` to `/community`. When no matching thread exists for a project, render a visually softer "Forum (coming soon)" state rather than a broken link -- either a disabled button or a link to `/community` with a tooltip explaining the thread will be created.
+Change the static fallback from `/community/land-projects` to `/community`. When no matching thread exists for a project, render a "Forum (coming soon)" state -- either a disabled button or a link to `/community` with a tooltip: "This project's forum space will be created once a steward claims it."
 
 ---
 
-**Part 2: Seed forum threads for all existing land projects**
+**Part 2: Create forum thread on claim approval**
 
-Use the `regen-database-sql` skill. Write a TypeScript seed script at `scripts/seed-land-project-threads.ts` that:
+In the admin claim approval flow (likely `server/routers/admin.ts` or wherever `orgClaims` status is updated to `approved`), add a step that:
 
-1. Queries the database for all currently accepted/active land projects
-2. Checks the "active-projects" forum category -- create it if it doesn't exist (slug: `active-projects`, name: "Land Project Spaces")
-3. For each land project, checks if a thread already exists with a title matching `"[Project Name] - ..."` pattern
-4. If no thread exists, creates one with:
-   - Title: `"[Project Name] - Land Project Forum"` (so GlobeMap's slug match works correctly)
-   - Body: a short templated opening post -- e.g. "This is the official forum space for [Project Name]. Share updates, ask questions, and connect with this project's team and supporters."
-   - Category: "active-projects"
-   - Author: system/admin user (use the first admin user in the DB or a dedicated system account)
-5. Logs what was created vs skipped
+1. Checks if a forum post already exists for this entity (land project or org)
+2. If not, creates one in the appropriate category:
+   - Land projects → `active-projects` (id 11)
+   - Alliance orgs → `alliance-partners` (id 6)
+3. Title: `🏡 [Project Name]` for land projects, `🤝 [Org Name]` for orgs
+4. Body: opening post authored by the claiming user (use their userId, not the team account)
+5. Stores the resulting `forumPostId` on the entity record (add column to `applications` or organisations table if not present)
 
-Include instructions at the top of the script for how to run it: `npx tsx scripts/seed-land-project-threads.ts`
+This means the GlobeMap Forum button activates automatically once a claim is approved.
 
 ---
 
-**Part 3: Auto-create forum thread when a land project is accepted**
+**Part 3: Add "Land Project Spaces" section to the Community page**
 
-Find the application approval flow (likely in the admin tRPC router or an admin action in `server/routers/admin.ts` or similar). When a project status changes to "accepted" or "active", automatically:
+In `client/src/pages/Community.tsx`, add a section labeled **"Land Project Spaces"**. This section:
 
-1. Create a new forum post in the "active-projects" category using the same templated format as the seed script
-2. Store the resulting `postId` against the land project record (add a `forumPostId` column to the land projects table if one doesn't exist)
-3. Log the creation
+- Fetches all posts from the `active-projects` category via `trpc.forum.activeProjectThreads` (already exists)
+- Renders each project as a card: project name, short description, "Visit Forum" button linking to `/community/post/${postId}`
+- If no projects have been claimed yet, shows: "Land project spaces appear here once a steward has claimed the project."
+- Grid layout consistent with the rest of the Community page
 
-This means every newly accepted project gets a forum space immediately -- no manual step required.
-
----
-
-**Part 4: Add "Land Project Spaces" section to the Community page**
-
-In `client/src/pages/Community.tsx`, add a dedicated section (above or below the main forum categories) labeled **"Land Project Spaces"**. This section:
-
-- Fetches all posts from the "active-projects" category via `trpc.forum.activeProjectThreads` (already exists)
-- Renders each land project as a card showing: project name, a short description or tagline if available, a "Visit Forum" button linking to `/community/post/${postId}`
-- If no projects exist yet (seed hasn't run), shows a placeholder: "Land project spaces will appear here as projects join the alliance."
-- Styling: use a grid layout consistent with the rest of the Community page; each card should feel like a "space" entry, not just a forum thread link
-
-GlobeMap's Forum button should link directly to the project's forum thread (`/community/post/${postId}`) once the thread exists. The `active-projects` tRPC endpoint already powers this -- just make sure the thread IDs are populated via the seed script.
+Note: `scripts/backfill-forum-threads.mjs` is now obsolete -- do not run it. The claim flow replaces it.
 
 ---
 
@@ -2675,7 +2663,7 @@ Claude Code will output a full post-deployment checklist when all fixes are comp
 
 | Fix | Action |
 |-----|--------|
-| Fix 94 | Run `npx tsx scripts/seed-land-project-threads.ts` against production DB to seed forum threads for existing land projects |
+| Fix 94 | No seed script needed. Forum threads are created automatically when a claim is approved. No manual DB step required. |
 | Fix 97 | In Railway: set `IMAGE_GEN_WORKER_URL` = `https://regen-civics-image-gen.rieki-cordon.workers.dev`; verify `IMAGE_GEN_SECRET` is set; if Worker is down, run `cd workers/image-gen && npx wrangler deploy` |
 
 ### Suggested execution order for Claude Code (Round 3)
@@ -2684,6 +2672,6 @@ Claude Code will output a full post-deployment checklist when all fixes are comp
 2. **Batch 2 (text/copy updates):** Fix 93, Fix 95
 3. **Batch 3 (component logic):** Fix 74 REVISED + Fix 82 together
 4. **Batch 4 (image generation + page section):** Fix 92 (generate images first via nano-banana-pro, then wire into Game.tsx)
-5. **Batch 5 (forum + community):** Fix 94 -- write seed script, wire auto-create on acceptance, add Land Project Spaces to Community page, fix GlobeMap fallback
+5. **Batch 5 (forum + community):** Fix 94 -- wire forum thread creation into claim approval, add Land Project Spaces to Community page, fix GlobeMap fallback
 6. **Batch 6 (error handling):** Fix 97
 7. **Final step:** Output the consolidated post-deployment checklist for Rye covering all [HUMAN] steps

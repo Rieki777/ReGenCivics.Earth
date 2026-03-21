@@ -52,6 +52,7 @@ import {
   Building2,
   RefreshCw,
   ChevronDown,
+  Compass,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,6 +81,7 @@ import { BioregionMultiSelect } from "@/components/BioregionMultiSelect";
 import { LocationPicker, LocationDisplay, type LocationData } from "@/components/LocationPicker";
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { ProfileCompletionMeter } from "@/components/ProfileCompletionMeter";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -462,6 +464,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
               displayName={profile.displayName}
               badges={badges}
               size={80}
+              questsCompleted={profile.questsCompleted}
             />
             <div>
               <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
@@ -553,13 +556,19 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           ) : (
             <button
               onClick={() => onGoToSettings?.()}
-              className="text-[#4a7c59] text-xs mt-1 hover:underline underline-offset-2 transition-colors"
+              className="text-sm text-[#4a7c59] underline hover:text-[#1a472a] transition-colors"
             >
-              Connect wallet in Settings to sync balances
+              Add your wallet address in Settings to sync token balances →
             </button>
           )
         )}
         
+        {/* Profile Completion */}
+        {isOwner && (() => {
+          const qc: string[] = (() => { try { return JSON.parse(profile.questsCompleted || "[]"); } catch { return []; } })();
+          return <ProfileCompletionMeter profile={profile} questsCompleted={qc} />;
+        })()}
+
         {/* Badges */}
         {badges.length > 0 && (
           <div>
@@ -2411,28 +2420,6 @@ function NoteField({ completionId, initialNote }: { completionId: number; initia
 // ─── Quest Journal ────────────────────────────────────────────────────────────
 function QuestJournal({ userId }: { userId: number }) {
   const completionsQuery = trpc.quest.myCompletions.useQuery();
-  const logCompletion = trpc.quest.logCompletion.useMutation({
-    onSuccess: () => completionsQuery.refetch(),
-  });
-
-  const [showLogForm, setShowLogForm] = useState(false);
-  const [newQuestId, setNewQuestId] = useState("");
-  const [newQuestTitle, setNewQuestTitle] = useState("");
-  const [newArtifactUrl, setNewArtifactUrl] = useState("");
-
-  function handleLogCompletion() {
-    if (!newQuestId.trim()) return;
-    logCompletion.mutate({
-      questId: newQuestId.trim(),
-      questTitle: newQuestTitle.trim() || newQuestId.trim(),
-      isPublic: true,
-      artifactText: "",
-    });
-    setNewQuestId("");
-    setNewQuestTitle("");
-    setNewArtifactUrl("");
-    setShowLogForm(false);
-  }
 
   function formatDate(date: Date | string) {
     return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -2444,56 +2431,6 @@ function QuestJournal({ userId }: { userId: number }) {
         <BookOpen className="w-5 h-5 text-[#7dd87d]" />
         Quest Journal
       </h3>
-
-      <div className="flex justify-end mb-3">
-        <button
-          onClick={() => setShowLogForm(!showLogForm)}
-          className="text-xs text-[#7dd87d] border border-[#7dd87d]/40 px-3 py-1.5 rounded-full hover:bg-[#7dd87d]/10 transition-colors"
-        >
-          + Log a completion
-        </button>
-      </div>
-
-      {showLogForm && (
-        <div className="bg-[#1a472a]/40 border border-white/10 rounded-xl p-4 mb-4 space-y-3">
-          <input
-            type="text"
-            placeholder="Quest ID (e.g. quest-0, food-foresting)"
-            value={newQuestId}
-            onChange={(e) => setNewQuestId(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
-          />
-          <input
-            type="text"
-            placeholder="Quest title (optional)"
-            value={newQuestTitle}
-            onChange={(e) => setNewQuestTitle(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
-          />
-          <input
-            type="url"
-            placeholder="Artifact URL (optional - photo, video, article)"
-            value={newArtifactUrl}
-            onChange={(e) => setNewArtifactUrl(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={handleLogCompletion}
-              disabled={!newQuestId.trim() || logCompletion.isPending}
-              className="bg-[#7dd87d] text-[#1a472a] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#6bc96b] disabled:opacity-50 transition-colors"
-            >
-              {logCompletion.isPending ? "Logging..." : "Log completion"}
-            </button>
-            <button
-              onClick={() => setShowLogForm(false)}
-              className="text-white/50 text-sm px-3 py-2 rounded-lg hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
       {completionsQuery.isLoading ? (
         <p className="text-white/40 text-sm py-4">Loading journal...</p>
@@ -2708,13 +2645,13 @@ export default function PlayerProfile() {
                       />
                     </AnimatedSection>
                     <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
-                    <div className="rounded-xl border border-green-500/20 p-6 text-center">
-                      <div className="text-3xl mb-3">🧭</div>
-                      <h3 className="font-semibold text-white mb-1">Explore Onboarding Quests</h3>
-                      <p className="text-sm text-white/60 mb-4">Complete quests to earn tokens, deepen your practice, and root yourself in the game.</p>
+                    <div className="rounded-2xl border border-[#1a472a]/20 bg-[#f0f7f0] p-6 flex flex-col items-center text-center gap-3">
+                      <Compass className="w-8 h-8 text-[#4a7c59]" />
+                      <h3 className="font-semibold text-[#1a472a] text-base">Explore Onboarding Quests</h3>
+                      <p className="text-sm text-[#1a472a]/70 leading-relaxed">Complete quests to earn tokens, deepen your practice, and root yourself in the game.</p>
                       <button
-                        onClick={() => setActiveTab('quests')}
-                        className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+                        onClick={() => setActiveTab("quests")}
+                        className="mt-1 px-4 py-2 rounded-lg bg-[#1a472a] text-white text-sm font-medium hover:bg-[#1a472a]/90 transition-colors"
                       >
                         View Quests
                       </button>

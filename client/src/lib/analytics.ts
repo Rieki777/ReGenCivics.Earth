@@ -40,8 +40,20 @@ export const analytics = {
   forumPostCreated: (categorySlug?: string) =>
     track("forum_post_created", { category: categorySlug }),
 
+  /** User began filling out the Apply form (first draft save) */
+  applyStarted: () => track("apply_started"),
+
+  /** User advanced to a specific step in the Apply multi-step form */
+  applyStepAdvanced: (step: number) => track(`apply_step_${step}`),
+
   /** User submitted the Apply page (land project incubator application) */
   applyFormSubmitted: () => track("apply_form_submitted"),
+
+  /** User submitted the Letter of Intent (investor pledge form) */
+  loiSubmitted: () => track("loi_submitted"),
+
+  /** User submitted the full investor inquiry form */
+  investorFormSubmitted: () => track("investor_form_submitted"),
 
   /** User registered / created a player profile */
   playerRegistered: (role?: string) => track("player_registered", { role }),

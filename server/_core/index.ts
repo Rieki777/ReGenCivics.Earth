@@ -1,4 +1,5 @@
 import "dotenv/config";
+import crypto from "node:crypto";
 import * as Sentry from "@sentry/node";
 import { runDigestJob } from "../jobs/digestJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
@@ -24,9 +25,11 @@ import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
+import { registerImageOptimization } from "../routes/global";
 import * as db from "../db";
 import { sendEmail } from "./email";
 import { cspMiddleware, securityHeadersMiddleware, rateLimitMiddleware } from "./security";
+import { isCacheAvailable } from "../cache";
 import path from "path";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -63,6 +66,12 @@ async function startServer() {
     }
   }));
 
+  // Attach a unique request ID for tracing (logged on every request, sent to Sentry)
+  app.use((req: any, _res, next) => {
+    req.id = crypto.randomUUID();
+    next();
+  });
+
   // Request/response logging (structured, Railway-friendly)
   app.use((req, res, next) => {
     const start = Date.now();
@@ -71,7 +80,7 @@ async function startServer() {
       const level = res.statusCode >= 500 ? "err" : res.statusCode >= 400 ? "wrn" : "inf";
       // Skip noisy health checks and static assets from logs
       if (req.path !== "/health" && !req.path.startsWith("/assets/")) {
-        console.log(`[${level}] ${req.method} ${req.path} ${res.statusCode} ${ms}ms`);
+        console.log(`[${level}] ${(req as any).id ?? '-'} ${req.method} ${req.path} ${res.statusCode} ${ms}ms`);
       }
     });
     next();
@@ -94,7 +103,12 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // Health check endpoint (for UptimeRobot / uptime monitoring)
   app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: Date.now() });
+    res.json({
+      status: 'ok',
+      db: process.env.DATABASE_URL ? 'connected' : 'disconnected',
+      cache: isCacheAvailable() ? 'connected' : 'disconnected',
+      ts: new Date().toISOString()
+    });
   });
 
   // Dynamic sitemap — includes static routes + DB-driven blog/campaign/forum URLs
@@ -132,6 +146,8 @@ async function startServer() {
       { loc: '/community/seeking-team',  changefreq: 'weekly',  priority: '0.5' },
       { loc: '/community/chains',        changefreq: 'weekly',  priority: '0.5' },
       { loc: '/community/quests',        changefreq: 'weekly',  priority: '0.5' },
+      { loc: '/community/members',       changefreq: 'daily',   priority: '0.6' },
+      { loc: '/community/guidelines',    changefreq: 'monthly', priority: '0.4' },
       { loc: '/connect',                 changefreq: 'monthly', priority: '0.6' },
       { loc: '/investor',                changefreq: 'weekly',  priority: '0.7' },
       { loc: '/loi',                     changefreq: 'weekly',  priority: '0.7' },
@@ -262,6 +278,8 @@ async function startServer() {
   // Admin Buffer + Farcaster routes
   app.use('/api/admin/buffer', bufferRouter);
   app.use('/api/admin/farcaster', farcasterRouter);
+  // Image optimization proxy
+  registerImageOptimization(app);
   // Cache-control for slow-changing tRPC GET endpoints (public, read-only data)
   const CACHED_TRPC_PREFIXES: Array<{ prefix: string; maxAge: number }> = [
     { prefix: "/api/trpc/forum.listCategories", maxAge: 300 },      // 5 min — forum categories change rarely
@@ -293,6 +311,48 @@ async function startServer() {
   if (process.env.SENTRY_DSN) {
     Sentry.setupExpressErrorHandler(app);
   }
+
+  // Branded 500 error handler — shown when the server crashes before React loads
+  app.use((_err: unknown, _req: import("express").Request, res: import("express").Response, _next: import("express").NextFunction) => {
+    res.status(500).send(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReGen Civics — Something went wrong</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(to bottom,#0a1a0a,#1a472a);font-family:system-ui,sans-serif;color:#fff;text-align:center;padding:2rem}
+    .spinner{width:72px;height:72px;margin:0 auto 1.5rem;opacity:.85;animation:spin 8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    h1{color:#d4a574;font-size:1.2rem;font-weight:300;letter-spacing:.05em;max-width:26rem;line-height:1.6;margin-bottom:.75rem}
+    p{color:rgba(122,158,122,.6);font-size:.875rem;margin-bottom:2.5rem}
+    .links{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center}
+    a{padding:.625rem 1.25rem;border-radius:.5rem;font-size:.875rem;text-decoration:none;border:1px solid rgba(125,216,125,.3);color:#7dd87d;transition:border-color .2s}
+    a:hover{border-color:rgba(125,216,125,.6)}
+    a.home{background:#1a472a}
+  </style>
+</head>
+<body>
+  <div>
+    <svg class="spinner" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#7dd87d" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
+      <circle cx="50" cy="20" r="16" stroke="#7dd87d" stroke-width="1.2" opacity="0.7"/>
+      <circle cx="35" cy="46" r="16" stroke="#7dd87d" stroke-width="1.2" opacity="0.7"/>
+      <circle cx="65" cy="46" r="16" stroke="#7dd87d" stroke-width="1.2" opacity="0.7"/>
+    </svg>
+    <h1>This route is broken&hellip; when we think things are broken, ponder the TAO.</h1>
+    <p>An unexpected server error occurred. Our team has been notified.</p>
+    <div class="links">
+      <a href="/" class="home">Return Home</a>
+      <a href="/community">Community</a>
+      <a href="/fund">The Fund</a>
+      <a href="/game">The Game</a>
+    </div>
+  </div>
+</body>
+</html>`);
+  });
 
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {

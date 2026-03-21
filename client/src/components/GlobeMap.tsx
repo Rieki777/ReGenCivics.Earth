@@ -749,6 +749,16 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // WebGL support detection
+  const [webglSupported, setWebglSupported] = useState(true);
+  useEffect(() => {
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) setWebglSupported(false);
+    } catch { setWebglSupported(false); }
+  }, []);
+
   const globeInstanceRef = useRef<any>(null);
   const [selectedEntity, setSelectedEntity] = useState<MapEntity | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
@@ -781,12 +791,14 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
   // Convert applicant data to MapEntity format
   const applicantEntities: MapEntity[] = useMemo(() => {
     if (!applicantData) return [];
-    return applicantData.map((app) => ({
-      id: `applicant-${app.id}`,
-      name: app.name,
-      type: "applicant" as EntityType,
-      lat: app.latitude,
-      lng: app.longitude,
+    return applicantData
+      .filter((app) => app.latitude != null && app.longitude != null)
+      .map((app) => ({
+        id: `applicant-${app.id}`,
+        name: app.name,
+        type: "applicant" as EntityType,
+        lat: app.latitude as number,
+        lng: app.longitude as number,
       location: app.location,
       country: app.country || "",
       description: app.vision || "A new regenerative land project applying to join the ReGen Civics alliance.",
@@ -1199,6 +1211,89 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
   const globeHeight = fullPage ? "calc(100vh - 64px)" : "500px";
   const mobileGlobeHeight = fullPage ? "50vh" : "300px";
 
+  // WebGL fallback: render accessible table when WebGL is unavailable
+  if (!webglSupported) {
+    return (
+      <div className={`${fullPage ? "min-h-screen" : ""} bg-[#0a1f14] p-6 rounded-2xl`}>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-[#1a472a]/80 border border-[#4a7c59]/40 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <Globe className="w-5 h-5 text-[#7dd87d] flex-shrink-0 mt-0.5" />
+            <p className="text-white/80 text-sm">
+              Interactive map not available in this browser. Here's a list of all locations.
+            </p>
+          </div>
+          {/* Inline search for fallback view */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search name, country, role..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap mb-4">
+            {(["all", "land_project", "organization", "applicant"] as const).map((f) => (
+              <FilterTab
+                key={f}
+                label={f === "all" ? "All" : f === "land_project" ? "Land Projects" : f === "organization" ? "Organizations" : "Applicants"}
+                count={f === "all" ? allEntities.length : allEntities.filter(e => e.type === f).length}
+                active={filter === f}
+                onClick={() => setFilter(f)}
+                color={f === "all" ? "bg-white/20 text-white" : f === "land_project" ? "bg-[#4a7c59] text-white" : f === "organization" ? "bg-[#d4a574] text-[#1a472a]" : "bg-[#87CEEB] text-[#1a472a]"}
+              />
+            ))}
+          </div>
+          <div className="overflow-x-auto rounded-xl border border-white/10">
+            <table className="w-full text-sm text-white/80" aria-label="Regenerative land projects and organizations">
+              <caption className="sr-only">Map entities — {filteredEntities.length} total</caption>
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th scope="col" className="text-left px-4 py-3 text-white/60 font-semibold text-xs uppercase tracking-wider">Name</th>
+                  <th scope="col" className="text-left px-4 py-3 text-white/60 font-semibold text-xs uppercase tracking-wider">Type</th>
+                  <th scope="col" className="text-left px-4 py-3 text-white/60 font-semibold text-xs uppercase tracking-wider">Location</th>
+                  <th scope="col" className="text-left px-4 py-3 text-white/60 font-semibold text-xs uppercase tracking-wider hidden sm:table-cell">Website</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEntities.map((entity, i) => (
+                  <tr key={entity.id} className={`border-b border-white/5 ${i % 2 === 0 ? "bg-white/[0.02]" : ""} hover:bg-white/5 transition-colors`}>
+                    <td className="px-4 py-3 font-medium text-white">{entity.name}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        entity.type === "land_project" ? "bg-[#4a7c59]/20 text-[#4a7c59]" :
+                        entity.type === "organization" ? "bg-[#d4a574]/20 text-[#d4a574]" :
+                        "bg-[#87CEEB]/20 text-[#87CEEB]"
+                      }`}>
+                        {entity.type === "land_project" ? "Land Project" : entity.type === "organization" ? "Alliance Org" : "Applicant"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-white/60">{entity.location}{entity.country ? `, ${entity.country}` : ""}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      {entity.url && !entity.inactive ? (
+                        <a href={entity.url} target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline text-xs inline-flex items-center gap-1">
+                          <ExternalLink className="w-3 h-3" /> Visit
+                        </a>
+                      ) : entity.inactive ? (
+                        <span className="text-white/30 text-xs line-through">Offline</span>
+                      ) : <span className="text-white/30 text-xs">—</span>}
+                    </td>
+                  </tr>
+                ))}
+                {filteredEntities.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-white/40">No results match your filters.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={fullPage ? "min-h-screen bg-[#0a1f14]" : ""}>
       {/* Desktop layout: globe with overlay sidebar */}
@@ -1208,7 +1303,32 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           ref={globeRef}
           className="w-full rounded-2xl overflow-hidden"
           style={{ height: globeHeight, background: "radial-gradient(ellipse at center, #0a1f14 0%, #050d09 100%)" }}
+          role="img"
+          aria-label={`Interactive 3D globe showing ${filteredEntities.length} regenerative land projects and alliance organizations worldwide`}
         />
+
+        {/* Screen reader data table — visually hidden, content matches globe pins */}
+        <table className="sr-only" aria-label="Regenerative land projects and organizations on the map">
+          <caption>Map entities — {filteredEntities.length} total</caption>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Type</th>
+              <th scope="col">Location</th>
+              <th scope="col">Website</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredEntities.map((entity) => (
+              <tr key={entity.id}>
+                <td>{entity.name}</td>
+                <td>{entity.type === "land_project" ? "Land Project" : entity.type === "organization" ? "Alliance Organization" : "Applicant"}</td>
+                <td>{entity.country || (entity.isGlobal ? "Global" : "Unknown")}</td>
+                <td>{entity.url ? <a href={entity.url}>{entity.url}</a> : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
         {/* Loading overlay */}
         {!globeReady && (

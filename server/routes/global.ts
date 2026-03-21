@@ -12,6 +12,8 @@ import { nanoid } from "nanoid";
 import { storagePut } from "../storage";
 import { CHAT_SYSTEM_PROMPT } from "../_core/oauth";
 import { invokeLLM } from "../_core/llm";
+import type { Express } from "express";
+import sharp from "sharp";
 
 export const globalSearchRouter = router({
   query: publicProcedure
@@ -42,6 +44,24 @@ export const globalSearchRouter = router({
     }),
 });
 
+// Map of allowed MIME types to their magic bytes (base64 prefix)
+const ALLOWED_MIME_PREFIXES: Record<string, string[]> = {
+  'image/jpeg': ['/9j/'],
+  'image/png': ['iVBORw0KGgo'],
+  'image/webp': ['UklGR'],
+  'image/gif': ['R0lGOD'],
+  'application/pdf': ['JVBERi0'],
+  // Word docs and Excel are zip-based, harder to check by magic bytes - allow by extension only
+};
+
+function validateMimeVsContent(base64Data: string, claimedType: string): boolean {
+  // For types we can check, verify the magic bytes match
+  const prefixes = ALLOWED_MIME_PREFIXES[claimedType];
+  if (!prefixes) return true; // Can't check this type, allow it
+  const dataStart = base64Data.substring(0, 20);
+  return prefixes.some(prefix => dataStart.startsWith(prefix));
+}
+
 export const filesRouter = router({
   upload: protectedProcedure
     .input(z.object({
@@ -53,6 +73,11 @@ export const filesRouter = router({
       // Generate unique file key with user ID prefix
       const ext = input.fileName.split('.').pop() || 'bin';
       const fileKey = `uploads/${ctx.user.id}/${nanoid()}.${ext}`;
+
+      // Validate that file content matches declared MIME type
+      if (!validateMimeVsContent(input.fileData, input.contentType)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'File content does not match its declared type.' });
+      }
 
       // Decode base64 to buffer
       const buffer = Buffer.from(input.fileData, 'base64');
@@ -77,7 +102,7 @@ export const chatRouter = router({
       })).max(20),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "chat_ask");
+      await checkRateLimit(ctx, "chat_ask");
       const llmMessages = [
         { role: "system" as const, content: CHAT_SYSTEM_PROMPT },
         ...input.messages.map(m => ({
@@ -92,3 +117,54 @@ export const chatRouter = router({
       return { content };
     }),
 });
+
+// ─── Image optimization route ────────────────────────────────────────────────
+const ALLOWED_IMG_DOMAINS = [
+  'assets.regencivics.earth',
+  'regencivics.earth',
+  'regencivics.com',
+];
+
+export function registerImageOptimization(app: Express) {
+  app.get('/api/img', async (req, res) => {
+    try {
+      const { url, w, h, q } = req.query as Record<string, string>;
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({ error: 'url required' });
+      }
+
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        return res.status(400).json({ error: 'invalid url' });
+      }
+      if (!ALLOWED_IMG_DOMAINS.some(d => parsedUrl.hostname === d || parsedUrl.hostname.endsWith(`.${d}`))) {
+        return res.status(403).json({ error: 'domain not allowed' });
+      }
+
+      const width = w ? Math.min(parseInt(w, 10), 2048) : undefined;
+      const height = h ? Math.min(parseInt(h, 10), 2048) : undefined;
+      const quality = q ? Math.min(parseInt(q, 10), 100) : 80;
+
+      const upstream = await fetch(url);
+      if (!upstream.ok) return res.status(502).json({ error: 'upstream error' });
+      const buffer = Buffer.from(await upstream.arrayBuffer());
+
+      const optimized = await sharp(buffer)
+        .resize(width, height, { fit: 'cover', withoutEnlargement: true })
+        .webp({ quality })
+        .toBuffer();
+
+      res.set({
+        'Content-Type': 'image/webp',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Vary': 'Accept',
+      });
+      res.send(optimized);
+    } catch (err) {
+      console.error('[img] optimization error:', err);
+      res.status(500).json({ error: 'processing failed' });
+    }
+  });
+}

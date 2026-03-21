@@ -21,6 +21,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { BlurImage } from "@/components/BlurImage";
 
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
@@ -215,13 +216,14 @@ export default function BlogPost() {
       {/* Hero Section */}
       <section className="relative min-h-[50vh] flex items-end overflow-hidden">
         <div className="absolute inset-0">
-          <img
+          <BlurImage
             src={post.image}
             alt={post.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full"
             loading="eager"
             fetchPriority="high"
             decoding="async"
+            placeholderColor="#1a472a"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#1a472a] via-[#1a472a]/60 to-transparent" />
         </div>
@@ -349,70 +351,76 @@ export default function BlogPost() {
                 className="text-white/80 leading-relaxed space-y-6"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
-                {activeContent.split('\n\n').map((paragraph, index) => {
-                  // Handle special component markers
-                  if (paragraph.trim() === '[FOOD_PRODUCTION_INFOGRAPHIC]') {
-                    return <FoodProductionInfographic key={index} />;
-                  }
-                  if (paragraph.trim() === '[ANIMAL_POPULATION_INFOGRAPHIC]') {
-                    return <AnimalPopulationInfographic key={index} />;
-                  }
-                  return null;
-                }).filter(Boolean).length > 0 ? (
-                  // If there are special markers, render block-by-block
-                  activeContent.split('\n\n').map((paragraph, index) => {
-                    if (paragraph.trim() === '[FOOD_PRODUCTION_INFOGRAPHIC]') {
-                      return <FoodProductionInfographic key={index} />;
-                    }
-                    if (paragraph.trim() === '[ANIMAL_POPULATION_INFOGRAPHIC]') {
-                      return <AnimalPopulationInfographic key={index} />;
-                    }
+                {(() => {
+                  const SPECIAL_MARKERS: Record<string, React.ReactElement> = {
+                    '[FOOD_PRODUCTION_INFOGRAPHIC]': <FoodProductionInfographic />,
+                    '[ANIMAL_POPULATION_INFOGRAPHIC]': <AnimalPopulationInfographic />,
+                  };
+
+                  const hasMarkers = Object.keys(SPECIAL_MARKERS).some(
+                    marker => activeContent.includes(marker)
+                  );
+
+                  const mdComponents = {
+                    ol: ({children}: {children?: React.ReactNode}) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
+                    ul: ({children}: {children?: React.ReactNode}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
+                    li: ({children}: {children?: React.ReactNode}) => <li className="ml-2">{children}</li>,
+                    h1: ({children}: {children?: React.ReactNode}) => <h1 className="text-3xl font-bold mb-4 mt-6">{children}</h1>,
+                    h2: ({children}: {children?: React.ReactNode}) => <h2 className="text-2xl font-bold mb-3 mt-5 scroll-mt-24">{children}</h2>,
+                    h3: ({children}: {children?: React.ReactNode}) => <h3 className="text-xl font-semibold mb-2 mt-4 scroll-mt-24">{children}</h3>,
+                    p: ({children}: {children?: React.ReactNode}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                    a: ({href, children}: {href?: string; children?: React.ReactNode}) => <a href={href} className="text-green-400 hover:text-green-300 underline">{children}</a>,
+                    blockquote: ({children}: {children?: React.ReactNode}) => <blockquote className="border-l-4 border-green-500 pl-4 italic my-4 text-white/70">{children}</blockquote>,
+                    strong: ({children}: {children?: React.ReactNode}) => <strong className="font-semibold">{children}</strong>,
+                    em: ({children}: {children?: React.ReactNode}) => <em className="italic">{children}</em>,
+                    code: ({children}: {children?: React.ReactNode}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
+                    pre: ({children}: {children?: React.ReactNode}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
+                  };
+
+                  if (!hasMarkers) {
+                    // No special markers: render entire content as one block (preserves list numbering)
                     return (
-                      <ReactMarkdown
-                        key={index}
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          ol: ({children}) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
-                          ul: ({children}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
-                          li: ({children}) => <li className="ml-2">{children}</li>,
-                          h1: ({children}) => <h1 className="text-3xl font-bold mb-4 mt-6">{children}</h1>,
-                          h2: ({children}) => <h2 className="text-2xl font-bold mb-3 mt-5 scroll-mt-24">{children}</h2>,
-                          h3: ({children}) => <h3 className="text-xl font-semibold mb-2 mt-4 scroll-mt-24">{children}</h3>,
-                          p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
-                          a: ({href, children}) => <a href={href} className="text-green-400 hover:text-green-300 underline">{children}</a>,
-                          blockquote: ({children}) => <blockquote className="border-l-4 border-green-500 pl-4 italic my-4 text-white/70">{children}</blockquote>,
-                          strong: ({children}) => <strong className="font-semibold">{children}</strong>,
-                          em: ({children}) => <em className="italic">{children}</em>,
-                          code: ({children}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
-                          pre: ({children}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
-                        }}
-                      >
-                        {paragraph}
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                        {activeContent}
                       </ReactMarkdown>
                     );
-                  })
-                ) : (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      ol: ({children}) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
-                      ul: ({children}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
-                      li: ({children}) => <li className="ml-2">{children}</li>,
-                      h1: ({children}) => <h1 className="text-3xl font-bold mb-4 mt-6">{children}</h1>,
-                      h2: ({children}) => <h2 className="text-2xl font-bold mb-3 mt-5 scroll-mt-24">{children}</h2>,
-                      h3: ({children}) => <h3 className="text-xl font-semibold mb-2 mt-4 scroll-mt-24">{children}</h3>,
-                      p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
-                      a: ({href, children}) => <a href={href} className="text-green-400 hover:text-green-300 underline">{children}</a>,
-                      blockquote: ({children}) => <blockquote className="border-l-4 border-green-500 pl-4 italic my-4 text-white/70">{children}</blockquote>,
-                      strong: ({children}) => <strong className="font-semibold">{children}</strong>,
-                      em: ({children}) => <em className="italic">{children}</em>,
-                      code: ({children}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
-                      pre: ({children}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
-                    }}
-                  >
-                    {activeContent}
-                  </ReactMarkdown>
-                )}
+                  }
+
+                  // Has special markers: accumulate consecutive non-marker paragraphs into
+                  // a single markdown chunk so that multi-item numbered lists stay in one
+                  // <ol> and increment correctly.
+                  const paragraphs = activeContent.split('\n\n');
+                  const segments: Array<{ type: 'markdown'; text: string } | { type: 'component'; key: string }> = [];
+
+                  for (const para of paragraphs) {
+                    const trimmed = para.trim();
+                    if (SPECIAL_MARKERS[trimmed] !== undefined) {
+                      segments.push({ type: 'component', key: trimmed });
+                    } else {
+                      const last = segments[segments.length - 1];
+                      if (last && last.type === 'markdown') {
+                        last.text += '\n\n' + para;
+                      } else {
+                        segments.push({ type: 'markdown', text: para });
+                      }
+                    }
+                  }
+
+                  return (
+                    <>
+                      {segments.map((seg, i) => {
+                        if (seg.type === 'component') {
+                          return <React.Fragment key={i}>{SPECIAL_MARKERS[seg.key]}</React.Fragment>;
+                        }
+                        return (
+                          <ReactMarkdown key={i} remarkPlugins={[remarkGfm]} components={mdComponents}>
+                            {seg.text}
+                          </ReactMarkdown>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
               </div>
             </article>
           </AnimatedSection>
@@ -510,10 +518,10 @@ export default function BlogPost() {
                   <Link key={relatedPost.id} href={"/blog/" + relatedPost.slug}>
                     <div className="group bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden border border-[#7dd87d]/20 hover:border-[#7dd87d]/40 transition-all duration-300 cursor-pointer">
                       <div className="aspect-[16/9] overflow-hidden relative">
-                        <img 
-                          src={relatedPost.image} 
+                        <BlurImage
+                          src={relatedPost.image}
                           alt={relatedPost.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="absolute inset-0 group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
                         />
                         {relatedPost.isVideo && (

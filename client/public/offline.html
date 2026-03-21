@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline — ReGen Civics</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a472a;
+      font-family: Georgia, serif;
+      color: #f0ebe3;
+      text-align: center;
+      padding: 2rem;
+    }
+    .container { max-width: 480px; }
+    .icon { font-size: 4rem; margin-bottom: 1.5rem; }
+    h1 { font-size: 1.75rem; margin-bottom: 1rem; color: #7dd87d; }
+    p { font-size: 1rem; line-height: 1.6; color: rgba(240,235,227,0.75); margin-bottom: 1.5rem; }
+    button {
+      background: #7dd87d;
+      color: #1a472a;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 9999px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #9de89d; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🌿</div>
+    <h1>You're offline</h1>
+    <p>Your connection to the forest is temporarily interrupted. Check your connection and try again.</p>
+    <button onclick="window.location.reload()">Try again</button>
+  </div>
+</body>
+</html>

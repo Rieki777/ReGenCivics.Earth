@@ -24,6 +24,33 @@ const SENDER_NOREPLY = 'ReGen Civics <noreply@regencivics.earth>';
 // Base URL for tracking (use environment variable in production)
 const BASE_URL = process.env.VITE_APP_URL || 'https://regencivics.earth';
 
+/**
+ * Public base URL used when constructing deep links in notification emails.
+ * Set APP_BASE_URL in your environment to override the default.
+ *
+ * Usage: `import { APP_BASE_URL } from '../_core/email'`
+ * Then embed links as: `${APP_BASE_URL}/community/post/123`
+ */
+export const APP_BASE_URL =
+  process.env.APP_BASE_URL || 'https://regencivics.com';
+
+/**
+ * Prepend APP_BASE_URL to a relative path if it is not already an absolute URL.
+ * Absolute URLs (starting with http:// or https://) are returned unchanged.
+ *
+ * @param path - A relative path like `/community/post/123` or an absolute URL.
+ * @returns A full URL string.
+ */
+export function toAbsoluteUrl(path: string, utmParams?: { campaign?: string; medium?: string }): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const base = APP_BASE_URL.replace(/\/$/, '');
+  const url = new URL(path, base);
+  url.searchParams.set('utm_source', 'email');
+  url.searchParams.set('utm_medium', utmParams?.medium ?? 'transactional');
+  if (utmParams?.campaign) url.searchParams.set('utm_campaign', utmParams.campaign);
+  return url.toString();
+}
+
 export interface SendEmailParams {
   to: string | string[];
   subject: string;
@@ -429,15 +456,15 @@ export const emailTemplates = {
       </ul>
       
       <div style="text-align: center; margin: 25px 0;">
-        <a href="https://regencivics.earth/campaigns" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">View Campaign</a>
+        <a href="${toAbsoluteUrl('/crowd-pooling-projects')}" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">View Campaign</a>
       </div>
-      
+
       <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
         <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
       </div>
     `,
   }),
-  
+
   contributionRejected: (recipientName: string, contributionTitle: string, campaignTitle: string, ownerNotes?: string) => ({
     subject: `Update on Your Contribution to "${campaignTitle}"`,
     html: `
@@ -457,7 +484,7 @@ export const emailTemplates = {
       </div>
       
       <div style="text-align: center; margin: 25px 0;">
-        <a href="https://regencivics.earth/campaigns" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Browse Campaigns</a>
+        <a href="${toAbsoluteUrl('/crowd-pooling-projects')}" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Browse Campaigns</a>
       </div>
       
       <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
@@ -588,7 +615,7 @@ export const emailTemplates = {
           <p style="color: #333; line-height: 1.7; font-size: 15px;">The regenerative renaissance is underway  -  and your capital can help it accelerate.</p>
         </div>
         <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
-          <p style="color: #999; font-size: 12px; margin: 0;">You received this because you expressed interest in ReGen Civics. <a href="https://regencivics.earth/unsubscribe" style="color: #4a7c59;">Unsubscribe</a></p>
+          <p style="color: #999; font-size: 12px; margin: 0;">You received this because you expressed interest in ReGen Civics. <a href="${toAbsoluteUrl('/unsubscribe')}" style="color: #4a7c59;">Unsubscribe</a></p>
         </div>
       </div>
     `,
@@ -615,7 +642,7 @@ export const emailTemplates = {
       <p style="color: #333; line-height: 1.6;">You are now part of the regenerative renaissance. Consider sharing your experience with others and exploring more ways to contribute to the movement!</p>
       
       <div style="text-align: center; margin: 25px 0;">
-        <a href="https://regencivics.earth/campaigns" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Explore More Campaigns</a>
+        <a href="${toAbsoluteUrl('/crowd-pooling-projects')}" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Explore More Campaigns</a>
       </div>
       
       <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">

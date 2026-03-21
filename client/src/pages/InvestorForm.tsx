@@ -4,7 +4,7 @@
  * Design: Enchanted Forest theme with professional polish
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SEO, pageSEO } from "@/components/SEO";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
@@ -43,6 +42,7 @@ import {
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { BackButton } from "@/components/BackButton";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
+import { analytics } from "@/lib/analytics";
 
 // Form data type
 interface InvestorFormData {
@@ -151,6 +151,15 @@ const sectorOptions = [
   "Community Finance",
 ];
 
+const INVESTOR_LS_KEY = 'investor_form_draft';
+
+function loadInvestorDraft(): Partial<InvestorFormData> | null {
+  try {
+    const raw = localStorage.getItem(INVESTOR_LS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 export default function InvestorForm() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
@@ -167,15 +176,31 @@ export default function InvestorForm() {
   const [step, setStep] = useState(1);
   const savedEmail = localStorage.getItem('investor_email') ?? '';
   const savedName = localStorage.getItem('investor_name') ?? '';
-  const [formData, setFormData] = useState<InvestorFormData>({
-    ...initialFormData,
-    email: savedEmail,
-    fullName: savedName,
+  const [formData, setFormData] = useState<InvestorFormData>(() => {
+    const draft = loadInvestorDraft();
+    return {
+      ...initialFormData,
+      email: savedEmail,
+      fullName: savedName,
+      ...(draft ?? {}),
+    };
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
-  
+
+  // Autosave to localStorage (debounced 1 second)
+  const lsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (lsTimerRef.current) clearTimeout(lsTimerRef.current);
+    lsTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(INVESTOR_LS_KEY, JSON.stringify(formData));
+      } catch { /* storage quota exceeded — ignore */ }
+    }, 1000);
+    return () => { if (lsTimerRef.current) clearTimeout(lsTimerRef.current); };
+  }, [formData]);
+
   // Auto-redirect to /opportunity after submission
   useEffect(() => {
     if (isSubmitted && redirectCountdown > 0) {
@@ -195,6 +220,7 @@ export default function InvestorForm() {
   
   const submitMutation = trpc.investorInquiries.submit.useMutation({
     onSuccess: () => {
+      analytics.investorFormSubmitted();
       // Set verification flag so /opportunity page knows the form was completed
       sessionStorage.setItem('investor_verified', 'true');
       // Persist across sessions so returning investors skip the form
@@ -205,6 +231,7 @@ export default function InvestorForm() {
       if (user) {
         utils.investorInquiries.hasSubmitted.invalidate();
       }
+      try { localStorage.removeItem(INVESTOR_LS_KEY); } catch { /* ignore */ }
       setIsSubmitted(true);
     },
     onError: (err) => {
@@ -277,8 +304,6 @@ export default function InvestorForm() {
       });
     }
   };
-
-  const progress = (step / steps.length) * 100;
 
   // Success screen
   if (isSubmitted) {
@@ -397,7 +422,19 @@ export default function InvestorForm() {
               );
             })}
           </div>
-          <Progress value={progress} className="h-2 bg-white/20" />
+          {/* Step progress bar */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-white/60">Step {step} of {steps.length}</span>
+              <span className="text-sm font-medium text-white">{steps[step - 1]?.title}</span>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-1.5">
+              <div
+                className="bg-[#7dd87d] h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${(step / steps.length) * 100}%` }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Form Card */}

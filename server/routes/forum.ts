@@ -5,16 +5,22 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql, count } from "drizzle-orm";
-import { forumPosts, forumReplies, forumCategories, postReactions, bioregions } from "../../drizzle/schema";
+import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, ForumCategory } from "../../drizzle/schema";
 import { sanitizeInput } from "../_core/security";
+import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
 
 export const forumRouter = router({
-  // List all categories with post counts
+  // List all categories with post counts (cached 5 min)
   categories: publicProcedure.query(async () => {
+    const CACHE_KEY = 'forum:categories';
+    const cached = await cacheGet<(ForumCategory & { postCount: number })[]>(CACHE_KEY);
+    if (cached) return cached;
     const categories = await db.listForumCategories();
     const counts = await db.getForumCategoryPostCounts();
-    return categories.map(c => ({ ...c, postCount: counts[c.id] || 0 }));
+    const result = categories.map(c => ({ ...c, postCount: counts[c.id] || 0 }));
+    await cacheSet(CACHE_KEY, result, 300);
+    return result;
   }),
 
   // Admin: create a new forum category
@@ -63,18 +69,53 @@ export const forumRouter = router({
       return db.getForumCategoryBySlug(input.slug);
     }),
 
-  // List posts, optionally filtered by category
+  // List posts, optionally filtered by category (cursor-based pagination)
   posts: publicProcedure
     .input(z.object({
       categoryId: z.number().optional(),
-      limit: z.number().min(1).max(100).default(50),
-      offset: z.number().min(0).default(0),
+      cursor: z.number().optional(), // last post ID seen (for cursor pagination)
+      limit: z.number().min(1).max(100).default(20),
     }))
     .query(async ({ input }) => {
-      const posts = await db.listForumPosts(input.categoryId, input.limit, input.offset);
-      // Pre-fetch bioregions for name lookup
+      const { categoryId, cursor, limit } = input;
       const db2 = await getDb();
-      const allBioregions = db2 ? await db2.select().from(bioregions) : [];
+      if (!db2) return { posts: [], nextCursor: null };
+
+      // Fetch one extra to determine if there's a next page
+      const fetchLimit = limit + 1;
+
+      let rows: (typeof forumPosts.$inferSelect)[];
+      if (categoryId !== undefined) {
+        if (cursor !== undefined) {
+          rows = await db2.select().from(forumPosts)
+            .where(sql`${forumPosts.categoryId} = ${categoryId} AND ${forumPosts.id} < ${cursor}`)
+            .orderBy(sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`)
+            .limit(fetchLimit);
+        } else {
+          rows = await db2.select().from(forumPosts)
+            .where(eq(forumPosts.categoryId, categoryId))
+            .orderBy(sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`)
+            .limit(fetchLimit);
+        }
+      } else {
+        if (cursor !== undefined) {
+          rows = await db2.select().from(forumPosts)
+            .where(sql`${forumPosts.id} < ${cursor}`)
+            .orderBy(sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`)
+            .limit(fetchLimit);
+        } else {
+          rows = await db2.select().from(forumPosts)
+            .orderBy(sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`)
+            .limit(fetchLimit);
+        }
+      }
+
+      const hasMore = rows.length > limit;
+      const posts = hasMore ? rows.slice(0, limit) : rows;
+      const nextCursor = hasMore ? posts[posts.length - 1].id : null;
+
+      // Pre-fetch bioregions for name lookup
+      const allBioregions = await db2.select().from(bioregions);
       // Batch-fetch all authors in one query (eliminates N+1)
       const authorIds = posts.map(p => p.authorId);
       const authorsMap = await db.getUsersByIds(authorIds);
@@ -90,7 +131,30 @@ export const forumRouter = router({
           bioregionName,
         };
       });
-      return enriched;
+      return { posts: enriched, nextCursor };
+    }),
+
+  // Full-text search across forum posts
+  search: publicProcedure
+    .input(z.object({ q: z.string().min(1).max(200) }))
+    .query(async ({ input }) => {
+      const db2 = await getDb();
+      if (!db2) return [];
+      const rows = await db2.select().from(forumPosts)
+        .where(sql`MATCH(${forumPosts.title}, ${forumPosts.content}) AGAINST(${input.q} IN BOOLEAN MODE)`)
+        .limit(20);
+      const authorsMap = await db.getUsersByIds(rows.map(p => p.authorId));
+      const cats = await db.listForumCategories();
+      return rows.map((post) => {
+        const category = cats.find(c => c.id === post.categoryId);
+        return {
+          ...post,
+          authorName: authorsMap[post.authorId]?.name || 'Anonymous',
+          authorAvatar: null,
+          categorySlug: category?.slug || 'general',
+          categoryName: category?.name || 'Unknown',
+        };
+      });
     }),
 
   // Get a single post with full details

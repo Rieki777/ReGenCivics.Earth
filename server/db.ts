@@ -1,7 +1,7 @@
 import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2847,11 +2847,12 @@ export async function getLatestDigest(): Promise<Digest | null> {
   return rows[0] || null;
 }
 
-export async function getRecentForumPostsForDigest(): Promise<{ title: string; content: string; replyCount: number; viewCount: number }[]> {
+export async function getRecentForumPostsForDigest(): Promise<{ id: number; title: string; content: string; replyCount: number; viewCount: number }[]> {
   const db = await getDb();
   if (!db) return [];
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const rows = await db.select({
+    id: forumPosts.id,
     title: forumPosts.title,
     content: forumPosts.content,
     replyCount: forumPosts.replyCount,
@@ -2945,5 +2946,59 @@ export async function updateQuestCompletionNote(id: number, userId: number, note
   await db.update(questCompletions)
     .set({ artifactText: note })
     .where(and(eq(questCompletions.id, id), eq(questCompletions.userId, userId)));
+}
+
+// ============================================
+// Admin Audit Log
+// ============================================
+
+/**
+ * Record an admin action in the immutable audit log.
+ * Fire-and-forget: never throws so it cannot disrupt the calling mutation.
+ */
+export async function logAdminAction(entry: {
+  adminUserId: number;
+  action: string;
+  entityType?: string;
+  entityId?: number;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.insert(adminAuditLog).values({
+      adminUserId: entry.adminUserId,
+      action: entry.action,
+      entityType: entry.entityType ?? null,
+      entityId: entry.entityId ?? null,
+      description: entry.description ?? null,
+      metadata: entry.metadata ?? null,
+    });
+  } catch (e) {
+    console.warn("[AuditLog] Failed to write audit entry:", e);
+  }
+}
+
+/**
+ * Retrieve the audit log for admin display.
+ * Sorted newest-first. Optionally filtered by adminUserId or entityType.
+ */
+export async function getAdminAuditLog(opts?: {
+  adminUserId?: number;
+  entityType?: string;
+  limit?: number;
+}): Promise<typeof adminAuditLog.$inferSelect[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const { limit = 100, adminUserId, entityType } = opts ?? {};
+  const conditions = [];
+  if (adminUserId) conditions.push(eq(adminAuditLog.adminUserId, adminUserId));
+  if (entityType) conditions.push(eq(adminAuditLog.entityType, entityType));
+  const query = db.select().from(adminAuditLog);
+  if (conditions.length > 0) {
+    return query.where(and(...conditions)).orderBy(desc(adminAuditLog.createdAt)).limit(limit);
+  }
+  return query.orderBy(desc(adminAuditLog.createdAt)).limit(limit);
 }
 

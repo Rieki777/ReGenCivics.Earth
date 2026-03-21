@@ -9,6 +9,7 @@ import { Link } from "wouter";
 import { SEO, pageSEO } from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
+import { analytics } from "@/lib/analytics";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ export default function Newsletter() {
   const subscribeMutation = trpc.newsletter.subscribe.useMutation({
     onSuccess: () => {
       markNewsletterSubscribed();
+      analytics.newsletterSignup();
       setStatus("success");
       setMessage("Thank you for subscribing! You'll hear from us soon.");
       setEmail("");

@@ -5,6 +5,7 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql } from "drizzle-orm";
+import { sanitizeInput } from "../_core/security";
 import { gifts, needs, upcomingAmas, playerProfiles, projectConnections, applications as applicationsTable } from "../../drizzle/schema";
 
 // ─── Marketplace (Gifts / Needs registry) ──────────────────────────────────────
@@ -97,7 +98,7 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx, input }) => {
       const d = await getDb();
       if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await d.insert(gifts).values({ userId: ctx.user.id, type: input.type, description: input.description });
+      await d.insert(gifts).values({ userId: ctx.user.id, type: input.type, description: sanitizeInput(input.description) });
       return { success: true };
     }),
 
@@ -122,7 +123,7 @@ export const marketplaceRouter = router({
     .mutation(async ({ ctx, input }) => {
       const d = await getDb();
       if (!d) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await d.insert(needs).values({ userId: ctx.user.id, type: input.type, description: input.description });
+      await d.insert(needs).values({ userId: ctx.user.id, type: input.type, description: sanitizeInput(input.description) });
       return { success: true };
     }),
 

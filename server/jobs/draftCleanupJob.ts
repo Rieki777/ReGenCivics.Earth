@@ -3,8 +3,13 @@
 import * as db from "../db";
 
 export async function runDraftCleanupJob() {
-  const deleted = await db.deleteStaleApplicationDrafts(30);
-  if (deleted > 0) {
-    console.log(`[DraftCleanup] Removed ${deleted} stale draft application(s) older than 30 days.`);
+  try {
+    const deleted = await db.deleteStaleApplicationDrafts(30);
+    if (deleted > 0) {
+      console.log(`[DraftCleanup] Removed ${deleted} stale draft application(s) older than 30 days.`);
+    }
+  } catch (e) {
+    console.error("[DraftCleanup] Error:", e);
+    try { const Sentry = await import("@sentry/node"); Sentry.captureException(e, { tags: { job: "draftCleanup" } }); } catch {}
   }
 }

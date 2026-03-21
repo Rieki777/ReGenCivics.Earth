@@ -5,12 +5,14 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql } from "drizzle-orm";
-import { campaigns as campaignsTable } from "../../drizzle/schema";
+import { campaigns as campaignsTable, CrowdPoolingProject } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
+import { sanitizeInput } from "../_core/security";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { generateImage } from "../_core/imageGeneration";
 import { nanoid } from "nanoid";
 import { storagePut } from "../storage";
+import { cacheGet, cacheSet, cacheDel } from "../cache";
 
 export const campaignsRouter = router({
   // List all campaigns (with optional filtering)
@@ -184,7 +186,7 @@ export const campaignsRouter = router({
       contributorNotes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "campaign_contribution");
+      await checkRateLimit(ctx, "campaign_contribution");
       // Verify campaign exists and is active
       const campaign = await db.getCampaignById(input.campaignId);
       if (!campaign) {
@@ -203,8 +205,8 @@ export const campaignsRouter = router({
         contributorPhone: input.contributorPhone,
         contributorBio: input.contributorBio,
         contributionType: input.contributionType,
-        title: input.title,
-        description: input.description,
+        title: sanitizeInput(input.title),
+        description: input.description ? sanitizeInput(input.description) : null,
         landHectares: input.landHectares,
         landRegion: input.landRegion,
         landFeatures: input.landFeatures ? JSON.stringify(input.landFeatures) : null,
@@ -552,9 +554,14 @@ export const campaignsRouter = router({
 });
 
 export const crowdPoolingProjectsRouter = router({
-  // Get all active projects (public)
+  // Get all active projects (public — cached 2 min)
   list: publicProcedure.query(async () => {
-    return db.getActiveCrowdPoolingProjects();
+    const CACHE_KEY = 'crowdpooling:active';
+    const cached = await cacheGet<CrowdPoolingProject[]>(CACHE_KEY);
+    if (cached) return cached;
+    const result = await db.getActiveCrowdPoolingProjects();
+    await cacheSet(CACHE_KEY, result, 120);
+    return result;
   }),
 
   // Get all projects including inactive (admin only)
@@ -649,7 +656,7 @@ export const crowdPoolingProposalsRouter = router({
       contributorNotes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "crowd_pooling_proposal");
+      await checkRateLimit(ctx, "crowd_pooling_proposal");
       // Verify project exists
       const project = await db.getCrowdPoolingProjectById(input.projectId);
       if (!project) {

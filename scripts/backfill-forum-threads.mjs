@@ -10,35 +10,34 @@ async function main() {
 
   // Get all approved applications that don't have a forum post
   const [apps] = await conn.execute(`
-    SELECT a.id, a.name, a.type, a.about, u.id as teamUserId
+    SELECT a.id, a.projectName, a.projectType, a.vision, u.id as teamUserId
     FROM applications a
     JOIN users u ON u.email = 'team@regencivics.earth'
-    WHERE a.status = 'approved'
+    WHERE a.status IN ('approved', 'active')
       AND NOT EXISTS (
         SELECT 1 FROM forumPosts fp
-        WHERE fp.title = CONCAT('🏡 ', a.name)
-           OR fp.title = CONCAT('🤝 ', a.name)
-           OR fp.title = a.name
+        WHERE fp.title = CONCAT('🏡 ', a.projectName)
+           OR fp.title = a.projectName
       )
   `)
 
   console.log(`Found ${apps.length} applications without forum threads`)
 
   for (const app of apps) {
-    const emoji = app.type === 'land_project' ? '🏡' : '🤝'
-    const categorySlug = app.type === 'land_project' ? 'active-projects' : 'alliance-partners'
+    const emoji = '🏡'
+    const categorySlug = 'active-projects'
 
     const [[category]] = await conn.execute(
       'SELECT id FROM forumCategories WHERE slug = ? LIMIT 1',
       [categorySlug]
     )
     if (!category) {
-      console.log(`No category found for slug: ${categorySlug}, skipping ${app.name}`)
+      console.log(`No category found for slug: ${categorySlug}, skipping ${app.projectName}`)
       continue
     }
 
-    const title = `${emoji} ${app.name}`
-    const body = app.about || `Welcome to the ${app.name} forum thread. Share updates, ask questions, and connect with the community.`
+    const title = `${emoji} ${app.projectName}`
+    const body = app.vision || `Welcome to the ${app.projectName} forum thread. Share updates, ask questions, and connect with the community.`
 
     console.log(`${dryRun ? '[DRY RUN] Would create' : 'Creating'}: "${title}" in ${categorySlug}`)
 

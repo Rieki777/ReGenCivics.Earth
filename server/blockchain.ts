@@ -33,7 +33,7 @@ async function ethCall(to: string, data: string): Promise<string | null> {
     });
     const json = await res.json() as any;
     if (json.error) {
-      console.warn('[blockchain] ethCall json.error:', json.error);
+      console.warn('[blockchain] eth_call returned error:', json.error, 'to:', to);
       return null;
     }
     if (!json.result || json.result === "0x") return null;

@@ -43,14 +43,10 @@ Mixed — some code, some not. This is part software project, part community org
 
 These files define all outstanding work for this project. Always check them before starting any implementation:
 
-- `FIXES_TO_MAKE_2026-03-12.md` — **current** fixes doc (2026-03-12). Start here for active fixes.
-- `UPGRADE_TASKS_2026-03-10.md` — master checklist of implementation tasks (Tasks 1–20 + forum pointer).
-- `FIXES_TO_MAKE_2026-03-11.md` — previous fixes log (Fixes 1–49 + planning specs, archived 2026-03-11).
-- `FIXES_TO_MAKE_2026-03-10.md` — previous fixes log (Fixes 1–14, archived 2026-03-10).
-- `FORUM_UPGRADES_2026-03-10.md` — forum content overhaul and Welcome Aboard Quests spec. Includes quest card UI, seed scripts, UX entry points, and forum URL mapping.
+- `QUALITY_SPRINT_9_10.md` — **current** working doc. Start here for all active fixes and quality sprint tasks.
 - `ReGenCivics_WelcomeAboard_Brief.md` — full content brief for the Welcome Aboard Quests: all 10 quest cards, forum post bodies, seed comments, and implementation plan.
 
-When implementing forum features or quest cards, read `FORUM_UPGRADES_2026-03-10.md` and `ReGenCivics_WelcomeAboard_Brief.md` in full before writing any code.
+Older fixes docs have been archived to `archive/`. Do not reference them for new work.
 
 ## Installed Skills (ln- pipeline)
 This project uses a structured delivery pipeline via the ln- skills (in ~/.claude/skills/):

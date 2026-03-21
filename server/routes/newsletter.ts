@@ -20,7 +20,7 @@ export const newsletterRouter = router({
       source: z.enum(["homepage", "investor_form", "connect_form", "apply_form", "footer", "exit_intent", "other"]).default("other"),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "newsletter_subscribe");
+      await checkRateLimit(ctx, "newsletter_subscribe");
       const subscriberId = await db.createNewsletterSubscriber({
         email: input.email,
         name: input.name || null,
@@ -90,7 +90,7 @@ export const newsletterRouter = router({
   unsubscribe: publicProcedure
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "newsletter_unsubscribe");
+      await checkRateLimit(ctx, "newsletter_unsubscribe");
       await db.unsubscribeNewsletter(input.email);
       // Always return success to prevent email enumeration
       return { success: true };

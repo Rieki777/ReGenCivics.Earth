@@ -9,6 +9,7 @@ import { applicationEvents, orgClaims } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
+import { sendEmail, toAbsoluteUrl } from "../_core/email";
 
 export const applicationsRouter = router({
   // Create a new draft application
@@ -19,7 +20,7 @@ export const applicationsRouter = router({
       location: z.string().min(1),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "apply_create");
+      await checkRateLimit(ctx, "apply_create");
 
       // One-per-user guard: prevent duplicate applications
       const existing = await db.getApplicationsByUserId(ctx.user.id);
@@ -133,7 +134,7 @@ export const applicationsRouter = router({
   submit: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "application_submit");
+      await checkRateLimit(ctx, "application_submit");
       const application = await db.getApplicationById(input.id);
       if (!application) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
@@ -144,13 +145,46 @@ export const applicationsRouter = router({
       await db.updateApplication(input.id, { status: "submitted", submittedAt: new Date() });
 
       // Notify owner of new application submission (respects notification preferences)
+      // Also send confirmation email directly to the applicant
       try {
         await notifyIfEnabled("applicationSubmissions", {
           title: `New Application: ${application.projectName}`,
           content: `A new land project application has been submitted for the Spring Season.\n\n**Project:** ${application.projectName}\n**Type:** ${application.projectType}\n**Location:** ${application.location}\n\nReview it in the admin dashboard.`,
         });
 
-        // Send confirmation notification (applicant copy) - always send
+        // Send transactional confirmation email to the applicant
+        const applicantUser = await db.getUserById(ctx.user.id);
+        if (applicantUser?.email) {
+          const applicantName = applicantUser.name || "Applicant";
+          await sendEmail({
+            to: applicantUser.email,
+            subject: `Application Received — ${application.projectName}`,
+            html: `
+              <h2>Your Application Has Been Received</h2>
+              <p>Hi ${applicantName},</p>
+              <p>Thank you for applying to the <strong>ReGen Civics Incubator</strong>! We have received your application for <strong>${application.projectName}</strong> and our team will review it carefully.</p>
+              <h3>What happens next?</h3>
+              <ol>
+                <li><strong>Review (1–2 weeks):</strong> Our team reviews your application for fit with the Regenerative Renaissance mission.</li>
+                <li><strong>Invitation to Connect:</strong> If your project is a strong fit, we will reach out to schedule a call.</li>
+                <li><strong>Season Decision:</strong> Final decisions are communicated before the season kickoff.</li>
+              </ol>
+              <h3>Your Application Summary</h3>
+              <ul>
+                <li><strong>Project:</strong> ${application.projectName}</li>
+                <li><strong>Type:</strong> ${application.projectType === "early_stage" ? "Early Stage" : "Mature Project"}</li>
+                <li><strong>Location:</strong> ${application.location}</li>
+              </ul>
+              <p>In the meantime, explore the <a href="${toAbsoluteUrl('/community')}">Community</a>, introduce yourself in the <a href="${toAbsoluteUrl('/community')}">Forum</a>, or complete your <a href="${toAbsoluteUrl('/profile')}">Player Profile</a>.</p>
+              <p>With gratitude,<br>The ReGen Civics Team</p>
+            `,
+            template: "application_confirmation",
+            inquiryType: "application",
+            inquiryId: application.id,
+            recipientName: applicantName,
+          }).catch((e) => console.warn("[Email] Applicant confirmation failed:", e));
+        }
+
         await notifyOwner({
           title: `Application Confirmation - ${application.projectName}`,
           content: `**CONFIRMATION COPY FOR APPLICANT**\n\nThank you for applying to the ReGen Civics Spring Season!\n\n**Project Name:** ${application.projectName}\n**Project Type:** ${application.projectType}\n**Location:** ${application.location}\n**Vision:** ${application.vision?.substring(0, 200)}...\n\nWe will review your application and get back to you soon.\n\n---\nPlease forward this confirmation to the applicant.`,
@@ -215,7 +249,7 @@ export const applicationsRouter = router({
       }
       await db.updateApplication(input.id, { status: input.status });
 
-      // Log the status change event
+      // Log to application events table
       try {
         const drizzleDb = await getDb();
         if (drizzleDb) {
@@ -229,6 +263,16 @@ export const applicationsRouter = router({
       } catch (e) {
         console.warn("Failed to log application event:", e);
       }
+
+      // Also write to the immutable admin audit log
+      await db.logAdminAction({
+        adminUserId: ctx.user.id,
+        action: "application.status_change",
+        entityType: "application",
+        entityId: input.id,
+        description: `Changed application status to: ${input.status}`,
+        metadata: { newStatus: input.status },
+      });
 
       // Notify owner of status change
       const updatedApp = await db.getApplicationById(input.id);

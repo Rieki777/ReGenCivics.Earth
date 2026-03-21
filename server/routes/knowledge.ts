@@ -283,7 +283,7 @@ export const customGameInquiriesRouter = router({
       additionalNotes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      checkRateLimit(ctx, "custom_game_waitlist");
+      await checkRateLimit(ctx, "custom_game_waitlist");
       const drizzle = await getDb();
       if (!drizzle) return { success: false };
       await drizzle.insert(customGameInquiries).values({

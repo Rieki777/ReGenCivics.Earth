@@ -521,6 +521,46 @@ export const questsRouter = router({
       await db.updateQuestCompletionNote(input.completionId, ctx.user.id, input.note);
       return { ok: true };
     }),
+
+  // Mark a quest complete — logs to quest_completions and updates the profile JSON blob
+  complete: protectedProcedure
+    .input(z.object({
+      questId: z.string().min(1).max(100),
+      questTitle: z.string().min(1).max(255),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db2 = await getDb();
+      if (!db2) return { ok: true };
+
+      // Log to quest_completions table
+      await db2.insert(questCompletions).values({
+        userId: ctx.user.id,
+        questId: input.questId,
+        questTitle: input.questTitle,
+        artifactType: "text",
+        artifactUrl: null,
+        artifactText: null,
+        caption: null,
+        visibility: "public",
+      });
+
+      // Also update the questsCompleted JSON on playerProfiles
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      if (profile) {
+        const existing: string[] = (() => {
+          try { return JSON.parse(profile.questsCompleted || "[]"); } catch { return []; }
+        })();
+        if (!existing.includes(input.questId)) {
+          existing.push(input.questId);
+          await db2
+            .update(playerProfiles)
+            .set({ questsCompleted: JSON.stringify(existing) })
+            .where(eq(playerProfiles.userId, ctx.user.id));
+        }
+      }
+
+      return { ok: true };
+    }),
 });
 
 // Quest router - completions, active signals, and social proof

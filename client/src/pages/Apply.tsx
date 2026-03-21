@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileUpload } from "@/components/FileUpload";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Save, MapPin, Map as MapIcon, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Loader2, Save, MapPin, Map as MapIcon, HelpCircle } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
@@ -18,6 +18,7 @@ import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { BackButton } from "@/components/BackButton";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { PageWrapper } from "@/components/PageWrapper";
+import { analytics } from "@/lib/analytics";
 
 type UploadedFile = {
   name: string;
@@ -112,6 +113,23 @@ export default function Apply() {
   const [draftRestored, setDraftRestored] = useState(() => loadDraft() !== null);
   const [applicationId, setApplicationId] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showOptionalStep1, setShowOptionalStep1] = useState(false);
+  const [showOptionalStep2, setShowOptionalStep2] = useState(false);
+
+  // Fetch the user's extended profile for pre-fill
+  const { data: userProfile } = trpc.userProfiles.getMe.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  // Pre-fill form from profile on first load (only if no draft was restored)
+  useEffect(() => {
+    if (!userProfile || draftRestored) return;
+    setFormData(prev => ({
+      ...prev,
+      location: prev.location || userProfile.location || '',
+      projectName: prev.projectName || userProfile.projectName || '',
+    }));
+  }, [userProfile]);
 
   // Autosave to localStorage (debounced 800ms) — docs/files excluded to avoid quota issues
   const lsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -132,6 +150,13 @@ export default function Apply() {
   const submitMutation = trpc.applications.submit.useMutation();
 
   const totalSteps = 5;
+  const stepTitles = [
+    "Basic Information",
+    "Land & Team",
+    "Values & Alignment",
+    "Commitment & Resources",
+    "Additional Information",
+  ];
 
   const updateField = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -145,6 +170,7 @@ export default function Apply() {
         projectType: formData.projectType || "early_stage",
         location: formData.location || "TBD",
       });
+      analytics.applyStarted();
       setApplicationId(result.id);
       return result.id;
     } else {
@@ -174,6 +200,7 @@ export default function Apply() {
   const handleNext = async () => {
     await saveDraft();
     if (currentStep < totalSteps) {
+      analytics.applyStepAdvanced(currentStep + 1);
       setCurrentStep(currentStep + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -191,6 +218,7 @@ export default function Apply() {
     try {
       const id = await saveDraft();
       await submitMutation.mutateAsync({ id });
+      analytics.applyFormSubmitted();
       try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
       navigate("/apply/success");
     } catch (err: any) {
@@ -252,25 +280,15 @@ export default function Apply() {
           </p>
         </div>
 
-        {/* Progress Bar */}
+        {/* Step progress bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            {[1, 2, 3, 4, 5].map((step) => (
-              <div
-                key={step}
-                className={`flex items-center justify-center w-10 h-10 rounded-full font-bold ${
-                  step <= currentStep
-                    ? "bg-[#7dd87d] text-[#1a472a]"
-                    : "bg-white text-[#1a472a]/40 border-2 border-[#1a472a]/20"
-                }`}
-              >
-                {step < currentStep ? <CheckCircle2 className="w-5 h-5" /> : step}
-              </div>
-            ))}
+            <span className="text-sm text-[#1a472a]/60">Step {currentStep} of {totalSteps}</span>
+            <span className="text-sm font-medium text-[#1a472a]">{stepTitles[currentStep - 1]}</span>
           </div>
-          <div className="h-2 bg-white rounded-full overflow-hidden">
+          <div className="w-full bg-[#e8e4de] rounded-full h-1.5">
             <div
-              className="h-full bg-[#7dd87d] transition-all duration-300"
+              className="bg-[#7dd87d] h-1.5 rounded-full transition-all duration-500"
               style={{ width: `${(currentStep / totalSteps) * 100}%` }}
             />
           </div>
@@ -343,6 +361,18 @@ export default function Apply() {
                   className="mt-1"
                 />
               </div>
+
+              <button
+                type="button"
+                onClick={() => setShowOptionalStep1(!showOptionalStep1)}
+                className="flex items-center gap-2 text-sm text-[#4a7c59] hover:text-[#1a472a] transition-colors mt-4"
+              >
+                <ChevronDown className={`w-4 h-4 transition-transform ${showOptionalStep1 ? 'rotate-180' : ''}`} />
+                {showOptionalStep1 ? 'Hide optional details' : 'Add optional details'}
+              </button>
+
+              {showOptionalStep1 && (
+              <div className="space-y-4 mt-4 pt-4 border-t border-[#1a472a]/10">
 
               {/* Interactive Map Pin Location - for globe map placement */}
               <div className="bg-[#f0f7f0] p-4 rounded-lg border border-[#4a7c59]/20">
@@ -542,6 +572,9 @@ export default function Apply() {
                 )}
               </div>
 
+              </div>
+              )}
+
               <div>
                 <Label htmlFor="vision">Project Vision *</Label>
                 <Textarea
@@ -621,6 +654,18 @@ export default function Apply() {
                   1 hectare = 2.471 acres | 1 acre = 0.4047 hectares
                 </p>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setShowOptionalStep2(!showOptionalStep2)}
+                className="flex items-center gap-2 text-sm text-[#4a7c59] hover:text-[#1a472a] transition-colors mt-4"
+              >
+                <ChevronDown className={`w-4 h-4 transition-transform ${showOptionalStep2 ? 'rotate-180' : ''}`} />
+                {showOptionalStep2 ? 'Hide optional details' : 'Add optional details'}
+              </button>
+
+              {showOptionalStep2 && (
+              <div className="space-y-4 mt-4 pt-4 border-t border-[#1a472a]/10">
 
               {/* Current Community Size */}
               <div className="border border-[#1a472a]/20 rounded-lg p-4 bg-[#f8f5f0]">
@@ -739,6 +784,9 @@ export default function Apply() {
                   </SelectContent>
                 </Select>
               </div>
+
+              </div>
+              )}
 
               <div>
                 <Label htmlFor="teamSize">Core Team Size *</Label>

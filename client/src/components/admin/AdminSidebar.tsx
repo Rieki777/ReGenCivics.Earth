@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Building2, Handshake, UserCheck,
   TrendingUp, FileText, Globe2, Shield, Megaphone, Search,
   BarChart3, Image, Gamepad2, Settings, ChevronLeft, ChevronRight,
-  ScrollText, Wallet, Map
+  ScrollText, Wallet, Map, ClipboardList
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -39,6 +39,7 @@ const NAV_GROUPS = [
       { id: 'banners', label: 'Banners', icon: Image },
       { id: 'custom-games', label: 'Custom Games', icon: Gamepad2 },
       { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+      { id: 'audit-log', label: 'Audit Log', icon: ClipboardList },
       { id: 'settings', label: 'Settings', icon: Settings },
     ]
   },

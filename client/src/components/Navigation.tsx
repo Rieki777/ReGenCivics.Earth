@@ -16,6 +16,7 @@ import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Cal
 import { Drawer } from "vaul";
 
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { AuthDialog } from "@/components/AuthDialog";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
@@ -61,6 +62,11 @@ export default function Navigation() {
   const { user, isAuthenticated, loading, logout } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
+  const { data: _msgUnreadData } = trpc.messages.unreadCount.useQuery(
+    undefined,
+    { enabled: !!user && isAuthenticated, refetchInterval: 10_000 }
+  );
+  const messagesUnreadCount = _msgUnreadData?.count ?? 0;
 
   // Convert SOCIAL_LINKS to array format for dropdown
   const socialLinks = Object.entries(SOCIAL_LINKS).map(([key, value]) => ({
@@ -83,6 +89,7 @@ export default function Navigation() {
   const isSocialsBlogActive = location === '/blog' || location.startsWith('/blog/') || location === '/socials' || location.startsWith('/community');
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-[#1a472a]/95 backdrop-blur-sm border-b border-[#7dd87d]/20" role="banner">
       <div className="container">
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
@@ -416,15 +423,33 @@ export default function Navigation() {
             {/* Notification Bell */}
             {isAuthenticated && user && <NotificationBell />}
 
+            {/* Messages icon */}
+            {isAuthenticated && user && (
+              <Link href="/messages">
+                <button
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors relative"
+                  aria-label="Messages"
+                >
+                  <MessageCircle className="w-5 h-5 text-white" />
+                  {messagesUnreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#7dd87d] text-[#1a472a] text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                      {messagesUnreadCount > 9 ? '9+' : messagesUnreadCount}
+                    </span>
+                  )}
+                </button>
+              </Link>
+            )}
+
             {/* Sign In / User Dropdown */}
             {loading ? (
               <div className="w-8 h-8 rounded-full bg-[#7dd87d]/20 animate-pulse" />
             ) : isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="flex items-center gap-2 text-white hover:bg-[#7dd87d]/20 hover:text-white rounded-full px-3"
+                    aria-label="Your profile"
                   >
                     <div className="w-8 h-8 rounded-full bg-[#7dd87d] flex items-center justify-center text-[#1a472a] font-bold text-sm">
                       {user.name?.charAt(0).toUpperCase() || 'U'}
@@ -992,5 +1017,30 @@ export default function Navigation() {
         onLogin={() => setAuthDialogOpen(false)}
       />
     </header>
+
+      {/* Mobile Bottom Tab Bar - 4 Paths */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#1a472a]/95 backdrop-blur-sm border-t border-[#7dd87d]/20 safe-area-pb">
+        <div className="grid grid-cols-4 h-16">
+          {[
+            { href: '/fund', icon: <Coins className="w-5 h-5" />, label: 'Fund', color: 'text-[#ffd700]' },
+            { href: '/land', icon: <Sprout className="w-5 h-5" />, label: 'Land', color: 'text-[#7dd87d]' },
+            { href: '/ally', icon: <Handshake className="w-5 h-5" />, label: 'Ally', color: 'text-cyan-400' },
+            { href: '/play', icon: <Heart className="w-5 h-5" />, label: 'Play', color: 'text-pink-400' },
+          ].map(({ href, icon, label, color }) => {
+            const active = location === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex flex-col items-center justify-center gap-1 transition-colors ${active ? color : 'text-white/40 hover:text-white/70'}`}
+              >
+                {icon}
+                <span className="text-[10px] font-medium">{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }

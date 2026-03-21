@@ -220,14 +220,18 @@ export function ExitIntentCapture() {
       className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-opacity duration-300 ${
         visible ? "opacity-100" : "opacity-0"
       }`}
+      role="presentation"
       onClick={handleDismiss}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
 
       <div
         className={`relative bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 max-w-md w-full shadow-2xl transition-all duration-300 ${
           visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-5"
         }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Stay connected with ReGen Civics"
         onClick={(e) => e.stopPropagation()}
       >
         <button

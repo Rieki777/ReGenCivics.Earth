@@ -1424,6 +1424,7 @@ export const userProfiles = mysqlTable("userProfiles", {
   avatarUrl: varchar("avatarUrl", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  lastActiveAt: timestamp("lastActiveAt"),
 });
 export type UserProfile = typeof userProfiles.$inferSelect;
 
@@ -1794,4 +1795,70 @@ export const adminNotifications = mysqlTable('adminNotifications', {
 });
 export type AdminNotification = typeof adminNotifications.$inferSelect;
 export type InsertAdminNotification = typeof adminNotifications.$inferInsert;
+
+/**
+ * Admin audit log — immutable record of every admin action taken on the platform.
+ * Rows are append-only (never updated or deleted) to provide a tamper-evident trail.
+ */
+export const adminAuditLog = mysqlTable('adminAuditLog', {
+  id: int('id').primaryKey().autoincrement(),
+  /** Admin user who performed the action */
+  adminUserId: int('adminUserId').notNull(),
+  /** High-level action category, e.g. "application.status_change", "user.ban" */
+  action: varchar('action', { length: 100 }).notNull(),
+  /** Type of entity affected, e.g. "application", "user", "forum_post" */
+  entityType: varchar('entityType', { length: 50 }),
+  /** ID of the entity affected */
+  entityId: int('entityId'),
+  /** Human-readable description of what changed */
+  description: text('description'),
+  /** JSON snapshot of before/after values (optional) */
+  metadata: json('metadata'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+}, (table) => ([
+  index('adminAuditLog_adminUserId_idx').on(table.adminUserId),
+  index('adminAuditLog_action_idx').on(table.action),
+  index('adminAuditLog_entityType_entityId_idx').on(table.entityType, table.entityId),
+  index('adminAuditLog_createdAt_idx').on(table.createdAt),
+]));
+export type AdminAuditLog = typeof adminAuditLog.$inferSelect;
+export type InsertAdminAuditLog = typeof adminAuditLog.$inferInsert;
+
+// ─── Direct Messaging ────────────────────────────────────────────────────────
+
+export const conversations = mysqlTable('conversations', {
+  id: int('id').primaryKey().autoincrement(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+}, (table) => ([
+  index('conversations_createdAt_idx').on(table.createdAt),
+]));
+export type Conversation = typeof conversations.$inferSelect;
+
+export const conversationParticipants = mysqlTable('conversationParticipants', {
+  id: int('id').primaryKey().autoincrement(),
+  conversationId: int('conversationId').notNull(),
+  userId: int('userId').notNull(),
+  lastReadAt: timestamp('lastReadAt'),
+  joinedAt: timestamp('joinedAt').defaultNow().notNull(),
+}, (table) => ([
+  index('convParticipants_conversationId_idx').on(table.conversationId),
+  index('convParticipants_userId_idx').on(table.userId),
+  index('convParticipants_userId_convId_idx').on(table.userId, table.conversationId),
+]));
+export type ConversationParticipant = typeof conversationParticipants.$inferSelect;
+
+export const directMessages = mysqlTable('directMessages', {
+  id: int('id').primaryKey().autoincrement(),
+  conversationId: int('conversationId').notNull(),
+  senderId: int('senderId').notNull(),
+  content: text('content').notNull(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  deletedAt: timestamp('deletedAt'),
+}, (table) => ([
+  index('directMessages_conversationId_idx').on(table.conversationId),
+  index('directMessages_senderId_idx').on(table.senderId),
+  index('directMessages_createdAt_idx').on(table.createdAt),
+]));
+export type DirectMessage = typeof directMessages.$inferSelect;
 

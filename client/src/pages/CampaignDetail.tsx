@@ -37,6 +37,8 @@ import { SEO } from "@/components/SEO";
 import { ShareButtons } from "@/components/ShareButtons";
 import { BackButton } from "@/components/BackButton";
 import VideoEmbed from "@/components/VideoEmbed";
+import { BlurImage } from "@/components/BlurImage";
+import { CampaignMilestones } from "@/components/CampaignMilestones";
 
 // Helper to detect device type
 function getDeviceType(): 'desktop' | 'mobile' | 'tablet' {
@@ -96,6 +98,15 @@ export default function CampaignDetail() {
     { campaignId: parseInt(id!), status: 'accepted' },
     { enabled: !!id }
   );
+
+  // Fetch related campaigns (active campaigns to show at the bottom)
+  const { data: allActiveCampaigns } = trpc.campaigns.list.useQuery(
+    { status: 'active' },
+    { staleTime: 5 * 60 * 1000 }
+  );
+  const relatedCampaigns = allActiveCampaigns
+    ?.filter((c) => c.id !== parseInt(id!))
+    .slice(0, 3);
   
   if (isLoading) {
     return <TaoSpinner fullPage size={72} />;
@@ -287,14 +298,24 @@ export default function CampaignDetail() {
         {/* Cover Image Hero (if no gallery but has cover) */}
         {campaign.coverImage && (!campaign.images || campaign.images.length === 0) && (
           <div className="rounded-3xl overflow-hidden mb-6 shadow-xl">
-            <img
+            <BlurImage
               src={campaign.coverImage.url}
               alt={campaign.coverImage.caption || campaign.title}
-              className="w-full h-48 md:h-64 object-cover"
+              className="w-full h-48 md:h-64"
               loading="lazy"
             />
           </div>
         )}
+
+        {/* Campaign Milestone Timeline */}
+        <CampaignMilestones
+          campaign={campaign}
+          contributions={(contributions || []).map((c) => ({
+            amount: c.estimatedValue,
+            createdAt: c.submittedAt,
+          }))}
+          currency={campaign.currency || 'USD'}
+        />
 
         {/* Contributors Section */}
         {contributions && contributions.length > 0 && (
@@ -744,6 +765,57 @@ export default function CampaignDetail() {
         </Tabs>
       </div>
       
+      {/* Related Campaigns */}
+      {relatedCampaigns && relatedCampaigns.length > 0 && (
+        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-8 mt-6 shadow-xl">
+          <h2 className="text-xl font-bold text-[#1a472a] mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <TrendingUp className="w-5 h-5 text-[#4a7c59]" />
+            More Campaigns
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {relatedCampaigns.map((c) => {
+              const cTotal = c.financialTarget || 0;
+              const cRaised = c.pledgedTotal || 0;
+              const cPct = cTotal > 0 ? Math.min((cRaised / cTotal) * 100, 100) : 0;
+              return (
+                <div key={c.id} className="flex flex-col bg-[#f0f7f0] rounded-2xl p-4 border border-[#1a472a]/10">
+                  <h3 className="font-bold text-[#1a472a] text-sm mb-1 line-clamp-2" style={{ fontFamily: 'var(--font-display)' }}>
+                    {c.title}
+                  </h3>
+                  {c.location && (
+                    <p className="text-xs text-[#1a472a]/50 flex items-center gap-1 mb-2">
+                      <MapPin className="w-3 h-3" />
+                      {c.location}
+                    </p>
+                  )}
+                  <p className="text-xs text-[#1a472a]/70 mb-3 line-clamp-2 flex-1">
+                    {c.description?.slice(0, 100)}{c.description && c.description.length > 100 ? "…" : ""}
+                  </p>
+                  {cTotal > 0 && (
+                    <div className="mb-3">
+                      <div className="flex justify-between text-xs text-[#1a472a]/60 mb-1">
+                        <span>{cPct.toFixed(0)}% funded</span>
+                      </div>
+                      <div className="w-full bg-[#1a472a]/10 rounded-full h-1.5">
+                        <div
+                          className="bg-[#4a7c59] h-1.5 rounded-full"
+                          style={{ width: `${cPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <Link href={`/campaign/${c.id}`}>
+                    <Button size="sm" variant="outline" className="w-full text-xs border-[#4a7c59] text-[#4a7c59] hover:bg-[#4a7c59] hover:text-white">
+                      View Campaign
+                    </Button>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Contribution Modal */}
       <ContributionModal
         isOpen={showContributionModal}
@@ -807,10 +879,10 @@ function CampaignPhotoGallery({ images }: { images: any[] }) {
           className="relative cursor-pointer group"
           onClick={() => setSelectedIndex(0)}
         >
-          <img
+          <BlurImage
             src={coverImage.url}
             alt={coverImage.caption || 'Campaign cover photo'}
-            className="w-full h-48 md:h-72 object-cover"
+            className="w-full h-48 md:h-72"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -837,10 +909,10 @@ function CampaignPhotoGallery({ images }: { images: any[] }) {
                   onClick={() => setSelectedIndex(idx + 1)}
                   className="aspect-square rounded-lg overflow-hidden relative group"
                 >
-                  <img
+                  <BlurImage
                     src={img.url}
                     alt={img.caption || `Photo ${idx + 2}`}
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />

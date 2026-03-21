@@ -81,11 +81,13 @@ describe("forum.posts", () => {
   it.skipIf(skipIfNoDb)("returns posts list (public access)", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
-    const posts = await caller.forum.posts({ limit: 10, offset: 0 });
-    expect(Array.isArray(posts)).toBe(true);
+    const result = await caller.forum.posts({ limit: 10 });
+    expect(result).toHaveProperty("posts");
+    expect(result).toHaveProperty("nextCursor");
+    expect(Array.isArray(result.posts)).toBe(true);
     // We created a test post earlier, so there should be at least one
-    if (posts.length > 0) {
-      const first = posts[0];
+    if (result.posts.length > 0) {
+      const first = result.posts[0];
       expect(first).toHaveProperty("id");
       expect(first).toHaveProperty("title");
       expect(first).toHaveProperty("content");
@@ -97,10 +99,10 @@ describe("forum.posts", () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     // Category 1 = General Discussion (has our test post)
-    const posts = await caller.forum.posts({ categoryId: 1, limit: 10, offset: 0 });
-    expect(Array.isArray(posts)).toBe(true);
+    const result = await caller.forum.posts({ categoryId: 1, limit: 10 });
+    expect(Array.isArray(result.posts)).toBe(true);
     // All returned posts should be in category 1
-    for (const post of posts) {
+    for (const post of result.posts) {
       expect(post.categoryId).toBe(1);
     }
   });

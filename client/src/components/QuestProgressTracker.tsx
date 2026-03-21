@@ -1,6 +1,8 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import { Footprints, Coins, Vote, CheckCircle2, Circle, Sparkles, X, Check, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface QuestProgress {
   completedQuests: string[];
@@ -74,6 +76,9 @@ export function useQuestProgressContext() {
 }
 
 export function QuestProgressProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  const completeMutation = trpc.quests.complete.useMutation();
+
   const [progress, setProgress] = useState<QuestProgress>({
     completedQuests: [],
     totalRegen: 0,
@@ -115,14 +120,14 @@ export function QuestProgressProvider({ children }: { children: React.ReactNode 
     const currentCount = progress.completionCount[questId] || 0;
     const rewards = QUEST_REWARDS[questId] || { regen: 0, rvoice: 0 };
     const maxCompletions = getMaxCompletions(questId);
-    
+
     if (currentCount >= maxCompletions) return; // Already at max completions
-    
+
     const newCount = currentCount + 1;
     const isFirstCompletion = !progress.completedQuests.includes(questId);
-    
+
     saveProgress({
-      completedQuests: isFirstCompletion 
+      completedQuests: isFirstCompletion
         ? [...progress.completedQuests, questId]
         : progress.completedQuests,
       totalRegen: progress.totalRegen + rewards.regen,
@@ -136,6 +141,15 @@ export function QuestProgressProvider({ children }: { children: React.ReactNode 
         [questId]: new Date().toISOString(),
       },
     });
+
+    // Persist first completion to the server so it appears on the player profile
+    if (isFirstCompletion && isAuthenticated) {
+      const title = questId
+        .replace(/-/g, " ")
+        .replace(/\bquest\b/gi, "Quest")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      completeMutation.mutate({ questId, questTitle: title });
+    }
   };
 
   const toggleQuest = (questId: string) => {

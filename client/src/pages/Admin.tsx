@@ -53,6 +53,8 @@ import {
   BookOpen,
   AlignJustify,
   Bell,
+  ClipboardList,
+  ChevronDown,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { TaoSpinner } from "@/components/TaoSpinner";
@@ -81,6 +83,159 @@ import { AdminAllianceTab, AdminCreateTab, AdminLiveTab, AdminRoleTab, AdminRole
 import { AdminOtherInquiriesTab } from "@/components/admin/AdminOtherInquiriesTab";
 import { AdminKanbanTab } from "@/components/admin/AdminKanbanTab";
 import { AdminCrowdpoolingTab, AdminBroadcastTab, AdminLOITab, AdminBannersTab, AdminImagesTab, AdminCustomGamesTab } from "@/components/admin/AdminSimpleTabs";
+
+// ─── Audit Log Tab ─────────────────────────────────────────────────────────────
+const DATE_RANGE_OPTIONS = [
+  { label: 'Last 7 days', days: 7 },
+  { label: 'Last 30 days', days: 30 },
+  { label: 'Last 90 days', days: 90 },
+  { label: 'All time', days: 0 },
+];
+
+function formatRelativeTime(date: Date): string {
+  const ms = Date.now() - date.getTime();
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
+
+function AdminAuditLogTab() {
+  const [actionFilter, setActionFilter] = useState<string>('all');
+  const [dateRangeDays, setDateRangeDays] = useState<number>(30);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+
+  const { data: entries, isLoading } = trpc.admin.auditLog.useQuery({ limit: 100 });
+
+  const now = Date.now();
+  const filtered = (entries ?? []).filter((entry: any) => {
+    if (actionFilter !== 'all' && entry.action !== actionFilter) return false;
+    if (dateRangeDays > 0) {
+      const age = now - new Date(entry.createdAt).getTime();
+      if (age > dateRangeDays * 24 * 60 * 60 * 1000) return false;
+    }
+    return true;
+  });
+
+  const uniqueActions = Array.from(new Set((entries ?? []).map((e: any) => e.action as string))).sort();
+
+  return (
+    <Card className="bg-white border border-[#1a472a]/10">
+      <CardHeader className="pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+            <ClipboardList className="w-5 h-5" />
+            Audit Log
+          </CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={actionFilter}
+              onChange={e => setActionFilter(e.target.value)}
+              className="bg-white border border-[#1a472a]/20 rounded-lg px-3 py-1.5 text-[#1a472a] text-sm"
+            >
+              <option value="all">All actions</option>
+              {uniqueActions.map(a => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+            <select
+              value={dateRangeDays}
+              onChange={e => setDateRangeDays(Number(e.target.value))}
+              className="bg-white border border-[#1a472a]/20 rounded-lg px-3 py-1.5 text-[#1a472a] text-sm"
+            >
+              {DATE_RANGE_OPTIONS.map(o => (
+                <option key={o.days} value={o.days}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-[#1a472a]/40" />
+          </div>
+        )}
+        {!isLoading && filtered.length === 0 && (
+          <p className="text-center text-[#1a472a]/50 text-sm py-12">No admin actions recorded yet.</p>
+        )}
+        {!isLoading && filtered.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#1a472a]/10 text-xs uppercase tracking-wide text-[#1a472a]/50">
+                  <th className="text-left px-4 py-2.5 font-medium">Date</th>
+                  <th className="text-left px-4 py-2.5 font-medium">Admin</th>
+                  <th className="text-left px-4 py-2.5 font-medium">Action</th>
+                  <th className="text-left px-4 py-2.5 font-medium">Entity</th>
+                  <th className="text-left px-4 py-2.5 font-medium">Description</th>
+                  <th className="px-4 py-2.5"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1a472a]/5">
+                {filtered.map((entry: any) => {
+                  const createdAt = new Date(entry.createdAt);
+                  const isExpanded = expandedRow === entry.id;
+                  return (
+                    <>
+                      <tr
+                        key={entry.id}
+                        className="hover:bg-[#f5f9f5] cursor-pointer transition-colors"
+                        onClick={() => setExpandedRow(isExpanded ? null : entry.id)}
+                      >
+                        <td className="px-4 py-3 text-[#1a472a]/70 whitespace-nowrap">
+                          <span title={createdAt.toLocaleString()}>
+                            {formatRelativeTime(createdAt)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-[#1a472a]/70">#{entry.adminUserId}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-block bg-[#1a472a]/10 text-[#1a472a] text-xs px-2 py-0.5 rounded font-mono">
+                            {entry.action}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-[#1a472a]/70">
+                          {entry.entityType && (
+                            <span>
+                              {entry.entityType}
+                              {entry.entityId ? ` #${entry.entityId}` : ''}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-[#1a472a] max-w-xs truncate">
+                          {entry.description ?? '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          {entry.metadata && (
+                            <ChevronDown
+                              className={`w-4 h-4 text-[#1a472a]/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            />
+                          )}
+                        </td>
+                      </tr>
+                      {isExpanded && entry.metadata && (
+                        <tr key={`${entry.id}-meta`} className="bg-[#f0f7f0]">
+                          <td colSpan={6} className="px-4 py-3">
+                            <pre className="text-xs text-[#1a472a]/80 whitespace-pre-wrap font-mono bg-white border border-[#1a472a]/10 rounded-lg p-3 overflow-x-auto">
+                              {JSON.stringify(entry.metadata, null, 2)}
+                            </pre>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 // ─── Admin: Custom Game Waitlist ──────────────────────────────────────────────
 function AdminCustomGameWaitlist() {
@@ -3024,6 +3179,7 @@ function AdminDashboard() {
   const [aiSelectedContact, setAiSelectedContact] = useState<{ email?: string; name?: string } | null>(null);
   const [globalSearch, setGlobalSearch] = useState('');
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [compact, setCompact] = useState(() => {
     try { return localStorage.getItem('admin_density') === 'compact'; } catch { return false; }
   });
@@ -3042,6 +3198,18 @@ function AdminDashboard() {
       setAiSelectedContact({ email: action.contactEmail, name: action.contactEmail });
     }
   }
+
+  // Debounce global search for tRPC endpoint
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(globalSearch.trim()), 300);
+    return () => clearTimeout(t);
+  }, [globalSearch]);
+
+  // Fetch forum posts + campaigns via globalSearch tRPC router
+  const { data: trpcSearchResults } = trpc.globalSearch.query.useQuery(
+    { q: debouncedSearch },
+    { enabled: debouncedSearch.length >= 2 }
+  );
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -3144,7 +3312,8 @@ function AdminDashboard() {
   );
 
   const q = globalSearch.trim().toLowerCase();
-  const globalResults = q.length > 1 ? {
+  const isSearching = q.length >= 2;
+  const globalResults = isSearching ? {
     investors: (investors || []).filter((i: any) =>
       i.fullName?.toLowerCase().includes(q) || i.email?.toLowerCase().includes(q) || i.organization?.toLowerCase().includes(q)
     ).slice(0, 4),
@@ -3154,6 +3323,8 @@ function AdminDashboard() {
     inquiries: (inquiries || []).filter((i: any) =>
       i.fullName?.toLowerCase().includes(q) || i.email?.toLowerCase().includes(q)
     ).slice(0, 4),
+    forumPosts: trpcSearchResults?.forumPosts ?? [],
+    campaigns: trpcSearchResults?.campaigns ?? [],
   } : null;
 
   // Investor investment range totals for display
@@ -3261,21 +3432,35 @@ function AdminDashboard() {
             <input
               type="text"
               data-global-search
-              placeholder='Search all contacts… (press "/" to focus)'
+              placeholder='Search contacts, projects, posts… (press "/" to focus)'
               value={globalSearch}
               onChange={(e) => { setGlobalSearch(e.target.value); setGlobalSearchOpen(true); }}
               onFocus={() => setGlobalSearchOpen(true)}
               onBlur={() => setTimeout(() => setGlobalSearchOpen(false), 200)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') { setGlobalSearch(''); setGlobalSearchOpen(false); }
+                if (e.key === 'Enter' && globalResults) {
+                  // Navigate to first available result
+                  const first =
+                    globalResults.investors[0] ? (() => { setInvestorSearch(globalResults.investors[0].email || globalResults.investors[0].fullName); setActiveTab('investors'); setGlobalSearch(''); }) :
+                    globalResults.applications[0] ? (() => { setAppSearch(globalResults.applications[0].projectName); setActiveTab('applications'); setGlobalSearch(''); }) :
+                    globalResults.inquiries[0] ? (() => { setActiveTab(globalResults.inquiries[0].pathType || 'live'); setGlobalSearch(''); }) :
+                    globalResults.campaigns[0] ? (() => { window.open(globalResults.campaigns[0].url, '_blank'); setGlobalSearch(''); }) :
+                    globalResults.forumPosts[0] ? (() => { window.open(globalResults.forumPosts[0].url, '_blank'); setGlobalSearch(''); }) :
+                    null;
+                  if (first) first();
+                }
+              }}
               className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
             {globalSearch && (
-              <button onClick={() => setGlobalSearch('')} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/65 hover:text-[#1a472a]">
+              <button onClick={() => { setGlobalSearch(''); setGlobalSearchOpen(false); }} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/65 hover:text-[#1a472a]">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
-            {globalSearchOpen && globalResults && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#1a472a]/20 rounded-xl shadow-xl z-50 overflow-hidden">
-                {globalResults.investors.length === 0 && globalResults.applications.length === 0 && globalResults.inquiries.length === 0 ? (
+            {globalSearchOpen && isSearching && globalResults && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#1a472a]/20 rounded-xl shadow-xl z-50 overflow-hidden max-h-[60vh] overflow-y-auto">
+                {globalResults.investors.length === 0 && globalResults.applications.length === 0 && globalResults.inquiries.length === 0 && globalResults.forumPosts.length === 0 && globalResults.campaigns.length === 0 ? (
                   <p className="p-4 text-sm text-[#1a472a]/65 text-center">No results for "{globalSearch}"</p>
                 ) : (
                   <div className="divide-y divide-[#1a472a]/10">
@@ -3315,6 +3500,34 @@ function AdminDashboard() {
                             <span className="text-sm text-[#1a472a] font-medium">{i.fullName || i.email}</span>
                             <span className="text-xs text-[#1a472a]/70">{i.pathType?.replace(/_/g, ' ')}</span>
                           </button>
+                        ))}
+                      </div>
+                    )}
+                    {globalResults.campaigns.length > 0 && (
+                      <div>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-blue-50">Campaigns</p>
+                        {globalResults.campaigns.map((c: any) => (
+                          <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer"
+                            className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2 block"
+                            onClick={() => setGlobalSearch('')}>
+                            <Globe className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                            <span className="text-sm text-[#1a472a] font-medium">{c.title}</span>
+                            <ExternalLink className="w-3 h-3 text-[#1a472a]/40 ml-auto flex-shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    {globalResults.forumPosts.length > 0 && (
+                      <div>
+                        <p className="px-3 py-1.5 text-xs font-semibold text-[#1a472a]/70 uppercase tracking-wide bg-teal-50">Forum Posts</p>
+                        {globalResults.forumPosts.map((p: any) => (
+                          <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer"
+                            className="w-full text-left px-3 py-2 hover:bg-[#f0f7f0] flex items-center gap-2 block"
+                            onClick={() => setGlobalSearch('')}>
+                            <BookOpen className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
+                            <span className="text-sm text-[#1a472a] font-medium">{p.title}</span>
+                            <ExternalLink className="w-3 h-3 text-[#1a472a]/40 ml-auto flex-shrink-0" />
+                          </a>
                         ))}
                       </div>
                     )}
@@ -3548,6 +3761,11 @@ function AdminDashboard() {
 
           <TabsContent value="custom-games">
             <AdminCustomGamesTab AdminCustomGameWaitlistComp={AdminCustomGameWaitlist} />
+          </TabsContent>
+
+          {/* Audit Log Tab */}
+          <TabsContent value="audit-log">
+            <AdminAuditLogTab />
           </TabsContent>
         </Tabs>
       </div>

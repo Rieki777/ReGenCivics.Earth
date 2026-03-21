@@ -232,8 +232,18 @@ export function QuestBadges() {
 
       {/* Badges Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          role="presentation"
+          onClick={() => setIsOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Quest Badges"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="bg-gradient-to-r from-[#1a472a] to-[#2e7d32] p-6 text-white">
               <div className="flex justify-between items-start">

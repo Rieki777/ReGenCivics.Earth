@@ -1453,9 +1453,13 @@ export default function CrowdPoolingProjects() {
           {activeTab !== "upcoming" && (
             <>
               {dbLoading && (
-                <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="animate-pulse bg-white/5 h-48 rounded-xl" />
+                    <div key={i} className="animate-pulse rounded-2xl bg-white/10 h-72 p-6 space-y-4">
+                      <div className="h-40 bg-[#1a472a]/40 rounded-xl" />
+                      <div className="h-4 bg-[#7dd87d]/20 rounded w-3/4" />
+                      <div className="h-3 bg-[#7dd87d]/10 rounded w-1/2" />
+                    </div>
                   ))}
                 </div>
               )}
