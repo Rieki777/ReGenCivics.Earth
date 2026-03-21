@@ -28,8 +28,8 @@ const pathCards = [
     glowColor: "shadow-amber-400/20",
     iconColor: "text-amber-300",
     accentColor: "#fbbf24",
-    image: "https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png",
-    activatedImage: "https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png",
+    image: "https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp",
+    activatedImage: "https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp",
   },
   {
     id: "land",
@@ -42,8 +42,8 @@ const pathCards = [
     glowColor: "shadow-[#7dd87d]/20",
     iconColor: "text-[#7dd87d]",
     accentColor: "#7dd87d",
-    image: "https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png",
-    activatedImage: "https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png",
+    image: "https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp",
+    activatedImage: "https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp",
   },
   {
     id: "ally",
@@ -56,8 +56,8 @@ const pathCards = [
     glowColor: "shadow-blue-400/20",
     iconColor: "text-blue-300",
     accentColor: "#60a5fa",
-    image: "https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png",
-    activatedImage: "https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png",
+    image: "https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp",
+    activatedImage: "https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp",
   },
   {
     id: "play",
@@ -70,8 +70,8 @@ const pathCards = [
     glowColor: "shadow-purple-400/20",
     iconColor: "text-purple-300",
     accentColor: "#c084fc",
-    image: "https://assets.regencivics.earth/LAizfmKwiZguwYMz.png",
-    activatedImage: "https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png",
+    image: "https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp",
+    activatedImage: "https://assets.regencivics.earth/qDmGFHBsFPyCECbM.webp",
   },
 ];
 

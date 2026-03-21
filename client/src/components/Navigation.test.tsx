@@ -40,6 +40,17 @@ vi.mock('@/components/NotificationBell', () => ({
   NotificationBell: () => <span data-testid="notification-bell" />,
 }));
 
+// Mock trpc (Navigation calls trpc.messages.unreadCount.useQuery)
+vi.mock('@/lib/trpc', () => ({
+  trpc: {
+    messages: {
+      unreadCount: {
+        useQuery: () => ({ data: { count: 0 } }),
+      },
+    },
+  },
+}));
+
 // Mock vaul Drawer
 vi.mock('vaul', () => ({
   Drawer: {

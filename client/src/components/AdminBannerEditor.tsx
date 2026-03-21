@@ -3,7 +3,7 @@
  * Admin interface for editing site banners with markdown support
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { Streamdown } from 'streamdown';
+
+const Streamdown = lazy(() => import('streamdown').then(m => ({ default: m.Streamdown })));
 
 interface BannerEditorProps {
   bannerKey: string;
@@ -182,7 +183,9 @@ export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
           <TabsContent value="preview" className="space-y-4">
             <div className="bg-gradient-to-r from-[#7dd87d] via-[#4a9f4a] to-[#7dd87d] text-[#1a472a] py-6 px-4 rounded-lg">
               <div className="text-sm sm:text-base font-semibold">
-                <Streamdown>{content}</Streamdown>
+                <Suspense fallback={<span>...</span>}>
+                  <Streamdown>{content}</Streamdown>
+                </Suspense>
               </div>
               {displayEndDate && (
                 <p className="text-xs text-[#1a472a]/70 mt-3">

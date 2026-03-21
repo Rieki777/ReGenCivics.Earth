@@ -10,6 +10,20 @@ import { sanitizeInput } from "../_core/security";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
 
+// In-memory cache for forum categories (refreshed every 5 minutes)
+let cachedCategories: Awaited<ReturnType<typeof db.listForumCategories>> | null = null;
+let categoriesCachedAt = 0;
+const CATEGORIES_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getCachedCategories() {
+  const now = Date.now();
+  if (!cachedCategories || now - categoriesCachedAt > CATEGORIES_TTL) {
+    cachedCategories = await db.listForumCategories();
+    categoriesCachedAt = now;
+  }
+  return cachedCategories;
+}
+
 export const forumRouter = router({
   // List all categories with post counts (cached 5 min)
   categories: publicProcedure.query(async () => {
@@ -116,13 +130,14 @@ export const forumRouter = router({
 
       // Pre-fetch bioregions for name lookup
       const allBioregions = await db2.select().from(bioregions);
+      const bioregionMap = new Map(allBioregions.map(b => [b.id, b]));
       // Batch-fetch all authors in one query (eliminates N+1)
       const authorIds = posts.map(p => p.authorId);
       const authorsMap = await db.getUsersByIds(authorIds);
       const enriched = posts.map((post) => {
         const author = authorsMap[post.authorId];
         const bioregionName = post.bioregionId
-          ? (allBioregions.find(b => b.id === post.bioregionId)?.name ?? null)
+          ? (bioregionMap.get(post.bioregionId)?.name ?? null)
           : null;
         return {
           ...post,
@@ -144,7 +159,7 @@ export const forumRouter = router({
         .where(sql`MATCH(${forumPosts.title}, ${forumPosts.content}) AGAINST(${input.q} IN BOOLEAN MODE)`)
         .limit(20);
       const authorsMap = await db.getUsersByIds(rows.map(p => p.authorId));
-      const cats = await db.listForumCategories();
+      const cats = await getCachedCategories();
       return rows.map((post) => {
         const category = cats.find(c => c.id === post.categoryId);
         return {
@@ -166,7 +181,7 @@ export const forumRouter = router({
       const [author, authorProfile, category] = await Promise.all([
         db.getUserById(post.authorId),
         db.getPlayerProfileByUserId(post.authorId),
-        db.listForumCategories().then(cats => cats.find(c => c.id === post.categoryId)),
+        getCachedCategories().then(cats => cats.find(c => c.id === post.categoryId)),
       ]);
       const authorBadges: string[] = (() => {
         try { return JSON.parse(authorProfile?.badges ?? "[]"); } catch { return []; }
@@ -240,7 +255,7 @@ export const forumRouter = router({
 
   // Get all active-project forum threads (for Map pin links)
   activeProjectThreads: publicProcedure.query(async () => {
-    const cats = await db.listForumCategories();
+    const cats = await getCachedCategories();
     // Try multiple slugs that might hold land project threads
     const LAND_SLUGS = ["active-projects", "land-project-spaces", "land-projects-spaces"];
     const cat = cats.find(c => LAND_SLUGS.includes(c.slug));
@@ -250,7 +265,7 @@ export const forumRouter = router({
   }),
 
   activeOrganisationThreads: publicProcedure.query(async () => {
-    const cats = await db.listForumCategories();
+    const cats = await getCachedCategories();
     // alliance-partners has the actual content; active-organisations is the fallback
     const cat = cats.find(c => c.slug === "alliance-partners") ?? cats.find(c => c.slug === "active-organisations");
     if (!cat) return [];
@@ -348,7 +363,7 @@ export const forumRouter = router({
       const posts = await db.listForumPostsByChainId(input.chainId);
       const [authorsMap, cats] = await Promise.all([
         db.getUsersByIds(posts.map(p => p.authorId)),
-        db.listForumCategories(),
+        getCachedCategories(),
       ]);
       return posts.map((post) => {
         const category = cats.find(c => c.id === post.categoryId);
@@ -372,7 +387,7 @@ export const forumRouter = router({
       const posts = await db.listForumPostsByType(input.postType, input.limit, input.offset);
       const [authorsMap, cats] = await Promise.all([
         db.getUsersByIds(posts.map(p => p.authorId)),
-        db.listForumCategories(),
+        getCachedCategories(),
       ]);
       return posts.map((post) => {
         const category = cats.find(c => c.id === post.categoryId);
@@ -392,7 +407,7 @@ export const forumRouter = router({
       const posts = await db.listForumChainPosts(input.limit, input.offset);
       const [authorsMap, cats] = await Promise.all([
         db.getUsersByIds(posts.map(p => p.authorId)),
-        db.listForumCategories(),
+        getCachedCategories(),
       ]);
       return posts.map((post) => {
         const category = cats.find(c => c.id === post.categoryId);
@@ -584,11 +599,13 @@ export const forumRouter = router({
   userProfile: publicProcedure
     .input(z.object({ userId: z.number() }))
     .query(async ({ input }) => {
-      const user = await db.getUserById(input.userId);
-      const profile = await db.getUserProfile(input.userId);
-      const stats = await db.getUserForumStats(input.userId);
-      const recentPosts = await db.getUserRecentPosts(input.userId, 5);
-      const recentReplies = await db.getUserRecentReplies(input.userId, 5);
+      const [user, profile, stats, recentPosts, recentReplies] = await Promise.all([
+        db.getUserById(input.userId),
+        db.getUserProfile(input.userId),
+        db.getUserForumStats(input.userId),
+        db.getUserRecentPosts(input.userId, 5),
+        db.getUserRecentReplies(input.userId, 5),
+      ]);
       return {
         user: user ? { id: user.id, name: user.name, createdAt: user.createdAt } : null,
         profile,

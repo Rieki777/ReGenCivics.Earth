@@ -71,10 +71,16 @@ export function useGlobalScrollReveal() {
     observeAll();
 
     // Re-observe after navigation (wouter doesn't fire popstate consistently)
-    const mutationObserver = new MutationObserver(observeAll);
+    // Debounce to avoid firing observeAll on every single DOM mutation
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    const mutationObserver = new MutationObserver(() => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(observeAll, 100);
+    });
     mutationObserver.observe(document.body, { childList: true, subtree: true });
 
     return () => {
+      clearTimeout(debounceTimer);
       observer.disconnect();
       mutationObserver.disconnect();
       document.head.removeChild(style);

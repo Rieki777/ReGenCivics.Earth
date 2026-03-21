@@ -46,7 +46,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
         <div className="bg-gradient-to-br from-[#d4a574]/15 to-[#1a472a]/60 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <img
-              src="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png"
+              src="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp"
               alt="RCVoice Fund Token"
               width="96"
               height="96"
@@ -104,7 +104,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
         <div className="bg-gradient-to-br from-purple-900/30 to-[#1a472a]/60 rounded-2xl p-8 border border-purple-500/40 space-y-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <img
-              src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png"
+              src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp"
               alt="RGVoice Game Token"
               width="96"
               height="96"
@@ -170,7 +170,7 @@ function TwoTokensSection() {
         <div className="bg-[#1a472a]/60 rounded-xl p-6 border-l-4 border-[#d4a574] transition-all">
           <div className="flex items-center gap-4 mb-3">
             <img
-              src="https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.png"
+              src="https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.webp"
               alt="$RCivics Token"
               width="48"
               height="48"
@@ -187,7 +187,7 @@ function TwoTokensSection() {
         <div className="bg-[#0d2818]/70 rounded-xl p-6 border-l-4 border-[#7dd87d] transition-all">
           <div className="flex items-center gap-4 mb-4">
             <img
-              src="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png"
+              src="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.webp"
               alt="$ReGen Token"
               width="48"
               height="48"
@@ -762,7 +762,7 @@ export default function Governance() {
                     <th className="py-4 px-4 w-1/3">
                       <div className="flex flex-col items-center gap-2">
                         <img
-                          src="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png"
+                          src="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp"
                           alt="RCVoice"
                           width="40"
                           height="40"
@@ -776,7 +776,7 @@ export default function Governance() {
                     <th className="py-4 px-4 w-1/3">
                       <div className="flex flex-col items-center gap-2">
                         <img
-                          src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png"
+                          src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp"
                           alt="RGVoice"
                           width="40"
                           height="40"
@@ -934,7 +934,7 @@ export default function Governance() {
             {/* Fund Governance Structure Graphic */}
             <div className="mb-12 flex justify-center">
               <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/governance-fund-structure-v2_688d510f.png"
+                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/governance-fund-structure-v2_688d510f.webp"
                 alt="ReGen Civics Fund Governance Structure"
                 width="1200"
                 height="800"
@@ -1010,7 +1010,7 @@ export default function Governance() {
               </p>
               <div className="flex justify-center">
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/governance-evolution-v2_66ad1937.png"
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/governance-evolution-v2_66ad1937.webp"
                   alt="ReGen Civics Governance Evolution"
                   width="1200"
                   height="800"
@@ -1028,7 +1028,7 @@ export default function Governance() {
               </p>
               <div className="flex justify-center mb-8">
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/seasonal-voting-v2_08cf1fa6.png"
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/seasonal-voting-v2_08cf1fa6.webp"
                   alt="ReGen Civics Seasonal Voting Process"
                   width="1200"
                   height="800"

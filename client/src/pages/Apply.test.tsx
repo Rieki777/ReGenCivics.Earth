@@ -25,6 +25,11 @@ vi.mock('@/lib/trpc', () => ({
         }),
       },
     },
+    userProfiles: {
+      getMe: {
+        useQuery: () => ({ data: null }),
+      },
+    },
     useUtils: () => ({
       applications: { invalidate: vi.fn() },
     }),

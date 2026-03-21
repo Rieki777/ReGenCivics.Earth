@@ -401,7 +401,7 @@ export default function Game() {
             <AutoplayVideo
               videoId="C9U0JTsqKv8"
               title="ReGen Civics Overview"
-              thumbnailUrl="https://assets.regencivics.earth/NnpPOudclSlFoAuh.png"
+              thumbnailUrl="https://assets.regencivics.earth/NnpPOudclSlFoAuh.webp"
               thumbnailAlt="Watch the ReGen Civics Overview"
               playLabel={pageCopy.game.overview.playLabel}
             />
@@ -962,7 +962,7 @@ export default function Game() {
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <TokenInfoCard
-                iconSrc="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png"
+                iconSrc="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp"
                 title="RGVoice"
                 subtitle="Game Governance Token"
                 description="RGVoice represents how much 'weight your voice carries' in game decisions. We believe that the more you contribute, the wiser your decisions become."
@@ -975,7 +975,7 @@ export default function Game() {
                 color="border-purple-500/50"
               />
               <TokenInfoCard
-                iconSrc="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png"
+                iconSrc="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.webp"
                 title="$ReGen"
                 subtitle="Game Utility Token"
                 description="$ReGen is our tradable utility token representing economic participation in the Game."
@@ -1005,7 +1005,7 @@ export default function Game() {
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <TokenInfoCard
-                iconSrc="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png"
+                iconSrc="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp"
                 title="RCVoice"
                 subtitle="Fund Governance Token"
                 description="RCVoice governs fund decisions. Council holds 40% voice; Land Projects, Alliance Orgs, and Investors each hold 20%. Voice evolves over time as the community matures."
@@ -1019,7 +1019,7 @@ export default function Game() {
                 color="border-amber-500/50"
               />
               <TokenInfoCard
-                iconSrc="https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.png"
+                iconSrc="https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.webp"
                 title="$RCivics"
                 subtitle="Rewards & Returns Token"
                 description="$RCivics is your claim on fund returns. Portfolio distributions are sent proportionally to $RCivics holders - separate from governance voice."

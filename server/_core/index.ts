@@ -53,6 +53,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
+  app.set('etag', 'strong');
   const server = createServer(app);
 
   // Gzip compression for all responses (reduces transfer size by 60-80%)
@@ -111,8 +112,19 @@ async function startServer() {
     });
   });
 
+  // Sitemap cache (regenerated at most once per hour)
+  let sitemapCache: { xml: string; generatedAt: number } | null = null;
+  const SITEMAP_TTL = 60 * 60 * 1000; // 1 hour
+
   // Dynamic sitemap — includes static routes + DB-driven blog/campaign/forum URLs
   app.get('/sitemap.xml', async (_req, res) => {
+    // Return cached sitemap if still fresh
+    if (sitemapCache && Date.now() - sitemapCache.generatedAt < SITEMAP_TTL) {
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(sitemapCache.xml);
+    }
+
     const BASE = 'https://regencivics.earth';
     const now = new Date().toISOString().split('T')[0];
 
@@ -206,9 +218,12 @@ async function startServer() {
       '</urlset>',
     ];
 
+    const xml = lines.join('\n');
+    sitemapCache = { xml, generatedAt: Date.now() };
+
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.send(lines.join('\n'));
+    res.send(xml);
   });
   app.get('/robots.txt', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/public/robots.txt'));

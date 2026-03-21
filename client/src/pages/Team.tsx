@@ -495,7 +495,7 @@ export default function Team() {
           {/* Static Ikigai Diagram Image */}
           <div className="relative max-w-2xl mx-auto mb-8">
             <LazyImage
-              src="https://assets.regencivics.earth/sceUJeMUZWMBHqFi.png"
+              src="https://assets.regencivics.earth/sceUJeMUZWMBHqFi.webp"
               alt="Regenerative Ikigai - The intersection of what you love creating, what you're good at, what the renaissance needs, and what ReGen Civics will pay you for"
               className="w-full h-auto"
               aspect="1/1"

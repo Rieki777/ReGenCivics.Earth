@@ -17,14 +17,14 @@ import { TaoSpinner } from '@/components/TaoSpinner';
 
 // Home page path card images (kept for backwards compatibility)
 const HOME_IMAGES = [
-  'https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png',
-  'https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png',
-  'https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png',
-  'https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png',
-  'https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png',
-  'https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png',
-  'https://assets.regencivics.earth/LAizfmKwiZguwYMz.png',
-  'https://assets.regencivics.earth/qDmGFHsBFPyCECbM.png',
+  'https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp',
+  'https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp',
+  'https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp',
+  'https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp',
+  'https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp',
+  'https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp',
+  'https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp',
+  'https://assets.regencivics.earth/qDmGFHsBFPyCECbM.webp',
 ];
 
 function preloadImages(urls: string[]): Promise<void> {

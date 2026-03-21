@@ -33,11 +33,11 @@ import { questData, QUEST_BEST_SEASONS, SEASON_HERO } from "@/data/questData";
 import { seasonalQuestsData } from "@/data/seasonalQuestsData";
 import { pageCopy } from "@/data/pageCopy";
 
-// Image base URL for quest art  -  drop files matching quest-NN-slug.png to this path
+// Image base URL for quest art  -  drop files matching quest-NN-slug.webp to this path
 const QUEST_IMG_BASE = "https://assets.regencivics.earth/quests";
 
 function questImageUrl(id: number, slug: string) {
-  return `${QUEST_IMG_BASE}/quest-${String(id).padStart(2, '0')}-${slug}.png`;
+  return `${QUEST_IMG_BASE}/quest-${String(id).padStart(2, '0')}-${slug}.webp`;
 }
 
 function questImageFallback(id: number, slug: string) {
@@ -262,7 +262,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
               {imgUrl && (
                 <a
                   href={imgUrl}
-                  download={`quest-${String(quest.id).padStart(2,'0')}-${slug}.png`}
+                  download={`quest-${String(quest.id).padStart(2,'0')}-${slug}.webp`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-xs bg-[#d4a574]/20 hover:bg-[#d4a574]/40 text-[#8b6135] border border-[#d4a574]/40 px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"

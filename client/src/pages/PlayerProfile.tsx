@@ -264,7 +264,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                       <h4 className="font-semibold text-[#1a472a] text-sm">Where do I find this?</h4>
                     </div>
                     <div className="p-3">
-                      <img src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png" alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" loading="lazy" />
+                      <img src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp" alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" loading="lazy" />
                       <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
                         <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
                         <li>Look at the top right of the page</li>
@@ -381,7 +381,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
                   </div>
                   <div className="p-3">
                     <img
-                      src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png"
+                      src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp"
                       alt="Hypha profile showing account address with copy icon"
                       width="400"
                       height="300"
@@ -408,7 +408,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
           
           <div className="bg-[#f0ebe3] border border-[#7dd87d]/30 rounded-lg p-3">
             <img
-              src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png"
+              src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp"
               alt="Hypha profile showing account address"
               width="400"
               height="300"

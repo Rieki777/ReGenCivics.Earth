@@ -455,7 +455,7 @@ export default function Fund() {
             <AutoplayVideo
               videoId="_LO2sItSofo"
               title="Fund Overview - Coming Soon"
-              thumbnailUrl="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.png"
+              thumbnailUrl="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp"
               thumbnailAlt="Fund overview video coming soon"
               comingSoon={true}
             />
@@ -538,7 +538,7 @@ export default function Fund() {
                     aspect="16/9"
                   />
                   <LazyImage
-                    src="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.png"
+                    src="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp"
                     alt="Underwater tree of life with bridges and community"
                     className="w-full h-48 md:h-56 object-cover rounded-lg"
                     aspect="16/9"
@@ -593,7 +593,7 @@ export default function Fund() {
                 playsInline
                 preload="metadata"
                 className="w-full h-auto"
-                poster="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.png"
+                poster="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp"
               >
                 <source src="https://assets.regencivics.earth/VeYvNDrIyHjuiPlZ.mp4" type="video/mp4" />
               </video>

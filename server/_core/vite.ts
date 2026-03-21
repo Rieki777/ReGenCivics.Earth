@@ -75,6 +75,7 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath, {
     maxAge: "1y",
     immutable: true,
+    etag: true,
     setHeaders(res, filePath) {
       // Don't cache HTML files — they must always reflect the latest deploy
       if (filePath.endsWith(".html")) {

@@ -42,6 +42,10 @@ export function useCsrfToken(): string | null {
  * Used by the tRPC client to inject the header on mutations.
  */
 export function getCsrfToken(): string | null {
+  if (!cachedToken && !fetchPromise) {
+    // Lazy init: start fetching on first access instead of at module load
+    fetchCsrfToken();
+  }
   return cachedToken;
 }
 

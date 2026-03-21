@@ -22,10 +22,7 @@ import { getLoginUrl } from "./const";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { GoogleTranslateProvider } from "@/components/GoogleTranslate";
 import "./index.css";
-import { getCsrfToken, initCsrfToken } from "@/hooks/useCsrfToken";
-
-// Prime CSRF token cache early so it's available for the first mutation
-initCsrfToken();
+import { getCsrfToken } from "@/hooks/useCsrfToken";
 
 const queryClient = new QueryClient({
   defaultOptions: {

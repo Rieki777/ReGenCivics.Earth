@@ -96,11 +96,18 @@ export function GoogleTranslateProvider({ children }: { children?: React.ReactNo
       }
     };
 
-    // Load the Google Translate script
-    const script = document.createElement('script');
-    script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-    script.async = true;
-    document.body.appendChild(script);
+    // Defer Google Translate script until browser is idle (non-blocking)
+    const loadScript = () => {
+      const script = document.createElement('script');
+      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.async = true;
+      document.body.appendChild(script);
+    };
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(loadScript, { timeout: 4000 });
+    } else {
+      setTimeout(loadScript, 3000);
+    }
 
     return () => {
       // Cleanup
