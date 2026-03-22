@@ -286,7 +286,11 @@ export const eventsRouter = router({
 
   // ── Admin: manually send reminder emails for an event ─────
   sendReminders: adminProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({
+      id: z.number(),
+      customSubject: z.string().max(200).optional(), // overrides default subject
+      customBody: z.string().max(2000).optional(),   // overrides default body paragraph
+    }))
     .mutation(async ({ input }) => {
       const database = await getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -314,6 +318,9 @@ export const eventsRouter = router({
       const zoomUrl = event.zoomUrl ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
       const scheduleUrl = `${APP_BASE_URL}/schedule`;
 
+      const subject = input.customSubject?.trim() || `Reminder: ${event.title} is tomorrow`;
+      const bodyText = input.customBody?.trim() || (event.description ?? "");
+
       const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
         <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
           <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
@@ -323,7 +330,7 @@ export const eventsRouter = router({
           <p style="color:#888;font-size:13px;margin:0 0 6px 0;">Starting in ~24 hours</p>
           <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2>
           <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>
-          ${event.description ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${event.description}</p>` : ""}
+          ${bodyText ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${bodyText}</p>` : ""}
           <a href="${zoomUrl}" style="display:inline-block;background:#2d8cff;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">Join on Zoom</a>
           <a href="${scheduleUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
         </div>
@@ -340,7 +347,7 @@ export const eventsRouter = router({
         const batch = emails.slice(i, i + BATCH);
         await sendEmail({
           to: batch,
-          subject: `Reminder: ${event.title} is tomorrow`,
+          subject,
           html,
           template: "event_reminder",
         });

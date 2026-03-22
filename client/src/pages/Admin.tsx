@@ -3984,6 +3984,9 @@ function AdminEventsTab() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState(defaultForm);
   const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
+  const [reminderEditorOpen, setReminderEditorOpen] = useState<number | null>(null);
+  const [customSubject, setCustomSubject] = useState('');
+  const [customBody, setCustomBody] = useState('');
 
   const countMap = Object.fromEntries(signupCounts.map(r => [r.eventId, r.count]));
 
@@ -4168,18 +4171,23 @@ function AdminEventsTab() {
                       className="text-white/60 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
                       <Edit size={11} className="mr-1" /> Edit
                     </Button>
-                    <Button size="sm" variant="ghost"
-                      disabled={reminderMutation.isPending}
-                      onClick={async () => {
-                        const res = await reminderMutation.mutateAsync({ id: ev.id });
-                        setReminderSuccess(ev.id);
-                        setTimeout(() => setReminderSuccess(null), 3000);
-                      }}
-                      className="text-white/60 hover:text-yellow-300 hover:bg-yellow-500/10 h-7 px-2 text-xs">
-                      {reminderSuccess === ev.id
-                        ? <><CheckCheck size={11} className="mr-1 text-yellow-400" /> Sent</>
-                        : <><Bell size={11} className="mr-1" /> Send Reminders</>}
-                    </Button>
+                    {reminderSuccess === ev.id
+                      ? <Button size="sm" variant="ghost" disabled className="text-yellow-400 h-7 px-2 text-xs">
+                          <CheckCheck size={11} className="mr-1" /> Sent!
+                        </Button>
+                      : <Button size="sm" variant="ghost"
+                          onClick={() => {
+                            // Open the email editor for this event with defaults pre-filled
+                            setReminderEditorOpen(reminderEditorOpen === ev.id ? null : ev.id);
+                            if (reminderEditorOpen !== ev.id) {
+                              setCustomSubject(`Reminder: ${ev.title} is tomorrow`);
+                              setCustomBody(ev.description ?? '');
+                            }
+                          }}
+                          className="text-white/60 hover:text-yellow-300 hover:bg-yellow-500/10 h-7 px-2 text-xs">
+                          <Bell size={11} className="mr-1" />
+                          {reminderEditorOpen === ev.id ? 'Cancel' : 'Send Reminders'}
+                        </Button>}
                     <Button size="sm" variant="ghost"
                       onClick={() => { if (confirm(`Delete "${ev.title}"?`)) deleteMutation.mutate({ id: ev.id }); }}
                       className="text-white/60 hover:text-red-400 hover:bg-red-500/10 h-7 px-2 text-xs">
@@ -4187,6 +4195,82 @@ function AdminEventsTab() {
                     </Button>
                   </div>
                 </div>
+
+                {/* Inline email editor — opens when "Send Reminders" is clicked */}
+                {reminderEditorOpen === ev.id && (
+                  <div className="border-t border-white/10 px-4 pb-4 pt-3 space-y-3">
+                    <p className="text-xs text-white/50 font-medium uppercase tracking-wide">Preview &amp; Edit Reminder Email</p>
+                    <div>
+                      <Label className="text-white/60 text-xs">Subject line</Label>
+                      <Input
+                        value={customSubject}
+                        onChange={e => setCustomSubject(e.target.value)}
+                        className="bg-white/5 border-white/20 text-white text-sm mt-1"
+                        placeholder={`Reminder: ${ev.title} is tomorrow`}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-white/60 text-xs">Body paragraph (shown below the date)</Label>
+                      <Textarea
+                        value={customBody}
+                        onChange={e => setCustomBody(e.target.value)}
+                        rows={4}
+                        className="bg-white/5 border-white/20 text-white text-sm mt-1 resize-none"
+                        placeholder="What do you want people to know before they join? Leave blank to use the event description."
+                      />
+                    </div>
+
+                    {/* Live email preview */}
+                    <div className="rounded-xl overflow-hidden border border-white/10 text-sm">
+                      <div className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] px-5 py-4 text-center">
+                        <p className="text-[#7dd87d] font-bold text-base m-0">ReGen Civics</p>
+                        <p className="text-[#a8e6a8] text-xs mt-1 m-0">Event reminder</p>
+                      </div>
+                      <div className="bg-white px-5 py-5 space-y-2">
+                        <p className="text-gray-400 text-xs m-0">Starting in ~24 hours</p>
+                        <p className="text-[#1a472a] font-bold text-base m-0">{ev.title}</p>
+                        <p className="text-gray-500 text-sm m-0">
+                          {ev.startTime ? new Date(ev.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : ''}
+                          {ev.startTime ? ` at ${new Date(ev.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ${ev.timezone ?? ''}` : ''}
+                        </p>
+                        {(customBody || ev.description) && (
+                          <p className="text-gray-600 text-sm leading-relaxed m-0">{customBody || ev.description}</p>
+                        )}
+                        <div className="flex gap-2 pt-1 flex-wrap">
+                          <span className="bg-[#2d8cff] text-white px-4 py-2 rounded-lg text-xs font-bold">Join on Zoom</span>
+                          <span className="border-2 border-[#1a472a] text-[#1a472a] px-4 py-2 rounded-lg text-xs font-bold">View Schedule</span>
+                        </div>
+                      </div>
+                      <div className="bg-[#f0f7f0] px-5 py-3 text-center">
+                        <p className="text-gray-400 text-xs m-0">You signed up for a reminder for this event.</p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-white/40">Subject: <span className="text-white/70">{customSubject || `Reminder: ${ev.title} is tomorrow`}</span></p>
+                    <p className="text-xs text-white/40">Sending to <span className="text-white/70">{Number(countMap[ev.id] ?? 0)} people</span> who signed up for this event.</p>
+
+                    <Button
+                      disabled={reminderMutation.isPending || Number(countMap[ev.id] ?? 0) === 0}
+                      onClick={async () => {
+                        await reminderMutation.mutateAsync({
+                          id: ev.id,
+                          customSubject: customSubject || undefined,
+                          customBody: customBody || undefined,
+                        });
+                        setReminderSuccess(ev.id);
+                        setReminderEditorOpen(null);
+                        setTimeout(() => setReminderSuccess(null), 4000);
+                      }}
+                      className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs h-8 px-4"
+                    >
+                      {reminderMutation.isPending
+                        ? <><Loader2 size={12} className="animate-spin mr-1" /> Sending...</>
+                        : Number(countMap[ev.id] ?? 0) === 0
+                          ? 'No signups yet'
+                          : `Send to ${Number(countMap[ev.id] ?? 0)} ${Number(countMap[ev.id] ?? 0) === 1 ? 'person' : 'people'}`}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );

@@ -1,6 +1,7 @@
 # ReGen Civics Event Flow — Full Overview
 
 > Last updated: March 2026. Reference this before touching anything related to events, schedule, recordings, or reminders.
+> Email copy section added — proofread and update text directly in this file, then ask Claude to push the changes.
 
 ---
 
@@ -205,6 +206,157 @@ Our server handles all of these field variations (Riverside's payload shape vari
 ```
 
 The `rawWebhook` JSON column in `recordings` stores the full payload on first receipt for debugging.
+
+---
+
+## Email Copy — All Outgoing Emails
+
+> Proofread and edit the text below. To push changes, open this file and ask Claude to update the server code to match. The bold labels are file locations, not copy.
+>
+> Rules for this copy: no em-dashes, no "delve/tapestry/foster/leverage/vibrant/crucial/transformative", no contrast framing ("this is not X, this is Y"), no rhetorical question openers. Direct, grounded, specific.
+
+---
+
+### Email 1: Event Signup Confirmation
+
+**Sent:** Immediately when someone clicks "Get Reminder" on the Schedule page.
+**To:** The person who signed up.
+**File:** `server/routes/events.ts` → `signup` mutation (currently no confirmation email — this is a planned addition)
+
+> ⚠️ **This email does not exist yet.** It should be added. Suggested copy below — confirm and we'll build it.
+
+**Subject line:**
+```
+You're on the list for [Event Title]
+```
+
+**Body:**
+```
+Hey [Name or "there"],
+
+You're signed up for a reminder for [Event Title] on [Day, Month Date] at [Time TZ].
+
+We'll send you a reminder the day before so you don't miss it.
+
+See you there.
+
+— The ReGen Civics team
+
+[Button: View the full schedule → regencivics.earth/schedule]
+```
+
+**Footer:**
+```
+You're getting this because you signed up for a reminder on regencivics.earth.
+[Unsubscribe from this event's reminder]
+```
+
+---
+
+### Email 2: 24-Hour Reminder
+
+**Sent:** ~24 hours before the event. Triggered by the hourly cron job, or manually via Admin > Events > "Send Reminders".
+**To:** Everyone who signed up for that specific event.
+**File:** `server/routes/events.ts` → `sendReminders` mutation AND `server/_core/index.ts` → `/api/cron/event-reminders`
+
+> ✅ This email exists. Edit copy below.
+
+**Subject line:**
+```
+Reminder: [Event Title] is tomorrow
+```
+
+**Header tag:**
+```
+Starting in ~24 hours
+```
+
+**Title:**
+```
+[Event Title]
+```
+
+**Date line:**
+```
+[Full date] at [Time TZ]
+```
+
+**Description:**
+```
+[The event description from the DB — set when you create the event in Admin]
+```
+
+**Buttons:**
+- Primary blue: `Join on Zoom`
+- Secondary green outline: `View Schedule`
+
+**Footer:**
+```
+You signed up for a reminder for this event.
+[View all events → regencivics.earth/schedule]
+```
+
+---
+
+### Email 3: Recording Ready (Newsletter Blast)
+
+**Sent:** Automatically when Riverside fires the `recording.complete` webhook.
+**To:** All active newsletter subscribers (not just event signups — this goes to everyone).
+**File:** `server/webhooks/riverside.ts` → `buildEmailHtml()`
+
+> ✅ This email exists. Edit copy below.
+
+**Subject line:**
+```
+Recording ready: [Session Title]
+```
+
+**Header tag:**
+```
+Recording ready
+```
+
+**Title:**
+```
+[Session Title]
+```
+
+**Date line:**
+```
+[Session date, e.g., "March 29, 2026"]
+```
+
+**Summary block (shows only if AI summary exists, green left-border callout):**
+```
+What we covered
+
+[AI-generated summary from Riverside transcript]
+```
+
+**Body paragraph:**
+```
+The recording from our latest community session is ready. Watch it back, share it, or drop a reply in the forum.
+```
+
+**Buttons:**
+- Red: `▶ Watch Recording` (links to YouTube — only shows if YouTube URL is set)
+- Green outline: `💬 Join the Discussion` (links to forum post — only shows if forum post was created)
+
+**Footer:**
+```
+You're receiving this because you subscribed to ReGen Civics updates.
+[Unsubscribe]
+```
+
+---
+
+### Notes on editing these
+
+**To change a subject line or body paragraph:** Edit the text above, then ask Claude to update the matching server file.
+
+**To change button text or colors:** The buttons live in `server/webhooks/riverside.ts` (recording email) and `server/routes/events.ts` (reminder email). Ask Claude to update.
+
+**The Admin "Send Reminders" button** now shows a live preview of the reminder email before sending, with editable subject and body. Changes there are per-send only — not saved permanently. To make permanent changes to the default, edit this doc and ask Claude to update the server.
 
 ---
 
