@@ -9,6 +9,11 @@ import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, F
 import { sanitizeInput } from "../_core/security";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
+import ogs from "open-graph-scraper";
+
+// In-memory cache for link preview OG data (TTL 24 hours)
+const linkPreviewCache = new Map<string, { data: any; timestamp: number }>();
+const LINK_PREVIEW_TTL = 86400000; // 24 hours
 
 // In-memory cache for forum categories (refreshed every 5 minutes)
 let cachedCategories: Awaited<ReturnType<typeof db.listForumCategories>> | null = null;
@@ -36,6 +41,38 @@ export const forumRouter = router({
     await cacheSet(CACHE_KEY, result, 300);
     return result;
   }),
+
+  // Fetch Open Graph link preview data for a URL
+  fetchLinkPreview: publicProcedure
+    .input(z.object({
+      url: z.string().url().refine(
+        (u) => u.startsWith("http://") || u.startsWith("https://"),
+        { message: "URL must start with http:// or https://" }
+      ),
+    }))
+    .query(async ({ input }) => {
+      const cached = linkPreviewCache.get(input.url);
+      if (cached && Date.now() - cached.timestamp < LINK_PREVIEW_TTL) {
+        return cached.data;
+      }
+
+      try {
+        const { result } = await ogs({ url: input.url, timeout: 5 });
+        const data = {
+          title: result.ogTitle || null,
+          description: result.ogDescription || null,
+          image: result.ogImage?.[0]?.url || null,
+          siteName: result.ogSiteName || null,
+          url: result.ogUrl || input.url,
+        };
+        linkPreviewCache.set(input.url, { data, timestamp: Date.now() });
+        return data;
+      } catch {
+        const fallback = { title: null, description: null, image: null, siteName: null, url: input.url };
+        linkPreviewCache.set(input.url, { data: fallback, timestamp: Date.now() });
+        return fallback;
+      }
+    }),
 
   // Admin: create a new forum category
   createCategory: adminProcedure
@@ -457,6 +494,25 @@ export const forumRouter = router({
       }).then(({ url }) =>
         getDb().then(d => d?.update(forumPosts).set({ generatedImageUrl: url }).where(eq(forumPosts.id, postId)))
       ).catch(err => console.error(`Image gen failed for forum post ${postId}:`, err));
+
+      // Fire-and-forget link preview fetch for the first URL in the post content
+      const urlMatch = input.content.match(/https?:\/\/[^\s<>"')\]]+/);
+      if (urlMatch) {
+        const targetUrl = urlMatch[0];
+        ogs({ url: targetUrl, timeout: 5 }).then(({ result }) => {
+          const preview = {
+            title: result.ogTitle || null,
+            description: result.ogDescription || null,
+            image: result.ogImage?.[0]?.url || null,
+            siteName: result.ogSiteName || null,
+            url: result.ogUrl || targetUrl,
+          };
+          return getDb().then(d =>
+            d?.update(forumPosts).set({ linkPreviews: JSON.stringify(preview) }).where(eq(forumPosts.id, postId))
+          );
+        }).catch(err => console.error(`Link preview fetch failed for forum post ${postId}:`, err));
+      }
+
       return { id: postId };
     }),
 

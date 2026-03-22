@@ -110,7 +110,7 @@ async function sendDigestEmails(
         batch.map(sub =>
           sendEmail({
             to: sub.email,
-            subject: `This week in the community — ${weekLabel}`,
+            subject: `This week in the community: ${weekLabel}`,
             html,
           }).catch(err => console.warn(`[DigestJob] Failed to send to ${sub.email}:`, err))
         )

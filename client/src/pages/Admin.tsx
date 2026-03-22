@@ -3976,13 +3976,21 @@ function AdminEventsTab() {
   const reminderMutation = trpc.events.sendReminders.useMutation();
   const agendaUpdateMutation = trpc.events.updateAgendaSuggestion.useMutation({ onSuccess: () => { refetch(); } });
   const rollupMutation = trpc.events.sendSeasonRollup.useMutation();
+  const followupMutation = trpc.events.sendFollowup.useMutation();
   const markAttendanceMutation = trpc.events.markAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
   const removeAttendanceMutation = trpc.events.removeAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
+  const speakerIntroMutation = trpc.events.sendSpeakerIntro.useMutation();
+  const [followupSuccess, setFollowupSuccess] = useState<number | null>(null);
+  const [checkinCopied, setCheckinCopied] = useState<number | null>(null);
+  const [speakerIntroSuccess, setSpeakerIntroSuccess] = useState<number | null>(null);
+  const [scheduleFor, setScheduleFor] = useState('');
+  const [scheduleSuccess, setScheduleSuccess] = useState<number | null>(null);
 
   const defaultForm = {
     title: '', description: '', type: 'open' as const, startTime: '', endTime: '',
     timezone: 'EDT', zoomUrl: '', riversideRoomUrl: '', youtubeUrl: '',
     season: '', episodeNumber: '', maxAttendees: '',
+    guestSpeakerName: '', guestSpeakerBio: '', guestSpeakerTopic: '',
   };
 
   const [showCreate, setShowCreate] = useState(false);
@@ -3996,6 +4004,8 @@ function AdminEventsTab() {
   const [customBody, setCustomBody] = useState('');
   const [rollupSeason, setRollupSeason] = useState('');
   const [showAgendaFor, setShowAgendaFor] = useState<number | null>(null);
+  const [preflightEventId, setPreflightEventId] = useState<number | null>(null);
+  const [preflightConfirmed, setPreflightConfirmed] = useState(false);
 
   const { data: attendanceList = [], refetch: refetchAttendance } = trpc.events.listAttendance.useQuery(
     { eventId: attendanceEventId! },
@@ -4020,6 +4030,9 @@ function AdminEventsTab() {
       season: ev.season ?? '',
       maxAttendees: (ev as any).maxAttendees ? String((ev as any).maxAttendees) : '',
       episodeNumber: ev.episodeNumber ? String(ev.episodeNumber) : '',
+      guestSpeakerName: ev.guestSpeakerName ?? '',
+      guestSpeakerBio: ev.guestSpeakerBio ?? '',
+      guestSpeakerTopic: ev.guestSpeakerTopic ?? '',
     });
   }
 
@@ -4037,6 +4050,9 @@ function AdminEventsTab() {
       season: formData.season || undefined,
       maxAttendees: formData.maxAttendees ? parseInt(formData.maxAttendees) : undefined,
       episodeNumber: formData.episodeNumber ? parseInt(formData.episodeNumber) : undefined,
+      guestSpeakerName: formData.guestSpeakerName || undefined,
+      guestSpeakerBio: formData.guestSpeakerBio || undefined,
+      guestSpeakerTopic: formData.guestSpeakerTopic || undefined,
     };
     if (editingId !== null) {
       updateMutation.mutate({ id: editingId, ...payload });
@@ -4107,7 +4123,7 @@ function AdminEventsTab() {
                   placeholder="EDT" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Start Time (local — will store as UTC)</Label>
+                <Label className="text-white/70 text-xs">Start Time (local, stored as UTC)</Label>
                 <Input type="datetime-local" value={formData.startTime} onChange={e => setFormData(f => ({ ...f, startTime: e.target.value }))}
                   className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
@@ -4129,7 +4145,7 @@ function AdminEventsTab() {
               <div>
                 <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/30 font-normal">(leave blank for unlimited)</span></Label>
                 <Input type="number" value={formData.maxAttendees} onChange={e => setFormData(f => ({ ...f, maxAttendees: e.target.value }))}
-                  placeholder="e.g. 50 — triggers waitlist when full" className="bg-white/5 border-white/20 text-white mt-1" />
+                  placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Riverside Room URL <span className="text-purple-400 font-normal">(primary join link)</span></Label>
@@ -4145,6 +4161,25 @@ function AdminEventsTab() {
                 <Label className="text-white/70 text-xs">YouTube URL (livestream or premiere)</Label>
                 <Input value={formData.youtubeUrl} onChange={e => setFormData(f => ({ ...f, youtubeUrl: e.target.value }))}
                   placeholder="https://youtube.com/live/..." className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              {/* #25 — Guest Speaker Fields */}
+              <div className="md:col-span-2 border-t border-white/10 pt-3 mt-1">
+                <p className="text-white/50 text-xs font-medium uppercase tracking-wide mb-2">Guest Speaker (optional)</p>
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Speaker Name</Label>
+                <Input value={formData.guestSpeakerName} onChange={e => setFormData(f => ({ ...f, guestSpeakerName: e.target.value }))}
+                  placeholder="Jane Doe" className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Speaker Topic</Label>
+                <Input value={formData.guestSpeakerTopic} onChange={e => setFormData(f => ({ ...f, guestSpeakerTopic: e.target.value }))}
+                  placeholder="Regenerative land economics" className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-white/70 text-xs">Speaker Bio</Label>
+                <Textarea value={formData.guestSpeakerBio} onChange={e => setFormData(f => ({ ...f, guestSpeakerBio: e.target.value }))}
+                  rows={2} placeholder="Brief bio for the introduction email" className="bg-white/5 border-white/20 text-white mt-1 resize-none" />
               </div>
             </div>
             <div className="flex gap-2 pt-2">
@@ -4204,12 +4239,65 @@ function AdminEventsTab() {
                             if (reminderEditorOpen !== ev.id) {
                               setCustomSubject(`Reminder: ${ev.title} is tomorrow`);
                               setCustomBody(ev.description ?? '');
+                              // #24 — Default schedule suggestion: 9 AM EST day before event
+                              if (ev.startTime) {
+                                const dayBefore = new Date(ev.startTime);
+                                dayBefore.setDate(dayBefore.getDate() - 1);
+                                dayBefore.setHours(9, 0, 0, 0);
+                                setScheduleFor(dayBefore.toISOString().slice(0, 16));
+                              }
                             }
                           }}
                           className="text-white/60 hover:text-yellow-300 hover:bg-yellow-500/10 h-7 px-2 text-xs">
                           <Bell size={11} className="mr-1" />
                           {reminderEditorOpen === ev.id ? 'Cancel' : 'Send Reminders'}
                         </Button>}
+                    {/* #17 — Send Follow-up for completed events */}
+                    {ev.status === 'completed' && (
+                      followupSuccess === ev.id
+                        ? <Button size="sm" variant="ghost" disabled className="text-green-400 h-7 px-2 text-xs">
+                            <CheckCheck size={11} className="mr-1" /> Follow-up Sent!
+                          </Button>
+                        : <Button size="sm" variant="ghost"
+                            onClick={() => {
+                              if (confirm(`Send "How was it?" follow-up email to everyone who signed up for "${ev.title}"?`)) {
+                                followupMutation.mutate({ eventId: ev.id }, {
+                                  onSuccess: () => {
+                                    setFollowupSuccess(ev.id);
+                                    setTimeout(() => setFollowupSuccess(null), 4000);
+                                  },
+                                });
+                              }
+                            }}
+                            disabled={followupMutation.isPending}
+                            className="text-white/60 hover:text-green-300 hover:bg-green-500/10 h-7 px-2 text-xs">
+                            <Send size={11} className="mr-1" />
+                            {followupMutation.isPending ? 'Sending...' : 'Send Follow-up'}
+                          </Button>
+                    )}
+                    {/* #25 — Send Speaker Intro (only if event has a guest speaker) */}
+                    {(ev as any).guestSpeakerName && (
+                      speakerIntroSuccess === ev.id
+                        ? <Button size="sm" variant="ghost" disabled className="text-purple-400 h-7 px-2 text-xs">
+                            <CheckCheck size={11} className="mr-1" /> Speaker Intro Sent!
+                          </Button>
+                        : <Button size="sm" variant="ghost"
+                            onClick={() => {
+                              if (confirm(`Send speaker introduction email for "${(ev as any).guestSpeakerName}" to all signups?`)) {
+                                speakerIntroMutation.mutate({ eventId: ev.id }, {
+                                  onSuccess: () => {
+                                    setSpeakerIntroSuccess(ev.id);
+                                    setTimeout(() => setSpeakerIntroSuccess(null), 4000);
+                                  },
+                                });
+                              }
+                            }}
+                            disabled={speakerIntroMutation.isPending}
+                            className="text-white/60 hover:text-purple-300 hover:bg-purple-500/10 h-7 px-2 text-xs">
+                            <Users size={11} className="mr-1" />
+                            {speakerIntroMutation.isPending ? 'Sending...' : 'Send Speaker Intro'}
+                          </Button>
+                    )}
                     <Button size="sm" variant="ghost"
                       onClick={() => { if (confirm(`Delete "${ev.title}"?`)) deleteMutation.mutate({ id: ev.id }); }}
                       className="text-white/60 hover:text-red-400 hover:bg-red-500/10 h-7 px-2 text-xs">
@@ -4217,6 +4305,33 @@ function AdminEventsTab() {
                     </Button>
                   </div>
                 </div>
+
+                {/* Guest speaker info display */}
+                {(ev as any).guestSpeakerName && (
+                  <div className="border-t border-white/10 px-4 py-2">
+                    <span className="text-xs text-purple-400">Guest: {(ev as any).guestSpeakerName}{(ev as any).guestSpeakerTopic ? `, ${(ev as any).guestSpeakerTopic}` : ''}</span>
+                  </div>
+                )}
+
+                {/* #16 — Check-in URL and copy button */}
+                {(ev as any).checkinToken && (
+                  <div className="border-t border-white/10 px-4 py-2 flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-white/40">Check-in URL:</span>
+                    <code className="text-xs text-[#7dd87d] bg-white/5 px-2 py-0.5 rounded break-all">
+                      {window.location.origin}/checkin/{(ev as any).checkinToken}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/checkin/${(ev as any).checkinToken}`);
+                        setCheckinCopied(ev.id);
+                        setTimeout(() => setCheckinCopied(null), 2000);
+                      }}
+                      className="text-xs text-white/40 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
+                    >
+                      {checkinCopied === ev.id ? <><CheckCheck size={11} /> Copied!</> : <><ClipboardList size={11} /> Copy</>}
+                    </button>
+                  </div>
+                )}
 
                 {/* Inline email editor — opens when "Send Reminders" is clicked */}
                 {reminderEditorOpen === ev.id && (
@@ -4271,26 +4386,153 @@ function AdminEventsTab() {
                     <p className="text-xs text-white/40">Subject: <span className="text-white/70">{customSubject || `Reminder: ${ev.title} is tomorrow`}</span></p>
                     <p className="text-xs text-white/40">Sending to <span className="text-white/70">{Number(countMap[ev.id] ?? 0)} people</span> who signed up for this event.</p>
 
-                    <Button
-                      disabled={reminderMutation.isPending || Number(countMap[ev.id] ?? 0) === 0}
-                      onClick={async () => {
-                        await reminderMutation.mutateAsync({
-                          id: ev.id,
-                          customSubject: customSubject || undefined,
-                          customBody: customBody || undefined,
-                        });
-                        setReminderSuccess(ev.id);
-                        setReminderEditorOpen(null);
-                        setTimeout(() => setReminderSuccess(null), 4000);
-                      }}
-                      className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs h-8 px-4"
-                    >
-                      {reminderMutation.isPending
-                        ? <><Loader2 size={12} className="animate-spin mr-1" /> Sending...</>
-                        : Number(countMap[ev.id] ?? 0) === 0
+                    <div className="flex flex-wrap items-end gap-2">
+                      <Button
+                        disabled={reminderMutation.isPending || Number(countMap[ev.id] ?? 0) === 0}
+                        onClick={() => { setPreflightEventId(ev.id); setPreflightConfirmed(false); }}
+                        className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs h-8 px-4"
+                      >
+                        {Number(countMap[ev.id] ?? 0) === 0
                           ? 'No signups yet'
-                          : `Send to ${Number(countMap[ev.id] ?? 0)} ${Number(countMap[ev.id] ?? 0) === 1 ? 'person' : 'people'}`}
-                    </Button>
+                          : `Review & Send to ${Number(countMap[ev.id] ?? 0)} ${Number(countMap[ev.id] ?? 0) === 1 ? 'person' : 'people'}`}
+                      </Button>
+
+                      {/* #24 — Schedule for later */}
+                      <div className="flex items-end gap-1.5">
+                        <div>
+                          <Label className="text-white/40 text-xs">Schedule for...</Label>
+                          <Input
+                            type="datetime-local"
+                            value={scheduleFor}
+                            onChange={e => setScheduleFor(e.target.value)}
+                            className="bg-white/5 border-white/20 text-white text-xs h-8 mt-0.5 w-48"
+                          />
+                        </div>
+                        <Button
+                          disabled={!scheduleFor || reminderMutation.isPending || Number(countMap[ev.id] ?? 0) === 0}
+                          onClick={async () => {
+                            const result = await reminderMutation.mutateAsync({
+                              id: ev.id,
+                              customSubject: customSubject || undefined,
+                              customBody: customBody || undefined,
+                              scheduledFor: new Date(scheduleFor).toISOString(),
+                            });
+                            setScheduleSuccess(ev.id);
+                            setReminderEditorOpen(null);
+                            setScheduleFor('');
+                            setTimeout(() => setScheduleSuccess(null), 6000);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 px-3"
+                        >
+                          <Clock size={11} className="mr-1" /> Schedule
+                        </Button>
+                      </div>
+                    </div>
+                    {scheduleSuccess === ev.id && (
+                      <p className="text-xs text-blue-400">Reminder scheduled. It will send at the selected time (lost if server restarts).</p>
+                    )}
+
+                    {/* #22 Preflight checklist dialog */}
+                    {preflightEventId === ev.id && (() => {
+                      const signupCount = Number(countMap[ev.id] ?? 0);
+                      const hasJoinLink = !!(ev.riversideRoomUrl || ev.zoomUrl);
+                      const isUpcoming = new Date(ev.startTime) > new Date();
+                      const alreadySent = !!(ev as any).reminderSent;
+
+                      return (
+                        <Dialog open onOpenChange={(open) => { if (!open) setPreflightEventId(null); }}>
+                          <DialogContent className="bg-[#0a1f14] border-white/20 text-white max-w-md">
+                            <DialogHeader>
+                              <DialogTitle className="text-white text-base">Preflight Check: Send Reminders</DialogTitle>
+                              <DialogDescription className="text-white/50 text-sm">{ev.title}</DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-3 py-2">
+                              {/* Join link check */}
+                              <div className="flex items-center gap-2 text-sm">
+                                {hasJoinLink
+                                  ? <CheckCheck size={14} className="text-green-400 flex-shrink-0" />
+                                  : <AlertTriangle size={14} className="text-red-400 flex-shrink-0" />}
+                                <span className={hasJoinLink ? 'text-white/70' : 'text-red-300'}>
+                                  {hasJoinLink ? 'Join link is set' : 'No join link set (Zoom or Riverside URL missing)'}
+                                </span>
+                              </div>
+
+                              {/* Upcoming check */}
+                              <div className="flex items-center gap-2 text-sm">
+                                {isUpcoming
+                                  ? <CheckCheck size={14} className="text-green-400 flex-shrink-0" />
+                                  : <AlertTriangle size={14} className="text-red-400 flex-shrink-0" />}
+                                <span className={isUpcoming ? 'text-white/70' : 'text-red-300'}>
+                                  {isUpcoming ? 'Event is still upcoming' : 'Event start time has already passed'}
+                                </span>
+                              </div>
+
+                              {/* Recipient count */}
+                              <div className="flex items-center gap-2 text-sm">
+                                <Users size={14} className="text-blue-400 flex-shrink-0" />
+                                <span className="text-white/70">
+                                  {signupCount} {signupCount === 1 ? 'person' : 'people'} will receive this email
+                                </span>
+                              </div>
+
+                              {/* Already sent warning */}
+                              {alreadySent && (
+                                <div className="flex items-start gap-2 text-sm bg-yellow-900/30 border border-yellow-700/40 rounded-lg p-3">
+                                  <AlertTriangle size={14} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+                                  <span className="text-yellow-300">
+                                    Reminders were already sent for this event. Sending again will send duplicate emails.
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Confirmation checkbox */}
+                              <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                                <Checkbox
+                                  id={`preflight-confirm-${ev.id}`}
+                                  checked={preflightConfirmed}
+                                  onCheckedChange={(val) => setPreflightConfirmed(!!val)}
+                                  className="border-white/30 data-[state=checked]:bg-[#7dd87d] data-[state=checked]:border-[#7dd87d]"
+                                />
+                                <Label htmlFor={`preflight-confirm-${ev.id}`} className="text-sm text-white/70 cursor-pointer">
+                                  I've reviewed and confirm sending to {signupCount} {signupCount === 1 ? 'person' : 'people'}
+                                </Label>
+                              </div>
+                            </div>
+
+                            <DialogFooter className="gap-2">
+                              <Button
+                                variant="ghost"
+                                onClick={() => setPreflightEventId(null)}
+                                className="text-white/50 hover:text-white text-xs"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                disabled={!preflightConfirmed || reminderMutation.isPending}
+                                onClick={async () => {
+                                  await reminderMutation.mutateAsync({
+                                    id: ev.id,
+                                    customSubject: customSubject || undefined,
+                                    customBody: customBody || undefined,
+                                  });
+                                  setPreflightEventId(null);
+                                  setReminderSuccess(ev.id);
+                                  setReminderEditorOpen(null);
+                                  refetch(); // refresh to get updated reminderSent flag
+                                  setTimeout(() => setReminderSuccess(null), 4000);
+                                }}
+                                className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs h-8 px-4"
+                              >
+                                {reminderMutation.isPending
+                                  ? <><Loader2 size={12} className="animate-spin mr-1" /> Sending...</>
+                                  : `Send Reminders`}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      );
+                    })()}
                   </div>
                 )}
               </CardContent>

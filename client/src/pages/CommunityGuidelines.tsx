@@ -51,7 +51,7 @@ export default function CommunityGuidelines() {
   return (
     <>
       <SEO
-        title="Community Guidelines — The Gathering Grove"
+        title="Community Guidelines: The Gathering Grove"
         description="How we show up for each other in The Gathering Grove regenerative civics community."
       />
 
@@ -123,7 +123,7 @@ export default function CommunityGuidelines() {
                 <strong>Curiosity.</strong> Ask questions before assuming. Learning together is the point.
               </li>
               <li>
-                <strong>Regeneration.</strong> We care about outcomes that restore rather than extract — in our land practices and in how we treat each other.
+                <strong>Regeneration.</strong> We care about outcomes that restore rather than extract, in our land practices and in how we treat each other.
               </li>
             </ul>
           </Section>
@@ -166,7 +166,7 @@ export default function CommunityGuidelines() {
                 <strong>Spam.</strong> Repeated low-effort posts, irrelevant links, or automated content.
               </li>
               <li>
-                <strong>Self-promotion without contribution.</strong> Share your work — but be a part of conversations, not just a sender of them.
+                <strong>Self-promotion without contribution.</strong> Share your work, but be a part of conversations, not just a sender of them.
               </li>
               <li>
                 <strong>Personal attacks.</strong> Criticise positions, not people.
@@ -180,7 +180,7 @@ export default function CommunityGuidelines() {
           {/* Section 5 */}
           <Section number="05" title="How to flag an issue">
             <p style={{ margin: "0 0 12px" }}>
-              Every post and reply has a flag button. Use it if you see something that violates these guidelines or makes the space feel unsafe. You don't have to explain yourself — a flag is enough to start a review.
+              Every post and reply has a flag button. Use it if you see something that violates these guidelines or makes the space feel unsafe. You don't have to explain yourself. A flag is enough to start a review.
             </p>
             <p style={{ margin: 0 }}>
               Flagging is not a vote. It's a request for a human to take a look.

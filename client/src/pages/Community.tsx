@@ -588,7 +588,7 @@ export default function Community() {
           <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">🌿</span>
-              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>General — Open Topics</h2>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>General: Open Topics</h2>
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Introductions, resources, governance, and open conversations.</p>
 
@@ -735,7 +735,7 @@ export default function Community() {
           <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">🌍</span>
-              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Earth — Land Projects</h2>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Earth: Land Projects</h2>
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Land project spaces. Where the work is rooted.</p>
 
@@ -841,7 +841,7 @@ export default function Community() {
           <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">🌊</span>
-              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Water — Alliance Partners</h2>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Water: Alliance Partners</h2>
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Alliance organisations. Networks and partners moving together.</p>
 
@@ -912,7 +912,7 @@ export default function Community() {
           <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">🔥</span>
-              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Fire — Quests and Challenges</h2>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Fire: Quests and Challenges</h2>
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Quests and challenges. Where regeneration gets real.</p>
 
@@ -949,7 +949,7 @@ export default function Community() {
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Epic Quests</p>
-                    <p className="text-white/60 text-xs">Long-form challenges — coming soon</p>
+                    <p className="text-white/60 text-xs">Long-form challenges, coming soon</p>
                   </div>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl z-10">
@@ -977,7 +977,7 @@ export default function Community() {
                 <span className="text-2xl">💡</span>
                 <div>
                   <h3 className="font-semibold text-white mb-1 group-hover:text-green-300 transition-colors">Got an idea for a quest?</h3>
-                  <p className="text-sm text-white/60">Propose it here — the community votes and the best ones get built.</p>
+                  <p className="text-sm text-white/60">Propose it here. The community votes and the best ones get built.</p>
                 </div>
               </div>
             </Link>
@@ -1008,7 +1008,7 @@ export default function Community() {
           <div className="bg-white border border-[#e8e4de] rounded-2xl p-5 mb-4 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">🍃</span>
-              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Air — Hard Conversations</h2>
+              <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Air: Hard Conversations</h2>
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">
               Some things need to move. This is where we say the hard thing, clear what's stagnant, and make space for what comes next.

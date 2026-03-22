@@ -1164,7 +1164,7 @@ export default function Quest() {
         <div className="container">
           <div className="max-w-2xl mx-auto mt-16 p-8 border border-green-500/30 rounded-2xl text-center">
             <h2 className="text-2xl font-bold mb-3 text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>Got a Quest Idea?</h2>
-            <p className="text-[#1a472a]/70 mb-6 max-w-lg mx-auto">If you've discovered a practice worth spreading, propose it. The community votes — the best ones become official quests.</p>
+            <p className="text-[#1a472a]/70 mb-6 max-w-lg mx-auto">If you've discovered a practice worth spreading, propose it. The community votes. The best ones become official quests.</p>
             <Link href="/community/quests" className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors">
               Suggest a Quest <ArrowRight className="w-4 h-4" />
             </Link>

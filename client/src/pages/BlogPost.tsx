@@ -321,7 +321,7 @@ export default function BlogPost() {
           {isSuperAdmin && editMode && (
             <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
               <p className="text-amber-400 text-xs font-semibold mb-3 flex items-center gap-1.5">
-                <Pencil className="w-3.5 h-3.5" /> Editing post — markdown supported
+                <Pencil className="w-3.5 h-3.5" /> Editing post (markdown supported)
               </p>
               <textarea
                 value={editContent}

@@ -1204,13 +1204,13 @@ Come to the forum. Bring your contributions. They have always been worth somethi
 
 # The Three Foundations: $SEEDS, $ReGen, and $RCivics
 
-$SEEDS — a global permissionless currency, continuing its path toward interconnected financial protocols as a fully decentralised protocol
+$SEEDS: a global permissionless currency, continuing its path toward interconnected financial protocols as a fully decentralised protocol
 
-$ReGen — the currency of this new network, designed for regenerative land projects and the organisations that support them, less decentralised, more focused and more connected to land projects
+$ReGen: the currency of this new network, designed for regenerative land projects and the organisations that support them, less decentralised, more focused and more connected to land projects
 
-$RCivics — equity in the ReGen Fund, the bridge foundation that connects regenerative vision to real capital deployment
+$RCivics: equity in the ReGen Fund, the bridge foundation that connects regenerative vision to real capital deployment
 
-"Think of ReGen Civics as a bridge. $RCivics is one foundation on the ground — rooted in the tools of capital of the current dominant Games. $ReGen is the other foundation — rooted in the future we're building together — the new Games we're co-creating." — Rieki Cordon
+"Think of ReGen Civics as a bridge. $RCivics is one foundation on the ground, rooted in the tools of capital of the current dominant Games. $ReGen is the other foundation, rooted in the future we're building together, the new Games we're co-creating." Rieki Cordon
 
 [Join the contributions discussion](/community/post/560)`,
     author: 'ReGen Civics Team',

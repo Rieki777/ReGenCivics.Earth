@@ -77,41 +77,19 @@ export default defineConfig(({ mode }): UserConfig => ({
     rollupOptions: {
       output: {
         // Function-based manualChunks is more reliable than object syntax for node_modules
+        // Only isolate react-vendor for long-term caching.
+        // All other chunks are handled by Vite's automatic code splitting,
+        // which is designed to avoid circular dependencies.
+        //
+        // Previous manual chunks (recharts, radix-ui, utils, sentry, icons,
+        // framer-motion, trpc-vendor) created a fragile circular dependency
+        // chain that broke whenever the module graph changed. The cycle was:
+        //   recharts → utils → radix-ui → react-vendor → recharts
+        // This caused React to be undefined at call time, crashing with:
+        //   "Cannot read properties of undefined (reading 'forwardRef')"
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return;
-          // React core — split first so it caches independently of app code
           if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) return 'react-vendor';
-          // Routing — intentionally NOT split into its own chunk.
-          // Wouter in a separate chunk causes a React 19 init order error:
-          // "Cannot set properties of undefined (setting 'Activity')"
-          // because react-vendor hasn't finished initializing when wouter loads.
-          // Keeping wouter in the main bundle ensures React is fully ready first.
-          // if (id.includes('/wouter/')) return 'router';
-          // tRPC + data fetching
-          if (id.includes('/@trpc/') || id.includes('/@tanstack/')) return 'trpc-vendor';
-          // Icons — large, changes rarely
-          if (id.includes('/lucide-react/')) return 'icons';
-          // Animation
-          if (id.includes('/framer-motion/')) return 'framer-motion';
-          // Charts
-          if (id.includes('/recharts/') || id.includes('/victory-') || id.includes('/d3-')) return 'recharts';
-          // Markdown / code rendering (streamdown, mermaid, shiki) — omitted from
-          // manualChunks so Vite code-splits them as async chunks via React.lazy().
-          // Radix UI — used across the whole app, benefits from caching separately
-          if (id.includes('/@radix-ui/')) return 'radix-ui';
-          // Utility libs
-          if (
-            id.includes('/superjson/') ||
-            id.includes('/zod/') ||
-            id.includes('/clsx/') ||
-            id.includes('/tailwind-merge/') ||
-            id.includes('/class-variance-authority/') ||
-            id.includes('/cmdk/')
-          ) return 'utils';
-          // Error monitoring — load last
-          if (id.includes('/@sentry/')) return 'sentry';
-          // Heavy visualizations (cytoscape, globe.gl, three.js) — omitted from
-          // manualChunks so Vite code-splits them as async chunks via React.lazy().
         },
       },
     },

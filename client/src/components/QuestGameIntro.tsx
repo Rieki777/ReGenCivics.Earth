@@ -27,7 +27,7 @@ const PANELS = [
   {
     id: 2,
     heading: "Do the work. Earn the tokens.",
-    body: "When you complete a quest, you earn tokens. Both to distribute the currency of the economic system we're co-creating together, and to distribute governance voice in our Infinite Game. This is your actual share of an economy built around healing, growth, and care. Your contribution is logged. Other players see it. Land projects see it. The record builds, quest by quest, person by person. This is the foundation from which we raise investment, seek donors, and bring real financial value into the movement — as well as build the financial systems of the future, today.",
+    body: "When you complete a quest, you earn tokens. Both to distribute the currency of the economic system we're co-creating together, and to distribute governance voice in our Infinite Game. This is your actual share of an economy built around healing, growth, and care. Your contribution is logged. Other players see it. Land projects see it. The record builds, quest by quest, person by person. This is the foundation from which we raise investment, seek donors, and bring real financial value into the movement, and build the financial systems of the future, today.",
     pulse: false,
     cta: false,
   },

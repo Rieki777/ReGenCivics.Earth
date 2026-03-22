@@ -174,14 +174,14 @@ export const questDetailsData: Record<string, QuestDetails> = {
     id: "quest-4",
     title: "Quest 4: Dreaming Spaces of Love",
     subtitle: "Family Homesteads",
-    description: "Designing, dreaming, and co-creating your ideal home, garden, and life — intended to meet all your needs. A Kins Domain for your family of life.",
+    description: "Designing, dreaming, and co-creating your ideal home, garden, and life, intended to meet all your needs. A Kins Domain for your family of life.",
     storyCard: "Most of us have spent so little time in spaces that were designed for us to actually rest, connect, and feel held. We have inherited an architecture of efficiency: offices, rentals, overhead lighting, no nature, no quiet. A space of love is not expensive or elaborate. It is intentional. It holds the needs of the people inside it. When you build a space like this and share it, you give others permission to want the same.",
     rewards: { regen: 111, rvoice: 1 },
-    deliverable: "Map of my current/future Space of Love — video or picture with reflection",
+    deliverable: "Map of my current/future Space of Love: video or picture with reflection",
     estimatedTime: "3-6 hours (ongoing practice)",
     steps: [
       { step: 1, title: "Reflect on what rest and love require", description: "Before building anything, sit with these questions: Where do you feel most at home? What does that place have that others lack? Write your answers down." },
-      { step: 2, title: "Choose a space to work with", description: "Pick somewhere you have access to and can shape — your home, a community space, a backyard corner, or an outdoor area." },
+      { step: 2, title: "Choose a space to work with", description: "Pick somewhere you have access to and can shape: your home, a community space, a backyard corner, or an outdoor area." },
       { step: 3, title: "Identify what the space currently lacks", description: "Walk through it slowly. Notice light, air, surfaces, sounds, smells. What does it invite? What does it make impossible?" },
       { step: 4, title: "Dream it into something different", description: "Sketch, write, or vision-board what this space could become. Bring in natural materials, living plants, comfortable seating arranged for conversation." },
       { step: 5, title: "Do at least one physical act of transformation", description: "Rearrange, plant, build, or clear something. Document the before and after." },
@@ -189,12 +189,12 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 7, title: "Document and share", description: "Create a short piece showing your space and what you learned from building and using it." }
     ],
     resources: [
-      { title: "The Timeless Way of Building — Christopher Alexander", url: "https://en.wikipedia.org/wiki/The_Timeless_Way_of_Building" }
+      { title: "The Timeless Way of Building by Christopher Alexander", url: "https://en.wikipedia.org/wiki/The_Timeless_Way_of_Building" }
     ],
     tips: [
       "The single biggest change in most indoor spaces: add living plants and remove overhead fluorescent light.",
       "A space that invites connection faces seats toward each other, not toward a screen.",
-      "Outdoor spaces count — a fire circle, a garden corner, a hammock grove. The Earth is the most healing space material there is."
+      "Outdoor spaces count: a fire circle, a garden corner, a hammock grove. The Earth is the most healing space material there is."
     ]
   },
   "quest-5": {
@@ -202,7 +202,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     title: "Quest 5: Rites of Love",
     subtitle: "We are the Land",
     description: "Marrying the Earth and your beloved, remembering we're one with our Spaces of Love, and other Sacred Rites to connect with Earth and the people closest to you.",
-    storyCard: "Love needs tending. Not just feeling, but practice. Most of us were never taught the practices that sustain love across years and decades. Rites are different from routines. A routine is something you do on autopilot. A rite is something you do with attention, marking it as significant. When you light a candle for a shared meal, when you build a fire together at the change of a season, when you find your way back to each other after a rupture — these are rites. Every healthy culture had them. This quest is an invitation to build some.",
+    storyCard: "Love needs tending. Not just feeling, but practice. Most of us were never taught the practices that sustain love across years and decades. Rites are different from routines. A routine is something you do on autopilot. A rite is something you do with attention, marking it as significant. When you light a candle for a shared meal, when you build a fire together at the change of a season, when you find your way back to each other after a rupture. These are rites. Every healthy culture had them. This quest is an invitation to build some.",
     rewards: { regen: 99, rvoice: 1 },
     deliverable: "A written or recorded reflection on a rite you designed, practiced, and what it changed",
     estimatedTime: "2-4 hours (ongoing practice)",
@@ -215,8 +215,8 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 6, title: "Reflect and share", description: "Write or record a reflection on what you built, what it felt like to practice it, and what it opened up." }
     ],
     resources: [
-      { title: "The Five Love Languages — Gary Chapman", url: "https://5lovelanguages.com" },
-      { title: "Braiding Sweetgrass — Robin Wall Kimmerer", url: "https://milkweed.org/book/braiding-sweetgrass" }
+      { title: "The Five Love Languages by Gary Chapman", url: "https://5lovelanguages.com" },
+      { title: "Braiding Sweetgrass by Robin Wall Kimmerer", url: "https://milkweed.org/book/braiding-sweetgrass" }
     ],
     tips: [
       "The simplest rites are often the most durable. A weekly 20-minute walk with a friend is a rite.",
@@ -228,7 +228,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     id: "quest-6",
     title: "Quest 6: Healing Circles",
     subtitle: "Community Gathering",
-    description: "Gathering in natural spaces with others to swap and practice healing modalities. Hold a genuine circle — a space for witnessing rather than fixing, for honest presence rather than advice.",
+    description: "Gathering in natural spaces with others to swap and practice healing modalities. Hold a genuine circle: a space for witnessing rather than fixing, for honest presence rather than advice.",
     storyCard: "Most of what passes for support in our culture is advice. Someone shares something painful and the listener immediately starts solving it. The result is that the person sharing feels even more alone, because what they needed was not a solution. They needed to be witnessed. A healing circle is a different technology. The circle format is ancient. Indigenous cultures around the world used circles for governance, healing, celebration, and grief. Most of us have never been in a genuinely held circle. When we have, something different becomes possible.",
     rewards: { regen: 144, rvoice: 1 },
     deliverable: "Documentation of a healing circle you held: the structure, what happened, and your reflection as the holder",
@@ -242,7 +242,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 6, title: "Reflect and share", description: "After the circle, write or record a reflection on how it went. What worked? What did you learn about holding space?" }
     ],
     resources: [
-      { title: "The Way of Council — Jack Zimmerman", url: "https://en.wikipedia.org/wiki/Council_(communication_practice)" },
+      { title: "The Way of Council by Jack Zimmerman", url: "https://en.wikipedia.org/wiki/Council_(communication_practice)" },
       { title: "Joanna Macy's Work That Reconnects", url: "https://workthatreconnects.org" }
     ],
     tips: [
@@ -256,12 +256,12 @@ export const questDetailsData: Record<string, QuestDetails> = {
     title: "Quest 7: Wild Foraging",
     subtitle: "Deep Nourishment",
     description: "Foraging mushrooms, medicinal herbs, berries, and tree magic. Eating sunlight and enjoying food plant-to-mouth while attuning to your ideal diet and your bioregion's wild abundance.",
-    storyCard: "For most of human history, people knew the land around them intimately. They knew which plants healed and which ones harmed, which fungi fruited after rain, which berries ripened in which week of autumn. That knowledge was not stored in books. It lived in people, passed through hands and seasons and walking together. Wild foods carry things that cultivated foods do not — biodiversity in the microbiome, compounds shaped by real ecological pressure. Beyond the nutrition, foraging changes your relationship to a place. The land is no longer scenery. It is a conversation.",
+    storyCard: "For most of human history, people knew the land around them intimately. They knew which plants healed and which ones harmed, which fungi fruited after rain, which berries ripened in which week of autumn. That knowledge was not stored in books. It lived in people, passed through hands and seasons and walking together. Wild foods carry things that cultivated foods do not: biodiversity in the microbiome, compounds shaped by real ecological pressure. Beyond the nutrition, foraging changes your relationship to a place. The land is no longer scenery. It is a conversation.",
     rewards: { regen: 111, rvoice: 1 },
     deliverable: "A field record (photos + notes) of your foraging sessions and a reflection on what changed in your relationship to the land",
     estimatedTime: "3-6 hours (field time + documentation)",
     steps: [
-      { step: 1, title: "Learn your bioregion's wild edibles", description: "Start with 5-10 plants or fungi you can identify with certainty. Use local field guides. Join a local foraging walk if one exists. Certainty matters — do not eat anything you cannot identify with confidence." },
+      { step: 1, title: "Learn your bioregion's wild edibles", description: "Start with 5-10 plants or fungi you can identify with certainty. Use local field guides. Join a local foraging walk if one exists. Certainty matters. Do not eat anything you cannot identify with confidence." },
       { step: 2, title: "Go out at least three times over two weeks", description: "Foraging as a single experience gives you little. Going out across different weather and terrain begins to give you a sense of patterns." },
       { step: 3, title: "Harvest with intention", description: "Take no more than a third of any plant in a given area. Leave the rest to seed, recover, and feed others. Where possible, give something back." },
       { step: 4, title: "Prepare and eat what you found", description: "Cook or use your harvest. Note the difference in taste, texture, and how your body responds compared to store-bought equivalents." },
@@ -269,8 +269,8 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 6, title: "Share your harvest and knowledge", description: "Cook for others using what you found. Share your field record. Teach someone one thing you learned." }
     ],
     resources: [
-      { title: "iNaturalist — species ID and community verification", url: "https://www.inaturalist.org" },
-      { title: "Plants For A Future — edible plants by region", url: "https://pfaf.org" }
+      { title: "iNaturalist: species ID and community verification", url: "https://www.inaturalist.org" },
+      { title: "Plants For A Future: edible plants by region", url: "https://pfaf.org" }
     ],
     tips: [
       "Three non-negotiables: a local field guide, local expertise, and the rule that you eat only what you can identify with full certainty.",
@@ -282,7 +282,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     id: "quest-8",
     title: "Quest 8: Medicine Journey",
     subtitle: "Inner Exploration",
-    description: "A guided journey into the depths of consciousness — exploring the medicine within and around us. Intentional inner journey, properly supported and integrated.",
+    description: "A guided journey into the depths of consciousness, exploring the medicine within and around us. Intentional inner journey, properly supported and integrated.",
     storyCard: "Something happens when a person goes deep enough into themselves that they cannot maintain the story they have been telling. The scaffolding comes down. And in that space, things become visible that ordinary consciousness keeps behind glass. These practices have been used by cultures around the world for thousands of years to facilitate healing, initiation, and contact with deeper dimensions of reality. They are not entertainment. They are not shortcuts. Used well, they are among the most powerful catalysts for transformation available to a human being. Integration is the work of taking what you found in the depths and actually living differently because of it.",
     rewards: { regen: 222, rvoice: 1 },
     deliverable: "A documented reflection on your journey and its integration, shared with the community",
@@ -296,8 +296,8 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 6, title: "Create and share your artifact", description: "Write, record, or capture a reflection on your journey and its integration. What did you enter with? What did you find? What is different now?" }
     ],
     resources: [
-      { title: "MAPS — research on therapeutic uses of plant medicines", url: "https://maps.org" },
-      { title: "Zendo Project — harm reduction and support", url: "https://zendoproject.org" }
+      { title: "MAPS: research on therapeutic uses of plant medicines", url: "https://maps.org" },
+      { title: "Zendo Project: harm reduction and support", url: "https://zendoproject.org" }
     ],
     tips: [
       "Preparation determines outcome more than people expect. How you enter shapes what you find.",
@@ -323,14 +323,14 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 6, title: "Document and share", description: "Keep a field journal across your visits. Write or record a piece about your relationship with these specific trees. What did you learn to see?" }
     ],
     resources: [
-      { title: "The Hidden Life of Trees — Peter Wohlleben", url: "https://en.wikipedia.org/wiki/The_Hidden_Life_of_Trees" },
-      { title: "Finding the Mother Tree — Suzanne Simard", url: "https://suzannesimard.com/finding-the-mother-tree-book" },
-      { title: "iNaturalist — species identification", url: "https://www.inaturalist.org" }
+      { title: "The Hidden Life of Trees by Peter Wohlleben", url: "https://en.wikipedia.org/wiki/The_Hidden_Life_of_Trees" },
+      { title: "Finding the Mother Tree by Suzanne Simard", url: "https://suzannesimard.com/finding-the-mother-tree-book" },
+      { title: "iNaturalist: species identification", url: "https://www.inaturalist.org" }
     ],
     tips: [
       "Slow down more than you think you need to. Most of what we miss in nature we miss because we are moving too fast.",
       "The old-growth forest floor is one of the most complete expressions of a living mycorrhizal network you can walk on.",
-      "The talking that trees do is primarily chemical and subterranean. Learn to read the effects — the health of the whole stand, the relationships between species."
+      "The talking that trees do is primarily chemical and subterranean. Learn to read the effects: the health of the whole stand, the relationships between species."
     ]
   },
   "quest-10": {
@@ -364,7 +364,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     id: "quest-11",
     title: "Quest 11: Coordination Patterns",
     subtitle: "How We Organize",
-    description: "Understanding how groups coordinate without hierarchy. Exploring governance frameworks, decision-making patterns, and collective action — and actually using them in a real group.",
+    description: "Understanding how groups coordinate without hierarchy. Exploring governance frameworks, decision-making patterns, and collective action, and actually using them in a real group.",
     storyCard: "Every group that tries to work together without a boss eventually hits the same wall. Who makes the final call? How do you handle disagreement? How do you stop a few people from dominating everything? These are not unsolvable problems. They are solved, repeatedly, by groups who have developed specific coordination patterns. Holacracy, Sociocracy, and consent-based governance are modern formalizations of much older practices. The indigenous consensus circle, the Quaker clearness committee, the commons governance of traditional fishing communities. Groups of humans have been solving the coordination problem for as long as humans have existed. We have more tools available than most people know.",
     rewards: { regen: 177, rvoice: 1 },
     deliverable: "A documented account of a coordination pattern you introduced and practiced in a real group, including reflection on what worked",
@@ -378,13 +378,13 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 6, title: "Share your experience", description: "Post your write-up in the forum. Your documented experience is useful to others working on the same problems." }
     ],
     resources: [
-      { title: "Reinventing Organizations — Frederic Laloux", url: "https://www.reinventingorganizations.com" },
+      { title: "Reinventing Organizations by Frederic Laloux", url: "https://www.reinventingorganizations.com" },
       { title: "Sociocracy 3.0 Practical Guide (free)", url: "https://sociocracy30.org" },
-      { title: "Governing the Commons — Elinor Ostrom", url: "https://en.wikipedia.org/wiki/Governing_the_Commons" }
+      { title: "Governing the Commons by Elinor Ostrom", url: "https://en.wikipedia.org/wiki/Governing_the_Commons" }
     ],
     tips: [
       "The check-in round is the single most universally useful coordination pattern. Start every meeting with a brief personal check-in.",
-      "Consent is different from consensus. Consensus requires everyone to agree. Consent requires no one to have a fundamental objection — much faster.",
+      "Consent is different from consensus. Consensus requires everyone to agree. Consent requires no one to have a fundamental objection. Much faster.",
       "The most important governance question: not 'what structure do we use' but 'how do we make and revisit agreements.'"
     ]
   },
@@ -393,7 +393,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     title: "Quest 12: Breathplay & Future Dreaming",
     subtitle: "Visioning Together",
     description: "Using breathwork to access expanded states and dream into the future we want to create together. A felt future is different from a thought-about future.",
-    storyCard: "The breath is the fastest path to an altered state that most people have access to right now, without anything else. Extended intentional breathing affects CO2 and oxygen levels in ways that produce measurable shifts in consciousness — a quieting of the internal critic, an expansion of what feels possible. Most people who try to vision a regenerative future end up listing things: solar panels, permaculture gardens, governance. Genuine visioning is sensory and specific. You are in a place, in a time, experiencing something. The futures we can feel our way into are different from the futures we can only think about.",
+    storyCard: "The breath is the fastest path to an altered state that most people have access to right now, without anything else. Extended intentional breathing affects CO2 and oxygen levels in ways that produce measurable shifts in consciousness: a quieting of the internal critic, an expansion of what feels possible. Most people who try to vision a regenerative future end up listing things: solar panels, permaculture gardens, governance. Genuine visioning is sensory and specific. You are in a place, in a time, experiencing something. The futures we can feel our way into are different from the futures we can only think about.",
     rewards: { regen: 111, rvoice: 1 },
     deliverable: "A sensory, specific written or recorded account of a future you visited during and after a breathwork session",
     estimatedTime: "3-5 hours (breathwork session + reflection)",
@@ -406,8 +406,8 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 6, title: "Compose your vision document", description: "After a day or two, return to your notes. Shape them into a coherent account of the future you visited. Make it sensory and specific. Share it with the community." }
     ],
     resources: [
-      { title: "Wim Hof Method — structured breathing practice", url: "https://www.wimhofmethod.com" },
-      { title: "Holotropic Breathwork — Stanislav Grof", url: "https://www.holotropic.com" }
+      { title: "Wim Hof Method: structured breathing practice", url: "https://www.wimhofmethod.com" },
+      { title: "Holotropic Breathwork by Stanislav Grof", url: "https://www.holotropic.com" }
     ],
     tips: [
       "If intense emotions arise during breathwork, stay with them. They are releases, not signs something is wrong.",
@@ -419,8 +419,8 @@ export const questDetailsData: Record<string, QuestDetails> = {
     id: "quest-13",
     title: "Quest 13: Fasting",
     subtitle: "Regenerative Ikigai",
-    description: "What is your role? Discovering your unique purpose through the practice of fasting and reflection. Repeatable — each fast earns tokens and deepens the practice.",
-    storyCard: "The body knows how to heal itself. What it needs, more often than any supplement or intervention, is time to stop processing long enough to do the work. When you fast, digestion stops. The gut goes quiet. That energy gets redirected. Autophagy kicks in — a cellular cleanup process the body cannot do while busy digesting. The 2016 Nobel Prize in Physiology was awarded for autophagy research. Cultures around the world have practiced intentional fasting for thousands of years. This quest is repeatable because the practice compounds. Early fasts are about the physical experience. Later fasts, once the body has adapted, become about something else. What remains when the usual drives go quiet.",
+    description: "What is your role? Discovering your unique purpose through the practice of fasting and reflection. Repeatable. Each fast earns tokens and deepens the practice.",
+    storyCard: "The body knows how to heal itself. What it needs, more often than any supplement or intervention, is time to stop processing long enough to do the work. When you fast, digestion stops. The gut goes quiet. That energy gets redirected. Autophagy kicks in: a cellular cleanup process the body cannot do while busy digesting. The 2016 Nobel Prize in Physiology was awarded for autophagy research. Cultures around the world have practiced intentional fasting for thousands of years. This quest is repeatable because the practice compounds. Early fasts are about the physical experience. Later fasts, once the body has adapted, become about something else. What remains when the usual drives go quiet.",
     rewards: { regen: 77, rvoice: 1 },
     deliverable: "A reflection document for each completed fast: dates, duration, key observations, and what shifted",
     estimatedTime: "Minimum 24 hours per completion (repeatable, no cap)",
@@ -433,8 +433,8 @@ export const questDetailsData: Record<string, QuestDetails> = {
       { step: 6, title: "Write your reflection", description: "Each time you complete a fast, write a brief account: what happened in your body, what happened in your mind, what surprised you. Over multiple fasts these become a record of a practice." }
     ],
     resources: [
-      { title: "The Complete Guide to Fasting — Jason Fung", url: "https://www.doctorfung.com/the-complete-guide-to-fasting" },
-      { title: "Dr. Valter Longo — fasting and longevity research", url: "https://valterlongo.com" }
+      { title: "The Complete Guide to Fasting by Jason Fung", url: "https://www.doctorfung.com/the-complete-guide-to-fasting" },
+      { title: "Dr. Valter Longo: fasting and longevity research", url: "https://valterlongo.com" }
     ],
     tips: [
       "The hardest part of any fast is the first 4-6 hours. Once past that, hunger becomes more manageable and the clarity begins.",

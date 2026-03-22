@@ -4,8 +4,9 @@
  * Features: Calendar integration, Zoom meeting info
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
+import { toast } from 'sonner';
 import {
   Calendar,
   Clock,
@@ -31,6 +32,7 @@ import AMABanner from "@/components/AMABanner";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from '@/lib/trpc';
 import { cdnImg } from "@/lib/utils";
+import { useAuth } from '@/_core/hooks/useAuth';
 
 
 
@@ -57,14 +59,14 @@ const upcomingEventsFallback = [
   {
     id: 0,
     title: "Season 2 Community Session",
-    date: "2026-03-29",
+    date: "2026-04-05",
     time: "1:00 PM",
-    timezone: "EST",
+    timezone: "EDT",
     duration: "2 hours",
     description: "Join us for an open introduction to Season 2! Learn about the program, meet the community, discover if this journey is right for your land project, and help us select the best day/time for the 13-week episodes.",
     type: "open",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Community+Session&dates=20260329T180000Z/20260329T200000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0AZoom:+https://us06web.zoom.us/j/5776315796%0AMeeting+ID:+577+631+5796%0APasscode:+333%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Zoom",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260329T180000Z%0ADTEND:20260329T200000Z%0ASUMMARY:ReGen+Civics+Season+2+Community+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2.%5Cn%5CnZoom:+https://us06web.zoom.us/j/5776315796%5CnMeeting+ID:+577+631+5796%5CnPasscode:+333%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Zoom%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Community+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0AZoom:+https://us06web.zoom.us/j/5776315796%0AMeeting+ID:+577+631+5796%0APasscode:+333%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Zoom",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260405T170000Z%0ADTEND:20260405T190000Z%0ASUMMARY:ReGen+Civics+Season+2+Community+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2.%5Cn%5CnZoom:+https://us06web.zoom.us/j/5776315796%5CnMeeting+ID:+577+631+5796%5CnPasscode:+333%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Zoom%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 100,
@@ -276,6 +278,10 @@ export default function Schedule() {
   // #12 — User's local timezone for display
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  // #23 — Token balance for signed-in users
+  const { user } = useAuth();
+  const { data: tokenData } = trpc.events.myTokenBalance.useQuery(undefined, { enabled: !!user });
+
   // Fetch events from DB (falls back gracefully while loading)
   const { data: dbEvents } = trpc.events.list.useQuery();
   // #8 — Signup counts for social proof
@@ -298,6 +304,32 @@ export default function Schedule() {
 
   const reminderMutation = trpc.events.signup.useMutation();
   const agendaMutation = trpc.events.suggestAgendaItem.useMutation();
+  const unsubscribeMutation = trpc.events.unsubscribe.useMutation();
+
+  // #18 — Handle unsubscribe query param on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const unsubEventId = params.get('unsubscribe');
+    const unsubEmail = params.get('email');
+    if (unsubEventId && unsubEmail) {
+      unsubscribeMutation.mutate(
+        { eventId: parseInt(unsubEventId, 10), email: unsubEmail },
+        {
+          onSuccess: () => {
+            toast.success("You've been unsubscribed from reminders for this event.");
+          },
+          onError: () => {
+            toast.error("Could not unsubscribe. Please try again.");
+          },
+        }
+      );
+      // Clean the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('unsubscribe');
+      url.searchParams.delete('email');
+      window.history.replaceState({}, '', url.pathname);
+    }
+  }, []);
 
   const submitReminder = (event: { id: number; title: string }) => {
     if (!reminderEmail.trim()) return;
@@ -362,7 +394,7 @@ export default function Schedule() {
       {/* Open Session Announcement Banner */}
       <div className="bg-[#7dd87d]/20 border-b border-[#7dd87d]/30 px-4 py-3 text-center">
         <p className="text-[#7dd87d] font-medium text-sm md:text-base">
-          🌿 Open Session call is Sunday March 29th with the SEEDS community and other friends of the Regenerative Renaissance
+          🌿 Open Session call is Sunday April 5th with the SEEDS community and other friends of the Regenerative Renaissance
         </p>
       </div>
       <BackButton />
@@ -451,7 +483,7 @@ export default function Schedule() {
                 </div>
                 <h3 className="text-lg font-bold text-white">All Events</h3>
               </div>
-              <p className="text-white/60 text-sm mb-4">Subscribe and new events appear automatically — no re-downloading</p>
+              <p className="text-white/60 text-sm mb-4">Subscribe and new events appear automatically. No re-downloading needed.</p>
               <div className="flex flex-wrap gap-2">
                 <a
                   href="https://calendar.google.com/calendar/u/0?cid=63ce71cca81ab47fb9986b4bc1dd379eba3da72ecc93a9b8424c5c49812fa69f%40group.calendar.google.com"
@@ -499,11 +531,11 @@ export default function Schedule() {
                   <h3 className="text-lg font-bold text-white">Open Access Session</h3>
                 </div>
               </div>
-              <p className="text-white/60 text-sm mb-2">March 29, 2026 at 1:00 PM - 3:00 PM EST</p>
+              <p className="text-white/60 text-sm mb-2">April 5, 2026 at 1:00 PM - 3:00 PM EDT</p>
               <p className="text-white/50 text-xs mb-4">Open introduction to Season 2 - no commitment required!</p>
               <div className="flex flex-wrap gap-2">
                 <a
-                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Open+Access+Session&dates=20260329T180000Z/20260329T200000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0AZoom:+https://us06web.zoom.us/j/5776315796%0AMeeting+ID:+577+631+5796%0APasscode:+333%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Zoom"
+                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Open+Access+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0AZoom:+https://us06web.zoom.us/j/5776315796%0AMeeting+ID:+577+631+5796%0APasscode:+333%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Zoom"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
@@ -515,7 +547,7 @@ export default function Schedule() {
                   Add to Google
                 </a>
                 <a
-                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260329T180000Z%0ADTEND:20260329T200000Z%0ASUMMARY:ReGen+Civics+Season+2+Open+Access+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2+(1PM-3PM+EST).%5Cn%5CnZoom:+https://us06web.zoom.us/j/5776315796%5CnMeeting+ID:+577+631+5796%5CnPasscode:+333%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Zoom%0AEND:VEVENT%0AEND:VCALENDAR"
+                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260405T170000Z%0ADTEND:20260405T190000Z%0ASUMMARY:ReGen+Civics+Season+2+Open+Access+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2+(1PM-3PM+EDT).%5Cn%5CnZoom:+https://us06web.zoom.us/j/5776315796%5CnMeeting+ID:+577+631+5796%5CnPasscode:+333%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Zoom%0AEND:VEVENT%0AEND:VCALENDAR"
                   download="regen-civics-open-session.ics"
                   className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
                 >
@@ -628,6 +660,21 @@ export default function Schedule() {
         </div>
       </section>
 
+      {/* #23 — Token balance widget for signed-in users */}
+      {user && tokenData && tokenData.balance > 0 && (
+        <section className="px-4 pt-4">
+          <div className="container mx-auto max-w-4xl">
+            <div className="inline-flex items-center gap-2 bg-[#7dd87d]/15 border border-[#7dd87d]/30 rounded-full px-4 py-2">
+              <span className="w-5 h-5 rounded-full bg-[#7dd87d]/30 flex items-center justify-center text-xs">
+                <svg className="w-3 h-3 text-[#7dd87d]" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+              </span>
+              <span className="text-[#7dd87d] font-semibold text-sm">$ReGen Balance: {tokenData.balance}</span>
+              <span className="text-white/40 text-xs">from {tokenData.entries.length} event{tokenData.entries.length !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Events List */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-4xl">
@@ -656,7 +703,11 @@ export default function Schedule() {
                           OPEN ACCESS
                         </span>
                       )}
-                      <h3 className="text-xl font-bold text-white">{event.title}</h3>
+                      <h3 className="text-xl font-bold text-white">
+                        <Link href={`/events/${event.id}`} className="hover:text-[#7dd87d] transition-colors" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                          {event.title}
+                        </Link>
+                      </h3>
                       <div className="flex flex-wrap items-center gap-4 mt-2 text-white/60">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
@@ -704,6 +755,22 @@ export default function Schedule() {
                 {effectiveExpanded === event.id && (
                   <div className="px-6 pb-6 pt-0 border-t border-white/10">
                     <p className="text-white/70 mb-6 mt-4">{event.description}</p>
+                    {/* #25 — Guest speaker info */}
+                    {(event as any).guestSpeakerName && (
+                      <div className="bg-[#7dd87d]/10 border border-[#7dd87d]/20 rounded-xl px-4 py-3 mb-4 flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Users className="w-4 h-4 text-[#7dd87d]" />
+                        </div>
+                        <div>
+                          <p className="text-white text-sm font-medium">
+                            With {(event as any).guestSpeakerName}{(event as any).guestSpeakerTopic ? ` on ${(event as any).guestSpeakerTopic}` : ''}
+                          </p>
+                          {(event as any).guestSpeakerBio && (
+                            <p className="text-white/50 text-xs mt-1">{(event as any).guestSpeakerBio}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="flex flex-wrap gap-3">
                       {/* #5 — Save to Calendar buttons, more prominent */}
@@ -808,7 +875,7 @@ export default function Schedule() {
                           {/* #4 — Optional SMS */}
                           <input
                             type="tel"
-                            placeholder="+1 555 000 0000 (optional — get a text reminder too)"
+                            placeholder="+1 555 000 0000 (optional, get a text reminder too)"
                             value={reminderPhone}
                             onChange={(e) => setReminderPhone(e.target.value)}
                             className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-white/30 text-xs focus:outline-none focus:border-[#7dd87d]/40"
