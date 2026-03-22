@@ -80,8 +80,8 @@ export function serveStatic(app: Express) {
     immutable: true,
     etag: true,
     setHeaders(res, filePath) {
-      // Don't cache HTML files — they must always reflect the latest deploy
-      if (filePath.endsWith(".html")) {
+      // Don't cache HTML or service worker files — they must always reflect the latest deploy
+      if (filePath.endsWith(".html") || filePath.endsWith("sw.js") || filePath.endsWith("registerSW.js")) {
         res.setHeader("Cache-Control", "no-cache");
       }
     },
