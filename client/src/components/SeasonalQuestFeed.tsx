@@ -169,7 +169,23 @@ export function SeasonalQuestFeed({ forceSeason }: SeasonalQuestFeedProps = {}) 
                         if (parent && !parent.querySelector('.img-fallback')) {
                           const fallback = document.createElement('div');
                           fallback.className = `img-fallback w-full h-full flex items-center justify-center opacity-40`;
-                          fallback.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>`;
+                          const svgNS = 'http://www.w3.org/2000/svg';
+                          const svg = document.createElementNS(svgNS, 'svg');
+                          svg.setAttribute('width', '40');
+                          svg.setAttribute('height', '40');
+                          svg.setAttribute('viewBox', '0 0 24 24');
+                          svg.setAttribute('fill', 'none');
+                          svg.setAttribute('stroke', 'currentColor');
+                          svg.setAttribute('stroke-width', '1.5');
+                          svg.setAttribute('stroke-linecap', 'round');
+                          svg.setAttribute('stroke-linejoin', 'round');
+                          const circle = document.createElementNS(svgNS, 'path');
+                          circle.setAttribute('d', 'M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z');
+                          const hand = document.createElementNS(svgNS, 'path');
+                          hand.setAttribute('d', 'M12 8v4l3 3');
+                          svg.appendChild(circle);
+                          svg.appendChild(hand);
+                          fallback.appendChild(svg);
                           parent.appendChild(fallback);
                         }
                       }}

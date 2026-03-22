@@ -1,5 +1,8 @@
-// seed-onboarding-quest-threads.mjs
+// seed-onboarding-quest-threads.mjs  (Fix 140 Part C)
 // Run with: DATABASE_URL=... node scripts/seed-onboarding-quest-threads.mjs [--dry-run|--execute]
+//
+// Creates forum posts for Welcome Aboard quests 1, 3, 5, 6 in the
+// onboarding-quests category, then patches forumUrl in welcomeAboardQuests.ts.
 
 import mysql from 'mysql2/promise'
 import fs from 'fs'
@@ -9,133 +12,157 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const dryRun = !process.argv.includes('--execute')
 
-// Quest data for quests 1, 3, 5, 6 of Welcome Aboard
-// (Read from welcomeAboardQuests.ts to get titles/about text)
-// These are the 4 quests that go into onboarding-quests category
+// Which Welcome Aboard quest numbers get onboarding-quests threads
+const QUEST_NUMBERS = [1, 3, 5, 6]
 
-async function main() {
-  const conn = await mysql.createConnection(process.env.DATABASE_URL)
+// ---------------------------------------------------------------------------
+// Helpers to extract quest data from the TS source
+// ---------------------------------------------------------------------------
 
-  // Get category ID for onboarding-quests
-  const [[category]] = await conn.execute(
-    "SELECT id FROM forumCategories WHERE slug = 'onboarding-quests' LIMIT 1"
-  )
-  if (!category) {
-    console.error("onboarding-quests category not found -- run the migration first")
-    await conn.end()
-    return
-  }
+function extractQuestBlocks(fileContent) {
+  // Each quest object starts with "  {" and ends with "  }," or "  }]"
+  // We split by the top-level array entries.
+  const quests = []
+  const objRegex = /\{\s*\n\s*id:\s*"welcome-aboard-(\d+)"[\s\S]*?\n\s*\}/g
+  let m
+  while ((m = objRegex.exec(fileContent)) !== null) {
+    const block = m[0]
+    const number = parseInt(m[1], 10)
 
-  // Get team author ID
-  const [[teamUser]] = await conn.execute(
-    "SELECT id FROM users WHERE email = 'team@regencivics.earth' LIMIT 1"
-  )
-  if (!teamUser) {
-    console.error("team@regencivics.earth user not found")
-    await conn.end()
-    return
-  }
+    const titleMatch = block.match(/title:\s*"([^"]+)"/)
+    const title = titleMatch ? titleMatch[1] : `Welcome Aboard Quest ${number}`
 
-  // Read welcomeAboardQuests.ts to get quest data
-  const questsFilePath = path.join(__dirname, '../client/src/data/welcomeAboardQuests.ts')
-  const questsFileContent = fs.readFileSync(questsFilePath, 'utf8')
-
-  // The 4 quests that need onboarding-quests forum threads
-  // quest.number values: 1, 3, 5, 6
-  const questsToSeed = [
-    { number: 1 },
-    { number: 3 },
-    { number: 5 },
-    { number: 6 },
-  ]
-
-  const createdPosts = []
-
-  for (const quest of questsToSeed) {
-    // Extract the quest block by its number field, then get the title
-    // Pattern: number: N, (possibly with whitespace)
-    const questBlockRegex = new RegExp(
-      `\\{[^{}]*?number:\\s*${quest.number}\\b[^{}]*?\\}`,
-      's'
-    )
-    const blockMatch = questsFileContent.match(questBlockRegex)
-
-    let title = `Welcome Aboard Quest ${quest.number}`
-    if (blockMatch) {
-      const titleMatch = blockMatch[0].match(/title:\s*["'`]([^"'`]+)["'`]/)
-      if (titleMatch) title = titleMatch[1]
+    // Extract the about field (multi-line template literal or string)
+    let about = ''
+    const aboutMatch = block.match(/about:\s*\n?\s*"([\s\S]*?)"(?:,|\n)/)
+    if (aboutMatch) {
+      about = aboutMatch[1].replace(/\\n/g, '\n')
     }
 
-    const body = `This is the discussion thread for the "${title}" quest.\n\nComplete the quest and share your experience here. What did you do? How did it feel? Questions, reflections, and completions all welcome.`
-
-    console.log(`${dryRun ? '[DRY RUN] Would create' : 'Creating'}: "${title}" forum thread in onboarding-quests`)
-
-    if (!dryRun) {
-      const [result] = await conn.execute(
-        'INSERT INTO forumPosts (title, content, authorId, categoryId, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
-        [title, body, teamUser.id, category.id]
-      )
-      createdPosts.push({ questNumber: quest.number, postId: result.insertId, title })
-      console.log(`  Created post ID ${result.insertId}`)
-    } else {
-      console.log(`  Would create forum post for quest ${quest.number}: "${title}"`)
-    }
-  }
-
-  if (!dryRun && createdPosts.length > 0) {
-    // Patch welcomeAboardQuests.ts
-    let updatedContent = questsFileContent
-
-    for (const post of createdPosts) {
-      // Find the quest block for this quest number and update its forumUrl
-      // Strategy: locate the quest object by number, then replace forumUrl within it
-      const questBlockRegex = new RegExp(
-        `(\\{[^{}]*?number:\\s*${post.questNumber}\\b[^{}]*?forumUrl:\\s*)["'\`][^"'\`]*["'\`]`,
-        's'
-      )
-
-      // Also try reversed order (forumUrl before number)
-      const questBlockRegex2 = new RegExp(
-        `(\\{[^{}]*?forumUrl:\\s*)["'\`][^"'\`]*["'\`]([^{}]*?number:\\s*${post.questNumber}\\b[^{}]*?\\})`,
-        's'
-      )
-
-      if (questBlockRegex.test(updatedContent)) {
-        updatedContent = updatedContent.replace(
-          questBlockRegex,
-          `$1"/community/post/${post.postId}"`
-        )
-        console.log(`Patched quest number ${post.questNumber} forumUrl to /community/post/${post.postId}`)
-      } else if (questBlockRegex2.test(updatedContent)) {
-        updatedContent = updatedContent.replace(
-          questBlockRegex2,
-          `$1"/community/post/${post.postId}"$2`
-        )
-        console.log(`Patched quest number ${post.questNumber} forumUrl to /community/post/${post.postId}`)
-      } else {
-        // Fallback: find by id field (welcome-aboard-N)
-        const idBasedRegex = new RegExp(
-          `(id:\\s*["'\`]welcome-aboard-${post.questNumber}["'\`][^}]+?forumUrl:\\s*)["'\`][^"'\`]*["'\`]`,
-          's'
-        )
-        if (idBasedRegex.test(updatedContent)) {
-          updatedContent = updatedContent.replace(
-            idBasedRegex,
-            `$1"/community/post/${post.postId}"`
-          )
-          console.log(`Patched quest welcome-aboard-${post.questNumber} forumUrl to /community/post/${post.postId}`)
-        } else {
-          console.log(`Could not find forumUrl for quest number ${post.questNumber} to patch`)
-        }
+    // Extract steps array
+    const steps = []
+    const stepsSection = block.match(/steps:\s*\[\s*([\s\S]*?)\s*\]/)
+    if (stepsSection) {
+      const stepRegex = /"([\s\S]*?)"/g
+      let s
+      while ((s = stepRegex.exec(stepsSection[1])) !== null) {
+        steps.push(s[1].replace(/\\n/g, '\n'))
       }
     }
 
-    fs.writeFileSync(questsFilePath, updatedContent, 'utf8')
-    console.log('Updated welcomeAboardQuests.ts')
+    quests.push({ number, title, about, steps })
   }
-
-  await conn.end()
-  console.log('Done')
+  return quests
 }
 
-main().catch(console.error)
+function buildBody(quest) {
+  let body = quest.about + '\n\n'
+  body += '## Steps\n\n'
+  quest.steps.forEach((step, i) => {
+    body += `${i + 1}. ${step}\n`
+  })
+  body += '\nComplete the quest and reply to this thread with your experience!'
+  return body
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+async function main() {
+  if (!process.env.DATABASE_URL) {
+    console.error('ERROR: DATABASE_URL environment variable is not set.')
+    process.exit(1)
+  }
+
+  const questsFilePath = path.join(__dirname, '../client/src/data/welcomeAboardQuests.ts')
+  const questsFileContent = fs.readFileSync(questsFilePath, 'utf8')
+  const allQuests = extractQuestBlocks(questsFileContent)
+
+  const targetQuests = allQuests.filter(q => QUEST_NUMBERS.includes(q.number))
+  if (targetQuests.length !== QUEST_NUMBERS.length) {
+    console.error(`Expected ${QUEST_NUMBERS.length} quests but found ${targetQuests.length} in the TS file.`)
+    process.exit(1)
+  }
+
+  const conn = await mysql.createConnection(process.env.DATABASE_URL)
+
+  try {
+    // Get category ID for onboarding-quests
+    const [[category]] = await conn.execute(
+      "SELECT id FROM forumCategories WHERE slug = 'onboarding-quests' LIMIT 1"
+    )
+    if (!category) {
+      console.error('ERROR: onboarding-quests category not found. Run the migration first.')
+      return
+    }
+
+    // Get team author ID
+    const [[teamUser]] = await conn.execute(
+      "SELECT id FROM users WHERE email = 'team@regencivics.earth' LIMIT 1"
+    )
+    if (!teamUser) {
+      console.error('ERROR: team@regencivics.earth user not found.')
+      return
+    }
+
+    console.log(`Category: onboarding-quests (id=${category.id})`)
+    console.log(`Author:   team@regencivics.earth (id=${teamUser.id})`)
+    console.log(`Mode:     ${dryRun ? 'DRY RUN' : 'EXECUTE'}\n`)
+
+    const createdPosts = []
+
+    for (const quest of targetQuests) {
+      const body = buildBody(quest)
+
+      if (dryRun) {
+        console.log(`[DRY RUN] Would create forum post:`)
+        console.log(`  Quest #${quest.number}: "${quest.title}"`)
+        console.log(`  Body preview: ${body.substring(0, 120)}...`)
+        console.log(`  Would update forumUrl in welcomeAboardQuests.ts\n`)
+      } else {
+        const [result] = await conn.execute(
+          'INSERT INTO forumPosts (title, content, authorId, categoryId, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())',
+          [quest.title, body, teamUser.id, category.id]
+        )
+        const postId = result.insertId
+        createdPosts.push({ questNumber: quest.number, postId, title: quest.title })
+        console.log(`Created post ID ${postId} for quest #${quest.number}: "${quest.title}"`)
+      }
+    }
+
+    // Patch welcomeAboardQuests.ts with new forumUrl values
+    if (!dryRun && createdPosts.length > 0) {
+      let updatedContent = questsFileContent
+
+      for (const post of createdPosts) {
+        // Match the quest block by its id field, then replace its forumUrl
+        const idStr = `welcome-aboard-${post.questNumber}`
+        const regex = new RegExp(
+          `(id:\\s*"${idStr}"[\\s\\S]*?forumUrl:\\s*)"[^"]*"`,
+        )
+        if (regex.test(updatedContent)) {
+          updatedContent = updatedContent.replace(
+            regex,
+            `$1"/community/post/${post.postId}"`
+          )
+          console.log(`Patched forumUrl for ${idStr} -> /community/post/${post.postId}`)
+        } else {
+          console.warn(`WARNING: Could not find forumUrl for ${idStr} to patch.`)
+        }
+      }
+
+      fs.writeFileSync(questsFilePath, updatedContent, 'utf8')
+      console.log('\nUpdated welcomeAboardQuests.ts')
+    }
+  } finally {
+    await conn.end()
+  }
+
+  console.log('\nDone.')
+}
+
+main().catch(err => {
+  console.error(err)
+  process.exit(1)
+})

@@ -123,7 +123,7 @@ function StepWelcome() {
         Welcome to ReGen Civics!
       </h2>
       <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
-        You have joined an Infinite Game for the Regenerative Renaissance — a living network of land projects, investors, allies, and learners co-creating a healthier world.
+        You have joined an Infinite Game for the Regenerative Renaissance. A living network of land projects, investors, allies, and learners co-creating a healthier world.
       </p>
       <p className="text-[#7dd87d]/80 text-xs mt-4">
         Let us take 60 seconds to personalise your experience.
@@ -232,7 +232,7 @@ function StepGetStarted({ onClose }: { onClose: () => void }) {
       >
         Here is your personalised path
       </h2>
-      <p className="text-white/50 text-xs text-center mb-5">Start anywhere — the game is infinite.</p>
+      <p className="text-white/50 text-xs text-center mb-5">Start anywhere. The game is infinite.</p>
 
       <div className="flex flex-col gap-3">
         {ACTION_CARDS.map((card) => (

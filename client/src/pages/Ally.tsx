@@ -40,6 +40,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import { cdnImg } from "@/lib/utils";
 
 function CollapsibleSection({
   title,
@@ -142,10 +143,10 @@ const allianceCategories = [
 export default function Ally() {
   return (
     <PageBackground
-      backgroundImage="https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp"
-      mobileBackgroundImage="https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp"
-      blurPlaceholder="https://assets.regencivics.earth/rUMeusROmsGTXuQF.webp"
-      mobileBlurPlaceholder="https://assets.regencivics.earth/oFcGbAHWTvIUIFjk.webp"
+      backgroundImage={cdnImg("https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp")}
+      mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp")}
+      blurPlaceholder={cdnImg("https://assets.regencivics.earth/rUMeusROmsGTXuQF.webp")}
+      mobileBlurPlaceholder={cdnImg("https://assets.regencivics.earth/oFcGbAHWTvIUIFjk.webp")}
       overlayOpacity={0.65}
       theme="sky"
       blendColor="15, 40, 45"

@@ -542,6 +542,8 @@ export function AdminBroadcastPanel() {
                   src={imageUrl}
                   alt="Preview"
                   className="mt-1 rounded-lg max-h-48 object-cover w-full"
+                  width={800}
+                  height={192}
                   onError={e => ((e.target as HTMLImageElement).style.display = "none")}
                 />
               </div>

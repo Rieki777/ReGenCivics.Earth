@@ -504,7 +504,7 @@ export default function Community() {
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group col-span-2 sm:col-span-1 ${activeSection === 'general' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]" />
-            <img src="/game-infinite-forest.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <img src="/game-infinite-forest.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="text-2xl mb-1">🌿</div>
@@ -520,7 +520,7 @@ export default function Community() {
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'earth' ? 'ring-2 ring-[#d4a574] shadow-lg shadow-[#d4a574]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#3d2b1f] to-[#5c3d2e]" />
-            <img src="/community/finca-sagrada.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <img src="/community/finca-sagrada.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="text-2xl mb-1">🌍</div>
@@ -536,7 +536,7 @@ export default function Community() {
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'water' ? 'ring-2 ring-[#60a5fa] shadow-lg shadow-[#60a5fa]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a5f] to-[#2d5a7f]" />
-            <img src="/community/liminal-village.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:opacity-45 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <img src="/community/liminal-village.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:opacity-45 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="text-2xl mb-1">🌊</div>
@@ -552,7 +552,7 @@ export default function Community() {
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'fire' ? 'ring-2 ring-[#fb923c] shadow-lg shadow-[#fb923c]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#7c2d12] to-[#9a3412]" />
-            <img src="/images/quests/quest-00-fire.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-45 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <img src="/images/quests/quest-00-fire.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-45 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="text-2xl mb-1">🔥</div>
@@ -568,7 +568,7 @@ export default function Community() {
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'air' ? 'ring-2 ring-slate-400 shadow-lg shadow-slate-400/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#374151] to-[#4b5563]" />
-            <img src="/blog-hero-bridging-worlds.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <img src="/blog-hero-bridging-worlds.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="text-2xl mb-1">🍃</div>
@@ -921,7 +921,7 @@ export default function Community() {
               {/* Rites of Passage */}
               <Link href="/community/c/rites-of-passage">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-05-rites-of-love.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-05-rites-of-love.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Rites of Passage</p>
@@ -933,7 +933,7 @@ export default function Community() {
               {/* All Quests */}
               <Link href="/community/c/quests-gameplay">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-00-fire.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-00-fire.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>All Quests</p>
@@ -945,7 +945,7 @@ export default function Community() {
               {/* Epic Quests */}
               <div className="relative cursor-default">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 transition-all h-36">
-                  <img src="/images/quests/quest-08-medicine-journey.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-08-medicine-journey.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Epic Quests</p>
@@ -960,7 +960,7 @@ export default function Community() {
               {/* General Discussion */}
               <Link href="/community/c/quests-gameplay">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-01-potion-brewing.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-01-potion-brewing.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>General Discussion</p>
@@ -1015,7 +1015,14 @@ export default function Community() {
             </p>
 
             {airLoading ? (
-              <p className="text-[#1a472a]/40 text-sm">Loading...</p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="animate-pulse bg-[#f8f5f0] rounded-xl p-4 border border-slate-200/60">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                    <div className="h-3 bg-gray-100 rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
             ) : !airThreads || airThreads.length === 0 ? (
               <div className="flex items-center justify-between gap-3 bg-[#f8f5f0] rounded-xl p-4 border border-slate-200/60">
                 <p className="text-[#1a472a]/50 text-sm" style={{ fontFamily: 'var(--font-body)' }}>

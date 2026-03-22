@@ -109,23 +109,34 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // SW registration is best-effort; silently ignore failures
-    });
-  });
+// Error recovery for installed PWA users: if React fails to mount,
+// clear caches and reload so they don't get stuck on a broken screen.
+try {
+  createRoot(document.getElementById("root")!).render(
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <GoogleTranslateProvider>
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
+        </GoogleTranslateProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
+  );
+} catch (err) {
+  const root = document.getElementById("root");
+  if (root) {
+    root.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0d2818;color:#e0e0e0;font-family:system-ui,sans-serif;text-align:center;padding:2rem;">
+        <div>
+          <h1 style="font-size:1.25rem;margin-bottom:0.5rem;">Something went wrong</h1>
+          <p style="opacity:0.7;">Clearing cache and reloading...</p>
+        </div>
+      </div>
+    `;
+  }
+  if ("caches" in window) {
+    caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n))));
+  }
+  setTimeout(() => window.location.reload(), 2000);
 }
-
-createRoot(document.getElementById("root")!).render(
-  <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <QueryClientProvider client={queryClient}>
-      <GoogleTranslateProvider>
-        <LanguageProvider>
-          <App />
-        </LanguageProvider>
-      </GoogleTranslateProvider>
-    </QueryClientProvider>
-  </trpc.Provider>
-);

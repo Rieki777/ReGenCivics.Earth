@@ -15,6 +15,7 @@ import { CalculatorWeightsSheet } from "@/components/CalculatorWeightsSheet";
 import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
 import { pageCopy } from "@/data/pageCopy";
+import { cdnImg } from "@/lib/utils";
 
 // Sign In CTA Component
 function SignInCTA() {
@@ -46,7 +47,7 @@ export default function Calculator() {
       <SEO
         title={pageCopy.calculator.seo.title}
         description={pageCopy.calculator.seo.description}
-        image="https://assets.regencivics.earth/ocDzkDHpivHtGCWo.jpg"
+        image={cdnImg("https://assets.regencivics.earth/ocDzkDHpivHtGCWo.jpg")}
       />
       
       {/* Header */}

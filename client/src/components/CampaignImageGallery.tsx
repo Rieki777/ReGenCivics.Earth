@@ -75,10 +75,12 @@ export function CampaignImageGallery({ images, campaignName, mode = 'card' }: Ca
           onClick={(e) => openLightbox(e, 0)}
         >
           {coverImage && (
-            <img 
-              src={coverImage.imageUrl} 
+            <img
+              src={coverImage.imageUrl}
               alt={coverImage.caption || campaignName}
               className="w-full h-full object-cover"
+              width={800}
+              height={500}
               loading="lazy"
             />
           )}

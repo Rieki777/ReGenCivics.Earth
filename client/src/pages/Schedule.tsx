@@ -30,6 +30,7 @@ import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import AMABanner from "@/components/AMABanner";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from '@/lib/trpc';
+import { cdnImg } from "@/lib/utils";
 
 
 
@@ -377,7 +378,7 @@ export default function Schedule() {
       <section className="relative min-h-[50vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://assets.regencivics.earth/MnRHvgPyBDbKYbay.jpg"
+            src={cdnImg("https://assets.regencivics.earth/MnRHvgPyBDbKYbay.jpg")}
             alt="Community Gathering"
             className="w-full h-full object-cover"
             width="1920"

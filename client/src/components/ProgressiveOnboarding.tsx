@@ -12,6 +12,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { PathCardImage } from '@/components/PathCardImage';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { cdnImg } from "@/lib/utils";
 
 const VISIT_KEY = 'regen_civics_visit_count';
 const ONBOARDING_DISMISSED_KEY = 'regen_civics_onboarding_dismissed';
@@ -28,8 +29,8 @@ const pathCards = [
     glowColor: "shadow-amber-400/20",
     iconColor: "text-amber-300",
     accentColor: "#fbbf24",
-    image: "https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp",
-    activatedImage: "https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp",
+    image: cdnImg("https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp"),
   },
   {
     id: "land",
@@ -42,8 +43,8 @@ const pathCards = [
     glowColor: "shadow-[#7dd87d]/20",
     iconColor: "text-[#7dd87d]",
     accentColor: "#7dd87d",
-    image: "https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp",
-    activatedImage: "https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp",
+    image: cdnImg("https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp"),
   },
   {
     id: "ally",
@@ -56,8 +57,8 @@ const pathCards = [
     glowColor: "shadow-blue-400/20",
     iconColor: "text-blue-300",
     accentColor: "#60a5fa",
-    image: "https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp",
-    activatedImage: "https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp",
+    image: cdnImg("https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp"),
   },
   {
     id: "play",
@@ -70,8 +71,8 @@ const pathCards = [
     glowColor: "shadow-purple-400/20",
     iconColor: "text-purple-300",
     accentColor: "#c084fc",
-    image: "https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp",
-    activatedImage: "https://assets.regencivics.earth/qDmGFHBsFPyCECbM.webp",
+    image: cdnImg("https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/qDmGFHBsFPyCECbM.webp"),
   },
 ];
 

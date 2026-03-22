@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SOCIAL_LINKS } from "@/components/SocialLinks";
+import { cdnImg } from "@/lib/utils";
 
 // Prefetch a route chunk on hover  -  import() is cached by the module system
 const prefetch = (path: string) => {
@@ -99,7 +100,7 @@ export default function Navigation() {
             className="flex items-center gap-2 text-[#7dd87d] hover:text-[#9de89d] transition-colors"
           >
             <img
-              src="https://assets.regencivics.earth/DUOLILquhPlWMUAF.webp"
+              src={cdnImg("https://assets.regencivics.earth/DUOLILquhPlWMUAF.webp")}
               alt="ReGen Civics"
               width="40"
               height="40"
@@ -107,7 +108,7 @@ export default function Navigation() {
               loading="eager"
             />
             <img
-              src="https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.webp"
+              src={cdnImg("https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.webp")}
               alt="ReGen Civics"
               width="40"
               height="40"

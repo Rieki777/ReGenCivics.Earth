@@ -43,7 +43,7 @@ const contextConfig: Record<PageContext, {
 }> = {
   investor: {
     icon: <FileText className="w-5 h-5 text-[#7dd87d]" />,
-    headline: "Before you go — the Fund is open.",
+    headline: "Before you go: the Fund is open.",
     subline: "ReGen Civics is actively raising",
     body: "ReGen Civics is actively raising from aligned investors. If you are ready to put capital to work in regenerative land projects, the path starts here.",
     cta: "Learn About Investing",

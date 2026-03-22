@@ -50,6 +50,7 @@ import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { pageCopy } from "@/data/pageCopy";
+import { cdnImg } from "@/lib/utils";
 // Calculator moved to separate page at /calculator
 
 // Game Way Card Component
@@ -131,7 +132,7 @@ function TokenInfoCard({
     <div className={`bg-white p-6 rounded-xl border-3 ${color} shadow-lg`}>
       <div className="flex items-start gap-4 mb-4">
         <div className="w-16 h-16 flex-shrink-0">
-          <img src={iconSrc} alt={title} className="w-full h-full object-contain" loading="lazy" />
+          <img src={iconSrc} alt={title} className="w-full h-full object-contain" width={64} height={64} loading="lazy" />
         </div>
         <div>
           <h3 className="font-bold text-[#1a472a] text-xl" style={{ fontFamily: 'var(--font-display)' }}>
@@ -401,7 +402,7 @@ export default function Game() {
             <AutoplayVideo
               videoId="C9U0JTsqKv8"
               title="ReGen Civics Overview"
-              thumbnailUrl="https://assets.regencivics.earth/NnpPOudclSlFoAuh.webp"
+              thumbnailUrl={cdnImg("https://assets.regencivics.earth/NnpPOudclSlFoAuh.webp")}
               thumbnailAlt="Watch the ReGen Civics Overview"
               playLabel={pageCopy.game.overview.playLabel}
             />
@@ -475,7 +476,7 @@ export default function Game() {
                     preload="metadata"
                     className="w-full h-auto"
                   >
-                    <source src="https://assets.regencivics.earth/ckVBEXxJKsydomeb.mp4" type="video/mp4" />
+                    <source src={cdnImg("https://assets.regencivics.earth/ckVBEXxJKsydomeb.mp4")} type="video/mp4" />
                   </video>
                 </div>
               </div>
@@ -495,7 +496,7 @@ export default function Game() {
                     preload="metadata"
                     className="w-full h-auto"
                   >
-                    <source src="https://assets.regencivics.earth/zpwWWhxtucLzomsE.mp4" type="video/mp4" />
+                    <source src={cdnImg("https://assets.regencivics.earth/zpwWWhxtucLzomsE.mp4")} type="video/mp4" />
                   </video>
                 </div>
               </div>
@@ -962,7 +963,7 @@ export default function Game() {
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <TokenInfoCard
-                iconSrc="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp"
+                iconSrc={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp")}
                 title="RGVoice"
                 subtitle="Game Governance Token"
                 description="RGVoice represents how much 'weight your voice carries' in game decisions. We believe that the more you contribute, the wiser your decisions become."
@@ -975,7 +976,7 @@ export default function Game() {
                 color="border-purple-500/50"
               />
               <TokenInfoCard
-                iconSrc="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.webp"
+                iconSrc={cdnImg("https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.webp")}
                 title="$ReGen"
                 subtitle="Game Utility Token"
                 description="$ReGen is our tradable utility token representing economic participation in the Game."
@@ -1005,7 +1006,7 @@ export default function Game() {
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <TokenInfoCard
-                iconSrc="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp"
+                iconSrc={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp")}
                 title="RCVoice"
                 subtitle="Fund Governance Token"
                 description="RCVoice governs fund decisions. Council holds 40% voice; Land Projects, Alliance Orgs, and Investors each hold 20%. Voice evolves over time as the community matures."
@@ -1019,7 +1020,7 @@ export default function Game() {
                 color="border-amber-500/50"
               />
               <TokenInfoCard
-                iconSrc="https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.webp"
+                iconSrc={cdnImg("https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.webp")}
                 title="$RCivics"
                 subtitle="Rewards & Returns Token"
                 description="$RCivics is your claim on fund returns. Portfolio distributions are sent proportionally to $RCivics holders - separate from governance voice."
@@ -1441,7 +1442,7 @@ export default function Game() {
             {/* Journey Image */}
             <div className="max-w-4xl mx-auto mb-12">
               <img
-                src="https://assets.regencivics.earth/LbIXEUcDdcOLOHmP.jpg"
+                src={cdnImg("https://assets.regencivics.earth/LbIXEUcDdcOLOHmP.jpg")}
                 alt="ReGen Game Journey Map"
                 width="1200"
                 height="800"

@@ -19,6 +19,7 @@ import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
+import { cdnImg } from "@/lib/utils";
 
 // How-To video categories
 const howToCategories = [
@@ -253,7 +254,7 @@ export default function Blog() {
         title="Blog: Stories & Updates | ReGen Civics"
         description="Stories, insights, and updates from our journey toward a regenerative civilization."
         url="https://regencivics.earth/blog"
-        image="https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.webp"
+        image={cdnImg("https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.webp")}
       />
       
       {/* Hero Section */}

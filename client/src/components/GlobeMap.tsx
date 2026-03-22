@@ -14,6 +14,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { MapPin, Leaf, Building2, ExternalLink, Globe, ChevronDown, ChevronUp, Sprout, Search, AlertCircle, Filter, X, MessageCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { cdnImg } from "@/lib/utils";
 
 /** Escape special HTML characters to prevent XSS in innerHTML interpolation. */
 function escapeHtml(str: string): string {
@@ -99,7 +100,7 @@ const LAND_PROJECTS: MapEntity[] = [
     description: "4,000-acre oceanfront agrihood community building a regenerative society on the Pacific coast.",
     size: "4,000 acres",
     url: "https://www.ubunturegenvillage.earth/",
-    image: "https://assets.regencivics.earth/QoeFynHfnqeZcjzN.jpg",
+    image: cdnImg("https://assets.regencivics.earth/QoeFynHfnqeZcjzN.jpg"),
     inactive: true,
     season: "Season 1",
   },
@@ -114,7 +115,7 @@ const LAND_PROJECTS: MapEntity[] = [
     description: "684-acre biodynamic community farm in the Valley of Longevity, focused on regenerative agriculture.",
     size: "684 acres",
     url: "https://fincasagrada.com/",
-    image: "https://assets.regencivics.earth/ptLdEEmSgyEQKzmF.jpg",
+    image: cdnImg("https://assets.regencivics.earth/ptLdEEmSgyEQKzmF.jpg"),
     season: "Season 1",
   },
   {
@@ -128,7 +129,7 @@ const LAND_PROJECTS: MapEntity[] = [
     description: "3,350-acre living lab in the Yucatan peninsula, exploring regenerative land stewardship at scale.",
     size: "3,350 acres",
     url: "https://www.tabiregeneration.com/",
-    image: "https://assets.regencivics.earth/tAiFiPiWRBOxUGZV.jpg",
+    image: cdnImg("https://assets.regencivics.earth/tAiFiPiWRBOxUGZV.jpg"),
     inactive: true,
     season: "Season 1",
   },
@@ -143,7 +144,7 @@ const LAND_PROJECTS: MapEntity[] = [
     description: "6,000m3 campus for co-living and co-creation, an eco-tech hub exploring the edges of regenerative culture.",
     size: "6,000 m3",
     url: "https://liminalvillage.com/",
-    image: "https://assets.regencivics.earth/akMLmQzqqlUsisDu.webp",
+    image: cdnImg("https://assets.regencivics.earth/akMLmQzqqlUsisDu.webp"),
     season: "Season 1",
   },
   {
@@ -169,7 +170,7 @@ const LAND_PROJECTS: MapEntity[] = [
     description: "62-acre regenerative co-creation hub in southern Portugal, blending community living with innovation.",
     size: "62 acres",
     url: "https://traditionaldreamfactory.com/",
-    image: "https://assets.regencivics.earth/euecgkvMVMKpIduW.jpg",
+    image: cdnImg("https://assets.regencivics.earth/euecgkvMVMKpIduW.jpg"),
     season: "Season 1",
   },
   {
@@ -182,7 +183,7 @@ const LAND_PROJECTS: MapEntity[] = [
     country: "USA",
     description: "24-224 acre regenerative learning center in Northern California, focused on education and land stewardship.",
     size: "24-224 acres",
-    image: "https://assets.regencivics.earth/xHHoWlRQHaZwWmCV.webp",
+    image: cdnImg("https://assets.regencivics.earth/xHHoWlRQHaZwWmCV.webp"),
     season: "Season 1",
   },
   {
@@ -196,7 +197,7 @@ const LAND_PROJECTS: MapEntity[] = [
     description: "1-acre urban garden and regen hub demonstrating that regeneration starts in your own backyard.",
     size: "1 acre",
     url: "https://lalagardens.org/",
-    image: "https://assets.regencivics.earth/RBFOBfivFZGRBilm.jpg",
+    image: cdnImg("https://assets.regencivics.earth/RBFOBfivFZGRBilm.jpg"),
     inactive: true,
     season: "Season 1",
   },
@@ -222,7 +223,7 @@ const LAND_PROJECTS: MapEntity[] = [
     country: "Guatemala",
     description: "385-acre regenerative village project in the highlands of Guatemala, blending indigenous wisdom with innovation.",
     size: "385 acres",
-    image: "https://assets.regencivics.earth/qDMEazGCLoNCuxiS.jpg",
+    image: cdnImg("https://assets.regencivics.earth/qDMEazGCLoNCuxiS.jpg"),
     season: "Season 1",
   },
   {
@@ -235,7 +236,7 @@ const LAND_PROJECTS: MapEntity[] = [
     country: "Indonesia",
     description: "5-acre regenerative community in Bali exploring new models of conscious co-living.",
     size: "5 acres",
-    image: "https://assets.regencivics.earth/FuQmXVqMDIJIpIbl.jpg",
+    image: cdnImg("https://assets.regencivics.earth/FuQmXVqMDIJIpIbl.jpg"),
     season: "Season 1",
   },
   {
@@ -248,7 +249,7 @@ const LAND_PROJECTS: MapEntity[] = [
     country: "USA",
     description: "100-120 acre regenerative campus in the Blue Ridge Mountains, a living laboratory for systemic change.",
     size: "100-120 acres",
-    image: "https://assets.regencivics.earth/HLPCggmitjgcNLWL.jpg",
+    image: cdnImg("https://assets.regencivics.earth/HLPCggmitjgcNLWL.jpg"),
     inactive: true,
     season: "Season 1",
   },
@@ -262,7 +263,7 @@ const LAND_PROJECTS: MapEntity[] = [
     country: "Costa Rica",
     description: "432-acre Blue Zone regenerative village in one of the world's longevity hotspots.",
     size: "432 acres",
-    image: "https://assets.regencivics.earth/wwnJXOsxkrlwtDre.jpg",
+    image: cdnImg("https://assets.regencivics.earth/wwnJXOsxkrlwtDre.jpg"),
     season: "Season 1",
   },
 ];
@@ -278,7 +279,7 @@ const APPLICANT_PROJECTS: MapEntity[] = [
     location: "Christchurch, New Zealand",
     country: "New Zealand",
     description: "Urban regenerative community hub in Christchurch, reimagining neighborhood-scale living.",
-    image: "https://assets.regencivics.earth/kEKLQJFyCBJjUEXT.jpg",
+    image: cdnImg("https://assets.regencivics.earth/kEKLQJFyCBJjUEXT.jpg"),
     season: "Season 2",
   },
 ];

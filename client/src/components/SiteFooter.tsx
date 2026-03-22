@@ -9,6 +9,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { resetCookieConsent } from "@/components/CookieConsent";
 import { Cookie, Mail } from "lucide-react";
 import { FooterSearch } from "@/components/FooterSearch";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
 
 export default function SiteFooter() {
   return (
@@ -199,6 +200,9 @@ export default function SiteFooter() {
                   <Mail className="w-3 h-3" />
                   Email Preferences
                 </Link>
+              </li>
+              <li>
+                <PWAInstallButton />
               </li>
             </ul>
           </div>

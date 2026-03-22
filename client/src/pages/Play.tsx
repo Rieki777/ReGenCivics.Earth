@@ -34,6 +34,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
+import { cdnImg } from "@/lib/utils";
 
 // Action card component with token info and linked button(s)
 function ActionCard({
@@ -300,7 +301,7 @@ function QuestAnimationVideo() {
             ) : (
               <video
                 ref={videoRef}
-                src="https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4"
+                src={cdnImg("https://assets.regencivics.earth/WZgPeSZvhJLTVpCn.mp4")}
                 loop
                 muted
                 playsInline
@@ -319,10 +320,10 @@ function QuestAnimationVideo() {
 export default function Play() {
   return (
     <PageBackground
-      backgroundImage="https://assets.regencivics.earth/MjNNpKCrJVSfNhoW.webp"
-      mobileBackgroundImage="https://assets.regencivics.earth/ZokDJKuGchcGPgoK.webp"
-      blurPlaceholder="https://assets.regencivics.earth/YnxggxEPecMtDtdd.webp"
-      mobileBlurPlaceholder="https://assets.regencivics.earth/WkKtePagbKLEHDCB.webp"
+      backgroundImage={cdnImg("https://assets.regencivics.earth/MjNNpKCrJVSfNhoW.webp")}
+      mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/ZokDJKuGchcGPgoK.webp")}
+      blurPlaceholder={cdnImg("https://assets.regencivics.earth/YnxggxEPecMtDtdd.webp")}
+      mobileBlurPlaceholder={cdnImg("https://assets.regencivics.earth/WkKtePagbKLEHDCB.webp")}
       overlayOpacity={0.6}
       theme="magic"
       blendColor="20, 30, 45"
@@ -390,7 +391,7 @@ export default function Play() {
               <AutoplayVideo
                 videoId="C9U0JTsqKv8"
                 title="How to Play the Infinite Game"
-                thumbnailUrl="https://assets.regencivics.earth/NnpPOudclSlFoAuh.webp"
+                thumbnailUrl={cdnImg("https://assets.regencivics.earth/NnpPOudclSlFoAuh.webp")}
                 thumbnailAlt="Playing the Game - Participating in the ReGenerative Renaissance"
                 playLabel="How to Play the Infinite Game"
               />

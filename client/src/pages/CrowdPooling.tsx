@@ -13,6 +13,7 @@ import CrowdPoolingTool from "@/components/CrowdPoolingTool";
 import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { pageCopy } from "@/data/pageCopy";
+import { cdnImg } from "@/lib/utils";
 
 // Sign In CTA Component
 function SignInCTA() {
@@ -52,7 +53,7 @@ export default function CrowdPooling() {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg"
+            src={cdnImg("https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg")}
             alt="Crowd Pooling - Community members bringing diverse resources together"
             width="1920"
             height="1080"

@@ -2005,3 +2005,67 @@ export const agendaSuggestions = mysqlTable("agenda_suggestions", {
 
 export type AgendaSuggestion = typeof agendaSuggestions.$inferSelect;
 export type InsertAgendaSuggestion = typeof agendaSuggestions.$inferInsert;
+
+/**
+ * Event Attendance table (#8 revised)
+ * Tracks who actually attended each event (marked by admin after the call).
+ * Each confirmed attendee earns 33 $ReGen tokens, recorded in the token ledger.
+ * Unique per (eventId, email) to prevent duplicate awards.
+ */
+export const eventAttendance = mysqlTable("event_attendance", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  // Admin who marked attendance (null if marked via self-check-in in future)
+  markedByAdminId: int("markedByAdminId"),
+  markedAt: timestamp("markedAt").defaultNow().notNull(),
+  // Tokens awarded for attending this event
+  tokensAwarded: int("tokensAwarded").default(33).notNull(),
+  tokenLedgerEntryId: int("tokenLedgerEntryId"), // FK to regenTokenLedger
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("eventAttendance_eventId_email_unique").on(table.eventId, table.email),
+  index("eventAttendance_eventId_idx").on(table.eventId),
+  index("eventAttendance_email_idx").on(table.email),
+]));
+
+export type EventAttendance = typeof eventAttendance.$inferSelect;
+export type InsertEventAttendance = typeof eventAttendance.$inferInsert;
+
+/**
+ * $ReGen Token Ledger
+ * Append-only ledger of all $ReGen token awards.
+ * Balances are computed by summing entries per email.
+ * This feeds into future token distribution and contribution tracking.
+ */
+export const regenTokenLedger = mysqlTable("regen_token_ledger", {
+  id: int("id").autoincrement().primaryKey(),
+  // Email is the primary identity key (users may not have accounts yet)
+  email: varchar("email", { length: 320 }).notNull(),
+  // Linked user account if they've signed up (nullable)
+  userId: int("userId"),
+  // Token amount (positive = award, negative = spend/deduct)
+  amount: int("amount").notNull(),
+  // Reason for the award
+  reason: mysqlEnum("reason", [
+    "event_attendance",
+    "quest_completion",
+    "community_contribution",
+    "referral",
+    "admin_grant",
+    "adjustment",
+  ]).notNull(),
+  // Optional references to what triggered this award
+  eventId: int("eventId"),
+  questId: varchar("questId", { length: 100 }),
+  notes: varchar("notes", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("regenTokenLedger_email_idx").on(table.email),
+  index("regenTokenLedger_reason_idx").on(table.reason),
+  index("regenTokenLedger_eventId_idx").on(table.eventId),
+]));
+
+export type RegenTokenLedger = typeof regenTokenLedger.$inferSelect;
+export type InsertRegenTokenLedger = typeof regenTokenLedger.$inferInsert;

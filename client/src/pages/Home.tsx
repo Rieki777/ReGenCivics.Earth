@@ -46,6 +46,7 @@ import { ImagePreloader } from "@/components/ImagePreloader";
 import { trpc } from "@/lib/trpc";
 import { PageWrapper } from "@/components/PageWrapper";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
+import { cdnImg } from "@/lib/utils";
 
 // Path card data
 const pathCards = [
@@ -63,8 +64,8 @@ const pathCards = [
     iconBg: "bg-amber-400/20",
     iconColor: "text-amber-300",
     accentColor: "#fbbf24",
-    image: "https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp",
-    activatedImage: "https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp",
+    image: cdnImg("https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp"),
   },
   {
     id: "land",
@@ -80,8 +81,8 @@ const pathCards = [
     iconBg: "bg-[#7dd87d]/20",
     iconColor: "text-[#7dd87d]",
     accentColor: "#7dd87d",
-    image: "https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp",
-    activatedImage: "https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp",
+    image: cdnImg("https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp"),
   },
   {
     id: "ally",
@@ -97,8 +98,8 @@ const pathCards = [
     iconBg: "bg-blue-400/20",
     iconColor: "text-blue-300",
     accentColor: "#60a5fa",
-    image: "https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp",
-    activatedImage: "https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp",
+    image: cdnImg("https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp"),
   },
   {
     id: "play",
@@ -114,8 +115,8 @@ const pathCards = [
     iconBg: "bg-purple-400/20",
     iconColor: "text-purple-300",
     accentColor: "#c084fc",
-    image: "https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp",
-    activatedImage: "https://assets.regencivics.earth/qDmGFHBsFPyCECbM.webp",
+    image: cdnImg("https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/qDmGFHBsFPyCECbM.webp"),
   },
 ];
 
@@ -180,16 +181,16 @@ export default function Home() {
   }, []);
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
-  const bgImage = "https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp";
-  const mobileBgImage = "https://assets.regencivics.earth/uoYdLjIIoDZIndLO.webp";
+  const bgImage = cdnImg("https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp");
+  const mobileBgImage = cdnImg("https://assets.regencivics.earth/uoYdLjIIoDZIndLO.webp");
 
   return (
     <PageWrapper>
     <PageBackground
       backgroundImage={bgImage}
       mobileBackgroundImage={mobileBgImage}
-      blurPlaceholder="https://assets.regencivics.earth/BgSdISTWNrtyvPRw.webp"
-      mobileBlurPlaceholder="https://assets.regencivics.earth/hgJmIPplQaQKSPKg.webp"
+      blurPlaceholder={cdnImg("https://assets.regencivics.earth/BgSdISTWNrtyvPRw.webp")}
+      mobileBlurPlaceholder={cdnImg("https://assets.regencivics.earth/hgJmIPplQaQKSPKg.webp")}
       overlayOpacity={0.55}
       theme="forest"
       blendColor="18, 45, 28"
@@ -264,7 +265,7 @@ export default function Home() {
               <AutoplayVideo
                 videoId="_LO2sItSofo"
                 title="ReGen Civics - 4 Paths to Play"
-                thumbnailUrl="https://assets.regencivics.earth/nAJFMAHKUducxpdN.jpg"
+                thumbnailUrl={cdnImg("https://assets.regencivics.earth/nAJFMAHKUducxpdN.jpg")}
                 thumbnailAlt="4 Paths to Play - Investors, Land Projects, Alliance Organisations, ReGen Players"
 
               />
@@ -441,7 +442,7 @@ export default function Home() {
               </div>
               {/* Desktop version - landscape layout */}
               <img
-                src="https://assets.regencivics.earth/zfElEQNBAtFioaGj.jpg"
+                src={cdnImg("https://assets.regencivics.earth/zfElEQNBAtFioaGj.jpg")}
                 alt="Impact metrics: Acres under regeneration, community members supported, biodiversity restored"
                 width={1200}
                 height={675}
@@ -451,7 +452,7 @@ export default function Home() {
               />
               {/* Mobile version - portrait layout optimized for phone screens */}
               <img
-                src="https://assets.regencivics.earth/FfLefvCNHfDcTYUt.webp"
+                src={cdnImg("https://assets.regencivics.earth/FfLefvCNHfDcTYUt.webp")}
                 alt="Impact metrics: Acres under regeneration, community members supported, biodiversity restored"
                 width={800}
                 height={1200}

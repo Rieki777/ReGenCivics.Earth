@@ -3,8 +3,22 @@ import { invokeLLM } from "../_core/llm";
 import * as db from "../db";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 
+const DIGEST_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 export async function runDigestJob() {
   try {
+    // Guard: skip if a digest was already sent in the last 7 days.
+    // This prevents duplicate sends when the server restarts (e.g. on Railway deploy).
+    const latest = await db.getLatestDigest();
+    if (latest) {
+      const age = Date.now() - new Date(latest.generatedAt).getTime();
+      if (age < DIGEST_INTERVAL_MS) {
+        const hoursAgo = Math.round(age / (60 * 60 * 1000));
+        console.log(`[DigestJob] Skipping — last digest was ${hoursAgo}h ago (< 7 days).`);
+        return;
+      }
+    }
+
     const threads = await db.getRecentForumPostsForDigest();
     if (threads.length === 0) {
       console.log("[DigestJob] No recent forum posts found, skipping.");

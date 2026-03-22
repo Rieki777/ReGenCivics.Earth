@@ -63,13 +63,39 @@ This project uses a structured delivery pipeline via the ln- skills (in ~/.claud
 - Regenerative values — the work should embody healing, reciprocity, long-term thinking
 - **Maximum autonomy** — Rye is holding a lot. Do as much as possible without asking. Only surface tasks to Rye when there is literally no way to proceed without human input. When a `[HUMAN]` step is unavoidable, complete everything else first, then ask for only the minimal required input. Try things before asking permission. Prefer attempting and reporting over asking whether to attempt.
 
-## Writing Rules (apply to ALL user-facing copy)
-- **No em-dashes** anywhere. Use commas, periods, or rewrite the sentence.
-- **No AI word patterns:** no "delve", "tapestry", "foster", "leverage", "it's worth noting", "in conclusion", "embark on", "vibrant", "crucial", "groundbreaking", "transformative journey", "testament to", "beacon of"
-- **No contrast-framing:** never write "This is not X, this is Y." Define things by what they are, not by negating something else.
-- **No rhetorical question openers:** don't introduce sections with "What if we could...?" or "Have you ever wondered...?"
-- **No passive inspiration:** phrases like "join us on this journey" or "be part of something bigger" are vague filler. Say something specific instead.
-- **Voice:** direct, grounded, specific. Write as if a thoughtful person inside the regen movement wrote it. First person is fine. Contractions are fine. Short sentences are fine.
+## Writing Rules (apply to ALL user-facing copy, docs, forum posts, emails, and markdown files)
+
+These are hard rules. Not guidelines. Every piece of content produced for this project must pass all of them before it ships.
+
+### RULE 1: No em-dashes. Zero.
+Em-dashes (—) are banned in all content. Not "use sparingly." Not "one per page." Zero. Replace with a comma, a period, a colon, or rewrite the sentence entirely.
+- Wrong: "This is the seed thread — share what you made."
+- Right: "This is the seed thread. Share what you made."
+
+### RULE 2: No contrast-framing.
+Never define something by what it isn't. This pattern takes many forms and all of them are banned:
+- "This is not X, this is Y."
+- "Seed content is not marketing. It's genuine participation."
+- "Players do quests. Co-creators design them." (parallel contrast implying lesser/greater)
+- "Not just X, but Y."
+- "Less X, more Y."
+- "This isn't about X, it's about Y."
+
+Rewrite to state what the thing IS. Lead with the affirmative.
+- Wrong: "Seed content is not marketing. It's genuine participation."
+- Right: "The best seed content comes from someone who has actually done the quest and written something real about it."
+
+### RULE 3: No AI word patterns.
+Banned words and phrases: "delve", "tapestry", "foster", "leverage", "it's worth noting", "in conclusion", "embark on", "vibrant", "crucial", "groundbreaking", "transformative journey", "testament to", "beacon of", "foster", "nurture" (as metaphor), "unlock", "unleash", "seamless", "robust", "comprehensive", "cutting-edge", "empower", "utilize", "navigate" (as metaphor).
+
+### RULE 4: No rhetorical question openers.
+Don't introduce sections with "What if we could...?" or "Have you ever wondered...?" Start with the thing itself.
+
+### RULE 5: No passive inspiration.
+"Join us on this journey," "be part of something bigger," "together we can" — these are vague filler. Say something specific instead.
+
+### Voice
+Direct, grounded, specific. Write as if a thoughtful person inside the regen movement wrote it. Rye's voice. First person is fine. Contractions are fine. Short sentences are fine. The site currently sounds like Rye. Keep it sounding like Rye.
 
 ## About Rye
 Founder, movement builder, tool designer. Engagement will be extremely diverse — writing, fundraising, game design, code, strategy, community comms. All of it. See `C:\Users\taren\Documents\Claude\about-me.md` for full context.

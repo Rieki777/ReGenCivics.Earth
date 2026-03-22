@@ -32,9 +32,10 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { questData, QUEST_BEST_SEASONS, SEASON_HERO } from "@/data/questData";
 import { seasonalQuestsData } from "@/data/seasonalQuestsData";
 import { pageCopy } from "@/data/pageCopy";
+import { cdnImg } from "@/lib/utils";
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.webp to this path
-const QUEST_IMG_BASE = "https://assets.regencivics.earth/quests";
+const QUEST_IMG_BASE = cdnImg("https://assets.regencivics.earth/quests");
 
 function questImageUrl(id: number, slug: string) {
   return `${QUEST_IMG_BASE}/quest-${String(id).padStart(2, '0')}-${slug}.webp`;
@@ -1173,8 +1174,8 @@ export default function Quest() {
 
       {/* Quest Journal Prompt */}
       <div className="text-center py-8 text-[#1a472a]/60 text-sm">
-        <Link href="/profile#quest-journal" className="hover:text-[#1a472a] underline">
-          Your quest journal lives in your profile →
+        <Link href="/profile?tab=quests" className="hover:text-[#1a472a] underline">
+          Your quest completions live in your profile →
         </Link>
       </div>
 

@@ -44,6 +44,7 @@ import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { LazyImage } from "@/components/LazyImage";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import { cdnImg } from "@/lib/utils";
 
 function CollapsibleSection({
   title,
@@ -170,10 +171,10 @@ export default function Land() {
 
   return (
     <PageBackground
-      backgroundImage="https://assets.regencivics.earth/UfviEsVKlfgomHkn.webp"
-      mobileBackgroundImage="https://assets.regencivics.earth/qpgHkSSnOsTrFhXQ.webp"
-      blurPlaceholder="https://assets.regencivics.earth/BXOcRMdYlfNoEQcm.webp"
-      mobileBlurPlaceholder="https://assets.regencivics.earth/CFqunDldTPTGuURs.webp"
+      backgroundImage={cdnImg("https://assets.regencivics.earth/UfviEsVKlfgomHkn.webp")}
+      mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/qpgHkSSnOsTrFhXQ.webp")}
+      blurPlaceholder={cdnImg("https://assets.regencivics.earth/BXOcRMdYlfNoEQcm.webp")}
+      mobileBlurPlaceholder={cdnImg("https://assets.regencivics.earth/CFqunDldTPTGuURs.webp")}
       overlayOpacity={0.65}
       theme="garden"
       blendColor="22, 50, 30"
@@ -283,7 +284,7 @@ export default function Land() {
               <AutoplayVideo
                 videoId="slsblbvYHUk"
                 title="Land Projects - Stewards of Regeneration"
-                thumbnailUrl="https://assets.regencivics.earth/CmfDfArnSYUuTsEl.jpg"
+                thumbnailUrl={cdnImg("https://assets.regencivics.earth/CmfDfArnSYUuTsEl.jpg")}
                 thumbnailAlt="Land Projects introduction video"
                 playLabel="Watch Introduction"
               />
@@ -694,7 +695,7 @@ export default function Land() {
                 preload="metadata"
                 className="w-full aspect-video object-cover"
               >
-                <source src="https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4" type="video/mp4" />
+                <source src={cdnImg("https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4")} type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a472a]/80 to-transparent p-4 md:p-6">
@@ -752,12 +753,12 @@ export default function Land() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <LazyImage
-                    src="https://assets.regencivics.earth/akMLmQzqqlUsisDu.webp"
+                    src={cdnImg("https://assets.regencivics.earth/akMLmQzqqlUsisDu.webp")}
                     alt="Liminal Village aerial view"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
                   <LazyImage
-                    src="https://assets.regencivics.earth/yyyxPsMbwSGiMHEp.webp"
+                    src={cdnImg("https://assets.regencivics.earth/yyyxPsMbwSGiMHEp.webp")}
                     alt="Liminal Village sunset"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
@@ -799,12 +800,12 @@ export default function Land() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <LazyImage
-                    src="https://assets.regencivics.earth/xHHoWlRQHaZwWmCV.webp"
+                    src={cdnImg("https://assets.regencivics.earth/xHHoWlRQHaZwWmCV.webp")}
                     alt="Heartland glamping tent"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
                   <LazyImage
-                    src="https://assets.regencivics.earth/eHZRDmAdPefGZGgJ.webp"
+                    src={cdnImg("https://assets.regencivics.earth/eHZRDmAdPefGZGgJ.webp")}
                     alt="Heartland wellness"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
@@ -838,12 +839,12 @@ export default function Land() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <LazyImage
-                    src="https://assets.regencivics.earth/rmKnVnHXVDidptKc.jpg"
+                    src={cdnImg("https://assets.regencivics.earth/rmKnVnHXVDidptKc.jpg")}
                     alt="Traditional Dream Factory greenhouse"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
                   <LazyImage
-                    src="https://assets.regencivics.earth/ezyQpMhwRnDAKylV.jpg"
+                    src={cdnImg("https://assets.regencivics.earth/ezyQpMhwRnDAKylV.jpg")}
                     alt="Traditional Dream Factory aerial view"
                     className="w-full h-28 object-cover rounded-lg border border-white/10"
                   />
@@ -911,14 +912,14 @@ export default function Land() {
           <AnimatedSection animation="scale-in" delay={200}>
             <div className="mb-8 rounded-2xl overflow-hidden border-4 border-[#4a7c59]/60 shadow-2xl">
               <video
-                src="https://assets.regencivics.earth/TfYrpbnmJmpWuEeg.mp4"
+                src={cdnImg("https://assets.regencivics.earth/TfYrpbnmJmpWuEeg.mp4")}
                 autoPlay
                 loop
                 muted
                 playsInline
                 preload="metadata"
                 className="w-full h-auto"
-                poster="https://assets.regencivics.earth/ACFKZcufsmYBYHhs.jpg"
+                poster={cdnImg("https://assets.regencivics.earth/ACFKZcufsmYBYHhs.jpg")}
               />
             </div>
           </AnimatedSection>

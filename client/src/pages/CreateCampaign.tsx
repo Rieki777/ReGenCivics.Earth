@@ -69,6 +69,7 @@ import { estimateLandPrice, estimateEquipmentPrice, suggestHourlyRate, EQUIPMENT
 import { BackButton } from "@/components/BackButton";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cdnImg } from "@/lib/utils";
 
 // Types
 interface LandRequirement {
@@ -614,10 +615,12 @@ export default function CreateCampaign() {
         
         {/* Hero Image */}
         <div className="relative w-full h-[250px] md:h-[350px] overflow-hidden">
-          <img 
-            src="https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg"
+          <img
+            src={cdnImg("https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg")}
             alt="Crowd Pooling - Create your campaign"
             className="w-full h-full object-cover object-center"
+            width={1200}
+            height={350}
             loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#f0f7f0] via-transparent to-transparent" />
         </div>
@@ -757,11 +760,13 @@ export default function CreateCampaign() {
       
       {/* Hero Image */}
       <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden">
-        <img 
-          src="https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg"
+        <img
+          src={cdnImg("https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg")}
           alt="Crowd Pooling - We don't need as much money as we think we do!"
           className="w-full h-full object-cover object-center"
-        loading="lazy" />
+          width={1200}
+          height={400}
+          loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#f0f7f0] via-transparent to-transparent" />
       </div>
       

@@ -3349,7 +3349,7 @@ function AdminDashboard() {
         <div className="container px-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3 md:gap-4">
-              <img src="/images/logos/regencivics-logo-dark-transparent-rounded.webp" alt="ReGen Civics" className="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" loading="lazy" />
+              <img src="/images/logos/regencivics-logo-dark-transparent-rounded.webp" alt="ReGen Civics" className="w-10 h-10 md:w-12 md:h-12 object-contain flex-shrink-0" width={48} height={48} loading="lazy" />
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-xl md:text-3xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>
@@ -3976,6 +3976,8 @@ function AdminEventsTab() {
   const reminderMutation = trpc.events.sendReminders.useMutation();
   const agendaUpdateMutation = trpc.events.updateAgendaSuggestion.useMutation({ onSuccess: () => { refetch(); } });
   const rollupMutation = trpc.events.sendSeasonRollup.useMutation();
+  const markAttendanceMutation = trpc.events.markAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
+  const removeAttendanceMutation = trpc.events.removeAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
 
   const defaultForm = {
     title: '', description: '', type: 'open' as const, startTime: '', endTime: '',
@@ -3985,6 +3987,8 @@ function AdminEventsTab() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [attendanceEventId, setAttendanceEventId] = useState<number | null>(null);
+  const [attendanceInput, setAttendanceInput] = useState(''); // comma or newline-separated emails
   const [formData, setFormData] = useState(defaultForm);
   const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
   const [reminderEditorOpen, setReminderEditorOpen] = useState<number | null>(null);
@@ -3992,6 +3996,12 @@ function AdminEventsTab() {
   const [customBody, setCustomBody] = useState('');
   const [rollupSeason, setRollupSeason] = useState('');
   const [showAgendaFor, setShowAgendaFor] = useState<number | null>(null);
+
+  const { data: attendanceList = [], refetch: refetchAttendance } = trpc.events.listAttendance.useQuery(
+    { eventId: attendanceEventId! },
+    { enabled: attendanceEventId !== null }
+  );
+  const { data: tokenLeaderboard = [] } = trpc.events.tokenLeaderboard.useQuery({ limit: 10 });
 
   const countMap = Object.fromEntries(signupCounts.map(r => [r.eventId, r.count]));
 
@@ -4373,6 +4383,114 @@ function AdminEventsTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* #8 revised — Attendance Tracking + $ReGen Token Awards */}
+      <Card className="bg-white/5 border border-white/10">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-amber-400 text-sm flex items-center gap-2">
+            ✦ Event Attendance + $ReGen Token Awards
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-white/50 text-xs">
+            Mark who actually attended a completed event. Each person earns 33 $ReGen tokens, recorded in the contribution ledger.
+          </p>
+
+          {/* Event selector */}
+          <div className="flex gap-2">
+            <select
+              value={attendanceEventId ?? ''}
+              onChange={e => { setAttendanceEventId(e.target.value ? Number(e.target.value) : null); setAttendanceInput(''); }}
+              className="flex-1 bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/20"
+            >
+              <option value="">Select an event...</option>
+              {allEvents.filter(e => e.status === 'completed' || e.status === 'live').map(e => (
+                <option key={e.id} value={e.id}>{e.title} ({e.season ?? 'no season'})</option>
+              ))}
+            </select>
+          </div>
+
+          {attendanceEventId && (
+            <div className="space-y-3">
+              {/* Current attendance list */}
+              {attendanceList.length > 0 && (
+                <div className="bg-white/5 rounded-lg p-3 space-y-2">
+                  <p className="text-amber-400 text-xs font-medium">{attendanceList.length} confirmed attendees · {attendanceList.reduce((sum, a: any) => sum + (a.tokensAwarded ?? 0), 0)} $ReGen awarded</p>
+                  {attendanceList.map((a: any) => (
+                    <div key={a.id} className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-white text-sm">{a.name || a.email}</span>
+                        {a.name && <span className="text-white/40 text-xs ml-2">{a.email}</span>}
+                        <span className="text-amber-400 text-xs ml-2">+{a.tokensAwarded} $ReGen</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Remove attendance for ${a.email}? This will also remove their ${a.tokensAwarded} $ReGen tokens.`)) {
+                            removeAttendanceMutation.mutate({ eventId: attendanceEventId, email: a.email });
+                          }
+                        }}
+                        className="text-white/30 hover:text-red-400 text-xs px-2 py-1 rounded"
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add attendees input */}
+              <div className="space-y-2">
+                <label className="text-white/60 text-xs">Add attendees (one email per line, or paste a comma-separated list):</label>
+                <textarea
+                  value={attendanceInput}
+                  onChange={e => setAttendanceInput(e.target.value)}
+                  placeholder="jane@example.com&#10;alex@example.com"
+                  rows={4}
+                  className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/20 placeholder:text-white/30 font-mono"
+                />
+                <button
+                  onClick={() => {
+                    const emails = attendanceInput
+                      .split(/[\n,;]+/)
+                      .map(e => e.trim())
+                      .filter(e => e.includes('@'));
+                    if (emails.length === 0) return;
+                    if (window.confirm(`Mark ${emails.length} attendee(s) for this event? Each will earn 33 $ReGen tokens.`)) {
+                      markAttendanceMutation.mutate({
+                        eventId: attendanceEventId,
+                        attendees: emails.map(email => ({ email })),
+                      });
+                      setAttendanceInput('');
+                    }
+                  }}
+                  disabled={markAttendanceMutation.isPending || !attendanceInput.trim()}
+                  className="bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-sm px-4 py-2 rounded font-medium"
+                >
+                  {markAttendanceMutation.isPending ? 'Marking...' : 'Mark Attendance + Award Tokens'}
+                </button>
+                {markAttendanceMutation.isSuccess && (
+                  <p className="text-amber-400 text-xs">
+                    Marked {(markAttendanceMutation.data as any)?.newlyMarked ?? 0} new attendees. {(markAttendanceMutation.data as any)?.tokensAwarded ?? 0} $ReGen awarded.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* $ReGen Leaderboard */}
+          {tokenLeaderboard.length > 0 && (
+            <div className="border-t border-white/10 pt-3">
+              <p className="text-white/60 text-xs mb-2">$ReGen Leaderboard (top earners)</p>
+              <div className="space-y-1">
+                {tokenLeaderboard.map((entry: any, i: number) => (
+                  <div key={entry.email} className="flex items-center justify-between text-xs">
+                    <span className="text-white/50">#{i + 1} {entry.email}</span>
+                    <span className="text-amber-400 font-medium">{entry.total} $ReGen</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

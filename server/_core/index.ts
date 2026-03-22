@@ -28,6 +28,8 @@ import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
 import { registerImageOptimization } from "../routes/global";
 import * as db from "../db";
+import { createRequire } from "module";
+const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
 import { cspMiddleware, securityHeadersMiddleware, rateLimitMiddleware } from "./security";
 import { isCacheAvailable } from "../cache";
@@ -67,6 +69,28 @@ async function startServer() {
       return compression.filter(req, res);
     }
   }));
+
+  // Prerender.io middleware: serves pre-rendered HTML to bots/crawlers (SEO)
+  // PRERENDER_TOKEN must be set in Railway env vars
+  if (process.env.PRERENDER_TOKEN) {
+    try {
+      const prerenderNode = _require("prerender-node");
+      prerenderNode.set("prerenderToken", process.env.PRERENDER_TOKEN);
+      // Don't prerender API routes, static assets, or health checks
+      prerenderNode.set("beforeRenderFn", (req: any, done: (err: any, cached: string | null) => void) => {
+        const path = req.path || "";
+        if (path.startsWith("/api/") || path.startsWith("/assets/") || path === "/health") {
+          done(null, null); // skip prerender
+        } else {
+          done(null, null); // continue normally
+        }
+      });
+      app.use(prerenderNode);
+      console.log("[Prerender] Middleware active (token configured)");
+    } catch (e) {
+      console.warn("[Prerender] prerender-node not installed yet. Run npm install.", e);
+    }
+  }
 
   // Attach a unique request ID for tracing (logged on every request, sent to Sentry)
   app.use((req: any, _res, next) => {

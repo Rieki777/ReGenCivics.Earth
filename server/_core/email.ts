@@ -170,24 +170,109 @@ function wrapLinksWithTracking(html: string, emailLogId?: number): string {
   );
 }
 
+// ── Email Rate Limiter ────────────────────────────────────────────────────────
+// Two-layer protection against accidental spam:
+//
+//  1. STARTUP BURST BLOCK: For the first 120s after the process starts, max 5
+//     total recipients. Catches the "digest fires on restart" class of bug even
+//     if the digest job's own guard fails. Configurable via STARTUP_EMAIL_LIMIT.
+//
+//  2. ROLLING HOURLY RATE LIMIT: Sliding 1-hour window. Default 50 recipients/hr.
+//     Set EMAIL_RATE_LIMIT_PER_HOUR to override. Use a high value (e.g. 500) to
+//     effectively disable it for bulk sends you've consciously triggered.
+//
+// These are in-memory and reset on restart. They supplement EMAIL_HOLD — not replace it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SERVER_START_TIME = Date.now();
+const STARTUP_WINDOW_MS = 120_000; // 2 minutes
+const STARTUP_LIMIT = parseInt(process.env.STARTUP_EMAIL_LIMIT ?? "5", 10);
+let startupEmailCount = 0;
+
+const HOUR_MS = 60 * 60 * 1000;
+const HOURLY_LIMIT = parseInt(process.env.EMAIL_RATE_LIMIT_PER_HOUR ?? "50", 10);
+// Sliding window: timestamps of each recipient send in the last hour
+const sendTimestamps: number[] = [];
+
+function checkRateLimits(recipientCount: number, subject: string): { blocked: boolean; reason: string } {
+  const now = Date.now();
+
+  // ── Guard 1: startup burst ──
+  const ageMs = now - SERVER_START_TIME;
+  if (ageMs < STARTUP_WINDOW_MS) {
+    if (startupEmailCount + recipientCount > STARTUP_LIMIT) {
+      return {
+        blocked: true,
+        reason: `STARTUP_BURST_BLOCK — ${startupEmailCount + recipientCount} recipients would exceed the ${STARTUP_LIMIT}-recipient startup limit (${Math.round(ageMs / 1000)}s since start). Set STARTUP_EMAIL_LIMIT env var to raise this. Subject: "${subject}"`,
+      };
+    }
+  }
+
+  // ── Guard 2: rolling hourly window ──
+  const windowStart = now - HOUR_MS;
+  // Purge timestamps older than 1 hour
+  while (sendTimestamps.length > 0 && sendTimestamps[0] < windowStart) sendTimestamps.shift();
+  const sentThisHour = sendTimestamps.length;
+  if (sentThisHour + recipientCount > HOURLY_LIMIT) {
+    return {
+      blocked: true,
+      reason: `HOURLY_RATE_LIMIT — ${sentThisHour} already sent this hour, ${recipientCount} more would exceed the ${HOURLY_LIMIT}-recipient/hr limit. Set EMAIL_RATE_LIMIT_PER_HOUR env var to raise this. Subject: "${subject}"`,
+    };
+  }
+
+  return { blocked: false, reason: "" };
+}
+
+function recordSend(recipientCount: number): void {
+  const now = Date.now();
+  const ageMs = now - SERVER_START_TIME;
+  if (ageMs < STARTUP_WINDOW_MS) startupEmailCount += recipientCount;
+  for (let i = 0; i < recipientCount; i++) sendTimestamps.push(now);
+}
+
 /**
  * Send an email using Resend with tracking
  * @param params Email parameters
  * @returns Email ID if successful, null if failed
  */
 export async function sendEmail(params: SendEmailParams): Promise<{ id: string | null; trackingData?: any }> {
+  // ── EMAIL HOLD ────────────────────────────────────────────────────────────
+  // Set EMAIL_HOLD=true in Railway env vars to pause ALL outbound email.
+  // Use this while testing flows or after accidental spam. Remove / set to false
+  // to re-enable. Emails that hit this gate are logged but never sent.
+  if (process.env.EMAIL_HOLD === "true") {
+    const recipients = Array.isArray(params.to) ? params.to.join(", ") : params.to;
+    console.log(`[Email] HELD (EMAIL_HOLD=true) — would have sent "${params.subject}" to: ${recipients}`);
+    return { id: null };
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── RATE LIMIT CHECK ──────────────────────────────────────────────────────
+  const toList = Array.isArray(params.to) ? params.to : [params.to];
+  const recipientCount = toList.length;
+  const { blocked, reason } = checkRateLimits(recipientCount, params.subject);
+  if (blocked) {
+    console.error(`[Email] BLOCKED by rate limiter — ${reason}`);
+    // In production, this would ideally fire a Sentry alert or admin notification.
+    try { const Sentry = await import("@sentry/node"); Sentry.captureMessage(`Email rate limit hit: ${reason}`, "error"); } catch {}
+    return { id: null };
+  }
+  // Record send before dispatching (optimistic — prevents races)
+  recordSend(recipientCount);
+  // ─────────────────────────────────────────────────────────────────────────
+
   try {
-    const { 
-      to, 
-      subject, 
-      html, 
-      from = SENDER_NOREPLY, 
-      replyTo, 
-      template, 
-      inquiryType, 
-      inquiryId, 
+    const {
+      to,
+      subject,
+      html,
+      from = SENDER_NOREPLY,
+      replyTo,
+      template,
+      inquiryType,
+      inquiryId,
       recipientName,
-      emailLogId 
+      emailLogId
     } = params;
     
     // Wrap content with branded template

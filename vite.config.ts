@@ -8,11 +8,12 @@ export default defineConfig(({ mode }): UserConfig => ({
   plugins: [
     react(),
     tailwindcss(),
+    // VitePWA generates sw.js at build time — do not create a manual public/sw.js
     VitePWA({
       registerType: "autoUpdate",
       strategies: "generateSW",
       workbox: {
-        // 5 MB limit to accommodate large vendor JS chunks (visualization, streamdown)
+        // 5 MB limit to accommodate large vendor JS chunks
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // Exclude OG images — social crawlers always fetch fresh, no offline value
         globPatterns: ["**/*.{js,css,html,ico,webp,svg,woff2,png}"],
@@ -94,8 +95,8 @@ export default defineConfig(({ mode }): UserConfig => ({
           if (id.includes('/framer-motion/')) return 'framer-motion';
           // Charts
           if (id.includes('/recharts/') || id.includes('/victory-') || id.includes('/d3-')) return 'recharts';
-          // Markdown / code rendering — very heavy, lazy-loaded pages only
-          if (id.includes('/streamdown/') || id.includes('/mermaid/') || id.includes('/shiki/')) return 'streamdown';
+          // Markdown / code rendering (streamdown, mermaid, shiki) — omitted from
+          // manualChunks so Vite code-splits them as async chunks via React.lazy().
           // Radix UI — used across the whole app, benefits from caching separately
           if (id.includes('/@radix-ui/')) return 'radix-ui';
           // Utility libs
@@ -109,8 +110,8 @@ export default defineConfig(({ mode }): UserConfig => ({
           ) return 'utils';
           // Error monitoring — load last
           if (id.includes('/@sentry/')) return 'sentry';
-          // Heavy visualizations — only on Map/Chains pages
-          if (id.includes('/cytoscape') || id.includes('/globe.gl/') || id.includes('/three/')) return 'visualization';
+          // Heavy visualizations (cytoscape, globe.gl, three.js) — omitted from
+          // manualChunks so Vite code-splits them as async chunks via React.lazy().
         },
       },
     },

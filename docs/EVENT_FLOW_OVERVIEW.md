@@ -383,7 +383,7 @@ Were you there? If you missed this one, what got in the way?
 
 **Question 2:**
 ```
-What's one thing you want us to go deeper on next time?
+What's one thing you want us to cover, or go deeper on next time?
 ```
 *Why:* This replaces the agenda-setting form entirely. Instead of a separate survey asking "what topics do you want?", this question captures the same data as a natural follow-up to the session.
 
@@ -396,13 +396,13 @@ What's one thing you want us to go deeper on next time?
 Link to send people: `https://regencivics.earth/community/post/[post-id]`
 (This is inserted automatically when the recording email is sent.)
 
-**Agenda form** — If you want to also capture structured input for next session's agenda, use this Google Form:
+**Agenda form** — Built into the website. Form is live at:
 ```
-[ADD YOUR GOOGLE FORM URL HERE]
+https://regencivics.earth/shape-next-session
 ```
-The form should ask only: name (optional), what they want covered, whether they'll attend. Three fields max.
+Fields: name (optional), email (optional), what they want covered, whether they'll attend. Auto-detects the next upcoming event from the DB. Submissions stored in `agenda_suggestions` table and visible in Admin > Events > Agenda Suggestions.
 
-Once the form URL exists, add it to the recording-ready email and forum post body. Ask Claude to update `server/webhooks/riverside.ts` → `buildEmailHtml()` and `createRecordingForumPost()`.
+To add this link to the recording-ready email and forum post, ask Claude to update `server/webhooks/riverside.ts` → `buildEmailHtml()` and `createRecordingForumPost()` with the URL above.
 
 ---
 
@@ -432,7 +432,7 @@ Were you there? If you missed this one, what got in the way?
 What's one thing you want us to go deeper on next time?
 
 [Add your thoughts to the forum thread →]
-[Shape the next session →] (links to agenda form)
+[Shape the next session → regencivics.earth/shape-next-session]
 ```
 
 ---

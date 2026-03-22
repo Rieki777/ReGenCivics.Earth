@@ -82,6 +82,7 @@ import { LocationPicker, LocationDisplay, type LocationData } from "@/components
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ProfileCompletionMeter } from "@/components/ProfileCompletionMeter";
+import { cdnImg } from "@/lib/utils";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -264,7 +265,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                       <h4 className="font-semibold text-[#1a472a] text-sm">Where do I find this?</h4>
                     </div>
                     <div className="p-3">
-                      <img src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp" alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" loading="lazy" />
+                      <img src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp")} alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" width={600} height={400} loading="lazy" />
                       <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
                         <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
                         <li>Look at the top right of the page</li>
@@ -381,7 +382,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
                   </div>
                   <div className="p-3">
                     <img
-                      src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp"
+                      src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp")}
                       alt="Hypha profile showing account address with copy icon"
                       width="400"
                       height="300"
@@ -408,7 +409,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
           
           <div className="bg-[#f0ebe3] border border-[#7dd87d]/30 rounded-lg p-3">
             <img
-              src="https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp"
+              src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp")}
               alt="Hypha profile showing account address"
               width="400"
               height="300"
@@ -803,7 +804,13 @@ function GiftsNeedsPanel() {
   });
   const removeNeed = trpc.marketplace.removeNeed.useMutation({ onSuccess: invalidate });
 
-  if (isLoading) return <div className="glass-panel p-6 rounded-xl"><TaoSpinner size={32} /></div>;
+  if (isLoading) return (
+    <div className="glass-panel p-6 rounded-xl space-y-3">
+      {[1, 2].map(i => (
+        <div key={i} className="animate-pulse bg-white/10 rounded-lg h-12" />
+      ))}
+    </div>
+  );
 
   const myGifts = data?.gifts ?? [];
   const myNeeds = data?.needs ?? [];
@@ -1382,7 +1389,14 @@ function RssFeedManager() {
 
       {/* Feed list */}
       {feedsQuery.isLoading ? (
-        <p className="text-white/30 text-xs">Loading feeds...</p>
+        <div className="space-y-2">
+          {[1, 2].map(i => (
+            <div key={i} className="animate-pulse bg-[#1a472a]/20 border border-white/5 rounded-lg px-3 py-2 flex items-center gap-3">
+              <div className="h-3 bg-white/10 rounded w-1/3" />
+              <div className="h-3 bg-white/10 rounded w-1/4 ml-auto" />
+            </div>
+          ))}
+        </div>
       ) : feedsQuery.data?.length === 0 ? (
         <p className="text-white/30 text-xs">No RSS feeds connected yet.</p>
       ) : (
@@ -1912,7 +1926,18 @@ function ContributionsTab({
 
       {/* Contribution log grouped by capital type */}
       {isLoading ? (
-        <div className="text-center py-8"><TaoSpinner size={40} /></div>
+        <div className="space-y-4 py-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="animate-pulse bg-white/10 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-6 h-6 rounded-full bg-white/10" />
+                <div className="h-4 bg-white/10 rounded w-1/4" />
+              </div>
+              <div className="h-3 bg-white/10 rounded w-3/4 mb-2" />
+              <div className="h-3 bg-white/10 rounded w-1/2" />
+            </div>
+          ))}
+        </div>
       ) : byType.length === 0 ? (
         <div className="text-center py-12">
           <Leaf className="w-10 h-10 text-white/20 mx-auto mb-3" />
@@ -2433,7 +2458,17 @@ function QuestJournal({ userId }: { userId: number }) {
       </h3>
 
       {completionsQuery.isLoading ? (
-        <p className="text-white/40 text-sm py-4">Loading journal...</p>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="animate-pulse bg-[#1a472a]/40 rounded-lg p-4 border border-white/10">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="h-4 bg-white/10 rounded w-2/5" />
+                <div className="h-3 bg-white/10 rounded w-16" />
+              </div>
+              <div className="h-3 bg-white/10 rounded w-3/4" />
+            </div>
+          ))}
+        </div>
       ) : completionsQuery.data?.length === 0 ? (
         <p className="text-white/50 text-sm">No quest completions yet. <a href="/quest" className="text-[#7dd87d] hover:underline">Explore quests →</a></p>
       ) : (
@@ -2505,11 +2540,27 @@ export default function PlayerProfile() {
 
   if (isLoading) return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] p-8">
-      <div className="animate-pulse flex space-x-4 mb-8 max-w-2xl mx-auto mt-16">
-        <div className="rounded-full bg-white/10 h-24 w-24 flex-shrink-0" />
-        <div className="flex-1 space-y-3 py-1">
-          <div className="h-4 bg-white/10 rounded w-3/4" />
-          <div className="h-4 bg-white/10 rounded w-1/2" />
+      <div className="animate-pulse max-w-2xl mx-auto mt-16">
+        {/* Profile header skeleton */}
+        <div className="flex space-x-4 mb-8">
+          <div className="rounded-full bg-white/10 h-24 w-24 flex-shrink-0" />
+          <div className="flex-1 space-y-3 py-1">
+            <div className="h-5 bg-white/10 rounded w-1/3" />
+            <div className="h-4 bg-white/10 rounded w-1/2" />
+            <div className="h-3 bg-white/10 rounded w-1/4" />
+          </div>
+        </div>
+        {/* Tab bar skeleton */}
+        <div className="flex gap-3 mb-8">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-8 bg-white/10 rounded-lg w-20" />
+          ))}
+        </div>
+        {/* Content area skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-white/10 rounded-xl h-24" />
+          ))}
         </div>
       </div>
     </div>

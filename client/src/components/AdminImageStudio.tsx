@@ -161,7 +161,7 @@ export function AdminImageStudio() {
               />
               {editUrl && (
                 <div className="mt-2 rounded-lg overflow-hidden border border-[#e8e4de] h-32 bg-[#e8e4de]">
-                  <img src={editUrl} alt="Current" className="w-full h-full object-cover" loading="lazy" />
+                  <img src={editUrl} alt="Current" className="w-full h-full object-cover" width={400} height={128} loading="lazy" />
                 </div>
               )}
             </div>
@@ -213,7 +213,7 @@ export function AdminImageStudio() {
                         : "border-transparent hover:border-[#7dd87d]/50"
                     }`}
                   >
-                    <img src={url} alt={`Variation ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                    <img src={url} alt={`Variation ${i + 1}`} className="w-full h-full object-cover" width={400} height={400} loading="lazy" />
                     {selected === i && (
                       <div className="absolute top-2 right-2 bg-[#7dd87d] rounded-full p-0.5">
                         <CheckCircle className="w-4 h-4 text-white" />
@@ -271,7 +271,7 @@ export function AdminImageStudio() {
             </div>
           )}
           <div className="mt-2 rounded-lg overflow-hidden border border-[#7dd87d]/20 h-40">
-            <img src={result.publicUrl} alt="Applied" className="w-full h-full object-cover" loading="lazy" />
+            <img src={result.publicUrl} alt="Applied" className="w-full h-full object-cover" width={400} height={160} loading="lazy" />
           </div>
         </div>
       )}

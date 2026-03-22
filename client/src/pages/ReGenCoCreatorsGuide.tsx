@@ -46,7 +46,7 @@ const hyphaActions = [
     title: "Start with an Agreement",
     subtitle: "Proposing a role, quest, or new contribution",
     description:
-      "Before you begin any new type of contribution — a seasonal role, a quest, or a new initiative — open it to the community with an Agreement. Describe what you're bringing, what ReGen Civics receives, and what you're requesting in return. The community votes. Value in = value out.",
+      "Before you begin any new type of contribution (a seasonal role, a quest, or a new initiative), open it to the community with an Agreement. Describe what you're bringing, what ReGen Civics receives, and what you're requesting in return. The community votes. Value in = value out.",
     cta: "Create Agreement",
     href: `${HYPHA_BASE}/agreements/create`,
     color: "border-teal-500/30 bg-teal-50",
@@ -58,7 +58,7 @@ const hyphaActions = [
     title: "Claim Your Tokens",
     subtitle: "After completing a task, pay period, or season",
     description:
-      "When you've done the work — completed a quest, finished a season as a role holder, or reached a milestone — come back and propose a Contribution Claim. Detail what you delivered, what ReGen Civics gained, and claim your tokens. This is how the value you create becomes visible and rewarded.",
+      "When you've done the work (completed a quest, finished a season as a role holder, or reached a milestone), come back and propose a Contribution Claim. Detail what you delivered, what ReGen Civics gained, and claim your tokens. This is how the value you create becomes visible and rewarded.",
     cta: "Propose a Contribution",
     href: `${HYPHA_BASE}/agreements/create/propose-contribution`,
     color: "border-emerald-500/30 bg-emerald-50",
@@ -82,7 +82,7 @@ const hyphaActions = [
     title: "Delegate Your Voice",
     subtitle: "Trust someone to vote on your behalf",
     description:
-      "Your voice is your governance power — it grows as you contribute. If you trust another member to represent your perspective while you're away or unavailable, you can delegate your voice to them. Choose someone whose judgment aligns with yours and whose commitment to the mission you trust.",
+      "Your voice is your governance power. It grows as you contribute. If you trust another member to represent your perspective while you're away or unavailable, you can delegate your voice to them. Choose someone whose judgment aligns with yours and whose commitment to the mission you trust.",
     cta: "View Members",
     href: `${HYPHA_BASE}/members`,
     color: "border-purple-500/30 bg-purple-50",
@@ -91,7 +91,7 @@ const hyphaActions = [
   },
 ];
 
-// How the game works in practice — scenario cards
+// How the game works in practice: scenario cards
 const gameScenarios = [
   {
     icon: PlusCircle,
@@ -102,8 +102,8 @@ const gameScenarios = [
     route: "Agreements",
     routeHref: `${HYPHA_BASE}/agreements/create`,
     explanation:
-      "Describe the quest: what players will do, what the community gains, how tokens will be awarded on completion. The community votes to approve it. Once it passes, you're the quest designer — go build it.",
-    example: "\"I want to create a quest called Seed Saving Basics — players learn and practice seed saving, share a photo, and earn 80 tokens.\"",
+      "Describe the quest: what players will do, what the community gains, how tokens will be awarded on completion. The community votes to approve it. Once it passes, you're the quest designer. Go build it.",
+    example: "\"I want to create a quest called Seed Saving Basics: players learn and practice seed saving, share a photo, and earn 80 tokens.\"",
   },
   {
     icon: PlayCircle,
@@ -127,7 +127,7 @@ const gameScenarios = [
     routeHref: `${HYPHA_BASE}/agreements/create`,
     explanation:
       "Got an idea for a new feature, a better process, or a change to how governance works? Propose it as an Agreement. Describe the change, why it improves the game, and what it costs (in time or tokens, if anything). The community decides.",
-    example: "\"I want to propose we add a mentor role to the game — experienced players who onboard new ones, earning 50 tokens per mentee who completes their first quest.\"",
+    example: "\"I want to propose we add a mentor role to the game: experienced players who onboard new ones, earning 50 tokens per mentee who completes their first quest.\"",
   },
   {
     icon: DollarSign,
@@ -138,7 +138,7 @@ const gameScenarios = [
     route: "Expenses",
     routeHref: `${HYPHA_BASE}/agreements/create/pay-for-expenses`,
     explanation:
-      "Hosting costs, materials for a community event, tools bought to run a quest, travel to represent the project — if it served ReGen Civics and was in the spirit of a community agreement, you can propose reimbursement. Document the expense clearly and submit it.",
+      "Hosting costs, materials for a community event, tools bought to run a quest, travel to represent the project: if it served ReGen Civics and was in the spirit of a community agreement, you can propose reimbursement. Document the expense clearly and submit it.",
     example: "\"I paid $47 for the domain we agreed to use for the land project directory. Requesting reimbursement.\"",
   },
 ];
@@ -255,7 +255,7 @@ export default function ReGenCoCreatorsGuide() {
         </div>
       </section>
 
-      {/* HOW TO PLAY — scenario-based guide */}
+      {/* HOW TO PLAY: scenario-based guide */}
       <section id="how-to-play" className="py-20 bg-gray-50">
         <div className="container">
           <motion.div
@@ -493,7 +493,7 @@ export default function ReGenCoCreatorsGuide() {
                 <div className="space-y-4">
                   {[
                     { step: "1", title: "Propose", description: "Anyone can raise a proposal. State clearly what you're bringing, what the community receives, and what you're requesting in return." },
-                    { step: "2", title: "Clarify", description: "The circle asks clarifying questions — not debate, just understanding. Proposals may be refined." },
+                    { step: "2", title: "Clarify", description: "The circle asks clarifying questions: not debate, just understanding. Proposals may be refined." },
                     { step: "3", title: "Consent", description: "No reasoned objections means we move forward. We're not seeking unanimous love. Just no blocking concerns." },
                   ].map((item) => (
                     <div key={item.step} className="flex gap-4">
@@ -697,7 +697,7 @@ export default function ReGenCoCreatorsGuide() {
                 Path of Growth
               </h2>
               <p className="text-emerald-200 text-lg max-w-2xl mx-auto">
-                Your journey through ReGen Civics — from first exploration to deepest
+                Your journey through ReGen Civics, from first exploration to deepest
                 co-creation. Each stage has its own rights, responsibilities, and opportunities.
               </p>
             </div>

@@ -23,6 +23,7 @@ import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
+import { cdnImg } from "@/lib/utils";
 
 // Path types matching the database enum
 type PathType = "land_partner" | "create_with_regens" | "alliance" | "finance" | "live" | "role" | "something_else";
@@ -1073,7 +1074,7 @@ export default function Connect() {
               {/* Logo */}
               <div className="mb-6">
                 <img
-                  src="https://assets.regencivics.earth/qtPtaaJfgElzmVAI.webp"
+                  src={cdnImg("https://assets.regencivics.earth/qtPtaaJfgElzmVAI.webp")}
                   alt="ReGen Civics"
                   className="w-20 h-20 md:w-24 md:h-24 mx-auto object-contain drop-shadow-lg"
                   width="96"

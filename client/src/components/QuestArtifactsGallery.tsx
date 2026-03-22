@@ -17,7 +17,7 @@ function timeAgo(date: Date | string): string {
 }
 
 function Avatar({ name, url }: { name?: string | null; url?: string | null }) {
-  if (url) return <img src={url} alt={name ?? "player"} className="w-8 h-8 rounded-full object-cover" />;
+  if (url) return <img src={url} alt={name ?? "player"} className="w-8 h-8 rounded-full object-cover" width={32} height={32} />;
   const initial = name ? name.charAt(0).toUpperCase() : "?";
   return (
     <div className="w-8 h-8 rounded-full bg-[#4a7c59] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">

@@ -38,6 +38,7 @@ import { LazyImage } from "@/components/LazyImage";
 import InvestorJourney from "@/components/InvestorJourney";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { PageWrapper } from "@/components/PageWrapper";
+import { cdnImg } from "@/lib/utils";
 
 // Collapsible section component
 function CollapsibleSection({
@@ -121,10 +122,10 @@ export default function Fund() {
   return (
     <PageWrapper>
     <PageBackground
-      backgroundImage="https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp"
-      mobileBackgroundImage="https://assets.regencivics.earth/AxJkbpktjcGvTnJs.webp"
-      blurPlaceholder="https://assets.regencivics.earth/mCYNtInTzAALMYmI.webp"
-      mobileBlurPlaceholder="https://assets.regencivics.earth/CPfORGmZXXuBnUvg.webp"
+      backgroundImage={cdnImg("https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp")}
+      mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/AxJkbpktjcGvTnJs.webp")}
+      blurPlaceholder={cdnImg("https://assets.regencivics.earth/mCYNtInTzAALMYmI.webp")}
+      mobileBlurPlaceholder={cdnImg("https://assets.regencivics.earth/CPfORGmZXXuBnUvg.webp")}
       overlayOpacity={0.65}
       theme="ocean"
       blendColor="12, 42, 48"
@@ -455,7 +456,7 @@ export default function Fund() {
             <AutoplayVideo
               videoId="_LO2sItSofo"
               title="Fund Overview - Coming Soon"
-              thumbnailUrl="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp"
+              thumbnailUrl={cdnImg("https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp")}
               thumbnailAlt="Fund overview video coming soon"
               comingSoon={true}
             />
@@ -526,19 +527,19 @@ export default function Fund() {
               <div className="glass-panel p-3 border-amber-400/20 overflow-hidden rounded-xl">
                 <div className="space-y-2">
                   <LazyImage
-                    src="https://assets.regencivics.earth/qxKCptuMsYLJOEzx.jpg"
+                    src={cdnImg("https://assets.regencivics.earth/qxKCptuMsYLJOEzx.jpg")}
                     alt="Regenerative floating island communities"
                     className="w-full h-48 md:h-56 object-cover rounded-lg"
                     aspect="16/9"
                   />
                   <LazyImage
-                    src="https://assets.regencivics.earth/cQIjYKqAtIzcnlPb.jpg"
+                    src={cdnImg("https://assets.regencivics.earth/cQIjYKqAtIzcnlPb.jpg")}
                     alt="Tree of life roots and branches"
                     className="w-full h-36 md:h-44 object-cover rounded-lg"
                     aspect="16/9"
                   />
                   <LazyImage
-                    src="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp"
+                    src={cdnImg("https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp")}
                     alt="Underwater tree of life with bridges and community"
                     className="w-full h-48 md:h-56 object-cover rounded-lg"
                     aspect="16/9"
@@ -593,9 +594,9 @@ export default function Fund() {
                 playsInline
                 preload="metadata"
                 className="w-full h-auto"
-                poster="https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp"
+                poster={cdnImg("https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.webp")}
               >
-                <source src="https://assets.regencivics.earth/VeYvNDrIyHjuiPlZ.mp4" type="video/mp4" />
+                <source src={cdnImg("https://assets.regencivics.earth/VeYvNDrIyHjuiPlZ.mp4")} type="video/mp4" />
               </video>
             </div>
           </AnimatedSection>

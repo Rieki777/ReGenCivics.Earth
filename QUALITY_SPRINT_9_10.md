@@ -1896,3 +1896,601 @@ Reuse existing forum: create a forum post per episode in a new "episodes" catego
 | **Riverside webhook** | Fix 159 | In Riverside: Settings → Integrations → Webhooks → add `https://regencivics.earth/api/webhooks/riverside` |
 | **YouTube Live** | Fix 159 Step 2 | Enable YouTube Live per recording room in Riverside pre-recording screen |
 | **YouTube channel** | Fix 159 Step 3 | Confirm ReGen Civics YouTube channel has livestreaming enabled |
+
+---
+
+## Fix 160 — Email Spam Mitigation + Digest Job Guard
+
+**What happened:** Deploying to Railway caused the digest job to fire 60 seconds after startup (via a `setTimeout` in `index.ts`), sending emails to all active newsletter subscribers. Combined with a weekly digest run, 15 emails went out unexpectedly.
+
+**Fixes applied (by Claude Code):**
+
+1. `server/_core/email.ts` — Added `EMAIL_HOLD` guard at the top of `sendEmail()`. When `EMAIL_HOLD=true` is set in Railway env vars, all outbound email is blocked and logged. Set this while testing.
+2. `server/jobs/digestJob.ts` — Added a self-guard: checks `db.getLatestDigest()` at the start of `runDigestJob()`. If a digest was sent in the last 7 days, the job skips. This prevents duplicate sends on every Railway deploy/restart.
+
+**Done when:** `EMAIL_HOLD=true` is set in Railway. Digest job confirms "Skipping — last digest was Xh ago" in Railway logs after a restart.
+
+### Steps:
+| # | Who | What |
+|---|-----|------|
+| 1 | **[HUMAN — IMMEDIATE]** | In Railway: set `EMAIL_HOLD=true` in environment variables. This is a safety hold — turn it back off once the flow is verified. |
+| 2 | [CLAUDE CODE] | `digestJob.ts` already patched — guard is live. |
+| 3 | [CLAUDE CODE] | `email.ts` EMAIL_HOLD guard already patched. |
+| 4 | **[HUMAN]** | After verifying the flow locally or in staging, set `EMAIL_HOLD=false` (or delete the var) in Railway to re-enable emails. |
+
+---
+
+## Fix 161 — Event Attendance Tracking + $ReGen Token Ledger
+
+**What:** Tracks who actually attends each event (admin marks attendance after the call). Each confirmed attendee earns 33 $ReGen tokens, stored in an append-only ledger. This feeds future contribution tracking and token distribution.
+
+**New tables:**
+- `event_attendance` — one row per (eventId, email) pair; links to ledger entry
+- `regen_token_ledger` — append-only ledger of all $ReGen awards (event attendance, quest completions, admin grants, etc.)
+
+**New tRPC endpoints (all admin-only):**
+- `events.markAttendance` — bulk-mark attendees for an event, awards 33 $ReGen each
+- `events.removeAttendance` — undo attendance + remove token award
+- `events.listAttendance` — get confirmed attendees for an event
+- `events.getTokenBalance` — get total $ReGen balance + ledger for an email
+- `events.tokenLeaderboard` — top $ReGen earners across all events
+
+**Admin UI:** Events tab now has an "Event Attendance + $ReGen Token Awards" panel at the bottom. Select a completed event, paste emails (one per line), click "Mark Attendance + Award Tokens". The leaderboard shows top earners.
+
+### Steps:
+| # | Who | What |
+|---|-----|------|
+| 1 | **[HUMAN]** | Run migration `drizzle/0078_attendance_and_token_ledger.sql` in Railway DB console |
+| 2 | [CLAUDE CODE] | Schema, DB functions, tRPC endpoints, and Admin.tsx UI all done. |
+| 3 | **[HUMAN]** | After migration runs, open Admin → Events tab → scroll to bottom → test marking attendance on a completed event |
+
+---
+
+### Updated Handoff Breakdown (new items from this session)
+
+| Priority | Who | Task |
+|---|---|---|
+| **IMMEDIATE** | Rye | Set `EMAIL_HOLD=true` in Railway env vars to stop any accidental email sends while testing |
+| High | Rye | Run `drizzle/0077_event_enhancements.sql` in Railway DB (adds phone, signupType to event_signups; adds forumThreadId, maxAttendees to events; creates agenda_suggestions) |
+| High | Rye | Run `drizzle/0078_attendance_and_token_ledger.sql` in Railway DB (creates event_attendance and regen_token_ledger tables) |
+| Medium | Rye | Set up Google Calendar service account and add `GOOGLE_SERVICE_ACCOUNT_JSON_B64` + `GOOGLE_CALENDAR_ID` in Railway (see googlecal.ts comments for full setup steps) |
+| Medium | Rye | Set up Twilio for SMS reminders: add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` in Railway |
+| Low | Rye | Set up Telegram bot: add `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in Railway |
+| Low | Rye | Set up WhatsApp Meta Cloud API: add `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_TO_NUMBER` in Railway |
+| When ready | Rye | Set `EMAIL_HOLD=false` (or delete the var) in Railway once email flow is verified |
+
+---
+
+## Fix 162 — Email Rate Limiter
+
+**What:** Two-layer in-memory rate limiter inside `sendEmail()` in `server/_core/email.ts`. Catches runaway jobs even if other guards fail.
+
+**Layer 1 — Startup burst block:** For the first 120 seconds after server start, a maximum of 5 total recipients are allowed. This directly prevents the "digest fires on restart, spams 15 people" pattern. Configurable via `STARTUP_EMAIL_LIMIT` env var.
+
+**Layer 2 — Rolling hourly limit:** Sliding 1-hour window. Default: 50 recipients/hr. Configurable via `EMAIL_RATE_LIMIT_PER_HOUR` env var. If a batch job needs to send more (e.g. season rollup to a large list), set this higher before triggering that job and reset afterward.
+
+**When blocked:** A `console.error` is written and a Sentry alert fires. The email is dropped (not queued for retry). This is intentional — better to miss one transactional email than spam 50 people.
+
+### Env vars:
+| Var | Default | What it does |
+|-----|---------|-------------|
+| `EMAIL_HOLD` | `false` | Blocks ALL email when `true`. Use as a circuit breaker. |
+| `STARTUP_EMAIL_LIMIT` | `5` | Max recipients in first 120s of server life. |
+| `EMAIL_RATE_LIMIT_PER_HOUR` | `50` | Max recipients per rolling hour window. |
+
+---
+
+## Email Copy Reference
+
+All outbound emails sent by the ReGen Civics platform. Copy is in the listed files.
+
+### Event emails (`server/routes/events.ts`)
+
+**1. Event signup confirmation — spot secured**
+- Subject: `You're on the list: {event.title}`
+- Sent: when user signs up for an event (not waitlisted)
+- Body: Event title, date/time + timezone, "We'll send you a reminder the day before." + join link (Riverside or Zoom) + View Schedule link
+- Template key: `event_signup_confirm`
+
+**2. Event signup confirmation — waitlisted**
+- Subject: `You're on the waitlist: {event.title}`
+- Sent: when event is full (`maxAttendees` reached) and user joins waitlist
+- Body: "{event.title} is currently full. We'll email you if a spot opens up before {date} at {time} {tz}." + View all events link
+
+**3. Event reminder (day-before)**
+- Subject: `Reminder: {event.title} is tomorrow` (or admin's custom subject)
+- Sent: manually by admin from Events tab
+- Body: "Starting in ~24 hours" + event title + date/time + optional "Last session covered" block (AI summary of prior episode) + custom body text + join link + View Schedule
+- Template key: `event_reminder`
+
+**4. Season rollup email**
+- Subject: `{season} — Here's what we built together`
+- Sent: manually by admin from Events tab → Season Rollup panel
+- Body: All completed episodes in the season as a numbered list with Watch/Discussion links, total episode count, "This season you showed up X times" count per person (where data exists)
+- Template key: `season_rollup`
+- Audience: all event signups from the season + active newsletter subscribers (deduped)
+
+### Newsletter / digest emails (`server/jobs/digestJob.ts`, `server/routes/newsletter.ts`)
+
+**5. Weekly community digest**
+- Subject: `This week in the community — {Month Day, Year}`
+- Sent: automatically, weekly (via digest job — first run uses DB check to prevent double-fire)
+- Body: Top 3-5 forum threads ranked by engagement, with title, 2-sentence AI-generated summary, reply count + "Join the conversation" CTA
+- Audience: all active newsletter subscribers
+
+**6. Newsletter subscribe confirmation**
+- Subject: `Confirm your ReGen Civics newsletter subscription`
+- Sent: when user signs up for newsletter
+- Body: confirmation/double-opt-in flow
+
+### Application emails (`server/routes/applications.ts`)
+
+**7. Application received**
+- Subject: `Application Received — {project.name}`
+- Sent: when application is submitted
+
+**8. Application status updates**
+- Subjects vary by status:
+  - Under review: `Your Application is Under Review - {project.name}`
+  - Approved: `Congratulations! Your Application is Approved - {project.name}`
+  - Rejected: `Application Update - {project.name}`
+  - Changes requested: `Changes Requested - {project.name}`
+
+### Investor emails (`server/routes/investors.ts`)
+
+**9. Investor welcome**
+- Subject: from template
+- Sent: when investor registers interest
+
+**10. Letter of Intent confirmation**
+- Subject: `Your Letter of Intent — ReGen Civics`
+- Sent: when LOI is submitted
+
+---
+
+## 10 More Ways to Perfect the Event Flow
+
+These build on the existing 15. No session has started on any of them yet.
+
+---
+
+**#16 — Attendance check-in QR code**
+When an event is created, generate a unique check-in URL (e.g. `/checkin/{eventToken}`). Display it as a QR code during the live call (Riverside screen share or Zoom). Attendees open it, enter their email, and are marked as attended automatically — no admin work required. The token awards and ledger entries happen in real time. Admin still gets a one-click override to mark/unmark anyone.
+
+Why it matters: removes the post-event admin step entirely. Attendees feel the immediate reward loop ("you just earned 33 $ReGen").
+
+---
+
+**#17 — Post-event "how was it?" email**
+24 hours after an event ends, send a short email to everyone who signed up (not just attendees). Two questions: "Did you make it?" (yes/no — links back to the check-in URL to claim tokens if they haven't yet) and "One word for how it felt?" (maps to a quick form). This doubles as a passive attendance capture AND gives you qualitative signal.
+
+Subject: `How was it? — {event.title}`
+
+---
+
+**#18 — Unsubscribe from event reminders (per-event)**
+The signup confirmation email currently has no unsubscribe link specific to that event. Anyone who changes plans has to email or do nothing. Add a one-click `unsubscribe from reminders for this event` link in the confirmation email and in the reminder email. Backend: adds a `cancelledAt` timestamp to the `event_signups` row. Reminder sender already filters by `signupType = 'reminder'` — extend it to also filter `cancelledAt IS NULL`.
+
+Why it matters: reduces complaints, keeps reminder lists clean, and is expected behavior for transactional email.
+
+---
+
+**#19 — Event page per episode (`/events/{id}`)**
+Right now events only show on `/schedule`. A dedicated URL per event means:
+- Direct links can be shared (socials, newsletter, WhatsApp)
+- OG meta tags per event (title, date, description) for link previews
+- After the event, the page becomes a recap page: replay link, AI summary, discussion thread link, attendee count
+
+This feeds into the replay page (#4 from the previous 10 new suggestions).
+
+---
+
+**#20 — Waitlist auto-promote**
+When someone on the waitlist for an event cancels their reminder subscription (fix #18), or when a reminder signup is deleted by admin, automatically check if anyone is on the waitlist. If so, email the next person in waitlist order: "A spot opened up — you're now confirmed for {event.title}." Update their `signupType` from `waitlist` to `reminder`.
+
+Currently the waitlist is inert — this makes it real.
+
+---
+
+**#21 — Event series landing page**
+A `/series/{season}` page that shows all episodes in a season — past (with replay links and AI summaries) and upcoming (with signup forms). This becomes the canonical URL for "what's the ReGen Civics call series?" Instead of linking people to `/schedule` (all events, all seasons), share `/series/season-2` for a specific cohort.
+
+---
+
+**#22 — Admin "preflight" checklist before sending reminders**
+Before the "Send Reminders" button fires, show a blocking checklist modal:
+- Is the join link set? (Riverside or Zoom URL present)
+- Is the event still upcoming?
+- How many people will receive this? (show count)
+- Was this reminder already sent? (reminderSent flag)
+Require a checkbox acknowledgment before proceeding. This one simple modal would have caught the spam issue.
+
+---
+
+**#23 — Token balance shown to signed-in users**
+After a user completes their profile or signs in, show their $ReGen balance in a small widget (profile header, sidebar, or the Schedule page after they've attended events). Even if it's just "You have 33 $ReGen" — it closes the feedback loop and makes the token real to them. Backend: `events.getTokenBalance` endpoint is already built.
+
+---
+
+**#24 — Batch reminder timing (send at optimal time)**
+Instead of sending reminders the moment admin clicks "Send Reminders", schedule them to land at 9am in the recipient's timezone (derived from their signup time/geo, or defaulting to UTC-5). Use the existing `scheduled_emails` table and processor. The admin sets the reminder, it queues, the processor fires it at the right local time. No more reminders arriving at 2am.
+
+---
+
+**#25 — Guest speaker introduction email**
+When admin adds a guest speaker to an event (guest speaker card from suggestion #16 in the new 10), auto-generate and send a "join us this [day]" email to all signups featuring the speaker's name, short bio, and topic. Separate from the day-before reminder — more promotional, goes out 3-5 days before. Subject: `Joining us this {day}: {speaker name} on {topic}`. This is a high-engagement email (people forward it, share it).
+
+---
+
+
+---
+
+## Bash Commands — Run These to Complete the Session
+
+Everything Claude Code built this session is ready in the repo. These are the commands you need to run, in order.
+
+### Step 1 — Commit and push to Railway
+
+Run these from the project root folder in Git Bash (or your terminal):
+
+```bash
+# Stage all the files changed/added this session
+git add server/_core/email.ts
+git add server/_core/googlecal.ts
+git add server/_core/index.ts
+git add server/_core/notify.ts
+git add server/jobs/digestJob.ts
+git add server/routes/events.ts
+git add client/src/pages/Admin.tsx
+git add client/src/pages/Schedule.tsx
+git add drizzle/schema.ts
+git add drizzle/0077_event_enhancements.sql
+git add drizzle/0078_attendance_and_token_ledger.sql
+git add QUALITY_SPRINT_9_10.md
+
+# Commit
+git commit -m "feat: event flow improvements, attendance tracking, email rate limiter"
+
+# Push (Railway auto-deploys on push)
+git push
+```
+
+---
+
+### Step 2 — Set Railway env vars (IMMEDIATE — do this before the push lands)
+
+In Railway dashboard → your service → Variables tab:
+
+```
+EMAIL_HOLD=true
+```
+
+This blocks all outbound email until you've verified the flow. Set it first, then push.
+
+Optional but recommended while testing:
+```
+STARTUP_EMAIL_LIMIT=5
+EMAIL_RATE_LIMIT_PER_HOUR=50
+```
+
+---
+
+### Step 3 — Run migrations in Railway DB console
+
+In Railway → your MySQL database → "Connect" → "MySQL Shell" (or use your local DATABASE_URL):
+
+```sql
+-- Migration 1: event flow enhancements (phone, waitlist, forum thread, max attendees, agenda suggestions)
+-- Paste contents of: drizzle/0077_event_enhancements.sql
+
+-- Migration 2: attendance tracking + $ReGen token ledger
+-- Paste contents of: drizzle/0078_attendance_and_token_ledger.sql
+```
+
+Or if you have DATABASE_URL set locally, run them via node:
+
+```bash
+# Set your DATABASE_URL first:
+export DATABASE_URL="mysql://..."
+
+# Then run each migration file:
+node -e "
+const mysql = require('mysql2/promise');
+const fs = require('fs');
+(async () => {
+  const conn = await mysql.createConnection(process.env.DATABASE_URL);
+  const sql = fs.readFileSync('./drizzle/0077_event_enhancements.sql', 'utf8');
+  for (const stmt of sql.split(';').filter(s => s.trim())) {
+    await conn.execute(stmt);
+  }
+  await conn.end();
+  console.log('0077 done');
+})();
+"
+
+node -e "
+const mysql = require('mysql2/promise');
+const fs = require('fs');
+(async () => {
+  const conn = await mysql.createConnection(process.env.DATABASE_URL);
+  const sql = fs.readFileSync('./drizzle/0078_attendance_and_token_ledger.sql', 'utf8');
+  for (const stmt of sql.split(';').filter(s => s.trim())) {
+    await conn.execute(stmt);
+  }
+  await conn.end();
+  console.log('0078 done');
+})();
+"
+```
+
+---
+
+### Step 4 — Set optional integration env vars (when ready)
+
+These are for the new notification channels. None are required for core functionality.
+
+```bash
+# Google Calendar push (see server/_core/googlecal.ts comments for setup)
+GOOGLE_SERVICE_ACCOUNT_JSON_B64=<base64 of your service account .json>
+GOOGLE_CALENDAR_ID=<your calendar id>@group.calendar.google.com
+
+# SMS reminders via Twilio
+TWILIO_ACCOUNT_SID=ACxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxx
+TWILIO_FROM_NUMBER=+1xxxxxxxxxx
+
+# Telegram announcements
+TELEGRAM_BOT_TOKEN=xxxxxxxxxx:xxxxxxxxxxx
+TELEGRAM_CHAT_ID=@regencivics  (or numeric chat ID)
+
+# WhatsApp announcements (Meta Cloud API)
+WHATSAPP_PHONE_NUMBER_ID=xxxxxxxxxx
+WHATSAPP_ACCESS_TOKEN=EAAxxxxxxxx
+WHATSAPP_TO_NUMBER=+1xxxxxxxxxx
+```
+
+---
+
+### Step 5 — Verify the deploy
+
+After Railway redeploys (watch the logs):
+
+```
+# Should see in Railway logs:
+[DigestJob] Skipping — last digest was Xh ago (< 7 days).
+# NOT: [DigestJob] Digest sent to 15 subscribers
+
+# If you see any email:
+[Email] BLOCKED by rate limiter — STARTUP_BURST_BLOCK ...
+# That means the guard is working. Good.
+```
+
+---
+
+### Step 6 — Re-enable email when ready
+
+Once you've verified the flow works end-to-end (test event signup, test reminder send in admin panel with EMAIL_HOLD=true confirming the log output), flip the hold off:
+
+```
+# In Railway Variables:
+EMAIL_HOLD=false   (or delete the variable entirely)
+```
+
+---
+
+
+---
+
+## Fix 163 — WebP Image Wiring (Mobile Images Not Loading)
+
+**What:** Seasonal quest card images and one community project image were broken on mobile because the image filenames in `public/` didn't match the IDs used to construct image URLs in code.
+
+**Root cause:** `SeasonalQuestFeed` builds image URLs as `/quest-images/seasonal/${quest.id}.webp`. The IDs in `seasonalQuestsData.ts` are short (`honey-moon`, `make-a-song`, etc.) but the actual webp files had different names (`your-honey-moon.webp`, `make-song-regeneration.webp`, etc.).
+
+**Fixes applied:**
+- Copied files with matching names:
+  - `your-honey-moon.webp` → `honey-moon.webp`
+  - `make-song-regeneration.webp` → `make-a-song.webp`
+  - `decrease-expenses-increase-joy.webp` → `decrease-expenses.webp`
+  - `the-fifth-agreement.webp` → `fifth-agreement.webp`
+  - `regen-financial-systems.webp` → `community-currency.webp` (thematic placeholder)
+  - `study-natural-hygiene.webp` → `ringing-cedars.webp` (thematic placeholder)
+- `community/la-tierra.webp` — created placeholder copy from finca-sagrada.webp
+
+**Note:** `community-currency.webp` and `ringing-cedars.webp` are using placeholder images from similar quests. Real images should be generated for these eventually (see nano-banana-pro skill).
+
+**Steps for Rye:**
+| # | Who | What |
+|---|-----|------|
+| 1 | [CLAUDE CODE] | Done — files copied. Will take effect on next deploy. |
+| 2 | **[HUMAN — optional]** | Generate real branded images for `community-currency` and `ringing-cedars` quests using the image gen skill, then replace the placeholders. |
+| 3 | **[HUMAN — optional]** | Upload a real photo for La Tierra community project to replace the finca-sagrada placeholder. |
+
+---
+
+## Fix 164 — Mobile Scroll Glitch / Seizure Effect
+
+**What:** A shaky/glitching/seizure effect appeared on the home page when scrolling past sections 2-3 on mobile. Caused by three overlapping issues:
+
+**Root causes identified:**
+1. **30 particle animations** (fireflies, leaves, bubbles, butterflies, etc.) running continuously in the background via `ThemeParticles` — GPU-intensive animations with blur, box-shadow, and transform running even on slow mobile devices
+2. **SectionOverlayLayer scroll handler** called `querySelectorAll` + `getBoundingClientRect()` on every scroll frame, causing layout thrashing (DOM read → style write → layout recalculation) on mobile
+3. **`AnimatedSection` used `transition: all`** which transitions EVERY CSS property including ones that cause layout reflow (height, width, padding) — compounded when multiple sections animated simultaneously
+
+**Fixes applied:**
+- `PageBackground.tsx`: Disabled `ThemeParticles` on mobile (`{!isMobile && <ThemeParticles theme={theme} />}`)
+- `PageBackground.tsx`: Skip the per-scroll `getBoundingClientRect()` loop entirely on mobile (`window.innerWidth < 768`)
+- `AnimatedSection.tsx`: Changed `transition: all` to `transition: opacity ..., transform ...` (only the two properties actually animated)
+- `AnimatedSection.tsx`: Added `willChange: 'opacity, transform'` during animation, then reset to `willChange: 'auto'` when complete
+
+**Expected result:** Smooth scroll on mobile. Particles still render on desktop. Section overlay gradient still updates on desktop.
+
+---
+
+## Fix 165 — SEO Overhaul (Site Not Ranking for Its Own Domain)
+
+**Root cause:** Pure client-side rendering (CSR). When Googlebot crawls regencivics.earth, it gets `<div id="root"></div>` before React hydrates. All meta tags, titles, and descriptions are injected by React's `useEffect` — after the initial HTML is served. Googlebot may not wait for this.
+
+**Fixes applied this session:**
+
+**1. Server-side meta tag injection (`server/_core/vite.ts`)**
+The Express catch-all handler now reads `index.html`, finds the correct meta data for the requested route, and injects real `<title>`, `<meta name="description">`, `<meta property="og:*">`, and `<link rel="canonical">` before serving the HTML. Google now sees real content on the first HTTP response.
+
+Route map covers: `/fund`, `/game`, `/quest`, `/schedule`, `/community`, `/governance`, `/map`, `/opportunity`, `/blog`, `/connect`, `/apply`, `/tokenomics`, `/land`, `/ally` — and all dynamic subroutes via longest-prefix matching.
+
+**2. Governance page (`client/src/pages/Governance.tsx`)**
+Added missing `SEO` component and basic `JsonLD` structured data (was the only major page with no SEO tags at all).
+
+**Remaining SEO work (still needed):**
+- **[HIGH]** Sign up for prerender.io and set `PRERENDER_TOKEN` in Railway — this handles JavaScript rendering for Googlebot and is the gold standard solution for CSR SEO (already in fixes doc as Fix 155)
+- **[MEDIUM]** Submit sitemap.xml to Google Search Console (if not already done)
+- **[MEDIUM]** Add JsonLD structured data to: Tokenomics, Land, Ally, Showcase, ReGenGames pages
+- **[LOW]** Add breadcrumb schema to all pages
+
+**Steps for Rye:**
+| # | Who | What |
+|---|-----|------|
+| 1 | [CLAUDE CODE] | Server-side meta injection done — active after next deploy |
+| 2 | [CLAUDE CODE] | Governance page SEO done |
+| 3 | **[HUMAN]** | In Google Search Console: confirm regencivics.earth property is verified, then submit `/sitemap.xml` for re-crawl |
+| 4 | **[HUMAN]** | Sign up at prerender.io, get token, set `PRERENDER_TOKEN=<token>` in Railway |
+| 5 | **[HUMAN]** | After setting PRERENDER_TOKEN, submit key pages to prerender.io cache |
+
+---
+
+## Quest Organization Plan
+
+See `QUEST_ORGANIZATION_PLAN.md` in the project root. This is a full inventory of all 52 quests and three options for reorganizing them on the Quests page. Review with Rye before implementing.
+
+**Summary of options:**
+- **Option A (recommended):** Unified seasonal tabs, merging Rites of Passage + Seasonal Practices per season. Most cohesive experience. 1 session to implement.
+- **Option B:** Three track view (Rites / Practices / Epic). Best for players who want to choose their path.
+- **Option C:** Least change — just fill out the existing carousel with all quests and activate Epics. Fastest to ship.
+
+**Questions to answer before building:** See the "Questions for Rye" section in QUEST_ORGANIZATION_PLAN.md.
+
+---
+
+## Updated Bash Commands (Add to Deploy Checklist)
+
+These are additions to the bash commands from the previous section. Run these in the same deploy sequence:
+
+```bash
+# Add the new/modified files to git
+git add client/src/components/PageBackground.tsx
+git add client/src/components/AnimatedSection.tsx
+git add client/src/pages/Governance.tsx
+git add server/_core/vite.ts
+git add client/public/quest-images/seasonal/
+git add client/public/community/la-tierra.webp
+git add QUEST_ORGANIZATION_PLAN.md
+git add QUALITY_SPRINT_9_10.md
+
+# Commit
+git commit -m "fix: mobile images, scroll glitch, SEO meta injection, governance page"
+
+# Push (Railway auto-deploys)
+git push
+```
+
+After deploy, verify in Google Chrome mobile DevTools:
+1. Open regencivics.earth on a mobile-sized viewport — scroll through — glitch should be gone
+2. View source of any page (e.g. `/governance`) — you should see the real `<title>` tag injected by the server
+3. Check `/quest` on mobile — seasonal quest images should all load now
+
+
+---
+
+## Fix 166: CDN Image Proxy (All Client Images)
+
+**Problem:** `assets.regencivics.earth` CDN is IP-allowlisted. Only Railway's server IP can fetch from it directly. Browsers get `403 Forbidden` from the CDN, breaking logo, home page path cards, hero images, globe map markers, and every other image across the site.
+
+**Solution:** Added `cdnImg()` utility in `client/src/lib/utils.ts`. Routes all CDN image URLs through the server-side `/api/img?url=...` proxy (already existed in `server/routes/global.ts`). Replaced all 158 direct CDN URL references across 26 files.
+
+**Files changed:**
+- `client/src/lib/utils.ts` — added `cdnImg()` function
+- `client/src/components/ImagePreloader.tsx` — wrap preload URLs
+- All pages and components with CDN image references
+
+**CDN fix for Rye:**
+The longer-term fix is to remove the IP allowlist on `assets.regencivics.earth` (or add all IPs to the allowlist) so browsers can hit the CDN directly. The proxy works fine as a permanent solution but adds latency. To fix the allowlist: in Cloudflare WAF or R2 bucket settings, set the asset domain to public access.
+
+| # | Who | What |
+|---|-----|------|
+| 1 | [CLAUDE CODE] | `cdnImg()` utility + 158 URL replacements done |
+| 2 | **[OPTIONAL/HUMAN]** | Remove IP allowlist on `assets.regencivics.earth` for direct CDN access |
+
+---
+
+## Fix 167: Prerender.io Middleware
+
+**Problem:** Prerender.io integration was showing "not detected" because `prerender-node` npm package was not installed and no middleware was registered.
+
+**Solution:** Added `prerender-node` to `package.json` dependencies and wired up the middleware in `server/_core/index.ts`. Uses `createRequire` for CJS compat. Middleware is guarded by `PRERENDER_TOKEN` env var — no effect until token is set.
+
+**Files changed:**
+- `package.json` — added `"prerender-node": "^3.2.6"`
+- `server/_core/index.ts` — added prerender middleware block after compression
+
+**Steps for Rye:**
+| # | Who | What |
+|---|-----|------|
+| 1 | [CLAUDE CODE] | Package added to package.json, middleware wired up |
+| 2 | **[HUMAN]** | After `git push`: Railway will run `npm install` and install prerender-node automatically |
+| 3 | **[HUMAN]** | Set `PRERENDER_TOKEN=<your token>` in Railway env vars (token is already in Railway per previous session) |
+| 4 | **[HUMAN]** | Go to prerender.io dashboard → Integration Wizard → re-verify |
+
+---
+
+## Fix 168: Quest Organization Plan Updated
+
+**Quest plan** (`QUEST_ORGANIZATION_PLAN.md`) updated with all feedback:
+- Removed all em-dashes
+- Removed AI language patterns
+- Removed `community-currency` from Spring seasonal quests (moved to Epic Quests)
+- Set Option A as the chosen approach (unified seasonal tabs)
+- Welcome Aboard stays in profile with a link from quests page
+- Epic quests gated until Rites of Passage are completed
+- Rites of Passage always come first within a season tab
+- Duplicate quest IDs identified and canonical versions noted
+
+**Ready to implement.** See implementation steps at the bottom of `QUEST_ORGANIZATION_PLAN.md`.
+
+---
+
+## Updated Bash Commands (Third Deploy)
+
+```bash
+# Stage all new changes
+git add client/src/lib/utils.ts
+git add client/src/components/ImagePreloader.tsx
+git add client/src/components/Navigation.tsx
+git add client/src/pages/Home.tsx
+git add client/src/pages/Fund.tsx
+git add client/src/pages/Game.tsx
+git add client/src/pages/Land.tsx
+git add client/src/pages/Play.tsx
+git add client/src/pages/Ally.tsx
+git add client/src/pages/Blog.tsx
+git add client/src/pages/CrowdPoolingProjects.tsx
+git add client/src/data/blogPosts.ts
+git add client/src/components/GlobeMap.tsx
+git add client/src/components/SEO.tsx
+git add client/src/components/ProgressiveOnboarding.tsx
+git add server/_core/index.ts
+git add package.json
+git add QUEST_ORGANIZATION_PLAN.md
+git add QUALITY_SPRINT_9_10.md
+
+# Commit
+git commit -m "fix: route all CDN images through proxy, add prerender.io middleware"
+
+# Push (Railway auto-deploys + npm install runs)
+git push
+```
+
+After deploy:
+1. Check logo loads on `regencivics.earth`
+2. Check home page path card images load on mobile
+3. Set `PRERENDER_TOKEN` in Railway if not already active
+4. Re-verify at prerender.io dashboard

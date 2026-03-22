@@ -208,7 +208,7 @@ export default function ReGenGuide() {
         ) : (
           <>
             <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">Show Me Around</span>
+            <span className="hidden sm:inline">Your ReGen Guide</span>
           </>
         )}
       </button>

@@ -1,7 +1,7 @@
 import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -3000,5 +3000,175 @@ export async function getAdminAuditLog(opts?: {
     return query.where(and(...conditions)).orderBy(desc(adminAuditLog.createdAt)).limit(limit);
   }
   return query.orderBy(desc(adminAuditLog.createdAt)).limit(limit);
+}
+
+// ─── Event Attendance ─────────────────────────────────────────────────────────
+
+/** Mark an attendee as having attended an event. Returns the new attendance record, or null if already marked. */
+export async function markEventAttendance(data: {
+  eventId: number;
+  email: string;
+  name?: string | null;
+  markedByAdminId?: number | null;
+}): Promise<{ attendance: EventAttendance; alreadyExisted: boolean } | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Check if already marked
+  const [existing] = await db
+    .select()
+    .from(eventAttendance)
+    .where(and(eq(eventAttendance.eventId, data.eventId), eq(eventAttendance.email, data.email)))
+    .limit(1);
+
+  if (existing) return { attendance: existing, alreadyExisted: true };
+
+  // Insert attendance record
+  const [result] = await db.insert(eventAttendance).values({
+    eventId: data.eventId,
+    email: data.email,
+    name: data.name ?? null,
+    markedByAdminId: data.markedByAdminId ?? null,
+    tokensAwarded: 33,
+  });
+  const insertId = (result as any).insertId;
+
+  // Award 33 $ReGen tokens — insert into ledger first
+  const [ledgerResult] = await db.insert(regenTokenLedger).values({
+    email: data.email,
+    amount: 33,
+    reason: "event_attendance",
+    eventId: data.eventId,
+    notes: `Attended event #${data.eventId}`,
+  });
+  const ledgerId = (ledgerResult as any).insertId;
+
+  // Link ledger entry back to attendance record
+  await db
+    .update(eventAttendance)
+    .set({ tokenLedgerEntryId: ledgerId })
+    .where(eq(eventAttendance.id, insertId));
+
+  const [attendance] = await db
+    .select()
+    .from(eventAttendance)
+    .where(eq(eventAttendance.id, insertId))
+    .limit(1);
+
+  return { attendance, alreadyExisted: false };
+}
+
+/** Remove an attendance mark (undo). Also removes the linked token ledger entry. */
+export async function removeEventAttendance(eventId: number, email: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  const [existing] = await db
+    .select()
+    .from(eventAttendance)
+    .where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.email, email)))
+    .limit(1);
+
+  if (!existing) return false;
+
+  // Remove the token ledger entry if it exists
+  if (existing.tokenLedgerEntryId) {
+    await db.delete(regenTokenLedger).where(eq(regenTokenLedger.id, existing.tokenLedgerEntryId));
+  }
+
+  await db
+    .delete(eventAttendance)
+    .where(and(eq(eventAttendance.eventId, eventId), eq(eventAttendance.email, email)));
+
+  return true;
+}
+
+/** Get all attendance records for an event, ordered by markedAt. */
+export async function getEventAttendance(eventId: number): Promise<EventAttendance[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(eventAttendance)
+    .where(eq(eventAttendance.eventId, eventId))
+    .orderBy(eventAttendance.markedAt);
+}
+
+/** Count attendees for multiple events at once (used for social proof). Returns a map of eventId -> count. */
+export async function getAttendanceCounts(eventIds: number[]): Promise<Record<number, number>> {
+  const db = await getDb();
+  if (!db || eventIds.length === 0) return {};
+  const rows = await db
+    .select({ eventId: eventAttendance.eventId, count: sql<number>`count(*)` })
+    .from(eventAttendance)
+    .where(inArray(eventAttendance.eventId, eventIds))
+    .groupBy(eventAttendance.eventId);
+  const result: Record<number, number> = {};
+  for (const row of rows) result[row.eventId] = Number(row.count);
+  return result;
+}
+
+// ─── $ReGen Token Ledger ──────────────────────────────────────────────────────
+
+/** Get total $ReGen token balance for an email address. */
+export async function getTokenBalance(email: string): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const [row] = await db
+    .select({ total: sql<number>`COALESCE(SUM(amount), 0)` })
+    .from(regenTokenLedger)
+    .where(eq(regenTokenLedger.email, email));
+  return Number(row?.total ?? 0);
+}
+
+/** Get the full token ledger for an email (sorted newest first). */
+export async function getTokenLedger(email: string): Promise<RegenTokenLedger[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(regenTokenLedger)
+    .where(eq(regenTokenLedger.email, email))
+    .orderBy(desc(regenTokenLedger.createdAt));
+}
+
+/** Add an arbitrary $ReGen award (for admin grants, quest completions, etc.). */
+export async function addTokenLedgerEntry(data: {
+  email: string;
+  userId?: number | null;
+  amount: number;
+  reason: InsertRegenTokenLedger["reason"];
+  eventId?: number | null;
+  questId?: string | null;
+  notes?: string | null;
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("No DB connection");
+  const [result] = await db.insert(regenTokenLedger).values({
+    email: data.email,
+    userId: data.userId ?? null,
+    amount: data.amount,
+    reason: data.reason,
+    eventId: data.eventId ?? null,
+    questId: data.questId ?? null,
+    notes: data.notes ?? null,
+  });
+  return (result as any).insertId;
+}
+
+/** Get a leaderboard of top $ReGen earners (sorted by total tokens descending). */
+export async function getTokenLeaderboard(limit = 20): Promise<{ email: string; total: number }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      email: regenTokenLedger.email,
+      total: sql<number>`SUM(amount)`,
+    })
+    .from(regenTokenLedger)
+    .groupBy(regenTokenLedger.email)
+    .orderBy(sql`SUM(amount) DESC`)
+    .limit(limit);
+  return rows.map(r => ({ email: r.email, total: Number(r.total) }));
 }
 

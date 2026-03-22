@@ -5,6 +5,9 @@ import { BackButton } from "@/components/BackButton";
 import { useEffect, useRef, useState } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageWrapper } from "@/components/PageWrapper";
+import { SEO, pageSEO } from "@/components/SEO";
+import { JsonLD, schemas } from "@/components/JsonLD";
+import { cdnImg } from "@/lib/utils";
 
 // Fund vs Game RCVoice Toggle Component
 function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game') => void }) {
@@ -46,7 +49,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
         <div className="bg-gradient-to-br from-[#d4a574]/15 to-[#1a472a]/60 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <img
-              src="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp"
+              src={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp")}
               alt="RCVoice Fund Token"
               width="96"
               height="96"
@@ -104,7 +107,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
         <div className="bg-gradient-to-br from-purple-900/30 to-[#1a472a]/60 rounded-2xl p-8 border border-purple-500/40 space-y-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <img
-              src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp"
+              src={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp")}
               alt="RGVoice Game Token"
               width="96"
               height="96"
@@ -170,7 +173,7 @@ function TwoTokensSection() {
         <div className="bg-[#1a472a]/60 rounded-xl p-6 border-l-4 border-[#d4a574] transition-all">
           <div className="flex items-center gap-4 mb-3">
             <img
-              src="https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.webp"
+              src={cdnImg("https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.webp")}
               alt="$RCivics Token"
               width="48"
               height="48"
@@ -187,7 +190,7 @@ function TwoTokensSection() {
         <div className="bg-[#0d2818]/70 rounded-xl p-6 border-l-4 border-[#7dd87d] transition-all">
           <div className="flex items-center gap-4 mb-4">
             <img
-              src="https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.webp"
+              src={cdnImg("https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.webp")}
               alt="$ReGen Token"
               width="48"
               height="48"
@@ -721,6 +724,15 @@ function EarthDayCountdown() {
 export default function Governance() {
   return (
     <PageWrapper>
+      <SEO {...pageSEO.governance} />
+      <JsonLD data={{
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "ReGen Civics Governance",
+        "description": "Voice-based governance rooted in land and contribution. How ReGen Civics makes decisions, and who has a say.",
+        "url": "https://regencivics.earth/governance",
+        "isPartOf": { "@type": "WebSite", "url": "https://regencivics.earth" }
+      }} />
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818]">
       <BackButton />
       
@@ -762,7 +774,7 @@ export default function Governance() {
                     <th className="py-4 px-4 w-1/3">
                       <div className="flex flex-col items-center gap-2">
                         <img
-                          src="https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp"
+                          src={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp")}
                           alt="RCVoice"
                           width="40"
                           height="40"
@@ -776,7 +788,7 @@ export default function Governance() {
                     <th className="py-4 px-4 w-1/3">
                       <div className="flex flex-col items-center gap-2">
                         <img
-                          src="https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp"
+                          src={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp")}
                           alt="RGVoice"
                           width="40"
                           height="40"

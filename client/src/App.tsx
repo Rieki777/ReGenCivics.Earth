@@ -15,7 +15,6 @@ const ReGenGuide = lazy(() => import("./components/ReGenGuide"));
 import AMABanner from "./components/AMABanner";
 import SiteFooter from "./components/SiteFooter";
 import { ScrollToTop } from "./components/ScrollToTop";
-import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 const ExitIntentCapture = lazy(() => import("./components/ExitIntentCapture").then(m => ({ default: m.ExitIntentCapture })));
 const CommandPalette = lazy(() => import("./components/CommandPalette"));
 const ShortcutPill = lazy(() => import("./components/ShortcutPill").then(m => ({ default: m.ShortcutPill })));
@@ -130,6 +129,7 @@ const Marketplace = lazy(() => import("./pages/Marketplace"));
 const Messages = lazy(() => import("./pages/Messages"));
 const MemberDirectory = lazy(() => import("./pages/MemberDirectory"));
 const CommunityGuidelines = lazy(() => import("./pages/CommunityGuidelines"));
+const ShapeNextSession = lazy(() => import("./pages/ShapeNextSession"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -166,6 +166,7 @@ function Router() {
       <Route path={"/socials"}><EB><Socials /></EB></Route>
       <Route path={"/seasons"}><EB><Seasons /></EB></Route>
       <Route path={"/schedule"}><EB><Schedule /></EB></Route>
+      <Route path={"/shape-next-session"}><EB><ShapeNextSession /></EB></Route>
       <Route path={"/team"}><EB><Team /></EB></Route>
       <Route path={"/game"}><EB><Game /></EB></Route>
       <Route path={"/calculator"}><EB><Calculator /></EB></Route>
@@ -315,7 +316,6 @@ function App() {
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!adminMode && <OnboardingController />}
           <ReturnToHandler />
-          <ServiceWorkerRegister />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

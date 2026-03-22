@@ -27,6 +27,7 @@ import { SEO } from '@/components/SEO';
 import { BackButton } from "@/components/BackButton";
 import { CampaignImageGallery } from '@/components/CampaignImageGallery';
 import { CampaignProgressTracker } from '@/components/CampaignProgressTracker';
+import { cdnImg } from "@/lib/utils";
 
 type FilterCategory = 'all' | 'land' | 'equipment' | 'roles' | 'resources';
 
@@ -88,7 +89,7 @@ export default function CrowdPoolingCampaigns() {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg"
+            src={cdnImg("https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg")}
             alt="Crowd Pooling - Community members bringing diverse resources together"
             width="1920"
             height="1080"
@@ -179,7 +180,7 @@ export default function CrowdPoolingCampaigns() {
                         mode="card"
                       />
                     ) : (campaign as any).generatedImageUrl ? (
-                      <img src={(campaign as any).generatedImageUrl} alt={campaign.title} className="w-full h-full object-cover" loading="lazy" />
+                      <img src={(campaign as any).generatedImageUrl} alt={campaign.title} className="w-full h-full object-cover" width={800} height={500} loading="lazy" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Leaf className="w-16 h-16 text-white/35" />

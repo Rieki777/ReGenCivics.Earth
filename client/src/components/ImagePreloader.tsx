@@ -14,17 +14,18 @@
  */
 import { useState, useEffect } from 'react';
 import { TaoSpinner } from '@/components/TaoSpinner';
+import { cdnImg } from '@/lib/utils';
 
 // Home page path card images (kept for backwards compatibility)
 const HOME_IMAGES = [
-  'https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp',
-  'https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp',
-  'https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp',
-  'https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp',
-  'https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp',
-  'https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp',
-  'https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp',
-  'https://assets.regencivics.earth/qDmGFHsBFPyCECbM.webp',
+  cdnImg('https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp'),
+  cdnImg('https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp'),
+  cdnImg('https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp'),
+  cdnImg('https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp'),
+  cdnImg('https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp'),
+  cdnImg('https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp'),
+  cdnImg('https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp'),
+  cdnImg('https://assets.regencivics.earth/qDmGFHsBFPyCECbM.webp'),
 ];
 
 function preloadImages(urls: string[]): Promise<void> {

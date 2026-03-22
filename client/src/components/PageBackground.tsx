@@ -423,7 +423,11 @@ function SectionOverlayLayer({
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // On mobile: skip the per-scroll DOM query entirely — use a static gradient instead.
+    // The getBoundingClientRect() loop on every scroll frame causes layout thrashing on mobile.
+    const isMobileDevice = window.innerWidth < 768;
     if (!sectionOverlays || sectionOverlays.length === 0 || !containerRef.current || !overlayRef.current) return;
+    if (isMobileDevice) return;
 
     let ticking = false;
     const updateOverlay = () => {
@@ -679,8 +683,8 @@ export default function PageBackground({
         containerRef={containerRef}
       />
 
-      {/* Theme-specific particles */}
-      <ThemeParticles theme={theme} />
+      {/* Theme-specific particles — disabled on mobile to prevent scroll jank */}
+      {!isMobile && <ThemeParticles theme={theme} />}
 
       {/* Content layer */}
       <div className="relative z-20 page-bg-content">

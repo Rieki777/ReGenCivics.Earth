@@ -33,6 +33,7 @@ import { trpc } from "@/lib/trpc";
 import { BackButton } from "@/components/BackButton";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useCountUp } from "@/hooks/useCountUp";
+import { cdnImg } from "@/lib/utils";
 
 // ────────────────────────────────────────────────────────────────────────────────
 // Project data — enhanced with lat/lng, phases, impact formula, momentum
@@ -54,7 +55,7 @@ const sampleProjects = [
     contributors: 23,
     pendingContributors: 8,
     deadline: "June 2026",
-    image: "https://assets.regencivics.earth/ptLdEEmSgyEQKzmF.jpg",
+    image: cdnImg("https://assets.regencivics.earth/ptLdEEmSgyEQKzmF.jpg"),
     tags: ["Permaculture", "Housing", "Food Forest"],
     status: "active",
     season: "Season 2",
@@ -127,7 +128,7 @@ const sampleProjects = [
     contributors: 15,
     pendingContributors: 5,
     deadline: "September 2026",
-    image: "https://assets.regencivics.earth/wwnJXOsxkrlwtDre.jpg",
+    image: cdnImg("https://assets.regencivics.earth/wwnJXOsxkrlwtDre.jpg"),
     tags: ["Agriculture", "Land Restoration", "Education"],
     status: "active",
     season: "Season 2",
@@ -184,7 +185,7 @@ const sampleProjects = [
     contributors: 31,
     pendingContributors: 12,
     deadline: "December 2026",
-    image: "https://assets.regencivics.earth/qDMEazGCLoNCuxiS.jpg",
+    image: cdnImg("https://assets.regencivics.earth/qDMEazGCLoNCuxiS.jpg"),
     tags: ["Indigenous", "Education", "Traditional Knowledge"],
     status: "active",
     season: "Season 2",
@@ -241,7 +242,7 @@ const sampleProjects = [
     contributors: 42,
     pendingContributors: 15,
     deadline: "March 2027",
-    image: "https://assets.regencivics.earth/FuQmXVqMDIJIpIbl.jpg",
+    image: cdnImg("https://assets.regencivics.earth/FuQmXVqMDIJIpIbl.jpg"),
     tags: ["Rewilding", "Conservation", "Wildlife"],
     status: "active",
     season: "Season 2",
@@ -779,7 +780,7 @@ function ProjectDetailModal({
             {/* Hero image + optional video */}
             <div className="rounded-xl overflow-hidden aspect-video relative group">
               <img
-                src={project.image || "https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg"}
+                src={project.image || cdnImg("https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg")}
                 alt={project.name}
                 className="w-full h-full object-cover"
               />

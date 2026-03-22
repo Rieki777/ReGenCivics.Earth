@@ -1,24 +1,36 @@
-// find-resources-thread.mjs
-// Run with: DATABASE_URL=... node scripts/find-resources-thread.mjs
+// Fix 140 — Find resource/book/learning threads in the general category
+// Usage: DATABASE_URL=mysql://... node scripts/find-resources-thread.mjs
 
-import mysql from 'mysql2/promise'
+import mysql from 'mysql2/promise';
 
-async function main() {
-  const conn = await mysql.createConnection(process.env.DATABASE_URL)
+const DATABASE_URL = process.env.DATABASE_URL;
 
-  const [rows] = await conn.execute(`
-    SELECT fp.id, fp.title, fp.createdAt
-    FROM forumPosts fp
-    WHERE fp.categoryId = (SELECT id FROM forumCategories WHERE slug = 'general' LIMIT 1)
-      AND (fp.title LIKE '%resource%' OR fp.title LIKE '%book%' OR fp.title LIKE '%learn%' OR fp.title LIKE '%read%')
-    ORDER BY fp.createdAt DESC
-    LIMIT 10
-  `)
-
-  console.log('Resources threads in General category:')
-  console.log(JSON.stringify(rows, null, 2))
-
-  await conn.end()
+if (!DATABASE_URL) {
+  console.error('DATABASE_URL is not set.');
+  console.error('Run with: DATABASE_URL=mysql://user:pass@host:port/dbname node scripts/find-resources-thread.mjs');
+  process.exit(1);
 }
 
-main().catch(console.error)
+const connection = await mysql.createConnection(DATABASE_URL);
+
+try {
+  const [rows] = await connection.execute(
+    `SELECT id, title, createdAt FROM forumPosts
+     WHERE categoryId = (SELECT id FROM forumCategories WHERE slug = 'general')
+       AND (title LIKE '%resource%'
+         OR title LIKE '%book%'
+         OR title LIKE '%learn%'
+         OR title LIKE '%read%')
+     ORDER BY createdAt DESC
+     LIMIT 10`
+  );
+
+  if (rows.length === 0) {
+    console.log('No matching resource threads found in the general category.');
+  } else {
+    console.log(`Found ${rows.length} matching thread(s):\n`);
+    console.table(rows);
+  }
+} finally {
+  await connection.end();
+}

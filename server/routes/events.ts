@@ -250,7 +250,7 @@ export const eventsRouter = router({
   suggestAgendaItem: publicProcedure
     .input(z.object({
       eventId: z.number(),
-      authorEmail: z.string().email(),
+      authorEmail: z.string().email().optional(),
       authorName: z.string().max(255).optional(),
       suggestion: z.string().min(5).max(1000),
     }))
@@ -259,7 +259,7 @@ export const eventsRouter = router({
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await database.insert(agendaSuggestions).values({
         eventId: input.eventId,
-        authorEmail: input.authorEmail,
+        authorEmail: input.authorEmail ?? "anonymous@regencivics.earth",
         authorName: input.authorName ?? null,
         suggestion: input.suggestion,
       });
@@ -628,4 +628,73 @@ export const eventsRouter = router({
 
       return { sent: totalSent };
     }),
+
+  // ── Attendance Tracking (#8 revised) ─────────────────────────────────────
+
+  /**
+   * Mark one or more attendees for a completed event.
+   * Awards 33 $ReGen tokens per unique (eventId, email) pair.
+   * Admin-only. Call after the event ends with the list of people who showed up.
+   */
+  markAttendance: adminProcedure
+    .input(z.object({
+      eventId: z.number(),
+      // Pass an array so admin can bulk-mark the full attendee list at once
+      attendees: z.array(z.object({
+        email: z.string().email(),
+        name: z.string().optional(),
+      })),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const results: { email: string; tokens: number; alreadyExisted: boolean }[] = [];
+      for (const a of input.attendees) {
+        const res = await db.markEventAttendance({
+          eventId: input.eventId,
+          email: a.email,
+          name: a.name,
+          markedByAdminId: ctx.user.id,
+        });
+        if (res) {
+          results.push({
+            email: a.email,
+            tokens: res.alreadyExisted ? 0 : 33,
+            alreadyExisted: res.alreadyExisted,
+          });
+        }
+      }
+      const newlyMarked = results.filter(r => !r.alreadyExisted).length;
+      return { results, newlyMarked, tokensAwarded: newlyMarked * 33 };
+    }),
+
+  /** Remove an attendance mark (undo). Also removes the token ledger entry. */
+  removeAttendance: adminProcedure
+    .input(z.object({ eventId: z.number(), email: z.string().email() }))
+    .mutation(async ({ input }) => {
+      const removed = await db.removeEventAttendance(input.eventId, input.email);
+      return { removed };
+    }),
+
+  /** List all confirmed attendees for an event, with their token award amounts. */
+  listAttendance: adminProcedure
+    .input(z.object({ eventId: z.number() }))
+    .query(async ({ input }) => {
+      return db.getEventAttendance(input.eventId);
+    }),
+
+  /** Get $ReGen token balance for an email address. */
+  getTokenBalance: adminProcedure
+    .input(z.object({ email: z.string().email() }))
+    .query(async ({ input }) => {
+      const balance = await db.getTokenBalance(input.email);
+      const ledger = await db.getTokenLedger(input.email);
+      return { email: input.email, balance, ledger };
+    }),
+
+  /** $ReGen leaderboard — top earners across all events and contributions. */
+  tokenLeaderboard: adminProcedure
+    .input(z.object({ limit: z.number().min(1).max(100).default(20) }))
+    .query(async ({ input }) => {
+      return db.getTokenLeaderboard(input.limit);
+    }),
 });
+

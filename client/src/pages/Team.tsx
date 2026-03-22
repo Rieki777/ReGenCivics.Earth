@@ -39,6 +39,7 @@ import { SEO, pageSEO } from '@/components/SEO';
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { LazyImage } from "@/components/LazyImage";
+import { cdnImg } from "@/lib/utils";
 
 const coreValues = [
   { icon: Heart, title: "Honesty (with Empathy)", description: "We speak truth with care, balancing directness with compassion for each other's journeys." },
@@ -353,7 +354,7 @@ export default function Team() {
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <LazyImage
-            src="https://assets.regencivics.earth/PPEoXqTcNBKerkDe.jpg"
+            src={cdnImg("https://assets.regencivics.earth/PPEoXqTcNBKerkDe.jpg")}
             alt="Regenerative Ikigai"
             className="w-full h-full object-cover"
             placeholder={<div className="w-full h-full bg-[#1a472a]" />}
@@ -495,7 +496,7 @@ export default function Team() {
           {/* Static Ikigai Diagram Image */}
           <div className="relative max-w-2xl mx-auto mb-8">
             <LazyImage
-              src="https://assets.regencivics.earth/sceUJeMUZWMBHqFi.webp"
+              src={cdnImg("https://assets.regencivics.earth/sceUJeMUZWMBHqFi.webp")}
               alt="Regenerative Ikigai - The intersection of what you love creating, what you're good at, what the renaissance needs, and what ReGen Civics will pay you for"
               className="w-full h-auto"
               aspect="1/1"

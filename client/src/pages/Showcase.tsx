@@ -31,6 +31,7 @@ import {
 import { SEO, pageSEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { trpc } from "@/lib/trpc";
+import { cdnImg } from "@/lib/utils";
 
 // Land projects data from the opportunity page
 const landProjects = [
@@ -44,7 +45,7 @@ const landProjects = [
     status: "active",
     description: "A regenerative community focused on permaculture education and sustainable living in the heart of Costa Rica's rainforest.",
     mixedUse: ["residential", "commercial"],
-    image: "https://assets.regencivics.earth/wwnJXOsxkrlwtDre.jpg"
+    image: cdnImg("https://assets.regencivics.earth/wwnJXOsxkrlwtDre.jpg")
   },
   {
     id: "starseed",
@@ -56,7 +57,7 @@ const landProjects = [
     status: "active",
     description: "A holistic community blending ancient wisdom with modern sustainability practices on the shores of Lake Atitlan.",
     mixedUse: ["residential"],
-    image: "https://assets.regencivics.earth/qDMEazGCLoNCuxiS.jpg"
+    image: cdnImg("https://assets.regencivics.earth/qDMEazGCLoNCuxiS.jpg")
   },
   {
     id: "nyx",
@@ -68,7 +69,7 @@ const landProjects = [
     status: "active",
     description: "A creative hub merging technology innovation with traditional Balinese agriculture and artistic expression.",
     mixedUse: ["residential", "commercial"],
-    image: "https://assets.regencivics.earth/FuQmXVqMDIJIpIbl.jpg"
+    image: cdnImg("https://assets.regencivics.earth/FuQmXVqMDIJIpIbl.jpg")
   },
   {
     id: "neighbourgood",
@@ -80,7 +81,7 @@ const landProjects = [
     status: "active",
     description: "New Zealand's largest food forest community, pioneering regenerative land management and community governance.",
     mixedUse: ["residential", "commercial", "industrial"],
-    image: "https://assets.regencivics.earth/kEKLQJFyCBJjUEXT.jpg"
+    image: cdnImg("https://assets.regencivics.earth/kEKLQJFyCBJjUEXT.jpg")
   },
   {
     id: "highland_lake",
@@ -92,7 +93,7 @@ const landProjects = [
     status: "active",
     description: "A learning campus in the Blue Ridge Mountains offering programs in regenerative design and community building.",
     mixedUse: ["residential", "commercial"],
-    image: "https://assets.regencivics.earth/HLPCggmitjgcNLWL.jpg"
+    image: cdnImg("https://assets.regencivics.earth/HLPCggmitjgcNLWL.jpg")
   },
   {
     id: "liminal",
@@ -104,7 +105,7 @@ const landProjects = [
     status: "active",
     description: "An artistic community in the Italian countryside exploring the intersection of creativity and sustainable living.",
     mixedUse: ["residential", "commercial"],
-    image: "https://assets.regencivics.earth/RBFOBfivFZGRBilm.jpg"
+    image: cdnImg("https://assets.regencivics.earth/RBFOBfivFZGRBilm.jpg")
   },
   {
     id: "tdf",
@@ -116,7 +117,7 @@ const landProjects = [
     status: "active",
     description: "Portugal's pioneering regenerative village combining traditional crafts with modern entrepreneurship.",
     mixedUse: ["residential", "commercial", "industrial"],
-    image: "https://assets.regencivics.earth/euecgkvMVMKpIduW.jpg"
+    image: cdnImg("https://assets.regencivics.earth/euecgkvMVMKpIduW.jpg")
   },
 ];
 
@@ -277,7 +278,7 @@ export default function Showcase() {
         title="Project Showcase | ReGen Civics"
         description="Explore the growing network of regenerative land projects and alliance organizations co-creating a sustainable future."
         keywords="regenerative projects, land projects, eco-communities, alliance partners, sustainable living"
-        image="https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.webp"
+        image={cdnImg("https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.webp")}
         url="/showcase"
       />
       

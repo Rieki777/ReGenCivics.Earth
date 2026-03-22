@@ -187,7 +187,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {campaign.images.map((img: any) => (
                 <div key={img.id} className="aspect-square rounded-lg overflow-hidden relative group">
-                  <img src={img.imageUrl} alt={img.caption || ''} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={img.imageUrl} alt={img.caption || ''} className="w-full h-full object-cover" width={400} height={400} loading="lazy" />
                   {img.caption && (
                     <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-1 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                       {img.caption}

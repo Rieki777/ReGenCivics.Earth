@@ -52,8 +52,12 @@ export function AnimatedSection({
   const getInitialStyles = (): React.CSSProperties => {
     if (skipAnim) return {};
 
+    // Use specific properties instead of `all` — `transition: all` transitions EVERY css property
+    // including ones that trigger layout reflow (height, width, padding). On mobile this causes
+    // the "seizure" scroll glitch when multiple sections animate simultaneously.
     const base: React.CSSProperties = {
-      transition: `all 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms`,
+      transition: `opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms`,
+      willChange: 'opacity, transform',
     };
 
     if (!isVisible) {
@@ -76,7 +80,9 @@ export function AnimatedSection({
     }
 
     return {
-      ...base,
+      // Animation complete: clear willChange so browser releases compositor layers
+      transition: `opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms`,
+      willChange: 'auto',
       opacity: 1,
       transform: 'translateY(0) translateX(0) scale(1)',
       filter: 'blur(0)',

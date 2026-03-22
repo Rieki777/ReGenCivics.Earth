@@ -33,6 +33,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { SEO, pageSEO } from '@/components/SEO';
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import { cdnImg } from "@/lib/utils";
 
 
 const weeklyTopics = [
@@ -64,7 +65,7 @@ export default function Seasons() {
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg"
+            src={cdnImg("https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg")}
             alt="Seasons"
             className="w-full h-full object-cover"
             width="1920"
@@ -633,7 +634,7 @@ export default function Seasons() {
           {/* Seasons Image */}
           <div className="max-w-4xl mx-auto mb-8">
             <img
-              src="https://assets.regencivics.earth/YSvQAoALDuGiALPV.jpg"
+              src={cdnImg("https://assets.regencivics.earth/YSvQAoALDuGiALPV.jpg")}
               alt="Seasonal journey from assessment to abundance"
               loading="lazy"
               width="1200"

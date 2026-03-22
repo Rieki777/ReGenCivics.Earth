@@ -197,6 +197,8 @@ export function ProfileEditForm() {
               src={form.avatarUrl}
               alt="Preview"
               className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-white/20"
+              width={40}
+              height={40}
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           )}
