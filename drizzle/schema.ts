@@ -1940,6 +1940,12 @@ export const events = mysqlTable("events", {
   season: varchar("season", { length: 50 }),
   episodeNumber: int("episodeNumber"),
 
+  // Capacity (#11 — waitlist)
+  maxAttendees: int("maxAttendees"), // null = unlimited
+
+  // Pre-event forum discussion thread (#6)
+  forumThreadId: int("forumThreadId"), // ID of the forum post created when this event is added
+
   // Reminder tracking
   reminderSent: tinyint("reminderSent").default(0).notNull(), // 1 once 24h reminder has been sent
 
@@ -1965,6 +1971,10 @@ export const eventSignups = mysqlTable("event_signups", {
   eventId: int("eventId").notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   name: varchar("name", { length: 255 }),
+  // #4 — SMS reminders
+  phone: varchar("phone", { length: 30 }),
+  // #11 — waitlist vs. reminder
+  signupType: mysqlEnum("signupType", ["reminder", "waitlist"]).default("reminder").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   unique("eventSignups_eventId_email_unique").on(table.eventId, table.email),
@@ -1974,3 +1984,24 @@ export const eventSignups = mysqlTable("event_signups", {
 
 export type EventSignup = typeof eventSignups.$inferSelect;
 export type InsertEventSignup = typeof eventSignups.$inferInsert;
+
+/**
+ * Agenda Suggestions table (#9)
+ * Community members can suggest topics for upcoming episodes.
+ * Admin can approve or reject from the Events tab.
+ */
+export const agendaSuggestions = mysqlTable("agenda_suggestions", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull(),
+  authorEmail: varchar("authorEmail", { length: 320 }).notNull(),
+  authorName: varchar("authorName", { length: 255 }),
+  suggestion: text("suggestion").notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("agendaSuggestions_eventId_idx").on(table.eventId),
+  index("agendaSuggestions_status_idx").on(table.status),
+]));
+
+export type AgendaSuggestion = typeof agendaSuggestions.$inferSelect;
+export type InsertAgendaSuggestion = typeof agendaSuggestions.$inferInsert;

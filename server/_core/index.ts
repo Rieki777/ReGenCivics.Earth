@@ -319,6 +319,27 @@ async function startServer() {
       const windowStart = new Date(now.getTime() + 20 * 60 * 60 * 1000); // 20h from now
       const windowEnd = new Date(now.getTime() + 28 * 60 * 60 * 1000);   // 28h from now
 
+      // #7 — Auto-update event status based on time
+      const liveThreshold = new Date(now.getTime() - 30 * 60 * 1000);   // started >30min ago
+      const completedThreshold = now;                                      // endTime has passed
+      // Mark events as live if they started within the last 30 min and are still "upcoming"
+      await database.update(eventsTable)
+        .set({ status: "live" })
+        .where(dbAnd(
+          dbEq(eventsTable.status, "upcoming"),
+          dbLte(eventsTable.startTime, now),
+          dbGte(eventsTable.startTime, liveThreshold)
+        ));
+      // Mark events as completed if their endTime has passed
+      const { lt: dbLt, sql: dbSql, isNotNull: dbIsNotNull } = await import("drizzle-orm");
+      await database.update(eventsTable)
+        .set({ status: "completed" })
+        .where(dbAnd(
+          dbSql`${eventsTable.status} IN ('upcoming','live')`,
+          dbIsNotNull(eventsTable.endTime),
+          dbLt(eventsTable.endTime as any, completedThreshold)
+        ));
+
       // Find upcoming events in the reminder window that haven't been reminded yet
       const upcomingEvents = await database
         .select()
@@ -332,12 +353,14 @@ async function startServer() {
           )
         );
 
+      const { sendSMS: sendTwilioSMS } = await import("./notify");
+
       let totalSent = 0;
       for (const event of upcomingEvents) {
         const signups = await database
           .select()
           .from(signupsTable)
-          .where(dbEq(signupsTable.eventId, event.id));
+          .where(dbAnd(dbEq(signupsTable.eventId, event.id), dbEq(signupsTable.signupType, "reminder")));
         if (!signups.length) {
           await database.update(eventsTable).set({ reminderSent: 1 }).where(dbEq(eventsTable.id, event.id));
           continue;
@@ -350,12 +373,23 @@ async function startServer() {
         const joinColor = event.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"><div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;"><h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1><p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Happening tomorrow</p></div><div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;"><h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2><p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>${event.description ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${event.description}</p>` : ""}<a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">${joinLabel}</a></div><div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;"><p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/><a href="${appUrl}/schedule" style="color:#7dd87d;">View all events</a></p></div></div>`;
 
-        const emails = signups.map(s => s.email);
+        const emailSignups = signups.filter(s => s.email);
+        const smsSignups = signups.filter(s => s.phone);
+
+        // Send emails in batches
         const BATCH = 50;
-        for (let i = 0; i < emails.length; i += BATCH) {
-          await sendResend({ to: emails.slice(i, i + BATCH), subject: `Tomorrow: ${event.title}`, html, template: "event_reminder" });
-          totalSent += Math.min(BATCH, emails.length - i);
+        for (let i = 0; i < emailSignups.length; i += BATCH) {
+          const batch = emailSignups.slice(i, i + BATCH).map(s => s.email);
+          await sendResend({ to: batch, subject: `Tomorrow: ${event.title}`, html, template: "event_reminder" });
+          totalSent += batch.length;
         }
+
+        // #4 — Send SMS reminders to those who provided a phone number
+        const smsText = `ReGen Civics reminder: "${event.title}" is tomorrow at ${timeStr}. Join: ${joinUrl}`;
+        for (const signup of smsSignups) {
+          await sendTwilioSMS(signup.phone!, smsText).catch(() => {});
+        }
+
         await database.update(eventsTable).set({ reminderSent: 1 }).where(dbEq(eventsTable.id, event.id));
       }
 

@@ -3969,15 +3969,18 @@ function AdminRecordingsTab() {
 function AdminEventsTab() {
   const { data: allEvents = [], refetch, isLoading } = trpc.events.adminList.useQuery();
   const { data: signupCounts = [] } = trpc.events.signupCounts.useQuery();
+  const { data: agendaSuggestions = [] } = trpc.events.listAgendaSuggestions.useQuery({});
   const createMutation = trpc.events.create.useMutation({ onSuccess: () => { refetch(); setShowCreate(false); setFormData(defaultForm); } });
   const updateMutation = trpc.events.update.useMutation({ onSuccess: () => { refetch(); setEditingId(null); } });
   const deleteMutation = trpc.events.delete.useMutation({ onSuccess: () => refetch() });
   const reminderMutation = trpc.events.sendReminders.useMutation();
+  const agendaUpdateMutation = trpc.events.updateAgendaSuggestion.useMutation({ onSuccess: () => { refetch(); } });
+  const rollupMutation = trpc.events.sendSeasonRollup.useMutation();
 
   const defaultForm = {
     title: '', description: '', type: 'open' as const, startTime: '', endTime: '',
     timezone: 'EDT', zoomUrl: '', riversideRoomUrl: '', youtubeUrl: '',
-    season: '', episodeNumber: '',
+    season: '', episodeNumber: '', maxAttendees: '',
   };
 
   const [showCreate, setShowCreate] = useState(false);
@@ -3987,6 +3990,8 @@ function AdminEventsTab() {
   const [reminderEditorOpen, setReminderEditorOpen] = useState<number | null>(null);
   const [customSubject, setCustomSubject] = useState('');
   const [customBody, setCustomBody] = useState('');
+  const [rollupSeason, setRollupSeason] = useState('');
+  const [showAgendaFor, setShowAgendaFor] = useState<number | null>(null);
 
   const countMap = Object.fromEntries(signupCounts.map(r => [r.eventId, r.count]));
 
@@ -4003,6 +4008,7 @@ function AdminEventsTab() {
       riversideRoomUrl: ev.riversideRoomUrl ?? '',
       youtubeUrl: ev.youtubeUrl ?? '',
       season: ev.season ?? '',
+      maxAttendees: (ev as any).maxAttendees ? String((ev as any).maxAttendees) : '',
       episodeNumber: ev.episodeNumber ? String(ev.episodeNumber) : '',
     });
   }
@@ -4019,6 +4025,7 @@ function AdminEventsTab() {
       riversideRoomUrl: formData.riversideRoomUrl || undefined,
       youtubeUrl: formData.youtubeUrl || undefined,
       season: formData.season || undefined,
+      maxAttendees: formData.maxAttendees ? parseInt(formData.maxAttendees) : undefined,
       episodeNumber: formData.episodeNumber ? parseInt(formData.episodeNumber) : undefined,
     };
     if (editingId !== null) {
@@ -4108,6 +4115,11 @@ function AdminEventsTab() {
                 <Label className="text-white/70 text-xs">Episode Number</Label>
                 <Input type="number" value={formData.episodeNumber} onChange={e => setFormData(f => ({ ...f, episodeNumber: e.target.value }))}
                   placeholder="1" className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/30 font-normal">(leave blank for unlimited)</span></Label>
+                <Input type="number" value={formData.maxAttendees} onChange={e => setFormData(f => ({ ...f, maxAttendees: e.target.value }))}
+                  placeholder="e.g. 50 — triggers waitlist when full" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Riverside Room URL <span className="text-purple-400 font-normal">(primary join link)</span></Label>
@@ -4290,9 +4302,77 @@ function AdminEventsTab() {
             <li>Command: <code className="bg-white/10 px-1 rounded break-all">curl -X POST https://regencivics.earth/api/cron/event-reminders -H "Authorization: Bearer $CRON_SECRET"</code></li>
             <li>Add <code className="bg-white/10 px-1 rounded">CRON_SECRET</code> as an env var on both services (any secure random string)</li>
           </ol>
-          <p className="mt-2">Or use the "Send Reminders" button above to send manually any time.</p>
+          <p className="mt-2">The same cron job also auto-updates event status (upcoming → live → completed) based on start/end times.</p>
         </CardContent>
       </Card>
+
+      {/* #10 — Season Rollup Email */}
+      <Card className="bg-[#0a1f14] border-[#7dd87d]/20 mt-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-[#7dd87d] text-sm flex items-center gap-2"><Bell size={14} /> Season Rollup Email</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-white/60">Sends a "here's what we built together" digest to all event signups + newsletter subscribers for a completed season.</p>
+          <div className="flex items-center gap-2">
+            <input
+              value={rollupSeason}
+              onChange={e => setRollupSeason(e.target.value)}
+              placeholder="Season name (e.g. Season 2)"
+              className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+            />
+            <button
+              onClick={() => {
+                if (!rollupSeason.trim()) return;
+                if (window.confirm(`Send season rollup email for "${rollupSeason}" to all signups + newsletter subscribers?`)) {
+                  rollupMutation.mutate({ season: rollupSeason.trim() });
+                }
+              }}
+              disabled={rollupMutation.isPending || !rollupSeason.trim()}
+              className="bg-[#7dd87d] hover:bg-[#6bc86b] disabled:opacity-50 text-[#1a472a] px-4 py-1.5 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
+            >
+              {rollupMutation.isPending ? 'Sending...' : 'Send Rollup'}
+            </button>
+          </div>
+          {rollupMutation.isSuccess && (
+            <p className="text-[#7dd87d] text-xs">Sent to {(rollupMutation.data as any)?.sent ?? 0} recipients.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* #9 — Agenda Suggestions from Community */}
+      {agendaSuggestions.length > 0 && (
+        <Card className="bg-[#0a1f14] border-purple-800/30 mt-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-purple-400 text-sm flex items-center gap-2">
+              <Bell size={14} /> Agenda Suggestions ({agendaSuggestions.filter((s: any) => s.status === 'pending').length} pending)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {agendaSuggestions.map((s: any) => {
+              const eventTitle = allEvents.find(e => e.id === s.eventId)?.title ?? `Event #${s.eventId}`;
+              return (
+                <div key={s.id} className={`flex items-start gap-3 p-3 rounded-lg border ${s.status === 'pending' ? 'bg-white/5 border-white/10' : s.status === 'approved' ? 'bg-green-900/20 border-green-800/30 opacity-60' : 'bg-red-900/10 border-red-800/20 opacity-50'}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/50 text-xs mb-1">{eventTitle} · {s.authorName || s.authorEmail}</p>
+                    <p className="text-white text-sm">{s.suggestion}</p>
+                  </div>
+                  {s.status === 'pending' && (
+                    <div className="flex gap-1 shrink-0">
+                      <button onClick={() => agendaUpdateMutation.mutate({ id: s.id, status: 'approved' })}
+                        className="bg-green-700 hover:bg-green-600 text-white text-xs px-2 py-1 rounded">✓</button>
+                      <button onClick={() => agendaUpdateMutation.mutate({ id: s.id, status: 'rejected' })}
+                        className="bg-red-800 hover:bg-red-700 text-white text-xs px-2 py-1 rounded">✕</button>
+                    </div>
+                  )}
+                  {s.status !== 'pending' && (
+                    <span className={`text-xs px-2 py-1 rounded ${s.status === 'approved' ? 'text-green-400' : 'text-red-400'}`}>{s.status}</span>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

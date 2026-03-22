@@ -86,6 +86,41 @@ async function sendWhatsApp(message: string): Promise<void> {
   }
 }
 
+// ── Twilio SMS (#4) ───────────────────────────────────────────────────────────
+// Setup: set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER in Railway env vars.
+// TWILIO_FROM_NUMBER is your Twilio phone number in E.164 format (e.g., +15551234567).
+
+export async function sendSMS(toPhone: string, message: string): Promise<void> {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const fromNumber = process.env.TWILIO_FROM_NUMBER;
+  if (!accountSid || !authToken || !fromNumber) {
+    console.log("[notify/sms] Skipped — TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_FROM_NUMBER not set");
+    return;
+  }
+  try {
+    const credentials = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${credentials}`,
+        },
+        body: new URLSearchParams({ To: toPhone, From: fromNumber, Body: message }),
+      }
+    );
+    if (!res.ok) {
+      console.warn("[notify/sms] Send failed:", res.status, await res.text());
+    } else {
+      console.log(`[notify/sms] Sent to ${toPhone}`);
+    }
+  } catch (err) {
+    console.error("[notify/sms] Error:", err);
+  }
+}
+
 // ── Public helpers ────────────────────────────────────────────────────────────
 
 /**

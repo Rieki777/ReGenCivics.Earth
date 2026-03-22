@@ -265,15 +265,27 @@ export default function Schedule() {
   // Per-event reminder signup
   const [reminderOpenFor, setReminderOpenFor] = useState<number | null>(null);
   const [reminderEmail, setReminderEmail] = useState<string>('');
-  const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
+  const [reminderPhone, setReminderPhone] = useState<string>(''); // #4 SMS
+  const [reminderSuccess, setReminderSuccess] = useState<{ id: number; type: 'reminder' | 'waitlist' } | null>(null);
+  // #9 — Agenda suggestions
+  const [agendaOpenFor, setAgendaOpenFor] = useState<number | null>(null);
+  const [agendaEmail, setAgendaEmail] = useState('');
+  const [agendaText, setAgendaText] = useState('');
+  const [agendaSuccess, setAgendaSuccess] = useState<number | null>(null);
+  // #12 — User's local timezone for display
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   // Fetch events from DB (falls back gracefully while loading)
-  const { data: dbEvents, isLoading: eventsLoading } = trpc.events.list.useQuery();
+  const { data: dbEvents } = trpc.events.list.useQuery();
+  // #8 — Signup counts for social proof
+  const { data: signupCountsData } = trpc.events.publicSignupCounts.useQuery();
+  const signupCountMap: Record<number, number> = Object.fromEntries(
+    (signupCountsData ?? []).map(({ eventId, count }) => [eventId, Number(count)])
+  );
 
   // Use DB events if available, otherwise fall back to hardcoded list until DB is ready
   const upcomingEvents = (dbEvents && dbEvents.length > 0 ? dbEvents : upcomingEventsFallback).map(ev => ({
     ...ev,
-    // Normalise: DB events use startTime, hardcoded use date+time strings
     startTime: (ev as any).startTime ?? null,
     googleCalendarUrl: (ev as any).googleCalendarUrl ?? ((ev as any).startTime ? buildGoogleCalendarUrl(ev as any) : ''),
     appleCalendarUrl: (ev as any).appleCalendarUrl ?? ((ev as any).startTime ? buildIcsDataUrl(ev as any) : ''),
@@ -284,6 +296,7 @@ export default function Schedule() {
   const effectiveExpanded = expandedEvent !== null ? expandedEvent : firstUpcomingId;
 
   const reminderMutation = trpc.events.signup.useMutation();
+  const agendaMutation = trpc.events.suggestAgendaItem.useMutation();
 
   const submitReminder = (event: { id: number; title: string }) => {
     if (!reminderEmail.trim()) return;
@@ -292,13 +305,31 @@ export default function Schedule() {
       {
         eventId: event.id,
         email: reminderEmail.trim(),
+        phone: reminderPhone.trim() || undefined,
       },
       {
-        onSuccess: () => {
-          setReminderSuccess(eventId);
+        onSuccess: (data) => {
+          setReminderSuccess({ id: eventId, type: (data as any).signupType ?? 'reminder' });
           setReminderOpenFor(null);
           setReminderEmail('');
-          setTimeout(() => setReminderSuccess(null), 6000);
+          setReminderPhone('');
+          setTimeout(() => setReminderSuccess(null), 8000);
+        },
+      }
+    );
+  };
+
+  const submitAgenda = (eventId: number) => {
+    if (!agendaText.trim() || !agendaEmail.trim()) return;
+    agendaMutation.mutate(
+      { eventId, authorEmail: agendaEmail.trim(), suggestion: agendaText.trim() },
+      {
+        onSuccess: () => {
+          setAgendaSuccess(eventId);
+          setAgendaOpenFor(null);
+          setAgendaEmail('');
+          setAgendaText('');
+          setTimeout(() => setAgendaSuccess(null), 6000);
         },
       }
     );
@@ -634,14 +665,28 @@ export default function Schedule() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
-                          {(event as any).startTime
-                            ? `${new Date((event as any).startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ${(event as any).timezone ?? 'UTC'}`
+                          {(event as any).startTime ? (() => {
+                            const d = new Date((event as any).startTime);
+                            const stored = `${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ${(event as any).timezone ?? 'UTC'}`;
+                            // #12 — show user's local time if different timezone
+                            const localTime = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: userTz, timeZoneName: 'short' });
+                            const storedTz = (event as any).timezone ?? 'UTC';
+                            const localTzAbbr = new Intl.DateTimeFormat('en-US', { timeZone: userTz, timeZoneName: 'short' }).format(d).split(' ').pop() ?? '';
+                            return storedTz !== localTzAbbr ? `${stored} (${localTime} your time)` : stored;
+                          })()
                             : (event as any).time === 'TBD' ? 'Time TBD' : `${(event as any).time} ${(event as any).timezone}`}
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
-                          Online via Zoom
+                          Online
                         </span>
+                        {/* #8 — Social proof signup count */}
+                        {signupCountMap[event.id] > 0 && (
+                          <span className="flex items-center gap-1 text-[#7dd87d]/80">
+                            <Users className="w-4 h-4" />
+                            {signupCountMap[event.id]} {signupCountMap[event.id] === 1 ? 'person' : 'people'} signed up
+                          </span>
+                        )}
                       </div>
                     </div>
                     
@@ -660,26 +705,22 @@ export default function Schedule() {
                     <p className="text-white/70 mb-6 mt-4">{event.description}</p>
                     
                     <div className="flex flex-wrap gap-3">
+                      {/* #5 — Save to Calendar buttons, more prominent */}
                       {event.googleCalendarUrl ? (
                         <a
                           href={event.googleCalendarUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-800 px-4 py-2 rounded-xl font-medium transition-colors"
+                          className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors"
                         >
                           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
                             <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285F4"/>
                             <path d="M12 8V16M8 12H16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
                           </svg>
-                          Add to Google Calendar
+                          Save to Calendar
                         </a>
-                      ) : (
-                        <span className="inline-flex items-center gap-2 bg-white/20 text-white/60 px-4 py-2 rounded-xl font-medium cursor-not-allowed">
-                          <Calendar className="w-5 h-5" />
-                          Calendar link coming soon
-                        </span>
-                      )}
-                      
+                      ) : null}
+
                       {event.appleCalendarUrl && (
                         <a
                           href={event.appleCalendarUrl}
@@ -731,36 +772,46 @@ export default function Schedule() {
                         )
                       )}
 
-                      {/* Per-event reminder */}
-                      {reminderSuccess === event.id ? (
-                        <span className="inline-flex items-center gap-2 bg-[#7dd87d]/20 text-[#7dd87d] px-4 py-2 rounded-xl font-medium text-sm border border-[#7dd87d]/30">
+                      {/* Per-event reminder / waitlist */}
+                      {reminderSuccess?.id === event.id ? (
+                        <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm border ${reminderSuccess.type === 'waitlist' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' : 'bg-[#7dd87d]/20 text-[#7dd87d] border-[#7dd87d]/30'}`}>
                           <Check className="w-4 h-4" />
-                          Reminder set!
+                          {reminderSuccess.type === 'waitlist' ? "You're on the waitlist" : "Reminder set!"}
                         </span>
                       ) : reminderOpenFor === event.id ? (
-                        <div className="flex items-center gap-2 w-full mt-2">
+                        <div className="flex flex-col gap-2 w-full mt-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="email"
+                              placeholder="your@email.com"
+                              value={reminderEmail}
+                              onChange={(e) => setReminderEmail(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && submitReminder(event)}
+                              className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-[#7dd87d]/60"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => submitReminder(event)}
+                              disabled={reminderMutation.isPending || !reminderEmail.trim()}
+                              className="bg-[#7dd87d] hover:bg-[#6bc86b] disabled:opacity-50 text-[#1a472a] px-4 py-2 rounded-xl font-medium text-sm transition-colors whitespace-nowrap"
+                            >
+                              {reminderMutation.isPending ? '...' : 'Notify me'}
+                            </button>
+                            <button
+                              onClick={() => { setReminderOpenFor(null); setReminderEmail(''); setReminderPhone(''); }}
+                              className="text-white/40 hover:text-white/70 px-2 py-2 text-sm"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          {/* #4 — Optional SMS */}
                           <input
-                            type="email"
-                            placeholder="your@email.com"
-                            value={reminderEmail}
-                            onChange={(e) => setReminderEmail(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && submitReminder(event)}
-                            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-[#7dd87d]/60"
-                            autoFocus
+                            type="tel"
+                            placeholder="+1 555 000 0000 (optional — get a text reminder too)"
+                            value={reminderPhone}
+                            onChange={(e) => setReminderPhone(e.target.value)}
+                            className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-white/30 text-xs focus:outline-none focus:border-[#7dd87d]/40"
                           />
-                          <button
-                            onClick={() => submitReminder(event)}
-                            disabled={reminderMutation.isPending || !reminderEmail.trim()}
-                            className="bg-[#7dd87d] hover:bg-[#6bc86b] disabled:opacity-50 text-[#1a472a] px-4 py-2 rounded-xl font-medium text-sm transition-colors"
-                          >
-                            {reminderMutation.isPending ? '...' : 'Notify me'}
-                          </button>
-                          <button
-                            onClick={() => { setReminderOpenFor(null); setReminderEmail(''); }}
-                            className="text-white/40 hover:text-white/70 px-2 py-2 text-sm"
-                          >
-                            Cancel
-                          </button>
                         </div>
                       ) : (
                         <button
@@ -768,9 +819,55 @@ export default function Schedule() {
                           className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/10"
                         >
                           <Bell className="w-4 h-4" />
-                          Get Reminder
+                          {(event as any).maxAttendees ? 'Join Waitlist' : 'Get Reminder'}
                         </button>
                       )}
+
+                      {/* #9 — Suggest agenda item */}
+                      {agendaSuccess === event.id ? (
+                        <span className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-300 px-4 py-2 rounded-xl font-medium text-sm border border-purple-500/30">
+                          <Check className="w-4 h-4" />
+                          Suggestion sent!
+                        </span>
+                      ) : agendaOpenFor === event.id ? (
+                        <div className="flex flex-col gap-2 w-full mt-2">
+                          <textarea
+                            placeholder="What should we cover in this session?"
+                            value={agendaText}
+                            onChange={(e) => setAgendaText(e.target.value)}
+                            rows={2}
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-purple-400/60 resize-none"
+                          />
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="email"
+                              placeholder="your@email.com"
+                              value={agendaEmail}
+                              onChange={(e) => setAgendaEmail(e.target.value)}
+                              className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-purple-400/60"
+                            />
+                            <button
+                              onClick={() => submitAgenda(event.id)}
+                              disabled={agendaMutation.isPending || !agendaText.trim() || !agendaEmail.trim()}
+                              className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-xl font-medium text-sm transition-colors whitespace-nowrap"
+                            >
+                              {agendaMutation.isPending ? '...' : 'Submit'}
+                            </button>
+                            <button
+                              onClick={() => { setAgendaOpenFor(null); setAgendaText(''); setAgendaEmail(''); }}
+                              className="text-white/40 hover:text-white/70 px-2 py-2 text-sm"
+                            >✕</button>
+                          </div>
+                        </div>
+                      ) : (event as any).status !== 'completed' ? (
+                        <button
+                          onClick={() => setAgendaOpenFor(event.id)}
+                          className="inline-flex items-center gap-2 bg-white/5 hover:bg-purple-600/20 text-white/50 hover:text-purple-300 px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/10 hover:border-purple-500/30"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Suggest agenda item
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 )}

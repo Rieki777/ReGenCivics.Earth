@@ -270,16 +270,60 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
     .limit(1);
   if (!recording) return;
 
-  // ── 2. Create forum post (if not yet created) ──────────────────────────────
+  // ── 2. Create forum post or reply to existing event thread ────────────────
   if (!recording.forumPostId) {
     try {
-      const forumPostId = await createRecordingForumPost(recording);
+      // #6 — Try to match this recording to a pre-existing event forum thread
+      const { events: eventsTable } = await import("../../drizzle/schema");
+      const { gte: gteOp, lte: lteOp, isNotNull: isNotNullOp, and: andOp } = await import("drizzle-orm");
+      const recordingTime = sessionDate instanceof Date ? sessionDate : new Date();
+      const windowStart = new Date(recordingTime.getTime() - 4 * 3600000);
+      const windowEnd = new Date(recordingTime.getTime() + 4 * 3600000);
+
+      const [matchedEvent] = await database.select({ forumThreadId: eventsTable.forumThreadId, id: eventsTable.id })
+        .from(eventsTable)
+        .where(andOp(
+          gteOp(eventsTable.startTime, windowStart),
+          lteOp(eventsTable.startTime, windowEnd),
+          isNotNullOp(eventsTable.forumThreadId)
+        ))
+        .limit(1);
+
+      let forumPostId: number | null = null;
+
+      if (matchedEvent?.forumThreadId) {
+        // Reply to the pre-event thread with the recording link
+        const sessionDateStr = recording.sessionDate
+          ? recording.sessionDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+          : "Recent session";
+        const watchLink = recording.youtubeUrl
+          ? `**[Watch the recording on YouTube](${recording.youtubeUrl})**`
+          : recording.riversideUrl
+          ? `**[Watch the recording](${recording.riversideUrl})**`
+          : "";
+        const summarySection = recording.aiSummary ? `\n\n**What we covered**\n\n${recording.aiSummary}` : "";
+        const replyContent = `The recording from ${sessionDateStr} is ready.\n\n${watchLink}${summarySection}\n\nDrop any follow-up thoughts below.`;
+
+        const replyId = await db.createForumReply({
+          postId: matchedEvent.forumThreadId,
+          authorId: 1,
+          content: replyContent,
+        }).catch(() => null);
+
+        // Link this recording to the event's thread for the email forum button
+        forumPostId = matchedEvent.forumThreadId;
+        if (replyId) console.log(`[riverside-webhook] Replied to forum thread ${matchedEvent.forumThreadId} for recording ${recordingId}`);
+      } else {
+        // No matching event thread — create a fresh forum post
+        forumPostId = await createRecordingForumPost(recording);
+      }
+
       if (forumPostId) {
         await database.update(recordings)
           .set({ forumPostId })
           .where(eq(recordings.id, recordingId));
         recording.forumPostId = forumPostId;
-        console.log(`[riverside-webhook] Created forum post ${forumPostId} for recording ${recordingId}`);
+        console.log(`[riverside-webhook] Forum post/reply set to ${forumPostId} for recording ${recordingId}`);
       }
     } catch (err) {
       console.error("[riverside-webhook] Forum post creation failed:", err);
