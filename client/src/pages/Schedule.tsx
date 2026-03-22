@@ -706,28 +706,30 @@ export default function Schedule() {
                         </a>
                       )}
 
-                      {/* Riverside room link */}
-                      {(event as any).riversideRoomUrl && (event as any).status !== 'completed' && (
-                        <a
-                          href={(event as any).riversideRoomUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
-                        >
-                          <Video className="w-5 h-5" />
-                          Join Riverside
-                        </a>
+                      {/* Join link: Riverside takes priority over Zoom */}
+                      {(event as any).status !== 'completed' && (
+                        (event as any).riversideRoomUrl ? (
+                          <a
+                            href={(event as any).riversideRoomUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                          >
+                            <Video className="w-5 h-5" />
+                            Join on Riverside
+                          </a>
+                        ) : (
+                          <a
+                            href={(event as any).zoomUrl ?? ZOOM_INFO.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 bg-[#2D8CFF] hover:bg-[#2681eb] text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                          >
+                            <Video className="w-5 h-5" />
+                            Join on Zoom
+                          </a>
+                        )
                       )}
-
-                      <a
-                        href={(event as any).zoomUrl ?? ZOOM_INFO.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-[#2D8CFF] hover:bg-[#2681eb] text-white px-4 py-2 rounded-xl font-medium transition-colors"
-                      >
-                        <Video className="w-5 h-5" />
-                        Join Zoom
-                      </a>
 
                       {/* Per-event reminder */}
                       {reminderSuccess === event.id ? (

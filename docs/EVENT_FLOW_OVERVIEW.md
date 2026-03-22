@@ -360,6 +360,83 @@ You're receiving this because you subscribed to ReGen Civics updates.
 
 ---
 
+## Post-Session Engagement
+
+This is not a survey. It's part of the session.
+
+The goal is to keep the conversation going after the call ends — and to actually shape the next one. People fill things out when it feels like it matters. The questions below are the ones we ask every time, and the links take people somewhere alive, not a dead form.
+
+---
+
+### The Two Questions
+
+These go in:
+- The recording-ready email (Email 3), after the Watch/Forum buttons
+- The forum post body that gets auto-created for each recording
+- Optionally: a pinned comment or post in whatever WhatsApp/Telegram group we have
+
+**Question 1:**
+```
+Were you there? If you missed this one, what got in the way?
+```
+*Why:* Attendance data matters for scheduling, but more importantly it gives people who missed a natural in. "I missed it but here's why" is a real entry point to the community.
+
+**Question 2:**
+```
+What's one thing you want us to go deeper on next time?
+```
+*Why:* This replaces the agenda-setting form entirely. Instead of a separate survey asking "what topics do you want?", this question captures the same data as a natural follow-up to the session.
+
+---
+
+### Where Responses Go
+
+**Forum thread** — The recording forum post (auto-created by the webhook) is where this lives. It's the right place: public, searchable, lets people see what others said and build on it.
+
+Link to send people: `https://regencivics.earth/community/post/[post-id]`
+(This is inserted automatically when the recording email is sent.)
+
+**Agenda form** — If you want to also capture structured input for next session's agenda, use this Google Form:
+```
+[ADD YOUR GOOGLE FORM URL HERE]
+```
+The form should ask only: name (optional), what they want covered, whether they'll attend. Three fields max.
+
+Once the form URL exists, add it to the recording-ready email and forum post body. Ask Claude to update `server/webhooks/riverside.ts` → `buildEmailHtml()` and `createRecordingForumPost()`.
+
+---
+
+### How to Make It Feel Like Part of the Journey (Not a Survey)
+
+A few concrete things that help:
+
+**Frame it as contribution, not feedback.** "Help us build the next session" lands differently than "fill out this form." The questions above are written from that angle already.
+
+**Put it in context.** The forum post auto-includes the AI summary of what was covered. When people can read what happened and then immediately respond to "what do you want more of," there's a natural connection.
+
+**Show that it worked.** At the start of the next session, open with one line: "Last time, the most common thing you asked us to go deeper on was X. That's what we're starting with today." One sentence. It closes the loop and makes the feedback feel real.
+
+**Don't send a separate survey email.** The forum post and the recording email are the only touchpoints. Adding a third "we want your feedback" email tanks response rate and feels extractive.
+
+---
+
+### Adding This to the Recording Email (When Ready)
+
+When you're ready to add the two questions to the recording-ready email, update this section with the exact copy, then ask Claude to update `server/webhooks/riverside.ts` → `buildEmailHtml()`. The suggested placement is after the Watch/Forum buttons, in a light grey block:
+
+```
+---
+
+Were you there? If you missed this one, what got in the way?
+
+What's one thing you want us to go deeper on next time?
+
+[Add your thoughts to the forum thread →]
+[Shape the next session →] (links to agenda form)
+```
+
+---
+
 ## Seeding Existing Events
 
 The current 15 hardcoded events in `Schedule.tsx` are the seed data. Once the migration runs, the app seeds them from the hardcoded array if the DB is empty. This is handled in the server startup logic — no manual seed step needed.

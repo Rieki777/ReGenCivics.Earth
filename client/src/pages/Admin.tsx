@@ -4110,14 +4110,14 @@ function AdminEventsTab() {
                   placeholder="1" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Zoom URL</Label>
-                <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
-                  placeholder="https://us06web.zoom.us/..." className="bg-white/5 border-white/20 text-white mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Riverside Room URL</Label>
+                <Label className="text-white/70 text-xs">Riverside Room URL <span className="text-purple-400 font-normal">(primary join link)</span></Label>
                 <Input value={formData.riversideRoomUrl} onChange={e => setFormData(f => ({ ...f, riversideRoomUrl: e.target.value }))}
                   placeholder="https://riverside.fm/studio/..." className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/30 font-normal">(fallback, only shown if no Riverside)</span></Label>
+                <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
+                  placeholder="https://us06web.zoom.us/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div className="md:col-span-2">
                 <Label className="text-white/70 text-xs">YouTube URL (livestream or premiere)</Label>

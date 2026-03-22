@@ -19,6 +19,7 @@ import { getDb } from "../db";
 import { recordings, newsletterSubscribers } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { notifyRecordingReady } from "../_core/notify";
 import * as db from "../db";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -297,6 +298,14 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
       console.error("[riverside-webhook] Email send failed:", err);
     }
   }
+
+  // ── 4. Channel announcements (Telegram + WhatsApp) — fire-and-forget ────────
+  notifyRecordingReady({
+    title: recording.title,
+    youtubeUrl: recording.youtubeUrl,
+    riversideUrl: recording.riversideUrl,
+    forumPostId: recording.forumPostId,
+  }).catch(err => console.error("[riverside-webhook] notify error:", err));
 }
 
 // ── Forum post creation ───────────────────────────────────────────────────────

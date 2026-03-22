@@ -11,6 +11,7 @@ import { events, eventSignups } from "../../drizzle/schema";
 import { asc, desc, eq, gte, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { notifyNewEvent } from "../_core/notify";
 
 // ─────────────────────────────────────────────────────────────
 // Seed data — used to pre-populate the DB if it's empty
@@ -237,6 +238,16 @@ export const eventsRouter = router({
         status: "upcoming",
       });
 
+      // Fire-and-forget channel announcements (Telegram + WhatsApp)
+      notifyNewEvent({
+        title: input.title,
+        startTime: new Date(input.startTime),
+        timezone: input.timezone,
+        riversideRoomUrl: input.riversideRoomUrl ?? null,
+        zoomUrl: input.zoomUrl ?? null,
+        season: input.season ?? null,
+      }).catch(err => console.error("[events.create] notify error:", err));
+
       return { success: true, id: (result as any).insertId };
     }),
 
@@ -315,7 +326,12 @@ export const eventsRouter = router({
       const timeStr = event.startTime.toLocaleTimeString("en-US", {
         hour: "numeric", minute: "2-digit", timeZoneName: "short"
       });
-      const zoomUrl = event.zoomUrl ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
+      // Prefer Riverside over Zoom; fall back to default Zoom if neither is set
+      const joinUrl = event.riversideRoomUrl
+        ?? event.zoomUrl
+        ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
+      const joinLabel = event.riversideRoomUrl ? "Join on Riverside" : "Join on Zoom";
+      const joinColor = event.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
       const scheduleUrl = `${APP_BASE_URL}/schedule`;
 
       const subject = input.customSubject?.trim() || `Reminder: ${event.title} is tomorrow`;
@@ -331,7 +347,7 @@ export const eventsRouter = router({
           <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2>
           <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>
           ${bodyText ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${bodyText}</p>` : ""}
-          <a href="${zoomUrl}" style="display:inline-block;background:#2d8cff;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">Join on Zoom</a>
+          <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
           <a href="${scheduleUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
         </div>
         <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
