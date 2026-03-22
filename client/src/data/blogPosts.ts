@@ -2,6 +2,7 @@
  * Blog Posts Data
  * Contains all blog post content for the ReGen Civics blog
  */
+import { cdnImg } from "@/lib/utils";
 
 export interface BlogPost {
   id: string;
