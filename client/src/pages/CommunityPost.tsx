@@ -28,6 +28,8 @@ import { RichEditor } from "@/components/RichEditor";
 import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import { EmojiReactions } from "@/components/EmojiReactions";
+import { LinkPreviewCard } from "@/components/LinkPreviewCard";
+import { useLinkPreview } from "@/hooks/useLinkPreview";
 
 function timeAgo(date: Date | string): string {
   const now = new Date();
@@ -59,6 +61,22 @@ function getInitials(name: string): string {
 }
 
 // Markdown rendering is now handled by ForumMarkdown component
+
+/** Renders a link preview for content that contains a URL */
+function ContentLinkPreview({ content }: { content: string }) {
+  const { preview, isLoading, url } = useLinkPreview(content);
+  if (!url) return null;
+  return (
+    <LinkPreviewCard
+      url={url}
+      title={preview?.title}
+      description={preview?.description}
+      image={preview?.image}
+      siteName={preview?.siteName}
+      loading={isLoading}
+    />
+  );
+}
 
 const STAGE_LABELS: Record<string, string> = { idea: "Idea", experiment: "Experiment", result: "Result" };
 const STAGE_ORDER = ["idea", "experiment", "result"];
@@ -118,6 +136,9 @@ export default function CommunityPost() {
   const [translatingPost, setTranslatingPost] = useState(false);
   const [translatedReplies, setTranslatedReplies] = useState<Record<number, string>>({});
   const [translatingReplyId, setTranslatingReplyId] = useState<number | null>(null);
+
+  // Link preview for the reply composer
+  const { preview: replyLinkPreview, isLoading: replyLinkPreviewLoading, url: replyLinkPreviewUrl } = useLinkPreview(replyContent);
 
   const translateMutation = trpc.translate.content.useMutation();
 
@@ -563,6 +584,7 @@ export default function CommunityPost() {
               ) : (
                 <ForumMarkdown content={post.content} />
               )}
+              <ContentLinkPreview content={post.content} />
             </div>
             )}
 
@@ -715,6 +737,7 @@ export default function CommunityPost() {
                           ) : (
                             <ForumMarkdown content={reply.content} />
                           )}
+                          <ContentLinkPreview content={reply.content} />
                         </div>
                         {/* Emoji Reactions on reply */}
                         <EmojiReactions replyId={reply.id} />
@@ -868,6 +891,16 @@ export default function CommunityPost() {
               placeholder="Share your thoughts..."
               className="min-h-[100px] text-[#1a472a] mb-3"
             />
+            {replyLinkPreviewUrl && (
+              <LinkPreviewCard
+                url={replyLinkPreviewUrl}
+                title={replyLinkPreview?.title}
+                description={replyLinkPreview?.description}
+                image={replyLinkPreview?.image}
+                siteName={replyLinkPreview?.siteName}
+                loading={replyLinkPreviewLoading}
+              />
+            )}
             <div className="flex items-center justify-between">
               <MarkdownHints />
               <Button

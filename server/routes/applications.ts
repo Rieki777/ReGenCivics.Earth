@@ -158,7 +158,7 @@ export const applicationsRouter = router({
           const applicantName = applicantUser.name || "Applicant";
           await sendEmail({
             to: applicantUser.email,
-            subject: `Application Received — ${application.projectName}`,
+            subject: `Application Received: ${application.projectName}`,
             html: `
               <h2>Your Application Has Been Received</h2>
               <p>Hi ${applicantName},</p>

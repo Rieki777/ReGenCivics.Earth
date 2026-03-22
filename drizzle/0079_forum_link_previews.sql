@@ -1,0 +1,1 @@
+ALTER TABLE forumPosts ADD COLUMN linkPreviews JSON DEFAULT NULL;

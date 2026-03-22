@@ -94,6 +94,7 @@ const AdminModeration = lazy(() => import("./pages/AdminModeration"));
 const Glossary = lazy(() => import("./pages/Glossary"));
 const Tokenomics = lazy(() => import("./pages/Tokenomics"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
+const EventSeries = lazy(() => import("./pages/EventSeries"));
 
 function NewsletterConfirm() {
   const token = new URLSearchParams(window.location.search).get('token') || '';
@@ -130,6 +131,8 @@ const Messages = lazy(() => import("./pages/Messages"));
 const MemberDirectory = lazy(() => import("./pages/MemberDirectory"));
 const CommunityGuidelines = lazy(() => import("./pages/CommunityGuidelines"));
 const ShapeNextSession = lazy(() => import("./pages/ShapeNextSession"));
+const Checkin = lazy(() => import("./pages/Checkin"));
+const EventDetail = lazy(() => import("./pages/EventDetail"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -166,6 +169,9 @@ function Router() {
       <Route path={"/socials"}><EB><Socials /></EB></Route>
       <Route path={"/seasons"}><EB><Seasons /></EB></Route>
       <Route path={"/schedule"}><EB><Schedule /></EB></Route>
+      <Route path={"/checkin/:token"}><EB><Checkin /></EB></Route>
+      <Route path={"/events/:id"}><EB><EventDetail /></EB></Route>
+      <Route path={"/series/:season"}><EB><EventSeries /></EB></Route>
       <Route path={"/shape-next-session"}><EB><ShapeNextSession /></EB></Route>
       <Route path={"/team"}><EB><Team /></EB></Route>
       <Route path={"/game"}><EB><Game /></EB></Route>

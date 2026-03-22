@@ -4,17 +4,18 @@
  * Also handles per-event reminder email signups.
  */
 
-import { adminProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { events, eventSignups, agendaSuggestions } from "../../drizzle/schema";
+import { events, eventSignups, eventAttendance, regenTokenLedger, agendaSuggestions } from "../../drizzle/schema";
 import { newsletterSubscribers, recordings } from "../../drizzle/schema";
-import { and, asc, desc, eq, gte, lte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, lt, isNull, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { notifyNewEvent } from "../_core/notify";
 import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
+import crypto from "crypto";
 
 // ─────────────────────────────────────────────────────────────
 // Seed data — used to pre-populate the DB if it's empty
@@ -111,6 +112,79 @@ async function ensureEventsSeed() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Helper: promote oldest waitlisted signup when a spot opens (#20)
+// ─────────────────────────────────────────────────────────────
+async function promoteFromWaitlist(eventId: number) {
+  const database = await getDb();
+  if (!database) return;
+
+  const [event] = await database
+    .select()
+    .from(events)
+    .where(eq(events.id, eventId))
+    .limit(1);
+  if (!event || !event.maxAttendees) return;
+
+  // Count current active (non-cancelled) reminder signups
+  const [{ count }] = await database
+    .select({ count: sql<number>`count(*)` })
+    .from(eventSignups)
+    .where(and(
+      eq(eventSignups.eventId, eventId),
+      eq(eventSignups.signupType, "reminder"),
+      isNull(eventSignups.cancelledAt),
+    ));
+
+  if (Number(count) >= event.maxAttendees) return; // still full
+
+  // Find oldest waitlisted signup that hasn't been cancelled
+  const [next] = await database
+    .select()
+    .from(eventSignups)
+    .where(and(
+      eq(eventSignups.eventId, eventId),
+      eq(eventSignups.signupType, "waitlist"),
+      isNull(eventSignups.cancelledAt),
+    ))
+    .orderBy(asc(eventSignups.createdAt))
+    .limit(1);
+
+  if (!next) return; // no one on the waitlist
+
+  // Promote to confirmed
+  await database
+    .update(eventSignups)
+    .set({ signupType: "reminder" })
+    .where(eq(eventSignups.id, next.id));
+
+  // Send "spot opened up" email
+  const dateStr = event.startTime.toLocaleDateString("en-US", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
+  const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${APP_BASE_URL}/schedule`;
+
+  const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+    <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+      <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
+      <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Good news</p>
+    </div>
+    <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
+      <h2 style="color:#1a472a;margin:0 0 10px 0;">A spot opened up</h2>
+      <p style="color:#444;line-height:1.7;">A spot opened up for <strong>${event.title}</strong> on ${dateStr}. You're now confirmed. We'll send you a reminder before the event.</p>
+      ${joinUrl !== `${APP_BASE_URL}/schedule` ? `<a href="${joinUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:16px 0 0 0;border:2px solid #7dd87d;">Join Link</a>` : ""}
+      <p style="color:#888;font-size:13px;margin:20px 0 0 0;"><a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a></p>
+    </div>
+  </div>`;
+
+  sendEmail({
+    to: [next.email],
+    subject: `A spot opened up: ${event.title}`,
+    html,
+    template: "waitlist_promoted",
+  }).catch(err => console.error("[promoteFromWaitlist] email error:", err));
+}
+
+// ─────────────────────────────────────────────────────────────
 // Router
 // ─────────────────────────────────────────────────────────────
 export const eventsRouter = router({
@@ -148,7 +222,7 @@ export const eventsRouter = router({
         count: sql<number>`count(*)`,
       })
       .from(eventSignups)
-      .where(eq(eventSignups.signupType, "reminder"))
+      .where(and(eq(eventSignups.signupType, "reminder"), isNull(eventSignups.cancelledAt)))
       .groupBy(eventSignups.eventId);
   }),
 
@@ -236,7 +310,7 @@ export const eventsRouter = router({
               <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
             </div>
             <div style="background:#f0f7f0;padding:16px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-              <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder. <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a></p>
+              <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder. <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${APP_BASE_URL}/schedule?unsubscribe=${input.eventId}&email=${encodeURIComponent(input.email)}" style="color:#999;">Unsubscribe</a></p>
             </div>
           </div>`;
 
@@ -244,6 +318,59 @@ export const eventsRouter = router({
         .catch(err => console.error("[events.signup] confirm email error:", err));
 
       return { success: true, alreadySignedUp: false, signupType };
+    }),
+
+  // ── Public: cancel a signup (#20 — triggers waitlist auto-promote) ──
+  cancelSignup: publicProcedure
+    .input(z.object({
+      eventId: z.number(),
+      email: z.string().email(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Find the active signup
+      const [signup] = await database
+        .select()
+        .from(eventSignups)
+        .where(and(
+          eq(eventSignups.eventId, input.eventId),
+          eq(eventSignups.email, input.email),
+          isNull(eventSignups.cancelledAt),
+        ))
+        .limit(1);
+
+      if (!signup) return { success: true, message: "No active signup found" };
+
+      // Mark as cancelled
+      await database
+        .update(eventSignups)
+        .set({ cancelledAt: new Date() })
+        .where(eq(eventSignups.id, signup.id));
+
+      // If this was a confirmed signup, try to promote someone from the waitlist
+      if (signup.signupType === "reminder") {
+        promoteFromWaitlist(input.eventId).catch(err =>
+          console.error("[cancelSignup] promoteFromWaitlist error:", err)
+        );
+      }
+
+      return { success: true };
+    }),
+
+  // ── Public: get all events for a season (#21 — series landing page) ──
+  getBySeason: publicProcedure
+    .input(z.object({ season: z.string() }))
+    .query(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return [];
+      await ensureEventsSeed();
+      return database
+        .select()
+        .from(events)
+        .where(eq(events.season, input.season))
+        .orderBy(asc(events.startTime));
     }),
 
   // ── Public: submit an agenda suggestion (#9) ───────────────
@@ -340,6 +467,9 @@ export const eventsRouter = router({
       season: z.string().max(50).optional(),
       episodeNumber: z.number().int().optional(),
       maxAttendees: z.number().int().optional(), // #11
+      guestSpeakerName: z.string().max(255).optional(), // #25
+      guestSpeakerBio: z.string().optional(), // #25
+      guestSpeakerTopic: z.string().max(500).optional(), // #25
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
@@ -358,7 +488,11 @@ export const eventsRouter = router({
         season: input.season ?? null,
         episodeNumber: input.episodeNumber ?? null,
         maxAttendees: input.maxAttendees ?? null,
+        guestSpeakerName: input.guestSpeakerName ?? null,
+        guestSpeakerBio: input.guestSpeakerBio ?? null,
+        guestSpeakerTopic: input.guestSpeakerTopic ?? null,
         status: "upcoming",
+        checkinToken: crypto.randomUUID(), // #16 — auto-generate check-in token
       });
 
       const newEventId = (result as any).insertId;
@@ -417,6 +551,9 @@ export const eventsRouter = router({
       episodeNumber: z.number().int().nullable().optional(),
       recordingId: z.number().int().nullable().optional(),
       maxAttendees: z.number().int().nullable().optional(), // #11
+      guestSpeakerName: z.string().max(255).nullable().optional(), // #25
+      guestSpeakerBio: z.string().nullable().optional(), // #25
+      guestSpeakerTopic: z.string().max(500).nullable().optional(), // #25
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
@@ -450,6 +587,7 @@ export const eventsRouter = router({
       id: z.number(),
       customSubject: z.string().max(200).optional(), // overrides default subject
       customBody: z.string().max(2000).optional(),   // overrides default body paragraph
+      scheduledFor: z.string().optional(), // #24 — ISO date string; if set, delay sending
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
@@ -462,10 +600,75 @@ export const eventsRouter = router({
         .limit(1);
       if (!event) throw new TRPCError({ code: "NOT_FOUND" });
 
+      // #24 — If scheduledFor is provided, defer sending via setTimeout
+      if (input.scheduledFor) {
+        const scheduledTime = new Date(input.scheduledFor).getTime();
+        const delayMs = scheduledTime - Date.now();
+        const MAX_DELAY = 7 * 24 * 60 * 60 * 1000; // 7 days max
+        if (delayMs < 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Scheduled time is in the past" });
+        if (delayMs > MAX_DELAY) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot schedule more than 7 days out" });
+
+        const eventId = input.id;
+        const savedSubject = input.customSubject;
+        const savedBody = input.customBody;
+        console.log(`[events.sendReminders] Scheduled reminder for event #${eventId} at ${input.scheduledFor} (${Math.round(delayMs / 60000)} min from now)`);
+
+        setTimeout(async () => {
+          try {
+            const db2 = await getDb();
+            if (!db2) return;
+            const sups = await db2.select().from(eventSignups)
+              .where(and(eq(eventSignups.eventId, eventId), eq(eventSignups.signupType, "reminder"), isNull(eventSignups.cancelledAt)));
+            if (!sups.length) return;
+            const [ev] = await db2.select().from(events).where(eq(events.id, eventId)).limit(1);
+            if (!ev) return;
+            const d = ev.startTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+            const tm = ev.startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+            const jUrl = ev.riversideRoomUrl ?? ev.zoomUrl ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
+            const jLabel = ev.riversideRoomUrl ? "Join on Riverside" : "Join on Zoom";
+            const jColor = ev.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
+            const subj = savedSubject?.trim() || `Reminder: ${ev.title} is tomorrow`;
+            const body = savedBody?.trim() || (ev.description ?? "");
+            for (const signup of sups) {
+              const unsub = `${APP_BASE_URL}/schedule?unsubscribe=${eventId}&email=${encodeURIComponent(signup.email)}`;
+              const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+                  <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
+                  <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Event reminder</p>
+                </div>
+                <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
+                  <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${ev.title}</h2>
+                  <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${d} at ${tm}</p>
+                  ${body ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${body}</p>` : ""}
+                  <a href="${jUrl}" style="display:inline-block;background:${jColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${jLabel}</a>
+                  <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
+                </div>
+                <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
+                  <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/>
+                  <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${unsub}" style="color:#999;">Unsubscribe from this event</a></p>
+                </div>
+              </div>`;
+              await sendEmail({ to: [signup.email], subject: subj, html, template: "event_reminder" })
+                .catch(err => console.error(`[events.sendReminders:scheduled] error for ${signup.email}:`, err));
+            }
+            await db2.update(events).set({ reminderSent: 1 }).where(eq(events.id, eventId));
+            console.log(`[events.sendReminders:scheduled] Sent ${sups.length} reminders for event #${eventId}`);
+          } catch (err) {
+            console.error(`[events.sendReminders:scheduled] Error for event #${eventId}:`, err);
+          }
+        }, delayMs);
+
+        return { sent: 0, scheduled: true, scheduledFor: input.scheduledFor };
+      }
+
       const signups = await database
         .select()
         .from(eventSignups)
-        .where(and(eq(eventSignups.eventId, input.id), eq(eventSignups.signupType, "reminder")));
+        .where(and(
+          eq(eventSignups.eventId, input.id),
+          eq(eventSignups.signupType, "reminder"),
+          isNull(eventSignups.cancelledAt), // #18 — skip unsubscribed
+        ));
 
       if (!signups.length) return { sent: 0, message: "No signups for this event" };
 
@@ -513,33 +716,33 @@ export const eventsRouter = router({
         }
       }
 
-      const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-        <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-          <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-          <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Event reminder</p>
-        </div>
-        <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
-          <p style="color:#888;font-size:13px;margin:0 0 6px 0;">Starting in ~24 hours</p>
-          <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2>
-          <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>
-          ${prevSummaryBlock}
-          ${bodyText ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${bodyText}</p>` : ""}
-          <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
-          <a href="${scheduleUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
-        </div>
-        <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-          <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/>
-          <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a></p>
-        </div>
-      </div>`;
-
-      const emails = signups.map(s => s.email);
-      const BATCH = 50;
+      // #18 — Send individually so each email gets a personalized unsubscribe link
       let totalSent = 0;
-      for (let i = 0; i < emails.length; i += BATCH) {
-        const batch = emails.slice(i, i + BATCH);
-        await sendEmail({ to: batch, subject, html, template: "event_reminder" });
-        totalSent += batch.length;
+      for (const signup of signups) {
+        const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
+        const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+          <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+            <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
+            <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Event reminder</p>
+          </div>
+          <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
+            <p style="color:#888;font-size:13px;margin:0 0 6px 0;">Starting in ~24 hours</p>
+            <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2>
+            <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>
+            ${prevSummaryBlock}
+            ${bodyText ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${bodyText}</p>` : ""}
+            <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
+            <a href="${scheduleUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
+          </div>
+          <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
+            <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/>
+            <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${unsubscribeUrl}" style="color:#999;">Unsubscribe from this event</a></p>
+          </div>
+        </div>`;
+
+        await sendEmail({ to: [signup.email], subject, html, template: "event_reminder" })
+          .catch(err => console.error(`[events.sendReminders] email error for ${signup.email}:`, err));
+        totalSent++;
       }
 
       await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, input.id));
@@ -584,7 +787,7 @@ export const eventsRouter = router({
       const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
         <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:40px 20px;text-align:center;border-radius:8px 8px 0 0;">
           <h1 style="color:#7dd87d;margin:0;font-size:26px;">ReGen Civics</h1>
-          <p style="color:#a8e6a8;margin:8px 0 0 0;font-size:16px;">${input.season} — Season Wrap</p>
+          <p style="color:#a8e6a8;margin:8px 0 0 0;font-size:16px;">${input.season}: Season Wrap</p>
         </div>
         <div style="padding:32px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
           <p style="color:#444;font-size:16px;line-height:1.7;margin:0 0 28px 0;">Here's what we built together this season. Every session, every conversation, every project that showed up.</p>
@@ -605,12 +808,12 @@ export const eventsRouter = router({
         .where(sql`eventId IN (${seasonEvents.map(e => e.id).join(",")})`);
       const newsletterSubs = await database.select({ email: newsletterSubscribers.email })
         .from(newsletterSubscribers)
-        .where(eq(newsletterSubscribers.status, "active" as any));
+        .where(eq(newsletterSubscribers.isActive, 1));
 
-      const allEmails = [...new Set([
+      const allEmails = Array.from(new Set([
         ...seasonSignups.map(s => s.email),
         ...newsletterSubs.map(s => s.email),
-      ])];
+      ]));
 
       if (!allEmails.length) return { sent: 0, message: "No recipients" };
 
@@ -619,7 +822,7 @@ export const eventsRouter = router({
       for (let i = 0; i < allEmails.length; i += BATCH) {
         await sendEmail({
           to: allEmails.slice(i, i + BATCH),
-          subject: `${input.season} — Here's what we built together`,
+          subject: `${input.season}: Here's what we built together`,
           html,
           template: "season_rollup",
         });
@@ -695,6 +898,263 @@ export const eventsRouter = router({
     .input(z.object({ limit: z.number().min(1).max(100).default(20) }))
     .query(async ({ input }) => {
       return db.getTokenLeaderboard(input.limit);
+    }),
+
+  // ── #19 — Public: get single event by ID ──────────────────
+  getById: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [event] = await database
+        .select()
+        .from(events)
+        .where(eq(events.id, input.id))
+        .limit(1);
+      if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
+
+      const [{ count }] = await database
+        .select({ count: sql<number>`count(*)` })
+        .from(eventSignups)
+        .where(and(eq(eventSignups.eventId, input.id), eq(eventSignups.signupType, "reminder")));
+
+      let recording = null;
+      if (event.recordingId) {
+        const [rec] = await database
+          .select({ youtubeUrl: recordings.youtubeUrl, aiSummary: recordings.aiSummary })
+          .from(recordings)
+          .where(eq(recordings.id, event.recordingId))
+          .limit(1);
+        if (rec) recording = rec;
+      }
+
+      return { ...event, signupCount: Number(count), recording };
+    }),
+
+  // ── #16 — Public: self-service check-in ───────────────────
+  checkin: publicProcedure
+    .input(z.object({
+      token: z.string().min(1),
+      email: z.string().email(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [event] = await database
+        .select()
+        .from(events)
+        .where(eq(events.checkinToken, input.token))
+        .limit(1);
+      if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Invalid check-in link" });
+
+      const now = new Date();
+      const eventDate = new Date(event.startTime);
+      eventDate.setHours(0, 0, 0, 0);
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      if (eventDate > todayStart) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This event hasn't happened yet. Check-in opens on the day of the event." });
+      }
+
+      const [existing] = await database
+        .select()
+        .from(eventAttendance)
+        .where(and(eq(eventAttendance.eventId, event.id), eq(eventAttendance.email, input.email)))
+        .limit(1);
+      if (existing) {
+        return { success: true, alreadyCheckedIn: true, tokensAwarded: 0, eventTitle: event.title };
+      }
+
+      const [ledgerResult] = await database.insert(regenTokenLedger).values({
+        email: input.email,
+        amount: 33,
+        reason: "event_attendance",
+        eventId: event.id,
+        notes: `Self check-in: ${event.title}`,
+      });
+      const ledgerEntryId = (ledgerResult as any).insertId;
+
+      await database.insert(eventAttendance).values({
+        eventId: event.id,
+        email: input.email,
+        markedByAdminId: null,
+        tokensAwarded: 33,
+        tokenLedgerEntryId: ledgerEntryId,
+      });
+
+      return { success: true, alreadyCheckedIn: false, tokensAwarded: 33, eventTitle: event.title };
+    }),
+
+  // ── #18 — Public: unsubscribe from event reminders ────────
+  unsubscribe: publicProcedure
+    .input(z.object({
+      eventId: z.number(),
+      email: z.string().email(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await database.update(eventSignups)
+        .set({ cancelledAt: new Date() })
+        .where(and(
+          eq(eventSignups.eventId, input.eventId),
+          eq(eventSignups.email, input.email),
+        ));
+
+      return { success: true };
+    }),
+
+  // ── #17 — Admin: send post-event follow-up email ──────────
+  sendFollowup: adminProcedure
+    .input(z.object({ eventId: z.number() }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [event] = await database
+        .select()
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+      if (!event) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const signups = await database
+        .select()
+        .from(eventSignups)
+        .where(and(
+          eq(eventSignups.eventId, input.eventId),
+          isNull(eventSignups.cancelledAt),
+        ));
+
+      if (!signups.length) return { sent: 0, message: "No signups for this event" };
+
+      const checkinUrl = event.checkinToken
+        ? `${APP_BASE_URL}/checkin/${event.checkinToken}`
+        : `${APP_BASE_URL}/schedule`;
+      const forumUrl = event.forumThreadId
+        ? `${APP_BASE_URL}/community/post/${event.forumThreadId}`
+        : `${APP_BASE_URL}/schedule`;
+
+      let totalSent = 0;
+      for (const signup of signups) {
+        const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
+        const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+          <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+            <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
+            <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">How was it?</p>
+          </div>
+          <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
+            <h2 style="color:#1a472a;margin:0 0 16px 0;font-size:20px;">${event.title}</h2>
+            <p style="color:#444;line-height:1.7;margin:0 0 24px 0;">Did you make it? Let us know so we can send you your $ReGen tokens.</p>
+            <div style="margin:0 0 24px 0;">
+              <a href="${checkinUrl}" style="display:inline-block;background:#7dd87d;color:#1a472a;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Yes, I was there</a>
+            </div>
+            <p style="color:#444;line-height:1.7;margin:0 0 16px 0;">One word for how it felt?</p>
+            <a href="${forumUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">Share your thoughts</a>
+          </div>
+          <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
+            <p style="color:#888;font-size:12px;margin:0;">You signed up for this event. <a href="${unsubscribeUrl}" style="color:#999;">Unsubscribe</a></p>
+          </div>
+        </div>`;
+
+        await sendEmail({
+          to: [signup.email],
+          subject: `How was it? - ${event.title}`,
+          html,
+          template: "event_followup",
+        }).catch(err => console.error(`[events.sendFollowup] email error for ${signup.email}:`, err));
+        totalSent++;
+      }
+
+      return { sent: totalSent };
+    }),
+
+  // ── #23 — User-facing: get own $ReGen token balance ─────
+  myTokenBalance: protectedProcedure
+    .query(async ({ ctx }) => {
+      const email = ctx.user.email;
+      if (!email) return { balance: 0, entries: [] };
+      const balance = await db.getTokenBalance(email);
+      const ledger = await db.getTokenLedger(email);
+      return { balance, entries: ledger };
+    }),
+
+  // ── #25 — Admin: send guest speaker introduction email ──
+  sendSpeakerIntro: adminProcedure
+    .input(z.object({ eventId: z.number() }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [event] = await database
+        .select()
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+      if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
+      if (!event.guestSpeakerName) throw new TRPCError({ code: "BAD_REQUEST", message: "No guest speaker set for this event" });
+
+      const signups = await database
+        .select()
+        .from(eventSignups)
+        .where(and(
+          eq(eventSignups.eventId, input.eventId),
+          eq(eventSignups.signupType, "reminder"),
+          isNull(eventSignups.cancelledAt),
+        ));
+
+      if (!signups.length) return { sent: 0, message: "No signups for this event" };
+
+      const dayOfWeek = event.startTime.toLocaleDateString("en-US", { weekday: "long" });
+      const dateStr = event.startTime.toLocaleDateString("en-US", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+      });
+      const timeStr = event.startTime.toLocaleTimeString("en-US", {
+        hour: "numeric", minute: "2-digit", timeZoneName: "short",
+      });
+      const joinUrl = event.riversideRoomUrl
+        ?? event.zoomUrl
+        ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
+      const joinLabel = event.riversideRoomUrl ? "Join on Riverside" : "Join on Zoom";
+      const joinColor = event.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
+
+      const topicLine = event.guestSpeakerTopic ? ` on ${event.guestSpeakerTopic}` : "";
+      const subject = `Joining us this ${dayOfWeek}: ${event.guestSpeakerName}${topicLine}`;
+
+      let totalSent = 0;
+      for (const signup of signups) {
+        const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
+        const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+          <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+            <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
+            <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Guest Speaker Announcement</p>
+          </div>
+          <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
+            <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.guestSpeakerName}${topicLine}</h2>
+            <p style="color:#444;font-size:15px;margin:0 0 16px 0;">${dateStr} at ${timeStr}</p>
+            ${event.guestSpeakerBio ? `<div style="background:#f0f7f0;border-left:4px solid #7dd87d;padding:14px 18px;border-radius:0 8px 8px 0;margin:0 0 20px 0;">
+              <p style="color:#1a472a;font-weight:bold;margin:0 0 6px 0;font-size:13px;">About ${event.guestSpeakerName}</p>
+              <p style="color:#2d5a3d;margin:0;font-size:14px;line-height:1.6;">${event.guestSpeakerBio}</p>
+            </div>` : ""}
+            <p style="color:#444;line-height:1.7;margin:0 0 24px 0;">We have a guest joining us for ${event.title}. Come with your questions and ideas.</p>
+            <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
+            <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
+          </div>
+          <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
+            <p style="color:#888;font-size:12px;margin:0;">You signed up for reminders for this event.<br/>
+            <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${unsubscribeUrl}" style="color:#999;">Unsubscribe from this event</a></p>
+          </div>
+        </div>`;
+
+        await sendEmail({ to: [signup.email], subject, html, template: "speaker_intro" })
+          .catch(err => console.error(`[events.sendSpeakerIntro] error for ${signup.email}:`, err));
+        totalSent++;
+      }
+
+      return { sent: totalSent };
     }),
 });
 

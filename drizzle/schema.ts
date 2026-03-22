@@ -1249,6 +1249,8 @@ export const forumPosts = mysqlTable("forumPosts", {
   chainId: int("chainId"), // links posts in same chain (ID of the original "idea" post)
   // C17: Bioregional tagging
   bioregionId: int("bioregionId"),
+  // Link preview OG data (cached after post creation)
+  linkPreviews: json("linkPreviews"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -1949,6 +1951,14 @@ export const events = mysqlTable("events", {
   // Reminder tracking
   reminderSent: tinyint("reminderSent").default(0).notNull(), // 1 once 24h reminder has been sent
 
+  // #16 — Self-service check-in QR code token
+  checkinToken: varchar("checkinToken", { length: 64 }),
+
+  // #25 — Guest speaker fields
+  guestSpeakerName: varchar("guestSpeakerName", { length: 255 }),
+  guestSpeakerBio: text("guestSpeakerBio"),
+  guestSpeakerTopic: varchar("guestSpeakerTopic", { length: 500 }),
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
@@ -1975,6 +1985,8 @@ export const eventSignups = mysqlTable("event_signups", {
   phone: varchar("phone", { length: 30 }),
   // #11 — waitlist vs. reminder
   signupType: mysqlEnum("signupType", ["reminder", "waitlist"]).default("reminder").notNull(),
+  // #18 — per-event unsubscribe
+  cancelledAt: timestamp("cancelledAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   unique("eventSignups_eventId_email_unique").on(table.eventId, table.email),

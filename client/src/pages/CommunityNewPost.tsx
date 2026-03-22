@@ -24,6 +24,8 @@ import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownTool
 import { RichEditor } from "@/components/RichEditor";
 import { PageTransition } from "@/components/PageTransition";
 import { FileUploadInput } from "@/components/FileUploadInput";
+import { LinkPreviewCard } from "@/components/LinkPreviewCard";
+import { useLinkPreview } from "@/hooks/useLinkPreview";
 import { toast } from "sonner";
 
 type PostTag = "lesson" | "seeking-support" | "offering-support";
@@ -80,6 +82,7 @@ export default function CommunityNewPost() {
   const handleMarkdownShortcuts = useMarkdownShortcuts(contentRef, content, setContent);
 
   const { data: categories, isLoading: catsLoading } = trpc.forum.categories.useQuery();
+  const { preview: linkPreview, isLoading: linkPreviewLoading, url: linkPreviewUrl } = useLinkPreview(content);
 
   const createPostMutation = trpc.forum.createPost.useMutation({
     onSuccess: (data) => {
@@ -380,6 +383,16 @@ export default function CommunityNewPost() {
               <MarkdownHints />
               <p className="text-[10px] text-[#1a472a]/30">{content.length}/10,000</p>
             </div>
+            {linkPreviewUrl && (
+              <LinkPreviewCard
+                url={linkPreviewUrl}
+                title={linkPreview?.title}
+                description={linkPreview?.description}
+                image={linkPreview?.image}
+                siteName={linkPreview?.siteName}
+                loading={linkPreviewLoading}
+              />
+            )}
           </div>
 
           {/* Tags */}
