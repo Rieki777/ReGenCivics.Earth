@@ -254,7 +254,7 @@ export default function Blog() {
         title="Blog: Stories & Updates | ReGen Civics"
         description="Stories, insights, and updates from our journey toward a regenerative civilization."
         url="https://regencivics.earth/blog"
-        image={cdnImg("https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.webp")}
+        image={cdnImg("https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.png")}
       />
       
       {/* Hero Section */}

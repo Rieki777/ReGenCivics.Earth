@@ -1,5 +1,6 @@
 import "dotenv/config";
 import crypto from "node:crypto";
+import { parse as parseCookieHeader } from "cookie";
 import * as Sentry from "@sentry/node";
 import { runDigestJob } from "../jobs/digestJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
@@ -31,7 +32,7 @@ import * as db from "../db";
 import { createRequire } from "module";
 const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
-import { cspMiddleware, securityHeadersMiddleware, rateLimitMiddleware } from "./security";
+import { cspMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
 import { isCacheAvailable } from "../cache";
 import path from "path";
 
@@ -127,6 +128,28 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // CSRF token endpoint — issues a CSRF token tied to the session cookie.
+  // The tRPC CSRF middleware validates this token on mutations.
+  app.get("/api/csrf-token", (req, res) => {
+    const cookies = parseCookieHeader(req.headers.cookie || "");
+    let sessionId = cookies["session_id"];
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      res.cookie("session_id", sessionId, {
+        httpOnly: true,
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+    const csrfToken = generateCSRFToken(sessionId);
+    res.cookie("csrf_token", csrfToken, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+    });
+    res.json({ csrfToken });
+  });
   // Health check endpoint (for UptimeRobot / uptime monitoring)
   app.get('/health', (_req, res) => {
     res.json({

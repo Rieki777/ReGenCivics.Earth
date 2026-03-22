@@ -64,8 +64,8 @@ const pathCards = [
     iconBg: "bg-amber-400/20",
     iconColor: "text-amber-300",
     accentColor: "#fbbf24",
-    image: cdnImg("https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp"),
-    activatedImage: cdnImg("https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp"),
+    image: cdnImg("https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png"),
   },
   {
     id: "land",
@@ -81,8 +81,8 @@ const pathCards = [
     iconBg: "bg-[#7dd87d]/20",
     iconColor: "text-[#7dd87d]",
     accentColor: "#7dd87d",
-    image: cdnImg("https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp"),
-    activatedImage: cdnImg("https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp"),
+    image: cdnImg("https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png"),
   },
   {
     id: "ally",
@@ -98,8 +98,8 @@ const pathCards = [
     iconBg: "bg-blue-400/20",
     iconColor: "text-blue-300",
     accentColor: "#60a5fa",
-    image: cdnImg("https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp"),
-    activatedImage: cdnImg("https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp"),
+    image: cdnImg("https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png"),
   },
   {
     id: "play",
@@ -115,8 +115,8 @@ const pathCards = [
     iconBg: "bg-purple-400/20",
     iconColor: "text-purple-300",
     accentColor: "#c084fc",
-    image: cdnImg("https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp"),
-    activatedImage: cdnImg("https://assets.regencivics.earth/qDmGFHBsFPyCECbM.webp"),
+    image: cdnImg("https://assets.regencivics.earth/LAizfmKwiZguwYMz.png"),
+    activatedImage: cdnImg("https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png"),
   },
 ];
 
@@ -452,7 +452,7 @@ export default function Home() {
               />
               {/* Mobile version - portrait layout optimized for phone screens */}
               <img
-                src={cdnImg("https://assets.regencivics.earth/FfLefvCNHfDcTYUt.webp")}
+                src={cdnImg("https://assets.regencivics.earth/FfLefvCNHfDcTYUt.png")}
                 alt="Impact metrics: Acres under regeneration, community members supported, biodiversity restored"
                 width={800}
                 height={1200}

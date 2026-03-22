@@ -100,7 +100,7 @@ export default function Navigation() {
             className="flex items-center gap-2 text-[#7dd87d] hover:text-[#9de89d] transition-colors"
           >
             <img
-              src={cdnImg("https://assets.regencivics.earth/DUOLILquhPlWMUAF.webp")}
+              src={cdnImg("https://assets.regencivics.earth/DUOLILquhPlWMUAF.png")}
               alt="ReGen Civics"
               width="40"
               height="40"
@@ -108,7 +108,7 @@ export default function Navigation() {
               loading="eager"
             />
             <img
-              src={cdnImg("https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.webp")}
+              src={cdnImg("https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png")}
               alt="ReGen Civics"
               width="40"
               height="40"

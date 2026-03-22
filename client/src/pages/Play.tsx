@@ -391,7 +391,7 @@ export default function Play() {
               <AutoplayVideo
                 videoId="C9U0JTsqKv8"
                 title="How to Play the Infinite Game"
-                thumbnailUrl={cdnImg("https://assets.regencivics.earth/NnpPOudclSlFoAuh.webp")}
+                thumbnailUrl={cdnImg("https://assets.regencivics.earth/NnpPOudclSlFoAuh.png")}
                 thumbnailAlt="Playing the Game - Participating in the ReGenerative Renaissance"
                 playLabel="How to Play the Infinite Game"
               />

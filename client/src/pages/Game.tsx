@@ -402,7 +402,7 @@ export default function Game() {
             <AutoplayVideo
               videoId="C9U0JTsqKv8"
               title="ReGen Civics Overview"
-              thumbnailUrl={cdnImg("https://assets.regencivics.earth/NnpPOudclSlFoAuh.webp")}
+              thumbnailUrl={cdnImg("https://assets.regencivics.earth/NnpPOudclSlFoAuh.png")}
               thumbnailAlt="Watch the ReGen Civics Overview"
               playLabel={pageCopy.game.overview.playLabel}
             />
@@ -963,7 +963,7 @@ export default function Game() {
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <TokenInfoCard
-                iconSrc={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp")}
+                iconSrc={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png")}
                 title="RGVoice"
                 subtitle="Game Governance Token"
                 description="RGVoice represents how much 'weight your voice carries' in game decisions. We believe that the more you contribute, the wiser your decisions become."
@@ -976,7 +976,7 @@ export default function Game() {
                 color="border-purple-500/50"
               />
               <TokenInfoCard
-                iconSrc={cdnImg("https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.webp")}
+                iconSrc={cdnImg("https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png")}
                 title="$ReGen"
                 subtitle="Game Utility Token"
                 description="$ReGen is our tradable utility token representing economic participation in the Game."
@@ -1006,7 +1006,7 @@ export default function Game() {
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <TokenInfoCard
-                iconSrc={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp")}
+                iconSrc={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png")}
                 title="RCVoice"
                 subtitle="Fund Governance Token"
                 description="RCVoice governs fund decisions. Council holds 40% voice; Land Projects, Alliance Orgs, and Investors each hold 20%. Voice evolves over time as the community matures."
@@ -1020,7 +1020,7 @@ export default function Game() {
                 color="border-amber-500/50"
               />
               <TokenInfoCard
-                iconSrc={cdnImg("https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.webp")}
+                iconSrc={cdnImg("https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.png")}
                 title="$RCivics"
                 subtitle="Rewards & Returns Token"
                 description="$RCivics is your claim on fund returns. Portfolio distributions are sent proportionally to $RCivics holders - separate from governance voice."
@@ -1584,7 +1584,7 @@ export default function Game() {
                       </div>
                       <div>
                         <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
-                          RVoice — Governance Token
+                          RVoice: Governance Token
                         </h3>
                         <p className="text-sm text-[#1a472a]/60">Earned through participation, used to vote</p>
                       </div>
@@ -1595,7 +1595,7 @@ export default function Game() {
                 <CollapsibleContent>
                   <div className="bg-white border-2 border-t-0 border-purple-200 rounded-b-2xl p-5 -mt-1">
                     <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">
-                      RVoice represents how much weight your voice carries in decisions. The more you contribute, the more you earn, and the more your votes count. It is not transferable — it stays tied to your own participation and cannot be bought or sold.
+                      RVoice represents how much weight your voice carries in decisions. The more you contribute, the more you earn, and the more your votes count. It is not transferable. It stays tied to your own participation and cannot be bought or sold.
                     </p>
                     <ul className="space-y-2">
                       <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
@@ -1612,7 +1612,7 @@ export default function Game() {
                       </li>
                       <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">
                         <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                        <span>Not tradable — earned through direct experience only</span>
+                        <span>Not tradable. Earned through direct experience only.</span>
                       </li>
                     </ul>
                   </div>
@@ -1629,7 +1629,7 @@ export default function Game() {
                       </div>
                       <div>
                         <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
-                          ReGen Token — Economic Token
+                          ReGen Token: Economic Token
                         </h3>
                         <p className="text-sm text-[#1a472a]/60">Earned through verified impact contributions</p>
                       </div>
@@ -1685,25 +1685,25 @@ export default function Game() {
                         <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-purple-600 font-bold text-xs">V</span>
                         </div>
-                        <span><strong className="text-[#1a472a]">Complete a quest</strong> — earn RVoice</span>
+                        <span><strong className="text-[#1a472a]">Complete a quest</strong>: earn RVoice</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
                         <div className="w-6 h-6 rounded-full bg-[#7dd87d]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-[#4a7c59] font-bold text-xs">R</span>
                         </div>
-                        <span><strong className="text-[#1a472a]">Fund a campaign</strong> — earn ReGen Token</span>
+                        <span><strong className="text-[#1a472a]">Fund a campaign</strong>: earn ReGen Token</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
                         <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-amber-600 font-bold text-xs">+</span>
                         </div>
-                        <span><strong className="text-[#1a472a]">Contribute a skill to a project</strong> — earn both</span>
+                        <span><strong className="text-[#1a472a]">Contribute a skill to a project</strong>: earn both</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
                         <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-amber-600 font-bold text-xs">+</span>
                         </div>
-                        <span><strong className="text-[#1a472a]">Participate in community sessions</strong> — earn RVoice</span>
+                        <span><strong className="text-[#1a472a]">Participate in community sessions</strong>: earn RVoice</span>
                       </li>
                     </ul>
                     <p className="text-xs text-[#1a472a]/50 mt-4 italic">

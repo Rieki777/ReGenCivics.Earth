@@ -18,14 +18,14 @@ import { cdnImg } from '@/lib/utils';
 
 // Home page path card images (kept for backwards compatibility)
 const HOME_IMAGES = [
-  cdnImg('https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp'),
-  cdnImg('https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp'),
-  cdnImg('https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp'),
-  cdnImg('https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp'),
-  cdnImg('https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp'),
-  cdnImg('https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp'),
-  cdnImg('https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp'),
-  cdnImg('https://assets.regencivics.earth/qDmGFHsBFPyCECbM.webp'),
+  cdnImg('https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png'),
+  cdnImg('https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png'),
+  cdnImg('https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png'),
+  cdnImg('https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png'),
+  cdnImg('https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png'),
+  cdnImg('https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png'),
+  cdnImg('https://assets.regencivics.earth/LAizfmKwiZguwYMz.png'),
+  cdnImg('https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png'),
 ];
 
 function preloadImages(urls: string[]): Promise<void> {

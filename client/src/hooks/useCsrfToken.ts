@@ -9,14 +9,18 @@ async function fetchCsrfToken(): Promise<string> {
   if (fetchPromise) return fetchPromise;
 
   fetchPromise = fetch("/api/csrf-token", { credentials: "include" })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) throw new Error(`CSRF fetch failed: ${res.status}`);
+      return res.json();
+    })
     .then((data: { csrfToken: string }) => {
-      cachedToken = data.csrfToken;
+      cachedToken = data.csrfToken ?? "";
       fetchPromise = null;
-      return cachedToken!;
+      return cachedToken;
     })
     .catch(() => {
       fetchPromise = null;
+      cachedToken = "";
       return "";
     });
 

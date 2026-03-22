@@ -1074,7 +1074,7 @@ export default function Connect() {
               {/* Logo */}
               <div className="mb-6">
                 <img
-                  src={cdnImg("https://assets.regencivics.earth/qtPtaaJfgElzmVAI.webp")}
+                  src={cdnImg("https://assets.regencivics.earth/qtPtaaJfgElzmVAI.png")}
                   alt="ReGen Civics"
                   className="w-20 h-20 md:w-24 md:h-24 mx-auto object-contain drop-shadow-lg"
                   width="96"

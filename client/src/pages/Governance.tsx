@@ -49,7 +49,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
         <div className="bg-gradient-to-br from-[#d4a574]/15 to-[#1a472a]/60 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <img
-              src={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp")}
+              src={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png")}
               alt="RCVoice Fund Token"
               width="96"
               height="96"
@@ -107,7 +107,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
         <div className="bg-gradient-to-br from-purple-900/30 to-[#1a472a]/60 rounded-2xl p-8 border border-purple-500/40 space-y-6">
           <div className="flex flex-col sm:flex-row items-center gap-6">
             <img
-              src={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp")}
+              src={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png")}
               alt="RGVoice Game Token"
               width="96"
               height="96"
@@ -173,7 +173,7 @@ function TwoTokensSection() {
         <div className="bg-[#1a472a]/60 rounded-xl p-6 border-l-4 border-[#d4a574] transition-all">
           <div className="flex items-center gap-4 mb-3">
             <img
-              src={cdnImg("https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.webp")}
+              src={cdnImg("https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.png")}
               alt="$RCivics Token"
               width="48"
               height="48"
@@ -190,7 +190,7 @@ function TwoTokensSection() {
         <div className="bg-[#0d2818]/70 rounded-xl p-6 border-l-4 border-[#7dd87d] transition-all">
           <div className="flex items-center gap-4 mb-4">
             <img
-              src={cdnImg("https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.webp")}
+              src={cdnImg("https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png")}
               alt="$ReGen Token"
               width="48"
               height="48"
@@ -774,7 +774,7 @@ export default function Governance() {
                     <th className="py-4 px-4 w-1/3">
                       <div className="flex flex-col items-center gap-2">
                         <img
-                          src={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.webp")}
+                          src={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png")}
                           alt="RCVoice"
                           width="40"
                           height="40"
@@ -788,7 +788,7 @@ export default function Governance() {
                     <th className="py-4 px-4 w-1/3">
                       <div className="flex flex-col items-center gap-2">
                         <img
-                          src={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.webp")}
+                          src={cdnImg("https://assets.regencivics.earth/dWhwxPMVWDYiuDpF.png")}
                           alt="RGVoice"
                           width="40"
                           height="40"

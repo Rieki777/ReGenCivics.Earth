@@ -3,6 +3,7 @@
  * Handles CSP, CSRF protection, rate limiting, and input sanitization
  */
 
+import crypto from 'node:crypto';
 import { Request, Response, NextFunction } from 'express';
 import { cacheGet, cacheSet, isCacheAvailable } from '../cache';
 
@@ -113,7 +114,7 @@ export function rateLimitMiddleware(
 const csrfTokens = new Map<string, { token: string; createdAt: number }>();
 
 export function generateCSRFToken(sessionId: string): string {
-  const token = require('crypto').randomBytes(32).toString('hex');
+  const token = crypto.randomBytes(32).toString('hex');
   csrfTokens.set(sessionId, { token, createdAt: Date.now() });
   return token;
 }

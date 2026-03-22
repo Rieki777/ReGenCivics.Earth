@@ -278,7 +278,7 @@ export default function Showcase() {
         title="Project Showcase | ReGen Civics"
         description="Explore the growing network of regenerative land projects and alliance organizations co-creating a sustainable future."
         keywords="regenerative projects, land projects, eco-communities, alliance partners, sustainable living"
-        image={cdnImg("https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.webp")}
+        image={cdnImg("https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.png")}
         url="/showcase"
       />
       

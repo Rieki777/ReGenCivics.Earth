@@ -148,7 +148,11 @@ export function registerImageOptimization(app: Express) {
       const quality = q ? Math.min(parseInt(q, 10), 100) : 80;
 
       const upstream = await fetch(url);
-      if (!upstream.ok) return res.status(502).json({ error: 'upstream error' });
+      if (!upstream.ok) {
+        // Redirect to the original URL so the browser can display whatever it gets
+        // (or show its own broken-image icon) instead of a hard 502 that can crash React.
+        return res.redirect(302, url);
+      }
       const buffer = Buffer.from(await upstream.arrayBuffer());
 
       const optimized = await sharp(buffer)
@@ -164,6 +168,9 @@ export function registerImageOptimization(app: Express) {
       res.send(optimized);
     } catch (err) {
       console.error('[img] optimization error:', err);
+      // Fall back to the original image rather than crashing the page
+      const fallbackUrl = req.query.url as string;
+      if (fallbackUrl) return res.redirect(302, fallbackUrl);
       res.status(500).json({ error: 'processing failed' });
     }
   });

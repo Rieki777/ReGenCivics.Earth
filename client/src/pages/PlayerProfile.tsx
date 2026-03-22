@@ -265,7 +265,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                       <h4 className="font-semibold text-[#1a472a] text-sm">Where do I find this?</h4>
                     </div>
                     <div className="p-3">
-                      <img src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp")} alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" width={600} height={400} loading="lazy" />
+                      <img src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png")} alt="Hypha profile showing account address with copy icon" className="w-full rounded-lg border border-[#1a472a]/10 mb-3" width={600} height={400} loading="lazy" />
                       <ol className="text-sm text-[#1a472a]/70 space-y-2 list-decimal list-inside">
                         <li>Go to <a href="https://app.hypha.earth/en/dho/regen-games/" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] underline">app.hypha.earth/en/dho/regen-games/</a></li>
                         <li>Look at the top right of the page</li>
@@ -382,7 +382,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
                   </div>
                   <div className="p-3">
                     <img
-                      src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp")}
+                      src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png")}
                       alt="Hypha profile showing account address with copy icon"
                       width="400"
                       height="300"
@@ -409,7 +409,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
           
           <div className="bg-[#f0ebe3] border border-[#7dd87d]/30 rounded-lg p-3">
             <img
-              src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.webp")}
+              src={cdnImg("https://assets.regencivics.earth/KAyoJaDXiKUFGzWz.png")}
               alt="Hypha profile showing account address"
               width="400"
               height="300"
@@ -1597,6 +1597,26 @@ const CAPITAL_TYPES = [
 
 type CapitalType = typeof CAPITAL_TYPES[number]["value"];
 
+// ─── #23 — Event Attendance Token Balance ────────────────────────────────────
+function EventAttendanceBalance() {
+  const { data: tokenData } = trpc.events.myTokenBalance.useQuery(undefined);
+  if (!tokenData || tokenData.balance === 0) return null;
+  return (
+    <div className="bg-[#7dd87d]/5 border border-[#7dd87d]/15 rounded-xl p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-white/50 text-xs mb-1">Event Attendance</p>
+          <p className="text-lg font-bold text-[#7dd87d]">{tokenData.balance} $ReGen</p>
+          <p className="text-white/40 text-xs mt-0.5">earned across {tokenData.entries.length} event{tokenData.entries.length !== 1 ? 's' : ''}</p>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-[#7dd87d]/15 flex items-center justify-center">
+          <svg className="w-5 h-5 text-[#7dd87d]" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Contributions Tab ───────────────────────────────────────────────────────
 function ContributionsTab({
   walletAddress,
@@ -1704,6 +1724,9 @@ function ContributionsTab({
           <p className="text-white/50 text-xs mt-1">Voice Weight</p>
         </div>
       </div>
+
+      {/* #23 — Event Attendance Token Balance */}
+      <EventAttendanceBalance />
 
       {/* Calculator Hub */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">

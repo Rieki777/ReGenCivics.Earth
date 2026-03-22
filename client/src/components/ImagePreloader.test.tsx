@@ -9,17 +9,17 @@ describe('ImagePreloader', () => {
   it('preloads all 8 path card images', () => {
     const pathCardImages = [
       // Fund path
-      'https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp',
-      'https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp',
+      'https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png',
+      'https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png',
       // Land path
-      'https://assets.regencivics.earth/yqqImtZyZVyKlZyO.webp',
-      'https://assets.regencivics.earth/mgXrrAJIIHwfFWah.webp',
+      'https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png',
+      'https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png',
       // Ally path
-      'https://assets.regencivics.earth/xlNRfxzajiAdMyaP.webp',
-      'https://assets.regencivics.earth/HQpqacLKyIAkXOdS.webp',
+      'https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png',
+      'https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png',
       // Play path
-      'https://assets.regencivics.earth/LAizfmKwiZguwYMz.webp',
-      'https://assets.regencivics.earth/qDmGFHBsFPyCECbM.webp',
+      'https://assets.regencivics.earth/LAizfmKwiZguwYMz.png',
+      'https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png',
     ];
 
     // Verify we have 8 images (4 paths × 2 images each)
@@ -33,8 +33,8 @@ describe('ImagePreloader', () => {
 
   it('validates path card image structure', () => {
     const fundImages = [
-      'https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.webp',
-      'https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.webp',
+      'https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png',
+      'https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png',
     ];
 
     expect(fundImages).toHaveLength(2);
