@@ -39,7 +39,7 @@ export const EPIC_QUESTS: EpicQuest[] = [
     tier: "easy",
     tagline: "Connect neighbours' plots into one shared growing network.",
     description:
-      "Coordinate with neighbours for each household to offer some space on their property for a collective garden. Multiple small plots connected into one shared network — or adopt a vacant lot. Design the shared governance from the start. Document the process.",
+      "Coordinate with neighbours for each household to offer some space on their property for a collective garden. Multiple small plots connected into one shared network, or adopt a vacant lot. Design the shared governance from the start. Document the process.",
     duration: "3-6 months",
     commitment: "Weekly coordination + ongoing tending",
     regenReward: 444,
@@ -141,7 +141,7 @@ export const EPIC_QUESTS: EpicQuest[] = [
     description:
       "Coordinate the design and establishment of a new settlement built from the ground up on regenerative principles. Land access, governance design, food systems, energy systems, waste systems, cultural life. This is the long game. Document every step. This is what the Ringing Cedars movement built in Russia, and what is being built again, everywhere.",
     duration: "5+ years",
-    commitment: "Life-stage commitment — full community leadership",
+    commitment: "Life-stage commitment: full community leadership",
     regenReward: 1444,
     element: "earth",
   },

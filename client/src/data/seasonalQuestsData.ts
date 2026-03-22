@@ -326,10 +326,10 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     season: "any",
     tagline: "Ancient wisdom for a regenerative world.",
     description:
-      "Read the Ringing Cedars of Russia series by Vladimir Megre — 10 books carrying an unbroken thread of knowledge about how humans once lived in genuine harmony with the Earth. Read with a regenerative lens: notice how her people organized communities, tended land, raised children, and thought about the long arc of civilization. Post a reflection in the forum after each book. Claim your tokens when you finish.",
+      "Read the Ringing Cedars of Russia series by Vladimir Megre. 10 books carrying an unbroken thread of knowledge about how humans once lived in genuine harmony with the Earth. Read with a regenerative lens: notice how her people organized communities, tended land, raised children, and thought about the long arc of civilization. Post a reflection in the forum after each book. Claim your tokens when you finish.",
     deliverable:
       "One forum post per book reflecting through a regenerative lens. Claim tokens once at the end (33 $ReGen + 1 RGVoice per book; full series: 333 $ReGen + 10 RGVoice + cedar tree badge).",
-    estimatedTime: "Self-paced — one book is 4-10 hours; full series over weeks or months",
+    estimatedTime: "Self-paced. One book is 4-10 hours; full series over weeks or months.",
     element: "air",
     reward: { regen: 33, rvoice: 1 },
   },

@@ -1248,7 +1248,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           </div>
           <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full text-sm text-white/80" aria-label="Regenerative land projects and organizations">
-              <caption className="sr-only">Map entities — {filteredEntities.length} total</caption>
+              <caption className="sr-only">Map entities: {filteredEntities.length} total</caption>
               <thead>
                 <tr className="border-b border-white/10 bg-white/5">
                   <th scope="col" className="text-left px-4 py-3 text-white/60 font-semibold text-xs uppercase tracking-wider">Name</th>
@@ -1310,7 +1310,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
 
         {/* Screen reader data table — visually hidden, content matches globe pins */}
         <table className="sr-only" aria-label="Regenerative land projects and organizations on the map">
-          <caption>Map entities — {filteredEntities.length} total</caption>
+          <caption>Map entities: {filteredEntities.length} total</caption>
           <thead>
             <tr>
               <th scope="col">Name</th>

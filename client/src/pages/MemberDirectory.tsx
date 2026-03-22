@@ -182,7 +182,7 @@ export default function MemberDirectory() {
   return (
     <>
       <SEO
-        title="Members — The Gathering Grove"
+        title="Members: The Gathering Grove"
         description="Browse community members of the regenerative civics network."
       />
 

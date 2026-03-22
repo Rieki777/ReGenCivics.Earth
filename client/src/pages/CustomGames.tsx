@@ -145,7 +145,7 @@ export default function CustomGames() {
               Ready to Build Your Own Game?
             </h2>
             <p className="text-white/70 text-sm max-w-lg mx-auto">
-              Custom Land Games are designed for land projects that have purchased land and are ready to start coordinating real community growth. Each persona — residents, investors, business owners, core team — gets their own onboarding path, so you stop doing manual onboarding.
+              Custom Land Games are designed for land projects that have purchased land and are ready to start coordinating real community growth. Each persona (residents, investors, business owners, core team) gets their own onboarding path, so you stop doing manual onboarding.
             </p>
             <div className="inline-block bg-[#d4a574]/15 border border-[#d4a574]/30 rounded-xl px-5 py-3">
               <p className="text-[#d4a574] text-lg font-bold">$20,000</p>
