@@ -3763,6 +3763,11 @@ function AdminDashboard() {
             <AdminCustomGamesTab AdminCustomGameWaitlistComp={AdminCustomGameWaitlist} />
           </TabsContent>
 
+          {/* Events Tab */}
+          <TabsContent value="events">
+            <AdminEventsTab />
+          </TabsContent>
+
           {/* Recordings Tab */}
           <TabsContent value="recordings">
             <AdminRecordingsTab />
@@ -3954,6 +3959,254 @@ function AdminRecordingsTab() {
           <p className="text-xs text-muted-foreground">In Riverside: Settings → Integrations → Webhooks → add URL:</p>
           <code className="text-xs bg-muted px-2 py-1 rounded block mt-1 break-all">https://regencivics.earth/api/webhooks/riverside</code>
           <p className="text-xs text-muted-foreground mt-2">Set <code className="bg-muted px-1 rounded">RIVERSIDE_WEBHOOK_SECRET</code> in Railway to the signing secret from Riverside.</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Events Tab ────────────────────────────────────────────────────────────────
+function AdminEventsTab() {
+  const { data: allEvents = [], refetch, isLoading } = trpc.events.adminList.useQuery();
+  const { data: signupCounts = [] } = trpc.events.signupCounts.useQuery();
+  const createMutation = trpc.events.create.useMutation({ onSuccess: () => { refetch(); setShowCreate(false); setFormData(defaultForm); } });
+  const updateMutation = trpc.events.update.useMutation({ onSuccess: () => { refetch(); setEditingId(null); } });
+  const deleteMutation = trpc.events.delete.useMutation({ onSuccess: () => refetch() });
+  const reminderMutation = trpc.events.sendReminders.useMutation();
+
+  const defaultForm = {
+    title: '', description: '', type: 'open' as const, startTime: '', endTime: '',
+    timezone: 'EDT', zoomUrl: '', riversideRoomUrl: '', youtubeUrl: '',
+    season: '', episodeNumber: '',
+  };
+
+  const [showCreate, setShowCreate] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState(defaultForm);
+  const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
+
+  const countMap = Object.fromEntries(signupCounts.map(r => [r.eventId, r.count]));
+
+  function startEdit(ev: any) {
+    setEditingId(ev.id);
+    setFormData({
+      title: ev.title ?? '',
+      description: ev.description ?? '',
+      type: ev.type ?? 'open',
+      startTime: ev.startTime ? new Date(ev.startTime).toISOString().slice(0, 16) : '',
+      endTime: ev.endTime ? new Date(ev.endTime).toISOString().slice(0, 16) : '',
+      timezone: ev.timezone ?? 'EDT',
+      zoomUrl: ev.zoomUrl ?? '',
+      riversideRoomUrl: ev.riversideRoomUrl ?? '',
+      youtubeUrl: ev.youtubeUrl ?? '',
+      season: ev.season ?? '',
+      episodeNumber: ev.episodeNumber ? String(ev.episodeNumber) : '',
+    });
+  }
+
+  function handleSave() {
+    const payload = {
+      title: formData.title,
+      description: formData.description || undefined,
+      type: formData.type,
+      startTime: formData.startTime,
+      endTime: formData.endTime || undefined,
+      timezone: formData.timezone,
+      zoomUrl: formData.zoomUrl || undefined,
+      riversideRoomUrl: formData.riversideRoomUrl || undefined,
+      youtubeUrl: formData.youtubeUrl || undefined,
+      season: formData.season || undefined,
+      episodeNumber: formData.episodeNumber ? parseInt(formData.episodeNumber) : undefined,
+    };
+    if (editingId !== null) {
+      updateMutation.mutate({ id: editingId, ...payload });
+    } else {
+      createMutation.mutate(payload as any);
+    }
+  }
+
+  const typeColors: Record<string, string> = {
+    open: 'bg-blue-500/20 text-blue-300',
+    episode: 'bg-green-500/20 text-green-300',
+    special: 'bg-purple-500/20 text-purple-300',
+  };
+  const statusColors: Record<string, string> = {
+    upcoming: 'bg-yellow-500/20 text-yellow-300',
+    live: 'bg-red-500/20 text-red-300 animate-pulse',
+    completed: 'bg-gray-500/20 text-gray-400',
+    cancelled: 'bg-gray-700/30 text-gray-500',
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white">Events</h2>
+          <p className="text-sm text-white/50">Manage schedule events. Events appear on the Schedule page automatically.</p>
+        </div>
+        <Button onClick={() => { setShowCreate(true); setEditingId(null); setFormData(defaultForm); }}
+          className="bg-green-600 hover:bg-green-700 text-white">
+          <Plus size={14} className="mr-1" /> Add Event
+        </Button>
+      </div>
+
+      {/* Create / Edit Form */}
+      {(showCreate || editingId !== null) && (
+        <Card className="bg-[#0f2a18] border-green-800/40">
+          <CardHeader>
+            <CardTitle className="text-white text-base">{editingId !== null ? 'Edit Event' : 'New Event'}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="md:col-span-2">
+                <Label className="text-white/70 text-xs">Title *</Label>
+                <Input value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
+                  placeholder="Week 1: Selection Day" className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-white/70 text-xs">Description</Label>
+                <Textarea value={formData.description} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
+                  rows={3} placeholder="What will this session cover?" className="bg-white/5 border-white/20 text-white mt-1 resize-none" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Type</Label>
+                <Select value={formData.type} onValueChange={v => setFormData(f => ({ ...f, type: v as any }))}>
+                  <SelectTrigger className="bg-white/5 border-white/20 text-white mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open Session</SelectItem>
+                    <SelectItem value="episode">Incubator Episode</SelectItem>
+                    <SelectItem value="special">Special Event</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Timezone display (e.g., EDT)</Label>
+                <Input value={formData.timezone} onChange={e => setFormData(f => ({ ...f, timezone: e.target.value }))}
+                  placeholder="EDT" className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Start Time (local — will store as UTC)</Label>
+                <Input type="datetime-local" value={formData.startTime} onChange={e => setFormData(f => ({ ...f, startTime: e.target.value }))}
+                  className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">End Time (optional)</Label>
+                <Input type="datetime-local" value={formData.endTime} onChange={e => setFormData(f => ({ ...f, endTime: e.target.value }))}
+                  className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Season (e.g., Season 2)</Label>
+                <Input value={formData.season} onChange={e => setFormData(f => ({ ...f, season: e.target.value }))}
+                  placeholder="Season 2" className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Episode Number</Label>
+                <Input type="number" value={formData.episodeNumber} onChange={e => setFormData(f => ({ ...f, episodeNumber: e.target.value }))}
+                  placeholder="1" className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Zoom URL</Label>
+                <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
+                  placeholder="https://us06web.zoom.us/..." className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-white/70 text-xs">Riverside Room URL</Label>
+                <Input value={formData.riversideRoomUrl} onChange={e => setFormData(f => ({ ...f, riversideRoomUrl: e.target.value }))}
+                  placeholder="https://riverside.fm/studio/..." className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-white/70 text-xs">YouTube URL (livestream or premiere)</Label>
+                <Input value={formData.youtubeUrl} onChange={e => setFormData(f => ({ ...f, youtubeUrl: e.target.value }))}
+                  placeholder="https://youtube.com/live/..." className="bg-white/5 border-white/20 text-white mt-1" />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button onClick={handleSave} disabled={!formData.title || !formData.startTime || createMutation.isPending || updateMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 text-white">
+                {(createMutation.isPending || updateMutation.isPending) ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+                {editingId !== null ? 'Save Changes' : 'Create Event'}
+              </Button>
+              <Button variant="ghost" onClick={() => { setShowCreate(false); setEditingId(null); setFormData(defaultForm); }}
+                className="text-white/60 hover:text-white">Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Events List */}
+      {isLoading && <div className="text-center py-8 text-white/40"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
+
+      <div className="space-y-2">
+        {allEvents.map(ev => {
+          const signupCount = Number(countMap[ev.id] ?? 0);
+          const startDate = ev.startTime ? new Date(ev.startTime) : null;
+          const dateStr = startDate ? startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : '—';
+          const timeStr = startDate ? startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : '';
+          return (
+            <Card key={ev.id} className={`bg-[#0a1f14] border-white/10 ${ev.status === 'cancelled' ? 'opacity-50' : ''}`}>
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[ev.type] ?? ''}`}>{ev.type}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[ev.status] ?? ''}`}>{ev.status}</span>
+                      {ev.season && <span className="text-xs text-white/40">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
+                    </div>
+                    <p className="font-medium text-white text-sm truncate">{ev.title}</p>
+                    <p className="text-xs text-white/50 mt-0.5">{dateStr} {timeStr} {ev.timezone ?? ''}</p>
+                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/40">
+                      <span><Bell size={11} className="inline mr-1" />{signupCount} reminder signup{signupCount !== 1 ? 's' : ''}</span>
+                      {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
+                      {ev.youtubeUrl && <a href={ev.youtubeUrl} target="_blank" rel="noreferrer" className="text-red-400 hover:underline">YouTube ↗</a>}
+                      {ev.recordingId && <span className="text-purple-400">Recording #{ev.recordingId}</span>}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 sm:flex-col sm:items-end">
+                    <Button size="sm" variant="ghost" onClick={() => startEdit(ev)}
+                      className="text-white/60 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
+                      <Edit size={11} className="mr-1" /> Edit
+                    </Button>
+                    <Button size="sm" variant="ghost"
+                      disabled={reminderMutation.isPending}
+                      onClick={async () => {
+                        const res = await reminderMutation.mutateAsync({ id: ev.id });
+                        setReminderSuccess(ev.id);
+                        setTimeout(() => setReminderSuccess(null), 3000);
+                      }}
+                      className="text-white/60 hover:text-yellow-300 hover:bg-yellow-500/10 h-7 px-2 text-xs">
+                      {reminderSuccess === ev.id
+                        ? <><CheckCheck size={11} className="mr-1 text-yellow-400" /> Sent</>
+                        : <><Bell size={11} className="mr-1" /> Send Reminders</>}
+                    </Button>
+                    <Button size="sm" variant="ghost"
+                      onClick={() => { if (confirm(`Delete "${ev.title}"?`)) deleteMutation.mutate({ id: ev.id }); }}
+                      className="text-white/60 hover:text-red-400 hover:bg-red-500/10 h-7 px-2 text-xs">
+                      <Trash2 size={11} className="mr-1" /> Delete
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Setup reminder */}
+      <Card className="bg-[#0a1f14] border-yellow-800/30 mt-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-yellow-400 text-sm flex items-center gap-2"><Clock size={14} /> Auto-Reminder Cron Setup</CardTitle>
+        </CardHeader>
+        <CardContent className="text-xs text-white/60 space-y-1">
+          <p>Reminders send automatically if you set up the Railway cron job:</p>
+          <ol className="list-decimal list-inside space-y-1 text-white/50">
+            <li>In Railway: New Service → Cron Job</li>
+            <li>Schedule: <code className="bg-white/10 px-1 rounded">0 * * * *</code> (hourly)</li>
+            <li>Command: <code className="bg-white/10 px-1 rounded break-all">curl -X POST https://regencivics.earth/api/cron/event-reminders -H "Authorization: Bearer $CRON_SECRET"</code></li>
+            <li>Add <code className="bg-white/10 px-1 rounded">CRON_SECRET</code> as an env var on both services (any secure random string)</li>
+          </ol>
+          <p className="mt-2">Or use the "Send Reminders" button above to send manually any time.</p>
         </CardContent>
       </Card>
     </div>

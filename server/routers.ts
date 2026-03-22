@@ -17,6 +17,7 @@ import { glossaryRouter, knowledgeMapRouter, translateRouter, customGameInquirie
 import { bioregionsRouter, userBioregionsRouter } from "./routes/geo";
 import { messagesRouter } from "./routes/messages";
 import { recordingsRouter } from "./routes/recordings";
+import { eventsRouter } from "./routes/events";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -101,6 +102,9 @@ export const appRouter = router({
 
   // Recordings (Riverside.fm)
   recordings: recordingsRouter,
+
+  // Events + per-event reminders
+  events: eventsRouter,
 });
 
 export type AppRouter = typeof appRouter;

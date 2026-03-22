@@ -50,9 +50,9 @@ const ZOOM_INFO = {
 // YouTube playlist for Season 1 recordings
 const YOUTUBE_PLAYLIST = "https://www.youtube.com/watch?v=AJZI0OiRPeU&list=PL3Xi8vZSmBTSUZsQ82awoNIQS8ceBQ4io";
 
-// Events - Open Session March 29. Season 2 starts September 2026
-// Episodes run 11:00 AM - 1:00 PM EST (16:00-18:00 UTC) for 13 weeks
-const upcomingEvents = [
+// Fallback hardcoded events — used only if the DB events table is empty or unreachable
+// The DB is the real source of truth once migrations have run.
+const upcomingEventsFallback = [
   {
     id: 0,
     title: "Season 2 Community Session",
@@ -235,24 +235,63 @@ const upcomingEvents = [
   }
 ];
 
+// ─── Calendar URL helpers ────────────────────────────────────────────────────
+function toGcalDate(d: Date) {
+  return d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+}
+
+function buildGoogleCalendarUrl(event: { title: string; startTime: string | Date; endTime?: string | Date | null; description?: string | null }) {
+  const start = new Date(event.startTime);
+  const end = event.endTime ? new Date(event.endTime) : new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const zoom = "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
+  const details = encodeURIComponent(`${event.description ?? ''}\n\nZoom: ${zoom}\nMeeting ID: 577 631 5796\nPasscode: 333\n\nYouTube: https://www.youtube.com/@SEEDSRegenerativeEconomies`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${toGcalDate(start)}/${toGcalDate(end)}&details=${details}&location=Online+via+Zoom`;
+}
+
+function buildIcsDataUrl(event: { title: string; startTime: string | Date; endTime?: string | Date | null; description?: string | null }) {
+  const start = new Date(event.startTime);
+  const end = event.endTime ? new Date(event.endTime) : new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  const zoom = "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
+  const desc = `${event.description ?? ''}\\n\\nZoom: ${zoom}\\nMeeting ID: 577 631 5796\\nPasscode: 333`;
+  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:${fmt(start)}\nDTEND:${fmt(end)}\nSUMMARY:${event.title}\nDESCRIPTION:${desc}\nLOCATION:Online via Zoom\nEND:VEVENT\nEND:VCALENDAR`;
+  return `data:text/calendar;charset=utf8,${encodeURIComponent(ics)}`;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function Schedule() {
-  const [expandedEvent, setExpandedEvent] = useState<number | null>(1);
+  const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   // Per-event reminder signup
   const [reminderOpenFor, setReminderOpenFor] = useState<number | null>(null);
   const [reminderEmail, setReminderEmail] = useState<string>('');
   const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
 
-  const reminderMutation = trpc.newsletter.subscribe.useMutation();
+  // Fetch events from DB (falls back gracefully while loading)
+  const { data: dbEvents, isLoading: eventsLoading } = trpc.events.list.useQuery();
+
+  // Use DB events if available, otherwise fall back to hardcoded list until DB is ready
+  const upcomingEvents = (dbEvents && dbEvents.length > 0 ? dbEvents : upcomingEventsFallback).map(ev => ({
+    ...ev,
+    // Normalise: DB events use startTime, hardcoded use date+time strings
+    startTime: (ev as any).startTime ?? null,
+    googleCalendarUrl: (ev as any).googleCalendarUrl ?? ((ev as any).startTime ? buildGoogleCalendarUrl(ev as any) : ''),
+    appleCalendarUrl: (ev as any).appleCalendarUrl ?? ((ev as any).startTime ? buildIcsDataUrl(ev as any) : ''),
+  }));
+
+  // First upcoming event — auto-expand it
+  const firstUpcomingId = upcomingEvents.find(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')?.id ?? null;
+  const effectiveExpanded = expandedEvent !== null ? expandedEvent : firstUpcomingId;
+
+  const reminderMutation = trpc.events.signup.useMutation();
 
   const submitReminder = (event: { id: number; title: string }) => {
     if (!reminderEmail.trim()) return;
     const eventId = event.id;
     reminderMutation.mutate(
       {
+        eventId: event.id,
         email: reminderEmail.trim(),
-        name: `[EVENT: ${event.title}]`,
-        source: 'other',
       },
       {
         onSuccess: () => {
@@ -568,14 +607,14 @@ export default function Schedule() {
             {upcomingEvents.map((event) => (
               <div 
                 key={event.id}
-                className={`bg-white/5 backdrop-blur-sm rounded-2xl border transition-all duration-300 overflow-hidden ${
+                className={`bg-white/5 backdrop-blur-sm rounded-2xl border transition-all duration-300 overflow-hidden ${(event as any).status === 'completed' ? 'opacity-60' : ''} ${
                   event.type === 'open' 
                     ? 'border-[#7dd87d]/50 ring-2 ring-[#7dd87d]/20' 
                     : 'border-[#7dd87d]/20 hover:border-[#7dd87d]/40'
                 }`}
               >
                 <button
-                  onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                  onClick={() => setExpandedEvent(effectiveExpanded === event.id ? null : event.id)}
                   className="w-full p-6 text-left"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -589,11 +628,15 @@ export default function Schedule() {
                       <div className="flex flex-wrap items-center gap-4 mt-2 text-white/60">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          {event.date === 'TBD' ? 'Date TBD' : formatDate(event.date)}
+                          {(event as any).startTime
+                            ? new Date((event as any).startTime).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                            : (event as any).date === 'TBD' ? 'Date TBD' : formatDate((event as any).date)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
-                          {event.time === 'TBD' ? 'Time TBD' : `${event.time} ${event.timezone}`}
+                          {(event as any).startTime
+                            ? `${new Date((event as any).startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ${(event as any).timezone ?? 'UTC'}`
+                            : (event as any).time === 'TBD' ? 'Time TBD' : `${(event as any).time} ${(event as any).timezone}`}
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
@@ -603,7 +646,7 @@ export default function Schedule() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      {expandedEvent === event.id ? (
+                      {effectiveExpanded === event.id ? (
                         <ChevronUp className="w-5 h-5 text-[#7dd87d]" />
                       ) : (
                         <ChevronDown className="w-5 h-5 text-white/50" />
@@ -612,7 +655,7 @@ export default function Schedule() {
                   </div>
                 </button>
                 
-                {expandedEvent === event.id && (
+                {effectiveExpanded === event.id && (
                   <div className="px-6 pb-6 pt-0 border-t border-white/10">
                     <p className="text-white/70 mb-6 mt-4">{event.description}</p>
                     
@@ -650,8 +693,34 @@ export default function Schedule() {
                         </a>
                       )}
                       
+                      {/* Watch Recording (shows once recording is linked) */}
+                      {(event as any).youtubeUrl && (event as any).status === 'completed' && (
+                        <a
+                          href={(event as any).youtubeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                        >
+                          <Video className="w-5 h-5" />
+                          Watch Recording
+                        </a>
+                      )}
+
+                      {/* Riverside room link */}
+                      {(event as any).riversideRoomUrl && (event as any).status !== 'completed' && (
+                        <a
+                          href={(event as any).riversideRoomUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                        >
+                          <Video className="w-5 h-5" />
+                          Join Riverside
+                        </a>
+                      )}
+
                       <a
-                        href={ZOOM_INFO.link}
+                        href={(event as any).zoomUrl ?? ZOOM_INFO.link}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 bg-[#2D8CFF] hover:bg-[#2681eb] text-white px-4 py-2 rounded-xl font-medium transition-colors"

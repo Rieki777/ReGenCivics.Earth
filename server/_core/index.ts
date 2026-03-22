@@ -293,6 +293,77 @@ async function startServer() {
   registerResendWebhookRoutes(app);
   // Riverside recording webhook
   registerRiversideWebhookRoutes(app);
+
+  // ── Event reminder cron endpoint ────────────────────────────────────────────
+  // Called hourly by Railway cron: POST /api/cron/event-reminders
+  // Finds events starting in 20–28 hours, sends reminder to all event_signups.
+  // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
+  app.post("/api/cron/event-reminders", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (secret) {
+      const auth = req.headers.authorization;
+      if (!auth || auth !== `Bearer ${secret}`) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+    }
+    try {
+      const { getDb } = await import("../db");
+      const { events: eventsTable, eventSignups: signupsTable } = await import("../../drizzle/schema");
+      const { sendEmail: sendResend, APP_BASE_URL: appUrl } = await import("./email");
+      const { gte: dbGte, lte: dbLte, eq: dbEq, and: dbAnd } = await import("drizzle-orm");
+
+      const database = await getDb();
+      if (!database) return res.json({ skipped: true, reason: "no db" });
+
+      const now = new Date();
+      const windowStart = new Date(now.getTime() + 20 * 60 * 60 * 1000); // 20h from now
+      const windowEnd = new Date(now.getTime() + 28 * 60 * 60 * 1000);   // 28h from now
+
+      // Find upcoming events in the reminder window that haven't been reminded yet
+      const upcomingEvents = await database
+        .select()
+        .from(eventsTable)
+        .where(
+          dbAnd(
+            dbGte(eventsTable.startTime, windowStart),
+            dbLte(eventsTable.startTime, windowEnd),
+            dbEq(eventsTable.reminderSent, 0),
+            dbEq(eventsTable.status, "upcoming")
+          )
+        );
+
+      let totalSent = 0;
+      for (const event of upcomingEvents) {
+        const signups = await database
+          .select()
+          .from(signupsTable)
+          .where(dbEq(signupsTable.eventId, event.id));
+        if (!signups.length) {
+          await database.update(eventsTable).set({ reminderSent: 1 }).where(dbEq(eventsTable.id, event.id));
+          continue;
+        }
+
+        const dateStr = event.startTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+        const timeStr = event.startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+        const zoomUrl = event.zoomUrl ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
+        const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"><div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;"><h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1><p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Happening tomorrow</p></div><div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;"><h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2><p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>${event.description ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${event.description}</p>` : ""}<a href="${zoomUrl}" style="display:inline-block;background:#2d8cff;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Join on Zoom</a></div><div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;"><p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/><a href="${appUrl}/schedule" style="color:#7dd87d;">View all events</a></p></div></div>`;
+
+        const emails = signups.map(s => s.email);
+        const BATCH = 50;
+        for (let i = 0; i < emails.length; i += BATCH) {
+          await sendResend({ to: emails.slice(i, i + BATCH), subject: `Tomorrow: ${event.title}`, html, template: "event_reminder" });
+          totalSent += Math.min(BATCH, emails.length - i);
+        }
+        await database.update(eventsTable).set({ reminderSent: 1 }).where(dbEq(eventsTable.id, event.id));
+      }
+
+      res.json({ ok: true, eventsProcessed: upcomingEvents.length, remindersSent: totalSent });
+    } catch (err: any) {
+      console.error("[cron/event-reminders]", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Admin Buffer + Farcaster routes
   app.use('/api/admin/buffer', bufferRouter);
   app.use('/api/admin/farcaster', farcasterRouter);

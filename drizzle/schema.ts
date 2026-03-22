@@ -1904,3 +1904,73 @@ export const recordings = mysqlTable("recordings", {
 
 export type Recording = typeof recordings.$inferSelect;
 export type InsertRecording = typeof recordings.$inferInsert;
+
+/**
+ * Events table
+ * Stores scheduled community sessions, incubator episodes, and special events.
+ * This is the source of truth for the Schedule page.
+ */
+export const events = mysqlTable("events", {
+  id: int("id").autoincrement().primaryKey(),
+
+  // Content
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  type: mysqlEnum("type", ["open", "episode", "special"]).default("open").notNull(),
+
+  // Timing (stored in UTC)
+  startTime: timestamp("startTime").notNull(),
+  endTime: timestamp("endTime"),
+
+  // Display hint for the UI (e.g., "EST", "EDT")
+  timezone: varchar("timezone", { length: 10 }).default("UTC"),
+
+  // Links
+  zoomUrl: varchar("zoomUrl", { length: 512 }),
+  riversideRoomUrl: varchar("riversideRoomUrl", { length: 512 }),
+  youtubeUrl: varchar("youtubeUrl", { length: 512 }), // livestream or premiere
+
+  // Linked recording once session is done
+  recordingId: int("recordingId"),
+
+  // Status lifecycle
+  status: mysqlEnum("status", ["upcoming", "live", "completed", "cancelled"]).default("upcoming").notNull(),
+
+  // Season info
+  season: varchar("season", { length: 50 }),
+  episodeNumber: int("episodeNumber"),
+
+  // Reminder tracking
+  reminderSent: tinyint("reminderSent").default(0).notNull(), // 1 once 24h reminder has been sent
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("events_type_idx").on(table.type),
+  index("events_startTime_idx").on(table.startTime),
+  index("events_status_idx").on(table.status),
+  index("events_season_idx").on(table.season),
+]));
+
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = typeof events.$inferInsert;
+
+/**
+ * Event Signups table
+ * Per-event reminder subscribers. Separate from newsletter subscribers.
+ * Unique per (eventId, email) — no double-signups.
+ */
+export const eventSignups = mysqlTable("event_signups", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("eventSignups_eventId_email_unique").on(table.eventId, table.email),
+  index("eventSignups_eventId_idx").on(table.eventId),
+  index("eventSignups_email_idx").on(table.email),
+]));
+
+export type EventSignup = typeof eventSignups.$inferSelect;
+export type InsertEventSignup = typeof eventSignups.$inferInsert;
