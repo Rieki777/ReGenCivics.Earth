@@ -331,7 +331,17 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
   }
 
   // ── 3. Send email summary (once per recording) ─────────────────────────────
-  if (!recording.emailSent && (youtubeUrl || riversideUrl)) {
+  // Guard: skip if the recording is older than 72 hours — prevents Zapier test
+  // runs (which use real but old sample video data) from firing real emails.
+  const publishedDate = recording.sessionDate instanceof Date ? recording.sessionDate : null;
+  const ageHours = publishedDate ? (Date.now() - publishedDate.getTime()) / 3600000 : 0;
+  const isFreshEnough = !publishedDate || ageHours <= 72;
+
+  if (!isFreshEnough) {
+    console.log(`[riverside-webhook] Recording is ${Math.round(ageHours)}h old — skipping email (likely Zapier test data)`);
+  }
+
+  if (!recording.emailSent && (youtubeUrl || riversideUrl) && isFreshEnough) {
     try {
       await sendRecordingEmail(recording);
       await database.update(recordings)
@@ -446,19 +456,17 @@ async function sendRecordingEmail(recording: {
     forumUrl,
   });
 
-  // Send in batches of 50 to stay within Resend limits
+  // Send individually so recipients cannot see each other's addresses
   const emails = subscribers.map((s) => s.email);
-  const BATCH = 50;
-  for (let i = 0; i < emails.length; i += BATCH) {
-    const batch = emails.slice(i, i + BATCH);
+  for (const email of emails) {
     await sendEmail({
-      to: batch,
+      to: email,
       subject: `Recording ready: ${recording.title}`,
       html,
       template: "recording_summary",
     });
-    console.log(`[riverside-webhook] Sent email batch ${Math.floor(i / BATCH) + 1} (${batch.length} recipients)`);
   }
+  console.log(`[riverside-webhook] Sent recording email to ${emails.length} subscriber(s)`);
 }
 
 // Need express for the raw body parser in the route handler
