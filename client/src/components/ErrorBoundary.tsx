@@ -64,6 +64,12 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error: Error, errorInfo: { componentStack?: string | null }) {
+    // Log to console so we can diagnose production crashes
+    console.error("[ErrorBoundary] Caught error:", error?.message || error);
+    console.error("[ErrorBoundary] Component stack:", errorInfo?.componentStack);
+  }
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
