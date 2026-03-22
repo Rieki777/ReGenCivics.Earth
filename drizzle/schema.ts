@@ -1862,3 +1862,45 @@ export const directMessages = mysqlTable('directMessages', {
 ]));
 export type DirectMessage = typeof directMessages.$inferSelect;
 
+
+
+/**
+ * Recordings table
+ * Stores Riverside.fm recording metadata received via webhook
+ */
+export const recordings = mysqlTable("recordings", {
+  id: int("id").autoincrement().primaryKey(),
+
+  // Riverside identifiers
+  riversideId: varchar("riversideId", { length: 255 }).notNull().unique(),
+  riversideUrl: varchar("riversideUrl", { length: 512 }),
+
+  // Content
+  title: varchar("title", { length: 255 }).notNull(),
+  sessionDate: timestamp("sessionDate"),
+  durationSeconds: int("durationSeconds"),
+  youtubeUrl: varchar("youtubeUrl", { length: 512 }),
+  thumbnailUrl: varchar("thumbnailUrl", { length: 512 }),
+
+  // AI-generated content (may arrive via second webhook after transcription)
+  transcript: text("transcript"),
+  aiSummary: text("aiSummary"),
+
+  // Admin controls
+  emailSent: tinyint("emailSent").default(0).notNull(),  // 1 once summary email has been sent
+  forumPostId: int("forumPostId"),                        // linked forum post if created
+  featured: tinyint("featured").default(0).notNull(),    // pin to top of recordings list
+
+  // Raw webhook payload for debugging
+  rawWebhook: json("rawWebhook"),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("recordings_riversideId_idx").on(table.riversideId),
+  index("recordings_sessionDate_idx").on(table.sessionDate),
+  index("recordings_featured_idx").on(table.featured),
+]));
+
+export type Recording = typeof recordings.$inferSelect;
+export type InsertRecording = typeof recordings.$inferInsert;

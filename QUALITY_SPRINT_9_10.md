@@ -1758,27 +1758,36 @@ The `globeImageUrl` getter (or an object it references) is being accessed before
 
 ## Fix 158: Live Google Calendar Subscription
 
-**Status: BLOCKED on Rye**
+**Status: DONE (2026-03-21)**
 
-**What:** Replace the static .ics download "Subscribe to All Events" button with a live webcal:// subscription link. This means all subscribers auto-get new/updated events without re-downloading.
+**What:** Live webcal:// subscription replaces the static .ics-only approach. Rye created the public "ReGen Civics Events" Google Calendar.
 
-**The gap:** No dedicated public "ReGen Civics Events" Google Calendar exists yet. The subscribe button currently offers a static .ics download only.
+**Calendar ID:** `63ce71cca81ab47fb9986b4bc1dd379eba3da72ecc93a9b8424c5c49812fa69f@group.calendar.google.com`
 
-**Steps:**
-1. [HUMAN] Rye creates a dedicated Google Calendar named "ReGen Civics Events"
-2. [HUMAN] Makes it public: Settings > "Access permissions for events" > "Make available to public"
-3. [HUMAN] Gets the calendar ID from "Integrate calendar" section (looks like `...@group.calendar.google.com`)
-4. [HUMAN] Shares the calendar ID with Claude
-5. [CLAUDE] Update Schedule.tsx "All Events" card to add a webcal:// subscription button alongside the .ics download
-6. [CLAUDE] Update the ics file strategy: add new events to the Google Calendar; the .ics is a backup
+**Wired in Schedule.tsx:**
+- "Subscribe (Google)" button: links to `https://calendar.google.com/calendar/u/0?cid=...` — adds to Google Calendar with live sync
+- "Apple/Outlook (live)" button: uses `webcal://calendar.google.com/calendar/ical/...` — auto-updates in any calendar app
+- "Snapshot .ics" small fallback download kept for compatibility
 
-**Why it matters:** Every time a new event is added, subscribed users see it automatically. The current .ics download is a one-time snapshot.
+**Going forward:** Add new events to the Google Calendar directly and they'll appear for all subscribers automatically. The .ics file in `client/public/` is a static backup only.
 
 ---
 
 ## Fix 159: Riverside.fm + YouTube Live Streaming Workflow
 
-**Status: PLANNING (2026-03-21)**
+**Status: PARTIALLY DONE (2026-03-21) — backend built, Rye to complete Riverside setup**
+
+**Code built:**
+- `server/webhooks/riverside.ts` — receives Riverside recording-complete webhook, stores to DB, creates forum post, sends Resend email to all active subscribers
+- `server/routes/recordings.ts` — admin tRPC router: list, update, sendEmail, delete
+- `drizzle/0075_recordings.sql` — recordings table migration
+- `drizzle/schema.ts` — `recordings` table added
+- `server/_core/index.ts` — webhook route registered
+- `server/routers.ts` — recordings router registered
+- `client/src/pages/Admin.tsx` — AdminRecordingsTab component (list, edit YouTube URL/summary, send email, feature, delete)
+- `client/src/components/admin/AdminSidebar.tsx` — Recordings nav item added
+
+**Webhook URL for Riverside:** `https://regencivics.earth/api/webhooks/riverside`
 
 **What:** Set up a complete recording, transcription, and distribution pipeline for ReGen Civics episodes and community sessions.
 
@@ -1881,7 +1890,9 @@ Reuse existing forum: create a forum post per episode in a new "episodes" catego
 | **Prerender.io account** | Fix 155 Step 4 | Sign up at prerender.io, get token, set `PRERENDER_TOKEN=<token>` in Railway. |
 | **Prerender cache warm** | Fix 155 Step 5 | Submit main public pages to prerender.io cache after deploy. |
 | **Apply DB migration** | Fix 156 Step 6 | Run `0070_forum_link_previews.sql` in Railway (not urgent). |
-| **Create Google Calendar** | Fix 158 Step 1-4 | Create "ReGen Civics Events" calendar, make public, share calendar ID with Claude |
-| **Riverside.fm setup** | Fix 159 Steps 1-5 | Sign up/log in, connect YouTube, enable live streaming per room |
-| **YouTube channel** | Fix 159 Step 3 | Create/confirm ReGen Civics YouTube channel |
-| **Zapier setup** | Fix 159 Step 5 | Connect Riverside "Recording Ready" trigger to email/webhook action |
+| ~~**Create Google Calendar**~~ | Fix 158 | ~~Create "ReGen Civics Events" calendar~~ — DONE, calendar ID wired in |
+| **Apply DB migration** | Fix 159 | Run `0075_recordings.sql` in Railway |
+| **Set env var** | Fix 159 | Set `RIVERSIDE_WEBHOOK_SECRET` in Railway (get value from Riverside dashboard → Settings → Integrations → Webhooks) |
+| **Riverside webhook** | Fix 159 | In Riverside: Settings → Integrations → Webhooks → add `https://regencivics.earth/api/webhooks/riverside` |
+| **YouTube Live** | Fix 159 Step 2 | Enable YouTube Live per recording room in Riverside pre-recording screen |
+| **YouTube channel** | Fix 159 Step 3 | Confirm ReGen Civics YouTube channel has livestreaming enabled |

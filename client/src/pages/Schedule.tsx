@@ -360,7 +360,7 @@ export default function Schedule() {
                   Google Calendar
                 </a>
                 <a
-                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260321T160000Z%0ADTEND:20260321T180000Z%0ARRULE:FREQ=WEEKLY;COUNT=13%0ASUMMARY:ReGen+Civics+Season+2+Session%0ADESCRIPTION:Weekly+ReGen+Civics+Season+2+Incubator+session+(11AM-1PM+EST).%5Cn%5CnZoom:+https://us06web.zoom.us/j/5776315796%5CnMeeting+ID:+577+631+5796%5CnPasscode:+333%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Zoom%0AEND:VEVENT%0AEND:VCALENDAR"
+                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260926T150000Z%0ADTEND:20260926T170000Z%0ARRULE:FREQ=WEEKLY;COUNT=13%0ASUMMARY:ReGen+Civics+Season+2+Episode%0ADESCRIPTION:Weekly+ReGen+Civics+Season+2+Incubator+episode+(11AM-1PM+EST).%5Cn%5CnZoom:+https://us06web.zoom.us/j/5776315796%5CnMeeting+ID:+577+631+5796%5CnPasscode:+333%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Zoom%0AEND:VEVENT%0AEND:VCALENDAR"
                   download="regen-civics-season-2.ics"
                   className="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm"
                 >
@@ -380,20 +380,41 @@ export default function Schedule() {
                 </div>
                 <h3 className="text-lg font-bold text-white">All Events</h3>
               </div>
-              <p className="text-white/60 text-sm mb-4">Every event — Open Session, Launch Party, and all 13 Season 2 episodes in one download</p>
+              <p className="text-white/60 text-sm mb-4">Subscribe and new events appear automatically — no re-downloading</p>
               <div className="flex flex-wrap gap-2">
+                <a
+                  href="https://calendar.google.com/calendar/u/0?cid=63ce71cca81ab47fb9986b4bc1dd379eba3da72ecc93a9b8424c5c49812fa69f%40group.calendar.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285F4"/>
+                    <path d="M12 8V16M8 12H16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  Subscribe (Google)
+                </a>
+                <a
+                  href="webcal://calendar.google.com/calendar/ical/63ce71cca81ab47fb9986b4bc1dd379eba3da72ecc93a9b8424c5c49812fa69f%40group.calendar.google.com/public/basic.ics"
+                  className="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17 3H7C5.9 3 5 3.9 5 5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V5C19 3.9 18.1 3 17 3ZM12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18ZM15 14H9V6H15V14Z"/>
+                  </svg>
+                  Apple/Outlook (live)
+                </a>
                 <a
                   href="/regen-civics-all-events.ics"
                   download="regen-civics-all-events.ics"
-                  className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-800 px-4 py-2 rounded-xl font-medium transition-colors text-sm"
+                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white/60 hover:text-white px-3 py-2 rounded-xl font-medium transition-colors text-xs border border-white/10"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                   </svg>
-                  Download All (.ics)
+                  Snapshot .ics
                 </a>
               </div>
-              <p className="text-white/30 text-xs mt-3">Works with Apple Calendar, Google Calendar, Outlook, and any calendar app</p>
+              <p className="text-white/30 text-xs mt-3">Live subscription updates automatically as new events are added</p>
             </div>
 
             {/* Add Next Event */}

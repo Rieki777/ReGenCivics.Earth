@@ -23,6 +23,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
+import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
 import { registerImageOptimization } from "../routes/global";
@@ -290,6 +291,8 @@ async function startServer() {
   registerTrackingRoutes(app);
   // Resend webhook routes
   registerResendWebhookRoutes(app);
+  // Riverside recording webhook
+  registerRiversideWebhookRoutes(app);
   // Admin Buffer + Farcaster routes
   app.use('/api/admin/buffer', bufferRouter);
   app.use('/api/admin/farcaster', farcasterRouter);

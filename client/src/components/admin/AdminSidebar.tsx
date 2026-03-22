@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Building2, Handshake, UserCheck,
   TrendingUp, FileText, Globe2, Shield, Megaphone, Search,
   BarChart3, Image, Gamepad2, Settings, ChevronLeft, ChevronRight,
-  ScrollText, Wallet, Map, ClipboardList
+  ScrollText, Wallet, Map, ClipboardList, Video
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -31,6 +31,7 @@ const NAV_GROUPS = [
       { id: 'quests', label: 'Quests', icon: ScrollText },
       { id: 'newsletter', label: 'Newsletter', icon: Megaphone },
       { id: 'broadcast', label: 'Broadcast', icon: Search },
+      { id: 'recordings', label: 'Recordings', icon: Video },
     ]
   },
   {

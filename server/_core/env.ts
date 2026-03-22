@@ -52,4 +52,6 @@ export const ENV = {
   bufferAccessToken: process.env.BUFFER_ACCESS_TOKEN ?? "",
   // Farcaster
   farcasterHandle: process.env.FARCASTER_HANDLE ?? "",
+  // Riverside.fm webhook signing secret
+  riversideWebhookSecret: process.env.RIVERSIDE_WEBHOOK_SECRET ?? "",
 };
