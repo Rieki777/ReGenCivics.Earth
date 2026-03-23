@@ -166,6 +166,7 @@ function Router() {
       <Route path={"/loi"}><EB><LOI /></EB></Route>
       <Route path={"/404"}><EB><NotFound /></EB></Route>
       <Route path={"/investmentform"}>{() => { window.location.replace('/investor'); return null; }}</Route>
+      <Route path={"/investor-form"}>{() => { window.location.replace('/investor'); return null; }}</Route>
       <Route path={"/socials"}><EB><Socials /></EB></Route>
       <Route path={"/seasons"}><EB><Seasons /></EB></Route>
       <Route path={"/schedule"}><EB><Schedule /></EB></Route>
