@@ -57,7 +57,7 @@ export default function CommunityGuidelines() {
 
       <div
         style={{
-          minHeight: "100vh",
+          minHeight: "100dvh",
           background: "#f8faf8",
           padding: "40px 20px 80px",
         }}

@@ -35,6 +35,17 @@ import { JsonLD, schemas } from "@/components/JsonLD";
 import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { LazyImage } from "@/components/LazyImage";
+import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
+
+const FUND_SECTIONS: TocSection[] = [
+  { id: 'fund-dashboard', title: 'Dashboard' },
+  { id: 'fund-opportunity', title: 'The Opportunity' },
+  { id: 'fund-how-it-works', title: 'How It Works' },
+  { id: 'fund-overview', title: 'Fund Overview' },
+  { id: 'fund-finance-future', title: 'Finance the Future' },
+  { id: 'fund-journey', title: 'Investor Journey' },
+  { id: 'fund-cta', title: 'Get Started' },
+];
 import InvestorJourney from "@/components/InvestorJourney";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -149,6 +160,8 @@ export default function Fund() {
         { question: "What types of land projects does the fund support?", answer: "The fund backs early-stage and mature regenerative land projects including ecovillages, food forests, regenerative farms, and intentional communities with demonstrated community engagement." },
       ])} />
 
+      <MobileTableOfContents sections={FUND_SECTIONS} fallbackTitle="Fund" />
+
       {/* Fund Status Banner */}
       <div className="bg-gradient-to-r from-[#d4a574] via-[#ffd700] to-[#d4a574] border-b-2 border-[#ffd700]/50 shadow-[0_4px_15px_rgba(255,215,0,0.3)]">
         <div className="container mx-auto px-4 py-3">
@@ -225,7 +238,7 @@ export default function Fund() {
       </section>
 
       {/* Investor Dashboard */}
-      <section className="py-12 md:py-16 px-4">
+      <section id="fund-dashboard" className="py-12 md:py-16 px-4">
         <div className="max-w-5xl mx-auto">
           <AnimatedSection animation="slide-up">
             <TreasuryDashboard />
@@ -234,7 +247,7 @@ export default function Fund() {
       </section>
 
       {/* The Opportunity */}
-      <section className="py-12 md:py-20 px-4">
+      <section id="fund-opportunity" className="py-12 md:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up">
             <h2
@@ -325,7 +338,7 @@ export default function Fund() {
       </section>
 
       {/* How It Works */}
-      <section className="py-12 md:py-20 px-4">
+      <section id="fund-how-it-works" className="py-12 md:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up">
             <h2
@@ -444,7 +457,7 @@ export default function Fund() {
       </section>
 
       {/* Fund Overview Video - Coming Soon */}
-      <section className="py-12 md:py-16 px-4">
+      <section id="fund-overview" className="py-12 md:py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <AnimatedSection animation="scale-in">
             <h2
@@ -465,7 +478,7 @@ export default function Fund() {
       </section>
 
       {/* Finance the Future of Our Planet */}
-      <section className="py-12 md:py-20 px-4">
+      <section id="fund-finance-future" className="py-12 md:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up">
             <h2
@@ -604,10 +617,12 @@ export default function Fund() {
       </section>
 
       {/* Investor Journey Quest */}
-      <InvestorJourney />
+      <div id="fund-journey">
+        <InvestorJourney />
+      </div>
 
       {/* Bottom CTA */}
-      <section className="py-16 md:py-24 px-4">
+      <section id="fund-cta" className="py-16 md:py-24 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <AnimatedSection animation="scale-in">
             <div className="glass-panel p-8 md:p-12 border-amber-400/20">

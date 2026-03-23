@@ -288,7 +288,7 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
         <Button
           variant="ghost"
           onClick={onShowFullPage}
-          className="text-white/60 hover:text-white hover:bg-white/10 text-sm group"
+          className="text-white/80 hover:text-white hover:bg-white/10 text-sm font-medium group"
         >
           <ChevronDown className="w-4 h-4 mr-1 group-hover:translate-y-0.5 transition-transform" />
           View Full Landing Page

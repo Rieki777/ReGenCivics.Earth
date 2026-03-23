@@ -117,6 +117,7 @@ export default function KnowledgeMapAdminPanel() {
                   onClick={() => deleteMut.mutate({ id: entry.id })}
                   className="p-1.5 rounded-md bg-red-900/30 hover:bg-red-800/60 text-red-400 transition-colors"
                   title="Delete"
+                  aria-label="Delete entry"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

@@ -170,35 +170,35 @@ export const pageSEO = {
     title: 'Connect With Us | ReGen Civics',
     description: 'Get in touch with the ReGen Civics team. Whether you\'re an investor, land project, alliance partner, or player -- we want to hear from you.',
     keywords: 'contact regenerative fund, impact investing contact, regenerative community, partnership inquiry',
-    image: '/og/connect.webp',
+    image: 'https://regencivics.earth/og/connect.webp',
     url: '/connect'
   },
   map: {
     title: 'Global Project Map | ReGen Civics',
     description: 'Land projects, alliance orgs, and players mapped across the world. See where regeneration is happening right now.',
     keywords: 'regenerative projects map, ecovillage locations, sustainable communities, global regeneration, land project directory',
-    image: '/og/map.webp',
+    image: 'https://regencivics.earth/og/map.webp',
     url: '/map'
   },
   fund: {
     title: 'The ReGen Civics Fund | Regenerative Land Investment',
     description: 'ReGen Civics runs a venture fund for regenerative land projects. Real land, diversified portfolio, community governed. Season 3 opens in 2026.',
     keywords: 'regenerative fund, land investment, impact fund, regenerative capital, crowd-pooling, land project funding',
-    image: '/og/fund.webp',
+    image: 'https://regencivics.earth/og/fund.webp',
     url: '/fund'
   },
   crowdPooling: {
     title: 'Crowd Pooling Tool | ReGen Civics',
     description: 'Pool capital with aligned investors to fund regenerative land projects. Coordinated impact, land-backed, and community governed.',
     keywords: 'crowd pooling, regenerative investing, pool capital, land project funding, collaborative investment',
-    image: '/og/crowd-pooling.webp',
+    image: 'https://regencivics.earth/og/crowd-pooling.webp',
     url: '/crowd-pooling'
   },
   crowdPoolingProjects: {
     title: 'Land Project Campaigns | ReGen Civics Crowd Pooling',
     description: 'Browse active crowd pooling campaigns from regenerative land projects. Find projects aligned with your values and contribute directly.',
     keywords: 'land project campaigns, crowd pooling projects, regenerative investment campaigns, ecovillage funding',
-    image: '/og/crowd-pooling.webp',
+    image: 'https://regencivics.earth/og/crowd-pooling.webp',
     url: '/crowd-pooling-projects'
   },
   riskDisclosure: {
@@ -240,7 +240,7 @@ export const pageSEO = {
     title: 'Community Forum | ReGen Civics',
     description: 'The ReGen Civics forum. Where players, investors, land stewards, and builders connect, coordinate, and tell the truth.',
     keywords: 'regenerative community forum, impact investing discussion, ecovillage community, regenerative economy discussion, land project forum',
-    image: '/og/community.webp',
+    image: 'https://regencivics.earth/og/community.webp',
     url: '/community'
   },
   land: {

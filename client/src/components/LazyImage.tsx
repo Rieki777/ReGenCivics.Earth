@@ -46,6 +46,7 @@ export function LazyImage({ src, alt, className = "", aspect, placeholder, style
         style={style}
         loading="lazy"
         onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
         {...rest}
       />
     </span>

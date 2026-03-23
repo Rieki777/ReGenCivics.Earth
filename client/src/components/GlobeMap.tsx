@@ -907,19 +907,33 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           .atmosphereAltitude(0.25)
           .pointOfView({ lat: 20, lng: 0, altitude: 2.5 });
 
-        // Set size
-        globe.width(targetEl.clientWidth);
-        globe.height(targetEl.clientHeight);
+        // Set size - use fallback if container hasn't laid out yet
+        const w = targetEl.clientWidth || targetEl.offsetWidth || 400;
+        const h = targetEl.clientHeight || targetEl.offsetHeight || 300;
+        globe.width(w);
+        globe.height(h);
 
         globeInstanceRef.current = globe;
         setGlobeReady(true);
+
+        // Re-measure after layout settles in case initial read was 0
+        requestAnimationFrame(() => {
+          if (targetEl && globeInstanceRef.current) {
+            const realW = targetEl.clientWidth;
+            const realH = targetEl.clientHeight;
+            if (realW && realH && (realW !== w || realH !== h)) {
+              globeInstanceRef.current.width(realW);
+              globeInstanceRef.current.height(realH);
+            }
+          }
+        });
       } catch (err) {
         console.error("Failed to initialize globe:", err);
       }
     };
 
     // Small delay to ensure DOM is ready
-    const timer = setTimeout(initGlobe, 100);
+    const timer = setTimeout(initGlobe, 150);
 
     return () => {
       mounted = false;
@@ -1209,7 +1223,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
 
   // Mobile-first: on small screens, globe and cards stack vertically
   // On desktop (md+), use the overlay sidebar layout
-  const globeHeight = fullPage ? "calc(100vh - 64px)" : "500px";
+  const globeHeight = fullPage ? "calc(100dvh - 64px)" : "500px";
   const mobileGlobeHeight = fullPage ? "50vh" : "300px";
 
   // WebGL fallback: render accessible table when WebGL is unavailable
@@ -1298,7 +1312,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
   return (
     <div className={fullPage ? "min-h-screen bg-[#0a1f14]" : ""}>
       {/* Desktop layout: globe with overlay sidebar */}
-      <div className="hidden md:block relative w-full" style={{ minHeight: fullPage ? "calc(100vh - 64px)" : "600px" }}>
+      <div className="hidden md:block relative w-full" style={{ minHeight: fullPage ? "calc(100dvh - 64px)" : "600px" }}>
         {/* Globe Container */}
         <div
           ref={globeRef}

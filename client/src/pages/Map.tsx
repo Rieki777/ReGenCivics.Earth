@@ -12,7 +12,7 @@ function GlobePlaceholder() {
   return (
     <div
       className="w-full bg-[#0a1f14] flex items-center justify-center"
-      style={{ minHeight: "calc(100vh - 64px)" }}
+      style={{ minHeight: "calc(100dvh - 64px)" }}
       role="status"
       aria-label="Loading the globe"
     >

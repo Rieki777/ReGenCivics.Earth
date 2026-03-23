@@ -188,7 +188,7 @@ export default function MemberDirectory() {
 
       <div
         style={{
-          minHeight: "100vh",
+          minHeight: "100dvh",
           background: "linear-gradient(to bottom, #1a472a, #2d5a3d, #1a472a)",
           padding: "0 0 60px",
         }}

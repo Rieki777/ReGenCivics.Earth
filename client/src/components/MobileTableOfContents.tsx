@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react';
 import { ChevronUp, Compass, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useThrottledScroll } from '@/hooks/useThrottledScroll';
 
-interface Section {
+export interface TocSection {
   id: string;
   title: string;
 }
 
-const SECTIONS: Section[] = [
+// Default sections for the Opportunity page (backward compat)
+const OPPORTUNITY_SECTIONS: TocSection[] = [
   { id: 'what-is-alliance', title: 'What Is The Alliance?' },
   { id: 'fund-snapshot', title: 'Fund Snapshot' },
   { id: 'governance', title: 'Why On-Chain Governance?' },
@@ -28,7 +28,12 @@ const SECTIONS: Section[] = [
   { id: 'vision-2040', title: 'The Vision: 2040' },
 ];
 
-export function MobileTableOfContents() {
+interface MobileTableOfContentsProps {
+  sections?: TocSection[];
+  fallbackTitle?: string;
+}
+
+export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbackTitle = 'Sections' }: MobileTableOfContentsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string>('');
 
@@ -36,11 +41,10 @@ export function MobileTableOfContents() {
   const handleScroll = useCallback(() => {
     let activeSection = '';
 
-    for (const section of SECTIONS) {
+    for (const section of sections) {
       const element = document.getElementById(section.id);
       if (element) {
         const rect = element.getBoundingClientRect();
-        // If section is in viewport (top half), mark as active
         if (rect.top < window.innerHeight / 2) {
           activeSection = section.id;
         }
@@ -48,7 +52,7 @@ export function MobileTableOfContents() {
     }
 
     setCurrentSection(activeSection);
-  }, []);
+  }, [sections]);
 
   useThrottledScroll(handleScroll);
 
@@ -60,7 +64,7 @@ export function MobileTableOfContents() {
     }
   };
 
-  const currentSectionTitle = SECTIONS.find(s => s.id === currentSection)?.title || 'Opportunity';
+  const currentSectionTitle = sections.find(s => s.id === currentSection)?.title || fallbackTitle;
 
   return (
     <>
@@ -79,7 +83,7 @@ export function MobileTableOfContents() {
       {/* Floating Action Button - Mobile Only */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 md:hidden w-14 h-14 rounded-full bg-[#7dd87d] hover:bg-[#5fc85f] text-[#1a472a] shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+        className="fixed bottom-20 md:bottom-6 right-6 z-40 md:hidden w-14 h-14 rounded-full bg-[#7dd87d] hover:bg-[#5fc85f] text-[#1a472a] shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
         aria-label="Jump to section"
       >
         <Compass className="w-6 h-6" />
@@ -109,7 +113,7 @@ export function MobileTableOfContents() {
 
             {/* Section List */}
             <div className="px-4 py-3 space-y-2 pb-8">
-              {SECTIONS.map((section) => (
+              {sections.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => handleSectionClick(section.id)}

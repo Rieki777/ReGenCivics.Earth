@@ -87,6 +87,7 @@ export function ShareButtons({
               className="p-2 h-10 hover:bg-[#1DA1F2]/10 hover:border-[#1DA1F2]"
               onClick={() => openShareWindow(shareLinks.twitter)}
               title="Share on Twitter"
+              aria-label="Share on Twitter"
             >
               <Twitter className="w-4 h-4 text-[#1DA1F2]" />
             </Button>
@@ -96,6 +97,7 @@ export function ShareButtons({
               className="p-2 h-10 hover:bg-[#4267B2]/10 hover:border-[#4267B2]"
               onClick={() => openShareWindow(shareLinks.facebook)}
               title="Share on Facebook"
+              aria-label="Share on Facebook"
             >
               <Facebook className="w-4 h-4 text-[#4267B2]" />
             </Button>
@@ -105,6 +107,7 @@ export function ShareButtons({
               className="p-2 h-10 hover:bg-[#0A66C2]/10 hover:border-[#0A66C2]"
               onClick={() => openShareWindow(shareLinks.linkedin)}
               title="Share on LinkedIn"
+              aria-label="Share on LinkedIn"
             >
               <Linkedin className="w-4 h-4 text-[#0A66C2]" />
             </Button>
@@ -114,6 +117,7 @@ export function ShareButtons({
               className="p-2 h-10 hover:bg-gray-100"
               onClick={() => window.location.href = shareLinks.email}
               title="Share via Email"
+              aria-label="Share via Email"
             >
               <Mail className="w-4 h-4 text-gray-600" />
             </Button>

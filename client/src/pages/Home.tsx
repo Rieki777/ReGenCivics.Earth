@@ -328,7 +328,7 @@ export default function Home() {
                       >
                         {card.title}
                       </h3>
-                      <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">
+                      <p className="text-white/80 text-xs font-bold uppercase tracking-wider mb-3">
                         {card.tagline}
                       </p>
                       <p className="text-white/70 text-sm mb-4 leading-relaxed">

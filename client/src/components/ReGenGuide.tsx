@@ -134,7 +134,7 @@ export default function ReGenGuide() {
     <>
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-2 left-2 sm:right-auto sm:left-4 z-[9999] sm:w-[380px] max-h-[60vh] sm:max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-[#7dd87d]/30 bg-[#0a2314]">
+        <div className="fixed bottom-[8.5rem] md:bottom-20 right-2 left-2 sm:right-auto sm:left-4 z-[9999] sm:w-[380px] max-h-[50vh] sm:max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-[#7dd87d]/30 bg-[#0a2314]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] border-b border-[#7dd87d]/20">
             <div className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function ReGenGuide() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 left-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all duration-200 font-medium text-sm btn-press
+        className={`fixed bottom-20 md:bottom-6 left-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all duration-200 font-medium text-sm btn-press
           ${
             isOpen
               ? "bg-[#1a472a] border border-[#7dd87d]/40 text-[#7dd87d]/60 hover:text-[#7dd87d]"

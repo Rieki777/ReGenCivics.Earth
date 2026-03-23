@@ -125,7 +125,7 @@ function FundStatusBanner() {
 function CollapsibleSection({
   title,
   children,
-  defaultOpen = false,
+  defaultOpen = true,
   icon: Icon,
   id
 }: {

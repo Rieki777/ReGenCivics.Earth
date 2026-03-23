@@ -109,8 +109,9 @@ export function SocialLinks({
               href={social.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`${colors.text} transition-all duration-200 hover:scale-110`}
+              className={`${colors.text} transition-all duration-200 hover:scale-110 inline-flex items-center justify-center min-w-[44px] min-h-[44px]`}
               title={social.name}
+              aria-label={social.name}
             >
               <Icon className={sizes.icon} />
             </a>

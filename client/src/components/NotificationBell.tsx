@@ -142,6 +142,7 @@ export function NotificationBell() {
                             onClick={(e) => { e.stopPropagation(); deleteMutation.mutate({ id: notification.id }); }}
                             className="p-1 hover:bg-red-100 rounded flex-shrink-0"
                             title="Delete"
+                            aria-label="Delete notification"
                           >
                             <Trash2 className="w-3 h-3 text-red-400" />
                           </button>

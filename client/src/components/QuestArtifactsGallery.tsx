@@ -38,7 +38,7 @@ export function QuestArtifactsGallery() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-[5.5rem] z-40 flex items-center gap-2 bg-[#1a472a] text-white rounded-full px-4 py-2.5 shadow-lg hover:bg-[#2d6a4f] transition-colors text-sm font-semibold"
+        className="fixed bottom-20 md:bottom-6 right-[5.5rem] z-40 flex items-center gap-2 bg-[#1a472a] text-white rounded-full px-4 py-2.5 shadow-lg hover:bg-[#2d6a4f] transition-colors text-sm font-semibold"
         aria-label="From the field"
       >
         <Users className="w-4 h-4" />

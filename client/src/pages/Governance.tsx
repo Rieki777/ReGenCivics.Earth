@@ -8,6 +8,18 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { SEO, pageSEO } from "@/components/SEO";
 import { JsonLD, schemas } from "@/components/JsonLD";
 import { cdnImg } from "@/lib/utils";
+import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
+
+const GOVERNANCE_SECTIONS: TocSection[] = [
+  { id: 'gov-comparison', title: 'Fund vs Game' },
+  { id: 'gov-tokens', title: 'Two Tokens, Two Powers' },
+  { id: 'gov-fund-structure', title: 'Fund Governance' },
+  { id: 'gov-game-structure', title: 'Game Governance' },
+  { id: 'gov-why-matters', title: 'Why It Matters' },
+  { id: 'gov-infrastructure', title: 'Movement Infrastructure' },
+  { id: 'gov-dashboard', title: 'Live Dashboard' },
+  { id: 'gov-cta', title: 'Get Involved' },
+];
 
 // Fund vs Game RCVoice Toggle Component
 function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game') => void }) {
@@ -735,7 +747,8 @@ export default function Governance() {
       }} />
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818]">
       <BackButton />
-      
+      <MobileTableOfContents sections={GOVERNANCE_SECTIONS} fallbackTitle="Governance" />
+
       {/* Hero Section */}
       <section className="relative py-20 px-4">
         <div className="container">
@@ -757,7 +770,7 @@ export default function Governance() {
       </section>
 
       {/* Fund vs Game Governance Comparison Chart - moved to top */}
-      <section data-reveal className="py-16 px-4 bg-[#0d2818]/50">
+      <section id="gov-comparison" data-reveal className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Fund vs Game: Governance at a Glance</h2>
@@ -907,7 +920,7 @@ export default function Governance() {
       </section>
 
       {/* Two Tokens, Two Powers */}
-      <section className="py-16 px-4">
+      <section id="gov-tokens" className="py-16 px-4">
         <div className="container">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Two Tokens, Two Powers</h2>
@@ -931,7 +944,7 @@ export default function Governance() {
       </section>
 
       {/* Fund Governance Structure */}
-      <section className="py-16 px-4 bg-[#0d2818]/50">
+      <section id="gov-fund-structure" className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 flex items-center gap-3">
@@ -1060,7 +1073,7 @@ export default function Governance() {
       </section>
 
       {/* Game Governance Section */}
-      <section className="py-16 px-4 bg-[#0d2818]/50">
+      <section id="gov-game-structure" className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 flex items-center gap-3">
@@ -1169,7 +1182,7 @@ export default function Governance() {
       </section>
 
       {/* Why Collective Governance Matters */}
-      <section className="py-16 px-4 bg-[#0d2818]/50">
+      <section id="gov-why-matters" className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-12 text-center">
@@ -1210,7 +1223,7 @@ export default function Governance() {
       </section>
 
       {/* Governance as Movement Infrastructure */}
-      <section className="py-16 px-4 bg-[#0d2818]/50">
+      <section id="gov-infrastructure" className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 text-center">
@@ -1229,7 +1242,7 @@ export default function Governance() {
       </section>
 
       {/* Live Governance Dashboard - Earth Day Countdown */}
-      <section className="py-16 px-4">
+      <section id="gov-dashboard" className="py-16 px-4">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Live Governance Dashboard</h2>
@@ -1242,7 +1255,7 @@ export default function Governance() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4">
+      <section id="gov-cta" className="py-20 px-4">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-white mb-6">

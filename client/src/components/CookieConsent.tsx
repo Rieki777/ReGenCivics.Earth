@@ -100,7 +100,7 @@ export default function CookieConsent() {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-[9999] p-3 md:p-4 transition-all duration-300 ease-out ${
+      className={`fixed bottom-16 md:bottom-0 left-0 right-0 z-[9999] p-3 md:p-4 transition-all duration-300 ease-out ${
         animating
           ? "translate-y-0 opacity-100"
           : "translate-y-full opacity-0"

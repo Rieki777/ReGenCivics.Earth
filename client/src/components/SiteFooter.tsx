@@ -10,6 +10,7 @@ import { resetCookieConsent } from "@/components/CookieConsent";
 import { Cookie, Mail } from "lucide-react";
 import { FooterSearch } from "@/components/FooterSearch";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 
 export default function SiteFooter() {
   return (
@@ -44,22 +45,22 @@ export default function SiteFooter() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/fund" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/fund" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Investors
                 </Link>
               </li>
               <li>
-                <Link href="/land" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/land" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Land Projects
                 </Link>
               </li>
               <li>
-                <Link href="/ally" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/ally" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Alliance Partners
                 </Link>
               </li>
               <li>
-                <Link href="/play" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/play" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Players
                 </Link>
               </li>
@@ -76,22 +77,22 @@ export default function SiteFooter() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/seasons" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/seasons" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Seasons
                 </Link>
               </li>
               <li>
-                <Link href="/schedule" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/schedule" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Open Sessions
                 </Link>
               </li>
               <li>
-                <Link href="/apply" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/apply" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Apply
                 </Link>
               </li>
               <li>
-                <Link href="/team" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/team" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Team
                 </Link>
               </li>
@@ -108,37 +109,37 @@ export default function SiteFooter() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/game" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/game" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Game Overview
                 </Link>
               </li>
               <li>
-                <Link href="/quest" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/quest" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Start Questing
                 </Link>
               </li>
               <li>
-                <Link href="/crowd-pooling-projects" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/crowd-pooling-projects" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Crowd Pool Campaigns
                 </Link>
               </li>
               <li>
-                <Link href="/crowd-pooling" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/crowd-pooling" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Crowd Pool Calculator
                 </Link>
               </li>
               <li>
-                <Link href="/calculator" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/calculator" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Contribution Calculator
                 </Link>
               </li>
               <li>
-                <Link href="/governance" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/governance" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Governance
                 </Link>
               </li>
               <li>
-                <Link href="/tokenomics" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/tokenomics" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Tokenomics
                 </Link>
               </li>
@@ -155,36 +156,37 @@ export default function SiteFooter() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/privacy-policy" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/privacy-policy" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms-of-use" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/terms-of-use" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Terms of Use
                 </Link>
               </li>
               <li>
-                <Link href="/risk-disclosure" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/risk-disclosure" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Risk Disclosure
                 </Link>
               </li>
               <li>
-                <Link href="/disclaimers" className="text-white/60 hover:text-white transition-colors text-xs">
+                <Link href="/disclaimers" className="text-white/60 hover:text-white transition-colors text-xs py-1.5 inline-block">
                   Disclaimers
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Preferences */}
-          <div>
+          {/* Subscribe + Preferences */}
+          <div className="col-span-2 md:col-span-1">
             <h4
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
-              Preferences
+              Stay in the Loop
             </h4>
+            <NewsletterSignupInline className="mb-4" />
             <ul className="space-y-2">
               <li>
                 <button

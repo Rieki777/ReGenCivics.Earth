@@ -45,15 +45,17 @@ export default function NewsletterSignup() {
 export function NewsletterSignupInline({ className = "" }: { className?: string }) {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(() => isNewsletterSubscribed());
+  const [error, setError] = useState(false);
 
   const subscribeMutation = trpc.newsletter.subscribe.useMutation({
     onSuccess: () => {
       markNewsletterSubscribed();
       analytics.newsletterSignup();
       setSubscribed(true);
+      setError(false);
     },
     onError: () => {
-      // Silently fail — newsletter signup errors should not interrupt the user
+      setError(true);
     },
   });
 
@@ -74,7 +76,7 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`flex items-center gap-2 ${className}`}>
+    <form onSubmit={handleSubmit} className={`relative flex items-center gap-2 ${className}`}>
       <div className="relative flex-1 max-w-xs">
         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
         <Input
@@ -100,6 +102,9 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
           "Subscribe"
         )}
       </Button>
+      {error && (
+        <p className="text-red-400 text-xs mt-1 absolute -bottom-5 left-0">Something went wrong. Try again.</p>
+      )}
     </form>
   );
 }

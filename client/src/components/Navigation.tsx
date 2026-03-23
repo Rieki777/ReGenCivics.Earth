@@ -91,6 +91,12 @@ export default function Navigation() {
 
   return (
     <>
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-[#7dd87d] focus:text-[#1a472a] focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold focus:text-sm"
+    >
+      Skip to main content
+    </a>
     <header className="sticky top-0 z-50 bg-[#1a472a]/95 backdrop-blur-sm border-b border-[#7dd87d]/20" role="banner">
       <div className="container">
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
@@ -487,7 +493,7 @@ export default function Navigation() {
                     <Calculator className="w-5 h-5 mr-3 text-amber-400" />
                     <span style={{ fontFamily: 'var(--font-accent)' }}>My Contributions</span>
                   </DropdownMenuItem>
-                  {user.role === 'admin' && (
+                  {(user.role === 'admin' || user.role === 'superadmin') && (
                     <DropdownMenuItem 
                       className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                       onClick={() => window.location.href = '/admin'}
@@ -558,7 +564,7 @@ export default function Navigation() {
               </span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-white/60 hover:text-white p-1 transition-colors"
+                className="text-white/60 hover:text-white p-2.5 -mr-1 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -968,7 +974,7 @@ export default function Navigation() {
                       <User className="w-5 h-5 text-[#7dd87d]" />
                       My Profile
                     </Link>
-                    {user.role === 'admin' && (
+                    {(user.role === 'admin' || user.role === 'superadmin') && (
                       <Link 
                         href="/admin"
                         className="flex items-center gap-2 px-4 py-3 text-white hover:bg-[#7dd87d]/20 rounded-xl transition-all"
