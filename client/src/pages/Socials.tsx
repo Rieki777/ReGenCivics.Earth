@@ -8,13 +8,11 @@ import { Link } from "wouter";
 import { ArrowLeft, Leaf, MessageCircle, Youtube, Users, ExternalLink, Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SEO, pageSEO } from "@/components/SEO";
-import { BackButton } from "@/components/BackButton";
 
 // Floating leaf animation component
 function FloatingLeaves() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <BackButton />
       {[...Array(12)].map((_, i) => (
         <div
           key={i}

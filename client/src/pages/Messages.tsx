@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { SEO, pageSEO } from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import {
   useState,
@@ -702,6 +703,7 @@ export default function Messages() {
 
     return (
       <div className="h-screen bg-[#f0ebe3] flex flex-col overflow-hidden">
+        <SEO {...pageSEO.messages} />
         {showCompose && (
           <ComposeModal
             onClose={() => setShowCompose(false)}

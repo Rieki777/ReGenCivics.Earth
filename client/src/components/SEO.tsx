@@ -284,6 +284,27 @@ export const pageSEO = {
     keywords: 'contribution calculator, crowd pooling calculator, regenerative investment calculator',
     image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
     url: '/calculator'
+  },
+  showcase: {
+    title: 'Community Showcase | ReGen Civics',
+    description: 'Artifacts, completions, and creations from the ReGen Civics community. See what players are building, growing, and healing.',
+    keywords: 'regenerative showcase, community creations, quest completions, player artifacts',
+    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    url: '/showcase'
+  },
+  messages: {
+    title: 'Messages | ReGen Civics',
+    description: 'Your messages and conversations within the ReGen Civics community.',
+    keywords: 'messages, community chat, regenerative community',
+    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    url: '/messages'
+  },
+  shapeNextSession: {
+    title: 'Shape the Next Session | ReGen Civics',
+    description: 'Tell us what you want covered and whether you will be there. Help shape the next community session.',
+    keywords: 'community session, feedback, regenerative community, session planning',
+    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    url: '/shape-next-session'
   }
 };
 

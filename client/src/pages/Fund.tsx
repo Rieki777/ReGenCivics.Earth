@@ -32,7 +32,6 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SEO, pageSEO } from "@/components/SEO";
 import { JsonLD, schemas } from "@/components/JsonLD";
-import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { LazyImage } from "@/components/LazyImage";
 import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
@@ -186,9 +185,6 @@ export default function Fund() {
       {/* Hero */}
       <section className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-4">
-            <BackButton />
-          </div>
 
           <AnimatedSection animation="fade-in">
             <div

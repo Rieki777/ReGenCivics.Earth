@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SEO, pageSEO } from "@/components/SEO";
-import { BackButton } from "@/components/BackButton";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -239,7 +238,6 @@ export default function Community() {
       <PageTransition>
       <div className="min-h-screen bg-[#f8f5f0]">
         <SEO {...pageSEO.community} />
-        <BackButton />
         <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] via-[#2d5a3f] to-[#1a472a]" />
           <div className="absolute top-20 left-4 opacity-20">
@@ -312,7 +310,6 @@ export default function Community() {
       <SEO {...pageSEO.community} />
       <AMABanner />
       <BannerDisplay bannerKey="community-banner" />
-      <BackButton />
 
       {/* Hero Section */}
       <section className="relative pt-24 pb-12 md:pt-32 md:pb-16 overflow-hidden">

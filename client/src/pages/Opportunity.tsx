@@ -122,10 +122,12 @@ function FundStatusBanner() {
 }
 
 // Collapsible section component with smooth animation
+// On desktop (1024px+): sections default open for scannable reading
+// On mobile: sections default closed so users can scan headers on the 47k+ px page
 function CollapsibleSection({
   title,
   children,
-  defaultOpen = true,
+  defaultOpen,
   icon: Icon,
   id
 }: {
@@ -135,7 +137,9 @@ function CollapsibleSection({
   icon?: React.ComponentType<{ className?: string }>;
   id?: string;
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const isDesktopSection = useMediaQuery('(min-width: 1024px)');
+  const resolvedDefault = defaultOpen ?? isDesktopSection;
+  const [isOpen, setIsOpen] = useState(resolvedDefault);
 
   return (
     <AnimatedSection animation="slide-up" className="mb-6">

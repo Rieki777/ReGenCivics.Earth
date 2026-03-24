@@ -32,7 +32,6 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
 import { SEO } from "@/components/SEO";
-import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { cdnImg } from "@/lib/utils";
 
@@ -345,9 +344,6 @@ export default function Play() {
       {/* Hero */}
       <section className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-4">
-            <BackButton />
-          </div>
 
           <AnimatedSection animation="fade-in">
             <div

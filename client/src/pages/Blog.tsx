@@ -17,7 +17,6 @@ import { SEO } from '@/components/SEO';
 import { blogPosts, getFeaturedPost } from '@/data/blogPosts';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
 import { cdnImg } from "@/lib/utils";
 
@@ -43,7 +42,6 @@ function VideoSuggestionCard({
   
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-[#7dd87d]/20 hover:border-[#7dd87d]/40 transition-all">
-      <BackButton />
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">

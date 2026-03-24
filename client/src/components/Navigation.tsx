@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SOCIAL_LINKS } from "@/components/SocialLinks";
 import { cdnImg } from "@/lib/utils";
+import SmartBottomNav from "@/components/SmartBottomNav";
 
 // Prefetch a route chunk on hover  -  import() is cached by the module system
 const prefetch = (path: string) => {
@@ -1025,29 +1026,8 @@ export default function Navigation() {
       />
     </header>
 
-      {/* Mobile Bottom Tab Bar - 4 Paths */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#1a472a]/95 backdrop-blur-sm border-t border-[#7dd87d]/20 safe-area-pb">
-        <div className="grid grid-cols-4 h-16">
-          {[
-            { href: '/fund', icon: <Coins className="w-5 h-5" />, label: 'Fund', color: 'text-[#ffd700]' },
-            { href: '/land', icon: <Sprout className="w-5 h-5" />, label: 'Land', color: 'text-[#7dd87d]' },
-            { href: '/ally', icon: <Handshake className="w-5 h-5" />, label: 'Ally', color: 'text-cyan-400' },
-            { href: '/play', icon: <Heart className="w-5 h-5" />, label: 'Play', color: 'text-pink-400' },
-          ].map(({ href, icon, label, color }) => {
-            const active = location === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex flex-col items-center justify-center gap-1 transition-colors ${active ? color : 'text-white/40 hover:text-white/70'}`}
-              >
-                {icon}
-                <span className="text-[10px] font-medium">{label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Smart Mobile Bottom Nav */}
+      <SmartBottomNav />
     </>
   );
 }

@@ -36,7 +36,6 @@ import { SeedOfLifeIcon } from '@/components/SeedOfLifeIcon';
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { SEO, pageSEO } from '@/components/SEO';
-import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { LazyImage } from "@/components/LazyImage";
 import { cdnImg } from "@/lib/utils";
@@ -339,7 +338,6 @@ export default function Team() {
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
-      <BackButton />
       <SEO {...pageSEO.team} />
       
       {/* CSS for card flip animation */}

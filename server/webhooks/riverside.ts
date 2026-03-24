@@ -180,7 +180,11 @@ export function registerRiversideWebhookRoutes(app: Express) {
     "/api/webhooks/riverside/resend-email/:recordingId",
     async (req: Request, res: Response) => {
       // Only allow from admin sessions — check x-admin-secret header
-      const adminSecret = process.env.ADMIN_WEBHOOK_SECRET || process.env.JWT_SECRET;
+      const adminSecret = process.env.ADMIN_WEBHOOK_SECRET;
+      if (!adminSecret) {
+        console.error("[riverside-webhook] ADMIN_WEBHOOK_SECRET not set");
+        return res.status(500).json({ error: "Server misconfigured" });
+      }
       if (req.headers["x-admin-secret"] !== adminSecret) {
         return res.status(403).json({ error: "Forbidden" });
       }

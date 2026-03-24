@@ -56,7 +56,11 @@ export function securityHeadersMiddleware(_req: Request, res: Response, next: Ne
   
   // HSTS for HTTPS enforcement
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  
+
+  // Cross-origin isolation headers
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+
   next();
 }
 
@@ -227,8 +231,15 @@ export function validateFileUpload(
 
 /**
  * Prevent Path Traversal
+ * Handles raw, URL-encoded (%2e%2e%2f), and double-encoded variants
  */
-export function sanitizePath(path: string): string {
-  // Remove any path traversal attempts
-  return path.replace(/\.\.\//g, '').replace(/\.\.\\/g, '');
+export function sanitizePath(inputPath: string): string {
+  // Decode URL-encoded characters first
+  let decoded = inputPath;
+  try { decoded = decodeURIComponent(decoded); } catch { /* malformed encoding */ }
+  // Remove traversal attempts
+  return decoded
+    .replace(/\.\.\//g, '')
+    .replace(/\.\.\\/g, '')
+    .replace(/\.{2,}/g, '.');
 }

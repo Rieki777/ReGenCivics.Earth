@@ -46,7 +46,6 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO, pageSEO } from "@/components/SEO";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
-import { BackButton } from "@/components/BackButton";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { pageCopy } from "@/data/pageCopy";
@@ -73,7 +72,6 @@ function GameWayCard({
 }) {
   return (
     <div className="bg-white p-6 rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-lg transition-all hover:-translate-y-1">
-      <BackButton />
       <div className="flex items-center gap-3 mb-4">
         <div className="w-12 h-12 rounded-full bg-[#7dd87d] flex items-center justify-center flex-shrink-0">
           <span className="text-2xl">{emoji}</span>

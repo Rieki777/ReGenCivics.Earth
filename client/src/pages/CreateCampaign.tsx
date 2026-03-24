@@ -397,9 +397,51 @@ const formatCurrency = (amount: number, symbol: string) => {
 
 // Using imported estimateLandPrice from regionalCostData
 
+const CAMPAIGN_PASSWORD = "222";
+
 export default function CreateCampaign() {
   const { user } = useAuth();
-  
+  const [authenticated, setAuthenticated] = useState(() =>
+    localStorage.getItem("campaign_authenticated") === "true"
+  );
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
+
+  // Password gate: require "222" even for logged-in users
+  if (user && !authenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 text-center">
+          <Lock className="w-10 h-10 text-[#1a472a] mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+            Campaign Creator Access
+          </h2>
+          <p className="text-sm text-[#1a472a]/60 mb-4">Enter the password to create campaigns</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (passwordInput === CAMPAIGN_PASSWORD) {
+              localStorage.setItem("campaign_authenticated", "true");
+              setAuthenticated(true);
+            } else {
+              setPasswordError(true);
+            }
+          }} className="space-y-3">
+            <Input
+              type="password"
+              placeholder="Enter password"
+              value={passwordInput}
+              onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+            />
+            {passwordError && <p className="text-red-500 text-xs">Incorrect password</p>}
+            <Button type="submit" className="w-full bg-[#4a7c59] hover:bg-[#2e7d32] text-white">
+              Access Campaign Creator
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   // Applicant search for campaign creation
   const [applicantSearch, setApplicantSearch] = useState('');
   const [selectedApplication, setSelectedApplication] = useState<any>(null);

@@ -40,6 +40,11 @@ vi.mock('@/components/NotificationBell', () => ({
   NotificationBell: () => <span data-testid="notification-bell" />,
 }));
 
+// Mock SmartBottomNav (uses trpc + hooks internally)
+vi.mock('@/components/SmartBottomNav', () => ({
+  default: () => <nav data-testid="smart-bottom-nav">Smart Nav</nav>,
+}));
+
 // Mock trpc (Navigation calls trpc.messages.unreadCount.useQuery)
 vi.mock('@/lib/trpc', () => ({
   trpc: {

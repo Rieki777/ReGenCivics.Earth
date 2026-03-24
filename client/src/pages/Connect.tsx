@@ -20,7 +20,6 @@ import {
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
-import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
 import { cdnImg } from "@/lib/utils";
@@ -1216,7 +1215,6 @@ export default function Connect() {
       {/* Header */}
       <div className="py-8">
         <div className="container">
-          <BackButton fallbackPath="/connect" label="Back to Connect" inline />
           <button
             onClick={() => setStep("select")}
             className="flex items-center gap-2 text-[#7dd87d] hover:text-white mb-4 transition-colors"
