@@ -131,7 +131,7 @@ export default function OnePagerPlayer() {
         </h2>
         <p className="text-xs text-[#1a472a]/85 mb-3" style={{ fontFamily: 'var(--font-body)' }}>
           The game runs in seasons aligned with natural cycles. Each season introduces new quests, 
-          challenges, and rewards. Season 3 begins in 2026.
+          challenges, and rewards. Season 2 begins September 2026.
         </p>
         <div className="grid grid-cols-4 gap-2 mb-6">
           {[
@@ -155,7 +155,7 @@ export default function OnePagerPlayer() {
           <div className="flex items-center justify-center gap-4 text-[#7dd87d] text-xs">
             <span>regencivics.earth/game</span>
             <span>|</span>
-            <span>Season 3 Coming 2026</span>
+            <span>Season 2 Starting September 2026</span>
           </div>
         </div>
 

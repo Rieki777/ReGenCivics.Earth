@@ -38,7 +38,7 @@ import { cdnImg } from "@/lib/utils";
 
 const weeklyTopics = [
   { week: 1, title: "Selection Day", description: "First steps of the ReGen Civics Incubator. Meet the selected projects, set intentions, and begin mapping your regenerative vision together." },
-  { week: 2, title: "Incubator Overview", description: "Starting Season 3! Deep dive into the incubator structure, expectations, and how we'll journey together over the next 13 weeks." },
+  { week: 2, title: "Incubator Overview", description: "Starting Season 2! Deep dive into the incubator structure, expectations, and how we'll journey together over the next 13 weeks." },
   { week: 3, title: "Game & Organisation Co-Creation Part 1", description: "Designing the structure of our projects. Introduction to decentralized autonomous organizations and how to structure your community." },
   { week: 4, title: "Game & Organisation Co-Creation Part 2", description: "Continuing to design the structure of our projects. Practical implementation of governance frameworks and community design." },
   { week: 5, title: "Game Guides & Economic Systems", description: "Co-creating project 'Game Guides' and kickstarting our economic systems. How to document your project's unique plays and patterns." },
@@ -78,7 +78,7 @@ export default function Seasons() {
         <AnimatedSection animation="fade-in" className="relative z-10 container mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 bg-[#7dd87d]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/30">
             <Sprout className="w-5 h-5 text-[#7dd87d]" />
-            <span className="text-white font-medium">Season 3 Opening 2026</span>
+            <span className="text-white font-medium">Season 2 Starting September 2026</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
@@ -103,7 +103,7 @@ export default function Seasons() {
               >
                 <span className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-xl blur opacity-30 animate-pulse"></span>
                 <span className="relative flex items-center gap-2">
-                  🌱 Apply for Season 3
+                  🌱 Apply for Season 2
                   <ArrowRight className="w-5 h-5" />
                 </span>
               </Button>
@@ -125,7 +125,7 @@ export default function Seasons() {
                     </div>
                     <div className="text-left">
                       <h3 className="text-xl font-bold text-white">Who We're Looking For</h3>
-                      <p className="text-white/60 text-sm">Click to learn about ideal candidates for Season 3</p>
+                      <p className="text-white/60 text-sm">Click to learn about ideal candidates for Season 2</p>
                     </div>
                   </div>
                   {whoWeAreLookingForOpen ? (
@@ -238,7 +238,7 @@ export default function Seasons() {
                 <div className="mt-8 text-center">
                   <Link href="/apply">
                     <Button size="lg" className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] rounded-xl">
-                      🌱 Apply for Season 3 Now
+                      🌱 Apply for Season 2 Now
                       <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
                   </Link>
@@ -528,19 +528,19 @@ export default function Seasons() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Season 2 */}
+            {/* Season 2 - Upcoming */}
             <div className="bg-gradient-to-br from-[#7dd87d]/20 to-transparent rounded-2xl p-8 border-2 border-[#7dd87d]/40">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-[#7dd87d] rounded-full flex items-center justify-center">
                   <Sprout className="w-6 h-6 text-[#1a472a]" />
                 </div>
                 <div>
-                  <span className="text-[#7dd87d] text-sm font-semibold">Current Season</span>
-                  <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Season 2</h3>
+                  <span className="text-[#7dd87d] text-sm font-semibold">Accepting Applications</span>
+                  <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Season 2 - September 2026</h3>
                 </div>
               </div>
               <p className="text-white/80 mb-4">
-                <strong className="text-[#7dd87d]">Building the Portfolio:</strong> Season 2 is focused on onboarding quality regenerative land projects into our portfolio, conducting token swaps with founding alliance and land projects, creating the initial governance systems for the fund, and expanding the portfolio pipeline by developing quality "Plays" and "Games" to help other projects emulate.
+                <strong className="text-[#7dd87d]">Building the Portfolio:</strong> Season 2 focuses on onboarding quality regenerative land projects into our portfolio, conducting token swaps with founding alliance and land projects, creating the initial governance systems for the fund, and expanding the portfolio pipeline.
               </p>
               <ul className="space-y-2 text-white/70 text-sm">
                 <li className="flex items-start gap-2">
@@ -566,14 +566,14 @@ export default function Seasons() {
               </ul>
             </div>
 
-            {/* Season 3 */}
+            {/* Season 3 - Future */}
             <div className="bg-gradient-to-br from-amber-500/20 to-transparent rounded-2xl p-8 border-2 border-amber-500/40">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
                   <Target className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <span className="text-amber-400 text-sm font-semibold">Coming Next</span>
+                  <span className="text-amber-400 text-sm font-semibold">Future</span>
                   <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Season 3</h3>
                 </div>
               </div>
@@ -597,14 +597,10 @@ export default function Seasons() {
                   <Clock className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
                   <span>Scale alliance network and support services</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                  <span>Conduct equity and token swaps with initial alliances and land projects</span>
-                </li>
               </ul>
               <div className="mt-4 p-3 bg-amber-500/20 rounded-xl border border-amber-500/30">
                 <p className="text-amber-200 text-sm">
-                  <strong>Capital Commitments:</strong> We're currently taking commitments for capital. Initial operations funding capped at $300k until full fund activation.
+                  <strong>Capital Commitments:</strong> We are currently taking commitments for capital. Initial operations funding capped at $300k until full fund activation.
                 </p>
               </div>
             </div>
@@ -727,7 +723,7 @@ export default function Seasons() {
             Ready to Begin Your <span className="text-[#7dd87d]">Journey</span>?
           </h2>
           <p className="text-lg text-white/70 mb-8">
-            Season 3 opens in 2026. Join us for an open access session to learn more, or apply now to be considered for the next cohort.
+            Season 2 starts September 2026. Join us for an open access session to learn more, or apply now to be considered for the next cohort.
           </p>
           
           <div className="flex flex-wrap justify-center gap-4">
@@ -744,7 +740,7 @@ export default function Seasons() {
               >
                 <span className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-yellow-400 rounded-xl blur opacity-30 animate-pulse"></span>
                 <span className="relative flex items-center gap-2">
-                  🌱 Apply for Season 3
+                  🌱 Apply for Season 2
                   <ArrowRight className="w-5 h-5" />
                 </span>
               </Button>
@@ -789,15 +785,15 @@ export default function Seasons() {
                 side: "left",
               },
               {
-                season: "Season 2",
-                period: "Winter Season · 2021–2026",
+                season: "Building Phase",
+                period: "2021-2026",
                 status: "complete" as const,
                 color: "#d4a574",
                 outcomes: [
-                  "Expanded cohort with international projects",
+                  "Expanded network with international projects",
                   "DAO governance structures implemented and refined",
                   "Tokenomics framework designed",
-                  "Fund structure finalized & investor outreach begun",
+                  "Fund structure finalized and investor outreach begun",
                   "Quests, Games, CrowdPooling structures built out",
                   "Admin panel for coordinating projects and applications built",
                   "Tooling for the Fund and Games built, tested, and refined",
@@ -806,24 +802,24 @@ export default function Seasons() {
                 side: "right",
               },
               {
-                season: "Season 3",
-                period: "Spring Season · September 2026",
+                season: "Season 2",
+                period: "Spring Season - September 2026",
                 status: "active" as const,
                 color: "#ffd700",
                 outcomes: [
-                  "Upcoming cohort  -  opening September Equinox",
+                  "Upcoming cohort opens September Equinox",
                   "Live investor due diligence for fund launch",
-                  "ReGen Games & custom land games rollout",
-                  "Fund governance & $RCivics token live",
-                  "ReGen Game Governance & $ReGen token live",
+                  "ReGen Games and custom land games rollout",
+                  "Fund governance and $RCivics token live",
+                  "ReGen Game Governance and $ReGen token live",
                   "Accepting LOIs for the Fund",
                   "Built out a 'ReGen Game' template for land projects",
                 ],
                 side: "left",
               },
               {
-                season: "Season 4+",
-                period: "2027 & Beyond",
+                season: "Season 3+",
+                period: "2027 and Beyond",
                 status: "future" as const,
                 color: "#a0aec0",
                 outcomes: [

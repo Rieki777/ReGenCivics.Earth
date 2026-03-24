@@ -170,7 +170,7 @@ export default function OnePagerLand() {
           <div className="flex items-center justify-center gap-4 text-[#7dd87d] text-xs">
             <span>regencivics.earth/land</span>
             <span>|</span>
-            <span>Season 3 Opening 2026</span>
+            <span>Season 2 Starting September 2026</span>
           </div>
         </div>
 

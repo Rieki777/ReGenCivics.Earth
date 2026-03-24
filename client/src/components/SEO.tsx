@@ -105,7 +105,7 @@ export const pageSEO = {
   },
   seasons: {
     title: 'Seasons: Join Our Regenerative Journey',
-    description: 'Apply for Season 3 of ReGen Civics opening in 2026. Build your regenerative portfolio, connect with land projects, and prepare for fund launch in Late 2026.',
+    description: 'Apply for Season 2 of ReGen Civics starting September 2026. Build your regenerative portfolio, connect with land projects, and join the incubator.',
     keywords: 'regenerative season, land project application, regenerative portfolio, impact investment opportunity, ecovillage funding, sustainable land development',
     image: cdnImg('https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg'),
     url: '/seasons'
@@ -154,7 +154,7 @@ export const pageSEO = {
   },
   apply: {
     title: 'Apply: Land Project Application | ReGen Civics',
-    description: 'Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 3 applications open 2026.',
+    description: 'Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications open now for September 2026.',
     keywords: 'land project application, regenerative project funding, ecovillage application, sustainable land development, regenerative community application',
     image: cdnImg('https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg'),
     url: '/apply'
@@ -182,7 +182,7 @@ export const pageSEO = {
   },
   fund: {
     title: 'The ReGen Civics Fund | Regenerative Land Investment',
-    description: 'ReGen Civics runs a venture fund for regenerative land projects. Real land, diversified portfolio, community governed. Season 3 opens in 2026.',
+    description: 'ReGen Civics runs a venture fund for regenerative land projects. Real land, diversified portfolio, community governed. Season 2 starts September 2026.',
     keywords: 'regenerative fund, land investment, impact fund, regenerative capital, crowd-pooling, land project funding',
     image: 'https://regencivics.earth/og/fund.webp',
     url: '/fund'

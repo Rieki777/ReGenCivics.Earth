@@ -619,7 +619,7 @@ export default function Blog() {
                 Stay in the <span className="text-[#7dd87d]">Loop</span>
               </h2>
               <p className="text-white/70 mb-6">
-                Get updates on new blog posts, Season 3 announcements, and community events.
+                Get updates on new blog posts, Season 2 announcements, and community events.
               </p>
               <Link href="/socials">
                 <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-semibold px-8 py-3 rounded-xl">

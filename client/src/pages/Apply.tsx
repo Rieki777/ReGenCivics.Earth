@@ -234,7 +234,7 @@ export default function Apply() {
       <SEO {...pageSEO.apply} />
       <JsonLD data={schemas.faqPage([
         { question: "Who can apply to ReGen Civics?", answer: "Any regenerative land project (ecovillages, food forests, intentional communities, regenerative farms) can apply. Projects at any stage are welcome." },
-        { question: "When do applications open?", answer: "Season 2 applications are currently being reviewed. Season 3 opens in 2026. Sign up to be notified when the next round opens." },
+        { question: "When do applications open?", answer: "Season 2 applications are open now for September 2026. Apply to be part of the next incubator cohort." },
         { question: "Is there a fee to apply?", answer: "No. There is no fee to apply to the ReGen Civics program." },
         { question: "How long does the application process take?", answer: "The review process typically takes 4–8 weeks after submission. You will be notified by email of the decision." },
       ])} />

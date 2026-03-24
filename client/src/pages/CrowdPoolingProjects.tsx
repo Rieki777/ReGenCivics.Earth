@@ -1361,7 +1361,7 @@ export default function CrowdPoolingProjects() {
           <div className="flex flex-wrap items-center gap-2 mb-6">
             {[
               { key: "active", label: `Active (${sampleProjects.filter(p => p.status === "active").length})` },
-              { key: "upcoming", label: "Upcoming: Season 3 Applications Open" },
+              { key: "upcoming", label: "Upcoming: Season 2 Applications Open" },
               { key: "funded", label: "Funded (0, first closes coming)" },
             ].map(({ key, label }) => (
               <button
@@ -1645,7 +1645,7 @@ export default function CrowdPoolingProjects() {
                     </p>
                     <Link href="/seasons">
                       <Button className="bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/25 text-sm">
-                        Apply for Season 3
+                        Apply for Season 2
                       </Button>
                     </Link>
                   </div>
@@ -1676,7 +1676,7 @@ export default function CrowdPoolingProjects() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/seasons">
                 <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] w-full sm:w-auto font-semibold">
-                  Apply for Season 3
+                  Apply for Season 2
                 </Button>
               </Link>
               <Link href="/schedule">

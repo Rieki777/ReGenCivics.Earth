@@ -146,7 +146,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
       { href: "/schedule", title: "Open Sessions", description: "Attend a community session to learn more before applying." },
       { href: "/game", title: "Play the Game", description: "Start contributing as a player while you prepare your application." },
     ],
-    blog: { slug: "how-to-apply-for-season-3", title: "How to Apply for Season 3", excerpt: "Complete guide to the application process, requirements, and timeline." },
+    blog: { slug: "how-to-apply-for-season-2", title: "How to Apply for Season 2", excerpt: "Complete guide to the application process, requirements, and timeline." },
   },
   blog: {
     pages: [

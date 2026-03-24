@@ -199,7 +199,7 @@ export default function Land() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-[#1a472a]">
             <div className="flex items-center gap-2 font-bold text-sm sm:text-base">
               <Sprout className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Season 3 Applications Opening 2026</span>
+              <span>Season 2 Applications Open - September 2026</span>
             </div>
             <span className="hidden sm:inline text-[#1a472a]/60">|</span>
             <Link href="/apply">
@@ -1034,7 +1034,7 @@ export default function Land() {
                 Ready to <span className="text-[#7dd87d]">Begin?</span>
               </h2>
               <p className="text-white/60 text-base md:text-lg mb-6 max-w-xl mx-auto">
-                Season 3 applications open in 2026. Join the next cohort of regenerative land
+                Season 2 applications are open now for September 2026. Join the next cohort of regenerative land
                 projects and receive the support your vision deserves.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
