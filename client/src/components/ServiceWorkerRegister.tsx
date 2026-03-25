@@ -9,12 +9,12 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     // Only register in production or if explicitly enabled
     if (import.meta.env.MODE !== 'production' && !import.meta.env.VITE_ENABLE_SW) {
-      console.log('[SW] Service worker registration disabled in development');
+      if (import.meta.env.DEV) console.log('[SW] Service worker registration disabled in development');
       return;
     }
 
     if (!('serviceWorker' in navigator)) {
-      console.log('[SW] Service workers not supported');
+      if (import.meta.env.DEV) console.log('[SW] Service workers not supported');
       return;
     }
 
@@ -22,7 +22,7 @@ export function ServiceWorkerRegister() {
     const registerSW = async () => {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        console.log('[SW] Service worker registered:', registration);
+        if (import.meta.env.DEV) console.log('[SW] Service worker registered:', registration);
 
         // Check for updates periodically (every 6 hours)
         setInterval(async () => {
@@ -41,7 +41,7 @@ export function ServiceWorkerRegister() {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // New service worker is ready, notify user
-              console.log('[SW] New service worker available');
+              if (import.meta.env.DEV) console.log('[SW] New service worker available');
               notifyUpdate();
             }
           });
@@ -55,7 +55,7 @@ export function ServiceWorkerRegister() {
 
     // Handle controller change (new service worker activated)
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('[SW] Service worker controller changed');
+      if (import.meta.env.DEV) console.log('[SW] Service worker controller changed');
       // Page will be controlled by new service worker
     });
   }, []);

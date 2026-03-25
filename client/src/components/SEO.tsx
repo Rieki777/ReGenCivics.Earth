@@ -326,6 +326,41 @@ export const pageSEO = {
     keywords: 'community session, feedback, regenerative community, session planning',
     image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
     url: '/shape-next-session'
+  },
+  marketplace: {
+    title: 'Gifts + Needs Marketplace | ReGen Civics',
+    description: 'Share your gifts and find what you need. The community marketplace for regenerative projects, skills, and resources.',
+    keywords: 'marketplace, gifts, needs, regenerative exchange, community resources',
+    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    url: '/marketplace'
+  },
+  createCampaign: {
+    title: 'Create a Campaign | ReGen Civics Crowd Pooling',
+    description: 'Launch a crowd pooling campaign for your regenerative land project. Attract aligned investors and build community support.',
+    keywords: 'create campaign, crowd pooling, regenerative fundraising, land project campaign',
+    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    url: '/create-campaign'
+  },
+  coCreatorsGuide: {
+    title: 'Co-Creators Guide | ReGen Civics',
+    description: 'The guide for ReGen Civics co-creators. Roles, expectations, and how to contribute to the Regenerative Renaissance.',
+    keywords: 'co-creators, guide, regenerative community, contributor roles',
+    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    url: '/co-creators-guide'
+  },
+  newsletter: {
+    title: 'Newsletter | ReGen Civics',
+    description: 'Stay connected with the Regenerative Renaissance. Monthly updates on land projects, quests, and community milestones.',
+    keywords: 'newsletter, regenerative updates, community news',
+    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    url: '/newsletter'
+  },
+  tokenomics: {
+    title: 'Tokenomics | ReGen Civics',
+    description: 'How the ReGen Civics token system works. Dual-layer governance, contribution tracking, and value flows across the network.',
+    keywords: 'tokenomics, token system, governance tokens, regenerative economics',
+    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    url: '/tokenomics'
   }
 };
 

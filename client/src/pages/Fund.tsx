@@ -167,13 +167,13 @@ export default function Fund() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-[#1a472a]">
             <div className="flex items-center gap-2 font-bold text-sm sm:text-base">
               <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Fund Not Yet Active - Currently Accepting LOIs Only</span>
+              <span>Fund In Formation, Currently Accepting LOIs</span>
             </div>
             <span className="hidden sm:inline text-[#1a472a]/60">|</span>
             <Link href="/loi">
               <Button
                 size="sm"
-                className="bg-[#1a472a] hover:bg-[#0d2818] text-white text-xs sm:text-sm px-3 py-1 h-auto"
+                className="bg-[#1a472a] hover:bg-[#0d2818] text-white text-xs sm:text-sm px-5 py-3 min-h-[44px] h-auto"
               >
                 Submit LOI
               </Button>

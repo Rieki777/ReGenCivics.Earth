@@ -128,8 +128,8 @@ export function validateCSRFToken(sessionId: string, token: string): boolean {
   
   if (!record) return false;
   
-  // Token expires after 1 hour
-  if (Date.now() - record.createdAt > 60 * 60 * 1000) {
+  // Token expires after 15 minutes
+  if (Date.now() - record.createdAt > 15 * 60 * 1000) {
     csrfTokens.delete(sessionId);
     return false;
   }
@@ -144,13 +144,15 @@ export function validateCSRFToken(sessionId: string, token: string): boolean {
 export function sanitizeInput(input: string): string {
   if (typeof input !== 'string') return '';
   
-  // Remove script tags and event handlers
+  // Remove dangerous tags and event handlers
   let sanitized = input
-    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/<(script|style|iframe|object|embed|form|base|link|meta)[^>]*>[\s\S]*?<\/\1>/gi, '')
+    .replace(/<(script|style|iframe|object|embed|form|base|link|meta)[^>]*\/?>/gi, '')
     .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
     .replace(/on\w+\s*=\s*[^\s>]*/gi, '')
     .replace(/javascript:/gi, '')
-    .replace(/vbscript:/gi, '');
+    .replace(/vbscript:/gi, '')
+    .replace(/data:\s*text\/html/gi, '');
   
   // Escape HTML entities for safety
   const htmlEscapes: Record<string, string> = {
@@ -188,7 +190,8 @@ export function sanitizeObject(obj: Record<string, any>): Record<string, any> {
  * Validate Email
  */
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Require: local part, @, domain with at least one dot, TLD 2-63 chars
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,63}$/;
   return emailRegex.test(email) && email.length <= 254;
 }
 
@@ -207,9 +210,22 @@ export function isValidUrl(url: string): boolean {
 /**
  * Validate File Upload
  */
+// Map of allowed MIME types to their valid extensions
+const MIME_EXTENSION_MAP: Record<string, string[]> = {
+  'image/jpeg': ['jpg', 'jpeg'],
+  'image/png': ['png'],
+  'image/webp': ['webp'],
+  'application/pdf': ['pdf'],
+  'application/msword': ['doc'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['docx'],
+  'application/vnd.ms-excel': ['xls'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['xlsx'],
+};
+
 export function validateFileUpload(
   fileName: string,
   fileSize: number,
+  mimeType?: string,
   allowedTypes: string[] = ['image/jpeg', 'image/png', 'application/pdf'],
   maxSize: number = 10 * 1024 * 1024 // 10MB
 ): { valid: boolean; error?: string } {
@@ -217,15 +233,29 @@ export function validateFileUpload(
   if (fileSize > maxSize) {
     return { valid: false, error: `File size exceeds maximum of ${maxSize / 1024 / 1024}MB` };
   }
-  
-  // Check file extension (basic check)
-  const extension = fileName.split('.').pop()?.toLowerCase();
-  const validExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'xls', 'xlsx'];
-  
+
+  // Strip null bytes from filename
+  const cleanName = fileName.replace(/\0/g, '');
+
+  // Check file extension
+  const extension = cleanName.split('.').pop()?.toLowerCase();
+  const validExtensions = allowedTypes.flatMap(t => MIME_EXTENSION_MAP[t] || []);
+
   if (!extension || !validExtensions.includes(extension)) {
     return { valid: false, error: 'File type not allowed' };
   }
-  
+
+  // Validate MIME type matches extension if provided
+  if (mimeType) {
+    if (!allowedTypes.includes(mimeType)) {
+      return { valid: false, error: 'File MIME type not allowed' };
+    }
+    const expectedExtensions = MIME_EXTENSION_MAP[mimeType];
+    if (expectedExtensions && !expectedExtensions.includes(extension)) {
+      return { valid: false, error: 'File extension does not match its content type' };
+    }
+  }
+
   return { valid: true };
 }
 
@@ -234,9 +264,14 @@ export function validateFileUpload(
  * Handles raw, URL-encoded (%2e%2e%2f), and double-encoded variants
  */
 export function sanitizePath(inputPath: string): string {
-  // Decode URL-encoded characters first
-  let decoded = inputPath;
-  try { decoded = decodeURIComponent(decoded); } catch { /* malformed encoding */ }
+  // Strip null bytes
+  let decoded = inputPath.replace(/\0/g, '');
+  // Decode URL-encoded characters (try twice for double-encoding)
+  for (let i = 0; i < 2; i++) {
+    try { decoded = decodeURIComponent(decoded); } catch { break; }
+  }
+  // Strip null bytes again after decoding
+  decoded = decoded.replace(/\0/g, '');
   // Remove traversal attempts
   return decoded
     .replace(/\.\.\//g, '')

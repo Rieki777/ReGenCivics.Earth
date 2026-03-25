@@ -78,6 +78,16 @@ export default function CookieConsent() {
     return () => window.removeEventListener(MANAGE_COOKIES_EVENT, handleManageCookies);
   }, [showBanner]);
 
+  // ESC key dismisses the banner (accepts essential only)
+  useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleDecline();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [visible]);
+
   const handleAccept = () => {
     storeConsent("accepted");
     dismiss();

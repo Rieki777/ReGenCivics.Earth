@@ -97,7 +97,7 @@ export default {
         });
       } catch (err) {
         console.error("Promote failed:", err);
-        return new Response(JSON.stringify({ error: "Promote failed", detail: String(err) }), {
+        return new Response(JSON.stringify({ error: "Promote failed" }), {
           status: 500,
           headers: { "Content-Type": "application/json" },
         });
@@ -131,7 +131,7 @@ export default {
       imageData = await streamToBytes(stream);
     } catch (err) {
       console.error("Workers AI generation failed:", err);
-      return new Response(JSON.stringify({ error: "Image generation failed", detail: String(err) }), {
+      return new Response(JSON.stringify({ error: "Image generation failed" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
@@ -149,7 +149,7 @@ export default {
       });
     } catch (err) {
       console.error("R2 write failed:", err);
-      return new Response(JSON.stringify({ error: "Storage write failed", detail: String(err) }), {
+      return new Response(JSON.stringify({ error: "Storage write failed" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });

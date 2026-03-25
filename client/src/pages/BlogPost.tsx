@@ -159,9 +159,9 @@ export default function BlogPost() {
             {tocOpen && (
               <div>
                 <nav className="px-4 py-3 max-h-[50vh] overflow-y-auto border-b border-white/10">
-                  {tableOfContents.map((header, index) => (
+                  {tableOfContents.map((header) => (
                     <a
-                      key={index}
+                      key={header.id}
                       href={`#${header.id}`}
                       className={`block py-2 text-sm text-white/70 hover:text-[#7dd87d] transition-colors ${
                         header.level === 3 ? 'pl-4' : ''
