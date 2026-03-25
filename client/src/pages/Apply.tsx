@@ -231,7 +231,7 @@ export default function Apply() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
-      <SEO {...pageSEO.apply} />
+      <SEO {...pageSEO.apply} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Apply", url: "/apply" }]} />
       <JsonLD data={schemas.faqPage([
         { question: "Who can apply to ReGen Civics?", answer: "Any regenerative land project (ecovillages, food forests, intentional communities, regenerative farms) can apply. Projects at any stage are welcome." },
         { question: "When do applications open?", answer: "Season 2 applications are open now for September 2026. Apply to be part of the next incubator cohort." },

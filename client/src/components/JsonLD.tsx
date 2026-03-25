@@ -19,38 +19,6 @@ export function JsonLD({ data }: JsonLDProps) {
 // ─── Common schema builders ───────────────────────────────────────────────────
 
 export const schemas = {
-  organization: () => ({
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "ReGen Civics",
-    url: "https://regencivics.earth",
-    logo: "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp",
-    description:
-      "ReGen Civics is a regenerative investment fund and infinite game connecting investors, land projects, alliance partners, and players in the regenerative renaissance.",
-    sameAs: [
-      "https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34",
-      "https://discord.gg/8aTzTxH3Qe",
-      "https://www.youtube.com/@SEEDSRegenerativeEconomies",
-    ],
-    contactPoint: {
-      "@type": "ContactPoint",
-      email: "team@regencivics.earth",
-      contactType: "customer support",
-    },
-  }),
-
-  website: () => ({
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "ReGen Civics",
-    url: "https://regencivics.earth",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://regencivics.earth/search?q={search_term_string}",
-      "query-input": "required name=search_term_string",
-    },
-  }),
-
   investmentFund: () => ({
     "@context": "https://schema.org",
     "@type": "FinancialProduct",

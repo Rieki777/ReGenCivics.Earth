@@ -1,5 +1,4 @@
 import { Component, ReactNode } from "react";
-import { TaoErrorState } from "./TaoErrorState";
 
 interface Props {
   children: ReactNode;
@@ -13,8 +12,8 @@ interface State {
 }
 
 function clearCacheAndReload() {
-  if ("caches" in window) {
-    caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n)))).then(() => {
+  if (typeof window.caches !== "undefined") {
+    window.caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n)))).then(() => {
       window.location.reload();
     });
   } else {

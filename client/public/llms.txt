@@ -1,18 +1,25 @@
 # ReGen Civics
 
-> A venture fund and alliance helping regenerative land projects succeed through capital, governance tools, and a supportive network. We operate as an "Infinite Game" for the Regenerative Renaissance.
+> A venture fund and infinite game for regenerative land projects. Capital, governance tools, and a global network powering the Regenerative Renaissance.
 
 ## About
 
-ReGen Civics connects impact investors with ecovillages, regenerative farms, and sustainable communities worldwide. Our approach integrates ecology, finance, development, regenerative agriculture, restoration ecology, impact auditing, and systems thinking.
+ReGen Civics connects impact investors with ecovillages, regenerative farms, and sustainable communities worldwide. We integrate ecology, finance, regenerative agriculture, restoration ecology, impact auditing, and systems thinking.
 
-We believe healthier lands lead to healthier people and increasing real-world value. Our mission is to catalyze the Regenerative Renaissance by providing the tools, capital, and community infrastructure that regenerative land projects need to thrive.
+Healthier lands lead to healthier people and increasing real-world value. We provide capital, governance tools, and community infrastructure that regenerative land projects need to thrive.
+
+## Four Paths
+
+- **Investor**: Put capital to work in the regenerative transition through the fund or crowd pooling
+- **Land Project**: Apply for the incubator, build governance, access capital and alliance support
+- **Alliance Partner**: Join the network of organizations co-creating the Regenerative Renaissance
+- **Player**: Complete quests, earn tokens, and participate in building a regenerative civilization
 
 ## Key Concepts
 
-- **The Infinite Game**: Systems designed for lasting positive impact, not short-term returns
+- **The Infinite Game**: Systems designed for lasting positive impact across generations
 - **Regenerative Renaissance**: A cultural and economic shift where human systems work with natural systems
-- **HEIST Framework**: Holistic Ecosystemic Impact & Sustainability Toolkit for evaluating projects
+- **HEIST Framework**: Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating projects
 - **Regenerative Ikigai**: Finding the intersection of passion, skill, need, and compensation
 - **Nine Forms of Capital**: Financial, Social, Intellectual, Material, Living, Cultural, Spiritual, Experiential, Influence
 - **Crowd Pooling (CCECs)**: Community-Centered Economic Cooperatives for collective investment
@@ -21,35 +28,39 @@ We believe healthier lands lead to healthier people and increasing real-world va
 
 - $Regen: Utility token for tracking contributions in the ReGen Game
 - RGVoice: Governance token for decision-making in the ReGen Game
-- $RCivics: Utility token for the Alliance & Fund
+- $RCivics: Utility token for the Alliance and Fund
 - Fund Voice: Governance token for fund decisions
 
 ## Programs
 
-- Season 2 Incubator: 13-week program starting March Equinox 2025
-- Quests: Regenerative actions earning tokens
-- Crowd Pooling: Community collective investment mechanism
+- Season 2 Incubator: 13-week program starting September 2026
+- Quests: Regenerative actions earning tokens across seasonal categories
+- Crowd Pooling: Community collective investment mechanism for funding land projects directly
 
 ## Links
 
 - [Home](https://regencivics.earth/)
+- [The Fund](https://regencivics.earth/fund)
 - [Investment Opportunity](https://regencivics.earth/opportunity)
-- [Seasons / Incubator](https://regencivics.earth/seasons)
-- [The Game](https://regencivics.earth/game)
+- [Apply](https://regencivics.earth/apply)
 - [Quests](https://regencivics.earth/quest)
-- [Team](https://regencivics.earth/team)
-- [Schedule](https://regencivics.earth/schedule)
-- [Blog](https://regencivics.earth/blog)
-- [Map](https://regencivics.earth/map)
 - [Crowd Pooling](https://regencivics.earth/crowd-pooling)
 - [Community Forum](https://regencivics.earth/community)
+- [The Game](https://regencivics.earth/game)
+- [Seasons / Incubator](https://regencivics.earth/seasons)
+- [Land Projects](https://regencivics.earth/land)
+- [Governance](https://regencivics.earth/governance)
+- [Blog](https://regencivics.earth/blog)
+- [Map](https://regencivics.earth/map)
 - [Glossary](https://regencivics.earth/glossary)
 - [Connect](https://regencivics.earth/connect)
-- [Governance](https://regencivics.earth/governance)
-- [Full AI Content](/llms-full.txt)
+- [Team](https://regencivics.earth/team)
+- [Schedule](https://regencivics.earth/schedule)
+- [Full AI Content](https://regencivics.earth/llms-full.txt)
 
 ## Contact
 
+- Website: https://regencivics.earth
 - YouTube: https://www.youtube.com/@SEEDSRegenerativeEconomies
 - Discord: https://discord.gg/JGmApbPDPd
 - Telegram: https://t.me/+Zl_GNPpL8TE3YTFh

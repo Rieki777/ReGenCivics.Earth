@@ -58,8 +58,20 @@ interface RiversideWebhookPayload {
   recording_id?: string;
   title?: string;
   url?: string;
+  recording_url?: string;
   youtube_url?: string;
+  thumbnail_url?: string;
   duration?: number;
+  duration_seconds?: number;
+  created_at?: string;
+  recorded_at?: string;
+  transcript?: string;
+  ai_summary?: string;
+  summary?: string;
+  project?: {
+    id?: string;
+    name?: string;
+  };
 }
 
 // ── Signature verification ────────────────────────────────────────────────────

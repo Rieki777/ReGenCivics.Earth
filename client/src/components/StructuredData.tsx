@@ -5,7 +5,7 @@
 
 import { useEffect } from 'react';
 
-const BASE_URL = 'https://www.regencivics.earth';
+const BASE_URL = 'https://regencivics.earth';
 
 // Organization schema
 const organizationSchema = {
@@ -37,6 +37,22 @@ const organizationSchema = {
     "Community Development",
     "Decentralized Governance",
     "Token Economics"
+  ],
+  "speakable": {
+    "@type": "SpeakableSpecification",
+    "cssSelector": ["h1", ".hero-description", ".site-description"]
+  },
+  "about": [
+    { "@type": "Thing", "name": "Regenerative Agriculture" },
+    { "@type": "Thing", "name": "Impact Investing" },
+    { "@type": "Thing", "name": "Land Conservation" },
+    { "@type": "Thing", "name": "Community Governance" },
+    { "@type": "Thing", "name": "Ecovillages" }
+  ],
+  "mentions": [
+    { "@type": "Thing", "name": "Regenerative Renaissance" },
+    { "@type": "Thing", "name": "Infinite Game" },
+    { "@type": "Thing", "name": "Crowd Pooling" }
   ]
 };
 
@@ -55,6 +71,51 @@ const websiteSchema = {
     },
     "query-input": "required name=search_term_string"
   }
+};
+
+// SiteNavigationElement schema for Google sitelinks
+const siteNavigationSchema = {
+  "@context": "https://schema.org",
+  "@type": "SiteNavigationElement",
+  "name": "Main Navigation",
+  "hasPart": [
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Sign In",
+      "description": "Sign in to your ReGen Civics account to access the community, track quests, and manage your profile.",
+      "url": `${BASE_URL}/community`
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Apply",
+      "description": "Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications open now.",
+      "url": `${BASE_URL}/apply`
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Quests",
+      "description": "Browse and complete quests that heal the earth and grow the movement. Earn tokens for real-world regenerative actions.",
+      "url": `${BASE_URL}/quest`
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Crowd Pooling",
+      "description": "Pool capital with aligned contributors to fund regenerative land projects directly.",
+      "url": `${BASE_URL}/crowd-pooling`
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "name": "The Fund",
+      "description": "The ReGen Civics venture fund for regenerative land projects. Real land, diversified portfolio, community governed.",
+      "url": `${BASE_URL}/fund`
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "name": "Community",
+      "description": "The ReGen Civics forum where players, investors, land stewards, and builders connect and coordinate.",
+      "url": `${BASE_URL}/community`
+    }
+  ]
 };
 
 // Investment Fund schema
@@ -169,6 +230,7 @@ export function StructuredData() {
     const schemas = [
       organizationSchema,
       websiteSchema,
+      siteNavigationSchema,
       investmentFundSchema,
       faqSchema,
       eventSchema,

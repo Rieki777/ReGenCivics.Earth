@@ -30,6 +30,7 @@ import { QuestArcMap } from "@/components/QuestArcMap";
 import { useHemisphere, setHemisphereOverride } from "@/hooks/useHemisphere";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { questData, QUEST_BEST_SEASONS, SEASON_HERO } from "@/data/questData";
+import { JsonLD } from "@/components/JsonLD";
 import { seasonalQuestsData } from "@/data/seasonalQuestsData";
 import { pageCopy } from "@/data/pageCopy";
 import { cdnImg } from "@/lib/utils";
@@ -107,7 +108,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
   const [imgError, setImgError] = useState(false);
 
   const proposalName = `Quest ${quest.id}: ${quest.title}`;
-  const slug = (quest as any).slug as string | undefined;
+  const slug = quest.slug;
   const imgUrl = slug ? questImageUrl(quest.id, slug) : null;
   const shimmerClass = ORIGINAL_QUEST_IDS.has(quest.id) ? 'quest-card-gold' : 'quest-card-green';
 
@@ -490,8 +491,17 @@ export default function Quest() {
       }} />
     )}
     <div className="min-h-screen bg-[#faf6f1]">
-      <SEO {...pageSEO.quest} />
-      
+      <SEO {...pageSEO.quest} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Quests", url: "/quest" }]} />
+      <JsonLD data={{
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "ReGen Civics Quests",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": questData.intro.title, "url": `https://regencivics.earth/quest#${questData.intro.slug}` },
+          ...questData.spring.map((q, i) => ({ "@type": "ListItem" as const, "position": i + 2, "name": q.title, "url": `https://regencivics.earth/quest#${q.slug}` })),
+        ]
+      }} />
+
       {/* Announcement Banner */}
       <div className="bg-gradient-to-r from-[#7dd87d] via-[#5cb85c] to-[#7dd87d] py-3 px-4 text-center">
         <p className="text-[#1a472a] font-medium flex items-center justify-center gap-2 flex-wrap">
@@ -1140,7 +1150,7 @@ export default function Quest() {
                   <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
                     Quest 13: {questData.routine.title}
                   </h4>
-                  <p className="text-sm text-white/60">{questData.routine.subtitle} &mdash; {questData.routine.minimumTime}</p>
+                  <p className="text-sm text-white/60">{questData.routine.subtitle}, {questData.routine.minimumTime}</p>
                 </div>
               </div>
               <p className="text-white/80 text-sm leading-relaxed flex-1">

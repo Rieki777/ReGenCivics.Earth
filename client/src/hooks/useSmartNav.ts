@@ -159,7 +159,7 @@ export function useSmartNav(): { slots: NavSlot[] } {
 
     // Score all pages
     const scores: Array<{ path: string; score: number }> = [];
-    const allPages = new Set([...Object.keys(affinity), ...Object.keys(counts)]);
+    const allPages = Array.from(new Set([...Object.keys(affinity), ...Object.keys(counts)]));
 
     for (const page of allPages) {
       if (page === "/quest") continue; // slot 1 is hardcoded

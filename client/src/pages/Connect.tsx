@@ -299,7 +299,7 @@ export default function Connect() {
   
   const newsletterMutation = trpc.newsletter.subscribe.useMutation({
     onSuccess: () => markNewsletterSubscribed(),
-    onError: () => console.warn("Failed to subscribe to newsletter"),
+    onError: (error) => console.error("Newsletter subscription failed:", error.message),
   });
   
   const joinRequestMutation = trpc.projectJoinRequests.create.useMutation();

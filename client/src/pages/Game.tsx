@@ -206,7 +206,7 @@ export default function Game() {
 
   return (
     <div className="min-h-screen bg-[#f8f5f0]">
-      <SEO {...pageSEO.game} />
+      <SEO {...pageSEO.game} breadcrumbs={[{ name: "Home", url: "/" }, { name: "The Game", url: "/game" }]} />
       
       {/* SEEDS Legacy Banner */}
       <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-4">

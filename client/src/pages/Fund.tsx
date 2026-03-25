@@ -149,7 +149,7 @@ export default function Fund() {
         { id: "cta", opacity: 0.55 },               // Call to action
       ]}
     >
-      <SEO {...pageSEO.fund} />
+      <SEO {...pageSEO.fund} breadcrumbs={[{ name: "Home", url: "/" }, { name: "The Fund", url: "/fund" }]} />
       <JsonLD data={schemas.investmentFund()} />
       <JsonLD data={schemas.faqPage([
         { question: "What is the ReGen Civics Alliance Fund?", answer: "The ReGen Civics Alliance Fund is a venture fund investing in regenerative land projects globally. It pools capital from accredited investors to back projects that heal soil, water, community, and local economy." },

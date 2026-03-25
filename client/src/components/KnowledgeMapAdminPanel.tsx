@@ -195,7 +195,7 @@ export default function KnowledgeMapAdminPanel() {
               <p className="text-sm text-white">{entry.title}</p>
               {entry.summary && <p className="text-xs text-white/40 mt-0.5">{entry.summary}</p>}
               <p className="text-xs text-white/25 mt-1">
-                {entry.postId ? `Post #${entry.postId}` : entry.url ?? "—"}
+                {entry.postId ? `Post #${entry.postId}` : entry.url ?? "-"}
                 {" · "}Cat #{entry.categoryId}
                 {" · "}Order {entry.sortOrder}
               </p>

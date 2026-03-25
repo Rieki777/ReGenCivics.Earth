@@ -4,7 +4,9 @@
  */
 
 import { useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { cdnImg } from "@/lib/utils";
+import { schemas } from "@/components/JsonLD";
 
 interface SEOProps {
   title: string;
@@ -15,6 +17,7 @@ interface SEOProps {
   type?: 'website' | 'article';
   author?: string;
   publishedTime?: string;
+  breadcrumbs?: Array<{ name: string; url: string }>;
 }
 
 const BASE_URL = 'https://regencivics.earth';
@@ -26,13 +29,16 @@ export function SEO({
   description,
   keywords,
   image = DEFAULT_IMAGE,
-  url = '',
+  url,
   type = 'website',
   author,
-  publishedTime
+  publishedTime,
+  breadcrumbs
 }: SEOProps) {
+  const [location] = useLocation();
+  const effectiveUrl = url ?? location;
   const fullTitle = title.includes('ReGen Civics') ? title : `${title} | ReGen Civics`;
-  const fullUrl = `${BASE_URL}${url}`;
+  const fullUrl = `${BASE_URL}${effectiveUrl}`;
   const fullImage = image.startsWith('http') ? image : `${BASE_URL}${image}`;
 
   useEffect(() => {
@@ -89,7 +95,22 @@ export function SEO({
     }
     canonical.setAttribute('href', fullUrl);
 
-  }, [fullTitle, description, keywords, fullImage, fullUrl, type, author, publishedTime]);
+    // Breadcrumb structured data
+    const existingBreadcrumb = document.getElementById('seo-breadcrumb-ld');
+    if (existingBreadcrumb) existingBreadcrumb.remove();
+    if (breadcrumbs && breadcrumbs.length > 0) {
+      const breadcrumbItems = breadcrumbs.map((item) => ({
+        name: item.name,
+        url: item.url.startsWith('http') ? item.url : `${BASE_URL}${item.url}`,
+      }));
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.id = 'seo-breadcrumb-ld';
+      script.textContent = JSON.stringify(schemas.breadcrumb(breadcrumbItems));
+      document.head.appendChild(script);
+    }
+
+  }, [fullTitle, description, keywords, fullImage, fullUrl, type, author, publishedTime, breadcrumbs]);
 
   return null;
 }
@@ -98,7 +119,7 @@ export function SEO({
 export const pageSEO = {
   home: {
     title: 'ReGen Civics: Infinite Game for the Regenerative Renaissance',
-    description: 'Join the Regenerative Renaissance. ReGen Civics is a venture fund and alliance helping regenerative land projects succeed through capital, governance tools, and a supportive network. Healthier lands = Healthier people = Increasing real world value.',
+    description: 'ReGen Civics is a venture fund and infinite game for regenerative land projects. Capital, governance, and a global network powering the Regenerative Renaissance.',
     keywords: 'regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative renaissance, infinite game',
     image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
     url: '/'
@@ -119,14 +140,14 @@ export const pageSEO = {
   },
   game: {
     title: 'The Game: How ReGen Civics Works',
-    description: 'An infinite game -- no finish line, no winners, just a growing civilization we\'re building together. Here\'s how the ReGen Civics game works.',
+    description: 'An infinite game with no finish line. A growing civilization we\'re building together. Here\'s how the ReGen Civics game works.',
     keywords: 'regenerative game, token economy, DAO governance, contribution tracking, regenerative tokens, impact rewards',
     image: cdnImg('https://assets.regencivics.earth/ocDzkDHpivHtGCWo.jpg'),
     url: '/game'
   },
   quest: {
     title: 'Quests: Regenerative Actions & Rewards',
-    description: 'Quests are how you participate. Each one moves healing into the world -- your body, your land, your community. Earn rewards doing the work that actually matters.',
+    description: 'Quests are how you participate. Each one moves healing into the world: your body, your land, your community. Earn rewards doing the work that actually matters.',
     keywords: 'regenerative quests, impact actions, earn tokens, food forest, gut health, regenerative lifestyle, sustainable living',
     image: cdnImg('https://assets.regencivics.earth/kdpmqczDwXGfwTIK.jpg'),
     url: '/quest'
@@ -168,7 +189,7 @@ export const pageSEO = {
   },
   connect: {
     title: 'Connect With Us | ReGen Civics',
-    description: 'Get in touch with the ReGen Civics team. Whether you\'re an investor, land project, alliance partner, or player -- we want to hear from you.',
+    description: 'Get in touch with the ReGen Civics team. Whether you\'re an investor, land project, alliance partner, or player, we want to hear from you.',
     keywords: 'contact regenerative fund, impact investing contact, regenerative community, partnership inquiry',
     image: 'https://regencivics.earth/og/connect.webp',
     url: '/connect'

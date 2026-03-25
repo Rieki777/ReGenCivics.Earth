@@ -1292,7 +1292,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                         </a>
                       ) : entity.inactive ? (
                         <span className="text-white/30 text-xs line-through">Offline</span>
-                      ) : <span className="text-white/30 text-xs">—</span>}
+                      ) : <span className="text-white/30 text-xs">-</span>}
                     </td>
                   </tr>
                 ))}
@@ -1339,7 +1339,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 <td>{entity.name}</td>
                 <td>{entity.type === "land_project" ? "Land Project" : entity.type === "organization" ? "Alliance Organization" : "Applicant"}</td>
                 <td>{entity.country || (entity.isGlobal ? "Global" : "Unknown")}</td>
-                <td>{entity.url ? <a href={entity.url}>{entity.url}</a> : "—"}</td>
+                <td>{entity.url ? <a href={entity.url}>{entity.url}</a> : "-"}</td>
               </tr>
             ))}
           </tbody>

@@ -33,6 +33,28 @@ export default function SiteFooter() {
           </p>
         </div>
 
+        {/* Primary actions nav for sitelink signals */}
+        <nav aria-label="Primary actions" className="flex flex-wrap justify-center gap-4 mb-8">
+          <Link href="/community" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            Sign In
+          </Link>
+          <Link href="/apply" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            Apply
+          </Link>
+          <Link href="/quest" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            Quests
+          </Link>
+          <Link href="/crowd-pooling" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            Crowd Pooling
+          </Link>
+          <Link href="/fund" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            The Fund
+          </Link>
+          <Link href="/community" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            Community
+          </Link>
+        </nav>
+
         {/* Middle row: Navigation columns */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8 text-sm">
           {/* Explore */}

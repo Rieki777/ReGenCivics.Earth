@@ -34,7 +34,6 @@ import NewsletterSignup from "@/components/NewsletterSignup";
 import { SocialLinks } from "@/components/SocialLinks";
 
 import { SEO, pageSEO } from "@/components/SEO";
-import { JsonLD, schemas } from "@/components/JsonLD";
 import { PathCardImage } from "@/components/PathCardImage";
 import "@/components/PathCardImage.css";
 import AutoplayVideo from "@/components/AutoplayVideo";
@@ -173,8 +172,8 @@ export default function Home() {
       import('./Community');
       import('./Play');
     };
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(preload, { timeout: 3000 });
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(preload, { timeout: 3000 });
     } else {
       setTimeout(preload, 2000);
     }
@@ -204,9 +203,7 @@ export default function Home() {
         { id: "newsletter", opacity: 0.65 },       // Newsletter/Footer - stronger for contrast
       ]}
     >
-      <SEO {...pageSEO.home} />
-      <JsonLD data={schemas.organization()} />
-      <JsonLD data={schemas.website()} />
+      <SEO {...pageSEO.home} breadcrumbs={[{ name: "Home", url: "/" }]} />
 
       {/* Editable Banner */}
       <BannerDisplay bannerKey="main-banner" />

@@ -46,7 +46,7 @@ export default function CrowdPooling() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f8f5f0] to-[#f0ebe0]">
-      <SEO {...pageSEO.crowdPooling} />
+      <SEO {...pageSEO.crowdPooling} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Crowd Pooling", url: "/crowd-pooling" }]} />
       
       {/* Header with Background Image */}
       <header className="relative bg-[#1a472a] text-white py-4 px-4 sticky top-0 z-50 overflow-hidden">

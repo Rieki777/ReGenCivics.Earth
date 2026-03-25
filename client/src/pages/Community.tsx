@@ -237,7 +237,7 @@ export default function Community() {
     return (
       <PageTransition>
       <div className="min-h-screen bg-[#f8f5f0]">
-        <SEO {...pageSEO.community} />
+        <SEO {...pageSEO.community} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Community", url: "/community" }]} />
         <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] via-[#2d5a3f] to-[#1a472a]" />
           <div className="absolute top-20 left-4 opacity-20">
@@ -307,7 +307,7 @@ export default function Community() {
   return (
     <PageTransition>
     <div className="min-h-screen bg-[#f8f5f0]">
-      <SEO {...pageSEO.community} />
+      <SEO {...pageSEO.community} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Community", url: "/community" }]} />
       <AMABanner />
       <BannerDisplay bannerKey="community-banner" />
 

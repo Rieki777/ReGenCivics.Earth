@@ -621,7 +621,7 @@ export default function Opportunity() {
           Welcome back, {investorName.split(" ")[0]}
         </div>
       )}
-      <SEO {...pageSEO.opportunity} />
+      <SEO {...pageSEO.opportunity} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Investment Opportunity", url: "/opportunity" }]} />
       {isDesktop ? <TableOfContents /> : <MobileTableOfContents />}
       
       {/* Fixed Header */}

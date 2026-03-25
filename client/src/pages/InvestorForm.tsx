@@ -215,7 +215,7 @@ export default function InvestorForm() {
 
   const newsletterMutation = trpc.newsletter.subscribe.useMutation({
     onSuccess: () => markNewsletterSubscribed(),
-    onError: () => console.warn("Failed to subscribe to newsletter"),
+    onError: (error) => console.error("Newsletter subscription failed:", error.message),
   });
   
   const submitMutation = trpc.investorInquiries.submit.useMutation({

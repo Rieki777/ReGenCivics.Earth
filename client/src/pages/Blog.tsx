@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import { JsonLD } from '@/components/JsonLD';
 import { SEO } from '@/components/SEO';
 import { blogPosts, getFeaturedPost } from '@/data/blogPosts';
 import { trpc } from '@/lib/trpc';
@@ -91,7 +92,7 @@ function VideoSuggestionCard({
 function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<string>('other');
+  const [category, setCategory] = useState<"how_to_play" | "how_to_participate" | "how_to_invest" | "how_to_apply" | "how_to_contribute" | "other">('other');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   
@@ -117,7 +118,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
     createMutation.mutate({
       title: title.trim(),
       description: description.trim() || undefined,
-      category: category as any,
+      category,
       submitterEmail: email.trim() || undefined,
       submitterName: name.trim() || undefined,
     });
@@ -138,7 +139,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
       
       <div>
         <label className="text-white/80 text-sm mb-1 block">Category</label>
-        <Select value={category} onValueChange={setCategory}>
+        <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
           <SelectTrigger className="bg-white/10 border-white/20 text-white">
             <SelectValue />
           </SelectTrigger>
@@ -251,10 +252,21 @@ export default function Blog() {
       <SEO
         title="Blog: Stories & Updates | ReGen Civics"
         description="Stories, insights, and updates from our journey toward a regenerative civilization."
-        url="https://regencivics.earth/blog"
+        url="/blog"
         image={cdnImg("https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.png")}
+        breadcrumbs={[{ name: "Home", url: "/" }, { name: "Blog", url: "/blog" }]}
       />
-      
+      <JsonLD data={{
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "ReGen Civics Blog",
+        "itemListElement": blogPosts.map((post, i) => ({
+          "@type": "ListItem",
+          "position": i + 1,
+          "url": `https://regencivics.earth/blog/${post.slug}`
+        }))
+      }} />
+
       {/* Hero Section */}
       <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
