@@ -199,7 +199,7 @@ const capitalForms: CapitalForm[] = [
     color: '#E91E63',
     bgColor: 'bg-pink-500/20',
     borderColor: 'border-pink-500/40',
-    description: 'Purpose, meaning, inspiration, faith, and transformative experiences',
+    description: 'Purpose, meaning, inspiration, faith, and meaningful experiences',
     examples: [
       'Vision and purpose clarification sessions',
       'Ceremonies, rituals, or sacred gatherings',

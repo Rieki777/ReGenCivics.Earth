@@ -168,7 +168,7 @@ const tokenItems = {
   hold: [
     "Visible on your member profile",
     "Reflects your full contribution history",
-    "Unlocks governance voice weight",
+    "Earns governance voice weight",
     "Records the trust the community has built with you",
   ],
   use: [

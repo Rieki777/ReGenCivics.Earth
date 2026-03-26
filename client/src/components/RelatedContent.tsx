@@ -135,7 +135,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
   opportunity: {
     pages: [
       { href: "/fund", title: "Fund Overview", description: "See the full fund structure, treasury, and impact metrics." },
-      { href: "/risk-disclosure", title: "Risk Disclosure", description: "Review our comprehensive risk disclosures before investing." },
+      { href: "/risk-disclosure", title: "Risk Disclosure", description: "Review our full risk disclosures before investing." },
       { href: "/schedule", title: "Book a Session", description: "Join an open session to ask questions and meet the team." },
     ],
     blog: { slug: "what-makes-regen-civics-different", title: "What Makes ReGen Civics Different", excerpt: "7 unique features that set our regenerative platform apart." },

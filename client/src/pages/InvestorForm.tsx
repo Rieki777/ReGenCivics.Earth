@@ -449,7 +449,7 @@ export default function InvestorForm() {
                       Contact Information
                     </CardTitle>
                     <CardDescription className="text-white/80">
-                      Let us know how to reach you. After submitting, you'll unlock our Investment Thesis.
+                      Let us know how to reach you. After submitting, you'll get access to our Investment Thesis.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-6">

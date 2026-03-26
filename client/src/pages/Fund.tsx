@@ -323,7 +323,7 @@ export default function Fund() {
               <CollapsibleSection title="De-Risked Through Alliance" icon={Building}>
                 <p>
                   Land projects don't go it alone. Our alliance of organizations provides
-                  comprehensive support: legal structure, financial modeling, regenerative design,
+                  full-spectrum support: legal structure, financial modeling, regenerative design,
                   governance setup, infrastructure and development, and ongoing operational support.
                   This dramatically reduces the failure rate and protects investor capital.
                 </p>

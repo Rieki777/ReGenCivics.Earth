@@ -281,7 +281,7 @@ const defaultCapitalWeights: CapitalType[] = [
     name: 'Spiritual Capital',
     icon: Sparkles,
     color: '#E91E63',
-    description: 'Purpose, meaning, inspiration, faith, and transformative experiences',
+    description: 'Purpose, meaning, inspiration, faith, and meaningful experiences',
     example: {
       scenario: 'You facilitate 2 vision sessions with 30 attendees total',
       input: '2 sessions + 30 attendees',
@@ -291,7 +291,7 @@ const defaultCapitalWeights: CapitalType[] = [
     weights: [
       { input: 'Vision sessions facilitated', multiplier: '$150', unit: 'per session', rationale: 'Value of strategic visioning and purpose work', key: 'spiritual_vision' },
       { input: 'Ceremonies/gatherings led', multiplier: '$100', unit: 'per ceremony', rationale: 'Value of sacred space holding and ritual facilitation', key: 'spiritual_ceremonies' },
-      { input: 'Session attendees', multiplier: '$15', unit: 'per person', rationale: 'Per-person value of transformative experiences', key: 'spiritual_attendees' },
+      { input: 'Session attendees', multiplier: '$15', unit: 'per person', rationale: 'Per-person value of meaningful experiences', key: 'spiritual_attendees' },
       { input: 'Inspiration impact', multiplier: '$25', unit: 'per % morale increase', rationale: 'Value of motivation and purpose alignment', key: 'spiritual_inspiration' },
     ]
   },

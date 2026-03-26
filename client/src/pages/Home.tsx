@@ -131,8 +131,8 @@ const insightCards = [
   {
     icon: TrendingUp,
     title: "$10.1 Trillion Opportunity",
-    lede: 'Nature-positive transitions could unlock $10.1 trillion in business value by 2030.',
-    body: 'Nature-positive transitions could unlock <a href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/" target="_blank" rel="noopener noreferrer" class="text-[#7dd87d] underline hover:text-[#a3e635]">$10.1 trillion in business value</a> by 2030 and create 395 million jobs. Regenerative development is where the capital is flowing.<br/><br/><span class="text-white/50 text-xs">Source: World Economic Forum / PwC, 2024</span>',
+    lede: 'Nature-positive transitions could generate $10.1 trillion in business value by 2030.',
+    body: 'Nature-positive transitions could generate <a href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/" target="_blank" rel="noopener noreferrer" class="text-[#7dd87d] underline hover:text-[#a3e635]">$10.1 trillion in business value</a> by 2030 and create 395 million jobs. Regenerative development is where the capital is flowing.<br/><br/><span class="text-white/50 text-xs">Source: World Economic Forum / PwC, 2024</span>',
     borderColor: "border-[#7dd87d]/30",
   },
   {

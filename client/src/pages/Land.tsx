@@ -304,7 +304,7 @@ export default function Land() {
               className="text-white/60 text-center mb-8 max-w-xl mx-auto text-lg text-shadow-subtle"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              A comprehensive support system from conception to thriving community.
+              A complete support system from conception to thriving community.
             </p>
           </AnimatedSection>
 

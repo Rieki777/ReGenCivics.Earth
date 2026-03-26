@@ -206,7 +206,7 @@ function AdminAuditLogTab() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-[#1a472a] max-w-xs truncate">
-                          {entry.description ?? '—'}
+                          {entry.description ?? '-'}
                         </td>
                         <td className="px-4 py-3">
                           {entry.metadata && (
@@ -4202,7 +4202,7 @@ function AdminEventsTab() {
         {allEvents.map(ev => {
           const signupCount = Number(countMap[ev.id] ?? 0);
           const startDate = ev.startTime ? new Date(ev.startTime) : null;
-          const dateStr = startDate ? startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : '—';
+          const dateStr = startDate ? startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : '-';
           const timeStr = startDate ? startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : '';
           return (
             <Card key={ev.id} className={`bg-[#0a1f14] border-white/10 ${ev.status === 'cancelled' ? 'opacity-50' : ''}`}>

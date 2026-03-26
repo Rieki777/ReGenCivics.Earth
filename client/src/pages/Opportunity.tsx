@@ -1608,7 +1608,7 @@ export default function Opportunity() {
                 </table>
               </div>
               <p className="text-xs text-white/40 italic">
-                This is not a complete list of risks. Investors should review the confidential private placement memorandum for comprehensive discussion of risk factors before making any investment decision.
+                This is not a complete list of risks. Investors should review the confidential private placement memorandum for a full discussion of risk factors before making any investment decision.
               </p>
               <div className="mt-4">
                 <Link href="/risk-disclosure" className="inline-flex items-center gap-2 text-[#7dd87d] hover:text-[#ffd700] transition-colors text-sm">

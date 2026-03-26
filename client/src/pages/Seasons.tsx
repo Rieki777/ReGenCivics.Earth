@@ -491,7 +491,7 @@ export default function Seasons() {
             <div className="bg-gradient-to-br from-[#7dd87d]/20 to-transparent rounded-2xl p-6 border border-[#7dd87d]/30">
               <TreeDeciduous className="w-10 h-10 text-[#7dd87d] mb-4" />
               <h3 className="text-lg font-bold text-white mb-2">Thriving Village</h3>
-              <p className="text-white/60 text-sm">Expand from a few core members to a vibrant, self-sustaining community.</p>
+              <p className="text-white/60 text-sm">Expand from a few core members to a thriving, self-sustaining community.</p>
             </div>
             
             <div className="bg-gradient-to-br from-[#7dd87d]/20 to-transparent rounded-2xl p-6 border border-[#7dd87d]/30">

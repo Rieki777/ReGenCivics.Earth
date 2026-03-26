@@ -159,7 +159,7 @@ const openRoles = [
   },
   {
     title: "Community Engagement Coordinator",
-    purpose: "Foster vibrant community participation and member engagement",
+    purpose: "Build active community participation and member engagement",
     circle: "Community Circle",
     accountability: "Organize events, welcome new members, maintain community health",
     domain: "Community events calendar and engagement initiatives",
