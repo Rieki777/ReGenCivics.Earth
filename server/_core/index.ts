@@ -1,6 +1,20 @@
 import "dotenv/config";
 import crypto from "node:crypto";
-import { parse as parseCookieHeader } from "cookie";
+/** Inline cookie parser — replaces the `cookie` npm package to avoid CJS/ESM
+ *  interop issues in the esbuild ESM bundle (Sentry: "Dynamic require of cookie"). */
+function parseCookieHeader(str: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  if (!str) return result;
+  for (const pair of str.split(";")) {
+    const idx = pair.indexOf("=");
+    if (idx < 0) continue;
+    const key = pair.substring(0, idx).trim();
+    let val = pair.substring(idx + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+    try { result[key] = decodeURIComponent(val); } catch { result[key] = val; }
+  }
+  return result;
+}
 import * as Sentry from "@sentry/node";
 import { runDigestJob } from "../jobs/digestJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";

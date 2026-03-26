@@ -1,3 +1,18 @@
+// ── Stale-chunk reload ──────────────────────────────────────────────────────
+// After a deploy, users with cached HTML try to load JS chunks that no longer
+// exist. Vite fires "vite:preloadError" for lazy-loaded routes. We catch it
+// and do a single hard reload so the browser fetches the fresh HTML + chunks.
+window.addEventListener("vite:preloadError", (e: Event) => {
+  const key = "vite-chunk-reload";
+  if (!sessionStorage.getItem(key)) {
+    sessionStorage.setItem(key, "1");
+    window.location.reload();
+  }
+  e.preventDefault();           // suppress the uncaught error in Sentry
+});
+// Clear the flag on successful page loads so future deploys also auto-reload
+window.addEventListener("load", () => sessionStorage.removeItem("vite-chunk-reload"), { once: true });
+
 // Sentry is deferred until after page load — it's non-essential for rendering
 if (import.meta.env.VITE_SENTRY_DSN) {
   window.addEventListener("load", () => {

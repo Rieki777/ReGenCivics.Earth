@@ -437,11 +437,46 @@ Note: Reaching 9.5+ on Functionality, Mobile, and Performance requires completin
 
 ## Handoff Breakdown -- Who Does What
 
+---
+
+## Fix 192: Sentry "Dynamic require of cookie" -- CJS/ESM Interop (Bug Fix)
+
+**Status: CODED**
+
+**Symptom:** 8 Sentry events: "Dynamic require of 'cookie' is not supported" on `GET /api/csrf-token`. The esbuild ESM bundle generates a `__require` CJS shim that throws at runtime when trying to import the CommonJS `cookie` package.
+
+**Root cause:** `cookie@1.0.2` is a CommonJS-only package. The build script (`esbuild ... --format=esm`) outputs ESM, but the named import `{ parse } from "cookie"` triggers esbuild's CJS interop shim, which fails at runtime in the Node.js ESM environment.
+
+**Fix:** Replaced the `cookie` package import with an inline `parseCookieHeader()` function in both `server/_core/index.ts` and `server/_core/sdk.ts`. Cookie parsing is trivial string splitting (split on `;`, then on `=`, decode URI components). This eliminates the CJS/ESM interop issue entirely and removes the runtime dependency.
+
+**Files changed:**
+- `server/_core/index.ts` -- replaced `import { parse as parseCookieHeader } from "cookie"` with inline function
+- `server/_core/sdk.ts` -- same replacement
+
+**Cleanup:** The `cookie` direct dependency in `package.json` can be removed (express uses it as a transitive dep, but our code no longer imports it directly).
+
+---
+
+## Fix 193: Stale Chunk Auto-Reload After Deploy (Bug Fix)
+
+**Status: CODED**
+
+**Symptom:** 23 Sentry events: "Failed to fetch dynamically imported module" / "ChunkLoadError". After a deploy, users with cached HTML pages try to load JS chunks that no longer exist on the server.
+
+**Root cause:** Vite uses content-hashed chunk filenames. When a new build deploys, old chunk files are replaced. Users with the old HTML cached in their browser (or in a long-lived tab) request chunks that 404.
+
+**Fix:** Added a `vite:preloadError` event listener in `client/src/main.tsx` that catches chunk load failures and performs a single hard reload (using `sessionStorage` to prevent reload loops). On successful page load, the flag is cleared so future deploys also auto-reload.
+
+**Files changed:**
+- `client/src/main.tsx` -- added stale-chunk reload handler at top of file
+
+---
+
 ### YOU (Rye) -- things only you can do
 
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
-| 169 | `git add .github/workflows/ci.yml && git commit -m "fix: remove hardcoded pnpm v9 from CI, use packageManager field" && git push` | Git push required | Terminal in project root |
+| 169, 192, 193 | `git add -A && git commit -m "fix: cookie CJS/ESM interop, stale chunk reload, CI pnpm version" && git push` | Git push required | Terminal in project root |
 | 174-5 | Submit updated sitemap in Google Search Console and request indexing for sitelink target pages | GSC dashboard login required | Google Search Console |
 | 177 | Test CSP changes in production after deploy | Verify no broken functionality from CSP tightening | Browser on regencivics.earth after deploy |
 
@@ -450,6 +485,8 @@ Note: Reaching 9.5+ on Functionality, Mobile, and Performance requires completin
 | # | Task | Status |
 |---|------|--------|
 | 169 | Fix pnpm version mismatch in ci.yml | CODED |
+| 192 | Replace `cookie` package import with inline parser (CJS/ESM fix) | CODED |
+| 193 | Add stale-chunk auto-reload handler | CODED |
 | 170 | Add SiteNavigationElement schema, fix URL inconsistency, add per-page breadcrumbs | READY TO IMPLEMENT |
 | 171 | Audit and fix page titles, add H1 tags to legal pages | READY TO IMPLEMENT |
 | 172 | Fix canonical URLs, absolutify OG images | READY TO IMPLEMENT |
@@ -475,5 +512,5 @@ Note: Reaching 9.5+ on Functionality, Mobile, and Performance requires completin
 
 ### WAITING ON YOU before Claude Code can proceed
 
-- Fix 169 needs `git push` to verify CI passes
+- Fixes 169, 192, 193 need `git push` to deploy and verify
 - Fix 174-5 needs GSC access to submit sitemap and request indexing

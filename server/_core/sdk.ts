@@ -1,6 +1,19 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
-import { parse as parseCookieHeader } from "cookie";
+/** Inline cookie parser — avoids CJS/ESM interop issues with the `cookie` package. */
+function parseCookieHeader(str: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  if (!str) return result;
+  for (const pair of str.split(";")) {
+    const idx = pair.indexOf("=");
+    if (idx < 0) continue;
+    const key = pair.substring(0, idx).trim();
+    let val = pair.substring(idx + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+    try { result[key] = decodeURIComponent(val); } catch { result[key] = val; }
+  }
+  return result;
+}
 import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
