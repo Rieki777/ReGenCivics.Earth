@@ -472,13 +472,296 @@ Note: Reaching 9.5+ on Functionality, Mobile, and Performance requires completin
 
 ---
 
+---
+
+## Fix 202: "Dream Up a Regenerative Quest" -- Two Links (Bug Fix)
+
+**Status: CODED**
+
+**Problem:** Quest 10 in `welcomeAboardQuests.ts` had `forumUrl: "/community/quests"` which pointed to the proposal form, not the discussion post. Rye confirmed there are two distinct links needed: the forum discussion post (post 599) and the actual proposal submission page.
+
+**Fix:**
+- Added optional `proposalUrl` field to `WelcomeAboardQuest` interface
+- Updated Quest 10: `forumUrl: "/community/post/599"` (discussion), `proposalUrl: "/community/quests"` (submit proposal)
+- Updated `WelcomeAboardQuests.tsx` to render a second "Propose it" link in amber/gold color when `proposalUrl` is set
+
+**Files changed:**
+- `client/src/data/welcomeAboardQuests.ts` -- added `proposalUrl` field to interface, updated quest 10 data
+- `client/src/components/WelcomeAboardQuests.tsx` -- added conditional render for `proposalUrl`
+
+---
+
+## Fix 203: Forum Deep Links Broken for Unauthenticated Users
+
+**Status: CODED**
+
+**Problem:** `CommunityPost.tsx` had a hard redirect: `if (!isAuthenticated) { window.location.href = '/community'; return null; }`. Any unauthenticated user (or user with slow auth load) visiting a direct forum link like `regencivics.earth/community/post/599` was immediately bounced to `/community/`. This broke all external sharing, email links, and notification links.
+
+Same issue existed in `QuestSuggestions.tsx` (`/community/quests`).
+
+**Fix:** Removed the hard auth redirect from both files. Unauthenticated users can now read forum posts and the quest suggestions page. Actions requiring auth (liking, replying, voting) already have their own inline auth checks that redirect to login.
+
+**Files changed:**
+- `client/src/pages/CommunityPost.tsx` -- removed `if (!isAuthenticated)` redirect block
+- `client/src/pages/QuestSuggestions.tsx` -- removed `if (!isAuthenticated)` redirect block
+
+---
+
+## Fix 204: Emoji Reactions -- Swap 👍 for ✔️, Add Tooltip Labels
+
+**Status: CODED**
+
+**Problem:** The 6 emoji reactions had no explanation and used 👍 (generic thumbs up) rather than a meaningful quest-specific signal. Rye specified a new set of meanings.
+
+**New emoji set:**
+
+| Emoji | Label | Tooltip |
+|-------|-------|---------|
+| ✔️ | Done This | Done This — I have tried or completed this |
+| ❤️ | Love It | Love It — I love and support this |
+| 🌱 | Considering Doing | Considering Doing — This is growing on me and I might do it |
+| 🔥 | Paradigm Shifting | Paradigm Shifting — This challenges how I see things |
+| 💡 | Make Blog Post | Make Blog Post — This deserves a deeper write-up |
+| 🌍 | Globally Replicable | Globally Replicable — This could work anywhere on Earth |
+
+**Fix:**
+- Swapped `'👍'` for `'✔️'` in `ALLOWED_EMOJIS` const in `EmojiReactions.tsx`
+- Added `EMOJI_LABELS` map with full tooltip text
+- Added `title` attribute to each emoji button
+- Updated `aria-label` to use the full label text
+- Updated server-side Zod enum in `server/routes/forum.ts` to accept `✔️` instead of `👍`
+
+**Note:** Any existing `👍` reactions in the DB will be orphaned (won't appear in the new `✔️` slot). This is acceptable -- existing reaction counts were low.
+
+**Files changed:**
+- `client/src/components/EmojiReactions.tsx` -- new ALLOWED_EMOJIS, EMOJI_LABELS, title/aria-label
+- `server/routes/forum.ts` -- updated Zod enum and ALLOWED_EMOJIS array
+
+---
+
+## Fix 205: Overview Tab -- Remove Quest Card List, Keep Progress + Explore Button
+
+**Status: READY TO IMPLEMENT**
+
+**Problem:** The Overview tab on the Player Profile page renders `<WelcomeAboardQuests />` which shows the full list of 10 quest cards. This makes the Overview tab overwhelming and long. The quest cards belong on the Quests tab. The Overview should only show: the profile card, a compact progress indicator, and an "Explore Quests" CTA button.
+
+**Fix:**
+- In `PlayerProfile.tsx`, find the Overview tab section (around line 2734-2763 per earlier analysis)
+- Remove the `<WelcomeAboardQuests />` render from Overview
+- Keep the `DiscoverTab` component
+- Keep the "Explore Onboarding Quests" section with the "View Quests" button
+- Ensure the "View Quests" button scrolls to the top of the Quests tab (not the bottom) when clicked -- it should call `setActiveTab('quests')` and then scroll to top of page
+
+**Files to change:**
+- `client/src/pages/PlayerProfile.tsx` -- remove `<WelcomeAboardQuests />` from the Overview tab section
+
+---
+
+## Fix 206: Forum Cards on Community Page -- Full-Width Desktop Cards
+
+**Status: READY TO IMPLEMENT**
+
+**Problem:** Forum thread cards in the community page appear as small inline items. On desktop they should be beautiful full-width cards with the thread image, title, excerpt, reply count, and author info. The land project threads already have a card-style layout (around lines 771-805 in Community.tsx). Other thread sections should match this quality.
+
+**Fix:**
+- In `Community.tsx`, audit the thread card rendering for all sections (land projects, quest threads, alliance partners, etc.)
+- Make all thread cards use the full-width card pattern: image/icon, title, brief description, reply count, last activity
+- On desktop (`md:`), cards should be full-width single column with substantial padding and visual presence
+- On mobile, keep compact
+
+**Files to change:**
+- `client/src/pages/Community.tsx` -- update thread card styles in all sections to use full-width card pattern
+
+---
+
+## Fix 207: Alliance Partners Thread -- Add Quest Cards Like Fire Has
+
+**Status: READY TO IMPLEMENT**
+
+**Problem:** The Alliance Partners category page or thread is missing the quest card treatment that the Fire quest thread has. The Fire quest thread shows visual quest card(s) for players to jump into. Alliance Partners needs the same pattern to orient visitors.
+
+**What "like Fire has" means:** The Fire quest forum thread includes a styled card (probably using `QuestDetailModal` or a similar component) linking to the quest. The Alliance Partners thread needs a similar card showing what alliance partners are invited to do.
+
+**Fix:**
+- Identify where the Fire quest thread shows quest cards (likely in Community.tsx or CommunityCategory.tsx)
+- Add the same quest card component to the Alliance Partners category view
+- The card should link to the Alliance Partners onboarding content or the relevant quest
+
+**Files to change:**
+- `client/src/pages/Community.tsx` or `client/src/pages/CommunityCategory.tsx` -- add quest card to Alliance Partners section
+
+---
+
+## Fix 208: Relabel "Rites of Passage" Button to "Welcome Aboard Quests"
+
+**Status: READY TO IMPLEMENT**
+
+**Problem:** In the Player Profile Quests tab (and possibly elsewhere), a button labeled "Rites of Passage" should be relabeled to "Welcome Aboard Quests" since it links to the 10 onboarding quests (welcome-aboard-1 through welcome-aboard-10).
+
+**Fix:**
+- In `PlayerProfile.tsx`, find any button or link labeled "Rites of Passage" that points to the 10 onboarding quests
+- Rename it to "Welcome Aboard Quests"
+
+**Files to change:**
+- `client/src/pages/PlayerProfile.tsx` -- update label
+
+---
+
+## Fix 209: Add New "Rites of Passage" Button for 14 Rites Quests (0-13)
+
+**Status: READY TO IMPLEMENT**
+
+**Problem:** After renaming the onboarding button (Fix 208), there's no button for the 14 numbered "Rites of Passage" quests (Quest 0 through Quest 13). These are the core initiatory arc. A new button should be added pointing to the Quests page filtered to show rites-of-passage quests.
+
+**Fix:**
+- In `PlayerProfile.tsx` Quests tab, add a new "Rites of Passage" button that navigates to `/quest` or `/community/c/rites-of-passage`
+- The button should be visually distinct from the Welcome Aboard button (different color or icon)
+
+**Files to change:**
+- `client/src/pages/PlayerProfile.tsx` -- add new Rites of Passage CTA button in Quests tab
+
+---
+
+## Fix 210: Quest Section -- Seasonal Follow-On Quests in Correct Seasonal Order
+
+**Status: READY TO IMPLEMENT**
+
+**Problem:** The seasonal follow-on quests in `questData.ts` or the Quest page are not showing in the correct seasonal order. Per the Quest Organization Plan, the correct order is Spring, Summer, Fall, Winter (then any Anytime/Routine quests).
+
+**Current state:** The `QUEST_ORGANIZATION_PLAN.md` defines the correct ordering:
+- Spring: Quests 1 (Potions), 2 (Seeds), 3 (Healing Whole)
+- Summer: Quests 4 (Love Family Homesteads), 5 (Rites of Love), 6 (Healing Circles)
+- Fall: Quests 7 (Animal Friendship), 8 (Futurecasting), 9 (Song for the Garden)
+- Winter: Quests 10 (NVC), 11 (Healing Inner Masculine/Feminine), 12 (Honey Fast)
+- Anytime/Routine: Quest 13 (Fasting), Food Foresting (Featured)
+
+**Fix:**
+- In `client/src/data/questData.ts`, verify the `season` field on each quest matches the above
+- In `client/src/pages/Quest.tsx`, verify the seasonal display order is Spring > Summer > Fall > Winter
+- If quests are sorted alphabetically or by ID instead of by season, fix the sort logic
+
+**Files to change:**
+- `client/src/data/questData.ts` -- verify/fix season assignments
+- `client/src/pages/Quest.tsx` -- verify/fix seasonal display order
+
+---
+
+## Fix 211: Fix Stacked Bottom-Right Buttons on Profile Page
+
+**Status: READY TO IMPLEMENT**
+
+**Problem:** Multiple floating action buttons (FABs) or fixed-position buttons are stacking on top of each other in the bottom-right corner of the Profile page, making them unusable.
+
+**Fix:**
+- In `PlayerProfile.tsx`, audit all `fixed` or `sticky` positioned elements
+- If multiple buttons share the same bottom/right positioning, either:
+  a. Arrange them vertically with proper spacing (e.g., `bottom-4`, `bottom-16`, `bottom-28`)
+  b. Collapse them into a single FAB with an expandable menu
+  c. Move some to be inline rather than floating
+
+**Files to change:**
+- `client/src/pages/PlayerProfile.tsx` -- fix floating button positioning
+
+---
+
+## Fix 212: Forum Reply Box -- Focus and Scroll-to-View on Click (Bug Fix)
+
+**Status: CODED**
+
+**Problem:** Clicking "Reply" on a forum comment set the `replyingTo` state but the reply textarea didn't become focused or visible. The reply form uses `<RichEditor>` (Tiptap), but the code tried to focus a `useRef<HTMLTextAreaElement>` that was never connected to anything. Result: user clicked reply, saw "Replying to a comment" banner, but couldn't type anywhere.
+
+**Root cause:** `RichEditor` is a Tiptap editor, not a `<textarea>`. The old `replyRef = useRef<HTMLTextAreaElement>()` had no connection to it. Tiptap editors are focused via `editor.commands.focus()`, not via a DOM ref.
+
+**Fix:**
+- Added `RichEditorHandle` interface exposing a `focus()` method to `RichEditor.tsx`
+- Converted `RichEditor` to `forwardRef<RichEditorHandle, RichEditorProps>` using `useImperativeHandle`
+- In `CommunityPost.tsx`: changed `replyRef` to `useRef<RichEditorHandle>(null)`, added `replyFormRef = useRef<HTMLDivElement>(null)` for scroll
+- `useEffect` now calls `replyFormRef.current?.scrollIntoView({ behavior: 'smooth' })` then `replyRef.current?.focus()` (with 50ms delay for scroll to complete)
+- Passes `ref={replyRef}` to `<RichEditor>` in the reply form
+- Added `ref={replyFormRef}` to the reply form container div
+- Removed unused `useMarkdownShortcuts` (was using the old textarea ref, never connected)
+
+**Files changed:**
+- `client/src/components/RichEditor.tsx` -- added `RichEditorHandle`, `forwardRef`, `useImperativeHandle`
+- `client/src/pages/CommunityPost.tsx` -- updated refs, fixed focus/scroll logic, removed unused import
+
+---
+
+## Fix 213: Forum Category Cards -- Earth, Water, Air Get Beautiful Header Cards
+
+**Status: READY TO IMPLEMENT**
+
+**Problem:** Fire quest thread has a beautiful full-image header card. The other elemental categories (Earth, Water, Air) and the general/open topics sections show as plain text list items. Rye wants them to have the same beautiful card treatment as Fire.
+
+**Fix:**
+- In `Community.tsx`, find where Earth, Water, Air, and General/Open Topics category threads are rendered
+- Apply the same card style used for Fire: full-width card with a background image, title overlay, gradient, hover effect
+- Use appropriate quest images for each element:
+  - Earth: use a soil/forest image (e.g. `/images/quests/quest-03-healing-whole.webp`)
+  - Water: use a water/potion image (e.g. `/images/quests/quest-01-potion-brewing.webp`)
+  - Air: use a sky/open image (e.g. `/images/quests/quest-10-nvc.webp`)
+  - General/Open Topics: use a community/gathering image
+
+**Files to change:**
+- `client/src/pages/Community.tsx` -- update Earth, Water, Air, and General category card styles
+
+---
+
+## Fix 214: Welcome Aboard Quest Thread -- Move to Fire Section
+
+**Status: NEEDS RYE ACTION -- database + content**
+
+**Problem:** The Welcome Aboard Quests forum thread is in the General section but should be in the Fire section (the introductory elemental category). Rye also noted a duplicate thread that was deleted manually during the video.
+
+**Fix:**
+- Move the Welcome Aboard Quests forum thread to the Fire category in the DB
+- This requires an SQL UPDATE to change the `categoryId` of the relevant forum post
+
+**SQL (Rye runs in Railway DB console):**
+```sql
+-- First find the Welcome Aboard Quests thread ID
+SELECT id, title, categoryId FROM forumPosts WHERE title LIKE '%Welcome Aboard%';
+
+-- Then update its category to Fire's category ID
+-- (Get Fire category ID first: SELECT id FROM forumCategories WHERE slug = 'fire' OR slug LIKE '%fire%')
+UPDATE forumPosts SET categoryId = [FIRE_CATEGORY_ID] WHERE id = [WELCOME_ABOARD_POST_ID];
+```
+
+**Also:** Verify the duplicate thread was deleted (Rye did this manually in the video).
+
+---
+
+## Fix 215: Rites of Passage Forum Links -- Wrong Destination
+
+**Status: NEEDS RYE INPUT**
+
+**Problem:** Clicking on Rites of Passage in the forum section goes to the wrong destination (post/599, same as "Dream Up a Quest"). This is a data/routing issue in the forum category or thread configuration.
+
+**From video (4:40-4:51):** "Right here. Which. Don't go to the right tent. So these are again, uh, the destination for the rites of passage. I wonder if this is the same. Yes, 5.99 for the dream up a request. So this is going to the same place the fire."
+
+**What needs to happen:**
+1. Identify which link/button is incorrectly pointing to post/599
+2. Determine the correct destination for Rites of Passage (should be `/community/c/rites-of-passage` category or a specific pinned thread)
+3. Update the link
+
+**Where to look:**
+- `Community.tsx` around line 919: `<Link href="/community/c/rites-of-passage">` -- this looks correct
+- `client/src/data/welcomeAboardQuests.ts` -- might have a rites-of-passage link pointing to wrong post
+- The specific button Rye clicked may be in `PlayerProfile.tsx` quest tab
+
+**Next step:** Rye, can you confirm exactly which button/link you clicked that went to post/599 instead of the right destination? Is it on the Community page, the Profile page, or the Quest page?
+
+---
+
 ### YOU (Rye) -- things only you can do
 
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
-| 169, 192, 193 | `git add -A && git commit -m "fix: cookie CJS/ESM interop, stale chunk reload, CI pnpm version" && git push` | Git push required | Terminal in project root |
+| 169, 192-204, 212 | `git add -A && git commit -m "fix: reply focus, emoji tooltips, forum deep links, quest links, profile fixes" && git push` | Git push required | Terminal in project root |
 | 174-5 | Submit updated sitemap in Google Search Console and request indexing for sitelink target pages | GSC dashboard login required | Google Search Console |
 | 177 | Test CSP changes in production after deploy | Verify no broken functionality from CSP tightening | Browser on regencivics.earth after deploy |
+| 214 | Move Welcome Aboard Quests thread to Fire category in DB | Railway DB access | `UPDATE forumPosts SET categoryId = [FIRE_ID] WHERE id = [WELCOME_ABOARD_ID]` in Railway console |
+| 215 | Identify which Rites of Passage button goes to wrong destination | Need to test in browser | Navigate to the community/profile/quest page and find the button that sends to post/599 |
 
 ### CLAUDE CODE -- already done or can be done without you
 
@@ -510,7 +793,34 @@ Note: Reaching 9.5+ on Functionality, Mobile, and Performance requires completin
 | 190 | AI-isms and voice polish grep | READY TO IMPLEMENT |
 | 191 | Homepage meta description shortening | READY TO IMPLEMENT |
 
+| 192 | Replace `cookie` package import with inline parser (CJS/ESM fix) | CODED |
+| 193 | Add stale-chunk auto-reload handler | CODED |
+| 194 | Fix wallet save bug: `linkBaseAccount` now also writes `walletAddress` field | CODED |
+| 195 | Fix wallet display: check `baseAccountName` fallback so existing users see Connected | CODED |
+| 196 | Fix input field text visibility: add white text + glass styling to all ProfileEditForm inputs | CODED |
+| 197 | Add token refresh button to ContributionsTab | CODED |
+| 198 | Add "Newsletter" option to email digest frequency (client + server validation) | CODED |
+| 199 | Improve bioregion location denied message with browser settings guidance | CODED |
+| 200 | Fix Russian auto-translate: remove browser language auto-detect, only restore explicit user choice | CODED |
+| 201 | Fix Back button on profile: shows "Overview" and navigates to /profile when on non-overview tab | CODED |
+| 202 | Fix "Dream Up a Quest" -- forumUrl to post/599, add proposalUrl for /community/quests, render two buttons | CODED |
+| 203 | Fix forum deep links -- remove hard auth redirect in CommunityPost and QuestSuggestions | CODED |
+| 204 | Emoji reactions: swap 👍 for ✔️, add tooltip labels (Done This / Love It / Considering / Paradigm Shifting / Blog Post / Globally Replicable) | CODED |
+| 205 | Overview tab cleanup -- remove WelcomeAboardQuests card list, keep progress board + Explore button only | READY TO IMPLEMENT |
+| 206 | Forum cards on community page -- make full-width beautiful cards on desktop (not small inline) | READY TO IMPLEMENT |
+| 207 | Alliance Partners thread -- add quest cards like Fire has | READY TO IMPLEMENT |
+| 208 | Relabel "Rites of Passage" button to "Welcome Aboard Quests" (10 onboarding quests) | READY TO IMPLEMENT |
+| 209 | Add new "Rites of Passage" button for 14 rites-of-passage quests (0-13) | READY TO IMPLEMENT |
+| 210 | Quest section: seasonal follow-on quests in correct seasonal order | READY TO IMPLEMENT |
+| 211 | Fix stacked bottom-right buttons on profile page | READY TO IMPLEMENT |
+| 212 | Forum reply box: fix focus bug (RichEditor ref), add scroll-to-view on reply click | CODED |
+| 213 | Forum category cards: Earth, Water, Air get beautiful header cards like Fire | READY TO IMPLEMENT |
+| 214 | Welcome Aboard Quests thread: move to Fire section (DB UPDATE needed) | NEEDS RYE -- DB |
+| 215 | Rites of Passage forum links: wrong destination (post/599), needs correct URL | NEEDS RYE INPUT |
+
 ### WAITING ON YOU before Claude Code can proceed
 
-- Fixes 169, 192, 193 need `git push` to deploy and verify
+- Fixes 169, 192-204, 212 need `git push` to deploy and verify
 - Fix 174-5 needs GSC access to submit sitemap and request indexing
+- Fix 214 needs SQL UPDATE in Railway DB console
+- Fix 215 needs clarification: which specific button/page has the wrong Rites of Passage link?

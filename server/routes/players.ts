@@ -146,7 +146,7 @@ export const playerProfilesRouter = router({
   // Update email digest frequency preference
   updateDigestFrequency: protectedProcedure
     .input(z.object({
-      frequency: z.enum(["never", "weekly", "monthly", "seasonal"]),
+      frequency: z.enum(["never", "weekly", "monthly", "seasonal", "newsletter"]),
     }))
     .mutation(async ({ ctx, input }) => {
       const profile = await db.getPlayerProfileByUserId(ctx.user.id);
@@ -179,6 +179,8 @@ export const playerProfilesRouter = router({
 
       await db.updatePlayerProfile(profile.id, {
         baseAccountName: input.baseAccountName,
+        // walletAddress mirrors baseAccountName so token sync + UI display work correctly
+        walletAddress: input.baseAccountName,
         hyphaProfileUrl: input.hyphaProfileUrl || null,
       });
       return { success: true };

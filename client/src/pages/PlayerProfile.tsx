@@ -53,6 +53,7 @@ import {
   RefreshCw,
   ChevronDown,
   Compass,
+  Flame,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -402,7 +403,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
               value={baseAccountName}
               onChange={(e) => setBaseAccountName(e.target.value)}
               placeholder="e.g., 0xaAaF...354e"
-              className="font-mono"
+              className="font-mono text-[#1a472a] placeholder:text-[#1a472a]/40"
               required
             />
           </div>
@@ -1624,12 +1625,16 @@ function ContributionsTab({
   rgenBalance,
   rvoiceBalance,
   lastTokenSync,
+  onSyncTokens,
+  syncIsPending,
 }: {
   walletAddress?: string | null;
   onLinkWallet?: () => void;
   rgenBalance?: number | null;
   rvoiceBalance?: number | null;
   lastTokenSync?: string | null;
+  onSyncTokens?: () => void;
+  syncIsPending?: boolean;
 }) {
   const { data: contributions, isLoading, refetch } = trpc.playerContributions.list.useQuery();
   const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery();
@@ -1712,17 +1717,36 @@ function ContributionsTab({
       </div>
 
       {/* Token Stats Row */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-[#7dd87d]/8 border border-[#7dd87d]/20 rounded-xl p-4">
-          <p className="text-white/50 text-xs mb-1">💚 $ReGen Balance</p>
-          <p className="text-2xl font-bold text-[#7dd87d]">{rgenBalance != null && rgenBalance !== 0 ? rgenBalance.toLocaleString() : "--"}</p>
-          <p className="text-white/50 text-xs mt-1">Currency</p>
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-[#7dd87d]/8 border border-[#7dd87d]/20 rounded-xl p-4">
+            <p className="text-white/50 text-xs mb-1">💚 $ReGen Balance</p>
+            <p className="text-2xl font-bold text-[#7dd87d]">{rgenBalance != null && rgenBalance !== 0 ? rgenBalance.toLocaleString() : "--"}</p>
+            <p className="text-white/50 text-xs mt-1">Currency</p>
+          </div>
+          <div className="bg-[#d4a574]/8 border border-[#d4a574]/20 rounded-xl p-4">
+            <p className="text-white/50 text-xs mb-1">🗳 RGVoice / Voice Weight</p>
+            <p className="text-2xl font-bold text-[#d4a574]">{rvoiceBalance != null && rvoiceBalance !== 0 ? rvoiceBalance.toLocaleString() : "--"}</p>
+            <p className="text-white/50 text-xs mt-1">Voice Weight</p>
+          </div>
         </div>
-        <div className="bg-[#d4a574]/8 border border-[#d4a574]/20 rounded-xl p-4">
-          <p className="text-white/50 text-xs mb-1">🗳 RGVoice / Voice Weight</p>
-          <p className="text-2xl font-bold text-[#d4a574]">{rvoiceBalance != null && rvoiceBalance !== 0 ? rvoiceBalance.toLocaleString() : "--"}</p>
-          <p className="text-white/50 text-xs mt-1">Voice Weight</p>
-        </div>
+        {walletAddress && onSyncTokens && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onSyncTokens}
+              disabled={syncIsPending}
+              className="flex items-center gap-1.5 text-white/40 hover:text-[#7dd87d] text-xs transition-colors disabled:opacity-40"
+            >
+              <RefreshCw className={`w-3 h-3 ${syncIsPending ? "animate-spin" : ""}`} />
+              {syncIsPending ? "Syncing…" : "Refresh balances"}
+            </button>
+            {lastTokenSync && (
+              <span className="text-white/25 text-xs">
+                Updated {new Date(lastTokenSync).toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* #23 — Event Attendance Token Balance */}
@@ -2591,7 +2615,10 @@ export default function PlayerProfile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
-      <BackButton />
+      <BackButton
+        fallbackPath={activeTab !== "overview" ? "/profile" : "/"}
+        label={activeTab !== "overview" ? "Overview" : "Back"}
+      />
       <SEO 
         title="Player Profile | ReGen Civics"
         description="Create your player profile and connect your Base blockchain account to track your contributions and tokens."
@@ -2718,13 +2745,12 @@ export default function PlayerProfile() {
                         onGoToSettings={() => setActiveTab('settings')}
                       />
                     </AnimatedSection>
-                    <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
                     <div className="rounded-2xl border border-[#1a472a]/20 bg-[#f0f7f0] p-6 flex flex-col items-center text-center gap-3">
                       <Compass className="w-8 h-8 text-[#4a7c59]" />
                       <h3 className="font-semibold text-[#1a472a] text-base">Explore Onboarding Quests</h3>
                       <p className="text-sm text-[#1a472a]/70 leading-relaxed">Complete quests to earn tokens, deepen your practice, and root yourself in the game.</p>
                       <button
-                        onClick={() => setActiveTab("quests")}
+                        onClick={() => { setActiveTab("quests"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         className="mt-1 px-4 py-2 rounded-lg bg-[#1a472a] text-white text-sm font-medium hover:bg-[#1a472a]/90 transition-colors"
                       >
                         View Quests
@@ -2771,6 +2797,17 @@ export default function PlayerProfile() {
                         {(!allWelcomeDone || !hasCompleted) && (
                           <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
                         )}
+
+                        {/* Quest navigation buttons */}
+                        <div className="flex flex-wrap gap-3">
+                          <a
+                            href="/quest"
+                            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-md"
+                          >
+                            <Flame className="w-4 h-4" />
+                            Rites of Passage (Quests 0-13)
+                          </a>
+                        </div>
                       </div>
                     );
                   })()}
@@ -2790,7 +2827,7 @@ export default function PlayerProfile() {
                       Record contributions across the 8 forms of capital. Self-reported values can be verified by admins.
                     </p>
                     <ContributionsTab
-                      walletAddress={profile?.walletAddress}
+                      walletAddress={profile?.walletAddress || profile?.baseAccountName}
                       onLinkWallet={() => {
                         setActiveTab("settings");
                         setTimeout(() => document.getElementById("wallet-section")?.scrollIntoView({ behavior: "smooth" }), 100);
@@ -2798,6 +2835,8 @@ export default function PlayerProfile() {
                       rgenBalance={profile?.rgenBalance}
                       rvoiceBalance={profile?.rvoiceBalance}
                       lastTokenSync={profile?.lastTokenSync instanceof Date ? profile.lastTokenSync.toISOString() : (profile?.lastTokenSync ?? null)}
+                      onSyncTokens={() => syncTokensMutation.mutate()}
+                      syncIsPending={syncTokensMutation.isPending}
                     />
                   </div>
                 </AnimatedSection>
@@ -2832,10 +2871,10 @@ export default function PlayerProfile() {
                       <p className="text-white/50 text-sm mb-4">
                         Link your Base wallet to sync token balances and verify your on-chain identity. Your address starts with 0x.
                       </p>
-                      {profile?.walletAddress ? (
+                      {(profile?.walletAddress || profile?.baseAccountName) ? (
                         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
                           <Wallet className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
-                          <code className="text-xs text-white/80 flex-1 truncate font-mono">{profile.walletAddress}</code>
+                          <code className="text-xs text-white/80 flex-1 truncate font-mono">{profile.walletAddress || profile.baseAccountName}</code>
                           <span className="text-[10px] text-green-400 flex-shrink-0">Connected</span>
                         </div>
                       ) : (

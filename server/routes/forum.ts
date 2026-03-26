@@ -712,7 +712,7 @@ export const forumRouter = router({
       .input(z.object({
         postId: z.number().optional(),
         replyId: z.number().optional(),
-        emoji: z.enum(['👍', '❤️', '🌱', '🔥', '💡', '🌍']),
+        emoji: z.enum(['✔️', '❤️', '🌱', '🔥', '💡', '🌍']),
       }))
       .mutation(async ({ ctx, input }) => {
         if (!input.postId && !input.replyId) {
@@ -770,7 +770,7 @@ export const forumRouter = router({
         const currentUserId = ctx.user?.id ?? null;
 
         // Aggregate by emoji
-        const ALLOWED_EMOJIS = ['👍', '❤️', '🌱', '🔥', '💡', '🌍'];
+        const ALLOWED_EMOJIS = ['✔️', '❤️', '🌱', '🔥', '💡', '🌍'];
         const result = ALLOWED_EMOJIS.map(emoji => {
           const matching = rows.filter(r => r.emoji === emoji);
           return {

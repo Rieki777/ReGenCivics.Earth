@@ -150,7 +150,9 @@ export function BioregionMultiSelect({
           {geoDetecting ? "Detecting..." : "Detect my bioregion"}
         </button>
         {geoDenied && (
-          <span className="text-xs text-red-400/70">Location denied. Search by name below.</span>
+          <span className="text-xs text-amber-400/80">
+            Location access was denied. To enable it, click the lock icon in your browser's address bar and allow location, then try again.
+          </span>
         )}
       </div>
       {geoSuggestions.length > 0 && (

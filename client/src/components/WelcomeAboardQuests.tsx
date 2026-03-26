@@ -114,6 +114,15 @@ function QuestCard({
                   <ExternalLink className="w-3 h-3" />
                 </a>
               )}
+              {quest.proposalUrl && (
+                <a
+                  href={quest.proposalUrl}
+                  className="inline-flex items-center gap-1 text-[#d4a574] text-xs hover:underline"
+                >
+                  Propose it
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
               {quest.forumUrl && (
                 <SharePanel
                   questTitle={quest.title}

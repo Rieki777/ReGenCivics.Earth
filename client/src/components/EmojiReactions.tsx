@@ -2,7 +2,16 @@ import { trpc } from '@/lib/trpc'
 import { useAuth } from '@/_core/hooks/useAuth'
 import { getLoginUrl } from '@/const'
 
-const ALLOWED_EMOJIS = ['👍', '❤️', '🌱', '🔥', '💡', '🌍'] as const
+const ALLOWED_EMOJIS = ['✔️', '❤️', '🌱', '🔥', '💡', '🌍'] as const
+
+const EMOJI_LABELS: Record<string, string> = {
+  '✔️': 'Done This — I have tried or completed this',
+  '❤️': 'Love It — I love and support this',
+  '🌱': 'Considering Doing — This is growing on me and I might do it',
+  '🔥': 'Paradigm Shifting — This challenges how I see things',
+  '💡': 'Make Blog Post — This deserves a deeper write-up',
+  '🌍': 'Globally Replicable — This could work anywhere on Earth',
+}
 
 interface EmojiReactionsProps {
   postId?: number
@@ -67,12 +76,13 @@ export function EmojiReactions({ postId, replyId }: EmojiReactionsProps) {
             key={emoji}
             onClick={() => handleReact(emoji)}
             disabled={toggleMutation.isPending}
+            title={EMOJI_LABELS[emoji]}
             className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm border transition-colors ${
               reacted
                 ? 'bg-green-500/20 border-green-500/50 text-green-700'
                 : 'bg-white/5 border-[#e8e4de] hover:bg-[#f0f7f0] text-[#1a472a]/50 hover:text-[#1a472a]/80'
             }`}
-            aria-label={`React with ${emoji}${count > 0 ? `, ${count} reactions` : ''}`}
+            aria-label={`${EMOJI_LABELS[emoji]}${count > 0 ? `, ${count} reactions` : ''}`}
           >
             <span>{emoji}</span>
             {count > 0 && <span className="text-xs font-medium">{count}</span>}

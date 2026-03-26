@@ -490,7 +490,7 @@ export const playerProfiles = mysqlTable("player_profiles", {
   isActive: int("isActive").default(1).notNull(),
 
   // Email digest preferences
-  emailDigestFrequency: mysqlEnum("emailDigestFrequency", ["never", "weekly", "monthly", "seasonal"]).default("monthly").notNull(),
+  emailDigestFrequency: mysqlEnum("emailDigestFrequency", ["never", "weekly", "monthly", "seasonal", "newsletter"]).default("monthly").notNull(),
 
   // Profile layer (Phase 3)
   collaborationStatus: text("collaborationStatus"), // null | "seeking_collaborators" | "looking_to_join"

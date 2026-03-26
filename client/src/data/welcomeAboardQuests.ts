@@ -5,6 +5,7 @@ export interface WelcomeAboardQuest {
   tagline: string;
   reward: string;
   forumUrl: string;
+  proposalUrl?: string; // optional second CTA link (e.g. "Propose it" for quest 10)
   about: string;
   steps: string[];
   bonus?: string;
@@ -154,7 +155,8 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     title: "Dream Up a Regenerative Quest",
     tagline: "Step from player to co-creator of the Game.",
     reward: "33 $ReGen + 0.1 RGVoice",
-    forumUrl: "/community/quests",
+    forumUrl: "/community/post/599",
+    proposalUrl: "/community/quests",
     about:
       "Every great game is shaped by the people who play it. This quest invites you into the creative heart of ReGen Civics: imagining new quests that add value to the Regenerative Renaissance. The best quests are ones that draw on your unique gifts and life purpose, bridge multiple forms of capital (social, ecological, financial, intellectual), are inherently scalable, and are genuinely fun to play. Before brainstorming, try this: take the question to sleep with you. Let your dreaming mind offer something unexpected.",
     steps: [

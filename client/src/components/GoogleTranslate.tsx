@@ -36,19 +36,7 @@ declare global {
  * This component renders a hidden container that Google Translate uses,
  * then we expose a custom styled trigger through LanguageSwitcher.
  */
-const AUTO_DETECT_KEY = 'regen-civics-auto-lang-detected';
 const LANG_STORAGE_KEY = 'regen-civics-language';
-
-/**
- * Detect the browser's preferred language and return the matching
- * Google Translate language code, or null if English or unsupported.
- */
-function detectBrowserLanguage(): string | null {
-  if (typeof navigator === 'undefined') return null;
-  const browserLang = navigator.language?.split('-')[0]?.toLowerCase();
-  if (!browserLang || browserLang === 'en') return null;
-  return GOOGLE_LANG_MAP[browserLang] || null;
-}
 
 export function GoogleTranslateProvider({ children }: { children?: React.ReactNode }) {
   const initialized = useRef(false);
@@ -71,27 +59,21 @@ export function GoogleTranslateProvider({ children }: { children?: React.ReactNo
           'google_translate_element'
         );
 
-        // Auto-detect: on first visit, if browser is non-English,
-        // auto-trigger translation after a short delay for the widget to initialize
-        const alreadyDetected = localStorage.getItem(AUTO_DETECT_KEY);
+        // Restore a previously manually-chosen language (if user explicitly selected one)
         const manuallyChosen = localStorage.getItem(LANG_STORAGE_KEY);
-        if (!alreadyDetected && !manuallyChosen) {
-          const detectedLang = detectBrowserLanguage();
-          if (detectedLang) {
-            // Mark as detected so we don't auto-trigger again
-            localStorage.setItem(AUTO_DETECT_KEY, 'true');
-            // Wait for Google Translate widget to fully render
-            setTimeout(() => {
-              const selectEl = document.querySelector('.goog-te-combo') as HTMLSelectElement;
-              if (selectEl) {
-                selectEl.value = detectedLang;
-                selectEl.dispatchEvent(new Event('change'));
-              }
-            }, 1500);
-          } else {
-            // English browser, mark as detected to skip future checks
-            localStorage.setItem(AUTO_DETECT_KEY, 'true');
-          }
+        if (manuallyChosen && manuallyChosen !== 'en') {
+          const googleLang = GOOGLE_LANG_MAP[manuallyChosen] || manuallyChosen;
+          setTimeout(() => {
+            const selectEl = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+            if (selectEl) {
+              selectEl.value = googleLang;
+              selectEl.dispatchEvent(new Event('change'));
+            }
+          }, 1500);
+        } else {
+          // Ensure no stale googtrans cookie causes an unexpected language — clear it
+          document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname;
         }
       }
     };

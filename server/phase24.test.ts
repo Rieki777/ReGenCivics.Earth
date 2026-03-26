@@ -91,44 +91,21 @@ describe('Markdown Toolbar Component', () => {
       resolve(__dirname, '../client/src/pages/CommunityPost.tsx'),
       'utf-8'
     );
+    // CommunityPost uses RichEditor (Tiptap) instead of raw textarea + useMarkdownShortcuts
+    expect(source).toContain('RichEditor');
     expect(source).toContain('MarkdownToolbar');
-    expect(source).toContain('useMarkdownShortcuts');
-    expect(source).toContain('handleReplyShortcuts');
-    // Should use compact mode for replies
-    expect(source).toContain('compact');
   });
 });
 
-describe('Auto-Language Detection', () => {
-  it('should have auto-detection logic in GoogleTranslate.tsx', () => {
+describe('Language Selection (Fix 200: removed auto-detect, only restore explicit user choice)', () => {
+  it('should restore only explicit user language choice from localStorage', () => {
     const source = readFileSync(
       resolve(__dirname, '../client/src/components/GoogleTranslate.tsx'),
       'utf-8'
     );
-    expect(source).toContain('AUTO_DETECT_KEY');
-    expect(source).toContain('detectBrowserLanguage');
-    expect(source).toContain('navigator.language');
-  });
-
-  it('should only auto-detect on first visit (check localStorage)', () => {
-    const source = readFileSync(
-      resolve(__dirname, '../client/src/components/GoogleTranslate.tsx'),
-      'utf-8'
-    );
-    expect(source).toContain('regen-civics-auto-lang-detected');
-    expect(source).toContain('alreadyDetected');
-    expect(source).toContain('manuallyChosen');
-    // Should check both auto-detect flag AND manual language preference
-    expect(source).toContain('!alreadyDetected && !manuallyChosen');
-  });
-
-  it('should skip auto-detect for English browsers', () => {
-    const source = readFileSync(
-      resolve(__dirname, '../client/src/components/GoogleTranslate.tsx'),
-      'utf-8'
-    );
-    expect(source).toContain("browserLang === 'en'");
-    expect(source).toContain('return null');
+    // Auto-detect was removed in Fix 200. Only manual selection is restored.
+    expect(source).toContain('LANG_STORAGE_KEY');
+    expect(source).toContain('regen-civics-language');
   });
 
   it('should respect stored language preference after manual selection', () => {

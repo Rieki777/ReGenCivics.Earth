@@ -70,7 +70,7 @@ These are the core initiatory arc, numbered 1-13 plus Food Foresting.
 
 ### Section 3: Seasonal Practices (18 quests from `seasonalQuestsData.ts`)
 
-These are distributed across seasons alongside the Rites of Passage.
+These are distributed across seasons following the Rites of Passage so as a user scrolls horizontally they see the rites of passage first in the season, then the additional quests below using the same format as quests 1-3 do (copying the card structure and repeating it's form)
 
 **Spring**
 | ID | Title | Reward |

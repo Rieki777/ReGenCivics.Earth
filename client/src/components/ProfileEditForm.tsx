@@ -12,6 +12,10 @@ import { toast } from "sonner";
 
 type Path = "investor" | "land_project" | "ally" | "player";
 
+// Shared classNames for Input / Textarea fields inside the dark glass-panel background
+const glassInput = "text-white placeholder:text-white/30 bg-white/8 border-white/15 focus-visible:border-[#7dd87d]/50";
+const glassTextarea = "text-white placeholder:text-white/30 bg-white/8 border-white/15 focus-visible:border-[#7dd87d]/50 resize-none";
+
 const PATH_LABELS: Record<Path, string> = {
   investor: "Investor",
   land_project: "Land Project",
@@ -115,6 +119,7 @@ export function ProfileEditForm() {
             onChange={(e) => set("displayName", e.target.value)}
             placeholder="Your name"
             maxLength={255}
+            className={glassInput}
           />
         </div>
         <div className="space-y-1.5">
@@ -125,6 +130,7 @@ export function ProfileEditForm() {
             onChange={(e) => set("location", e.target.value)}
             placeholder="City, Country"
             maxLength={255}
+            className={glassInput}
           />
         </div>
       </div>
@@ -141,6 +147,7 @@ export function ProfileEditForm() {
               onChange={(e) => set("legacyBio", e.target.value)}
               placeholder="Tell the community about yourself"
               rows={3}
+              className={glassTextarea}
             />
           </div>
         ) : (
@@ -153,6 +160,7 @@ export function ProfileEditForm() {
                 onChange={(e) => set("role", e.target.value)}
                 placeholder="Land steward, investor, builder, artist..."
                 maxLength={255}
+                className={glassInput}
               />
             </div>
             <div className="space-y-1.5">
@@ -163,6 +171,7 @@ export function ProfileEditForm() {
                 onChange={(e) => set("soul", e.target.value)}
                 placeholder="The deeper calling that brought you here..."
                 rows={2}
+                className={glassTextarea}
               />
             </div>
             <div className="space-y-1.5">
@@ -173,6 +182,7 @@ export function ProfileEditForm() {
                 onChange={(e) => set("desires", e.target.value)}
                 placeholder="What would make this worth your time and energy?"
                 rows={2}
+                className={glassTextarea}
               />
             </div>
             <div className="space-y-1.5">
@@ -183,6 +193,7 @@ export function ProfileEditForm() {
                 onChange={(e) => set("gifts", e.target.value)}
                 placeholder="Skills, resources, wisdom, connections..."
                 rows={2}
+                className={glassTextarea}
               />
             </div>
           </>
@@ -214,6 +225,7 @@ export function ProfileEditForm() {
             }}
             placeholder="https://..."
             maxLength={500}
+            className={glassInput}
           />
         </div>
         <p className="text-white/40 text-xs">
@@ -231,6 +243,7 @@ export function ProfileEditForm() {
             onChange={(e) => set("investmentRange", e.target.value)}
             placeholder="e.g. $50k – $250k"
             maxLength={255}
+            className={glassInput}
           />
         </div>
       )}
@@ -246,6 +259,7 @@ export function ProfileEditForm() {
               onChange={(e) => set("projectName", e.target.value)}
               placeholder="Your project name"
               maxLength={255}
+              className={glassInput}
             />
           </div>
           <div className="space-y-1.5">
@@ -257,6 +271,7 @@ export function ProfileEditForm() {
               placeholder="https://..."
               maxLength={500}
               type="url"
+              className={glassInput}
             />
           </div>
         </div>
@@ -272,6 +287,7 @@ export function ProfileEditForm() {
             onChange={(e) => set("organizationName", e.target.value)}
             placeholder="Your organization"
             maxLength={255}
+            className={glassInput}
           />
         </div>
       )}
@@ -286,6 +302,7 @@ export function ProfileEditForm() {
             onChange={(e) => set("questInterests", e.target.value)}
             placeholder="What kinds of quests interest you? (e.g. ecology, governance, art, tech)"
             rows={2}
+            className={glassTextarea}
           />
         </div>
       )}

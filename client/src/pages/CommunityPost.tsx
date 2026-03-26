@@ -23,8 +23,8 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ForumMarkdown, MarkdownHints } from "@/components/ForumMarkdown";
-import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownToolbar";
-import { RichEditor } from "@/components/RichEditor";
+import { MarkdownToolbar } from "@/components/MarkdownToolbar";
+import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import { EmojiReactions } from "@/components/EmojiReactions";
@@ -126,8 +126,8 @@ export default function CommunityPost() {
   const [editingPost, setEditingPost] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
-  const replyRef = useRef<HTMLTextAreaElement>(null);
-  const handleReplyShortcuts = useMarkdownShortcuts(replyRef, replyContent, setReplyContent);
+  const replyRef = useRef<RichEditorHandle>(null);
+  const replyFormRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
   const { language } = useLanguage();
   
@@ -300,10 +300,13 @@ export default function CommunityPost() {
     incrementTriedThisMutation.mutate({ replyId });
   };
 
-  // Focus reply textarea when replying to someone
+  // Focus and scroll to reply editor when replying to someone
   useEffect(() => {
-    if (replyingTo !== null && replyRef.current) {
-      replyRef.current.focus();
+    if (replyingTo !== null) {
+      setTimeout(() => {
+        replyFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        replyRef.current?.focus();
+      }, 50);
     }
   }, [replyingTo]);
 
@@ -342,11 +345,6 @@ export default function CommunityPost() {
   };
 
   // Redirect non-authenticated users to the community gate page
-  if (!isAuthenticated) {
-    window.location.href = '/community';
-    return null;
-  }
-
   if (postLoading) {
     return (
       <div className="min-h-screen bg-[#f8f5f0]">
@@ -776,7 +774,6 @@ export default function CommunityPost() {
                             <button
                               onClick={() => {
                                 setReplyingTo(reply.id);
-                                replyRef.current?.focus();
                               }}
                               className="text-[#1a472a]/30 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors"
                             >
@@ -871,7 +868,7 @@ export default function CommunityPost() {
             </p>
           </div>
         ) : isAuthenticated ? (
-          <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
+          <div ref={replyFormRef} className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
             {replyingTo && (
               <div className="flex items-center gap-2 mb-3 text-xs text-[#4a7c59] bg-[#f0f7f0] px-3 py-1.5 rounded-lg">
                 <CornerDownRight className="w-3 h-3" />
@@ -886,6 +883,7 @@ export default function CommunityPost() {
             )}
             {/* compact reply editor */}
             <RichEditor
+              ref={replyRef}
               value={replyContent}
               onChange={setReplyContent}
               placeholder="Share your thoughts..."

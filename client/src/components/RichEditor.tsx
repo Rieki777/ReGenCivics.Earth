@@ -1,13 +1,17 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
-import { useEffect } from 'react'
+import { useEffect, forwardRef, useImperativeHandle } from 'react'
 
 interface RichEditorProps {
   value: string
   onChange: (markdown: string) => void
   placeholder?: string
   className?: string
+}
+
+export interface RichEditorHandle {
+  focus: () => void
 }
 
 /**
@@ -55,7 +59,10 @@ function serializeToMarkdown(editor: ReturnType<typeof useEditor>): string {
   return nodeToMarkdown(json).trimEnd()
 }
 
-export function RichEditor({ value, onChange, placeholder, className }: RichEditorProps) {
+export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function RichEditor(
+  { value, onChange, placeholder, className },
+  ref
+) {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -66,6 +73,12 @@ export function RichEditor({ value, onChange, placeholder, className }: RichEdit
       onChange(serializeToMarkdown(editor))
     },
   })
+
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      editor?.commands.focus()
+    },
+  }), [editor])
 
   useEffect(() => {
     if (editor && value !== serializeToMarkdown(editor)) {
@@ -92,4 +105,4 @@ export function RichEditor({ value, onChange, placeholder, className }: RichEdit
       />
     </div>
   )
-}
+})

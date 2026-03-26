@@ -71,12 +71,6 @@ export default function QuestSuggestions() {
     voteMutation.mutate({ suggestionId });
   };
 
-  // Redirect non-authenticated users to the community gate page
-  if (!isAuthenticated) {
-    window.location.href = '/community';
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO title="Suggest the Next Quest | ReGen Civics" description="Submit quest ideas and vote for your favorites. Community-driven quest creation for the regenerative renaissance." />

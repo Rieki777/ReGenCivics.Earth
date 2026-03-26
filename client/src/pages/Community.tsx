@@ -8,7 +8,7 @@ import {
   MessageCircle, Sprout, Coins, Handshake, Scale, BookOpen,
   UserPlus, Lightbulb, ArrowRight, Plus, Users,
   Leaf, Sparkles, TrendingUp, Search, Trees, Vote, Gamepad2,
-  Heart, MapPin, Pencil, Trash2, X, Check
+  Heart, MapPin, Pencil, Trash2, X, Check, Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -736,6 +736,20 @@ export default function Community() {
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Land project spaces. Where the work is rooted.</p>
 
+            {/* Earth header card */}
+            <div className="mb-4">
+              <Link href="/community/c/land-projects">
+                <div className="relative rounded-xl overflow-hidden border border-[#d4a574]/40 hover:border-[#d4a574]/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-03-healing-whole.webp" alt="Earth element: land projects and regeneration" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-emerald-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Land Project Spaces</p>
+                    <p className="text-white/60 text-xs">Where the work is rooted</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+
             {/* General land projects category card */}
             {landProjectCategory && (
               <div className="mb-4">
@@ -842,6 +856,20 @@ export default function Community() {
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Alliance organisations. Networks and partners moving together.</p>
 
+            {/* Water header card */}
+            <div className="mb-4">
+              <Link href="/community/c/alliance-partners">
+                <div className="relative rounded-xl overflow-hidden border border-blue-200/60 hover:border-blue-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-01-potion-brewing.webp" alt="Water element: alliance partners and collaboration" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Alliance Partners</p>
+                    <p className="text-white/60 text-xs">Networks and partners moving together</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+
             {!organisationThreads || organisationThreads.length === 0 ? (
               <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
                 <p className="text-[#1a472a]/50 text-sm mb-3">
@@ -855,16 +883,16 @@ export default function Community() {
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {organisationThreads.map((thread: { id: number; title: string }) => (
                     <Link key={thread.id} href={`/community/post/${thread.id}`}>
-                      <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#60a5fa]/40 hover:shadow-md transition-all cursor-pointer group">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#60a5fa]/15 flex items-center justify-center flex-shrink-0">
-                            <Handshake className="w-4 h-4 text-[#1e3a5f]" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-[#1e3a5f] transition-colors">
+                      <div className="bg-[#f8f5f0] rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#60a5fa]/40 hover:shadow-md transition-all cursor-pointer group">
+                        <div className="h-20 bg-blue-500/10 relative overflow-hidden flex items-center justify-center">
+                          <Building2 className="w-8 h-8 text-[#0369a1]/30" />
+                        </div>
+                        <div className="px-4 py-3 flex items-center justify-between">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#0369a1] transition-colors truncate">
                               {thread.title}
                             </p>
                             <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
@@ -918,7 +946,7 @@ export default function Community() {
               {/* Rites of Passage */}
               <Link href="/community/c/rites-of-passage">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-05-rites-of-love.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-05-rites-of-love.webp" alt="Rites of Passage quests" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Rites of Passage</p>
@@ -942,7 +970,7 @@ export default function Community() {
               {/* Epic Quests */}
               <div className="relative cursor-default">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 transition-all h-36">
-                  <img src="/images/quests/quest-08-medicine-journey.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-08-medicine-journey.webp" alt="Epic quests coming soon" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Epic Quests</p>
@@ -957,7 +985,7 @@ export default function Community() {
               {/* General Discussion */}
               <Link href="/community/c/quests-gameplay">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-01-potion-brewing.webp" alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-01-potion-brewing.webp" alt="General quest discussion" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>General Discussion</p>
@@ -1011,6 +1039,20 @@ export default function Community() {
               Some things need to move. This is where we say the hard thing, clear what's stagnant, and make space for what comes next.
             </p>
 
+            {/* Air header card */}
+            <div className="mb-4">
+              <Link href="/community/c/air-conversations">
+                <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-10-nvc.webp" alt="Air element: open conversations and clearing space" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Hard Conversations</p>
+                    <p className="text-white/60 text-xs">Clear what's stagnant, make space for what comes next</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+
             {airLoading ? (
               <div className="grid sm:grid-cols-2 gap-3">
                 {[1, 2, 3, 4].map(i => (
@@ -1032,15 +1074,15 @@ export default function Community() {
                 </Link>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {airThreads.map((thread: { id: number; title: string }) => (
                   <Link key={thread.id} href={`/community/post/${thread.id}`}>
-                    <div className="bg-[#f8f5f0] rounded-xl p-4 border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                          <MessageCircle className="w-4 h-4 text-slate-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
+                    <div className="bg-[#f8f5f0] rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="h-20 bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                        <MessageCircle className="w-8 h-8 text-slate-400/40" />
+                      </div>
+                      <div className="px-4 py-3 flex items-center justify-between">
+                        <div className="min-w-0">
                           <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-slate-700 transition-colors">
                             {thread.title}
                           </p>
