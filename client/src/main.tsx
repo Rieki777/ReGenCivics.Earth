@@ -35,6 +35,7 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { GoogleTranslateProvider } from "@/components/GoogleTranslate";
 import "./index.css";
 import { getCsrfToken } from "@/hooks/useCsrfToken";
 
@@ -129,9 +130,11 @@ try {
   createRoot(document.getElementById("root")!).render(
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <LanguageProvider>
-          <App />
-        </LanguageProvider>
+        <GoogleTranslateProvider>
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
+        </GoogleTranslateProvider>
       </QueryClientProvider>
     </trpc.Provider>
   );

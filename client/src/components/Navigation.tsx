@@ -32,6 +32,7 @@ import {
 import { SOCIAL_LINKS } from "@/components/SocialLinks";
 import { cdnImg } from "@/lib/utils";
 import SmartBottomNav from "@/components/SmartBottomNav";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 // Prefetch a route chunk on hover  -  import() is cached by the module system
 const prefetch = (path: string) => {
@@ -427,6 +428,9 @@ export default function Navigation() {
             </DropdownMenu>
 
 
+
+            {/* Language Switcher */}
+            <LanguageSwitcher compact />
 
             {/* Notification Bell */}
             {isAuthenticated && user && <NotificationBell />}
@@ -947,6 +951,11 @@ export default function Navigation() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Mobile Language Switcher */}
+              <div className="mt-4 pt-4 border-t border-[#7dd87d]/20 px-4">
+                <LanguageSwitcher />
               </div>
 
               {/* Mobile Sign In / User Section */}

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { type Language, t as translate, detectLanguage, LANGUAGES, getLanguageInfo } from '@/lib/i18n';
+import { type Language, t as translate, LANGUAGES, getLanguageInfo } from '@/lib/i18n';
 
 interface LanguageContextType {
   language: Language;
@@ -13,14 +13,31 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 
 const STORAGE_KEY = 'regen-civics-language';
 
+/**
+ * Clear all Google Translate cookies so it can't auto-translate on load.
+ * This runs on every mount to prevent stale cookies from hijacking the page.
+ */
+function clearGoogTransCookies() {
+  document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname;
+  // Also clear for bare domain and www variant
+  const host = window.location.hostname;
+  const parts = host.split('.');
+  if (parts.length >= 2) {
+    const rootDomain = parts.slice(-2).join('.');
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + rootDomain;
+  }
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  // Always start in English on fresh page load. We intentionally do NOT read
+  // from localStorage here to prevent stale non-English settings from auto-
+  // translating on load. The user must explicitly click the language switcher.
   const [language, setLanguageState] = useState<Language>('en');
 
-  // Clear any stale translation state on mount
+  // On mount: nuke any stale Google Translate cookies and force English
   useEffect(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname;
+    clearGoogTransCookies();
     document.documentElement.lang = 'en';
     document.documentElement.dir = 'ltr';
   }, []);
@@ -28,7 +45,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem(STORAGE_KEY, lang);
-    // Update document direction for RTL languages
     const info = getLanguageInfo(lang);
     document.documentElement.dir = info.dir;
     document.documentElement.lang = lang;
