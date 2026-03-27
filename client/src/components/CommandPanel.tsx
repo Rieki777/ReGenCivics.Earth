@@ -3,7 +3,8 @@ import { useAudio } from '@/contexts/AudioContext'
 import { usePresence } from '@/hooks/usePresence'
 import { useAuth } from '@/_core/hooks/useAuth'
 import { getCurrentSeason, SEASON_THEMES } from '@/lib/seasons'
-import { SkipBack, SkipForward, Play, Pause, Volume2, Coins, Send } from 'lucide-react'
+import { SkipBack, SkipForward, Play, Pause, Volume2, Coins, Send, HelpCircle, Award, Image, Search, List } from 'lucide-react'
+import { useReGenGuide } from '@/contexts/ReGenGuideContext'
 
 interface CommandPanelProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
           duration, currentTime, seek, volume, setVolume } = useAudio()
   const { count } = usePresence()
   const { isAuthenticated } = useAuth()
+  const guide = useReGenGuide()
 
   // Quick-post state
   const [quickPost, setQuickPost] = useState('')
@@ -56,6 +58,30 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
       style={{ opacity: 0.98 }}
     >
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
+        {/* Quick tools grid */}
+        <div className="grid grid-cols-5 gap-2">
+          <button onClick={guide.toggle} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+            <HelpCircle className="w-4 h-4" />
+            <span className="text-[9px]">Guide</span>
+          </button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('open-quest-badges'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+            <Award className="w-4 h-4" />
+            <span className="text-[9px]">Badges</span>
+          </button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('open-quest-gallery'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+            <Image className="w-4 h-4" />
+            <span className="text-[9px]">Gallery</span>
+          </button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+            <Search className="w-4 h-4" />
+            <span className="text-[9px]">Search</span>
+          </button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('open-toc'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+            <List className="w-4 h-4" />
+            <span className="text-[9px]">Jump</span>
+          </button>
+        </div>
+
         {/* Player count + token balance row */}
         <div className="flex items-center justify-between text-xs">
           {/* A.2: Player count display */}

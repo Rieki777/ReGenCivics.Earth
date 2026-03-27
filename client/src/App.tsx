@@ -19,6 +19,7 @@ const ExitIntentCapture = lazy(() => import("./components/ExitIntentCapture").th
 const CommandPalette = lazy(() => import("./components/CommandPalette"));
 const ShortcutPill = lazy(() => import("./components/ShortcutPill").then(m => ({ default: m.ShortcutPill })));
 import { AudioProvider } from "./contexts/AudioContext";
+import { ReGenGuideProvider } from "./contexts/ReGenGuideContext";
 
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { useFocusOnNavigation } from "./hooks/useFocusOnNavigation";
@@ -297,6 +298,7 @@ function App() {
   return (
     <ErrorBoundary fallback={<TaoErrorState />}>
       <AudioProvider>
+      <ReGenGuideProvider>
       <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
@@ -329,6 +331,7 @@ function App() {
           <ReturnToHandler />
         </TooltipProvider>
       </ThemeProvider>
+      </ReGenGuideProvider>
       </AudioProvider>
     </ErrorBoundary>
   );

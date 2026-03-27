@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Award, Flame, Leaf, Sprout, Sun, Snowflake, Star, Heart, TreeDeciduous, Sparkles, X, RefreshCw } from "lucide-react";
 
 // ╔════════════════════════════════════════════════════════════════════════════╗
@@ -183,6 +183,13 @@ export function QuestBadges() {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Allow CommandPanel to open badges via custom event
+  useEffect(() => {
+    const handler = () => setIsOpen(true);
+    window.addEventListener('open-quest-badges', handler);
+    return () => window.removeEventListener('open-quest-badges', handler);
+  }, []);
 
   // Merge badge definitions with user's earned badges
   const loadBadges = async () => {

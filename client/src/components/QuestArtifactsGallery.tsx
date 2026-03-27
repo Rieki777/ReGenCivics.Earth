@@ -3,7 +3,7 @@
  * of recent quest completions and active quest signals.
  * Replaces QuestLeaderboard.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, X, ExternalLink, Leaf } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
@@ -28,6 +28,14 @@ function Avatar({ name, url }: { name?: string | null; url?: string | null }) {
 
 export function QuestArtifactsGallery() {
   const [open, setOpen] = useState(false);
+
+  // Allow CommandPanel to open gallery via custom event
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener('open-quest-gallery', handler);
+    return () => window.removeEventListener('open-quest-gallery', handler);
+  }, []);
+
   const completions = trpc.quest.recentCompletions.useQuery({ limit: 20 }, { enabled: open });
   const activeCounts = trpc.quest.activeCountPerQuest.useQuery(undefined, { enabled: open });
 

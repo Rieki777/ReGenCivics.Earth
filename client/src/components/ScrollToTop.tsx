@@ -31,7 +31,7 @@ export function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      className={`fixed bottom-[128px] right-4 z-40 w-11 h-11 rounded-full bg-[#1a472a]/80 backdrop-blur-sm border border-[#7dd87d]/40 text-[#7dd87d] shadow-lg hover:bg-[#1a472a] hover:border-[#7dd87d]/60 transition-all duration-200 flex items-center justify-center ${
+      className={`fixed bottom-20 right-4 z-40 w-11 h-11 rounded-full bg-[#1a472a]/80 backdrop-blur-sm border border-[#7dd87d]/40 text-[#7dd87d] shadow-lg hover:bg-[#1a472a] hover:border-[#7dd87d]/60 transition-all duration-200 flex items-center justify-center ${
         showButton
           ? "opacity-100 scale-100 translate-y-0"
           : "opacity-0 scale-75 translate-y-5 pointer-events-none"
