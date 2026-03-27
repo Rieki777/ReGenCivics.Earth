@@ -505,6 +505,14 @@ export const playerProfiles = mysqlTable("player_profiles", {
   locationNomadic: tinyint("locationNomadic").default(0).notNull(),
   locationEarth: tinyint("locationEarth").default(0).notNull(),
 
+  // Lunar streak tracking
+  lunarStreak: int("lunarStreak").default(0).notNull(),
+  lastQuestCompletedAt: timestamp("lastQuestCompletedAt"),
+  currentLunarCycleStart: timestamp("currentLunarCycleStart"),
+
+  // Status line
+  currentlyWorkingOn: varchar("currentlyWorkingOn", { length: 200 }),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1251,6 +1259,8 @@ export const forumPosts = mysqlTable("forumPosts", {
   bioregionId: int("bioregionId"),
   // Link preview OG data (cached after post creation)
   linkPreviews: json("linkPreviews"),
+  // Seed post flag (B.3)
+  isSeed: tinyint("isSeed").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -2081,3 +2091,73 @@ export const regenTokenLedger = mysqlTable("regen_token_ledger", {
 
 export type RegenTokenLedger = typeof regenTokenLedger.$inferSelect;
 export type InsertRegenTokenLedger = typeof regenTokenLedger.$inferInsert;
+
+// Notifications (A.7)
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  playerId: int("playerId").notNull(),
+  type: mysqlEnum("type", ["forum_reply", "quest_complete", "fund_update", "vouch", "mention"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body"),
+  link: varchar("link", { length: 500 }),
+  isRead: tinyint("isRead").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  index("notifications_player_unread_idx").on(t.playerId, t.isRead, t.createdAt),
+]));
+export type Notification = typeof notifications.$inferSelect;
+
+// Quest Journal (C.3)
+export const questJournal = mysqlTable("quest_journal", {
+  id: int("id").autoincrement().primaryKey(),
+  playerId: int("playerId").notNull(),
+  questId: int("questId").notNull(),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+  reflection: text("reflection"),
+  forumPostId: int("forumPostId"),
+}, (t) => ([
+  index("quest_journal_player_date_idx").on(t.playerId, t.completedAt),
+]));
+export type QuestJournalEntry = typeof questJournal.$inferSelect;
+
+// Player Alliances (C.5)
+export const playerAlliances = mysqlTable("player_alliances", {
+  id: int("id").autoincrement().primaryKey(),
+  playerId: int("playerId").notNull(),
+  allianceType: mysqlEnum("allianceType", ["land_project", "investor", "partner"]).notNull(),
+  allianceName: varchar("allianceName", { length: 200 }).notNull(),
+  allianceId: int("allianceId"),
+  role: varchar("role", { length: 100 }),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+}, (t) => ([
+  index("player_alliances_player_idx").on(t.playerId),
+]));
+export type PlayerAlliance = typeof playerAlliances.$inferSelect;
+
+// Vouches (C.9) - trust layer between players
+export const vouches = mysqlTable("vouches", {
+  id: int("id").autoincrement().primaryKey(),
+  voucherId: int("voucherId").notNull(),
+  vouchedForId: int("vouchedForId").notNull(),
+  vouchedAt: timestamp("vouchedAt").defaultNow().notNull(),
+  // Optional context: "worked together at Cascadia Commons"
+  note: varchar("note", { length: 200 }),
+}, (t) => ([
+  unique("unique_vouch").on(t.voucherId, t.vouchedForId),
+  index("vouches_vouched_for_idx").on(t.vouchedForId),
+]));
+export type Vouch = typeof vouches.$inferSelect;
+
+// Seasonal Intentions (C.10)
+export const seasonalIntentions = mysqlTable("seasonal_intentions", {
+  id: int("id").autoincrement().primaryKey(),
+  playerId: int("playerId").notNull(),
+  season: varchar("season", { length: 20 }).notNull(),
+  year: int("year").notNull(),
+  intention: varchar("intention", { length: 300 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("unique_season").on(t.playerId, t.season, t.year),
+  index("seasonal_intentions_season_idx").on(t.season, t.year),
+]));
+export type SeasonalIntention = typeof seasonalIntentions.$inferSelect;
