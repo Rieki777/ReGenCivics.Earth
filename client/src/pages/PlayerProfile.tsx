@@ -77,6 +77,7 @@ import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { WelcomeAboardQuests } from "@/components/WelcomeAboardQuests";
 import { QuestStartPopup, flagShowQuestPrompt } from "@/components/QuestStartPopup";
 import { DiscoverTab } from "@/components/DiscoverTab";
+import { QuestJournal } from "@/components/QuestJournal";
 import { BioregionSelect } from "@/components/BioregionSelect";
 import { BioregionMultiSelect } from "@/components/BioregionMultiSelect";
 import { LocationPicker, LocationDisplay, type LocationData } from "@/components/LocationPicker";
@@ -2770,6 +2771,20 @@ export default function PlayerProfile() {
                         View Quests
                       </button>
                     </div>
+                    {/* Profile completeness prompt */}
+                    {(() => {
+                      const fields = [profile.displayName, profile.avatarUrl, profile.bioregionId, profile.bio, profile.currentlyWorkingOn, profile.walletAddress];
+                      const filled = fields.filter(Boolean).length;
+                      const pct = Math.round((filled / fields.length) * 100);
+                      if (pct >= 80) return null;
+                      return (
+                        <div className="bg-[#1a472a]/50 border border-[#7dd87d]/20 rounded-lg px-4 py-3 text-xs text-white/60">
+                          Your profile is {pct}% complete.
+                          {!profile.bioregionId && <> <a href="/profile?tab=settings" className="text-[#7dd87d] hover:underline">Add your bioregion</a> to help others find you.</>}
+                          {!profile.bio && <> <a href="/profile?tab=settings" className="text-[#7dd87d] hover:underline">Write a short bio</a> so people know who you are.</>}
+                        </div>
+                      );
+                    })()}
                     <AnimatedSection animation="slide-up">
                       <DiscoverTab />
                     </AnimatedSection>
@@ -2845,6 +2860,9 @@ export default function PlayerProfile() {
                             Rites of Passage (Quests 0-13)
                           </a>
                         </div>
+
+                        {/* TODO: Wire up when GET /api/profile/journal endpoint is available */}
+                        <QuestJournal entries={[]} />
                       </div>
                     );
                   })()}

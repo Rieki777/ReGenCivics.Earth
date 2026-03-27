@@ -5,6 +5,8 @@ import { useAuth } from '@/_core/hooks/useAuth'
 import { getCurrentSeason, SEASON_THEMES } from '@/lib/seasons'
 import { SkipBack, SkipForward, Play, Pause, Volume2, Coins, Send, HelpCircle, Award, Image, Search, List } from 'lucide-react'
 import { useReGenGuide } from '@/contexts/ReGenGuideContext'
+import { usePageTools } from '@/hooks/usePageTools'
+import { NavIcon } from '@/components/SmartBottomNav'
 
 interface CommandPanelProps {
   isOpen: boolean
@@ -17,6 +19,7 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
   const { count } = usePresence()
   const { isAuthenticated } = useAuth()
   const guide = useReGenGuide()
+  const pageTools = usePageTools()
 
   // Quick-post state
   const [quickPost, setQuickPost] = useState('')
@@ -81,6 +84,18 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
             <span className="text-[9px]">Jump</span>
           </button>
         </div>
+
+        {/* Page-specific tools */}
+        {pageTools.length > 0 && (
+          <div className="grid grid-cols-5 gap-2 pt-1 border-t border-white/10">
+            {pageTools.map((tool, i) => (
+              <button key={i} onClick={tool.action} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+                <NavIcon name={tool.icon} className="w-4 h-4" />
+                <span className="text-[9px]">{tool.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Player count + token balance row */}
         <div className="flex items-center justify-between text-xs">
