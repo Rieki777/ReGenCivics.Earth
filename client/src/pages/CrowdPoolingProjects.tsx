@@ -1304,6 +1304,27 @@ export default function CrowdPoolingProjects() {
           </div>
         </div>
 
+        {/* Example Data Notice Banner */}
+        <div className="bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-amber-500/15 border-y border-amber-400/30 backdrop-blur-sm py-4 px-4">
+          <div className="container">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+                <p className="text-white/90 text-sm sm:text-base">
+                  <span className="font-semibold text-amber-300">All example data.</span>{" "}
+                  Our first season of crowd pooling goes live late 2026 / early 2027.
+                </p>
+              </div>
+              <Link href="/newsletter">
+                <Button size="sm" className="bg-amber-500/20 border border-amber-400/40 text-amber-200 hover:bg-amber-500/30 hover:text-white text-xs sm:text-sm whitespace-nowrap">
+                  <Bell className="w-3.5 h-3.5 mr-1.5" />
+                  Sign up for updates
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Aggregate Progress Banner (DB-sourced only) */}
         {dbProjects && dbProjects.length > 0 && (() => {
           const totalFunded = dbProjects.reduce((s: number, p: any) => s + (p.currentAmount || 0), 0);

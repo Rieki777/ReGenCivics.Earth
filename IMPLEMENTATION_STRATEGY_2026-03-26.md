@@ -181,6 +181,131 @@ After implementing, check every page at 375px (mobile) and 1440px (desktop):
 
 ---
 
+## CRITICAL: Back Button Consolidation (Fix 222)
+
+**Problem:** The `BackButton` component (`components/BackButton.tsx`) renders as a floating green pill (`md:fixed md:top-20 md:left-4 md:z-40`) on desktop or a relative element on mobile. It's used on **27 pages**. On many pages it overlaps other elements (the Map page legend, page headers, the Command Center). Additional custom back buttons exist on 8+ more pages.
+
+**Fix: Move "Back" into the Command Center bar.**
+
+The nav bar already has 3 adaptive slots. The first slot (Quests) is fixed. Slots 2-3 are adaptive and context-aware. Add a **context-aware Back action** into the nav system so players always have a way back without a floating pill cluttering the page.
+
+### Step 1: Add Back as a nav bar action
+
+In `SmartBottomNav.tsx`, detect when the player is on a sub-page (not a top-level route) and show a Back button in one of the adaptive slots. The existing `useSmartNav` hook already has context-awareness. Add:
+
+```typescript
+// In hooks/useSmartNav.ts, add logic:
+const TOP_LEVEL_ROUTES = ['/', '/land', '/play', '/quest', '/community', '/fund', '/apply', '/profile', '/map'];
+
+function isSubPage(path: string): boolean {
+  return !TOP_LEVEL_ROUTES.includes(path);
+}
+
+// When on a sub-page, slot 1 (index 0, normally Quests) becomes a Back button:
+if (isSubPage(currentPath)) {
+  slots[0] = {
+    path: '', // handled by onClick, not navigation
+    label: 'Back',
+    icon: 'ArrowLeft',
+    isContextual: false,
+    isBack: true, // new flag
+  };
+}
+```
+
+In `SmartBottomNav.tsx`, handle the `isBack` flag:
+
+```tsx
+// Add ArrowLeft to the lucide imports (already imported in BackButton)
+import { ArrowLeft, /* ...existing imports */ } from "lucide-react";
+
+// Add to ICON_MAP:
+const ICON_MAP = { ...existing, ArrowLeft };
+
+// In the nav slot renderer, if the slot has isBack:
+{slot.isBack ? (
+  <button
+    onClick={() => window.history.length > 1 ? window.history.back() : navigate('/')}
+    className={`flex flex-col items-center justify-center gap-1 transition-colors text-white/40 hover:text-white/70`}
+    aria-label="Go back"
+  >
+    <ArrowLeft className="w-5 h-5" />
+    <span className="text-[10px] font-medium">Back</span>
+  </button>
+) : (
+  <Link ...existing link code... />
+)}
+```
+
+### Step 2: Remove floating BackButton from all pages
+
+Delete or empty the `BackButton` component file. Then remove all imports and usages across 27+ pages:
+
+**Pages using `<BackButton />` (remove the import and component):**
+- AdminApplicationDetail.tsx
+- AdminApplications.tsx
+- Apply.tsx
+- BlogPost.tsx
+- Calculator.tsx
+- CampaignAnalytics.tsx
+- CampaignDetail.tsx
+- CampaignManage.tsx
+- CommunityCategory.tsx
+- CommunityNewPost.tsx
+- CommunityPost.tsx
+- CreateCampaign.tsx
+- CrowdPooling.tsx
+- CustomGames.tsx
+- Governance.tsx
+- InvestorForm.tsx
+- LOI.tsx
+- Map.tsx
+- MemberDirectory.tsx
+- MyApplications.tsx
+- PlayerProfile.tsx
+- ProjectComparison.tsx
+- Quest.tsx
+- ReGenGames.tsx
+- UserForumProfile.tsx
+
+**Pages with custom back elements (replace with nothing, the nav bar handles it):**
+- CommunityCategory.tsx: remove "Back to Community" button
+- CommunityPost.tsx: remove "Back to Forum" link
+- OnePager.tsx: remove "Back to Site" link
+- AdminModeration.tsx: remove "Back to Forum" and "Back to Admin" links
+- ApplyStatus.tsx: remove "← Back to Apply" link
+- Blog.tsx: remove "Back to Home" link
+- EventDetail.tsx: remove "Back to Schedule" link
+
+**Keep these (they are step/form navigation, not page navigation):**
+- Connect.tsx: "Back to Path Selection" (wizard step)
+- PlayerProfile.tsx: inline "← Back" buttons for form steps within the profile edit flow
+
+### Step 3: Update BackButton.tsx
+
+Don't delete the file (it would break imports during migration). Instead, make it render nothing:
+
+```tsx
+/** @deprecated Back navigation is now handled by the Command Center nav bar */
+export function BackButton(_props: { fallbackPath?: string; label?: string; inline?: boolean }) {
+  return null;
+}
+```
+
+This is a safe migration path. All 27 imports still work, no build breaks, but the floating button disappears. Claude Code can clean up the imports in a follow-up pass.
+
+### Step 4: Adjust page content positioning
+
+Many pages have top padding or margin to account for the floating BackButton on desktop. After removing it, audit these pages and remove any compensating `pt-` or `mt-` classes that were creating space for the back button. Search for `md:pt-` and `md:mt-` in page files.
+
+**Files to change:**
+- `client/src/components/BackButton.tsx` (neuter the component)
+- `client/src/hooks/useSmartNav.ts` (add isSubPage detection and Back slot logic)
+- `client/src/components/SmartBottomNav.tsx` (handle isBack slot type with ArrowLeft)
+- All 27+ pages listed above (remove BackButton usage, optional cleanup pass)
+
+---
+
 ## CRITICAL: Safari "You're Offline" Bug (Fix 220)
 
 **Symptom:** Users on Safari (especially macOS) see "You're offline. Check your connection and try again." when navigating pages, even though they have a working connection.
@@ -1751,6 +1876,7 @@ Execute in this order to avoid dependency conflicts:
 1. Verify `SmartBottomNav.tsx` and `App.tsx` are complete (both were reconstructed from truncation)
 2. Safari offline bug (Fix 220)
 3. Bottom element overlap fix (Fix 221): create ReGenGuideContext, move all floating buttons into CommandPanel, reposition ScrollToTop and CookieConsent
+4. Back button consolidation (Fix 222): neuter BackButton component, add Back slot to SmartBottomNav for sub-pages, remove floating pills from 27+ pages
 
 ### Phase 1: Database Migrations (batch together)
 Run all these as one migration:
