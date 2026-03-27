@@ -1635,7 +1635,7 @@ export default function Opportunity() {
               </div>
 
               <h3 className="text-base font-bold text-[#7dd87d] mb-3">Operating Model</h3>
-              <p className="text-sm mb-3">Rather than building large overhead at launch, the fund leverages specialized partners to maintain capital efficiency while accessing institutional-quality expertise.</p>
+              <p className="text-sm mb-3">Rather than building large overhead at launch, the fund works with specialized partners to maintain capital efficiency while accessing institutional-quality expertise.</p>
               <div className="overflow-x-auto mb-5">
                 <table className="w-full border-collapse text-sm">
                   <thead>

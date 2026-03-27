@@ -19,7 +19,7 @@ export function cspMiddleware(_req: Request, res: Response, next: NextFunction) 
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.youtube.com https://s.ytimg.com https://static.cloudflareinsights.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://www.gstatic.com",
-    "img-src 'self' data: https: blob:",
+    "img-src 'self' data: blob: https://assets.regencivics.earth https://regencivics.earth https://*.googleapis.com https://*.gstatic.com https:",
     "font-src 'self' https://fonts.gstatic.com data:",
     "media-src 'self' https: blob:",
     "connect-src 'self' https: wss:",

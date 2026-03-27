@@ -1272,7 +1272,7 @@ export default function Game() {
                         <Sparkles className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="font-bold text-[#1a472a] text-sm mb-1">Creative Solutions</h4>
-                      <p className="text-xs text-[#1a472a]/70 mb-2">Play unlocks innovative thinking</p>
+                      <p className="text-xs text-[#1a472a]/70 mb-2">Play opens up innovative thinking</p>
                       <a href="https://pubmed.ncbi.nlm.nih.gov/38889248/" target="_blank" rel="noopener noreferrer" className="text-xs text-[#558b2f] hover:underline">
                         Research &rarr;
                       </a>

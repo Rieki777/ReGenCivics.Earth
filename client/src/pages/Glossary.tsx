@@ -122,7 +122,7 @@ const glossaryEntries: GlossaryEntry[] = [
   },
   {
     term: "$RCivics Token",
-    definition: "A utility token representing civic participation in the ReGen Civics ecosystem. Used for tracking engagement and unlocking governance privileges.",
+    definition: "A utility token representing civic participation in the ReGen Civics ecosystem. Used for tracking engagement and earning governance privileges.",
     category: "Governance & Technology",
   },
 

@@ -824,3 +824,186 @@ UPDATE forumPosts SET categoryId = [FIRE_CATEGORY_ID] WHERE id = [WELCOME_ABOARD
 - Fix 174-5 needs GSC access to submit sitemap and request indexing
 - Fix 214 needs SQL UPDATE in Railway DB console
 - Fix 215 needs clarification: which specific button/page has the wrong Rites of Passage link?
+- DB migration: `ALTER TABLE player_profiles MODIFY COLUMN emailDigestFrequency ENUM('never','weekly','monthly','seasonal','newsletter') NOT NULL DEFAULT 'monthly';` — run via Railway CLI or dashboard query console
+
+---
+
+## Fix 216: Gathering Grove (/community) -- Epic Hero Photo
+
+**Status: READY TO IMPLEMENT**
+
+**What:** The `/community` page hero section needs a stunning full-bleed background photograph. The community is called "The Gathering Grove" — the image should evoke an ancient sacred grove where people gather: trees forming a natural cathedral, firelight, moss, stone seats, golden light.
+
+**Image generation (Claude Code runs this with Gemini API key):**
+```bash
+cd /path/to/regen-civics-clean
+uv run ~/.claude/skills/nano-banana-pro/scripts/generate_image.py \
+  --prompt "Epic aerial photograph of a gathering grove: ancient trees forming a cathedral circle around a central fire pit, golden late-afternoon light streaming through old-growth forest canopy, mossy stone seats arranged in concentric rings, wildflowers carpeting the forest floor, smoke rising gently from the fire, a sense of sacred community gathering, hyper-realistic nature photography, cinematic wide angle, 16:9 landscape, no people" \
+  --filename "gathering-grove-hero.png" \
+  --resolution 2K
+```
+
+**Optimization (REQUIRED before upload — all generated images must be optimized):**
+```bash
+node -e "
+const sharp = require('sharp');
+sharp('gathering-grove-hero.png')
+  .resize(1920, 1080, { fit: 'cover' })
+  .webp({ quality: 85, effort: 6 })
+  .toFile('gathering-grove-hero.webp')
+  .then(info => console.log('Optimized:', info));
+"
+```
+
+**Upload to R2:**
+Use the existing upload-to-r2 pattern from other images. The final CDN URL should be something like `https://assets.regencivics.earth/gathering-grove-hero.webp`.
+
+**Integration:** In `Community.tsx`, find the hero `<section>` (around line 241) and add the image as a background:
+```tsx
+<img
+  src={cdnImg("https://assets.regencivics.earth/gathering-grove-hero.webp")}
+  alt=""
+  className="absolute inset-0 w-full h-full object-cover opacity-30"
+  loading="eager"
+/>
+```
+
+**Files to change:**
+- `client/src/pages/Community.tsx` -- add hero background image to the hero section
+
+---
+
+## Fix 217: Command Center -- Music Player + Extended Nav (Mobile AND Desktop)
+
+**Status: READY TO IMPLEMENT**
+
+**What:** The existing `SmartBottomNav` is mobile-only (`md:hidden`). Rye wants a persistent "Command Center" panel at the bottom of the screen visible on ALL screen widths, with:
+
+1. **The existing mobile nav slots** (now visible on desktop too)
+2. **A music player** with a 4-song playlist, page-specific starting song, persists across navigation
+3. **Expandable panel** that pops up above the bar with additional features (quest FABs, shortcuts)
+
+### Song Playlist + Page Mapping
+
+Songs are in `client/public/audio/`:
+| File | Title | Start Page |
+|------|-------|-----------|
+| `wasteland-into-wonderland.mp3` | Wasteland into Wonderland | `/land` |
+| `we-are-regen-magicians.mp3` | We are ReGen Magicians | `/quest` |
+| `we-are-the-land.mp3` | We are the Land | `/community` |
+| `regen-transition-team.mp3` | ReGen Transition Team | `/play` |
+
+Playlist order (what plays after the starting song): all 4 songs loop continuously. Each page just sets the *starting position* when the user first hits play. Once playing, the music continues through all songs and across all page navigations.
+
+### Architecture
+
+**Step 1: AudioContext at App level (`client/src/App.tsx`)**
+
+Create `client/src/contexts/AudioContext.tsx`:
+```tsx
+// Exports: AudioProvider (wraps app), useAudio() hook
+// State: isPlaying, currentSong, volume, playlist, currentIndex
+// Methods: play(), pause(), togglePlay(), nextSong(), prevSong(), setStartingSong(pageKey)
+
+const PLAYLIST = [
+  { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land" },
+  { title: "We are ReGen Magicians", src: "/audio/we-are-regen-magicians.mp3", page: "/quest" },
+  { title: "We are the Land", src: "/audio/we-are-the-land.mp3", page: "/community" },
+  { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play" },
+];
+
+const PAGE_START_INDEX: Record<string, number> = {
+  "/land": 0,
+  "/quest": 1,
+  "/community": 2,
+};
+```
+
+Key behaviors:
+- The `<audio>` element is created once in AudioProvider and never unmounted
+- `isPlaying` persists as user navigates
+- When user is on a page with a mapped song and hasn't played yet, that song is pre-queued as the starting position
+- When already playing, navigation does NOT interrupt the current song
+
+**Step 2: Update SmartBottomNav**
+
+- Remove `md:hidden` from the `<nav>` — show on all screen sizes
+- On desktop, make the bar taller (h-16 → h-14) with slightly different spacing
+- On desktop, increase from 4 to 5 slots to accommodate the music button
+
+**Step 3: Add music controls to the nav bar**
+
+Add a 5th slot to the nav grid: a Play/Pause button that uses `useAudio()`:
+```tsx
+<button onClick={togglePlay} className="flex flex-col items-center justify-center gap-1">
+  {isPlaying ? <PauseCircle className="w-5 h-5" /> : <PlayCircle className="w-5 h-5" />}
+  <span className="text-[9px]">{isPlaying ? currentSong.title.slice(0, 8) + '…' : 'Music'}</span>
+</button>
+```
+
+**Step 4: Expandable command panel**
+
+Add a 6th button: a chevron/grid icon that toggles an overlay panel above the nav bar. This panel contains:
+- Full music player UI: song title, progress bar, prev/next, volume
+- Quick links to profile, quest submission, new forum post
+- Any FABs that were previously floating on the Quest page
+
+The panel slides up from behind the nav bar using CSS `transform: translateY`.
+
+**Files to create/change:**
+- `client/src/contexts/AudioContext.tsx` -- new file, AudioProvider + useAudio hook
+- `client/src/App.tsx` -- wrap with AudioProvider
+- `client/src/components/SmartBottomNav.tsx` -- remove md:hidden, add music slot, add expand button
+- `client/src/components/CommandPanel.tsx` -- new file, expandable panel with full music player
+- `client/src/pages/Quest.tsx` -- remove floating FABs (they move into CommandPanel)
+
+---
+
+## Fix 218: Photo Optimization Rule -- All Generated Images Must Be Optimized Before R2 Upload
+
+**Status: READY TO IMPLEMENT (add to nano-banana-pro skill + document as standard)**
+
+**Rule:** Every time an image is generated with `nano-banana-pro`, it MUST be converted to WebP and resized before being committed to the repo or uploaded to R2.
+
+**Standard optimization command (add to any image generation workflow):**
+```bash
+# After generating image.png:
+node scripts/optimize-images.mjs  # runs full optimization pass
+# OR for a single file:
+node -e "
+const sharp = require('sharp');
+const src = 'path/to/generated-image.png';
+sharp(src)
+  .resize(1920, null, { fit: 'inside', withoutEnlargement: true })
+  .webp({ quality: 85, effort: 6 })
+  .toFile(src.replace('.png', '.webp'))
+  .then(() => console.log('Done'));
+"
+```
+
+**Update nano-banana-pro skill:** Add a note to `SKILL.md` that after every `generate_image.py` call, run the above optimization before saving to `client/public/` or uploading to R2. Target file size: under 300KB for hero images, under 150KB for content images.
+
+**Files to change:**
+- `/sessions/gallant-wizardly-franklin/mnt/.claude/skills/nano-banana-pro/SKILL.md` -- add optimization step
+
+---
+
+## Fix 219: DB Migration -- Add Newsletter to emailDigestFrequency Enum
+
+**Status: NEEDS RYE -- Railway DB**
+
+**What:** The server code already validates `newsletter` as a valid frequency (Fix 198 added it to the Zod enum). But the MySQL column definition still uses the old enum. Inserts/updates with `newsletter` will fail at the DB layer until this migration runs.
+
+**Railway CLI command (PowerShell or Git Bash):**
+```powershell
+# Option 1: Railway CLI shell
+railway login
+railway link
+railway shell --service mysql
+# In MySQL prompt:
+ALTER TABLE player_profiles MODIFY COLUMN emailDigestFrequency ENUM('never','weekly','monthly','seasonal','newsletter') NOT NULL DEFAULT 'monthly';
+EXIT;
+
+# Option 2: Direct one-liner (fill in your connection vars from Railway dashboard → MySQL → Connect)
+mysql -h HOST -P PORT -u USER -pPASS DBNAME -e "ALTER TABLE player_profiles MODIFY COLUMN emailDigestFrequency ENUM('never','weekly','monthly','seasonal','newsletter') NOT NULL DEFAULT 'monthly';"
+```

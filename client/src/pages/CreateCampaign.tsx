@@ -62,6 +62,7 @@ import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 // Navigation is rendered globally in App.tsx
 import { useAuth } from '@/_core/hooks/useAuth';
+import { getLoginUrl } from '@/const';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CAMPAIGN_TEMPLATES } from '@/data/campaignTemplates';
 import { CSVImportDialog } from '@/components/CSVImportDialog';
@@ -407,8 +408,29 @@ export default function CreateCampaign() {
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState(false);
 
+  // Auth gate: redirect unauthenticated users to community (login)
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 text-center">
+          <Lock className="w-10 h-10 text-[#1a472a] mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+            Sign In Required
+          </h2>
+          <p className="text-sm text-[#1a472a]/60 mb-4">You need to be signed in to create campaigns.</p>
+          <a
+            href={getLoginUrl()}
+            className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#4a7c59] hover:bg-[#2e7d32] text-white text-sm font-semibold rounded-lg transition-colors"
+          >
+            Sign In
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   // Password gate: require "222" even for logged-in users
-  if (user && !authenticated) {
+  if (!authenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center p-4">
         <div className="w-full max-w-sm bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 text-center">

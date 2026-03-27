@@ -464,7 +464,7 @@ const ORGANIZATIONS: MapEntity[] = [
     lng: -74.01,
     location: "Global / New York, USA",
     country: "USA",
-    description: "Open-source funding platform empowering communities through quadratic funding and grants.",
+    description: "Open-source funding platform supporting communities through quadratic funding and grants.",
     url: "https://gitcoin.co",
     roles: ["Funding"],
     isGlobal: true,

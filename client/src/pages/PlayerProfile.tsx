@@ -2801,7 +2801,14 @@ export default function PlayerProfile() {
                         {/* Quest navigation buttons */}
                         <div className="flex flex-wrap gap-3">
                           <a
-                            href="/quest"
+                            href="/quest#welcome-aboard"
+                            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white text-sm font-semibold hover:from-emerald-700 hover:to-green-700 transition-all shadow-md"
+                          >
+                            <Compass className="w-4 h-4" />
+                            Welcome Aboard Quests
+                          </a>
+                          <a
+                            href="/quest#rites-of-passage"
                             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-md"
                           >
                             <Flame className="w-4 h-4" />

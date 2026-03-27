@@ -315,6 +315,14 @@ export default function Community() {
       <section className="relative pt-24 pb-12 md:pt-32 md:pb-16 overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] via-[#2d5a3f] to-[#f8f5f0]" />
+        {/* Hero image: replace src with gathering-grove-hero.webp once generated */}
+        <img
+          src="/gathering-grove-hero.webp"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+          loading="eager"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }}
+        />
 
         {/* Decorative elements */}
         <div className="absolute top-20 left-4 opacity-20">
@@ -736,15 +744,28 @@ export default function Community() {
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Land project spaces. Where the work is rooted.</p>
 
-            {/* Earth header card */}
-            <div className="mb-4">
+            {/* Earth quest-style cards */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Land Project Spaces */}
               <Link href="/community/c/land-projects">
                 <div className="relative rounded-xl overflow-hidden border border-[#d4a574]/40 hover:border-[#d4a574]/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-03-healing-whole.webp" alt="Earth element: land projects and regeneration" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-03-healing-whole.webp" alt="Land project spaces" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-emerald-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Land Project Spaces</p>
                     <p className="text-white/60 text-xs">Where the work is rooted</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Apply */}
+              <Link href="/apply">
+                <div className="relative rounded-xl overflow-hidden border border-[#d4a574]/40 hover:border-[#d4a574]/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-02-saving-seeds.webp" alt="Apply to join with your land project" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-emerald-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Apply</p>
+                    <p className="text-white/60 text-xs">Bring your land project in</p>
                   </div>
                 </div>
               </Link>
@@ -856,15 +877,52 @@ export default function Community() {
             </div>
             <p className="text-[#1a472a]/60 text-sm mb-4">Alliance organisations. Networks and partners moving together.</p>
 
-            {/* Water header card */}
-            <div className="mb-4">
+            {/* Water quest-style cards */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Alliance Partners */}
               <Link href="/community/c/alliance-partners">
                 <div className="relative rounded-xl overflow-hidden border border-blue-200/60 hover:border-blue-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-01-potion-brewing.webp" alt="Water element: alliance partners and collaboration" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-01-potion-brewing.webp" alt="Alliance partners and collaboration" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Alliance Partners</p>
-                    <p className="text-white/60 text-xs">Networks and partners moving together</p>
+                    <p className="text-white/60 text-xs">Networks moving together</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Governance */}
+              <Link href="/community/c/governance">
+                <div className="relative rounded-xl overflow-hidden border border-blue-200/60 hover:border-blue-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-11-coordination-patterns.webp" alt="Governance and coordination" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Governance</p>
+                    <p className="text-white/60 text-xs">How we coordinate</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Crowd Pooling */}
+              <Link href="/crowd-pooling">
+                <div className="relative rounded-xl overflow-hidden border border-blue-200/60 hover:border-blue-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-06-healing-circles.webp" alt="Crowd pooling capital together" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Crowd Pooling</p>
+                    <p className="text-white/60 text-xs">Pool capital for land projects</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* General Discussion */}
+              <Link href="/community/c/alliance-partners">
+                <div className="relative rounded-xl overflow-hidden border border-blue-200/60 hover:border-blue-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-04-dreaming-spaces-of-love.webp" alt="Alliance discussion" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>General Discussion</p>
+                    <p className="text-white/60 text-xs">Alliance talk, new ideas</p>
                   </div>
                 </div>
               </Link>
@@ -1039,15 +1097,28 @@ export default function Community() {
               Some things need to move. This is where we say the hard thing, clear what's stagnant, and make space for what comes next.
             </p>
 
-            {/* Air header card */}
-            <div className="mb-4">
+            {/* Air quest-style cards */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Hard Conversations */}
               <Link href="/community/c/air-conversations">
                 <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-10-nvc.webp" alt="Air element: open conversations and clearing space" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-10-nvc.webp" alt="Open conversations and clearing space" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Hard Conversations</p>
-                    <p className="text-white/60 text-xs">Clear what's stagnant, make space for what comes next</p>
+                    <p className="text-white/60 text-xs">Clear what's stagnant</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Community Guidelines */}
+              <Link href="/community-guidelines">
+                <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-12-breathplay.webp" alt="Community guidelines and agreements" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Community Agreements</p>
+                    <p className="text-white/60 text-xs">How we hold space together</p>
                   </div>
                 </div>
               </Link>

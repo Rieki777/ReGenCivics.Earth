@@ -18,8 +18,10 @@ import { ScrollToTop } from "./components/ScrollToTop";
 const ExitIntentCapture = lazy(() => import("./components/ExitIntentCapture").then(m => ({ default: m.ExitIntentCapture })));
 const CommandPalette = lazy(() => import("./components/CommandPalette"));
 const ShortcutPill = lazy(() => import("./components/ShortcutPill").then(m => ({ default: m.ShortcutPill })));
+import { AudioProvider } from "./contexts/AudioContext";
 
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
+import { useFocusOnNavigation } from "./hooks/useFocusOnNavigation";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useLocation as useWouterLocation } from "wouter";
@@ -268,6 +270,7 @@ function ReturnToHandler() {
 
 function AppInner() {
   useGlobalScrollReveal();
+  useFocusOnNavigation();
   return null;
 }
 
@@ -293,6 +296,7 @@ function App() {
 
   return (
     <ErrorBoundary fallback={<TaoErrorState />}>
+      <AudioProvider>
       <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
@@ -308,7 +312,7 @@ function App() {
           {!adminMode && <MycelialBackground />}
           {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
-          <main id="main-content" className="pb-16 md:pb-0">
+          <main id="main-content" className="pb-20">
             <Router />
           </main>
           {!adminMode && <SiteFooter />}
@@ -325,6 +329,7 @@ function App() {
           <ReturnToHandler />
         </TooltipProvider>
       </ThemeProvider>
+      </AudioProvider>
     </ErrorBoundary>
   );
 }

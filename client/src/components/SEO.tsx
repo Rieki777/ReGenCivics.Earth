@@ -119,7 +119,7 @@ export function SEO({
 export const pageSEO = {
   home: {
     title: 'ReGen Civics: Infinite Game for the Regenerative Renaissance',
-    description: 'ReGen Civics is a venture fund and infinite game for regenerative land projects. Capital, governance, and a global network powering the Regenerative Renaissance.',
+    description: 'ReGen Civics runs quests and games that fund regenerative land projects. Complete real-world actions, earn tokens, and build the movement.',
     keywords: 'regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative renaissance, infinite game',
     image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
     url: '/'

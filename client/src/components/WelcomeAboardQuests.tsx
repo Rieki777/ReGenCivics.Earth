@@ -248,7 +248,7 @@ export function WelcomeAboardQuests({ profile, onUpdate }: WelcomeAboardQuestsPr
 
         {!allDone && (
           <p className="mt-2 text-white/40 text-xs">
-            Complete all 10 quests to earn 330 $ReGen + 1 RGVoice and unlock your first Claim.
+            Complete all 10 quests to earn 330 $ReGen + 1 RGVoice and place your first Claim.
           </p>
         )}
       </div>

@@ -52,7 +52,7 @@ export function QuestStartPopup({ onNavigateToQuests }: QuestStartPopupProps) {
         </div>
 
         <p className="text-white/70 text-sm leading-relaxed mb-4">
-          You have 10 Welcome Aboard Quests waiting for you. Complete them to earn 330 $ReGen + 1 RGVoice and unlock your first Claim in the ReGen Game.
+          You have 10 Welcome Aboard Quests waiting for you. Complete them to earn 330 $ReGen + 1 RGVoice and place your first Claim in the ReGen Game.
         </p>
 
         <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-5 space-y-1.5">

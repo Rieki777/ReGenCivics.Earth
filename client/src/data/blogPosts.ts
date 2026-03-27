@@ -171,7 +171,7 @@ Base is a Layer 2 blockchain built by Coinbase, one of the most trusted names in
 
 **Security**: Base inherits Ethereum's security while adding Coinbase's institutional-grade infrastructure. Your governance tokens and treasury funds are protected by battle-tested technology.
 
-**Mainstream Bridge**: Coinbase's involvement means easier onboarding for newcomers. It provides a seamless means from national currencies into the currencies of our Regenerative Renaissance.
+**Mainstream Bridge**: Coinbase's involvement means easier onboarding for newcomers. It provides a direct path from national currencies into the currencies of our Regenerative Renaissance.
 
 ## How Hypha Makes It Work
 
@@ -450,7 +450,7 @@ See you in the game!`,
     slug: 'how-to-apply-for-season-2',
     title: 'How to Apply for Season 2: Complete Application Guide',
     excerpt: 'Step-by-step tutorial on submitting your land project application for ReGen Civics Season 2. Learn what information you need and how to present your project effectively.',
-    content: `Ready to apply for Season 2? This comprehensive tutorial walks you through every step of the application process.
+    content: `Ready to apply for Season 2? This guide walks you through every step of the application process.
 
 ## What You Will Need
 
