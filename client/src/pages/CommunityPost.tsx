@@ -6,7 +6,7 @@ import { Link, useLocation, useParams } from "wouter";
 import {
   MessageCircle, ArrowLeft, Heart, Eye, Clock, Send,
   ChevronRight, Pin, Lock, Loader2, Trash2, CornerDownRight,
-  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save, Link2
+  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save, Link2, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import { EmojiReactions } from "@/components/EmojiReactions";
+import ThreadRoots from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
 
@@ -461,6 +462,8 @@ export default function CommunityPost() {
                     Author
                   </Badge>
                 </div>
+                {/* B.4: Bioregion display (requires server to include bioregion on post author data) */}
+                {(post as any).authorBioregion && <span className="block text-[10px] text-[#1a472a]/40">{(post as any).authorBioregion}</span>}
                 <div className="flex items-center gap-3 text-[#1a472a]/40 text-xs mt-0.5" style={{ fontFamily: 'var(--font-body)' }}>
                   <span>{formatDate(post.createdAt)}</span>
                   <span className="flex items-center gap-1">
@@ -616,6 +619,14 @@ export default function CommunityPost() {
                 <Link2 className="w-4 h-4" />
                 {copied ? 'Copied!' : 'Copy link'}
               </button>
+              {/* B.7: Propose as Quest */}
+              <a
+                href={`/community/quests?propose=true&title=${encodeURIComponent(post.title)}&threadId=${post.id}`}
+                className="flex items-center gap-1 text-xs text-[#1a472a]/40 hover:text-[#4a7c59] transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Propose as Quest
+              </a>
               {language !== 'en' && !translatedPost && (
                 <button
                   onClick={handleTranslatePost}
@@ -668,6 +679,25 @@ export default function CommunityPost() {
           <ChainNav postId={post.id} chainId={post.chainId ?? post.id} currentStage={post.threadStage} />
         )}
 
+        {/* B.1: Thread Roots visualization */}
+        {replies && replies.length > 2 && (
+          <div className="mb-4">
+            <ThreadRoots
+              replies={replies.map(r => ({
+                id: r.id,
+                authorName: r.authorName,
+                authorAvatar: r.authorAvatar ?? '',
+                parentId: r.parentReplyId ?? null,
+                depth: r.parentReplyId ? 1 : 0,
+              }))}
+              onNodeClick={(replyId) => {
+                const el = document.getElementById(`reply-${replyId}`);
+                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+            />
+          </div>
+        )}
+
         {/* Replies */}
         {repliesLoading ? (
           <div className="space-y-3">
@@ -694,7 +724,7 @@ export default function CommunityPost() {
               
               return (
                 <AnimatedSection key={reply.id} delay={index * 0.03}>
-                  <div className={`bg-white rounded-xl border border-[#e8e4de] overflow-hidden ${isNested ? 'ml-6 md:ml-10' : ''}`}>
+                  <div id={`reply-${reply.id}`} className={`bg-white rounded-xl border border-[#e8e4de] overflow-hidden ${isNested ? 'ml-6 md:ml-10' : ''}`}>
                     <div className="px-4 py-3 flex items-start gap-3">
                       {isNested && (
                         <CornerDownRight className="w-4 h-4 text-[#4a7c59]/30 flex-shrink-0 mt-1" />

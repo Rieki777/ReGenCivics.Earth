@@ -32,10 +32,18 @@ const QUEST_CATEGORIES = [
 export default function QuestSuggestions() {
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
-  const [showForm, setShowForm] = useState(false);
+  // B.7: Pre-fill from "Propose as Quest" link on forum threads
+  const urlParams = new URLSearchParams(window.location.search);
+  const proposeMode = urlParams.get('propose') === 'true';
+  const prefillTitle = urlParams.get('title') || '';
+  const prefillThreadId = urlParams.get('threadId');
+
+  const [showForm, setShowForm] = useState(proposeMode);
   const [sortBy, setSortBy] = useState<'votes' | 'newest'>('votes');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState(prefillTitle);
+  const [description, setDescription] = useState(
+    prefillThreadId ? `Inspired by forum thread: /community/post/${prefillThreadId}` : ''
+  );
   const [category, setCategory] = useState('');
 
   const suggestionsQuery = trpc.quests.suggestions.useQuery({ sortBy });

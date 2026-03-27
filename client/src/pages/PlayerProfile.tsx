@@ -83,6 +83,10 @@ import { LocationPicker, LocationDisplay, type LocationData } from "@/components
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ProfileCompletionMeter } from "@/components/ProfileCompletionMeter";
+import VouchSection from "@/components/VouchSection";
+import SeasonalIntention from "@/components/SeasonalIntention";
+import ContributionTimeline from "@/components/ContributionTimeline";
+import { getCurrentSeason } from "@/lib/seasons";
 import { cdnImg } from "@/lib/utils";
 
 // Badge definitions
@@ -2563,6 +2567,7 @@ export default function PlayerProfile() {
   const [activeTab, setActiveTab] = useState<ProfileTab>(
     _tabParam && _validTabs.includes(_tabParam) ? _tabParam : "overview"
   );
+  const [questFilter, setQuestFilter] = useState<"completed" | "in-progress" | "proposed">("completed");
 
   const syncTokensMutation = trpc.playerProfiles.forceSync.useMutation({
     onSuccess: () => {
@@ -2745,6 +2750,15 @@ export default function PlayerProfile() {
                         onGoToSettings={() => setActiveTab('settings')}
                       />
                     </AnimatedSection>
+                    {profile.currentlyWorkingOn && (
+                      <p className="text-sm text-[#7dd87d]/80 italic mt-1">{profile.currentlyWorkingOn}</p>
+                    )}
+                    {/* TODO: Wire up vouches when API endpoint is available */}
+                    <VouchSection playerId={profile.id} vouches={[]} isOwnProfile={true} />
+                    {/* TODO: Wire up intention persistence when API endpoint is available */}
+                    <SeasonalIntention intention={null} season={getCurrentSeason()} year={new Date().getFullYear()} onSet={() => {}} />
+                    {/* TODO: Wire up when activity endpoint is available */}
+                    <ContributionTimeline data={[]} />
                     <div className="rounded-2xl border border-[#1a472a]/20 bg-[#f0f7f0] p-6 flex flex-col items-center text-center gap-3">
                       <Compass className="w-8 h-8 text-[#4a7c59]" />
                       <h3 className="font-semibold text-[#1a472a] text-base">Explore Onboarding Quests</h3>
@@ -2784,6 +2798,22 @@ export default function PlayerProfile() {
                     const hasCompleted = completedQuestsList.length > 0;
                     return (
                       <div className="space-y-6">
+                        {/* Quest filter buttons */}
+                        <div className="flex gap-2">
+                          {(["completed", "in-progress", "proposed"] as const).map((f) => (
+                            <button
+                              key={f}
+                              onClick={() => setQuestFilter(f)}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                questFilter === f
+                                  ? "bg-[#1a472a] text-white border border-[#7dd87d]/30"
+                                  : "bg-white/5 text-white/50 border border-white/10 hover:text-white/80"
+                              }`}
+                            >
+                              {f === "completed" ? "Completed" : f === "in-progress" ? "In Progress" : "Proposed"}
+                            </button>
+                          ))}
+                        </div>
                         {/* Completed quests first if any exist */}
                         {hasCompleted && (
                           <div className="glass-panel p-6 rounded-xl">

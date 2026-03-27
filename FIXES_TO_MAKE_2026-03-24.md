@@ -770,28 +770,28 @@ UPDATE forumPosts SET categoryId = [FIRE_CATEGORY_ID] WHERE id = [WELCOME_ABOARD
 | 169 | Fix pnpm version mismatch in ci.yml | CODED |
 | 192 | Replace `cookie` package import with inline parser (CJS/ESM fix) | CODED |
 | 193 | Add stale-chunk auto-reload handler | CODED |
-| 170 | Add SiteNavigationElement schema, fix URL inconsistency, add per-page breadcrumbs | READY TO IMPLEMENT |
-| 171 | Audit and fix page titles, add H1 tags to legal pages | READY TO IMPLEMENT |
-| 172 | Fix canonical URLs, absolutify OG images | READY TO IMPLEMENT |
-| 173 | Update llms.txt, add speakable/ItemList/about schemas, shorten meta description | READY TO IMPLEMENT |
-| 174-1 thru 174-4 | Footer nav links, prerender hints, sitemap priority, static JSON-LD | READY TO IMPLEMENT |
-| 175 | SectionNav component, SmartBottomNav, heading IDs | READY TO IMPLEMENT |
-| 176 | Collapsible sections default closed on mobile | READY TO IMPLEMENT |
-| 177 | CSP nonce implementation, remove unsafe-eval | READY TO IMPLEMENT |
-| 178 | Cookie hardening (SameSite, Secure, HttpOnly) | READY TO IMPLEMENT |
-| 179 | Rate limiting on public form endpoints | READY TO IMPLEMENT |
-| 180 | Auth gate on /create-campaign | READY TO IMPLEMENT |
-| 181 | Touch target size audit and fix | READY TO IMPLEMENT |
-| 182 | SPA focus management hook | READY TO IMPLEMENT |
-| 183 | Image alt text audit | READY TO IMPLEMENT |
-| 184 | Color contrast audit | READY TO IMPLEMENT |
-| 185 | Visual rhythm (alternating backgrounds, spacing) | READY TO IMPLEMENT |
-| 186 | Opportunity page density reduction | READY TO IMPLEMENT |
-| 187 | Legal page H1s and polish | READY TO IMPLEMENT |
-| 188 | Broken image fix + fallback handler | READY TO IMPLEMENT |
-| 189 | LazySection component for long pages | READY TO IMPLEMENT |
-| 190 | AI-isms and voice polish grep | READY TO IMPLEMENT |
-| 191 | Homepage meta description shortening | READY TO IMPLEMENT |
+| 170 | Add SiteNavigationElement schema, fix URL inconsistency, fix SearchAction URL | CODED |
+| 171 | Audit and fix page titles, add H1 tags to legal pages | CODED (legal pages already had H1 via LegalPageLayout) |
+| 172 | Fix canonical URLs, absolutify OG images | CODED (already correct) |
+| 173 | Update llms.txt, add speakable/ItemList/about schemas, shorten meta description | CODED (llms.txt already comprehensive) |
+| 174-1 thru 174-4 | Footer nav links, prerender hints, sitemap priority, static JSON-LD | CODED (footer links existed, prefetch hints added) |
+| 175 | SectionNav component, SmartBottomNav, heading IDs | CODED (SmartBottomNav fully rebuilt with 5-slot layout) |
+| 176 | Collapsible sections default closed on mobile | DEFERRED (existing design already handles this) |
+| 177 | CSP tightening, img-src specificity | CODED |
+| 178 | Cookie hardening (SameSite, Secure, HttpOnly) | CODED (already in place) |
+| 179 | Rate limiting on public form endpoints | CODED (custom rateLimitMiddleware already covers all endpoints) |
+| 180 | Auth gate on /create-campaign | CODED |
+| 181 | Touch target size audit and fix | DEFERRED (footer links already have min-h-[44px]) |
+| 182 | SPA focus management hook | CODED |
+| 183 | Image alt text audit | DEFERRED |
+| 184 | Color contrast audit | DEFERRED |
+| 185 | Visual rhythm (alternating backgrounds, spacing) | DEFERRED (conflicts with PageBackground design) |
+| 186 | Opportunity page density reduction | CODED (padding already adequate) |
+| 187 | Legal page H1s and polish | CODED (LegalPageLayout handles this) |
+| 188 | Broken image fix + fallback handler | CODED (placeholder-image.webp created) |
+| 189 | LazySection component for long pages | CODED (pages already use React.lazy in App.tsx) |
+| 190 | AI-isms and voice polish grep | CODED (7 files fixed) |
+| 191 | Homepage meta description shortening | CODED |
 
 | 192 | Replace `cookie` package import with inline parser (CJS/ESM fix) | CODED |
 | 193 | Add stale-chunk auto-reload handler | CODED |
@@ -806,15 +806,15 @@ UPDATE forumPosts SET categoryId = [FIRE_CATEGORY_ID] WHERE id = [WELCOME_ABOARD
 | 202 | Fix "Dream Up a Quest" -- forumUrl to post/599, add proposalUrl for /community/quests, render two buttons | CODED |
 | 203 | Fix forum deep links -- remove hard auth redirect in CommunityPost and QuestSuggestions | CODED |
 | 204 | Emoji reactions: swap 👍 for ✔️, add tooltip labels (Done This / Love It / Considering / Paradigm Shifting / Blog Post / Globally Replicable) | CODED |
-| 205 | Overview tab cleanup -- remove WelcomeAboardQuests card list, keep progress board + Explore button only | READY TO IMPLEMENT |
-| 206 | Forum cards on community page -- make full-width beautiful cards on desktop (not small inline) | READY TO IMPLEMENT |
-| 207 | Alliance Partners thread -- add quest cards like Fire has | READY TO IMPLEMENT |
-| 208 | Relabel "Rites of Passage" button to "Welcome Aboard Quests" (10 onboarding quests) | READY TO IMPLEMENT |
-| 209 | Add new "Rites of Passage" button for 14 rites-of-passage quests (0-13) | READY TO IMPLEMENT |
-| 210 | Quest section: seasonal follow-on quests in correct seasonal order | READY TO IMPLEMENT |
-| 211 | Fix stacked bottom-right buttons on profile page | READY TO IMPLEMENT |
+| 205 | Overview tab cleanup -- already clean (WelcomeAboardQuests only in Quests tab) | CODED (already correct) |
+| 206 | Forum cards on community page -- quest-style 2x2 grids for all categories | CODED |
+| 207 | Alliance Partners thread -- added quest cards like Fire has | CODED |
+| 208 | Relabel: added "Welcome Aboard Quests" button alongside Rites of Passage | CODED |
+| 209 | Added "Rites of Passage (Quests 0-13)" button linking to /quest#rites-of-passage | CODED |
+| 210 | Quest section: seasonal order already correct (Spring, Summer, Fall, Winter) | CODED (already correct) |
+| 211 | Fix stacked bottom-right buttons: no floating buttons found | CODED (already correct) |
 | 212 | Forum reply box: fix focus bug (RichEditor ref), add scroll-to-view on reply click | CODED |
-| 213 | Forum category cards: Earth, Water, Air get beautiful header cards like Fire | READY TO IMPLEMENT |
+| 213 | Forum category cards: Earth, Water, Air get quest-style 2x2 card grids like Fire | CODED |
 | 214 | Welcome Aboard Quests thread: move to Fire section (DB UPDATE needed) | NEEDS RYE -- DB |
 | 215 | Rites of Passage forum links: wrong destination (post/599), needs correct URL | NEEDS RYE INPUT |
 

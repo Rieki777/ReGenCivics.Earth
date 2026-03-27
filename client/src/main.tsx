@@ -138,6 +138,13 @@ try {
       </QueryClientProvider>
     </trpc.Provider>
   );
+// Force SW update on deploy: reload when a new service worker activates
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+
 } catch (err) {
   const root = document.getElementById("root");
   if (root) {

@@ -20,7 +20,8 @@ export default defineConfig(({ mode }): UserConfig => ({
         globIgnores: ["og/**", "og-default.*"],
         // Serve offline.html when navigation requests fail (no network + not in cache)
         navigateFallback: "/offline.html",
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /^\/assets\//],
+        navigateFallbackAllowlist: [/^\/$/,  /^\/land/, /^\/play/, /^\/quest/, /^\/community/, /^\/fund/, /^\/apply/, /^\/profile/, /^\/crowd-pooling/, /^\/opportunity/, /^\/terms/, /^\/privacy/],
         runtimeCaching: [
           {
             urlPattern: /\/api\//,

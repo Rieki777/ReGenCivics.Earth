@@ -19,5 +19,13 @@ button:hover{background:#2d6a4f}
 <p>You're offline. Check your connection and try again.</p>
 <button onclick="window.location.reload()">Retry</button>
 </div>
+<script>
+  // If the browser reports online, this is likely a stale service worker response.
+  // Auto-retry after a brief delay.
+  if (navigator.onLine) {
+    setTimeout(function() { window.location.reload(); }, 1500);
+  }
+  window.addEventListener('online', function() { window.location.reload(); });
+</script>
 </body>
 </html>

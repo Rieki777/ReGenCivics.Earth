@@ -39,6 +39,7 @@ import { serveStatic, setupVite } from "./vite";
 import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
+import { registerPresenceRoutes } from "../routes/presence";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
 import { registerImageOptimization } from "../routes/global";
@@ -356,6 +357,8 @@ async function startServer() {
   registerResendWebhookRoutes(app);
   // Riverside recording webhook
   registerRiversideWebhookRoutes(app);
+  // Presence heartbeat and count
+  registerPresenceRoutes(app);
 
   // ── Event reminder cron endpoint ────────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/event-reminders
