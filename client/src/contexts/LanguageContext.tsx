@@ -14,15 +14,16 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 const STORAGE_KEY = 'regen-civics-language';
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && LANGUAGES.some(l => l.code === stored)) {
-        return stored as Language;
-      }
-    }
-    return 'en';
-  });
+  const [language, setLanguageState] = useState<Language>('en');
+
+  // Clear any stale translation state on mount
+  useEffect(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname;
+    document.documentElement.lang = 'en';
+    document.documentElement.dir = 'ltr';
+  }, []);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
