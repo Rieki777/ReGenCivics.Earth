@@ -1,7 +1,7 @@
 import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1970,7 +1970,7 @@ export async function deleteCustomTemplate(templateKey: string): Promise<void> {
 // Forum Helpers
 // ==========================================
 
-export async function createForumCategory(data: { name: string; slug: string; description?: string; icon?: string; color?: string; sortOrder?: number }) {
+export async function createForumCategory(data: { name: string; slug: string; description?: string; icon?: string; color?: string; imageUrl?: string; sortOrder?: number }) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   const [result] = await db.insert(forumCategories).values({
@@ -1979,12 +1979,13 @@ export async function createForumCategory(data: { name: string; slug: string; de
     description: data.description ?? null,
     icon: data.icon ?? null,
     color: data.color ?? null,
+    imageUrl: data.imageUrl ?? null,
     sortOrder: data.sortOrder ?? 0,
   });
   return (result as any).insertId as number;
 }
 
-export async function updateForumCategory(id: number, data: { name?: string; description?: string; icon?: string; color?: string; sortOrder?: number }) {
+export async function updateForumCategory(id: number, data: { name?: string; description?: string; icon?: string; color?: string; imageUrl?: string; sortOrder?: number }) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   await db.update(forumCategories).set(data).where(eq(forumCategories.id, id));
@@ -2694,7 +2695,7 @@ export async function ensureEntityForumThread(
   const db = await getDb();
   if (!db) return null;
 
-  const categorySlug = entityType === 'land_project' ? 'active-projects' : 'active-organisations';
+  const categorySlug = entityType === 'land_project' ? 'land-projects' : 'alliance-partners';
   const cats = await db.select().from(forumCategories).where(eq(forumCategories.slug, categorySlug)).limit(1);
   if (!cats.length) return null;
   const categoryId = cats[0].id;
@@ -3170,5 +3171,79 @@ export async function getTokenLeaderboard(limit = 20): Promise<{ email: string; 
     .orderBy(sql`SUM(amount) DESC`)
     .limit(limit);
   return rows.map(r => ({ email: r.email, total: Number(r.total) }));
+}
+
+// ─── Community Agreements ─────────────────────────────────────────────────────
+
+export async function listCommunityAgreements(
+  sortBy: 'votes' | 'newest' = 'votes',
+  status?: string,
+  limit = 50,
+  offset = 0,
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const orderCol = sortBy === 'votes'
+    ? desc(communityAgreements.voteCount)
+    : desc(communityAgreements.createdAt);
+
+  if (status) {
+    return db.select().from(communityAgreements)
+      .where(eq(communityAgreements.status, status as any))
+      .orderBy(orderCol).limit(limit).offset(offset);
+  }
+  return db.select().from(communityAgreements)
+    .orderBy(orderCol).limit(limit).offset(offset);
+}
+
+export async function createCommunityAgreement(data: {
+  authorId: number;
+  title: string;
+  description: string;
+  category?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(communityAgreements).values({
+    authorId: data.authorId,
+    title: data.title,
+    description: data.description,
+    category: data.category || null,
+  });
+  return (result as any).insertId as number;
+}
+
+export async function toggleCommunityAgreementVote(userId: number, agreementId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [existing] = await db.select().from(communityAgreementVotes)
+    .where(and(
+      eq(communityAgreementVotes.userId, userId),
+      eq(communityAgreementVotes.agreementId, agreementId),
+    ))
+    .limit(1);
+
+  if (existing) {
+    await db.delete(communityAgreementVotes).where(eq(communityAgreementVotes.id, existing.id));
+    await db.update(communityAgreements)
+      .set({ voteCount: sql`GREATEST(${communityAgreements.voteCount} - 1, 0)` })
+      .where(eq(communityAgreements.id, agreementId));
+    return false;
+  } else {
+    await db.insert(communityAgreementVotes).values({ userId, agreementId });
+    await db.update(communityAgreements)
+      .set({ voteCount: sql`${communityAgreements.voteCount} + 1` })
+      .where(eq(communityAgreements.id, agreementId));
+    return true;
+  }
+}
+
+export async function getUserCommunityAgreementVotes(userId: number) {
+  const db = await getDb();
+  if (!db) return [] as number[];
+  const votes = await db.select().from(communityAgreementVotes)
+    .where(eq(communityAgreementVotes.userId, userId));
+  return votes.map(v => v.agreementId);
 }
 

@@ -1232,6 +1232,7 @@ export const forumCategories = mysqlTable("forumCategories", {
   description: text("description"),
   icon: varchar("icon", { length: 50 }), // lucide icon name
   color: varchar("color", { length: 20 }), // hex color for category badge
+  imageUrl: varchar("imageUrl", { length: 500 }),
   sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -1397,6 +1398,32 @@ export const questSuggestionVotes = mysqlTable("questSuggestionVotes", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type QuestSuggestionVote = typeof questSuggestionVotes.$inferSelect;
+
+/**
+ * Community Agreements table
+ * Propose-and-vote system for community norms
+ */
+export const communityAgreements = mysqlTable("communityAgreements", {
+  id: int("id").autoincrement().primaryKey(),
+  authorId: int("authorId").notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description").notNull(),
+  category: varchar("category", { length: 100 }),
+  status: mysqlEnum("status", ["open", "ratified", "in_review", "declined"]).default("open").notNull(),
+  voteCount: int("voteCount").default(0).notNull(),
+  forumThreadId: int("forumThreadId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CommunityAgreement = typeof communityAgreements.$inferSelect;
+
+export const communityAgreementVotes = mysqlTable("communityAgreementVotes", {
+  id: int("id").autoincrement().primaryKey(),
+  agreementId: int("agreementId").notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CommunityAgreementVote = typeof communityAgreementVotes.$inferSelect;
 
 /**
  * Translation Cache table

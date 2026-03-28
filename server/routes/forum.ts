@@ -82,6 +82,7 @@ export const forumRouter = router({
       description: z.string().max(500).optional(),
       icon: z.string().max(50).optional(),
       color: z.string().max(20).optional(),
+      imageUrl: z.string().max(500).optional(),
       sortOrder: z.number().optional(),
     }))
     .mutation(async ({ input }) => {
@@ -97,6 +98,7 @@ export const forumRouter = router({
       description: z.string().max(500).optional(),
       icon: z.string().max(50).optional(),
       color: z.string().max(20).optional(),
+      imageUrl: z.string().max(500).optional(),
       sortOrder: z.number().optional(),
     }))
     .mutation(async ({ input }) => {
@@ -303,8 +305,7 @@ export const forumRouter = router({
 
   activeOrganisationThreads: publicProcedure.query(async () => {
     const cats = await getCachedCategories();
-    // alliance-partners has the actual content; active-organisations is the fallback
-    const cat = cats.find(c => c.slug === "alliance-partners") ?? cats.find(c => c.slug === "active-organisations");
+    const cat = cats.find(c => c.slug === "alliance-partners");
     if (!cat) return [];
     const posts = await db.listForumPosts(cat.id, 200, 0);
     return posts.map(p => ({ id: p.id, title: p.title }));

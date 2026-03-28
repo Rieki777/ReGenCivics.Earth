@@ -320,20 +320,20 @@ export const applicationsRouter = router({
         if (input.status === "approved") {
           try {
             const cats = await db.listForumCategories();
-            let activeProjectsCat = cats.find(c => c.slug === "active-projects");
+            let landProjectsCat = cats.find(c => c.slug === "land-projects");
 
             // Auto-create the category if it doesn't exist
-            if (!activeProjectsCat) {
+            if (!landProjectsCat) {
               const catId = await db.createForumCategory({
-                name: "Active Projects",
-                slug: "active-projects",
+                name: "Land Projects",
+                slug: "land-projects",
                 description: "Land projects approved by ReGen Civics. Follow updates, ask questions, and connect with the teams.",
                 sortOrder: 99,
               });
-              activeProjectsCat = { id: catId, slug: "active-projects", name: "Active Projects" } as any;
+              landProjectsCat = { id: catId, slug: "land-projects", name: "Land Projects" } as any;
             }
 
-            if (activeProjectsCat) {
+            if (landProjectsCat) {
               const typeLabel = updatedApp.projectType === "early_stage" ? "early-stage" : "mature";
               const landStatusLabel: Record<string, string> = { owned: "owned", leased: "leased", committed: "committed to purchase", seeking: "seeking land" };
 
@@ -385,7 +385,7 @@ export const applicationsRouter = router({
               ].filter(l => l !== null && l !== undefined && !(l === "" && false)).join("\n").replace(/\n{3,}/g, "\n\n").trim();
 
               await db.createForumPost({
-                categoryId: activeProjectsCat.id,
+                categoryId: landProjectsCat.id,
                 authorId: 1,
                 title: `${updatedApp.projectName} - ${updatedApp.location}`,
                 content: threadContent,
