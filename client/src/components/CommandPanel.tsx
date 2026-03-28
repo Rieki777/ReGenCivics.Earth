@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { useAudio } from '@/contexts/AudioContext'
 import { useAuth } from '@/_core/hooks/useAuth'
 import { getCurrentSeason, SEASON_THEMES } from '@/lib/seasons'
@@ -6,6 +6,9 @@ import { SkipBack, SkipForward, Play, Pause, Volume2, HelpCircle, Search } from 
 import { useReGenGuide } from '@/contexts/ReGenGuideContext'
 import { usePageTools } from '@/hooks/usePageTools'
 import { NavIcon } from '@/components/SmartBottomNav'
+import { ProgressMapMini } from '@/components/ProgressMap/ProgressMapMini'
+
+const ProgressMap = lazy(() => import('@/components/ProgressMap/ProgressMap'))
 
 interface CommandPanelProps {
   isOpen: boolean
@@ -19,6 +22,7 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
   const guide = useReGenGuide()
   const pageTools = usePageTools()
   const panelRef = useRef<HTMLDivElement>(null)
+  const [showMap, setShowMap] = useState(false)
 
   // Seasonal theme
   const season = getCurrentSeason()
@@ -50,6 +54,7 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
   }, [isOpen, onClose])
 
   return (
+    <>
     <div
       ref={panelRef}
       className={`fixed bottom-16 left-0 right-0 z-40 bg-gradient-to-br ${theme.gradient} backdrop-blur-md border-t border-[#7dd87d]/20 transition-transform duration-300 ${
@@ -88,6 +93,9 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
             ))}
           </div>
         )}
+
+        {/* Progress Map mini widget */}
+        <ProgressMapMini onExpand={() => setShowMap(true)} />
 
         {/* Online indicator */}
         <div className="flex items-center justify-center text-xs">
@@ -154,5 +162,13 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
         </div>
       </div>
     </div>
+
+    {/* Full-screen map overlay */}
+    {showMap && (
+      <Suspense fallback={null}>
+        <ProgressMap onClose={() => setShowMap(false)} />
+      </Suspense>
+    )}
+    </>
   )
 }
