@@ -10,7 +10,7 @@ import { toast } from "sonner";
 type DigestFrequency = "never" | "weekly" | "monthly" | "seasonal" | "newsletter";
 
 const OPTIONS: { value: DigestFrequency; label: string; description: string }[] = [
-  { value: "newsletter", label: "Newsletter", description: "Important updates and auto-generated digests of site activity" },
+  { value: "newsletter", label: "Newsletter", description: "Occasional and important updates" },
   { value: "weekly", label: "Weekly", description: "Every Monday  -  stay on top of new quests & project updates" },
   { value: "monthly", label: "Monthly", description: "First of the month  -  fund updates, highlights & community news" },
   { value: "seasonal", label: "Seasonal", description: "4x per year  -  deep-dive reflections & major milestones" },

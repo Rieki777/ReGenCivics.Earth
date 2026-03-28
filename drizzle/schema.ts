@@ -103,6 +103,8 @@ export const applications = mysqlTable("applications", {
   
   // Metadata
   submittedAt: timestamp("submittedAt"),
+  adminSeeded: tinyint("adminSeeded").default(0).notNull(),
+  stewardUserId: int("stewardUserId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -491,6 +493,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
 
   // Email digest preferences
   emailDigestFrequency: mysqlEnum("emailDigestFrequency", ["never", "weekly", "monthly", "seasonal", "newsletter"]).default("monthly").notNull(),
+  // User notification preferences (JSON: { communityUpdates, questAnnouncements })
+  notificationPrefs: json("notificationPrefs"),
 
   // Profile layer (Phase 3)
   collaborationStatus: text("collaborationStatus"), // null | "seeking_collaborators" | "looking_to_join"

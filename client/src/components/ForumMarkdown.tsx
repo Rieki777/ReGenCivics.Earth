@@ -104,7 +104,7 @@ const markdownComponents: Components = {
     <td className="border border-[#1a472a]/20 px-3 py-2">{children}</td>
   ),
   img: ({ src, alt }) => (
-    <img src={src} alt={alt || ''} className="max-w-full h-auto rounded-lg my-3" loading="lazy" />
+    <img src={src} alt={alt || ''} className="max-w-full h-auto rounded-lg my-3" loading="lazy" width={800} height={450} style={{ aspectRatio: '16/9', objectFit: 'cover' }} />
   ),
 };
 

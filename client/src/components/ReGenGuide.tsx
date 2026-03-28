@@ -1,12 +1,14 @@
 /**
- * ReGenGuide - Floating AI chat assistant widget.
+ * ReGenGuide - AI chat assistant panel.
  * Uses streaming SSE for real-time word-by-word responses.
+ * Opened/closed via the Command Panel's Guide button (ReGenGuideContext).
  */
 import { useState, useCallback, useRef } from "react";
 import { X, Sparkles } from "lucide-react";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useReGenGuide } from "@/contexts/ReGenGuideContext";
 
 const PATH_WELCOMES: Record<string, string> = {
   investor: "Welcome back! I'm your personal ReGen Guide, here to help you navigate the Fund: exploring the investment thesis, understanding the seasonal accelerator, or figuring out your next step. What's on your mind?",
@@ -24,6 +26,7 @@ const STARTER_PROMPTS = [
 
 export default function ReGenGuide() {
   const { user } = useAuth();
+  const { isOpen, close } = useReGenGuide();
   const { data: profile } = trpc.userProfiles.getMe.useQuery(undefined, {
     enabled: !!user,
     staleTime: 300_000,
@@ -35,7 +38,6 @@ export default function ReGenGuide() {
       ? PATH_WELCOMES[userPath]
       : "Hi! I'm Your ReGen Guide, here to help you find your footing in the regenerative ecosystem. Whether you're curious about the Fund, the Infinite Game, or just figuring out where you fit, I've got you. What would you like to explore?";
 
-  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -130,88 +132,61 @@ export default function ReGenGuide() {
     [messages]
   );
 
+  if (!isOpen) return null;
+
   return (
-    <>
-      {/* Chat Panel */}
-      {isOpen && (
-        <div className="fixed bottom-[8.5rem] md:bottom-20 right-2 left-2 sm:right-auto sm:left-4 z-[9999] sm:w-[380px] max-h-[50vh] sm:max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-[#7dd87d]/30 bg-[#0a2314]">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] border-b border-[#7dd87d]/20">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#7dd87d]" />
-              <span
-                className="text-white font-bold text-sm"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Your ReGen Guide
-              </span>
-              {isStreaming && (
-                <span className="flex gap-0.5 ml-1">
-                  <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:300ms]" />
-                </span>
-              )}
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white/60 hover:text-white transition-colors p-1"
-              aria-label="Close chat"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Starter prompts - shown when conversation is fresh */}
-          {messages.length <= 1 && (
-            <div className="px-3 pt-3 pb-1 flex flex-wrap gap-1.5">
-              {STARTER_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => handleSendMessage(prompt)}
-                  className="text-xs px-2.5 py-1 rounded-full bg-[#1a472a]/60 border border-[#7dd87d]/30 text-[#7dd87d]/80 hover:border-[#7dd87d]/60 hover:text-[#7dd87d] transition-colors"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
+    <div className="fixed bottom-[8.5rem] md:bottom-20 right-2 left-2 sm:right-auto sm:left-4 z-[9999] sm:w-[380px] max-h-[50vh] sm:max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-[#7dd87d]/30 bg-[#0a2314]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] border-b border-[#7dd87d]/20">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-[#7dd87d]" />
+          <span
+            className="text-white font-bold text-sm"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Your ReGen Guide
+          </span>
+          {isStreaming && (
+            <span className="flex gap-0.5 ml-1">
+              <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:0ms]" />
+              <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:150ms]" />
+              <span className="w-1 h-1 bg-[#7dd87d] rounded-full animate-bounce [animation-delay:300ms]" />
+            </span>
           )}
+        </div>
+        <button
+          onClick={close}
+          className="text-white/60 hover:text-white transition-colors p-1"
+          aria-label="Close chat"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
-          {/* Chat Body */}
-          <AIChatBox
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isLoading={isStreaming}
-            placeholder="Ask about the Fund, Game, or how to participate..."
-            height={320}
-            className="border-0 rounded-none"
-          />
+      {/* Starter prompts - shown when conversation is fresh */}
+      {messages.length <= 1 && (
+        <div className="px-3 pt-3 pb-1 flex flex-wrap gap-1.5">
+          {STARTER_PROMPTS.map((prompt) => (
+            <button
+              key={prompt}
+              onClick={() => handleSendMessage(prompt)}
+              className="text-xs px-2.5 py-1 rounded-full bg-[#1a472a]/60 border border-[#7dd87d]/30 text-[#7dd87d]/80 hover:border-[#7dd87d]/60 hover:text-[#7dd87d] transition-colors"
+            >
+              {prompt}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-20 md:bottom-6 left-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all duration-200 font-medium text-sm btn-press
-          ${
-            isOpen
-              ? "bg-[#1a472a] border border-[#7dd87d]/40 text-[#7dd87d]/60 hover:text-[#7dd87d]"
-              : "bg-[#1a472a] border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#1e5533] hover:border-[#7dd87d]/70 hover:shadow-xl"
-          }`}
-        aria-label={isOpen ? "Close Your ReGen Guide" : "Your ReGen Guide"}
-      >
-        {isOpen ? (
-          <>
-            <X className="w-4 h-4" />
-            <span className="hidden sm:inline">Close</span>
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">Your ReGen Guide</span>
-          </>
-        )}
-      </button>
-    </>
+      {/* Chat Body */}
+      <AIChatBox
+        messages={messages}
+        onSendMessage={handleSendMessage}
+        isLoading={isStreaming}
+        placeholder="Ask about the Fund, Game, or how to participate..."
+        height={320}
+        className="border-0 rounded-none"
+      />
+    </div>
   );
 }

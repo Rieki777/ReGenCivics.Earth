@@ -41,9 +41,7 @@ export function usePageTools(): PageTool[] {
       );
       break;
     case '/play':
-      tools.push(
-        { icon: 'Award', label: 'Badges', action: () => window.dispatchEvent(new CustomEvent('open-quest-badges')) },
-      );
+      // Badges event only works on /quest where QuestBadges is mounted
       break;
     case '/crowd-pooling':
       tools.push(

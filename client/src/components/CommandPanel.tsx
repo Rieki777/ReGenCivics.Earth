@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAudio } from '@/contexts/AudioContext'
-import { usePresence } from '@/hooks/usePresence'
 import { useAuth } from '@/_core/hooks/useAuth'
 import { getCurrentSeason, SEASON_THEMES } from '@/lib/seasons'
-import { SkipBack, SkipForward, Play, Pause, Volume2, Coins, Send, HelpCircle, Award, Image, Search, List } from 'lucide-react'
+import { SkipBack, SkipForward, Play, Pause, Volume2, HelpCircle, Search } from 'lucide-react'
 import { useReGenGuide } from '@/contexts/ReGenGuideContext'
 import { usePageTools } from '@/hooks/usePageTools'
 import { NavIcon } from '@/components/SmartBottomNav'
@@ -16,14 +15,10 @@ interface CommandPanelProps {
 export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
   const { isPlaying, togglePlay, nextSong, prevSong, currentSong,
           duration, currentTime, seek, volume, setVolume } = useAudio()
-  const { count } = usePresence()
   const { isAuthenticated } = useAuth()
   const guide = useReGenGuide()
   const pageTools = usePageTools()
-
-  // Quick-post state
-  const [quickPost, setQuickPost] = useState('')
-  const [posting, setPosting] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   // Seasonal theme
   const season = getCurrentSeason()
@@ -36,58 +31,55 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
     return `${m}:${sec.toString().padStart(2, '0')}`
   }
 
-  const handleQuickPost = async () => {
-    if (!quickPost.trim() || posting) return
-    setPosting(true)
-    try {
-      await fetch('/api/forum/quick-post', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: quickPost.trim() }),
-      })
-      setQuickPost('')
-    } catch {
-      // Silently fail for now. Wire up error toasts later.
-    } finally {
-      setPosting(false)
+  // Click outside to collapse
+  useEffect(() => {
+    if (!isOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onClose()
+      }
     }
-  }
+    // Delay listener to avoid closing on the same click that opened the panel
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 100)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen, onClose])
 
   return (
     <div
+      ref={panelRef}
       className={`fixed bottom-16 left-0 right-0 z-40 bg-gradient-to-br ${theme.gradient} backdrop-blur-md border-t border-[#7dd87d]/20 transition-transform duration-300 ${
         isOpen ? 'translate-y-0' : 'translate-y-full pointer-events-none'
       }`}
       style={{ opacity: 0.98 }}
     >
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
-        {/* Quick tools grid */}
-        <div className="grid grid-cols-5 gap-2">
-          <button onClick={guide.toggle} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+        {/* Quick tools: Guide + Search (the two that work everywhere) */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={guide.toggle}
+            className={`flex flex-col items-center gap-1 py-2 rounded-lg transition-colors ${
+              guide.isOpen
+                ? 'bg-[#7dd87d]/20 text-[#7dd87d] ring-1 ring-[#7dd87d]/40'
+                : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/80'
+            }`}
+          >
             <HelpCircle className="w-4 h-4" />
             <span className="text-[9px]">Guide</span>
-          </button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('open-quest-badges'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
-            <Award className="w-4 h-4" />
-            <span className="text-[9px]">Badges</span>
-          </button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('open-quest-gallery'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
-            <Image className="w-4 h-4" />
-            <span className="text-[9px]">Gallery</span>
           </button>
           <button onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
             <Search className="w-4 h-4" />
             <span className="text-[9px]">Search</span>
           </button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('open-toc'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
-            <List className="w-4 h-4" />
-            <span className="text-[9px]">Jump</span>
-          </button>
         </div>
 
         {/* Page-specific tools */}
         {pageTools.length > 0 && (
-          <div className="grid grid-cols-5 gap-2 pt-1 border-t border-white/10">
+          <div className={`grid gap-2 pt-1 border-t border-white/10`} style={{ gridTemplateColumns: `repeat(${Math.min(pageTools.length, 5)}, 1fr)` }}>
             {pageTools.map((tool, i) => (
               <button key={i} onClick={tool.action} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
                 <NavIcon name={tool.icon} className="w-4 h-4" />
@@ -97,22 +89,14 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
           </div>
         )}
 
-        {/* Player count + token balance row */}
-        <div className="flex items-center justify-between text-xs">
-          {/* A.2: Player count display */}
+        {/* Online indicator */}
+        <div className="flex items-center justify-center text-xs">
           <div className="flex items-center gap-1.5 text-white/60">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
             </span>
-            <span>{count !== null ? `${count} players online` : 'Connecting...'}</span>
-          </div>
-
-          {/* A.4: Token balance placeholder */}
-          {/* TODO: Wire up when profile context is available. Pull balance from user profile data. */}
-          <div className="flex items-center gap-1 text-white/40">
-            <Coins className="w-3.5 h-3.5" />
-            <span>--</span>
+            <span>Online</span>
           </div>
         </div>
 
@@ -168,28 +152,6 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
             className="flex-1 accent-[#7dd87d] h-1"
           />
         </div>
-
-        {/* A.3: Quick-post section (authenticated users only) */}
-        {isAuthenticated && (
-          <div className="flex items-center gap-2 pt-1 border-t border-white/10">
-            <input
-              type="text"
-              value={quickPost}
-              onChange={e => setQuickPost(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleQuickPost() }}
-              placeholder="What did you do today?"
-              className="flex-1 bg-white/10 text-white text-sm rounded-lg px-3 py-2 placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
-            />
-            <button
-              onClick={handleQuickPost}
-              disabled={!quickPost.trim() || posting}
-              className="p-2 rounded-lg bg-[#7dd87d]/20 text-[#7dd87d] hover:bg-[#7dd87d]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              aria-label="Submit quick post"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )

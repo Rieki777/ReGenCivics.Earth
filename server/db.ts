@@ -166,9 +166,9 @@ export async function getApplicationById(id: number) {
 export async function getApplicationsByUserId(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  
+
   return db.select().from(applications)
-    .where(eq(applications.userId, userId))
+    .where(and(eq(applications.userId, userId), eq(applications.adminSeeded, 0)))
     .orderBy(desc(applications.createdAt));
 }
 

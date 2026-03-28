@@ -308,6 +308,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
               disabled={!input.trim() || isLoading}
               size="icon"
               className="h-10 w-10 rounded-xl bg-[#1a472a] hover:bg-[#2d5a3d] flex-shrink-0"
+              aria-label="Send message"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

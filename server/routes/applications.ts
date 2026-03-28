@@ -142,7 +142,7 @@ export const applicationsRouter = router({
       if (application.userId !== ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your application" });
       }
-      await db.updateApplication(input.id, { status: "submitted", submittedAt: new Date() });
+      await db.updateApplication(input.id, { status: "submitted", submittedAt: new Date(), stewardUserId: ctx.user.id });
 
       // Notify owner of new application submission (respects notification preferences)
       // Also send confirmation email directly to the applicant
@@ -442,6 +442,7 @@ export const applicationsRouter = router({
         projectSizeHectares: app.projectSizeHectares,
         meetingFrequency: app.meetingFrequency || undefined,
         dietaryPatterns: app.dietaryPatterns || undefined,
+        stewardUserId: app.stewardUserId ?? null,
       }));
   }),
 });
@@ -652,6 +653,13 @@ export const orgClaimsRouter = router({
         await db.routeJoinRequestsToSteward(claim.orgId, claim.userId);
         // Auto-create the forum thread for this entity if it doesn't exist yet
         await db.ensureEntityForumThread(claim.orgType, claim.orgName, ctx.user.id);
+        // Set stewardUserId on the application so the project is no longer "unclaimed"
+        if (claim.orgType === 'land_project') {
+          const appId = parseInt(claim.orgId, 10);
+          if (!isNaN(appId)) {
+            await db.updateApplication(appId, { stewardUserId: claim.userId });
+          }
+        }
       }
       return { ok: true };
     }),

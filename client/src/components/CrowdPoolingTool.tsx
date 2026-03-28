@@ -1193,6 +1193,7 @@ export default function CrowdPoolingTool() {
                         size="icon"
                         onClick={() => removeImmediateContribution(contribution.id)}
                         className="text-red-500 hover:bg-red-50 flex-shrink-0 self-end sm:self-start"
+                        aria-label="Remove contribution"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -1359,6 +1360,7 @@ export default function CrowdPoolingTool() {
                             size="icon"
                             onClick={() => removeFutureContribution(contribution.id)}
                             className="text-red-500 hover:bg-red-50 flex-shrink-0 sm:hidden"
+                            aria-label="Remove contribution"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -1408,6 +1410,7 @@ export default function CrowdPoolingTool() {
                         size="icon"
                         onClick={() => removeFutureContribution(contribution.id)}
                         className="text-red-500 hover:bg-red-50 flex-shrink-0 hidden sm:flex"
+                        aria-label="Remove contribution"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

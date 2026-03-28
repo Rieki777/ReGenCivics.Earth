@@ -159,6 +159,26 @@ export const playerProfilesRouter = router({
       return { success: true };
     }),
 
+  // Update user notification preferences (community updates, quest announcements)
+  updateNotificationPrefs: protectedProcedure
+    .input(z.object({
+      communityUpdates: z.boolean(),
+      questAnnouncements: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      if (!profile) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Create a profile first" });
+      }
+      await db.updatePlayerProfile(profile.id, {
+        notificationPrefs: JSON.stringify({
+          communityUpdates: input.communityUpdates,
+          questAnnouncements: input.questAnnouncements,
+        }),
+      });
+      return { success: true };
+    }),
+
   // Link Base blockchain account
   linkBaseAccount: protectedProcedure
     .input(z.object({
@@ -205,7 +225,8 @@ export const playerProfilesRouter = router({
       if (!profile) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Player profile not found" });
       }
-      if (!profile.walletAddress) {
+      const wallet = profile.walletAddress || profile.baseAccountName;
+      if (!wallet) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "No wallet address on profile" });
       }
 
@@ -222,7 +243,7 @@ export const playerProfilesRouter = router({
       }
 
       const { fetchTokenBalances } = await import("../blockchain");
-      const balances = await fetchTokenBalances(profile.walletAddress);
+      const balances = await fetchTokenBalances(wallet);
 
       await db.updatePlayerProfile(profile.id, {
         rvoiceBalance: balances.rvoice,
@@ -238,11 +259,12 @@ export const playerProfilesRouter = router({
     .input(z.object({ profileId: z.number() }))
     .mutation(async ({ input }) => {
       const profile = await db.getPlayerProfileById(input.profileId);
-      if (!profile || !profile.walletAddress) {
+      const wallet = profile?.walletAddress || profile?.baseAccountName;
+      if (!profile || !wallet) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Profile not found or no wallet address" });
       }
       const { fetchTokenBalances } = await import("../blockchain");
-      const balances = await fetchTokenBalances(profile.walletAddress);
+      const balances = await fetchTokenBalances(wallet);
       await db.updatePlayerProfile(profile.id, {
         rvoiceBalance: balances.rvoice,
         rgenBalance: balances.rgen,
@@ -258,11 +280,12 @@ export const playerProfilesRouter = router({
       if (!profile) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Player profile not found" });
       }
-      if (!profile.walletAddress) {
+      const wallet = profile.walletAddress || profile.baseAccountName;
+      if (!wallet) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "No wallet address on profile" });
       }
       const { fetchTokenBalances } = await import("../blockchain");
-      const balances = await fetchTokenBalances(profile.walletAddress);
+      const balances = await fetchTokenBalances(wallet);
       await db.updatePlayerProfile(profile.id, {
         rvoiceBalance: balances.rvoice,
         rgenBalance: balances.rgen,

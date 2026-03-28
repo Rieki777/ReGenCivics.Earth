@@ -197,6 +197,7 @@ export default function Community() {
   const SECTION_SLUGS = new Set([
     'quests-gameplay', 'epic-quests', 'alliance-partners', 'air-conversations',
     'active-projects', 'active-organisations', 'land-projects',
+    'rites-of-passage', 'welcome-aboard-quests',
   ]);
 
   const filteredCategories = useMemo(() => {
@@ -389,7 +390,7 @@ export default function Community() {
       </section>
 
       {/* Search Bar */}
-      <section className="container px-4 max-w-4xl mx-auto -mt-4 mb-6 relative z-20">
+      <section className="container px-4 max-w-4xl mx-auto mt-4 mb-6 relative z-20">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
           <Input
@@ -1001,14 +1002,26 @@ export default function Community() {
 
             <div className="grid grid-cols-2 gap-3">
 
+              {/* Welcome Aboard Quests */}
+              <Link href="/community/c/welcome-aboard-quests">
+                <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-05-rites-of-love.webp" alt="Welcome Aboard quests" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Welcome Aboard Quests</p>
+                    <p className="text-white/60 text-xs">10 quests to get started</p>
+                  </div>
+                </div>
+              </Link>
+
               {/* Rites of Passage */}
               <Link href="/community/c/rites-of-passage">
                 <div className="relative rounded-xl overflow-hidden border border-amber-200/60 hover:border-amber-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-05-rites-of-love.webp" alt="Rites of Passage quests" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-00-fire.webp" alt="Rites of Passage quests" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-amber-950/80 via-amber-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Rites of Passage</p>
-                    <p className="text-white/60 text-xs">Quests 1–13</p>
+                    <p className="text-white/60 text-xs">Quests 0-13</p>
                   </div>
                 </div>
               </Link>
@@ -1055,12 +1068,12 @@ export default function Community() {
             </div>
 
             {/* Suggest a Quest */}
-            <Link href="/community/quests" className="block border-l-4 border-green-500 bg-white/5 rounded-xl p-5 hover:bg-green-500/10 transition-colors group mt-3">
+            <Link href="/community/quests" className="block border-l-4 border-green-500 bg-green-50 rounded-xl p-5 hover:bg-green-100 transition-colors group mt-3">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">💡</span>
                 <div>
-                  <h3 className="font-semibold text-white mb-1 group-hover:text-green-300 transition-colors">Got an idea for a quest?</h3>
-                  <p className="text-sm text-white/60">Propose it here. The community votes and the best ones get built.</p>
+                  <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-green-700 transition-colors">Got an idea for a quest?</h3>
+                  <p className="text-sm text-[#1a472a]/60">Propose it here. The community votes and the best ones get built.</p>
                 </div>
               </div>
             </Link>

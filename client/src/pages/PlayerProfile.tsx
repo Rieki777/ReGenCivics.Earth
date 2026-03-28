@@ -73,6 +73,7 @@ import { getLoginUrl } from '@/const';
 import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
 import { DigestPreferences } from "@/components/DigestPreferences";
+import { UserNotificationPreferences } from "@/components/UserNotificationPreferences";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { WelcomeAboardQuests } from "@/components/WelcomeAboardQuests";
 import { QuestStartPopup, flagShowQuestPrompt } from "@/components/QuestStartPopup";
@@ -452,9 +453,11 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
   const [copied, setCopied] = useState(false);
   const badges: string[] = profile.badges ? JSON.parse(profile.badges) : [];
   
+  const effectiveWallet = profile.walletAddress || profile.baseAccountName;
+
   const copyWalletAddress = () => {
-    if (profile.walletAddress) {
-      navigator.clipboard.writeText(profile.walletAddress);
+    if (effectiveWallet) {
+      navigator.clipboard.writeText(effectiveWallet);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -544,7 +547,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           </div>
         </div>
         {isOwner && onSyncTokens && (
-          profile.walletAddress ? (
+          effectiveWallet ? (
             <div className="flex items-center gap-2 mt-1">
               <button
                 onClick={onSyncTokens}
@@ -1022,8 +1025,11 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
 
   const approvedClaims = claims?.filter(c => c.status === 'approved') ?? [];
   const pendingClaims = claims?.filter(c => c.status === 'pending') ?? [];
+  const approvedClaimOrgIds = new Set(claims?.filter(c => c.status === 'approved').map(c => c.orgId) ?? []);
   const orgOptions = claimType === "land_project"
-    ? mapApps.map((a: any) => ({ id: String(a.id), name: a.name ?? a.projectName ?? "", location: a.location }))
+    ? mapApps
+        .filter((a: any) => !a.stewardUserId && !approvedClaimOrgIds.has(String(a.id)))
+        .map((a: any) => ({ id: String(a.id), name: a.name ?? a.projectName ?? "", location: a.location }))
     : ALLIANCE_ORGS;
   const selectedOrg = orgOptions.find(o => o.id === claimOrgId);
 
@@ -2578,7 +2584,8 @@ export default function PlayerProfile() {
 
   useEffect(() => {
     if (!profile) return;
-    if (!(profile as any).walletAddress) return;
+    const wallet = (profile as any).walletAddress || (profile as any).baseAccountName;
+    if (!wallet) return;
     const tenMinutes = 10 * 60 * 1000;
     const lastSync = (profile as any).lastTokenSync;
     const isStale = !lastSync ||
@@ -2587,7 +2594,7 @@ export default function PlayerProfile() {
       syncTokensMutation.mutate();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [(profile as any)?.walletAddress, (profile as any)?.lastTokenSync]);
+  }, [(profile as any)?.walletAddress, (profile as any)?.baseAccountName, (profile as any)?.lastTokenSync]);
 
   const isLoading = authLoading || profileLoading;
 
@@ -2760,16 +2767,29 @@ export default function PlayerProfile() {
                     <SeasonalIntention intention={null} season={getCurrentSeason()} year={new Date().getFullYear()} onSet={() => {}} />
                     {/* TODO: Wire up when activity endpoint is available */}
                     <ContributionTimeline data={[]} />
-                    <div className="rounded-2xl border border-[#1a472a]/20 bg-[#f0f7f0] p-6 flex flex-col items-center text-center gap-3">
-                      <Compass className="w-8 h-8 text-[#4a7c59]" />
-                      <h3 className="font-semibold text-[#1a472a] text-base">Explore Onboarding Quests</h3>
-                      <p className="text-sm text-[#1a472a]/70 leading-relaxed">Complete quests to earn tokens, deepen your practice, and root yourself in the game.</p>
-                      <button
-                        onClick={() => { setActiveTab("quests"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                        className="mt-1 px-4 py-2 rounded-lg bg-[#1a472a] text-white text-sm font-medium hover:bg-[#1a472a]/90 transition-colors"
-                      >
-                        View Quests
-                      </button>
+                    <div
+                      className="rounded-2xl overflow-hidden relative flex flex-col items-center text-center gap-3 p-6 min-h-[220px] justify-center"
+                      style={{
+                        backgroundImage: `url('/images/quests/quest-hero.webp')`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    >
+                      {/* Dark overlay for readability */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/60 via-[#0a1f10]/65 to-[#0d2818]/80 pointer-events-none rounded-2xl" />
+                      <div className="relative z-10 flex flex-col items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-white/10 border border-[#7dd87d]/40 flex items-center justify-center backdrop-blur-sm">
+                          <Compass className="w-6 h-6 text-[#7dd87d]" />
+                        </div>
+                        <h3 className="font-semibold text-white text-base drop-shadow">Explore Welcome Aboard Quests</h3>
+                        <p className="text-sm text-white/75 leading-relaxed max-w-xs">Complete quests to earn tokens, deepen your practice, and root yourself in the game.</p>
+                        <button
+                          onClick={() => { setActiveTab("quests"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                          className="mt-1 px-5 py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] text-sm font-semibold hover:bg-[#6cc86c] transition-colors shadow-md"
+                        >
+                          View Quests
+                        </button>
+                      </div>
                     </div>
                     {/* Profile completeness prompt */}
                     {(() => {
@@ -2843,15 +2863,8 @@ export default function PlayerProfile() {
                           <WelcomeAboardQuests profile={profile} onUpdate={() => refetch()} />
                         )}
 
-                        {/* Quest navigation buttons */}
+                        {/* Quest navigation button */}
                         <div className="flex flex-wrap gap-3">
-                          <a
-                            href="/quest#welcome-aboard"
-                            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white text-sm font-semibold hover:from-emerald-700 hover:to-green-700 transition-all shadow-md"
-                          >
-                            <Compass className="w-4 h-4" />
-                            Welcome Aboard Quests
-                          </a>
                           <a
                             href="/quest#rites-of-passage"
                             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-md"
@@ -2913,6 +2926,9 @@ export default function PlayerProfile() {
                     <DigestPreferences currentFrequency={(profile as any).emailDigestFrequency || 'monthly'} />
                   </AnimatedSection>
                   <AnimatedSection animation="slide-up">
+                    <UserNotificationPreferences currentPrefs={(profile as any).notificationPrefs} />
+                  </AnimatedSection>
+                  <AnimatedSection animation="slide-up">
                     <CollaborationSettingsPanel profile={profile} onUpdate={() => refetch()} />
                   </AnimatedSection>
                   <AnimatedSection animation="slide-up">
@@ -2959,11 +2975,7 @@ export default function PlayerProfile() {
                       </div>
                     </div>
                   </AnimatedSection>
-                  {user?.role === 'admin' && (
-                    <AnimatedSection animation="slide-up">
-                      <NotificationPreferences />
-                    </AnimatedSection>
-                  )}
+                  {/* Admin notification preferences moved to Admin panel */}
                 </div>
               )}
             </div>

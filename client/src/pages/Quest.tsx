@@ -194,6 +194,13 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
           <strong>Deliverable:</strong> {quest.deliverable}
         </p>
 
+        {quest.forumUrl && (
+          <Link href={quest.forumUrl} className="inline-flex items-center gap-1.5 text-xs text-[#4a7c59] hover:text-[#1a472a] font-medium mb-3 transition-colors">
+            <MessageSquare className="w-3.5 h-3.5" />
+            Discuss in Forum
+          </Link>
+        )}
+
         {/* Endorsement badges from DB */}
         {endorsements && endorsements.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
@@ -1082,6 +1089,12 @@ export default function Quest() {
                   <p className="text-xs text-[#4a7c59] font-medium">
                     🌱 {quest.deliverable}
                   </p>
+                )}
+                {quest.forumUrl && (
+                  <Link href={quest.forumUrl} className="inline-flex items-center gap-1.5 text-xs text-[#4a7c59] hover:text-[#1a472a] font-medium mt-2 transition-colors">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Discuss in Forum
+                  </Link>
                 )}
               </div>
             ))}

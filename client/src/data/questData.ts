@@ -20,6 +20,8 @@ export const questData = {
     borderColor: "border-orange-500/50",
     iconBg: "bg-orange-500",
     deliverable: "A 3-7 minute video sharing who you are and why you're here",
+    forumSlug: "rites-quest-0-fire",
+    forumUrl: "/community/post/607",
   },
   spring: [
     {
@@ -33,6 +35,8 @@ export const questData = {
       icon: Droplets,
       deliverable: "A 'Showcasing my Potions' video/article",
       focus: "Microbiomes, Fungi, Bacteria, Soil",
+      forumSlug: "rites-quest-1-potion-brewing",
+      forumUrl: "/community/post/608",
     },
     {
       id: 2,
@@ -45,6 +49,8 @@ export const questData = {
       icon: Sprout,
       deliverable: "Adding seeds to swap in your LocalScale profile",
       focus: "Plant Kingdom",
+      forumSlug: "rites-quest-2-saving-seeds",
+      forumUrl: "/community/post/609",
     },
     {
       id: 3,
@@ -57,6 +63,8 @@ export const questData = {
       icon: TreeDeciduous,
       deliverable: "'Showcasing my Healing Whole' video/article",
       focus: "Bioregion, Gardens",
+      forumSlug: "rites-quest-3-healing-wholes",
+      forumUrl: "/community/post/610",
     },
   ],
   summer: [
@@ -71,6 +79,8 @@ export const questData = {
       icon: HomeIcon,
       deliverable: "'Map of my current/future Space of Love' video/picture",
       focus: "Family, Home, Gardens",
+      forumSlug: "rites-quest-4-dreaming-spaces-of-love",
+      forumUrl: "/community/post/611",
     },
     {
       id: 5,
@@ -83,6 +93,8 @@ export const questData = {
       icon: Heart,
       deliverable: "Video/article or... Get Married!",
       focus: "Love, Partnership, Earth Connection",
+      forumSlug: "rites-quest-5-rites-of-love",
+      forumUrl: "/community/post/612",
     },
     {
       id: 6,
@@ -95,6 +107,8 @@ export const questData = {
       icon: Users,
       deliverable: "'How we gathered, what we learned' video/article",
       focus: "Community, Healing, Touch",
+      forumSlug: "rites-quest-6-healing-circles",
+      forumUrl: "/community/post/613",
     },
   ],
   fall: [
@@ -109,6 +123,8 @@ export const questData = {
       icon: Apple,
       deliverable: "'What did I harvest and what did I do with it?' video/article",
       focus: "Foraging, Wild Foods, Nutrition",
+      forumSlug: "rites-quest-7-wild-foraging",
+      forumUrl: "/community/post/614",
     },
     {
       id: 8,
@@ -121,6 +137,8 @@ export const questData = {
       icon: Circle,
       deliverable: "Reflection on your medicine journey",
       focus: "Consciousness, Healing, Spirit",
+      forumSlug: "rites-quest-8-medicine-journey",
+      forumUrl: "/community/post/615",
     },
     {
       id: 9,
@@ -133,6 +151,8 @@ export const questData = {
       icon: TreeDeciduous,
       deliverable: "'My conversation with trees' video/article",
       focus: "Trees, Nature, Communication",
+      forumSlug: "rites-quest-9-tree-talk",
+      forumUrl: "/community/post/616",
     },
   ],
   winter: [
@@ -147,6 +167,8 @@ export const questData = {
       icon: MessageSquare,
       deliverable: "Reflection on communication patterns",
       focus: "Communication, Relationships",
+      forumSlug: "rites-quest-10-communication-patterns",
+      forumUrl: "/community/post/617",
     },
     {
       id: 11,
@@ -159,6 +181,8 @@ export const questData = {
       icon: GitBranch,
       deliverable: "Analysis of coordination patterns",
       focus: "Governance, Organization",
+      forumSlug: "rites-quest-11-coordination-patterns",
+      forumUrl: "/community/post/618",
     },
     {
       id: 12,
@@ -171,6 +195,8 @@ export const questData = {
       icon: Wind,
       deliverable: "Vision board or future dreaming video",
       focus: "Breathwork, Visioning",
+      forumSlug: "rites-quest-12-breathplay-future-dreaming",
+      forumUrl: "/community/post/619",
     },
   ],
   routine: {
@@ -185,6 +211,8 @@ export const questData = {
     focus: "Purpose, Role, Fasting",
     isRoutine: true,
     minimumTime: "3-day fast minimum",
+    forumSlug: "rites-quest-13-fasting",
+    forumUrl: "/community/post/620",
   },
   featured: {
     title: "Food Foresting",
@@ -196,6 +224,8 @@ export const questData = {
     deliverable: "A <3 min video and/or written article",
     focus: "Bioregion, Food Forest, Community",
     isRoutine: true,
+    forumSlug: "food-foresting-being-human-again",
+    forumUrl: "/community/post/621",
   },
 };
 
