@@ -7,6 +7,7 @@ import { useState } from "react";
 import { X, ChevronRight, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { PATHS, type MapNode, type PathId } from "./mapData";
+import { MAP_ASSETS } from "./mapAssets";
 import { ProgressMapSVG } from "./ProgressMapSVG";
 import { useProgressMap } from "./useProgressMap";
 
@@ -28,6 +29,8 @@ export default function ProgressMap({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#0a1a10] flex flex-col">
+      {/* Preload hero map illustration */}
+      <link rel="preload" href={MAP_ASSETS.hero} as="image" type="image/webp" />
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
         <h1
