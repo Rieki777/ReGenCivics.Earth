@@ -382,11 +382,26 @@ This is a major feature on its own. Noting it here so the map architecture doesn
 
 4. **Village endgame:** When a player reaches the center (completes their paths), the map transitions to a village view. Spec'd separately, architecture should support the swap. CONFIRMED.
 
-## Remaining Open Questions
+5. **Multiple paths:** Players can activate any combination of 1-4 paths simultaneously. Each path has an on/off toggle. All 4 paths are available to every player. Current DB has a single `path` enum on `userProfiles`, which needs to become a JSON array or a separate `userActivePaths` table. CONFIRMED.
 
-1. **Illustration source:** For Phase 2, AI-generated SVG illustrations, commissioned artist, or a hybrid approach? The treasure-map-meets-solarpunk aesthetic is clear. Need to decide the production path.
+## Illustration Approach: CONFIRMED
 
-2. **Multiple paths:** Can a player activate multiple paths simultaneously, or do they complete one before starting another? Current DB has a single `path` enum on `userProfiles`. Might need to support an array.
+**Tool:** nano-banana-pro (Gemini 3 Pro Image API) at 4K resolution
+**Style:** Hand-drawn line art with watercolor fills. Studio Ghibli meets treasure map cartography. Solarpunk aesthetic. Fine pen details on buildings and nature. Soft gradients for sky and terrain. Tiny details that reward zooming in.
+
+**Assets to generate:**
+
+1. **Full Map (hero):** Bird's-eye view of entire regenerative settlement, all 4 zones visible, the ReGen Tree at center, winding paths through distinct terrain. This is the background layer for the interactive SVG.
+2. **Earth Zone (Land Path):** Terraced hillsides, food forests, seed vault, restoration trails. Deep greens, rich browns, amber. Landmarks: Trailhead, Seed Vault, Gathering Grove, Great Terrace, Summit Overlook.
+3. **Water Zone (Ally Path):** River delta, connected settlements, bridges, meeting halls. Teals, deep blues, silver. Landmarks: River Dock, Bridge Market, Confluence Meeting Hall, Council Chamber, The Great Bridge.
+4. **Air Zone (Play Path):** High ground, quest stone spiral, healing circles, ancient trees. Purples, soft golds, starlight white. Landmarks: Threshold Stone, Quest Stones, Midway Clearing, Speaking Circle, High Ring, Ancient Tree.
+5. **Fire Zone (Fund Path):** Forge district, solar arrays, treasury hillside, exchange garden. Warm oranges, deep reds, amber glow. Landmarks: Observatory, Forge Amphitheatre, Exchange Garden, Treasury Gate, The Forge, Great Hall of the Forge, Flame Garden.
+6. **ReGen Tree Centerpiece:** The great tree at the center with visible roots connecting to all zones via mycelium. Detailed, standalone asset.
+7. **Village Endgame:** The regenerative futuristic-yet-ancient elven village with food forest. This replaces the map when a player reaches the center. Full scene, alive and detailed.
+
+Each zone illustration will be generated as a standalone piece that can be composited into the full map SVG, or used as background imagery behind the interactive node layer. The full map hero piece establishes the overall composition and color harmony.
+
+Production by Rye's directive: "No generalizations, make a high quality full production rendering to make it as stunning and beautiful as possible." Human artist support planned for future iterations, but the initial production run uses AI generation.
 
 ---
 

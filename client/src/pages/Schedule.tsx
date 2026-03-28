@@ -18,7 +18,8 @@ import {
   MapPin,
   Users,
   Home as HomeIcon,
-  Bell
+  Bell,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
@@ -33,6 +34,24 @@ import { cdnImg } from "@/lib/utils";
 import { useAuth } from '@/_core/hooks/useAuth';
 
 
+
+function ReplayButton({ eventId }: { eventId: number }) {
+  const { data: recording } = trpc.recordings.byEventId.useQuery({ eventId });
+  if (!recording) return null;
+  const url = recording.youtubeUrl ?? recording.riversideUrl;
+  if (!url) return null;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
+    >
+      <Video className="w-4 h-4" />
+      Watch Replay
+    </a>
+  );
+}
 
 // Riverside studio details
 const RIVERSIDE_INFO = {
@@ -762,6 +781,11 @@ export default function Schedule() {
                           <Video className="w-5 h-5" />
                           Watch Recording
                         </a>
+                      )}
+
+                      {/* Replay button for completed events with linked recording */}
+                      {(event as any).status === 'completed' && (event as any).recordingId && !(event as any).youtubeUrl && (
+                        <ReplayButton eventId={event.id} />
                       )}
 
                       {/* Join link: DB riversideUrl takes priority, then fallback to RIVERSIDE_INFO */}

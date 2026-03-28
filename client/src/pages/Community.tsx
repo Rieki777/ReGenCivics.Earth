@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SmartImagePicker } from "@/components/SmartImagePicker";
 import { SEO, pageSEO } from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -726,7 +727,7 @@ export default function Community() {
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug (auto-generated)" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatImageUrl} onChange={e => setNewCatImageUrl(e.target.value)} placeholder="Image URL (optional)" />
+                    <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
@@ -862,7 +863,7 @@ export default function Community() {
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatImageUrl} onChange={e => setNewCatImageUrl(e.target.value)} placeholder="Image URL (optional)" />
+                    <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
@@ -985,7 +986,7 @@ export default function Community() {
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatImageUrl} onChange={e => setNewCatImageUrl(e.target.value)} placeholder="Image URL (optional)" />
+                    <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>

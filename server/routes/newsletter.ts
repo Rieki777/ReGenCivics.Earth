@@ -105,6 +105,51 @@ export const newsletterRouter = router({
       .where(eq(newsletterSubscribers.email, ctx.user.email)).limit(1);
     return { subscribed: rows.length > 0 };
   }),
+
+  // Toggle recording email notifications for the authenticated user
+  toggleRecordingNotify: protectedProcedure
+    .input(z.object({ enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await db.getUserById(ctx.user.id);
+      if (!user?.email) throw new TRPCError({ code: "BAD_REQUEST", message: "No email on your account" });
+
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Find or create subscriber row
+      const [existing] = await database.select().from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.email, user.email)).limit(1);
+
+      if (existing) {
+        await database.update(newsletterSubscribers)
+          .set({ notifyRecordings: input.enabled ? 1 : 0 })
+          .where(eq(newsletterSubscribers.id, existing.id));
+      } else {
+        await database.insert(newsletterSubscribers).values({
+          email: user.email,
+          name: user.name ?? null,
+          source: "other",
+          isActive: 1,
+          notifyRecordings: input.enabled ? 1 : 0,
+        });
+      }
+      return { enabled: input.enabled };
+    }),
+
+  // Get recording notification status for the authenticated user
+  recordingNotifyStatus: protectedProcedure.query(async ({ ctx }) => {
+    const user = await db.getUserById(ctx.user.id);
+    if (!user?.email) return { enabled: false };
+
+    const database = await getDb();
+    if (!database) return { enabled: false };
+
+    const [sub] = await database.select({ notifyRecordings: newsletterSubscribers.notifyRecordings })
+      .from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.email, user.email)).limit(1);
+
+    return { enabled: (sub?.notifyRecordings ?? 0) === 1 };
+  }),
 });
 
 export const videoSuggestionsRouter = router({

@@ -138,7 +138,7 @@ function buildEmailHtml(opts: {
 
       <div style="background: #f0f7f0; padding: 20px 24px; text-align: center; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none;">
         <p style="color: #888; font-size: 12px; margin: 0;">
-          You're receiving this because you subscribed to ReGen Civics updates.<br/>
+          You're receiving this because you opted into recording updates in your profile.<br/>
           <a href="${APP_BASE_URL}/newsletter/unsubscribe" style="color: #7dd87d;">Unsubscribe</a>
         </p>
       </div>
@@ -223,18 +223,30 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
     return;
   }
 
-  const data = payload.data ?? payload;
-  const riversideId = data.id ?? data.recording_id ?? `webhook-${Date.now()}`;
-  const title = data.title ?? "ReGen Civics Recording";
-  const youtubeUrl = data.youtube_url ?? null;
-  const riversideUrl = data.url ?? data.recording_url ?? null;
-  const thumbnailUrl = data.thumbnail_url ?? null;
-  const durationSeconds = data.duration ?? data.duration_seconds ?? null;
-  const sessionDate = data.created_at ?? data.recorded_at
-    ? new Date(data.created_at ?? data.recorded_at!)
+  const rawData = payload.data ?? payload;
+
+  // Normalize Zapier-style flat keys (data_title -> title, data_youtube_url -> youtube_url, etc.)
+  const d: any = { ...rawData };
+  for (const [key, value] of Object.entries(rawData as Record<string, unknown>)) {
+    if (key.startsWith('data_')) {
+      const normalizedKey = key.replace(/^data_/, '');
+      if (!(normalizedKey in d)) {
+        d[normalizedKey] = value;
+      }
+    }
+  }
+
+  const riversideId = d.id ?? d.recording_id ?? `webhook-${Date.now()}`;
+  const title = d.title ?? "ReGen Civics Recording";
+  const youtubeUrl = d.youtube_url ?? null;
+  const riversideUrl = d.url ?? d.recording_url ?? null;
+  const thumbnailUrl = d.thumbnail_url ?? null;
+  const durationSeconds = d.duration ?? d.duration_seconds ?? null;
+  const sessionDate = d.created_at ?? d.recorded_at
+    ? new Date(d.created_at ?? d.recorded_at!)
     : new Date();
-  const transcript = data.transcript ?? null;
-  const aiSummary = data.ai_summary ?? data.summary ?? null;
+  const transcript = d.transcript ?? null;
+  const aiSummary = d.ai_summary ?? d.summary ?? null;
 
   // ── 1. Upsert recording in DB ──────────────────────────────────────────────
   const [existing] = await database
@@ -329,6 +341,12 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
         // Link this recording to the event's thread for the email forum button
         forumPostId = matchedEvent.forumThreadId;
         if (replyId) console.log(`[riverside-webhook] Replied to forum thread ${matchedEvent.forumThreadId} for recording ${recordingId}`);
+
+        // Link recording to event for schedule page replay button
+        await database.update(eventsTable)
+          .set({ recordingId, status: "completed" })
+          .where(eq(eventsTable.id, matchedEvent.id));
+        console.log(`[riverside-webhook] Linked recording ${recordingId} to event ${matchedEvent.id}`);
       } else {
         // No matching event thread — create a fresh forum post
         forumPostId = await createRecordingForumPost(recording);
@@ -387,15 +405,15 @@ async function createRecordingForumPost(recording: {
   if (!database) return null;
 
   const { forumCategories } = await import("../../drizzle/schema");
-  const { eq: eqFn, like } = await import("drizzle-orm");
-  const [episodesCategory] = await database
+  const { eq: eqFn } = await import("drizzle-orm");
+  const [recordingsCategory] = await database
     .select()
     .from(forumCategories)
-    .where(like(forumCategories.name, "%episode%"))
+    .where(eqFn(forumCategories.slug, "session-recordings"))
     .limit(1);
 
-  // Fall back to category 1 (General) if episodes category doesn't exist yet
-  const categoryId = episodesCategory?.id ?? 1;
+  // Fall back to category 1 (General) if session-recordings category doesn't exist
+  const categoryId = recordingsCategory?.id ?? 1;
 
   const sessionDateStr = recording.sessionDate
     ? recording.sessionDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
@@ -422,7 +440,7 @@ async function createRecordingForumPost(recording: {
     authorId: SYSTEM_AUTHOR_ID,
     title: recording.title,
     content,
-    tags: ["recording", "episode"],
+    tags: ["recording", "session"],
     postType: "discussion",
   });
 
@@ -439,9 +457,9 @@ async function sendRecordingEmail(recording: {
   aiSummary: string | null;
   forumPostId: number | null;
 }) {
-  const subscribers = await db.getActiveNewsletterSubscribers();
+  const subscribers = await db.getRecordingSubscribers();
   if (!subscribers.length) {
-    console.log("[riverside-webhook] No active subscribers — skipping email");
+    console.log("[riverside-webhook] No recording subscribers — skipping email");
     return;
   }
 

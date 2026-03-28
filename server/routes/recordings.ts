@@ -6,7 +6,7 @@
 import { adminProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { recordings } from "../../drizzle/schema";
+import { recordings, events } from "../../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -33,6 +33,28 @@ export const recordingsRouter = router({
         .from(recordings)
         .orderBy(desc(recordings.sessionDate))
         .limit(input?.limit ?? 20);
+    }),
+
+  // Public: get recording linked to a specific event
+  byEventId: publicProcedure
+    .input(z.object({ eventId: z.number() }))
+    .query(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return null;
+      const [event] = await database.select({ recordingId: events.recordingId })
+        .from(events)
+        .where(eq(events.id, input.eventId))
+        .limit(1);
+      if (!event?.recordingId) return null;
+      const [recording] = await database.select({
+        id: recordings.id,
+        title: recordings.title,
+        youtubeUrl: recordings.youtubeUrl,
+        riversideUrl: recordings.riversideUrl,
+        thumbnailUrl: recordings.thumbnailUrl,
+        durationSeconds: recordings.durationSeconds,
+      }).from(recordings).where(eq(recordings.id, event.recordingId)).limit(1);
+      return recording ?? null;
     }),
 
   // Admin: full list with all fields

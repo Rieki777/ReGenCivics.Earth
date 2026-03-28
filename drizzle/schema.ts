@@ -385,7 +385,10 @@ export const newsletterSubscribers = mysqlTable("newsletter_subscribers", {
   
   // Status
   isActive: int("isActive").default(1).notNull(),
-  
+
+  // Email preferences
+  notifyRecordings: tinyint("notifyRecordings").default(0).notNull(),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

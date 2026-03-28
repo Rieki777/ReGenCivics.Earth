@@ -451,6 +451,19 @@ export async function getActiveNewsletterSubscribers() {
     .orderBy(desc(newsletterSubscribers.createdAt));
 }
 
+export async function getRecordingSubscribers(): Promise<{ email: string; name: string | null }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    email: newsletterSubscribers.email,
+    name: newsletterSubscribers.name,
+  }).from(newsletterSubscribers)
+    .where(and(
+      eq(newsletterSubscribers.isActive, 1),
+      eq(newsletterSubscribers.notifyRecordings, 1),
+    ));
+}
+
 export async function unsubscribeNewsletter(email: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

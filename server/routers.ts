@@ -3,7 +3,7 @@
 import { systemRouter } from "./_core/systemRouter";
 import { router } from "./_core/trpc";
 
-import { globalSearchRouter, filesRouter, chatRouter } from "./routes/global";
+import { globalSearchRouter, filesRouter, chatRouter, imagesRouter } from "./routes/global";
 import { authRouter, statsRouter, userProfilesRouter } from "./routes/auth";
 import { applicationsRouter, applicantsForCampaignRouter, reviewsRouter, orgClaimsRouter } from "./routes/applications";
 import { investorInquiriesRouter, generalInquiriesRouter, loiRouter, reviewerEmailsRouter, contactNotesRouter, contactTagsRouter } from "./routes/investors";
@@ -27,6 +27,7 @@ export const appRouter = router({
   // Global
   globalSearch: globalSearchRouter,
   files: filesRouter,
+  images: imagesRouter,
   chat: chatRouter,
 
   // Auth / User

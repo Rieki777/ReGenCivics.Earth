@@ -12,6 +12,7 @@ import { nanoid } from "nanoid";
 import { storagePut } from "../storage";
 import { CHAT_SYSTEM_PROMPT } from "../_core/oauth";
 import { invokeLLM } from "../_core/llm";
+import { generateImage, buildImagePrompt, type ContentType } from "../_core/imageGeneration";
 import type { Express } from "express";
 import sharp from "sharp";
 
@@ -90,6 +91,26 @@ export const filesRouter = router({
         key: result.key,
         fileName: input.fileName,
       };
+    }),
+});
+
+// User-facing image generation (authenticated, not admin-only)
+export const imagesRouter = router({
+  generate: protectedProcedure
+    .input(z.object({
+      context: z.enum(["forum", "quest", "campaign", "blog", "video", "profile", "default"]),
+      title: z.string().min(1).max(200),
+      description: z.string().max(300).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "image_generate");
+      const result = await generateImage({
+        contentType: input.context as ContentType,
+        contentId: `user-${ctx.user.id}-${Date.now()}`,
+        contextText: buildImagePrompt(input.context as ContentType, input.title, input.description),
+        temp: true,
+      });
+      return { url: result.url, key: result.key };
     }),
 });
 

@@ -97,6 +97,49 @@ export function UserNotificationPreferences({ currentPrefs }: Props) {
           </button>
         ))}
       </div>
+
+      {/* Recording email toggle (separate from player profile prefs, stored on newsletter subscriber) */}
+      <RecordingEmailToggle />
     </div>
+  );
+}
+
+function RecordingEmailToggle() {
+  const { data, isLoading } = trpc.newsletter.recordingNotifyStatus.useQuery();
+  const mutation = trpc.newsletter.toggleRecordingNotify.useMutation({
+    onSuccess: (res) => {
+      toast.success(res.enabled ? "Recording updates enabled" : "Recording updates disabled");
+    },
+    onError: (err) => {
+      toast.error("Failed to update", { description: err.message });
+    },
+  });
+
+  const enabled = data?.enabled ?? false;
+
+  if (isLoading) return null;
+
+  return (
+    <button
+      onClick={() => mutation.mutate({ enabled: !enabled })}
+      disabled={mutation.isPending}
+      className="w-full flex items-center justify-between gap-3 p-3 rounded-xl border border-white/10 bg-white/5 hover:border-white/20 transition-all text-left mt-3 pt-3 border-t border-t-white/10"
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-white">Session Recording Updates</p>
+        <p className="text-white/50 text-xs mt-0.5">Get an email when a new session recording is ready to watch</p>
+      </div>
+      <div
+        className={`w-10 h-5 rounded-full flex-shrink-0 relative transition-colors ${
+          enabled ? "bg-[#7dd87d]" : "bg-white/20"
+        }`}
+      >
+        <div
+          className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+            enabled ? "translate-x-5" : "translate-x-0.5"
+          }`}
+        />
+      </div>
+    </button>
   );
 }
