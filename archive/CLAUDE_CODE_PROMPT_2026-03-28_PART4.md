@@ -2,11 +2,11 @@
 
 **Date:** 2026-03-28 (Part 4)
 **Project:** regen-civics-clean
-**What this is:** Implementation prompt for 3 recording flow improvements, a Zapier data mapping fix, progress map illustration generation, and the illustration spec baked into the codebase.
+**What this is:** Implementation prompt for 3 recording flow improvements, a Zapier data mapping fix, and progress map production integration (images already generated).
 
 **Read `CLAUDE.md` before writing any user-facing copy.** Writing rules are non-negotiable: zero em-dashes, no AI-isms, no contrast-framing, no rhetorical questions, no passive inspiration.
 
-**Read `PROGRESS_MAP_DESIGN.md` for the full map spec.** The illustration prompts in this file are production-ready.
+**Read `PROGRESS_MAP_DESIGN.md` for the full map spec.** The illustrations are already generated and sitting in `client/public/map/`.
 
 ---
 
@@ -327,54 +327,71 @@ To:
 
 ---
 
-### Part 5: Progress Map Illustrations (using Gemini 3 Pro Image API)
+### Part 5: Get Map Illustrations Into Production
 
-Generate 7 high-quality illustrations at 4K resolution for the progress map feature. Output to `client/public/map/`.
+All 7 map illustrations have been generated and optimized as WebP in `client/public/map/`. They are ready to use.
 
-**5a. Set up generation script**
+**Files present:**
 
-Use the `generate_map_images.py` script in the project root (already created). It requires `GEMINI_API_KEY` environment variable. Run:
+| File | Size | Use |
+|------|------|-----|
+| `progress-map-full.webp` | 338 KB | Hero map background for ProgressMapSVG |
+| `zone-earth-land.webp` | 346 KB | Earth/Land zone detail (hover or drill-down) |
+| `zone-water-ally.webp` | 375 KB | Water/Ally zone detail |
+| `zone-air-play.webp` | 294 KB | Air/Play zone detail |
+| `zone-fire-fund.webp` | 356 KB | Fire/Fund zone detail |
+| `regen-tree-center.webp` | 366 KB | Central tree (convergence point) |
+| `village-endgame.webp` | 363 KB | Village endgame reward view |
 
-```bash
-pip install httpx --break-system-packages -q
-GEMINI_API_KEY=$GEMINI_API_KEY python3 generate_map_images.py
+**5a. Upload to Cloudflare CDN**
+
+If the project uses Cloudflare for image hosting (check for `cdnImg()` utility in `client/src/lib/utils.ts`), upload all 7 WebPs to the CDN and reference them via `cdnImg()`. Otherwise, they'll be served directly from `/map/filename.webp` as static assets.
+
+**5b. Create the image mapping constant**
+
+**File:** `client/src/components/ProgressMap/mapAssets.ts` (new file)
+
+```typescript
+import { cdnImg } from "@/lib/utils";
+
+// Map illustration assets (all optimized WebP, ~300-375 KB each)
+export const MAP_ASSETS = {
+  hero: cdnImg("/map/progress-map-full.webp"),
+  earth: cdnImg("/map/zone-earth-land.webp"),
+  water: cdnImg("/map/zone-water-ally.webp"),
+  air: cdnImg("/map/zone-air-play.webp"),
+  fire: cdnImg("/map/zone-fire-fund.webp"),
+  tree: cdnImg("/map/regen-tree-center.webp"),
+  village: cdnImg("/map/village-endgame.webp"),
+} as const;
+
+// If cdnImg isn't suitable, fall back to direct paths:
+// export const MAP_ASSETS = {
+//   hero: "/map/progress-map-full.webp",
+//   ...
+// } as const;
 ```
 
-If `GEMINI_API_KEY` is not available, skip this part and note it in the handoff.
+**5c. Preload the hero map**
 
-**5b. The 7 illustrations to generate**
+In the ProgressMap component or the page that renders it, add a preload link for the hero image so it loads before the component mounts:
 
-Each prompt below includes the full style prefix. All at 4K resolution. Output PNG files to `client/public/map/`.
+```tsx
+// In the component's parent or in the head
+<link rel="preload" href={MAP_ASSETS.hero} as="image" type="image/webp" />
+```
 
-**1. `progress-map-full.png`** (Hero map, bird's-eye view)
+**5d. Verify all 7 WebPs exist**
 
-Prompt: "Hand-drawn line art with rich watercolor fills, Studio Ghibli art style meets treasure map cartography. Solarpunk aesthetic, futuristic yet ancient, elven architecture blended with regenerative permaculture design. Warm, inviting, lived-in feeling. Fine pen details on buildings and nature. Soft watercolor gradients. Tiny rewarding details: cats on rooftops, mushrooms at tree bases, bees near flowers, birds in canopy. Bird's-eye view illustrated map of a regenerative settlement village. Four distinct zones arranged around a magnificent central tree with glowing roots visible underground connecting all zones via mycelium. BOTTOM-LEFT: Earth Zone with terraced hillsides, lush food forests, a stone seed vault, winding restoration trails. Deep greens, rich browns, amber. TOP-LEFT: Water Zone with a flowing river delta, settlements joined by elegant wooden bridges, a grand confluence meeting hall. Teals, deep blues, silver. TOP-RIGHT: Air Zone on high ground with ancient quest stones in a spiral, healing circles in forest clearings, luminous golden-purple canopies. Purples, soft golds, starlight white. BOTTOM-RIGHT: Fire Zone forge district with solar arrays on copper rooftops, treasury carved into hillside, exchange garden. Warm oranges, deep reds, amber. CENTER: Great ancient tree with massive visible root system, glowing mycelium. Four winding paths in green, blue, purple, orange from each zone to center. Overhead perspective, slightly tilted for depth. Rich saturated watercolor palette. Soft gradient sky."
+```bash
+ls -la client/public/map/*.webp | wc -l  # Should output 7
+```
 
-**2. `zone-earth-land.png`** (Earth Zone detail)
+**5e. Add to .gitignore check**
 
-Prompt: "Hand-drawn line art with rich watercolor fills, Studio Ghibli art style meets treasure map cartography. Solarpunk aesthetic. Detailed illustration of the Earth Zone of a regenerative village map. Terraced hillsides with abundant food forests, cascading permaculture gardens. A stone seed vault built into a hillside with an arched wooden door. Winding restoration trails through deep green canopy with dappled sunlight. A gathering grove with a circular clearing and log seating. A great stone terrace overlooking a valley with planted gardens. A summit overlook at the highest point with a planted flag and panoramic views. Color palette: deep forest greens, rich earth browns, warm amber, golden sunlight. Mushrooms growing at tree bases, fallen logs with moss, a small creek flowing through, butterflies, a fox in the underbrush. Overhead tilted perspective."
+Make sure `client/public/map/*.webp` is NOT in `.gitignore`. These are production assets that must be committed.
 
-**3. `zone-water-ally.png`** (Water Zone detail)
-
-Prompt: "Hand-drawn line art with rich watercolor fills, Studio Ghibli art style meets treasure map cartography. Solarpunk aesthetic. Detailed illustration of the Water Zone of a regenerative village map. A flowing river delta with crystal clear water branching into streams. Interconnected settlements on river islands joined by elegant curved wooden bridges. A river dock with small boats and rope moorings at the entrance. A bridge market with colorful awnings and stalls on a wide stone bridge. A grand confluence meeting hall where three rivers meet, with tall windows reflecting water light. A council chamber with a round table visible through an open roof. The Great Bridge at the far end with ceremonial banners raised. Color palette: teals, deep sapphire blues, silver water reflections, jade green riverbanks. Fish visible in shallow water, lily pads, a heron on a rock, waterfalls in the background. Overhead tilted perspective."
-
-**4. `zone-air-play.png`** (Air Zone detail)
-
-Prompt: "Hand-drawn line art with rich watercolor fills, Studio Ghibli art style meets treasure map cartography. Solarpunk aesthetic. Detailed illustration of the Air Zone of a regenerative village map. High ground with sweeping panoramic views and clear open sky. A spiral of ancient standing quest stones, each carved with different symbols, arranged in an ascending spiral path up a gentle hill. A threshold stone at the entrance, a single tall monolith with runes. Healing circles in forest clearings with soft grass and wildflowers. Ancient trees with massive trunks and luminous golden-purple canopies that seem to glow from within. A speaking circle with a natural amphitheatre. The High Ring near the top with a circle of the tallest quest stones. The Ancient Tree at the peak, enormous, with branches reaching into clouds. Color palette: deep purples, soft golds, starlight white, mystical violet, pale moonlight blue. Fireflies, owls in trees, crystals embedded in stones, wispy clouds. Overhead tilted perspective."
-
-**5. `zone-fire-fund.png`** (Fire Zone detail)
-
-Prompt: "Hand-drawn line art with rich watercolor fills, Studio Ghibli art style meets treasure map cartography. Solarpunk aesthetic. Detailed illustration of the Fire Zone of a regenerative village map. A forge district alive with productive energy. Solar arrays gleaming on copper and terracotta rooftops. An observatory tower with a telescope and star charts visible through windows. A forge amphitheatre with tiered stone seating around a central flame. An exchange garden where resources flow between growing beds and trading posts, a living marketplace. A treasury gate carved into a hillside with ornate metalwork doors. The Forge itself with glowing furnaces and a great chimney with smoke wisps. The Great Hall of the Forge, a grand building with high arched ceilings and stained glass windows in flame colors. The Flame Garden at the far end with an eternal flame at center surrounded by blooming fire-colored flowers and fruit trees. Color palette: warm oranges, deep reds, amber glow, copper, bronze, golden yellow. Sparks floating, hawks soaring overhead. Overhead tilted perspective."
-
-**6. `regen-tree-center.png`** (Central tree)
-
-Prompt: "Hand-drawn line art with rich watercolor fills, Studio Ghibli art style meets treasure map cartography. Solarpunk aesthetic. Detailed illustration of the ReGen Tree, the great central tree of a regenerative village. An enormous ancient tree with a massive trunk, wider than a house, with deep textured bark covered in moss and lichens. The canopy spreads across the sky with thousands of leaves in shifting colors: green to gold to purple to silver, reflecting all four elements. Below ground, visible in cross-section: a vast root system spreading in all directions, with glowing bioluminescent mycelium networks pulsing with soft light in green, blue, purple, and orange, connecting to the four zones. At the base: a circular stone platform where all four paths converge, with mosaic tiles in four colors. Small offerings at the roots: flowers, crystals, written notes. Birds nesting in every branch, squirrels, a treehouse platform visible high up. Sunlight filtering through the canopy creating god-rays. Centered composition, slightly tilted perspective."
-
-**7. `village-endgame.png`** (Village reward view)
-
-Prompt: "Hand-drawn line art with rich watercolor fills, Studio Ghibli art style meets treasure map cartography. Solarpunk aesthetic. Panoramic illustration of a regenerative futuristic-yet-ancient elven village with food forest. A thriving village nestled in a valley surrounded by food forests and permaculture gardens. Architecture blends living trees with elegant elven-style buildings: curved organic forms, living roofs with gardens, solar-crystal panels, water features, bridges between treetop homes. A central plaza with the great ReGen Tree at its heart, now in full bloom with golden fruit. Community gathering spaces: an open-air kitchen, a library in a tree, a healing springs bath house, a children's play area in a grove, a star-watching platform on the highest building. Every element is alive: smoke from bakery chimneys, water wheels turning, flags flying, instruments on porches. Extensive food forests with beehives, aquaponics systems, seed libraries. Color palette: full rich spectrum, golden hour lighting, warm and abundant. Wide panoramic composition, slightly elevated perspective."
-
-**If generation succeeds, verify all 7 PNGs exist in `client/public/map/`.**
+**Run `pnpm build`.**
 
 ---
 
@@ -422,7 +439,7 @@ All must be true before claiming done:
 - [ ] User profile has a toggle for recording email notifications
 - [ ] Email footer text updated for recording emails
 - [ ] Migration file `drizzle/0091_recording_email_pref.sql` created
-- [ ] If GEMINI_API_KEY available: all 7 map PNGs generated in `client/public/map/`
+- [ ] All 7 map WebPs exist in `client/public/map/` (already generated, just verify they're present)
 - [ ] Zero em-dashes in any user-facing copy
 
 ---
@@ -434,8 +451,7 @@ All must be true before claiming done:
 | # | Task | Why only you | Where |
 |---|------|-------------|-------|
 | 1 | Run migration 0091 in Railway | DB access | `mysql -h ... < drizzle/0091_recording_email_pref.sql` |
-| 2 | Set `GEMINI_API_KEY` env var if needed | API credentials | Railway env vars or local `.env` |
-| 3 | `git push` after Claude Code finishes | Git credentials | `git add -A && git commit -m "recording flow + map illustrations" && git push` |
+| 2 | `git push` after Claude Code finishes | Git credentials | `git add -A && git commit -m "recording flow + map illustrations" && git push` |
 | 4 | Verify Zapier data mapping with a real recording | Riverside account | Record a test session, check webhook logs |
 
 ### CLAUDE CODE: can do without you
@@ -453,8 +469,8 @@ All must be true before claiming done:
 | 9 | Update sendRecordingEmail to use opt-in list | READY |
 | 10 | Recording email toggle in user profile | READY |
 | 11 | Email footer text update | READY |
-| 12 | Map illustration generation (if API key available) | READY |
+| 12 | Map illustration production integration (images already in client/public/map/) | READY |
 
 ### WAITING ON YOU before Claude Code can proceed
 
-Nothing blocked. Claude Code can execute Parts 1-4 and Part 6 immediately. Part 5 (illustrations) requires `GEMINI_API_KEY` to be available in the environment. If it's not set, Claude Code should skip illustration generation and note it in the output.
+Nothing blocked. Claude Code can execute all parts immediately. Part 5 does NOT require generating images. The 7 WebP illustrations are already in `client/public/map/`. Claude Code just needs to create `mapAssets.ts`, verify the files exist, add the preload link, and check `.gitignore`.

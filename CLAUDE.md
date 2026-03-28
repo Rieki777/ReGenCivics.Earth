@@ -43,10 +43,12 @@ Mixed — some code, some not. This is part software project, part community org
 
 These files define all outstanding work for this project. Always check them before starting any implementation:
 
-- `QUALITY_SPRINT_9_10.md` — **current** working doc. Start here for all active fixes and quality sprint tasks.
+- `CLAUDE_CODE_PROMPT_2026-03-28_PART5.md` — **active** execution prompt. Recording flow fixes, Zapier data normalization, map illustration production integration, and email opt-in preference.
+- `QUALITY_SPRINT_9_10.md` — quality sprint backlog. Performance, security, and code quality targets.
 - `ReGenCivics_WelcomeAboard_Brief.md` — full content brief for the Welcome Aboard Quests: all 10 quest cards, forum post bodies, seed comments, and implementation plan.
+- `PROGRESS_MAP_DESIGN.md` — full spec for the interactive progress map component (illustrations done, component build is next).
 
-Older fixes docs have been archived to `archive/`. Do not reference them for new work.
+All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
 
 ## Installed Skills (ln- pipeline)
 This project uses a structured delivery pipeline via the ln- skills (in ~/.claude/skills/):
