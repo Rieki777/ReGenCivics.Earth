@@ -535,6 +535,17 @@ There is also `db.ensureEntityForumThread()` in `server/db.ts` (lines 2684-2741)
 3. In `client/src/pages/Community.tsx`: Make sure the Earth section's "Land Projects" card links to `/community/c/land-projects` and that general land discussion has its own home (or is folded into General Discussion)
 4. Move any existing threads from `active-projects` to `land-projects` category (migration SQL)
 
+**5. New general categories already created in DB (no migration needed):**
+
+The old `active-projects` (id 11) and `active-organisations` (id 10) categories have been repurposed:
+- id 11: renamed to "Land General", slug `land-general`, sortOrder 3, icon "Sprout"
+- id 10: renamed to "Alliance General", slug `alliance-general`, sortOrder 7, icon "Users"
+
+These are already live in the database. Claude Code needs to:
+- Add `'land-general'` and `'alliance-general'` to `SECTION_SLUGS` in `Community.tsx` so they show in their dedicated sections (not General)
+- Add a "Land General" card in the Earth section linking to `/community/c/land-general`
+- Add an "Alliance General" card in the Alliance section linking to `/community/c/alliance-general`
+
 **Migration** (save as `drizzle/0089_move_land_threads.sql`):
 ```sql
 -- Move all threads from active-projects to land-projects category
@@ -657,7 +668,7 @@ Replace `ZOOM_INFO` with:
 const RIVERSIDE_INFO = {
   topic: "ReGen Civics Season 2",
   description: "Join ReGen Civics in Season 2! Helping land projects evolve to the next stage of their regenerative journeys.",
-  roomUrl: "[RIVERSIDE_ROOM_URL]", // Rye needs to create a room and paste the URL here
+  roomUrl: "https://riverside.com/studio/rieki-cordon-riekis-studio", // Rye needs to create a room and paste the URL here
 };
 ```
 
@@ -705,8 +716,9 @@ Check if a `recordings` table exists in the schema. If not, the webhook handler 
 
 ### Human Steps Required (cannot be done by Claude Code)
 
-- [HUMAN] Create a Riverside room in the ReGen Civics project and share the room URL
-- [HUMAN] Connect YouTube to Riverside via Riverside Settings > Streaming (for YouTube Live simulcast)
+- [DONE] Riverside studio exists: "ReGen Civics Studio" at `https://riverside.com/studio/rieki-cordon-riekis-studio`
+- [DONE] YouTube connected: SEEDS: ReGenerative Renaissance channel linked in Riverside Live stream settings
+- [DONE] Facebook connected: Rieki Cordon profile linked in Riverside Live stream settings
 - [HUMAN] Turn ON the Zapier automation (it's currently disabled)
 - [HUMAN] Verify the Riverside Pro plan has enough hours for Season 2 (13 episodes x 2 hours = 26 hours)
 
@@ -718,7 +730,7 @@ Check if a `recordings` table exists in the schema. If not, the webhook handler 
 - Do NOT modify questData.ts or quest-related code.
 - Do NOT change the Welcome Aboard quest threads.
 - Do NOT recreate migration files 0083, 0084, 0085 (already applied).
-- Do NOT hardcode a Riverside room URL. Use `RIVERSIDE_INFO.roomUrl` as a placeholder until Rye provides the real URL.
+- The Riverside room URL is `https://riverside.com/studio/rieki-cordon-riekis-studio`. Use this as the real value.
 
 ---
 
@@ -739,9 +751,12 @@ Check if a `recordings` table exists in the schema. If not, the webhook handler 
 - Approving a land project application auto-creates a thread in `land-projects` category
 - `/community/c/alliance-partners` shows only accepted alliance org threads
 - Approving an alliance org auto-creates a thread in `alliance-partners` category
+- `/community/c/land-general` shows as a card in the Earth section for open land discussion
+- `/community/c/alliance-general` shows as a card in the Alliance section for open alliance discussion
+- Both `land-general` and `alliance-general` are in `SECTION_SLUGS` so they don't appear in General
 - Schedule page: all calendar buttons use consistent styling and naming ("Google Calendar" green, "Apple/Outlook" ghost)
 - All Zoom references in Schedule.tsx replaced with Riverside
 - "All Episodes via Zoom" section renamed and updated with Riverside join flow
 - Dynamic calendar URL builders use Riverside room URL instead of Zoom
 - Event card join buttons say "Join on Riverside"
-- Placeholder `RIVERSIDE_INFO.roomUrl` used until Rye provides real URL
+- `RIVERSIDE_INFO.roomUrl` set to `https://riverside.com/studio/rieki-cordon-riekis-studio`

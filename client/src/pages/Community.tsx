@@ -199,6 +199,7 @@ export default function Community() {
     'quests-gameplay', 'epic-quests', 'alliance-partners', 'air-conversations',
     'active-projects', 'active-organisations', 'land-projects',
     'rites-of-passage', 'welcome-aboard-quests',
+    'land-general', 'alliance-general',
   ]);
 
   const filteredCategories = useMemo(() => {
@@ -213,7 +214,6 @@ export default function Community() {
   }, [categories, searchQuery]);
 
   // The land-projects category to display under Earth
-  const landProjectCategory = useMemo(() => categories?.find(c => c.slug === 'land-projects'), [categories]);
 
   const totalPosts = useMemo(() => {
     if (!categories) return 0;
@@ -580,7 +580,7 @@ export default function Community() {
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="text-2xl mb-1">🍃</div>
               <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Air</p>
-              <p className="text-white/60 text-xs">Hard Conversations</p>
+              <p className="text-white/60 text-xs">Clarity & Agreements</p>
             </div>
             {activeSection === 'air' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-400" />}
           </button>
@@ -725,7 +725,8 @@ export default function Community() {
                     <p className="text-[#1a472a] text-sm font-semibold mb-3">New Category</p>
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug (auto-generated)" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatImageUrl} onChange={e => setNewCatImageUrl(e.target.value)} placeholder="Image URL (optional)" />
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
@@ -777,23 +778,21 @@ export default function Community() {
               </Link>
             </div>
 
-            {/* General land projects category card */}
-            {landProjectCategory && (
-              <div className="mb-4">
-                <Link href="/community/c/land-projects">
-                  <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#d4a574]/50 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#d4a574]/15 flex items-center justify-center flex-shrink-0">
-                      <Trees className="w-5 h-5 text-[#5c3d2e]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#5c3d2e] transition-colors">Land Project General</p>
-                      <p className="text-[#1a472a]/50 text-xs line-clamp-1">{landProjectCategory.description || 'General discussion space for land projects'}</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
+            {/* General land discussion card */}
+            <div className="mb-4">
+              <Link href="/community/c/land-general">
+                <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#d4a574]/50 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#d4a574]/15 flex items-center justify-center flex-shrink-0">
+                    <Sprout className="w-5 h-5 text-[#5c3d2e]" />
                   </div>
-                </Link>
-              </div>
-            )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#5c3d2e] transition-colors">Land General</p>
+                    <p className="text-[#1a472a]/50 text-xs line-clamp-1">General discussion about land projects, regenerative land practices, and stewardship</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                </div>
+              </Link>
+            </div>
 
             {/* Individual land project spaces */}
             {!landProjectThreads || landProjectThreads.filter((t: { id: number; title: string }) => !REMOVED_PROJECTS.has(t.title.replace(/ - Land Project Forum$/, ""))).length === 0 ? (
@@ -862,7 +861,8 @@ export default function Community() {
                   <div className="mt-3 bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatImageUrl} onChange={e => setNewCatImageUrl(e.target.value)} placeholder="Image URL (optional)" />
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
@@ -921,13 +921,13 @@ export default function Community() {
                 </div>
               </Link>
 
-              {/* General Discussion */}
-              <Link href="/community/c/alliance-partners">
+              {/* Alliance General */}
+              <Link href="/community/c/alliance-general">
                 <div className="relative rounded-xl overflow-hidden border border-blue-200/60 hover:border-blue-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-04-dreaming-spaces-of-love.webp" alt="Alliance discussion" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-04-dreaming-spaces-of-love.webp" alt="Alliance general discussion" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>General Discussion</p>
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Alliance General</p>
                     <p className="text-white/60 text-xs">Alliance talk, new ideas</p>
                   </div>
                 </div>
@@ -984,7 +984,8 @@ export default function Community() {
                   <div className="mt-3 bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]" value={newCatImageUrl} onChange={e => setNewCatImageUrl(e.target.value)} placeholder="Image URL (optional)" />
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
@@ -1117,7 +1118,7 @@ export default function Community() {
 
             {/* Air quest-style cards */}
             <div className="grid grid-cols-2 gap-3 mb-4">
-              {/* Hard Conversations */}
+              {/* Healthy Conversations */}
               <Link href="/community/c/air-conversations">
                 <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
                   <img src="/images/quests/quest-10-communication-patterns.webp" alt="Healthy conversations and clearing space" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
