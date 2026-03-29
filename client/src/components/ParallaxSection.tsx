@@ -38,7 +38,7 @@ export function ParallaxSection({
         className="absolute inset-0 z-[1]"
         style={overlay ? { backgroundColor: overlay } : undefined}
       >
-        {!overlay && <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/50 to-white/80" />}
+        {!overlay && <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-white/30 to-white/60 backdrop-blur-[0.5px]" />}
       </div>
       {/* Content */}
       <div className="relative z-10">

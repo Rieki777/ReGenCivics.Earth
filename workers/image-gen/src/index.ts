@@ -124,11 +124,24 @@ export default {
 
     let imageData: Uint8Array;
     try {
-      const stream = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+      const result = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
         prompt,
         num_steps: 8,
-      }) as ReadableStream;
-      imageData = await streamToBytes(stream);
+      });
+
+      // Handle multiple return types from Cloudflare AI binding
+      if (result instanceof ReadableStream) {
+        imageData = await streamToBytes(result);
+      } else if (result instanceof ArrayBuffer) {
+        imageData = new Uint8Array(result);
+      } else if (result instanceof Uint8Array) {
+        imageData = result;
+      } else if (typeof result === 'object' && result !== null && 'image' in result) {
+        // Cloudflare AI sometimes returns { image: base64string }
+        imageData = Uint8Array.from(atob((result as any).image), c => c.charCodeAt(0));
+      } else {
+        throw new Error(`Unexpected AI response type: ${typeof result}`);
+      }
     } catch (err) {
       console.error("Workers AI generation failed:", err);
       return new Response(JSON.stringify({ error: "Image generation failed" }), {

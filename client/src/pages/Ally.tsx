@@ -473,10 +473,6 @@ export default function Ally() {
                   </Button>
                 </Link>
               </div>
-              <Link href="/one-pager/alliance" className="mt-3 inline-flex items-center gap-1 text-white/50 hover:text-cyan-400 text-sm transition-colors">
-                <Printer className="w-3.5 h-3.5" />
-                Download printable one-pager for your team
-              </Link>
             </div>
           </AnimatedSection>
 

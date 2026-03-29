@@ -1059,10 +1059,6 @@ export default function Land() {
                   </Button>
                 </Link>
               </div>
-              <Link href="/one-pager/land" className="mt-3 inline-flex items-center gap-1 text-white/50 hover:text-[#7dd87d] text-sm transition-colors">
-                <Printer className="w-3.5 h-3.5" />
-                Download printable one-pager for your team
-              </Link>
             </div>
           </AnimatedSection>
 

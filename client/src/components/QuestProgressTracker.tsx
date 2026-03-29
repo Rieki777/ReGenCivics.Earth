@@ -279,26 +279,16 @@ export function QuestProgressTracker() {
 
   const completionPercentage = Math.round((progress.completedQuests.length / ALL_QUESTS.length) * 100);
 
+  // Listen for open-quest-progress event from CommandPanel
+  useEffect(() => {
+    const handler = () => setIsOpen(true);
+    window.addEventListener('open-quest-progress', handler);
+    return () => window.removeEventListener('open-quest-progress', handler);
+  }, []);
+
   return (
     <>
-      {/* Floating Progress Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        aria-label="Your quest journey"
-        title="Your quest journey"
-        className="fixed bottom-4 right-4 z-40 bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 group"
-      >
-        <Footprints className="w-5 h-5" />
-        <span className="font-semibold">{progress.completedQuests.length}/{ALL_QUESTS.length}</span>
-        <div className="w-16 h-2 bg-white/30 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-[#7dd87d] transition-all duration-500"
-            style={{ width: `${completionPercentage}%` }}
-          />
-        </div>
-      </button>
-
-      {/* Progress Panel */}
+      {/* Progress Panel (floating button removed, triggered via CommandPanel) */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden">

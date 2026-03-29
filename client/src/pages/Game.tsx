@@ -284,72 +284,97 @@ export default function Game() {
               <CollapsibleContent className="overflow-hidden transition-all duration-300">
                 <div className="space-y-4 text-[#1a472a]/80 leading-relaxed">
                   <p>
-                    What do we mean "the thing"? Let's start here as it's the most important. The "thing" is creating a civilization that's a healthy, joyful, fulfilling and magical place to raise ourselves and our children.
+                    What do we mean "The Thing"? Let's start here as it's the most important.
                   </p>
                   <p>
-                    That's "The Thing" and the thing about the thing is there's no right answer. But there are a LOT better answers than the dominant way we're doing this as a society...
+                    The "Thing" is creating a civilization that's a healthy, joyful, fulfilling and magical place to raise ourselves, our children, and the more than human world.
                   </p>
                   <p>
-                    The thing is hard, the thing is monumental... and it's necessary. Nobody knows the absolute right way to do it, and there isn't one. So, we need to try and have thousands of viable options to learn from and choose between.
+                    The thing about "The Thing" is there's no right, or single, answer. There are however a growing diversity of much better answers than the dominant way we're doing this as a human species...
+                  </p>
+                  <p>
+                    The Thing is hard, The Thing is monumental... and it's necessary, fun, fulfilling to work on, and deeply meaningful and evolutionary to be part of (at least it is for the person writing these words...).
+                  </p>
+                  <p>
+                    Nobody knows the absolute right way to do it, and there isn't one. So, we need to try and have thousands (or more) of viable options to learn from and choose between.
                   </p>
                   <p>
                     Because if we can't choose the story in which we raise ourselves, we aren't choosing anything meaningful.
                   </p>
-                  <p className="font-semibold text-[#1a472a]">So if it's so important, why call it a Game?</p>
+
+                  <h3 className="text-xl font-bold text-[#1a472a] pt-4" style={{ fontFamily: "var(--font-display)" }}>So if it's so important, why call it a Game?</h3>
                   <p>
-                    There's so many layers to this, let's start with the surface. We need to design from the point of view of a Game so that it's simple for people to participate.
+                    There's so many layers to this, let's start with the surface.
                   </p>
                   <p>
-                    Because the old Games (corporatism, nationalism, capitalism, etc) are taking everyone's time. So, it needs to be extremely easy to participate, and designing it like a Game helps us consider that lens.
+                    We design from the point of view of a Game so that it's simple for people to participate.
                   </p>
                   <p>
-                    Second, why not make it as fun as possible?!
+                    Because the old Games (corporatism, nationalism, capitalism, etc) are taking everyone's time and degrading our attention. So, it needs to be extremely easy to participate, and designing it like a Game helps us consider this lens and design for it.
                   </p>
                   <p>
-                    Authentically fulfilling and fun to be part of co-creating regenerative civilizations. In our opinion, it's the best Game to play. Which brings us to part 3: it's the best Game to play.
+                    Second, if we get to make new economic, financial and governance systems, why not make them as fun as possible?!
                   </p>
-                  <p className="font-semibold text-[#1a472a]">The Infinite Part</p>
                   <p>
-                    This is the best part. The Game is continually redesigned by and for the players! The catalysts that are forming ReGen Civics are not the founders, owners, C-Suite, etc. of this vital piece of community infrastructure.
+                    Imagine if the vast majority of our days were spent in authentically fulfilling and fun-to-be-part-of-ways where we're actively co-creating regenerative civilizations and the realities we inhabit...
+                  </p>
+                  <p>
+                    In our opinion this is the best Game to play. Which is also why we call it a Game. It's the best Game!
+                  </p>
+                  <p>Which brings us to part 3...</p>
+
+                  <h3 className="text-xl font-bold text-[#1a472a] pt-4" style={{ fontFamily: "var(--font-display)" }}>The Infinite Part</h3>
+                  <p>
+                    The Game isn't designed to end "finite Games" that have winners, losers, and outcomes.
+                  </p>
+                  <p>
+                    This Game is continually redesigned by and for the players, to become a better and better Game to play!
+                  </p>
+                  <p>
+                    The catalysts that are forming ReGen Civics are not the founders, owners, C-Suite, etc. of this vital piece of community infrastructure.
                   </p>
                   <p>
                     Our roles are simply to get the Game started then make ourselves obsolete as quickly as we can while still supporting the healthy development of the Game.
                   </p>
-                  <p>
-                    Much like the pattern for raising healthy children.
-                  </p>
+                  <p>Much like the pattern for raising healthy children.</p>
                   <p>
                     In this way we continually evolve the Game to better serve us and the goal of co-creating a growing diversity of regenerative realities, villages, projects, etc.
                   </p>
+                  <p>This is why we call it an "Infinite Game".</p>
+
+                  <h3 className="text-xl font-bold text-[#1a472a] pt-4" style={{ fontFamily: "var(--font-display)" }}>2 main parts to this Game:</h3>
                   <p>
-                    This is why we call it an "Ifinite Game".
+                    Much of what we're doing is building bridges from one Game, the Dominant Game, to a growing diversity of new Games. We approach this by mastering the economic systems of the old Game and the New Games simultaneously.
                   </p>
-                  <p className="font-semibold text-[#1a472a]">There are 2 main parts to this.</p>
+                  <p>That's why we have 2 distinct spaces.</p>
                   <p>
-                    Much of what we're doing is building bridges from one Game, the Dominant Game, to a growing diversity of new Games. We approach this by mastering the economic systems of the old Game and the New Game simultaneously.
-                  </p>
-                  <p>
-                    That's why we have 2 distinct spaces.
-                  </p>
-                  <p>
-                    The ReGen Civics Fund is designed to be deeply rooted in the old Games, working to master that Game through using the most powerful coordination structures, ensuring we have the capability to coordinate in that Game.
+                    The ReGen Civics Fund is designed to be deeply rooted in the old Games, working to master that Game through using the most powerful coordination structures, a Fund, to ensure we have the capability to coordinate in that Game.
                   </p>
                   <p>
-                    The ReGen Game is a continuation of the work started in SEEDS back in 2017: taking almost a decade of learning and weaving it into this new structure to help us co-create a growing number of new financial and economic systems better suited for Regenerative Civilizations.
+                    The ReGen Game is deeply rooted on the other side, the Games we're moving into. It's a continuation of the work started in SEEDS back in 2017: taking a decade of learning and weaving it into this new structure to help us co-create a growing number of new financial and economic systems better suited for Regenerative Civilizations.
+                  </p>
+                  <p>Think of these two spaces as the 2 foundations of a bridge crossing a chasm.</p>
+                  <p>
+                    Part of our Game is then creating a bigger and better bridge so that the growing number of people ready for these realities can safely, joyfully, easily, and, hopefully with a bit of awe and wonder, walk across these bridges into the new worlds.
+                  </p>
+
+                  <h3 className="text-xl font-bold text-[#1a472a] pt-4" style={{ fontFamily: "var(--font-display)" }}>Quests!</h3>
+                  <p>
+                    Now this is not without doing the work. By "the work" we mean the inner work and the actual actions we humans need to take to heal ourselves and our world.
                   </p>
                   <p>
-                    Think of these two spaces as the 2 foundations of a bridge crossing a chasm.
-                  </p>
-                  <p>
-                    Part of our Game is then creating a bigger and better bridge so that the growing number of people ready for these realities can safely, joyfully, easily, and hopefully with a bit of awe and wonder, walk across the bridge into the new worlds.
-                  </p>
-                  <p className="font-semibold text-[#1a472a]">Quests!</p>
-                  <p>
-                    Now this is not without doing the work. By "the work" we mean the inner work. This is where Quests come in. To help us co-create a growing number of "Mini Games" on doing the inner and outer work of healing so that we can become better players in the Game.
+                    This is where Quests come in. To help us co-create a growing number of "Mini Games" on doing the inner and outer work of healing so that we can become better players in the Game.
                   </p>
                   <p>
                     In this way we can see ourselves as "Athletes in the Infinite Game of Systemic Regeneration" and Quests help strengthen us and improve our abilities.
                   </p>
+                  <p>
+                    Quests are intended to grow into vital coordination infrastructure of our new civilization. Where we're exploring the question, "Can we meet all of our needs through Quests and Play?" We lean into this question when designing quests.
+                  </p>
+                  <p>
+                    There's so much more to this Game, but the story is just beginning the Game is to be designed by all of us, by you dear reader, so don't feel that you need to have a full handle on this to get involved, as nobody does!
+                  </p>
+                  <p className="font-semibold text-[#1a472a]">Welcome to the Infinite Game.</p>
 
                   {/* Images */}
                   <div className="grid md:grid-cols-2 gap-4 mt-6">
@@ -380,6 +405,20 @@ export default function Game() {
                 </button>
               </CollapsibleTrigger>
             </Collapsible>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap gap-4 mt-8">
+              <Link href="/tokenomics">
+                <Button size="lg" className="rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white">
+                  Explore Tokenomics <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/governance">
+                <Button size="lg" className="rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white">
+                  Explore Governance <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </section>
       </AnimatedSection>
@@ -615,17 +654,17 @@ export default function Game() {
             </p>
           </AnimatedSection>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {/* Work with Alliance Organizations */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Create with Alliances (merged from Work with Alliances + Create Together) */}
             <div className="bg-white p-6 rounded-xl border-2 border-purple-200 shadow-md hover:shadow-lg transition-all hover:-translate-y-1">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center mb-4 mx-auto">
                 <Building2 className="w-7 h-7 text-white" />
               </div>
               <h3 className="font-bold text-[#1a472a] text-lg mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
-                Work with Alliances
+                Create with Alliances
               </h3>
               <p className="text-[#1a472a]/70 text-sm mb-4 text-center">
-                Collab remotely or in-person with our alliance orgs on regenerative projects.
+                Collaborate with alliance organisations and land projects to co-create regenerative infrastructure, remotely or in person.
               </p>
               <Link href="/connect?path=create_with_regens">
                 <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white rounded-xl">
@@ -633,8 +672,8 @@ export default function Game() {
                 </Button>
               </Link>
             </div>
-            
-            {/* Live at Land Projects */}
+
+            {/* Join a Community */}
             <div className="bg-white p-6 rounded-xl border-2 border-teal-200 shadow-md hover:shadow-lg transition-all hover:-translate-y-1">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center mb-4 mx-auto">
                 <TreeDeciduous className="w-7 h-7 text-white" />
@@ -651,26 +690,8 @@ export default function Game() {
                 </Button>
               </Link>
             </div>
-            
-            {/* Create at Land Projects */}
-            <div className="bg-white p-6 rounded-xl border-2 border-emerald-200 shadow-md hover:shadow-lg transition-all hover:-translate-y-1">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center mb-4 mx-auto">
-                <Sprout className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="font-bold text-[#1a472a] text-lg mb-2 text-center" style={{ fontFamily: 'var(--font-display)' }}>
-                Create Together
-              </h3>
-              <p className="text-[#1a472a]/70 text-sm mb-4 text-center">
-                Bring your skills to land projects and co-create regenerative infrastructure.
-              </p>
-              <Link href="/connect?path=create_with_regens">
-                <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl">
-                  Start Creating <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-            
-            {/* Apply for a Role */}
+
+            {/* Join Our Team */}
             <div className="bg-white p-6 rounded-xl border-2 border-rose-200 shadow-md hover:shadow-lg transition-all hover:-translate-y-1">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center mb-4 mx-auto">
                 <Users className="w-7 h-7 text-white" />
@@ -1763,10 +1784,6 @@ export default function Game() {
           <div className="flex justify-center mb-4">
             <SocialLinks />
           </div>
-          <Link href="/one-pager/player" className="inline-flex items-center gap-1 text-white/50 hover:text-[#7dd87d] text-sm transition-colors">
-            <Printer className="w-3.5 h-3.5" />
-            Download printable one-pager to share
-          </Link>
         </div>
       </section>
 

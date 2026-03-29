@@ -225,19 +225,7 @@ export function QuestBadges() {
 
   return (
     <>
-      {/* Floating Badge Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 z-40 bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 group"
-        title="View Your Badges"
-      >
-        <Award className="w-6 h-6" />
-        <span className="absolute -top-1 -right-1 bg-amber-400 text-[#1a472a] text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-          {earnedCount}
-        </span>
-      </button>
-
-      {/* Badges Modal */}
+      {/* Badges Modal (floating button removed, triggered via CommandPanel) */}
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"

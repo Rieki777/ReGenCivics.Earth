@@ -22,6 +22,7 @@ import { AudioProvider } from "./contexts/AudioContext";
 import { ReGenGuideProvider } from "./contexts/ReGenGuideContext";
 
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
+import { usePageVisitTracker } from "./hooks/usePageVisitTracker";
 import { useFocusOnNavigation } from "./hooks/useFocusOnNavigation";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useEffect, useState } from "react";
@@ -80,10 +81,6 @@ const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Disclaimers = lazy(() => import("./pages/Disclaimers"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
-const OnePager = lazy(() => import("./pages/OnePager"));
-const OnePagerLand = lazy(() => import("./pages/OnePagerLand"));
-const OnePagerAlliance = lazy(() => import("./pages/OnePagerAlliance"));
-const OnePagerPlayer = lazy(() => import("./pages/OnePagerPlayer"));
 const Community = lazy(() => import("./pages/Community"));
 const CommunityCategory = lazy(() => import("./pages/CommunityCategory"));
 const CommunityPost = lazy(() => import("./pages/CommunityPost"));
@@ -207,10 +204,6 @@ function Router() {
       <Route path={"/privacy-policy"}><EB><PrivacyPolicy /></EB></Route>
       <Route path={"/disclaimers"}><EB><Disclaimers /></EB></Route>
       <Route path={"/unsubscribe"}><EB><Unsubscribe /></EB></Route>
-      <Route path="/one-pager/land"><EB><OnePagerLand /></EB></Route>
-      <Route path="/one-pager/alliance"><EB><OnePagerAlliance /></EB></Route>
-      <Route path="/one-pager/player"><EB><OnePagerPlayer /></EB></Route>
-      <Route path={"/one-pager/:path"}><EB><OnePager /></EB></Route>
       <Route path={"/community"}><EB><Community /></EB></Route>
       <Route path={"/community/c/:slug"}><EB><CommunityCategory /></EB></Route>
       <Route path={"/community/post/:id"}><EB><CommunityPost /></EB></Route>
@@ -278,6 +271,8 @@ function AppInner() {
 function App() {
   const [location] = useLocation();
   const adminMode = isAdminRoute(location);
+  // Track page visits for progress map milestones
+  usePageVisitTracker();
 
   // Maintenance mode — toggle VITE_MAINTENANCE_MODE=true in Railway env vars before risky deploys
   if (import.meta.env.VITE_MAINTENANCE_MODE === "true") {

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { useAudio } from '@/contexts/AudioContext'
 import { useAuth } from '@/_core/hooks/useAuth'
 import { getCurrentSeason, SEASON_THEMES } from '@/lib/seasons'
-import { SkipBack, SkipForward, Play, Pause, Volume2, HelpCircle, Search } from 'lucide-react'
+import { SkipBack, SkipForward, Play, Pause, Volume2, HelpCircle, Search, ChevronDown } from 'lucide-react'
 import { useReGenGuide } from '@/contexts/ReGenGuideContext'
 import { usePageTools } from '@/hooks/usePageTools'
 import { NavIcon } from '@/components/SmartBottomNav'
@@ -43,10 +43,9 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
         onClose()
       }
     }
-    // Delay listener to avoid closing on the same click that opened the panel
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside)
-    }, 100)
+    }, 10)
     return () => {
       clearTimeout(timer)
       document.removeEventListener('mousedown', handleClickOutside)
@@ -63,6 +62,11 @@ export function CommandPanel({ isOpen, onClose }: CommandPanelProps) {
       style={{ opacity: 0.98 }}
     >
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
+        {/* Close handle */}
+        <button onClick={onClose} className="w-full flex justify-center py-0.5 -mt-2 mb-1 text-white/30 hover:text-white/60 transition-colors" aria-label="Close panel">
+          <ChevronDown className="w-5 h-5" />
+        </button>
+
         {/* Quick tools: Guide + Search (the two that work everywhere) */}
         <div className="grid grid-cols-2 gap-2">
           <button

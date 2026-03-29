@@ -43,20 +43,7 @@ export function QuestArtifactsGallery() {
 
   return (
     <>
-      {/* Floating button */}
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-20 md:bottom-6 right-[5.5rem] z-40 flex items-center gap-2 bg-[#1a472a] text-white rounded-full px-4 py-2.5 shadow-lg hover:bg-[#2d6a4f] transition-colors text-sm font-semibold"
-        aria-label="From the field"
-      >
-        <Users className="w-4 h-4" />
-        <span className="hidden sm:inline">From the Field</span>
-        {totalActive > 0 && (
-          <span className="bg-[#7dd87d] text-[#1a472a] text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
-            {totalActive}
-          </span>
-        )}
-      </button>
+      {/* Floating button removed, triggered via CommandPanel */}
 
       {/* Modal */}
       {open && (

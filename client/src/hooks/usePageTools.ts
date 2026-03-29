@@ -21,6 +21,7 @@ export function usePageTools(): PageTool[] {
   switch (path) {
     case '/quest':
       tools.push(
+        { icon: 'BarChart3', label: 'Progress', action: () => window.dispatchEvent(new CustomEvent('open-quest-progress')) },
         { icon: 'Award', label: 'Badges', action: () => window.dispatchEvent(new CustomEvent('open-quest-badges')) },
         { icon: 'Image', label: 'Gallery', action: () => window.dispatchEvent(new CustomEvent('open-quest-gallery')) },
         { icon: 'Calculator', label: 'Calculator', action: () => window.location.href = '/calculator' },

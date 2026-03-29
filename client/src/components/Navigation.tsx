@@ -7,7 +7,7 @@
  *   + Player Profile
  * - "Seasons + Schedule" dropdown: Seasons, Schedule
  * - Map, Team, Participate CTA
- * - "Learn + Connect" dropdown: Learn + Blog, Community Forum, social links
+ * - "Explore + Connect" dropdown: Learn + Blog, Community Forum, social links
  */
 
 import { useState } from "react";
@@ -88,7 +88,7 @@ export default function Navigation() {
   // Check if current location is in Seasons + Schedule section
   const isSeasonsActive = location === '/seasons' || location === '/schedule';
 
-  // Check if current location is in Learn + Connect
+  // Check if current location is in Explore + Connect
   const isSocialsBlogActive = location === '/blog' || location.startsWith('/blog/') || location === '/socials' || location.startsWith('/community');
 
   return (
@@ -364,7 +364,7 @@ export default function Navigation() {
               </Button>
             </Link>
 
-            {/* Learn + Connect Dropdown */}
+            {/* Explore + Connect Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
@@ -377,7 +377,7 @@ export default function Navigation() {
                   style={{ fontFamily: 'var(--font-accent)' }}
                 >
                   <Users className="w-4 h-4" />
-                  Learn + Connect
+                  Explore + Connect
                   <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -413,9 +413,16 @@ export default function Navigation() {
                   <MessageCircle className="w-5 h-5 mr-3 text-[#7dd87d]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Community Forum</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/glossary'}
+                >
+                  <BookOpen className="w-5 h-5 mr-3 text-[#c084fc]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Glossary</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 {socialLinks.map((social) => (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     key={social.name}
                     className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                     onClick={() => window.open(social.href, '_blank')}
@@ -889,7 +896,7 @@ export default function Navigation() {
                 Team
               </Link>
               
-              {/* Learn + Connect Collapsible - Mobile */}
+              {/* Explore + Connect Collapsible - Mobile */}
               <div className="flex flex-col">
                 <button
                   onClick={() => setMobileSocialsOpen(!mobileSocialsOpen)}
@@ -902,7 +909,7 @@ export default function Navigation() {
                 >
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5" />
-                    Learn + Connect
+                    Explore + Connect
                   </div>
                   {mobileSocialsOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </button>

@@ -649,17 +649,24 @@ export const orgClaimsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const claim = await db.updateOrgClaimStatus(input.id, 'approved', input.adminNotes);
       if (claim) {
+        // Check if the project already has a steward before overwriting
+        if (claim.orgType === 'land_project') {
+          const appId = parseInt(claim.orgId, 10);
+          if (!isNaN(appId)) {
+            const existing = await db.getApplicationById(appId);
+            if (existing?.stewardUserId && existing.stewardUserId !== claim.userId) {
+              throw new TRPCError({
+                code: "CONFLICT",
+                message: "This project already has a steward assigned. Remove the current steward before approving a new claim.",
+              });
+            }
+            await db.updateApplication(appId, { stewardUserId: claim.userId });
+          }
+        }
         // Route all pending join requests for this org to the new steward
         await db.routeJoinRequestsToSteward(claim.orgId, claim.userId);
         // Auto-create the forum thread for this entity if it doesn't exist yet
         await db.ensureEntityForumThread(claim.orgType, claim.orgName, ctx.user.id);
-        // Set stewardUserId on the application so the project is no longer "unclaimed"
-        if (claim.orgType === 'land_project') {
-          const appId = parseInt(claim.orgId, 10);
-          if (!isNaN(appId)) {
-            await db.updateApplication(appId, { stewardUserId: claim.userId });
-          }
-        }
       }
       return { ok: true };
     }),

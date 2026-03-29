@@ -138,7 +138,7 @@ function CollapsibleSection({
   id?: string;
 }) {
   const isDesktopSection = useMediaQuery('(min-width: 1024px)');
-  const resolvedDefault = defaultOpen ?? isDesktopSection;
+  const resolvedDefault = defaultOpen ?? false;
   const [isOpen, setIsOpen] = useState(resolvedDefault);
 
   return (
