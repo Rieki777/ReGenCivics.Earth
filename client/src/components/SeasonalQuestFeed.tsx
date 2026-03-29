@@ -4,8 +4,10 @@
  */
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 import { useHemisphere, setHemisphereOverride } from "@/hooks/useHemisphere";
+import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
+import { SeasonProgressRing } from "@/components/SeasonProgressRing";
 import { seasonalQuestsData } from "@/data/seasonalQuestsData";
 import type { Season } from "@/hooks/useHemisphere";
 
@@ -73,6 +75,10 @@ export function SeasonalQuestFeed({ forceSeason }: SeasonalQuestFeedProps = {}) 
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
 
+  let unlocks: ReturnType<typeof useQuestUnlocks> | null = null;
+  try { unlocks = useQuestUnlocks(); } catch { /* outside provider */ }
+  const isLocked = unlocks ? !unlocks.isSeasonalPracticeUnlocked : false;
+
   const season: Season = forceSeason ?? (loading ? "spring" : currentSeason);
   const colors = SEASON_COLORS[season] ?? SEASON_COLORS.spring;
   const tagline = SEASON_TAGLINES[season] ?? SEASON_TAGLINES.spring;
@@ -106,6 +112,18 @@ export function SeasonalQuestFeed({ forceSeason }: SeasonalQuestFeedProps = {}) 
     <section className="py-14">
       <div className="container">
         <div className="max-w-5xl mx-auto">
+          {/* Gate banner for locked state */}
+          {isLocked && unlocks && (
+            <div className="flex items-center gap-3 bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-2xl px-5 py-4 mb-6">
+              <Lock className="w-5 h-5 text-emerald-400/70 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-[#1a472a] text-sm font-medium">Complete the Rites of Passage to access Seasonal Practices</p>
+                <SeasonProgressRing completedSeasons={unlocks.completedSeasons} compact className="mt-2" />
+              </div>
+            </div>
+          )}
+
+          <div className={isLocked ? "opacity-40 grayscale pointer-events-none" : ""}>
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-2">
             <div>
@@ -300,6 +318,7 @@ export function SeasonalQuestFeed({ forceSeason }: SeasonalQuestFeedProps = {}) 
               )}
             </div>
           )}
+        </div>
         </div>
       </div>
     </section>

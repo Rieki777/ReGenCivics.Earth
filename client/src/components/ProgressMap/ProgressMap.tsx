@@ -7,9 +7,10 @@ import { useState } from "react";
 import { X, ChevronRight, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { PATHS, type MapNode, type PathId } from "./mapData";
-import { MAP_ASSETS } from "./mapAssets";
+import { MAP_ASSETS, getMapSrc } from "./mapAssets";
 import { ProgressMapSVG } from "./ProgressMapSVG";
 import { useProgressMap } from "./useProgressMap";
+import { MapTransition } from "./MapTransition";
 
 interface Props {
   onClose: () => void;
@@ -28,9 +29,10 @@ export default function ProgressMap({ onClose }: Props) {
     : null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0a1a10] flex flex-col">
-      {/* Preload hero map illustration */}
-      <link rel="preload" href={MAP_ASSETS.hero} as="image" type="image/webp" />
+    <div className="fixed inset-0 z-[100] bg-[#0a1a10] flex flex-col" data-map-overlay>
+      {/* Preload hero map illustration (responsive) */}
+      <link rel="preload" href={MAP_ASSETS.hero.md} as="image" type="image/webp" media="(min-width: 768px)" />
+      <link rel="preload" href={MAP_ASSETS.hero.sm} as="image" type="image/webp" media="(max-width: 767px)" />
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
         <h1
@@ -150,12 +152,13 @@ export default function ProgressMap({ onClose }: Props) {
                   Completed
                 </p>
               ) : (
-                <Link
-                  href={selectedNode.href}
+                <MapTransition
+                  targetPath={selectedNode.href}
+                  onTransitionStart={onClose}
                   className="inline-flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-xs hover:bg-[#6bc86b] transition-colors"
                 >
                   Go there <ChevronRight className="w-3 h-3" />
-                </Link>
+                </MapTransition>
               )}
             </div>
           )}

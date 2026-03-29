@@ -1024,6 +1024,26 @@
   transform: scale(0.97);
 }
 
+/* Map dissolve transition */
+.map-dissolve-out {
+  animation: mapDissolve 600ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes mapDissolve {
+  0% { opacity: 1; filter: blur(0px); }
+  50% { opacity: 0.6; filter: blur(2px); }
+  100% { opacity: 0; filter: blur(8px); }
+}
+
+/* GPU-accelerated map container */
+[data-map-overlay] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  contain: layout style paint;
+  image-rendering: auto;
+}
+
 /* Global focus-visible ring for keyboard navigation */
 :focus-visible {
   outline: 2px solid #4ade80;

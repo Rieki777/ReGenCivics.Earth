@@ -4,7 +4,7 @@
  */
 import { useState } from "react";
 import { PATHS, REGEN_TREE, buildPathCurve, type MapNode, type NodeState } from "./mapData";
-import { MAP_ASSETS } from "./mapAssets";
+import { MAP_ASSETS, getMapSrc } from "./mapAssets";
 import type { ProgressMapState } from "./useProgressMap";
 
 interface Props {
@@ -138,9 +138,9 @@ export function ProgressMapSVG({ progress, onNodeClick, selectedPath }: Props) {
       className="w-full h-full"
       style={{ background: "#0a1a10" }}
     >
-      {/* Background illustration */}
+      {/* Background illustration (responsive) */}
       <image
-        href={MAP_ASSETS.hero}
+        href={getMapSrc(MAP_ASSETS.hero)}
         x={0}
         y={0}
         width={1200}

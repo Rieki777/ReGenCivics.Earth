@@ -34,6 +34,9 @@ import { JsonLD } from "@/components/JsonLD";
 import { seasonalQuestsData } from "@/data/seasonalQuestsData";
 import { pageCopy } from "@/data/pageCopy";
 import { cdnImg } from "@/lib/utils";
+import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
+import { LockedQuestCard } from "@/components/LockedQuestCard";
+import { SeasonProgressRing } from "@/components/SeasonProgressRing";
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.webp to this path
 const QUEST_IMG_BASE = cdnImg("https://assets.regencivics.earth/quests");
@@ -100,7 +103,18 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 // Original quest IDs (0–12) get gold shimmer; future quests get green shimmer
 const ORIGINAL_QUEST_IDS = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12]);
 
-const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated, endorsements }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean, endorsements?: Array<{ orgId: string; endorsementType: "recommended" | "required" }> }) {
+const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated, endorsements, isLocked }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean, endorsements?: Array<{ orgId: string; endorsementType: "recommended" | "required" }>, isLocked?: boolean }) {
+  // Locked state: show greyed card with lock icon
+  if (isLocked) {
+    return (
+      <LockedQuestCard title={quest.title} subtitle={quest.subtitle}>
+        {quest.deliverable && (
+          <p className="text-xs text-[#1a472a]/30 mt-2 italic">{quest.deliverable}</p>
+        )}
+      </LockedQuestCard>
+    );
+  }
+
   const Icon = quest.icon;
   const hasDetails = questDetailsData[`quest-${quest.id}`];
   const questId = `quest-${quest.id}`;
@@ -426,6 +440,10 @@ export default function Quest() {
   const [showIntro, setShowIntro] = useState(!hasEntered);
   const featuredQuestRef = useRef<HTMLDivElement>(null);
   const [isQuestReturnVisitor, setIsQuestReturnVisitor] = useState(false);
+
+  // Quest progression locking
+  let unlocks: ReturnType<typeof useQuestUnlocks> | null = null;
+  try { unlocks = useQuestUnlocks(); } catch { /* not inside QuestProgressProvider yet */ }
   
   // Track quest page visits and auto-scroll return visitors to featured quest
   useEffect(() => {
@@ -970,7 +988,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.spring.length}>
             {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
             ))}
           </QuestCarousel>
           {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -995,7 +1013,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.summer.length}>
             {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
             ))}
           </QuestCarousel>
           {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -1020,7 +1038,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.fall.length}>
             {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
             ))}
           </QuestCarousel>
           {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
@@ -1045,7 +1063,7 @@ export default function Quest() {
           </div>
           <QuestCarousel totalCount={questData.winter.length}>
             {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} />
+              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
             ))}
           </QuestCarousel>
           {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (

@@ -5,6 +5,9 @@
 
 import { EPIC_QUESTS, EpicQuest, EpicElement } from "@/data/epicQuestsData";
 import { Link } from "wouter";
+import { Lock } from "lucide-react";
+import { SeasonProgressRing } from "@/components/SeasonProgressRing";
+import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
 
 const TIER_CONFIG = {
   easy: {
@@ -139,6 +142,10 @@ function TierRow({ tier }: { tier: "easy" | "hard" | "expert" }) {
 }
 
 export function EpicQuestSection() {
+  let unlocks: ReturnType<typeof useQuestUnlocks> | null = null;
+  try { unlocks = useQuestUnlocks(); } catch { /* outside provider */ }
+  const isLocked = unlocks ? !unlocks.isEpicUnlocked : false;
+
   return (
     <section className="py-20 px-4" style={{ backgroundColor: "#0a1f0f" }}>
       <div className="container max-w-5xl mx-auto">
@@ -156,12 +163,23 @@ export function EpicQuestSection() {
           <p className="text-white/55 text-lg max-w-xl mx-auto">
             Long-form challenges for committed regenerators. These are not short quests. They are seasons of real work.
           </p>
+          {isLocked && unlocks && (
+            <div className="mt-6 inline-flex flex-col items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-6 py-4">
+              <div className="flex items-center gap-2 text-white/60 text-sm">
+                <Lock className="w-4 h-4 text-emerald-400/70" />
+                <span>Complete at least 1 Rite in each season to access Epic Quests</span>
+              </div>
+              <SeasonProgressRing completedSeasons={unlocks.completedSeasons} />
+            </div>
+          )}
         </div>
 
         {/* Tier rows */}
-        <TierRow tier="easy" />
-        <TierRow tier="hard" />
-        <TierRow tier="expert" />
+        <div className={isLocked ? "opacity-40 grayscale pointer-events-none" : ""}>
+          <TierRow tier="easy" />
+          <TierRow tier="hard" />
+          <TierRow tier="expert" />
+        </div>
 
         {/* CTA */}
         <div className="text-center mt-8">
