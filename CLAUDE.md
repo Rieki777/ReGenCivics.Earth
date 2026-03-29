@@ -47,6 +47,9 @@ These files define all outstanding work for this project. Always check them befo
 - `QUALITY_SPRINT_9_10.md` — quality sprint backlog. Performance, security, and code quality targets.
 - `ReGenCivics_WelcomeAboard_Brief.md` — full content brief for the Welcome Aboard Quests: all 10 quest cards, forum post bodies, seed comments, and implementation plan.
 - `PROGRESS_MAP_DESIGN.md` — full spec for the interactive progress map component (illustrations done, component build is next).
+- `QUEST_PROGRESSION_SPEC.md` — quest locking and progression system. Unlock chain, visual states, component changes, useQuestUnlocks hook.
+- `CLAUDE_CODE_PROMPT_2026-03-28_MAP_PERF.md` — **active** execution prompt. Map performance optimization, quest hero image generation, dissolve page transitions.
+- `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` — **active** execution prompt. Quest locking UI, hero quest cards, season progress ring. Depends on MAP_PERF running first.
 
 All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
 
