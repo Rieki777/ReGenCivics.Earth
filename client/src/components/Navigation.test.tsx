@@ -40,6 +40,11 @@ vi.mock('@/components/NotificationBell', () => ({
   NotificationBell: () => <span data-testid="notification-bell" />,
 }));
 
+// Mock LanguageSwitcher (uses LanguageContext internally)
+vi.mock('@/components/LanguageSwitcher', () => ({
+  LanguageSwitcher: () => <span data-testid="language-switcher" />,
+}));
+
 // Mock SmartBottomNav (uses trpc + hooks internally)
 vi.mock('@/components/SmartBottomNav', () => ({
   default: () => <nav data-testid="smart-bottom-nav">Smart Nav</nav>,

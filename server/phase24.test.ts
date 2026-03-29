@@ -99,22 +99,21 @@ describe('Markdown Toolbar Component', () => {
 
 describe('Language Selection (Fix 200: removed auto-detect, only restore explicit user choice)', () => {
   it('should restore only explicit user language choice from localStorage', () => {
+    // Language storage key moved from GoogleTranslate.tsx to LanguageContext.tsx
     const source = readFileSync(
-      resolve(__dirname, '../client/src/components/GoogleTranslate.tsx'),
+      resolve(__dirname, '../client/src/contexts/LanguageContext.tsx'),
       'utf-8'
     );
-    // Auto-detect was removed in Fix 200. Only manual selection is restored.
-    expect(source).toContain('LANG_STORAGE_KEY');
+    expect(source).toContain('STORAGE_KEY');
     expect(source).toContain('regen-civics-language');
   });
 
   it('should respect stored language preference after manual selection', () => {
     const source = readFileSync(
-      resolve(__dirname, '../client/src/components/GoogleTranslate.tsx'),
+      resolve(__dirname, '../client/src/contexts/LanguageContext.tsx'),
       'utf-8'
     );
-    // Should check for LANG_STORAGE_KEY (manual selection)
     expect(source).toContain('regen-civics-language');
-    expect(source).toContain('LANG_STORAGE_KEY');
+    expect(source).toContain('STORAGE_KEY');
   });
 });
