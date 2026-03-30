@@ -769,7 +769,7 @@ export default function Game() {
                   {pageCopy.game.contributions.buttons.calculator}
                 </a>
                 <a
-                  href="/community/post/560"
+                  href="/community/post/622"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1a472a] text-white rounded-xl hover:bg-[#2d5a3d] transition-colors font-medium text-sm"
                 >
                   {pageCopy.game.contributions.buttons.discussion}
@@ -1756,39 +1756,4 @@ export default function Game() {
                 className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                <span className="mr-2">🧙</span> Start Your Quest Journey
-              </Button>
-            </Link>
-            <Link href="/seasons">
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-xl border-2 border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/20"
-                style={{ fontFamily: 'var(--font-accent)' }}
-              >
-                Apply for the Next Season → <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-            <Link href="/governance">
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-xl border-2 border-[#d4a574]/60 text-[#d4a574] hover:bg-[#d4a574]/10"
-                style={{ fontFamily: 'var(--font-accent)' }}
-              >
-                <span className="mr-2">🌳</span> Explore How We Govern
-              </Button>
-            </Link>
-          </div>
-          
-          <div className="flex justify-center mb-4">
-            <SocialLinks />
-          </div>
-        </div>
-      </section>
-
-      {/* Related Content */}
-      <RelatedContent pages={relatedContentMap.game.pages} blog={relatedContentMap.game.blog} />
-    </div>
-  );
-}
+              
