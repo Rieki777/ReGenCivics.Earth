@@ -18,6 +18,7 @@ import { SEO, pageSEO } from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
+import { resolveAssetUrl } from "@/lib/utils";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
@@ -665,7 +666,7 @@ export default function Community() {
                         <div className="flex items-start gap-3 md:gap-4">
                           <Link href={`/community/c/${category.slug}`} className="flex items-start gap-3 md:gap-4 flex-1 min-w-0 cursor-pointer">
                             {category.imageUrl ? (
-                              <img src={category.imageUrl} alt={category.name} className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover flex-shrink-0 transition-transform group-hover:scale-110" width={48} height={48} loading="lazy" />
+                              <img src={resolveAssetUrl(category.imageUrl)} alt={category.name} className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover flex-shrink-0 transition-transform group-hover:scale-110" width={48} height={48} loading="lazy" />
                             ) : (
                               <div
                                 className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"

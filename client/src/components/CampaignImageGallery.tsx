@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Camera, Images } from 'lucide-react';
+import { resolveAssetUrl } from "@/lib/utils";
 
 interface GalleryImage {
   id: number;
@@ -76,7 +77,7 @@ export function CampaignImageGallery({ images, campaignName, mode = 'card' }: Ca
         >
           {coverImage && (
             <img
-              src={coverImage.imageUrl}
+              src={resolveAssetUrl(coverImage.imageUrl)}
               alt={coverImage.caption || campaignName}
               className="w-full h-full object-cover"
               width={800}
@@ -125,7 +126,7 @@ export function CampaignImageGallery({ images, campaignName, mode = 'card' }: Ca
             onClick={(e) => openLightbox(e, index)}
           >
             <img
-              src={image.imageUrl}
+              src={resolveAssetUrl(image.imageUrl)}
               alt={image.caption || `${campaignName} photo ${index + 1}`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
@@ -213,7 +214,7 @@ function ImageLightbox({
 
         {/* Main image */}
         <img
-          src={current.imageUrl}
+          src={resolveAssetUrl(current.imageUrl)}
           alt={current.caption || `${campaignName} photo`}
           className="max-w-full max-h-[70vh] object-contain rounded-lg"
           onClick={e => e.stopPropagation()}
@@ -254,7 +255,7 @@ function ImageLightbox({
               }`}
             >
               <img
-                src={img.imageUrl}
+                src={resolveAssetUrl(img.imageUrl)}
                 alt=""
                 className="w-full h-full object-cover"
                 loading="lazy"

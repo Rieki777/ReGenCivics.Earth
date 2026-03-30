@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { resolveAssetUrl } from "@/lib/utils";
 
 type Mode = "upload" | "generate" | "url";
 type Theme = "light" | "dark";
@@ -175,7 +176,7 @@ export function SmartImagePicker({
         {label && <p className={`text-xs font-medium ${c.label}`}>{label}</p>}
         <div className="relative inline-block group">
           <img
-            src={value}
+            src={resolveAssetUrl(value)}
             alt="Selected image"
             className={`w-24 h-24 ${shapeClass} object-cover border-2 ${c.previewBorder} transition-opacity group-hover:opacity-80`}
             width={96}
