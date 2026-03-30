@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb } from "lucide-react";
 import { Drawer } from "vaul";
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -419,6 +419,13 @@ export default function Navigation() {
                 >
                   <BookOpen className="w-5 h-5 mr-3 text-[#c084fc]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Glossary</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/features'}
+                >
+                  <Lightbulb className="w-5 h-5 mr-3 text-amber-400" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Suggest a Feature</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 {socialLinks.map((social) => (

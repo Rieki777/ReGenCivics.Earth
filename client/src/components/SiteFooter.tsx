@@ -53,6 +53,12 @@ export default function SiteFooter() {
           <Link href="/community" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
             Community
           </Link>
+          <Link href="/glossary" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            Glossary
+          </Link>
+          <Link href="/features" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            Suggest a Feature
+          </Link>
         </nav>
 
         {/* Middle row: Navigation columns */}

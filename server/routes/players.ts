@@ -81,6 +81,7 @@ export const playerProfilesRouter = router({
       displayName: z.string().min(2).max(255).optional(),
       bio: z.string().optional(),
       avatarUrl: z.string().optional(),
+      bannerUrl: z.string().nullable().optional(),
       baseAccountName: z.string().optional(),
       hyphaProfileUrl: z.string().optional(),
       walletAddress: z.string().optional(),

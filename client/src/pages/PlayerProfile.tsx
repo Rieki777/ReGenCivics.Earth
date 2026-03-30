@@ -2639,19 +2639,32 @@ export default function PlayerProfile() {
       />
       
       {/* Hero Section */}
-      <section className="relative py-16 px-4">
-        <div className="container mx-auto max-w-4xl">
+      <section className="relative py-16 px-4 overflow-hidden">
+        {/* Banner image (when set) */}
+        {(profile as any)?.bannerUrl && (
+          <>
+            <img
+              src={(profile as any).bannerUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              width={1200}
+              height={400}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/60 via-[#0d2818]/40 to-[#0d2818]/90" />
+          </>
+        )}
+        <div className="container mx-auto max-w-4xl relative z-10">
           <AnimatedSection animation="slide-up">
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 bg-[#7dd87d]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/30">
                 <SeedOfLifeIcon className="w-5 h-5 text-[#7dd87d]" />
                 <span className="text-[#7dd87d] font-medium">Game Profile</span>
               </div>
-              
+
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 Your <span className="text-[#7dd87d]">Player</span> Profile
               </h1>
-              
+
               <p className="text-xl text-white/80 max-w-2xl mx-auto">
                 Track your contributions, earn tokens, and connect your Base blockchain account to verify your on-chain identity.
               </p>

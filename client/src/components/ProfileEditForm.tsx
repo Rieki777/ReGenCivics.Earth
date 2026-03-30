@@ -210,6 +210,15 @@ export function ProfileEditForm() {
         shape="circle"
       />
 
+      <SmartImagePicker
+        value={form.bannerUrl || ""}
+        onChange={(url) => set("bannerUrl", url)}
+        context="profile"
+        label="Profile Banner"
+        theme="dark"
+        shape="square"
+      />
+
       {/* Investor-specific */}
       {path === "investor" && (
         <div className="space-y-1.5">

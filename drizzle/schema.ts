@@ -469,7 +469,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   email: varchar("email", { length: 320 }),
   bio: text("bio"),
   avatarUrl: varchar("avatarUrl", { length: 512 }),
-  
+  bannerUrl: varchar("bannerUrl", { length: 512 }),
+
   // Base blockchain account linking
   // This is the primary blockchain identifier from Hypha (e.g., 0xaAaF...354e)
   baseAccountName: varchar("baseAccountName", { length: 255 }), // Base blockchain account address

@@ -3,8 +3,9 @@
  * Helps first-time visitors understand specialized terminology
  */
 import { useState, useMemo } from "react";
-import { Search, BookOpen, ExternalLink } from "lucide-react";
+import { Search, BookOpen, ExternalLink, Plus, X, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
@@ -12,6 +13,8 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { Link } from "wouter";
 import { PageTransition } from "@/components/PageTransition";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 
 interface GlossaryEntry {
   term: string;
@@ -211,6 +214,17 @@ const categories = Array.from(new Set(glossaryEntries.map((e) => e.category)));
 export default function Glossary() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
+  const [showPropose, setShowPropose] = useState(false);
+  const [proposeTerm, setProposeTerm] = useState("");
+  const [proposeDefinition, setProposeDefinition] = useState("");
+  const utils = trpc.useUtils();
+  const proposeMutation = trpc.glossary.propose.useMutation({
+    onSuccess: () => {
+      setProposeTerm(""); setProposeDefinition(""); setShowPropose(false);
+      utils.glossary.list.invalidate();
+    },
+  });
 
   const { data: dbTerms } = trpc.glossary.list.useQuery();
 
@@ -265,8 +279,8 @@ export default function Glossary() {
               Definitions for the key terms, frameworks, and concepts used throughout the ReGen Civics ecosystem.
             </p>
 
-            {/* Search */}
-            <div className="relative max-w-md mx-auto">
+            {/* Search + Propose */}
+            <div className="relative max-w-md mx-auto mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/55" />
               <Input
                 type="text"
@@ -276,6 +290,25 @@ export default function Glossary() {
                 className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
               />
             </div>
+            {isAuthenticated ? (
+              <Button onClick={() => setShowPropose(!showPropose)} variant="outline" className="text-[#7dd87d] border-[#7dd87d]/30 hover:bg-[#7dd87d]/10 rounded-full text-sm">
+                {showPropose ? <X className="w-4 h-4 mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
+                {showPropose ? "Close" : "Propose a Term"}
+              </Button>
+            ) : (
+              <a href={getLoginUrl()} className="inline-flex items-center gap-1 text-[#7dd87d]/60 hover:text-[#7dd87d] text-sm transition-colors">
+                Sign in to propose a term
+              </a>
+            )}
+            {showPropose && (
+              <div className="max-w-md mx-auto mt-4 bg-white/10 border border-white/20 rounded-2xl p-4 space-y-3 text-left">
+                <input value={proposeTerm} onChange={e => setProposeTerm(e.target.value)} placeholder="Term (e.g. 'Bioregion')" className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={200} />
+                <textarea value={proposeDefinition} onChange={e => setProposeDefinition(e.target.value)} placeholder="Definition..." className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[80px] resize-y" maxLength={5000} />
+                <Button onClick={() => { if (proposeTerm.trim() && proposeDefinition.trim()) proposeMutation.mutate({ term: proposeTerm.trim(), definition: proposeDefinition.trim() }); }} disabled={!proposeTerm.trim() || !proposeDefinition.trim() || proposeMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold rounded-full px-5 text-sm">
+                  <Send className="w-3 h-3 mr-1" /> {proposeMutation.isPending ? "Submitting..." : "Submit"}
+                </Button>
+              </div>
+            )}
 
             {/* Category filters */}
             <div className="flex flex-wrap justify-center gap-2 mt-6">
