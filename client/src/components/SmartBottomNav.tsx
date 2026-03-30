@@ -57,6 +57,7 @@ export default function SmartBottomNav() {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pressedSlot, setPressedSlot] = useState<number | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const panelToggleRef = useRef<HTMLButtonElement>(null);
   const { isPlaying, togglePlay, currentSong } = useAudio();
 
   const handleLongPressStart = useCallback((slotIndex: number) => {
@@ -93,7 +94,7 @@ export default function SmartBottomNav() {
 
   return (
     <>
-      <CommandPanel isOpen={panelOpen} onClose={() => setPanelOpen(false)} />
+      <CommandPanel isOpen={panelOpen} onClose={() => setPanelOpen(false)} toggleRef={panelToggleRef} />
 
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 bg-[#1a472a]/95 backdrop-blur-sm border-t border-[#7dd87d]/20 safe-area-pb"
@@ -142,6 +143,7 @@ export default function SmartBottomNav() {
 
           {/* Expand panel slot */}
           <button
+            ref={panelToggleRef}
             onClick={() => setPanelOpen(p => !p)}
             className={`flex flex-col items-center justify-center gap-1 transition-colors ${
               panelOpen ? "text-[#7dd87d]" : "text-white/40 hover:text-white/70"
