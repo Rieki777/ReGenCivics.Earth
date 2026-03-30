@@ -6,6 +6,7 @@
  */
 import React from "react";
 import { BADGE_DEF_MAP, getHighestBadgeId } from "@/const/badges";
+import { resolveAssetUrl } from "@/lib/utils";
 
 const QUEST_MAX = 10;
 
@@ -111,7 +112,7 @@ export function BadgeRingAvatar({ avatarUrl, displayName, badges, size = 40, cla
 
   const avatar = avatarUrl ? (
     <img
-      src={avatarUrl}
+      src={resolveAssetUrl(avatarUrl)}
       alt={displayName ?? "Player"}
       width={size}
       height={size}

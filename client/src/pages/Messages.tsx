@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SEO, pageSEO } from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
+import { resolveAssetUrl } from "@/lib/utils";
 import {
   useState,
   useEffect,
@@ -81,7 +82,7 @@ function Avatar({ name, avatarUrl, size = "md" }: AvatarProps) {
   if (avatarUrl) {
     return (
       <img
-        src={avatarUrl}
+        src={resolveAssetUrl(avatarUrl)}
         alt={name}
         className={`${sizeClass} rounded-full object-cover flex-shrink-0`}
       />

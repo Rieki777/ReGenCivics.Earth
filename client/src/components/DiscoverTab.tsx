@@ -149,3 +149,9 @@ export function DiscoverTab() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

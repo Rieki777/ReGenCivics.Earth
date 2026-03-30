@@ -89,7 +89,7 @@ import VouchSection from "@/components/VouchSection";
 import SeasonalIntention from "@/components/SeasonalIntention";
 import ContributionTimeline from "@/components/ContributionTimeline";
 import { getCurrentSeason } from "@/lib/seasons";
-import { cdnImg, resolveAssetUrl } from "@/lib/utils";
+import { cdnImg } from "@/lib/utils";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -504,10 +504,9 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
               </div>
             </div>
           </div>
-          {isOwner && onGoToSettings && (
-            <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10" onClick={onGoToSettings}>
-              <Edit className="w-4 h-4 mr-1" />
-              <span className="text-xs">Edit</span>
+          {isOwner && (
+            <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
+              <Edit className="w-4 h-4" />
             </Button>
           )}
         </div>
@@ -2640,32 +2639,19 @@ export default function PlayerProfile() {
       />
       
       {/* Hero Section */}
-      <section className="relative py-16 px-4 overflow-hidden">
-        {/* Banner image (when set) */}
-        {(profile as any)?.bannerUrl && (
-          <>
-            <img
-              src={resolveAssetUrl((profile as any).bannerUrl)}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover"
-              width={1200}
-              height={400}
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/60 via-[#0d2818]/40 to-[#0d2818]/90" />
-          </>
-        )}
-        <div className="container mx-auto max-w-4xl relative z-10">
+      <section className="relative py-16 px-4">
+        <div className="container mx-auto max-w-4xl">
           <AnimatedSection animation="slide-up">
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 bg-[#7dd87d]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/30">
                 <SeedOfLifeIcon className="w-5 h-5 text-[#7dd87d]" />
                 <span className="text-[#7dd87d] font-medium">Game Profile</span>
               </div>
-
+              
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 Your <span className="text-[#7dd87d]">Player</span> Profile
               </h1>
-
+              
               <p className="text-xl text-white/80 max-w-2xl mx-auto">
                 Track your contributions, earn tokens, and connect your Base blockchain account to verify your on-chain identity.
               </p>
@@ -3043,4 +3029,32 @@ export default function PlayerProfile() {
               </Card>
 
               <Card className="bg-white/10 backdrop-blur-sm border-[#7dd87d]/20">
-                <CardContent className="p-6 te
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-[#7dd87d] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <UsersIcon className="w-6 h-6 text-[#1a472a]" />
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">4. Co-Create</h3>
+                  <p className="text-white/60 text-sm">
+                    Be part of designing the financial and economic systems of our present and future
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* Back to Home */}
+      <section className="py-8 px-4">
+        <div className="container mx-auto max-w-4xl text-center">
+          <Link href="/">
+            <Button variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10">
+              <HomeIcon className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

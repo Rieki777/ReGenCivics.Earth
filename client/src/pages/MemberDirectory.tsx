@@ -317,4 +317,10 @@ export default function MemberDirectory() {
                   </button>
                 </div>
               )}
-            </
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

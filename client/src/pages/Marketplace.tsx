@@ -218,4 +218,9 @@ export default function Marketplace() {
           <p className="text-center text-white/30 text-xs mt-8">
             {items.length} member{items.length !== 1 ? "s" : ""} in the marketplace
           </p>
-  
+        )}
+      </div>
+    </div>
+    </PageWrapper>
+  );
+}
