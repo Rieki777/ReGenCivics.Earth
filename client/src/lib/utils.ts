@@ -20,22 +20,18 @@ export function cdnImg(url: string, widthPx?: number, quality = 85): string {
 
 /**
  * Resolves any R2 asset URL so it's loadable by the browser.
- * - assets.regencivics.earth URLs are routed through /storage/ (direct R2 proxy)
- * - Other URLs pass through unchanged.
- * Use this for avatars, banners, and any user-uploaded image where you
- * don't need Sharp optimization (cdnImg does optimization).
+ * Routes assets.regencivics.earth URLs through /api/img so they get
+ * Sharp optimization (resize, webp, quality) just like cdnImg does.
+ * Other URLs pass through unchanged.
+ * Use this for avatars, banners, and any user-uploaded image.
  */
 export function resolveAssetUrl(url: string | null | undefined): string {
   if (!url) return "";
   if (url.includes("assets.regencivics.earth")) {
-    // Extract the path after the domain and route through the server proxy
-    try {
-      const parsed = new URL(url);
-      return `/storage${parsed.pathname}`;
-    } catch {
-      // If URL parsing fails, try a simple string replace
-      return url.replace(/https?:\/\/assets\.regencivics\.earth/, "/storage");
-    }
+    // Route through /api/img for Sharp optimization (same proxy cdnImg uses)
+    const params = new URLSearchParams({ url });
+    params.set("q", "85");
+    return `/api/img?${params.toString()}`;
   }
   return url;
 }
