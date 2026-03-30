@@ -77,6 +77,7 @@ export const userProfilesRouter = router({
       bio: z.string().optional(),
       location: z.string().max(255).optional(),
       avatarUrl: z.string().max(500).optional(),
+      bannerUrl: z.string().max(500).optional(),
       investmentRange: z.string().max(255).optional(),
       projectName: z.string().max(255).optional(),
       projectUrl: z.string().max(500).optional(),

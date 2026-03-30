@@ -23,7 +23,7 @@ function getNotificationLink(type: string, metadata?: any): string | null {
     case 'campaign_milestone':
       return metadata?.campaignId ? `/campaigns/${metadata.campaignId}` : '/crowdpooling';
     case 'quest_complete':
-      return '/quests';
+      return '/quest';
     case 'governance':
       return '/governance';
     default:

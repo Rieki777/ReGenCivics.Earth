@@ -1493,6 +1493,7 @@ export const userProfiles = mysqlTable("userProfiles", {
   questInterests: text("questInterests"),
   displayName: varchar("displayName", { length: 255 }),
   avatarUrl: varchar("avatarUrl", { length: 500 }),
+  bannerUrl: varchar("bannerUrl", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastActiveAt: timestamp("lastActiveAt"),

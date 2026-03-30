@@ -504,9 +504,10 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
               </div>
             </div>
           </div>
-          {isOwner && (
-            <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
-              <Edit className="w-4 h-4" />
+          {isOwner && onGoToSettings && (
+            <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10" onClick={onGoToSettings}>
+              <Edit className="w-4 h-4 mr-1" />
+              <span className="text-xs">Edit</span>
             </Button>
           )}
         </div>

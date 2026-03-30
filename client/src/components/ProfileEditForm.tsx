@@ -38,6 +38,7 @@ export function ProfileEditForm() {
     legacyBio: "",  // fallback for pre-structured bio plain text
     location: "",
     avatarUrl: "",
+    bannerUrl: "",
     investmentRange: "",
     projectName: "",
     projectUrl: "",
@@ -58,6 +59,7 @@ export function ProfileEditForm() {
       legacyBio: (!parsed && profile.bio) ? profile.bio : "",
       location: profile.location ?? "",
       avatarUrl: profile.avatarUrl ?? "",
+      bannerUrl: profile.bannerUrl ?? "",
       investmentRange: profile.investmentRange ?? "",
       projectName: profile.projectName ?? "",
       projectUrl: profile.projectUrl ?? "",
@@ -92,6 +94,7 @@ export function ProfileEditForm() {
       bio: bioValue,
       location: form.location || undefined,
       avatarUrl: form.avatarUrl || undefined,
+      bannerUrl: form.bannerUrl || undefined,
       investmentRange: form.investmentRange || undefined,
       projectName: form.projectName || undefined,
       projectUrl: form.projectUrl || undefined,

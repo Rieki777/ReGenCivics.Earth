@@ -1075,15 +1075,26 @@ export default function Community() {
             </div>
 
             {/* Suggest a Quest */}
-            <Link href="/community/quests" className="block border-l-4 border-green-500 bg-green-50 rounded-xl p-5 hover:bg-green-100 transition-colors group mt-3">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">💡</span>
-                <div>
-                  <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-green-700 transition-colors">Got an idea for a quest?</h3>
-                  <p className="text-sm text-[#1a472a]/60">Propose it here. The community votes and the best ones get built.</p>
+            <div className="grid sm:grid-cols-2 gap-3 mt-3">
+              <Link href="/community/quests" className="block border-l-4 border-green-500 bg-green-50 rounded-xl p-5 hover:bg-green-100 transition-colors group">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">💡</span>
+                  <div>
+                    <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-green-700 transition-colors">Got an idea for a quest?</h3>
+                    <p className="text-sm text-[#1a472a]/60">Propose it here. The community votes and the best ones get built.</p>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+              <Link href="/features" className="block border-l-4 border-amber-500 bg-amber-50 rounded-xl p-5 hover:bg-amber-100 transition-colors group">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🔧</span>
+                  <div>
+                    <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-amber-700 transition-colors">Got an idea for a feature?</h3>
+                    <p className="text-sm text-[#1a472a]/60">Suggest improvements to the site. Vote on what gets built next.</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
 
             {isAdmin && (
               <div className="mt-4 pt-4 border-t border-amber-200/60">

@@ -68,14 +68,6 @@ const searchItems: { group: string; items: SearchItem[] }[] = [
     ],
   },
   {
-    group: "One-Pagers",
-    items: [
-      { label: "Land Project One-Pager", href: "/one-pager/land", keywords: "one pager land download pdf", icon: <FileText className="w-4 h-4" /> },
-      { label: "Alliance One-Pager", href: "/one-pager/alliance", keywords: "one pager alliance partner download", icon: <FileText className="w-4 h-4" /> },
-      { label: "Player One-Pager", href: "/one-pager/player", keywords: "one pager player game download", icon: <FileText className="w-4 h-4" /> },
-    ],
-  },
-  {
     group: "Legal",
     items: [
       { label: "Privacy Policy", href: "/privacy-policy", keywords: "privacy data policy", icon: <Shield className="w-4 h-4" /> },
