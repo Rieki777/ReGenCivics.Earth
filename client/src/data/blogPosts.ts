@@ -1176,7 +1176,7 @@ The process runs through Hypha's DAO tools at [hypha.earth](https://app.hypha.ea
 
 For all value you're claiming you need to provide proof of impact (what was delivered, if it's financial value you need to show how much you spent. For SEEDS you'll need to provide your SEEDS account, that 12 character account name, in your proposal for verification that you didn't sell or spend your Seeds that you bought).
 
-**Step 2: Write your proposal.** Come to the [forum thread for contributions discussion](/community/post/560). Read what others are writing, share your own thinking, and refine your proposal together. Join the community conversation about how we value each other's work. Once you're confident with your proposal...
+**Step 2: Write your proposal.** Come to the [forum thread for contributions discussion](/community/post/622). Read what others are writing, share your own thinking, and refine your proposal together. Join the community conversation about how we value each other's work. Once you're confident with your proposal...
 
 **Step 3: Submit through Hypha.** Bring your proposal to [hypha.earth](https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution) for community review. The ReGen Civics community votes on proposals and $ReGen tokens are distributed on approval.
 
@@ -1193,7 +1193,7 @@ SEEDS has its own accounting for many of these contributions, and we are working
 
 Important note: We won't be replicating or accounting for Campaign Distributions (if you got seeds through a campaign proposal) as those were given out on the expectation that you would do things, not that you have already done them. If you went ahead and fulfilled the agreements for that campaign (you did the thing, planted the community garden, set up the local food hub, etc.) then use "the thing" as your contribution proposal.
 
-If you have SEEDS contribution records you want to bring into ReGen Civics, bring them to the [forum thread](/community/post/560). We will figure out the best path together.
+If you have SEEDS contribution records you want to bring into ReGen Civics, bring them to the [forum thread](/community/post/622). We will figure out the best path together.
 
 ## What this is building toward
 
@@ -1213,7 +1213,7 @@ $RCivics: equity in the ReGen Fund, the bridge foundation that connects regenera
 
 "Think of ReGen Civics as a bridge. $RCivics is one foundation on the ground, rooted in the tools of capital of the current dominant Games. $ReGen is the other foundation, rooted in the future we're building together, the new Games we're co-creating." Rieki Cordon
 
-[Join the contributions discussion](/community/post/560)`,
+[Join the contributions discussion](/community/post/622)`,
     author: 'ReGen Civics Team',
     date: 'Mar 18, 2026',
     readTime: '7 min read',
