@@ -50,6 +50,25 @@ export const glossaryRouter = router({
       });
       return { id };
     }),
+
+  // Community: propose a new term (requires auth, status = proposed)
+  propose: protectedProcedure
+    .input(z.object({
+      term: z.string().min(1).max(200),
+      definition: z.string().min(5).max(5000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { sanitizeInput } = await import("../_core/security");
+      const id = await db.addGlossaryTerm({
+        term: sanitizeInput(input.term),
+        definition: sanitizeInput(input.definition),
+        sourceThreadUrl: null,
+        status: "proposed",
+        approvedAt: null,
+        authorId: ctx.user.id,
+      });
+      return { id };
+    }),
 });
 
 // ─── C9: Knowledge Map ────────────────────────────────────────────────────────

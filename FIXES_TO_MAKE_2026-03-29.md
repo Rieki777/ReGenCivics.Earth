@@ -345,28 +345,54 @@ if (result instanceof ReadableStream) {
 
 **Root cause:** Forum was rebuilt, post IDs changed. Hardcoded IDs in data files and components now point to nonexistent posts.
 
-**Fix:** Audit every file that constructs `/community/post/` links. Files to check:
+**Current forum posts in the database (verified 2026-03-29):**
 
-- `client/src/data/questData.ts` (forumUrl fields with hardcoded IDs like `/community/post/607`)
-- `client/src/data/blogPosts.ts` (markdown links to `/community/post/560`)
-- `client/src/data/welcomeAboardQuests.ts`
-- `client/src/components/admin/AdminRecordingsTab.tsx`
-- `client/src/components/GlobeMap.tsx`
-- `client/src/components/KnowledgeMapPanel.tsx`
-- `client/src/components/LiveActivityFeed.tsx`
-- `client/src/components/profile/ProfileForumPosts.tsx`
-- `client/src/components/ProjectConnectionsPanel.tsx`
-- `client/src/components/QuestJournal.tsx`
-- `client/src/components/SharePanel.tsx`
-- `client/src/components/WelcomeAboardQuests.tsx`
-- `client/src/pages/Community.tsx`
-- `client/src/pages/QuestSuggestions.tsx`
+| ID | Title | Category |
+|----|-------|----------|
+| 604 | Build your first Zap with Zapier | General Discussion |
+| 605 | Build your first Zap with Zapier | General Discussion |
+| 607 | Quest 0: Fire | Rites of Passage |
+| 608 | Quest 1: Potion Brewing | Rites of Passage |
+| 609 | Quest 2: Saving Seeds | Rites of Passage |
+| 610 | Quest 3: Healing Wholes | Rites of Passage |
+| 611 | Quest 4: Dreaming Spaces of Love | Rites of Passage |
+| 612 | Quest 5: Rites of Love | Rites of Passage |
+| 613 | Quest 6: Healing Circles | Rites of Passage |
+| 614 | Quest 7: Wild Foraging | Rites of Passage |
+| 615 | Quest 8: Medicine Journey | Rites of Passage |
+| 616 | Quest 9: Tree Talk | Rites of Passage |
+| 617 | Quest 10: Communication Patterns | Rites of Passage |
+| 618 | Quest 11: Coordination Patterns | Rites of Passage |
+| 619 | Quest 12: Breathplay & Future Dreaming | Rites of Passage |
+| 620 | Quest 13: Fasting | Rites of Passage |
+| 621 | Food Foresting: Being Human Again | Rites of Passage |
 
-For each: verify the linked post ID still exists in the database. If the post was recreated, update to the new ID. If it no longer exists, either recreate the forum thread or remove the broken link.
+Valid IDs: 604, 605, 607-621. No post with ID below 604 exists.
 
-**HUMAN STEP:** Run a DB query to get all current forum post IDs so Claude Code can map old IDs to new ones.
+**Audit findings:**
 
-**Files changed:** Multiple data and component files (list above)
+1. `client/src/data/questData.ts` (IDs 607-621): ALL VALID. No changes needed.
+
+2. `client/src/data/welcomeAboardQuests.ts` (IDs 591, 593, 596-603): ALL BROKEN. None of these IDs exist in the current database. These Welcome Aboard quest threads need to be recreated in the forum, then the IDs updated. Affected IDs:
+   - Line 21: `/community/post/600` (broken)
+   - Line 36: `/community/post/591` (broken)
+   - Line 51: `/community/post/601` (broken)
+   - Line 66: `/community/post/593` (broken)
+   - Line 81: `/community/post/602` (broken)
+   - Line 96: `/community/post/603` (broken)
+   - Line 111: `/community/post/596` (broken)
+   - Line 126: `/community/post/597` (broken)
+   - Line 142: `/community/post/598` (broken)
+   - Line 158: `/community/post/599` (broken)
+
+3. `client/src/data/blogPosts.ts` (ID 560): BROKEN. Referenced 3 times in the SEEDS contributions article. The "contributions discussion" forum thread at ID 560 does not exist. Either recreate it or remove these links.
+
+**Fix:**
+1. For `welcomeAboardQuests.ts`: Claude Code should create 10 new forum threads using the existing Welcome Aboard quest titles/content (via the forum.createPost tRPC route in a seed script), then update the forumUrl values with the new post IDs.
+2. For `blogPosts.ts`: Create a new "Contributions Discussion" thread in General Discussion, then update the 3 references from `/community/post/560` to the new ID.
+3. Dynamic links in components (AdminRecordingsTab, GlobeMap, LiveActivityFeed, ProfileForumPosts, etc.) all construct URLs from database-stored IDs at runtime, so those will be correct as long as the DB IDs are valid. No code changes needed for those.
+
+**Files changed:** `client/src/data/welcomeAboardQuests.ts`, `client/src/data/blogPosts.ts`, new seed script `scripts/seed-welcome-aboard-threads.ts`
 
 ---
 
@@ -489,7 +515,6 @@ Already included in Fix 1 as the two CTA buttons after the collapsible section. 
 
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
-| 12 | Provide current forum post ID mapping (old ID -> new ID) | Requires Railway DB access | Run: `SELECT id, title, createdAt FROM forumPosts ORDER BY id` and share results |
 | ALL | `git add -A && git commit && git push` after Claude Code completes fixes | Git push requires your machine | Terminal in `C:\Users\taren\Downloads\regen-civics-clean` |
 | 9 | Deploy updated Cloudflare Worker (image-gen) | Requires `wrangler` auth on your machine | `cd workers/image-gen && wrangler deploy` |
 | 10 | Run DB migration for bannerUrl field | Requires Railway DB access | `npx drizzle-kit push` from your machine |
@@ -512,7 +537,7 @@ Already included in Fix 1 as the two CTA buttons after the collapsible section. 
 | 9 | Fix stream.getReader in image-gen worker | READY |
 | 10 | Profile page overhaul (edit button, upload, banner) | READY |
 | 11 | Navigation rename + restructure | READY |
-| 12 | Forum link audit (code side, once Rye provides ID mapping) | BLOCKED on Rye |
+| 12 | Forum link audit: recreate 10 Welcome Aboard threads + 1 Contributions thread, update IDs | READY |
 | 13 | 1-pagers: export to MD, remove routes and links | READY |
 | 14 | Glossary propose-a-term feature | READY |
 | 15 | Propose a Feature forum feature | READY |
@@ -521,6 +546,5 @@ Already included in Fix 1 as the two CTA buttons after the collapsible section. 
 
 ### WAITING ON YOU before Claude Code can proceed
 
-- **Fix 12 (Forum Links):** Need a dump of current forum post IDs and titles from Railway DB so old hardcoded IDs can be mapped to new ones.
 - **Fix 17 (Locking Audit):** Needs CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md to be run first.
 - **Fix 10 (Profile banner):** Migration needs to be run after schema change is written.

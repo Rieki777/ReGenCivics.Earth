@@ -50,7 +50,8 @@ These files define all outstanding work for this project. Always check them befo
 - `QUEST_PROGRESSION_SPEC.md` — quest locking and progression system. Unlock chain, visual states, component changes, useQuestUnlocks hook.
 - `CLAUDE_CODE_PROMPT_2026-03-28_MAP_PERF.md` — **active** execution prompt. Map performance optimization, quest hero image generation, dissolve page transitions.
 - `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` — **active** execution prompt. Quest locking UI, hero quest cards, season progress ring. Depends on MAP_PERF running first.
-- `FIXES_TO_MAKE_2026-03-29.md` — **active** fixes batch. 17 fixes covering Game page copy, quest button overlap, CommandPanel collapse, parallax transparency, readability audit, steward claim bug, image upload fix, profile overhaul, nav restructure, forum link audit, 1-pager removal, glossary wiki, feature proposals, map auto-tracking.
+- `FIXES_TO_MAKE_2026-03-29.md` — **active** fixes batch. 17 fixes covering Game page copy, quest button overlap, CommandPanel collapse, parallax transparency, readability audit, steward claim bug, image upload fix, profile overhaul, nav restructure, forum link audit, 1-pager removal, glossary wiki, feature proposals, map auto-tracking. Fixes 1-9, 11, 13, 16 completed in commit 490518c.
+- `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` — **active** execution prompt. Remaining fixes: 10 (profile overhaul), 12 (forum link audit + seed script), 14 (glossary propose UI), 15 (feature suggestions page), 17 (quest locking audit).
 
 All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
 

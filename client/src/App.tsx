@@ -92,6 +92,7 @@ const QuestSuggestions = lazy(() => import("./pages/QuestSuggestions"));
 const UserForumProfile = lazy(() => import("./pages/UserForumProfile"));
 const AdminModeration = lazy(() => import("./pages/AdminModeration"));
 const Glossary = lazy(() => import("./pages/Glossary"));
+const FeatureSuggestions = lazy(() => import("./pages/FeatureSuggestions"));
 const Tokenomics = lazy(() => import("./pages/Tokenomics"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
 const EventSeries = lazy(() => import("./pages/EventSeries"));
@@ -222,6 +223,7 @@ function Router() {
       <Route path={"/community/user/:id"}><EB><UserForumProfile /></EB></Route>
       <Route path={"/admin/moderation"}><EB><AdminModeration /></EB></Route>
       <Route path={"/glossary"}><EB><Glossary /></EB></Route>
+      <Route path={"/features"}><EB><FeatureSuggestions /></EB></Route>
       <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
       <Route path={"/newsletter/confirm"}><EB><NewsletterConfirm /></EB></Route>
       <Route path={"/regen-games"}><EB><ReGenGames /></EB></Route>

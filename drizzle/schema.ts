@@ -1429,6 +1429,30 @@ export const communityAgreementVotes = mysqlTable("communityAgreementVotes", {
 export type CommunityAgreementVote = typeof communityAgreementVotes.$inferSelect;
 
 /**
+ * Feature Suggestions table
+ * Community-driven propose-and-vote for site features
+ */
+export const featureSuggestions = mysqlTable("featureSuggestions", {
+  id: int("id").autoincrement().primaryKey(),
+  authorId: int("authorId").notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+  description: text("description").notNull(),
+  category: varchar("category", { length: 100 }),
+  status: mysqlEnum("status", ["open", "planned", "building", "shipped", "declined"]).default("open").notNull(),
+  voteCount: int("voteCount").default(0).notNull(),
+  forumThreadId: int("forumThreadId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const featureSuggestionVotes = mysqlTable("featureSuggestionVotes", {
+  id: int("id").autoincrement().primaryKey(),
+  suggestionId: int("suggestionId").notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/**
  * Translation Cache table
  * Caches LLM translations of forum content
  */
