@@ -177,6 +177,33 @@ async function startServer() {
     });
   });
 
+  // ── R2 storage proxy ────────────────────────────────────────────────
+  // Serves objects from Cloudflare R2 through our own server, bypassing
+  // the R2 custom domain which may be misconfigured.  Requests to
+  // /storage/<key> are streamed directly from the bucket.
+  app.get('/storage/*', async (req, res) => {
+    try {
+      const { storageStream } = await import("../storage.js");
+      // Strip the /storage/ prefix to get the R2 object key
+      const objectKey = req.path.replace(/^\/storage\//, "");
+      if (!objectKey) {
+        return res.status(400).send("Missing object key");
+      }
+      const { body, contentType, contentLength } = await storageStream(objectKey);
+      res.setHeader("Content-Type", contentType);
+      if (contentLength) res.setHeader("Content-Length", contentLength);
+      // Cache for 1 day at edge + browser, revalidate after
+      res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=3600");
+      body.pipe(res);
+    } catch (err: any) {
+      if (err?.name === "NoSuchKey" || err?.$metadata?.httpStatusCode === 404) {
+        return res.status(404).send("Not found");
+      }
+      console.error("[storage proxy]", err);
+      res.status(500).send("Storage error");
+    }
+  });
+
   // Sitemap cache (regenerated at most once per hour)
   let sitemapCache: { xml: string; generatedAt: number } | null = null;
   const SITEMAP_TTL = 60 * 60 * 1000; // 1 hour

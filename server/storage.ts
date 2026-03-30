@@ -2,11 +2,15 @@
  * File storage helpers using Cloudflare R2 / AWS S3
  * Configured via env vars: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
  * AWS_BUCKET_NAME, AWS_REGION, AWS_ENDPOINT_URL (R2 endpoint), STORAGE_PUBLIC_URL
+ *
+ * Includes a storageStream helper so the Express server can proxy R2 objects
+ * through /storage/* when the R2 public custom domain is unavailable.
  */
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
+import type { Readable } from "stream";
 
 function getS3Client(): S3Client {
   return new S3Client({
@@ -71,4 +75,23 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
     { expiresIn: 3600 }
   );
   return { key, url };
+}
+
+/**
+ * Stream an object directly from R2. Used by the /storage/* proxy route
+ * so we don't depend on R2's public custom domain being functional.
+ */
+export async function storageStream(
+  relKey: string
+): Promise<{ body: Readable; contentType: string; contentLength: number | undefined }> {
+  const key = relKey.replace(/^\/+/, "");
+  const client = getS3Client();
+  const resp = await client.send(
+    new GetObjectCommand({ Bucket: getBucket(), Key: key })
+  );
+  return {
+    body: resp.Body as Readable,
+    contentType: resp.ContentType ?? "application/octet-stream",
+    contentLength: resp.ContentLength,
+  };
 }

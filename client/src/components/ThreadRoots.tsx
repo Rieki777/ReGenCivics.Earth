@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { resolveAssetUrl } from "@/lib/utils";
 
 interface Reply {
   id: number;
@@ -43,7 +44,7 @@ function TreeNode({
         className="flex items-center gap-2 py-1 text-sm hover:underline"
       >
         <img
-          src={reply.authorAvatar}
+          src={resolveAssetUrl(reply.authorAvatar)}
           alt={reply.authorName}
           className="h-5 w-5 rounded-full"
         />

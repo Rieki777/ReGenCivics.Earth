@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { PageWrapper } from "@/components/PageWrapper";
+import { resolveAssetUrl } from "@/lib/utils";
 
 const CATEGORIES = [
   { value: "", label: "All categories" },
@@ -132,7 +133,7 @@ export default function Marketplace() {
               <div className="flex items-start gap-4 mb-4">
                 {item.avatarUrl ? (
                   <img
-                    src={item.avatarUrl}
+                    src={resolveAssetUrl(item.avatarUrl)}
                     alt={item.displayName}
                     width="44"
                     height="44"
@@ -217,9 +218,4 @@ export default function Marketplace() {
           <p className="text-center text-white/30 text-xs mt-8">
             {items.length} member{items.length !== 1 ? "s" : ""} in the marketplace
           </p>
-        )}
-      </div>
-    </div>
-    </PageWrapper>
-  );
-}
+  

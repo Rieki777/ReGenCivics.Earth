@@ -89,7 +89,7 @@ import VouchSection from "@/components/VouchSection";
 import SeasonalIntention from "@/components/SeasonalIntention";
 import ContributionTimeline from "@/components/ContributionTimeline";
 import { getCurrentSeason } from "@/lib/seasons";
-import { cdnImg } from "@/lib/utils";
+import { cdnImg, resolveAssetUrl } from "@/lib/utils";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -2645,7 +2645,7 @@ export default function PlayerProfile() {
         {(profile as any)?.bannerUrl && (
           <>
             <img
-              src={(profile as any).bannerUrl}
+              src={resolveAssetUrl((profile as any).bannerUrl)}
               alt=""
               className="absolute inset-0 w-full h-full object-cover"
               width={1200}
@@ -3043,32 +3043,4 @@ export default function PlayerProfile() {
               </Card>
 
               <Card className="bg-white/10 backdrop-blur-sm border-[#7dd87d]/20">
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-[#7dd87d] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <UsersIcon className="w-6 h-6 text-[#1a472a]" />
-                  </div>
-                  <h3 className="text-white font-semibold mb-2">4. Co-Create</h3>
-                  <p className="text-white/60 text-sm">
-                    Be part of designing the financial and economic systems of our present and future
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      {/* Back to Home */}
-      <section className="py-8 px-4">
-        <div className="container mx-auto max-w-4xl text-center">
-          <Link href="/">
-            <Button variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10">
-              <HomeIcon className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-      </section>
-    </div>
-  );
-}
+                <CardContent className="p-6 te

@@ -9,6 +9,7 @@ import { Search, Leaf, MessageSquare, User } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
+import { resolveAssetUrl } from "@/lib/utils";
 
 const FOCUS_AREAS = ["Land", "Water", "Energy", "Food", "Governance", "Culture", "Finance"];
 
@@ -56,7 +57,7 @@ function MemberCard({ member }: MemberCardProps) {
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         {member.avatarUrl ? (
           <img
-            src={member.avatarUrl}
+            src={resolveAssetUrl(member.avatarUrl)}
             alt={member.displayName ?? "Member"}
             style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
           />
@@ -316,10 +317,4 @@ export default function MemberDirectory() {
                   </button>
                 </div>
               )}
-            </>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
+            </

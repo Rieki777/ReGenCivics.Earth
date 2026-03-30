@@ -8,6 +8,7 @@ import { Link } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { TaoSpinner } from '@/components/TaoSpinner';
 import { MapPin, Sparkles } from 'lucide-react';
+import { resolveAssetUrl } from '@/lib/utils';
 
 type PersonCard = {
   userId: number | null;
@@ -22,7 +23,7 @@ function AvatarCircle({ displayName, avatarUrl }: { displayName: string; avatarU
   if (avatarUrl) {
     return (
       <img
-        src={avatarUrl}
+        src={resolveAssetUrl(avatarUrl)}
         alt={displayName}
         width="40"
         height="40"
@@ -148,9 +149,3 @@ export function DiscoverTab() {
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

@@ -9,7 +9,7 @@ import { forumPosts, campaigns as campaignsTable } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { ENV } from "../_core/env";
 import { nanoid } from "nanoid";
-import { storagePut } from "../storage";
+import { storagePut, storageStream } from "../storage";
 import { CHAT_SYSTEM_PROMPT } from "../_core/oauth";
 import { invokeLLM } from "../_core/llm";
 import { generateImage, buildImagePrompt, type ContentType } from "../_core/imageGeneration";
@@ -168,13 +168,29 @@ export function registerImageOptimization(app: Express) {
       const height = h ? Math.min(parseInt(h, 10), 2048) : undefined;
       const quality = q ? Math.min(parseInt(q, 10), 100) : 80;
 
-      const upstream = await fetch(url);
-      if (!upstream.ok) {
-        // Redirect to the original URL so the browser can display whatever it gets
-        // (or show its own broken-image icon) instead of a hard 502 that can crash React.
-        return res.redirect(302, url);
+      // Fetch the image: use R2 S3 client directly for assets.regencivics.earth
+      // (the custom domain is broken), fall back to regular fetch for others.
+      let buffer: Buffer;
+      if (parsedUrl.hostname === 'assets.regencivics.earth') {
+        const objectKey = parsedUrl.pathname.replace(/^\/+/, '');
+        try {
+          const { body } = await storageStream(objectKey);
+          const chunks: Buffer[] = [];
+          for await (const chunk of body) {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+          }
+          buffer = Buffer.concat(chunks);
+        } catch (r2err: any) {
+          console.error('[img] R2 fetch error:', r2err?.name, objectKey);
+          return res.status(404).json({ error: 'not found in storage' });
+        }
+      } else {
+        const upstream = await fetch(url);
+        if (!upstream.ok) {
+          return res.redirect(302, url);
+        }
+        buffer = Buffer.from(await upstream.arrayBuffer());
       }
-      const buffer = Buffer.from(await upstream.arrayBuffer());
 
       const optimized = await sharp(buffer)
         .resize(width, height, { fit: 'cover', withoutEnlargement: true })
