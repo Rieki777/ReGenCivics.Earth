@@ -38,7 +38,7 @@ export function SEO({
   const [location] = useLocation();
   const effectiveUrl = url ?? location;
   const fullTitle = title.includes('ReGen Civics') ? title : `${title} | ReGen Civics`;
-  const fullUrl = `${BASE_URL}${effectiveUrl}`;
+  const fullUrl = effectiveUrl.startsWith('http') ? effectiveUrl : `${BASE_URL}${effectiveUrl}`;
   const fullImage = image.startsWith('http') ? image : `${BASE_URL}${image}`;
 
   useEffect(() => {

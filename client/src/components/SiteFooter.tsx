@@ -62,7 +62,7 @@ export default function SiteFooter() {
         </nav>
 
         {/* Middle row: Navigation columns */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8 text-sm">
           {/* Explore */}
           <div>
             <h4
@@ -171,6 +171,23 @@ export default function SiteFooter() {
                   Tokenomics
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* Learn */}
+          <div>
+            <h4
+              className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
+              style={{ fontFamily: "var(--font-accent)" }}
+            >
+              Learn
+            </h4>
+            <ul className="space-y-2">
+              <li><Link href="/blog" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">Blog</Link></li>
+              <li><Link href="/glossary" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">Glossary</Link></li>
+              <li><Link href="/community" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">Community Forum</Link></li>
+              <li><Link href="/map" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">World Map</Link></li>
+              <li><Link href="/connect" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">Connect</Link></li>
             </ul>
           </div>
 

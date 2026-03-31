@@ -306,7 +306,7 @@ async function startServer() {
       ...staticUrls.map(u => urlTag(u.loc, u.changefreq, u.priority)),
       ...blogSlugs.map(slug => urlTag(`/blog/${slug}`, 'monthly', '0.6')),
       ...campaignIds.map(id => urlTag(`/crowd-pooling-projects/${id}`, 'weekly', '0.7')),
-      ...forumPostIds.map(id => urlTag(`/community/post/${id}`, 'weekly', '0.5')),
+      // Community posts excluded from sitemap to save crawl budget (thin user-generated content)
       '</urlset>',
     ];
 
