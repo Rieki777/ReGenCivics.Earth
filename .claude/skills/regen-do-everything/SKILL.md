@@ -237,6 +237,13 @@ DC edit_block:
 - Use `&&` to chain commands in cmd.exe (not `;` which is PowerShell).
 - DC `edit_block` old_string must match EXACTLY (whitespace, indentation, line endings).
 - Large file edits: make multiple small edit_block calls, not one giant replacement.
+- **Git commit messages**: cmd.exe mangles `-m "message with spaces"`. Instead,
+  write the message to a temp file and use `-F`:
+  ```
+  DC (cmd.exe): echo fix: profile avatar sync> C:\Users\taren\Downloads\regen-civics-clean\commit-msg.txt
+  DC (cmd.exe): set PATH=... && cd /d ... && git commit -F commit-msg.txt
+  DC (cmd.exe): del C:\Users\taren\Downloads\regen-civics-clean\commit-msg.txt
+  ```
 
 ## Common Patterns in This Codebase
 
