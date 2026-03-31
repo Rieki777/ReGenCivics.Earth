@@ -563,6 +563,8 @@ export default function PageBackground({
   const [bgLoaded, setBgLoaded] = useState(false);
   const [mobileBgLoaded, setMobileBgLoaded] = useState(false);
   const [blurLoaded, setBlurLoaded] = useState(false);
+  const [bgFailed, setBgFailed] = useState(false);
+  const [mobileBgFailed, setMobileBgFailed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   const effectiveBlendColor = blendColor || overlayColor;
@@ -589,6 +591,7 @@ export default function PageBackground({
   useEffect(() => {
     const img = new window.Image();
     img.onload = () => setBgLoaded(true);
+    img.onerror = () => setBgFailed(true);
     img.src = backgroundImage;
   }, [backgroundImage]);
 
@@ -597,6 +600,7 @@ export default function PageBackground({
     if (mobileBackgroundImage) {
       const img = new window.Image();
       img.onload = () => setMobileBgLoaded(true);
+      img.onerror = () => setMobileBgFailed(true);
       img.src = mobileBackgroundImage;
     }
   }, [mobileBackgroundImage]);
@@ -628,6 +632,7 @@ export default function PageBackground({
   }, [parallax, scrollWithPage, isMobile, parallaxSpeed]);
 
   const isLoaded = isMobile && mobileBackgroundImage ? mobileBgLoaded : bgLoaded;
+  const isFailed = isMobile && mobileBackgroundImage ? mobileBgFailed : bgFailed;
   const activeImage = isMobile && mobileBackgroundImage ? mobileBackgroundImage : backgroundImage;
   const activePlaceholder = isMobile && mobileBlurPlaceholder ? mobileBlurPlaceholder : blurPlaceholder;
 
@@ -637,22 +642,31 @@ export default function PageBackground({
       className={`relative overflow-hidden ${className}`}
       style={{ backgroundColor: `rgb(${effectiveBlendColor})` }}
     >
-      {/* Themed loading shimmer - only show if no blur placeholder */}
-      {!isLoaded && !blurLoaded && <ThemedLoadingShimmer theme={theme} overlayColor={overlayColor} />}
+      {/* Themed loading shimmer - only show if no blur placeholder and still loading */}
+      {!isLoaded && !blurLoaded && !isFailed && <ThemedLoadingShimmer theme={theme} overlayColor={overlayColor} />}
 
-      {/* Blur placeholder layer - shows while full image loads */}
+      {/* Blur placeholder layer - shows while full image loads.
+          When full image fails, remove blur so placeholder shows at native resolution. */}
       {activePlaceholder && !isLoaded && blurLoaded && (
         <div
-          className="absolute inset-0 z-[1] transition-opacity duration-500 opacity-100"
+          className="absolute inset-0 z-[1] transition-all duration-500 opacity-100"
           style={{
             backgroundImage: `url(${activePlaceholder})`,
             backgroundSize: "cover",
             backgroundPosition: `center ${backgroundPositionY || "top"}`,
             backgroundRepeat: "no-repeat",
             backgroundAttachment: "scroll",
-            filter: "blur(20px)",
-            transform: "scale(1.1)", // Prevent blur edges from showing
+            filter: isFailed ? "none" : "blur(20px)",
+            transform: isFailed ? "none" : "scale(1.1)",
           }}
+        />
+      )}
+
+      {/* Fallback: if no blur placeholder either, show solid color bg */}
+      {!activePlaceholder && !isLoaded && isFailed && (
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{ backgroundColor: `rgb(${effectiveBlendColor})` }}
         />
       )}
 

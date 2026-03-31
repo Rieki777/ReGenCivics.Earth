@@ -1209,7 +1209,7 @@ export default function Quest() {
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                    {questData.routine.title}
+                    Quest 13: {questData.routine.title}
                   </h4>
                   <p className="text-sm text-white/60">{questData.routine.subtitle}, {questData.routine.minimumTime}</p>
                 </div>

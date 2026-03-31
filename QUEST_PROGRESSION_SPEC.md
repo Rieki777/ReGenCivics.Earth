@@ -33,7 +33,7 @@ FIRE COMPLETE --> unlocks current real-world season's Rites
   - Anytime quests
   - Elemental quests
 
-ALL 12 RITES COMPLETE (quests 1-12) --> unlocks:
+ALL 13 RITES COMPLETE (Fire + quests 1-12) --> unlocks:
   - All Epic Quests
 ```
 
@@ -103,11 +103,11 @@ Normal quest card rendering as it exists today. No changes needed.
 - "Repeatable" badge visible
 - Pinned position: always first in the Anytime/Routine section, or given its own row at the top of the quest page alongside Fire
 
-### 5. Epic Quest Cards (locked until ALL 12 rites complete)
+### 5. Epic Quest Cards (locked until ALL 13 rites complete)
 
 - Same grey + lock treatment as locked Rites
 - Additional gate banner across the section header:
-  - Text: "Complete all 12 Rites of Passage to access Epic Quests (X/12)"
+  - Text: "Complete all 13 Rites of Passage to access Epic Quests (X/13)"
   - Below that: a season progress ring showing seasons completed
 
 ### 6. Seasonal Practices / Routine / Anytime Cards (locked until 1-per-season gate)

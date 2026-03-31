@@ -118,7 +118,7 @@ Note: `community-currency` (Launch a Community Currency) has been moved to Epic 
 
 ### Section 4: Epic Quests (10 quests, currently placeholder)
 
-Community-scale transformation projects. Unlocked after completing ALL 12 Rites of Passage (quests 1-12). Currently show "Coming Soon."
+Community-scale transformation projects. Unlocked after completing ALL 13 Rites of Passage (Fire + quests 1-12). Currently show "Coming Soon."
 
 **Easy Tier (444 $ReGen each)**
 - Block Food Forest

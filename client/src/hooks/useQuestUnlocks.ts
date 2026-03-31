@@ -20,8 +20,8 @@ const RITES_BY_SEASON: Record<Season, string[]> = {
   winter: ["quest-10", "quest-11", "quest-12"],
 };
 
-/** All rite quest IDs (1-12) */
-const ALL_RITE_IDS = new Set(Object.values(RITES_BY_SEASON).flat());
+/** All rite quest IDs (0-12, Fire through the full Rites of Passage series = 13 quests) */
+const ALL_RITE_IDS = new Set(["quest-0", ...Object.values(RITES_BY_SEASON).flat()]);
 
 const SEASON_LABELS: Record<Season, string> = {
   spring: "Spring",
@@ -50,7 +50,7 @@ export function useQuestUnlocks() {
     );
 
     // Are ALL 12 rites of passage completed?
-    const allRitesComplete = [...ALL_RITE_IDS].every(qId => isQuestCompleted(qId));
+    const allRitesComplete = Array.from(ALL_RITE_IDS).every(qId => isQuestCompleted(qId));
 
     // Build the unlock chain starting from the current real-world season
     const startSeason = getCurrentSeason();
@@ -111,7 +111,7 @@ export function useQuestUnlocks() {
     };
 
     /** Count completed rites */
-    const completedRitesCount = [...ALL_RITE_IDS].filter(qId => isQuestCompleted(qId)).length;
+    const completedRitesCount = Array.from(ALL_RITE_IDS).filter(qId => isQuestCompleted(qId)).length;
 
     return {
       fireComplete,
@@ -130,7 +130,7 @@ export function useQuestUnlocks() {
       /** Routine, seasonal, anytime, elemental require 1 per season */
       isSeasonalPracticeUnlocked: allSeasonsComplete,
       seasonProgress: { completed: completedSeasons.length, total: 4 },
-      ritesProgress: { completed: completedRitesCount, total: 12 },
+      ritesProgress: { completed: completedRitesCount, total: 13 },
     };
   }, [isQuestCompleted]);
 }
