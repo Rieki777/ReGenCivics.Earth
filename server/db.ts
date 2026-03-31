@@ -598,8 +598,29 @@ export async function getVerifiedPlayerProfiles() {
 export async function updatePlayerProfile(id: number, data: Partial<InsertPlayerProfile>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   await db.update(playerProfiles).set(data).where(eq(playerProfiles.id, id));
+
+  // Reverse sync: push avatar, displayName, bio changes to userProfiles
+  // so both tables stay consistent regardless of which form saves.
+  const syncToUser: Record<string, string | undefined> = {};
+  if (data.avatarUrl !== undefined) syncToUser.avatarUrl = data.avatarUrl ?? undefined;
+  if (data.displayName !== undefined) syncToUser.displayName = data.displayName;
+  if (data.bio !== undefined) syncToUser.bio = data.bio ?? undefined;
+  if (Object.keys(syncToUser).length > 0) {
+    try {
+      const [pp] = await db.select({ userId: playerProfiles.userId })
+        .from(playerProfiles).where(eq(playerProfiles.id, id)).limit(1);
+      if (pp?.userId) {
+        const existing = await getUserProfile(pp.userId);
+        if (existing) {
+          await db.update(userProfiles).set(syncToUser).where(eq(userProfiles.userId, pp.userId));
+        }
+      }
+    } catch (_e) {
+      console.warn("Failed to sync playerProfile fields to userProfiles:", _e);
+    }
+  }
 }
 
 export async function deletePlayerProfile(id: number) {
@@ -2504,6 +2525,24 @@ export async function upsertUserProfile(userId: number, data: {
       ...data,
     });
   }
+
+  // Sync shared fields (avatar, banner, displayName, bio) to playerProfiles
+  // so the Overview card and member directory stay in sync with Settings.
+  const syncFields: Record<string, string | undefined> = {};
+  if (data.avatarUrl !== undefined) syncFields.avatarUrl = data.avatarUrl;
+  if (data.displayName !== undefined) syncFields.displayName = data.displayName;
+  if (data.bio !== undefined) syncFields.bio = data.bio;
+  if (Object.keys(syncFields).length > 0) {
+    try {
+      const pp = await getPlayerProfileByUserId(userId);
+      if (pp) {
+        await db.update(playerProfiles).set(syncFields).where(eq(playerProfiles.userId, userId));
+      }
+    } catch (_e) {
+      // Non-critical: log but don't fail the profile save
+      console.warn("Failed to sync profile fields to playerProfiles:", _e);
+    }
+  }
 }
 
 export async function incrementUserReputation(userId: number, amount: number) {
@@ -3259,4 +3298,3 @@ export async function getUserCommunityAgreementVotes(userId: number) {
     .where(eq(communityAgreementVotes.userId, userId));
   return votes.map(v => v.agreementId);
 }
-
