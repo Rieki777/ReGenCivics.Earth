@@ -123,9 +123,12 @@ Before touching any code, do these three things:
 1. Use Desktop Commander (cmd.exe) to commit and push. Each as a separate call:
    ```
    DC (cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && git add [specific files]
-   DC (cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && git commit -m "[clear commit message]"
+   DC (cmd.exe): echo fix: clear commit message here> C:\Users\taren\Downloads\regen-civics-clean\commit-msg.txt
+   DC (cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && git commit -F commit-msg.txt && del commit-msg.txt
    DC (cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && git push origin main
    ```
+   **Do NOT use `git commit -m`.** cmd.exe mangles quoted messages with spaces.
+   Always write to a temp file and use `-F` (see Gotchas).
 2. Railway auto-deploys from main. Wait ~60 seconds for deploy.
 3. If git push fails (auth issue), tell Rye exactly what to run and wait.
 
@@ -244,6 +247,38 @@ DC edit_block:
   DC (cmd.exe): set PATH=... && cd /d ... && git commit -F commit-msg.txt
   DC (cmd.exe): del C:\Users\taren\Downloads\regen-civics-clean\commit-msg.txt
   ```
+- **DC `read_file` is unreliable on .ts/.tsx files.** It often returns JSON metadata
+  instead of file content. Use Cowork `Read` for reading code (instant, always works).
+  If you specifically need the real filesystem version (not overlay), use:
+  ```
+  DC (cmd.exe): set PATH=... && cd /d ... && git show HEAD:path/to/file.tsx
+  ```
+- **`findstr` cannot read UTF-8 TypeScript files.** It silently returns nothing.
+  Use `git grep` instead for searching on the real filesystem:
+  ```
+  DC (cmd.exe): set PATH=... && cd /d ... && git grep "searchTerm" -- "*.tsx"
+  ```
+- **DC `edit_block` may read from the Cowork overlay.** If you previously edited a
+  file with Cowork Edit/Write, DC's edit_block might match against the overlay version
+  (stale content) instead of the real file. Before editing a file that was touched in
+  the overlay, confirm the real content first:
+  ```
+  DC (cmd.exe): set PATH=... && cd /d ... && git show HEAD:path/to/file.tsx
+  ```
+  Then base your edit_block old_string on that output.
+
+### Speed and Efficiency
+- **Always prefer Cowork Read/Grep for diagnosis.** Instant, no shell overhead.
+  Only go through DC when you need the real filesystem version specifically.
+- **Batch DC edit_block calls.** Each DC call has network overhead. Plan edits in
+  advance rather than read-edit-read-edit loops. Cowork Read -> plan all edits ->
+  DC edit_block x N -> DC git diff to verify.
+- **One git add + one git commit per fix batch.** Don't commit file by file.
+  `git add file1 file2 file3` then one commit with a clear message.
+- **Build check catches most issues.** If `npm run build` passes, the code is
+  almost certainly correct. Don't over-verify before pushing.
+- **DC start_process timeout:** Set timeout_ms appropriately. Git commands: 10000ms.
+  npm run build: 120000ms. Git push: 30000ms. Too short = truncated output.
 
 ## Common Patterns in This Codebase
 
