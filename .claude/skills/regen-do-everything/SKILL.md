@@ -188,13 +188,26 @@ Before touching any code, do these three things:
 - Adding sync logic, proxy routes, or other server-side plumbing
 - Re-deploying after a verification failure (fix -> commit -> push -> verify loop)
 
+**Just do it (database):**
+- Reading DATABASE_URL from `.env` in the project root (it's there, use it)
+- Running seed scripts with `set DATABASE_URL=<value from .env> && npx tsx scripts/...`
+- Creating new seed scripts following patterns in `scripts/seed-*.ts`
+- Querying the Railway DB for lookups (category IDs, user IDs, post IDs)
+- Forum post creation and seed comment insertion
+
+**Just do it (quest building):**
+- Use the `regen-quest-builder` skill for full quest creation
+- All quest artifacts (code, PDF, forum seeding) can be done autonomously
+- Only the hero image needs Rye if nano-banana-pro API is unavailable
+- Save a ready-to-run prompt file at `docs/quest-{N}-image-prompt.md` for Claude Code
+
 **Ask Rye (must have human input):**
-- Running scripts that need DATABASE_URL (Railway DB)
-- Changing Railway environment variables
+- Changing Railway environment variables (not reading them, reading .env is fine)
 - Uploading files that only exist on Rye's machine
 - Architecture decisions that change how the product works for users
 - Anything that needs Rye logged into a third-party site
 - If Desktop Commander can't push (auth issue), give Rye the exact commands
+- Running nano-banana-pro image generation in Claude Code (provide the prompt file)
 
 ### When to keep going vs. stop
 

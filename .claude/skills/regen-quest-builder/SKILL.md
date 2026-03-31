@@ -146,38 +146,85 @@ Use the pdf skill to create a 1-2 page quest guide.
 "quest-{N}": "quest-{NN}-{slug}",
 ```
 
-## Phase 5: Write Forum Seed Post + Comments
+## Phase 5: Seed Forum Post + Comments (automated via DB)
 
-**Seed post (for database or manual entry):**
-- Title: "{Quest Title}: Share Your Experience"
-- Body: 3-4 paragraphs in Rye's voice introducing the quest, what the
-  community should share, and how to participate
-- Category: Create or use existing forum category matching `forumSlug`
+Write a seed script at `scripts/seed-quest-{N}-forum.ts` following the
+pattern in `scripts/seed-quest-forum-posts.ts`. The script must:
 
-**Seed comments (2-3 starter replies):**
-Write from the perspective of someone who has done the quest. Specific,
-personal, grounded. No generic encouragement.
+1. Use `mysql2/promise` with `DATABASE_URL` from `.env`
+2. Support `--dry-run` flag
+3. Be idempotent (skip if post title already exists)
+4. Look up category by slug: `quests-gameplay`, `rites-quests`, or `general`
+5. Look up author: `rieki.cordon@gmail.com` first, fallback to team user
+6. Insert post with `isPinned: 1`
+7. Insert 3 seed comments with `**Author Name** (@handle)` prefix
+8. Print the resulting post ID and forum URL
+
+**Seed comment personas:**
+Write from the perspective of fictional people who have done the quest.
+Specific, personal, grounded. No generic encouragement.
 - Comment 1: Someone sharing their first attempt and what surprised them
-- Comment 2: Someone sharing a tip they discovered
-- Comment 3 (optional): Someone connecting the quest to a broader life change
+- Comment 2: Someone sharing a practical tip they discovered
+- Comment 3: Someone connecting the quest to a broader life change
 
-## Phase 6: Integration and Build Check
+**After running the script:**
+1. Note the returned post ID
+2. Update `forumUrl` in questData.ts to `/community/post/{ID}`
+
+**Running the script:**
+```powershell
+# From project root on Windows:
+set DATABASE_URL=<value from .env>
+npx tsx scripts/seed-quest-{N}-forum.ts --dry-run   # verify first
+npx tsx scripts/seed-quest-{N}-forum.ts              # run for real
+```
+
+## Phase 6: Generate Hero Image
+
+**If nano-banana-pro skill is available (Cowork with API key):**
+Run it directly to generate the image.
+
+**If running in Claude Code or nano-banana-pro is unavailable:**
+Save a prompt file at `docs/quest-{N}-image-prompt.md` with:
+1. The full image generation prompt
+2. Output filename: `quest-{NN}-{slug}.webp`
+3. Conversion commands (cwebp or ffmpeg) to convert PNG to WebP
+4. Git commands to commit the result
+
+**Prompt template:**
+> A painterly digital illustration for a regenerative quest called "{title}".
+> [Specific visual description based on quest theme]. Style: warm earth tones,
+> lush greens and golds, soft natural lighting, no text, no UI elements,
+> evocative of healing and nature connection. Aspect ratio: 16:9.
+
+**For Rye to run in Claude Code:**
+```
+Generate a quest hero image using the nano-banana-pro skill.
+Use 2K resolution. Save as quest-{NN}-{slug}.png.
+Prompt: [paste the prompt from the doc]
+Then convert to WebP and move to client/public/images/quests/
+```
+
+## Phase 7: Integration, Build, and Deploy
 
 1. Verify all imports are correct in questData.ts and QuestDetailModal.tsx
-2. Run build: `npm run build` via Desktop Commander
-3. Fix any build errors
-4. Commit all files with message: `feat: add quest {N} - {title}`
-5. Push to main (Railway auto-deploys)
-6. Verify live on regencivics.earth/quest
+2. Verify Quest.tsx has a card for the new quest with onClick handler
+3. Run build: `npm run build` via Desktop Commander
+4. Fix any build errors
+5. Commit all files with message: `feat: add quest {N} - {title}`
+6. Push to main (Railway auto-deploys)
+7. Verify live on regencivics.earth/quest
 
-## Phase 7: Handoff
+## Phase 8: Handoff (only for items that truly need Rye)
 
-Report to Rye:
-- What was built (list all artifacts)
-- What needs manual action:
-  - Forum post creation (if no DB access)
-  - Image generation (if nano-banana-pro not available)
-  - Any content Rye wants to review/edit before going live
+Report to Rye with one clear list. Most items should be done already.
+The only remaining manual step is typically:
+
+- **Hero image** (if nano-banana-pro wasn't available): run the prompt file
+  in Claude Code. The file is at `docs/quest-{N}-image-prompt.md`.
+
+Everything else (code, PDF, forum post, seed comments, deploy) should be
+complete before handoff.
 
 ## Writing Quality Checklist
 
