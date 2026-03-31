@@ -192,13 +192,35 @@ export function registerImageOptimization(app: Express) {
         buffer = Buffer.from(await upstream.arrayBuffer());
       }
 
-      const optimized = await sharp(buffer)
-        .resize(width, height, { fit: 'cover', withoutEnlargement: true })
-        .webp({ quality })
-        .toBuffer();
+      // Content-negotiate: serve WebP only when the browser explicitly accepts it.
+      // Safari on iOS has inconsistent WebP support through custom proxies, so
+      // fall back to the original format (PNG for transparency, JPEG otherwise).
+      const accept = req.headers.accept || '';
+      const supportsWebp = accept.includes('image/webp');
+
+      // Detect if the source has an alpha channel (PNG/WebP/GIF with transparency)
+      const metadata = await sharp(buffer).metadata();
+      const hasAlpha = metadata.hasAlpha ?? false;
+
+      let optimized: Buffer;
+      let contentType: string;
+
+      const pipeline = sharp(buffer).resize(width, height, { fit: 'cover', withoutEnlargement: true });
+
+      if (supportsWebp) {
+        optimized = await pipeline.webp({ quality }).toBuffer();
+        contentType = 'image/webp';
+      } else if (hasAlpha) {
+        // Preserve transparency with PNG for Safari and older browsers
+        optimized = await pipeline.png({ quality: Math.min(quality, 100), compressionLevel: 8 }).toBuffer();
+        contentType = 'image/png';
+      } else {
+        optimized = await pipeline.jpeg({ quality, mozjpeg: true }).toBuffer();
+        contentType = 'image/jpeg';
+      }
 
       res.set({
-        'Content-Type': 'image/webp',
+        'Content-Type': contentType,
         'Cache-Control': 'public, max-age=31536000, immutable',
         'Vary': 'Accept',
       });

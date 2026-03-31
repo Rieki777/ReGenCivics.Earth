@@ -21,12 +21,40 @@ interface PathCardImageProps {
 
 export function PathCardImage({ cardId, image, activatedImage, title, accentColor }: PathCardImageProps) {
   const [tapped, setTapped] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const [activatedError, setActivatedError] = useState(false);
 
   // Mobile tap toggle (only for touch devices)
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     setTapped(prev => !prev);
   }, []);
+
+  // On image error: try stripping the proxy (load original R2 URL directly as fallback)
+  const handleImgError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    // If the /api/img proxy failed, try the original R2 URL directly
+    if (img.src.includes('/api/img') && !imgError) {
+      const params = new URLSearchParams(img.src.split('?')[1]);
+      const originalUrl = params.get('url');
+      if (originalUrl) {
+        setImgError(true);
+        img.src = originalUrl;
+      }
+    }
+  }, [imgError]);
+
+  const handleActivatedError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.src.includes('/api/img') && !activatedError) {
+      const params = new URLSearchParams(img.src.split('?')[1]);
+      const originalUrl = params.get('url');
+      if (originalUrl) {
+        setActivatedError(true);
+        img.src = originalUrl;
+      }
+    }
+  }, [activatedError]);
 
   return (
     <div
@@ -43,18 +71,23 @@ export function PathCardImage({ cardId, image, activatedImage, title, accentColo
         loading="eager"
         decoding="async"
         draggable={false}
+        onError={handleImgError}
       />
 
-      {/* Activated illustration (hidden by default, fades in on hover) */}
+      {/* Activated illustration (hidden by default, fades in on hover)
+          Use loading="eager" instead of "lazy" for Safari compatibility.
+          iOS Safari has unreliable lazy loading on off-screen images that
+          become visible via CSS opacity transitions. */}
       <img
         src={activatedImage}
         alt={`${title} - activated`}
         className="path-card-img path-card-img-activated"
         width="237"
         height="237"
-        loading="lazy"
+        loading="eager"
         decoding="async"
         draggable={false}
+        onError={handleActivatedError}
       />
 
       {/* Per-card overlay effects (enhance the cross-fade) */}

@@ -1018,4 +1018,34 @@ export default function Navigation() {
                   </>
                 ) : (
                   <button
-                    className="flex items-center justify-center gap-2 mx-4 py-3 w-[calc(100%-2rem)] bg-[#7d
+                    className="flex items-center justify-center gap-2 mx-4 py-3 w-[calc(100%-2rem)] bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] rounded-xl transition-all font-medium"
+                    style={{ fontFamily: 'var(--font-accent)' }}
+                    onClick={() => {
+                      setAuthDialogOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogIn className="w-5 h-5" />
+                    Sign In
+                  </button>
+                )}
+
+              </div>
+            </div>
+            </div>{/* end scrollable */}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+
+      <AuthDialog
+        open={authDialogOpen}
+        onOpenChange={setAuthDialogOpen}
+        onLogin={() => setAuthDialogOpen(false)}
+      />
+    </header>
+
+      {/* Smart Mobile Bottom Nav */}
+      <SmartBottomNav />
+    </>
+  );
+}
