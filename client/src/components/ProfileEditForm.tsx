@@ -39,6 +39,7 @@ export function ProfileEditForm() {
     location: "",
     avatarUrl: "",
     bannerUrl: "",
+    website: "",
     investmentRange: "",
     projectName: "",
     projectUrl: "",
@@ -60,6 +61,7 @@ export function ProfileEditForm() {
       location: profile.location ?? "",
       avatarUrl: profile.avatarUrl ?? "",
       bannerUrl: profile.bannerUrl ?? "",
+      website: (profile as any).website ?? "",
       investmentRange: profile.investmentRange ?? "",
       projectName: profile.projectName ?? "",
       projectUrl: profile.projectUrl ?? "",
@@ -95,6 +97,7 @@ export function ProfileEditForm() {
       location: form.location || undefined,
       avatarUrl: form.avatarUrl || undefined,
       bannerUrl: form.bannerUrl || undefined,
+      website: form.website || undefined,
       investmentRange: form.investmentRange || undefined,
       projectName: form.projectName || undefined,
       projectUrl: form.projectUrl || undefined,
@@ -137,6 +140,19 @@ export function ProfileEditForm() {
             className={glassInput}
           />
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="website" className="text-white/70">Website</Label>
+        <Input
+          id="website"
+          value={form.website}
+          onChange={(e) => set("website", e.target.value)}
+          placeholder="https://yoursite.earth"
+          maxLength={500}
+          type="url"
+          className={glassInput}
+        />
       </div>
 
       {/* Structured soul questions — stored as JSON in bio field */}

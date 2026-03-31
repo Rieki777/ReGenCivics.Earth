@@ -613,30 +613,22 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           </h3>
           
           {profile.baseAccountName ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between bg-[#f0ebe3] rounded-lg p-3">
-                <div>
-                  <p className="text-xs text-[#1a472a]/60">Base Blockchain Account</p>
-                  <p className="font-mono text-[#1a472a]">{profile.baseAccountName}</p>
-                </div>
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
+            <div className="flex items-center justify-between bg-[#f0ebe3] rounded-lg p-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-[#1a472a]/60">Base Blockchain Account</p>
+                <p className="font-mono text-[#1a472a] truncate">{profile.baseAccountName}</p>
               </div>
-              
-              {profile.walletAddress && (
-                <div className="flex items-center gap-2">
-                  <code className="text-xs bg-[#f0ebe3] px-2 py-1 rounded flex-1 truncate">
-                    {profile.walletAddress}
-                  </code>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={copyWalletAddress}
-                    className="text-[#1a472a]/60"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-              )}
+              <div className="flex items-center gap-1 ml-2 shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyWalletAddress}
+                  className="text-[#1a472a]/60 h-8 w-8 p-0"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="text-center py-4">
@@ -655,6 +647,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
 function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpdate: () => void }) {
   const [collab, setCollab] = useState<string>(profile?.collaborationStatus ?? "");
   const [dreaming, setDreaming] = useState<string>(profile?.dreamingOf ?? "");
+  const [workingOn, setWorkingOn] = useState<string>(profile?.currentlyWorkingOn ?? "");
   const [bioregionIds, setBioregionIds] = useState<number[]>([]);
   const [locationData, setLocationData] = useState<LocationData>({
     lat: profile?.locationLat ?? null,
@@ -693,6 +686,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
     updateMut.mutate({
       collaborationStatus: collab || null,
       dreamingOf: dreaming || undefined,
+      currentlyWorkingOn: workingOn || null,
       bioregionId: bioregionIds[0] ?? null,
       locationLat: locationData.lat,
       locationLng: locationData.lng,
@@ -745,6 +739,18 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
           rows={2}
           className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#7dd87d]/40"
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-white/60 text-xs">What are you working on right now?</label>
+        <input
+          value={workingOn}
+          onChange={(e) => setWorkingOn(e.target.value)}
+          placeholder="Building a seed library, writing a grant, planting trees..."
+          maxLength={200}
+          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#7dd87d]/40"
+        />
+        <p className="text-white/30 text-[10px]">Shows on your profile card. 200 chars max.</p>
       </div>
 
       <div className="space-y-1.5">
@@ -2575,6 +2581,7 @@ export default function PlayerProfile() {
     _tabParam && _validTabs.includes(_tabParam) ? _tabParam : "overview"
   );
   const [questFilter, setQuestFilter] = useState<"completed" | "in-progress" | "proposed">("completed");
+  const [settingsSection, setSettingsSection] = useState<"profile" | "game" | "notifications">("profile");
 
   const syncTokensMutation = trpc.playerProfiles.forceSync.useMutation({
     onSuccess: () => {
@@ -2913,69 +2920,112 @@ export default function PlayerProfile() {
 
               {/* Settings tab */}
               {activeTab === "settings" && (
-                <div className="space-y-6">
-                  <AnimatedSection animation="slide-up">
-                    <div className="glass-panel p-6 rounded-xl">
-                      <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
-                        <Settings className="w-5 h-5 text-[#7dd87d]" /> Edit Profile
-                      </h2>
-                      <ProfileEditForm />
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Sidebar nav */}
+                  <nav className="md:w-48 flex-shrink-0">
+                    <div className="md:sticky md:top-24 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
+                      {([
+                        { key: "profile" as const, label: "Profile", icon: Sprout },
+                        { key: "game" as const, label: "Game & Wallet", icon: Leaf },
+                        { key: "notifications" as const, label: "Notifications", icon: Compass },
+                      ]).map(({ key, label, icon: Icon }) => (
+                        <button
+                          key={key}
+                          onClick={() => setSettingsSection(key)}
+                          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                            settingsSection === key
+                              ? "bg-[#7dd87d]/15 text-[#7dd87d] border border-[#7dd87d]/30"
+                              : "text-white/50 hover:text-white/80 hover:bg-white/5 border border-transparent"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4 flex-shrink-0" />
+                          {label}
+                        </button>
+                      ))}
                     </div>
-                  </AnimatedSection>
-                  <AnimatedSection animation="slide-up">
-                    <DigestPreferences currentFrequency={(profile as any).emailDigestFrequency || 'monthly'} />
-                  </AnimatedSection>
-                  <AnimatedSection animation="slide-up">
-                    <UserNotificationPreferences currentPrefs={(profile as any).notificationPrefs} />
-                  </AnimatedSection>
-                  <AnimatedSection animation="slide-up">
-                    <CollaborationSettingsPanel profile={profile} onUpdate={() => refetch()} />
-                  </AnimatedSection>
-                  <AnimatedSection animation="slide-up">
-                    <GiftsNeedsPanel />
-                  </AnimatedSection>
-                  <AnimatedSection animation="slide-up">
-                    <div id="wallet-section" className="glass-panel p-6 rounded-xl">
-                      <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-[#7dd87d]" /> Your Base Wallet Address
-                      </h2>
-                      <p className="text-white/50 text-sm mb-4">
-                        Link your Base wallet to sync token balances and verify your on-chain identity. Your address starts with 0x.
-                      </p>
-                      {(profile?.walletAddress || profile?.baseAccountName) ? (
-                        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-                          <Wallet className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
-                          <code className="text-xs text-white/80 flex-1 truncate font-mono">{profile.walletAddress || profile.baseAccountName}</code>
-                          <span className="text-[10px] text-green-400 flex-shrink-0">Connected</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                          <span className="text-sm text-white/60">No wallet linked yet.</span>
-                          <LinkBaseAccountDialog onSuccess={() => refetch()} />
-                        </div>
-                      )}
-                    </div>
-                  </AnimatedSection>
-                  <AnimatedSection animation="slide-up">
-                    <div id="org-section">
-                    <OrgClaimSection userId={user!.id} questsCompleted={profile?.questsCompleted ?? undefined} />
-                    </div>
-                  </AnimatedSection>
-                  <AnimatedSection animation="slide-up">
-                    <div className="glass-panel p-5 rounded-xl">
-                      <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
-                        Stay in the Loop
-                      </h2>
-                      <p className="text-white/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
-                        Get the ReGen Civics digest: news, quests, and community updates in your inbox.
-                      </p>
-                      <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
-                        <NewsletterSignupInline />
-                      </div>
-                    </div>
-                  </AnimatedSection>
-                  {/* Admin notification preferences moved to Admin panel */}
+                  </nav>
+
+                  {/* Content area */}
+                  <div className="flex-1 min-w-0 space-y-6">
+                    {/* Profile section */}
+                    {settingsSection === "profile" && (
+                      <>
+                        <AnimatedSection animation="slide-up">
+                          <div className="glass-panel p-6 rounded-xl">
+                            <h2 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
+                              <Settings className="w-5 h-5 text-[#7dd87d]" /> Edit Profile
+                            </h2>
+                            <ProfileEditForm />
+                          </div>
+                        </AnimatedSection>
+                      </>
+                    )}
+
+                    {/* Game & Wallet section */}
+                    {settingsSection === "game" && (
+                      <>
+                        <AnimatedSection animation="slide-up">
+                          <div id="wallet-section" className="glass-panel p-6 rounded-xl">
+                            <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+                              <Wallet className="w-4 h-4 text-[#7dd87d]" /> Your Base Wallet Address
+                            </h2>
+                            <p className="text-white/50 text-sm mb-4">
+                              Link your Base wallet to sync token balances and verify your on-chain identity. Your address starts with 0x.
+                            </p>
+                            {(profile?.walletAddress || profile?.baseAccountName) ? (
+                              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                <Wallet className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
+                                <code className="text-xs text-white/80 flex-1 truncate font-mono">{profile.walletAddress || profile.baseAccountName}</code>
+                                <span className="text-[10px] text-green-400 flex-shrink-0">Connected</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                                <span className="text-sm text-white/60">No wallet linked yet.</span>
+                                <LinkBaseAccountDialog onSuccess={() => refetch()} />
+                              </div>
+                            )}
+                          </div>
+                        </AnimatedSection>
+                        <AnimatedSection animation="slide-up">
+                          <div id="org-section">
+                            <OrgClaimSection userId={user!.id} questsCompleted={profile?.questsCompleted ?? undefined} />
+                          </div>
+                        </AnimatedSection>
+                        <AnimatedSection animation="slide-up">
+                          <CollaborationSettingsPanel profile={profile} onUpdate={() => refetch()} />
+                        </AnimatedSection>
+                        <AnimatedSection animation="slide-up">
+                          <GiftsNeedsPanel />
+                        </AnimatedSection>
+                      </>
+                    )}
+
+                    {/* Notifications section */}
+                    {settingsSection === "notifications" && (
+                      <>
+                        <AnimatedSection animation="slide-up">
+                          <DigestPreferences currentFrequency={(profile as any).emailDigestFrequency || 'monthly'} />
+                        </AnimatedSection>
+                        <AnimatedSection animation="slide-up">
+                          <UserNotificationPreferences currentPrefs={(profile as any).notificationPrefs} />
+                        </AnimatedSection>
+                        <AnimatedSection animation="slide-up">
+                          <div className="glass-panel p-5 rounded-xl">
+                            <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                              Stay in the Loop
+                            </h2>
+                            <p className="text-white/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+                              Get the ReGen Civics digest: news, quests, and community updates in your inbox.
+                            </p>
+                            <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
+                              <NewsletterSignupInline />
+                            </div>
+                          </div>
+                        </AnimatedSection>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -3058,3 +3108,4 @@ export default function PlayerProfile() {
     </div>
   );
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     

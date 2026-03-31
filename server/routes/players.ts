@@ -96,6 +96,7 @@ export const playerProfilesRouter = router({
       locationLabel: z.string().max(255).nullable().optional(),
       locationNomadic: z.number().optional(),
       locationEarth: z.number().optional(),
+      currentlyWorkingOn: z.string().max(200).nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const profile = await db.getPlayerProfileByUserId(ctx.user.id);
@@ -120,6 +121,7 @@ export const playerProfilesRouter = router({
         ...(input.locationLabel !== undefined && { locationLabel: input.locationLabel }),
         ...(input.locationNomadic !== undefined && { locationNomadic: input.locationNomadic }),
         ...(input.locationEarth !== undefined && { locationEarth: input.locationEarth }),
+        ...(input.currentlyWorkingOn !== undefined && { currentlyWorkingOn: input.currentlyWorkingOn }),
       });
 
       // Auto-award Welcome Aboard badge when all 10 quests are complete
@@ -903,18 +905,3 @@ ${page.includes('/apply') ? '- You are on the application page. This visitor may
 
 Guidelines:
 - Keep responses concise: 2-4 sentences max unless they ask for detail
-- Be warm, encouraging, and use plain English (no markdown headers)
-- Offer concrete next steps with page paths like /opportunity or /quests
-- If asked something you don't know, admit it and suggest they contact the team
-- Don't make up specific numbers not in your knowledge base above`;
-
-      const llmMessages = [
-        { role: "system" as const, content: systemPrompt },
-        ...input.messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
-      ];
-
-      const response = await invokeLLM({ messages: llmMessages, maxTokens: 400 });
-      const content = response.choices?.[0]?.message?.content ?? "I'd be happy to help! What would you like to know about ReGen Civics?";
-      return { content };
-    }),
-});

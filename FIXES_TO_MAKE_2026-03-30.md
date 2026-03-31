@@ -64,13 +64,35 @@ Parked for now. The paste-address MVP wasn't the right approach. When we come ba
 
 ---
 
+## Fix 4 -- Settings Reorganization: Sidebar Nav + Missing Fields (Medium)
+
+**Status:** CODED
+
+**Symptom:** Settings tab was one massive vertical scroll with 7+ panels. Hard to find things. Several DB fields had no UI for editing them.
+
+**Fix:** Replaced single-scroll layout with sidebar navigation + content sections:
+- **Profile** section: Edit Profile form (name, location, website, bio/soul questions, avatar, banner, path fields)
+- **Game & Wallet** section: Wallet connection, org claim, collaboration settings (now includes "currently working on" field), gifts & needs
+- **Notifications** section: Digest preferences, notification preferences, newsletter signup
+
+Sidebar is sticky on desktop, horizontal scrollable pills on mobile. Icons use organic elements (Sprout, Leaf, Compass) to match the regen theme.
+
+**New fields surfaced:**
+- `website` (userProfiles) -- added to ProfileEditForm + update route
+- `currentlyWorkingOn` (playerProfiles) -- added to CollaborationSettingsPanel + player update route. Shows on profile card, 200 char max.
+- `dreamingOf`, `locationPrecision`, `locationNomadic`, `locationEarth` were already editable through CollaborationSettingsPanel's LocationPicker
+
+**Files changed:** `client/src/pages/PlayerProfile.tsx`, `client/src/components/ProfileEditForm.tsx`, `server/routes/auth.ts`, `server/routes/players.ts`
+
+---
+
 ## Handoff Breakdown -- Who Does What
 
 ### YOU (Rye) -- things only you can do
 
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
-| ALL | `git add server/db.ts FIXES_TO_MAKE_2026-03-30.md && git commit && git push` | Git push requires your machine | Terminal in `C:\Users\taren\Downloads\regen-civics-clean` |
+| ALL | `git add -A && git commit && git push` | Git push requires your machine | Terminal in `C:\Users\taren\Downloads\regen-civics-clean` |
 | 1 | Re-save profile from Settings after deploy | Triggers avatar sync to playerProfiles | Visit regencivics.earth/profile, Settings tab, click Save |
 
 ### CLAUDE CODE -- already done or can be done without you
@@ -83,7 +105,11 @@ Parked for now. The paste-address MVP wasn't the right approach. When we come ba
 | 2 | SmartImagePicker preview fix | CODED (prior session) |
 | 2 | CampaignImageGallery, Community, AdminCampaignApproval fixes | CODED (prior session) |
 | 3 | Document two-table architecture | DONE |
+| 4 | Settings sidebar nav layout | CODED |
+| 4 | Website field in ProfileEditForm + route | CODED |
+| 4 | currentlyWorkingOn field in CollaborationSettings + route | CODED |
 
 ### WAITING ON YOU before Claude Code can proceed
 
 - **Fix 1 (Profile Sync):** Needs git push + deploy, then re-save profile to trigger backfill
+- **Fix 4 (Settings Reorg):** Needs git push + deploy to go live

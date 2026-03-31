@@ -32,7 +32,7 @@ const BASE_URL = process.env.VITE_APP_URL || 'https://regencivics.earth';
  * Then embed links as: `${APP_BASE_URL}/community/post/123`
  */
 export const APP_BASE_URL =
-  process.env.APP_BASE_URL || 'https://regencivics.com';
+  process.env.APP_BASE_URL || 'https://regencivics.earth';
 
 /**
  * Prepend APP_BASE_URL to a relative path if it is not already an absolute URL.
@@ -72,7 +72,6 @@ export interface SendEmailParams {
 function getEmailHeader(): string {
   return `
     <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
-      <img src="https://regencivics.earth/images/logo-light.png" alt="ReGen Civics" style="height: 50px; margin-bottom: 10px;" onerror="this.style.display='none'" />
       <h1 style="color: #7dd87d; margin: 0; font-family: 'Quicksand', sans-serif; font-size: 24px;">ReGen Civics</h1>
       <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the Regenerative Renaissance</p>
     </div>

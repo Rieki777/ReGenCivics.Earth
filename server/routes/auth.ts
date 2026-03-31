@@ -83,6 +83,7 @@ export const userProfilesRouter = router({
       projectUrl: z.string().max(500).optional(),
       organizationName: z.string().max(255).optional(),
       questInterests: z.string().optional(),
+      website: z.string().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       await db.upsertUserProfile(ctx.user.id, input);
@@ -125,6 +126,4 @@ export const userProfilesRouter = router({
 
       const hasMore = rows.length > input.limit;
       if (hasMore) rows = rows.slice(0, input.limit);
-      return { members: rows, nextCursor: hasMore ? (input.cursor ?? 0) + input.limit : null };
-    }),
-});
+      return { members: rows, nextCursor: hasMore ? (input.
