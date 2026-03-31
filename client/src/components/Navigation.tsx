@@ -115,14 +115,9 @@ export default function Navigation() {
               className="w-10 h-10 object-contain md:hidden"
               loading="eager"
             />
-            <img
-              src={cdnImg("https://assets.regencivics.earth/MlOLFSvIBeiOvIFd.png")}
-              alt="ReGen Civics"
-              width="40"
-              height="40"
-              className="w-10 h-10 object-contain hidden md:block"
-              loading="eager"
-            />
+            <span className="hidden md:block text-lg font-bold bg-gradient-to-r from-[#d4a574] to-[#ffd700] bg-clip-text text-transparent">
+              ReGen Civics
+            </span>
           </Link>
 
           {/* Mobile Participate Button - centered with gold glow */}
@@ -1023,34 +1018,4 @@ export default function Navigation() {
                   </>
                 ) : (
                   <button
-                    className="flex items-center justify-center gap-2 mx-4 py-3 w-[calc(100%-2rem)] bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] rounded-xl transition-all font-medium"
-                    style={{ fontFamily: 'var(--font-accent)' }}
-                    onClick={() => {
-                      setAuthDialogOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <LogIn className="w-5 h-5" />
-                    Sign In
-                  </button>
-                )}
-
-              </div>
-            </div>
-            </div>{/* end scrollable */}
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
-
-      <AuthDialog
-        open={authDialogOpen}
-        onOpenChange={setAuthDialogOpen}
-        onLogin={() => setAuthDialogOpen(false)}
-      />
-    </header>
-
-      {/* Smart Mobile Bottom Nav */}
-      <SmartBottomNav />
-    </>
-  );
-}
+                    className="flex items-center justify-center gap-2 mx-4 py-3 w-[calc(100%-2rem)] bg-[#7d
