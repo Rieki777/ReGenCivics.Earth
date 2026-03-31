@@ -3,7 +3,7 @@
  */
 import {
   Flame, Droplets, Sprout, TreeDeciduous, HomeIcon, Heart, Users,
-  Apple, Circle, MessageSquare, GitBranch, Wind, Brain, Sparkles,
+  Apple, Circle, MessageSquare, GitBranch, Wind, Brain, Sparkles, HeartPulse,
 } from "lucide-react";
 
 export const questData = {
@@ -227,6 +227,22 @@ export const questData = {
     forumSlug: "food-foresting-being-human-again",
     forumUrl: "/community/post/621",
   },
+  routine2: {
+    id: 14,
+    slug: "love-to-heal-your-body",
+    title: "Love to Heal Your Body",
+    subtitle: "Listening to the Body's Wisdom",
+    description:
+      "A one moon cycle practice of body scanning meditation, every other day for one hour. You send love to the places in your body that hold tension, training your intuition to hear what your body has been trying to tell you.",
+    reward: { regen: 111, rvoice: 1 },
+    icon: HeartPulse,
+    deliverable: "A reflection journal or video documenting your 15 sessions and what your body told you",
+    focus: "Body, Meditation, Intuition, Healing",
+    isRoutine: true,
+    minimumTime: "1 moon cycle (every other day)",
+    forumSlug: "routine-quest-14-love-to-heal-your-body",
+    forumUrl: "/community",
+  },
 };
 
 export const QUEST_BEST_SEASONS: Record<string, string[]> = {
@@ -244,6 +260,7 @@ export const QUEST_BEST_SEASONS: Record<string, string[]> = {
   "quest-11": ["any"],
   "quest-12": ["spring", "summer"],
   "quest-13": ["winter", "spring"],
+  "quest-14": ["any"],
 };
 
 export const SEASON_HERO: Record<string, { gradient: string; tagline: string }> = {

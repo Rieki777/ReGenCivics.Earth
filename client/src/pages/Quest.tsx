@@ -8,7 +8,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon, Info, Map } from "lucide-react";
+import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon, Info, Map, HeartPulse } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { Link } from "wouter";
 import { ParallaxSection } from "@/components/ParallaxSection";
@@ -1169,7 +1169,7 @@ export default function Quest() {
             </div>
 
             {/* Fasting */}
-            <div className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4">
+            <div className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4 cursor-pointer hover:border-[#7dd87d]/60 transition-colors" onClick={() => openQuestDetails("quest-13")}>
               <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
                 <RotateCcw className="w-3 h-3" /> Repeatable
               </span>
@@ -1190,6 +1190,32 @@ export default function Quest() {
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <span className="px-3 py-1 bg-[#7dd87d]/30 text-[#7dd87d] rounded-full font-semibold text-sm">+{questData.routine.reward.regen} $ReGen</span>
                 <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold text-sm">+{questData.routine.reward.rvoice} RGVoice</span>
+                <span className="text-white/40 text-xs ml-1">per completion</span>
+              </div>
+            </div>
+
+            {/* Love to Heal Your Body */}
+            <div className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4 cursor-pointer hover:border-[#7dd87d]/60 transition-colors" onClick={() => openQuestDetails("quest-14")}>
+              <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
+                <RotateCcw className="w-3 h-3" /> Repeatable
+              </span>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-[#7dd87d] flex items-center justify-center flex-shrink-0">
+                  <HeartPulse className="w-6 h-6 text-[#1a472a]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                    Quest 14: {questData.routine2.title}
+                  </h4>
+                  <p className="text-sm text-white/60">{questData.routine2.subtitle}, {questData.routine2.minimumTime}</p>
+                </div>
+              </div>
+              <p className="text-white/80 text-sm leading-relaxed flex-1">
+                {questData.routine2.description}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="px-3 py-1 bg-[#7dd87d]/30 text-[#7dd87d] rounded-full font-semibold text-sm">+{questData.routine2.reward.regen} $ReGen</span>
+                <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold text-sm">+{questData.routine2.reward.rvoice} RGVoice</span>
                 <span className="text-white/40 text-xs ml-1">per completion</span>
               </div>
             </div>

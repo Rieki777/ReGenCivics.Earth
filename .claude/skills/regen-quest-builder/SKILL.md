@@ -1,0 +1,198 @@
+---
+name: regen-quest-builder
+description: >
+  Build complete quests for ReGen Civics from concept to code. Given a quest
+  idea, Claude produces all artifacts: questData.ts entry, QuestDetailModal
+  detail block, hero image prompt, PDF quest guide, forum seed post, seed
+  comments, and questData integration. Triggers on: "build a quest", "new
+  quest", "add a quest", "quest builder", "create a quest", "design a quest",
+  "quest for", or any request to add a new quest to the site.
+---
+
+# ReGen Quest Builder Skill
+
+## Purpose
+
+Take a quest idea from concept to fully shipped. Rye describes the quest theme,
+and Claude produces every artifact the site needs to display, explain, and
+support the quest.
+
+## Artifacts Produced
+
+Every quest needs these 7 artifacts:
+
+| # | Artifact | File / Location | Format |
+|---|----------|----------------|--------|
+| 1 | Quest card data | `client/src/data/questData.ts` | TS object in existing structure |
+| 2 | Quest detail block | `client/src/components/QuestDetailModal.tsx` | Inline object in QUEST_DETAIL_MAP |
+| 3 | Hero image | `client/public/images/quests/quest-{NN}-{slug}.webp` | WebP, generated via image skill |
+| 4 | PDF quest guide | `client/public/quest-guides/quest-{NN}-{slug}.pdf` | 1-2 page guide |
+| 5 | Forum seed post | Database insert or manual entry | Title + body markdown |
+| 6 | Seed comments | Database insert or manual entry | 2-3 starter replies |
+| 7 | PDF slug mapping | `QuestDetailModal.tsx` QUEST_PDF_SLUGS | Key-value entry |
+
+## Phase 0: Gather Requirements
+
+Ask Rye these questions (max 5, skip any already answered):
+
+1. **Quest name and theme** -- what is the quest about?
+2. **Duration and cadence** -- how long does it take? One-time or recurring?
+3. **Section placement** -- which season (spring/summer/fall/winter), routine, or featured?
+4. **Rewards** -- how many $ReGen and RGVoice? (default: 111 ReGen, 1 Voice)
+5. **References** -- any existing content, videos, PDFs, or links to draw from?
+
+Once answered, confirm the plan in one sentence and start building.
+
+## Phase 1: Write Quest Card Data
+
+Add an entry to `client/src/data/questData.ts`.
+
+**Required fields:**
+```typescript
+{
+  id: number,           // Next available ID (check existing max)
+  slug: string,         // kebab-case, e.g. "love-to-heal-your-body"
+  title: string,        // Display title
+  subtitle: string,     // 3-5 word thematic subtitle
+  description: string,  // 1-3 sentences, Rye's voice, no AI-isms
+  reward: { regen: number, rvoice: number },
+  icon: LucideIcon,     // Pick from lucide-react, import at top
+  deliverable: string,  // What the player submits
+  focus: string,        // Comma-separated keywords
+  isRoutine?: boolean,  // true if repeatable
+  forumSlug: string,    // kebab-case forum category
+  forumUrl: string,     // Will be filled after forum post is created
+}
+```
+
+**Placement rules:**
+- Seasonal quests go in the appropriate season array
+- Routine quests go alongside `routine` (Fasting) or `featured` (Food Foresting)
+- New routine quests: add a new key like `routine2` or extend the structure
+
+**Icon selection:** Pick a lucide-react icon that matches the theme. Common ones
+already imported: Flame, Droplets, Sprout, TreeDeciduous, HomeIcon, Heart,
+Users, Apple, Circle, MessageSquare, GitBranch, Wind, Brain, Sparkles. Add new
+imports as needed.
+
+## Phase 2: Write Quest Detail Block
+
+Add an entry to the quest details map in `QuestDetailModal.tsx`.
+
+**Required fields:**
+```typescript
+{
+  id: string,              // "quest-{N}" matching questData id
+  title: string,
+  subtitle: string,
+  description: string,     // Can be longer than card description
+  storyCard: string,       // 3-4 sentences, narrative, Rye's voice
+  rewards: { regen: number, rvoice: number },
+  deliverable: string,
+  estimatedTime: string,   // e.g. "2-4 hours" or "30 days (every other day)"
+  steps: QuestStep[],      // 4-8 steps with title + description
+  resources?: { title: string, url: string }[],
+  tips?: string[],         // 3-5 actionable tips
+  videoUrl?: string,       // YouTube URL if available
+}
+```
+
+**Writing rules for storyCard and description:**
+- Use Rye's voice: direct, grounded, specific
+- No em-dashes (zero)
+- No contrast-framing ("not X, but Y")
+- No AI word patterns (see CLAUDE.md RULE 3)
+- No rhetorical question openers
+- No passive inspiration ("join us on this journey")
+- Write as if someone inside the regen movement wrote it
+
+**Steps format:**
+Each step should be a concrete action, not a vague instruction.
+- Bad: "Reflect on your journey"
+- Good: "Sit quietly for 10 minutes. Scan your body from feet to crown.
+  Notice where you hold tension. Write down 3 areas that spoke to you."
+
+## Phase 3: Generate Hero Image
+
+Use the nano-banana-pro skill (or provide a prompt for manual generation).
+
+**Naming:** `quest-{NN}-{slug}.webp` in `client/public/images/quests/`
+**Style:** Match existing quest images: nature-themed, painterly/illustrated,
+warm earth tones with greens and golds, no text overlay.
+
+**Prompt template:**
+> A painterly digital illustration for a regenerative quest called "{title}".
+> Theme: {description}. Style: warm earth tones, lush greens and golds,
+> soft natural lighting, no text, evocative of healing and nature connection.
+> Aspect ratio: 16:9.
+
+## Phase 4: Create PDF Quest Guide
+
+Use the pdf skill to create a 1-2 page quest guide.
+
+**Location:** `client/public/quest-guides/quest-{NN}-{slug}.pdf`
+
+**Contents:**
+1. Quest title and subtitle
+2. Story card text (the narrative intro)
+3. What you will do (deliverable)
+4. Step-by-step instructions (from the detail block)
+5. Tips for success
+6. Resources and links
+7. Reward info
+
+**Also update** the `QUEST_PDF_SLUGS` map in `QuestDetailModal.tsx`:
+```typescript
+"quest-{N}": "quest-{NN}-{slug}",
+```
+
+## Phase 5: Write Forum Seed Post + Comments
+
+**Seed post (for database or manual entry):**
+- Title: "{Quest Title}: Share Your Experience"
+- Body: 3-4 paragraphs in Rye's voice introducing the quest, what the
+  community should share, and how to participate
+- Category: Create or use existing forum category matching `forumSlug`
+
+**Seed comments (2-3 starter replies):**
+Write from the perspective of someone who has done the quest. Specific,
+personal, grounded. No generic encouragement.
+- Comment 1: Someone sharing their first attempt and what surprised them
+- Comment 2: Someone sharing a tip they discovered
+- Comment 3 (optional): Someone connecting the quest to a broader life change
+
+## Phase 6: Integration and Build Check
+
+1. Verify all imports are correct in questData.ts and QuestDetailModal.tsx
+2. Run build: `npm run build` via Desktop Commander
+3. Fix any build errors
+4. Commit all files with message: `feat: add quest {N} - {title}`
+5. Push to main (Railway auto-deploys)
+6. Verify live on regencivics.earth/quest
+
+## Phase 7: Handoff
+
+Report to Rye:
+- What was built (list all artifacts)
+- What needs manual action:
+  - Forum post creation (if no DB access)
+  - Image generation (if nano-banana-pro not available)
+  - Any content Rye wants to review/edit before going live
+
+## Writing Quality Checklist
+
+Before shipping any quest content, verify:
+
+- [ ] Zero em-dashes in all text
+- [ ] No contrast-framing patterns
+- [ ] No AI word patterns (CLAUDE.md RULE 3)
+- [ ] No rhetorical question openers
+- [ ] No passive inspiration phrases
+- [ ] storyCard is 3-4 sentences, narrative, grounded
+- [ ] Steps are concrete actions with specific instructions
+- [ ] Tips are actionable, not generic
+- [ ] All slugs are kebab-case and consistent across artifacts
+- [ ] Quest ID is unique and sequential
+- [ ] Icon import exists at top of questData.ts
+- [ ] PDF slug mapping added to QuestDetailModal.tsx
+- [ ] Forum URL placeholder set (update after post creation)

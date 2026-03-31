@@ -40,6 +40,7 @@ const QUEST_PDF_SLUGS: Record<string, string> = {
   "quest-11": "quest-11-coordination-patterns",
   "quest-12": "quest-12-breathplay",
   "quest-13": "quest-13-fasting",
+  "quest-14": "quest-14-love-to-heal-your-body",
 };
 
 interface QuestDetailModalProps {
@@ -441,6 +442,32 @@ export const questDetailsData: Record<string, QuestDetails> = {
       "Coffee and tea without anything added do not significantly break the cellular benefits of fasting. If giving up coffee makes a fast impossible, keep it.",
       "People with diabetes, eating disorder history, or pregnancy should consult a doctor before fasting.",
       "Extended fasting requires electrolytes. Add salt and potassium to your water on days 2 and beyond."
+    ]
+  },
+  "quest-14": {
+    id: "quest-14",
+    title: "Quest 14: Love to Heal Your Body",
+    subtitle: "Listening to the Body's Wisdom",
+    description: "A one moon cycle practice of body scanning meditation. Every other day, for one hour, you sit with your body and learn its language. You send love to the places that hold tension, pain, or numbness. Over 15 sessions, something shifts: the body starts communicating back.",
+    storyCard: "Most of us live from the neck up. We think our way through the day, override the body's signals, and only pay attention when something breaks. This quest reverses that pattern. For one full moon cycle, every other day, you spend an hour in direct conversation with your body. You scan from feet to crown, you find the tension, and you send love there. Actual love, the way you would hold a child or a hurt animal. The body responds to this. Tension that has lived in the same places for years begins to loosen. Pain that seemed permanent starts to shift. By the end of the cycle, many people report that their body has started speaking to them in ways they can finally hear.",
+    rewards: { regen: 111, rvoice: 1 },
+    deliverable: "A reflection journal or video documenting your 15 sessions and what your body told you",
+    estimatedTime: "1 moon cycle (~30 days, 15 sessions of 1 hour each)",
+    steps: [
+      { step: 1, title: "Set your moon cycle dates", description: "Pick your start date. Count forward 28-30 days. Mark every other day on your calendar. That gives you roughly 15 sessions. Block one hour for each. Morning works best for most people, before the day's noise starts." },
+      { step: 2, title: "Prepare your space", description: "Find a quiet place where you can lie down or sit comfortably for an hour without interruption. A mat on the floor, a bed, a couch. No music, no guided audio. This is you and your body, nothing else." },
+      { step: 3, title: "Begin each session with grounding", description: "Close your eyes. Take 10 slow breaths. Feel your weight against the surface below you. Let your muscles soften. There is nothing to do yet. Just arrive." },
+      { step: 4, title: "Scan from feet to crown", description: "Move your attention slowly through your body. Start at the soles of your feet. Move through ankles, calves, knees, thighs, hips, belly, chest, shoulders, arms, hands, neck, face, crown. Spend at least a few breaths at each area. Notice what you find: tension, warmth, cold, numbness, tingling, pain, nothing." },
+      { step: 5, title: "Send love to what you find", description: "When you find a place that holds tension or pain, stay there. Breathe into it. Imagine sending warmth and love directly to that spot, the way you would comfort someone you care about. Do not try to fix it. Just be with it. Let it know you are paying attention." },
+      { step: 6, title: "Listen for the response", description: "After sending love to a tight area, wait. Sometimes the body responds with a release: a deep breath, a muscle twitch, a wave of emotion, a memory. Sometimes nothing happens. Both are fine. The practice is the listening, not the result." },
+      { step: 7, title: "Journal after each session", description: "Write 3-5 sentences about what you noticed. Where was the tension today? Did anything shift? Did any emotions or images come up? Over 15 sessions, patterns will emerge that you could never see in a single sitting." },
+      { step: 8, title: "Complete your reflection", description: "After your final session, review your journal entries. Write a summary of what changed over the moon cycle. What did your body tell you? What surprised you? Share your reflection with the community." }
+    ],
+    tips: [
+      "The first 3-4 sessions often feel like nothing is happening. That is normal. Your nervous system is learning to trust that you are actually listening. The shift usually comes around session 5-7.",
+      "If you find a spot that triggers strong emotion, stay with it gently. Crying, laughing, or shaking are all the body releasing stored tension. Let it happen without trying to understand it.",
+      "Some people fall asleep during early sessions. This is the body catching up on rest it has been missing. If it keeps happening, try sitting upright instead of lying down.",
+      "Do not skip sessions to 'make up' two in one day. The rest day between sessions is part of the practice. The body integrates during the off days."
     ]
   }
 };
