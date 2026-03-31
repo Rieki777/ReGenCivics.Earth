@@ -634,7 +634,7 @@ export default function PageBackground({
   return (
     <div
       ref={containerRef}
-      className={`relative ${className}`}
+      className={`relative overflow-hidden ${className}`}
       style={{ backgroundColor: `rgb(${effectiveBlendColor})` }}
     >
       {/* Themed loading shimmer - only show if no blur placeholder */}
