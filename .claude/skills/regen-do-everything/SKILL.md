@@ -2,10 +2,10 @@
 name: regen-do-everything
 description: >
   Autonomous end-to-end fix/upgrade execution for ReGen Civics. Given a fix or
-  upgrade task, Claude does everything possible without asking: diagnose, code,
-  test via browser, verify live, and report results. Rye only handles commits,
-  pushes, Railway deploys, and DB access. The skill ends once live verification
-  passes. Triggers on: "do everything", "fix this autonomously", "handle it",
+  upgrade task, Claude handles everything: diagnose, code, build-check, commit,
+  push, verify live, and report. Rye only handles Railway DB access and env var
+  changes. All access needs are identified upfront so Rye can log in once and
+  walk away. Triggers on: "do everything", "fix this autonomously", "handle it",
   "run the fix", "execute this fix", "take care of it", "ship it".
 ---
 
@@ -13,11 +13,70 @@ description: >
 
 ## Purpose
 
-Execute fixes and upgrades with maximum autonomy. Rye is holding a lot. The goal
-is: Rye describes the problem, Claude does everything except what physically
-requires Rye's machine (git push, Railway deploy, DB scripts, browser sign-in).
+Execute fixes and upgrades with maximum autonomy. Rye describes the problem,
+Claude does everything. Rye walks away after answering a short round of upfront
+questions.
+
+## Tools Available
+
+Claude has three tool layers. Understanding which one to use for what is critical.
+
+### Cowork VM (Read + Grep + search -- diagnosis only)
+The mounted folder at `/sessions/.../mnt/regen-civics-clean/` is a virtual overlay.
+Cowork's `Read`, `Grep`, and `Glob` tools are fast and perfect for **reading** code,
+searching patterns, and understanding the codebase. BUT: edits made with Cowork's
+`Edit` or `Write` tools live in a virtual layer that git and Windows cannot see.
+**Never use Cowork Edit/Write for code changes you intend to ship.** Use them only
+for scratch files, docs in the `.claude/` folder, or prototyping you'll redo via DC.
+
+### Desktop Commander (edit + git + build -- all real changes)
+DC's `edit_block` writes directly to Rye's Windows filesystem. Git sees these
+changes. DC's `start_process` runs commands on Rye's machine (git, npm, node).
+**All code changes, commits, and pushes go through Desktop Commander.**
+
+Key setup:
+- Shell: `cmd.exe` (not PowerShell -- PowerShell swallows git stdout)
+- Git PATH prefix: `set PATH=C:\Program Files\Git\cmd;%PATH%`
+- Project path: `C:\Users\taren\Downloads\regen-civics-clean`
+- Chain commands with `&&` in cmd.exe
+- Railway auto-deploys from main, so push = deploy
+
+### Claude in Chrome (browser verification)
+Navigate to regencivics.earth, run JS checks, verify live pages, read console
+errors, check network requests. Use for Phase 5 verification.
 
 ## Execution Protocol
+
+### Phase 0: Scope and Access (do this FIRST, every time)
+
+Before touching any code, do these three things:
+
+1. **Scan the task for access needs.** Ask yourself:
+   - Will I need to verify something on regencivics.earth? (Claude in Chrome)
+   - Will I need to run a DB query or migration? (Rye must provide DATABASE_URL)
+   - Will I need to change Railway env vars? (Rye must log into Railway dashboard)
+   - Will I need Rye to be logged into the site to test authenticated pages?
+
+2. **Ask Rye one combined question** covering everything you need upfront:
+   - Which sites to log into (regencivics.earth, Railway dashboard, GitHub)
+   - Whether to provide DATABASE_URL for this task
+   - Any design or product preferences ("should X look like Y or Z?")
+   - Max 5 questions. Be specific. No open-ended "any thoughts?" questions.
+
+3. **Once Rye answers, confirm the plan in one sentence and start working.**
+   Do not ask again unless you hit something truly unexpected.
+
+**Example opening:**
+> Before I start, a few things I'll need:
+>
+> 1. Can you log into regencivics.earth/profile so I can verify the fix on authenticated pages?
+> 2. This fix touches the forum schema. Can you paste your Railway DATABASE_URL so I can check current data?
+> 3. The broken image could be a missing file or a proxy issue. Any preference on fallback (text or placeholder image)?
+>
+> Once you answer these I'll handle the rest.
+
+**If the task needs zero access from Rye**, skip the questions and say:
+> I have everything I need. Starting now, I'll report back when it's live.
 
 ### Phase 1: Diagnose
 
@@ -26,48 +85,89 @@ requires Rye's machine (git push, Railway deploy, DB scripts, browser sign-in).
 3. Trace the bug from symptom to root cause:
    - Grep for the component/feature mentioned
    - Read the relevant files end-to-end
-   - Check the data flow: client component -> tRPC call -> server handler -> DB query -> schema
-   - Check the asset flow: upload -> storage -> DB URL -> client display -> proxy/CDN
+   - Check data flow: client component -> tRPC call -> server handler -> DB query -> schema
+   - Check asset flow: upload -> storage -> DB URL -> client display -> proxy/CDN
 4. Do not ask Rye to confirm the diagnosis. State what you found and move to fixing.
+
+**End of phase message:**
+> Diagnosis: [one sentence root cause]. Moving to fix.
 
 ### Phase 2: Fix
 
-1. Make all code changes needed
-2. Fix related issues discovered during diagnosis (don't leave adjacent broken things)
-3. Check for the same pattern elsewhere in the codebase (e.g., if one component
-   had a broken image URL, grep for all components with the same pattern)
-4. Preserve existing optimizations. If images were being Sharp-optimized, keep
-   them Sharp-optimized. If there was caching, keep caching. Don't simplify
-   away performance work.
-5. Keep changes minimal and focused. Don't refactor unrelated code.
+1. **Use Cowork Read/Grep to understand** the code that needs changing
+2. **Use DC `edit_block` to make all code changes** on the real filesystem.
+   Each edit should be small and focused -- DC edit_block uses find/replace on
+   the actual Windows file, so include enough context for a unique match.
+3. Fix related issues discovered during diagnosis (don't leave adjacent broken things)
+4. Check for the same pattern elsewhere in the codebase (grep for similar code)
+5. Preserve existing optimizations (Sharp, caching, lazy loading)
+6. After all edits, verify with DC: `git diff --stat` to confirm changes are real
 
-### Phase 3: Stage for Deploy
+**End of phase message:**
+> Fixed [N] files: [list]. Git diff confirms [N] files changed. Moving to build check.
 
-1. Report what changed and why, file by file
-2. Tell Rye exactly what to commit:
-   - Which files to `git add`
-   - Suggested commit message
-3. If there are Railway env var changes needed, list them with exact key=value
-4. Wait for Rye to confirm deploy is live before proceeding to verification
+### Phase 3: Build Check
 
-### Phase 4: Verify Live
+1. Use Desktop Commander (cmd.exe) to run build on Rye's machine:
+   ```
+   DC (cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && npm run build
+   ```
+2. If build fails, read the errors, fix them with DC `edit_block`, and re-run
+3. Do not proceed to commit until the build passes
 
-1. Use Claude in Chrome to navigate to the affected pages
-2. Run JavaScript checks to verify:
+**End of phase message:**
+> Build passes. Moving to commit and push.
+
+### Phase 4: Ship
+
+1. Use Desktop Commander (cmd.exe) to commit and push. Each as a separate call:
+   ```
+   DC (cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && git add [specific files]
+   DC (cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && git commit -m "[clear commit message]"
+   DC (cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && git push origin main
+   ```
+2. Railway auto-deploys from main. Wait ~60 seconds for deploy.
+3. If git push fails (auth issue), tell Rye exactly what to run and wait.
+
+**End of phase message (if push succeeds):**
+> Pushed to main. Railway deploying. I'll verify in ~60 seconds.
+
+**End of phase message (if push fails):**
+> I can't push from here (auth issue). Run this in your terminal:
+> ```
+> cd C:\Users\taren\Downloads\regen-civics-clean
+> git add [files]
+> git commit -m "[message]"
+> git push origin main
+> ```
+> Let me know when it's deployed and I'll verify.
+
+### Phase 5: Verify Live
+
+1. Use Claude in Chrome to navigate to the affected pages on regencivics.earth
+2. Run JavaScript checks:
    - Images load (naturalWidth > 0, no broken img elements)
-   - Components render expected content (no fallback states like initial letters)
+   - Components render expected content (no fallback states)
    - No console errors related to the fix
    - Network requests return 200 for proxied/CDN assets
 3. Check adjacent pages that share the same components
-4. If verification fails, diagnose why and loop back to Phase 2
-5. The skill is NOT done until live verification passes
+4. If verification fails, diagnose why and loop back to Phase 2 (no need to ask Rye)
 
-### Phase 5: Report
+**End of phase message (pass):**
+> Verified live. [what was checked]. Fix is done.
 
-1. Mark todo items complete
-2. Update the fixes doc with final status
-3. List any new issues discovered during the process (add to fixes doc)
-4. Update the Handoff Breakdown table per the regen-fixes-handoff skill
+**End of phase message (fail):**
+> Verification failed: [what broke]. Fixing now, will re-deploy.
+
+### Phase 6: Report
+
+1. Update the fixes doc with final status (change CODED to VERIFIED or LIVE)
+2. List any new issues discovered during the process (add to fixes doc)
+3. Update the Handoff Breakdown table per the regen-fixes-handoff skill
+4. Give Rye a clean summary: what changed, what's live, what's next (if anything)
+
+**End of skill message:**
+> Done. Here's what shipped: [summary]. Fixes doc updated. [Any new issues found.]
 
 ## Decision Rules
 
@@ -78,31 +178,65 @@ requires Rye's machine (git push, Railway deploy, DB scripts, browser sign-in).
 - Fixing adjacent bugs found during diagnosis
 - Choosing between implementation approaches (pick the simpler one)
 - Reading any file in the repo
-- Running JS in the browser to test things
-- Creating or updating docs/fixes files
+- Committing and pushing code (via Desktop Commander)
+- Running build/type checks (via Desktop Commander)
+- Running JS in the browser to verify things (via Claude in Chrome)
+- Creating or updating docs and fixes files
 - Adding sync logic, proxy routes, or other server-side plumbing
+- Re-deploying after a verification failure (fix -> commit -> push -> verify loop)
 
 **Ask Rye (must have human input):**
-- Git commit and push
-- Railway deploy confirmation
 - Running scripts that need DATABASE_URL (Railway DB)
 - Changing Railway environment variables
-- Uploading files from Rye's machine
+- Uploading files that only exist on Rye's machine
 - Architecture decisions that change how the product works for users
-- Anything that needs Rye to interact with the live site (sign in, submit forms)
+- Anything that needs Rye logged into a third-party site
+- If Desktop Commander can't push (auth issue), give Rye the exact commands
 
 ### When to keep going vs. stop
 
-**Keep going:**
+**Keep going (don't stop to ask):**
 - You found more broken things related to the fix
 - The fix works in one place but the same pattern is broken elsewhere
 - Verification failed and you know why
-- There's a data issue you can fix with a server-side change
+- Build failed and you can read the errors
+- There's a data issue you can fix with a server-side code change
 
 **Stop and report:**
 - Verification passes on all affected pages
-- You hit something that requires Rye's machine (DB access, env vars)
+- You hit something that requires Rye's machine access (DB, env vars)
 - The fix requires a product decision (not a technical one)
+
+## Desktop Commander Reference
+
+### Tested working patterns (2026-03-30)
+
+**Git commands (cmd.exe shell, always prefix PATH):**
+```
+DC (shell: cmd.exe): set PATH=C:\Program Files\Git\cmd;%PATH% && cd /d C:\Users\taren\Downloads\regen-civics-clean && git status --short
+```
+
+**File edits (edit_block, use Windows paths):**
+```
+DC edit_block:
+  file_path: C:\Users\taren\Downloads\regen-civics-clean\client\src\pages\PlayerProfile.tsx
+  old_string: [exact text to find]
+  new_string: [replacement text]
+```
+
+### Critical: Cowork overlay vs real filesystem
+- Cowork `Read`/`Grep`/`Glob` read from a virtual overlay. Fast for diagnosis.
+- Cowork `Edit`/`Write` write to the overlay only. Git and Windows CANNOT see these.
+- DC `edit_block` writes to the real Windows filesystem. Git sees these changes.
+- DC `start_process` runs on the real machine. Git, npm, node all work here.
+- New files created by Cowork `Write` DO sync (new inodes). Edits to existing files do NOT.
+
+### Gotchas
+- Use `cmd.exe` shell, not PowerShell. PowerShell swallows git stdout.
+- Always prefix PATH in each cmd.exe call (no persistent state between calls).
+- Use `&&` to chain commands in cmd.exe (not `;` which is PowerShell).
+- DC `edit_block` old_string must match EXACTLY (whitespace, indentation, line endings).
+- Large file edits: make multiple small edit_block calls, not one giant replacement.
 
 ## Common Patterns in This Codebase
 
@@ -130,14 +264,21 @@ Login routes in `server/_core/oauth.ts`.
 - `resolveAssetUrl(url)` -- for avatars, banners, user-uploaded images with default quality
 - Both route through `/api/img` which handles R2 fetch + Sharp optimization
 
+### Settings Architecture (as of 2026-03-30)
+Settings tab uses sidebar nav with three sections: Profile, Game & Wallet,
+Notifications. State managed by `settingsSection` useState in PlayerProfile.tsx.
+ProfileEditForm saves to `userProfiles` via `trpc.userProfiles.updateProfile`.
+CollaborationSettingsPanel saves to `playerProfiles` via `trpc.playerProfiles.update`.
+Both tables sync shared fields bidirectionally.
+
 ## Skill Checklist (use as todo template)
 
 For each fix:
-- [ ] Read fixes doc and CLAUDE.md
-- [ ] Diagnose root cause
-- [ ] Implement fix
-- [ ] Check for same pattern elsewhere
-- [ ] Report changes, stage for commit
-- [ ] Wait for deploy
-- [ ] Verify live via browser
-- [ ] Update fixes doc with final status
+- [ ] Phase 0: Identify access needs, ask Rye upfront
+- [ ] Phase 1: Diagnose root cause
+- [ ] Phase 2: Implement fix
+- [ ] Phase 2b: Check for same pattern elsewhere
+- [ ] Phase 3: Build check passes
+- [ ] Phase 4: Commit and push (or hand off exact commands)
+- [ ] Phase 5: Verify live via browser
+- [ ] Phase 6: Update fixes doc, report to Rye
