@@ -1,10 +1,17 @@
 import { useState, useCallback } from 'react';
-import { ChevronUp, Compass, X } from 'lucide-react';
+import { ChevronUp, Compass, X, Calendar, FileText } from 'lucide-react';
 import { useThrottledScroll } from '@/hooks/useThrottledScroll';
 
 export interface TocSection {
   id: string;
   title: string;
+}
+
+export interface TocAction {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  external?: boolean;
 }
 
 // Default sections for the Opportunity page (backward compat)
@@ -31,9 +38,10 @@ const OPPORTUNITY_SECTIONS: TocSection[] = [
 interface MobileTableOfContentsProps {
   sections?: TocSection[];
   fallbackTitle?: string;
+  actions?: TocAction[];
 }
 
-export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbackTitle = 'Sections' }: MobileTableOfContentsProps) {
+export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbackTitle = 'Sections', actions }: MobileTableOfContentsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string>('');
 
@@ -80,14 +88,7 @@ export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbac
         </button>
       </div>
 
-      {/* Floating Action Button - Mobile Only */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 md:bottom-6 right-6 z-40 md:hidden w-14 h-14 rounded-full bg-[#7dd87d] hover:bg-[#5fc85f] text-[#1a472a] shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-        aria-label="Jump to section"
-      >
-        <Compass className="w-6 h-6" />
-      </button>
+      {/* Action buttons removed - use top sticky pill and drawer instead */}
 
       {/* Navigation Drawer - Mobile Only */}
       {isOpen && (
@@ -110,6 +111,28 @@ export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbac
                 <X className="w-5 h-5 text-white" />
               </button>
             </div>
+
+            {/* Quick Actions */}
+            {actions && actions.length > 0 && (
+              <div className="px-4 pt-3 pb-1 flex gap-2">
+                {actions.map((action, i) => {
+                  const Icon = action.icon;
+                  return (
+                    <a
+                      key={i}
+                      href={action.href}
+                      target={action.external ? '_blank' : undefined}
+                      rel={action.external ? 'noopener noreferrer' : undefined}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-amber-400/20 text-amber-400 font-semibold text-sm hover:bg-amber-400/30 transition-colors border border-amber-400/30"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {action.label}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Section List */}
             <div className="px-4 py-3 space-y-2 pb-8">

@@ -2,7 +2,9 @@
 .github
 docs
 *.docx
-*.pdf
+docs/*.pdf
+*.docx.pdf
+scripts/*.pdf
 *.zip
 *.md
 attached_assets

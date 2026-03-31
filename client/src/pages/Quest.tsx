@@ -817,7 +817,7 @@ export default function Quest() {
                   <hr className="border-[#1a472a]/20 my-6" />
                   <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">The Arc</h4>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">We begin with Fire. Before we can build anything new we have to be willing to let go of the old.</p>
-                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Next we focus on our physical health - the healthier we are - the more capable we bcome.</p>
+                  <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Next we focus on our physical health - the healthier we are - the more capable we become.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The Potions Quest adds diversity and intelligence to our bodies and changes the information processing in all three minds; our gut, heart, and head.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Then we extend our internal intelligence to the soil around us through saving seeds and making healing wholes and growing food connected to ourselves.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The Food Foresting quest, done after Potions, seeds the earth with the expanded ecosystem of our own body and moves us closer to a world of healthy food abundance.</p>

@@ -34,7 +34,7 @@ import { SEO, pageSEO } from "@/components/SEO";
 import { JsonLD, schemas } from "@/components/JsonLD";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { LazyImage } from "@/components/LazyImage";
-import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
+import { MobileTableOfContents, type TocSection, type TocAction } from "@/components/MobileTableOfContents";
 
 const FUND_SECTIONS: TocSection[] = [
   { id: 'fund-dashboard', title: 'Dashboard' },
@@ -159,7 +159,14 @@ export default function Fund() {
         { question: "What types of land projects does the fund support?", answer: "The fund backs early-stage and mature regenerative land projects including ecovillages, food forests, regenerative farms, and intentional communities with demonstrated community engagement." },
       ])} />
 
-      <MobileTableOfContents sections={FUND_SECTIONS} fallbackTitle="Fund" />
+      <MobileTableOfContents
+        sections={FUND_SECTIONS}
+        fallbackTitle="Fund"
+        actions={[
+          { label: "Pitch Deck", href: "/regen-civics-investor-deck.pdf", icon: FileText, external: true },
+          { label: "Book a Call", href: "https://calendly.com/rieki-cordon/30min", icon: Calendar, external: true },
+        ]}
+      />
 
       {/* Fund Status Banner */}
       <div className="bg-gradient-to-r from-[#d4a574] via-[#ffd700] to-[#d4a574] border-b-2 border-[#ffd700]/50 shadow-[0_4px_15px_rgba(255,215,0,0.3)]">
@@ -353,7 +360,7 @@ export default function Fund() {
                 desc: "Schedule a conversation to explore alignment between your investment goals and our regenerative projects. We walk you through the fund structure, current portfolio, and governance model.",
                 icon: Calendar,
                 buttons: [
-                  { label: "Download Pitch Deck", href: "/investor", icon: FileText },
+                  { label: "Download Pitch Deck", href: "/regen-civics-investor-deck.pdf", icon: FileText, external: true },
                   { label: "Book a Call", href: "https://calendly.com/rieki-cordon/30min", icon: Calendar, external: true }
                 ]
               },

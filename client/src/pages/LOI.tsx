@@ -110,7 +110,7 @@ export default function LOI() {
             <AlertCircle className="w-6 h-6 text-[#d4a574] flex-shrink-0 mt-1" />
             <div>
               <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                Fund Not Yet Active
+                Fund in Formation
               </h2>
               <p className="text-white/90 mb-3">
                 We are currently only accepting Letters of Intent (LOIs) from capital partners. The fund will activate once we reach:
