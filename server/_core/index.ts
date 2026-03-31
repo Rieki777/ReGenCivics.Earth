@@ -184,12 +184,25 @@ async function startServer() {
   app.get('/storage/*', async (req, res) => {
     try {
       const { storageStream } = await import("../storage.js");
-      // Strip the /storage/ prefix to get the R2 object key
-      const objectKey = req.path.replace(/^\/storage\//, "");
-      if (!objectKey) {
+      // Strip the /storage/ prefix to get the R2 object key.
+      const rawKey = req.path.replace(/^\/storage\//, "");
+      if (!rawKey) {
         return res.status(400).send("Missing object key");
       }
-      const { body, contentType, contentLength } = await storageStream(objectKey);
+      // Try raw key first, then with bucket prefix (legacy images)
+      const keysToTry = [rawKey];
+      if (!rawKey.startsWith('regen-civics-assets/')) {
+        keysToTry.push(`regen-civics-assets/${rawKey}`);
+      }
+      let stream: { body: any; contentType: string; contentLength: number | undefined } | null = null;
+      for (const key of keysToTry) {
+        try {
+          stream = await storageStream(key);
+          break;
+        } catch { continue; }
+      }
+      if (!stream) throw Object.assign(new Error('Not found'), { name: 'NoSuchKey' });
+      const { body, contentType, contentLength } = stream;
       res.setHeader("Content-Type", contentType);
       if (contentLength) res.setHeader("Content-Length", contentLength);
       // Cache for 1 day at edge + browser, revalidate after

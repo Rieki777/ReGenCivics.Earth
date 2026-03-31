@@ -170,18 +170,33 @@ export function registerImageOptimization(app: Express) {
 
       // Fetch the image: use R2 S3 client directly for assets.regencivics.earth
       // (the custom domain is broken), fall back to regular fetch for others.
-      let buffer: Buffer;
+      let buffer!: Buffer;
       if (parsedUrl.hostname === 'assets.regencivics.earth') {
-        const objectKey = parsedUrl.pathname.replace(/^\/+/, '');
-        try {
-          const { body } = await storageStream(objectKey);
-          const chunks: Buffer[] = [];
-          for await (const chunk of body) {
-            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        const rawKey = parsedUrl.pathname.replace(/^\/+/, '');
+        // Try the raw key first (for new uploads at root), then with bucket prefix
+        // (legacy images stored under regen-civics-assets/ directory)
+        const keysToTry = [rawKey];
+        if (!rawKey.startsWith('regen-civics-assets/')) {
+          keysToTry.push(`regen-civics-assets/${rawKey}`);
+        }
+        let found = false;
+        for (const objectKey of keysToTry) {
+          try {
+            const { body } = await storageStream(objectKey);
+            const chunks: Buffer[] = [];
+            for await (const chunk of body) {
+              chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+            }
+            buffer = Buffer.concat(chunks);
+            found = true;
+            break;
+          } catch (r2err: any) {
+            // Try next key
+            continue;
           }
-          buffer = Buffer.concat(chunks);
-        } catch (r2err: any) {
-          console.error('[img] R2 fetch error:', r2err?.name, objectKey);
+        }
+        if (!found) {
+          console.error('[img] R2 not found in any prefix:', rawKey);
           return res.status(404).json({ error: 'not found in storage' });
         }
       } else {

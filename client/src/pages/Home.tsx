@@ -180,16 +180,16 @@ export default function Home() {
   }, []);
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
-  const bgImage = cdnImg("https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp");
-  const mobileBgImage = cdnImg("https://assets.regencivics.earth/uoYdLjIIoDZIndLO.webp");
+  const bgImage = "/images/backgrounds/home-desktop.webp";
+  const mobileBgImage = "/images/backgrounds/home-mobile.webp";
 
   return (
     <PageWrapper>
     <PageBackground
       backgroundImage={bgImage}
       mobileBackgroundImage={mobileBgImage}
-      blurPlaceholder={cdnImg("https://assets.regencivics.earth/BgSdISTWNrtyvPRw.webp")}
-      mobileBlurPlaceholder={cdnImg("https://assets.regencivics.earth/hgJmIPplQaQKSPKg.webp")}
+      blurPlaceholder="/images/backgrounds/home-desktop.webp"
+      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp"
       overlayOpacity={0.55}
       theme="forest"
       blendColor="18, 45, 28"

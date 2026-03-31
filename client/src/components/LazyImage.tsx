@@ -16,10 +16,13 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   aspect?: string;
   /** Custom placeholder element shown while loading */
   placeholder?: React.ReactNode;
+  /** Fallback image URL if src fails to load */
+  fallbackSrc?: string;
 }
 
-export function LazyImage({ src, alt, className = "", aspect, placeholder, style, ...rest }: LazyImageProps) {
+export function LazyImage({ src, alt, className = "", aspect, placeholder, fallbackSrc, style, ...rest }: LazyImageProps) {
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
   // If image is already cached and decoded, mark as loaded immediately
@@ -35,18 +38,43 @@ export function LazyImage({ src, alt, className = "", aspect, placeholder, style
     />
   );
 
+  // When image fails: try fallback, or show a styled placeholder
+  const errorFallback = (
+    <div
+      className="flex items-center justify-center bg-gradient-to-br from-[#1a472a]/20 to-[#4a7c59]/20 rounded text-[#1a472a]/40"
+      style={{ aspectRatio: aspect || "16/9", width: "100%" }}
+    >
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+    </div>
+  );
+
   return (
     <span className="block relative" style={aspect ? { aspectRatio: aspect } : undefined}>
-      {!loaded && (placeholder ?? defaultPlaceholder)}
+      {!loaded && !failed && (placeholder ?? defaultPlaceholder)}
+      {failed && !fallbackSrc && errorFallback}
       <img
         ref={handleRef}
-        src={src}
+        src={failed && fallbackSrc ? fallbackSrc : src}
         alt={alt}
         className={`${className} transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0 absolute inset-0 w-full h-full"}`}
         style={style}
         loading="lazy"
-        onLoad={() => setLoaded(true)}
-        onError={() => setLoaded(true)}
+        onLoad={() => { setLoaded(true); setFailed(false); }}
+        onError={() => {
+          if (!failed && fallbackSrc) {
+            // Try fallback image
+            setFailed(true);
+            setLoaded(false);
+          } else {
+            // No fallback or fallback also failed
+            setFailed(true);
+            setLoaded(true);
+          }
+        }}
         {...rest}
       />
     </span>
