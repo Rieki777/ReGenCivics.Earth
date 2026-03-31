@@ -313,6 +313,34 @@ ProfileEditForm saves to `userProfiles` via `trpc.userProfiles.updateProfile`.
 CollaborationSettingsPanel saves to `playerProfiles` via `trpc.playerProfiles.update`.
 Both tables sync shared fields bidirectionally.
 
+### Railway Build Verification (after push)
+
+Railway auto-deploys on push to main. After pushing, verify the build succeeds:
+
+1. **Navigate to Railway dashboard** via Claude in Chrome:
+   ```
+   https://railway.com/project/1b47f872-03c6-4c22-9ab7-a42c81d11e51/service/f99fd8fb-acf9-4a8f-97de-20514d1669f8
+   ```
+2. **Wait ~90 seconds** for the build to complete (Nixpacks + pnpm install + vite build + esbuild).
+3. **Check deployment status** -- look for "Deployment successful" or "Deployment failed".
+4. **If build fails**, read the build logs:
+   - Click on the failed deployment to open its detail view
+   - Check the Build Logs tab for esbuild or vite errors
+   - Common failures: truncated .ts files (incomplete syntax), missing imports, type errors
+   - Fix the issue, commit, push again. DO NOT leave a failing build.
+5. **Known pattern: file truncation.** Previous sessions have corrupted files by
+   writing incomplete content. If esbuild reports "Expected identifier but found end of file"
+   or "Unterminated string literal", the file is truncated. Restore from the last
+   complete git version: `git show <good-commit>:path/to/file > path/to/file`
+
+**Debugging truncated files:**
+```
+DC (cmd.exe): cd /d C:\Users\taren\Downloads\regen-civics-clean && git log --oneline -- path/to/file
+DC (cmd.exe): cd /d C:\Users\taren\Downloads\regen-civics-clean && git show <parent-commit>:path/to/file | more +last_few_lines
+```
+If the parent commit has a complete version, restore from it and re-add the legitimate
+changes from the truncating commit.
+
 ## Skill Checklist (use as todo template)
 
 For each fix:
@@ -322,5 +350,6 @@ For each fix:
 - [ ] Phase 2b: Check for same pattern elsewhere
 - [ ] Phase 3: Build check passes
 - [ ] Phase 4: Commit and push (or hand off exact commands)
+- [ ] Phase 4b: Verify Railway build succeeds (check dashboard)
 - [ ] Phase 5: Verify live via browser
 - [ ] Phase 6: Update fixes doc, report to Rye
