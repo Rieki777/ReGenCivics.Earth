@@ -126,4 +126,6 @@ export const userProfilesRouter = router({
 
       const hasMore = rows.length > input.limit;
       if (hasMore) rows = rows.slice(0, input.limit);
-      return { members: rows, nextCursor: hasMore ? (input.
+      return { members: rows, nextCursor: hasMore ? (input.cursor ?? 0) + input.limit : null };
+    }),
+});
