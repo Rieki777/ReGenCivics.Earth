@@ -1,6 +1,6 @@
 # Quest Progression System Spec
 
-**Date:** 2026-03-28
+**Date:** 2026-03-31 (updated from 2026-03-28)
 **For:** Claude Code handoff
 **Status:** Ready to build
 
@@ -29,8 +29,12 @@ FIRE COMPLETE --> unlocks current real-world season's Rites
 
 1 RITE COMPLETE in each of 4 seasons --> unlocks:
   - All Seasonal Practices (the 18 depth quests)
+  - Routine quests (Fasting, Love to Heal Your Body)
+  - Anytime quests
+  - Elemental quests
+
+ALL 12 RITES COMPLETE (quests 1-12) --> unlocks:
   - All Epic Quests
-  - Fasting (Quest 13)
 ```
 
 ### Season Rotation Logic
@@ -99,17 +103,17 @@ Normal quest card rendering as it exists today. No changes needed.
 - "Repeatable" badge visible
 - Pinned position: always first in the Anytime/Routine section, or given its own row at the top of the quest page alongside Fire
 
-### 5. Epic Quest Cards (locked until 4-season gate)
+### 5. Epic Quest Cards (locked until ALL 12 rites complete)
 
 - Same grey + lock treatment as locked Rites
 - Additional gate banner across the section header:
-  - Text: "Complete at least 1 Rite in each season to unlock Epic Quests"
-  - Below that: a progress indicator showing seasons completed (e.g., 4 small circles, filled = done)
+  - Text: "Complete all 12 Rites of Passage to access Epic Quests (X/12)"
+  - Below that: a season progress ring showing seasons completed
 
-### 6. Seasonal Practices Cards (locked until 4-season gate)
+### 6. Seasonal Practices / Routine / Anytime Cards (locked until 1-per-season gate)
 
 - Same grey + lock treatment
-- Section header note: "Complete the Rites of Passage to unlock Seasonal Practices"
+- Section header note: "Complete the Rites of Passage to unlock these quests"
 
 ---
 

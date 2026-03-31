@@ -226,6 +226,26 @@ The only remaining manual step is typically:
 Everything else (code, PDF, forum post, seed comments, deploy) should be
 complete before handoff.
 
+## Phase 7b: Update Master Reference Sheets
+
+Every new quest MUST be added to these three documents, which are the source of
+truth for all quest data:
+
+1. **QUEST_MASTER_SHEET.md** - Add full quest entry (story card, steps, tips,
+   connected quests) in the appropriate section (Part 3 for Rites, Part 4 for
+   Seasonal, Part 4b for Routine). Include slug, rewards, time, deliverable.
+
+2. **QUEST_ORGANIZATION_PLAN.md** - Add the quest to the appropriate inventory
+   table (Section 2 for Rites, Section 3 for Seasonal, Section 4 for Epic).
+   Update any carousel placement notes.
+
+3. **QUEST_PROGRESSION_SPEC.md** - If the quest has special unlock conditions
+   (routine, epic, etc.), verify the progression chain still matches. Update
+   any unlock rules that reference specific quest IDs.
+
+These sheets are the master reference for any work involving quests. Always
+read them before making quest-related changes to code or content.
+
 ## Writing Quality Checklist
 
 Before shipping any quest content, verify:

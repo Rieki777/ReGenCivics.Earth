@@ -880,6 +880,37 @@ A reflection document for each completed fast: dates, duration, key observations
 
 ---
 
+### Quest 14: Love to Heal Your Body
+**Season:** Routine (repeatable, no season) | **Slug:** `love-to-heal-your-body`
+**Rewards:** 111 $ReGen + 1 RGVoice (repeatable, no limit)
+**Time:** 1 moon cycle (every other day, 1 hour per session, ~15 sessions)
+**Deliverable:** A reflection journal or video documenting your 15 sessions and what your body told you
+
+#### Story Card
+Most of us live from the neck up. We think our way through the day, override the body's signals, and only pay attention when something breaks. This quest reverses that pattern. For one full moon cycle, every other day, you spend an hour in direct conversation with your body. You scan from feet to crown, you find the tension, and you send love there. Actual love, the way you would hold a child or a hurt animal. The body responds to this. Tension that has lived in the same places for years begins to loosen. Pain that seemed permanent starts to shift. By the end of the cycle, many people report that their body has started speaking to them in ways they can finally hear.
+
+#### Steps
+1. **Set your moon cycle dates** - Pick your start date. Count forward 28-30 days. Mark every other day. That gives you roughly 15 sessions. Block one hour for each. Morning works best for most people, before the day's noise starts.
+2. **Prepare your space** - Find a quiet place where you can lie down or sit comfortably for an hour without interruption. No music, no guided audio. This is you and your body, nothing else.
+3. **Begin each session with grounding** - Close your eyes. Take 10 slow breaths. Feel your weight against the surface below you. Let your muscles soften.
+4. **Scan from feet to crown** - Move your attention slowly through your body. Spend at least a few breaths at each area. Notice what you find: tension, warmth, cold, numbness, tingling, pain, nothing.
+5. **Send love to what you find** - When you find a place that holds tension or pain, stay there. Breathe into it. Imagine sending warmth and love directly to that spot. Do not try to fix it. Just be with it.
+6. **Listen for the response** - After sending love to a tight area, wait. Sometimes the body responds with a release: a deep breath, a muscle twitch, a wave of emotion. Sometimes nothing happens. Both are fine.
+7. **Journal after each session** - Write 3-5 sentences about what you noticed. Over 15 sessions, patterns will emerge.
+8. **Complete your reflection** - After your final session, review your journal entries. Write a summary of what changed. Share with the community.
+
+#### Tips
+- The first 3-4 sessions often feel like nothing is happening. That is normal. The shift usually comes around session 5-7.
+- If you find a spot that triggers strong emotion, stay with it gently. Crying, laughing, or shaking are all the body releasing stored tension.
+- Some people fall asleep during early sessions. If it keeps happening, try sitting upright.
+- Do not skip sessions to "make up" two in one day. The rest day between sessions is part of the practice.
+
+#### Connected To
+- Pairs with: Quest 13 (Fasting) - both practices teach you to listen to the body instead of overriding it
+- Pairs with: Quest 8 (Medicine Journey) - body scanning builds the awareness muscle that makes inner exploration safer
+- Reinforces: All quests - a body that feels heard and loved has more energy for everything else
+
+---
 
 ## Part 4: Seasonal Quests — New Additions to the Site
 
@@ -891,7 +922,7 @@ These 18 quests are not yet on the site. They need to be added INSIDE the existi
 - Fall tab: after quests 8, 9, 9b → add Future Casting, Eating Sunlight, Becoming Trauma Informed
 - Winter tab: after quests 10, 11, 12 → add Write a Children's Book, Make a Song for the ReGeneration, Recreate Your Personal Cycles
 - New Anytime tab: Decrease Expenses/Increase Joy, Hermetic Seal, Start a Friend Pool, Present Parenting, The Fifth Agreement, The Ringing Cedars
-- New Routine tab: Food Foresting (Quest 4), Fasting (Quest 13) — these pay out tokens every time you complete them, with no limit on repeats. The Routine carousel lives separately from the seasonal and anytime carousels, with a clear label: "These quests reward you every time. No limit."
+- New Routine tab: Food Foresting, Fasting (Quest 13), Love to Heal Your Body (Quest 14) - these pay out tokens every time you complete them, with no limit on repeats. The Routine carousel lives separately from the seasonal and anytime carousels, with a clear label: "These quests reward you every time. No limit."
 
 Each card needs: title, subtitle, rewards (TBD, placeholder 111 $ReGen + 1 RVoice), time, deliverable, description, and a hero image. Image prompts are in Fix 90.
 

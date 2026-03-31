@@ -350,9 +350,11 @@ function Quest0FlipCard() {
       >
         {/* Front of card */}
         <div 
-          className="bg-gradient-to-br from-orange-500/20 to-amber-500/20 p-8 rounded-2xl border-3 border-orange-500/50"
+          className="relative bg-gradient-to-br from-orange-500/20 to-amber-500/20 p-8 rounded-2xl border-3 border-orange-500/50 overflow-hidden"
           style={{ backfaceVisibility: 'hidden' }}
         >
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url(/images/quests/quest-fire-hero.webp)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+          <div className="relative z-10">
           {/* Completion Badge */}
           <QuestCompletionBadge questId="quest-0" className="!top-4 !left-4" />
           <div className="absolute top-4 right-4 flex items-center gap-2 text-xs text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
@@ -387,6 +389,7 @@ function Quest0FlipCard() {
           <div className="pt-4 border-t border-orange-300/50" onClick={(e) => e.stopPropagation()}>
             <MarkCompleteButton questId="quest-0" size="md" />
           </div>
+          </div>{/* close z-10 wrapper */}
         </div>
         
         {/* Back of card - Video */}
@@ -876,7 +879,9 @@ export default function Quest() {
             <Quest0FlipCard />
             
             {/* Featured Quest - Food Foresting */}
-            <div ref={featuredQuestRef} className="relative bg-gradient-to-br from-[#7dd87d]/20 to-[#4a7c59]/20 p-8 rounded-2xl border-3 border-[#7dd87d]/50">
+            <div ref={featuredQuestRef} className="relative bg-gradient-to-br from-[#7dd87d]/20 to-[#4a7c59]/20 p-8 rounded-2xl border-3 border-[#7dd87d]/50 overflow-hidden">
+              <div className="absolute inset-0 opacity-15" style={{ backgroundImage: 'url(/images/quests/quest-food-foresting-hero.webp)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+              <div className="relative z-10">
               {/* Completion Badge */}
               <QuestCompletionBadge questId="food-foresting" />
               <div className="flex items-center gap-4 mb-4">
@@ -912,6 +917,7 @@ export default function Quest() {
               <div className="pt-4 border-t border-[#7dd87d]/30">
                 <MarkCompleteButton questId="food-foresting" size="md" />
               </div>
+              </div>{/* close z-10 wrapper */}
             </div>
           </div>
         </div>
@@ -986,6 +992,12 @@ export default function Quest() {
               <p className="text-[#4a7c59] font-medium">Season of New Beginnings</p>
             </div>
           </div>
+          {unlocks && !unlocks.unlockedSeasons.includes("spring") && (
+            <div className="mb-6 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
+              <span className="text-white/50 text-lg">🔒</span>
+              <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason("spring")}</span>
+            </div>
+          )}
           <QuestCarousel totalCount={questData.spring.length}>
             {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
               <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
@@ -1011,6 +1023,12 @@ export default function Quest() {
               <p className="text-[#2e7d32] font-medium">Season of Adventure</p>
             </div>
           </div>
+          {unlocks && !unlocks.unlockedSeasons.includes("summer") && (
+            <div className="mb-6 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
+              <span className="text-white/50 text-lg">🔒</span>
+              <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason("summer")}</span>
+            </div>
+          )}
           <QuestCarousel totalCount={questData.summer.length}>
             {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
               <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
@@ -1036,6 +1054,12 @@ export default function Quest() {
               <p className="text-[#d4a574] font-medium">Season of Harvest</p>
             </div>
           </div>
+          {unlocks && !unlocks.unlockedSeasons.includes("fall") && (
+            <div className="mb-6 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
+              <span className="text-white/50 text-lg">🔒</span>
+              <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason("fall")}</span>
+            </div>
+          )}
           <QuestCarousel totalCount={questData.fall.length}>
             {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
               <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
@@ -1061,6 +1085,12 @@ export default function Quest() {
               <p className="text-[#8b7355] font-medium">Season of Reflection</p>
             </div>
           </div>
+          {unlocks && !unlocks.unlockedSeasons.includes("winter") && (
+            <div className="mb-6 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
+              <span className="text-white/50 text-lg">🔒</span>
+              <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason("winter")}</span>
+            </div>
+          )}
           <QuestCarousel totalCount={questData.winter.length}>
             {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
               <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
@@ -1179,7 +1209,7 @@ export default function Quest() {
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                    Quest 13: {questData.routine.title}
+                    {questData.routine.title}
                   </h4>
                   <p className="text-sm text-white/60">{questData.routine.subtitle}, {questData.routine.minimumTime}</p>
                 </div>
@@ -1223,21 +1253,24 @@ export default function Quest() {
         </div>
       </ParallaxSection>
 
-      {/* Epic Quest Section */}
-      <EpicQuestSection />
-
       {/* Suggest a Quest CTA */}
-      <section className="py-16 px-4 bg-[#f0ebe3]">
+      <section className="py-12 px-4 bg-gradient-to-b from-[#1a472a]/5 to-[#f0ebe3]">
         <div className="container">
-          <div className="max-w-2xl mx-auto mt-16 p-8 border border-green-500/30 rounded-2xl text-center">
+          <div className="max-w-2xl mx-auto p-8 bg-white/80 backdrop-blur-sm border border-[#7dd87d]/40 rounded-2xl text-center shadow-lg">
+            <div className="w-14 h-14 rounded-full bg-[#7dd87d]/20 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-7 h-7 text-[#1a472a]" />
+            </div>
             <h2 className="text-2xl font-bold mb-3 text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>Got a Quest Idea?</h2>
             <p className="text-[#1a472a]/70 mb-6 max-w-lg mx-auto">If you've discovered a practice worth spreading, propose it. The community votes. The best ones become official quests.</p>
-            <Link href="/community/quests" className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors">
+            <Link href="/community/quests" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-md">
               Suggest a Quest <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       </section>
+
+      {/* Epic Quest Section */}
+      <EpicQuestSection />
 
       {/* Quest Journal Prompt */}
       <div className="text-center py-8 text-[#1a472a]/60 text-sm">
@@ -1246,55 +1279,55 @@ export default function Quest() {
         </Link>
       </div>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-[#7dd87d]">
-        <div className="container text-center">
+      {/* Token Info Section */}
+      <section className="py-16 bg-[#f0ebe3]">
+        <div className="container">
           <h2 
-            className="text-3xl md:text-4xl font-bold mb-4 text-[#1a472a]"
+            className="text-2xl md:text-3xl font-bold mb-10 text-center text-[#1a472a]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Ready to Begin Your Quest?
+            Want to learn more about the tokens you're earning in quests?
           </h2>
-          <p className="text-xl text-[#1a472a]/80 mb-8 max-w-2xl mx-auto">
-            Join the ReGen Game Space to be able to claim tokens while healing yourself and our world
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-6">
-            <Button
-              size="lg"
-              className="rounded-xl bg-[#1a472a] hover:bg-[#0f2d1a] text-white text-lg px-10 py-6"
-              style={{ fontFamily: 'var(--font-accent)' }}
-              onClick={() => {
-                window.open('https://explore.joinseeds.earth/regen-civics-infinite-game/play-the-game/quest', '_blank');
-              }}
-            >
-              <Sparkles className="mr-2 w-5 h-5" />
-              Explore All Quests
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-xl border-3 border-[#1a472a] text-[#1a472a] hover:bg-[#1a472a]/10 text-lg px-10 py-6"
-              style={{ fontFamily: 'var(--font-accent)' }}
-              onClick={() => {
-                window.open('https://explore.joinseeds.earth/regen-civics-infinite-game/the-regenerative-renaissance', '_blank');
-              }}
-            >
-              <BookOpen className="mr-2 w-5 h-5" />
-              Explore Knowledge Base
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* $ReGen Tokenomics Card */}
+            <div className="bg-white rounded-2xl p-8 shadow-md border border-[#7dd87d]/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
+                  <Coins className="w-5 h-5 text-[#1a472a]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>$ReGen Tokenomics</h3>
+              </div>
+              <p className="text-[#1a472a]/70 text-sm font-semibold mb-2">🌳 Quests build your stake in the Game</p>
+              <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-5">
+                Every quest you complete earns $ReGen tokens, which is our in-game currency. Part of our Infinite Game involves making this a real and meaningful currency for our everyday lives in how we meet our needs and thrive together. The more you contribute, the more currency you earn.
+              </p>
+              <Link href="/tokenomics" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+                $ReGen Tokenomics <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* RGVoice Governance Card */}
+            <div className="bg-white rounded-2xl p-8 shadow-md border border-[#7dd87d]/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
+                  <Vote className="w-5 h-5 text-[#1a472a]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>RGVoice Governance</h3>
+              </div>
+              <p className="text-[#1a472a]/70 text-sm font-semibold mb-2">🌳 Quests build your governance voice</p>
+              <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-5">
+                Every quest you complete earns RGVoice tokens, giving you more say in how the game evolves. The more you contribute, the more the game is governed by players like you.
+              </p>
+              <Link href="/governance" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+                RGVoice Governance <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
-          <div className="bg-[#1a472a]/20 rounded-xl px-6 py-4 max-w-xl mx-auto mb-2">
-            <p className="text-[#1a472a] text-sm font-semibold mb-1">🌳 Quests build your governance voice</p>
-            <p className="text-[#1a472a]/70 text-sm">
-              Every quest you complete earns RGVoice tokens, giving you more say in how the game evolves. The more you contribute, the more the game is governed by players like you.
-            </p>
-            <Link href="/governance" className="inline-flex items-center gap-1 mt-2 text-[#1a472a] font-semibold text-sm hover:underline">
-              Learn how governance works <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-          
+
           {/* Sign In CTA */}
-          <SignInCTA />
+          <div className="mt-10">
+            <SignInCTA />
+          </div>
         </div>
       </section>
 

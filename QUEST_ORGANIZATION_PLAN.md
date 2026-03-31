@@ -64,7 +64,8 @@ These are the core initiatory arc, numbered 1-13 plus Food Foresting.
 | Quest | Title | Reward |
 |-------|-------|--------|
 | Quest 13 | Fasting: Regenerative Ikigai | 77 $ReGen |
-| — | Food Foresting: Being Human Again | 111 $ReGen |
+| Quest 14 | Love to Heal Your Body | 111 $ReGen + 1 RGVoice |
+| -- | Food Foresting: Being Human Again | 111 $ReGen |
 
 ---
 
@@ -117,7 +118,7 @@ Note: `community-currency` (Launch a Community Currency) has been moved to Epic 
 
 ### Section 4: Epic Quests (10 quests, currently placeholder)
 
-Community-scale transformation projects. Unlocked after completing Rites of Passage (gate TBD). Currently show "Coming Soon."
+Community-scale transformation projects. Unlocked after completing ALL 12 Rites of Passage (quests 1-12). Currently show "Coming Soon."
 
 **Easy Tier (444 $ReGen each)**
 - Block Food Forest

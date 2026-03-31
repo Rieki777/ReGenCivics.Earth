@@ -1,7 +1,9 @@
 /**
  * useQuestUnlocks - derives quest unlock state from existing quest progress.
  * Implements the progression chain:
- *   Fire (always open) -> current season Rites -> next season -> ... -> all unlocked
+ *   Fire (always open) -> Spring Rites -> Summer -> Fall -> Winter
+ *   ALL rites (1-12) completed -> Epic quests unlock
+ *   1 rite per season completed -> Routine, seasonal, anytime, elemental quests unlock
  * No backend changes needed. Pure derived state from useQuestProgressContext.
  */
 import { useMemo } from "react";
@@ -20,6 +22,13 @@ const RITES_BY_SEASON: Record<Season, string[]> = {
 
 /** All rite quest IDs (1-12) */
 const ALL_RITE_IDS = new Set(Object.values(RITES_BY_SEASON).flat());
+
+const SEASON_LABELS: Record<Season, string> = {
+  spring: "Spring",
+  summer: "Summer",
+  fall: "Fall",
+  winter: "Winter",
+};
 
 function getCurrentSeason(): Season {
   const month = new Date().getMonth();
@@ -40,6 +49,9 @@ export function useQuestUnlocks() {
       RITES_BY_SEASON[season].some(qId => isQuestCompleted(qId))
     );
 
+    // Are ALL 12 rites of passage completed?
+    const allRitesComplete = [...ALL_RITE_IDS].every(qId => isQuestCompleted(qId));
+
     // Build the unlock chain starting from the current real-world season
     const startSeason = getCurrentSeason();
     const startIdx = SEASON_ORDER.indexOf(startSeason);
@@ -58,18 +70,20 @@ export function useQuestUnlocks() {
       }
     }
 
+    // 1 per season = routine/seasonal/anytime/elemental unlock gate
     const allSeasonsComplete = completedSeasons.length === 4;
 
     const isQuestUnlocked = (questId: string): boolean => {
       // Fire and Food Foresting always open
       if (questId === "quest-0" || questId === "food-foresting") return true;
-      // Fasting (quest 13) requires all 4 seasons
-      if (questId === "quest-13") return allSeasonsComplete;
+      // Routine quests (Fasting, Love to Heal) require 1 per season
+      if (questId === "quest-13" || questId === "quest-14") return allSeasonsComplete;
       // Rites: check if the quest's season is unlocked
       for (const [season, ids] of Object.entries(RITES_BY_SEASON)) {
         if (ids.includes(questId)) return unlockedSeasons.includes(season as Season);
       }
-      // Seasonal Practices and Epics: need all 4 seasons
+      // Seasonal Practices, anytime, elemental: need 1 per season
+      // Epics: need ALL rites completed
       return allSeasonsComplete;
     };
 
@@ -81,18 +95,42 @@ export function useQuestUnlocks() {
       return null;
     };
 
+    /** Get a human-readable lock reason for a season */
+    const getSeasonLockReason = (season: Season): string | null => {
+      if (unlockedSeasons.includes(season)) return null;
+      if (!fireComplete) return "Complete the Fire quest to unlock " + SEASON_LABELS[season] + " Rites";
+      // Find which previous season hasn't been completed
+      const idx = SEASON_ORDER.indexOf(season);
+      for (let i = idx - 1; i >= 0; i--) {
+        const prevSeason = SEASON_ORDER[(startIdx + i) % 4];
+        if (!completedSeasons.includes(prevSeason)) {
+          return "Complete one quest in " + SEASON_LABELS[prevSeason] + " to unlock " + SEASON_LABELS[season];
+        }
+      }
+      return "Complete one quest in the previous season to unlock " + SEASON_LABELS[season];
+    };
+
+    /** Count completed rites */
+    const completedRitesCount = [...ALL_RITE_IDS].filter(qId => isQuestCompleted(qId)).length;
+
     return {
       fireComplete,
       unlockedSeasons,
       completedSeasons,
       allSeasonsComplete,
+      allRitesComplete,
+      completedRitesCount,
       currentSeason: startSeason,
       isQuestUnlocked,
       isRiteQuest: (id: string) => ALL_RITE_IDS.has(id),
       getQuestSeason,
-      isEpicUnlocked: allSeasonsComplete,
+      getSeasonLockReason,
+      /** Epic quests require ALL 12 rites completed */
+      isEpicUnlocked: allRitesComplete,
+      /** Routine, seasonal, anytime, elemental require 1 per season */
       isSeasonalPracticeUnlocked: allSeasonsComplete,
       seasonProgress: { completed: completedSeasons.length, total: 4 },
+      ritesProgress: { completed: completedRitesCount, total: 12 },
     };
   }, [isQuestCompleted]);
 }

@@ -167,7 +167,7 @@ export function EpicQuestSection() {
             <div className="mt-6 inline-flex flex-col items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-6 py-4">
               <div className="flex items-center gap-2 text-white/60 text-sm">
                 <Lock className="w-4 h-4 text-emerald-400/70" />
-                <span>Complete at least 1 Rite in each season to access Epic Quests</span>
+                <span>Complete all 12 Rites of Passage to access Epic Quests ({unlocks.completedRitesCount}/12)</span>
               </div>
               <SeasonProgressRing completedSeasons={unlocks.completedSeasons} />
             </div>
