@@ -370,6 +370,11 @@
   }
 }
 
+/* iOS Safe Area Utilities */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Professional Animation Utilities */
 @layer utilities {
   /* Fade in animations */
@@ -915,7 +920,7 @@
 /* ===== Biofi-style Background Animations ===== */
 @keyframes float-particle {
   0% {
-    transform: translateY(100vh) translateX(0);
+    transform: translateY(100dvh) translateX(0);
     opacity: 0;
   }
   10% {
@@ -1268,7 +1273,7 @@
     opacity: 0.6;
   }
   100% {
-    transform: translateY(100vh) translateX(calc(var(--drift, 30px) * 1.5)) rotate(360deg);
+    transform: translateY(100dvh) translateX(calc(var(--drift, 30px) * 1.5)) rotate(360deg);
     opacity: 0;
   }
 }
@@ -1334,7 +1339,7 @@
     opacity: 0.2;
   }
   100% {
-    transform: translateY(-100vh) translateX(20px);
+    transform: translateY(-100dvh) translateX(20px);
     opacity: 0;
   }
 }

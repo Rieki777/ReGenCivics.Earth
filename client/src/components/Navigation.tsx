@@ -114,6 +114,7 @@ export default function Navigation() {
               height="40"
               className="w-10 h-10 object-contain md:hidden"
               loading="eager"
+              onError={(e) => { e.currentTarget.style.display = 'none'; const span = e.currentTarget.nextElementSibling as HTMLElement; if (span) span.classList.remove('hidden', 'md:block'); }}
             />
             <span className="hidden md:block text-lg font-bold bg-gradient-to-r from-[#d4a574] to-[#ffd700] bg-clip-text text-transparent">
               ReGen Civics
