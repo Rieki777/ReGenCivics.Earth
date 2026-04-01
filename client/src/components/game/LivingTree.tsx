@@ -1,189 +1,526 @@
 /**
- * LivingTree - SVG visualization of player's contribution journey.
- * 6 life stages based on seasonsCompleted. 9 root arteries for capital types.
- * Trunk width from percentile. Seasonal visual cycle.
+ * LivingTree - SVG-based tree visualization of a player's contributions
+ * across 9 forms of capital. Grows through 6 life stages based on totalScore.
+ *
+ * Exports:
+ *   LivingTree     - full-size profile visualization
+ *   LivingTreeIcon - 32px simplified silhouette for forum posts and cards
  */
 import { useMemo } from "react";
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+const CAPITAL_TYPES = [
+  "financial",
+  "social",
+  "cultural",
+  "living",
+  "intellectual",
+  "experiential",
+  "material",
+  "spiritual",
+  "health",
+] as const;
+
+type CapitalType = (typeof CAPITAL_TYPES)[number];
+
 interface LivingTreeProps {
-  seasonsCompleted: number;
-  contributionScore: number; // percentile 0-99
-  capitalScores: Record<string, number>; // 9 capital types, raw scores
-  currentSeasonActions: number;
-  size?: "large" | "small";
-  className?: string;
+  /** Scores for each of the 9 capital types (0+). */
+  capitalValues: Record<string, number>;
+  /** Number of completed seasons. Drives seasonal palette rotation. */
+  seasonCount: number;
+  /** Cumulative contribution score. Determines life stage. */
+  totalScore: number;
+  /** Pixel width/height of the SVG. Defaults to 200. */
+  size?: number;
 }
 
-const CAPITAL_COLORS: Record<string, string> = {
-  intellectual: "#D4A574",
-  social: "#6BA3BE",
-  material: "#8B7355",
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Earthy, distinct hue per capital type. */
+const CAPITAL_COLORS: Record<CapitalType, string> = {
   financial: "#C4785B",
-  living: "#7DD87D",
+  social: "#6BA3BE",
   cultural: "#B07CB5",
-  spiritual: "#E8D4A0",
+  living: "#7DD87D",
+  intellectual: "#D4A574",
   experiential: "#E8A87C",
+  material: "#8B7355",
+  spiritual: "#E8D4A0",
   health: "#E06C75",
 };
 
-function getLifeStage(seasons: number): string {
-  if (seasons >= 10) return "ancient";
-  if (seasons >= 6) return "fruiting";
-  if (seasons >= 3) return "flowering";
-  if (seasons >= 2) return "young";
-  if (seasons >= 1) return "sapling";
+type LifeStage =
+  | "seedling"
+  | "sprout"
+  | "sapling"
+  | "young"
+  | "mature"
+  | "ancient";
+
+function getLifeStage(score: number): LifeStage {
+  if (score >= 10000) return "ancient";
+  if (score >= 4000) return "mature";
+  if (score >= 1500) return "young";
+  if (score >= 500) return "sapling";
+  if (score >= 100) return "sprout";
   return "seedling";
 }
 
-function getCurrentVisualSeason(): "spring" | "summer" | "autumn" | "winter" {
-  const month = new Date().getMonth();
-  if (month >= 2 && month <= 4) return "spring";
-  if (month >= 5 && month <= 7) return "summer";
-  if (month >= 8 && month <= 10) return "autumn";
-  return "winter";
+type VisualSeason = "spring" | "summer" | "autumn" | "winter";
+
+/** Rotate through seasons based on seasonCount so each player sees variety. */
+function getSeasonPalette(seasonCount: number): VisualSeason {
+  const seasons: VisualSeason[] = ["spring", "summer", "autumn", "winter"];
+  return seasons[seasonCount % 4];
 }
 
+const SEASON_CANOPY: Record<VisualSeason, string> = {
+  spring: "#88B87A",
+  summer: "#5E9A52",
+  autumn: "#C8824A",
+  winter: "#9BA5A0",
+};
+
+const SEASON_FLOWER: Record<VisualSeason, string> = {
+  spring: "#F0B4CC",
+  summer: "#F5D76E",
+  autumn: "#E0825C",
+  winter: "#D0DDE4",
+};
+
+const SEASON_SKY_TOP: Record<VisualSeason, string> = {
+  spring: "#E8F0E8",
+  summer: "#E4EDE0",
+  autumn: "#F0E8DD",
+  winter: "#C8D6E5",
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Clamp a number between min and max. */
+function clamp(val: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, val));
+}
+
+/** Deterministic pseudo-random based on index, avoids flicker on re-render. */
+function seededOffset(index: number, range: number): number {
+  const x = Math.sin(index * 127.1 + 311.7) * 43758.5453;
+  return (x - Math.floor(x)) * range;
+}
+
+/** Normalise a capital value to 0..1 range based on a soft cap. */
+function normCapital(val: number, softCap = 200): number {
+  return clamp(val / softCap, 0, 1);
+}
+
+// ---------------------------------------------------------------------------
+// Leaf generator
+// ---------------------------------------------------------------------------
+
+interface LeafProps {
+  cx: number;
+  cy: number;
+  r: number;
+  fill: string;
+  delay?: number;
+}
+
+function Leaf({ cx, cy, r, fill, delay = 0 }: LeafProps) {
+  return (
+    <circle cx={cx} cy={cy} r={r} fill={fill} opacity={0.8}>
+      <animate
+        attributeName="r"
+        values={`${r};${r * 1.08};${r}`}
+        dur="4s"
+        begin={`${delay}s`}
+        repeatCount="indefinite"
+      />
+    </circle>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component: LivingTree
+// ---------------------------------------------------------------------------
+
 export function LivingTree({
-  seasonsCompleted,
-  contributionScore,
-  capitalScores,
-  currentSeasonActions,
-  size = "large",
-  className = "",
+  capitalValues,
+  seasonCount,
+  totalScore,
+  size = 200,
 }: LivingTreeProps) {
-  const stage = getLifeStage(seasonsCompleted);
-  const visualSeason = getCurrentVisualSeason();
-  const isLarge = size === "large";
-  const viewSize = isLarge ? 400 : 32;
+  const stage = getLifeStage(totalScore);
+  const season = getSeasonPalette(seasonCount);
 
-  const trunkWidth = useMemo(() => {
-    const base = isLarge ? 8 : 2;
-    const growth = (contributionScore / 100) * (isLarge ? 20 : 4);
-    return base + growth;
-  }, [contributionScore, isLarge]);
+  // Pre-compute derived values once.
+  const derived = useMemo(() => {
+    // Normalise totalScore to a 0..1 growth factor (soft-caps at 15000).
+    const growthFactor = clamp(totalScore / 15000, 0, 1);
 
-  // Small icon version (32px)
-  if (!isLarge) {
-    const seedColor = stage === "seedling" ? "#8B7355" : "#7C9A7E";
-    return (
-      <svg viewBox="0 0 32 32" width={32} height={32} className={className}>
-        <circle cx={16} cy={24} r={8} fill="#4A3728" opacity={0.15} />
-        {stage === "seedling" ? (
-          <ellipse cx={16} cy={18} rx={3} ry={4} fill={seedColor}>
-            <animate attributeName="ry" values="4;4.2;4" dur="3s" repeatCount="indefinite" />
-          </ellipse>
-        ) : (
-          <>
-            <rect x={16 - trunkWidth / 2} y={8} width={trunkWidth} height={16} rx={1} fill="#8B7355" />
-            <ellipse cx={16} cy={8} rx={10} ry={8} fill="#7C9A7E" opacity={0.8} />
-          </>
-        )}
-      </svg>
-    );
-  }
+    // Trunk dimensions scale with growth.
+    const trunkW = 4 + growthFactor * 18;
+    const trunkH = 30 + growthFactor * 55;
 
-  // Large version
-  const cx = 200;
-  const groundY = 320;
+    // Canopy radius.
+    const canopyRx = 15 + growthFactor * 40;
+    const canopyRy = 12 + growthFactor * 32;
+
+    // How many leaves to render.
+    const leafCounts: Record<LifeStage, number> = {
+      seedling: 2,
+      sprout: 5,
+      sapling: 10,
+      young: 16,
+      mature: 22,
+      ancient: 30,
+    };
+    const leafCount = leafCounts[stage];
+
+    // Fruit count for mature / ancient stages.
+    const fruitCount =
+      stage === "ancient" ? 8 : stage === "mature" ? 4 : 0;
+
+    // Flower count for young+ stages (excluding seedling/sprout/sapling).
+    const flowerCount =
+      stage === "ancient"
+        ? 10
+        : stage === "mature"
+          ? 7
+          : stage === "young"
+            ? 4
+            : 0;
+
+    return { growthFactor, trunkW, trunkH, canopyRx, canopyRy, leafCount, fruitCount, flowerCount };
+  }, [totalScore, stage]);
+
+  const { growthFactor, trunkW, trunkH, canopyRx, canopyRy, leafCount, fruitCount, flowerCount } =
+    derived;
+
+  // Viewbox is always 200x200 for consistency, scaled via width/height.
+  const vb = 200;
+  const cx = vb / 2; // centre x
+  const groundY = 155; // where the ground line sits
+  const canopyCy = groundY - trunkH - canopyRy * 0.5;
 
   return (
-    <svg viewBox="0 0 400 400" className={`w-full max-w-md ${className}`} role="img" aria-label="Your Living Tree">
-      {/* Sky gradient */}
+    <svg
+      viewBox={`0 0 ${vb} ${vb}`}
+      width={size}
+      height={size}
+      role="img"
+      aria-label={`Living Tree, ${stage} stage, score ${totalScore}`}
+      style={{ transition: "width 0.4s ease, height 0.4s ease" }}
+    >
+      {/* ----- Defs ----- */}
       <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={visualSeason === "winter" ? "#C8D6E5" : "#E8F0E8"} />
+        <linearGradient id="lt-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={SEASON_SKY_TOP[season]} />
           <stop offset="100%" stopColor="#FAF8F3" />
         </linearGradient>
+        <linearGradient id="lt-trunk" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7A6347" />
+          <stop offset="100%" stopColor="#5C4833" />
+        </linearGradient>
       </defs>
-      <rect width="400" height="400" fill="url(#sky)" rx={16} />
 
-      {/* Ground */}
-      <ellipse cx={cx} cy={groundY + 20} rx={160} ry={30} fill="#4A3728" opacity={0.12} />
+      {/* ----- Sky ----- */}
+      <rect width={vb} height={vb} fill="url(#lt-sky)" rx={8} />
 
+      {/* ----- Ground ----- */}
+      <ellipse cx={cx} cy={groundY + 12} rx={80} ry={18} fill="#4A3728" opacity={0.1} />
+
+      {/* ----- Root arteries (9 lines fanning downward) ----- */}
+      {CAPITAL_TYPES.map((key, i) => {
+        const raw = capitalValues[key] ?? 0;
+        const norm = normCapital(raw);
+        const maxDepth = 28;
+        const depth = norm * maxDepth;
+        // Fan from -80deg to +80deg below the ground line.
+        const angleDeg = -80 + (i / (CAPITAL_TYPES.length - 1)) * 160;
+        const angleRad = (angleDeg * Math.PI) / 180;
+        const endX = cx + Math.sin(angleRad) * (20 + depth);
+        const endY = groundY + 8 + Math.cos(angleRad) * depth * 0.4 + depth * 0.5;
+        const thickness = 1 + norm * 3;
+        return (
+          <line
+            key={key}
+            x1={cx}
+            y1={groundY}
+            x2={endX}
+            y2={endY}
+            stroke={CAPITAL_COLORS[key]}
+            strokeWidth={thickness}
+            strokeLinecap="round"
+            opacity={raw > 0 ? 0.55 : 0.08}
+            style={{ transition: "all 0.6s ease" }}
+          />
+        );
+      })}
+
+      {/* ----- Trunk ----- */}
       {stage === "seedling" ? (
-        /* Seedling: tiny seed in bare soil */
+        // Tiny sprout stem.
         <g>
-          <ellipse cx={cx} cy={groundY - 5} rx={12} ry={15} fill="#8B7355">
-            <animate attributeName="ry" values="15;15.5;15" dur="3s" repeatCount="indefinite" />
-          </ellipse>
-          <text x={cx} y={groundY + 60} textAnchor="middle" fill="#4A3728" fontSize={11} opacity={0.5} fontFamily="var(--font-body)">
-            Every tree starts somewhere
-          </text>
+          <line
+            x1={cx}
+            y1={groundY}
+            x2={cx}
+            y2={groundY - 14}
+            stroke="#7A6347"
+            strokeWidth={2}
+            strokeLinecap="round"
+          />
+          {/* Two small leaves */}
+          <Leaf cx={cx - 5} cy={groundY - 12} r={3.5} fill="#88B87A" delay={0} />
+          <Leaf cx={cx + 5} cy={groundY - 15} r={3} fill="#7DB86F" delay={0.5} />
         </g>
       ) : (
         <g>
-          {/* Root arteries */}
-          {Object.entries(CAPITAL_COLORS).map(([key, color], i) => {
-            const score = capitalScores[key] ?? 0;
-            const maxDepth = 60;
-            const depth = Math.min(score / 100, 1) * maxDepth;
-            const angle = ((i / 9) * Math.PI) - Math.PI / 2;
-            const rootX = cx + Math.cos(angle) * 40;
-            const rootEndX = cx + Math.cos(angle) * (40 + depth);
-            const rootEndY = groundY + 10 + Math.sin(Math.abs(angle)) * depth * 0.5 + depth * 0.3;
-            return (
-              <line
-                key={key}
-                x1={cx}
-                y1={groundY}
-                x2={rootEndX}
-                y2={rootEndY}
-                stroke={color}
-                strokeWidth={Math.max(1, score / 30)}
-                opacity={score > 0 ? 0.6 : 0.1}
-                strokeLinecap="round"
-              />
-            );
-          })}
-
-          {/* Trunk */}
+          {/* Main trunk */}
           <rect
-            x={cx - trunkWidth / 2}
-            y={groundY - 120}
-            width={trunkWidth}
-            height={120}
-            rx={trunkWidth / 4}
-            fill="#8B7355"
+            x={cx - trunkW / 2}
+            y={groundY - trunkH}
+            width={trunkW}
+            height={trunkH}
+            rx={trunkW / 3}
+            fill="url(#lt-trunk)"
+            style={{ transition: "all 0.6s ease" }}
           />
 
-          {/* Seasonal rings */}
-          {Array.from({ length: Math.min(seasonsCompleted, 8) }).map((_, i) => (
-            <ellipse
-              key={i}
-              cx={cx}
-              cy={groundY - 60 + i * 12}
-              rx={trunkWidth / 2 - 1}
-              ry={1}
-              fill="#4A3728"
+          {/* Seasonal rings on trunk (subtle horizontal lines) */}
+          {Array.from({ length: Math.min(seasonCount, 10) }).map((_, i) => (
+            <line
+              key={`ring-${i}`}
+              x1={cx - trunkW / 2 + 1}
+              y1={groundY - trunkH * 0.3 + i * (trunkH * 0.06)}
+              x2={cx + trunkW / 2 - 1}
+              y2={groundY - trunkH * 0.3 + i * (trunkH * 0.06)}
+              stroke="#4A3728"
+              strokeWidth={0.5}
               opacity={0.2}
             />
           ))}
 
-          {/* Canopy */}
+          {/* Ancient stage extras: moss patches on trunk */}
+          {stage === "ancient" && (
+            <>
+              <ellipse cx={cx - trunkW / 2 + 2} cy={groundY - trunkH * 0.5} rx={3} ry={5} fill="#6B8E5A" opacity={0.35} />
+              <ellipse cx={cx + trunkW / 2 - 2} cy={groundY - trunkH * 0.7} rx={2} ry={4} fill="#6B8E5A" opacity={0.3} />
+            </>
+          )}
+
+          {/* ----- Canopy ----- */}
           <ellipse
             cx={cx}
-            cy={groundY - 140}
-            rx={40 + contributionScore * 0.5}
-            ry={35 + contributionScore * 0.3}
-            fill={visualSeason === "autumn" ? "#C4785B" : visualSeason === "winter" ? "#9BA5A0" : "#7C9A7E"}
-            opacity={visualSeason === "winter" ? 0.4 : 0.75}
+            cy={canopyCy}
+            rx={canopyRx}
+            ry={canopyRy}
+            fill={SEASON_CANOPY[season]}
+            opacity={season === "winter" ? 0.35 : 0.7}
+            style={{ transition: "all 0.6s ease" }}
           />
 
-          {/* Flowers (current season actions) */}
-          {stage !== "sapling" && Array.from({ length: Math.min(currentSeasonActions, 12) }).map((_, i) => {
-            const fAngle = (i / 12) * Math.PI * 2;
-            const fR = 25 + Math.random() * 20;
+          {/* Secondary canopy cluster for young+ trees */}
+          {(stage === "young" || stage === "mature" || stage === "ancient") && (
+            <ellipse
+              cx={cx + canopyRx * 0.3}
+              cy={canopyCy - canopyRy * 0.2}
+              rx={canopyRx * 0.6}
+              ry={canopyRy * 0.55}
+              fill={SEASON_CANOPY[season]}
+              opacity={season === "winter" ? 0.25 : 0.55}
+              style={{ transition: "all 0.6s ease" }}
+            />
+          )}
+
+          {/* ----- Leaves scattered around canopy ----- */}
+          {Array.from({ length: leafCount }).map((_, i) => {
+            const angle = (i / leafCount) * Math.PI * 2;
+            const rFactor = 0.5 + seededOffset(i, 0.5);
+            const lx = cx + Math.cos(angle) * canopyRx * rFactor;
+            const ly = canopyCy + Math.sin(angle) * canopyRy * rFactor;
+            const lr = 2 + seededOffset(i + 50, 2);
+            const shade = season === "autumn" ? "#C87A3E" : season === "winter" ? "#AAB2AD" : "#6BA35A";
             return (
-              <circle
-                key={i}
-                cx={cx + Math.cos(fAngle) * fR}
-                cy={groundY - 140 + Math.sin(fAngle) * fR * 0.6}
-                r={3}
-                fill={visualSeason === "spring" ? "#F0B4CC" : visualSeason === "autumn" ? "#E8A87C" : "#FFE4B5"}
-                opacity={0.8}
+              <Leaf
+                key={`leaf-${i}`}
+                cx={lx}
+                cy={ly}
+                r={lr}
+                fill={shade}
+                delay={seededOffset(i + 10, 2)}
               />
             );
           })}
+
+          {/* ----- Flowers (young, mature, ancient) ----- */}
+          {flowerCount > 0 &&
+            Array.from({ length: flowerCount }).map((_, i) => {
+              const angle = (i / flowerCount) * Math.PI * 2 + 0.3;
+              const dist = 0.55 + seededOffset(i + 200, 0.35);
+              const fx = cx + Math.cos(angle) * canopyRx * dist;
+              const fy = canopyCy + Math.sin(angle) * canopyRy * dist;
+              return (
+                <circle
+                  key={`flower-${i}`}
+                  cx={fx}
+                  cy={fy}
+                  r={2.5}
+                  fill={SEASON_FLOWER[season]}
+                  opacity={0.85}
+                >
+                  <animate
+                    attributeName="opacity"
+                    values="0.85;0.55;0.85"
+                    dur="5s"
+                    begin={`${seededOffset(i + 70, 3)}s`}
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              );
+            })}
+
+          {/* ----- Fruits (mature, ancient) ----- */}
+          {fruitCount > 0 &&
+            Array.from({ length: fruitCount }).map((_, i) => {
+              const angle = (i / fruitCount) * Math.PI * 2 + 1.0;
+              const dist = 0.65 + seededOffset(i + 300, 0.3);
+              const fx = cx + Math.cos(angle) * canopyRx * dist;
+              const fy = canopyCy + Math.sin(angle) * canopyRy * dist + 2;
+              return (
+                <circle
+                  key={`fruit-${i}`}
+                  cx={fx}
+                  cy={fy}
+                  r={3}
+                  fill="#C4785B"
+                  stroke="#A5603F"
+                  strokeWidth={0.5}
+                  opacity={0.9}
+                />
+              );
+            })}
+
+          {/* Ancient: small bird silhouette */}
+          {stage === "ancient" && (
+            <path
+              d={`M${cx + canopyRx * 0.6} ${canopyCy - canopyRy * 0.7}
+                  q3 -4 6 0 q3 4 6 0`}
+              stroke="#4A3728"
+              strokeWidth={1}
+              fill="none"
+              opacity={0.3}
+            />
+          )}
+        </g>
+      )}
+
+      {/* ----- Stage label ----- */}
+      <text
+        x={cx}
+        y={vb - 6}
+        textAnchor="middle"
+        fill="#4A3728"
+        fontSize={7}
+        opacity={0.4}
+        fontFamily="sans-serif"
+      >
+        {stage === "seedling" && "Seedling"}
+        {stage === "sprout" && "Sprout"}
+        {stage === "sapling" && "Sapling"}
+        {stage === "young" && "Young Tree"}
+        {stage === "mature" && "Mature Tree"}
+        {stage === "ancient" && "Ancient Tree"}
+      </text>
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LivingTreeIcon: 32px mini version (simplified silhouette)
+// ---------------------------------------------------------------------------
+
+export function LivingTreeIcon({
+  capitalValues,
+  totalScore,
+  seasonCount,
+}: Pick<LivingTreeProps, "capitalValues" | "totalScore" | "seasonCount">) {
+  const stage = getLifeStage(totalScore);
+  const season = getSeasonPalette(seasonCount);
+  const growth = clamp(totalScore / 15000, 0, 1);
+
+  // Dominant capital determines accent colour on the icon.
+  const dominantCapital = useMemo(() => {
+    let best: CapitalType = "social";
+    let bestVal = 0;
+    for (const key of CAPITAL_TYPES) {
+      const v = capitalValues[key] ?? 0;
+      if (v > bestVal) {
+        bestVal = v;
+        best = key;
+      }
+    }
+    return best;
+  }, [capitalValues]);
+
+  const trunkW = 2 + growth * 3;
+  const canopyR = 5 + growth * 7;
+  const canopyColor = SEASON_CANOPY[season];
+  const accentColor = CAPITAL_COLORS[dominantCapital];
+
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      width={32}
+      height={32}
+      role="img"
+      aria-label={`Living Tree icon, ${stage}`}
+    >
+      {/* Ground shadow */}
+      <ellipse cx={16} cy={26} rx={10} ry={3} fill="#4A3728" opacity={0.1} />
+
+      {stage === "seedling" ? (
+        <g>
+          <line x1={16} y1={24} x2={16} y2={19} stroke="#7A6347" strokeWidth={1.5} strokeLinecap="round" />
+          <circle cx={14.5} cy={18.5} r={2.2} fill="#88B87A" opacity={0.8} />
+          <circle cx={17.5} cy={17} r={2} fill="#7DB86F" opacity={0.8} />
+        </g>
+      ) : (
+        <g>
+          {/* Trunk */}
+          <rect
+            x={16 - trunkW / 2}
+            y={24 - (8 + growth * 6)}
+            width={trunkW}
+            height={8 + growth * 6}
+            rx={trunkW / 3}
+            fill="#7A6347"
+          />
+          {/* Canopy */}
+          <circle
+            cx={16}
+            cy={24 - (8 + growth * 6) - canopyR * 0.4}
+            r={canopyR}
+            fill={canopyColor}
+            opacity={season === "winter" ? 0.4 : 0.7}
+          />
+          {/* Accent dot for dominant capital */}
+          {(stage === "mature" || stage === "ancient") && (
+            <circle
+              cx={16 + canopyR * 0.35}
+              cy={24 - (8 + growth * 6) - canopyR * 0.3}
+              r={1.5}
+              fill={accentColor}
+              opacity={0.8}
+            />
+          )}
         </g>
       )}
     </svg>
