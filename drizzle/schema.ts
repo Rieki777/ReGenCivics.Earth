@@ -105,6 +105,15 @@ export const applications = mysqlTable("applications", {
   submittedAt: timestamp("submittedAt"),
   adminSeeded: tinyint("adminSeeded").default(0).notNull(),
   stewardUserId: int("stewardUserId"),
+
+  // Land project status progression
+  projectStatus: mysqlEnum("projectStatus", ["applied", "accepted", "active", "established", "anchor"]).default("applied"),
+  projectStatusUpdatedAt: timestamp("projectStatusUpdatedAt"),
+  endorsementCount: int("endorsementCount").default(0),
+  contributionCount: int("contributionCount").default(0),
+  fundedCampaignCount: int("fundedCampaignCount").default(0),
+  seasonsActive: int("seasonsActive").default(0),
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -520,6 +529,19 @@ export const playerProfiles = mysqlTable("player_profiles", {
 
   // Status line
   currentlyWorkingOn: varchar("currentlyWorkingOn", { length: 200 }),
+
+  // Citizenship tier system
+  citizenshipTier: mysqlEnum("citizenshipTier", ["explorer", "co_creator", "steward", "sage"]).default("explorer"),
+  citizenshipTierUpdatedAt: timestamp("citizenshipTierUpdatedAt"),
+  graceStartedAt: timestamp("graceStartedAt"),
+
+  // Contribution scoring
+  contributionScore: double("contributionScore").default(0),
+  contributionScoreRaw: int("contributionScoreRaw").default(0),
+  currentTier: varchar("currentTier", { length: 50 }).default("Seedling"),
+  trustScore: double("trustScore").default(1.0),
+  scoreLastCalculatedAt: timestamp("scoreLastCalculatedAt"),
+  seasonsCompleted: int("seasonsCompleted").default(0),
 
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1320,6 +1342,7 @@ export const postReactions = mysqlTable('postReactions', {
   postId: int('postId'),
   replyId: int('replyId'),
   emoji: varchar('emoji', { length: 8 }).notNull(),
+  reactionWeight: double('reactionWeight').default(1.0),
   createdAt: timestamp('createdAt').defaultNow(),
 }, (table) => ({
   uniqueReaction: unique('unique_reaction').on(table.userId, table.postId, table.replyId, table.emoji),
@@ -1460,6 +1483,7 @@ export const referrals = mysqlTable("referrals", {
   id: int("id").autoincrement().primaryKey(),
   referrerUserId: int("referrerUserId").notNull(),
   referredUserId: int("referredUserId"),
+  referralCode: varchar("referralCode", { length: 100 }),
   source: varchar("source", { length: 50 }),
   context: varchar("context", { length: 100 }),
   landingUrl: varchar("landingUrl", { length: 500 }),
@@ -1467,6 +1491,7 @@ export const referrals = mysqlTable("referrals", {
   firstQuestAt: timestamp("firstQuestAt"),
   firstContributionAt: timestamp("firstContributionAt"),
   rewardsPaid: int("rewardsPaid").default(0).notNull(),
+  rewardsEarned: double("rewardsEarned").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -1770,13 +1795,15 @@ export type InsertCustomGameInquiry = typeof customGameInquiries.$inferInsert;
 // Connect.tsx but stored in DB so they can have forum threads, status, etc.
 export const organisations = mysqlTable("organisations", {
   id: int("id").autoincrement().primaryKey(),
-  orgId: varchar("orgId", { length: 100 }).notNull().unique(), // short slug, e.g. "hypha", "seeds"
+  orgId: varchar("orgId", { length: 100 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   url: varchar("url", { length: 500 }),
   description: text("description"),
-  // forumPostId links to the forum thread in the active-organisations category
   forumPostId: int("forumPostId"),
   status: mysqlEnum("status", ["active", "inactive", "pending"]).default("active").notNull(),
+  regenerativeScore: double("regenerativeScore"),
+  regenerativeTier: mysqlEnum("regenerativeTier", ["regular", "reputable", "sustainable", "regenerative", "thriving"]),
+  communityRatingsCount: int("communityRatingsCount").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type Organisation = typeof organisations.$inferSelect;
@@ -2248,3 +2275,218 @@ export const seasonalIntentions = mysqlTable("seasonal_intentions", {
   index("seasonal_intentions_season_idx").on(t.season, t.year),
 ]));
 export type SeasonalIntention = typeof seasonalIntentions.$inferSelect;
+
+// ─── Citizenship Tier History ──────────────────────────────────────────────
+export const citizenshipTierHistory = mysqlTable("citizenship_tier_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  fromTier: mysqlEnum("fromTier", ["explorer", "co_creator", "steward", "sage"]).notNull(),
+  toTier: mysqlEnum("toTier", ["explorer", "co_creator", "steward", "sage"]).notNull(),
+  reason: mysqlEnum("reason", ["automatic", "admin_override", "nomination", "grace_period_expired"]).notNull(),
+  promotedBy: int("promotedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CitizenshipTierHistoryEntry = typeof citizenshipTierHistory.$inferSelect;
+
+// ─── Seasonal Councils ────────────────────────────────────────────────────
+export const seasonalCouncils = mysqlTable("seasonal_councils", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonId: int("seasonId").notNull(),
+  status: mysqlEnum("status", ["upcoming", "active", "completed"]).default("upcoming"),
+  meetingDate: timestamp("meetingDate"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SeasonalCouncil = typeof seasonalCouncils.$inferSelect;
+
+export const seasonalCouncilMembers = mysqlTable("seasonal_council_members", {
+  id: int("id").autoincrement().primaryKey(),
+  councilId: int("councilId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["top_contributor", "core_team", "elected"]).notNull(),
+  attendedAt: timestamp("attendedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SeasonalCouncilMember = typeof seasonalCouncilMembers.$inferSelect;
+
+// ─── Lunar Cycles ─────────────────────────────────────────────────────────
+export const lunarCycles = mysqlTable("lunar_cycles", {
+  id: int("id").autoincrement().primaryKey(),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  seasonId: int("seasonId"),
+  name: varchar("name", { length: 100 }),
+  status: mysqlEnum("status", ["upcoming", "active", "completed"]).default("upcoming"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LunarCycle = typeof lunarCycles.$inferSelect;
+
+// ─── Batch Job Runs ───────────────────────────────────────────────────────
+export const batchJobRuns = mysqlTable("batch_job_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  jobType: varchar("jobType", { length: 50 }).notNull(),
+  startedAt: timestamp("startedAt").notNull(),
+  completedAt: timestamp("completedAt"),
+  status: mysqlEnum("status", ["running", "success", "partial_failure", "failed"]).default("running"),
+  promotions: int("promotions").default(0),
+  demotions: int("demotions").default(0),
+  playersProcessed: int("playersProcessed").default(0),
+  errors: json("errors"),
+  triggeredBy: varchar("triggeredBy", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BatchJobRun = typeof batchJobRuns.$inferSelect;
+
+// ─── Proposals (standalone signaling system) ──────────────────────────────
+export const proposals = mysqlTable("proposals", {
+  id: int("id").autoincrement().primaryKey(),
+  authorId: int("authorId").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  category: mysqlEnum("category", [
+    "fund_allocation", "game_variable", "new_quest", "food_economy",
+    "platform_feature", "community", "bff_initiative", "partnership",
+    "community_agreement", "other"
+  ]).notNull(),
+  status: mysqlEnum("status", [
+    "idea", "draft", "signaling", "threshold_reached",
+    "in_governance", "passed", "implemented", "declined"
+  ]).default("idea"),
+  templateType: varchar("templateType", { length: 50 }),
+  forumThreadId: int("forumThreadId"),
+  signalVoteCount: int("signalVoteCount").default(0),
+  bioregionId: int("bioregionId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Proposal = typeof proposals.$inferSelect;
+
+export const proposalVotes = mysqlTable("proposal_votes", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("unique_proposal_vote").on(t.proposalId, t.userId),
+]));
+export type ProposalVote = typeof proposalVotes.$inferSelect;
+
+export const proposalUpdates = mysqlTable("proposal_updates", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  authorId: int("authorId").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProposalUpdate = typeof proposalUpdates.$inferSelect;
+
+// ─── Organisation Ratings ─────────────────────────────────────────────────
+export const organisationRatings = mysqlTable("organisation_ratings", {
+  id: int("id").autoincrement().primaryKey(),
+  raterId: int("raterId").notNull(),
+  organisationId: int("organisationId").notNull(),
+  soilScore: tinyint("soilScore"),
+  biodiversityScore: tinyint("biodiversityScore"),
+  waterScore: tinyint("waterScore"),
+  chemicalFreeScore: tinyint("chemicalFreeScore"),
+  communityScore: tinyint("communityScore"),
+  workerWellbeingScore: tinyint("workerWellbeingScore"),
+  overallScore: double("overallScore"),
+  note: text("note"),
+  seasonId: int("seasonId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type OrganisationRating = typeof organisationRatings.$inferSelect;
+
+// ─── Local Food Applications ──────────────────────────────────────────────
+export const localFoodApplications = mysqlTable("local_food_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  producerName: varchar("producerName", { length: 200 }).notNull(),
+  contactEmail: varchar("contactEmail", { length: 200 }).notNull(),
+  contactName: varchar("contactName", { length: 200 }).notNull(),
+  bioregionId: int("bioregionId"),
+  locationLat: double("locationLat"),
+  locationLng: double("locationLng"),
+  description: text("description"),
+  productsOffered: json("productsOffered"),
+  regenerativePractices: text("regenerativePractices"),
+  websiteUrl: varchar("websiteUrl", { length: 500 }),
+  localScaleProfileUrl: varchar("localScaleProfileUrl", { length: 500 }),
+  status: mysqlEnum("status", ["submitted", "under_review", "approved", "active", "declined"]).default("submitted"),
+  communityRatingsCount: int("communityRatingsCount").default(0),
+  regenerativeScore: double("regenerativeScore"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LocalFoodApplication = typeof localFoodApplications.$inferSelect;
+
+// ─── Economic Suggestions ─────────────────────────────────────────────────
+export const economicSuggestions = mysqlTable("economic_suggestions", {
+  id: int("id").autoincrement().primaryKey(),
+  authorId: int("authorId").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 100 }),
+  status: mysqlEnum("status", ["open", "in_review", "accepted", "declined"]).default("open"),
+  voteCount: int("voteCount").default(0),
+  forumThreadId: int("forumThreadId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EconomicSuggestion = typeof economicSuggestions.$inferSelect;
+
+export const economicSuggestionVotes = mysqlTable("economic_suggestion_votes", {
+  id: int("id").autoincrement().primaryKey(),
+  suggestionId: int("suggestionId").notNull(),
+  userId: int("userId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("unique_suggestion_vote").on(t.suggestionId, t.userId),
+]));
+export type EconomicSuggestionVote = typeof economicSuggestionVotes.$inferSelect;
+
+// ─── Activity Feed Events ─────────────────────────────────────────────────
+export const activityFeedEvents = mysqlTable("activity_feed_events", {
+  id: int("id").autoincrement().primaryKey(),
+  eventType: varchar("eventType", { length: 50 }).notNull(),
+  actorType: varchar("actorType", { length: 20 }).notNull(),
+  actorId: int("actorId"),
+  targetType: varchar("targetType", { length: 20 }),
+  targetId: int("targetId"),
+  metadata: json("metadata"),
+  visibility: mysqlEnum("visibility", ["public", "community", "admin"]).default("community"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ActivityFeedEvent = typeof activityFeedEvents.$inferSelect;
+
+// ─── Quest Unlock Tiers ───────────────────────────────────────────────────
+export const questUnlockTiers = mysqlTable("quest_unlock_tiers", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  minimumPercentile: int("minimumPercentile").notNull(),
+  requiresRitesComplete: boolean("requiresRitesComplete").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type QuestUnlockTier = typeof questUnlockTiers.$inferSelect;
+
+export const questTierAssignments = mysqlTable("quest_tier_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  tierId: int("tierId").notNull(),
+  questId: int("questId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type QuestTierAssignment = typeof questTierAssignments.$inferSelect;
+
+// ─── Seasonal Harvests ────────────────────────────────────────────────────
+export const seasonalHarvests = mysqlTable("seasonal_harvests", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  seasonId: int("seasonId").notNull(),
+  questsCompleted: int("questsCompleted").default(0),
+  tokensEarned: double("tokensEarned").default(0),
+  referralSignups: int("referralSignups").default(0),
+  newTier: varchar("newTier", { length: 50 }),
+  scoreAtEnd: double("scoreAtEnd").default(0),
+  percentileAtEnd: int("percentileAtEnd").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
