@@ -56,6 +56,9 @@ These files define all outstanding work for this project. Always check them befo
 - `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` — **active** execution prompt. Remaining fixes: 10 (profile overhaul), 14 (glossary propose UI), 15 (feature suggestions page), 17 (quest locking audit). Fix 12 DONE.
 - `CLAUDE_CODE_PROMPT_2026-03-31_MEGABATCH.md` — **START HERE.** Master execution prompt covering ALL outstanding work in priority order. References all other docs. Created 2026-03-31.
 - `SOCIAL_SHARING_SPEC.md` — **active** spec. Full social sharing optimization system: 12 initiatives across static OG images, dynamic image generation (satori), share prompts, referral tracking, viral loops, embeddable widgets. Go-to-market audience building infrastructure.
+- `PLAYER_EXPERIENCE_SPEC.md` — **SUPERSEDED by REGEN_GAMES_SPEC_V1.md.** Original draft of player experience features. Kept for reference only.
+- `REGEN_GAMES_SPEC_V1.md` — **THE GAME SPEC. START HERE for all game features.** Complete game system: Game Variables admin architecture, percentile-based contribution scoring, trust multiplier system, Living Tree visualization, gratitude system, land project status progression, seasonal harvest/composting, seasonal councils, endorsements/flags with cascading consequences, contribution compass, mycelium network, proof timeline, resume, gated quests, bioregional identity, forum reputation weighting, co-creator invitations, quiet recognitions, silent sharing score. 24 features across 5 phases with full database schema and compatibility notes. Built on SEEDS architecture, adapted for ReGen Civics.
+- `LIVING_TREE_VISUALIZATION_SPEC.md` — Detailed visual concept for the Living Tree growth visualization on player profiles. 6 life stages, 9 root arteries (forms of capital), seasonal mechanics, visual-to-data mapping. Referenced by REGEN_GAMES_SPEC_V1.md Part 3.
 
 All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
 
