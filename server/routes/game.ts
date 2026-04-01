@@ -133,9 +133,16 @@ export const gameRouter = router({
       }
       const db = await getDb();
       if (!db) throw new Error("DB unavailable");
+      // Capture endorser's citizenship tier at time of endorsement
+      let endorserTier: string | null = null;
+      try {
+        const [ep] = await db.execute(sql`SELECT citizenshipTier FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1`).then((r: any) => r[0] ?? []);
+        endorserTier = ep?.citizenshipTier ?? null;
+      } catch { /* non-fatal */ }
+
       await db.execute(sql`
-        INSERT IGNORE INTO game_endorsements (endorserType, endorserId, endorsedType, endorsedId, note)
-        VALUES ('player', ${ctx.user.id}, ${input.endorsedType}, ${input.endorsedId}, ${input.note ?? null})
+        INSERT IGNORE INTO game_endorsements (endorserType, endorserId, endorsedType, endorsedId, note, endorserTierAtTime)
+        VALUES ('player', ${ctx.user.id}, ${input.endorsedType}, ${input.endorsedId}, ${input.note ?? null}, ${endorserTier})
       `);
       // Record score event for the endorsed entity
       const variableKey = input.endorsedType === "project"

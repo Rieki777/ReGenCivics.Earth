@@ -22,6 +22,12 @@ import { agreementsRouter } from "./routes/agreements";
 import { featuresRouter } from "./routes/features";
 import { sharingRouter } from "./routes/sharing";
 import { gameRouter } from "./routes/game";
+import { batchJobsRouter } from "./routes/batchJobs";
+import { activityFeedRouter } from "./routes/activityFeed";
+import { proposalsRouter } from "./routes/proposals";
+import { localFoodRouter } from "./routes/localFood";
+import { economicSuggestionsRouter } from "./routes/economicSuggestions";
+import { orgRatingsRouter } from "./routes/orgRatings";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -122,6 +128,12 @@ export const appRouter = router({
 
   // Game System
   game: gameRouter,
+  batchJobs: batchJobsRouter,
+  activityFeed: activityFeedRouter,
+  proposals: proposalsRouter,
+  localFood: localFoodRouter,
+  economicSuggestions: economicSuggestionsRouter,
+  orgRatings: orgRatingsRouter,
 });
 
 export type AppRouter = typeof appRouter;

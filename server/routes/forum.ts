@@ -741,12 +741,24 @@ export const forumRouter = router({
           await db2.delete(postReactions).where(eq(postReactions.id, existing[0].id));
           return { reacted: false };
         } else {
-          // React: insert new reaction
+          // React: insert new reaction with reputation weight
+          // Weight = 1.0 + (contribution percentile / 100)
+          let weight = 1.0;
+          try {
+            const [profile] = await db2.execute(
+              sql`SELECT contributionScore FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1`
+            ).then((r: any) => r[0] ?? []);
+            if (profile?.contributionScore) {
+              weight = 1.0 + (Number(profile.contributionScore) / 100);
+            }
+          } catch { /* default weight 1.0 */ }
+
           await db2.insert(postReactions).values({
             userId: ctx.user.id,
             postId: input.postId ?? null,
             replyId: input.replyId ?? null,
             emoji: input.emoji,
+            reactionWeight: weight,
           });
           return { reacted: true };
         }
