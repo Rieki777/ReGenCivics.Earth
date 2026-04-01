@@ -13,7 +13,7 @@ const ProgressMap = lazy(() => import('@/components/ProgressMap/ProgressMap'))
 interface CommandPanelProps {
   isOpen: boolean
   onClose: () => void
-  toggleRef?: React.RefObject<HTMLButtonElement>
+  toggleRef?: React.RefObject<HTMLButtonElement | null>
 }
 
 export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) {

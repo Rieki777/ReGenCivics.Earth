@@ -50,7 +50,7 @@ interface SocialLinksProps {
 }
 
 export function SocialLinks({
-  show = ["whatsapp", "discord", "youtube"],
+  show = ["socials", "youtube"] as SocialKey[],
   variant = "icons",
   size = "md",
   colorScheme = "light",

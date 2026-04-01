@@ -65,7 +65,6 @@ export const glossaryRouter = router({
         sourceThreadUrl: null,
         status: "proposed",
         approvedAt: null,
-        authorId: ctx.user.id,
       });
       return { id };
     }),

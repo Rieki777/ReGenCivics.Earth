@@ -13,6 +13,7 @@ export interface SeasonalQuest {
   estimatedTime: string;
   element: "earth" | "water" | "fire" | "air";
   reward?: { regen: number; rvoice: number };
+  forumUrl?: string;
 }
 
 export const seasonalQuestsData: SeasonalQuest[] = [

@@ -48,6 +48,22 @@ export type InvokeResult = {
 
 let _client: Anthropic | null = null;
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const isOverloaded = err?.status === 529 || err?.error?.type === "overloaded_error";
+      if (isOverloaded && attempt < retries - 1) {
+        await new Promise(r => setTimeout(r, 2000 * Math.pow(2, attempt)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("withRetry: exhausted retries");
+}
+
 function getClient(): Anthropic {
   if (!_client) {
     if (!ENV.anthropicApiKey) {
@@ -70,12 +86,12 @@ export async function streamLLM(
     .filter((m) => m.role !== "system")
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-  const stream = client.messages.stream({
+  const stream = await withRetry(() => Promise.resolve(client.messages.stream({
     model: "claude-sonnet-4-6",
     max_tokens: maxTokens,
     ...(systemMessage ? { system: systemMessage } : {}),
     messages: conversationMessages,
-  });
+  })));
 
   for await (const event of stream) {
     if (
@@ -125,14 +141,14 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
       input_schema: jsonSchema.schema as Anthropic.Tool["input_schema"],
     };
 
-    const response = await client.messages.create({
+    const response = await withRetry(() => client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
       ...(systemMessage ? { system: systemMessage } : {}),
       messages: conversationMessages,
       tools: [tool],
       tool_choice: { type: "tool", name: jsonSchema.name },
-    });
+    }));
 
     const toolUse = response.content.find((b) => b.type === "tool_use");
     if (!toolUse || toolUse.type !== "tool_use") {
@@ -140,12 +156,12 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     }
     responseText = JSON.stringify(toolUse.input);
   } else {
-    const response = await client.messages.create({
+    const response = await withRetry(() => client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
       ...(systemMessage ? { system: systemMessage } : {}),
       messages: conversationMessages,
-    });
+    }));
 
     const textBlock = response.content.find((b) => b.type === "text");
     responseText = textBlock?.type === "text" ? textBlock.text : "";

@@ -78,7 +78,7 @@ import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { WelcomeAboardQuests } from "@/components/WelcomeAboardQuests";
 import { QuestStartPopup, flagShowQuestPrompt } from "@/components/QuestStartPopup";
 import { DiscoverTab } from "@/components/DiscoverTab";
-import { QuestJournal } from "@/components/QuestJournal";
+import { QuestJournal as QuestJournalLog } from "@/components/QuestJournal";
 import { BioregionSelect } from "@/components/BioregionSelect";
 import { BioregionMultiSelect } from "@/components/BioregionMultiSelect";
 import { LocationPicker, LocationDisplay, type LocationData } from "@/components/LocationPicker";
@@ -2882,7 +2882,7 @@ export default function PlayerProfile() {
                         </div>
 
                         {/* TODO: Wire up when GET /api/profile/journal endpoint is available */}
-                        <QuestJournal entries={[]} />
+                        <QuestJournalLog entries={[]} />
                       </div>
                     );
                   })()}

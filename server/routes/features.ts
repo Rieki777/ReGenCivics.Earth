@@ -22,11 +22,9 @@ export const featuresRouter = router({
       const order = input.sortBy === "votes"
         ? desc(featureSuggestions.voteCount)
         : desc(featureSuggestions.createdAt);
-      let q = database.select().from(featureSuggestions).orderBy(order).limit(input.limit);
-      if (input.status) {
-        q = q.where(eq(featureSuggestions.status, input.status as any));
-      }
-      const suggestions = await q;
+      const suggestions = await (input.status
+        ? database.select().from(featureSuggestions).where(eq(featureSuggestions.status, input.status as any)).orderBy(order).limit(input.limit)
+        : database.select().from(featureSuggestions).orderBy(order).limit(input.limit));
       const authorIds = suggestions.map(s => s.authorId);
       const authors = authorIds.length ? await db.getUsersByIds(authorIds) : {};
       return suggestions.map(s => ({
