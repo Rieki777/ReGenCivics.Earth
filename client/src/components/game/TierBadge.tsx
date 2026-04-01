@@ -8,7 +8,7 @@ const TIER_VISUALS: Record<string, { emoji: string; color: string; bgColor: stri
   Sprout: { emoji: "🌱", color: "#7C9A7E", bgColor: "#7C9A7E20" },
   Sapling: { emoji: "🌿", color: "#5A8C5A", bgColor: "#5A8C5A20" },
   Grower: { emoji: "🌳", color: "#4A7C4A", bgColor: "#4A7C4A20" },
-  Steward: { emoji: "🌲", color: "#3A6C3A", bgColor: "#3A6C3A20" },
+  Cultivator: { emoji: "🌲", color: "#3A6C3A", bgColor: "#3A6C3A20" },
   Elder: { emoji: "🌸", color: "#C4785B", bgColor: "#C4785B20" },
   Guardian: { emoji: "🍎", color: "#B85C3A", bgColor: "#B85C3A20" },
 };

@@ -251,7 +251,7 @@ export const QUEST_METADATA: Record<string, { category: QuestCategory; difficult
   "quest-5":       { category: "community",  difficulty: "advanced",     time: "long",   experience: "An evening ritual",                           element: "air"   },
   "quest-6":       { category: "community",  difficulty: "intermediate", time: "medium", experience: "A ceremony or gathering",                     element: "water" },
   "quest-7":       { category: "nature",     difficulty: "beginner",     time: "medium", experience: "A few hours with others",                     element: "fire"  },
-  "quest-8":       { category: "inner-work", difficulty: "advanced",     time: "long",   experience: "A morning walk",                              element: "earth" },
+  "quest-8":       { category: "inner-work", difficulty: "advanced",     time: "long",   experience: "An inner exploration",                        element: "earth" },
   "quest-9":       { category: "nature",     difficulty: "intermediate", time: "medium", experience: "A retreat or guided journey",                 element: "water" },
   "quest-10":      { category: "community",  difficulty: "beginner",     time: "quick",  experience: "A short daily practice",                      element: "air"   },
   "quest-11":      { category: "community",  difficulty: "intermediate", time: "medium", experience: "A community session",                         element: "air"   },

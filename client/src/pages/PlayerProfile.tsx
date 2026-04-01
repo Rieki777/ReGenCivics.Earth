@@ -1706,20 +1706,30 @@ function ContributionsTab({
       <div className="bg-white/5 border border-dashed border-white/15 rounded-xl p-4 space-y-3">
         <p className="text-white/60 text-xs font-medium uppercase tracking-wide">On-Chain Tracking</p>
         <div className="space-y-2">
-          <div className="flex items-start gap-3 bg-[#8b5cf6]/8 border border-[#8b5cf6]/20 rounded-lg px-3 py-2.5">
+          <a
+            href="https://app.hypha.earth"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start gap-3 bg-[#8b5cf6]/8 border border-[#8b5cf6]/20 rounded-lg px-3 py-2.5 hover:bg-[#8b5cf6]/15 transition-colors"
+          >
             <div className="w-2 h-2 rounded-full bg-[#8b5cf6] mt-1.5 flex-shrink-0" />
-            <div>
-              <p className="text-white/80 text-xs font-medium">Hypha DAO</p>
+            <div className="flex-1">
+              <p className="text-white/80 text-xs font-medium flex items-center gap-1">Hypha DAO <ExternalLink className="w-3 h-3 text-white/40" /></p>
               <p className="text-white/50 text-xs">Governance votes, proposals, role assignments, and payouts are recorded here.</p>
             </div>
-          </div>
-          <div className="flex items-start gap-3 bg-[#3b82f6]/8 border border-[#3b82f6]/20 rounded-lg px-3 py-2.5">
+          </a>
+          <a
+            href={walletAddress ? `https://basescan.org/address/${walletAddress}` : "https://basescan.org"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start gap-3 bg-[#3b82f6]/8 border border-[#3b82f6]/20 rounded-lg px-3 py-2.5 hover:bg-[#3b82f6]/15 transition-colors"
+          >
             <div className="w-2 h-2 rounded-full bg-[#3b82f6] mt-1.5 flex-shrink-0" />
-            <div>
-              <p className="text-white/80 text-xs font-medium">Base Blockchain</p>
-              <p className="text-white/50 text-xs">$ReGen and $RCivics transactions, token mints, and verifiable contributions live here.</p>
+            <div className="flex-1">
+              <p className="text-white/80 text-xs font-medium flex items-center gap-1">Base Blockchain <ExternalLink className="w-3 h-3 text-white/40" /></p>
+              <p className="text-white/50 text-xs">{walletAddress ? "$ReGen and $RCivics transactions, token mints, and verifiable contributions live here." : "Link your wallet to view on-chain activity."}</p>
             </div>
-          </div>
+          </a>
         </div>
         {walletAddress ? (
           <p className="text-[#7dd87d] text-xs">Hypha account linked: {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}</p>
@@ -2397,36 +2407,40 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
 }
 
 function SubmissionsTab() {
-  const { data: applications = [] } = trpc.applications.myApplications.useQuery();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const { data: applications = [] } = trpc.applications.myApplications.useQuery(undefined, { enabled: isAdmin });
   const { data: campaigns = [] } = trpc.campaigns.myCampaigns.useQuery();
   const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery();
-  const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery();
+  const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery(undefined, { enabled: isAdmin });
   const { data: orgClaims = [] } = trpc.orgClaims.mine.useQuery();
 
   return (
     <div className="space-y-8 py-2">
-      <SubmissionsSection
-        title="Land Project Applications"
-        icon={MapPin}
-        items={applications}
-        renderItem={(app: any) => (
-          <SubmissionCard
-            key={app.id}
-            title={app.projectName}
-            subtitle={app.location}
-            status={app.status}
-            statusColor={applicationStatusColor(app.status)}
-            updatedAt={app.updatedAt}
-            primaryAction={
-              app.status === "draft" || app.status === "changes_requested"
-                ? { label: app.status === "draft" ? "Continue Editing" : "Review & Resubmit", href: `/apply?id=${app.id}` }
-                : { label: "View Application", href: `/my-applications` }
-            }
-          />
-        )}
-        emptyMessage="No applications yet."
-        emptyAction={{ label: "Apply Now", href: "/apply" }}
-      />
+      {isAdmin && (
+        <SubmissionsSection
+          title="Land Project Applications"
+          icon={MapPin}
+          items={applications}
+          renderItem={(app: any) => (
+            <SubmissionCard
+              key={app.id}
+              title={app.projectName}
+              subtitle={app.location}
+              status={app.status}
+              statusColor={applicationStatusColor(app.status)}
+              updatedAt={app.updatedAt}
+              primaryAction={
+                app.status === "draft" || app.status === "changes_requested"
+                  ? { label: app.status === "draft" ? "Continue Editing" : "Review & Resubmit", href: `/apply?id=${app.id}` }
+                  : { label: "View Application", href: `/my-applications` }
+              }
+            />
+          )}
+          emptyMessage="No applications yet."
+          emptyAction={{ label: "Apply Now", href: "/apply" }}
+        />
+      )}
       <SubmissionsSection
         title="Incubator Season Campaigns"
         icon={Layers}
@@ -2464,7 +2478,7 @@ function SubmissionsTab() {
         emptyMessage="No saved contribution profiles."
         emptyAction={{ label: "Open Calculator", href: "/calculator" }}
       />
-      {investorInquiry && (
+      {isAdmin && investorInquiry && (
         <SubmissionsSection title="Investor Inquiry" icon={TrendingUp} items={[investorInquiry]} renderItem={(inv: any) => (
           <SubmissionCard
             key={inv.id}

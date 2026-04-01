@@ -105,9 +105,11 @@ export function UserNotificationPreferences({ currentPrefs }: Props) {
 }
 
 function RecordingEmailToggle() {
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.newsletter.recordingNotifyStatus.useQuery();
   const mutation = trpc.newsletter.toggleRecordingNotify.useMutation({
     onSuccess: (res) => {
+      utils.newsletter.recordingNotifyStatus.setData(undefined, { enabled: res.enabled });
       toast.success(res.enabled ? "Recording updates enabled" : "Recording updates disabled");
     },
     onError: (err) => {

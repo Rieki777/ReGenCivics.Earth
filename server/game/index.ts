@@ -121,7 +121,7 @@ export async function logActivityEvent(
 export function getTierFromPercentile(percentile: number): string {
   if (percentile >= 95) return "Guardian";
   if (percentile >= 85) return "Elder";
-  if (percentile >= 70) return "Steward";
+  if (percentile >= 70) return "Cultivator";
   if (percentile >= 50) return "Grower";
   if (percentile >= 30) return "Sapling";
   if (percentile >= 15) return "Sprout";

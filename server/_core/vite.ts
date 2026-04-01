@@ -96,8 +96,8 @@ export function serveStatic(app: Express) {
   // The meta tag map mirrors client/src/components/SEO.tsx `pageSEO`. Keep them in sync.
   const BASE_URL = "https://regencivics.earth";
   const DEFAULT_META = {
-    title: "ReGen Civics: Fund and Game for Regenerative Land Projects",
-    description: "ReGen Civics is a fund for regenerative land projects, who also runs quests and games for real-world regeneration.",
+    title: "ReGen Civics: Infinite Game for the Regenerative Renaissance",
+    description: "A fund and a game for regenerative land projects. Do quests, earn tokens, fund real-world regeneration.",
     image: `${BASE_URL}/og-default.jpg`,
   };
   const ROUTE_META: Record<string, { title: string; description: string; image?: string }> = {
