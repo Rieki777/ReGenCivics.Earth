@@ -5,7 +5,6 @@
 
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { cdnImg } from "@/lib/utils";
 import { schemas } from "@/components/JsonLD";
 
 interface SEOProps {
@@ -149,14 +148,14 @@ export const pageSEO = {
     title: 'Quests: Regenerative Actions & Rewards',
     description: 'Quests are how you participate. Each one moves healing into the world: your body, your land, your community. Earn rewards doing the work that actually matters.',
     keywords: 'regenerative quests, impact actions, earn tokens, food forest, gut health, regenerative lifestyle, sustainable living',
-    image: cdnImg('https://assets.regencivics.earth/kdpmqczDwXGfwTIK.jpg'),
+    image: '/og/quest.jpg',
     url: '/quest'
   },
   team: {
     title: 'Team: Join Our Dynamic Organization',
     description: 'A distributed team working to make the Regenerative Renaissance real. Meet the people behind ReGen Civics.',
     keywords: 'regenerative team, join DAO, regenerative ikigai, impact careers, sustainable jobs, regenerative organization',
-    image: cdnImg('https://assets.regencivics.earth/PPEoXqTcNBKerkDe.jpg'),
+    image: '/og/team.jpg',
     url: '/team'
   },
   opportunity: {
