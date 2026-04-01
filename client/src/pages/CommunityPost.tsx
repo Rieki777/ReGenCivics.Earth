@@ -28,6 +28,7 @@ import { MarkdownToolbar } from "@/components/MarkdownToolbar";
 import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
+import { CitizenshipBadge } from "@/components/game/TierBadge";
 import { EmojiReactions } from "@/components/EmojiReactions";
 import ThreadRoots from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
@@ -460,6 +461,9 @@ export default function CommunityPost() {
                   <Link href={`/community/user/${post.authorId}`} className="font-semibold text-[#1a472a] text-sm hover:text-[#4a7c59] transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
                     {post.authorName}
                   </Link>
+                  {(post as any).authorCitizenshipTier && (post as any).authorCitizenshipTier !== 'explorer' && (
+                    <CitizenshipBadge tier={(post as any).authorCitizenshipTier} size="sm" />
+                  )}
                   <Badge variant="secondary" className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-[10px] px-1.5 py-0">
                     Author
                   </Badge>
@@ -743,6 +747,9 @@ export default function CommunityPost() {
                           <span className="font-semibold text-[#1a472a] text-xs" style={{ fontFamily: 'var(--font-display)' }}>
                             {reply.authorName}
                           </span>
+                          {(reply as any).authorCitizenshipTier && (reply as any).authorCitizenshipTier !== 'explorer' && (
+                            <CitizenshipBadge tier={(reply as any).authorCitizenshipTier} size="sm" />
+                          )}
                           {reply.authorId === post.authorId && (
                             <Badge variant="secondary" className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-[10px] px-1.5 py-0">
                               OP

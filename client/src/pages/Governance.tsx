@@ -763,8 +763,39 @@ export default function Governance() {
             </h1>
             
             <p className="text-xl text-white/90 leading-relaxed">
-              ReGen Civics operates two distinct but complementary governance systems: one for coordinating capital (the Fund) and one for coordinating community engagement (the Game). Both are designed to be transparent, participatory, and aligned with regenerative outcomes.
+              ReGen Civics coordinates through three tools: Contribution Scores, Gratitude, and Proposals. Internal signaling happens here. Formal governance and binding votes happen on <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a>, where vote weight comes from RGVoice held.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Three Coordination Tools */}
+      <section data-reveal className="py-12 px-4">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-[#7dd87d] mb-8 text-center" style={{ fontFamily: 'var(--font-display)' }}>
+              Three Tools for Coordination
+            </h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+                <div className="text-2xl mb-2">📊</div>
+                <h3 className="text-white font-bold mb-1">Contribution Scores</h3>
+                <p className="text-white/60 text-sm">Your participation is tracked and scored. Percentile rankings determine your tier and your weight in the community.</p>
+                <Link href="/economy" className="text-[#7dd87d] text-xs mt-2 block hover:underline">How scoring works</Link>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+                <div className="text-2xl mb-2">🙏</div>
+                <h3 className="text-white font-bold mb-1">Gratitude</h3>
+                <p className="text-white/60 text-sm">Send gratitude tokens to recognize valuable contributions. Your budget and multiplier grow with your citizenship tier.</p>
+                <Link href="/economy" className="text-[#7dd87d] text-xs mt-2 block hover:underline">How gratitude works</Link>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+                <div className="text-2xl mb-2">📜</div>
+                <h3 className="text-white font-bold mb-1">Proposals</h3>
+                <p className="text-white/60 text-sm">Any Co-Creator can submit a proposal. The community signals support. Proposals that reach threshold move to <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a> for formal governance.</p>
+                <Link href="/proposals" className="text-[#7dd87d] text-xs mt-2 block hover:underline">View proposals</Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

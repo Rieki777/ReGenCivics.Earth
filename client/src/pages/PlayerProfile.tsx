@@ -1635,6 +1635,30 @@ function EventAttendanceBalance() {
   );
 }
 
+function ReferralStatsCard() {
+  const { data: stats } = trpc.sharing.myStats.useQuery();
+  if (!stats || (stats.totalReferrals === 0 && stats.totalShares === 0)) return null;
+  return (
+    <div className="bg-purple-500/5 border border-purple-500/15 rounded-xl p-4">
+      <p className="text-white/50 text-xs mb-2 font-semibold uppercase tracking-wider">Your Mycelium</p>
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div>
+          <p className="text-lg font-bold text-purple-300">{stats.totalReferrals}</p>
+          <p className="text-white/40 text-[10px]">People invited</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-[#7dd87d]">{stats.regenEarned}</p>
+          <p className="text-white/40 text-[10px]">$ReGen earned</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-white/60">{stats.totalShares}</p>
+          <p className="text-white/40 text-[10px]">Links shared</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Contributions Tab ───────────────────────────────────────────────────────
 function ContributionsTab({
   walletAddress,
@@ -1778,6 +1802,9 @@ function ContributionsTab({
 
       {/* #23 — Event Attendance Token Balance */}
       <EventAttendanceBalance />
+
+      {/* Referral Stats */}
+      <ReferralStatsCard />
 
       {/* Calculator Hub */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">

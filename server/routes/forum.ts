@@ -230,6 +230,8 @@ export const forumRouter = router({
         authorName: author?.name || 'Anonymous',
         authorAvatar: authorProfile?.avatarUrl || null,
         authorBadges,
+        authorCitizenshipTier: authorProfile?.citizenshipTier || 'explorer',
+        authorContributionTier: authorProfile?.currentTier || 'Seedling',
         categoryName: category?.name || 'Unknown',
         categorySlug: category?.slug || 'general',
       };
@@ -261,6 +263,8 @@ export const forumRouter = router({
           authorName: author?.name || 'Anonymous',
           authorAvatar: authorProfile?.avatarUrl || null,
           authorBadges,
+          authorCitizenshipTier: authorProfile?.citizenshipTier || 'explorer',
+          authorContributionTier: authorProfile?.currentTier || 'Seedling',
         };
       });
       return enriched;

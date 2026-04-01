@@ -1,5 +1,6 @@
 /**
- * Marketplace — filterable registry of member gifts and needs.
+ * Connection Hub (formerly Marketplace)
+ * A space for members to share what they can offer and what they need help with.
  * Route: /marketplace
  */
 import { useState } from "react";
@@ -56,10 +57,10 @@ export default function Marketplace() {
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-            Gifts + Needs Marketplace
+            Connection Hub
           </h1>
           <p className="text-white/60 text-base max-w-2xl mx-auto">
-            Members share what they offer and what they are looking for. Find your people and build something together.
+            Share what you can offer the community and what you could use help with. This is how regenerators find each other.
           </p>
           <div className="mt-5 flex flex-wrap gap-2 justify-center">
             <Link href="/profile">
@@ -67,9 +68,18 @@ export default function Marketplace() {
                 size="sm"
                 className="bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30"
               >
-                Add your gifts + needs
+                Share what you offer
               </Button>
             </Link>
+            <a href="https://localscale.org" target="_blank" rel="noopener noreferrer">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-white/60 border-white/20 hover:text-white hover:border-white/40"
+              >
+                Exchange on LocalScale.org
+              </Button>
+            </a>
           </div>
         </div>
 
@@ -112,11 +122,11 @@ export default function Marketplace() {
           <div className="text-center py-20 border border-white/8 rounded-2xl bg-white/2">
             <p className="text-white/50 text-lg mb-2">No entries yet</p>
             <p className="text-white/35 text-sm mb-6">
-              Be the first to share what you bring and what you are looking for.
+              Be the first to share what you can offer and what you could use help with.
             </p>
             <Link href="/profile">
               <Button className="bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30">
-                Add your gifts + needs in your profile
+                Share what you offer in your profile
               </Button>
             </Link>
           </div>
@@ -171,7 +181,7 @@ export default function Marketplace() {
               {item.gifts.length > 0 && (
                 <div className="mb-3">
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-[#7dd87d]/70 mb-2">
-                    Offering
+                    What I can offer
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {item.gifts.map(g => (
@@ -193,7 +203,7 @@ export default function Marketplace() {
               {item.needs.length > 0 && (
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-[#d4a574]/70 mb-2">
-                    Looking for
+                    What I'm looking for help with
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {item.needs.map(n => (
@@ -216,7 +226,7 @@ export default function Marketplace() {
 
         {items.length > 0 && (
           <p className="text-center text-white/30 text-xs mt-8">
-            {items.length} member{items.length !== 1 ? "s" : ""} in the marketplace
+            {items.length} member{items.length !== 1 ? "s" : ""} in the connection hub
           </p>
         )}
       </div>
