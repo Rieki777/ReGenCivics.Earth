@@ -43,6 +43,7 @@ import { registerPresenceRoutes } from "../routes/presence";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
 import { registerImageOptimization } from "../routes/global";
+import { registerOgRoutes } from "../routes/og";
 import * as db from "../db";
 import { createRequire } from "module";
 const _require = createRequire(import.meta.url);
@@ -511,6 +512,7 @@ async function startServer() {
   app.use('/api/admin/farcaster', farcasterRouter);
   // Image optimization proxy
   registerImageOptimization(app);
+  registerOgRoutes(app);
   // Cache-control for slow-changing tRPC GET endpoints (public, read-only data)
   const CACHED_TRPC_PREFIXES: Array<{ prefix: string; maxAge: number }> = [
     { prefix: "/api/trpc/forum.listCategories", maxAge: 300 },      // 5 min — forum categories change rarely

@@ -23,6 +23,7 @@ import { ReGenGuideProvider } from "./contexts/ReGenGuideContext";
 
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { usePageVisitTracker } from "./hooks/usePageVisitTracker";
+import { captureReferral } from "./components/SharePrompt";
 import { useFocusOnNavigation } from "./hooks/useFocusOnNavigation";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useEffect, useState } from "react";
@@ -275,6 +276,8 @@ function App() {
   const adminMode = isAdminRoute(location);
   // Track page visits for progress map milestones
   usePageVisitTracker();
+  // Capture referral params on first load
+  captureReferral();
 
   // Maintenance mode — toggle VITE_MAINTENANCE_MODE=true in Railway env vars before risky deploys
   if (import.meta.env.VITE_MAINTENANCE_MODE === "true") {

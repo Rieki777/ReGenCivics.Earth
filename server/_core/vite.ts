@@ -154,7 +154,13 @@ export function serveStatic(app: Express) {
     }
 
     const canonical = `${BASE_URL}${reqPath === "/" ? "" : reqPath}`;
-    const ogImage = meta.image ?? DEFAULT_META.image;
+
+    // Dynamic OG images for content pages
+    let ogImage = meta.image ?? DEFAULT_META.image;
+    const forumMatch = reqPath.match(/^\/community\/post\/(\d+)$/);
+    if (forumMatch) {
+      ogImage = `${BASE_URL}/api/og?type=forum&id=${forumMatch[1]}`;
+    }
 
     // Inject into the <head> — replace placeholder tags written into index.html
     // Covers both Open Graph and Twitter Card tags so social crawlers see correct data.
