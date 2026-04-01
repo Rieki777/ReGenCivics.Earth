@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { PageWrapper } from "@/components/PageWrapper";
 import { resolveAssetUrl } from "@/lib/utils";
+import { SEO } from "@/components/SEO";
 
 const CATEGORIES = [
   { value: "", label: "All categories" },
@@ -52,6 +53,11 @@ export default function Marketplace() {
 
   return (
     <PageWrapper>
+    <SEO
+      title="Connection Hub | ReGen Civics"
+      description="Share what you can offer the community and find help with what you need. A space for regenerators to connect."
+      url="/marketplace"
+    />
     <div className="min-h-screen pt-24 pb-16 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}

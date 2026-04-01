@@ -296,18 +296,18 @@ function GameSimulator() {
     sim.harvestPoolSize * (estimatedPercentile / 100) * 0.02 * (1 - sim.compostingDecay)
   );
 
-  // Gratitude budget scales with tier
+  // Gratitude budget scales with citizenship tier
   const tier =
     estimatedPercentile >= 90
-      ? "Co-Creator"
-      : estimatedPercentile >= 70
+      ? "Sage"
+      : estimatedPercentile >= 50
         ? "Steward"
-        : estimatedPercentile >= 40
-          ? "Player"
-          : "Seedling";
+        : estimatedPercentile >= 15
+          ? "Co-Creator"
+          : "Explorer";
 
   const tierMultiplier =
-    tier === "Co-Creator" ? 2.5 : tier === "Steward" ? 1.5 : tier === "Player" ? 1.0 : 0.5;
+    tier === "Sage" ? 3.0 : tier === "Steward" ? 2.0 : tier === "Co-Creator" ? 1.5 : 1.0;
 
   const effectiveGratitude = Math.round(sim.gratitudeBudget * tierMultiplier);
 
