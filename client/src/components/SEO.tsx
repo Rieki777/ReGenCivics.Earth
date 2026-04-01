@@ -128,21 +128,21 @@ export const pageSEO = {
     title: 'Seasons: Join Our Regenerative Journey',
     description: 'Apply for Season 2 of ReGen Civics starting September 2026. Build your regenerative portfolio, connect with land projects, and join the incubator.',
     keywords: 'regenerative season, land project application, regenerative portfolio, impact investment opportunity, ecovillage funding, sustainable land development',
-    image: cdnImg('https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg'),
+    image: '/og/seasons.jpg',
     url: '/seasons'
   },
   schedule: {
     title: 'Schedule: Community Sessions & Events',
     description: 'Join ReGen Civics community sessions, open calls, and events. Connect with fellow regenerators, learn about our governance model, and participate in the Infinite Game.',
     keywords: 'regenerative community, online events, impact investing community, ecovillage network, sustainable finance events',
-    image: cdnImg('https://assets.regencivics.earth/MnRHvgPyBDbKYbay.jpg'),
+    image: '/og/schedule.jpg',
     url: '/schedule'
   },
   game: {
     title: 'The Game: How ReGen Civics Works',
     description: 'An infinite game with no finish line. A growing civilization we\'re building together. Here\'s how the ReGen Civics game works.',
     keywords: 'regenerative game, token economy, DAO governance, contribution tracking, regenerative tokens, impact rewards',
-    image: cdnImg('https://assets.regencivics.earth/ocDzkDHpivHtGCWo.jpg'),
+    image: '/og/game.jpg',
     url: '/game'
   },
   quest: {
@@ -163,7 +163,7 @@ export const pageSEO = {
     title: 'Investment Opportunity: Regenerative Land Fund',
     description: 'For accredited investors ready to put capital to work in the regenerative transition. Here\'s the investment opportunity inside ReGen Civics.',
     keywords: 'regenerative investment, impact fund, land investment, sustainable investing, ESG investment, regenerative agriculture investment',
-    image: cdnImg('https://assets.regencivics.earth/GUIluaYPZOUiwyLA.jpg'),
+    image: '/og/opportunity.jpg',
     url: '/opportunity'
   },
   socials: {
@@ -177,14 +177,14 @@ export const pageSEO = {
     title: 'Apply: Land Project Application | ReGen Civics',
     description: 'Apply to bring your regenerative land project into the ReGen Civics ecosystem. Season 2 applications open now for September 2026.',
     keywords: 'land project application, regenerative project funding, ecovillage application, sustainable land development, regenerative community application',
-    image: cdnImg('https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg'),
+    image: '/og/seasons.jpg',
     url: '/apply'
   },
   loi: {
     title: 'Letter of Intent | ReGen Civics',
     description: 'Submit your Letter of Intent to invest in the ReGen Civics Regenerative Land Fund. Express your commitment to financing the transition to regenerative civilizations.',
     keywords: 'letter of intent, investment commitment, regenerative fund, impact investing, accredited investor',
-    image: cdnImg('https://assets.regencivics.earth/GUIluaYPZOUiwyLA.jpg'),
+    image: '/og/opportunity.jpg',
     url: '/loi'
   },
   connect: {
@@ -226,7 +226,7 @@ export const pageSEO = {
     title: 'Risk Disclosure | ReGen Civics',
     description: 'Comprehensive risk disclosure for the ReGen Civics Regenerative Land Fund. Understand the risks associated with investing in regenerative land projects and alliance organizations.',
     keywords: 'investment risk disclosure, regenerative fund risks, impact investing risks, land investment risks',
-    image: cdnImg('https://assets.regencivics.earth/GUIluaYPZOUiwyLA.jpg'),
+    image: '/og/opportunity.jpg',
     url: '/risk-disclosure'
   },
   termsOfUse: {
@@ -247,21 +247,21 @@ export const pageSEO = {
     title: 'Disclaimers | ReGen Civics',
     description: 'Legal disclaimers for the ReGen Civics website and investment materials. This is not an offer to sell securities.',
     keywords: 'legal disclaimers, investment disclaimers, securities disclaimer, not financial advice',
-    image: cdnImg('https://assets.regencivics.earth/GUIluaYPZOUiwyLA.jpg'),
+    image: '/og/opportunity.jpg',
     url: '/disclaimers'
   },
   investorForm: {
     title: 'Investor Information | ReGen Civics',
     description: 'Provide your information to explore the ReGen Civics investment opportunity. Accredited investors seeking to finance the regenerative transition.',
     keywords: 'investor form, accredited investor, regenerative fund application, impact investment inquiry',
-    image: cdnImg('https://assets.regencivics.earth/GUIluaYPZOUiwyLA.jpg'),
+    image: '/og/opportunity.jpg',
     url: '/investor-form'
   },
   community: {
     title: 'Community Forum | ReGen Civics',
     description: 'The ReGen Civics forum. Where players, investors, land stewards, and builders connect, coordinate, and tell the truth.',
     keywords: 'regenerative community forum, impact investing discussion, ecovillage community, regenerative economy discussion, land project forum',
-    image: 'https://regencivics.earth/og/community.webp',
+    image: '/og/community.jpg',
     url: '/community'
   },
   land: {
