@@ -18,14 +18,11 @@ import { cdnImg } from '@/lib/utils';
 
 // Home page path card images (kept for backwards compatibility)
 const HOME_IMAGES = [
-  cdnImg('https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png'),
-  cdnImg('https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png'),
-  cdnImg('https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png'),
-  cdnImg('https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png'),
-  cdnImg('https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png'),
-  cdnImg('https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png'),
-  cdnImg('https://assets.regencivics.earth/LAizfmKwiZguwYMz.png'),
-  cdnImg('https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png'),
+  // Default images only (activated hover images are lazy-loaded)
+  cdnImg('https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png', 480, 75),
+  cdnImg('https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png', 480, 75),
+  cdnImg('https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png', 480, 75),
+  cdnImg('https://assets.regencivics.earth/LAizfmKwiZguwYMz.png', 480, 75),
 ];
 
 function preloadImages(urls: string[]): Promise<void> {

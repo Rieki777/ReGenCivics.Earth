@@ -177,7 +177,10 @@ function PersonalizedCards() {
                       src={card.image}
                       alt={card.title}
                       className="w-full h-full object-cover"
+                      width="340"
+                      height="80"
                       loading="eager"
+                      decoding="async"
                     />
                   </div>
                   <div className="flex items-center gap-1 mb-0.5">

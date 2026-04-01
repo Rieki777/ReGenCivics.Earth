@@ -71,6 +71,12 @@ export default function Navigation() {
   );
   const messagesUnreadCount = _msgUnreadData?.count ?? 0;
 
+  const { data: userProfile } = trpc.userProfiles.getMe.useQuery(undefined, {
+    enabled: !!user && isAuthenticated,
+    staleTime: 300_000,
+  });
+  const avatarUrl = userProfile?.avatarUrl;
+
   // Convert SOCIAL_LINKS to array format for dropdown
   const socialLinks = Object.entries(SOCIAL_LINKS).map(([key, value]) => ({
     name: value.name,
@@ -473,7 +479,19 @@ export default function Navigation() {
                     className="flex items-center gap-2 text-white hover:bg-[#7dd87d]/20 hover:text-white rounded-full px-3"
                     aria-label="Your profile"
                   >
-                    <div className="w-8 h-8 rounded-full bg-[#7dd87d] flex items-center justify-center text-[#1a472a] font-bold text-sm">
+                    {avatarUrl ? (
+                      <img
+                        src={cdnImg(avatarUrl, 64)}
+                        alt={user.name || 'Profile'}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          const el = e.currentTarget;
+                          el.style.display = 'none';
+                          el.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-8 h-8 rounded-full bg-[#7dd87d] flex items-center justify-center text-[#1a472a] font-bold text-sm ${avatarUrl ? 'hidden' : ''}`}>
                       {user.name?.charAt(0).toUpperCase() || 'U'}
                     </div>
                     <ChevronDown className="w-4 h-4" />
@@ -977,7 +995,19 @@ export default function Navigation() {
                 ) : isAuthenticated && user ? (
                   <>
                     <div className="px-4 py-3 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[#7dd87d] flex items-center justify-center text-[#1a472a] font-bold">
+                      {avatarUrl ? (
+                        <img
+                          src={cdnImg(avatarUrl, 64)}
+                          alt={user.name || 'Profile'}
+                          className="w-10 h-10 rounded-full object-cover"
+                          onError={(e) => {
+                            const el = e.currentTarget;
+                            el.style.display = 'none';
+                            el.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-10 h-10 rounded-full bg-[#7dd87d] flex items-center justify-center text-[#1a472a] font-bold ${avatarUrl ? 'hidden' : ''}`}>
                         {user.name?.charAt(0).toUpperCase() || 'U'}
                       </div>
                       <div>

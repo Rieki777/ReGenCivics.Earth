@@ -7,7 +7,8 @@
  * Mobile: tap-to-toggle via React state
  * All animations reverse smoothly (1s blend)
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { cdnImg } from "@/lib/utils";
 
 type CardType = "fund" | "land" | "ally" | "play";
 
@@ -19,10 +20,29 @@ interface PathCardImageProps {
   accentColor: string;
 }
 
+// Extract original R2 URL from a /api/img proxy URL
+function getOriginalUrl(proxyUrl: string): string | null {
+  if (!proxyUrl.includes('/api/img')) return null;
+  try {
+    const params = new URLSearchParams(proxyUrl.split('?')[1]);
+    return params.get('url');
+  } catch { return null; }
+}
+
+// Build srcSet string for multiple widths
+function buildSrcSet(proxyUrl: string, widths: number[], quality = 75): string {
+  const originalUrl = getOriginalUrl(proxyUrl);
+  if (!originalUrl) return '';
+  return widths.map(w => `${cdnImg(originalUrl, w, quality)} ${w}w`).join(', ');
+}
+
 export function PathCardImage({ cardId, image, activatedImage, title, accentColor }: PathCardImageProps) {
   const [tapped, setTapped] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [activatedError, setActivatedError] = useState(false);
+
+  const defaultSrcSet = useMemo(() => buildSrcSet(image, [240, 480, 720]), [image]);
+  const activatedSrcSet = useMemo(() => buildSrcSet(activatedImage, [240, 480, 720]), [activatedImage]);
 
   // Mobile tap toggle (only for touch devices)
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
@@ -64,28 +84,31 @@ export function PathCardImage({ cardId, image, activatedImage, title, accentColo
       {/* Default illustration (visible by default, fades out on hover) */}
       <img
         src={image}
+        srcSet={defaultSrcSet || undefined}
+        sizes="(max-width: 768px) 168px, 237px"
         alt={title}
         className="path-card-img path-card-img-default"
         width="237"
         height="237"
         loading="eager"
         decoding="async"
+        fetchPriority="high"
         draggable={false}
         onError={handleImgError}
       />
 
-      {/* Activated illustration (hidden by default, fades in on hover)
-          Use loading="eager" instead of "lazy" for Safari compatibility.
-          iOS Safari has unreliable lazy loading on off-screen images that
-          become visible via CSS opacity transitions. */}
+      {/* Activated illustration (hidden by default, fades in on hover) */}
       <img
         src={activatedImage}
+        srcSet={activatedSrcSet || undefined}
+        sizes="(max-width: 768px) 168px, 237px"
         alt={`${title} - activated`}
         className="path-card-img path-card-img-activated"
         width="237"
         height="237"
-        loading="eager"
+        loading="lazy"
         decoding="async"
+        fetchPriority="low"
         draggable={false}
         onError={handleActivatedError}
       />

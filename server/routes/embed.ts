@@ -58,8 +58,8 @@ export function registerEmbedRoutes(app: Express) {
     if (!campaign) return res.send(errorWidget("Campaign not found"));
 
     const title = campaign.title || "Regenerative Land Project";
-    const goal = Number(campaign.targetAmount) || 100000;
-    const raised = Number(campaign.currentAmount) || 0;
+    const goal = Number(campaign.financialTarget) || 100000;
+    const raised = Number(campaign.pledgedTotal) || 0;
     const pct = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
     const funded = pct >= 100;
     const color = funded ? "#fbbf24" : "#7dd87d";

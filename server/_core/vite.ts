@@ -97,7 +97,7 @@ export function serveStatic(app: Express) {
   const BASE_URL = "https://regencivics.earth";
   const DEFAULT_META = {
     title: "ReGen Civics: Fund and Game for Regenerative Land Projects",
-    description: "ReGen Civics is a venture fund and alliance helping regenerative land projects succeed through capital, community, and an infinite game for the Regenerative Renaissance.",
+    description: "ReGen Civics is a fund for regenerative land projects, who also runs quests and games for real-world regeneration.",
     image: `${BASE_URL}/og-default.jpg`,
   };
   const ROUTE_META: Record<string, { title: string; description: string; image?: string }> = {

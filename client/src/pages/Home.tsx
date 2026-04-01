@@ -63,8 +63,8 @@ const pathCards = [
     iconBg: "bg-amber-400/20",
     iconColor: "text-amber-300",
     accentColor: "#fbbf24",
-    image: cdnImg("https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png"),
-    activatedImage: cdnImg("https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png"),
+    image: cdnImg("https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png", 480, 75),
+    activatedImage: cdnImg("https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png", 480, 75),
   },
   {
     id: "land",
@@ -80,8 +80,8 @@ const pathCards = [
     iconBg: "bg-[#7dd87d]/20",
     iconColor: "text-[#7dd87d]",
     accentColor: "#7dd87d",
-    image: cdnImg("https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png"),
-    activatedImage: cdnImg("https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png"),
+    image: cdnImg("https://assets.regencivics.earth/yqqImtZyZVyKlZyO.png", 480, 75),
+    activatedImage: cdnImg("https://assets.regencivics.earth/mgXrrAJIIHwfFWah.png", 480, 75),
   },
   {
     id: "ally",
@@ -97,8 +97,8 @@ const pathCards = [
     iconBg: "bg-blue-400/20",
     iconColor: "text-blue-300",
     accentColor: "#60a5fa",
-    image: cdnImg("https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png"),
-    activatedImage: cdnImg("https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png"),
+    image: cdnImg("https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png", 480, 75),
+    activatedImage: cdnImg("https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png", 480, 75),
   },
   {
     id: "play",
@@ -114,8 +114,8 @@ const pathCards = [
     iconBg: "bg-purple-400/20",
     iconColor: "text-purple-300",
     accentColor: "#c084fc",
-    image: cdnImg("https://assets.regencivics.earth/LAizfmKwiZguwYMz.png"),
-    activatedImage: cdnImg("https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png"),
+    image: cdnImg("https://assets.regencivics.earth/LAizfmKwiZguwYMz.png", 480, 75),
+    activatedImage: cdnImg("https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png", 480, 75),
   },
 ];
 

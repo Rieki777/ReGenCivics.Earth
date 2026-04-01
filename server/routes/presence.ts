@@ -18,7 +18,7 @@ const STALE_THRESHOLD_MS = 5 * 60 * 1000;
  */
 function pruneStale(): void {
   const cutoff = Date.now() - STALE_THRESHOLD_MS;
-  for (const [id, session] of activeSessions) {
+  for (const [id, session] of Array.from(activeSessions.entries())) {
     if (session.lastSeen < cutoff) {
       activeSessions.delete(id);
     }

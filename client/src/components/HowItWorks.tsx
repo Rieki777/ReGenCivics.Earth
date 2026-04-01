@@ -174,7 +174,6 @@ export default function HowItWorks() {
                 description: "Heal yourself and the Earth through guided regenerative quests. Earn $ReGen tokens.",
                 href: "/quest",
                 color: "text-[#7dd87d]",
-                bg: "bg-[#7dd87d]/10 hover:bg-[#7dd87d]/20",
                 border: "border-[#7dd87d]/30 hover:border-[#7dd87d]/60",
               },
               {
@@ -183,7 +182,6 @@ export default function HowItWorks() {
                 description: "Connect with land projects, alliance orgs, and regenerators in your bioregion.",
                 href: "/community",
                 color: "text-emerald-300",
-                bg: "bg-emerald-500/10 hover:bg-emerald-500/20",
                 border: "border-emerald-500/30 hover:border-emerald-500/60",
               },
               {
@@ -192,12 +190,14 @@ export default function HowItWorks() {
                 description: "Put capital to work in regenerative land projects, or bring your org into the alliance.",
                 href: "/connect",
                 color: "text-amber-300",
-                bg: "bg-amber-500/10 hover:bg-amber-500/20",
                 border: "border-amber-500/30 hover:border-amber-500/60",
               },
             ].map((card) => (
               <Link key={card.href} href={card.href}>
-                <div className={`flex flex-col gap-3 p-5 rounded-2xl border transition-all cursor-pointer ${card.bg} ${card.border}`}>
+                <div
+                  className={`flex flex-col gap-3 p-5 rounded-2xl border transition-all cursor-pointer ${card.border}`}
+                  style={{ backgroundColor: 'rgba(0, 40, 0, 0.88)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+                >
                   <card.icon className={`w-7 h-7 ${card.color}`} />
                   <div>
                     <h4
@@ -206,7 +206,7 @@ export default function HowItWorks() {
                     >
                       {card.title}
                     </h4>
-                    <p className="text-white/60 text-sm leading-relaxed">
+                    <p className="text-white/80 text-sm leading-relaxed">
                       {card.description}
                     </p>
                   </div>

@@ -140,6 +140,15 @@ export const chatRouter = router({
 });
 
 // ─── Image optimization route ────────────────────────────────────────────────
+import { LRUCache } from 'lru-cache';
+
+const imageCache = new LRUCache<string, Buffer>({
+  max: 200,
+  maxSize: 200_000_000, // 200MB
+  sizeCalculation: (value) => value.length,
+  ttl: 1000 * 60 * 60 * 24, // 24 hours
+});
+
 const ALLOWED_IMG_DOMAINS = [
   'assets.regencivics.earth',
   'regencivics.earth',
@@ -207,13 +216,22 @@ export function registerImageOptimization(app: Express) {
         buffer = Buffer.from(await upstream.arrayBuffer());
       }
 
-      // Content-negotiate: serve WebP only when the browser explicitly accepts it.
-      // Safari on iOS has inconsistent WebP support through custom proxies, so
-      // fall back to the original format (PNG for transparency, JPEG otherwise).
       const accept = req.headers.accept || '';
       const supportsWebp = accept.includes('image/webp');
+      const cacheKey = `${url}-${width ?? ''}-${height ?? ''}-${quality}-${supportsWebp ? 'webp' : 'orig'}`;
 
-      // Detect if the source has an alpha channel (PNG/WebP/GIF with transparency)
+      // Check LRU cache first
+      const cached = imageCache.get(cacheKey);
+      if (cached) {
+        const ct = supportsWebp ? 'image/webp' : (cached[0] === 0x89 ? 'image/png' : 'image/jpeg');
+        res.set({
+          'Content-Type': ct,
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          'Vary': 'Accept',
+        });
+        return res.send(cached);
+      }
+
       const metadata = await sharp(buffer).metadata();
       const hasAlpha = metadata.hasAlpha ?? false;
 
@@ -226,13 +244,15 @@ export function registerImageOptimization(app: Express) {
         optimized = await pipeline.webp({ quality }).toBuffer();
         contentType = 'image/webp';
       } else if (hasAlpha) {
-        // Preserve transparency with PNG for Safari and older browsers
         optimized = await pipeline.png({ quality: Math.min(quality, 100), compressionLevel: 8 }).toBuffer();
         contentType = 'image/png';
       } else {
         optimized = await pipeline.jpeg({ quality, mozjpeg: true }).toBuffer();
         contentType = 'image/jpeg';
       }
+
+      // Store in LRU cache
+      imageCache.set(cacheKey, optimized);
 
       res.set({
         'Content-Type': contentType,

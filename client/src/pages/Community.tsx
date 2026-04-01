@@ -236,78 +236,6 @@ export default function Community() {
     return merged;
   }, [activeLandProjectsData]);
 
-  // Members-only gate: show branded sign-in page for non-authenticated visitors
-  if (!isAuthenticated) {
-    return (
-      <PageTransition>
-      <div className="min-h-screen bg-[#f8f5f0]">
-        <SEO {...pageSEO.community} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Community", url: "/community" }]} />
-        <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] via-[#2d5a3f] to-[#1a472a]" />
-          <div className="absolute top-20 left-4 opacity-20">
-            <Leaf className="w-24 h-24 text-[#7dd87d] animate-pulse" />
-          </div>
-          <div className="absolute bottom-20 right-8 opacity-15">
-            <Sparkles className="w-16 h-16 text-[#d4a574]" />
-          </div>
-          <div className="absolute top-40 right-20 opacity-10">
-            <Trees className="w-20 h-20 text-[#7dd87d]" />
-          </div>
-          <div className="container relative z-10 px-4 max-w-lg mx-auto text-center">
-            <div data-reveal>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/30">
-                <SeedOfLifeIcon className="w-4 h-4 text-[#7dd87d]" />
-                <span className="text-[#7dd87d] text-sm font-medium" style={{ fontFamily: 'var(--font-accent)' }}>
-                  Members Only
-                </span>
-              </div>
-
-              <h1
-                className="text-3xl md:text-5xl font-bold text-white mb-4"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                Welcome to the<br />
-                <span className="text-[#7dd87d]">Gathering Grove</span>
-              </h1>
-
-              <p className="text-white/80 text-base md:text-lg mb-3 leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
-                A members-only space where regenerators connect, share wisdom, and grow together.
-              </p>
-              <p className="text-white/60 text-sm mb-8" style={{ fontFamily: 'var(--font-body)' }}>
-                Create a free profile to join the conversation, suggest quests, and connect with the community.
-              </p>
-
-              <Button
-                onClick={() => window.location.href = getLoginUrl()}
-                className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold px-8 py-3 rounded-full text-lg shadow-lg shadow-[#7dd87d]/20 hover:shadow-[#7dd87d]/40 transition-all"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                <UserPlus className="w-5 h-5 mr-2" />
-                Create Your Profile
-              </Button>
-
-              <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-[#7dd87d] text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>9</div>
-                  <div className="text-white/50 text-xs">Topic Groves</div>
-                </div>
-                <div>
-                  <div className="text-[#7dd87d] text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>{totalPosts}</div>
-                  <div className="text-white/50 text-xs">Discussions</div>
-                </div>
-                <div>
-                  <div className="text-[#7dd87d] text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>Free</div>
-                  <div className="text-white/50 text-xs">To Join</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-      </PageTransition>
-    );
-  }
-
   return (
     <PageTransition>
     <div className="min-h-screen bg-[#f8f5f0]">
@@ -623,9 +551,15 @@ export default function Community() {
                   {searchQuery ? 'No discussions match your search yet. Be the first to start one.' : 'No categories yet. Check back soon!'}
                 </p>
                 {searchQuery && (
-                  <Link href="/community/new">
-                    <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">Start a Discussion</Button>
-                  </Link>
+                  isAuthenticated ? (
+                    <Link href="/community/new">
+                      <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">Start a Discussion</Button>
+                    </Link>
+                  ) : (
+                    <Button onClick={() => window.location.href = getLoginUrl()} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">
+                      <UserPlus className="w-4 h-4 mr-2" /> Sign In to Participate
+                    </Button>
+                  )
                 )}
               </div>
             ) : (
