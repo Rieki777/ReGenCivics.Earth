@@ -46,6 +46,9 @@ const Seasons = lazy(() => import("./pages/Seasons"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
+const Economy = lazy(() => import("./pages/Economy"));
+const Proposals = lazy(() => import("./pages/Proposals"));
+const GameMechanics = lazy(() => import("./pages/GameMechanics"));
 const Calculator = lazy(() => import("./pages/Calculator"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Fund = lazy(() => import("./pages/Fund"));
@@ -227,6 +230,9 @@ function Router() {
       <Route path={"/features"}><EB><FeatureSuggestions /></EB></Route>
       <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
       <Route path={"/newsletter/confirm"}><EB><NewsletterConfirm /></EB></Route>
+      <Route path={"/economy"}><EB><Economy /></EB></Route>
+      <Route path={"/proposals"}><EB><Proposals /></EB></Route>
+      <Route path={"/game-mechanics"}><EB><GameMechanics /></EB></Route>
       <Route path={"/regen-games"}><EB><ReGenGames /></EB></Route>
       <Route path={"/custom-games"}><EB><CustomGames /></EB></Route>
       <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>
