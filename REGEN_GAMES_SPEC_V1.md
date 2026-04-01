@@ -30,6 +30,10 @@ This spec replaces and supersedes PLAYER_EXPERIENCE_SPEC.md (which covered featu
 
 **Part 11: Implementation Priority** -- What to build first.
 
+**Part 12: Visual Design Direction** -- Color, animation, empty states, mobile, and the beauty layer that makes this feel alive.
+
+**Part 13: Edge Cases and Small-Community Behavior** -- How the system behaves with 6 players, on first season, when players go inactive, and data integrity safeguards.
+
 ---
 
 # Part 1: Game Variables Architecture
@@ -181,9 +185,9 @@ The following variables are seeded on first deploy. All values are admin-editabl
 
 | Key | Display Name | Default | Type | Description |
 |-----|-------------|---------|------|-------------|
-| quests.tier_steward_min | Steward tier minimum score | 350 | integer | Percentile score needed (maps to ~60th percentile) |
-| quests.tier_elder_min | Elder tier minimum score | 750 | integer | Higher quest tier threshold |
-| quests.tier_guardian_min | Guardian tier minimum score | 1500 | integer | Highest quest tier threshold |
+| quests.tier_steward_min | Steward tier minimum percentile | 70 | integer | Contribution percentile needed for Steward-tier quests |
+| quests.tier_elder_min | Elder tier minimum percentile | 85 | integer | Contribution percentile needed for Elder-tier quests |
+| quests.tier_guardian_min | Guardian tier minimum percentile | 95 | integer | Contribution percentile needed for Guardian-tier quests |
 | quests.require_rites_complete | Require Rites of Passage | 1 | boolean | Must complete all 13 Rites before tier quests |
 
 ### Governance / Seasonal Councils
@@ -194,6 +198,47 @@ The following variables are seeded on first deploy. All values are admin-editabl
 | governance.council_min_score | Council minimum score | 80 | integer | Minimum percentile to qualify for council |
 | governance.council_require_rites | Council requires Rites | 1 | boolean | Must complete Rites to sit on council |
 | governance.cocreator_threshold_percentile | Co-creator threshold | 90 | integer | Top N percentile eligible for co-creator invite |
+
+## 1.5 The seasons table
+
+Every seasonal feature references a `seasonId`. This table defines seasons.
+
+```
+seasons:
+  id: serial primary key
+  name: varchar (e.g., 'Spring 2026', 'Season of Roots')
+  slug: varchar, unique (e.g., 'spring-2026')
+  startDate: date
+  endDate: date
+  status: enum('upcoming', 'active', 'closing', 'archived')
+  harvestCompleted: boolean, default false
+  compostingCompleted: boolean, default false
+  createdAt: timestamp
+```
+
+Admin can create seasons ahead of time. Only one season can have status 'active' at any time. The nightly jobs check `WHERE status = 'active'` to determine the current season. The closing process runs seasonal harvest, composting, and council archival before flipping status to 'archived'.
+
+## 1.6 The getGameVariable() helper
+
+All game code reads variables through a single server-side function:
+
+```typescript
+async function getGameVariable(key: string): Promise<number> {
+  // 1. Check Redis cache (TTL: 5 minutes)
+  // 2. If miss, query game_variables WHERE key = key AND isActive = true
+  // 3. Return value, or throw if key not found (never silently default)
+  // 4. Cache the result
+}
+
+// Batch variant for hot paths:
+async function getGameVariables(keys: string[]): Promise<Record<string, number>> {
+  // Same pattern, single query, returns a map
+}
+```
+
+Every scoring function, trust calculation, harvest distribution, and threshold check calls this helper. No hardcoded numbers anywhere in application code. If a variable is missing from the table, the system throws an error rather than falling back to a hardcoded default. This keeps the game_variables table as the single source of truth.
+
+Invalidation: when an admin saves a variable change, bust the Redis cache for that key (and the batch cache).
 
 ---
 
@@ -386,6 +431,10 @@ Players send gratitude from three places:
 3. **Player search / community page**: gratitude button on player cards
 
 Each send requires: recipient (auto-filled from context), amount (1-5 tokens from their budget), and a message (max 280 characters, required). One send per recipient per day (prevent spam).
+
+**The gratitude drawer (mobile) / modal (desktop):**
+
+Opens from any of the three send surfaces. Shows the recipient's name, avatar, and tier at the top. Below that: an amount selector (1-5 tokens, styled as organic leaf-shaped tokens the player taps to fill). Below that: a message textarea with a character counter. At the bottom: remaining budget for this season ("3 of 10 remaining"), and a Send button. The Send button is disabled until a message is written. On send: the leaves animate away toward the recipient's avatar, a gentle confirmation appears ("Gratitude sent to [name]"), and the drawer closes after 1.5 seconds.
 
 ## 4.2 What the receiver sees
 
@@ -855,6 +904,19 @@ This is a simple external link. No custom delegation UI needed. Hypha handles th
 ## New tables
 
 ```sql
+-- Seasons (the clock everything runs on)
+CREATE TABLE seasons (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(100) UNIQUE NOT NULL,
+  startDate DATE NOT NULL,
+  endDate DATE NOT NULL,
+  status ENUM('upcoming','active','closing','archived') DEFAULT 'upcoming',
+  harvestCompleted BOOLEAN DEFAULT FALSE,
+  compostingCompleted BOOLEAN DEFAULT FALSE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Game Variables (the backbone)
 CREATE TABLE game_variables (
   id SERIAL PRIMARY KEY,
@@ -1126,6 +1188,138 @@ ALTER TABLE postReactions ADD COLUMN reactionWeight DECIMAL(5,2) DEFAULT 1.00;
 
 ---
 
+# Part 12: Visual Design Direction
+
+The game layer should feel alive, warm, and rooted in nature. Every player-facing surface should feel like opening a well-loved field journal, with texture, breathing motion, and organic shapes.
+
+## 12.1 Color and texture
+
+**Earth palette (base):** warm cream backgrounds (#FAF8F3), soft charcoal text (#2D2A26), muted sage (#7C9A7E) for positive accents, warm clay (#C4785B) for calls to action, deep soil brown (#4A3728) for headers and emphasis. Avoid pure black or pure white.
+
+**Seasonal overlays:** Spring adds pale green tints and blossom pink highlights. Summer deepens greens and golds. Autumn shifts to amber, burnt orange, and russet. Winter cools to slate blue and frost gray with bare-branch silhouettes. These seasonal shifts appear as subtle background textures and accent color shifts, applied site-wide through a CSS custom property set that rotates with the active season.
+
+**Textures:** paper-grain backgrounds on cards. Subtle hand-drawn border treatments on key containers (profile cards, quest cards, gratitude drawer). No harsh drop shadows. Use soft, wide box-shadows with warm tones instead of gray.
+
+## 12.2 Animation principles
+
+Every animation serves a purpose: it shows something growing, connecting, or arriving. No animation exists purely for decoration.
+
+**Micro-interactions:**
+- Score changes: numbers don't jump. They count up/down over 400ms with an ease-out curve.
+- Tier changes: the old tier label dissolves while the new one grows in from a seed shape. A brief ring of particles in the tier's color.
+- New badge earned: the badge drops into the badge shelf with a soft bounce (200ms).
+- Gratitude sent: leaf tokens animate from sender to receiver avatar position. 800ms, gentle arc path.
+- Endorsement given: a root-like line draws from the endorser's node to the endorsed entity. 600ms.
+
+**Page transitions:**
+- Profile sections: stagger-fade children elements (50ms offset per child, 300ms per element).
+- Harvest review cards: swipe-in from right (mobile), fade-grow from center (desktop).
+- Living Tree: always animates from its last known state to its current state. Growth is visible. Nothing teleports.
+
+**Performance rule:** All animations are CSS transforms and opacity only. No layout-triggering properties. Use `will-change` sparingly, only on elements that actually animate. Respect `prefers-reduced-motion`: if the user has reduced motion enabled, replace all animations with instant state changes.
+
+## 12.3 Empty states and first-time experiences
+
+Every feature has a zero state for new players. These moments are opportunities to invite action, not display blank screens.
+
+**Contribution Compass (0 data):** Show the radar chart outline with all 9 axes at zero, but with a gentle pulse on the axes. Center text: "Your compass will fill in as you contribute. Start with a quest."
+
+**Living Tree (new player):** A tiny seed in bare soil. Single tap: a tooltip saying "This is your tree. Every quest, every contribution, every act of gratitude grows it." The seed has a slow breathing animation (scale 1.0 to 1.02, 3-second cycle).
+
+**Proof Timeline (empty):** A single dotted vertical line with a seed icon at the top. Text: "Your first contribution will appear here." Below: a link to the quest page.
+
+**Gratitude (no tokens received):** A soft illustration of an empty bowl. Text: "No gratitude received yet this season. Gratitude arrives when other players recognize your contributions."
+
+**Mycelium Network (no referrals):** A single node (the player) floating gently. Text: "You're the first node. Share your referral link to grow your network." The node has a slow orbit animation.
+
+**Harvest Review (first season, minimal activity):** Still shows all 7 cards, but with honest numbers. Card 1 might say "You completed 1 quest this season." The tree card shows growth from seed to sprout. The tone is warm and encouraging, never shaming. "Every tree starts somewhere."
+
+**Forum reputation (new player):** Their reactions count at 1x weight. No visible indicator of weight to other players. The system just works silently.
+
+**Endorsements (never received one):** Profile section shows "No endorsements yet" with a brief explanation: "Endorsements come from players and land projects who know your work." No empty-state illustration needed here, just clear text.
+
+## 12.4 Component-specific beauty notes
+
+**Player profile page:** The Living Tree sits as the hero element, taking roughly 40% of the viewport on desktop. Below it: the Contribution Compass (smaller, to the right on desktop, below on mobile), then the Proof Timeline. Endorsements and badges sit in a sidebar on desktop, in an accordion on mobile. The tree should feel like the centerpiece of the page. Everything else orbits it.
+
+**Tier badges:** Organic shapes, not geometric. Seedling is a small round seed. Sprout has two leaves. Sapling shows a small tree silhouette. Grower adds roots visible below. Steward has a fuller canopy. Elder shows flowers. Guardian has fruit and birds. Each badge uses the earth palette at different saturation levels, getting richer as tier increases. These badges appear at 20px next to usernames in the forum and community cards, and at 48px on profile pages.
+
+**Gratitude tokens:** Styled as small leaf shapes in sage green. When selecting amount (1-5), each leaf fills with deeper color as you tap. The tokens feel tangible, like picking leaves from a branch.
+
+**Harvest review cards:** Full-bleed background illustrations per card. Card 1 (quests): a field of completed quest icons sprouting from soil. Card 4 (tree): the actual Living Tree component at full size. Card 7 (shareable): the generated image has the player's tree, their name, tier, season name, and the ReGen Civics mark. Background texture: seasonal parchment.
+
+**Admin panels:** Clean and functional. The beauty budget goes to player-facing features. Admin panels use a simple white/gray palette with clear typography, good spacing, and fast load times. The Game Variables panel benefits from good information density: show as many variables as possible without scrolling, with inline editing where practical.
+
+## 12.5 Mobile-specific adaptations
+
+The game layer is mobile-first. Over half the community accesses the site on phones.
+
+**Living Tree:** Scales to full viewport width on mobile. Touch to explore roots (tap-and-hold opens the radial root view as a bottom sheet). Pinch to zoom is supported.
+
+**Contribution Compass:** On screens below 640px, the radar chart renders at 280px diameter with labels outside the chart area. Tapping an axis opens a detail tooltip.
+
+**Harvest review:** Full-screen swipeable cards with snap points. Bottom progress dots. Swipe right to advance, left to go back. Card 7 (share) has native share sheet integration.
+
+**Gratitude drawer:** Slides up from the bottom as a half-sheet (covers bottom 60% of viewport). The leaf token selector is thumb-friendly (48px tap targets minimum).
+
+**Forum tier badges:** 16px on mobile (slightly smaller than 20px desktop) to keep the comment layout clean.
+
+---
+
+# Part 13: Edge Cases and Small-Community Behavior
+
+The game was inspired by SEEDS (millions of users), but ReGen Civics has ~6 active players right now. The system needs to be meaningful at both scales.
+
+## 13.1 Percentile scoring with small player pools
+
+With 6 players, percentile scores jump in large increments (each player is ~16 percentile points apart). This is fine. The system still ranks players fairly. As the community grows, the granularity improves naturally.
+
+**Minimum player count for percentile calculation:** If fewer than 3 active players exist, skip percentile ranking and assign all players a score of 50 (midpoint). This prevents a single highly active player from permanently sitting at 99 while a second player sits at 0.
+
+**Tie-breaking:** When two players have the same multiplied raw score, the player with higher trust score ranks higher. If still tied, the player with more recent activity ranks higher.
+
+## 13.2 First season behavior
+
+Before the first season closes:
+- Composting is off by default (`composting.is_active = false`)
+- Harvest is off by default (`harvest.is_active = false`)
+- No seasonal councils form
+- Gratitude budgets are still calculated and active (gratitude works from day one)
+- Score events are recorded from day one (retroactive scoring when the system turns on)
+
+The first season close is a manual admin action. Admin flips the season from 'active' to 'closing', which triggers the end-of-season jobs. The system prompts admin through a checklist: run harvest? run composting? archive council? generate harvest review data?
+
+## 13.3 Player goes inactive
+
+A player who stops engaging:
+- Their tree never shrinks or dies. It enters a visual winter state: bare branches, quiet roots. It's still beautiful.
+- After 2 seasons of inactivity, they're excluded from percentile calculations (their score doesn't drag down the pool)
+- Their endorsements remain active (they still vouch for what they vouched for)
+- Their gratitude budget drops to zero (they don't receive one for seasons they're inactive)
+- If they return, their score recalculates on next login, and they re-enter the percentile pool
+
+## 13.4 Admin overrides
+
+Admin can always:
+- Manually set a player's tier (override the percentile-based assignment)
+- Freeze or promote a land project's status
+- Waive cascading penalties for specific endorsers
+- Grant or revoke co-creator status regardless of threshold
+- Adjust a player's trust score manually (with a reason logged in game_variable_history)
+- Create manual contribution_score_events (for offline contributions, partnerships, etc.)
+
+All overrides are logged in activity_feed_events with `actorType: 'system'` and metadata noting which admin took the action.
+
+## 13.5 Data integrity safeguards
+
+- contribution_score_events is append-only. No updates or deletes. Corrections are new rows with negative points.
+- gratitude_transactions is append-only. No edits after send.
+- game_variable_history is append-only. Full audit trail.
+- All nightly jobs are idempotent. Running the percentile calculation twice produces the same result.
+- All seasonal close jobs check for the `closing` status flag before executing. A season can only be closed once.
+
+---
+
 # Compatibility Notes
 
 This spec was built against the actual codebase schema (drizzle/schema.ts) and existing admin structure. Key compatibility points:
@@ -1158,3 +1352,11 @@ This spec was built against the actual codebase schema (drizzle/schema.ts) and e
 - Admin badge award flow: same
 
 Each integration is a single function call added to existing mutation handlers. No existing logic changes.
+
+**Shared utilities to build first:**
+- `getGameVariable(key)` / `getGameVariables(keys[])` -- Redis-cached variable reads (Part 1.6)
+- `logActivityEvent(eventType, actor, target, metadata)` -- writes to activity_feed_events
+- `recordScoreEvent(userId, action, variableKey, referenceType, referenceId)` -- reads the variable, writes the score event
+- `getCurrentSeason()` -- returns the season with status 'active'
+
+These four functions are the integration seam. Every mutation that feeds the game calls one or more of them.

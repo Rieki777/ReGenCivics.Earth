@@ -59,6 +59,7 @@ These files define all outstanding work for this project. Always check them befo
 - `PLAYER_EXPERIENCE_SPEC.md` — **SUPERSEDED by REGEN_GAMES_SPEC_V1.md.** Original draft of player experience features. Kept for reference only.
 - `REGEN_GAMES_SPEC_V1.md` — **THE GAME SPEC. START HERE for all game features.** Complete game system: Game Variables admin architecture, percentile-based contribution scoring, trust multiplier system, Living Tree visualization, gratitude system, land project status progression, seasonal harvest/composting, seasonal councils, endorsements/flags with cascading consequences, contribution compass, mycelium network, proof timeline, resume, gated quests, bioregional identity, forum reputation weighting, co-creator invitations, quiet recognitions, silent sharing score. 24 features across 5 phases with full database schema and compatibility notes. Built on SEEDS architecture, adapted for ReGen Civics.
 - `LIVING_TREE_VISUALIZATION_SPEC.md` — Detailed visual concept for the Living Tree growth visualization on player profiles. 6 life stages, 9 root arteries (forms of capital), seasonal mechanics, visual-to-data mapping. Referenced by REGEN_GAMES_SPEC_V1.md Part 3.
+- `CLAUDE_CODE_PROMPT_2026-03-31_GAME_SYSTEM.md` — **GAME BUILD.** Full execution prompt for building the entire ReGen Games system (all 5 phases, 24 features) in one consecutive run. References REGEN_GAMES_SPEC_V1.md as the single source of truth.
 
 All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
 
