@@ -55,6 +55,7 @@ These files define all outstanding work for this project. Always check them befo
 - `FIXES_TO_MAKE_2026-03-31.md` — **active** fixes batch. Quest hero images, locking UI, progression gating, CTA replacements. All CODED.
 - `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` — **active** execution prompt. Remaining fixes: 10 (profile overhaul), 14 (glossary propose UI), 15 (feature suggestions page), 17 (quest locking audit). Fix 12 DONE.
 - `CLAUDE_CODE_PROMPT_2026-03-31_MEGABATCH.md` — **START HERE.** Master execution prompt covering ALL outstanding work in priority order. References all other docs. Created 2026-03-31.
+- `SOCIAL_SHARING_SPEC.md` — **active** spec. Full social sharing optimization system: 12 initiatives across static OG images, dynamic image generation (satori), share prompts, referral tracking, viral loops, embeddable widgets. Go-to-market audience building infrastructure.
 
 All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
 

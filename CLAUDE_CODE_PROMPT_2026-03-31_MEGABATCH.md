@@ -129,6 +129,40 @@ Also already done in previous Cowork sessions (committed or awaiting push):
 
 ---
 
+## PHASE 4: Social Sharing System (source: SOCIAL_SHARING_SPEC.md)
+
+Read `SOCIAL_SHARING_SPEC.md` for the full spec. This is the go-to-market audience building system. Execute in the order listed in the spec's "Implementation Priority" section.
+
+**Phase 4a (can start in parallel with Phase 1):**
+- Generate 11 unique OG images for missing pages (requires Gemini API on Windows)
+- Fix dimensions on 5 existing OG images to 1200x630
+- Wire all images into ROUTE_META in vite.ts and pageSEO in SEO.tsx
+- Test with Facebook Debugger, Twitter Card Validator, LinkedIn Post Inspector
+
+**Phase 4b (after 4a):**
+- Build `/api/og` dynamic image endpoint using satori + @resvg/resvg-js
+- Create templates: forum posts, quest completions, campaign cards, player profiles, blog posts
+- Wire dynamic routes in vite.ts SSR for /community/post/:id, /quest/:slug, /land/:slug, /crowd-pooling-projects/:id
+
+**Phase 4c (after 4b):**
+- Build SharePrompt component with contextual copy for 8 key moments
+- Add referral tracking URL parameters (ref, src, ctx) to all share links
+- Create database tables: share_events, referrals, ab_test_variants, ab_test_assignments
+- Create text overlay variants for top 5 pages
+
+**Phase 4d (after 4c):**
+- Build "Social & Sharing" admin tab with: top-line cards, share activity chart, referral funnel, per-content breakdown, per-referrer leaderboard, A/B test results, campaign sharing stats, platform breakdown
+- Player referral rewards system ($ReGen tokens for referred signups/completions)
+- Player profile cards (shareable)
+- Messaging app optimization (WhatsApp cache busting, title length limits)
+
+**Phase 4e (later):**
+- Embeddable widgets for external sites
+- Seasonal wrap-up cards
+- Daily rollup cron job for analytics pre-aggregation
+
+---
+
 ## Cleanup (if you have file delete permissions)
 
 Remove these temp files from the project root:
