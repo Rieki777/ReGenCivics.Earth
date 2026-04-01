@@ -82,7 +82,7 @@ import { AdminInvestorsTab } from "@/components/admin/AdminInvestorsTab";
 import { AdminAllianceTab, AdminCreateTab, AdminLiveTab, AdminRoleTab, AdminRolesTab } from "@/components/admin/AdminAllianceTab";
 import { AdminOtherInquiriesTab } from "@/components/admin/AdminOtherInquiriesTab";
 import { AdminKanbanTab } from "@/components/admin/AdminKanbanTab";
-import { AdminCrowdpoolingTab, AdminBroadcastTab, AdminLOITab, AdminBannersTab, AdminImagesTab, AdminCustomGamesTab } from "@/components/admin/AdminSimpleTabs";
+import { AdminCrowdpoolingTab, AdminBroadcastTab, AdminLOITab, AdminBannersTab, AdminImagesTab, AdminCustomGamesTab, AdminWidgetsTab } from "@/components/admin/AdminSimpleTabs";
 
 // ─── Audit Log Tab ─────────────────────────────────────────────────────────────
 const DATE_RANGE_OPTIONS = [
@@ -3771,6 +3771,11 @@ function AdminDashboard() {
           {/* Recordings Tab */}
           <TabsContent value="recordings">
             <AdminRecordingsTab />
+          </TabsContent>
+
+          {/* Widgets Tab */}
+          <TabsContent value="widgets">
+            <AdminWidgetsTab />
           </TabsContent>
 
           {/* Audit Log Tab */}
