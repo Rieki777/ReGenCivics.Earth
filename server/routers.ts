@@ -21,6 +21,7 @@ import { eventsRouter } from "./routes/events";
 import { agreementsRouter } from "./routes/agreements";
 import { featuresRouter } from "./routes/features";
 import { sharingRouter } from "./routes/sharing";
+import { gameRouter } from "./routes/game";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -118,6 +119,9 @@ export const appRouter = router({
 
   // Sharing + Referrals
   sharing: sharingRouter,
+
+  // Game System
+  game: gameRouter,
 });
 
 export type AppRouter = typeof appRouter;
