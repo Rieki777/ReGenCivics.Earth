@@ -509,6 +509,98 @@ Already included in Fix 1 as the two CTA buttons after the collapsible section. 
 
 ---
 
+## Fix 18 — Feature Suggestions Form Redesign (Medium)
+
+**Status:** READY FOR CLAUDE CODE
+
+**Symptom:** Current feature suggestions form is a single text box. Rye wants two categories (bug fix vs. new feature request) and a "Copy prompt" button that copies a structured prompt for users to paste.
+
+**Root cause:** Original implementation was minimal MVP.
+
+**Fix:**
+1. Add a toggle/radio for "Report a Bug" vs. "Suggest a Feature"
+2. Show different form fields based on selection:
+   - Bug: description of issue, steps to reproduce, expected behavior
+   - Feature: description of feature, why it matters, who benefits
+3. Add a "Copy Prompt" button that generates a structured text block the user can paste into forum or chat
+4. Style consistent with existing form patterns on the site
+
+**Files to change:** Feature suggestions page component (identify current location), possibly new shared components.
+
+---
+
+## Fix 19 — Community Page: Bigger Cards + Feature Suggestions Link (Medium)
+
+**Status:** READY FOR CLAUDE CODE
+
+**Symptom:** Community page cards are too small. Missing link to Feature Suggestions.
+
+**Root cause:** Cards were sized for early MVP layout. Feature Suggestions page was built after the community page.
+
+**Fix:**
+1. Increase card size on the community page
+2. Add a "Feature Suggestions" card/link that routes to the feature suggestions page
+3. Add mention of open-source contribution somewhere on the community page
+
+**Files to change:** Community page component.
+
+---
+
+## Fix 20 — Forum Post Edit: Support Image Add/Edit (Medium)
+
+**Status:** READY FOR CLAUDE CODE
+
+**Symptom:** When editing a forum post, users can't add or change images.
+
+**Root cause:** Edit mode doesn't include the image upload component.
+
+**Fix:**
+1. Add image upload capability to the forum post edit form
+2. Allow replacing existing images
+3. Use the same image upload component already used in post creation
+
+**Files to change:** Forum post edit component, possibly shared image upload component.
+
+---
+
+## Fix 21 — Forum Content Templates by Post Type (Medium)
+
+**Status:** READY FOR CLAUDE CODE
+
+**Symptom:** All forum post types (discussion, case study, seeking team, etc.) use the same blank template.
+
+**Root cause:** Post type selection exists but doesn't change the content template.
+
+**Fix:**
+1. When a user selects a post type (discussion, case study, seeking team, etc.), pre-populate the editor with a relevant template
+2. Templates should be helpful scaffolding, not rigid forms
+3. Template suggestions:
+   - Discussion: just a prompt like "What's on your mind?"
+   - Case Study: "Project name / Location / What you tried / What happened / What you learned"
+   - Seeking Team: "What you're building / What roles you need / Location or remote / How to apply"
+
+**Files to change:** Forum post creation component, post type configuration.
+
+---
+
+## Fix 22 — LOI /opportunity Routing Logic (High)
+
+**Status:** READY FOR CLAUDE CODE
+
+**Symptom:** "View Investment Opportunity" link goes to /opportunity. But if a user hasn't filled out the investor information form at /investment, they should be redirected there first.
+
+**Root cause:** No conditional routing based on investor form completion.
+
+**Fix:**
+1. On /opportunity page load, check if the user has already submitted the investor information form
+2. If not submitted, redirect to /investment with a return URL parameter
+3. If submitted, show /opportunity content normally
+4. After completing /investment form, redirect back to /opportunity
+
+**Files to change:** Opportunity page, Investment form page, possibly auth/user context.
+
+---
+
 ## Handoff Breakdown — Who Does What
 
 ### YOU (Rye) — things only you can do
@@ -543,6 +635,11 @@ Already included in Fix 1 as the two CTA buttons after the collapsible section. 
 | 15 | Propose a Feature forum feature | READY |
 | 16 | Map auto-tracking hooks and wiring | READY |
 | 17 | Quest locking audit (after QUEST_LOCK prompt runs) | BLOCKED on QUEST_LOCK |
+| 18 | Feature suggestions form redesign (2 categories, copy prompt) | READY |
+| 19 | Community page bigger cards + Feature Suggestions link + open-source mention | READY |
+| 20 | Forum post edit: support image add/edit | READY |
+| 21 | Forum content templates by post type | READY |
+| 22 | LOI /opportunity conditional routing | READY |
 
 ### WAITING ON YOU before Claude Code can proceed
 

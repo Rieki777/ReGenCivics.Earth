@@ -85,7 +85,7 @@ const socialLinks = [
     icon: MessageCircle,
     url: "https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34",
     color: "#25D366",
-    recommended: true,
+    recommended: false,
   },
   {
     name: "Discord Server",
@@ -93,7 +93,7 @@ const socialLinks = [
     icon: Users,
     url: "https://discord.gg/8aTzTxH3Qe",
     color: "#5865F2",
-    recommended: true,
+    recommended: false,
   },
   {
     name: "YouTube Channel",
@@ -166,6 +166,9 @@ export default function Socials() {
             </h1>
             <p className="text-white/70 text-lg max-w-xl mx-auto">
               You're now part of our growing community. Here's the easiest way to get involved today and follow along with our journey.
+            </p>
+            <p className="text-white/50 text-sm max-w-xl mx-auto mt-4">
+              Most social media is overwhelmed with bots, scams, and fraud now. For this reason we encourage all conversations to happen on our own forums where we enforce strict standards for quality and fraud/bot control.
             </p>
           </div>
 

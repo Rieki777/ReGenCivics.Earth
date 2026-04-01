@@ -102,8 +102,8 @@ const howWeWork = [
     step: 3, 
     title: "Explore Compensation", 
     description: "Review historical compensation for similar contributions to see if it aligns with your needs.",
-    link: "/socials",
-    linkText: "Ask in Socials",
+    link: "/community/post/624",
+    linkText: "Ask in Forum",
     icon: Coins
   },
   { 

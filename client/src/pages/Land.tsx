@@ -255,7 +255,7 @@ export default function Land() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/apply">
                 <Button
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto"
+                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto shadow-[0_0_20px_rgba(125,216,125,0.4),0_0_40px_rgba(125,216,125,0.2)]"
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
                   <Sprout className="w-5 h-5 mr-2" />
@@ -265,7 +265,7 @@ export default function Land() {
               <Link href="/schedule">
                 <Button
                   variant="outline"
-                  className="border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10 font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto"
+                  className="border-[#7dd87d]/60 text-white bg-[#1a472a]/60 hover:bg-[#7dd87d]/20 font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto backdrop-blur-sm"
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
                   <Calendar className="w-5 h-5 mr-2" />

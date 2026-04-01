@@ -50,8 +50,11 @@ These files define all outstanding work for this project. Always check them befo
 - `QUEST_PROGRESSION_SPEC.md` — quest locking and progression system. Unlock chain, visual states, component changes, useQuestUnlocks hook.
 - `CLAUDE_CODE_PROMPT_2026-03-28_MAP_PERF.md` — **active** execution prompt. Map performance optimization, quest hero image generation, dissolve page transitions.
 - `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` — **active** execution prompt. Quest locking UI, hero quest cards, season progress ring. Depends on MAP_PERF running first.
-- `FIXES_TO_MAKE_2026-03-29.md` — **active** fixes batch. 17 fixes covering Game page copy, quest button overlap, CommandPanel collapse, parallax transparency, readability audit, steward claim bug, image upload fix, profile overhaul, nav restructure, forum link audit, 1-pager removal, glossary wiki, feature proposals, map auto-tracking. Fixes 1-9, 11, 13, 16 completed in commit 490518c.
-- `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` — **active** execution prompt. Remaining fixes: 10 (profile overhaul), 12 (forum link audit + seed script), 14 (glossary propose UI), 15 (feature suggestions page), 17 (quest locking audit).
+- `FIXES_TO_MAKE_2026-03-29.md` — **active** fixes batch. 22 fixes (original 17 + 5 added 2026-03-31). Fixes 1-9, 11, 13, 16 completed in commit 490518c. Fixes 18-22 added from Cowork session: feature suggestions redesign, community cards, forum edit images, forum templates, LOI routing.
+- `FIXES_TO_MAKE_2026-03-30.md` — **active** fixes batch. Profile avatar sync, R2 image proxy, settings reorganization.
+- `FIXES_TO_MAKE_2026-03-31.md` — **active** fixes batch. Quest hero images, locking UI, progression gating, CTA replacements. All CODED.
+- `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` — **active** execution prompt. Remaining fixes: 10 (profile overhaul), 14 (glossary propose UI), 15 (feature suggestions page), 17 (quest locking audit). Fix 12 DONE.
+- `CLAUDE_CODE_PROMPT_2026-03-31_MEGABATCH.md` — **START HERE.** Master execution prompt covering ALL outstanding work in priority order. References all other docs. Created 2026-03-31.
 
 All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
 

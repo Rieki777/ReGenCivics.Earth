@@ -155,7 +155,7 @@ export const recordingsRouter = router({
           <div style="margin:24px 0;">${watchBtn}${forumBtn}</div>
         </div>
         <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-          <p style="color:#888;font-size:12px;margin:0;">You're receiving this because you subscribed to ReGen Civics updates.<br/><a href="${APP_BASE_URL}/newsletter/unsubscribe" style="color:#7dd87d;">Unsubscribe</a></p>
+          <p style="color:#888;font-size:12px;margin:0;">You're receiving this because you subscribed to ReGen Civics updates.<br/><a href="${APP_BASE_URL}/settings" style="color:#7dd87d;">Update email preferences</a></p>
         </div>
       </div>`;
 

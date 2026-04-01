@@ -21,7 +21,7 @@ interface SEOProps {
 }
 
 const BASE_URL = 'https://regencivics.earth';
-const DEFAULT_IMAGE = cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg');
+const DEFAULT_IMAGE = `${BASE_URL}/og-default.jpg`;
 const SITE_NAME = 'ReGen Civics Alliance';
 
 export function SEO({
@@ -121,7 +121,7 @@ export const pageSEO = {
     title: 'ReGen Civics: Infinite Game for the Regenerative Renaissance',
     description: 'ReGen Civics runs quests and games that fund regenerative land projects. Complete real-world actions, earn tokens, and build the movement.',
     keywords: 'regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative renaissance, infinite game',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/'
   },
   seasons: {
@@ -170,7 +170,7 @@ export const pageSEO = {
     title: 'Connect: Social Media & Community',
     description: 'Connect with ReGen Civics across social platforms. Join our Discord, follow us on Twitter, subscribe to our YouTube, and stay updated on the Regenerative Renaissance.',
     keywords: 'regenerative community, discord server, twitter, youtube, social media, regenerative network',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/socials'
   },
   apply: {
@@ -233,14 +233,14 @@ export const pageSEO = {
     title: 'Terms of Use | ReGen Civics',
     description: 'Terms of Use for the ReGen Civics website and platform. Please review these terms carefully before using our services.',
     keywords: 'terms of use, terms of service, legal terms, website terms',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/terms-of-use'
   },
   privacyPolicy: {
     title: 'Privacy Policy | ReGen Civics',
     description: 'Privacy Policy for ReGen Civics. Learn how we collect, use, and protect your personal information.',
     keywords: 'privacy policy, data protection, personal information, GDPR compliance',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/privacy-policy'
   },
   disclaimers: {
@@ -268,98 +268,99 @@ export const pageSEO = {
     title: 'Land Projects | ReGen Civics',
     description: 'Real land projects doing the hard work of regenerating soil, water, community, and local economy. These are the projects we\'re backing.',
     keywords: 'regenerative land projects, ecovillages, sustainable farms, land-backed investment',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/land'
   },
   ally: {
     title: 'Alliance Organizations | ReGen Civics',
     description: 'The alliance organizations co-creating the Regenerative Renaissance alongside ReGen Civics. A network built on shared values, not just shared logos.',
     keywords: 'regenerative alliance, partner organizations, regenerative network',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/ally'
   },
   play: {
     title: 'Players | ReGen Civics',
     description: 'The players inside ReGen Civics. Contributors, builders, and healers doing quests and co-creating the new civilization one action at a time.',
     keywords: 'regenerative players, contributors, regenerative community members',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/play'
   },
   blog: {
     title: 'Blog | ReGen Civics',
     description: 'Writings from the ReGen Civics community. Strategy, stories from land projects, game design notes, and updates from the movement.',
     keywords: 'regenerative blog, land project stories, regenerative renaissance writing',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/blog'
   },
   governance: {
     title: 'Governance | ReGen Civics',
     description: 'Voice-based governance rooted in land and contribution. How ReGen Civics makes decisions, and who has a say.',
     keywords: 'regenerative governance, DAO, voice tokens, community governance',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/governance'
   },
   calculator: {
     title: 'Contribution Calculator | ReGen Civics',
     description: 'Run the numbers on your crowd pooling contribution and see how your capital compounds with others to fund regenerative land projects.',
     keywords: 'contribution calculator, crowd pooling calculator, regenerative investment calculator',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/calculator'
   },
   showcase: {
     title: 'Community Showcase | ReGen Civics',
     description: 'Artifacts, completions, and creations from the ReGen Civics community. See what players are building, growing, and healing.',
     keywords: 'regenerative showcase, community creations, quest completions, player artifacts',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/showcase'
   },
   messages: {
     title: 'Messages | ReGen Civics',
     description: 'Your messages and conversations within the ReGen Civics community.',
     keywords: 'messages, community chat, regenerative community',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/messages'
   },
   shapeNextSession: {
     title: 'Shape the Next Session | ReGen Civics',
     description: 'Tell us what you want covered and whether you will be there. Help shape the next community session.',
     keywords: 'community session, feedback, regenerative community, session planning',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/shape-next-session'
   },
   marketplace: {
     title: 'Gifts + Needs Marketplace | ReGen Civics',
     description: 'Share your gifts and find what you need. The community marketplace for regenerative projects, skills, and resources.',
     keywords: 'marketplace, gifts, needs, regenerative exchange, community resources',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/marketplace'
   },
   createCampaign: {
     title: 'Create a Campaign | ReGen Civics Crowd Pooling',
     description: 'Launch a crowd pooling campaign for your regenerative land project. Attract aligned investors and build community support.',
     keywords: 'create campaign, crowd pooling, regenerative fundraising, land project campaign',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/create-campaign'
   },
   coCreatorsGuide: {
     title: 'Co-Creators Guide | ReGen Civics',
     description: 'The guide for ReGen Civics co-creators. Roles, expectations, and how to contribute to the Regenerative Renaissance.',
     keywords: 'co-creators, guide, regenerative community, contributor roles',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/co-creators-guide'
   },
   newsletter: {
     title: 'Newsletter | ReGen Civics',
     description: 'Stay connected with the Regenerative Renaissance. Monthly updates on land projects, quests, and community milestones.',
     keywords: 'newsletter, regenerative updates, community news',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
     url: '/newsletter'
   },
   tokenomics: {
     title: 'Tokenomics | ReGen Civics',
     description: 'How the ReGen Civics token system works. Dual-layer governance, contribution tracking, and value flows across the network.',
     keywords: 'tokenomics, token system, governance tokens, regenerative economics',
-    image: cdnImg('https://assets.regencivics.earth/iZVeEDJwzuNVQLOg.jpg'),
+    image: `${BASE_URL}/og-default.jpg`,
+  
     url: '/tokenomics'
   }
 };

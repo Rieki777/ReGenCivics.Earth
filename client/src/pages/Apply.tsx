@@ -1007,7 +1007,7 @@ export default function Apply() {
                   Ready to submit?
                 </p>
                 <p className="text-[#1a472a] text-sm">
-                  By submitting this application, you agree to participate in the ReGen Civics next Season and commit to the time requirements outlined in the program.
+                  By submitting this application, you agree that, if picked, you'll participate in ReGen Civics next Season and commit to the time requirements (1 day / week) outlined in the program. Or, let us know ASAP if you're not going to be able to participate, so we can offer to another project if you were to be selected.
                 </p>
               </div>
             </div>
@@ -1026,7 +1026,7 @@ export default function Apply() {
               variant="outline"
               onClick={handleBack}
               disabled={currentStep === 1 || isLoading}
-              className="border-[#1a472a]/30 w-full sm:w-auto order-2 sm:order-1"
+              className="border-[#1a472a]/40 text-[#1a472a] hover:bg-[#1a472a]/10 w-full sm:w-auto order-2 sm:order-1"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back

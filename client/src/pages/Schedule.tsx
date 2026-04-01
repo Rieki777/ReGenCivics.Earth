@@ -57,7 +57,7 @@ function ReplayButton({ eventId }: { eventId: number }) {
 const RIVERSIDE_INFO = {
   topic: "ReGen Civics Season 2",
   description: "Join ReGen Civics in Season 2! Helping land projects evolve to the next stage of their regenerative journeys.",
-  roomUrl: "[RIVERSIDE_ROOM_URL]", // Rye will provide the real URL after creating a Riverside room
+  roomUrl: "https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b",
 };
 
 // YouTube playlist for Season 1 recordings
@@ -75,8 +75,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Join us for an open introduction to Season 2! Learn about the program, meet the community, discover if this journey is right for your land project, and help us select the best day/time for the 13-week episodes.",
     type: "open",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Community+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260405T170000Z%0ADTEND:20260405T190000Z%0ASUMMARY:ReGen+Civics+Season+2+Community+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Community+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260405T170000Z%0ADTEND:20260405T190000Z%0ASUMMARY:ReGen+Civics+Season+2+Community+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 100,
@@ -87,8 +87,8 @@ const upcomingEventsFallback = [
     duration: "2-3 hours",
     description: "Speaking during the main portion of this event is invite only. Apply to be an alliance member if you'd like to be considered for an invitation. However, anyone can attend the call and see the magic. We'll likely have a session at the end of the event for everyone to talk and meet.",
     type: "open",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Alliance+Launch+Party&dates=20260422T150000Z/20260422T180000Z&details=ReGen+Civics+Alliance+Launch+Party%0A%0ASpeaking+during+the+main+portion+is+invite+only.+Apply+to+be+an+alliance+member+for+an+invitation.+Anyone+can+attend+and+see+the+magic.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260422T150000Z%0ADTEND:20260422T180000Z%0ASUMMARY:ReGen+Civics+Alliance+Launch+Party%0ADESCRIPTION:Speaking+during+the+main+portion+is+invite+only.+Apply+to+be+an+alliance+member+for+an+invitation.+Anyone+can+attend+and+see+the+magic.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Alliance+Launch+Party&dates=20260422T150000Z/20260422T180000Z&details=ReGen+Civics+Alliance+Launch+Party%0A%0ASpeaking+during+the+main+portion+is+invite+only.+Apply+to+be+an+alliance+member+for+an+invitation.+Anyone+can+attend+and+see+the+magic.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260422T150000Z%0ADTEND:20260422T180000Z%0ASUMMARY:ReGen+Civics+Alliance+Launch+Party%0ADESCRIPTION:Speaking+during+the+main+portion+is+invite+only.+Apply+to+be+an+alliance+member+for+an+invitation.+Anyone+can+attend+and+see+the+magic.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 1,
@@ -99,8 +99,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "First steps of the ReGen Civics Incubator. Meet the selected projects, set intentions, and begin mapping your regenerative vision together.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+1:+Selection+Day&dates=20260926T150000Z/20260926T170000Z&details=First+steps+of+the+ReGen+Civics+Incubator.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260926T150000Z%0ADTEND:20260926T170000Z%0ASUMMARY:ReGen+Civics+Week+1:+Selection+Day%0ADESCRIPTION:First+steps+of+the+ReGen+Civics+Incubator.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+1:+Selection+Day&dates=20260926T150000Z/20260926T170000Z&details=First+steps+of+the+ReGen+Civics+Incubator.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260926T150000Z%0ADTEND:20260926T170000Z%0ASUMMARY:ReGen+Civics+Week+1:+Selection+Day%0ADESCRIPTION:First+steps+of+the+ReGen+Civics+Incubator.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 2,
@@ -111,8 +111,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Starting Season 2! Deep dive into the incubator structure, expectations, and how we'll journey together over the next 13 episodes.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+2:+Incubator+Overview&dates=20261003T150000Z/20261003T170000Z&details=Deep+dive+into+the+incubator+structure.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261003T150000Z%0ADTEND:20261003T170000Z%0ASUMMARY:ReGen+Civics+Week+2:+Incubator+Overview%0ADESCRIPTION:Deep+dive+into+the+incubator+structure.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+2:+Incubator+Overview&dates=20261003T150000Z/20261003T170000Z&details=Deep+dive+into+the+incubator+structure.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261003T150000Z%0ADTEND:20261003T170000Z%0ASUMMARY:ReGen+Civics+Week+2:+Incubator+Overview%0ADESCRIPTION:Deep+dive+into+the+incubator+structure.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 3,
@@ -123,8 +123,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Designing the structure of our projects. Introduction to decentralized autonomous organizations and how to structure your community.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+3:+DAO/DHO/Org+Co-Creation+Part+1&dates=20261010T150000Z/20261010T170000Z&details=Introduction+to+decentralized+autonomous+organizations.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261010T150000Z%0ADTEND:20261010T170000Z%0ASUMMARY:ReGen+Civics+Week+3:+DAO/DHO/Org+Co-Creation+Part+1%0ADESCRIPTION:Introduction+to+decentralized+autonomous+organizations.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+3:+DAO/DHO/Org+Co-Creation+Part+1&dates=20261010T150000Z/20261010T170000Z&details=Introduction+to+decentralized+autonomous+organizations.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261010T150000Z%0ADTEND:20261010T170000Z%0ASUMMARY:ReGen+Civics+Week+3:+DAO/DHO/Org+Co-Creation+Part+1%0ADESCRIPTION:Introduction+to+decentralized+autonomous+organizations.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 4,
@@ -135,8 +135,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Continuing to design the structure of our projects. Practical implementation of governance frameworks and community design.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+4:+DAO/DHO/Org+Co-Creation+Part+2&dates=20261017T150000Z/20261017T170000Z&details=Practical+implementation+of+governance+frameworks.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261017T150000Z%0ADTEND:20261017T170000Z%0ASUMMARY:ReGen+Civics+Week+4:+DAO/DHO/Org+Co-Creation+Part+2%0ADESCRIPTION:Practical+implementation+of+governance+frameworks.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+4:+DAO/DHO/Org+Co-Creation+Part+2&dates=20261017T150000Z/20261017T170000Z&details=Practical+implementation+of+governance+frameworks.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261017T150000Z%0ADTEND:20261017T170000Z%0ASUMMARY:ReGen+Civics+Week+4:+DAO/DHO/Org+Co-Creation+Part+2%0ADESCRIPTION:Practical+implementation+of+governance+frameworks.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 5,
@@ -147,8 +147,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Co-creating project 'Game Guides' and kickstarting our economic systems. How to document your project's unique plays and patterns.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+5:+Game+Guides+%26+Economic+Systems&dates=20261024T150000Z/20261024T170000Z&details=Co-creating+project+Game+Guides+and+economic+systems.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261024T150000Z%0ADTEND:20261024T170000Z%0ASUMMARY:ReGen+Civics+Week+5:+Game+Guides+%26+Economic+Systems%0ADESCRIPTION:Co-creating+project+Game+Guides+and+economic+systems.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+5:+Game+Guides+%26+Economic+Systems&dates=20261024T150000Z/20261024T170000Z&details=Co-creating+project+Game+Guides+and+economic+systems.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261024T150000Z%0ADTEND:20261024T170000Z%0ASUMMARY:ReGen+Civics+Week+5:+Game+Guides+%26+Economic+Systems%0ADESCRIPTION:Co-creating+project+Game+Guides+and+economic+systems.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 6,
@@ -159,8 +159,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Introduction to the ReGen Civics DHO and the first steps in setting up yours. How our alliance operates and how you can participate.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+6:+Intro+to+the+ReGen+Civics+DHO&dates=20261031T150000Z/20261031T170000Z&details=Introduction+to+the+ReGen+Civics+DHO.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261031T150000Z%0ADTEND:20261031T170000Z%0ASUMMARY:ReGen+Civics+Week+6:+Intro+to+the+ReGen+Civics+DHO%0ADESCRIPTION:Introduction+to+the+ReGen+Civics+DHO.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+6:+Intro+to+the+ReGen+Civics+DHO&dates=20261031T150000Z/20261031T170000Z&details=Introduction+to+the+ReGen+Civics+DHO.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261031T150000Z%0ADTEND:20261031T170000Z%0ASUMMARY:ReGen+Civics+Week+6:+Intro+to+the+ReGen+Civics+DHO%0ADESCRIPTION:Introduction+to+the+ReGen+Civics+DHO.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 7,
@@ -171,8 +171,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Evolving our culture through ecosystem mapping and policy design. How we co-create the rules of our regenerative game.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+7:+Ecosystem+Map+%26+Policies&dates=20261107T160000Z/20261107T180000Z&details=Ecosystem+mapping+and+policy+design.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261107T160000Z%0ADTEND:20261107T180000Z%0ASUMMARY:ReGen+Civics+Week+7:+Ecosystem+Map+%26+Policies%0ADESCRIPTION:Ecosystem+mapping+and+policy+design.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+7:+Ecosystem+Map+%26+Policies&dates=20261107T160000Z/20261107T180000Z&details=Ecosystem+mapping+and+policy+design.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261107T160000Z%0ADTEND:20261107T180000Z%0ASUMMARY:ReGen+Civics+Week+7:+Ecosystem+Map+%26+Policies%0ADESCRIPTION:Ecosystem+mapping+and+policy+design.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 8,
@@ -183,8 +183,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "The art and science of our token-assisted land-based economies. Understanding how tokens can support regenerative projects.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+8:+Tokenomics+Part+1&dates=20261114T160000Z/20261114T180000Z&details=Token-assisted+land-based+economies.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261114T160000Z%0ADTEND:20261114T180000Z%0ASUMMARY:ReGen+Civics+Week+8:+Tokenomics+Part+1%0ADESCRIPTION:Token-assisted+land-based+economies.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+8:+Tokenomics+Part+1&dates=20261114T160000Z/20261114T180000Z&details=Token-assisted+land-based+economies.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261114T160000Z%0ADTEND:20261114T180000Z%0ASUMMARY:ReGen+Civics+Week+8:+Tokenomics+Part+1%0ADESCRIPTION:Token-assisted+land-based+economies.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 9,
@@ -195,8 +195,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Continuing the art and theory of our token-assisted land-based economies. Practical token design for your project.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+9:+Tokenomics+Part+2&dates=20261121T160000Z/20261121T180000Z&details=Practical+token+design+for+your+project.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261121T160000Z%0ADTEND:20261121T180000Z%0ASUMMARY:ReGen+Civics+Week+9:+Tokenomics+Part+2%0ADESCRIPTION:Practical+token+design+for+your+project.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+9:+Tokenomics+Part+2&dates=20261121T160000Z/20261121T180000Z&details=Practical+token+design+for+your+project.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261121T160000Z%0ADTEND:20261121T180000Z%0ASUMMARY:ReGen+Civics+Week+9:+Tokenomics+Part+2%0ADESCRIPTION:Practical+token+design+for+your+project.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 10,
@@ -207,8 +207,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Exploring the expansive world of legal structures. How do our projects relate to nation states and existing legal frameworks?",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+10:+Legal+Structures+Part+1&dates=20261128T160000Z/20261128T180000Z&details=Exploring+legal+structures+for+regenerative+projects.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261128T160000Z%0ADTEND:20261128T180000Z%0ASUMMARY:ReGen+Civics+Week+10:+Legal+Structures+Part+1%0ADESCRIPTION:Exploring+legal+structures+for+regenerative+projects.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+10:+Legal+Structures+Part+1&dates=20261128T160000Z/20261128T180000Z&details=Exploring+legal+structures+for+regenerative+projects.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261128T160000Z%0ADTEND:20261128T180000Z%0ASUMMARY:ReGen+Civics+Week+10:+Legal+Structures+Part+1%0ADESCRIPTION:Exploring+legal+structures+for+regenerative+projects.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 11,
@@ -219,8 +219,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Continuing to explore legal structures. Practical considerations for land ownership, community agreements, and compliance.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+11:+Legal+Structures+Part+2&dates=20261205T160000Z/20261205T180000Z&details=Practical+considerations+for+land+ownership+and+compliance.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261205T160000Z%0ADTEND:20261205T180000Z%0ASUMMARY:ReGen+Civics+Week+11:+Legal+Structures+Part+2%0ADESCRIPTION:Practical+considerations+for+land+ownership+and+compliance.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+11:+Legal+Structures+Part+2&dates=20261205T160000Z/20261205T180000Z&details=Practical+considerations+for+land+ownership+and+compliance.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261205T160000Z%0ADTEND:20261205T180000Z%0ASUMMARY:ReGen+Civics+Week+11:+Legal+Structures+Part+2%0ADESCRIPTION:Practical+considerations+for+land+ownership+and+compliance.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 12,
@@ -231,8 +231,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "Meeting our needs through coordination structures. How do we create minimum viable regenerative economies? How do we thrive?",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+12:+Coordination+%26+Minimum+Viable+Economies&dates=20261212T160000Z/20261212T180000Z&details=Creating+minimum+viable+regenerative+economies.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261212T160000Z%0ADTEND:20261212T180000Z%0ASUMMARY:ReGen+Civics+Week+12:+Coordination+%26+Minimum+Viable+Economies%0ADESCRIPTION:Creating+minimum+viable+regenerative+economies.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+12:+Coordination+%26+Minimum+Viable+Economies&dates=20261212T160000Z/20261212T180000Z&details=Creating+minimum+viable+regenerative+economies.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261212T160000Z%0ADTEND:20261212T180000Z%0ASUMMARY:ReGen+Civics+Week+12:+Coordination+%26+Minimum+Viable+Economies%0ADESCRIPTION:Creating+minimum+viable+regenerative+economies.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   },
   {
     id: 13,
@@ -243,8 +243,8 @@ const upcomingEventsFallback = [
     duration: "2 hours",
     description: "A complete overview of the ReGen Civics Incubator journey. Project stewards share updates on their progress and celebrate our collective achievements.",
     type: "episode",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+13:+Season+Overview+%26+Project+Updates&dates=20261219T160000Z/20261219T180000Z&details=Season+finale+and+project+updates.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261219T160000Z%0ADTEND:20261219T180000Z%0ASUMMARY:ReGen+Civics+Week+13:+Season+Overview+%26+Project+Updates%0ADESCRIPTION:Season+finale+and+project+updates.%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Week+13:+Season+Overview+%26+Project+Updates&dates=20261219T160000Z/20261219T180000Z&details=Season+finale+and+project+updates.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
+    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20261219T160000Z%0ADTEND:20261219T180000Z%0ASUMMARY:ReGen+Civics+Week+13:+Season+Overview+%26+Project+Updates%0ADESCRIPTION:Season+finale+and+project+updates.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
   }
 ];
 
@@ -451,7 +451,7 @@ export default function Schedule() {
               <p className="text-white/60 text-sm mb-4">All 13 weekly episodes, Sept–Dec 2026</p>
               <div className="flex flex-wrap gap-2">
                 <a
-                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Episode&dates=20260926T150000Z/20260926T170000Z&details=ReGen+Civics+Season+2+Incubator+weekly+episode.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside&recur=RRULE:FREQ=WEEKLY;COUNT=13"
+                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Episode&dates=20260926T150000Z/20260926T170000Z&details=ReGen+Civics+Season+2+Incubator+weekly+episode.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside&recur=RRULE:FREQ=WEEKLY;COUNT=13"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
@@ -463,7 +463,7 @@ export default function Schedule() {
                   Google Calendar
                 </a>
                 <a
-                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260926T150000Z%0ADTEND:20260926T170000Z%0ARRULE:FREQ=WEEKLY;COUNT=13%0ASUMMARY:ReGen+Civics+Season+2+Episode%0ADESCRIPTION:Weekly+ReGen+Civics+Season+2+Incubator+episode+(11AM-1PM+EST).%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260926T150000Z%0ADTEND:20260926T170000Z%0ARRULE:FREQ=WEEKLY;COUNT=13%0ASUMMARY:ReGen+Civics+Season+2+Episode%0ADESCRIPTION:Weekly+ReGen+Civics+Season+2+Incubator+episode+(11AM-1PM+EST).%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
                   download="regen-civics-season-2.ics"
                   className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
                 >
@@ -535,7 +535,7 @@ export default function Schedule() {
               <p className="text-white/50 text-xs mb-4">Open introduction to Season 2 - no commitment required!</p>
               <div className="flex flex-wrap gap-2">
                 <a
-                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Open+Access+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0ARiverside:+[RIVERSIDE_ROOM_URL]%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside"
+                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Open+Access+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
@@ -547,7 +547,7 @@ export default function Schedule() {
                   Google Calendar
                 </a>
                 <a
-                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260405T170000Z%0ADTEND:20260405T190000Z%0ASUMMARY:ReGen+Civics+Season+2+Open+Access+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2+(1PM-3PM+EDT).%5Cn%5CnRiverside:+[RIVERSIDE_ROOM_URL]%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260405T170000Z%0ADTEND:20260405T190000Z%0ASUMMARY:ReGen+Civics+Season+2+Open+Access+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2+(1PM-3PM+EDT).%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
                   download="regen-civics-open-session.ics"
                   className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
                 >

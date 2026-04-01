@@ -98,7 +98,7 @@ async function sendDigestEmails(
         </div>
         <div style="padding: 24px 40px; background: #f8f5f0; text-align: center; font-size: 12px; color: #6b7280;">
           <p>You're receiving this because you subscribed to ReGen Civics updates.</p>
-          <p><a href="${APP_BASE_URL}/unsubscribe?utm_source=email&utm_medium=digest" style="color: #1a472a;">Unsubscribe</a></p>
+          <p><a href="${APP_BASE_URL}/settings?utm_source=email&utm_medium=digest" style="color: #1a472a;">Update email preferences</a></p>
         </div>
       </div>`;
 

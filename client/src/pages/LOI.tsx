@@ -84,9 +84,9 @@ export default function LOI() {
               Our team will review your submission and reach out to you within 3-5 business days to discuss next steps.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/investor">
+              <Link href="/opportunity">
                 <Button className="bg-[#7dd87d] hover:bg-[#6bc76b] text-[#1a472a]">
-                  View Investment Thesis
+                  View Investment Opportunity
                 </Button>
               </Link>
               <Link href="/">
@@ -165,7 +165,7 @@ export default function LOI() {
                     required
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   />
                 </div>
 
@@ -178,7 +178,7 @@ export default function LOI() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   />
                 </div>
 
@@ -190,7 +190,7 @@ export default function LOI() {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   />
                 </div>
 
@@ -202,7 +202,7 @@ export default function LOI() {
                     type="text"
                     value={formData.organization}
                     onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   />
                 </div>
 
@@ -214,7 +214,7 @@ export default function LOI() {
                     type="text"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   />
                 </div>
               </div>
@@ -241,7 +241,7 @@ export default function LOI() {
                       step="1000"
                       value={formData.pledgeAmount}
                       onChange={(e) => setFormData({ ...formData, pledgeAmount: e.target.value })}
-                      className="w-full pl-8 pr-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                      className="w-full pl-8 pr-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                       placeholder="250000"
                     />
                   </div>
@@ -255,7 +255,7 @@ export default function LOI() {
                     required
                     value={formData.investorType}
                     onChange={(e) => setFormData({ ...formData, investorType: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   >
                     <option value="individual">Individual</option>
                     <option value="family_office">Family Office</option>
@@ -273,7 +273,7 @@ export default function LOI() {
                   <select
                     value={formData.investmentTimeline}
                     onChange={(e) => setFormData({ ...formData, investmentTimeline: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   >
                     <option value="immediate">Immediate (Ready to invest once fund activates)</option>
                     <option value="3_months">Within 3 months</option>
@@ -299,7 +299,7 @@ export default function LOI() {
                   type="text"
                   value={formData.geographicPreference}
                   onChange={(e) => setFormData({ ...formData, geographicPreference: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   placeholder="e.g., North America, Europe, Global"
                 />
               </div>
@@ -312,7 +312,7 @@ export default function LOI() {
                   type="text"
                   value={formData.sectorInterests}
                   onChange={(e) => setFormData({ ...formData, sectorInterests: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   placeholder="e.g., Regenerative agriculture, Ecovillages, Renewable energy"
                 />
               </div>
@@ -325,7 +325,7 @@ export default function LOI() {
                   value={formData.motivations}
                   onChange={(e) => setFormData({ ...formData, motivations: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   placeholder="What motivates you to invest in regenerative land projects?"
                 />
               </div>
@@ -338,7 +338,7 @@ export default function LOI() {
                   value={formData.questionsForTeam}
                   onChange={(e) => setFormData({ ...formData, questionsForTeam: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   placeholder="Any questions or concerns you'd like to discuss?"
                 />
               </div>
@@ -351,7 +351,7 @@ export default function LOI() {
                   value={formData.additionalNotes}
                   onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   placeholder="Any other information you'd like to share"
                 />
               </div>
@@ -364,7 +364,7 @@ export default function LOI() {
                   type="text"
                   value={formData.referralSource}
                   onChange={(e) => setFormData({ ...formData, referralSource: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d]"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
                   placeholder="e.g., Referral, Conference, Website"
                 />
               </div>
@@ -385,13 +385,13 @@ export default function LOI() {
                   "Submit Letter of Intent"
                 )}
               </Button>
-              <Link href="/investor">
+              <Link href="/opportunity">
                 <Button
                   type="button"
                   variant="outline"
                   className="flex-1 border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 py-3 text-lg"
                 >
-                  View Investment Thesis
+                  View Investment Opportunity
                 </Button>
               </Link>
             </div>

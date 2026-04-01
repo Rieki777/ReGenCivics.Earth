@@ -98,7 +98,7 @@ export function serveStatic(app: Express) {
   const DEFAULT_META = {
     title: "ReGen Civics: Fund and Game for Regenerative Land Projects",
     description: "ReGen Civics is a venture fund and alliance helping regenerative land projects succeed through capital, community, and an infinite game for the Regenerative Renaissance.",
-    image: `${BASE_URL}/og-default.webp`,
+    image: `${BASE_URL}/og-default.jpg`,
   };
   const ROUTE_META: Record<string, { title: string; description: string; image?: string }> = {
     "/fund":        { title: "ReGen Civics Fund: Invest in Regenerative Land", description: "Invest in the Regenerative Renaissance. ReGen Civics pools capital to support land projects healing communities and ecosystems.", image: `${BASE_URL}/og/fund.webp` },
@@ -154,17 +154,31 @@ export function serveStatic(app: Express) {
     const ogImage = meta.image ?? DEFAULT_META.image;
 
     // Inject into the <head> — replace placeholder tags written into index.html
+    // Covers both Open Graph and Twitter Card tags so social crawlers see correct data.
+    const escapedTitle = meta.title.replace(/"/g, "&quot;");
+    const escapedDesc = meta.description.replace(/"/g, "&quot;");
+
     const injected = indexHtmlCache
       .replace(/<title>[^<]*<\/title>/, `<title>${meta.title}</title>`)
       .replace(/(<meta name="description" content=")[^"]*(")/,
-        `$1${meta.description.replace(/"/g, "&quot;")}$2`)
+        `$1${escapedDesc}$2`)
+      // Open Graph
       .replace(/(<meta property="og:title" content=")[^"]*(")/,
-        `$1${meta.title.replace(/"/g, "&quot;")}$2`)
+        `$1${escapedTitle}$2`)
       .replace(/(<meta property="og:description" content=")[^"]*(")/,
-        `$1${meta.description.replace(/"/g, "&quot;")}$2`)
+        `$1${escapedDesc}$2`)
       .replace(/(<meta property="og:url" content=")[^"]*(")/,
         `$1${canonical}$2`)
       .replace(/(<meta property="og:image" content=")[^"]*(")/,
+        `$1${ogImage}$2`)
+      // Twitter Card
+      .replace(/(<meta name="twitter:title" content=")[^"]*(")/,
+        `$1${escapedTitle}$2`)
+      .replace(/(<meta name="twitter:description" content=")[^"]*(")/,
+        `$1${escapedDesc}$2`)
+      .replace(/(<meta name="twitter:url" content=")[^"]*(")/,
+        `$1${canonical}$2`)
+      .replace(/(<meta name="twitter:image" content=")[^"]*(")/,
         `$1${ogImage}$2`)
       .replace(/(<link rel="canonical" href=")[^"]*(")/,
         `$1${canonical}$2`);

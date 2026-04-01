@@ -16,19 +16,12 @@ function DiscordIcon({ className }: { className?: string }) {
 
 // Social media configuration
 export const SOCIAL_LINKS = {
-  whatsapp: {
-    name: "WhatsApp",
-    url: "https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34",
+  socials: {
+    name: "Socials",
+    url: "/socials",
     icon: MessageCircle,
-    color: "#25D366",
+    color: "#7dd87d",
     hoverBg: "hover:bg-green-500/20",
-  },
-  discord: {
-    name: "Discord",
-    url: "https://discord.gg/8aTzTxH3Qe",
-    icon: DiscordIcon,
-    color: "#5865F2",
-    hoverBg: "hover:bg-indigo-500/20",
   },
   youtube: {
     name: "YouTube",

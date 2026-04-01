@@ -4,7 +4,7 @@
  * Content: Game mechanics, Voice tokens, ReGen tokens, and game philosophy
  */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 // State for Why Games dropdown
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -192,6 +192,53 @@ function PhilosophyCard({
         {description}
       </p>
     </div>
+  );
+}
+
+function TypewriterText({ className }: { className?: string }) {
+  const fullText = "Let's explore how we can turn the transition into a growing diversity of Regenerative Civilizations into a real-world Game for players of all ages.";
+  const [displayed, setDisplayed] = useState("");
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setStarted(true); },
+      { threshold: 0.5 }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
+    if (displayed.length >= fullText.length) return;
+    const timer = setTimeout(() => {
+      setDisplayed(fullText.slice(0, displayed.length + 1));
+    }, 30);
+    return () => clearTimeout(timer);
+  }, [started, displayed]);
+
+  // Highlight "Regenerative Civilizations" once fully typed
+  const rcStart = fullText.indexOf("Regenerative Civilizations");
+  const rcEnd = rcStart + "Regenerative Civilizations".length;
+
+  const before = displayed.slice(0, Math.min(displayed.length, rcStart));
+  const highlight = displayed.length > rcStart
+    ? displayed.slice(rcStart, Math.min(displayed.length, rcEnd))
+    : "";
+  const after = displayed.length > rcEnd ? displayed.slice(rcEnd) : "";
+
+  return (
+    <p ref={ref} className={className}>
+      {before}
+      {highlight && <span className="font-semibold text-[#4a7c59]">{highlight}</span>}
+      {after}
+      {displayed.length < fullText.length && started && (
+        <span className="inline-block w-0.5 h-5 bg-[#4a7c59] ml-0.5 animate-pulse align-middle" />
+      )}
+    </p>
   );
 }
 
@@ -567,12 +614,8 @@ export default function Game() {
               <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#7dd87d]" />
             </div>
             
-            {/* Exploration statement */}
-            <p className="text-lg md:text-xl text-[#1a472a]/80 leading-relaxed max-w-3xl mx-auto">
-              Let's explore how we can turn the transition into a growing diversity of{' '}
-              <span className="font-semibold text-[#4a7c59]">Regenerative Civilizations</span>{' '}
-              into a real-world Game for players of all ages.
-            </p>
+            {/* Exploration statement - typewriter effect */}
+            <TypewriterText className="text-lg md:text-xl text-[#1a472a]/80 leading-relaxed max-w-3xl mx-auto" />
             
             {/* Animated icons row */}
             <div className="flex justify-center gap-6 mt-10">

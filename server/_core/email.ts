@@ -699,7 +699,7 @@ export const emailTemplates = {
           <p style="color: #333; line-height: 1.7; font-size: 15px;">The regenerative renaissance is underway  -  and your capital can help it accelerate.</p>
         </div>
         <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
-          <p style="color: #999; font-size: 12px; margin: 0;">You received this because you expressed interest in ReGen Civics. <a href="${toAbsoluteUrl('/unsubscribe')}" style="color: #4a7c59;">Unsubscribe</a></p>
+          <p style="color: #999; font-size: 12px; margin: 0;">You received this because you expressed interest in ReGen Civics. <a href="${toAbsoluteUrl('/settings')}" style="color: #4a7c59;">Update email preferences</a></p>
         </div>
       </div>
     `,

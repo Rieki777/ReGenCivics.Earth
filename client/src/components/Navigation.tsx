@@ -76,7 +76,7 @@ export default function Navigation() {
     name: value.name,
     icon: value.icon,
     href: value.url,
-    color: key === 'whatsapp' ? 'text-green-500' : key === 'discord' ? 'text-indigo-500' : 'text-red-500',
+    color: key === 'socials' ? 'text-green-400' : key === 'youtube' ? 'text-red-500' : 'text-green-500',
   }));
 
   // Check if current location is in 4 Paths section
