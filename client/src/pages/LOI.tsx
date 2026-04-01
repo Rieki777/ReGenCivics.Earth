@@ -4,12 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { BackButton } from "@/components/BackButton";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { analytics } from "@/lib/analytics";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function LOI() {
+  const { isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
+
+  // Redirect to investor form if user hasn't submitted it yet
+  const { data: investorStatus } = trpc.investorInquiries.hasSubmitted.useQuery(undefined, { enabled: isAuthenticated });
+  if (isAuthenticated && investorStatus && !investorStatus.submitted) {
+    navigate("/investor?returnTo=/loi");
+    return null;
+  }
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",

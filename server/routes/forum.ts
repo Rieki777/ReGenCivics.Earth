@@ -554,6 +554,7 @@ export const forumRouter = router({
       id: z.number(),
       title: z.string().min(1).max(300),
       content: z.string().min(1).max(50000),
+      generatedImageUrl: z.string().max(512).nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const post = await db.getForumPost(input.id);
@@ -562,7 +563,9 @@ export const forumRouter = router({
       if (post.authorId !== ctx.user.id && !isAdminOrSuper) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to edit this post' });
       }
-      await db.updateForumPost(input.id, { title: input.title, content: input.content });
+      const updateData: any = { title: input.title, content: input.content };
+      if (input.generatedImageUrl !== undefined) updateData.generatedImageUrl = input.generatedImageUrl;
+      await db.updateForumPost(input.id, updateData);
       return { success: true };
     }),
 

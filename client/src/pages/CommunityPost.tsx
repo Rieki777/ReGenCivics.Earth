@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { BackButton } from "@/components/BackButton";
 import { SEO } from "@/components/SEO";
+import { SmartImagePicker } from "@/components/SmartImagePicker";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -127,6 +128,7 @@ export default function CommunityPost() {
   const [editingPost, setEditingPost] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState('');
   const replyRef = useRef<RichEditorHandle>(null);
   const replyFormRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
@@ -514,7 +516,7 @@ export default function CommunityPost() {
                 )}
                 {canDeletePost && !editingPost && (
                   <button
-                    onClick={() => { setEditTitle(post.title); setEditContent(post.content); setEditingPost(true); }}
+                    onClick={() => { setEditTitle(post.title); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
                     className="text-[#4a7c59] hover:text-[#1a472a] p-1 transition-colors"
                     title="Edit post"
                   >
@@ -549,6 +551,7 @@ export default function CommunityPost() {
                   className="w-full px-3 py-2 text-sm font-mono bg-white border border-[#7dd87d]/40 rounded-lg text-[#1a472a] resize-y focus:outline-none focus:border-[#7dd87d]"
                   placeholder="Post content (markdown supported)..."
                 />
+                <SmartImagePicker value={editImageUrl} onChange={setEditImageUrl} context="forum" label="Post image" theme="light" />
                 <div className="flex gap-2 justify-end">
                   <button
                     onClick={() => setEditingPost(false)}
@@ -557,7 +560,7 @@ export default function CommunityPost() {
                     <X className="w-3.5 h-3.5" /> Cancel
                   </button>
                   <button
-                    onClick={() => updatePostMutation.mutate({ id: post.id, title: editTitle, content: editContent })}
+                    onClick={() => updatePostMutation.mutate({ id: post.id, title: editTitle, content: editContent, generatedImageUrl: editImageUrl || null })}
                     disabled={updatePostMutation.isPending}
                     className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-[#1a472a] text-white rounded-lg hover:bg-[#2d5a3d] transition-colors disabled:opacity-60"
                   >

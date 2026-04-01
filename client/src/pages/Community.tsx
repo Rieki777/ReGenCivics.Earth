@@ -1097,6 +1097,10 @@ export default function Community() {
               </Link>
             </div>
 
+            <p className="text-[#1a472a]/40 text-xs mt-3">
+              This site is built by the community. All code is open source on <a href="https://github.com/Rieki777/ReGenCivics.Earth" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#1a472a]/60">GitHub</a>.
+            </p>
+
             {isAdmin && (
               <div className="mt-4 pt-4 border-t border-amber-200/60">
                 <button onClick={() => setShowCreateCategory(showCreateCategory === 'fire' ? null : 'fire')} className="flex items-center gap-1.5 text-sm text-amber-700 hover:text-amber-900 transition-colors">

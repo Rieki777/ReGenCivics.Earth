@@ -25,6 +25,7 @@ export default function FeatureSuggestions() {
   const { isAuthenticated } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [sortBy, setSortBy] = useState<"votes" | "newest">("votes");
+  const [formType, setFormType] = useState<"feature" | "bug">("feature");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -72,13 +73,19 @@ export default function FeatureSuggestions() {
       {showForm && (
         <section className="max-w-2xl mx-auto px-4 mb-8">
           <div className="bg-white/10 border border-white/20 rounded-2xl p-6 space-y-4">
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Feature title" className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
-            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what you'd like to see and why it matters." className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
+            {/* Bug / Feature toggle */}
+            <div className="flex gap-2 bg-white/5 rounded-lg p-0.5 border border-white/10 w-fit">
+              <button onClick={() => setFormType("feature")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "feature" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/50"}`}>Feature Request</button>
+              <button onClick={() => setFormType("bug")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "bug" ? "bg-red-500/20 text-red-400" : "text-white/50"}`}>Report a Bug</button>
+            </div>
+
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
+            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
             <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none">
               <option value="" className="bg-[#1a3a1f]">Category (optional)</option>
               {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a3a1f]">{c}</option>)}
             </select>
-            <Button onClick={() => { if (title.trim() && description.trim()) createMutation.mutate({ title: title.trim(), description: description.trim(), category: category || undefined }); }} disabled={!title.trim() || !description.trim() || createMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold rounded-full px-6">
+            <Button onClick={() => { if (title.trim() && description.trim()) createMutation.mutate({ title: `[${formType === "bug" ? "Bug" : "Feature"}] ${title.trim()}`, description: description.trim(), category: category || undefined }); }} disabled={!title.trim() || !description.trim() || createMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold rounded-full px-6">
               <Send className="w-4 h-4 mr-2" /> {createMutation.isPending ? "Submitting..." : "Submit"}
             </Button>
           </div>
