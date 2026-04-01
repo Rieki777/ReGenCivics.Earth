@@ -118,6 +118,10 @@ export function serveStatic(app: Express) {
     "/seasons":     { title: "Seasons: Join Our Regenerative Journey", description: "Apply for Season 2 of ReGen Civics starting September 2026. Build your regenerative portfolio and join the incubator.", image: `${BASE_URL}/og/seasons.jpg` },
     "/team":        { title: "Team: ReGen Civics", description: "The people behind ReGen Civics. Community builders, developers, land stewards, and movement catalysts.", image: `${BASE_URL}/og/team.jpg` },
     "/crowd-pooling": { title: "Crowd Pooling: ReGen Civics", description: "Pool capital with the community to directly fund regenerative land projects.", image: `${BASE_URL}/og/crowd-pooling.jpg` },
+    "/economy":     { title: "The Regenerative Economy: ReGen Civics", description: "A real economic system built through gameplay. Contribution scores, gratitude tokens, seasonal harvests.", image: `${BASE_URL}/og/economy.jpg` },
+    "/proposals":   { title: "Community Proposals: ReGen Civics", description: "Shape the direction of ReGen Civics. Submit proposals, signal your support, help the community decide.", image: `${BASE_URL}/og/proposals.jpg` },
+    "/game-mechanics": { title: "Game Mechanics: ReGen Civics", description: "See every variable that powers the game. Simulate changes. Export proposals.", image: `${BASE_URL}/og/game-mechanics.jpg` },
+    "/local-food-economy": { title: "Local Food Economy: ReGen Civics", description: "Build regenerative food systems in your bioregion. Rate producers, support local farms.", image: `${BASE_URL}/og/local-food-economy.jpg` },
   };
 
   let indexHtmlCache: string | null = null;

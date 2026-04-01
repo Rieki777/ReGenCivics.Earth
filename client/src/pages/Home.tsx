@@ -41,6 +41,7 @@ import VideoPreviewCard from "@/components/VideoPreviewCard";
 import HowItWorks from "@/components/HowItWorks";
 import { ProgressiveOnboarding, useIsReturnVisitor } from "@/components/ProgressiveOnboarding";
 import { BannerDisplay } from "@/components/BannerDisplay";
+import { GameHookBanner } from "@/components/GameHookBanner";
 import { ImagePreloader } from "@/components/ImagePreloader";
 import { trpc } from "@/lib/trpc";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -195,11 +196,11 @@ export default function Home() {
       blendColor="18, 45, 28"
       scrollWithPage={true}
       sectionOverlays={[
-        { id: "hero", opacity: 0.35 },           // Hero - let image detail show through
-        { id: "four-paths", opacity: 0.55 },      // Four Paths cards - moderate
-        { id: "scarcity", opacity: 0.50 },         // Scarcity to Regeneration - let art show
-        { id: "who-are-you", opacity: 0.60 },      // Who Are You - needs text readability
-        { id: "fund-game", opacity: 0.55 },        // Fund + Game overview
+        { id: "hero", opacity: 0.25 },           // Stars should show through more
+        { id: "four-paths", opacity: 0.50 },      // Four Paths cards
+        { id: "scarcity", opacity: 0.45 },         // Scarcity to Regeneration - let art show
+        { id: "who-are-you", opacity: 0.55 },      // Who Are You - text readability
+        { id: "fund-game", opacity: 0.50 },        // Fund + Game overview
         { id: "newsletter", opacity: 0.65 },       // Newsletter/Footer - stronger for contrast
       ]}
     >
@@ -345,6 +346,9 @@ export default function Home() {
 
         {/* How It Works - Interactive flow */}
         <HowItWorks />
+
+        {/* Game Hook Banner */}
+        <GameHookBanner variant="home" />
 
         {/* From Scarcity to Regeneration - Data-driven insight cards */}
         <section className="relative py-12 md:py-16">
