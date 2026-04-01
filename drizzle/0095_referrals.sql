@@ -1,0 +1,25 @@
+-- Referral tracking and rewards
+CREATE TABLE referrals (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  referrerUserId INT NOT NULL,
+  referredUserId INT DEFAULT NULL,
+  source VARCHAR(50) DEFAULT NULL,
+  context VARCHAR(100) DEFAULT NULL,
+  landingUrl VARCHAR(500) DEFAULT NULL,
+  signedUpAt TIMESTAMP DEFAULT NULL,
+  firstQuestAt TIMESTAMP DEFAULT NULL,
+  firstContributionAt TIMESTAMP DEFAULT NULL,
+  rewardsPaid INT NOT NULL DEFAULT 0,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Share event tracking for analytics
+CREATE TABLE share_events (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT DEFAULT NULL,
+  contentType VARCHAR(50) NOT NULL,
+  contentId VARCHAR(100) DEFAULT NULL,
+  platform VARCHAR(50) NOT NULL,
+  sharedUrl VARCHAR(500) DEFAULT NULL,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

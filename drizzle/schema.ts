@@ -1454,6 +1454,33 @@ export const featureSuggestionVotes = mysqlTable("featureSuggestionVotes", {
 });
 
 /**
+ * Referral tracking
+ */
+export const referrals = mysqlTable("referrals", {
+  id: int("id").autoincrement().primaryKey(),
+  referrerUserId: int("referrerUserId").notNull(),
+  referredUserId: int("referredUserId"),
+  source: varchar("source", { length: 50 }),
+  context: varchar("context", { length: 100 }),
+  landingUrl: varchar("landingUrl", { length: 500 }),
+  signedUpAt: timestamp("signedUpAt"),
+  firstQuestAt: timestamp("firstQuestAt"),
+  firstContributionAt: timestamp("firstContributionAt"),
+  rewardsPaid: int("rewardsPaid").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const shareEvents = mysqlTable("share_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  contentType: varchar("contentType", { length: 50 }).notNull(),
+  contentId: varchar("contentId", { length: 100 }),
+  platform: varchar("platform", { length: 50 }).notNull(),
+  sharedUrl: varchar("sharedUrl", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/**
  * Translation Cache table
  * Caches LLM translations of forum content
  */
