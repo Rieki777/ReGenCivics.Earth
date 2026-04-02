@@ -93,8 +93,8 @@ export const userProfilesRouter = router({
   // Public member list — searchable, paginated
   list: publicProcedure
     .input(z.object({
-      search: z.string().optional(),
-      interests: z.string().optional(), // comma-separated focus areas
+      search: z.string().max(100).optional(),
+      interests: z.string().max(500).optional(), // comma-separated focus areas
       limit: z.number().max(100).default(24),
       cursor: z.number().optional(),
     }))

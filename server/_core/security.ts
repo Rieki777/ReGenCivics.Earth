@@ -116,6 +116,15 @@ export function rateLimitMiddleware(
  * CSRF Token Generation & Validation
  */
 const csrfTokens = new Map<string, { token: string; createdAt: number }>();
+const CSRF_TTL = 15 * 60 * 1000; // 15 minutes
+
+// Periodic cleanup: remove expired tokens every 30 minutes to prevent memory leak
+setInterval(() => {
+  const cutoff = Date.now() - CSRF_TTL;
+  for (const [key, val] of Array.from(csrfTokens.entries())) {
+    if (val.createdAt < cutoff) csrfTokens.delete(key);
+  }
+}, 30 * 60 * 1000);
 
 export function generateCSRFToken(sessionId: string): string {
   const token = crypto.randomBytes(32).toString('hex');
@@ -128,8 +137,7 @@ export function validateCSRFToken(sessionId: string, token: string): boolean {
   
   if (!record) return false;
   
-  // Token expires after 15 minutes
-  if (Date.now() - record.createdAt > 15 * 60 * 1000) {
+  if (Date.now() - record.createdAt > CSRF_TTL) {
     csrfTokens.delete(sessionId);
     return false;
   }

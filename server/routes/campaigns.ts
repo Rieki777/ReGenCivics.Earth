@@ -363,21 +363,20 @@ export const campaignsRouter = router({
       return { success: true };
     }),
 
-  // Withdraw a contribution (contributor only)
-  withdrawContribution: publicProcedure
+  // Withdraw a contribution (authenticated, contributor only)
+  withdrawContribution: protectedProcedure
     .input(z.object({
       contributionId: z.number(),
-      contributorEmail: z.string().email(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const contribution = await db.getContributionById(input.contributionId);
       if (!contribution) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Contribution not found' });
       }
 
-      // Verify email matches
-      if (contribution.contributorEmail !== input.contributorEmail) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Email does not match' });
+      // Verify authenticated user owns this contribution
+      if (contribution.contributorEmail !== ctx.user.email) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'You can only withdraw your own contributions' });
       }
 
       // Can only withdraw pending contributions

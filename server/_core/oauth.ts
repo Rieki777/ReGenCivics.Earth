@@ -91,14 +91,22 @@ async function getGoogleUserInfo(accessToken: string) {
 // ─── Apple OAuth ─────────────────────────────────────────────────────────────
 
 async function getAppleUserInfo(idToken: string) {
-  // Decode the JWT payload (no verification needed here  -  Apple already signed it)
-  const payload = JSON.parse(
-    Buffer.from(idToken.split(".")[1], "base64url").toString()
-  );
-  return {
-    id: payload.sub as string,
-    email: payload.email as string | undefined,
-  };
+  // Verify Apple's JWT signature using their public JWKS
+  try {
+    const { createRemoteJWKSet, jwtVerify } = await import("jose");
+    const APPLE_JWKS = createRemoteJWKSet(new URL("https://appleid.apple.com/auth/keys"));
+    const { payload } = await jwtVerify(idToken, APPLE_JWKS, {
+      issuer: "https://appleid.apple.com",
+      audience: process.env.APPLE_CLIENT_ID,
+    });
+    return {
+      id: payload.sub as string,
+      email: payload.email as string | undefined,
+    };
+  } catch (err) {
+    console.error("[Apple OAuth] JWT verification failed:", err);
+    throw new Error("Apple authentication failed: invalid token");
+  }
 }
 
 // ─── Route Registration ───────────────────────────────────────────────────────

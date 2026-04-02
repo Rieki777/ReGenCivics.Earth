@@ -144,6 +144,15 @@ async function startServer() {
   app.use('/api/auth/email/request', rateLimitMiddleware(60 * 1000, 5));
   app.use('/api/oauth', rateLimitMiddleware(60 * 1000, 10));
   app.use('/api/webhooks', rateLimitMiddleware(60 * 1000, 30));
+  // Forum and messaging rate limits (anti-spam)
+  app.use('/api/trpc/forum.createPost', rateLimitMiddleware(60 * 1000, 5));
+  app.use('/api/trpc/forum.createReply', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/messages.send', rateLimitMiddleware(60 * 1000, 50));
+  // Contribution and quest rate limits (anti-gaming)
+  app.use('/api/trpc/playerContributions.create', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/game.sendGratitude', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/proposals.create', rateLimitMiddleware(60 * 60 * 1000, 5));
+  app.use('/api/trpc/proposals.signalVote', rateLimitMiddleware(60 * 1000, 20));
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -408,11 +417,12 @@ async function startServer() {
   // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
   app.post("/api/cron/event-reminders", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
-    if (secret) {
-      const auth = req.headers.authorization;
-      if (!auth || auth !== `Bearer ${secret}`) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+    if (!secret) {
+      return res.status(500).json({ error: "CRON_SECRET not configured" });
+    }
+    const auth = req.headers.authorization;
+    if (!auth || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
     try {
       const { getDb } = await import("../db");

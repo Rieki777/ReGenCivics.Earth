@@ -9,7 +9,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { events, eventSignups, eventAttendance, regenTokenLedger, agendaSuggestions } from "../../drizzle/schema";
 import { newsletterSubscribers, recordings } from "../../drizzle/schema";
-import { and, asc, desc, eq, gte, lte, lt, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, lt, isNull, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { notifyNewEvent } from "../_core/notify";
@@ -320,23 +320,22 @@ export const eventsRouter = router({
       return { success: true, alreadySignedUp: false, signupType };
     }),
 
-  // ── Public: cancel a signup (#20 — triggers waitlist auto-promote) ──
-  cancelSignup: publicProcedure
+  // ── Cancel a signup (authenticated, owner only) ──
+  cancelSignup: protectedProcedure
     .input(z.object({
       eventId: z.number(),
-      email: z.string().email(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const database = await getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      // Find the active signup
+      // Find the active signup by authenticated user's email
       const [signup] = await database
         .select()
         .from(eventSignups)
         .where(and(
           eq(eventSignups.eventId, input.eventId),
-          eq(eventSignups.email, input.email),
+          eq(eventSignups.email, ctx.user.email!),
           isNull(eventSignups.cancelledAt),
         ))
         .limit(1);
@@ -770,7 +769,7 @@ export const eventsRouter = router({
       if (recordingIds.length) {
         const recs = await database.select({ id: recordings.id, title: recordings.title, youtubeUrl: recordings.youtubeUrl, forumPostId: recordings.forumPostId })
           .from(recordings)
-          .where(sql`id IN (${recordingIds.join(",")})`);
+          .where(inArray(recordings.id, recordingIds));
         recMap = Object.fromEntries(recs.map(r => [r.id, r]));
       }
 
@@ -805,7 +804,7 @@ export const eventsRouter = router({
       // Get all unique emails from event signups for this season + newsletter subscribers
       const seasonSignups = await database.select({ email: eventSignups.email })
         .from(eventSignups)
-        .where(sql`eventId IN (${seasonEvents.map(e => e.id).join(",")})`);
+        .where(inArray(eventSignups.eventId, seasonEvents.map(e => e.id)));
       const newsletterSubs = await database.select({ email: newsletterSubscribers.email })
         .from(newsletterSubscribers)
         .where(eq(newsletterSubscribers.isActive, 1));

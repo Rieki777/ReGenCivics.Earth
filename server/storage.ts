@@ -38,13 +38,33 @@ function publicUrl(key: string): string {
   return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
 }
 
+const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_CONTENT_TYPES = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml",
+  "application/pdf", "audio/mpeg", "video/mp4",
+  "application/octet-stream", // fallback for unknown
+]);
+
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const key = relKey.replace(/^\/+/, "");
+  // Sanitize key: prevent directory traversal
+  let key = relKey.replace(/^\/+/, "").replace(/\.\.\//g, "").replace(/\.\.\\/g, "");
+  if (!key || key.includes("..")) throw new Error("Invalid storage key");
+
   const body = typeof data === "string" ? Buffer.from(data) : data;
+
+  // Size check
+  if (body.length > MAX_UPLOAD_SIZE) {
+    throw new Error(`File too large: ${(body.length / 1024 / 1024).toFixed(1)}MB exceeds ${MAX_UPLOAD_SIZE / 1024 / 1024}MB limit`);
+  }
+
+  // Content type check
+  if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+    throw new Error(`Content type not allowed: ${contentType}`);
+  }
 
   const client = getS3Client();
   await client.send(
