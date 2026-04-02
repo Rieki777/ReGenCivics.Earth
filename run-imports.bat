@@ -1,5 +1,6 @@
 @echo off
-set DATABASE_URL=mysql://root:RAILWAY_PASSWORD_REDACTED@nozomi.proxy.rlwy.net:46413/railway
+REM Set your DATABASE_URL before running
+set DATABASE_URL=mysql://root:YOUR_PASSWORD@YOUR_HOST:YOUR_PORT/railway
 echo === Importing users ===
 npx tsx scripts/import-users.ts
 echo === Importing applications ===

@@ -288,7 +288,7 @@ export default function TreasuryDashboard() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Project Allocations */}
-        <div className="bg-[#0d2818]/50 border border-[#7dd87d]/20 rounded-xl p-6">
+        <div className="bg-[#0d2818]/80 border border-[#7dd87d]/20 rounded-xl p-6">
           <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
             <PieChart className="w-5 h-5 text-[#7dd87d]" />
             Current Allocations
@@ -322,7 +322,7 @@ export default function TreasuryDashboard() {
         </div>
 
         {/* Recent Transactions */}
-        <div className="bg-[#0d2818]/50 border border-[#7dd87d]/20 rounded-xl p-6">
+        <div className="bg-[#0d2818]/80 border border-[#7dd87d]/20 rounded-xl p-6">
           <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
             <Globe className="w-5 h-5 text-[#7dd87d]" />
             Recent Distributions
@@ -331,7 +331,7 @@ export default function TreasuryDashboard() {
             {sampleTransactions.map((tx) => (
               <div 
                 key={tx.id} 
-                className="bg-[#1a472a]/50 rounded-lg p-3 border border-[#7dd87d]/10 hover:border-[#7dd87d]/30 transition-colors"
+                className="bg-[#1a472a]/70 rounded-lg p-3 border border-[#7dd87d]/10 hover:border-[#7dd87d]/30 transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

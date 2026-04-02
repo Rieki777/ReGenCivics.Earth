@@ -17,11 +17,14 @@
 import mysql from 'mysql2/promise';
 import { readFileSync } from 'fs';
 
+if (!process.env.DATABASE_URL) {
+  console.error('Set DATABASE_URL first');
+  process.exit(1);
+}
+
 const DRY_RUN = false; // dry run confirmed — this will now write to the DB
 
-const conn = await mysql.createConnection(
-  'mysql://root:RAILWAY_PASSWORD_REDACTED@nozomi.proxy.rlwy.net:46413/railway'
-);
+const conn = await mysql.createConnection(process.env.DATABASE_URL);
 
 console.log('Connected to Railway MySQL\n');
 console.log(DRY_RUN ? '=== DRY RUN — no writes ===' : '=== LIVE RUN — writing to DB ===');

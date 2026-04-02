@@ -117,3 +117,9 @@ temp/
 
 # Cloudflare Wrangler
 .wrangler/
+
+# Batch files with database credentials
+*.bat
+
+# Gemini API key file
+Nano Photos/.gemini_api_key

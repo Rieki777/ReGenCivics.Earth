@@ -1,6 +1,11 @@
 import mysql from 'mysql2/promise';
 
-const conn = await mysql.createConnection('mysql://root:RAILWAY_PASSWORD_REDACTED@nozomi.proxy.rlwy.net:46413/railway');
+if (!process.env.DATABASE_URL) {
+  console.error('Set DATABASE_URL first');
+  process.exit(1);
+}
+
+const conn = await mysql.createConnection(process.env.DATABASE_URL);
 
 const [rows] = await conn.query("SELECT category, COUNT(1) as cnt FROM game_variables WHERE category IN ('citizenship','gratitude','trust','harvest','referral','proposals','organisations','projects') GROUP BY category ORDER BY category");
 console.table(rows);

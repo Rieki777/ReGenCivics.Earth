@@ -115,15 +115,157 @@ Recommendation: Option B. Keep the tab, gate the admin sections. Check how `isAd
 
 ---
 
-## Priority Order
+---
+
+## Fix 8 - Mobile text readability: Hypha Space Treasury modal (High)
+
+**Status:** CLAUDE CODE
+
+**Symptom:** The Hypha Space Treasury popup/modal on mobile shows body text
+that is hard to read against the background image. The text "Explore our
+complete treasury dashboard on Base..." lacks enough contrast.
+
+**Root cause:** The modal card likely has insufficient background opacity or
+is missing a solid/semi-opaque backdrop behind the text content area.
+
+**Fix:** Increase the background color opacity on the modal content container
+to at least `rgba(0, 0, 0, 0.75)` or `rgba(10, 30, 15, 0.85)`. Alternatively,
+add a solid dark-green panel behind the text. Ensure text color is white or
+near-white with `font-weight: 500` minimum. Test on mobile viewport.
+
+**Files:** Search for "Hypha Space Treasury" in the codebase. Likely in a
+modal or card component on the Fund or Profile page.
+
+---
+
+## Fix 9 - Mobile text readability: Anyone / ReGen Players page (High)
+
+**Status:** CLAUDE CODE
+
+**Symptom:** The "Anyone / ReGen Players" path page has text overlaid on the
+background image that is hard to read on mobile. The headline "Anyone / ReGen
+Players" and body copy are not legible enough.
+
+**Root cause:** The text overlay section has insufficient contrast against the
+colorful background. Text shadow may be missing or too subtle. The dark
+overlay behind the text is not dark enough for mobile.
+
+**Fix:**
+- Add or increase `text-shadow` on the headline: `0 2px 12px rgba(0,0,0,0.8)`
+- Increase the dark overlay opacity on the hero section from whatever it
+  currently is to at least `0.55`
+- Ensure the body copy paragraph has a semi-transparent dark pill/backdrop
+  or increased overlay in that region
+- Check and fix on all mobile breakpoints (375px, 390px, 430px)
+
+**Files:** The Players/Anyone path page component. Search for "Anyone" or
+"ReGen Players" in `client/src/pages/`.
+
+---
+
+## Fix 10 - Mobile text readability: Welcome Back four-path cards (Medium)
+
+**Status:** CLAUDE CODE
+
+**Symptom:** On the logged-in "Welcome Back to ReGen Civics" mobile view,
+the four path card labels ("FUND THE RENAISSANCE", "EVOLVE YOUR PROJECT",
+"JOIN THE ALLIANCE", "PLAY THE GAME") are hard to read against the card
+background images.
+
+**Root cause:** Card label text on the image cards likely needs a stronger
+gradient overlay at the bottom, or the text needs a shadow. On mobile,
+the cards are smaller and the text competes more with the imagery.
+
+**Fix:**
+- Add `text-shadow: 0 1px 8px rgba(0,0,0,0.9)` to all card label text
+- Strengthen the bottom gradient overlay on each card image from current
+  value to at least `linear-gradient(to top, rgba(0,0,0,0.75), transparent)`
+- Verify the subtitle text under each label (e.g. "Go →") is also legible
+
+**Files:** The logged-in home/dashboard component. Search for "Welcome Back"
+or the four path card component used on the authenticated home view.
+
+---
+
+## Fix 11 - Error page buttons not clickable (High)
+
+**Status:** CLAUDE CODE
+
+**Symptom:** The error/404 page showing "When we think things are broken,
+ponder the TAO..." has "Return Home" and "Visit Community" buttons that
+Rye cannot click. The buttons appear rendered but do not respond to taps
+on mobile.
+
+**Root cause:** Likely one of:
+- The buttons are rendered but a parent element is intercepting pointer
+  events (`pointer-events: none` on a wrapper, or an invisible overlay
+  sitting on top)
+- The buttons use `<button onClick>` with a router navigation that is
+  broken in the error boundary context (the router context may not be
+  available inside the error boundary)
+- `z-index` issue where an invisible element sits above the buttons
+
+**Fix:**
+- Check the error page/boundary component for any overlay elements with
+  higher z-index than the buttons
+- If using React Router's `useNavigate` inside an ErrorBoundary, replace
+  with plain `<a href="/">` and `<a href="/community">` anchor tags — router
+  hooks can fail inside error boundaries
+- Add `position: relative; z-index: 10` to the button container
+- Test on mobile (touch events) and desktop (click events)
+
+**Files:** Search for "ponder the TAO" or "Return Home" or the ErrorBoundary
+/ 404 component in `client/src/`.
+
+---
+
+## Fix 12 - "If enough of us play" banner: gold glow background (Medium)
+
+**Status:** CLAUDE CODE
+
+**Symptom:** The "If enough of us play the Game, it's real." banner on the
+homepage is a plain green section. Rye wants it to have a glowing gold
+background to make it feel more special and significant.
+
+**Root cause:** Cosmetic — the section currently uses a flat background color.
+
+**Fix:** Replace the background with a warm gold glow treatment:
+```css
+background: linear-gradient(135deg, #8B6914 0%, #C9960C 35%, #F0B429 55%, #C9960C 75%, #8B6914 100%);
+box-shadow: inset 0 0 60px rgba(240, 180, 41, 0.4), 0 0 40px rgba(240, 180, 41, 0.2);
+```
+Or as a Tailwind-compatible inline style if the project doesn't use
+arbitrary CSS. The text color should shift to deep brown/black
+(`#2D1B00` or `#1A0F00`) for contrast against the gold, or stay white
+with a strong text shadow if the gold is dark enough.
+
+The arrow/link icon after "A regenerative economy built by the people who
+use it." should also pick up the gold treatment — either white on gold, or
+a deep warm tone.
+
+Test at multiple viewport widths. The glow should feel warm and alive, not
+gaudy. If it reads as too bright, reduce the lighter gold stop:
+`#F0B429` → `#D4A017`.
+
+**Files:** Search for "If enough of us play" or "if-enough" in
+`client/src/pages/Home.tsx` or the component that renders this banner.
+
+---
+
+## Priority Order (updated)
 
 1. Fix 5 - My Submissions admin data (High, privacy/UX)
 2. Fix 3 - Notification toggle (High, broken UI)
-3. Fix 2 - On-Chain Tracking links (Medium, missing functionality)
-4. Fix 7 - Cultivator rename (Medium, prep for citizenship tiers)
-5. Fix 6 - OG image/description (Medium, social sharing)
-6. Fix 1 - Background image (Medium, blocked on finding/generating image)
-7. Fix 4 - Quest 8 experience text (Low, quick text change)
+3. Fix 11 - Error page buttons not clickable (High, broken UI)
+4. Fix 8 - Hypha Treasury mobile readability (High, legibility)
+5. Fix 9 - ReGen Players page mobile readability (High, legibility)
+6. Fix 2 - On-Chain Tracking links (Medium, missing functionality)
+7. Fix 7 - Cultivator rename (Medium, prep for citizenship tiers)
+8. Fix 10 - Welcome Back cards mobile readability (Medium, legibility)
+9. Fix 12 - Gold glow banner (Medium, visual polish)
+10. Fix 6 - OG image/description (Medium, social sharing)
+11. Fix 1 - Background image (Medium, blocked on finding/generating image)
+12. Fix 4 - Quest 8 experience text (Low, quick text change)
 
 ---
 
@@ -148,6 +290,11 @@ Recommendation: Option B. Keep the tab, gate the admin sections. Check how `isAd
 | 5 | Gate Land Project Applications + Investor Inquiry behind admin check | READY TO CODE |
 | 6 | Update OG description text in index.html and SEO.tsx | READY TO CODE (pending Rye's copy approval) |
 | 7 | Rename contribution tier "Steward" to "Cultivator" in game.ts + all references | READY TO CODE |
+| 8 | Increase overlay opacity on Hypha Treasury modal text | READY TO CODE |
+| 9 | Fix text contrast on Anyone / ReGen Players page | READY TO CODE |
+| 10 | Fix card label readability on Welcome Back mobile view | READY TO CODE |
+| 11 | Fix error page buttons (replace router hooks with plain anchor tags) | READY TO CODE |
+| 12 | Apply gold glow background to "If enough of us play" banner | READY TO CODE |
 
 ### WAITING ON YOU before Claude Code can proceed
 

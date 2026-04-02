@@ -13,7 +13,7 @@ import os
 import base64
 from pathlib import Path
 
-API_KEY = os.environ.get("GEMINI_KEY") or os.environ.get("GEMINI_API_KEY") or "GEMINI_API_KEY_REDACTED"
+API_KEY = os.environ.get("GEMINI_KEY") or os.environ.get("GEMINI_API_KEY")
 
 PROMPT = """
 Fantasy illustration in storybook style titled 'Bridging Worlds.'

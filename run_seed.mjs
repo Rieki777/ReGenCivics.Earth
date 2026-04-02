@@ -1,9 +1,12 @@
 import mysql from 'mysql2/promise';
 import { readFileSync } from 'fs';
 
-const conn = await mysql.createConnection(
-  'mysql://root:RAILWAY_PASSWORD_REDACTED@nozomi.proxy.rlwy.net:46413/railway'
-);
+if (!process.env.DATABASE_URL) {
+  console.error('Set DATABASE_URL first');
+  process.exit(1);
+}
+
+const conn = await mysql.createConnection(process.env.DATABASE_URL);
 
 const raw = readFileSync('drizzle/0099_seed_citizenship_trust_harvest.sql', 'utf8');
 

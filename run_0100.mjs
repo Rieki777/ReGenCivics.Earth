@@ -1,9 +1,12 @@
 import mysql from 'mysql2/promise';
 import { readFileSync } from 'fs';
 
-const conn = await mysql.createConnection(
-  'mysql://root:RAILWAY_PASSWORD_REDACTED@nozomi.proxy.rlwy.net:46413/railway'
-);
+if (!process.env.DATABASE_URL) {
+  console.error('Set DATABASE_URL first');
+  process.exit(1);
+}
+
+const conn = await mysql.createConnection(process.env.DATABASE_URL);
 
 const raw = readFileSync('./drizzle/0100_seed_citizenship_powers.sql', 'utf8');
 const stripped = raw.split('\n').filter(line => !line.trim().startsWith('--')).join('\n');

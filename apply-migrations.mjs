@@ -1,8 +1,11 @@
 import mysql from 'mysql2/promise';
 
-const DB_URL = 'mysql://root:RAILWAY_PASSWORD_REDACTED@nozomi.proxy.rlwy.net:46413/railway';
+if (!process.env.DATABASE_URL) {
+  console.error('Set DATABASE_URL first');
+  process.exit(1);
+}
 
-const conn = await mysql.createConnection(DB_URL);
+const conn = await mysql.createConnection(process.env.DATABASE_URL);
 
 // 0038: player_contributions table
 console.log('Applying 0038: player_contributions...');

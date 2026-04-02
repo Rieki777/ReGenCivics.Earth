@@ -1,5 +1,6 @@
 @echo off
-set DATABASE_URL=mysql://root:RAILWAY_PASSWORD_REDACTED@nozomi.proxy.rlwy.net:46413/railway
+REM Set your DATABASE_URL before running
+set DATABASE_URL=mysql://root:YOUR_PASSWORD@YOUR_HOST:YOUR_PORT/railway
 echo Starting at %TIME% > last-imports-log.txt
 echo === Video Suggestions === >> last-imports-log.txt
 npx tsx scripts/import-video-suggestions.ts >> last-imports-log.txt 2>&1

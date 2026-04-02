@@ -3,7 +3,10 @@ from pathlib import Path
 from google import genai
 from google.genai import types
 
-API_KEY = "GEMINI_API_KEY_REDACTED"
+API_KEY = os.environ.get("GEMINI_API_KEY")
+if not API_KEY:
+  print("Set GEMINI_API_KEY")
+  exit(1)
 
 PROMPT = """
 Fantasy illustration in storybook style titled 'Bridging Worlds.'
