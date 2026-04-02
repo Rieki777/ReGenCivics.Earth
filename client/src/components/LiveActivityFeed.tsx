@@ -54,7 +54,7 @@ export function LiveActivityFeed() {
                 <p className="text-white/85 text-sm leading-snug line-clamp-1 group-hover:text-white transition-colors">
                   {post.title}
                 </p>
-                <p className="text-white/40 text-xs mt-0.5">
+                <p className="text-white/60 text-xs mt-0.5">
                   {post.authorName} · {timeAgo(post.createdAt)}
                 </p>
               </div>

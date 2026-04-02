@@ -212,7 +212,7 @@ export default function Proposals() {
                 </DialogContent>
               </Dialog>
             ) : isAuthenticated ? (
-              <p className="text-white/40 text-sm">Co-Creator tier or above required to submit proposals.</p>
+              <p className="text-white/60 text-sm">Co-Creator tier or above required to submit proposals.</p>
             ) : (
               <a
                 href={getLoginUrl()}
@@ -227,7 +227,7 @@ export default function Proposals() {
         {/* Filter bar */}
         <section className="max-w-3xl mx-auto px-4 mb-6">
           <div className="flex flex-wrap items-center gap-3">
-            <Filter className="w-4 h-4 text-white/40" />
+            <Filter className="w-4 h-4 text-white/60" />
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value)}
@@ -248,7 +248,7 @@ export default function Proposals() {
                 <option key={s.value} value={s.value} className="bg-[#1a3a1f]">{s.label}</option>
               ))}
             </select>
-            <span className="text-white/40 text-sm ml-auto">
+            <span className="text-white/60 text-sm ml-auto">
               {proposals.length} proposal{proposals.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -257,9 +257,9 @@ export default function Proposals() {
         {/* Proposal cards */}
         <div className="max-w-3xl mx-auto px-4 pb-20">
           {proposalsQuery.isLoading ? (
-            <div className="text-center py-12 text-white/40">Loading proposals...</div>
+            <div className="text-center py-12 text-white/60">Loading proposals...</div>
           ) : proposals.length === 0 ? (
-            <div className="text-center py-12 text-white/40">
+            <div className="text-center py-12 text-white/60">
               No proposals yet. Be the first to submit one.
             </div>
           ) : (
@@ -275,7 +275,7 @@ export default function Proposals() {
                         <button
                           onClick={() => handleVote(p.id)}
                           className={`flex flex-col items-center gap-0.5 min-w-[44px] pt-1 transition-colors ${
-                            hasVoted ? "text-[#7dd87d]" : "text-white/40 hover:text-[#7dd87d]"
+                            hasVoted ? "text-[#7dd87d]" : "text-white/60 hover:text-[#7dd87d]"
                           }`}
                           aria-label={hasVoted ? "Remove vote" : "Signal vote"}
                         >

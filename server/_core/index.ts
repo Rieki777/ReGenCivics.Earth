@@ -476,9 +476,9 @@ async function startServer() {
 
         const dateStr = event.startTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
         const timeStr = event.startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
-        const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
-        const joinLabel = event.riversideRoomUrl ? "Join on Riverside" : "Join on Zoom";
-        const joinColor = event.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
+        const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? "";
+        const joinLabel = "Join on Riverside";
+        const joinColor = "#7c3aed";
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"><div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;"><h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1><p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Happening tomorrow</p></div><div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;"><h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2><p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>${event.description ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${event.description}</p>` : ""}<a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">${joinLabel}</a></div><div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;"><p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/><a href="${appUrl}/schedule" style="color:#7dd87d;">View all events</a></p></div></div>`;
 
         const emailSignups = signups.filter(s => s.email);

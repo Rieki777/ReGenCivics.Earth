@@ -15,6 +15,14 @@ import { storagePut } from "../storage";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
 
 export const campaignsRouter = router({
+  // Verify campaign creator access password (server-side)
+  verifyCampaignAccess: protectedProcedure
+    .input(z.object({ password: z.string() }))
+    .mutation(({ input }) => {
+      const expected = process.env.CAMPAIGN_ACCESS_PASSWORD || "222";
+      return { valid: input.password === expected };
+    }),
+
   // List all campaigns (with optional filtering)
   list: publicProcedure
     .input(z.object({

@@ -637,7 +637,7 @@ export default function Schedule() {
                 <svg className="w-3 h-3 text-[#7dd87d]" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
               </span>
               <span className="text-[#7dd87d] font-semibold text-sm">$ReGen Balance: {tokenData.balance}</span>
-              <span className="text-white/40 text-xs">from {tokenData.entries.length} event{tokenData.entries.length !== 1 ? 's' : ''}</span>
+              <span className="text-white/60 text-xs">from {tokenData.entries.length} event{tokenData.entries.length !== 1 ? 's' : ''}</span>
             </div>
           </div>
         </section>
@@ -840,7 +840,7 @@ export default function Schedule() {
                             </button>
                             <button
                               onClick={() => { setReminderOpenFor(null); setReminderEmail(''); setReminderPhone(''); }}
-                              className="text-white/40 hover:text-white/70 px-2 py-2 text-sm"
+                              className="text-white/60 hover:text-white/70 px-2 py-2 text-sm"
                             >
                               ✕
                             </button>
@@ -896,7 +896,7 @@ export default function Schedule() {
                             </button>
                             <button
                               onClick={() => { setAgendaOpenFor(null); setAgendaText(''); setAgendaEmail(''); }}
-                              className="text-white/40 hover:text-white/70 px-2 py-2 text-sm"
+                              className="text-white/60 hover:text-white/70 px-2 py-2 text-sm"
                             >✕</button>
                           </div>
                         </div>

@@ -494,7 +494,7 @@ function MilestoneTracker({ phases, currentPhaseIndex }: { phases: string[]; cur
                 className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold border-2 transition-all ${
                   done ? "bg-[#7dd87d] border-[#7dd87d] text-[#1a472a]" :
                   active ? "bg-[#1a472a] border-[#7dd87d] text-[#7dd87d] ring-2 ring-[#7dd87d]/30" :
-                  "bg-white/10 border-white/20 text-white/40"
+                  "bg-white/10 border-white/20 text-white/60"
                 }`}
               >
                 {done ? "✓" : i + 1}
@@ -595,7 +595,7 @@ function ProjectShareSheet({ project }: { project: typeof sampleProjects[0] }) {
             className="relative bg-[#0d2818] border border-[#7dd87d]/20 rounded-2xl p-6 w-full max-w-sm z-10"
             onClick={e => e.stopPropagation()}
           >
-            <button onClick={() => setOpen(false)} className="absolute top-3 right-3 text-white/40 hover:text-white">
+            <button onClick={() => setOpen(false)} className="absolute top-3 right-3 text-white/60 hover:text-white">
               <X className="w-4 h-4" />
             </button>
             <h3 className="font-bold text-white mb-4">Share {project.name}</h3>
@@ -830,7 +830,7 @@ function ProjectDetailModal({
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 text-sm text-white/70 pb-2">
                 {[["Housing", project.applicationData.housingPlans], ["Food", project.applicationData.foodSystems], ["Water", project.applicationData.waterSystems], ["Energy", project.applicationData.energySystems]].map(([k, v]) => (
-                  <div key={k}><span className="text-white/40">{k}: </span>{v}</div>
+                  <div key={k}><span className="text-white/60">{k}: </span>{v}</div>
                 ))}
               </CollapsibleContent>
             </Collapsible>
@@ -843,7 +843,7 @@ function ProjectDetailModal({
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 text-sm text-white/70 pb-2">
                 {[["Governance", project.applicationData.governanceModel], ["Membership", project.applicationData.membershipModel], ["Legal", project.applicationData.legalStructure], ["Team", `${project.applicationData.teamSize} core members: ${project.applicationData.teamExperience}`]].map(([k, v]) => (
-                  <div key={k}><span className="text-white/40">{k}: </span>{v}</div>
+                  <div key={k}><span className="text-white/60">{k}: </span>{v}</div>
                 ))}
               </CollapsibleContent>
             </Collapsible>
@@ -856,7 +856,7 @@ function ProjectDetailModal({
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 text-sm text-white/70 pb-2">
                 {[["Programs", project.applicationData.educationPrograms], ["Engagement", project.applicationData.communityEngagement], ["Impact", project.applicationData.impactMetrics], ["Challenges", project.applicationData.challenges]].map(([k, v]) => (
-                  <div key={k}><span className="text-white/40">{k}: </span>{v}</div>
+                  <div key={k}><span className="text-white/60">{k}: </span>{v}</div>
                 ))}
               </CollapsibleContent>
             </Collapsible>
@@ -904,7 +904,7 @@ function ProjectDetailModal({
 
             {/* Avatar stack + contributors */}
             <div>
-              <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Contributors</p>
+              <p className="text-xs text-white/60 uppercase tracking-wider mb-2">Contributors</p>
               <div className="flex items-center gap-3">
                 <AvatarStack contributors={project.contributors} projectName={project.name} />
                 <div>
@@ -921,7 +921,7 @@ function ProjectDetailModal({
 
             {/* Deadline countdown */}
             <div className="flex items-center gap-2 text-sm">
-              <Calendar className="w-4 h-4 text-white/40" />
+              <Calendar className="w-4 h-4 text-white/60" />
               <DeadlineCountdown deadline={project.deadline} />
             </div>
 
@@ -934,7 +934,7 @@ function ProjectDetailModal({
                 ["Timeline", project.applicationData.timeline],
               ].map(([k, v]) => (
                 <div key={k} className="bg-white/5 rounded-lg p-2">
-                  <p className="text-white/40">{k}</p>
+                  <p className="text-white/60">{k}</p>
                   <p className="text-white font-medium text-[11px]">{v}</p>
                 </div>
               ))}
@@ -1024,7 +1024,7 @@ function HowCrowdPoolingWorks() {
           </div>
 
           {/* YouTube facade */}
-          <div className="rounded-xl overflow-hidden aspect-video relative group cursor-pointer" onClick={() => setVideoActive(true)}>
+          <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setVideoActive(true); } }} className="rounded-xl overflow-hidden aspect-video relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50" onClick={() => setVideoActive(true)}>
             {!videoActive ? (
               <>
                 <img
@@ -1127,7 +1127,7 @@ function ImpactStrip({ projects }: { projects: typeof sampleProjects }) {
 
   return (
     <div ref={ref} className="bg-[#0d2818]/80 border border-[#7dd87d]/20 backdrop-blur-sm rounded-2xl py-6 px-8 mb-8">
-      <p className="text-white/40 text-xs uppercase tracking-widest text-center mb-4">Combined impact across all active projects</p>
+      <p className="text-white/60 text-xs uppercase tracking-widest text-center mb-4">Combined impact across all active projects</p>
       <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-16">
         {[
           { value: animAcres, label: "acres", suffix: "" },
@@ -1419,7 +1419,7 @@ export default function CrowdPoolingProjects() {
               {activeTags.length > 0 && (
                 <button
                   onClick={() => setActiveTags([])}
-                  className="px-3 py-1 rounded-full text-xs font-medium text-white/40 hover:text-white/70 underline transition-colors"
+                  className="px-3 py-1 rounded-full text-xs font-medium text-white/60 hover:text-white/70 underline transition-colors"
                 >
                   Clear filters
                 </button>
@@ -1428,7 +1428,7 @@ export default function CrowdPoolingProjects() {
 
             {/* Sort dropdown */}
             <div className="ml-auto flex items-center gap-2">
-              <SortAsc className="w-3 h-3 text-white/40" />
+              <SortAsc className="w-3 h-3 text-white/60" />
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as typeof sortBy)}
@@ -1450,7 +1450,7 @@ export default function CrowdPoolingProjects() {
                   <div className="absolute inset-0 bg-[#0d2818]/80 z-10 flex flex-col items-center justify-center p-6 text-center">
                     <Lock className="w-8 h-8 text-white/30 mb-3" />
                     <p className="text-white/70 font-medium mb-1">Coming this season</p>
-                    <p className="text-white/40 text-sm mb-4">
+                    <p className="text-white/60 text-sm mb-4">
                       Our first round of Season 2 projects is live. More join as the season progresses.
                       Want to see your project here? Apply.
                     </p>
@@ -1487,7 +1487,7 @@ export default function CrowdPoolingProjects() {
               )}
 
               {sortedProjects.length === 0 && !dbLoading && (
-                <div className="text-center py-16 text-white/40">
+                <div className="text-center py-16 text-white/60">
                   <Filter className="w-10 h-10 mx-auto mb-3 opacity-30" />
                   <p>No projects match your current filters.</p>
                   <button onClick={() => setActiveTags([])} className="mt-2 text-[#7dd87d] underline text-sm">Clear filters</button>
@@ -1642,7 +1642,7 @@ export default function CrowdPoolingProjects() {
                           >
                             View Details
                           </Button>
-                          <div className="flex items-center gap-1 text-white/40 text-xs" onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center gap-1 text-white/60 text-xs" onClick={e => e.stopPropagation()}>
                             <ProjectShareSheet project={project} />
                           </div>
                         </div>
@@ -1661,7 +1661,7 @@ export default function CrowdPoolingProjects() {
                       <Sparkles className="w-5 h-5 text-[#7dd87d]" />
                     </div>
                     <p className="text-white/80 font-semibold mb-1" style={{ fontFamily: 'var(--font-display)' }}>More Coming This Season</p>
-                    <p className="text-white/40 text-sm mb-4">
+                    <p className="text-white/60 text-sm mb-4">
                       Our first round of Season 2 projects is live. More are joining as the season progresses. Want to see your project here? Apply.
                     </p>
                     <Link href="/seasons">

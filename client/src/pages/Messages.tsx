@@ -743,7 +743,7 @@ export default function Messages() {
         />
       )}
 
-      {/* Left panel — inbox */}
+      {/* Left panel - inbox */}
       <div className="w-[300px] flex-shrink-0 border-r border-[#1a472a]/10 bg-[#f0ebe3] overflow-hidden">
         <InboxPanel
           selectedId={selectedConversationId}

@@ -213,7 +213,7 @@ function AnimatedTokenFlow() {
             →
           </button>
         </div>
-        <span className="text-white/40 text-sm">{step + 1} / {steps.length}</span>
+        <span className="text-white/60 text-sm">{step + 1} / {steps.length}</span>
       </div>
 
       {/* All steps overview */}
@@ -497,7 +497,7 @@ function SupplyTable() {
           ))}
         </tbody>
       </table>
-      <p className="text-white/40 text-xs p-4">
+      <p className="text-white/60 text-xs p-4">
         Example only. Actual issuance governed by 90% unity threshold. 1 CHF = 1 $RCivics in early years.
       </p>
     </div>
@@ -665,9 +665,9 @@ function AcquisitionRoutes() {
                 <p className="text-white/60 text-sm mt-0.5 line-clamp-1">{route.description.slice(0, 80)}...</p>
               </div>
               {open === i ? (
-                <ChevronUp className="w-5 h-5 text-white/40 flex-shrink-0" />
+                <ChevronUp className="w-5 h-5 text-white/60 flex-shrink-0" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-white/40 flex-shrink-0" />
+                <ChevronDown className="w-5 h-5 text-white/60 flex-shrink-0" />
               )}
             </div>
           </button>

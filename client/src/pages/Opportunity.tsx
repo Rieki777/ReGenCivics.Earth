@@ -184,7 +184,7 @@ function SnapshotStat({ label, value, note }: { label: string; value: string; no
     <div className="text-center p-3 md:p-4">
       <p className="text-xs text-white/50 uppercase tracking-wider mb-1">{label}</p>
       <p className="text-lg md:text-xl font-bold text-[#7dd87d]" style={{ fontFamily: 'var(--font-display)' }}>{value}</p>
-      {note && <p className="text-[11px] text-white/40 mt-0.5">{note}</p>}
+      {note && <p className="text-[11px] text-white/60 mt-0.5">{note}</p>}
     </div>
   );
 }
@@ -407,7 +407,7 @@ function CountUpStat({ label, value, note, numericValue, suffix = '' }: {
     <div ref={ref} className="text-center p-3 md:p-4">
       <p className="text-xs text-white/50 uppercase tracking-wider mb-1">{label}</p>
       <p className="text-lg md:text-xl font-bold text-[#7dd87d]" style={{ fontFamily: 'var(--font-display)' }}>{displayValue}</p>
-      {note && <p className="text-[11px] text-white/40 mt-0.5">{note}</p>}
+      {note && <p className="text-[11px] text-white/60 mt-0.5">{note}</p>}
     </div>
   );
 }
@@ -478,7 +478,7 @@ function CaseStudyCard() {
         <p className="text-xs text-white/50 uppercase tracking-wider mb-1">Case Study</p>
         <h4 className="font-bold text-white text-base mb-1">Regenerative Land Project (In Review)</h4>
         <p className="text-white/60 text-xs"><MapPin className="w-3 h-3 inline mr-1" />Costa Rica</p>
-        <p className="text-white/40 text-xs mt-2">Preview only</p>
+        <p className="text-white/60 text-xs mt-2">Preview only</p>
       </div>
     </div>
   );
@@ -516,7 +516,7 @@ function LPDispatch() {
               placeholder="Your name (optional)"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#7dd87d]/50"
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/60 text-sm focus:outline-none focus:border-[#7dd87d]/50"
             />
             <input
               type="email"
@@ -524,7 +524,7 @@ function LPDispatch() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#7dd87d]/50"
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/60 text-sm focus:outline-none focus:border-[#7dd87d]/50"
             />
             <button
               type="submit"
@@ -810,7 +810,7 @@ export default function Opportunity() {
                   </div>
                 </div>
                 <div className="mt-4 pt-3 border-t border-white/10 text-center">
-                  <p className="text-xs text-white/40">
+                  <p className="text-xs text-white/60">
                     Offered pursuant to Reg D 506(c). Available to accredited investors only. Fee structure: 1.5% management fee, 20% carried interest above 8% preferred return (applies to distributions and asset sales; does not apply to secondary market token trading).
                   </p>
                 </div>
@@ -1001,7 +1001,7 @@ export default function Opportunity() {
                   <div key={i} className="bg-white/5 rounded-xl p-5 border border-white/10">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-[#7dd87d] font-bold text-sm">{phase.phase}</span>
-                      <span className="text-white/40 text-xs">({phase.years})</span>
+                      <span className="text-white/60 text-xs">({phase.years})</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-3">
                       <div><strong className="text-white/60">Status:</strong> <span className="text-white/80">{phase.status}</span></div>
@@ -1070,7 +1070,7 @@ export default function Opportunity() {
                   <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/10">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[#7dd87d] font-bold text-sm">{item.period}: {item.title}</span>
-                      <span className="text-white/40 text-xs">{item.aum}</span>
+                      <span className="text-white/60 text-xs">{item.aum}</span>
                     </div>
                     <p className="text-xs text-white/70">{item.details}</p>
                   </div>
@@ -1331,7 +1331,7 @@ export default function Opportunity() {
                   height="800"
                   loading="lazy"
                 />
-                <p className="text-xs text-white/40 mt-2 text-center">Three-tier portfolio strategy balancing stability, growth, and innovation</p>
+                <p className="text-xs text-white/60 mt-2 text-center">Three-tier portfolio strategy balancing stability, growth, and innovation</p>
               </div>
 
               {/* Animated allocation donut chart */}
@@ -1391,7 +1391,7 @@ export default function Opportunity() {
                     <p className="text-white/60 mb-1"><strong className="text-white/80">Year 3 Pro Forma:</strong> $1.11M revenue, $560K NOI, 14% cash yield on investment</p>
                     <p className="text-white/60"><strong className="text-white/80">Year 5 Exit:</strong> Project valued at $9M (2.25x growth), Total Return $3.12M, <strong className="text-[#7dd87d]">21% IRR</strong></p>
                   </div>
-                  <p className="text-[10px] text-white/40 mt-2 italic">This is an illustrative example. Actual projects vary. Blended portfolio targets 12-18% net IRR across all land investments.</p>
+                  <p className="text-[10px] text-white/60 mt-2 italic">This is an illustrative example. Actual projects vary. Blended portfolio targets 12-18% net IRR across all land investments.</p>
                 </div>
 
                 <p className="text-xs text-white/50 mt-3">
@@ -1479,7 +1479,7 @@ export default function Opportunity() {
                   <div key={i} className="bg-white/5 rounded-xl p-4 border border-white/10 text-center">
                     <p className="text-lg font-bold text-[#7dd87d]" style={{ fontFamily: 'var(--font-display)' }}>{item.value}</p>
                     <p className="text-xs font-semibold text-white/80">{item.label}</p>
-                    <p className="text-[10px] text-white/40">{item.desc}</p>
+                    <p className="text-[10px] text-white/60">{item.desc}</p>
                   </div>
                 ))}
               </div>
@@ -1607,7 +1607,7 @@ export default function Opportunity() {
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-white/40 italic">
+              <p className="text-xs text-white/60 italic">
                 This is not a complete list of risks. Investors should review the confidential private placement memorandum for a full discussion of risk factors before making any investment decision.
               </p>
               <div className="mt-4">
@@ -2247,7 +2247,7 @@ export default function Opportunity() {
                     Rieki@pm.me
                   </a>
                 </div>
-                <p className="text-xs text-white/40 mt-6">
+                <p className="text-xs text-white/60 mt-6">
                   This investment opportunity is available to accredited investors only. By proceeding, you confirm your accredited investor status under SEC Regulation D.
                 </p>
               </div>
@@ -2300,7 +2300,7 @@ export default function Opportunity() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <CaseStudyCard />
                   <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex items-center justify-center">
-                    <p className="text-white/40 text-sm text-center">More case studies published as fund progresses.</p>
+                    <p className="text-white/60 text-sm text-center">More case studies published as fund progresses.</p>
                   </div>
                 </div>
               </div>

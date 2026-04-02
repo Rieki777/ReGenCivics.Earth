@@ -1,5 +1,5 @@
 /**
- * #16 — Self-service Check-in Page
+ * #16 - Self-service Check-in Page
  * URL: /checkin/:token
  * Shows event title, email input, check-in button.
  * On success awards 33 $ReGen tokens.

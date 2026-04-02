@@ -279,8 +279,8 @@ export const eventsRouter = router({
       });
       const tz = event.timezone ?? "UTC";
       const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${APP_BASE_URL}/schedule`;
-      const joinLabel = event.riversideRoomUrl ? "Join on Riverside" : "Join on Zoom";
-      const joinColor = event.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
+      const joinLabel = "Join on Riverside";
+      const joinColor = "#7c3aed";
 
       const confirmSubject = signupType === "waitlist"
         ? `You're on the waitlist: ${event.title}`
@@ -624,9 +624,9 @@ export const eventsRouter = router({
             if (!ev) return;
             const d = ev.startTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
             const tm = ev.startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
-            const jUrl = ev.riversideRoomUrl ?? ev.zoomUrl ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
-            const jLabel = ev.riversideRoomUrl ? "Join on Riverside" : "Join on Zoom";
-            const jColor = ev.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
+            const jUrl = ev.riversideRoomUrl ?? ev.zoomUrl ?? "";
+            const jLabel = "Join on Riverside";
+            const jColor = "#7c3aed";
             const subj = savedSubject?.trim() || `Reminder: ${ev.title} is tomorrow`;
             const body = savedBody?.trim() || (ev.description ?? "");
             for (const signup of sups) {
@@ -680,9 +680,9 @@ export const eventsRouter = router({
       });
       const joinUrl = event.riversideRoomUrl
         ?? event.zoomUrl
-        ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
-      const joinLabel = event.riversideRoomUrl ? "Join on Riverside" : "Join on Zoom";
-      const joinColor = event.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
+        ?? "";
+      const joinLabel = "Join on Riverside";
+      const joinColor = "#7c3aed";
       const scheduleUrl = `${APP_BASE_URL}/schedule`;
 
       const subject = input.customSubject?.trim() || `Reminder: ${event.title} is tomorrow`;
@@ -1117,9 +1117,9 @@ export const eventsRouter = router({
       });
       const joinUrl = event.riversideRoomUrl
         ?? event.zoomUrl
-        ?? "https://us06web.zoom.us/j/5776315796?pwd=w43yb4Kpa6WAniIx1tHAqYINj3zoPx.1";
-      const joinLabel = event.riversideRoomUrl ? "Join on Riverside" : "Join on Zoom";
-      const joinColor = event.riversideRoomUrl ? "#7c3aed" : "#2d8cff";
+        ?? "";
+      const joinLabel = "Join on Riverside";
+      const joinColor = "#7c3aed";
 
       const topicLine = event.guestSpeakerTopic ? ` on ${event.guestSpeakerTopic}` : "";
       const subject = `Joining us this ${dayOfWeek}: ${event.guestSpeakerName}${topicLine}`;

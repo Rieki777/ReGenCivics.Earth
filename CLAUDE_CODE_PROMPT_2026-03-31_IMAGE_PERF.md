@@ -109,6 +109,40 @@ Create a script that:
 
 This is a one-time optimization script. Don't integrate it into the build pipeline yet, just write it so Rye can run it manually.
 
+## Fix 11: OG social sharing image not showing + update copy
+
+The homepage OG image exists at `client/public/og-default.jpg` (the forest village waterfall scene). The meta tag in `index.html` points to `https://regencivics.earth/og-default.jpg`. But social previews on WhatsApp show no image.
+
+1. Check the server-side meta tag injection in `server/_core/vite.ts` (line 170+). The `.replace()` chain that injects og:image may be malforming the tag, double-encoding the URL, or stripping it. Debug this carefully. Curl the deployed URL and verify the og:image tag is present and correct in the raw HTML.
+
+2. Update the OG description copy in BOTH locations:
+   - `client/index.html` line 61: change og:description to: `"ReGen Civics is a fund for regenerative land projects, who also runs quests and games for real-world regeneration."`
+   - `server/_core/vite.ts` line 100: change the DEFAULT_META description to match: `"ReGen Civics is a fund for regenerative land projects, who also runs quests and games for real-world regeneration."`
+   - `client/index.html` line 73: update twitter:description to match
+   - `client/index.html` line 60: sync og:title with vite.ts line 99
+
+3. Make sure the og:image URL is absolute (`https://regencivics.earth/og-default.jpg`) and not relative
+
+## Fix 12: Profile edit button not working
+
+**File:** `client/src/pages/PlayerProfile.tsx`
+
+The green pencil/edit icon on the profile overview section does nothing when clicked. Find the edit button near the user's name/avatar area. It should switch to the Settings tab where `ProfileEditForm` lives.
+
+Wire its onClick to: `setActiveTab('settings')` (or whatever the state setter is for the tab system). If the button already has an onClick, debug why it's not firing. Check for `e.stopPropagation()`, missing event binding, or a z-index issue where something is covering the button.
+
+## Fix 13: Show user avatar image in top-right nav
+
+**File:** `client/src/components/Navigation.tsx`
+
+The nav shows a green circle with the user's initial letter. When a user has a profile image, show it instead.
+
+Desktop avatar (~line 470) and mobile avatar (~line 979):
+1. Check if `user.avatarUrl` (or the equivalent field from the auth/user hook) exists and is non-empty
+2. If yes: render `<img src={cdnImg(user.avatarUrl, 64)} alt={user.name} className="w-8 h-8 rounded-full object-cover" />` (same dimensions as the letter circle)
+3. If no: keep the existing initial letter
+4. Add an `onError` handler that hides the image and falls back to the letter (in case the image URL is broken)
+
 ---
 
 ## After all fixes

@@ -5,12 +5,12 @@ import { getLoginUrl } from '@/const'
 const ALLOWED_EMOJIS = ['✔️', '❤️', '🌱', '🔥', '💡', '🌍'] as const
 
 const EMOJI_LABELS: Record<string, string> = {
-  '✔️': 'Done This — I have tried or completed this',
-  '❤️': 'Love It — I love and support this',
-  '🌱': 'Considering Doing — This is growing on me and I might do it',
-  '🔥': 'Paradigm Shifting — This challenges how I see things',
-  '💡': 'Make Blog Post — This deserves a deeper write-up',
-  '🌍': 'Globally Replicable — This could work anywhere on Earth',
+  '✔️': 'Done This: I have tried or completed this',
+  '❤️': 'Love It: I love and support this',
+  '🌱': 'Considering Doing: This is growing on me and I might do it',
+  '🔥': 'Paradigm Shifting: This challenges how I see things',
+  '💡': 'Make Blog Post: This deserves a deeper write-up',
+  '🌍': 'Globally Replicable: This could work anywhere on Earth',
 }
 
 interface EmojiReactionsProps {

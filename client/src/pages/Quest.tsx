@@ -1194,12 +1194,12 @@ export default function Quest() {
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <span className="px-3 py-1 bg-[#7dd87d]/30 text-[#7dd87d] rounded-full font-semibold text-sm">+{questData.featured.reward.regen} $ReGen</span>
                 <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold text-sm">+{questData.featured.reward.rvoice} RGVoice</span>
-                <span className="text-white/40 text-xs ml-1">per completion</span>
+                <span className="text-white/60 text-xs ml-1">per completion</span>
               </div>
             </div>
 
             {/* Fasting */}
-            <div className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4 cursor-pointer hover:border-[#7dd87d]/60 transition-colors" onClick={() => openQuestDetails("quest-13")}>
+            <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openQuestDetails("quest-13"); } }} className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4 cursor-pointer hover:border-[#7dd87d]/60 transition-colors focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50" onClick={() => openQuestDetails("quest-13")}>
               <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
                 <RotateCcw className="w-3 h-3" /> Repeatable
               </span>
@@ -1220,12 +1220,12 @@ export default function Quest() {
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <span className="px-3 py-1 bg-[#7dd87d]/30 text-[#7dd87d] rounded-full font-semibold text-sm">+{questData.routine.reward.regen} $ReGen</span>
                 <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold text-sm">+{questData.routine.reward.rvoice} RGVoice</span>
-                <span className="text-white/40 text-xs ml-1">per completion</span>
+                <span className="text-white/60 text-xs ml-1">per completion</span>
               </div>
             </div>
 
             {/* Love to Heal Your Body */}
-            <div className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4 cursor-pointer hover:border-[#7dd87d]/60 transition-colors" onClick={() => openQuestDetails("quest-14")}>
+            <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openQuestDetails("quest-14"); } }} className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4 cursor-pointer hover:border-[#7dd87d]/60 transition-colors focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50" onClick={() => openQuestDetails("quest-14")}>
               <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
                 <RotateCcw className="w-3 h-3" /> Repeatable
               </span>
@@ -1246,7 +1246,7 @@ export default function Quest() {
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <span className="px-3 py-1 bg-[#7dd87d]/30 text-[#7dd87d] rounded-full font-semibold text-sm">+{questData.routine2.reward.regen} $ReGen</span>
                 <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold text-sm">+{questData.routine2.reward.rvoice} RGVoice</span>
-                <span className="text-white/40 text-xs ml-1">per completion</span>
+                <span className="text-white/60 text-xs ml-1">per completion</span>
               </div>
             </div>
           </div>

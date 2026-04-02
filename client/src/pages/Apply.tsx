@@ -131,7 +131,7 @@ export default function Apply() {
     }));
   }, [userProfile]);
 
-  // Autosave to localStorage (debounced 800ms) — docs/files excluded to avoid quota issues
+  // Autosave to localStorage (debounced 800ms) - docs/files excluded to avoid quota issues
   const lsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (lsTimerRef.current) clearTimeout(lsTimerRef.current);
@@ -139,7 +139,7 @@ export default function Apply() {
       try {
         const { documents: _docs, ...rest } = formData;
         localStorage.setItem(LS_KEY, JSON.stringify(rest));
-      } catch { /* storage quota exceeded — ignore */ }
+      } catch { /* storage quota exceeded - ignore */ }
     }, 800);
     return () => { if (lsTimerRef.current) clearTimeout(lsTimerRef.current); };
   }, [formData]);

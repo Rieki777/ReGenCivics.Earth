@@ -1,5 +1,5 @@
 /**
- * #19 — Dedicated Event Page
+ * #19 - Dedicated Event Page
  * URL: /events/:id
  * Before event: title, date, description, signup form, countdown
  * After event: recording replay, AI summary, forum thread link

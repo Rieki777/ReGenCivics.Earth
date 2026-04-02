@@ -159,7 +159,7 @@ function LiveVariablesDashboard() {
     <div className="space-y-6">
       {/* Search bar */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/40" />
+        <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/60" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -170,11 +170,11 @@ function LiveVariablesDashboard() {
 
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-white/40 text-sm">Loading game variables...</p>
+          <p className="text-white/60 text-sm">Loading game variables...</p>
         </div>
       ) : Object.keys(grouped).length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-white/40 text-sm">No variables match your search.</p>
+          <p className="text-white/60 text-sm">No variables match your search.</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
@@ -208,7 +208,7 @@ function LiveVariablesDashboard() {
                           {v.displayName}
                         </p>
                         {v.description && (
-                          <p className="text-xs text-white/40 truncate mt-0.5">{v.description}</p>
+                          <p className="text-xs text-white/60 truncate mt-0.5">{v.description}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -396,7 +396,7 @@ function GameSimulator() {
             <Calculator className="w-4 h-4 text-[#7dd87d]" />
             Projected Outcomes
           </CardTitle>
-          <p className="text-xs text-white/40 mt-1">
+          <p className="text-xs text-white/60 mt-1">
             Based on completing {questsCompleted} quests and {forumsPosted} forum posts this season
           </p>
         </CardHeader>
@@ -430,7 +430,7 @@ function GameSimulator() {
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </Link>
-        <p className="text-xs text-white/40 mt-2">
+        <p className="text-xs text-white/60 mt-2">
           Opens the proposal form pre-filled with the game_variable category
         </p>
       </div>
@@ -451,7 +451,7 @@ function OutcomeRow({
     <div className="p-4 rounded-lg bg-white/5 border border-white/5">
       <p className="text-sm text-white/70">{label}</p>
       <p className="text-xl font-bold text-[#7dd87d] mt-1">{value}</p>
-      <p className="text-xs text-white/40 mt-1">{detail}</p>
+      <p className="text-xs text-white/60 mt-1">{detail}</p>
     </div>
   );
 }

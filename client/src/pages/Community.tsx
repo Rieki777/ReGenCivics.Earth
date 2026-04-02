@@ -64,7 +64,7 @@ function timeAgo(date: Date | string): string {
   return `${months}mo ago`;
 }
 
-// Static card images for land projects — augmented at runtime with DB data
+// Static card images for land projects - augmented at runtime with DB data
 const STATIC_PROJECT_META: Record<string, { image: string; location?: string }> = {
   "Finca Sagrada": { image: "/community/finca-sagrada.webp", location: "Ecuador" },
   "Liminal Village": { image: "/community/liminal-village.webp", location: "Italy" },
@@ -196,7 +196,7 @@ export default function Community() {
     { enabled: isSearching, staleTime: 30 * 1000 }
   );
 
-  // Slugs shown in dedicated section panels — exclude from General list
+  // Slugs shown in dedicated section panels - exclude from General list
   const SECTION_SLUGS = new Set([
     'quests-gameplay', 'epic-quests', 'alliance-partners', 'air-conversations',
     'active-projects', 'active-organisations', 'land-projects',

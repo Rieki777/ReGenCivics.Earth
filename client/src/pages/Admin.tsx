@@ -4173,7 +4173,7 @@ function AdminEventsTab() {
                 <Input value={formData.youtubeUrl} onChange={e => setFormData(f => ({ ...f, youtubeUrl: e.target.value }))}
                   placeholder="https://youtube.com/live/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
-              {/* #25 — Guest Speaker Fields */}
+              {/* #25 - Guest Speaker Fields */}
               <div className="md:col-span-2 border-t border-white/10 pt-3 mt-1">
                 <p className="text-white/50 text-xs font-medium uppercase tracking-wide mb-2">Guest Speaker (optional)</p>
               </div>
@@ -4250,7 +4250,7 @@ function AdminEventsTab() {
                             if (reminderEditorOpen !== ev.id) {
                               setCustomSubject(`Reminder: ${ev.title} is tomorrow`);
                               setCustomBody(ev.description ?? '');
-                              // #24 — Default schedule suggestion: 9 AM EST day before event
+                              // #24 - Default schedule suggestion: 9 AM EST day before event
                               if (ev.startTime) {
                                 const dayBefore = new Date(ev.startTime);
                                 dayBefore.setDate(dayBefore.getDate() - 1);
@@ -4263,7 +4263,7 @@ function AdminEventsTab() {
                           <Bell size={11} className="mr-1" />
                           {reminderEditorOpen === ev.id ? 'Cancel' : 'Send Reminders'}
                         </Button>}
-                    {/* #17 — Send Follow-up for completed events */}
+                    {/* #17 - Send Follow-up for completed events */}
                     {ev.status === 'completed' && (
                       followupSuccess === ev.id
                         ? <Button size="sm" variant="ghost" disabled className="text-green-400 h-7 px-2 text-xs">
@@ -4286,7 +4286,7 @@ function AdminEventsTab() {
                             {followupMutation.isPending ? 'Sending...' : 'Send Follow-up'}
                           </Button>
                     )}
-                    {/* #25 — Send Speaker Intro (only if event has a guest speaker) */}
+                    {/* #25 - Send Speaker Intro (only if event has a guest speaker) */}
                     {(ev as any).guestSpeakerName && (
                       speakerIntroSuccess === ev.id
                         ? <Button size="sm" variant="ghost" disabled className="text-purple-400 h-7 px-2 text-xs">
@@ -4324,7 +4324,7 @@ function AdminEventsTab() {
                   </div>
                 )}
 
-                {/* #16 — Check-in URL and copy button */}
+                {/* #16 - Check-in URL and copy button */}
                 {(ev as any).checkinToken && (
                   <div className="border-t border-white/10 px-4 py-2 flex items-center gap-2 flex-wrap">
                     <span className="text-xs text-white/40">Check-in URL:</span>
@@ -4344,7 +4344,7 @@ function AdminEventsTab() {
                   </div>
                 )}
 
-                {/* Inline email editor — opens when "Send Reminders" is clicked */}
+                {/* Inline email editor - opens when "Send Reminders" is clicked */}
                 {reminderEditorOpen === ev.id && (
                   <div className="border-t border-white/10 px-4 pb-4 pt-3 space-y-3">
                     <p className="text-xs text-white/50 font-medium uppercase tracking-wide">Preview &amp; Edit Reminder Email</p>
@@ -4385,7 +4385,7 @@ function AdminEventsTab() {
                           <p className="text-gray-600 text-sm leading-relaxed m-0">{customBody || ev.description}</p>
                         )}
                         <div className="flex gap-2 pt-1 flex-wrap">
-                          <span className="bg-[#2d8cff] text-white px-4 py-2 rounded-lg text-xs font-bold">Join on Zoom</span>
+                          <span className="bg-[#7c3aed] text-white px-4 py-2 rounded-lg text-xs font-bold">Join on Riverside</span>
                           <span className="border-2 border-[#1a472a] text-[#1a472a] px-4 py-2 rounded-lg text-xs font-bold">View Schedule</span>
                         </div>
                       </div>
@@ -4408,7 +4408,7 @@ function AdminEventsTab() {
                           : `Review & Send to ${Number(countMap[ev.id] ?? 0)} ${Number(countMap[ev.id] ?? 0) === 1 ? 'person' : 'people'}`}
                       </Button>
 
-                      {/* #24 — Schedule for later */}
+                      {/* #24 - Schedule for later */}
                       <div className="flex items-end gap-1.5">
                         <div>
                           <Label className="text-white/40 text-xs">Schedule for...</Label>
@@ -4569,7 +4569,7 @@ function AdminEventsTab() {
         </CardContent>
       </Card>
 
-      {/* #10 — Season Rollup Email */}
+      {/* #10 - Season Rollup Email */}
       <Card className="bg-[#0a1f14] border-[#7dd87d]/20 mt-4">
         <CardHeader className="pb-2">
           <CardTitle className="text-[#7dd87d] text-sm flex items-center gap-2"><Bell size={14} /> Season Rollup Email</CardTitle>
@@ -4602,7 +4602,7 @@ function AdminEventsTab() {
         </CardContent>
       </Card>
 
-      {/* #9 — Agenda Suggestions from Community */}
+      {/* #9 - Agenda Suggestions from Community */}
       {agendaSuggestions.length > 0 && (
         <Card className="bg-[#0a1f14] border-purple-800/30 mt-4">
           <CardHeader className="pb-2">
@@ -4637,7 +4637,7 @@ function AdminEventsTab() {
         </Card>
       )}
 
-      {/* #8 revised — Attendance Tracking + $ReGen Token Awards */}
+      {/* #8 revised - Attendance Tracking + $ReGen Token Awards */}
       <Card className="bg-white/5 border border-white/10">
         <CardHeader className="pb-2">
           <CardTitle className="text-amber-400 text-sm flex items-center gap-2">

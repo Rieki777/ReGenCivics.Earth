@@ -398,8 +398,6 @@ const formatCurrency = (amount: number, symbol: string) => {
 
 // Using imported estimateLandPrice from regionalCostData
 
-const CAMPAIGN_PASSWORD = "222";
-
 export default function CreateCampaign() {
   const { user } = useAuth();
   const [authenticated, setAuthenticated] = useState(() =>
@@ -407,6 +405,7 @@ export default function CreateCampaign() {
   );
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState(false);
+  const verifyAccess = trpc.campaigns.verifyCampaignAccess.useMutation();
 
   // Auth gate: redirect unauthenticated users to community (login)
   if (!user) {
@@ -439,12 +438,17 @@ export default function CreateCampaign() {
             Campaign Creator Access
           </h2>
           <p className="text-sm text-[#1a472a]/60 mb-4">Enter the password to create campaigns</p>
-          <form onSubmit={(e) => {
+          <form onSubmit={async (e) => {
             e.preventDefault();
-            if (passwordInput === CAMPAIGN_PASSWORD) {
-              localStorage.setItem("campaign_authenticated", "true");
-              setAuthenticated(true);
-            } else {
+            try {
+              const result = await verifyAccess.mutateAsync({ password: passwordInput });
+              if (result.valid) {
+                localStorage.setItem("campaign_authenticated", "true");
+                setAuthenticated(true);
+              } else {
+                setPasswordError(true);
+              }
+            } catch {
               setPasswordError(true);
             }
           }} className="space-y-3">

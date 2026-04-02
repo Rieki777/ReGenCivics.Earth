@@ -116,7 +116,7 @@ export default function Marketplace() {
           {(category || collabStatus) && (
             <button
               onClick={() => { setCategory(""); setCollabStatus(""); }}
-              className="text-white/40 hover:text-white/70 text-sm underline"
+              className="text-white/60 hover:text-white/70 text-sm underline"
             >
               Clear filters
             </button>
@@ -156,7 +156,7 @@ export default function Marketplace() {
                     className="w-11 h-11 rounded-full object-cover border border-white/10 flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-11 h-11 rounded-full bg-white/8 border border-white/10 flex-shrink-0 flex items-center justify-center text-white/40 font-bold text-lg">
+                  <div className="w-11 h-11 rounded-full bg-white/8 border border-white/10 flex-shrink-0 flex items-center justify-center text-white/60 font-bold text-lg">
                     {item.displayName.charAt(0).toUpperCase()}
                   </div>
                 )}

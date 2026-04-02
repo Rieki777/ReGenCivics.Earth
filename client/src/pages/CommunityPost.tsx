@@ -432,7 +432,7 @@ export default function CommunityPost() {
 
           <div className="flex items-start gap-2">
             {post.isPinned === 1 && <Pin className="w-4 h-4 text-[#d4a574] mt-1.5 flex-shrink-0" />}
-            {post.isLocked === 1 && <Lock className="w-4 h-4 text-white/40 mt-1.5 flex-shrink-0" />}
+            {post.isLocked === 1 && <Lock className="w-4 h-4 text-white/60 mt-1.5 flex-shrink-0" />}
             <h1
               className="text-xl md:text-2xl font-bold text-white"
               style={{ fontFamily: 'var(--font-display)' }}
@@ -492,7 +492,7 @@ export default function CommunityPost() {
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setShowFlagMenu(false)} />
                         <div className="absolute right-0 bottom-full mb-1 z-20 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl w-52 py-1 overflow-hidden">
-                          <p className="text-white/40 text-xs px-3 py-2 border-b border-white/10">Flag this content</p>
+                          <p className="text-white/60 text-xs px-3 py-2 border-b border-white/10">Flag this content</p>
                           <button
                             onClick={() => {
                               submitReportMutation.mutate({ postId: post.id, reason: "inappropriate", severity: "soft" });
@@ -655,7 +655,7 @@ export default function CommunityPost() {
         {/* Related Projects (C15) */}
         {postId > 0 && <ProjectConnectionsPanel postId={postId} />}
 
-        {/* Quest Endorsements (Fix 107) — shown on land project and alliance org forum spaces */}
+        {/* Quest Endorsements (Fix 107) - shown on land project and alliance org forum spaces */}
         {isEntitySpace && orgEndorsements && orgEndorsements.length > 0 && (
           <div className="mb-4 bg-[#f0f7f0] border border-[#7dd87d]/25 rounded-xl px-4 py-4">
             <p className="text-[#4a7c59] text-xs font-semibold uppercase tracking-wide mb-3">
@@ -842,7 +842,7 @@ export default function CommunityPost() {
                                 <>
                                   <div className="fixed inset-0 z-10" onClick={() => setShowReplyFlagMenu(null)} />
                                   <div className="absolute right-0 bottom-full mb-1 z-20 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl w-52 py-1 overflow-hidden">
-                                    <p className="text-white/40 text-xs px-3 py-2 border-b border-white/10">Flag this reply</p>
+                                    <p className="text-white/60 text-xs px-3 py-2 border-b border-white/10">Flag this reply</p>
                                     <button
                                       onClick={() => {
                                         submitReportMutation.mutate({ replyId: reply.id, reason: "inappropriate", severity: "soft" });

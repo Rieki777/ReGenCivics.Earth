@@ -1247,7 +1247,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 )}
 
                 {requests.length === 0 ? (
-                  <p className="text-white/40 text-sm">No join requests yet.</p>
+                  <p className="text-white/60 text-sm">No join requests yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {requests.map(req => (
@@ -1302,7 +1302,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
       )}
 
       {!hasStewardRole && pendingClaims.length === 0 && !showClaimForm && (
-        <p className="text-white/40 text-sm text-center py-2">
+        <p className="text-white/60 text-sm text-center py-2">
           Steward a land project or alliance org to see join requests here.
         </p>
       )}
@@ -1365,7 +1365,7 @@ function RssFeedManager() {
             </button>
             <button
               onClick={handleDismissPrompt}
-              className="text-xs text-white/40 hover:text-white/70 px-3 py-1.5 transition-colors"
+              className="text-xs text-white/60 hover:text-white/70 px-3 py-1.5 transition-colors"
             >
               Skip for now
             </button>
@@ -1381,14 +1381,14 @@ function RssFeedManager() {
             placeholder="Feed URL (RSS, Atom, or Substack)"
             value={feedUrl}
             onChange={(e) => setFeedUrl(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
+            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
           />
           <input
             type="text"
             placeholder="Label (e.g. Blog, Newsletter)"
             value={feedLabel}
             onChange={(e) => setFeedLabel(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
+            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
           />
           <div className="flex gap-2">
             <button
@@ -1398,7 +1398,7 @@ function RssFeedManager() {
             >
               {addFeed.isPending ? "Adding..." : "Add feed"}
             </button>
-            <button onClick={() => setShowAddForm(false)} className="text-xs text-white/40 hover:text-white/70 px-3 py-2 transition-colors">
+            <button onClick={() => setShowAddForm(false)} className="text-xs text-white/60 hover:text-white/70 px-3 py-2 transition-colors">
               Cancel
             </button>
           </div>
@@ -1491,7 +1491,7 @@ function QuestEndorsementManager() {
   return (
     <div className="mt-4 border-t border-white/10 pt-4">
       <p className="text-white/70 text-xs font-semibold uppercase tracking-wide mb-1">Quest Endorsements</p>
-      <p className="text-white/40 text-xs mb-3">
+      <p className="text-white/60 text-xs mb-3">
         Mark quests as recommended or required for people applying to join your project.
       </p>
       <div className="space-y-1">
@@ -1625,7 +1625,7 @@ function EventAttendanceBalance() {
         <div>
           <p className="text-white/50 text-xs mb-1">Event Attendance</p>
           <p className="text-lg font-bold text-[#7dd87d]">{tokenData.balance} $ReGen</p>
-          <p className="text-white/40 text-xs mt-0.5">earned across {tokenData.entries.length} event{tokenData.entries.length !== 1 ? 's' : ''}</p>
+          <p className="text-white/60 text-xs mt-0.5">earned across {tokenData.entries.length} event{tokenData.entries.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="w-10 h-10 rounded-full bg-[#7dd87d]/15 flex items-center justify-center">
           <svg className="w-5 h-5 text-[#7dd87d]" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
@@ -1644,15 +1644,15 @@ function ReferralStatsCard() {
       <div className="grid grid-cols-3 gap-3 text-center">
         <div>
           <p className="text-lg font-bold text-purple-300">{stats.totalReferrals}</p>
-          <p className="text-white/40 text-[10px]">People invited</p>
+          <p className="text-white/60 text-[10px]">People invited</p>
         </div>
         <div>
           <p className="text-lg font-bold text-[#7dd87d]">{stats.regenEarned}</p>
-          <p className="text-white/40 text-[10px]">$ReGen earned</p>
+          <p className="text-white/60 text-[10px]">$ReGen earned</p>
         </div>
         <div>
           <p className="text-lg font-bold text-white/60">{stats.totalShares}</p>
-          <p className="text-white/40 text-[10px]">Links shared</p>
+          <p className="text-white/60 text-[10px]">Links shared</p>
         </div>
       </div>
     </div>
@@ -1738,7 +1738,7 @@ function ContributionsTab({
           >
             <div className="w-2 h-2 rounded-full bg-[#8b5cf6] mt-1.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-white/80 text-xs font-medium flex items-center gap-1">Hypha DAO <ExternalLink className="w-3 h-3 text-white/40" /></p>
+              <p className="text-white/80 text-xs font-medium flex items-center gap-1">Hypha DAO <ExternalLink className="w-3 h-3 text-white/60" /></p>
               <p className="text-white/50 text-xs">Governance votes, proposals, role assignments, and payouts are recorded here.</p>
             </div>
           </a>
@@ -1750,7 +1750,7 @@ function ContributionsTab({
           >
             <div className="w-2 h-2 rounded-full bg-[#3b82f6] mt-1.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-white/80 text-xs font-medium flex items-center gap-1">Base Blockchain <ExternalLink className="w-3 h-3 text-white/40" /></p>
+              <p className="text-white/80 text-xs font-medium flex items-center gap-1">Base Blockchain <ExternalLink className="w-3 h-3 text-white/60" /></p>
               <p className="text-white/50 text-xs">{walletAddress ? "$ReGen and $RCivics transactions, token mints, and verifiable contributions live here." : "Link your wallet to view on-chain activity."}</p>
             </div>
           </a>
@@ -1786,7 +1786,7 @@ function ContributionsTab({
             <button
               onClick={onSyncTokens}
               disabled={syncIsPending}
-              className="flex items-center gap-1.5 text-white/40 hover:text-[#7dd87d] text-xs transition-colors disabled:opacity-40"
+              className="flex items-center gap-1.5 text-white/60 hover:text-[#7dd87d] text-xs transition-colors disabled:opacity-40"
             >
               <RefreshCw className={`w-3 h-3 ${syncIsPending ? "animate-spin" : ""}`} />
               {syncIsPending ? "Syncing…" : "Refresh balances"}
@@ -1816,7 +1816,7 @@ function ContributionsTab({
             <div className="bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-[#7dd87d]/5 rounded-xl p-4 cursor-pointer transition-all text-center group">
               <div className="text-2xl mb-2">🧮</div>
               <p className="text-white text-xs font-semibold group-hover:text-[#7dd87d] transition-colors">Contribution Calculator</p>
-              <p className="text-white/40 text-xs mt-1">Estimate your contribution using the 8 forms of capital - save your contributions here</p>
+              <p className="text-white/60 text-xs mt-1">Estimate your contribution using the 8 forms of capital - save your contributions here</p>
               <p className="text-[#7dd87d]/70 text-xs mt-2 font-medium">Open →</p>
             </div>
           </Link>
@@ -1824,7 +1824,7 @@ function ContributionsTab({
             <div className="bg-white/5 border border-white/10 hover:border-[#7dd87d]/30 hover:bg-[#7dd87d]/5 rounded-xl p-4 cursor-pointer transition-all text-center group">
               <div className="text-2xl mb-2">🌊</div>
               <p className="text-white text-xs font-semibold group-hover:text-[#7dd87d] transition-colors">Crowd Pooling Tool</p>
-              <p className="text-white/40 text-xs mt-1">Create your FULL VALUE proposal for a Land Project - save your proposals here</p>
+              <p className="text-white/60 text-xs mt-1">Create your FULL VALUE proposal for a Land Project - save your proposals here</p>
               <p className="text-[#7dd87d]/70 text-xs mt-2 font-medium">Open →</p>
             </div>
           </Link>
@@ -1914,7 +1914,7 @@ function ContributionsTab({
         <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-white font-semibold">Log a Contribution</h3>
-            <button type="button" onClick={() => setShowForm(false)} className="text-white/40 hover:text-white/70">
+            <button type="button" onClick={() => setShowForm(false)} className="text-white/60 hover:text-white/70">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -1943,7 +1943,7 @@ function ContributionsTab({
                 );
               })}
             </div>
-            <p className="text-white/40 text-xs mt-1.5">
+            <p className="text-white/60 text-xs mt-1.5">
               {CAPITAL_TYPES.find(c => c.value === capitalType)?.desc}
             </p>
           </div>
@@ -2042,7 +2042,7 @@ function ContributionsTab({
       ) : byType.length === 0 ? (
         <div className="text-center py-12">
           <Leaf className="w-10 h-10 text-white/20 mx-auto mb-3" />
-          <p className="text-white/40 text-sm">No contributions logged yet.</p>
+          <p className="text-white/60 text-sm">No contributions logged yet.</p>
           <p className="text-white/50 text-xs mt-1">Use the button above to record your first contribution.</p>
         </div>
       ) : (
@@ -2149,7 +2149,7 @@ function QuestsTab({ profile }: { profile: any }) {
     return (
       <div className="text-center py-12">
         <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
-        <p className="text-white/40 text-sm">No quests completed yet.</p>
+        <p className="text-white/60 text-sm">No quests completed yet.</p>
         <a href="/quest" className="inline-flex items-center gap-1 mt-3 text-[#7dd87d] text-sm hover:underline">
           Browse quests <ArrowRight className="w-3.5 h-3.5" />
         </a>
@@ -2178,7 +2178,7 @@ function QuestsTab({ profile }: { profile: any }) {
               <p className="text-white text-sm font-medium">
                 {(QUEST_NAMES[questId] ?? questId.replace(/[-_]/g, " ").replace(/\bquest\b/gi, "").trim()) || questId}
               </p>
-              <p className="text-white/40 text-xs">Completed</p>
+              <p className="text-white/60 text-xs">Completed</p>
             </div>
             <CheckCircle2 className="w-4 h-4 text-[#7dd87d] ml-auto shrink-0" />
           </div>
@@ -2241,7 +2241,7 @@ function SubmissionCard({
             {status.replace(/_/g, " ")}
           </span>
         </div>
-        {subtitle && <p className="text-white/40 text-xs mt-0.5 truncate">{subtitle}</p>}
+        {subtitle && <p className="text-white/60 text-xs mt-0.5 truncate">{subtitle}</p>}
         <p className="text-white/50 text-xs mt-0.5">Updated {new Date(updatedAt).toLocaleDateString()}</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -2275,11 +2275,11 @@ function SubmissionsSection<T>({
       <div className="flex items-center gap-2 mb-3">
         <Icon className="w-4 h-4 text-[#7dd87d]" />
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider">{title}</h3>
-        <span className="text-white/40 text-xs">({items.length})</span>
+        <span className="text-white/60 text-xs">({items.length})</span>
       </div>
       {items.length === 0 ? (
         <div className="bg-white/5 rounded-lg px-4 py-5 text-center">
-          <p className="text-white/40 text-sm">{emptyMessage}</p>
+          <p className="text-white/60 text-sm">{emptyMessage}</p>
           {emptyAction && (
             <a href={emptyAction.href} className="mt-2 inline-block text-[#7dd87d] text-sm font-medium hover:underline">
               {emptyAction.label}
@@ -2395,7 +2395,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
                   className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors"
                 >
                   <p className="text-white text-sm font-medium">{result.name}</p>
-                  <p className="text-white/40 text-xs">
+                  <p className="text-white/60 text-xs">
                     {result.location ? `${result.location} · ` : ""}
                     {result.type === "land_project" ? "Land Project" : "Alliance Org"}
                   </p>
@@ -2409,7 +2409,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
                 <p className="text-white text-sm font-medium">{selectedOrg.name}</p>
                 <p className="text-white/50 text-xs">{selectedOrg.type === "land_project" ? "Land Project" : "Alliance Org"}</p>
               </div>
-              <button onClick={() => setSelectedOrg(null)} className="text-white/40 hover:text-white/70 text-xs">x Change</button>
+              <button onClick={() => setSelectedOrg(null)} className="text-white/60 hover:text-white/70 text-xs">x Change</button>
             </div>
           )}
           <div className="flex gap-2 justify-end pt-1">
@@ -2595,7 +2595,7 @@ function QuestJournal({ userId }: { userId: number }) {
         </div>
       )}
 
-      <p className="mt-4 text-white/40 text-xs">Complete quests on the <a href="/quest" className="text-[#7dd87d] hover:underline">/quest page</a> to add entries here.</p>
+      <p className="mt-4 text-white/60 text-xs">Complete quests on the <a href="/quest" className="text-[#7dd87d] hover:underline">/quest page</a> to add entries here.</p>
     </div>
   );
 }
@@ -2794,7 +2794,7 @@ export default function PlayerProfile() {
 
               {/* Overview tab */}
               {activeTab === "overview" && (
-                <ErrorBoundary fallback={<div className="py-12 text-center text-white/40 text-sm">Something went quiet here. Try refreshing.</div>}>
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
                   <div className="space-y-6">
                     <AnimatedSection animation="slide-up">
                       <ProfileCard
@@ -2862,7 +2862,7 @@ export default function PlayerProfile() {
 
               {/* Submissions tab */}
               {activeTab === "submissions" && (
-                <ErrorBoundary fallback={<div className="py-12 text-center text-white/40 text-sm">Something went quiet here. Try refreshing.</div>}>
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
                   <div className="mt-6">
                     <SubmissionsTab />
                   </div>
@@ -2871,7 +2871,7 @@ export default function PlayerProfile() {
 
               {/* Quests tab */}
               {activeTab === "quests" && (
-                <ErrorBoundary fallback={<div className="py-12 text-center text-white/40 text-sm">Something went quiet here. Try refreshing.</div>}>
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
                 <AnimatedSection animation="slide-up">
                   {(() => {
                     const completedQuestsList: string[] = (() => {
@@ -2933,7 +2933,7 @@ export default function PlayerProfile() {
 
               {/* Contributions tab */}
               {activeTab === "contributions" && (
-                <ErrorBoundary fallback={<div className="py-12 text-center text-white/40 text-sm">Something went quiet here. Try refreshing.</div>}>
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
                 <AnimatedSection animation="slide-up">
                   <div className="glass-panel p-6 rounded-xl">
                     <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">

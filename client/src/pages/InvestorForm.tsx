@@ -165,7 +165,7 @@ export default function InvestorForm() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
 
-  // Already verified — skip the form and go straight to /opportunity
+  // Already verified - skip the form and go straight to /opportunity
   useEffect(() => {
     const alreadyVerified =
       localStorage.getItem('investor_verified') === 'true' ||
@@ -196,7 +196,7 @@ export default function InvestorForm() {
     lsTimerRef.current = setTimeout(() => {
       try {
         localStorage.setItem(INVESTOR_LS_KEY, JSON.stringify(formData));
-      } catch { /* storage quota exceeded — ignore */ }
+      } catch { /* storage quota exceeded - ignore */ }
     }, 1000);
     return () => { if (lsTimerRef.current) clearTimeout(lsTimerRef.current); };
   }, [formData]);
