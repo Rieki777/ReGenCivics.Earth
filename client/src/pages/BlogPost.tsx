@@ -355,6 +355,16 @@ export default function BlogPost() {
                   const SPECIAL_MARKERS: Record<string, React.ReactElement> = {
                     '[FOOD_PRODUCTION_INFOGRAPHIC]': <FoodProductionInfographic />,
                     '[ANIMAL_POPULATION_INFOGRAPHIC]': <AnimalPopulationInfographic />,
+                    '[CLAIM_SEEDS_BUTTON]': (
+                      <div className="flex justify-center my-6">
+                        <a
+                          href="/claim-seeds"
+                          className="inline-flex items-center gap-2 px-8 py-4 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all font-bold text-lg shadow-[0_0_24px_rgba(245,158,11,0.4)] hover:shadow-[0_0_36px_rgba(245,158,11,0.6)]"
+                        >
+                          Claim Your SEEDS Financial Contributions
+                        </a>
+                      </div>
+                    ),
                   };
 
                   const hasMarkers = Object.keys(SPECIAL_MARKERS).some(

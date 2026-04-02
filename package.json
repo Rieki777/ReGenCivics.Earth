@@ -16,6 +16,8 @@
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "seed:forum": "tsx scripts/seed-forum-posts.ts",
     "seed:forum:reset": "tsx scripts/seed-forum-posts.ts --reset",
+    "seed:seeds": "tsx scripts/seed-seeds-contributions.ts",
+    "seed:seeds:reset": "tsx scripts/seed-seeds-contributions.ts --reset",
     "optimize:images": "node scripts/optimize-images.mjs"
   },
   "dependencies": {

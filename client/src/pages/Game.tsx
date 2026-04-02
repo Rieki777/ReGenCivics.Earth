@@ -247,6 +247,7 @@ export default function Game() {
   const [whyOpen, setWhyOpen] = useState(false);
   const [infiniteOpen, setInfiniteOpen] = useState(false);
   const [seedsOpen, setSeedsOpen] = useState(false);
+  const [contribIntroOpen, setContribIntroOpen] = useState(false);
   const [whyGamesOpen, setWhyGamesOpen] = useState(false);
   const [tokenSystemOpen, setTokenSystemOpen] = useState(false);
   const [questDesignOpen, setQuestDesignOpen] = useState(false);
@@ -782,37 +783,52 @@ export default function Game() {
               >
                 Your contributions to creating a more healthy and beautiful world can be tracked here.
               </h2>
-              <div className="text-[#1a472a]/80 max-w-2xl mx-auto space-y-4 text-left">
-                <p>
-                  If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural!
-                </p>
-                <p>
-                  As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is not just the tokens, it's to form an ecosystem that represents us all, that helps us coordinate, raise capital, and move together as a whole.
-                </p>
-                <p>
-                  For every token we give out, we receive an equal amount of value pooled here - so as you claim tokens you offer up your contribution to the whole. This could be in the form of a video on the lessons you learned (starting a community garden for example) or free access to tools and templates you've created.
-                </p>
-                <p className="font-medium text-[#1a472a]">
-                  If you have something of value for the movement, we want to track it, share it, and coordinate new civilizations with it.
-                </p>
-                <p>
-                  Our collective contributions are the real value backing our tokens.
-                </p>
-                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-                  💛 If you contributed to SEEDS or other regenerative projects before finding ReGen Civics, those contributions count here too.
-                </p>
-              </div>
+              <Collapsible open={contribIntroOpen} onOpenChange={setContribIntroOpen}>
+                <CollapsibleTrigger className="flex items-center gap-2 text-amber-700 font-semibold hover:text-amber-600 transition-colors w-full justify-center text-sm">
+                  {contribIntroOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {contribIntroOpen ? 'Hide details' : 'Learn more about contributions'}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="text-[#1a472a]/80 max-w-2xl mx-auto space-y-4 text-left mt-4">
+                    <p>
+                      If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural!
+                    </p>
+                    <p>
+                      As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is not just the tokens, it's to form an ecosystem that represents us all, that helps us coordinate, raise capital, and move together as a whole.
+                    </p>
+                    <p>
+                      For every token we give out, we receive an equal amount of value pooled here - so as you claim tokens you offer up your contribution to the whole. This could be in the form of a video on the lessons you learned (starting a community garden for example) or free access to tools and templates you've created.
+                    </p>
+                    <p className="font-medium text-[#1a472a]">
+                      If you have something of value for the movement, we want to track it, share it, and coordinate new civilizations with it.
+                    </p>
+                    <p>
+                      Our collective contributions are the real value backing our tokens.
+                    </p>
+                    <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                      💛 If you contributed to SEEDS or other regenerative projects before finding ReGen Civics, those contributions count here too.
+                    </p>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
               <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+                <a
+                  href="/claim-seeds"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all font-bold text-sm shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)]"
+                >
+                  <Coins className="w-5 h-5" />
+                  Claim Financial Contributions
+                </a>
                 <a
                   href="https://docs.google.com/spreadsheets/d/1Z6V3DSRHpA7fIjE2JYi4L5L2-vH6TbOIYKXHYJp_mHY/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors font-medium text-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500/80 text-white rounded-xl hover:bg-amber-600 transition-colors font-medium text-sm"
                 >
                   {pageCopy.game.contributions.buttons.calculator}
                 </a>
                 <a
-                  href="/community/post/560"
+                  href="/community/post/625"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1a472a] text-white rounded-xl hover:bg-[#2d5a3d] transition-colors font-medium text-sm"
                 >
                   {pageCopy.game.contributions.buttons.discussion}

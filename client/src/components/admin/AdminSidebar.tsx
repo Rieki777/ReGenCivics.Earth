@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Building2, Handshake, UserCheck,
   TrendingUp, FileText, Globe2, Shield, Megaphone, Search,
   BarChart3, Image, Gamepad2, Settings, ChevronLeft, ChevronRight,
-  ScrollText, Wallet, Map, ClipboardList, Video, Calendar
+  ScrollText, Wallet, Map, ClipboardList, Video, Calendar, Coins
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -22,6 +22,7 @@ const NAV_GROUPS = [
       { id: 'investors', label: 'Investors', icon: TrendingUp },
       { id: 'lois', label: 'LOIs', icon: FileText },
       { id: 'crowdpooling', label: 'Crowd Pooling', icon: Globe2 },
+      { id: 'seeds-claims', label: 'SEEDS Claims', icon: Coins },
     ]
   },
   {

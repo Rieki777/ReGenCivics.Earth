@@ -2477,6 +2477,54 @@ export const questTierAssignments = mysqlTable("quest_tier_assignments", {
 });
 export type QuestTierAssignment = typeof questTierAssignments.$inferSelect;
 
+// ─── SEEDS Token Claims ──────────────────────────────────────────────────
+
+/**
+ * Pre-loaded SEEDS purchase transactions from the tlosto.seeds contract on Telos.
+ * Imported once from CSV. Read-only lookup table.
+ */
+export const seedsContributions = mysqlTable("seeds_contributions", {
+  id: int("id").autoincrement().primaryKey(),
+  recipientAccount: varchar("recipientAccount", { length: 12 }).notNull(),
+  transactionId: varchar("transactionId", { length: 16 }).notNull(),
+  date: timestamp("date").notNull(),
+  usdValueRaw: int("usdValueRaw").notNull(), // Raw value from CSV (divide by 10000 for USD)
+  usdValue: double("usdValue").notNull(), // Actual USD value
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("seeds_contributions_account_idx").on(table.recipientAccount),
+]);
+export type SeedsContribution = typeof seedsContributions.$inferSelect;
+export type InsertSeedsContribution = typeof seedsContributions.$inferInsert;
+
+/**
+ * User-submitted claims for SEEDS -> $ReGen token conversion.
+ * One claim per SEEDS account. Editable until September equinox 2026.
+ */
+export const seedsClaims = mysqlTable("seeds_claims", {
+  id: int("id").autoincrement().primaryKey(),
+  seedsAccount: varchar("seedsAccount", { length: 12 }).notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull(),
+  originalUsdTotal: double("originalUsdTotal").notNull(), // Total USD from our records
+  spentUsdAmount: double("spentUsdAmount").default(0).notNull(), // USD they say they spent/sold
+  claimedUsdAmount: double("claimedUsdAmount").notNull(), // Final USD claim (original - spent, or custom)
+  regenAmount: double("regenAmount").notNull(), // $ReGen = claimedUsdAmount * 100
+  baseWalletAddress: varchar("baseWalletAddress", { length: 42 }).notNull(), // 0x + 40 hex chars
+  isDispute: boolean("isDispute").default(false).notNull(), // True if claiming different amount
+  disputeReason: text("disputeReason"), // Why their claim differs (dispute only)
+  evidenceUrls: text("evidenceUrls"), // JSON array of uploaded file URLs (dispute only)
+  status: mysqlEnum("status", ["pending", "approved", "denied", "flagged"]).default("pending").notNull(),
+  adminNotes: text("adminNotes"),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewedBy: int("reviewedBy"), // Admin user ID
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("seeds_claims_status_idx").on(table.status),
+]);
+export type SeedsClaim = typeof seedsClaims.$inferSelect;
+export type InsertSeedsClaim = typeof seedsClaims.$inferInsert;
+
 // ─── Seasonal Harvests ────────────────────────────────────────────────────
 export const seasonalHarvests = mysqlTable("seasonal_harvests", {
   id: int("id").autoincrement().primaryKey(),

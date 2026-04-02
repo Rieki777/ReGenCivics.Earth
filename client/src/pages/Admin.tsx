@@ -81,6 +81,7 @@ import { AdminGovernancePanel } from "@/components/admin/AdminGovernancePanel";
 import { AdminInvestorsTab } from "@/components/admin/AdminInvestorsTab";
 import { AdminAllianceTab, AdminCreateTab, AdminLiveTab, AdminRoleTab, AdminRolesTab } from "@/components/admin/AdminAllianceTab";
 import { AdminOtherInquiriesTab } from "@/components/admin/AdminOtherInquiriesTab";
+import { AdminSeedsClaimsTab } from "@/components/admin/AdminSeedsClaimsTab";
 import { AdminKanbanTab } from "@/components/admin/AdminKanbanTab";
 import { AdminCrowdpoolingTab, AdminBroadcastTab, AdminLOITab, AdminBannersTab, AdminImagesTab, AdminCustomGamesTab, AdminWidgetsTab } from "@/components/admin/AdminSimpleTabs";
 
@@ -3776,6 +3777,11 @@ function AdminDashboard() {
           {/* Widgets Tab */}
           <TabsContent value="widgets">
             <AdminWidgetsTab />
+          </TabsContent>
+
+          {/* SEEDS Claims Tab */}
+          <TabsContent value="seeds-claims">
+            <AdminSeedsClaimsTab />
           </TabsContent>
 
           {/* Audit Log Tab */}

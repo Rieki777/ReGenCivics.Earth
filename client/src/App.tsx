@@ -65,6 +65,7 @@ const MyApplications = lazy(() => import("./pages/MyApplications"));
 const AdminApplications = lazy(() => import("./pages/AdminApplications"));
 const AdminApplicationDetail = lazy(() => import("./pages/AdminApplicationDetail"));
 const InvestorJourneyForm = lazy(() => import("./pages/InvestorForm"));
+const ClaimSeeds = lazy(() => import("./pages/ClaimSeeds"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Showcase = lazy(() => import("./pages/Showcase"));
@@ -192,6 +193,7 @@ function Router() {
       <Route path={"/admin/applications"}><EB><AdminApplications /></EB></Route>
       <Route path={"/admin/application/:id"}><EB><AdminApplicationDetail /></EB></Route>
       <Route path={"/investor"}><EB><InvestorJourneyForm /></EB></Route>
+      <Route path={"/claim-seeds"}><EB><ClaimSeeds /></EB></Route>
       <Route path={"/connect"}><EB><Connect /></EB></Route>
       <Route path={"/admin"}><EB><Admin /></EB></Route>
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>

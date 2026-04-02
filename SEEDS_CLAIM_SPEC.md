@@ -1,0 +1,309 @@
+# SEEDS Token Claim for $ReGen -- Full Spec
+
+**Created:** 2026-04-01
+**Status:** Ready to build
+**Priority:** Urgent, needs to be live ASAP
+
+---
+
+## Overview
+
+People who bought SEEDS tokens on the Telos blockchain can claim $ReGen tokens on Base (via Hypha). The conversion rate is **100 $ReGen per $1 USD contributed**. Claims are open from now until the **September 2026 equinox** (September 22, 2026). After the deadline, unclaimed tokens are forfeited.
+
+We have a CSV of 1,372 transactions across 801 unique accounts totaling ~$845,427 USD. This data comes from the `tlosto.seeds` contract on Telos. After the claim window closes, Rye will verify all claims against the live blockchain, then mint $ReGen in one batch.
+
+---
+
+## User Flow
+
+### Step 1: Enter SEEDS Account Name
+
+The user lands on `/claim-seeds`. They see:
+
+- Brief explanation of what this is and why (SEEDS is being honored in the new system, your contributions carry forward)
+- Input field for their 12-character SEEDS/Telos account name
+- Helper text: "This is the account name you created when you signed up for SEEDS. Open your SEEDS wallet to find it in your profile."
+- Link to the blockchain explorer for people who need to search: https://eosauthority.com/tokens/token.seeds/SEEDS?network=telos
+- Deadline notice: Claims close September 22, 2026
+
+User enters their account name and clicks "Look Up My Account."
+
+### Step 2: Show Contribution Summary
+
+**If found in our database:**
+
+We display:
+
+- Their total USD contribution (sum of all transactions)
+- The equivalent $ReGen they'd receive (total USD x 100)
+- A breakdown table showing each individual transaction: date, transaction ID (linked to Telos explorer), and USD amount
+- This lets them audit the number themselves
+
+Then we ask: **"Did you sell, spend, or transfer any of the SEEDS tokens you purchased?"**
+
+- **No, I still hold all my SEEDS** -- proceed to Step 3
+- **Yes, I used some** -- proceed to Step 2b (Spent Tokens)
+
+**If NOT found:**
+
+We show a message: "We don't have a record of purchases from this account. If you believe this is an error, you can submit a claim with evidence below."
+
+This routes them to the Dispute flow (Step 4).
+
+### Step 2b: Spent Tokens Adjustment
+
+If the user says they spent some tokens, we show:
+
+- Their original total USD amount
+- An input field: "Approximate USD value of SEEDS you sold, spent, or transferred"
+- The adjusted claim amount updates live as they type: (original - spent) x 100 $ReGen
+- A clear notice: **"We will verify all claims against the Telos blockchain before minting. The full transaction history for your account is public. Any claim that doesn't match the on-chain record will be denied, and you will lose your ability to claim entirely."**
+
+They can then proceed to Step 3 with the adjusted amount.
+
+### Step 3: Hypha/Base Account
+
+We explain:
+
+- "ReGen Civics has upgraded to Base (Coinbase's blockchain). Your $ReGen tokens will be sent to your Hypha account on Base."
+- "If you already have a Hypha account, enter your account name or Base wallet address below."
+- "If you don't have one yet, go to [app.hypha.earth](https://app.hypha.earth) to create a free Base blockchain account, then come back and enter it here."
+
+Input field for their Base wallet address (0x format). Validated as 0x + 40 hex characters.
+
+### Step 4: Confirm and Submit (Happy Path)
+
+Summary screen showing:
+
+- SEEDS account name
+- Original USD contribution
+- Any spent/sold adjustment
+- Final claim amount in USD
+- Final $ReGen amount (USD x 100)
+- Hypha/Base account where tokens will be sent
+- Checkbox: "I confirm this information is accurate. I understand that claims are verified against the blockchain and fraudulent claims result in permanent disqualification."
+
+Submit button. On success: confirmation message with a reference number and expected timeline ("Claims will be verified and $ReGen tokens minted after September 22, 2026"). Encourage them to sign up for a ReGen Civics account for updates, with a link to the site registration.
+
+**Re-submission:** Users can come back and update their claim anytime before the September equinox. If they look up an account that already has a claim, we show their existing claim data and let them edit and resubmit.
+
+### Step 4b: Dispute Path (Claiming a Different Amount)
+
+If the user was not found, or wants to claim more than our records show, they enter the dispute flow:
+
+- Input: SEEDS account name (pre-filled if they already entered it)
+- Input: USD amount they're claiming
+- Textarea: Explanation of why their claim differs from our records
+- File upload: Evidence (screenshots of wallet, transaction receipts, blockchain explorer links)
+- Same fraud warning as above
+- Same Hypha/Base account field
+
+On submit: goes into the admin review queue. The user sees: "Your claim has been submitted for review. You'll be notified of the outcome."
+
+### Contact Info
+
+At all submission points, we collect an **email address** so we can notify them about their claim status. This is required. They do not need to be logged into the site to submit a claim (many of these people may never have visited regencivics.earth before).
+
+---
+
+## Database Schema
+
+### Table: `seedsContributions` (pre-loaded from CSV)
+
+This is the lookup table. Populated once from the CSV, never edited by users.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | int, PK, auto | Row ID |
+| recipientAccount | varchar(12) | SEEDS/Telos account name |
+| transactionId | varchar(16) | Telos transaction hash (first 8 chars) |
+| date | timestamp | Transaction date |
+| usdValueRaw | int | Raw value from CSV (multiply by 10000 = actual cents representation) |
+| usdValue | double | Actual USD value (usdValueRaw / 10000) |
+| createdAt | timestamp | When we imported this row |
+
+Index on `recipientAccount` for fast lookups.
+
+### Table: `seedsClaims` (user submissions)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | int, PK, auto | Claim ID |
+| seedsAccount | varchar(12) | Their SEEDS/Telos account name |
+| email | varchar(320) | Contact email |
+| originalUsdTotal | double | The total USD we have on record for them |
+| spentUsdAmount | double | USD value of tokens they say they spent/sold (0 if none) |
+| claimedUsdAmount | double | Final USD amount they're claiming (original - spent, or custom amount for disputes) |
+| regenAmount | double | $ReGen to receive (claimedUsdAmount x 100) |
+| hyphaAccount | varchar(255) | Their Hypha/Base account name or wallet address |
+| isDispute | boolean | True if they're claiming a different amount than our records |
+| disputeReason | text, nullable | Why their claim differs (dispute path only) |
+| evidenceUrls | text, nullable | JSON array of uploaded file URLs (dispute path only) |
+| status | enum | pending, approved, denied, flagged |
+| adminNotes | text, nullable | Notes from admin review |
+| reviewedAt | timestamp, nullable | When admin reviewed this claim |
+| reviewedBy | int, nullable | Admin user ID who reviewed |
+| createdAt | timestamp | When claim was submitted |
+| updatedAt | timestamp | Last update |
+
+Unique index on `seedsAccount` (one claim per SEEDS account). Index on `status` for admin filtering.
+
+---
+
+## API Routes (tRPC)
+
+New router: `seedsClaimsRouter` in `server/routes/seedsClaims.ts`
+
+### Public Procedures
+
+**`seedsClaims.lookup`** -- `publicProcedure`
+- Input: `{ seedsAccount: string }` (validated: exactly 12 chars, lowercase alphanumeric + dots)
+- Returns: `{ found: boolean, totalUsd: number, transactions: Array<{ transactionId, date, usdValue }> }` or `{ found: false }`
+- Queries `seedsContributions` table grouped by account
+
+**`seedsClaims.submit`** -- `publicProcedure`
+- Input: full claim data (seedsAccount, email, spentUsdAmount, hyphaAccount, etc.)
+- Validates: account format, email format, amounts make sense (spent <= original), hypha account not empty
+- Checks: no existing claim for this SEEDS account
+- Creates row in `seedsClaims` with status `pending`
+- Returns: `{ claimId, regenAmount }`
+
+**`seedsClaims.submitDispute`** -- `publicProcedure`
+- Input: claim data + disputeReason + evidenceUrls
+- Same validation + requires reason text
+- Creates row with `isDispute: true`, status `pending`
+- Returns: `{ claimId }`
+
+**`seedsClaims.checkExisting`** -- `publicProcedure`
+- Input: `{ seedsAccount: string }`
+- Returns: `{ exists: boolean, status?: string }` so we can tell the user if they already claimed
+
+### Admin Procedures
+
+**`seedsClaims.adminList`** -- `adminProcedure`
+- Input: `{ status?: string, isDispute?: boolean, page, limit }`
+- Returns paginated list of claims with stats
+
+**`seedsClaims.adminReview`** -- `adminProcedure`
+- Input: `{ claimId, status: 'approved' | 'denied' | 'flagged', adminNotes? }`
+- Updates claim status, records reviewer and timestamp
+
+**`seedsClaims.adminStats`** -- `adminProcedure`
+- Returns: total claims, total $ReGen committed, claims by status, disputes count
+
+**`seedsClaims.adminExport`** -- `adminProcedure`
+- Returns all approved claims as a flat list for the September batch mint
+
+---
+
+## Admin Panel
+
+New tab: **"SEEDS Claims"** in the admin panel.
+
+**Dashboard view:**
+- Stats cards: Total claims, Approved, Pending, Disputes, Denied, Total $ReGen committed
+- Filter by status (all / pending / approved / denied / flagged / disputes only)
+- Searchable by SEEDS account name or email
+
+**Claim detail view:**
+- Full claim data
+- Side-by-side: "Our records" vs "Their claim" for easy comparison
+- For disputes: show their explanation and uploaded evidence
+- Action buttons: Approve / Deny / Flag
+- Notes field for admin comments
+- Link to Telos blockchain explorer for their account
+
+**Export button:**
+- Downloads all approved claims as CSV for the September batch mint
+- Columns: seedsAccount, email, hyphaAccount, approvedUsdAmount, regenAmount
+
+---
+
+## Frontend Page: `/claim-seeds`
+
+Single page, multi-step form following the existing pattern from Apply.tsx:
+
+- Step indicator at top (like the existing forms)
+- Glass card styling consistent with the rest of the site
+- No login required
+- LocalStorage draft saving (so if they leave and come back, their progress is preserved)
+- Mobile responsive
+
+**Steps rendered conditionally:**
+1. Account Lookup
+2. Contribution Review + Spent Tokens Question
+3. Hypha/Base Account
+4. Confirm and Submit
+
+The dispute path replaces steps 2-4 with the dispute form.
+
+---
+
+## Data Import
+
+One-time seed script to import the CSV into `seedsContributions`:
+
+- Read `tlosto_seeds_transactions.csv`
+- Parse each row: map `recipientAccount`, `transactionId`, `date`, `multipliedUsdValue`
+- Store raw value and computed USD value (raw / 10000)
+- Run as `npm run seed:seeds-claims` or similar
+
+---
+
+## Verification (Post-Deadline, Manual)
+
+This happens in September, outside the app:
+
+1. Export all approved claims
+2. For each SEEDS account, check the Telos blockchain for current token balance
+3. Cross-reference with their original purchase amounts and claimed spent amounts
+4. Flag any accounts where the math doesn't add up
+5. Batch mint $ReGen to all verified Hypha/Base accounts
+
+This is a Rye task, not automated in the app.
+
+---
+
+## Copy Notes
+
+All user-facing text should follow the ReGen Civics voice rules:
+- No em-dashes
+- No contrast-framing
+- No AI word patterns
+- Direct, grounded, specific
+- First person where appropriate
+
+The page should feel welcoming to people who might not have heard from the SEEDS community in a while. This is a homecoming. The tone is: "Your early contributions matter. We're honoring them in the new system."
+
+---
+
+## Resolved Questions
+
+1. **Hypha account format:** Validate as a 0x Ethereum/Base wallet address (0x followed by 40 hex chars).
+2. **Notification emails:** Users who have a ReGen Civics profile get notified through the site. Others get batch email updates in Fall 2026. Encourage sign-up at end of form.
+3. **Page placement:** Direct link only. Linked from the Game page contributions section and the SEEDS blog post.
+4. **Evidence uploads:** Yes, use the same R2 file upload system as land project applications.
+5. **Existing claim edits:** Users can resubmit and change their claim anytime until the September equinox event.
+
+## Site Integration Points
+
+These links to `/claim-seeds` need to be added:
+
+1. **Game.tsx contributions section** (id="seeds-legacy"): Make the intro text collapsible. Add a "Claim Financial Contributions" button with golden glow. Fix "Join the discussion" link from /community/post/560 to /community/post/625.
+2. **Blog post "Your SEEDS Contributions Live On"**: Add a claim button at top and bottom of the post content.
+
+---
+
+## File Inventory (to create)
+
+| File | Purpose |
+|------|---------|
+| `drizzle/schema.ts` | Add `seedsContributions` + `seedsClaims` tables |
+| `drizzle/relations.ts` | Add relations if needed |
+| `server/routes/seedsClaims.ts` | tRPC router with all endpoints |
+| `server/routers.ts` | Register the new router |
+| `client/src/pages/ClaimSeeds.tsx` | The claim form page |
+| `client/src/components/admin/AdminSeedsClaimsTab.tsx` | Admin panel tab |
+| `client/src/pages/Admin.tsx` | Add the new tab |
+| `server/seeds/seedsClaims.ts` | CSV import script |
+| `App.tsx` or routing config | Add `/claim-seeds` route |
