@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import PageBackground from "@/components/PageBackground";
+import { HeroPageLoader } from "@/components/HeroPageLoader";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -140,7 +141,10 @@ const allianceCategories = [
 ];
 
 export default function Ally() {
+  const heroImages = [cdnImg("https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp"), cdnImg("https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp")];
+
   return (
+    <HeroPageLoader images={heroImages}>
     <PageBackground
       backgroundImage={cdnImg("https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp")}
       mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp")}
@@ -481,5 +485,6 @@ export default function Ally() {
         </div>
       </section>
     </PageBackground>
+    </HeroPageLoader>
   );
 }

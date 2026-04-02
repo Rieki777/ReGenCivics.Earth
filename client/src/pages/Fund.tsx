@@ -24,6 +24,7 @@ import {
   Wallet,
 } from "lucide-react";
 import PageBackground from "@/components/PageBackground";
+import { HeroPageLoader } from "@/components/HeroPageLoader";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import TreasuryDashboard from "@/components/TreasuryDashboard";
@@ -129,7 +130,10 @@ export default function Fund() {
     setOpenSteps(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
+  const heroImages = [cdnImg("https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp"), cdnImg("https://assets.regencivics.earth/AxJkbpktjcGvTnJs.webp")];
+
   return (
+    <HeroPageLoader images={heroImages}>
     <PageWrapper>
     <PageBackground
       backgroundImage={cdnImg("https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp")}
@@ -660,5 +664,6 @@ export default function Fund() {
       <RelatedContent pages={relatedContentMap.fund.pages} blog={relatedContentMap.fund.blog} />
     </PageBackground>
     </PageWrapper>
+    </HeroPageLoader>
   );
 }

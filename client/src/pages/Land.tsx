@@ -36,6 +36,7 @@ import {
   Star,
 } from "lucide-react";
 import PageBackground from "@/components/PageBackground";
+import { HeroPageLoader } from "@/components/HeroPageLoader";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -168,7 +169,10 @@ export default function Land() {
   const [criteriaOpen, setCriteriaOpen] = useState(false);
   const [journeyStepsOpen, setJourneyStepsOpen] = useState(false);
 
+  const heroImages = [cdnImg("https://assets.regencivics.earth/UfviEsVKlfgomHkn.webp"), cdnImg("https://assets.regencivics.earth/qpgHkSSnOsTrFhXQ.webp")];
+
   return (
+    <HeroPageLoader images={heroImages}>
     <PageBackground
       backgroundImage={cdnImg("https://assets.regencivics.earth/UfviEsVKlfgomHkn.webp")}
       mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/qpgHkSSnOsTrFhXQ.webp")}
@@ -1067,5 +1071,6 @@ export default function Land() {
         </div>
       </section>
     </PageBackground>
+    </HeroPageLoader>
   );
 }

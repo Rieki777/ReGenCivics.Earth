@@ -28,6 +28,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import PageBackground from "@/components/PageBackground";
+import { HeroPageLoader } from "@/components/HeroPageLoader";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -317,7 +318,10 @@ function QuestAnimationVideo() {
 }
 
 export default function Play() {
+  const heroImages = [cdnImg("https://assets.regencivics.earth/MjNNpKCrJVSfNhoW.webp"), cdnImg("https://assets.regencivics.earth/ZokDJKuGchcGPgoK.webp")];
+
   return (
+    <HeroPageLoader images={heroImages}>
     <PageBackground
       backgroundImage={cdnImg("https://assets.regencivics.earth/MjNNpKCrJVSfNhoW.webp")}
       mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/ZokDJKuGchcGPgoK.webp")}
@@ -622,5 +626,6 @@ export default function Play() {
         </div>
       </section>
     </PageBackground>
+    </HeroPageLoader>
   );
 }

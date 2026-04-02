@@ -7,7 +7,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { HeroPageLoader } from "@/components/HeroPageLoader";
 import {
   ArrowRight,
   Coins,
@@ -183,8 +184,10 @@ export default function Home() {
   
   const bgImage = "/images/backgrounds/home-desktop.webp?v=2";
   const mobileBgImage = "/images/backgrounds/home-mobile.webp?v=2";
+  const heroImages = useMemo(() => [bgImage, mobileBgImage], [bgImage, mobileBgImage]);
 
   return (
+    <HeroPageLoader images={heroImages} dataLoading={loading}>
     <PageWrapper>
     <PageBackground
       backgroundImage={bgImage}
@@ -672,5 +675,6 @@ export default function Home() {
       )}
     </PageBackground>
     </PageWrapper>
+    </HeroPageLoader>
   );
 }
