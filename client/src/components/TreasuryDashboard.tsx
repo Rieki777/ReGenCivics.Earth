@@ -373,7 +373,7 @@ export default function TreasuryDashboard() {
           </div>
           
           {/* Content */}
-          <div className="relative p-8 md:p-12">
+          <div className="relative p-5 md:p-12 rounded-xl" style={{ backgroundColor: 'rgba(10, 28, 18, 0.82)' }}>
             <div className="flex flex-col md:flex-row md:items-center gap-8">
               {/* Left Side - Icon & Info */}
               <div className="flex-1">

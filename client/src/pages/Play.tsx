@@ -362,8 +362,8 @@ export default function Play() {
 
           <AnimatedSection animation="slide-up" delay={200}>
             <h1
-              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white leading-tight text-shadow-strong"
-              style={{ fontFamily: "var(--font-display)" }}
+              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white leading-tight"
+              style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
             >
               Anyone / <span className="text-amber-400">ReGen Players</span>
             </h1>
@@ -371,15 +371,15 @@ export default function Play() {
 
           <AnimatedSection animation="slide-up" delay={400}>
             <p
-              className="text-lg md:text-xl lg:text-2xl text-white/80 mb-4 leading-relaxed max-w-3xl mx-auto text-shadow-subtle"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="text-lg md:text-xl lg:text-2xl text-white/90 mb-4 leading-relaxed max-w-3xl mx-auto"
+              style={{ fontFamily: "var(--font-body)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
             >
               Everyone can play. Whether you have five minutes or five years, there is a way to
               participate in regenerating civilization. Choose your level and jump in.
             </p>
             <p
-              className="text-xl md:text-2xl text-amber-400 font-semibold mb-8 text-shadow-subtle"
-              style={{ fontFamily: "var(--font-display)" }}
+              className="text-xl md:text-2xl text-amber-400 font-semibold mb-8"
+              style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
             >
               At what level do we want to play the Infinite Game?
             </p>

@@ -265,17 +265,17 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
                   
                   <h3
                     className="text-base md:text-lg font-bold text-white mb-1"
-                    style={{ fontFamily: 'var(--font-display)' }}
+                    style={{ fontFamily: 'var(--font-display)', textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}
                   >
                     {card.title}
                   </h3>
-                  <p className="text-white/50 text-[10px] md:text-xs font-semibold uppercase tracking-wider mb-2">
+                  <p className="text-white/70 text-[10px] md:text-xs font-semibold uppercase tracking-wider mb-2" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
                     {card.tagline}
                   </p>
-                  <p className="text-white/70 text-xs md:text-sm leading-relaxed hidden md:block">
+                  <p className="text-white/80 text-xs md:text-sm leading-relaxed hidden md:block" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
                     {card.shortDesc}
                   </p>
-                  <div className="flex items-center text-xs md:text-sm font-semibold mt-2 md:mt-3 group-hover:gap-1 transition-all">
+                  <div className="flex items-center text-xs md:text-sm font-semibold mt-2 md:mt-3 group-hover:gap-1 transition-all" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
                     <span style={{ color: card.accentColor }}>Go</span>
                     <ArrowRight className="w-3 h-3 md:w-4 md:h-4 ml-1" style={{ color: card.accentColor }} />
                   </div>

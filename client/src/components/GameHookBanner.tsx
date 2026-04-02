@@ -40,18 +40,22 @@ export function GameHookBanner({ variant = "home", className = "" }: Props) {
   return (
     <Link href="/economy">
       <div
-        className={`w-full py-6 px-4 bg-gradient-to-r from-[#1a472a] via-[#2d5a3f] to-[#1a472a] border-y border-[#7dd87d]/20 cursor-pointer group hover:from-[#1f5230] hover:via-[#347046] hover:to-[#1f5230] transition-all ${className}`}
+        className={`w-full py-6 px-4 border-y border-[#B8860B]/30 cursor-pointer group transition-all ${className}`}
+        style={{
+          background: 'linear-gradient(135deg, #7A5C0F 0%, #B8860B 30%, #D4A017 50%, #B8860B 70%, #7A5C0F 100%)',
+          boxShadow: 'inset 0 0 80px rgba(212, 160, 23, 0.35), 0 4px 32px rgba(212, 160, 23, 0.15)',
+        }}
       >
         <div className="container max-w-4xl mx-auto text-center">
           <p
-            className="text-white text-lg md:text-xl font-bold mb-1"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="text-lg md:text-xl font-bold mb-1"
+            style={{ fontFamily: "var(--font-display)", color: "#FFF8E7", textShadow: "0 1px 12px rgba(0,0,0,0.4)" }}
           >
             {content.hook}
           </p>
-          <p className="text-white/60 text-sm flex items-center justify-center gap-1">
+          <p className="text-sm flex items-center justify-center gap-1" style={{ color: "#FFF8E7", opacity: 0.9 }}>
             {content.subtext}
-            <ArrowRight className="w-4 h-4 text-[#7dd87d] group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" style={{ color: "#FFF8E7" }} />
           </p>
         </div>
       </div>
