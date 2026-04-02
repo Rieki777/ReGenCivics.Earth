@@ -14,6 +14,7 @@ import AnalyticsLoader from "./components/AnalyticsLoader";
 const ReGenGuide = lazy(() => import("./components/ReGenGuide"));
 import AMABanner from "./components/AMABanner";
 import SiteFooter from "./components/SiteFooter";
+import { GameHookBanner } from "./components/GameHookBanner";
 import { ScrollToTop } from "./components/ScrollToTop";
 const ExitIntentCapture = lazy(() => import("./components/ExitIntentCapture").then(m => ({ default: m.ExitIntentCapture })));
 const CommandPalette = lazy(() => import("./components/CommandPalette"));
@@ -327,6 +328,17 @@ function App() {
           <main id="main-content" className="pb-20">
             <Router />
           </main>
+          {!adminMode && (
+            <GameHookBanner
+              variant={
+                location.startsWith("/play") ? "play"
+                : location.startsWith("/quest") ? "quest"
+                : location.startsWith("/game") ? "game"
+                : location.startsWith("/local-food") ? "food"
+                : "home"
+              }
+            />
+          )}
           {!adminMode && <SiteFooter />}
           {!adminMode && <Suspense fallback={null}><CookieConsent /></Suspense>}
           <AnalyticsLoader />

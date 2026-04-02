@@ -42,7 +42,6 @@ import VideoPreviewCard from "@/components/VideoPreviewCard";
 import HowItWorks from "@/components/HowItWorks";
 import { ProgressiveOnboarding, useIsReturnVisitor } from "@/components/ProgressiveOnboarding";
 import { BannerDisplay } from "@/components/BannerDisplay";
-import { GameHookBanner } from "@/components/GameHookBanner";
 import { ImagePreloader } from "@/components/ImagePreloader";
 import { trpc } from "@/lib/trpc";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -349,9 +348,6 @@ export default function Home() {
 
         {/* How It Works - Interactive flow */}
         <HowItWorks />
-
-        {/* Game Hook Banner */}
-        <GameHookBanner variant="home" />
 
         {/* From Scarcity to Regeneration - Data-driven insight cards */}
         <section className="relative py-12 md:py-16">
