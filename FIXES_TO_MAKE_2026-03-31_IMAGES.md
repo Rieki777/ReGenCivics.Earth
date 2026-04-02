@@ -200,32 +200,102 @@ Found during Cowork browser audit. The site is loading 2048x2048 PNG images thro
 
 ---
 
-## Priority Order
+## Fix 11 -- OG social sharing image not showing + wrong copy (Critical)
 
-1. **Fix 10** (CI build failure) — site stability, Claude Code is on it
-2. **Fix 1** (pass width to cdnImg) — biggest single performance win
-3. **Fix 2** (lazy-load hover images) — halves initial image bandwidth
-4. **Fix 4** (server-side proxy cache) — prevents re-processing
-5. **Fix 6** (card transparency) — text readability
-6. **Fix 7** (community 404 for logged-out) — access for new visitors
-7. **Fix 3** (width for quick-action cards) — more perf gains
-8. **Fix 5** (use OptimizedImage) — proper responsive images
-9. **Fix 8** (duplicate requests) — bandwidth waste
-10. **Fix 9** (pre-generate thumbnails) — ultimate perf solution
+**Status:** CODED BY CLAUDE CODE
+
+**Symptom:** When sharing https://regencivics.earth/ on WhatsApp (and likely other platforms), the link preview shows no image. Just text. The forest/village illustration that used to appear is gone from the preview. Also, the description copy needs updating.
+
+**Root cause:** The image file exists at `client/public/og-default.jpg` (the forest village waterfall scene, 275KB, 1200x630). The meta tag in `index.html` points to `https://regencivics.earth/og-default.jpg`. The server-side injection in `server/_core/vite.ts` also references it. But social crawlers may be getting blocked or the meta tag injection is breaking the image URL.
+
+Possible causes:
+1. The server-side meta injection in `vite.ts` (line 170+) may be double-encoding or malforming the og:image tag
+2. A Content-Security-Policy or robots.txt may be blocking crawler access to the image file
+3. WhatsApp might have cached an earlier version without the image
+
+**Fix:**
+1. Verify the og:image meta tag is correctly present in the HTML served to crawlers. Test by curling the page: `curl -s https://regencivics.earth/ | grep og:image` -- make sure the full URL is there and correct
+2. Update the og:description in both `client/index.html` (line 61) and `server/_core/vite.ts` (line 100) to: "ReGen Civics is a fund for regenerative land projects, who also runs quests and games for real-world regeneration."
+3. Update the og:title to: "ReGen Civics: Fund and Game for Regenerative Land Projects" (already close in vite.ts, sync with index.html)
+4. Make sure the server-side injection doesn't strip or corrupt the og:image tag
+5. After deploy, paste the URL into the Facebook Sharing Debugger (https://developers.facebook.com/tools/debug/) to force a re-scrape
+
+**Files to change:**
+- `client/index.html` (lines 60-65, 73-74)
+- `server/_core/vite.ts` (lines 98-101)
 
 ---
 
-## Handoff Breakdown — Who Does What
+## Fix 12 -- Profile edit button not working (High)
 
-### YOU (Rye) — things only you can do
+**Status:** CODED BY CLAUDE CODE
+
+**Symptom:** Clicking the green pencil/edit icon on the player profile page does nothing. Users can't edit their profile.
+
+**Root cause:** The edit button on the profile overview section (the green pencil icon next to the user's name/avatar) is either missing its onClick handler, navigating to a broken route, or conflicting with the tab-based settings system. The profile edit form exists at `client/src/components/ProfileEditForm.tsx` and is rendered inside the Settings tab. The edit icon may need to switch the active tab to "settings" and open the Profile section.
+
+**Fix:**
+1. Find the edit button on the profile overview (in `client/src/pages/PlayerProfile.tsx`, near the user's name/avatar area)
+2. Wire its onClick to: `setActiveTab('settings')` so clicking it jumps to the Settings tab where ProfileEditForm lives
+3. If the edit button is supposed to open a modal instead, check if the modal component exists and its open state is being set
+4. Test: click the edit icon, verify it either opens Settings > Profile or opens an inline edit form
+
+**Files to change:**
+- `client/src/pages/PlayerProfile.tsx` (edit button onClick handler)
+
+---
+
+## Fix 13 -- Show user avatar image in top-right nav (Medium)
+
+**Status:** CODED BY CLAUDE CODE
+
+**Symptom:** The top-right navigation shows a green circle with the user's initial letter ("R" for Rye). When a user has a profile image uploaded, it should display that image instead of the initial. This makes it clearer that they're looking at their own profile area.
+
+**Root cause:** The Navigation component (`client/src/components/Navigation.tsx`, lines 470-481 for desktop, 979-986 for mobile) only renders the first letter of the user's name. It doesn't check for or display `user.avatarUrl` even though the field exists on the user object.
+
+**Fix:** In Navigation.tsx, for both desktop and mobile avatar circles:
+1. Check if `user.avatarUrl` exists and is non-empty
+2. If yes: render an `<img>` tag with `src={cdnImg(user.avatarUrl, 64)}` (32px display * 2x retina), rounded full, same dimensions as the letter circle
+3. If no: fall back to the existing initial letter display
+4. Add `alt={user.name}` to the image
+5. Add error fallback: if the image fails to load, fall back to the letter
+
+**Files to change:**
+- `client/src/components/Navigation.tsx` (desktop avatar ~line 470, mobile avatar ~line 979)
+
+---
+
+## Priority Order
+
+1. **Fix 10** (CI build failure) -- site stability, Claude Code is on it
+2. **Fix 11** (OG social sharing) -- first impression for every shared link
+3. **Fix 12** (profile edit button) -- core UX broken
+4. **Fix 1** (pass width to cdnImg) -- biggest single performance win
+5. **Fix 2** (lazy-load hover images) -- halves initial image bandwidth
+6. **Fix 4** (server-side proxy cache) -- prevents re-processing
+7. **Fix 6** (card transparency) -- text readability
+8. **Fix 7** (community 404 for logged-out) -- access for new visitors
+9. **Fix 13** (nav avatar image) -- polish
+10. **Fix 3** (width for quick-action cards) -- more perf gains
+11. **Fix 5** (use OptimizedImage) -- proper responsive images
+12. **Fix 8** (duplicate requests) -- bandwidth waste
+13. **Fix 9** (pre-generate thumbnails) -- ultimate perf solution
+
+---
+
+## Handoff Breakdown -- Who Does What
+
+### YOU (Rye) -- things only you can do
 
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
 | 10 | Verify CI passes after Claude Code fix push | Need to check GitHub Actions | GitHub Actions tab |
+| 11 | Re-scrape OG after deploy | Browser action | Paste URL into Facebook Sharing Debugger |
+| 11 | Test WhatsApp link preview | Phone required | Share regencivics.earth link in a chat |
 | ALL | git push after Claude Code commits | Git push requires your machine | `git add -A && git commit -m "msg" && git push` |
 | ALL | Verify visual fixes on mobile after deploy | Browser testing on your phone | regencivics.earth on mobile |
 
-### CLAUDE CODE — can do without you
+### CLAUDE CODE -- can do without you
 
 | # | Task | Status |
 |---|------|--------|
@@ -239,8 +309,12 @@ Found during Cowork browser audit. The site is loading 2048x2048 PNG images thro
 | 8 | Deduplicate image requests | CODED BY CLAUDE CODE |
 | 9 | Pre-generate thumbnail script | CODED BY CLAUDE CODE |
 | 10 | Fix 10 TypeScript errors | IN PROGRESS |
+| 11 | Fix OG meta tags + update copy | CODED BY CLAUDE CODE |
+| 12 | Fix profile edit button onClick | CODED BY CLAUDE CODE |
+| 13 | Show avatar image in nav | CODED BY CLAUDE CODE |
 
 ### WAITING ON YOU before Claude Code can proceed
 
 - Fix 10 is in progress. Once CI passes, remaining fixes can be built on top.
-- Fixes 1-9 can be batched into a single commit after Fix 10 lands.
+- Fix 11 needs a re-scrape after deploy (Facebook Debugger + WhatsApp re-share).
+- All other fixes can be batched into a single commit.
