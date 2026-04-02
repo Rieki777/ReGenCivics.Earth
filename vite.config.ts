@@ -89,7 +89,18 @@ export default defineConfig(({ mode }): UserConfig => ({
         //   "Cannot read properties of undefined (reading 'forwardRef')"
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return;
+          // Core React: long-term cache, rarely changes
           if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) return 'react-vendor';
+          // Icons: bundle ALL lucide icons into one chunk (eliminates 100+ tiny files)
+          if (id.includes('lucide-react')) return 'icons';
+          // UI primitives: Radix components used across most pages
+          if (id.includes('@radix-ui')) return 'ui-primitives';
+          // Charts: only loaded on pages with data visualizations
+          if (id.includes('recharts') || id.includes('d3-') || id.includes('victory')) return 'charts';
+          // Animation: framer-motion
+          if (id.includes('framer-motion')) return 'animation';
+          // tRPC + tanstack query: data fetching layer
+          if (id.includes('@trpc') || id.includes('@tanstack')) return 'data-layer';
         },
       },
     },

@@ -22,8 +22,13 @@ export const playerProfilesRouter = router({
 
   // Get current user's profile
   me: protectedProcedure.query(async ({ ctx }) => {
-    const profile = await db.getPlayerProfileByUserId(ctx.user.id);
-    return profile || null;
+    try {
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      return profile || null;
+    } catch (err) {
+      console.error("[playerProfiles.me] Error fetching profile for user", ctx.user.id, err);
+      return null;
+    }
   }),
 
   // Get profile by ID

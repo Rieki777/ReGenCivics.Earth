@@ -50,9 +50,8 @@
     <!-- Preload primary body font only (others load on demand via font-display: swap) -->
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/quicksand-latin.woff2" />
     
-    <!-- Preload hero images for faster LCP -->
-    <link rel="preload" as="image" href="https://assets.regencivics.earth/YPVdYWGRrdEquJbO.webp" fetchpriority="high" />
-    <link rel="preload" as="image" href="https://assets.regencivics.earth/OySlQvtOgDYjZaIa.webp" fetchpriority="high" />
+    <!-- Preload homepage background for faster LCP (local file, not R2 which 403s for browsers) -->
+    <link rel="preload" as="image" href="/images/backgrounds/home-desktop.webp?v=2" fetchpriority="high" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
