@@ -93,14 +93,10 @@ export default defineConfig(({ mode }): UserConfig => ({
           if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) return 'react-vendor';
           // Icons: bundle ALL lucide icons into one chunk (eliminates 100+ tiny files)
           if (id.includes('lucide-react')) return 'icons';
-          // UI primitives: Radix components used across most pages
-          if (id.includes('@radix-ui')) return 'ui-primitives';
-          // Charts: only loaded on pages with data visualizations
-          if (id.includes('recharts') || id.includes('d3-') || id.includes('victory')) return 'charts';
-          // Animation: framer-motion
-          if (id.includes('framer-motion')) return 'animation';
-          // tRPC + tanstack query: data fetching layer
-          if (id.includes('@trpc') || id.includes('@tanstack')) return 'data-layer';
+          // IMPORTANT: Do NOT manually chunk recharts, radix-ui, framer-motion,
+          // or @trpc. They share circular dependencies through React that cause
+          // "Cannot access 'X' before initialization" temporal dead zone errors.
+          // Let Vite's automatic splitting handle them safely.
         },
       },
     },
