@@ -31,7 +31,7 @@ export const localFoodRouter = router({
     }),
 
   // Submit a food producer application
-  apply: publicProcedure
+  submitApplication: publicProcedure
     .input(z.object({
       producerName: z.string().max(200),
       contactEmail: z.string().max(200),

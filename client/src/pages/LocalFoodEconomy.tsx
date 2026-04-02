@@ -162,7 +162,7 @@ export default function LocalFoodEconomy() {
     { staleTime: 30_000 }
   );
 
-  const applyMutation = trpc.localFood.apply.useMutation({
+  const applyMutation = trpc.localFood.submitApplication.useMutation({
     onSuccess: () => {
       setFormSubmitted(true);
       setProducerName("");
