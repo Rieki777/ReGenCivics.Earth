@@ -122,6 +122,22 @@ export function serveStatic(app: Express) {
     "/proposals":   { title: "Community Proposals: ReGen Civics", description: "Shape the direction of ReGen Civics. Submit proposals, signal your support, help the community decide.", image: `${BASE_URL}/og/proposals.jpg` },
     "/game-mechanics": { title: "Game Mechanics: ReGen Civics", description: "See every variable that powers the game. Simulate changes. Export proposals.", image: `${BASE_URL}/og/game-mechanics.jpg` },
     "/local-food-economy": { title: "Local Food Economy: ReGen Civics", description: "Build regenerative food systems in your bioregion. Rate producers, support local farms.", image: `${BASE_URL}/og/local-food-economy.jpg` },
+    "/play":        { title: "Play the Game: ReGen Civics", description: "Complete quests, earn $ReGen tokens, and contribute to regenerative projects. The Infinite Game is open to everyone." },
+    "/socials":     { title: "Socials: ReGen Civics", description: "Find us on WhatsApp, Discord, YouTube, and beyond. Connect with the regenerative community." },
+    "/marketplace": { title: "Connection Hub: ReGen Civics", description: "Share what you can offer and find help with what you need. A space for regenerators to connect." },
+    "/calculator":  { title: "Contribution Calculator: ReGen Civics", description: "Calculate the value of your contributions to regenerative land projects." },
+    "/newsletter":  { title: "Newsletter: ReGen Civics", description: "Stay updated on the Regenerative Renaissance. Community news, season updates, and quest announcements." },
+    "/crowd-pooling-projects": { title: "Crowd Pooling Projects: ReGen Civics", description: "Browse active crowd pooling campaigns for regenerative land projects." },
+    "/co-creators-guide": { title: "Co-Creators Guide: ReGen Civics", description: "A guide for co-creators building the Regenerative Renaissance together." },
+    "/claim-seeds": { title: "Claim SEEDS: ReGen Civics", description: "Former SEEDS token holders can claim their $ReGen allocation here." },
+    "/risk-disclosure": { title: "Risk Disclosure: ReGen Civics", description: "Full risk disclosure for the ReGen Civics Regenerative Land Fund." },
+    "/terms-of-use": { title: "Terms of Use: ReGen Civics", description: "Terms governing use of the ReGen Civics platform." },
+    "/privacy-policy": { title: "Privacy Policy: ReGen Civics", description: "How ReGen Civics handles your data." },
+    "/disclaimers": { title: "Disclaimers: ReGen Civics", description: "Legal disclaimers for the ReGen Civics platform and fund." },
+    "/glossary":    { title: "Glossary: ReGen Civics", description: "Key terms and concepts in the ReGen Civics ecosystem." },
+    "/features":    { title: "Feature Suggestions: ReGen Civics", description: "Suggest and vote on new features for the ReGen Civics platform." },
+    "/investor":    { title: "Investor Journey: ReGen Civics", description: "Begin your journey as a regenerative investor. Explore the fund and connect with land projects." },
+    "/loi":         { title: "Letter of Intent: ReGen Civics", description: "Submit a letter of intent to invest in the ReGen Civics Fund." },
   };
 
   let indexHtmlCache: string | null = null;

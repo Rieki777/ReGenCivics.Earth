@@ -1218,7 +1218,7 @@ export default function Opportunity() {
 
               <h3 className="text-base font-bold text-[#7dd87d] mb-3">A $4.5 Trillion Financing Gap</h3>
               <p className="mb-4 text-sm">
-                Global agrifood systems require <strong className="text-white">$1.1 trillion in annual investment</strong> over the next five years (Bain & Company, 2025). Closing the current financing gap in regenerative agriculture alone would unlock <strong className="text-white">$4.5 trillion in new investment opportunities per year</strong> and avoid $5.7 trillion in costs from environmental degradation (AgFunder News, 2024).
+                Global agrifood systems require <strong className="text-white">$1.1 trillion in annual investment</strong> over the next five years (Bain & Company, 2025). Closing the current financing gap in regenerative agriculture alone would open <strong className="text-white">$4.5 trillion in new investment opportunities per year</strong> and avoid $5.7 trillion in costs from environmental degradation (AgFunder News, 2024).
               </p>
               <div className="bg-white/5 rounded-xl p-5 border border-white/10 mb-5">
                 <h4 className="font-bold text-white mb-3">Why This Gap Exists</h4>

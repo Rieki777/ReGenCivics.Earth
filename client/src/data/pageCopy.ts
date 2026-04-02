@@ -32,7 +32,7 @@ export const pageCopy = {
           body: "Dramatically reduce the perceived financial funding needed by recognizing all forms of capital, not just money.",
         },
         {
-          title: "Unlock Hidden Assets",
+          title: "Access Hidden Assets",
           body: "Access assets that could never have been bought, like land that's not for sale but wants to be part of your vision.",
         },
         {

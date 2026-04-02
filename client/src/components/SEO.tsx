@@ -223,7 +223,7 @@ export const pageSEO = {
   },
   riskDisclosure: {
     title: 'Risk Disclosure | ReGen Civics',
-    description: 'Comprehensive risk disclosure for the ReGen Civics Regenerative Land Fund. Understand the risks associated with investing in regenerative land projects and alliance organizations.',
+    description: 'Full risk disclosure for the ReGen Civics Regenerative Land Fund. Understand the risks of investing in regenerative land projects and alliance organizations.',
     keywords: 'investment risk disclosure, regenerative fund risks, impact investing risks, land investment risks',
     image: '/og/opportunity.jpg',
     url: '/risk-disclosure'

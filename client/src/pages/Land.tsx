@@ -972,7 +972,7 @@ export default function Land() {
                       icon={Scale}
                       title="Legal Structure"
                       summary="How do we relate with legacy economies and nation-states? What legal vehicle gives us the most flexibility, protection and ability to execute our mission?"
-                      expanded="Navigate the complex landscape of legal entities to find the structure that best serves your mission. We explore options like cooperatives, DAOs, trusts, private associations, hybrid models, and more. The goal is maximum flexibility and protection while maintaining alignment with your values."
+                      expanded="Find the legal structure that best serves your mission. We explore cooperatives, DAOs, trusts, private associations, hybrid models, and more. The goal is maximum flexibility and protection while staying aligned with your values."
                     />
 
                     {/* 4. Circles, Roles & Quests */}

@@ -203,7 +203,7 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
                       <Bot className="w-4 h-4 text-[#7dd87d]" />
                     </div>
                     <div className="bg-[#f0ebe3] rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-[#1a472a] max-w-[280px]">
-                      Hi! I'm your ReGen admin assistant. I can help you navigate the dashboard, draft emails, prioritize contacts, and more. What do you need?
+                      Hi! I'm your ReGen admin assistant. I can help you find things in the dashboard, draft emails, prioritize contacts, and more. What do you need?
                     </div>
                   </div>
                   <div className="pl-9 flex flex-wrap gap-1.5">
