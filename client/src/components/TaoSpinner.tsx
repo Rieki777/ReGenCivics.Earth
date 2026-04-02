@@ -120,7 +120,7 @@ export function TaoSpinner({
       if (cancelled) return;
       setNextQuote(getRandomQuote());
       setPhase("fading-out");
-    }, 5000);
+    }, 6000);
 
     return () => {
       cancelled = true;
@@ -166,13 +166,4 @@ export function TaoSpinner({
 
   if (fullPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
-        {content}
-      </div>
-    );
-  }
-
-  return content;
-}
-
-export default TaoSpinner;
+      <div className="min-h-screen fle
