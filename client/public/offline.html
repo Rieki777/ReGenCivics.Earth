@@ -16,16 +16,20 @@ button:hover{background:#2d6a4f}
 <body>
 <div>
 <h1>ReGen Civics</h1>
-<p>You're offline. Check your connection and try again.</p>
+<p>Your internet is not strong enough for this Game</p>
 <button onclick="window.location.reload()">Retry</button>
 </div>
 <script>
-  // If the browser reports online, this is likely a stale service worker response.
-  // Auto-retry after a brief delay.
+  // If the browser reports online, this is likely a stale service worker response
+  // or a slow connection. Auto-retry with increasing delays.
   if (navigator.onLine) {
     setTimeout(function() { window.location.reload(); }, 1500);
   }
   window.addEventListener('online', function() { window.location.reload(); });
+  // Safari can be slow to update navigator.onLine. Retry once more after 4s regardless.
+  setTimeout(function() {
+    if (document.visibilityState === 'visible') window.location.reload();
+  }, 4000);
 </script>
 </body>
 </html>
