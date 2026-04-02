@@ -181,16 +181,16 @@ export default function Home() {
   }, []);
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
-  const bgImage = "/images/backgrounds/home-desktop.webp";
-  const mobileBgImage = "/images/backgrounds/home-mobile.webp";
+  const bgImage = "/images/backgrounds/home-desktop.webp?v=2";
+  const mobileBgImage = "/images/backgrounds/home-mobile.webp?v=2";
 
   return (
     <PageWrapper>
     <PageBackground
       backgroundImage={bgImage}
       mobileBackgroundImage={mobileBgImage}
-      blurPlaceholder="/images/backgrounds/home-desktop.webp"
-      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp"
+      blurPlaceholder="/images/backgrounds/home-desktop.webp?v=2"
+      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp?v=2"
       overlayOpacity={0.55}
       theme="forest"
       blendColor="18, 45, 28"
