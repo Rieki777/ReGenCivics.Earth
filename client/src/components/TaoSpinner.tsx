@@ -99,27 +99,47 @@ interface TaoSpinnerProps {
   fullPage?: boolean;
 }
 
-export function TaoSpinner({ 
-  size = 64, 
-  className = "", 
+export function TaoSpinner({
+  size = 64,
+  className = "",
   showQuote = true,
-  fullPage = true 
+  fullPage = true
 }: TaoSpinnerProps) {
   const [quote, setQuote] = useState(getRandomQuote);
-  const [fadeIn, setFadeIn] = useState(true);
+  const [nextQuote, setNextQuote] = useState<typeof quote | null>(null);
+  const [phase, setPhase] = useState<"visible" | "fading-out" | "fading-in">("visible");
 
-  // Rotate quotes every 5 seconds with fade transition
+  // Rotate quotes every 5 seconds with clean phase-based transitions.
+  // Uses a single interval with phase tracking instead of nested setTimeout,
+  // which caused render thrashing on mobile Safari.
   useEffect(() => {
     if (!showQuote) return;
+    let cancelled = false;
+
     const interval = setInterval(() => {
-      setFadeIn(false);
-      setTimeout(() => {
-        setQuote(getRandomQuote());
-        setFadeIn(true);
-      }, 300);
+      if (cancelled) return;
+      setNextQuote(getRandomQuote());
+      setPhase("fading-out");
     }, 5000);
-    return () => clearInterval(interval);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [showQuote]);
+
+  // Handle phase transitions via transitionend instead of setTimeout
+  const handleTransitionEnd = () => {
+    if (phase === "fading-out" && nextQuote) {
+      setQuote(nextQuote);
+      setNextQuote(null);
+      setPhase("fading-in");
+    } else if (phase === "fading-in") {
+      setPhase("visible");
+    }
+  };
+
+  const opacity = phase === "fading-out" ? "opacity-0" : "opacity-100";
 
   const content = (
     <div className={`text-center ${className}`}>
@@ -127,17 +147,14 @@ export function TaoSpinner({
       {showQuote && (
         <div className="max-w-sm mx-auto px-4">
           <p
-            className={`text-white/80 text-sm italic leading-relaxed transition-opacity duration-300 ${
-              fadeIn ? "opacity-100" : "opacity-0"
-            }`}
+            className={`text-white/80 text-sm italic leading-relaxed transition-opacity duration-300 ${opacity}`}
             style={{ fontFamily: "var(--font-body)" }}
+            onTransitionEnd={handleTransitionEnd}
           >
             "{quote.text}"
           </p>
           <p
-            className={`text-[#7dd87d]/50 text-xs mt-2 transition-opacity duration-300 ${
-              fadeIn ? "opacity-100" : "opacity-0"
-            }`}
+            className={`text-[#7dd87d]/50 text-xs mt-2 transition-opacity duration-300 ${opacity}`}
             style={{ fontFamily: "var(--font-accent)" }}
           >
             {quote.attribution}

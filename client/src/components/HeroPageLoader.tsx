@@ -67,19 +67,27 @@ export function HeroPageLoader({
     }
   }, [imagesReady, minTimeElapsed, dataLoading]);
 
+  // Once revealed and fade-out complete, remove the loader from the DOM entirely
+  // to free up the compositing layer on mobile Safari
+  const [loaderDismissed, setLoaderDismissed] = useState(false);
+
   return (
     <>
-      {/* Loading screen */}
-      <div
-        className={`fixed inset-0 z-[9999] bg-[#0a1a0a] flex items-center justify-center transition-opacity duration-700 ${
-          revealed ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
-        style={{ willChange: "opacity" }}
-      >
-        <TaoSpinner size={72} showQuote fullPage={false} />
-      </div>
+      {/* Loading screen - removed from DOM after fade to free GPU layers */}
+      {!loaderDismissed && (
+        <div
+          className={`fixed inset-0 z-[9999] bg-[#0a1a0a] flex items-center justify-center transition-opacity duration-700 ${
+            revealed ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+          onTransitionEnd={() => {
+            if (revealed) setLoaderDismissed(true);
+          }}
+        >
+          <TaoSpinner size={72} showQuote fullPage={false} />
+        </div>
+      )}
 
-      {/* Page content (renders underneath, becomes visible when loader fades) */}
+      {/* Page content */}
       <div
         className={`transition-opacity duration-500 ${
           revealed ? "opacity-100" : "opacity-0"
