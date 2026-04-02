@@ -18,10 +18,9 @@ export default defineConfig(({ mode }): UserConfig => ({
         // Exclude OG images — social crawlers always fetch fresh, no offline value
         globPatterns: ["**/*.{js,css,html,ico,webp,svg,woff2,png}"],
         globIgnores: ["og/**", "og-default.*"],
-        // Serve offline.html when navigation requests fail (no network + not in cache)
-        navigateFallback: "/offline.html",
+        // Serve index.html (SPA shell) for all navigation requests, with offline.html as the actual offline fallback
+        navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /^\/assets\//],
-        navigateFallbackAllowlist: [/^\/$/,  /^\/land/, /^\/play/, /^\/quest/, /^\/community/, /^\/fund/, /^\/apply/, /^\/profile/, /^\/crowd-pooling/, /^\/opportunity/, /^\/terms/, /^\/privacy/],
         runtimeCaching: [
           {
             urlPattern: /\/api\//,
