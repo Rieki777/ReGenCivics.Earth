@@ -109,7 +109,7 @@ export default function SmartBottomNav() {
                 key={`${slot.path}-${i}`}
                 href={slot.path}
                 className={`flex flex-col items-center justify-center gap-1 transition-colors relative ${
-                  isActive ? "text-[#7dd87d]" : "text-white/40 hover:text-white/70"
+                  isActive ? "text-[#7dd87d]" : "text-white/60 hover:text-white/70"
                 }`}
                 onTouchStart={() => handleLongPressStart(i)}
                 onTouchEnd={handleLongPressEnd}
@@ -133,7 +133,7 @@ export default function SmartBottomNav() {
           <button
             onClick={togglePlay}
             className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-              isPlaying ? "text-[#7dd87d]" : "text-white/40 hover:text-white/70"
+              isPlaying ? "text-[#7dd87d]" : "text-white/60 hover:text-white/70"
             }`}
             aria-label={isPlaying ? "Pause music" : "Play music"}
           >
@@ -146,7 +146,7 @@ export default function SmartBottomNav() {
             ref={panelToggleRef}
             onClick={() => setPanelOpen(p => !p)}
             className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-              panelOpen ? "text-[#7dd87d]" : "text-white/40 hover:text-white/70"
+              panelOpen ? "text-[#7dd87d]" : "text-white/60 hover:text-white/70"
             }`}
             aria-label={panelOpen ? "Close player" : "Open player"}
           >

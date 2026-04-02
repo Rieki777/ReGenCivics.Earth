@@ -68,7 +68,7 @@ export function SharePanel({ questTitle, questTagline, forumUrl }: SharePanelPro
           >
             <button
               onClick={() => setFlipped(false)}
-              className="absolute top-3 right-3 text-white/40 hover:text-white/80 transition-colors"
+              className="absolute top-3 right-3 text-white/60 hover:text-white/80 transition-colors"
               aria-label="Close"
             >
               <X className="w-4 h-4" />

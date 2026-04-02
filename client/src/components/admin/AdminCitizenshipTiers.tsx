@@ -98,14 +98,14 @@ export function AdminCitizenshipTiers() {
                   <Badge variant={job.status === "success" ? "default" : "destructive"} className="text-xs">
                     {job.status}
                   </Badge>
-                  <span className="text-white/40 text-xs">
+                  <span className="text-white/60 text-xs">
                     {job.playersProcessed} players, {job.promotions}↑ {job.demotions}↓
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-white/40 text-sm text-center py-4">No jobs run yet</p>
+            <p className="text-white/60 text-sm text-center py-4">No jobs run yet</p>
           )}
         </CardContent>
       </Card>
@@ -132,7 +132,7 @@ export function AdminCitizenshipTiers() {
               ))}
             </div>
           ) : (
-            <p className="text-white/40 text-sm text-center py-4">No players in grace period</p>
+            <p className="text-white/60 text-sm text-center py-4">No players in grace period</p>
           )}
         </CardContent>
       </Card>

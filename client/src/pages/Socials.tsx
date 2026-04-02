@@ -216,7 +216,7 @@ export default function Socials() {
                         {social.description}
                       </p>
                     </div>
-                    <ExternalLink className="w-5 h-5 text-white/40 group-hover:text-[#7dd87d] transition-colors shrink-0" />
+                    <ExternalLink className="w-5 h-5 text-white/60 group-hover:text-[#7dd87d] transition-colors shrink-0" />
                   </div>
                 </div>
               </a>

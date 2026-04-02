@@ -380,7 +380,7 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
         {/* Skip / close button */}
         <button
           onClick={handleSkip}
-          className="absolute top-4 right-4 text-white/40 hover:text-white/70 transition-colors"
+          className="absolute top-4 right-4 text-white/60 hover:text-white/70 transition-colors"
           aria-label="Skip onboarding"
         >
           <X className="w-5 h-5" />
@@ -403,7 +403,7 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
           {!isLastStep ? (
             <button
               onClick={handleSkip}
-              className="text-white/40 hover:text-white/70 text-sm transition-colors"
+              className="text-white/60 hover:text-white/70 text-sm transition-colors"
             >
               Skip for now
             </button>

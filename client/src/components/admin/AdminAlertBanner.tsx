@@ -49,7 +49,7 @@ export function AdminAlertBanner({ onTabChange }: { onTabChange: (tab: string) =
         </button>
       ))}
       {alerts.length > 5 && (
-        <button onClick={() => setExpanded(e => !e)} className="w-full px-4 py-1 text-xs text-white/40 hover:text-white/60 transition-colors">
+        <button onClick={() => setExpanded(e => !e)} className="w-full px-4 py-1 text-xs text-white/60 hover:text-white/60 transition-colors">
           {expanded ? 'Show fewer' : `View all ${alerts.length} alerts`}
         </button>
       )}

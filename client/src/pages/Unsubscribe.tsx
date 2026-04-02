@@ -97,7 +97,7 @@ export default function Unsubscribe() {
                 <strong className="text-white/80">{email}</strong> has been removed from our mailing list.
                 You will no longer receive newsletter emails from ReGen Civics.
               </p>
-              <p className="text-white/40 text-xs mb-6">
+              <p className="text-white/60 text-xs mb-6">
                 Changed your mind? You can always re-subscribe from our homepage or any form on the site.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -181,7 +181,7 @@ export default function Unsubscribe() {
           <div className="mt-6 pt-4 border-t border-white/10">
             <div className="flex items-start gap-2">
               <Shield className="w-4 h-4 text-[#7dd87d]/60 flex-shrink-0 mt-0.5" />
-              <p className="text-white/40 text-xs leading-relaxed">
+              <p className="text-white/60 text-xs leading-relaxed">
                 Your privacy matters. We process unsubscribe requests immediately and do not share your email with third parties.
                 For questions, reach out through our{" "}
                 <a

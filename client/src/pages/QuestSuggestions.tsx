@@ -253,7 +253,7 @@ export default function QuestSuggestions() {
               <h3 className="text-white/60 text-lg mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                 No quest suggestions yet
               </h3>
-              <p className="text-white/40 text-sm mb-6">Be the first to suggest a quest for the community!</p>
+              <p className="text-white/60 text-sm mb-6">Be the first to suggest a quest for the community!</p>
               {isAuthenticated && (
                 <Button
                   onClick={() => setShowForm(true)}
@@ -312,7 +312,7 @@ export default function QuestSuggestions() {
                         {suggestion.description}
                       </p>
 
-                      <div className="flex items-center gap-3 text-xs text-white/40 flex-wrap">
+                      <div className="flex items-center gap-3 text-xs text-white/60 flex-wrap">
                         {catInfo && (
                           <span className="bg-white/10 px-2 py-0.5 rounded-full">
                             {catInfo.icon} {catInfo.label}

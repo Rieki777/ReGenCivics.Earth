@@ -236,7 +236,7 @@ export function ExitIntentCapture() {
       >
         <button
           onClick={handleDismiss}
-          className="absolute top-3 right-3 text-white/40 hover:text-white/70 transition-colors"
+          className="absolute top-3 right-3 text-white/60 hover:text-white/70 transition-colors"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -282,7 +282,7 @@ export function ExitIntentCapture() {
                 </button>
                 <button
                   onClick={() => { setShow(false); sessionStorage.setItem('exitIntentDismissed', '1'); setDismissed(true); }}
-                  className="w-full py-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+                  className="w-full py-2 text-xs text-white/60 hover:text-white/60 transition-colors"
                 >
                   Not right now
                 </button>

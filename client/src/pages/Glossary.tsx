@@ -345,7 +345,7 @@ export default function Glossary() {
             {filtered.length === 0 && (
               <div className="text-center py-12">
                 <SeedOfLifeIcon className="w-12 h-12 text-white/35 mx-auto mb-4" size={48} />
-                <p className="text-white/40 text-sm">No terms match your search.</p>
+                <p className="text-white/60 text-sm">No terms match your search.</p>
               </div>
             )}
             {filtered.map((entry, i) => (

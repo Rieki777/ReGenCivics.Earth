@@ -13,7 +13,7 @@ interface DataProtectionBadgeProps {
 export function DataProtectionBadge({ className = "", compact = false }: DataProtectionBadgeProps) {
   if (compact) {
     return (
-      <div className={`flex items-center gap-1.5 text-white/40 text-[10px] ${className}`}>
+      <div className={`flex items-center gap-1.5 text-white/60 text-[10px] ${className}`}>
         <Lock className="w-3 h-3" />
         <span>Encrypted and secure.{" "}
           <Link href="/privacy-policy" className="underline hover:text-white/60">

@@ -114,7 +114,7 @@ export default function AllocationCalculator() {
               <div className="flex items-center justify-between mb-3">
                 <label className="text-white/60 text-sm">Your Investment Amount</label>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-white/40 text-sm">$</span>
+                  <span className="text-white/60 text-sm">$</span>
                   <input
                     type="text"
                     value={customInput}
@@ -133,7 +133,7 @@ export default function AllocationCalculator() {
                 onChange={(e) => handleSliderChange(Number(e.target.value))}
                 className="w-full accent-[#7dd87d]"
               />
-              <div className="flex justify-between text-white/40 text-xs mt-1">
+              <div className="flex justify-between text-white/60 text-xs mt-1">
                 <span>$250K minimum</span>
                 <span>$5M+</span>
               </div>
@@ -174,7 +174,7 @@ export default function AllocationCalculator() {
                 </p>
                 <Tooltip>
                   <TooltipTrigger>
-                    <Info className="w-3.5 h-3.5 text-white/40" />
+                    <Info className="w-3.5 h-3.5 text-white/60" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-xs max-w-[220px]">
@@ -214,7 +214,7 @@ export default function AllocationCalculator() {
                   </p>
                   <Tooltip>
                     <TooltipTrigger>
-                      <Info className="w-3.5 h-3.5 text-white/40" />
+                      <Info className="w-3.5 h-3.5 text-white/60" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="text-xs max-w-[240px]">
@@ -250,7 +250,7 @@ export default function AllocationCalculator() {
 
                 <div className="mt-4 flex items-start gap-2 bg-white/5 rounded-lg px-3 py-2">
                   <div className="w-2 h-2 rounded-full bg-white/20 mt-1 shrink-0" />
-                  <p className="text-white/40 text-xs">
+                  <p className="text-white/60 text-xs">
                     Years 1–2 are reinvestment phase  -  no cash distributions. Year 3 also triggers annual
                     redemption windows (at NAV less 5% early-exit discount).
                   </p>
@@ -313,9 +313,9 @@ export default function AllocationCalculator() {
                   <span className="text-white font-medium text-sm">Fee &amp; Carry Structure</span>
                 </div>
                 {showTerms ? (
-                  <ChevronUp className="w-4 h-4 text-white/40" />
+                  <ChevronUp className="w-4 h-4 text-white/60" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-white/40" />
+                  <ChevronDown className="w-4 h-4 text-white/60" />
                 )}
               </button>
               {showTerms && (
@@ -362,7 +362,7 @@ export default function AllocationCalculator() {
 
           {/* Disclaimer */}
           <AnimatedSection animation="fade-in" delay={350}>
-            <p className="text-white/40 text-[10px] leading-relaxed max-w-2xl mx-auto text-center">
+            <p className="text-white/60 text-[10px] leading-relaxed max-w-2xl mx-auto text-center">
               <Sparkles className="w-3 h-3 inline mr-1" />
               All projections are hypothetical and for illustration purposes only. Net IRR scenarios reference
               the fund's target range of 12–18%; actual returns may differ materially. Cash yield estimates

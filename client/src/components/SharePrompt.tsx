@@ -75,7 +75,7 @@ export function SharePrompt({ url, text, moment, onClose, className = "" }: Shar
       <div className="flex items-center justify-between">
         <p className="text-white font-semibold text-sm">Tell someone about this</p>
         {onClose && (
-          <button onClick={onClose} className="text-white/40 hover:text-white/70 transition-colors" aria-label="Close">
+          <button onClick={onClose} className="text-white/60 hover:text-white/70 transition-colors" aria-label="Close">
             <X className="w-4 h-4" />
           </button>
         )}

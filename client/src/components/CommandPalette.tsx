@@ -157,7 +157,7 @@ export function CommandPalette() {
 
           {/* Results */}
           <Command.List className="max-h-[60vh] overflow-y-auto py-2">
-            <Command.Empty className="py-8 text-center text-white/40 text-sm">
+            <Command.Empty className="py-8 text-center text-white/60 text-sm">
               No results found.
             </Command.Empty>
 
@@ -231,7 +231,7 @@ export function CommandPalette() {
                     <span className="flex-1 min-w-0">
                       <span className="font-medium">{page.label}</span>
                       {page.description && (
-                        <span className="block text-xs text-white/40 truncate">{page.description}</span>
+                        <span className="block text-xs text-white/60 truncate">{page.description}</span>
                       )}
                     </span>
                   </Command.Item>

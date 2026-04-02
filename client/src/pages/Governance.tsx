@@ -726,7 +726,7 @@ function EarthDayCountdown() {
               Preview on Hypha Now →
             </Button>
           </a>
-          <p className="text-white/40 text-xs mt-3">Full dashboard integration launches April 22, 2026 (Earth Day)</p>
+          <p className="text-white/60 text-xs mt-3">Full dashboard integration launches April 22, 2026 (Earth Day)</p>
         </div>
       </div>
     </div>

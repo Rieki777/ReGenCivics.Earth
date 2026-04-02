@@ -33,7 +33,7 @@ export function QuestStartPopup({ onNavigateToQuests }: QuestStartPopupProps) {
       <div className="relative bg-gradient-to-br from-[#1a472a] to-[#2d5a3d] border border-[#7dd87d]/30 rounded-2xl shadow-2xl max-w-md w-full p-6">
         <button
           onClick={dismiss}
-          className="absolute top-4 right-4 text-white/40 hover:text-white/80 transition-colors"
+          className="absolute top-4 right-4 text-white/60 hover:text-white/80 transition-colors"
           aria-label="Dismiss"
         >
           <X className="w-5 h-5" />
@@ -62,7 +62,7 @@ export function QuestStartPopup({ onNavigateToQuests }: QuestStartPopupProps) {
               {q}
             </div>
           ))}
-          <div className="text-xs text-white/40 pl-3.5">+ 6 more quests...</div>
+          <div className="text-xs text-white/60 pl-3.5">+ 6 more quests...</div>
         </div>
 
         <div className="flex gap-3">

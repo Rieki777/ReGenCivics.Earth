@@ -36,7 +36,7 @@ export function BulkActionBar({ selectedCount, entityType, onAction, onClear }: 
           {action.label}
         </button>
       ))}
-      <button onClick={onClear} className="text-sm text-white/40 hover:text-white/60 ml-2">Clear</button>
+      <button onClick={onClear} className="text-sm text-white/60 hover:text-white/60 ml-2">Clear</button>
     </div>
   )
 }

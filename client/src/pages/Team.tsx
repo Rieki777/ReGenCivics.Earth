@@ -228,7 +228,7 @@ function ArchetypeCard({ archetype }: { archetype: typeof archetypes[0] }) {
               </li>
             ))}
           </ul>
-          <p className="text-white/40 text-xs mt-4 absolute bottom-4 left-6">Click to flip back</p>
+          <p className="text-white/60 text-xs mt-4 absolute bottom-4 left-6">Click to flip back</p>
         </div>
       </div>
     </div>

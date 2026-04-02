@@ -225,7 +225,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
 
             {Object.keys(seasonData.contributionsByType).length > 0 && (
               <div className="w-full mt-4 space-y-2">
-                <p className="text-xs text-white/40 uppercase tracking-wider">By type</p>
+                <p className="text-xs text-white/60 uppercase tracking-wider">By type</p>
                 {Object.entries(seasonData.contributionsByType).map(([type, count]) => (
                   <div key={type} className="flex justify-between text-sm">
                     <span className="text-white/70 capitalize">{CAPITAL_LABELS[type] ?? type}</span>
@@ -336,7 +336,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
             )}
 
             <div className="w-full space-y-4 mt-2">
-              <p className="text-xs text-white/40 uppercase tracking-wider">Top Contributions</p>
+              <p className="text-xs text-white/60 uppercase tracking-wider">Top Contributions</p>
               {topCapitals.map(([type, value]) => {
                 const maxVal = topCapitals[0]?.[1] ?? 1;
                 const pct = Math.round((value / maxVal) * 100);
@@ -382,15 +382,15 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
               <div className="flex gap-4 mt-2">
                 <div className="text-center">
                   <span className="text-lg font-bold text-white">{seasonData.questsCompleted}</span>
-                  <p className="text-white/40 text-[10px]">Quests</p>
+                  <p className="text-white/60 text-[10px]">Quests</p>
                 </div>
                 <div className="text-center">
                   <span className="text-lg font-bold text-white">{seasonData.tokensEarned}</span>
-                  <p className="text-white/40 text-[10px]">$ReGen</p>
+                  <p className="text-white/60 text-[10px]">$ReGen</p>
                 </div>
                 <div className="text-center">
                   <span className="text-lg font-bold text-white">{seasonData.gratitudeReceived}</span>
-                  <p className="text-white/40 text-[10px]">Gratitude</p>
+                  <p className="text-white/60 text-[10px]">Gratitude</p>
                 </div>
               </div>
 
@@ -452,7 +452,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
               style={{ backgroundColor: "rgba(244, 114, 182, 0.08)", border: "1px solid rgba(244, 114, 182, 0.15)" }}
             >
               <MessageCircle className="w-5 h-5 text-[#F472B6]/60 mx-auto mb-2" />
-              <p className="text-white/40 text-xs">
+              <p className="text-white/60 text-xs">
                 Gratitude messages from your community will appear here.
               </p>
             </div>
@@ -475,7 +475,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
             <button
               onClick={prev}
               disabled={activeCard === 0}
-              className="text-white/40 hover:text-white disabled:opacity-20 transition-colors p-2"
+              className="text-white/60 hover:text-white disabled:opacity-20 transition-colors p-2"
               aria-label="Previous card"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -488,7 +488,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
             <button
               onClick={next}
               disabled={activeCard === CARD_COUNT - 1}
-              className="text-white/40 hover:text-white disabled:opacity-20 transition-colors p-2"
+              className="text-white/60 hover:text-white disabled:opacity-20 transition-colors p-2"
               aria-label="Next card"
             >
               <ArrowRight className="w-5 h-5" />

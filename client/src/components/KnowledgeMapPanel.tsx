@@ -27,7 +27,7 @@ export default function KnowledgeMapPanel({ categoryId, categoryName }: Props) {
         <span className="text-sm font-semibold text-[#7dd87d]">
           Knowledge Map{categoryName ? `: ${categoryName}` : ""}
         </span>
-        <span className="text-xs text-white/40 ml-1">Essential reading</span>
+        <span className="text-xs text-white/60 ml-1">Essential reading</span>
       </div>
 
       <ul className="space-y-2">
@@ -60,7 +60,7 @@ export default function KnowledgeMapPanel({ categoryId, categoryName }: Props) {
                   </Link>
                 )}
                 {entry.summary && (
-                  <p className="text-xs text-white/40 mt-0.5 leading-relaxed line-clamp-1">
+                  <p className="text-xs text-white/60 mt-0.5 leading-relaxed line-clamp-1">
                     {entry.summary}
                   </p>
                 )}

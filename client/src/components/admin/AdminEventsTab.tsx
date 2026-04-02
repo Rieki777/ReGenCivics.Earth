@@ -252,7 +252,7 @@ export function AdminEventsTab() {
       )}
 
       {/* Events List */}
-      {isLoading && <div className="text-center py-8 text-white/40"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
+      {isLoading && <div className="text-center py-8 text-white/60"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
 
       <div className="space-y-2">
         {allEvents.map(ev => {
@@ -268,11 +268,11 @@ export function AdminEventsTab() {
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[ev.type] ?? ''}`}>{ev.type}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[ev.status] ?? ''}`}>{ev.status}</span>
-                      {ev.season && <span className="text-xs text-white/40">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
+                      {ev.season && <span className="text-xs text-white/60">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
                     </div>
                     <p className="font-medium text-white text-sm truncate">{ev.title}</p>
                     <p className="text-xs text-white/50 mt-0.5">{dateStr} {timeStr} {ev.timezone ?? ''}</p>
-                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/40">
+                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/60">
                       <span><Bell size={11} className="inline mr-1" />{signupCount} reminder signup{signupCount !== 1 ? 's' : ''}</span>
                       {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
                       {ev.youtubeUrl && <a href={ev.youtubeUrl} target="_blank" rel="noreferrer" className="text-red-400 hover:underline">YouTube ↗</a>}
@@ -370,7 +370,7 @@ export function AdminEventsTab() {
                 {/* #16 — Check-in URL and copy button */}
                 {(ev as any).checkinToken && (
                   <div className="border-t border-white/10 px-4 py-2 flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-white/40">Check-in URL:</span>
+                    <span className="text-xs text-white/60">Check-in URL:</span>
                     <code className="text-xs text-[#7dd87d] bg-white/5 px-2 py-0.5 rounded break-all">
                       {window.location.origin}/checkin/{(ev as any).checkinToken}
                     </code>
@@ -380,7 +380,7 @@ export function AdminEventsTab() {
                         setCheckinCopied(ev.id);
                         setTimeout(() => setCheckinCopied(null), 2000);
                       }}
-                      className="text-xs text-white/40 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
+                      className="text-xs text-white/60 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
                     >
                       {checkinCopied === ev.id ? <><CheckCheck size={11} /> Copied!</> : <><ClipboardList size={11} /> Copy</>}
                     </button>
@@ -437,8 +437,8 @@ export function AdminEventsTab() {
                       </div>
                     </div>
 
-                    <p className="text-xs text-white/40">Subject: <span className="text-white/70">{customSubject || `Reminder: ${ev.title} is tomorrow`}</span></p>
-                    <p className="text-xs text-white/40">Sending to <span className="text-white/70">{Number(countMap[ev.id] ?? 0)} people</span> who signed up for this event.</p>
+                    <p className="text-xs text-white/60">Subject: <span className="text-white/70">{customSubject || `Reminder: ${ev.title} is tomorrow`}</span></p>
+                    <p className="text-xs text-white/60">Sending to <span className="text-white/70">{Number(countMap[ev.id] ?? 0)} people</span> who signed up for this event.</p>
 
                     <div className="flex flex-wrap items-end gap-2">
                       <Button
@@ -454,7 +454,7 @@ export function AdminEventsTab() {
                       {/* #24 — Schedule for later */}
                       <div className="flex items-end gap-1.5">
                         <div>
-                          <Label className="text-white/40 text-xs">Schedule for...</Label>
+                          <Label className="text-white/60 text-xs">Schedule for...</Label>
                           <Input
                             type="datetime-local"
                             value={scheduleFor}
@@ -716,7 +716,7 @@ export function AdminEventsTab() {
                     <div key={a.id} className="flex items-center justify-between gap-2">
                       <div>
                         <span className="text-white text-sm">{a.name || a.email}</span>
-                        {a.name && <span className="text-white/40 text-xs ml-2">{a.email}</span>}
+                        {a.name && <span className="text-white/60 text-xs ml-2">{a.email}</span>}
                         <span className="text-amber-400 text-xs ml-2">+{a.tokensAwarded} $ReGen</span>
                       </div>
                       <button

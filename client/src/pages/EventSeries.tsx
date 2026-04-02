@@ -109,7 +109,7 @@ export default function EventSeries() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex-1">
                         <h3 className="text-white/80 font-medium mb-1">{ev.title}</h3>
-                        <p className="text-white/40 text-xs flex items-center gap-1.5">
+                        <p className="text-white/60 text-xs flex items-center gap-1.5">
                           <Clock size={11} />
                           {new Date(ev.startTime).toLocaleDateString("en-US", {
                             month: "short", day: "numeric", year: "numeric",

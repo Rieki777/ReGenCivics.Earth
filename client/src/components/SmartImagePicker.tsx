@@ -61,7 +61,7 @@ function t(theme: Theme) {
     dropzone: dark ? "border-white/20 hover:border-white/40 bg-white/5" : "border-[#e8e4de] hover:border-[#7dd87d]/50 bg-[#f8f5f0]",
     dropzoneActive: "border-[#7dd87d] bg-[#7dd87d]/10",
     dropIcon: dark ? "text-white/30" : "text-[#1a472a]/25",
-    dropText: dark ? "text-white/40" : "text-[#1a472a]/50",
+    dropText: dark ? "text-white/60" : "text-[#1a472a]/50",
     input: dark
       ? "bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:ring-[#7dd87d]/50"
       : "bg-white border-[#e8e4de] text-[#1a472a] placeholder:text-[#1a472a]/30 focus:ring-[#7dd87d]/50 focus:border-[#7dd87d]",

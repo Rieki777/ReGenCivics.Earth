@@ -20,7 +20,7 @@ function formatDate(dateStr: string): string {
 export function QuestJournal({ entries }: { entries: JournalEntry[] }) {
   if (entries.length === 0) {
     return (
-      <div className="text-center py-8 text-white/40 text-sm">
+      <div className="text-center py-8 text-white/60 text-sm">
         <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-40" />
         <p>Your quest journal is empty. Complete a quest to start your log.</p>
       </div>
@@ -33,7 +33,7 @@ export function QuestJournal({ entries }: { entries: JournalEntry[] }) {
         <div key={entry.id} className="border-l-2 border-[#7dd87d]/30 pl-3 py-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-white">{entry.questTitle}</span>
-            <span className="text-xs text-white/40">{formatDate(entry.completedAt)}</span>
+            <span className="text-xs text-white/60">{formatDate(entry.completedAt)}</span>
           </div>
           {entry.reflection && (
             <p className="text-xs text-white/60 mt-1">{entry.reflection}</p>

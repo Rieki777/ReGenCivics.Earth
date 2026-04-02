@@ -137,7 +137,7 @@ function QuestCard({
         {/* Expand toggle */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="mt-3 flex items-center gap-1 text-white/40 text-xs hover:text-white/70 transition-colors ml-12"
+          className="mt-3 flex items-center gap-1 text-white/60 text-xs hover:text-white/70 transition-colors ml-12"
         >
           {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           About this quest
@@ -247,7 +247,7 @@ export function WelcomeAboardQuests({ profile, onUpdate }: WelcomeAboardQuestsPr
         )}
 
         {!allDone && (
-          <p className="mt-2 text-white/40 text-xs">
+          <p className="mt-2 text-white/60 text-xs">
             Complete all 10 quests to earn 330 $ReGen + 1 RGVoice and place your first Claim.
           </p>
         )}

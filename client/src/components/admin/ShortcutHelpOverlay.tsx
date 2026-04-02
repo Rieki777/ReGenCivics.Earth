@@ -114,7 +114,7 @@ export function ShortcutHelpOverlay() {
           <button
             onClick={() => setOpen(false)}
             aria-label="Close keyboard shortcuts"
-            className="text-white/40 hover:text-white"
+            className="text-white/60 hover:text-white"
           >
             <X size={16} />
           </button>

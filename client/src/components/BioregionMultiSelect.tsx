@@ -186,7 +186,7 @@ export function BioregionMultiSelect({
           <button type="button" className={triggerBase} aria-expanded={open}>
             <span className="flex items-center gap-1.5">
               <MapPin className="shrink-0 w-3.5 h-3.5 opacity-60" />
-              <span className={variant === "dark" ? "text-white/40" : "text-[#1a472a]/40"}>
+              <span className={variant === "dark" ? "text-white/60" : "text-[#1a472a]/40"}>
                 {isLoading ? "Loading…" : placeholder}
               </span>
             </span>

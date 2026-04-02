@@ -70,7 +70,7 @@ export function UserNotificationPreferences({ currentPrefs }: Props) {
       <div className="flex items-center gap-2 mb-4">
         <Bell className="w-4 h-4 text-[#7dd87d]" />
         <h3 className="text-white font-semibold text-sm">Notification Preferences</h3>
-        {saving && <span className="text-white/40 text-xs">Saving...</span>}
+        {saving && <span className="text-white/60 text-xs">Saving...</span>}
       </div>
       <div className="space-y-3">
         {TOGGLES.map(({ key, label, description }) => (

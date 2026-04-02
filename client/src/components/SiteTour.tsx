@@ -191,7 +191,7 @@ export function SiteTour() {
         {/* Starter prompts  -  shown when only the welcome message exists */}
         {messages.length <= 1 && (
           <div className="px-4 pb-2 space-y-1.5 shrink-0">
-            <p className="text-white/40 text-xs mb-2">Suggested questions:</p>
+            <p className="text-white/60 text-xs mb-2">Suggested questions:</p>
             {STARTER_PROMPTS.map((prompt) => (
               <button
                 key={prompt}

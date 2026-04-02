@@ -337,7 +337,7 @@ export default function ProjectComparison() {
                       </th>
                     ))}
                     {Array(3 - projects.length).fill(null).map((_, idx) => (
-                      <th key={`empty-header-${idx}`} className="py-4 px-4 text-center text-white/40">
+                      <th key={`empty-header-${idx}`} className="py-4 px-4 text-center text-white/60">
                         -
                       </th>
                     ))}

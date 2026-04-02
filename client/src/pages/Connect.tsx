@@ -721,7 +721,7 @@ export default function Connect() {
                 >
                   <MapPin className="w-3 h-3" /> Use my current location
                 </button>
-                <p className="text-xs text-white/40 mt-2">
+                <p className="text-xs text-white/60 mt-2">
                   Tip: Right-click your location on Google Maps to copy coordinates.
                 </p>
               </div>

@@ -145,7 +145,7 @@ export default function TreasuryDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-white/40">
+          <span className="text-xs text-white/60">
             Last updated: {lastUpdated.toLocaleTimeString()}
           </span>
           <Button
@@ -303,7 +303,7 @@ export default function TreasuryDashboard() {
                       style={{ backgroundColor: project.color }}
                     />
                     <span className="text-white">{project.name}</span>
-                    <span className="text-white/40 text-xs">({project.type})</span>
+                    <span className="text-white/60 text-xs">({project.type})</span>
                   </div>
                   <span className="text-[#7dd87d] font-semibold">{project.allocation}%</span>
                 </div>
@@ -349,7 +349,7 @@ export default function TreasuryDashboard() {
                     <div className={`font-semibold text-sm ${tx.type === "investment" ? "text-blue-400" : "text-[#7dd87d]"}`}>
                       {tx.type === "investment" ? "+" : "-"}${tx.amount.toLocaleString()}
                     </div>
-                    <div className="text-white/40 text-xs">{tx.date}</div>
+                    <div className="text-white/60 text-xs">{tx.date}</div>
                   </div>
                 </div>
               </div>

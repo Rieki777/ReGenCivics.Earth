@@ -587,7 +587,7 @@ function EntityCard({
         {/* Meeting Frequency */}
         {isSelected && entity.meetingFrequency && (
           <p className="text-white/60 text-xs mt-1">
-            <span className="text-white/40">Meets:</span>{" "}
+            <span className="text-white/60">Meets:</span>{" "}
             {({
               everyday: "Everyday",
               "2_3x_week": "2–3× per week",
@@ -666,7 +666,7 @@ function EntityCard({
                 href="/community"
                 onClick={(e) => e.stopPropagation()}
                 title="Forum space coming soon for this project"
-                className="inline-flex items-center gap-1 text-xs border border-white/20 text-white/40 px-3 py-1.5 rounded-full font-medium cursor-default pointer-events-none"
+                className="inline-flex items-center gap-1 text-xs border border-white/20 text-white/60 px-3 py-1.5 rounded-full font-medium cursor-default pointer-events-none"
               >
                 <MessageCircle className="w-3 h-3" /> Forum (coming soon)
               </a>
@@ -730,7 +730,7 @@ function CountryFilter({
         ))}
       </select>
       <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-        <Filter className="w-3 h-3 text-white/40" />
+        <Filter className="w-3 h-3 text-white/60" />
       </div>
     </div>
   );
@@ -1239,7 +1239,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           </div>
           {/* Inline search for fallback view */}
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
             <input
               type="text"
               placeholder="Search name, country, role..."
@@ -1298,7 +1298,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 ))}
                 {filteredEntities.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-white/40">No results match your filters.</td>
+                    <td colSpan={4} className="px-4 py-8 text-center text-white/60">No results match your filters.</td>
                   </tr>
                 )}
               </tbody>
@@ -1381,7 +1381,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 <p className="text-white/50 text-xs mt-0.5">{filteredEntities.length} {filter === "all" ? "projects & organizations" : filter === "land_project" ? "land projects" : filter === "organization" ? "organizations" : "applicants"}</p>
                 {/* Search */}
                 <div className="relative mt-2">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/60" />
                   <input
                     type="text"
                     placeholder="Search name, country, role..."
@@ -1466,8 +1466,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 ))}
                 {filteredEntities.length === 0 && (
                   <div className="text-center py-8">
-                    <Globe className="w-8 h-8 text-white/40 mx-auto mb-2" />
-                    <p className="text-white/40 text-xs">No results match your filters</p>
+                    <Globe className="w-8 h-8 text-white/60 mx-auto mb-2" />
+                    <p className="text-white/60 text-xs">No results match your filters</p>
                     <button onClick={clearFilters} className="text-xs text-[#7dd87d] mt-2 hover:underline">Clear filters</button>
                   </div>
                 )}
@@ -1515,7 +1515,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 </div>
                 {/* Size scale */}
                 <div className="mt-1 pt-1 border-t border-white/10">
-                  <p className="text-white/40 text-[9px] mb-1">Tree size by acreage:</p>
+                  <p className="text-white/60 text-[9px] mb-1">Tree size by acreage:</p>
                   <div className="flex items-end gap-3 pl-1">
                     <div className="flex flex-col items-center">
                       <svg width="8" height="14" viewBox="0 0 8 14"><polygon points="4,1 7,6 1,6" fill="#7dd87d" opacity="0.8" /><polygon points="4,3 8,10 0,10" fill="#5cb85c" opacity="0.7" /><rect x="3" y="9" width="2" height="4" fill="#5D3A1A" /></svg>
@@ -1576,7 +1576,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         {/* Search + Country filter - mobile */}
         <div className="bg-[#0a1f14] px-4 pb-2 space-y-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
             <input
               type="text"
               placeholder="Search name, country, role..."
@@ -1664,8 +1664,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           ))}
           {filteredEntities.length === 0 && (
             <div className="text-center py-8">
-              <Globe className="w-8 h-8 text-white/40 mx-auto mb-2" />
-              <p className="text-white/40 text-sm">No results match your filters</p>
+              <Globe className="w-8 h-8 text-white/60 mx-auto mb-2" />
+              <p className="text-white/60 text-sm">No results match your filters</p>
               <button onClick={clearFilters} className="text-sm text-[#7dd87d] mt-2 hover:underline">Clear filters</button>
             </div>
           )}

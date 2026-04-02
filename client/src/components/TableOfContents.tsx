@@ -85,7 +85,7 @@ export function TableOfContents() {
 
         {/* Scroll indicator */}
         <div className="mt-4 pt-4 border-t border-[#7dd87d]/20">
-          <p className="text-xs text-white/40 text-center">
+          <p className="text-xs text-white/60 text-center">
             Scroll to explore
           </p>
         </div>

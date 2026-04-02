@@ -78,7 +78,7 @@ function SectionHeader({ icon, label }: { icon: React.ReactNode; label: string }
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <p className="text-white/40 text-sm italic px-1">{message}</p>
+    <p className="text-white/60 text-sm italic px-1">{message}</p>
   );
 }
 
@@ -109,7 +109,7 @@ export function DiscoverTab() {
       {bothEmpty && (
         <div className="rounded-lg bg-white/5 p-4 text-center space-y-2">
           <p className="text-white/70 text-sm font-medium">Fill in your profile to find kindred spirits.</p>
-          <p className="text-white/40 text-xs">
+          <p className="text-white/60 text-xs">
             Set your bioregion and what you are dreaming of in Settings to see personalized recommendations here.
           </p>
         </div>

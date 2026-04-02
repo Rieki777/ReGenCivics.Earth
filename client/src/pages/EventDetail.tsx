@@ -160,7 +160,7 @@ export default function EventDetail() {
                   <span className="bg-[#7dd87d] text-[#1a472a] text-xs font-bold px-2 py-1 rounded-full">OPEN ACCESS</span>
                 )}
                 {event.season && (
-                  <span className="text-xs text-white/40">{event.season}{event.episodeNumber ? ` · Episode ${event.episodeNumber}` : ''}</span>
+                  <span className="text-xs text-white/60">{event.season}{event.episodeNumber ? ` · Episode ${event.episodeNumber}` : ''}</span>
                 )}
                 {isCompleted && (
                   <span className="bg-gray-500/20 text-gray-400 text-xs font-medium px-2 py-1 rounded-full">Completed</span>
@@ -294,7 +294,7 @@ export default function EventDetail() {
 
             {/* Share buttons */}
             <div className="px-8 pb-8 pt-2 border-t border-white/10">
-              <p className="text-white/40 text-sm mb-3 flex items-center gap-2">
+              <p className="text-white/60 text-sm mb-3 flex items-center gap-2">
                 <Share2 className="w-4 h-4" />
                 Share this event
               </p>

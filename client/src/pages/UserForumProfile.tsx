@@ -46,7 +46,7 @@ export default function UserForumProfile() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
         <div className="text-center">
-          <User className="w-16 h-16 text-white/40 mx-auto mb-4" />
+          <User className="w-16 h-16 text-white/60 mx-auto mb-4" />
           <h2 className="text-white/60 text-lg mb-4">User not found</h2>
           <Link href="/community" className="text-[#7dd87d] hover:underline">Back to Forum</Link>
         </div>
@@ -197,7 +197,7 @@ export default function UserForumProfile() {
                   className="block bg-white/5 hover:bg-white/8 border border-white/10 rounded-xl p-4 transition-colors"
                 >
                   <h3 className="text-white font-medium text-sm mb-1">{post.title}</h3>
-                  <div className="flex items-center gap-3 text-xs text-white/40">
+                  <div className="flex items-center gap-3 text-xs text-white/60">
                     <span>{post.replyCount} replies</span>
                     <span>{post.viewCount} views</span>
                     <span>{new Date(post.createdAt).toLocaleDateString()}</span>
@@ -222,7 +222,7 @@ export default function UserForumProfile() {
                   className="block bg-white/5 hover:bg-white/8 border border-white/10 rounded-xl p-4 transition-colors"
                 >
                   <p className="text-white/70 text-sm line-clamp-2">{reply.content}</p>
-                  <div className="flex items-center gap-3 text-xs text-white/40 mt-1">
+                  <div className="flex items-center gap-3 text-xs text-white/60 mt-1">
                     <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
                   </div>
                 </Link>

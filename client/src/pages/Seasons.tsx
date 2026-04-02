@@ -873,7 +873,7 @@ export default function Seasons() {
                       >
                         {item.status === "complete" ? "Complete" : item.status === "active" ? "Opening Now" : "Coming Soon"}
                       </span>
-                      <span className="text-white/40 text-sm ml-auto">{item.period}</span>
+                      <span className="text-white/60 text-sm ml-auto">{item.period}</span>
                     </div>
                     <ul className={`space-y-1.5 ${item.side === "right" ? "sm:text-right" : ""}`}>
                       {item.outcomes.map((o) => (

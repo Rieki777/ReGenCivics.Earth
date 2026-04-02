@@ -47,7 +47,7 @@ export function DigestPreferences({ currentFrequency }: Props) {
       <div className="flex items-center gap-2 mb-4">
         <Mail className="w-4 h-4 text-[#7dd87d]" />
         <h3 className="text-white font-semibold text-sm">Email Digest Frequency</h3>
-        {saving && <span className="text-white/40 text-xs">Saving…</span>}
+        {saving && <span className="text-white/60 text-xs">Saving…</span>}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {OPTIONS.map((opt) => (

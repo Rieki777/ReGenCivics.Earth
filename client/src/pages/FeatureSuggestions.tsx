@@ -94,7 +94,7 @@ export default function FeatureSuggestions() {
 
       <div className="max-w-3xl mx-auto px-4 pb-20">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-white/40 text-sm">{suggestions.length} suggestions</span>
+          <span className="text-white/60 text-sm">{suggestions.length} suggestions</span>
           <div className="flex gap-1 bg-white/5 rounded-lg p-0.5 border border-white/10">
             <button onClick={() => setSortBy("votes")} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === "votes" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/50"}`}>Top</button>
             <button onClick={() => setSortBy("newest")} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === "newest" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/50"}`}>New</button>
@@ -109,7 +109,7 @@ export default function FeatureSuggestions() {
               <AnimatedSection key={s.id} delay={i * 0.03}>
                 <div className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-white/20 transition-colors">
                   <div className="flex gap-3">
-                    <button onClick={() => { if (!isAuthenticated) { window.location.href = getLoginUrl(); return; } voteMutation.mutate({ suggestionId: s.id }); }} className={`flex flex-col items-center gap-0.5 min-w-[44px] pt-1 transition-colors ${hasVoted ? "text-[#7dd87d]" : "text-white/40 hover:text-[#7dd87d]"}`} aria-label={hasVoted ? "Remove vote" : "Vote"}>
+                    <button onClick={() => { if (!isAuthenticated) { window.location.href = getLoginUrl(); return; } voteMutation.mutate({ suggestionId: s.id }); }} className={`flex flex-col items-center gap-0.5 min-w-[44px] pt-1 transition-colors ${hasVoted ? "text-[#7dd87d]" : "text-white/60 hover:text-[#7dd87d]"}`} aria-label={hasVoted ? "Remove vote" : "Vote"}>
                       <ChevronUp className="w-5 h-5" />
                       <span className="text-sm font-bold">{s.voteCount}</span>
                     </button>

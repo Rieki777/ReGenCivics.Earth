@@ -48,7 +48,7 @@ Then we ask: **"Did you sell, spend, or transfer any of the SEEDS tokens you pur
 
 We show a message: "We don't have a record of purchases from this account. If you believe this is an error, you can submit a claim with evidence below."
 
-This routes them to the Dispute flow (Step 4).
+This routes them to the Dispute flow (Step 6).
 
 ### Step 2b: Spent Tokens Adjustment
 
@@ -61,33 +61,82 @@ If the user says they spent some tokens, we show:
 
 They can then proceed to Step 3 with the adjusted amount.
 
-### Step 3: Hypha/Base Account
+### Step 3: Prove You Own This Account
 
-We explain:
+This is the identity verification step. The user chooses one of two paths:
+
+**Path A: Video Introduction (recommended, doubles as Welcome Aboard Quest)**
+
+Record a 30-60 second video. The prompt:
+
+> "Say your name, your SEEDS account name, and share a memory from your time in SEEDS or what drew you to regenerative economics."
+
+- Upload via the R2 upload system (same as land project applications)
+- Toggle: **"Share this in the SEEDS Reunion thread so the community can get to know you"** (defaults off)
+  - If ON: video gets posted to the SEEDS Reunion forum thread in General. This also completes their Welcome Aboard introduction quest.
+  - If OFF: video is visible only to the core team during claim review. Still counts as identity verification.
+- Either way, this doubles as the introduction quest in the Welcome Aboard series if they have a regencivics.earth account.
+
+**Path B: On-Chain Verification**
+
+For people who still have access to their SEEDS wallet and private keys:
+
+- Send exactly **0.001 SEEDS** to the account `thealchemist` from the account they are claiming
+- The memo field must contain the reference code displayed on screen (format: `claim-[seedsAccountName]`)
+- The system can verify this transaction on the Telos blockchain
+- This is a cryptographic proof of ownership that requires no video
+
+**Path C: Both**
+
+Users who verify on-chain can still record a video introduction to share with the community. The video is optional in this case but encouraged. "You've already proven ownership. Want to introduce yourself to the community too?"
+
+### Step 4: Join the Community (Account Required)
+
+Before proceeding to wallet entry and submission, the user must create a regencivics.earth account or log in. This is the commitment gate.
+
+**The framing here is important.** This distribution is specifically for people who are joining and building now. The copy should communicate that clearly, while also acknowledging that people who aren't ready to join yet aren't being left behind. Something like:
+
+> This contribution distribution is for people who are joining us now to build this together. Your $ReGen tokens are part of how we meet our needs and thrive on this earth together, and claiming them means becoming part of the community that's making this real.
+>
+> If you're not ready to join right now, that's okay. Depending on how SEEDS 3.0 develops, we may do a full airdrop to every SEEDS account holder in the future, whether or not they're active in ReGen Civics. If that happens, you'll have the chance to do what you want with your tokens then, including selling them once there are buyers. So there's no pressure to claim now if this isn't your moment.
+
+This framing does two things: it makes clear that claiming now is an act of participation (you're joining the community), and it gives people who aren't ready a reason to wait rather than feeling excluded. No guilt, no pressure, just honesty about what each path means.
+
+- "Create Account" button (routes to registration flow, then returns to claim form)
+- "Log In" button (for people who already have accounts)
+- The claim form saves progress to localStorage so nothing is lost during account creation
+
+**This step also means:**
+- The claim gets linked to their user account in the database
+- They can receive notifications about their claim status through their profile
+- The video introduction (if they did one publicly) can be auto-posted to the forum under their account
+- Their Welcome Aboard quest can be marked complete
+
+### Step 5: Hypha/Base Wallet + Confirm + Submit (Happy Path)
+
+**Wallet entry:**
 
 - "ReGen Civics has upgraded to Base (Coinbase's blockchain). Your $ReGen tokens will be sent to your Hypha account on Base."
-- "If you already have a Hypha account, enter your account name or Base wallet address below."
+- "If you already have a Hypha account, enter your Base wallet address below."
 - "If you don't have one yet, go to [app.hypha.earth](https://app.hypha.earth) to create a free Base blockchain account, then come back and enter it here."
+- Input field for their Base wallet address (0x format). Validated as 0x + 40 hex characters.
 
-Input field for their Base wallet address (0x format). Validated as 0x + 40 hex characters.
-
-### Step 4: Confirm and Submit (Happy Path)
-
-Summary screen showing:
+**Confirmation summary:**
 
 - SEEDS account name
+- Verification method (video / on-chain / both)
 - Original USD contribution
 - Any spent/sold adjustment
 - Final claim amount in USD
 - Final $ReGen amount (USD x 100)
-- Hypha/Base account where tokens will be sent
+- Hypha/Base wallet where tokens will be sent
 - Checkbox: "I confirm this information is accurate. I understand that claims are verified against the blockchain and fraudulent claims result in permanent disqualification."
 
-Submit button. On success: confirmation message with a reference number and expected timeline ("Claims will be verified and $ReGen tokens minted after September 22, 2026"). Encourage them to sign up for a ReGen Civics account for updates, with a link to the site registration.
+Submit button. On success: confirmation message with a reference number and expected timeline ("Claims will be verified and $ReGen tokens minted after September 22, 2026").
 
 **Re-submission:** Users can come back and update their claim anytime before the September equinox. If they look up an account that already has a claim, we show their existing claim data and let them edit and resubmit.
 
-### Step 4b: Dispute Path (Claiming a Different Amount)
+### Step 6: Dispute Path (Claiming a Different Amount)
 
 If the user was not found, or wants to claim more than our records show, they enter the dispute flow:
 
@@ -96,13 +145,19 @@ If the user was not found, or wants to claim more than our records show, they en
 - Textarea: Explanation of why their claim differs from our records
 - File upload: Evidence (screenshots of wallet, transaction receipts, blockchain explorer links)
 - Same fraud warning as above
-- Same Hypha/Base account field
+- Same identity verification step (Step 3)
+- Same account requirement (Step 4)
+- Same Hypha/Base wallet field
 
 On submit: goes into the admin review queue. The user sees: "Your claim has been submitted for review. You'll be notified of the outcome."
 
-### Contact Info
+### SEEDS Reunion Forum Thread
 
-At all submission points, we collect an **email address** so we can notify them about their claim status. This is required. They do not need to be logged into the site to submit a claim (many of these people may never have visited regencivics.earth before).
+A pinned thread in the General category: **"SEEDS Reunion: Faces Behind the Accounts"**
+
+This is where public video introductions land. When a user opts to share their video with the community, a forum reply is auto-posted under their account in this thread containing their video and a short intro. The community can welcome them, respond, start conversations.
+
+This thread also serves as a historical archive of the people who carried their contributions forward from SEEDS into ReGen Civics.
 
 ---
 
@@ -130,12 +185,18 @@ Index on `recipientAccount` for fast lookups.
 |--------|------|-------------|
 | id | int, PK, auto | Claim ID |
 | seedsAccount | varchar(12) | Their SEEDS/Telos account name |
-| email | varchar(320) | Contact email |
+| userId | int, nullable, FK | Link to their regencivics.earth user account (set when they log in/register in Step 4) |
+| email | varchar(320) | Contact email (from their account) |
 | originalUsdTotal | double | The total USD we have on record for them |
 | spentUsdAmount | double | USD value of tokens they say they spent/sold (0 if none) |
 | claimedUsdAmount | double | Final USD amount they're claiming (original - spent, or custom amount for disputes) |
 | regenAmount | double | $ReGen to receive (claimedUsdAmount x 100) |
-| hyphaAccount | varchar(255) | Their Hypha/Base account name or wallet address |
+| baseWalletAddress | varchar(42) | Their 0x Base/Hypha wallet address |
+| verificationMethod | enum | "video", "onchain", "both" |
+| videoUrl | varchar(512), nullable | R2 URL of their uploaded video introduction |
+| videoPublic | boolean, default false | Whether they opted to share the video in the SEEDS Reunion thread |
+| onchainTxVerified | boolean, default false | Whether the 0.001 SEEDS transaction to thealchemist has been confirmed |
+| onchainTxId | varchar(64), nullable | Telos transaction ID of the verification transfer |
 | isDispute | boolean | True if they're claiming a different amount than our records |
 | disputeReason | text, nullable | Why their claim differs (dispute path only) |
 | evidenceUrls | text, nullable | JSON array of uploaded file URLs (dispute path only) |
@@ -146,7 +207,7 @@ Index on `recipientAccount` for fast lookups.
 | createdAt | timestamp | When claim was submitted |
 | updatedAt | timestamp | Last update |
 
-Unique index on `seedsAccount` (one claim per SEEDS account). Index on `status` for admin filtering.
+Unique index on `seedsAccount` (one claim per SEEDS account). Index on `status` for admin filtering. Index on `userId`.
 
 ---
 
@@ -161,14 +222,16 @@ New router: `seedsClaimsRouter` in `server/routes/seedsClaims.ts`
 - Returns: `{ found: boolean, totalUsd: number, transactions: Array<{ transactionId, date, usdValue }> }` or `{ found: false }`
 - Queries `seedsContributions` table grouped by account
 
-**`seedsClaims.submit`** -- `publicProcedure`
-- Input: full claim data (seedsAccount, email, spentUsdAmount, hyphaAccount, etc.)
-- Validates: account format, email format, amounts make sense (spent <= original), hypha account not empty
-- Checks: no existing claim for this SEEDS account
+**`seedsClaims.submit`** -- `protectedProcedure` (requires login)
+- Input: full claim data (seedsAccount, spentUsdAmount, baseWalletAddress, verificationMethod, videoUrl?, videoPublic?, onchainTxId?, etc.)
+- Validates: account format, amounts make sense (spent <= original), wallet address format, at least one verification method provided
+- Links claim to the logged-in user's ID and email
 - Creates row in `seedsClaims` with status `pending`
+- If videoPublic is true, auto-posts a reply in the SEEDS Reunion forum thread with embedded video
+- If video was submitted, marks Welcome Aboard introduction quest as complete
 - Returns: `{ claimId, regenAmount }`
 
-**`seedsClaims.submitDispute`** -- `publicProcedure`
+**`seedsClaims.submitDispute`** -- `protectedProcedure` (requires login)
 - Input: claim data + disputeReason + evidenceUrls
 - Same validation + requires reason text
 - Creates row with `isDispute: true`, status `pending`
@@ -208,14 +271,17 @@ New tab: **"SEEDS Claims"** in the admin panel.
 **Claim detail view:**
 - Full claim data
 - Side-by-side: "Our records" vs "Their claim" for easy comparison
+- Verification status: which method they used (video / on-chain / both), with embedded video player if applicable
+- For on-chain verification: link to the Telos transaction showing the 0.001 SEEDS transfer
 - For disputes: show their explanation and uploaded evidence
 - Action buttons: Approve / Deny / Flag
 - Notes field for admin comments
 - Link to Telos blockchain explorer for their account
+- Link to their regencivics.earth profile
 
 **Export button:**
 - Downloads all approved claims as CSV for the September batch mint
-- Columns: seedsAccount, email, hyphaAccount, approvedUsdAmount, regenAmount
+- Columns: seedsAccount, email, baseWalletAddress, verificationMethod, approvedUsdAmount, regenAmount
 
 ---
 
@@ -225,17 +291,18 @@ Single page, multi-step form following the existing pattern from Apply.tsx:
 
 - Step indicator at top (like the existing forms)
 - Glass card styling consistent with the rest of the site
-- No login required
+- Login required at Step 4 (but Steps 1-3 work without login, so people can look up their account and start the process before committing)
 - LocalStorage draft saving (so if they leave and come back, their progress is preserved)
 - Mobile responsive
 
 **Steps rendered conditionally:**
 1. Account Lookup
 2. Contribution Review + Spent Tokens Question
-3. Hypha/Base Account
-4. Confirm and Submit
+3. Prove Ownership (video intro / on-chain verification / both)
+4. Join the Community (create account or log in, with commitment framing)
+5. Base Wallet + Confirm + Submit
 
-The dispute path replaces steps 2-4 with the dispute form.
+The dispute path branches from Step 2 if account is not found, but still requires Steps 3-5.
 
 ---
 
@@ -280,17 +347,24 @@ The page should feel welcoming to people who might not have heard from the SEEDS
 ## Resolved Questions
 
 1. **Hypha account format:** Validate as a 0x Ethereum/Base wallet address (0x followed by 40 hex chars).
-2. **Notification emails:** Users who have a ReGen Civics profile get notified through the site. Others get batch email updates in Fall 2026. Encourage sign-up at end of form.
+2. **Notification emails:** Users have regencivics.earth accounts (required in Step 4), so they get notified through their profile. Batch email updates in Fall 2026 for status changes.
 3. **Page placement:** Direct link only. Linked from the Game page contributions section and the SEEDS blog post.
 4. **Evidence uploads:** Yes, use the same R2 file upload system as land project applications.
 5. **Existing claim edits:** Users can resubmit and change their claim anytime until the September equinox event.
+6. **Account required:** Yes. Creating a regencivics.earth account is required before submitting a claim. This is a commitment gate: the distribution is for people who intend to stay and build.
+7. **Identity verification:** Three paths: (A) video introduction, (B) on-chain proof via 0.001 SEEDS transfer to `thealchemist` with memo `claim-[accountName]`, (C) both.
+8. **Video sharing:** Optional toggle to share publicly in the SEEDS Reunion forum thread. Private videos are visible only to core team during review. Public videos auto-post as a reply in the SEEDS Reunion thread.
+9. **Quest integration:** The video introduction doubles as the Welcome Aboard introduction quest. Completing the claim flow with a video marks that quest as done on their profile.
+10. **Commitment framing:** Step 4 (account creation) makes clear this distribution is for people joining now. For those not ready, we mention the possibility of a future full SEEDS airdrop (depending on SEEDS 3.0), where they could sell tokens once there are buyers. No guilt, just clarity about what each path means.
+11. **SEEDS 3.0 airdrop:** If ReGen Civics becomes what SEEDS is doing (SEEDS 3.0), a 100% airdrop to all SEEDS accounts is possible regardless of whether they joined ReGen Civics. This is mentioned as a future possibility in the Step 4 copy, giving non-joiners a reason to wait rather than feel excluded.
 
 ## Site Integration Points
 
 These links to `/claim-seeds` need to be added:
 
-1. **Game.tsx contributions section** (id="seeds-legacy"): Make the intro text collapsible. Add a "Claim Financial Contributions" button with golden glow. Fix "Join the discussion" link from /community/post/560 to /community/post/625.
-2. **Blog post "Your SEEDS Contributions Live On"**: Add a claim button at top and bottom of the post content.
+1. **Game.tsx contributions section** (id="seeds-legacy"): Make the intro text collapsible. Add a "Claim Financial Contributions" button with golden glow. Fix "Join the discussion" link from /community/post/560 to /community/post/625. (DONE)
+2. **Blog post "Your SEEDS Contributions Live On"**: Add a claim button at top and bottom of the post content. (DONE)
+3. **SEEDS Reunion forum thread**: Pinned thread in General category where public video introductions are posted. Needs to be seeded.
 
 ---
 
@@ -307,3 +381,4 @@ These links to `/claim-seeds` need to be added:
 | `client/src/pages/Admin.tsx` | Add the new tab |
 | `server/seeds/seedsClaims.ts` | CSV import script |
 | `App.tsx` or routing config | Add `/claim-seeds` route |
+| `scripts/seed-seeds-reunion-thread.ts` | Create the SEEDS Reunion pinned forum thread |

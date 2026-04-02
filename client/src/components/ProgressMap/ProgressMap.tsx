@@ -42,7 +42,7 @@ export default function ProgressMap({ onClose }: Props) {
           The Regenerative Map
         </h1>
         <div className="flex items-center gap-3">
-          <span className="text-white/40 text-xs">{progress.overallPercent}% explored</span>
+          <span className="text-white/60 text-xs">{progress.overallPercent}% explored</span>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
@@ -56,7 +56,7 @@ export default function ProgressMap({ onClose }: Props) {
       <div className="flex flex-1 min-h-0">
         {/* Sidebar (desktop only) */}
         <div className="hidden md:flex flex-col w-64 border-r border-white/10 p-4 overflow-y-auto flex-shrink-0">
-          <p className="text-white/40 text-xs mb-4 uppercase tracking-wider font-semibold">Paths</p>
+          <p className="text-white/60 text-xs mb-4 uppercase tracking-wider font-semibold">Paths</p>
 
           {PATHS.map(path => {
             const pp = progress.paths.find(p => p.pathId === path.id);
@@ -96,7 +96,7 @@ export default function ProgressMap({ onClose }: Props) {
 
                 {/* Next milestone */}
                 {pp.nextNode && (
-                  <p className="text-white/40 text-[10px] truncate">
+                  <p className="text-white/60 text-[10px] truncate">
                     Next: {pp.nextNode.label}
                   </p>
                 )}
@@ -139,7 +139,7 @@ export default function ProgressMap({ onClose }: Props) {
                 </div>
                 <button
                   onClick={() => setSelectedNode(null)}
-                  className="p-1 hover:bg-white/10 rounded-lg text-white/40"
+                  className="p-1 hover:bg-white/10 rounded-lg text-white/60"
                   aria-label="Close detail"
                 >
                   <X className="w-4 h-4" />
@@ -196,7 +196,7 @@ export default function ProgressMap({ onClose }: Props) {
             >
               <div>
                 <p className="text-white text-xs font-medium">Next: {activeProgress.nextNode.label}</p>
-                <p className="text-white/40 text-[10px]">{activeProgress.nextNode.landmark}</p>
+                <p className="text-white/60 text-[10px]">{activeProgress.nextNode.landmark}</p>
               </div>
               <ExternalLink className="w-4 h-4 text-white/30" />
             </Link>

@@ -396,7 +396,7 @@ export default function Blog() {
                   <div className="text-center py-8">
                     <Video className="w-12 h-12 text-white/30 mx-auto mb-3" />
                     <p className="text-white/60">How-To videos coming soon!</p>
-                    <p className="text-white/40 text-sm mt-1">Vote below for the videos you want to see first</p>
+                    <p className="text-white/60 text-sm mt-1">Vote below for the videos you want to see first</p>
                   </div>
                 )}
                 

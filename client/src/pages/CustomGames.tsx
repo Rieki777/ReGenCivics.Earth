@@ -178,7 +178,7 @@ export default function CustomGames() {
           <div className="relative bg-[#0d2818] border border-[#7dd87d]/25 rounded-2xl shadow-2xl w-full max-w-lg my-8 p-6">
             <button
               onClick={() => setShowForm(false)}
-              className="absolute top-4 right-4 text-white/40 hover:text-white/80 transition-colors"
+              className="absolute top-4 right-4 text-white/60 hover:text-white/80 transition-colors"
               aria-label="Close"
             >
               <X className="w-5 h-5" />

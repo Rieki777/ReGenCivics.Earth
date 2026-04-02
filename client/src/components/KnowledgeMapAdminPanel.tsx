@@ -185,7 +185,7 @@ export default function KnowledgeMapAdminPanel() {
         <p className="text-xs text-white/50 font-semibold uppercase tracking-wider">
           Approved entries ({approved.length})
         </p>
-        {isLoading && <p className="text-sm text-white/40">Loading…</p>}
+        {isLoading && <p className="text-sm text-white/60">Loading…</p>}
         {!isLoading && approved.length === 0 && (
           <p className="text-sm text-white/30">No entries yet. Use AI or add manually.</p>
         )}
@@ -193,7 +193,7 @@ export default function KnowledgeMapAdminPanel() {
           <div key={entry.id} className="flex items-start gap-3 bg-[#0d1f0d]/40 border border-[#7dd87d]/15 rounded-lg p-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white">{entry.title}</p>
-              {entry.summary && <p className="text-xs text-white/40 mt-0.5">{entry.summary}</p>}
+              {entry.summary && <p className="text-xs text-white/60 mt-0.5">{entry.summary}</p>}
               <p className="text-xs text-white/25 mt-1">
                 {entry.postId ? `Post #${entry.postId}` : entry.url ?? "-"}
                 {" · "}Cat #{entry.categoryId}

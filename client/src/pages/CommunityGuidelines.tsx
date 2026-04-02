@@ -166,7 +166,7 @@ export default function CommunityGuidelines() {
                   <Send className="w-4 h-4 mr-2" />
                   {createMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
                 </Button>
-                <span className="text-white/40 text-xs">A forum thread will be created for discussion.</span>
+                <span className="text-white/60 text-xs">A forum thread will be created for discussion.</span>
               </div>
             </div>
           </AnimatedSection>
@@ -182,7 +182,7 @@ export default function CommunityGuidelines() {
             <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
               Active Agreements
             </h2>
-            <span className="text-white/40 text-sm ml-1">({ratified.length})</span>
+            <span className="text-white/60 text-sm ml-1">({ratified.length})</span>
           </div>
 
           {ratifiedQuery.isLoading ? (
@@ -232,7 +232,7 @@ export default function CommunityGuidelines() {
               <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
                 Proposals
               </h2>
-              <span className="text-white/40 text-sm ml-1">({proposals.length})</span>
+              <span className="text-white/60 text-sm ml-1">({proposals.length})</span>
             </div>
 
             <div className="flex items-center gap-1 bg-white/5 rounded-lg p-0.5 border border-white/10">
@@ -285,7 +285,7 @@ export default function CommunityGuidelines() {
                           className={`flex flex-col items-center gap-0.5 min-w-[44px] pt-1 transition-colors ${
                             hasVoted
                               ? 'text-[#7dd87d]'
-                              : 'text-white/40 hover:text-[#7dd87d]'
+                              : 'text-white/60 hover:text-[#7dd87d]'
                           }`}
                           aria-label={hasVoted ? 'Remove vote' : 'Vote for this proposal'}
                         >

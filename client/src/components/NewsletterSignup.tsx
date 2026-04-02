@@ -78,14 +78,14 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
   return (
     <form onSubmit={handleSubmit} className={`relative flex items-center gap-2 ${className}`}>
       <div className="relative flex-1 max-w-xs">
-        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
         <Input
           type="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
           placeholder="your@email.com"
           required
-          className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-[#7dd87d]/50 text-sm"
+          className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-[#7dd87d]/50 text-sm"
           style={{ fontFamily: "var(--font-body)" }}
         />
       </div>

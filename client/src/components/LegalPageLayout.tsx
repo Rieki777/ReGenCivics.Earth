@@ -105,7 +105,7 @@ export default function LegalPageLayout({
                       className={`text-xs leading-snug py-1 px-2 rounded transition-colors border-l-2 ${
                         activeId === id
                           ? "border-[#7dd87d] text-white bg-white/5"
-                          : "border-transparent text-white/40 hover:text-white/70 hover:border-[#7dd87d]/40"
+                          : "border-transparent text-white/60 hover:text-white/70 hover:border-[#7dd87d]/40"
                       }`}
                       onClick={(e) => {
                         e.preventDefault();

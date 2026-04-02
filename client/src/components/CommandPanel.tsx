@@ -120,7 +120,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
         {/* Song title */}
         <div className="text-center">
           <p className="text-[#7dd87d] text-sm font-medium">{currentSong?.title ?? 'No song loaded'}</p>
-          <p className="text-white/40 text-xs">ReGen Civics Soundtrack</p>
+          <p className="text-white/60 text-xs">ReGen Civics Soundtrack</p>
         </div>
 
         {/* Progress bar */}
@@ -133,7 +133,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
             onChange={e => seek(Number(e.target.value))}
             className="w-full accent-[#7dd87d] h-1"
           />
-          <div className="flex justify-between text-white/40 text-xs mt-1">
+          <div className="flex justify-between text-white/60 text-xs mt-1">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -158,7 +158,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
 
         {/* Volume */}
         <div className="flex items-center gap-2">
-          <Volume2 className="w-4 h-4 text-white/40" />
+          <Volume2 className="w-4 h-4 text-white/60" />
           <input
             type="range"
             min={0}

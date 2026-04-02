@@ -50,7 +50,7 @@ export function AdminGameVariables() {
         </div>
         <div className="flex gap-2 mt-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/60" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -72,9 +72,9 @@ export function AdminGameVariables() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p className="text-white/40 text-sm text-center py-8">Loading variables...</p>
+          <p className="text-white/60 text-sm text-center py-8">Loading variables...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-white/40 text-sm text-center py-8">No variables found</p>
+          <p className="text-white/60 text-sm text-center py-8">No variables found</p>
         ) : (
           <div className="space-y-1 max-h-[600px] overflow-y-auto">
             {filtered.map((v: any) => (
@@ -85,7 +85,7 @@ export function AdminGameVariables() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-white text-sm font-medium truncate">{v.displayName}</span>
-                    <Badge variant="outline" className="text-[10px] text-white/40 border-white/10">
+                    <Badge variant="outline" className="text-[10px] text-white/60 border-white/10">
                       {v.category}
                     </Badge>
                   </div>

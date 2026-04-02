@@ -91,7 +91,7 @@ export function QuestArtifactsGallery() {
                   <p className="text-white/30 text-sm text-center py-6">Loading...</p>
                 ) : completions.data?.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-white/40 text-sm">No completions yet.</p>
+                    <p className="text-white/60 text-sm">No completions yet.</p>
                     <p className="text-white/30 text-xs mt-1">Be the first to complete a quest and share your artifact.</p>
                   </div>
                 ) : (
