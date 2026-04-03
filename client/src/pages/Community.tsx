@@ -245,16 +245,19 @@ export default function Community() {
 
       {/* Hero Section */}
       <section className="relative pt-24 pb-12 md:pt-32 md:pb-16 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] via-[#2d5a3f] to-[#f8f5f0]" />
-        {/* Hero image: replace src with gathering-grove-hero.webp once generated */}
-        <img
-          src="/gathering-grove-hero.webp"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
-          loading="eager"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }}
-        />
+        {/* Background image */}
+        <picture>
+          <source media="(max-width: 767px)" srcSet="/images/backgrounds/community-hero-mobile.webp" />
+          <img
+            src="/images/backgrounds/community-hero.webp"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            style={{ objectPosition: "center top" }}
+            loading="eager"
+          />
+        </picture>
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/65 via-[#1a472a]/60 to-[#f8f5f0]" />
 
         {/* Decorative elements */}
         <div className="absolute top-20 left-4 opacity-20">

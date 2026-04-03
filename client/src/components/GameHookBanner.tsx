@@ -5,6 +5,7 @@
  */
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
+import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 
 const HOOK_VARIANTS: Record<string, { hook: string; subtext: string }> = {
   home: {
@@ -13,7 +14,7 @@ const HOOK_VARIANTS: Record<string, { hook: string; subtext: string }> = {
   },
   play: {
     hook: "Every quest you complete builds a real economy.",
-    subtext: "Your contributions earn tokens that flow back to land projects.",
+    subtext: "Your contributions earn tokens that create the foundation for new economic systems.",
   },
   quest: {
     hook: "This quest is part of something bigger.",
@@ -40,22 +41,38 @@ export function GameHookBanner({ variant = "home", className = "" }: Props) {
   return (
     <Link href="/economy">
       <div
-        className={`w-full py-6 px-4 border-y border-[#B8860B]/30 cursor-pointer group transition-all ${className}`}
+        className={`w-full py-6 px-4 border-y border-[#7dd87d]/25 cursor-pointer group transition-all relative overflow-hidden ${className}`}
         style={{
-          background: 'linear-gradient(135deg, #7A5C0F 0%, #B8860B 30%, #D4A017 50%, #B8860B 70%, #7A5C0F 100%)',
-          boxShadow: 'inset 0 0 80px rgba(212, 160, 23, 0.35), 0 4px 32px rgba(212, 160, 23, 0.15)',
+          background: "linear-gradient(135deg, rgba(26,71,42,0.92) 0%, rgba(45,107,63,0.88) 50%, rgba(26,71,42,0.92) 100%)",
+          backdropFilter: "blur(12px)",
+          boxShadow: "inset 0 1px 0 rgba(125,216,125,0.2), inset 0 -1px 0 rgba(125,216,125,0.2)",
         }}
       >
-        <div className="container max-w-4xl mx-auto text-center">
+        {/* Seed of Life watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
+          <SeedOfLifeIcon className="text-[#7dd87d]" size={200} />
+        </div>
+
+        <div className="container max-w-4xl mx-auto text-center relative z-10">
           <p
             className="text-lg md:text-xl font-bold mb-1"
-            style={{ fontFamily: "var(--font-display)", color: "#FFF8E7", textShadow: "0 1px 12px rgba(0,0,0,0.4)" }}
+            style={{
+              fontFamily: "var(--font-display)",
+              color: "#7dd87d",
+              textShadow: "0 1px 8px rgba(0,0,0,0.4)",
+            }}
           >
             {content.hook}
           </p>
-          <p className="text-sm flex items-center justify-center gap-1" style={{ color: "#FFF8E7", opacity: 0.9 }}>
+          <p
+            className="text-sm flex items-center justify-center gap-1"
+            style={{ color: "rgba(255,255,255,0.85)" }}
+          >
             {content.subtext}
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" style={{ color: "#FFF8E7" }} />
+            <ArrowRight
+              className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+              style={{ color: "#7dd87d" }}
+            />
           </p>
         </div>
       </div>

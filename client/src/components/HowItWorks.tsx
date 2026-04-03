@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { 
   Sprout, Users, Coins, Globe, ArrowRight, ChevronDown,
-  Leaf, Handshake, Target, TrendingUp
+  Leaf, Handshake, Target, Infinity
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { Link } from "wouter";
@@ -54,10 +54,10 @@ const steps = [
   },
   {
     number: "05",
-    title: "Value Flows Back",
-    summary: "As projects thrive, value returns to investors, players, and the land itself.",
-    detail: "Healthy land appreciates. Thriving communities generate economic activity. Alliance services create recurring revenue. This creates a positive feedback loop where ecological regeneration drives financial returns, and financial returns fund more regeneration.",
-    icon: TrendingUp,
+    title: "Regenerative Economic Systems",
+    summary: "The land projects, organizations, and food producers create the foundations for entirely new economic systems. Welcome to the Infinite Game.",
+    detail: "Healthy land appreciates. Thriving communities generate economic activity. Food systems become local. Governance becomes participatory. Alliance services create recurring value. Together these pieces form the foundation of regenerative economies that grow stronger the more people participate.",
+    icon: Infinity,
     color: "text-[#7dd87d]",
     bgColor: "bg-[#7dd87d]/20",
     borderColor: "border-[#7dd87d]/30",
