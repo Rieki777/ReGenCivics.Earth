@@ -602,7 +602,7 @@ export default function InvestorForm() {
                       </div>
                       
                       {!formData.isAccreditedInvestor || !formData.understandsRisks || !formData.hasReadDisclosures ? (
-                        <div className="mt-4 flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                        <div className="mt-4 flex items-center gap-2 text-sm text-amber-600 bg-muted p-3 rounded-lg border border-border">
                           <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                           <span>All three checkboxes must be confirmed to proceed.</span>
                         </div>

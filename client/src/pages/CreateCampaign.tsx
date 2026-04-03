@@ -1320,7 +1320,7 @@ export default function CreateCampaign() {
                       </div>
                     ))}
                   </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="bg-muted border border-border rounded-lg p-3">
                     <p className="text-sm text-amber-800">
                       <strong>Tip:</strong> Photos will be available to upload after your campaign is created.
                       Go to your Campaign Management page to add photos organized by category.

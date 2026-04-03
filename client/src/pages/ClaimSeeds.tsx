@@ -207,12 +207,12 @@ export default function ClaimSeeds() {
   if (isSubmitted) {
     return (
       <PageWrapper>
-        <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-b bg-background py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mx-auto">
-            <Card className="border-amber-400 shadow-lg">
+            <Card className="border-primary/30 shadow-lg">
               <CardHeader className="text-center space-y-3">
                 <div className="flex justify-center">
-                  <CheckCircle2 className="w-16 h-16 text-green-600" />
+                  <CheckCircle2 className="w-16 h-16 text-primary" />
                 </div>
                 <CardTitle className="text-3xl">Claim Submitted</CardTitle>
                 <CardDescription className="text-lg">
@@ -220,27 +220,27 @@ export default function ClaimSeeds() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
-                  <p className="text-sm font-medium text-amber-900">Claim ID</p>
-                  <p className="font-mono text-lg text-amber-700">{submittedClaimId}</p>
+                <div className="bg-muted border border-border rounded-lg p-4 space-y-2">
+                  <p className="text-sm font-medium text-foreground">Claim ID</p>
+                  <p className="font-mono text-lg text-primary">{submittedClaimId}</p>
                 </div>
 
                 <div className="space-y-3 text-sm">
-                  <p className="text-gray-700">
+                  <p className="text-foreground">
                     We will verify your claim against the Telos blockchain and process
                     it within 7-10 business days. You will receive email updates at:
                   </p>
-                  <p className="font-medium text-gray-900">{formData.email}</p>
+                  <p className="font-medium text-foreground">{formData.email}</p>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-900">
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                  <p className="text-sm text-foreground">
                     Join the ReGen Civics community to start building with us.
                   </p>
                 </div>
 
                 <Link href="/play">
-                  <Button className="w-full bg-amber-600 hover:bg-amber-700">
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
                     Continue to ReGen Civics
                   </Button>
                 </Link>
@@ -254,7 +254,7 @@ export default function ClaimSeeds() {
 
   return (
     <PageWrapper>
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-b bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
           {/* Step Indicator */}
           <div className="flex justify-between mb-8 px-2">
@@ -266,12 +266,12 @@ export default function ClaimSeeds() {
                       ? "bg-amber-600 text-white"
                       : s < step
                         ? "bg-green-600 text-white"
-                        : "bg-gray-300 text-gray-600"
+                        : "bg-gray-300 text-muted-foreground"
                   }`}
                 >
                   {s < step ? "✓" : s}
                 </div>
-                <p className="text-xs text-gray-600 mt-2 text-center w-16">
+                <p className="text-xs text-muted-foreground mt-2 text-center w-16">
                   {s === 1 && "Account"}
                   {s === 2 && "Review"}
                   {s === 3 && "Wallet"}
@@ -283,17 +283,17 @@ export default function ClaimSeeds() {
 
           {/* Error Message */}
           {submitError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{submitError}</p>
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex gap-3">
+              <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-destructive">{submitError}</p>
             </div>
           )}
 
           {/* Draft Restored Notice */}
           {draftRestored && step === 1 && (
-            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex gap-2">
-              <Save className="w-4 h-4 text-amber-700 mt-0.5" />
-              <p className="text-sm text-amber-700">
+            <div className="mb-6 p-4 bg-muted border border-border rounded-lg flex gap-2">
+              <Save className="w-4 h-4 text-primary mt-0.5" />
+              <p className="text-sm text-primary">
                 Your draft has been restored. You can continue where you left off.
               </p>
             </div>
@@ -301,7 +301,7 @@ export default function ClaimSeeds() {
 
           {/* STEP 1: Account Lookup */}
           {step === 1 && !formData.isOnDisputePath && (
-            <Card className="border-amber-400">
+            <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle className="text-2xl">Claim Your SEEDS Contributions</CardTitle>
                 <CardDescription>
@@ -323,19 +323,19 @@ export default function ClaimSeeds() {
                     onChange={(e) => updateField("seedsAccount", e.target.value.toLowerCase())}
                     className="text-lg"
                   />
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     This is the account name you created when you signed up for SEEDS. Check
                     your SEEDS wallet profile to find it.
                   </p>
                 </div>
 
                 <div className="flex gap-2 text-sm">
-                  <ExternalLink className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <ExternalLink className="w-4 h-4 text-primary flex-shrink-0" />
                   <a
                     href="https://eosauthority.com/tokens/token.seeds/SEEDS?network=telos"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-600 hover:text-amber-700 underline"
+                    className="text-primary hover:text-primary underline"
                   >
                     View SEEDS token information
                   </a>
@@ -345,7 +345,7 @@ export default function ClaimSeeds() {
                   <Button
                     onClick={handleLookup}
                     disabled={lookupMutation.isPending}
-                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {lookupMutation.isPending ? (
                       <>
@@ -363,7 +363,7 @@ export default function ClaimSeeds() {
 
           {/* STEP 2: Contribution Review */}
           {step === 2 && !formData.isOnDisputePath && (
-            <Card className="border-amber-400">
+            <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle>Review Your Contributions</CardTitle>
                 <CardDescription>
@@ -372,10 +372,10 @@ export default function ClaimSeeds() {
               </CardHeader>
               <CardContent className="space-y-8">
                 {/* Contribution Summary */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
-                  <p className="text-sm font-medium text-amber-900">Original USD Contribution</p>
-                  <p className="text-3xl font-bold text-amber-700">${formData.totalUsd.toFixed(2)}</p>
-                  <p className="text-sm text-amber-700">
+                <div className="bg-muted border border-border rounded-lg p-4 space-y-3">
+                  <p className="text-sm font-medium text-foreground">Original USD Contribution</p>
+                  <p className="text-3xl font-bold text-primary">${formData.totalUsd.toFixed(2)}</p>
+                  <p className="text-sm text-primary">
                     Equivalent: {(formData.totalUsd * 100).toLocaleString()} $ReGen tokens
                   </p>
                 </div>
@@ -385,28 +385,28 @@ export default function ClaimSeeds() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-2 font-medium text-gray-700">Date</th>
-                          <th className="text-left py-2 font-medium text-gray-700">Transaction ID</th>
-                          <th className="text-right py-2 font-medium text-gray-700">Amount</th>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-2 font-medium text-foreground">Date</th>
+                          <th className="text-left py-2 font-medium text-foreground">Transaction ID</th>
+                          <th className="text-right py-2 font-medium text-foreground">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
                         {formData.transactions.map((tx, idx) => (
-                          <tr key={idx} className="border-b border-gray-100">
-                            <td className="py-3 text-gray-600">{typeof tx.date === 'string' ? tx.date : tx.date.toLocaleDateString()}</td>
+                          <tr key={idx} className="border-b border-border/50">
+                            <td className="py-3 text-muted-foreground">{typeof tx.date === 'string' ? tx.date : tx.date.toLocaleDateString()}</td>
                             <td className="py-3">
                               <a
                                 href={`https://eosauthority.com/transaction/${tx.transactionId}?network=telos`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-amber-600 hover:text-amber-700 underline text-xs font-mono flex items-center gap-1"
+                                className="text-primary hover:text-primary underline text-xs font-mono flex items-center gap-1"
                               >
                                 {tx.transactionId.slice(0, 10)}...
                                 <ExternalLink className="w-3 h-3" />
                               </a>
                             </td>
-                            <td className="py-3 text-right text-gray-700">
+                            <td className="py-3 text-right text-foreground">
                               ${(tx.usdAmount ?? tx.usdValue ?? 0).toFixed(2)}
                             </td>
                           </tr>
@@ -418,7 +418,7 @@ export default function ClaimSeeds() {
 
                 {/* Spent Tokens Question */}
                 <div className="space-y-4 border-t pt-6">
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-foreground">
                     Did you sell, spend, or transfer any of the SEEDS tokens you purchased?
                   </p>
                   <RadioGroup
@@ -442,7 +442,7 @@ export default function ClaimSeeds() {
 
                 {/* Spent Amount Input */}
                 {formData.hasSpentTokens && (
-                  <div className="space-y-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="space-y-4 bg-primary/10 border border-primary/20 rounded-lg p-4">
                     <div className="space-y-2">
                       <Label htmlFor="spentAmount" className="text-sm font-medium">
                         Approximate USD value of SEEDS you sold, spent, or transferred
@@ -461,18 +461,18 @@ export default function ClaimSeeds() {
 
                     {/* Adjusted Amount */}
                     <div className="bg-white rounded-lg p-3 space-y-2">
-                      <p className="text-xs text-gray-600">Adjusted USD Amount</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-xs text-muted-foreground">Adjusted USD Amount</p>
+                      <p className="text-2xl font-bold text-foreground">
                         ${formData.adjustedUsd.toFixed(2)}
                       </p>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-muted-foreground">
                         {regenAmount.toLocaleString()} $ReGen tokens
                       </p>
                     </div>
 
                     {/* Fraud Warning */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
-                      <p className="text-xs font-medium text-amber-900 flex gap-2">
+                    <div className="bg-muted border border-border rounded-lg p-3 mt-4">
+                      <p className="text-xs font-medium text-foreground flex gap-2">
                         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span>
                           We will verify all claims against the Telos blockchain before minting.
@@ -500,7 +500,7 @@ export default function ClaimSeeds() {
                   <Button
                     onClick={() => setStep(3)}
                     disabled={!formData.hasSpentTokens && step === 2}
-                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Continue
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -512,7 +512,7 @@ export default function ClaimSeeds() {
 
           {/* STEP 2: Dispute Path */}
           {step === 2 && formData.isOnDisputePath && (
-            <Card className="border-amber-400">
+            <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle>Claim Dispute</CardTitle>
                 <CardDescription>
@@ -530,7 +530,7 @@ export default function ClaimSeeds() {
                     value={formData.seedsAccount}
                     onChange={(e) => updateField("seedsAccount", e.target.value.toLowerCase())}
                     disabled
-                    className="bg-gray-50"
+                    className="bg-muted"
                   />
                 </div>
 
@@ -547,7 +547,7 @@ export default function ClaimSeeds() {
                     onChange={(e) => updateField("spentAmount", parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
                   />
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     Equivalent: {(formData.spentAmount * 100).toLocaleString()} $ReGen tokens
                   </p>
                 </div>
@@ -577,8 +577,8 @@ export default function ClaimSeeds() {
                 </div>
 
                 {/* Fraud Warning */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <p className="text-xs font-medium text-amber-900 flex gap-2">
+                <div className="bg-muted border border-border rounded-lg p-3">
+                  <p className="text-xs font-medium text-foreground flex gap-2">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span>
                       We will verify all claims against the Telos blockchain before minting.
@@ -604,7 +604,7 @@ export default function ClaimSeeds() {
                   <Button
                     onClick={() => setStep(3)}
                     disabled={!canProceedToStep3()}
-                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Continue
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -616,7 +616,7 @@ export default function ClaimSeeds() {
 
           {/* STEP 3: Base Wallet */}
           {step === 3 && (
-            <Card className="border-amber-400">
+            <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle>Base Wallet Address</CardTitle>
                 <CardDescription>
@@ -625,8 +625,8 @@ export default function ClaimSeeds() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-900">
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                  <p className="text-sm text-foreground">
                     If you don't have one yet, go to{" "}
                     <a
                       href="https://app.hypha.earth"
@@ -657,7 +657,7 @@ export default function ClaimSeeds() {
                     }`}
                   />
                   {formData.baseWalletAddress && !validateBaseWallet(formData.baseWalletAddress) && (
-                    <p className="text-xs text-red-600">
+                    <p className="text-xs text-destructive">
                       Please enter a valid Base wallet address (starts with 0x)
                     </p>
                   )}
@@ -674,13 +674,13 @@ export default function ClaimSeeds() {
                     value={formData.email}
                     onChange={(e) => updateField("email", e.target.value)}
                   />
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     We'll send you claim status updates at this address.
                   </p>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <p className="text-sm text-amber-900">
+                <div className="bg-muted border border-border rounded-lg p-4">
+                  <p className="text-sm text-foreground">
                     Sign up at{" "}
                     <a
                       href="https://regencivics.earth"
@@ -703,7 +703,7 @@ export default function ClaimSeeds() {
                   <Button
                     onClick={() => setStep(4)}
                     disabled={!canProceedToStep4()}
-                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Continue
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -715,7 +715,7 @@ export default function ClaimSeeds() {
 
           {/* STEP 4: Confirm & Submit */}
           {step === 4 && (
-            <Card className="border-amber-400">
+            <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle>Confirm & Submit Claim</CardTitle>
                 <CardDescription>
@@ -725,25 +725,25 @@ export default function ClaimSeeds() {
               <CardContent className="space-y-8">
                 {/* Summary */}
                 <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                  <div className="bg-muted rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-start">
-                      <span className="text-sm text-gray-600">SEEDS Account</span>
-                      <span className="font-medium text-gray-900 text-right">
+                      <span className="text-sm text-muted-foreground">SEEDS Account</span>
+                      <span className="font-medium text-foreground text-right">
                         {formData.seedsAccount}
                       </span>
                     </div>
                     <div className="h-px bg-gray-200"></div>
                     <div className="flex justify-between items-start">
-                      <span className="text-sm text-gray-600">Original USD</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-sm text-muted-foreground">Original USD</span>
+                      <span className="font-medium text-foreground">
                         ${formData.totalUsd.toFixed(2)}
                       </span>
                     </div>
                     {formData.hasSpentTokens && formData.spentAmount > 0 && (
                       <>
                         <div className="flex justify-between items-start">
-                          <span className="text-sm text-gray-600">Spent/Transferred</span>
-                          <span className="font-medium text-gray-900">
+                          <span className="text-sm text-muted-foreground">Spent/Transferred</span>
+                          <span className="font-medium text-foreground">
                             -${formData.spentAmount.toFixed(2)}
                           </span>
                         </div>
@@ -751,27 +751,27 @@ export default function ClaimSeeds() {
                       </>
                     )}
                     <div className="flex justify-between items-start bg-amber-50 -mx-4 -my-3 px-4 py-3 rounded">
-                      <span className="text-sm font-medium text-amber-900">Final USD Claim</span>
-                      <span className="font-bold text-amber-700">
+                      <span className="text-sm font-medium text-foreground">Final USD Claim</span>
+                      <span className="font-bold text-primary">
                         ${formData.adjustedUsd.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-start">
-                      <span className="text-sm text-gray-600">$ReGen Tokens</span>
-                      <span className="font-bold text-gray-900">
+                      <span className="text-sm text-muted-foreground">$ReGen Tokens</span>
+                      <span className="font-bold text-foreground">
                         {regenAmount.toLocaleString()}
                       </span>
                     </div>
                     <div className="h-px bg-gray-200"></div>
                     <div className="flex justify-between items-start">
-                      <span className="text-sm text-gray-600">Base Wallet</span>
-                      <span className="font-mono text-xs text-gray-900 text-right">
+                      <span className="text-sm text-muted-foreground">Base Wallet</span>
+                      <span className="font-mono text-xs text-foreground text-right">
                         {formData.baseWalletAddress}
                       </span>
                     </div>
                     <div className="flex justify-between items-start">
-                      <span className="text-sm text-gray-600">Email</span>
-                      <span className="text-sm text-gray-900">{formData.email}</span>
+                      <span className="text-sm text-muted-foreground">Email</span>
+                      <span className="text-sm text-foreground">{formData.email}</span>
                     </div>
                   </div>
                 </div>
@@ -786,7 +786,7 @@ export default function ClaimSeeds() {
                         updateField("hasSpentTokens", checked === true)
                       }
                     />
-                    <label htmlFor="confirm" className="text-sm leading-relaxed text-gray-700">
+                    <label htmlFor="confirm" className="text-sm leading-relaxed text-foreground">
                       I confirm this information is accurate. I understand that claims are
                       verified against the blockchain and fraudulent claims result in permanent
                       disqualification.
@@ -816,7 +816,7 @@ export default function ClaimSeeds() {
                       });
                     }}
                     disabled={!formData.hasSpentTokens || submitMutation.isPending}
-                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {submitMutation.isPending ? (
                       <>
