@@ -181,8 +181,8 @@ export default function Home() {
   }, []);
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
-  const bgImage = "/images/backgrounds/home-desktop.webp?v=2";
-  const mobileBgImage = "/images/backgrounds/home-mobile.webp?v=2";
+  const bgImage = "/images/backgrounds/home-desktop.webp?v=3";
+  const mobileBgImage = "/images/backgrounds/home-mobile.webp?v=3";
   const heroImages = useMemo(() => [bgImage, mobileBgImage], [bgImage, mobileBgImage]);
 
   return (
@@ -191,8 +191,8 @@ export default function Home() {
     <PageBackground
       backgroundImage={bgImage}
       mobileBackgroundImage={mobileBgImage}
-      blurPlaceholder="/images/backgrounds/home-desktop.webp?v=2"
-      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp?v=2"
+      blurPlaceholder="/images/backgrounds/home-desktop.webp?v=3"
+      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp?v=3"
       overlayOpacity={0.55}
       theme="forest"
       blendColor="18, 45, 28"
