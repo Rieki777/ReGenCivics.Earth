@@ -18,7 +18,10 @@
     "seed:forum:reset": "tsx scripts/seed-forum-posts.ts --reset",
     "seed:seeds": "tsx scripts/seed-seeds-contributions.ts",
     "seed:seeds:reset": "tsx scripts/seed-seeds-contributions.ts --reset",
-    "optimize:images": "node scripts/optimize-images.mjs"
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "db:migrate": "tsx scripts/run-migration.ts",
+    "db:migrate:all": "tsx scripts/run-migration.ts --all",
+    "db:migrate:status": "tsx scripts/run-migration.ts --status"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

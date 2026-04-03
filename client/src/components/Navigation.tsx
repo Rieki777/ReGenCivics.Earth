@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb, Wrench, TrendingUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb, Wrench, TrendingUp, SlidersHorizontal } from "lucide-react";
 import { Drawer } from "vaul";
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -429,6 +429,13 @@ export default function Navigation() {
                 >
                   <TrendingUp className="w-5 h-5 mr-3 text-[#d4a574]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Economy</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/game-mechanics'}
+                >
+                  <SlidersHorizontal className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Game Mechanics</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
@@ -984,6 +991,19 @@ export default function Navigation() {
                     >
                       <MessageCircle className="w-4 h-4 text-[#7dd87d]" />
                       Community Forum
+                    </Link>
+                    <Link
+                      href="/game-mechanics"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/game-mechanics'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <SlidersHorizontal className="w-4 h-4 text-[#7dd87d]" />
+                      Game Mechanics
                     </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
                     {socialLinks.map((social) => (

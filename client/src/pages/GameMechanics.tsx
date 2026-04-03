@@ -28,6 +28,7 @@ import {
   Leaf,
   Heart,
   Shield,
+  Moon,
 } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
@@ -100,6 +101,10 @@ interface SimState {
   compostingDecay: number;
   harvestPoolSize: number;
   gratitudeBudget: number;
+  gratitudeRecipients: number;
+  streakCycles: number;
+  regenDistributionPool: number;
+  claimThreshold: number;
 }
 
 const SIM_DEFAULTS: SimState = {
@@ -109,7 +114,11 @@ const SIM_DEFAULTS: SimState = {
   trustMultiplierMax: 3.0,
   compostingDecay: 0.15,
   harvestPoolSize: 50000,
-  gratitudeBudget: 20,
+  gratitudeBudget: 100,
+  gratitudeRecipients: 10,
+  streakCycles: 0,
+  regenDistributionPool: 10000,
+  claimThreshold: 333,
 };
 
 /* ─── Section A: Live Variables Dashboard ────────────────────────────── */
@@ -307,9 +316,20 @@ function GameSimulator() {
           : "Explorer";
 
   const tierMultiplier =
-    tier === "Sage" ? 3.0 : tier === "Steward" ? 2.0 : tier === "Co-Creator" ? 1.5 : 1.0;
+    tier === "Sage" ? 5.0 : tier === "Steward" ? 3.0 : tier === "Co-Creator" ? 2.0 : 1.0;
 
-  const effectiveGratitude = Math.round(sim.gratitudeBudget * tierMultiplier);
+  // Streak bonus: 3% per consecutive cycle, max 30%
+  const streakBonus = Math.min(sim.streakCycles * 0.03, 0.30);
+  const effectiveBudget = Math.round(sim.gratitudeBudget * tierMultiplier * (1 + streakBonus));
+
+  // Per-person share based on recipients
+  const perPerson = sim.gratitudeRecipients > 0
+    ? Math.round(effectiveBudget / sim.gratitudeRecipients)
+    : effectiveBudget;
+
+  // Full power: first 10 recipients get max share (budget / 10)
+  const fullPowerShare = Math.round(effectiveBudget / 10);
+  const isFullPower = sim.gratitudeRecipients <= 10;
 
   const proposalParams = new URLSearchParams({
     category: "game_variable",
@@ -379,12 +399,45 @@ function GameSimulator() {
             onChange={update("harvestPoolSize")}
           />
           <SliderRow
-            label="Gratitude Budget (base tokens)"
+            label="Gratitude Base Budget (per cycle)"
             value={sim.gratitudeBudget}
-            min={5}
-            max={100}
-            step={1}
+            min={50}
+            max={200}
+            step={10}
             onChange={update("gratitudeBudget")}
+          />
+          <SliderRow
+            label="People Acknowledged (this cycle)"
+            value={sim.gratitudeRecipients}
+            min={1}
+            max={30}
+            step={1}
+            onChange={update("gratitudeRecipients")}
+          />
+          <SliderRow
+            label="Streak (consecutive 10+ cycles)"
+            value={sim.streakCycles}
+            min={0}
+            max={10}
+            step={1}
+            onChange={update("streakCycles")}
+          />
+          <SliderRow
+            label="$ReGen Distribution Pool (per cycle)"
+            value={sim.regenDistributionPool}
+            min={1000}
+            max={50000}
+            step={1000}
+            unit="$"
+            onChange={update("regenDistributionPool")}
+          />
+          <SliderRow
+            label="$ReGen Claim Threshold"
+            value={sim.claimThreshold}
+            min={100}
+            max={1000}
+            step={50}
+            onChange={update("claimThreshold")}
           />
         </CardContent>
       </Card>
@@ -413,8 +466,18 @@ function GameSimulator() {
           />
           <OutcomeRow
             label={`Gratitude budget at ${tier} tier`}
-            value={`${effectiveGratitude} tokens`}
-            detail={`${sim.gratitudeBudget} base * ${tierMultiplier}x tier bonus`}
+            value={`${effectiveBudget} effective budget`}
+            detail={`${sim.gratitudeBudget} base * ${tierMultiplier}x tier${streakBonus > 0 ? ` + ${(streakBonus * 100).toFixed(0)}% streak bonus` : ""}`}
+          />
+          <OutcomeRow
+            label={`Acknowledging ${sim.gratitudeRecipients} ${sim.gratitudeRecipients === 1 ? "person" : "people"}`}
+            value={`${perPerson} per person`}
+            detail={isFullPower ? `Full power: each of ${sim.gratitudeRecipients} gets ${perPerson}` : `Diluting: over 10 recipients (${fullPowerShare} at full power)`}
+          />
+          <OutcomeRow
+            label="$ReGen from gratitude (if avg recipient)"
+            value={`~${Math.round(sim.regenDistributionPool / 50)} per cycle`}
+            detail={`Pool of ${sim.regenDistributionPool.toLocaleString()} split proportionally. Claim at ${sim.claimThreshold}+.`}
           />
         </CardContent>
       </Card>
@@ -452,6 +515,26 @@ function OutcomeRow({
       <p className="text-sm text-white/70">{label}</p>
       <p className="text-xl font-bold text-[#7dd87d] mt-1">{value}</p>
       <p className="text-xs text-white/60 mt-1">{detail}</p>
+    </div>
+  );
+}
+
+function GratVarRow({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-white/90 font-medium">{label}</p>
+        <p className="text-xs text-white/50 mt-0.5">{detail}</p>
+      </div>
+      <span className="text-sm font-mono text-[#7dd87d] shrink-0">{value}</span>
     </div>
   );
 }
@@ -508,7 +591,7 @@ export default function GameMechanics() {
         </section>
 
         {/* Section B: Simulator */}
-        <section className="container mx-auto px-4 pb-24">
+        <section className="container mx-auto px-4 pb-16">
           <AnimatedSection animation="slide-up">
             <h2
               className="text-2xl md:text-3xl font-bold text-white mb-8"
@@ -518,6 +601,82 @@ export default function GameMechanics() {
             </h2>
             <div className="max-w-2xl mx-auto">
               <GameSimulator />
+            </div>
+          </AnimatedSection>
+        </section>
+
+        {/* Section C: Gratitude Variables Reference */}
+        <section className="container mx-auto px-4 pb-24">
+          <AnimatedSection animation="slide-up">
+            <h2
+              className="text-2xl md:text-3xl font-bold text-white mb-8 flex items-center gap-3"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              <Heart className="w-6 h-6 text-[#D4A017]" />
+              Gratitude System Variables
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
+              {/* Cycle & Budget */}
+              <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base flex items-center gap-2">
+                    <Moon className="w-4 h-4 text-purple-400" />
+                    Cycle and Budget
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <GratVarRow label="Cycle Duration" value="~29.5 days" detail="New moon to new moon" />
+                  <GratVarRow label="Base Budget" value="100" detail="Same for all tiers" />
+                  <GratVarRow label="Full-Power Threshold" value="10 people" detail="Max impact per person" />
+                  <GratVarRow label="Streak Bonus" value="+3% / cycle" detail="Max 30% (10 cycles)" />
+                </CardContent>
+              </Card>
+
+              {/* Tier Multipliers */}
+              <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#D4A017]" />
+                    Tier Multipliers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <GratVarRow label="Explorer" value="1.0x" detail="100 effective budget" />
+                  <GratVarRow label="Co-Creator" value="2.0x" detail="200 effective budget" />
+                  <GratVarRow label="Steward" value="3.0x" detail="300 effective budget" />
+                  <GratVarRow label="Sage" value="5.0x" detail="500 effective budget" />
+                </CardContent>
+              </Card>
+
+              {/* $ReGen Distribution */}
+              <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base flex items-center gap-2">
+                    <Leaf className="w-4 h-4 text-[#7dd87d]" />
+                    $ReGen Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <GratVarRow label="Pool per Cycle" value="10,000 $ReGen" detail="Split by gratitude received" />
+                  <GratVarRow label="Claim Threshold" value="333 $ReGen" detail="Accumulate before claiming on Hypha" />
+                  <GratVarRow label="Distribution" value="Proportional" detail="Weighted by sender's effective budget" />
+                </CardContent>
+              </Card>
+
+              {/* Trust Graph */}
+              <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-blue-400" />
+                    Trust Graph Bonus
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <GratVarRow label="Enabled" value="Yes" detail="Builds on base tier multiplier" />
+                  <GratVarRow label="Received Weight" value="0.1x" detail="Per gratitude received last season" />
+                  <GratVarRow label="Max Bonus" value="+2.0x" detail="Cap on trust graph boost" />
+                </CardContent>
+              </Card>
             </div>
           </AnimatedSection>
         </section>

@@ -57,9 +57,11 @@ Note: The 70th percentile tier was renamed from "Steward" to **"Cultivator"** to
 - Arbitrate disputes
 - Sponsor new players
 
-**Gratitude budget:** 3 per season
-**Gratitude multiplier:** 1.0x (base)
+**Gratitude budget:** 100 per cycle (base)
+**Gratitude multiplier:** 1.0x (effective budget: 100)
 **Harvest multiplier:** 1.0x (base rate)
+
+See GRATITUDE_SYSTEM_SPEC.md for full gratitude mechanic (proportional splitting, streaks, $ReGen distribution).
 
 **Game Variables:**
 ```
@@ -69,7 +71,7 @@ citizenship.explorer.can_rate_producers = false
 citizenship.explorer.can_nominate_tiers = false
 citizenship.explorer.can_arbitrate = false
 citizenship.explorer.can_sponsor = false
-citizenship.explorer.gratitude_budget = 3
+citizenship.explorer.gratitude_budget = 100
 citizenship.explorer.gratitude_multiplier = 1.0
 citizenship.explorer.harvest_multiplier = 1.0
 ```
@@ -92,8 +94,8 @@ citizenship.explorer.harvest_multiplier = 1.0
 - Appear in Member Directory as "Co-Creator"
 - Gratitude sends at 1.5x multiplier (50% stronger)
 
-**Gratitude budget:** 5 per season
-**Gratitude multiplier:** 1.5x
+**Gratitude budget:** 100 per cycle (base), 200 effective (2.0x multiplier)
+**Gratitude multiplier:** 2.0x
 **Harvest multiplier:** 1.5x base rate
 
 **Game Variables:**
@@ -104,8 +106,8 @@ citizenship.co_creator.can_rate_producers = false
 citizenship.co_creator.can_nominate_tiers = false
 citizenship.co_creator.can_arbitrate = false
 citizenship.co_creator.can_sponsor = false
-citizenship.co_creator.gratitude_budget = 5
-citizenship.co_creator.gratitude_multiplier = 1.5
+citizenship.co_creator.gratitude_budget = 100
+citizenship.co_creator.gratitude_multiplier = 2.0
 citizenship.co_creator.harvest_multiplier = 1.5
 ```
 
@@ -139,8 +141,8 @@ citizenship.co_creator.req.seasons_active = 2
 - Eligible for Seasonal Council (top 7 contributors + core team + elected)
 - Gratitude sends at 2x multiplier (double Explorer)
 
-**Gratitude budget:** 8 per season
-**Gratitude multiplier:** 2.0x
+**Gratitude budget:** 100 per cycle (base), 300 effective (3.0x multiplier)
+**Gratitude multiplier:** 3.0x
 **Harvest multiplier:** 2.0x base rate
 
 **Game Variables:**
@@ -151,8 +153,8 @@ citizenship.steward.can_rate_producers = true
 citizenship.steward.can_nominate_tiers = true
 citizenship.steward.can_arbitrate = false
 citizenship.steward.can_sponsor = false
-citizenship.steward.gratitude_budget = 8
-citizenship.steward.gratitude_multiplier = 2.0
+citizenship.steward.gratitude_budget = 100
+citizenship.steward.gratitude_multiplier = 3.0
 citizenship.steward.harvest_multiplier = 2.0
 ```
 
@@ -190,8 +192,8 @@ citizenship.steward.req.endorsement_from_steward_or_sage = 1
 - Gratitude sends at 3x multiplier (triple Explorer)
 - Ability to apply for Admin status in the Game over the Forum and Site
 
-**Gratitude budget:** 13 per season
-**Gratitude multiplier:** 3.0x
+**Gratitude budget:** 100 per cycle (base), 500 effective (5.0x multiplier)
+**Gratitude multiplier:** 5.0x
 **Harvest multiplier:** 3.0x base rate
 
 **Game Variables:**
@@ -203,8 +205,8 @@ citizenship.sage.can_nominate_tiers = true
 citizenship.sage.can_arbitrate = true
 citizenship.sage.can_sponsor = true
 citizenship.sage.can_apply_admin = true
-citizenship.sage.gratitude_budget = 13
-citizenship.sage.gratitude_multiplier = 3.0
+citizenship.sage.gratitude_budget = 100
+citizenship.sage.gratitude_multiplier = 5.0
 citizenship.sage.harvest_multiplier = 3.0
 ```
 
@@ -332,8 +334,8 @@ A Seasonal Council meets every season to discuss priorities, review proposals, a
 | Power | Explorer | Co-Creator | Steward | Sage |
 |-------|----------|------------|---------|------|
 | Complete quests | Yes | Yes | Yes | Yes |
-| Send gratitude | 1x | 1.5x | 2x | 3x |
-| Gratitude budget/season | 3 | 5 | 8 | 13 |
+| Send gratitude | 1x | 2x | 3x | 5x |
+| Gratitude budget/cycle | 100 | 200 | 300 | 500 |
 | Forum (general) | Yes | Yes | Yes | Yes |
 | Forum (governance) | No | Yes | Yes | Yes |
 | Forum (steward-only) | No | No | Yes | Yes |

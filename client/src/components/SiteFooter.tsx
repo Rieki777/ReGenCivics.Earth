@@ -142,6 +142,11 @@ export default function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/game-mechanics" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
+                  Game Mechanics
+                </Link>
+              </li>
+              <li>
                 <Link href="/quest" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
                   Start Questing
                 </Link>
