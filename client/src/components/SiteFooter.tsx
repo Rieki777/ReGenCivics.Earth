@@ -171,6 +171,16 @@ export default function SiteFooter() {
                   Tokenomics
                 </Link>
               </li>
+              <li>
+                <Link href="/tools" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
+                  Tools Library
+                </Link>
+              </li>
+              <li>
+                <Link href="/local-food-economy" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
+                  Local Food Economy
+                </Link>
+              </li>
             </ul>
           </div>
 

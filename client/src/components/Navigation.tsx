@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb, Wrench, TrendingUp } from "lucide-react";
 import { Drawer } from "vaul";
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -89,13 +89,13 @@ export default function Navigation() {
   const is4PathsActive = location === '/fund' || location === '/land' || location === '/ally' || location === '/play';
   
   // Check if current location is in Play the Game section
-  const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/');
+  const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/') || location === '/local-food-economy' || location === '/tools' || location.startsWith('/tools/');
   
   // Check if current location is in Seasons + Schedule section
   const isSeasonsActive = location === '/seasons' || location === '/schedule';
 
   // Check if current location is in Explore + Connect
-  const isSocialsBlogActive = location === '/blog' || location.startsWith('/blog/') || location === '/socials' || location.startsWith('/community');
+  const isSocialsBlogActive = location === '/blog' || location.startsWith('/blog/') || location === '/socials' || location.startsWith('/community') || location === '/economy';
 
   return (
     <>
@@ -247,8 +247,23 @@ export default function Navigation() {
                   <UsersRound className="w-5 h-5 mr-3 text-blue-400" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Crowd Pool Campaigns</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/tools'}
+                >
+                  <Wrench className="w-5 h-5 mr-3 text-amber-400" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Tools Library</span>
+                  <span className="ml-auto text-[9px] bg-[#7dd87d]/30 text-[#7dd87d] px-1.5 py-0.5 rounded-full">New</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/local-food-economy'}
+                >
+                  <Sprout className="w-5 h-5 mr-3 text-green-400" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Local Food Economy</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/crowd-pooling'}
                 >
@@ -408,7 +423,14 @@ export default function Navigation() {
                   <Coins className="w-5 h-5 mr-3 text-[#d4a574]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Tokenomics</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/economy'}
+                >
+                  <TrendingUp className="w-5 h-5 mr-3 text-[#d4a574]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Economy</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/community'}
                 >
