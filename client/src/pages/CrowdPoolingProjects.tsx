@@ -1248,11 +1248,10 @@ export default function CrowdPoolingProjects() {
         backgroundImage: `url('/images/crowd-pooling-hero.webp')`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
       }}
     >
-      {/* Dark overlay — 60% opacity */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/60 via-[#0a1f10]/70 to-[#0d2818]/90 pointer-events-none" />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/55 via-[#0a1f10]/65 to-[#0d2818]/85 pointer-events-none" />
 
       <SEO {...pageSEO.crowdPoolingProjects} />
 
@@ -1274,7 +1273,7 @@ export default function CrowdPoolingProjects() {
               >
                 {pageCopy.crowdPoolingProjects.hero.heading}
               </h1>
-              <p className="text-white/70 text-base md:text-lg mb-10 max-w-2xl mx-auto">
+              <p className="text-white/90 text-base md:text-lg mb-10 max-w-2xl mx-auto">
                 {pageCopy.crowdPoolingProjects.hero.subtext}
               </p>
 

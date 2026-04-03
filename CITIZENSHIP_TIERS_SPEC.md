@@ -48,10 +48,10 @@ Note: The 70th percentile tier was renamed from "Steward" to **"Cultivator"** to
 - Participate in the forum (read, post, reply in general categories)
 - View the Game Mechanics page (read-only, all variables visible)
 - Endorse other players and projects
+- Governance on Hypha (app.hypha.earth)
+- Access to marketplace on LocalScale.org
 
 **Cannot do:**
-- Submit proposals
-- Signal-vote on proposals
 - Rate food producers for regenerative certification
 - Nominate anyone to a higher tier
 - Arbitrate disputes
@@ -63,8 +63,8 @@ Note: The 70th percentile tier was renamed from "Steward" to **"Cultivator"** to
 
 **Game Variables:**
 ```
-citizenship.explorer.can_submit_proposals = false
-citizenship.explorer.can_signal_vote = false
+citizenship.explorer.can_submit_proposals = true
+citizenship.explorer.can_signal_vote = true
 citizenship.explorer.can_rate_producers = false
 citizenship.explorer.can_nominate_tiers = false
 citizenship.explorer.can_arbitrate = false
@@ -87,8 +87,6 @@ citizenship.explorer.harvest_multiplier = 1.0
 - Be active for 2+ seasons
 
 **New powers (beyond Explorer):**
-- Submit proposals (discussion/signaling layer; actual governance through Hypha)
-- Signal-vote on proposals (upvote to show support)
 - Access contribution-gated quests
 - Create forum threads in governance categories
 - Appear in Member Directory as "Co-Creator"
@@ -131,7 +129,7 @@ citizenship.co_creator.req.seasons_active = 2
 - Reach Sapling contribution score (30th percentile)
 - Receive 20+ gratitude tokens
 - Give 15+ gratitude tokens
-- Be active for 4+ seasons
+- Be active for 2+ seasons
 - Receive 1+ endorsement from a Steward or Sage
 
 **New powers (beyond Co-Creator):**
@@ -164,7 +162,7 @@ citizenship.steward.req.seasonal_rites_count = 4
 citizenship.steward.req.contribution_percentile = 30
 citizenship.steward.req.gratitude_received = 20
 citizenship.steward.req.gratitude_given = 15
-citizenship.steward.req.seasons_active = 4
+citizenship.steward.req.seasons_active = 2
 citizenship.steward.req.endorsement_from_steward_or_sage = 1
 ```
 
@@ -179,7 +177,7 @@ citizenship.steward.req.endorsement_from_steward_or_sage = 1
 - Reach Grower contribution score (50th percentile)
 - Receive 50+ gratitude tokens
 - Serve on 1+ Seasonal Council
-- Be active for 8+ seasons
+- Be active for 4+ seasons
 - Receive 2+ endorsements from existing Sages
 - Reputation (trust) score above 80th percentile
 
@@ -190,6 +188,7 @@ citizenship.steward.req.endorsement_from_steward_or_sage = 1
 - Sponsor new Explorer accounts (vouching)
 - Visible as mentor in community directory
 - Gratitude sends at 3x multiplier (triple Explorer)
+- Ability to apply for Admin status in the Game over the Forum and Site
 
 **Gratitude budget:** 13 per season
 **Gratitude multiplier:** 3.0x
@@ -203,6 +202,7 @@ citizenship.sage.can_rate_producers = true
 citizenship.sage.can_nominate_tiers = true
 citizenship.sage.can_arbitrate = true
 citizenship.sage.can_sponsor = true
+citizenship.sage.can_apply_admin = true
 citizenship.sage.gratitude_budget = 13
 citizenship.sage.gratitude_multiplier = 3.0
 citizenship.sage.harvest_multiplier = 3.0
@@ -214,7 +214,7 @@ citizenship.sage.req.rites_complete = 13
 citizenship.sage.req.contribution_percentile = 50
 citizenship.sage.req.gratitude_received = 50
 citizenship.sage.req.seasonal_councils_served = 1
-citizenship.sage.req.seasons_active = 8
+citizenship.sage.req.seasons_active = 4
 citizenship.sage.req.endorsement_from_sage = 2
 citizenship.sage.req.trust_score_percentile = 80
 ```
@@ -339,12 +339,13 @@ A Seasonal Council meets every season to discuss priorities, review proposals, a
 | Forum (steward-only) | No | No | Yes | Yes |
 | Forum (sage-only) | No | No | No | Yes |
 | Endorse players/projects | Yes | Yes | Yes | Yes |
-| Submit proposals | No | Yes | Yes | Yes |
-| Signal-vote on proposals | No | Yes | Yes | Yes |
+| Submit proposals | Yes | Yes | Yes | Yes |
+| Signal-vote on proposals | Yes | Yes | Yes | Yes |
 | Rate food producers | No | No | Yes | Yes |
 | Nominate Stewards | No | No | Yes | Yes |
 | Nominate Sages | No | No | No | Yes |
 | Seasonal Council eligible | No | No | Yes | Yes |
 | Arbitrate disputes | No | No | No | Yes |
 | Sponsor new players | No | No | No | Yes |
+| Apply for Admin status | No | No | No | Yes |
 | Harvest multiplier | 1.0x | 1.5x | 2.0x | 3.0x |

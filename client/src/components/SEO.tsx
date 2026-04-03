@@ -361,6 +361,13 @@ export const pageSEO = {
     image: `${BASE_URL}/og-default.jpg`,
   
     url: '/tokenomics'
+  },
+  tools: {
+    title: 'Regen Civilization Tools Library | ReGen Civics',
+    description: 'Every tool the regenerative renaissance needs. Software, hardware, governance, currency, food systems. Describe your challenge, find your tools.',
+    keywords: 'regenerative tools, community tools, governance tools, DAO tools, food systems, permaculture tools, open source',
+    image: `${BASE_URL}/og-default.jpg`,
+    url: '/tools'
   }
 };
 

@@ -51,6 +51,9 @@ const Economy = lazy(() => import("./pages/Economy"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
 const LocalFoodEconomy = lazy(() => import("./pages/LocalFoodEconomy"));
+const ToolsLibrary = lazy(() => import("./pages/ToolsLibrary"));
+const ToolDetail = lazy(() => import("./pages/ToolDetail"));
+const ToolSubmit = lazy(() => import("./pages/ToolSubmit"));
 const Calculator = lazy(() => import("./pages/Calculator"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Fund = lazy(() => import("./pages/Fund"));
@@ -238,6 +241,9 @@ function Router() {
       <Route path={"/proposals"}><EB><Proposals /></EB></Route>
       <Route path={"/game-mechanics"}><EB><GameMechanics /></EB></Route>
       <Route path={"/local-food-economy"}><EB><LocalFoodEconomy /></EB></Route>
+      <Route path={"/tools"}><EB><ToolsLibrary /></EB></Route>
+      <Route path={"/tools/submit"}><EB><ToolSubmit /></EB></Route>
+      <Route path={"/tools/:slug"}><EB><ToolDetail /></EB></Route>
       <Route path={"/regen-games"}><EB><ReGenGames /></EB></Route>
       <Route path={"/custom-games"}><EB><CustomGames /></EB></Route>
       <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>
@@ -328,7 +334,9 @@ function App() {
           <main id="main-content" className="pb-20">
             <Router />
           </main>
-          {!adminMode && (
+          {!adminMode && !location.startsWith("/economy") && !location.startsWith("/admin") && (
+            location === "/" || location.startsWith("/play") || location.startsWith("/quest") || location.startsWith("/game") || location.startsWith("/local-food")
+          ) && (
             <GameHookBanner
               variant={
                 location.startsWith("/play") ? "play"

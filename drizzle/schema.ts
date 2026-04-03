@@ -2538,3 +2538,71 @@ export const seasonalHarvests = mysqlTable("seasonal_harvests", {
   percentileAtEnd: int("percentileAtEnd").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+
+// ─── Regen Civilization Tools Library ─────────────────────────────────────
+
+export const regenToolCategories = mysqlTable("regen_tool_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  color: varchar("color", { length: 7 }),
+  icon: varchar("icon", { length: 50 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+export type RegenToolCategory = typeof regenToolCategories.$inferSelect;
+
+export const regenTools = mysqlTable("regen_tools", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  websiteUrl: varchar("websiteUrl", { length: 500 }).notNull(),
+  logoUrl: varchar("logoUrl", { length: 500 }),
+  cardImageUrl: varchar("cardImageUrl", { length: 500 }),
+  shortSummary: text("shortSummary"),
+  longDescription: text("longDescription"),
+  pricingModel: mysqlEnum("pricingModel", ["free", "freemium", "paid", "open_source"]).default("free"),
+  gettingStartedUrl: varchar("gettingStartedUrl", { length: 500 }),
+  contactEmail: varchar("contactEmail", { length: 255 }),
+  isOpenSource: boolean("isOpenSource").default(false),
+  isPhysical: boolean("isPhysical").default(false),
+  regions: json("regions"),
+  integrations: json("integrations"),
+  problemStatements: json("problemStatements"),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending"),
+  submittedBy: int("submittedBy"),
+  approvedBy: int("approvedBy"),
+  totalClicks: int("totalClicks").default(0),
+  seasonSpotlight: int("seasonSpotlight"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RegenTool = typeof regenTools.$inferSelect;
+
+export const regenToolCategoryMap = mysqlTable("regen_tool_category_map", {
+  toolId: int("toolId").notNull(),
+  categoryId: int("categoryId").notNull(),
+});
+
+export const regenToolClicks = mysqlTable("regen_tool_clicks", {
+  id: int("id").autoincrement().primaryKey(),
+  toolId: int("toolId").notNull(),
+  userId: int("userId"),
+  referrer: varchar("referrer", { length: 255 }),
+  clickedAt: timestamp("clickedAt").defaultNow(),
+});
+
+export const regenToolEndorsements = mysqlTable("regen_tool_endorsements", {
+  id: int("id").autoincrement().primaryKey(),
+  toolId: int("toolId").notNull(),
+  userId: int("userId").notNull(),
+  questId: int("questId"),
+  comment: text("comment"),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export const regenToolMentions = mysqlTable("regen_tool_mentions", {
+  id: int("id").autoincrement().primaryKey(),
+  toolId: int("toolId").notNull(),
+  postId: int("postId"),
+  detectedAt: timestamp("detectedAt").defaultNow(),
+});
