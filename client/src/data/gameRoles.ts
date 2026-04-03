@@ -5,8 +5,11 @@
 
 export interface GameRole {
   title: string;
+  characterName: string;
+  tagline: string;
   emoji: string;
   characterImage: string;
+  sceneImage: string;
   purpose: string;
   circle: string;
   powers: string[];
@@ -38,8 +41,11 @@ export interface Season {
 export const gameRoles: GameRole[] = [
   {
     title: "Season Facilitator",
+    characterName: "The Gardener",
+    tagline: "Keeps the seasons turning",
     emoji: "\u{1F33F}",
-    characterImage: "/images/roles/season-facilitator.png",
+    characterImage: "/images/roles/season-facilitator-card.webp",
+    sceneImage: "/images/roles/season-facilitator-scene.webp",
     purpose:
       "Walk beside the 13 land projects through each incubation season, holding the rhythm of weekly sessions and making sure resources flow where they're needed.",
     circle: "Incubation Circle",
@@ -70,8 +76,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Alliance Weaver",
+    characterName: "The Weaver",
+    tagline: "Connects what wants to be connected",
     emoji: "\u{1F578}\uFE0F",
-    characterImage: "/images/roles/alliance-weaver.png",
+    characterImage: "/images/roles/alliance-weaver-card.webp",
+    sceneImage: "/images/roles/alliance-weaver-scene.webp",
     purpose:
       "Build and tend the web of relationships with investors, partner organizations, and land project referral networks that keep the ecosystem alive.",
     circle: "Alliance Circle",
@@ -102,8 +111,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Incubator Guide",
+    characterName: "The Guide",
+    tagline: "Walks beside new roots",
     emoji: "\u{1F5FA}\uFE0F",
-    characterImage: "/images/roles/incubator-guide.png",
+    characterImage: "/images/roles/incubator-guide-card.webp",
+    sceneImage: "/images/roles/incubator-guide-scene.webp",
     purpose:
       "Walk land projects through the application, the season, and the milestones. You're the person they call when they're stuck or lost.",
     circle: "Projects Circle",
@@ -133,8 +145,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Forum Gardener",
+    characterName: "The Tender",
+    tagline: "Grows conversations into community",
     emoji: "\u{1F331}",
-    characterImage: "/images/roles/forum-gardener.png",
+    characterImage: "/images/roles/forum-gardener-card.webp",
+    sceneImage: "/images/roles/forum-gardener-scene.webp",
     purpose:
       "Tend the community forum like a garden. Seed discussions, welcome newcomers, pull weeds, and make sure the tone stays rooted and real.",
     circle: "Community Circle",
@@ -164,8 +179,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Game Designer",
+    characterName: "The Architect",
+    tagline: "Designs the rules we play by",
     emoji: "\u{1F3B2}",
-    characterImage: "/images/roles/game-designer.png",
+    characterImage: "/images/roles/game-designer-card.webp",
+    sceneImage: "/images/roles/game-designer-scene.webp",
     purpose:
       "Design and evolve the game mechanics, contribution scoring, citizenship tiers, seasonal events, and quest progression that make the Infinite Game playable and meaningful.",
     circle: "Anchor Circle",
@@ -196,8 +214,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Treasury Steward",
+    characterName: "The Keeper",
+    tagline: "Balances seeds and coins",
     emoji: "\u2696\uFE0F",
-    characterImage: "/images/roles/treasury-steward.png",
+    characterImage: "/images/roles/treasury-steward-card.webp",
+    sceneImage: "/images/roles/treasury-steward-scene.webp",
     purpose:
       "Keep the community's resources flowing transparently. Track funds, process payments, and report on treasury health so everyone can see where the money goes.",
     circle: "Finance Circle",
@@ -227,8 +248,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Storyteller",
+    characterName: "The Storyteller",
+    tagline: "Turns what happened into what matters",
     emoji: "\u{1F4D6}",
-    characterImage: "/images/roles/storyteller.png",
+    characterImage: "/images/roles/storyteller-card.webp",
+    sceneImage: "/images/roles/storyteller-scene.webp",
     purpose:
       "Write the story of the regenerative renaissance as it happens. Blog posts, social media, newsletters, and the narrative thread that ties everything together.",
     circle: "Communications Circle",
@@ -258,9 +282,12 @@ export const gameRoles: GameRole[] = [
     color: "#d4a574",
   },
   {
-    title: "Lead Builder",
+    title: "Grand Builder",
+    characterName: "The Tinkerer",
+    tagline: "Builds the world one tool at a time",
     emoji: "\u{1F528}",
-    characterImage: "/images/roles/lead-builder.png",
+    characterImage: "/images/roles/grand-builder-card.webp",
+    sceneImage: "/images/roles/grand-builder-scene.webp",
     purpose:
       "Maintain the codebase, review community PRs, and keep the technical systems running. The person who makes sure the tools work.",
     circle: "Tech Circle",
@@ -290,8 +317,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Security Reviewer",
+    characterName: "The Ranger",
+    tagline: "Keeps our digital commons safe",
     emoji: "\u{1F6E1}\uFE0F",
-    characterImage: "/images/roles/security-reviewer.png",
+    characterImage: "/images/roles/security-reviewer-card.webp",
+    sceneImage: "/images/roles/security-reviewer-scene.webp",
     purpose:
       "Review every community PR for vulnerabilities before it merges. Maintain security scanning workflows and help the project build secure development habits.",
     circle: "Tech Circle",
@@ -321,8 +351,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Tool Curator",
+    characterName: "The Librarian",
+    tagline: "Organizes what the builders make",
     emoji: "\u{1F9F0}",
-    characterImage: "/images/roles/tool-curator.png",
+    characterImage: "/images/roles/tool-curator-card.webp",
+    sceneImage: "/images/roles/tool-curator-scene.webp",
     purpose:
       "Manage the Tools Library. Review submissions, write clear descriptions, keep categories organized, and connect the right tools to the right land projects.",
     circle: "Community Circle",
@@ -351,9 +384,12 @@ export const gameRoles: GameRole[] = [
     color: "#fbbf24",
   },
   {
-    title: "Quest Author",
+    title: "Quest Steward",
+    characterName: "The Cartographer",
+    tagline: "Maps the paths players walk",
     emoji: "\u270D\uFE0F",
-    characterImage: "/images/roles/quest-author.png",
+    characterImage: "/images/roles/quest-steward-card.webp",
+    sceneImage: "/images/roles/quest-steward-scene.webp",
     purpose:
       "Design quests from start to finish: the card content, forum post, seed comments, progression placement, and the real-world action each quest asks players to take.",
     circle: "Community Circle",
@@ -383,8 +419,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Outreach Writer",
+    characterName: "The Herald",
+    tagline: "Carries the signal outward",
     emoji: "\u2709\uFE0F",
-    characterImage: "/images/roles/outreach-writer.png",
+    characterImage: "/images/roles/outreach-writer-card.webp",
+    sceneImage: "/images/roles/outreach-writer-scene.webp",
     purpose:
       "Write the emails, messages, and campaigns that bring land projects, investors, and allies into the ecosystem. Each season needs fresh copy for fresh audiences.",
     circle: "Communications Circle",
@@ -414,8 +453,11 @@ export const gameRoles: GameRole[] = [
   },
   {
     title: "Skills Builder",
+    characterName: "The Alchemist",
+    tagline: "Turns code into community tools",
     emoji: "\u26A1",
-    characterImage: "/images/roles/skills-builder.png",
+    characterImage: "/images/roles/skills-builder-card.webp",
+    sceneImage: "/images/roles/skills-builder-scene.webp",
     purpose:
       "Create and maintain the Claude skills that power the whole contributor ecosystem. The quality of the skills determines the quality of everyone's output. You can also build tools independently on your own Claude account and earn revenue when those tools help the community.",
     circle: "Tech Circle",
