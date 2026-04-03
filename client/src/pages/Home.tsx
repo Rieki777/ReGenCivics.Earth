@@ -230,12 +230,11 @@ export default function Home() {
         <section className="relative py-10 md:py-14">
           <div className="container max-w-4xl">
             <AnimatedSection animation="fade-in">
-              <VideoPreviewCard
-                mp4Url="/images/clip-01-welcome.mp4"
-                posterUrl="/images/clip-01-poster.webp"
-                youtubeUrl="https://youtu.be/G-6ZpxvZ3qM"
+              <AutoplayVideo
+                videoId="G-6ZpxvZ3qM"
                 title="Welcome to the Regenerative Renaissance"
-                playLabel="Watch Full Video"
+                thumbnailUrl="/images/clip-01-poster.webp"
+                thumbnailAlt="Welcome to the Regenerative Renaissance"
               />
             </AnimatedSection>
           </div>

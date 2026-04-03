@@ -185,14 +185,14 @@ export default function CrowdPooling() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button className="bg-[#1a472a] hover:bg-[#2d5a3d] w-full sm:w-auto">
-                  <ExternalLink className="w-4 h-4 mr-2" />
+                <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-lg py-3 px-6 ring-2 ring-[#7dd87d]/30 w-full sm:w-auto">
+                  <ExternalLink className="w-5 h-5 mr-2" />
                   {pageCopy.crowdPooling.submit.submitLabel}
                 </Button>
               </a>
               <Link href="/crowd-pooling-projects">
-                <Button variant="outline" className="border-[#1a472a]/30 w-full sm:w-auto">
-                  <Users className="w-4 h-4 mr-2" />
+                <Button className="bg-white/10 hover:bg-white/20 text-white border border-[#7dd87d]/40 text-lg py-3 px-6 w-full sm:w-auto">
+                  <Users className="w-5 h-5 mr-2" />
                   {pageCopy.crowdPooling.submit.viewProjectsLabel}
                 </Button>
               </Link>

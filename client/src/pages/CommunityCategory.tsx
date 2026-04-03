@@ -275,7 +275,7 @@ export default function CommunityCategory() {
                   <div className="bg-white rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-sm transition-all duration-200 cursor-pointer group">
                     {post.generatedImageUrl && (
                       <div className="w-full h-32 overflow-hidden">
-                        <img src={post.generatedImageUrl} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width={800} height={128} loading="lazy" />
+                        <img src={post.generatedImageUrl} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width={800} height={128} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                       </div>
                     )}
                     <div className="flex items-start gap-3 p-4">
