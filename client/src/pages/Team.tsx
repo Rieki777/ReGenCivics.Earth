@@ -6,6 +6,10 @@
 
 import { useState } from 'react';
 import { Link } from 'wouter';
+import { gameRoles } from '@/data/gameRoles';
+import { RolePortalCard } from '@/components/RolePortalCard';
+import { SeasonalRhythmSection } from '@/components/SeasonalRhythmSection';
+import { HowToApplySection } from '@/components/HowToApplySection';
 import { 
   ExternalLink,
   Heart,
@@ -334,7 +338,7 @@ function IkigaiCircle({
 }
 
 export default function Team() {
-  const [selectedRole, setSelectedRole] = useState<typeof openRoles[0] | null>(null);
+  // Role portal cards handle their own modal state via RolePortalCard
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
@@ -564,86 +568,34 @@ export default function Team() {
         </div>
       </section>
 
-      {/* Open Roles Section - NEW */}
+      {/* Game Roles Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-[#fbbf24]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-[#fbbf24]/30">
+              <span className="text-lg">🎮</span>
+              <span className="text-[#fbbf24] font-medium text-sm uppercase tracking-wide">Choose Your Role</span>
+            </div>
             <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Open <span className="text-[#7dd87d]">Roles</span>
+              Roles of the <span className="text-[#7dd87d]">Infinite Game</span>
             </h2>
-            <p className="text-lg text-white/70 max-w-2xl mx-auto">
-              Roles belong to ReGen Civics, not a person. Click any role to learn more about how you can contribute.
+            <p className="text-lg text-white/70 max-w-3xl mx-auto">
+              Every role is a way to play. Each one has specific powers, rights, responsibilities, and token rewards. Roles belong to the Game, filled by players each season through community vote. Click any role to enter its portal.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {openRoles.map((role, index) => {
-              // Determine badge color based on assignment status - using light green variants
-              const isFilled = role.assignment.toLowerCase().includes('filled') && !role.assignment.toLowerCase().includes('partial') && !role.assignment.toLowerCase().includes('seeking');
-              const isPartial = role.assignment.toLowerCase().includes('partial') || (role.assignment.toLowerCase().includes('filled') && role.assignment.toLowerCase().includes('seeking'));
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {gameRoles.map((role, index) => {
               const isOpen = role.assignment.toLowerCase().includes('open');
               
               let badgeColor = 'bg-[#7dd87d]'; // light green for open
               let badgeText = 'Open';
               
-              if (isFilled) {
-                badgeColor = 'bg-[#4a9f4a]'; // darker green for filled
-                badgeText = 'Filled';
-              } else if (isPartial) {
-                badgeColor = 'bg-[#9de89d]'; // lighter green for partial
-                badgeText = 'Partial';
-              } else if (isOpen) {
-                badgeColor = 'bg-[#7dd87d]'; // medium green for open
-                badgeText = 'Open';
-              }
-              
-              return (
-                <div 
-                  key={index} 
-                  className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-[#7dd87d]/20 hover:border-[#7dd87d]/50 hover:bg-white/10 transition-all cursor-pointer group"
-                  onClick={() => setSelectedRole(role)}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-10 h-10 bg-[#7dd87d]/20 rounded-lg flex items-center justify-center">
-                      <Users className="w-5 h-5 text-[#7dd87d]" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`${badgeColor} text-[#1a472a] text-xs font-bold px-2 py-1 rounded-full`}>
-                        {badgeText}
-                      </span>
-                      <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-[#7dd87d] transition-colors" />
-                    </div>
-                  </div>
-                  <h3 className="text-white font-bold mb-2">{role.title}</h3>
-                  <p className="text-white/50 text-xs mb-3">{role.circle}</p>
-                  <p className="text-white/60 text-sm line-clamp-2">{role.purpose}</p>
-                </div>
-              );
+              return <RolePortalCard key={index} role={role} />;
             })}
           </div>
           
-          {/* Apply for Role CTA */}
-          <div className="mt-8 bg-gradient-to-r from-[#7dd87d]/20 via-[#7dd87d]/10 to-[#7dd87d]/20 backdrop-blur-sm rounded-2xl p-8 border border-[#7dd87d]/30">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="text-center md:text-left">
-                <h3 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                  Ready to Join the Team?
-                </h3>
-                <p className="text-white/70">
-                  Apply for a role in ReGen Civics and help shape the regenerative renaissance.
-                </p>
-              </div>
-              <Link href="/connect?path=role">
-                <Button 
-                  size="lg" 
-                  className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl whitespace-nowrap"
-                  style={{ fontFamily: 'var(--font-accent)' }}
-                >
-                  Apply for a Role <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          </div>
+          {/* Missing Role Callout */}
           
           {/* Missing Role Callout */}
           <div className="mt-4 bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-[#7dd87d]/20 text-center">
@@ -655,10 +607,11 @@ export default function Team() {
         </div>
       </section>
 
-      {/* Role Modal */}
-      {selectedRole && (
-        <RoleModal role={selectedRole} onClose={() => setSelectedRole(null)} />
-      )}
+      {/* Seasonal Rhythm */}
+      <SeasonalRhythmSection />
+
+      {/* How to Apply */}
+      <HowToApplySection />
 
       {/* Key Principles */}
       <section className="py-20 px-4 bg-[#0d2818]">

@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { Link } from 'wouter';
+import { SeasonalRhythmSection } from '@/components/SeasonalRhythmSection';
 import { 
   Calendar, 
   Clock, 
@@ -614,16 +615,19 @@ export default function Seasons() {
         </div>
       </section>
 
-      {/* The Regenerative Journey - Seasonal Cycle (migrated from old homepage) */}
+      {/* The Rhythm of the Infinite Game */}
+      <SeasonalRhythmSection />
+
+      {/* The Project Growth Cycle (renamed from Regenerative Journey) */}
       <section className="py-20 px-4 bg-gradient-to-b from-[#0d2818] to-[#1a472a]">
         <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-8">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white" style={{ fontFamily: 'var(--font-display)' }}>
-              The Regenerative{" "}
-              <span className="text-[#7dd87d]">Journey</span>
+              The Project{" "}
+              <span className="text-[#7dd87d]">Growth Cycle</span>
             </h2>
             <p className="text-xl text-white/70 max-w-3xl mx-auto">
-              From potential to abundance: Together through the seasons of regeneration
+              Land projects move through these phases at their own pace, from first formation to thriving abundance
             </p>
           </div>
 
@@ -711,7 +715,7 @@ export default function Seasons() {
           </div>
 
           <p className="text-center text-sm text-white/50 italic mt-6">
-            Seasons represent phases of growth, not calendar seasons. *Projects who have completed their own "Winter Season" are invited to apply for the "Spring Season Incubator"
+            These phases describe a project's growth, not the community's seasonal rhythm above. Projects who have completed their own "Assessment" phase are invited to apply for the Spring Season Incubator.
           </p>
         </div>
       </section>
