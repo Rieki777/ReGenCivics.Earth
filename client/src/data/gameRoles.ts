@@ -16,7 +16,13 @@ export interface GameRole {
   rights: string[];
   responsibilities: string[];
   domains: string;
+  band: number;
   tokenAward: string;
+  maxTokenAward: string;
+  hoursPerWeek: number;
+  deliverables: string[];
+  seed: string;
+  harvest: string;
   seasons: string[];
   assignment: string;
   color: string;
@@ -68,8 +74,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Season incubation process, project support protocols, session design",
-    tokenAward:
-      "1,200 $ReGen per season + completion bonuses based on project outcomes",
+    band: 5,
+    tokenAward: "700,000 $ReGen ($7,000)",
+    maxTokenAward: "910,000 $ReGen ($9,100)",
+    hoursPerWeek: 12,
+    deliverables: [
+      "Facilitate weekly incubation sessions",
+      "Track project milestones and flag blockers",
+      "Write season wrap-up report",
+      "Onboard incoming projects at season start",
+    ],
+    seed: "All scheduled sessions held on time through the season",
+    harvest: "Land projects report feeling supported (Season Festival survey, target: 4+/5 average)",
     seasons: ["spring"],
     assignment: "Filled, seeking 1-2 co-facilitators",
     color: "#7dd87d",
@@ -103,8 +119,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Alliance partnerships, investor relations, conference representation",
-    tokenAward:
-      "1,000 $ReGen per season + commission on partnerships that convert to fund contributions",
+    band: 4,
+    tokenAward: "600,000 $ReGen ($6,000)",
+    maxTokenAward: "780,000 $ReGen ($7,800)",
+    hoursPerWeek: 10,
+    deliverables: [
+      "Maintain active contact with 10+ alliance partners per season",
+      "Report on partnership health monthly",
+      "Coordinate investor communications with Treasury Steward",
+      "Facilitate alliance partner onboarding",
+    ],
+    seed: "New partnership conversations opened (target: 3+ per season)",
+    harvest: "At least one partnership that resulted in tangible support for a land project",
     seasons: ["spring", "summer"],
     assignment: "Open",
     color: "#d4a574",
@@ -138,7 +164,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Project intake, milestone tracking, mentor matching, project support",
-    tokenAward: "800 $ReGen per season per project guided",
+    band: 3,
+    tokenAward: "500,000 $ReGen ($5,000)",
+    maxTokenAward: "650,000 $ReGen ($6,500)",
+    hoursPerWeek: 10,
+    deliverables: [
+      "Guide 3-4 land projects per season",
+      "Check in with each project weekly",
+      "Document project progress and lessons learned",
+      "Connect projects with relevant tools from the Tools Library",
+    ],
+    seed: "Weekly check-ins with every guided project completed through the season",
+    harvest: "Guided projects hitting their own self-set milestones (target: 70%+ on track)",
     seasons: ["spring", "summer"],
     assignment: "Open, 2 positions",
     color: "#4a9f4a",
@@ -172,7 +209,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Forum moderation, community tone, new member welcome, seed content",
-    tokenAward: "600 $ReGen per season + bonuses for community growth metrics",
+    band: 1,
+    tokenAward: "300,000 $ReGen ($3,000)",
+    maxTokenAward: "390,000 $ReGen ($3,900)",
+    hoursPerWeek: 6,
+    deliverables: [
+      "Post 2-3 seed discussions per week",
+      "Respond to new member introductions within 24 hours",
+      "Review flagged content daily",
+      "Write monthly community health report",
+    ],
+    seed: "Seed discussions posted each week throughout the season",
+    harvest: "New members who came back and posted more than once (community retention)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Open",
     color: "#7dd87d",
@@ -206,8 +254,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Game mechanics, contribution scoring, quest design, citizenship tiers, seasonal events",
-    tokenAward:
-      "1,000 $ReGen per season + design bonuses for adopted mechanics",
+    band: 6,
+    tokenAward: "800,000 $ReGen ($8,000)",
+    maxTokenAward: "1,040,000 $ReGen ($10,400)",
+    hoursPerWeek: 12,
+    deliverables: [
+      "Maintain the game spec",
+      "Balance contribution scoring each season",
+      "Design 2+ new quests per season",
+      "Document all game mechanic changes and reasoning",
+    ],
+    seed: "New quests or mechanics designed and live on the site (target: 2+)",
+    harvest: "Players completing those quests (measured by quest completion count)",
     seasons: ["winter", "spring"],
     assignment: "Partially filled, support needed",
     color: "#fbbf24",
@@ -241,7 +299,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Treasury operations, financial reporting, payment processing, budget tracking",
-    tokenAward: "800 $ReGen per season",
+    band: 4,
+    tokenAward: "600,000 $ReGen ($6,000)",
+    maxTokenAward: "780,000 $ReGen ($7,800)",
+    hoursPerWeek: 8,
+    deliverables: [
+      "Process payments within 48 hours of approval",
+      "Publish monthly treasury reports",
+      "Track all fund inflows and outflows",
+      "Coordinate with Alliance Weaver on investor fund allocations",
+    ],
+    seed: "Monthly reports published on time and visible to the community",
+    harvest: "Community reports zero confusion about where money went (Season Festival survey, target: 4+/5)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Partially filled, seeking support",
     color: "#4a9f4a",
@@ -275,8 +344,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Blog, social media, newsletter, brand voice, public narrative",
-    tokenAward:
-      "800 $ReGen per season + bonuses for content that drives signups",
+    band: 3,
+    tokenAward: "500,000 $ReGen ($5,000)",
+    maxTokenAward: "650,000 $ReGen ($6,500)",
+    hoursPerWeek: 10,
+    deliverables: [
+      "Publish 2+ blog posts per month",
+      "Maintain social media presence (3+ posts per week)",
+      "Write or edit the monthly newsletter",
+      "Run content through the avoid-ai-writing skill before publishing",
+    ],
+    seed: "Content published on cadence (blog, social, newsletter targets met)",
+    harvest: "New community members who say content brought them here (signup source tracking, target: 10+/season)",
     seasons: ["winter", "spring", "summer"],
     assignment: "Open",
     color: "#d4a574",
@@ -310,7 +389,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Codebase architecture, PR review, deployment, technical documentation",
-    tokenAward: "1,200 $ReGen per season",
+    band: 7,
+    tokenAward: "900,000 $ReGen ($9,000)",
+    maxTokenAward: "1,170,000 $ReGen ($11,700)",
+    hoursPerWeek: 15,
+    deliverables: [
+      "Review all community PRs weekly",
+      "Maintain CI/CD pipeline and deployment process",
+      "Write execution prompts for major features",
+      "Mentor new code contributors",
+    ],
+    seed: "Features and fixes shipped to production through the season",
+    harvest: "Community contributors who merged their first PR (people you enabled)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Partially filled, builders needed",
     color: "#7dd87d",
@@ -344,7 +434,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Security review, vulnerability scanning, secure development practices",
-    tokenAward: "1,000 $ReGen per season",
+    band: 6,
+    tokenAward: "800,000 $ReGen ($8,000)",
+    maxTokenAward: "1,040,000 $ReGen ($10,400)",
+    hoursPerWeek: 10,
+    deliverables: [
+      "Review all PRs for security vulnerabilities weekly",
+      "Maintain and improve security scanning workflows",
+      "Document security practices and known risks",
+      "Run quarterly security audits",
+    ],
+    seed: "Security reviews completed for every community PR through the season",
+    harvest: "Zero critical vulnerabilities reaching production",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Golden opportunity",
     color: "#fbbf24",
@@ -378,7 +479,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Tools Library curation, tool submissions, tool-quest integration",
-    tokenAward: "600 $ReGen per season + bonuses for library growth",
+    band: 3,
+    tokenAward: "500,000 $ReGen ($5,000)",
+    maxTokenAward: "650,000 $ReGen ($6,500)",
+    hoursPerWeek: 6,
+    deliverables: [
+      "Review tool submissions within 72 hours",
+      "Write or improve 5+ tool descriptions per month",
+      "Connect tools to relevant quests and seasons",
+      "Track tool usage metrics and report quarterly",
+    ],
+    seed: "Submissions reviewed and cataloged within the season (target: 72hr turnaround)",
+    harvest: "Tools actually getting used by land projects (usage tracking)",
     seasons: ["winter", "spring"],
     assignment: "Open",
     color: "#fbbf24",
@@ -412,7 +524,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Quest design, forum seed content, progression chain, quest rewards",
-    tokenAward: "400 $ReGen per quest accepted + seasonal base of 400 $ReGen",
+    band: 2,
+    tokenAward: "400,000 $ReGen ($4,000)",
+    maxTokenAward: "520,000 $ReGen ($5,200)",
+    hoursPerWeek: 8,
+    deliverables: [
+      "Design 3+ new quests per season",
+      "Write forum seed posts for each quest",
+      "Track quest completion rates and adjust difficulty",
+      "Collaborate with Game Designer on progression balance",
+    ],
+    seed: "Quests designed, written, and live with forum seed posts (target: 3+)",
+    harvest: "Players completing those specific quests (completion count)",
     seasons: ["winter", "spring", "summer"],
     assignment: "Open",
     color: "#7dd87d",
@@ -446,7 +569,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Email campaigns, outreach sequences, audience messaging, campaign metrics",
-    tokenAward: "600 $ReGen per season + bonuses for conversion results",
+    band: 2,
+    tokenAward: "400,000 $ReGen ($4,000)",
+    maxTokenAward: "520,000 $ReGen ($5,200)",
+    hoursPerWeek: 8,
+    deliverables: [
+      "Write 2+ outreach sequences per season",
+      "Maintain email templates and adapt for each campaign",
+      "Track open rates and conversion metrics",
+      "Collaborate with Alliance Weaver on investor messaging",
+    ],
+    seed: "Sequences written and sent on schedule (target: 2+)",
+    harvest: "People who responded or applied (actual human engagement, not open rates)",
     seasons: ["spring", "summer"],
     assignment: "Open",
     color: "#d4a574",
@@ -480,7 +614,18 @@ export const gameRoles: GameRole[] = [
     ],
     domains:
       "Skill creation, skill testing, skill documentation, contributor tooling",
-    tokenAward: "800 $ReGen per season + bonuses for skill adoption rates",
+    band: 5,
+    tokenAward: "700,000 $ReGen ($7,000)",
+    maxTokenAward: "910,000 $ReGen ($9,100)",
+    hoursPerWeek: 10,
+    deliverables: [
+      "Build 2+ new skills per season",
+      "Maintain and improve existing skills based on usage feedback",
+      "Document skill usage patterns and best practices",
+      "Test skills across different Claude interfaces",
+    ],
+    seed: "New skills shipped to the repo (target: 2+)",
+    harvest: "Other contributors actively using those skills (adoption tracking)",
     seasons: ["winter"],
     assignment: "Open",
     color: "#fbbf24",

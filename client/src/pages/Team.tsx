@@ -10,6 +10,8 @@ import { gameRoles } from '@/data/gameRoles';
 import { RolePortalCard } from '@/components/RolePortalCard';
 import { SeasonalRhythmSection } from '@/components/SeasonalRhythmSection';
 import { HowToApplySection } from '@/components/HowToApplySection';
+import { RoleVariablesSection } from '@/components/RoleVariablesSection';
+import { SeasonScorecardSection } from '@/components/SeasonScorecardSection';
 import { 
   ExternalLink,
   Heart,
@@ -608,10 +610,17 @@ export default function Team() {
       </section>
 
       {/* Seasonal Rhythm */}
+      {/* Role Variables: Seed & Harvest */}
+      <RoleVariablesSection />
+
+      {/* Seasonal Rhythm */}
       <SeasonalRhythmSection />
 
       {/* How to Apply */}
       <HowToApplySection />
+
+      {/* Season Scorecard */}
+      <SeasonScorecardSection />
 
       {/* Key Principles */}
       <section className="py-20 px-4 bg-[#0d2818]">
