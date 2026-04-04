@@ -232,6 +232,7 @@ export default function Connect() {
   const [roleInterest, setRoleInterest] = useState("");
   const [whyIdeal, setWhyIdeal] = useState("");
   const [seasonDeliverables, setSeasonDeliverables] = useState("");
+  const [videoPitchUrl, setVideoPitchUrl] = useState("");
   const [cvWebsite, setCvWebsite] = useState("");
   const [uniqueContribution, setUniqueContribution] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
@@ -389,6 +390,7 @@ export default function Connect() {
       roleInterest: roleInterest || undefined,
       whyIdeal: whyIdeal || undefined,
       seasonDeliverables: seasonDeliverables || undefined,
+      videoPitchUrl: videoPitchUrl || undefined,
       cvWebsite: cvWebsite || undefined,
       uniqueContribution: uniqueContribution || undefined,
       additionalNotes: additionalNotes || undefined,
@@ -1015,6 +1017,21 @@ export default function Connect() {
               />
             </div>
             
+            <div>
+              <Label htmlFor="videoPitchUrl" className="text-lg font-semibold text-white/90">
+                3-Minute Video Pitch
+              </Label>
+              <p className="text-sm text-white/60 mb-2">Record a short video introducing yourself and your pitch for this role. Upload it to YouTube, Loom, Google Drive, or any hosting service and paste the link here.</p>
+              <Input
+                id="videoPitchUrl"
+                type="url"
+                value={videoPitchUrl}
+                onChange={(e) => setVideoPitchUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=... or https://loom.com/share/..."
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+              />
+            </div>
+
             <div>
               <Label htmlFor="cvWebsite" className="text-lg font-semibold text-white/90">
                 CV, Portfolio, or Website (Optional)

@@ -245,6 +245,7 @@ export const generalInquiriesRouter = router({
       roleInterest: z.string().optional(),
       whyIdeal: z.string().optional(),
       seasonDeliverables: z.string().optional(),
+      videoPitchUrl: z.string().optional(),
       cvWebsite: z.string().optional(),
 
       // Path 7: Something else specific fields
@@ -290,6 +291,7 @@ export const generalInquiriesRouter = router({
         roleInterest: input.roleInterest || null,
         whyIdeal: input.whyIdeal || null,
         seasonDeliverables: input.seasonDeliverables || null,
+        videoPitchUrl: input.videoPitchUrl || null,
         cvWebsite: input.cvWebsite || null,
         uniqueContribution: input.uniqueContribution || null,
         capitalTypes: input.capitalTypes || null,

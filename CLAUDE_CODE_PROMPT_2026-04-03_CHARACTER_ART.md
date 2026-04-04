@@ -6,7 +6,7 @@ Generate 26 character illustrations for the Team page role cards (13 roles x 2 v
 
 **Two versions per character:**
 1. **Card portrait** (`[slug]-card.webp`) - Character only, no background scene, no text. Used on the exterior of role portal cards. Will be composited onto dark card backgrounds with HTML-rendered titles below.
-2. **Full scene** (`[slug]-scene.webp`) - Character in a background scene with the character name as text on the image. Used inside the expanded portal modal when someone clicks a card. Style matches The Tinkerer and The Ranger reference images (landscape composition, scene background, character name in a banner/label).
+2. **Full scene** (`[slug]-scene.webp`) - Character in a background scene with the character name as text on the image. Used inside the expanded portal modal when someone clicks a card.
 
 **Save all to:** `client/public/images/roles/`
 
@@ -18,13 +18,19 @@ Generate 26 character illustrations for the Team page role cards (13 roles x 2 v
 
 ## Style Guide
 
-**Overall style:** Quirky hand-drawn illustrated character design. Warm earthy tones (browns, tans, olive greens, warm golds) with green and gold nature accents. Looks like a character select screen in a cooperative board game about regenerating the earth. Each character is a distinct person with personality, posture, and attitude visible before you read the name.
+**THE VIBE: Solarpunk meets elven meets jedi meets regenerative future.** These characters live in a world that already healed. Think: Rivendell if it was built by permaculture designers with solar panels woven into living architecture. Studio Ghibli's future earth. Moss-covered technology. Bioluminescent accents. Flowing fabrics with circuitry patterns. Living wood merged with soft-glowing interfaces. Crystal and mycelium and sunlight, not leather and iron and torchlight.
 
-**Card portraits:** Character standing, full body or 3/4 body, simple flat or transparent background (light parchment tone or transparent). No scene elements, no text, no title, no tagline. Just the character and their key props/tools. Clean edges for compositing onto dark card backgrounds.
+**Color palette:** Deep forest greens, warm golds, bioluminescent teals and cyans, sunrise amber, living wood browns, soft white light. NOT medieval browns and grays. The world is green and alive and lit from within.
 
-**Full scene images:** Landscape orientation (16:9 ish). Character in the left or center of a nature scene relevant to their role. Rolling hills, forests, fields, ruins, workshops. Warm golden light (sunrise/sunset feel). The character name appears as a label/banner in the style of The Tinkerer reference (earthy banner with serif-style lettering). NO tagline text on the image. NO "Character Select" header. Just the character name.
+**Overall style:** Illustrated character design with a hand-painted quality. Warm and inviting, detailed but not photorealistic. The line between technology and nature is gone. Tools are grown, not forged. Clothing is woven from living fibers. Architecture behind them is part tree, part crystal, part solar membrane. Every surface has some sign of life growing on or through it.
 
-**Character diversity:** Vary skin tones, body types, hairstyles, and ages across the 13 characters. Some younger, some older. Mix of masculine, feminine, and androgynous presentations. Everyone looks like someone who actually works with land and community.
+**Card portraits:** Character standing, full body or 3/4 body, simple soft gradient or transparent background (warm green-to-gold gradient or transparent). No scene elements, no text, no title, no tagline. Just the character and their key props/tools. Clean edges for compositing onto dark card backgrounds.
+
+**Full scene images:** Landscape orientation (16:9 ish). Character in the left or center of a solarpunk nature scene relevant to their role. Living architecture, food forests, bioluminescent groves, rooftop gardens with solar membranes, mycelium networks visible as soft glowing veins in the ground. Golden hour light, always. The character name appears as a simple clean label. NO tagline text on the image. NO "Character Select" header. Just the character name.
+
+**CRITICAL: Every scene must feel deeply regenerative, organic, and alive.** Every scene includes visible fruiting plants (berry bushes, fruit trees, gourds, hanging figs, pomegranates, citrus, etc.) and at least one or two animals or creatures (songbirds, deer, foxes, rabbits, butterflies, dragonflies, bees, frogs, owls, hummingbirds, small lizards, etc.). This is a world of abundance. Food is growing everywhere. Animals are comfortable around people. Nothing is barren or sterile. Even the most "technological" scenes have vines bearing fruit climbing through them, pollinators buzzing past, and wildlife at ease in the background.
+
+**Character diversity:** Vary skin tones, body types, hairstyles, and ages across the 13 characters. Some younger, some older. Mix of masculine, feminine, and androgynous presentations. Everyone looks like someone who lives deeply connected to land and community. Some have subtle bioluminescent freckles or markings. Some have hair woven with living vines or small flowers. Pointed ears on some (elven touch), not all. Flowing robes and tunics, not armor.
 
 ---
 
@@ -33,92 +39,92 @@ Generate 26 character illustrations for the Team page role cards (13 roles x 2 v
 ### 1. The Gardener (Season Facilitator)
 - **Tagline (for HTML only, not on image):** Keeps the seasons turning
 - **Slug:** `season-facilitator`
-- **Character:** Warm-faced person with sun-weathered skin and a gentle smile, wearing a woven straw hat with green ribbon, earth-toned patched coat with leaf embroidery. Holding a large wooden seasonal calendar wheel divided into four sections (snowflake, flower, sun, leaf). Small plants and seedlings growing around their boots. Tool belt with pruning shears and a small journal.
-- **Scene background:** A garden at the transition between seasons, one side blooming, the other side with autumn leaves. Stone path. Gentle sunrise.
+- **Character:** Serene person with warm brown skin and silver-streaked hair woven with tiny living flowers. Wearing a flowing robe in shifting seasonal colors (green fading to gold fading to frost-blue at the hem). Holding a circular holographic seasonal wheel that floats above their open palm, each quadrant glowing with its season's energy. Bare feet in soft moss. A living-wood staff in the other hand with leaves that change color along its length. Subtle pointed ears. Eyes that hold deep patience.
+- **Scene background:** A circular garden where four seasons exist simultaneously in four quadrants. Cherry blossoms heavy with fruit, summer wildflowers with bees humming through them, autumn apple and persimmon trees loaded with ripe fruit, frost-touched evergreens with a fox curled beneath. A crystal sundial in the center. Bioluminescent pathways between quadrants. A pair of songbirds on a branch. Golden hour light.
 - **Scene text:** `- THE GARDENER -`
 
 ### 2. The Weaver (Alliance Weaver)
 - **Tagline (for HTML only):** Connects what wants to be connected
 - **Slug:** `alliance-weaver`
-- **Character:** Tall person with long braided hair and a knowing expression, wearing a cloak covered in constellation patterns and subtle thread designs. Threads of golden light extend from their fingertips connecting to distant points. A satchel at their hip full of sealed letters and small gifts. Wearing sturdy travel boots.
-- **Scene background:** A hilltop at golden hour, looking out over a valley with distant villages connected by faintly glowing threads of light. Wind in the cloak.
+- **Character:** Tall, graceful person with deep copper skin and very long hair in elaborate braids threaded with thin bioluminescent fibers. Wearing a flowing cape with a subtle mycelium-network pattern that seems to shift and pulse with soft light. From their fingertips, threads of golden-green light extend outward, connecting to unseen points. A crystalline pendant at their chest pulses with a soft heartbeat glow. Travel sandals with living vine straps. Calm, far-seeing expression.
+- **Scene background:** Standing on a living-wood bridge between two treehouse communities, threads of light connecting dozens of structures across a lush valley. Grapevines heavy with fruit climb the bridge railings alongside bioluminescent fungi. A hummingbird hovers near a flowering vine. Butterflies drift between the treehouses. Distant solar-membrane canopies catching sunset light. Fig trees line the valley floor.
 - **Scene text:** `- THE WEAVER -`
 
 ### 3. The Guide (Incubator Guide)
 - **Tagline (for HTML only):** Walks beside new roots
 - **Slug:** `incubator-guide`
-- **Character:** Sturdy person with kind eyes and weathered hands, wearing a canvas vest over a green tunic. Holding an old lantern in one hand and a hand-drawn map in the other. Compass hanging from belt. Small seedlings growing out of the top of their backpack. Muddy boots that have seen real trails.
-- **Scene background:** A forest path with dappled sunlight, the trail ahead splitting into multiple directions, each marked with small wooden signposts. Ferns and new growth everywhere.
+- **Character:** Sturdy person with warm olive skin, kind crinkled eyes, and short curly hair with a few small leaves growing naturally in it. Wearing a practical tunic with many pockets, each containing a different seedling or small crystal tool. One hand holds a softly glowing orb that projects a holographic trail map. The other hand rests gently on a young sapling growing from a portable living-soil pouch at their hip. Comfortable walking boots with moss cushion soles. Radiates trustworthy calm.
+- **Scene background:** A forest path where young saplings line both sides, each one labeled with a small glowing marker. Berry bushes heavy with blueberries and raspberries grow wild along the edges. The path ahead forks into several directions, each fork marked by a living-wood archway with bioluminescent vines bearing small glowing fruit. A deer and fawn graze peacefully in a clearing to one side. Dappled golden light through a canopy. A rabbit sits near the trailhead. Small glowing wayfinding orbs floating at each fork.
 - **Scene text:** `- THE GUIDE -`
 
 ### 4. The Tender (Forum Gardener)
 - **Tagline (for HTML only):** Grows conversations into community
 - **Slug:** `forum-gardener`
-- **Character:** Younger person with curly hair and bright eyes, kneeling in a garden. Wearing an apron with pockets full of seed packets. One hand holds a wooden watering can, the other tends to speech-bubble-shaped plants growing on vines. Small glowing comment-thread flowers blooming around them. Soil on their knees.
-- **Scene background:** A cozy walled garden with trellises covered in conversation-vine plants. A small wooden bench. Warm afternoon light through the leaves.
+- **Character:** Young person with rich dark skin and an explosion of natural hair adorned with tiny bioluminescent flowers that glow softly. Wearing a loose linen tunic with living-thread embroidery that slowly shifts patterns. Kneeling in a garden where the plants are shaped like speech bubbles and conversation threads, tending them with a crystalline watering vessel that pours light instead of water. A small companion creature (like a luminous moth) rests on their shoulder. Expression of focused tenderness.
+- **Scene background:** A sheltered courtyard garden within living architecture, where conversation-plants grow on trellises of woven light. Some plants bloom (active threads), some are budding (new discussions). Passionfruit and kiwi vines climb the living walls. A bright-feathered songbird perches on a trellis. Dragonflies hover over a small reflective pool. A comfortable seating circle in the center with moss cushions. A cat dozes on one cushion. Warm afternoon light filtering through translucent leaf-membrane walls. Strawberry plants spill over the edges of raised beds.
 - **Scene text:** `- THE TENDER -`
 
 ### 5. The Architect (Game Designer)
 - **Tagline (for HTML only):** Designs the rules we play by
 - **Slug:** `game-designer`
-- **Character:** Person with glasses and an intent expression, sitting at a table covered in dice, game boards, glowing rule cards, and small figurines. Wearing a vest with geometric patterns. One hand holds a compass, the other sketches on a large piece of parchment. Scattered pencils and protractors. A cat sitting on the corner of the table watching.
-- **Scene background:** A warm study or workshop with shelves of game prototypes, hanging mobiles of geometric shapes, and a window looking out onto green hills. Candle and lamp light.
+- **Character:** Sharp-featured person with pale freckled skin, focused eyes behind thin crystalline glasses, and auburn hair pulled back loosely. Wearing a fitted vest with geometric bioluminescent patterns over a simple tunic. Seated at a floating holographic workstation covered in game board projections, rule-card holograms, and small glowing figurines that move on their own. One hand manipulates a 3D holographic model of interconnected systems. Scattered around them: crystalline dice, a compass made of living wood, sketched designs on translucent leaf-paper. A small fern grows from the corner of their desk.
+- **Scene background:** A sun-drenched design studio in a treehouse, one wall entirely open to a view of green canopy with visible mango and avocado trees. Holographic game prototypes float around the room. Shelves of crystalline prototypes and living-wood models. A real cat (ginger, warm) sleeps on a beam overhead. A bowl of fresh figs and pomegranates on the desk. Bees drift past the open wall. A small gecko clings to a vine on the ceiling.
 - **Scene text:** `- THE ARCHITECT -`
 
 ### 6. The Keeper (Treasury Steward)
 - **Tagline (for HTML only):** Balances seeds and coins
 - **Slug:** `treasury-steward`
-- **Character:** Older person with silver-streaked hair and a steady, trustworthy gaze. Wearing a long apron over simple clothes. Holding an old-fashioned balance scale: seeds on one side, coins on the other, perfectly balanced. A thick ledger book tucked under one arm. Round spectacles. Belt pouch with a large brass key.
-- **Scene background:** A stone-walled treasury room with wooden shelves holding labeled jars of seeds and small coin pouches. A large open ledger on a standing desk. Warm lamplight. An arched window showing green outside.
+- **Character:** Older person with deep brown skin, silver locs, and a steady, trustworthy gaze that has seen many seasons. Wearing a long flowing robe with subtle golden thread throughout, like veins of a leaf. Holding a floating balance scale made of crystallized light: seeds on one side, glowing tokens on the other, perfectly balanced. A holographic ledger orbits slowly around their other hand, numbers and flows visible as streams of light. Round spectacles with a soft golden tint. A large living-wood key hangs from a chain at their waist.
+- **Scene background:** A treasury chamber grown from living crystal and wood. Shelves hold jars of seeds and containers of softly glowing tokens, interspersed with potted citrus trees heavy with lemons and oranges. A large holographic ledger display shows flows of resources as rivers of light. Sunlight enters through a crystal ceiling where a vine of golden grapes has woven itself through. An owl perches calmly on a high shelf. A small tortoise walks slowly across the floor. Everything is transparent, open, visible.
 - **Scene text:** `- THE KEEPER -`
 
 ### 7. The Storyteller (Storyteller)
 - **Tagline (for HTML only):** Turns what happened into what matters
 - **Slug:** `storyteller`
-- **Character:** Person with an expressive face and animated posture, sitting cross-legged under a large tree. Writing in a leather journal. Story threads float up from the pages like wisps of golden light or fireflies, each carrying tiny images. A shoulder bag with scrolls and a camera. Ink-stained fingers. A warm scarf even in mild weather.
-- **Scene background:** Under a massive old oak tree in a meadow. The floating story-threads drift up into the branches. Sunset colors. Distant mountains.
+- **Character:** Expressive person with warm tawny skin and animated dark eyes, sitting cross-legged on a floating moss platform. Writing in a journal made of living leaf-pages with a stylus that leaves trails of soft light. Story-threads rise from the pages as wisps of golden bioluminescence, each carrying tiny holographic scenes. Their clothes are loose and comfortable, a draped wrap in sunset colors. A camera-like crystal device hangs from a strap. Ink-like bioluminescent markings on their hands (from the writing). Hair is medium-length and windswept, with a few small feathers woven in.
+- **Scene background:** Beneath a massive ancient fruit tree (figs and pears hanging from branches) in a meadow, its roots glowing with soft mycelium light. The story-threads drift up into the branches and become tiny floating scenes visible in the canopy. Fireflies beginning to emerge in the warm dusk. A fox sits among the listeners, ears forward. Butterflies rest on wildflowers. Sunset colors. Distant solarpunk spires on the horizon. Other listeners sit nearby, drawn to the stories. A basket of freshly picked fruit sits beside them.
 - **Scene text:** `- THE STORYTELLER -`
 
 ### 8. The Tinkerer (Grand Builder)
 - **Tagline (for HTML only):** Builds the world one tool at a time
 - **Slug:** `grand-builder`
-- **Character:** Person with rolled-up sleeves and a focused, creative expression. Wearing a leather workshop apron with tool loops holding wrenches, code-symbol tools, and a small hammer. One hand assembles a glowing crystal module on a rustic wooden workbench. Floating instruction manuals and blueprints hover around them with sparking connections. Plants grow through cracks in the workshop floor.
-- **Scene background:** An open-air workshop at the edge of a field. Half-built structures that are part physical, part digital (wooden beams merging with glowing wireframes). Tools and materials everywhere. Golden hour light.
+- **Character:** Strong-armed person with medium brown skin, rolled-up sleeves, and a focused creative expression. Wearing a living-fiber workshop apron with tool loops that hold hybrid tools: part crystal, part living wood, part soft-glowing circuitry. One hand assembles a glowing module on a workbench that's half living wood, half holographic interface. Floating schematics and instruction-holograms orbit their workspace. Plants grow through cracks in everything. Goggles pushed up on forehead with bioluminescent lenses. Sawdust and pollen in their hair.
+- **Scene background:** An open-air workshop at the edge of a food forest with visible banana palms, breadfruit trees, and tomato vines climbing the workshop posts. Half-built structures that seamlessly merge living wood, crystal, and soft-glowing technological elements. Solar membrane canopy overhead. A robin hops along the workbench. Bees pollinate squash blossoms growing around the base of a half-built arch. Tools and living materials everywhere. The boundary between building and growing is invisible. Golden hour light.
 - **Scene text:** `- THE TINKERER -`
 
 ### 9. The Ranger (Security Reviewer)
 - **Tagline (for HTML only):** Keeps our digital commons safe
 - **Slug:** `security-reviewer`
-- **Character:** Alert, keen-eyed person in a forest ranger style outfit (earth tones with gold accents and buckles). Standing in a wooden watchtower. One hand holds a brass spyglass, the other rests on a glowing translucent shield with Celtic knot patterns. A scroll of code symbols hangs from the watchtower railing. Boots planted firmly. Confident, watchful posture.
-- **Scene background:** A watchtower on a hilltop overlooking a green valley with a winding river. Sunrise behind distant mountains. The watchtower is wooden and vine-covered but solid.
+- **Character:** Alert, keen-eyed person with dark skin and short natural hair, carrying themselves with quiet confidence. Wearing a fitted ranger-style outfit in forest greens and golds with subtle bioluminescent circuitry patterns along the seams. Standing in a living-wood watchtower. One hand holds a crystalline spyglass that shows holographic overlays of what it sees. The other hand rests on a translucent shield made of woven light with sacred geometry patterns. A scroll of glowing code-symbols unfurls from a belt pouch. Boots with living-root grip soles. Watchful, protective energy.
+- **Scene background:** A watchtower grown from a living tree on a hilltop, overlooking a green valley with a winding bioluminescent river. The watchtower tree bears large peaches and the branches host a nesting hawk. The watchtower has crystal sensor arrays woven into its branches. A loyal wolf-like companion rests at the base of the tower. Sunrise behind mountains. The valley below is a patchwork of orchards, food forests, and garden plots. Peaceful but alert atmosphere.
 - **Scene text:** `- THE RANGER -`
 
 ### 10. The Librarian (Tool Curator)
 - **Tagline (for HTML only):** Organizes what the builders make
 - **Slug:** `tool-curator`
-- **Character:** Thoughtful person with neat hair and a calm expression, organizing a beautiful wooden shelf. Each shelf holds glowing tools of different colors, some floating gently into position as the person guides them. Wearing a cardigan over a simple shirt, reading glasses perched on head. One hand holds a tool, the other holds a small label. A step stool nearby.
-- **Scene background:** A warm library or tool shed with floor-to-ceiling wooden shelves. Each tool has a hand-written label. Soft natural light from a skylight. A cozy reading nook in the corner with a mug of tea.
+- **Character:** Thoughtful person with light brown skin, neat shoulder-length hair, and a calm collected expression. Wearing a comfortable cardigan woven from living fibers over a simple tunic, crystalline reading glasses perched on their head. Standing before a wall of floating shelves where tools hover in place, each one softly glowing its own color, some drifting gently into new positions as the person guides them with small hand gestures. One hand holds a tool, examining it. The other hand holds a small holographic label. A mug of something warm floats beside them on a tiny platform of woven light.
+- **Scene background:** A warm, bright library-workshop hybrid inside a living-crystal structure. Floor-to-ceiling shelves of glowing tools, each with a holographic label. Herb pots (basil, rosemary, lavender) line the windowsills. A potted dwarf lemon tree in the corner bears ripe fruit. Soft natural light from a living-crystal skylight where a pair of doves roost. A cozy reading nook with moss cushions and climbing vines bearing small berries. A friendly tabby cat weaves between shelves. Everything is organized, peaceful, inviting.
 - **Scene text:** `- THE LIBRARIAN -`
 
 ### 11. The Cartographer (Quest Steward)
 - **Tagline (for HTML only):** Maps the paths players walk
 - **Slug:** `quest-steward`
-- **Character:** Person with adventurous energy, leaning over a large scroll that's transforming into a winding landscape path as they draw it. Holding a glowing quill pen in one hand. The other hand traces the path on the scroll. Wearing a traveler's vest with many pockets, each holding different colored inks. A compass rose tattoo visible on one forearm. Explorer's hat tipped back on their head.
-- **Scene background:** A cartographer's table set up outdoors on a cliff overlook. The landscape below mirrors the map they're drawing. Colored ink bottles and rolled scrolls on the table. Wind catching loose papers.
+- **Character:** Adventurous person with light skin, bright curious eyes, and windswept reddish hair. Wearing a traveler's vest with many pockets over flowing clothes, each pocket holding different colors of bioluminescent ink. Leaning over a large holographic map that transforms into a living landscape as they draw on it with a glowing stylus. The stylus leaves trails that become winding paths through projected terrain. A compass rose tattoo on one forearm pulses with soft light. Explorer's goggles pushed back on their head.
+- **Scene background:** A cartographer's station set up on a cliff overlook, the actual landscape below mirroring the holographic map on their table. Wild olive and walnut trees frame the cliff edge. Crystalline ink bottles and floating scroll-holograms around the table. An eagle circles in the middle distance. Wind catching translucent papers. The paths on the map below glow faintly where players have walked them, winding through orchards and food forests. A lizard suns itself on a warm rock nearby. Vast green horizon.
 - **Scene text:** `- THE CARTOGRAPHER -`
 
-### 11. The Herald (Outreach Writer)
+### 12. The Herald (Outreach Writer)
 - **Tagline (for HTML only):** Carries the signal outward
 - **Slug:** `outreach-writer`
-- **Character:** Energetic person with a bright expression, releasing carrier pigeons from raised hands. Each pigeon carries a sealed letter and trails a glowing ribbon of different colors. Wearing a messenger's outfit: crossbody leather satchel, sturdy boots, a short cape that catches the wind. Quill pen tucked behind one ear. Stack of sealed letters in the satchel.
-- **Scene background:** A stone tower balcony overlooking a vast green landscape. Pigeons flying outward in different directions, their glowing ribbons creating paths across the sky. Morning light.
+- **Character:** Energetic person with bronze skin and a bright, open expression. Releasing luminous bird-like creatures (not quite birds, more like origami light-forms) from raised hands. Each light-bird carries a sealed message and trails a different colored bioluminescent ribbon as it flies. Wearing a messenger's outfit: a crossbody satchel of living leather, comfortable travel clothes in warm tones, a short cape with solar-membrane lining that catches light. A crystalline quill tucked behind one ear. Stack of sealed letter-crystals visible in the satchel. Energy of someone who loves what they carry.
+- **Scene background:** A balcony on a tall living-crystal tower overlooking a vast green landscape of orchards, terraced gardens, and food forests. Jasmine and passionfruit vines climb the tower walls, buzzing with bees. Light-birds flying outward in every direction, their glowing ribbons creating a web of paths across the sky. Real swallows fly alongside the light-birds. A potted pomegranate tree sits on the balcony rail, fruit splitting open. Morning light breaking through clouds. Other communities visible in the distance, connected by the light-trails.
 - **Scene text:** `- THE HERALD -`
 
 ### 13. The Alchemist (Skills Builder)
 - **Tagline (for HTML only):** Turns code into community tools
 - **Slug:** `skills-builder`
-- **Character:** Person with bright, curious eyes and slightly wild hair, standing at a rustic alchemist's workbench. Assembling glowing crystal-like skill modules that emit soft colored light. Floating instruction manuals orbit around their head. Sparking connections arc between finished crystals on the shelf behind them. Wearing a leather lab coat with alchemical symbols stitched in. Goggles pushed up on forehead.
-- **Scene background:** An alchemist's lab merged with a nature workshop. Stone walls with climbing vines. Shelves of glowing crystals and bottled skills. A bubbling cauldron-like forge. Sunlight streaming through a cracked ceiling.
+- **Character:** Person with olive skin, bright curious eyes, and slightly wild dark hair with bioluminescent streaks. Standing at a workbench that's part alchemist's lab, part living organism. Assembling glowing crystalline skill-modules that emit soft colored light and hum with energy. Floating holographic instruction manuals orbit around their head like a halo. Sparking connections arc between finished skill-crystals on the shelf behind them. Wearing a living-fiber lab coat with alchemical and circuit symbols that shift and change. Goggles on forehead with iridescent lenses. Expression of someone in creative flow.
+- **Scene background:** An alchemist's lab grown inside a hollow crystal-tree. Living walls with climbing bioluminescent vines bearing glowing berries. Shelves of glowing skill-crystals and bottled abilities next to jars of dried herbs and hanging bundles of lavender and sage. A forge-like structure that's part cauldron, part living reactor, emitting soft warm light. A curious raven perches on the cauldron's rim. Mushrooms (chanterelles, lion's mane) grow from the living walls. Sunlight streaming through the crystal walls, refracting into rainbows. Frogs sit on lily pads in a small water feature. The boundary between magic and technology doesn't exist here.
 - **Scene text:** `- THE ALCHEMIST -`
 
 ---
@@ -129,12 +135,12 @@ For each character, run TWO generations:
 
 ### Card Portrait Prompt Template:
 ```
-Illustrated character design, quirky hand-drawn style with warm earthy tones and green/gold nature accents. [CHARACTER DESCRIPTION]. Full body, standing pose against a simple light parchment-colored background. No text, no title, no scene background. Clean edges. Like a character token from a cooperative board game about regenerating the earth.
+Solarpunk illustrated character design, hand-painted style with warm greens, golds, and bioluminescent accents. [CHARACTER DESCRIPTION]. Full body, standing pose against a simple soft green-to-gold gradient background. No text, no title, no scene background. Clean edges. Futuristic regenerative aesthetic where nature and technology are one. Like a character select screen in a solarpunk cooperative game about healing the earth.
 ```
 
 ### Full Scene Prompt Template:
 ```
-Illustrated game character card in landscape orientation, quirky hand-drawn style with warm earthy tones and green/gold nature accents. [CHARACTER DESCRIPTION]. [SCENE BACKGROUND DESCRIPTION]. A rustic banner label reads "[SCENE TEXT]" in earthy serif lettering. No other text. Warm golden light. Like a character select screen in a cooperative board game about regenerating the earth.
+Solarpunk illustrated game character card in landscape orientation, hand-painted style with warm greens, golds, and bioluminescent teal accents. [CHARACTER DESCRIPTION]. [SCENE BACKGROUND DESCRIPTION]. A clean minimal label reads "[SCENE TEXT]" in elegant thin lettering. No other text. Golden hour light. Futuristic regenerative world where nature and technology have merged. Abundant fruiting plants and comfortable wildlife visible throughout the scene. Like a character card from a solarpunk game about the regenerative renaissance.
 ```
 
 ---

@@ -67,9 +67,52 @@ These files define all outstanding work for this project. Always check them befo
 - `SEEDS_VISION_IMPLEMENTATION_SPEC.md` — **SEEDS ECONOMIC VISION. READ ALONGSIDE REGEN_GAMES_SPEC_V1.md.** 33 features across 7 groups translating the SEEDS economic design into ReGen Civics. Citizenship tiers (Explorer/Co-Creator/Steward/Sage), gratitude trust graph multipliers, Game Mechanics page with simulator, proposals system with weighted voting, BFF governance, LocalScale/Hypha integration, food economy infrastructure, seasonal protocols (solstice/equinox + lunar cycles). Includes gap analysis with 5 decisions for Rye and 3 missing calculations to define. Two copy deliverables: Day in the Life walkthrough and first-person SEEDS origin story.
 - `CITIZENSHIP_TIERS_SPEC.md` — **CITIZENSHIP TIERS. Standalone reference.** Four-tier system (Explorer/Co-Creator/Steward/Sage) with full requirements, powers, Game Variables, grace period demotion, trust graph mechanics, admin controls, database schema, and quick-reference power comparison table. Extracted from SEEDS_VISION_IMPLEMENTATION_SPEC.md for easy reference.
 - `FIXES_TO_MAKE_2026-04-01.md` — **active** fixes batch. 7 fixes: admin-gate My Submissions, notification toggle visual, On-Chain Tracking links, Cultivator rename, OG description, Quest 8 experience text, background image.
+- `FIXES_TO_MAKE_2026-04-03.md` — **active** fixes batch. 7 fixes: crowdpooling button visibility, ClaimSeeds inline signup form, ClaimSeeds form readability, landing page video inline playback, forum post broken image fallback, "community socials" text fix, Cowork referral link integration across builder content.
 - `CLAUDE_CODE_PROMPT_2026-04-01_FIXES_AND_TIERS.md` — **active** execution prompt. Part A: 7 fixes from screenshots. Part B: Full citizenship tier foundation build (schema, migrations, seeds, nightly batch job, tier checker, admin UI, profile display).
 
+- `CLAUDE_CODE_PROMPT_2026-04-02_TEAM_ROLES.md` — **active** execution prompt. Full Team page overhaul: 13 sociocratic game roles with powers/rights/responsibilities/token awards, role portal cards with character illustrations, seasonal rhythm section (Winter/Spring/Summer/Fall), application pitch process, CSS shimmer animations. References CHARACTER_ART prompt for image generation. Roles renamed: Lead Builder -> Grand Builder, Quest Author -> Quest Steward. Each role has characterName (e.g., "The Gardener") and tagline.
+- `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` — **active** execution prompt. Generate 26 character illustrations (13 card portraits + 13 full scenes) via nano-banana-pro/Gemini. Detailed per-character descriptions, style guide, prompt templates, WebP conversion. Run before or alongside TEAM_ROLES.
+- `CLAUDE_CODE_PROMPT_2026-04-02_FORM_READABILITY.md` — **active** execution prompt. ClaimSeeds dark-mode overhaul, site-wide form audit, base UI component fixes, post-submit notifications, profile SEEDS Claim card, navigation menu updates.
+- `CLAUDE_CODE_PROMPT_2026-04-02_MENU_RESTRUCTURE.md` — **active** execution prompt. Desktop dropdown restructure (4 groups), mobile nav, Economy item, footer updates.
+- `CLAUDE_CODE_PROMPT_2026-04-03_COMPENSATION_AND_SCORECARD.md` — **active** execution prompt. 7-band compensation system ($0.01/token), Seed/Harvest bonus model (+30% for both, +15% for one), deliverables and hours per role, Role Variables section on Team page, Season Scorecard section, compensation bands table. Run AFTER TEAM_ROLES (extends the gameRoles data).
+
 All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
+
+## Living Records
+
+- `SEASONS_HISTORY.md` — **index** of all seasons with compensation bands, cross-season tracking table, and links to per-season detail files. Updated each season by the `regen-seasonal-roles` skill.
+- `seasons/season-1-the-first-build.md` — Full detail for Season 1. All 13 roles with bands, Seed/Harvest metrics, deliverables, character art descriptions, and blank scorecard for Season Festival.
+- Future seasons: `seasons/season-N-name.md` pattern.
+
+## Custom Skills (in `skills/` directory, install to `~/.claude/skills/`)
+
+- `skills/regen-seasonal-roles/` — Skill for generating, evolving, and managing seasonal game roles. Produces updated gameRoles arrays, character art prompts, seasons arrays, and SEASONS_HISTORY entries. Use at each season transition. Includes templates and reference docs.
+
+## Database Migrations
+
+**Always use the migration runner script to apply SQL migrations.** Do not write ad-hoc Node.js scripts to run SQL.
+
+```bash
+# Run a specific migration
+npx tsx scripts/run-migration.ts drizzle/0101_regen_tools_library.sql
+
+# Run ALL unapplied migrations (in order)
+npx tsx scripts/run-migration.ts --all
+
+# Check which migrations have been applied
+npx tsx scripts/run-migration.ts --status
+```
+
+The script:
+- Connects via DATABASE_URL from .env
+- Tracks applied migrations in a `_migrations_applied` table (idempotent)
+- Splits SQL properly (handles multi-line INSERTs)
+- Skips already-applied migrations
+- Reports results
+
+Migration files live in `drizzle/` and follow the pattern `NNNN_description.sql` (e.g., `0101_regen_tools_library.sql`).
+
+For Drizzle ORM schema changes (generating migrations from schema.ts): use `npm run db:push` which runs `drizzle-kit generate && drizzle-kit migrate`.
 
 ## Installed Skills (ln- pipeline)
 This project uses a structured delivery pipeline via the ln- skills (in ~/.claude/skills/):
@@ -121,4 +164,4 @@ Don't introduce sections with "What if we could...?" or "Have you ever wondered.
 Direct, grounded, specific. Write as if a thoughtful person inside the regen movement wrote it. Rye's voice. First person is fine. Contractions are fine. Short sentences are fine. The site currently sounds like Rye. Keep it sounding like Rye.
 
 ## About Rye
-Founder, movement builder, tool designer. Engagement will be extremely diverse — writing, fundraising, game design, code, strategy, community comms. All of it. See `C:\Users\taren\Documents\Claude\about-me.md` for full context.
+Founder, movement builder, tool designer. Engagement will be extremely diverse — writing, fundraising, ga

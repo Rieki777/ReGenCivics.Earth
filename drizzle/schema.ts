@@ -312,6 +312,7 @@ export const generalInquiries = mysqlTable("general_inquiries", {
   roleInterest: text("roleInterest"),
   whyIdeal: text("whyIdeal"), // Why applicant is ideal for the role
   seasonDeliverables: text("seasonDeliverables"), // What they intend to deliver next season
+  videoPitchUrl: varchar("videoPitchUrl", { length: 512 }), // 3-minute video pitch link
   cvWebsite: varchar("cvWebsite", { length: 512 }), // CV/Portfolio/Website link
   
   // Path 7: Something else specific fields

@@ -2,6 +2,10 @@
 
 This project is built by a distributed community. Your contributions matter. Here's how to get involved.
 
+## Getting Claude
+
+The whole project is set up so Claude can read the codebase and start building immediately. If you don't have a Claude account yet, [get a free week of Claude Cowork here](https://claude.ai/referral/v8oHxjZJxg?s=cowork&v=apps). One week is enough to ship your first pull request.
+
 ## Picking Up Work
 
 Start with one of these sources:
@@ -64,6 +68,53 @@ Don't start sections with "What if we could...?" or "Have you ever wondered...?"
 ### Voice
 Write direct, grounded, specific. Sound like a thoughtful person inside the regen movement. Short sentences are fine. Contractions are fine. First person is fine.
 
+## Building with Claude Code
+
+This project is built with Claude Code. The repo includes everything your Claude needs to contribute effectively.
+
+**Project context:** `CLAUDE.md` at the repo root gives Claude full project context: tech stack, writing rules, active specs, migration instructions.
+
+**Skills:** `.claude/skills/` contains project-specific skills that teach Claude how to build forms, quests, backgrounds, and more. Claude reads these automatically when it encounters a matching task.
+
+**Execution prompts:** `CLAUDE_CODE_PROMPT_*.md` files are ready-to-run build specs. Hand one to Claude Code and it executes top to bottom.
+
+### Running an execution prompt
+
+```bash
+claude "Read and execute CLAUDE_CODE_PROMPT_2026-04-02_FORM_READABILITY.md"
+```
+
+### Fixing something from a screenshot
+
+```bash
+claude "Look at this screenshot. [describe the problem]. Fix it following project conventions."
+```
+
+### Writing your own execution prompt
+
+A good execution prompt has: context at the top (what problem, which files), numbered steps with specific code changes, and a verification checklist at the bottom. See existing prompts in the repo for the format.
+
+### Database migrations
+
+```bash
+npx tsx scripts/run-migration.ts drizzle/NNNN_your_migration.sql   # Run one
+npx tsx scripts/run-migration.ts --all                              # Run all pending
+npx tsx scripts/run-migration.ts --status                           # Check status
+```
+
+Migration files go in `drizzle/` with incrementing numbers (e.g., `0102_your_feature.sql`).
+
+### Project skills
+
+| Skill | When Claude uses it |
+|-------|-------------------|
+| `regen-form-design` | Building or fixing any form (dark theme, WCAG contrast) |
+| `regen-background-design` | Generating page backgrounds (Gemini, compositing) |
+| `regen-quest-builder` | Creating quests from concept to code |
+| `regen-do-everything` | Autonomous fix/upgrade execution |
+
+If you write a skill that helps you contribute, submit it as a PR. Skills are contributions too.
+
 ## Code Review Process
 
 The core team reviews all PRs. We aim to respond within 2-3 days. If you haven't heard back, bump the PR with a comment.
@@ -93,7 +144,7 @@ The community votes on proposals. If approved, your contributions are tracked in
 - Start with a Low priority fix. You'll get momentum and learn the codebase at the same time.
 - Read the relevant spec before coding. Check the CLAUDE.md file to see which spec docs are active.
 - Ask in the forum or GitHub if you're stuck. We'd rather help than see you frustrated.
-- Small PRs are better than big ones. Ship, get feedback, iterate.
+- Favor small, scoped PRs. Ship, get feedback, iterate.
 - Look at existing code for patterns. We have conventions for database queries, API routes, React components. Copy the pattern, don't reinvent.
 
 ## What Not to Touch Without Discussion
@@ -104,8 +155,4 @@ Some parts of the system are core and risky to change alone:
 - Auth flow. If you're thinking about changing how login or OAuth works, talk to the core team first.
 - Migration files. Once a migration is applied to the database, it's locked. Mistakes here are expensive.
 
-If you're unsure whether something is risky, ask. There's no penalty for caution.
-
-## Questions?
-
-Ask in the forum. That's what it's there for. We're building this together.
+If you're unsure whether something is risky, ask. There's no penalt

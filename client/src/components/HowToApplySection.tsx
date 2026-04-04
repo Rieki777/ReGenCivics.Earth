@@ -6,7 +6,14 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
-const steps = [
+const steps: {
+  num: number;
+  title: string;
+  desc: string;
+  highlight: boolean;
+  link?: string;
+  linkText?: string;
+}[] = [
   {
     num: 1,
     title: "Choose a role and prepare your pitch",
@@ -24,6 +31,8 @@ const steps = [
     title: "Submit your application",
     desc: "Applications open at the Season Festival. Submit your video pitch and a written summary through the application form. The team reviews applications monthly during active seasons, and seasonally during quieter ones.",
     highlight: false,
+    link: "/connect?path=role",
+    linkText: "Go to Application Form",
   },
   {
     num: 4,
@@ -77,6 +86,13 @@ export function HowToApplySection() {
               <div>
                 <h3 className="font-bold text-white mb-2">{step.title}</h3>
                 <p className="text-white/60 text-sm">{step.desc}</p>
+                {step.link && (
+                  <Link href={step.link}>
+                    <span className="inline-flex items-center gap-1 text-[#7dd87d] text-sm font-medium hover:underline cursor-pointer mt-2">
+                      {step.linkText} <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </Link>
+                )}
               </div>
             </div>
           ))}

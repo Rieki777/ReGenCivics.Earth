@@ -122,16 +122,33 @@ export function RolePortalCard({ role }: { role: GameRole }) {
         tabIndex={0}
         className="role-card-shimmer relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:-translate-y-1 border border-white/10 hover:border-white/25 bg-[#0d2818]/80"
       >
-        {/* Top area with gradient + emoji */}
+        {/* Top area with character image */}
         <div
-          className="relative h-[140px] flex items-center justify-center"
+          className="relative h-[140px] overflow-hidden"
           style={{
             background: `linear-gradient(135deg, ${role.color}30 0%, ${role.color}10 50%, transparent 100%)`,
           }}
         >
-          <span className="text-[64px] leading-none select-none drop-shadow-lg">
-            {role.emoji}
-          </span>
+          {role.characterImage ? (
+            <img
+              src={role.characterImage}
+              alt={role.characterName}
+              className="w-full h-full object-cover object-top"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-[64px] leading-none select-none drop-shadow-lg">
+                {role.emoji}
+              </span>
+            </div>
+          )}
+          {/* Gradient fade to card background */}
+          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#0d2818] to-transparent" />
+          {/* Emoji overlay bottom-left */}
+          <div className="absolute bottom-2 left-3 w-9 h-9 bg-[#0d2818]/80 rounded-full flex items-center justify-center">
+            <span className="text-lg">{role.emoji}</span>
+          </div>
 
           {/* Assignment badge - top right */}
           <span
@@ -143,25 +160,28 @@ export function RolePortalCard({ role }: { role: GameRole }) {
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-[#7dd87d] text-[10px] font-bold uppercase tracking-wider mb-1">
-            {role.circle}
-          </p>
           <h3
-            className="text-white font-bold text-sm leading-tight mb-2"
+            className="text-white font-bold text-base leading-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            {role.title}
+            {role.characterName}
           </h3>
-          <p className="text-white/60 text-xs line-clamp-2 mb-4">
-            {role.purpose}
+          <p className="text-[#7dd87d] text-[10px] font-bold uppercase tracking-wider mb-1">
+            {role.title}
+          </p>
+          <p className="text-white/40 text-xs italic mb-3">
+            {role.tagline}
           </p>
 
-          {/* Bottom: season dots + token award */}
-          <div className="flex items-center justify-between">
+          {/* Bottom: season dots + band + hours */}
+          <div className="flex items-center justify-between pt-3 border-t border-white/10">
             <SeasonDots activeSeasons={role.seasons} />
-            <span className="text-[10px] text-[#fbbf24]/80 font-medium truncate ml-2">
-              $ReGen
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-white/40 text-xs">~{role.hoursPerWeek}h/wk</span>
+              <span className="bg-[#7dd87d]/20 text-[#7dd87d] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                B{role.band}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -169,33 +189,54 @@ export function RolePortalCard({ role }: { role: GameRole }) {
       {/* Modal (expanded state) */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="bg-[#0d2818] border-[#1a472a] max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-          {/* Banner */}
+          {/* Banner with scene image */}
           <div
-            className="relative h-[160px] flex items-center justify-center"
+            className="relative h-[200px] overflow-hidden"
             style={{
               background: `linear-gradient(135deg, ${role.color}40 0%, ${role.color}15 50%, #0d2818 100%)`,
             }}
           >
-            <span className="text-[72px] leading-none select-none drop-shadow-lg">
-              {role.emoji}
-            </span>
+            {(role.sceneImage || role.characterImage) ? (
+              <img
+                src={role.sceneImage || role.characterImage}
+                alt={role.characterName}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-[72px] leading-none select-none drop-shadow-lg">
+                  {role.emoji}
+                </span>
+              </div>
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#0d2818] to-transparent" />
           </div>
 
           <div className="px-6 pb-6 space-y-6">
             {/* Title + circle */}
             <div>
               <DialogTitle>
-                <span
-                  className="text-2xl font-bold text-white"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  {role.title}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{role.emoji}</span>
+                  <div>
+                    <span
+                      className="text-2xl font-bold text-white"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {role.characterName}
+                    </span>
+                    <span className="text-white/40 text-lg ml-2">{role.title}</span>
+                  </div>
+                </div>
               </DialogTitle>
               <DialogDescription asChild>
-                <p className="text-[#7dd87d] text-xs font-bold uppercase tracking-wider mt-1">
-                  {role.circle}
-                </p>
+                <div>
+                  <p className="text-white/50 text-sm italic mt-1">{role.tagline}</p>
+                  <p className="text-[#7dd87d] text-xs font-bold uppercase tracking-wider mt-2">
+                    {role.circle}
+                  </p>
+                </div>
               </DialogDescription>
               <p className="text-white/70 text-sm mt-3">{role.purpose}</p>
             </div>
@@ -272,17 +313,69 @@ export function RolePortalCard({ role }: { role: GameRole }) {
               </div>
             )}
 
-            {/* Token award */}
-            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <h4 className="text-[#7dd87d] text-xs font-bold uppercase tracking-wider mb-2">
-                Token Award
+            {/* Seed and Harvest */}
+            <div>
+              <h4 className="text-xs uppercase tracking-wider text-[#7dd87d] font-semibold mb-4">
+                Seed & Harvest
               </h4>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full bg-[#fbbf24]/20 text-[#fbbf24] text-xs font-bold border border-[#fbbf24]/30">
-                  $ReGen
-                </span>
-                <span className="text-white/80 text-sm">{role.tokenAward}</span>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="bg-[#7dd87d]/10 border border-[#7dd87d]/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">🌱</span>
+                    <span className="text-[#7dd87d] font-semibold text-sm">Seed</span>
+                    <span className="text-white/40 text-xs ml-auto">Did you plant it?</span>
+                  </div>
+                  <p className="text-white/70 text-sm">{role.seed}</p>
+                </div>
+                <div className="bg-[#fbbf24]/10 border border-[#fbbf24]/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">🌾</span>
+                    <span className="text-[#fbbf24] font-semibold text-sm">Harvest</span>
+                    <span className="text-white/40 text-xs ml-auto">Did it grow?</span>
+                  </div>
+                  <p className="text-white/70 text-sm">{role.harvest}</p>
+                </div>
               </div>
+              <p className="text-white/40 text-xs mt-3 text-center">
+                Both met = +30% bonus on base. One met = +15%. Reviewed at the Season Festival.
+              </p>
+            </div>
+
+            {/* Compensation */}
+            <div>
+              <h4 className="text-xs uppercase tracking-wider text-[#7dd87d] font-semibold mb-3">
+                Compensation
+              </h4>
+              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#7dd87d] font-bold text-lg">{role.tokenAward.split(" ")[0]}</span>
+                    <span className="text-white/50 text-sm">$ReGen / season</span>
+                  </div>
+                  <span className="bg-[#7dd87d]/20 text-[#7dd87d] text-xs font-semibold px-2 py-1 rounded-full">
+                    Band {role.band}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-white/40">
+                  <span>~{role.hoursPerWeek} hrs/week</span>
+                  <span>Up to {role.maxTokenAward.split(" ")[0]} with Seed + Harvest</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Deliverables */}
+            <div>
+              <h4 className="text-xs uppercase tracking-wider text-white/50 font-semibold mb-2">
+                Deliverables
+              </h4>
+              <ul className="space-y-1.5">
+                {role.deliverables.map((d: string) => (
+                  <li key={d} className="flex items-start gap-2 text-white/60 text-sm">
+                    <span className="text-[#7dd87d] mt-0.5">📦</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {/* Season bar */}
@@ -295,7 +388,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
 
             {/* Apply button */}
             <a
-              href="/connect"
+              href={`/connect?path=role&role=${encodeURIComponent(role.title)}&circle=${encodeURIComponent(role.circle)}&purpose=${encodeURIComponent(role.purpose)}`}
               className="block w-full text-center bg-[#7dd87d] hover:bg-[#6bc86b] text-[#0d2818] font-bold py-3 rounded-xl transition-colors text-sm"
             >
               Apply for This Role
