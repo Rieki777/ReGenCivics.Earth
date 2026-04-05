@@ -368,6 +368,13 @@ export const pageSEO = {
     keywords: 'regenerative tools, community tools, governance tools, DAO tools, food systems, permaculture tools, open source',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/tools'
+  },
+  healTheLand: {
+    title: 'Heal the Land, Heal Ourselves | Church of the Regenerative Earth',
+    description: 'A community healing ministry offering free food, gardening days, and land residency. For land project sponsors: free Game Building in exchange for hosting the program.',
+    keywords: 'land healing, community ministry, regenerative food, gardening days, land residency, regenerative earth, church',
+    image: `${BASE_URL}/og-default.jpg`,
+    url: '/heal-the-land'
   }
 };
 

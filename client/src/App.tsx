@@ -48,6 +48,7 @@ const Schedule = lazy(() => import("./pages/Schedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
 const Economy = lazy(() => import("./pages/Economy"));
+const HealTheLand = lazy(() => import("./pages/HealTheLand"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
 const LocalFoodEconomy = lazy(() => import("./pages/LocalFoodEconomy"));
@@ -238,6 +239,7 @@ function Router() {
       <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
       <Route path={"/newsletter/confirm"}><EB><NewsletterConfirm /></EB></Route>
       <Route path={"/economy"}><EB><Economy /></EB></Route>
+      <Route path={"/heal-the-land"}><EB><HealTheLand /></EB></Route>
       <Route path={"/proposals"}><EB><Proposals /></EB></Route>
       <Route path={"/game-mechanics"}><EB><GameMechanics /></EB></Route>
       <Route path={"/local-food-economy"}><EB><LocalFoodEconomy /></EB></Route>

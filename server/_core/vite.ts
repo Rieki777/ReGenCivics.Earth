@@ -139,6 +139,7 @@ export function serveStatic(app: Express) {
     "/investor":    { title: "Investor Journey: ReGen Civics", description: "Begin your journey as a regenerative investor. Explore the fund and connect with land projects." },
     "/loi":         { title: "Letter of Intent: ReGen Civics", description: "Submit a letter of intent to invest in the ReGen Civics Fund." },
     "/tools":       { title: "Regen Civilization Tools Library", description: "Every tool the regenerative renaissance needs. Software, hardware, governance, currency, food systems." },
+    "/heal-the-land": { title: "Heal the Land, Heal Ourselves | Church of the Regenerative Earth", description: "A community healing ministry offering free food, gardening days, and land residency. For land project sponsors: free Game Building." },
   };
 
   let indexHtmlCache: string | null = null;

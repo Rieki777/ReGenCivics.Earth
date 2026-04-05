@@ -1066,6 +1066,60 @@ export default function Land() {
             </div>
           </AnimatedSection>
 
+      {/* Heal the Land Program */}
+      <section id="heal-program" className="py-16 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <AnimatedSection animation="fade-in">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 bg-[#d4a574]/20 px-4 py-2 rounded-full mb-4 border border-[#d4a574]/30">
+                <span className="text-lg">🌱</span>
+                <span className="text-[#d4a574] font-medium text-sm uppercase tracking-wide">Ministry Program</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+                Heal the Land, <span className="text-[#7dd87d]">Heal Ourselves</span>
+              </h2>
+              <p className="text-white/70 max-w-2xl mx-auto">
+                Host the program on your land. We build a custom civic coordination game for your local food system at no cost.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white/5 border border-[#d4a574]/20 rounded-2xl p-6">
+                <h3 className="text-[#d4a574] font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>You Bring</h3>
+                <ul className="space-y-2 text-white/70 text-sm">
+                  <li className="flex items-start gap-2"><span className="text-[#d4a574]">+</span> Land and growing capacity</li>
+                  <li className="flex items-start gap-2"><span className="text-[#d4a574]">+</span> Willingness to host community days</li>
+                  <li className="flex items-start gap-2"><span className="text-[#d4a574]">+</span> Space for land residents (if capacity allows)</li>
+                  <li className="flex items-start gap-2"><span className="text-[#d4a574]">+</span> Alignment with regenerative values</li>
+                </ul>
+              </div>
+              <div className="bg-white/5 border border-[#7dd87d]/20 rounded-2xl p-6">
+                <h3 className="text-[#7dd87d] font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>We Bring</h3>
+                <ul className="space-y-2 text-white/70 text-sm">
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Active community and spiritual container</li>
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Stewardship labor from gardening day participants</li>
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Free Game Building for your local food system</li>
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Custom quest curriculum for your ecosystem</li>
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> $ReGen token rewards for contributors</li>
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Governance design and community onboarding</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <Link href="/connect?path=land_project&program=heal-the-land">
+                <Button size="lg" className="bg-[#d4a574] hover:bg-[#c49564] text-[#1a472a] font-bold rounded-xl" style={{ fontFamily: 'var(--font-accent)' }}>
+                  Apply as a Land Project Partner
+                </Button>
+              </Link>
+              <p className="text-white/40 text-xs mt-3">
+                <Link href="/heal-the-land" className="text-[#7dd87d] hover:underline">Learn more about the program</Link>
+              </p>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
       {/* Related Content */}
       <RelatedContent pages={relatedContentMap.land.pages} blog={relatedContentMap.land.blog} />
         </div>
