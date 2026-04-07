@@ -41,42 +41,39 @@ Mixed — some code, some not. This is part software project, part community org
 
 ## Planning Documents (read before implementing)
 
-These files define all outstanding work for this project. Always check them before starting any implementation:
+**START HERE: `REMAINING_WORK_2026-04-07.md`** — consolidated list of everything outstanding across the 10 remaining active docs, priority-tagged. Created during the 2026-04-07 cleanup pass that archived 17 fully-shipped planning docs.
 
-- `CLAUDE_CODE_PROMPT_2026-03-28_PART5.md` — **active** execution prompt. Recording flow fixes, Zapier data normalization, map illustration production integration, and email opt-in preference.
-- `QUALITY_SPRINT_9_10.md` — quality sprint backlog. Performance, security, and code quality targets.
-- `ReGenCivics_WelcomeAboard_Brief.md` — full content brief for the Welcome Aboard Quests: all 10 quest cards, forum post bodies, seed comments, and implementation plan.
-- `PROGRESS_MAP_DESIGN.md` — full spec for the interactive progress map component (illustrations done, component build is next).
-- `QUEST_PROGRESSION_SPEC.md` — quest locking and progression system. Unlock chain, visual states, component changes, useQuestUnlocks hook.
-- `CLAUDE_CODE_PROMPT_2026-03-28_MAP_PERF.md` — **active** execution prompt. Map performance optimization, quest hero image generation, dissolve page transitions.
-- `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` — **active** execution prompt. Quest locking UI, hero quest cards, season progress ring. Depends on MAP_PERF running first.
-- `FIXES_TO_MAKE_2026-03-29.md` — **active** fixes batch. 22 fixes (original 17 + 5 added 2026-03-31). Fixes 1-9, 11, 13, 16 completed in commit 490518c. Fixes 18-22 added from Cowork session: feature suggestions redesign, community cards, forum edit images, forum templates, LOI routing.
-- `FIXES_TO_MAKE_2026-03-30.md` — **active** fixes batch. Profile avatar sync, R2 image proxy, settings reorganization.
-- `FIXES_TO_MAKE_2026-03-31.md` — **active** fixes batch. Quest hero images, locking UI, progression gating, CTA replacements. All CODED.
-- `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` — **active** execution prompt. Remaining fixes: 10 (profile overhaul), 14 (glossary propose UI), 15 (feature suggestions page), 17 (quest locking audit). Fix 12 DONE.
-- `CLAUDE_CODE_PROMPT_2026-04-01_UNIFIED_BUILD.md` — **START HERE.** Unified execution prompt consolidating ALL specs (game system, citizenship tiers, economy pages, social sharing, fixes, visualizations) into one build plan with 7 tracks. Resolves 10 cross-spec conflicts. Includes Social Sharing system (Track 7). Supersedes MEGABATCH and all prior execution prompts. Created 2026-04-01.
-- `CLAUDE_CODE_PROMPT_2026-03-31_MEGABATCH.md` — **SUPERSEDED by UNIFIED_BUILD.** Kept for reference.
-- `SOCIAL_SHARING_SPEC.md` — **active** spec, **included in UNIFIED_BUILD as Track 7.** Full social sharing optimization system: 12 initiatives across static OG images, dynamic image generation (satori), share prompts, referral tracking, viral loops, embeddable widgets. Go-to-market audience building infrastructure.
-- `PLAYER_EXPERIENCE_SPEC.md` — **SUPERSEDED by REGEN_GAMES_SPEC_V1.md.** Original draft of player experience features. Kept for reference only.
-- `REGEN_GAMES_SPEC_V1.md` — **THE GAME SPEC. START HERE for all game features.** Complete game system: Game Variables admin architecture, percentile-based contribution scoring, trust multiplier system, Living Tree visualization, gratitude system, land project status progression, seasonal harvest/composting, seasonal councils, endorsements/flags with cascading consequences, contribution compass, mycelium network, proof timeline, resume, gated quests, bioregional identity, forum reputation weighting, co-creator invitations, quiet recognitions, silent sharing score. 24 features across 5 phases with full database schema and compatibility notes. Built on SEEDS architecture, adapted for ReGen Civics.
-- `LIVING_TREE_VISUALIZATION_SPEC.md` — Detailed visual concept for the Living Tree growth visualization on player profiles. 6 life stages, 9 root arteries (forms of capital), seasonal mechanics, visual-to-data mapping. Referenced by REGEN_GAMES_SPEC_V1.md Part 3.
-- `CLAUDE_CODE_PROMPT_2026-03-31_GAME_SYSTEM.md` — **GAME BUILD.** Full execution prompt for building the entire ReGen Games system (all 5 phases, 24 features) in one consecutive run. References REGEN_GAMES_SPEC_V1.md as the single source of truth.
-- `SITE_IMPROVEMENT_BRIEF_SEEDS_VISION.md` — **CONTENT DIRECTION.** How the Game section should be reframed as co-creating a regenerative economic system. Based on Rye's 7 SEEDS Medium articles. Covers quest entry redesign, Play page improvements, new "Economy" page, site-wide language shifts, content pieces to write. The core hook: "if enough of us play the Game, it's real."
-- `DRAFT_GAME_AND_ECONOMY_PAGES.md` — **ACTIVE BUILD SPEC.** Full copy and technical spec for /economy page, /local-food-economy page, /game additions, and site-wide "if enough of us play" hook. Includes economic upgrade suggestion voting feature, food producer application flow, SEEDS complementary path framing, bioregional seasons roadmap. v4.
-- `SEEDS_WHITE_DECK_SYNTHESIS.md` — Synthesis of the 155-page SEEDS White Deck. 10 missing concepts, 20 food movement ideas, broader game/economy ideas, storytelling improvements. First-pass analysis before the full spec.
-- `SEEDS_VISION_IMPLEMENTATION_SPEC.md` — **SEEDS ECONOMIC VISION. READ ALONGSIDE REGEN_GAMES_SPEC_V1.md.** 33 features across 7 groups translating the SEEDS economic design into ReGen Civics. Citizenship tiers (Explorer/Co-Creator/Steward/Sage), gratitude trust graph multipliers, Game Mechanics page with simulator, proposals system with weighted voting, BFF governance, LocalScale/Hypha integration, food economy infrastructure, seasonal protocols (solstice/equinox + lunar cycles). Includes gap analysis with 5 decisions for Rye and 3 missing calculations to define. Two copy deliverables: Day in the Life walkthrough and first-person SEEDS origin story.
-- `CITIZENSHIP_TIERS_SPEC.md` — **CITIZENSHIP TIERS. Standalone reference.** Four-tier system (Explorer/Co-Creator/Steward/Sage) with full requirements, powers, Game Variables, grace period demotion, trust graph mechanics, admin controls, database schema, and quick-reference power comparison table. Extracted from SEEDS_VISION_IMPLEMENTATION_SPEC.md for easy reference.
-- `FIXES_TO_MAKE_2026-04-01.md` — **active** fixes batch. 7 fixes: admin-gate My Submissions, notification toggle visual, On-Chain Tracking links, Cultivator rename, OG description, Quest 8 experience text, background image.
-- `FIXES_TO_MAKE_2026-04-03.md` — **active** fixes batch. 7 fixes: crowdpooling button visibility, ClaimSeeds inline signup form, ClaimSeeds form readability, landing page video inline playback, forum post broken image fallback, "community socials" text fix, Cowork referral link integration across builder content.
-- `CLAUDE_CODE_PROMPT_2026-04-01_FIXES_AND_TIERS.md` — **active** execution prompt. Part A: 7 fixes from screenshots. Part B: Full citizenship tier foundation build (schema, migrations, seeds, nightly batch job, tier checker, admin UI, profile display).
+### Active execution prompts (10)
 
-- `CLAUDE_CODE_PROMPT_2026-04-02_TEAM_ROLES.md` — **active** execution prompt. Full Team page overhaul: 13 sociocratic game roles with powers/rights/responsibilities/token awards, role portal cards with character illustrations, seasonal rhythm section (Winter/Spring/Summer/Fall), application pitch process, CSS shimmer animations. References CHARACTER_ART prompt for image generation. Roles renamed: Lead Builder -> Grand Builder, Quest Author -> Quest Steward. Each role has characterName (e.g., "The Gardener") and tagline.
-- `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` — **active** execution prompt. Generate 26 character illustrations (13 card portraits + 13 full scenes) via nano-banana-pro/Gemini. Detailed per-character descriptions, style guide, prompt templates, WebP conversion. Run before or alongside TEAM_ROLES.
-- `CLAUDE_CODE_PROMPT_2026-04-02_FORM_READABILITY.md` — **active** execution prompt. ClaimSeeds dark-mode overhaul, site-wide form audit, base UI component fixes, post-submit notifications, profile SEEDS Claim card, navigation menu updates.
-- `CLAUDE_CODE_PROMPT_2026-04-02_MENU_RESTRUCTURE.md` — **active** execution prompt. Desktop dropdown restructure (4 groups), mobile nav, Economy item, footer updates.
-- `CLAUDE_CODE_PROMPT_2026-04-03_COMPENSATION_AND_SCORECARD.md` — **active** execution prompt. 7-band compensation system ($0.01/token), Seed/Harvest bonus model (+30% for both, +15% for one), deliverables and hours per role, Role Variables section on Team page, Season Scorecard section, compensation bands table. Run AFTER TEAM_ROLES (extends the gameRoles data).
+- `CLAUDE_CODE_PROMPT_2026-04-01_UNIFIED_BUILD.md` — **master build plan.** 7-track consolidated build covering database foundation, seeds, backend routers, citizenship tiers, frontend pages, visualizations, and social sharing. Resolves cross-spec conflicts. Start here for any Track 1-7 work.
+- `CLAUDE_CODE_PROMPT_2026-04-07_POST_CTO.md` — **current sprint.** CTO hardening items (C1-C3, H1-H10, M1-M12) + Round 2 Safari walkthrough fixes (R2-1 to R2-21) including music player, song submissions, fund role illustrations, and heal-the-land seeds.
+- `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` — **40 illustrations to generate.** 26 game role images + 14 fund role images via `nano-banana-pro`. Zero currently in `public/images/roles/`. Paths already referenced in `gameRoles.ts`.
+- `CLAUDE_CODE_PROMPT_2026-04-01_FIXES_AND_TIERS.md` — citizenship tier foundation. Migrations 0098-0100 shipped. Remaining: nightly batch job, tier checker, admin UI, profile display, homepage background images.
+- `CLAUDE_CODE_PROMPT_2026-03-28_MAP_PERF.md` — map performance + quest hero image generation + dissolve page transitions.
+- `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` — quest locking UI. Core components shipped; verification audit still pending against `QUEST_PROGRESSION_SPEC.md`.
+- `CLAUDE_CODE_PROMPT_2026-03-28_PART5.md` — recording flow: Zapier normalization, `recordings.ts` tRPC router, Watch Replay button, opt-in email preference.
+- `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` — remaining older fixes: 10 (profile overhaul), 14 (glossary propose UI), 15 (feature suggestions), 17 (quest locking audit).
+- `CLAUDE_CODE_PROMPT_2026-03-31_GAME_SYSTEM.md` — **reference spec.** Full 5-phase game system build prompt. Overlaps with UNIFIED_BUILD; use as reference, build incrementally.
+- `FIXES_TO_MAKE_2026-03-29.md` — original 22-fix batch. Referenced by other active docs for individual fix specs.
 
-All older prompt and fixes docs have been archived to `archive/`. Do not reference them for new work.
+### Standing specs (always-on references)
+
+- `CONTEXT_THE_TWO_GAMES.md` — **essential context** on Fund vs. Game distinction (already above).
+- `REGEN_GAMES_SPEC_V1.md` — **the game spec.** 24 features across 5 phases. Single source of truth for game features.
+- `SEEDS_VISION_IMPLEMENTATION_SPEC.md` — SEEDS economic vision translated to ReGen Civics. Read alongside REGEN_GAMES_SPEC_V1.
+- `CITIZENSHIP_TIERS_SPEC.md` — standalone reference for the 4-tier citizenship system.
+- `LIVING_TREE_VISUALIZATION_SPEC.md` — Living Tree visual concept.
+- `SOCIAL_SHARING_SPEC.md` — social sharing optimization (included in UNIFIED_BUILD Track 7).
+- `DRAFT_GAME_AND_ECONOMY_PAGES.md` — `/economy` and `/local-food-economy` page copy + tech spec.
+- `SITE_IMPROVEMENT_BRIEF_SEEDS_VISION.md` — content direction for Game section reframing.
+- `QUEST_PROGRESSION_SPEC.md` — quest locking and unlock chain reference.
+- `PROGRESS_MAP_DESIGN.md` — interactive progress map component spec.
+- `ReGenCivics_WelcomeAboard_Brief.md` — Welcome Aboard Quests content brief.
+- `SEEDS_WHITE_DECK_SYNTHESIS.md` — SEEDS White Deck synthesis.
+- `QUALITY_SPRINT_9_10.md` — quality sprint backlog.
+- `PLAYER_EXPERIENCE_SPEC.md` — superseded by REGEN_GAMES_SPEC_V1, kept for reference.
+
+17 fully-shipped or superseded planning docs were moved to `archive/` on 2026-04-07. Do not reference them for new work.
 
 ## Living Records
 
