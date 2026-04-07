@@ -28,6 +28,7 @@ import {
   Loader2,
   CheckCircle2,
   ExternalLink,
+  Handshake,
 } from "lucide-react";
 
 const RATING_CATEGORIES = [
@@ -252,22 +253,23 @@ export default function LocalFoodEconomy() {
               <AnimatedSection>
                 <div className="text-center">
                   <div className="w-16 h-16 rounded-full bg-[#7dd87d]/15 flex items-center justify-center mx-auto mb-4">
-                    <Star className="w-8 h-8 text-[#7dd87d]" />
+                    <Handshake className="w-8 h-8 text-[#7dd87d]" />
                   </div>
                   <h3
                     className="text-xl font-bold text-white mb-3"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
-                    Rate Local Producers
+                    Collaborate with Local Producers
                   </h3>
                   <p
-                    className="text-white/70 text-sm leading-relaxed"
+                    className="text-white/85 text-sm leading-relaxed"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    Co-Creators rate food producers across six categories: soil health,
-                    biodiversity, water stewardship, chemical-free practices, community
-                    benefit, and worker wellbeing. Ratings come from people who actually
-                    know the land and the food.
+                    Players take their quests to local producer farms. Planting trees,
+                    building gardens, healing wholes. Players earn $ReGen tokens for
+                    showing up and doing the work, and producers get hands and hearts
+                    in their fields. This onboards producers into the system through
+                    real shared work.
                   </p>
                 </div>
               </AnimatedSection>

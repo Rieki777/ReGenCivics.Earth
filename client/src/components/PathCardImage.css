@@ -11,10 +11,20 @@
 .path-card-image {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  /* On mobile, cap height so the image does not push title + body below the fold.
+     Above sm, return to a square aspect ratio for the cleaner desktop look. */
+  aspect-ratio: 16 / 9;
+  max-height: 180px;
   border-radius: 1.25rem;
   overflow: hidden;
   cursor: pointer;
+}
+
+@media (min-width: 640px) {
+  .path-card-image {
+    aspect-ratio: 1 / 1;
+    max-height: none;
+  }
 }
 
 /* Alliance needs overflow visible for the beam, but images still get rounded */

@@ -1093,6 +1093,15 @@ export default function Bionomics() {
                 title="The 12 BFF Attributes"
                 blurb="The BioFi ebook lists 12 attributes a Bioregional Financing Facility should embody. Here is where we honestly stand on each one. We will update this list openly as the Game evolves."
               />
+              <img
+                src="/bionomics-12-attributes.webp"
+                alt="A circular mandala of twelve woven attributes around a central living tree"
+                width="1376"
+                height="768"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-auto rounded-2xl border border-white/10 mb-6"
+              />
               <div className="flex flex-wrap items-center gap-3 mb-6 text-xs">
                 {(["Building", "Experimenting", "Reaching"] as AttrStatus[]).map((s) => (
                   <span
@@ -1228,6 +1237,15 @@ export default function Bionomics() {
                 title="The three legs of bioregional regeneration"
                 blurb="The BioFi framework names three legs that any bioregion needs to regenerate at scale: an Organizing Team, a Bioregional Hub, and a Bioregional Financing Facility. ReGen Civics builds tools for all three."
                 accent={C.teal}
+              />
+              <img
+                src="/bionomics-three-legs.webp"
+                alt="A triangular composition of an organizing team, a bioregional hub, and a bioregional financing facility connected by mycelial threads"
+                width="1408"
+                height="768"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-auto rounded-2xl border border-white/10 mb-6"
               />
               <div className="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
                 <ThreeLegsTriangle />
@@ -1493,6 +1511,15 @@ export default function Bionomics() {
                 eyebrow="The People"
                 title="Regenerators"
                 accent={C.green}
+              />
+              <img
+                src="/bionomics-regenerators.webp"
+                alt="A wide bioregional landscape: hands cupping seedlings in the foreground, a regenerative farm in the midground, a forested valley with a sun shaped like the bridge glyph in the sky"
+                width="1584"
+                height="672"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-auto rounded-2xl border border-white/10 mb-6"
               />
               <p className="text-white/85 text-base md:text-lg leading-relaxed mb-8">
                 The BioFi framework centers regenerators. People, projects, and practices

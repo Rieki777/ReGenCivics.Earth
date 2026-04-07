@@ -133,7 +133,8 @@ export function RolePortalCard({ role }: { role: GameRole }) {
             <img
               src={role.characterImage}
               alt={role.characterName}
-              className="w-full h-full object-cover object-top"
+              className="w-full h-full object-cover"
+              style={{ objectPosition: role.cardImagePosition || "center top" }}
               loading="lazy"
             />
           ) : (
@@ -191,7 +192,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
         <DialogContent className="bg-[#0d2818] border-[#1a472a] max-w-2xl max-h-[90vh] overflow-y-auto p-0">
           {/* Banner with scene image */}
           <div
-            className="relative h-[200px] overflow-hidden"
+            className="relative h-[280px] overflow-hidden"
             style={{
               background: `linear-gradient(135deg, ${role.color}40 0%, ${role.color}15 50%, #0d2818 100%)`,
             }}
@@ -350,7 +351,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-[#7dd87d] font-bold text-lg">{role.tokenAward.split(" ")[0]}</span>
-                    <span className="text-white/50 text-sm">$ReGen / season</span>
+                    <span className="text-white/50 text-sm">{role.kind === "fund" ? "$RCivics" : "$ReGen"} / season</span>
                   </div>
                   <span className="bg-[#7dd87d]/20 text-[#7dd87d] text-xs font-semibold px-2 py-1 rounded-full">
                     Band {role.band}

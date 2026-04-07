@@ -1617,6 +1617,22 @@ export default function Opportunity() {
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
+
+              {/* Regeneration is our foundation */}
+              <div className="mt-6 bg-[#0d2818]/70 border border-[#7dd87d]/30 rounded-2xl p-5 md:p-6">
+                <h4 className="text-base md:text-lg font-bold text-white mb-2" style={{ fontFamily: "var(--font-display)" }}>
+                  Regeneration is our foundation
+                </h4>
+                <p className="text-white/85 text-sm md:text-base leading-relaxed">
+                  Every month we hold a project, we are doing the work. Planting fruiting trees,
+                  healing soil, building infrastructure, making the land more abundant and more
+                  valuable. So if any individual project fails to deliver its planned returns,
+                  we can sell the land. Because of the regenerative work we have done, the land
+                  is presumably worth more than when we acquired it. That sale becomes a return
+                  for investors. Successful projects create ongoing yield. Failed projects, in
+                  our model, can also become a source of returns. The land itself is the floor.
+                </p>
+              </div>
             </CollapsibleSection>
 
 

@@ -132,7 +132,18 @@ function TierRow({ tier }: { tier: "easy" | "hard" | "expert" }) {
         <div className="flex-1 h-px" style={{ backgroundColor: `${cfg.accent}20` }} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Mobile: horizontal snap carousel. Desktop: 2-col grid. */}
+      <div className="md:hidden -mx-4 px-4">
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+          {quests.map((quest) => (
+            <div key={quest.id} className="snap-start shrink-0 w-[85vw] max-w-sm">
+              <EpicCard quest={quest} />
+            </div>
+          ))}
+        </div>
+        <p className="text-white/40 text-xs text-center mt-2">Swipe to see more →</p>
+      </div>
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
         {quests.map((quest) => (
           <EpicCard key={quest.id} quest={quest} />
         ))}

@@ -27,6 +27,12 @@ export interface GameRole {
   assignment: string;
   color: string;
   cardImagePosition?: string;
+  /**
+   * Which side of the bridge this role serves.
+   *  - "game" (default): coordinates the Infinite Game; compensated in $ReGen.
+   *  - "fund": coordinates the ReGen Civics Fund; compensated in $RCivics.
+   */
+  kind?: "game" | "fund";
   specialContent?: {
     title: string;
     body: string;

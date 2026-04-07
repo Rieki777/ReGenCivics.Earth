@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { useAudio } from '@/contexts/AudioContext'
 import { useAuth } from '@/_core/hooks/useAuth'
 import { getCurrentSeason, SEASON_THEMES } from '@/lib/seasons'
-import { SkipBack, SkipForward, Play, Pause, Volume2, HelpCircle, Search, ChevronDown } from 'lucide-react'
+import { SkipBack, SkipForward, Play, Pause, Volume2, HelpCircle, Search, ChevronDown, Music, ListMusic } from 'lucide-react'
 import { useReGenGuide } from '@/contexts/ReGenGuideContext'
 import { usePageTools } from '@/hooks/usePageTools'
 import { NavIcon } from '@/components/SmartBottomNav'
@@ -17,13 +17,14 @@ interface CommandPanelProps {
 }
 
 export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) {
-  const { isPlaying, togglePlay, nextSong, prevSong, currentSong,
+  const { isPlaying, togglePlay, nextSong, prevSong, currentSong, currentIndex, playlist, playSong,
           duration, currentTime, seek, volume, setVolume } = useAudio()
   const { isAuthenticated } = useAuth()
   const guide = useReGenGuide()
   const pageTools = usePageTools()
   const panelRef = useRef<HTMLDivElement>(null)
   const [showMap, setShowMap] = useState(false)
+  const [showTrackList, setShowTrackList] = useState(false)
 
   // Seasonal theme
   const season = getCurrentSeason()
@@ -118,11 +119,71 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
           </div>
         </div>
 
-        {/* Song title */}
+        {/* Song title + track list toggle */}
         <div className="text-center">
           <p className="text-[#7dd87d] text-sm font-medium">{currentSong?.title ?? 'No song loaded'}</p>
-          <p className="text-white/60 text-xs">ReGen Civics Soundtrack</p>
+          {currentSong?.artist && (
+            <p className="text-white/60 text-[11px]">{currentSong.artist}</p>
+          )}
+          <button
+            onClick={() => setShowTrackList(s => !s)}
+            className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-white/55 hover:text-[#7dd87d] transition-colors"
+            aria-expanded={showTrackList}
+            aria-controls="hymn-book-track-list"
+          >
+            <ListMusic className="w-3 h-3" />
+            <span>Hymns of the ReGeneration ({playlist.length})</span>
+            <ChevronDown className={`w-3 h-3 transition-transform ${showTrackList ? 'rotate-180' : ''}`} />
+          </button>
         </div>
+
+        {/* Expandable track list */}
+        {showTrackList && (
+          <div
+            id="hymn-book-track-list"
+            className="rounded-lg border border-white/10 bg-black/20 max-h-56 overflow-y-auto"
+          >
+            <ul className="divide-y divide-white/5">
+              {playlist.map((track, i) => {
+                const isCurrent = i === currentIndex
+                return (
+                  <li key={track.src}>
+                    <button
+                      type="button"
+                      onClick={() => playSong(i)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
+                        isCurrent
+                          ? 'bg-[#7dd87d]/15 text-[#7dd87d]'
+                          : 'text-white/75 hover:bg-white/5 hover:text-white'
+                      }`}
+                      aria-current={isCurrent ? 'true' : undefined}
+                    >
+                      <span className="w-5 flex-shrink-0 flex items-center justify-center">
+                        {isCurrent && isPlaying
+                          ? <Music className="w-3 h-3 text-[#7dd87d] animate-pulse" />
+                          : <span className="text-[10px] text-white/35 tabular-nums">{(i + 1).toString().padStart(2, '0')}</span>}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-xs font-medium truncate">{track.title}</span>
+                        {track.artist && (
+                          <span className="block text-[10px] text-white/45 truncate">{track.artist}</span>
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+            <div className="px-3 py-2 border-t border-white/5 text-center">
+              <a
+                href="/hymn-book"
+                className="inline-flex items-center gap-1 text-[11px] text-[#7dd87d] hover:text-white transition-colors"
+              >
+                + Add Your Voice
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Progress bar */}
         <div>

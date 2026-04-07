@@ -3,12 +3,68 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
 import { validateCSRFToken } from "./security";
+import { cacheGet, cacheSet, isCacheAvailable } from "../cache";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
 });
 
 export const router = t.router;
+
+/**
+ * Per-procedure rate limit middleware. Buckets by (procedure path, userId|ip).
+ *
+ * Use this instead of Express path-based rate limiting for tRPC routes,
+ * because the httpBatchLink can pack multiple procedures into a single HTTP
+ * request whose URL is `/api/trpc/proc1,proc2`. Path prefix matching at the
+ * Express layer can be bypassed when the rate-limited procedure is not first.
+ *
+ * Example:
+ *   submit: protectedProcedure
+ *     .use(rateLimited({ windowMs: 60_000, max: 5 }))
+ *     .mutation(...)
+ */
+const rateLimitFallback = new Map<string, { count: number; resetTime: number }>();
+export function rateLimited(opts: { windowMs: number; max: number }) {
+  return t.middleware(async ({ ctx, path, next }) => {
+    const userId = ctx.user?.id;
+    const bucket = userId ? `u:${userId}` : `ip:${ctx.req?.ip || 'unknown'}`;
+    const key = `trpc-rl:${path}:${bucket}`;
+    const now = Date.now();
+    const windowSec = Math.ceil(opts.windowMs / 1000);
+
+    const reject = () => {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: 'Too many requests, please slow down.',
+      });
+    };
+
+    if (isCacheAvailable()) {
+      try {
+        const current = await cacheGet<{ count: number; resetTime: number }>(key);
+        if (current && now < current.resetTime) {
+          if (current.count >= opts.max) reject();
+          await cacheSet(key, { count: current.count + 1, resetTime: current.resetTime }, windowSec);
+        } else {
+          await cacheSet(key, { count: 1, resetTime: now + opts.windowMs }, windowSec);
+        }
+        return next();
+      } catch {
+        // fall through to in-memory fallback
+      }
+    }
+
+    const record = rateLimitFallback.get(key);
+    if (record && now < record.resetTime) {
+      if (record.count >= opts.max) reject();
+      record.count++;
+    } else {
+      rateLimitFallback.set(key, { count: 1, resetTime: now + opts.windowMs });
+    }
+    return next();
+  });
+}
 
 /**
  * CSRF validation middleware for mutations.

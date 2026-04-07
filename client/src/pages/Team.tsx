@@ -586,16 +586,36 @@ export default function Team() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {gameRoles.map((role, index) => {
-              const isOpen = role.assignment.toLowerCase().includes('open');
-              
-              let badgeColor = 'bg-[#7dd87d]'; // light green for open
-              let badgeText = 'Open';
-              
-              return <RolePortalCard key={index} role={role} />;
-            })}
+          {/* Game-side clarifier */}
+          <div className="max-w-3xl mx-auto mb-6 bg-[#0d2818]/60 border border-[#7dd87d]/30 rounded-2xl p-4 md:p-5 text-center">
+            <p className="text-white/85 text-sm md:text-base leading-relaxed">
+              These roles coordinate the <span className="font-bold text-[#7dd87d]">ReGen Infinite Game</span>.
+              They steward quests, players, the forum, and the Living Game economy. Compensated in $ReGen.
+            </p>
           </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {gameRoles.filter(r => r.kind !== 'fund').map((role, index) => (
+              <RolePortalCard key={index} role={role} />
+            ))}
+          </div>
+
+          {/* Fund-side clarifier (only shown if any fund roles exist) */}
+          {gameRoles.some(r => r.kind === 'fund') && (
+            <>
+              <div className="max-w-3xl mx-auto mt-12 mb-6 bg-[#0d2818]/60 border border-[#d4a574]/40 rounded-2xl p-4 md:p-5 text-center">
+                <p className="text-white/85 text-sm md:text-base leading-relaxed">
+                  These roles coordinate the <span className="font-bold text-[#d4a574]">ReGen Infinite Fund</span>.
+                  They steward capital, due diligence, and investor relationships. Compensated in $RCivics.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {gameRoles.filter(r => r.kind === 'fund').map((role, index) => (
+                  <RolePortalCard key={index} role={role} />
+                ))}
+              </div>
+            </>
+          )}
           
           {/* Missing Role Callout */}
           

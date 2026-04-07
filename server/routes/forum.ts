@@ -1,5 +1,5 @@
 // server/routes/forum.ts
-import { protectedProcedure, publicProcedure, adminProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, adminProcedure, rateLimited, router } from "../_core/trpc";
 import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
@@ -464,6 +464,7 @@ export const forumRouter = router({
 
   // Create a new post (auth required)
   createPost: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 5 }))
     .input(z.object({
       categoryId: z.number(),
       title: z.string().min(3).max(300),
@@ -523,6 +524,7 @@ export const forumRouter = router({
 
   // Create a reply (auth required)
   createReply: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
     .input(z.object({
       postId: z.number(),
       content: z.string().min(1).max(5000),
@@ -540,6 +542,7 @@ export const forumRouter = router({
 
   // Toggle like on post or reply (auth required)
   toggleLike: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 30 }))
     .input(z.object({
       postId: z.number().optional(),
       replyId: z.number().optional(),
@@ -575,6 +578,7 @@ export const forumRouter = router({
 
   // Delete a post (author or admin)
   deletePost: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 5 }))
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const post = await db.getForumPost(input.id);
@@ -589,6 +593,7 @@ export const forumRouter = router({
 
   // Delete a reply (author, admin, or moderator)
   deleteReply: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const isMod = await db.isForumModerator(ctx.user.id);

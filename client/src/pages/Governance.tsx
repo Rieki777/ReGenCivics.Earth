@@ -639,15 +639,16 @@ function RewardsFlowAnimation() {
   );
 }
 
-// Earth Day Countdown + Governance Dashboard Placeholder
+// September Equinox Countdown + Governance Dashboard Placeholder
+// Targets the Season 2 launch at the September 2026 equinox.
 function EarthDayCountdown() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    const earthDay = new Date("2026-04-22T00:00:00");
+    const target = new Date("2026-09-22T15:19:00Z");
     const tick = () => {
       const now = new Date();
-      const diff = earthDay.getTime() - now.getTime();
+      const diff = target.getTime() - now.getTime();
       if (diff <= 0) {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
@@ -669,7 +670,7 @@ function EarthDayCountdown() {
       <div className="bg-gradient-to-r from-[#1a472a] to-[#0d2818] p-6 border-b border-[#7dd87d]/20 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 mb-3">
           <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
-          <span className="text-[#7dd87d] text-sm font-semibold">Going Live on Earth Day 2026</span>
+          <span className="text-[#7dd87d] text-sm font-semibold">Going Live at the September Equinox</span>
         </div>
         <h3 className="text-2xl font-bold text-white mb-2">Live Governance Dashboard</h3>
         <p className="text-white/60 text-sm">Real-time voice distribution and active proposals from Hypha DAO</p>
@@ -987,16 +988,46 @@ export default function Governance() {
               The ReGen Civics Fund is governed by four distinct groups, each bringing unique perspectives and expertise. Together, they make strategic decisions about capital allocation, land project selection, and alliance partnerships.
             </p>
             
-            {/* Fund Governance Structure Graphic */}
+            {/* Fund Governance Structure Diagram */}
             <div className="mb-12 flex justify-center">
-              <img
-                src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/governance-fund-structure-v2_688d510f.webp"
-                alt="ReGen Civics Fund Governance Structure"
-                width="1200"
-                height="800"
-                className="w-full max-w-2xl rounded-xl shadow-2xl"
-                loading="lazy"
-              />
+              <svg
+                viewBox="0 0 600 420"
+                className="w-full max-w-2xl rounded-xl shadow-2xl bg-[#0d2818]"
+                role="img"
+                aria-label="ReGen Civics Fund Governance Structure: four voice-holder groups around the Fund"
+              >
+                <defs>
+                  <radialGradient id="fundCenter" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#f0c040" stopOpacity="0.95" />
+                    <stop offset="60%" stopColor="#d4a574" stopOpacity="0.55" />
+                    <stop offset="100%" stopColor="#1a472a" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+                {/* Connecting lines */}
+                <line x1="300" y1="210" x2="120" y2="80" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
+                <line x1="300" y1="210" x2="480" y2="80" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
+                <line x1="300" y1="210" x2="120" y2="340" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
+                <line x1="300" y1="210" x2="480" y2="340" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
+                {/* Center: The Fund */}
+                <circle cx="300" cy="210" r="80" fill="url(#fundCenter)" />
+                <circle cx="300" cy="210" r="58" fill="#1a472a" stroke="#f0c040" strokeWidth="2" />
+                <text x="300" y="200" textAnchor="middle" fill="#f0c040" fontFamily="serif" fontSize="14" fontWeight="700">ReGen Civics</text>
+                <text x="300" y="220" textAnchor="middle" fill="#f0c040" fontFamily="serif" fontSize="14" fontWeight="700">Fund</text>
+                <text x="300" y="240" textAnchor="middle" fill="#7dd87d" fontFamily="sans-serif" fontSize="10">$RCivics</text>
+                {/* 4 voice-holder nodes */}
+                {[
+                  { cx: 120, cy: 80, label1: 'Council of', label2: 'Domain Experts', accent: '#d4a574' },
+                  { cx: 480, cy: 80, label1: 'Land Project', label2: 'Stewards', accent: '#7dd87d' },
+                  { cx: 120, cy: 340, label1: 'Alliance', label2: 'Partners', accent: '#4a9f9f' },
+                  { cx: 480, cy: 340, label1: 'Investor', label2: 'Voice', accent: '#f0c040' },
+                ].map((n) => (
+                  <g key={`${n.cx}-${n.cy}`}>
+                    <circle cx={n.cx} cy={n.cy} r="50" fill="#0d2818" stroke={n.accent} strokeWidth="2" />
+                    <text x={n.cx} y={n.cy - 4} textAnchor="middle" fill={n.accent} fontFamily="sans-serif" fontSize="11" fontWeight="700">{n.label1}</text>
+                    <text x={n.cx} y={n.cy + 12} textAnchor="middle" fill={n.accent} fontFamily="sans-serif" fontSize="11" fontWeight="700">{n.label2}</text>
+                  </g>
+                ))}
+              </svg>
             </div>
             
             {/* Four Voice-Holder Groups */}

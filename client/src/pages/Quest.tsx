@@ -49,6 +49,36 @@ function questImageFallback(id: number, slug: string) {
   return `/images/quests/quest-${String(id).padStart(2, '0')}-${slug}.webp`;
 }
 
+
+async function downloadImage(url: string, filename: string) {
+  // Try the primary URL (R2 / CDN) first, then the local fallback under
+  // /images/quests/, then open whichever responded in a new tab.
+  const candidates = [url];
+  const localFallback = `/images/quests/${filename}`;
+  if (!url.startsWith(localFallback)) candidates.push(localFallback);
+
+  for (const src of candidates) {
+    try {
+      const response = await fetch(src);
+      if (!response.ok) continue;
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+      return;
+    } catch {
+      // try next candidate
+    }
+  }
+  // Final fallback: open the local copy in a new tab so the user at least sees it
+  window.open(localFallback, '_blank');
+}
+
 // Quest data is imported from @/data/questData (extracted for code-splitting)
 
 // Sign In CTA Component
@@ -283,17 +313,16 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
               <CopyButton text={String(quest.reward.regen)} label="ReGen tokens" />
               <CopyButton text="1" label="RGVoice" />
               {imgUrl && (
-                <a
-                  href={imgUrl}
-                  download={`quest-${String(quest.id).padStart(2,'0')}-${slug}.webp`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    downloadImage(imgUrl, `quest-${String(quest.id).padStart(2,'0')}-${slug}.webp`);
+                  }}
                   className="flex items-center gap-1.5 text-xs bg-[#d4a574]/20 hover:bg-[#d4a574]/40 text-[#8b6135] border border-[#d4a574]/40 px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
-                  onClick={(e) => e.stopPropagation()}
                 >
                   <Download className="w-3 h-3" />
                   Download Quest Image
-                </a>
+                </button>
               )}
               <a
                 href="https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution"
@@ -357,11 +386,12 @@ function Quest0FlipCard() {
           <div className="relative z-10">
           {/* Completion Badge */}
           <QuestCompletionBadge questId="quest-0" className="!top-4 !left-4" />
-          <div className="absolute top-4 right-4 flex items-center gap-2 text-xs text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
-            <RotateCcw className="w-3 h-3" />
-            <span>Click to flip for video</span>
+          <div className="absolute top-4 right-4 flex items-center gap-2 text-[10px] sm:text-xs text-orange-600 bg-orange-100 px-2 sm:px-3 py-1 rounded-full max-w-[40%] z-10" aria-label="Click to flip for video">
+            <RotateCcw className="w-3 h-3 flex-shrink-0" />
+            <span className="hidden sm:inline">Click to flip for video</span>
+            <span className="sm:hidden">Flip</span>
           </div>
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-4 pr-16 sm:pr-32">
             <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
               <Flame className="w-8 h-8 text-white" />
             </div>
@@ -1170,25 +1200,28 @@ export default function Quest() {
             </p>
           </div>
 
-          {/* Two-card grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mt-10">
+          {/*
+            Mobile: horizontal snap carousel (flex + overflow-x).
+            Desktop: 2-column grid via md:grid override of layout properties.
+          */}
+          <div className="flex md:grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mt-10 overflow-x-auto snap-x snap-mandatory md:overflow-visible md:snap-none -mx-4 px-4 md:mx-auto md:px-0 pb-2 md:pb-0 [&>div]:snap-start [&>div]:shrink-0 [&>div]:w-[85vw] md:[&>div]:w-auto [&>div]:max-w-sm md:[&>div]:max-w-none">
             {/* Food Foresting */}
             <div className="relative bg-white/10 backdrop-blur-md p-7 rounded-2xl border-2 border-[#7dd87d]/30 shadow-2xl flex flex-col gap-4">
               <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
                 <RotateCcw className="w-3 h-3" /> Repeatable
               </span>
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 pr-28 sm:pr-24">
                 <div className="w-12 h-12 rounded-full bg-[#7dd87d] flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-6 h-6 text-[#1a472a]" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
                     {questData.featured.title}
                   </h4>
-                  <p className="text-sm text-white/60">{questData.featured.subtitle}</p>
+                  <p className="text-sm text-white/70">{questData.featured.subtitle}</p>
                 </div>
               </div>
-              <p className="text-white/80 text-sm leading-relaxed flex-1">
+              <p className="text-white/85 text-base sm:text-sm leading-relaxed flex-1">
                 {questData.featured.description}
               </p>
               <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -1203,18 +1236,18 @@ export default function Quest() {
               <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
                 <RotateCcw className="w-3 h-3" /> Repeatable
               </span>
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 pr-28 sm:pr-24">
                 <div className="w-12 h-12 rounded-full bg-[#7dd87d] flex items-center justify-center flex-shrink-0">
                   <Brain className="w-6 h-6 text-[#1a472a]" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
                     Quest 13: {questData.routine.title}
                   </h4>
-                  <p className="text-sm text-white/60">{questData.routine.subtitle}, {questData.routine.minimumTime}</p>
+                  <p className="text-sm text-white/70">{questData.routine.subtitle}, {questData.routine.minimumTime}</p>
                 </div>
               </div>
-              <p className="text-white/80 text-sm leading-relaxed flex-1">
+              <p className="text-white/85 text-base sm:text-sm leading-relaxed flex-1">
                 {questData.routine.description}
               </p>
               <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -1229,18 +1262,18 @@ export default function Quest() {
               <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold">
                 <RotateCcw className="w-3 h-3" /> Repeatable
               </span>
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4 pr-28 sm:pr-24">
                 <div className="w-12 h-12 rounded-full bg-[#7dd87d] flex items-center justify-center flex-shrink-0">
                   <HeartPulse className="w-6 h-6 text-[#1a472a]" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h4 className="font-bold text-white text-lg leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
                     {questData.routine2.title}
                   </h4>
-                  <p className="text-sm text-white/60">{questData.routine2.subtitle}, {questData.routine2.minimumTime}</p>
+                  <p className="text-sm text-white/70">{questData.routine2.subtitle}, {questData.routine2.minimumTime}</p>
                 </div>
               </div>
-              <p className="text-white/80 text-sm leading-relaxed flex-1">
+              <p className="text-white/85 text-base sm:text-sm leading-relaxed flex-1">
                 {questData.routine2.description}
               </p>
               <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -1301,8 +1334,8 @@ export default function Quest() {
               <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-5">
                 Every quest you complete earns $ReGen tokens, which is our in-game currency. Part of our Infinite Game involves making this a real and meaningful currency for our everyday lives in how we meet our needs and thrive together. The more you contribute, the more currency you earn.
               </p>
-              <Link href="/tokenomics" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
-                $ReGen Tokenomics <ArrowRight className="w-4 h-4" />
+              <Link href="/bionomics" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+                $ReGen on the Bionomics page <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 

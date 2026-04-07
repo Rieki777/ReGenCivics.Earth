@@ -2607,3 +2607,31 @@ export const regenToolMentions = mysqlTable("regen_tool_mentions", {
   postId: int("postId"),
   detectedAt: timestamp("detectedAt").defaultNow(),
 });
+
+/**
+ * Community song submissions for the Hymn Book.
+ * One submission per player per season; community vote elects the winner.
+ */
+export const songSubmissions = mysqlTable("song_submissions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  seasonId: int("seasonId"),
+  title: varchar("title", { length: 200 }).notNull(),
+  artist: varchar("artist", { length: 200 }),
+  audioUrl: varchar("audioUrl", { length: 500 }).notNull(),
+  description: text("description"),
+  voteCount: int("voteCount").default(0).notNull(),
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending | winner | archived
+  submittedAt: timestamp("submittedAt").defaultNow().notNull(),
+});
+export type SongSubmission = typeof songSubmissions.$inferSelect;
+
+/** One vote per user per season across all submissions for that season. */
+export const songSubmissionVotes = mysqlTable("song_submission_votes", {
+  id: int("id").autoincrement().primaryKey(),
+  songSubmissionId: int("songSubmissionId").notNull(),
+  userId: int("userId").notNull(),
+  seasonId: int("seasonId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SongSubmissionVote = typeof songSubmissionVotes.$inferSelect;

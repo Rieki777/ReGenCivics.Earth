@@ -137,7 +137,7 @@ function AnimatedTokenFlow() {
             }`}
           >
             <span className="text-xl sm:text-2xl">{s.icon}</span>
-            <span className="text-xs text-white/70 hidden sm:block text-center leading-tight">{s.label}</span>
+            <span className="text-[10px] sm:text-xs text-white/70 hidden sm:block text-center leading-tight break-words">{s.label}</span>
             <div className={`w-2 h-2 rounded-full transition-all ${
               i === step ? 'bg-white scale-125' : i < step ? 'bg-[#7dd87d]' : 'bg-white/20'
             }`} />
@@ -217,17 +217,17 @@ function AnimatedTokenFlow() {
       </div>
 
       {/* All steps overview */}
-      <div className="grid grid-cols-5 gap-2 mt-4">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mt-4">
         {steps.map((s, i) => (
           <div
             key={s.id}
-            className={`rounded-lg p-3 text-center border transition-all cursor-pointer ${
+            className={`rounded-lg p-2 sm:p-3 text-center border transition-all cursor-pointer min-h-[68px] flex flex-col items-center justify-center ${
               i === step ? 'border-white/40 bg-white/10' : 'border-white/10 bg-white/5 hover:bg-white/8'
             }`}
             onClick={() => { setIsPlaying(false); setStep(i); }}
           >
-            <div className="text-lg mb-1">{s.icon}</div>
-            <p className="text-xs text-white/60 leading-tight">{s.label}</p>
+            <div className="text-base sm:text-lg mb-1">{s.icon}</div>
+            <p className="text-[9px] sm:text-xs text-white/60 leading-tight break-words text-balance">{s.label}</p>
           </div>
         ))}
       </div>
@@ -1120,6 +1120,25 @@ export default function Tokenomics() {
                     As we regenerate land and communities, the assets backing $RCivics increase in value. A food forest producing abundant yields is worth more than degraded farmland. Regeneration is the return.
                   </p>
                 </div>
+              </div>
+
+              {/* Regeneration is our foundation */}
+              <div className="mt-8 max-w-4xl mx-auto bg-[#0d2818]/70 border border-[#7dd87d]/30 rounded-2xl p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-3">
+                  <Sprout className="w-6 h-6 text-[#7dd87d]" />
+                  <h3 className="text-xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
+                    Regeneration is our foundation
+                  </h3>
+                </div>
+                <p className="text-white/85 text-base leading-relaxed">
+                  Every month we hold a project, we are doing the work. Planting fruiting trees,
+                  healing soil, building infrastructure, making the land more abundant and more
+                  valuable. So if any individual project fails to deliver its planned returns,
+                  we can sell the land. Because of the regenerative work we have done, the land
+                  is presumably worth more than when we acquired it. That sale becomes a return
+                  for investors. Successful projects create ongoing yield. Failed projects, in
+                  our model, can also become a source of returns. The land itself is the floor.
+                </p>
               </div>
             </div>
           </div>

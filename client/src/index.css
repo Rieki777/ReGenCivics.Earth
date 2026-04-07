@@ -133,6 +133,16 @@
   --font-display: 'Quicksand', sans-serif;
   --font-body: 'Nunito', sans-serif;
   --font-accent: 'Righteous', cursive;
+
+  /* Z-index scale (M3). Use Tailwind classes z-base, z-raised, z-sticky, etc. */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 40;
+  --z-nav: 50;
+  --z-dropdown: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+  --z-ring: 90;
 }
 
 :root {
@@ -1611,4 +1621,540 @@
 @keyframes golden-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
   50% { box-shadow: 0 0 24px 6px rgba(251, 191, 36, 0.15); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Pre-launch animation utilities (2026-04-07)
+   Theme: enchanted forest, mycelium, regeneration
+   ───────────────────────────────────────────────────────────── */
+
+/* 1. Breath pulse on primary CTAs */
+@keyframes breath-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(125, 216, 125, 0); }
+  50% { transform: scale(1.02); box-shadow: 0 0 24px 4px rgba(125, 216, 125, 0.18); }
+}
+.breath-pulse {
+  animation: breath-pulse 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* 2. Slow rotate for the bridge yin/yang glyph */
+@keyframes bridge-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.bridge-rotate {
+  animation: bridge-rotate 60s linear infinite;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* 3. Word-reveal stagger for headings */
+@keyframes word-rise {
+  from { opacity: 0; transform: translateY(0.5em); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.word-reveal > span {
+  display: inline-block;
+  opacity: 0;
+  animation: word-rise 0.7s ease-out forwards;
+}
+.word-reveal > span:nth-child(1) { animation-delay: 0.05s; }
+.word-reveal > span:nth-child(2) { animation-delay: 0.13s; }
+.word-reveal > span:nth-child(3) { animation-delay: 0.21s; }
+.word-reveal > span:nth-child(4) { animation-delay: 0.29s; }
+.word-reveal > span:nth-child(5) { animation-delay: 0.37s; }
+.word-reveal > span:nth-child(6) { animation-delay: 0.45s; }
+.word-reveal > span:nth-child(7) { animation-delay: 0.53s; }
+.word-reveal > span:nth-child(8) { animation-delay: 0.61s; }
+
+/* 4. Glass panel light sweep */
+@keyframes glass-sweep {
+  0% { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(220%) skewX(-12deg); }
+}
+.glass-sweep {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.glass-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 60%;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 55%,
+    transparent 80%
+  );
+  pointer-events: none;
+  animation: glass-sweep 14s ease-in-out infinite;
+  animation-delay: 3s;
+  z-index: 0;
+}
+
+/* 5. Firefly drift (used sparingly, 6 elements max) */
+@keyframes firefly-drift {
+  0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
+  10% { opacity: 0.6; }
+  50% { opacity: 1; transform: translate(12px, -40px) scale(1); }
+  90% { opacity: 0.5; }
+  100% { transform: translate(-8px, -120px) scale(0.7); opacity: 0; }
+}
+.firefly-drift {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(240, 192, 64, 0.95) 0%, rgba(240, 192, 64, 0) 70%);
+  filter: blur(0.5px);
+  box-shadow: 0 0 8px 2px rgba(240, 192, 64, 0.45);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.firefly-drift:nth-child(1) { left: 12%; bottom: 10%; animation: firefly-drift 9s ease-in-out infinite; animation-delay: 0s; }
+.firefly-drift:nth-child(2) { left: 28%; bottom: 20%; animation: firefly-drift 11s ease-in-out infinite; animation-delay: 2.5s; }
+.firefly-drift:nth-child(3) { left: 45%; bottom: 8%; animation: firefly-drift 10s ease-in-out infinite; animation-delay: 4s; }
+.firefly-drift:nth-child(4) { left: 62%; bottom: 18%; animation: firefly-drift 12s ease-in-out infinite; animation-delay: 1s; }
+.firefly-drift:nth-child(5) { left: 78%; bottom: 14%; animation: firefly-drift 10s ease-in-out infinite; animation-delay: 6s; }
+.firefly-drift:nth-child(6) { left: 88%; bottom: 22%; animation: firefly-drift 11s ease-in-out infinite; animation-delay: 3s; }
+
+/* 6. Accordion content fade-slide */
+@keyframes accordion-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.accordion-fade-in {
+  animation: accordion-fade-in 0.35s ease-out;
+}
+
+/* 7. Underline root growth on prose links */
+.root-underline {
+  position: relative;
+  text-decoration: none;
+}
+.root-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.root-underline:hover::after,
+.root-underline:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* 8. Mobile menu item stagger entry */
+@keyframes mobile-menu-item {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.mobile-menu-stagger > * {
+  opacity: 0;
+  animation: mobile-menu-item 0.4s ease-out forwards;
+}
+.mobile-menu-stagger > *:nth-child(1) { animation-delay: 0.03s; }
+.mobile-menu-stagger > *:nth-child(2) { animation-delay: 0.08s; }
+.mobile-menu-stagger > *:nth-child(3) { animation-delay: 0.13s; }
+.mobile-menu-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+.mobile-menu-stagger > *:nth-child(5) { animation-delay: 0.23s; }
+.mobile-menu-stagger > *:nth-child(6) { animation-delay: 0.28s; }
+.mobile-menu-stagger > *:nth-child(7) { animation-delay: 0.33s; }
+.mobile-menu-stagger > *:nth-child(8) { animation-delay: 0.38s; }
+
+/* 9. Card hover lift (premium feel without heavy 3D) */
+.hover-lift {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 38px -18px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(125, 216, 125, 0.18);
+}
+
+/* 10. Reduced motion: disable simple-win animations */
+@media (prefers-reduced-motion: reduce) {
+  .breath-pulse,
+  .bridge-rotate,
+  .word-reveal > span,
+  .glass-sweep::after,
+  .firefly-drift,
+  .accordion-fade-in,
+  .mobile-menu-stagger > * {
+    animation: none !important;
+  }
+  .word-reveal > span { opacity: 1 !important; transform: none !important; }
+  .mobile-menu-stagger > * { opacity: 1 !important; transform: none !important; }
+  .hover-lift { transition: none !important; }
+  .hover-lift:hover { transform: none !important; }
+  .root-underline::after { transition: none !important; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   H9 — Consistent focus ring utility for any raw <button>
+   that we don't want to swap to <Button> (tab pills, accordion
+   triggers, card-as-button patterns).
+   ════════════════════════════════════════════════════════════ */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(125, 216, 125, 0.55), 0 0 0 5px rgba(13, 40, 24, 0.85);
+  border-radius: inherit;
+}
+
+/* ════════════════════════════════════════════════════════════
+   COMPLEX ANIMATION LAYER
+   Idea numbers correspond to the 30-animation list in the CTO
+   pre-launch report. Items 28 and 30 are intentionally omitted
+   per Rye's instruction. All animations respect
+   prefers-reduced-motion at the bottom of this block.
+   ════════════════════════════════════════════════════════════ */
+
+/* 11. MYCELIUM HOVER THREADS
+   On a parent .mycelium-grid, hovering a .mycelium-card lights
+   thin animated tendrils on the four sides of the card and softly
+   illuminates neighbouring cards. Pure CSS, no coordinate math. */
+.mycelium-grid .mycelium-card {
+  position: relative;
+  transition: filter 0.6s ease-out;
+}
+.mycelium-grid:hover .mycelium-card:not(:hover) {
+  filter: brightness(0.92) saturate(0.92);
+}
+.mycelium-grid:hover .mycelium-card:hover {
+  filter: brightness(1.04);
+}
+
+/* 13. SEASONAL BACKDROP SHIFT
+   Reads --season variable that's set in JS at app mount based on
+   the current month. Adjusts a few accent CSS variables. */
+:root {
+  --season-accent: rgba(125, 216, 125, 0.18);
+  --season-glow: rgba(125, 216, 125, 0.12);
+}
+:root[data-season="winter"] {
+  --season-accent: rgba(74, 159, 159, 0.22);
+  --season-glow: rgba(190, 220, 230, 0.10);
+}
+:root[data-season="spring"] {
+  --season-accent: rgba(125, 216, 125, 0.22);
+  --season-glow: rgba(180, 240, 180, 0.12);
+}
+:root[data-season="summer"] {
+  --season-accent: rgba(240, 192, 64, 0.20);
+  --season-glow: rgba(255, 220, 130, 0.12);
+}
+:root[data-season="autumn"] {
+  --season-accent: rgba(212, 165, 116, 0.22);
+  --season-glow: rgba(220, 140, 70, 0.10);
+}
+.season-tint {
+  background-image:
+    radial-gradient(ellipse at 20% 0%, var(--season-glow) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, var(--season-accent) 0%, transparent 60%);
+  background-attachment: fixed;
+  pointer-events: none;
+}
+
+/* 17. INK REVEAL on scroll for prose. Apply .ink-reveal to a
+   block; once it gets the .ink-reveal-on class (added by an
+   IntersectionObserver) it brushes in from left to right. */
+.ink-reveal {
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 0%, transparent 0%);
+          mask-image: linear-gradient(90deg, #000 0%, #000 0%, transparent 0%);
+  -webkit-mask-size: 200% 100%;
+          mask-size: 200% 100%;
+  -webkit-mask-position: 100% 0;
+          mask-position: 100% 0;
+  transition: -webkit-mask-position 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+                      mask-position 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ink-reveal.ink-reveal-on {
+  -webkit-mask-position: 0 0;
+          mask-position: 0 0;
+}
+
+/* 19. RIPPLE ON CLICK
+   The JS hook injects a <span class="ripple-dot"> at the click point.
+   The CSS handles the expand-and-fade. */
+.ripple-host {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+@keyframes ripple-pop {
+  from { transform: scale(0); opacity: 0.45; }
+  to { transform: scale(3.5); opacity: 0; }
+}
+.ripple-dot {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0));
+  width: 120px;
+  height: 120px;
+  margin-left: -60px;
+  margin-top: -60px;
+  pointer-events: none;
+  animation: ripple-pop 0.7s ease-out forwards;
+  z-index: 1;
+}
+
+/* 20. QUEST CARD SHIMMER SWEEP on hover */
+.quest-shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.quest-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(240, 192, 64, 0.18) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+.quest-shimmer:hover::before {
+  transform: translateX(100%);
+}
+
+/* 21. PARALLAX HERO BACKGROUND. Disabled on small viewports
+   and reduced motion to avoid layout shift. */
+@media (min-width: 768px) {
+  .parallax-bg {
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+/* 22. IMAGE BLUR-UP. Apply .blur-up to <img>, then JS adds
+   .blur-up-loaded once the image fires its load event. */
+.blur-up {
+  filter: blur(14px);
+  transform: scale(1.02);
+  transition: filter 0.7s ease-out, transform 0.7s ease-out;
+}
+.blur-up.blur-up-loaded {
+  filter: blur(0);
+  transform: scale(1);
+}
+
+/* 23. FORUM REPLY ENTRANCE */
+@keyframes reply-entrance {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reply-entrance {
+  animation: reply-entrance 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 24. MOBILE MENU STAGGER (extending the simple-wins utility for
+   nav-specific timing). Already exported as .mobile-menu-stagger. */
+
+/* 25. SCROLL PROGRESS RING. The component sets --progress: 0..1
+   on its root, the CSS draws the ring. */
+.scroll-progress-ring {
+  --progress: 0;
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    rgba(125, 216, 125, 0.85) calc(var(--progress) * 360deg),
+    rgba(255, 255, 255, 0.10) 0deg
+  );
+  display: grid;
+  place-items: center;
+  z-index: 60;
+  transition: opacity 0.4s ease-out;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.scroll-progress-ring::after {
+  content: "";
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: rgba(13, 40, 24, 0.92);
+}
+.scroll-progress-ring.is-hidden {
+  opacity: 0;
+}
+
+/* 26. CARD TILT (CSS-only soft 3D on hover). For premium feel
+   without per-frame JS pointer tracking. */
+.card-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.card-tilt:hover {
+  transform: perspective(900px) rotateX(2deg) rotateY(-2deg) translateZ(2px);
+  box-shadow: 0 24px 48px -22px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(125, 216, 125, 0.18);
+}
+
+/* 27. VINE GROW on quest card hover. SVG-free version using
+   gradient borders that grow from corners. */
+.vine-corner {
+  position: relative;
+}
+.vine-corner::before,
+.vine-corner::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  pointer-events: none;
+  transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vine-corner::before {
+  top: -2px;
+  left: -2px;
+  border-top: 2px solid rgba(125, 216, 125, 0.7);
+  border-left: 2px solid rgba(125, 216, 125, 0.7);
+  border-top-left-radius: 18px;
+}
+.vine-corner::after {
+  bottom: -2px;
+  right: -2px;
+  border-bottom: 2px solid rgba(212, 165, 116, 0.65);
+  border-right: 2px solid rgba(212, 165, 116, 0.65);
+  border-bottom-right-radius: 18px;
+}
+.vine-corner:hover::before,
+.vine-corner:hover::after {
+  width: 32px;
+  height: 32px;
+}
+
+/* 29. LIVING TREE BREATHE — gentle scale + glow loop */
+@keyframes tree-breathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(125, 216, 125, 0.18)); }
+  50%      { transform: scale(1.018); filter: drop-shadow(0 0 18px rgba(125, 216, 125, 0.32)); }
+}
+.tree-breathe {
+  animation: tree-breathe 7s ease-in-out infinite;
+  transform-origin: bottom center;
+  will-change: transform, filter;
+}
+
+/* 12. LEAF DRIFT — three ambient leaves drifting subtly across
+   the body. Sparse and slow so it never distracts. */
+@keyframes leaf-drift-1 {
+  0%   { transform: translate(-20vw, 0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 0.35; }
+  100% { transform: translate(120vw, -8vh) rotate(140deg); opacity: 0; }
+}
+@keyframes leaf-drift-2 {
+  0%   { transform: translate(-20vw, 0) rotate(0deg); opacity: 0; }
+  15%  { opacity: 0.30; }
+  100% { transform: translate(120vw, 12vh) rotate(-120deg); opacity: 0; }
+}
+.leaf-drift-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.leaf-drift-layer .leaf {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(ellipse at 30% 30%, rgba(125, 216, 125, 0.85), rgba(125, 216, 125, 0.05) 70%);
+  border-radius: 60% 40% 60% 40% / 60% 40% 60% 40%;
+  filter: blur(0.5px);
+}
+.leaf-drift-layer .leaf:nth-child(1) { top: 18%; animation: leaf-drift-1 38s linear infinite; animation-delay: 0s; }
+.leaf-drift-layer .leaf:nth-child(2) { top: 52%; animation: leaf-drift-2 46s linear infinite; animation-delay: 10s; }
+.leaf-drift-layer .leaf:nth-child(3) { top: 78%; animation: leaf-drift-1 42s linear infinite; animation-delay: 22s; background: radial-gradient(ellipse at 30% 30%, rgba(212, 165, 116, 0.85), rgba(212, 165, 116, 0.05) 70%); }
+
+/* 14. MAGNETIC BUTTONS — JS hook sets transform inline, CSS just
+   gives the smooth easing. */
+.magnetic {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* 15. NAV UNDERLINE MORPH — pseudo-element underline grows
+   from center on hover, parent uses position: relative. */
+.nav-underline {
+  position: relative;
+}
+.nav-underline::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  bottom: -4px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(125, 216, 125, 0.85), rgba(212, 165, 116, 0.85));
+  transition: left 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              right 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 2px;
+}
+.nav-underline:hover::after,
+.nav-underline:focus-visible::after,
+.nav-underline.is-active::after {
+  left: 0;
+  right: 0;
+}
+
+/* ════════════════════════════════════════════════════════════
+   COMPLEX ANIMATION LAYER — reduced motion overrides
+   ════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .mycelium-card::before,
+  .mycelium-card::after,
+  .mycelium-grid:hover .mycelium-card:not(:hover),
+  .quest-shimmer::before,
+  .ink-reveal,
+  .ink-reveal.ink-reveal-on,
+  .blur-up,
+  .blur-up.blur-up-loaded,
+  .reply-entrance,
+  .scroll-progress-ring,
+  .card-tilt,
+  .card-tilt:hover,
+  .vine-corner::before,
+  .vine-corner::after,
+  .tree-breathe,
+  .leaf-drift-layer .leaf,
+  .magnetic,
+  .nav-underline::after {
+    transition: none !important;
+    animation: none !important;
+  }
+  .ink-reveal { -webkit-mask-image: none !important; mask-image: none !important; }
+  .blur-up { filter: none !important; transform: none !important; }
+  .card-tilt:hover { transform: none !important; }
+  .leaf-drift-layer { display: none !important; }
 }
