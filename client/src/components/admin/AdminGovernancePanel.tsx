@@ -67,7 +67,7 @@ export function AdminGovernancePanel() {
                   <Icon className={`w-4 h-4 ${kpi.color}`} />
                 </div>
                 <p className={`text-xl font-bold ${kpi.color}`}>{kpi.value}</p>
-                <p className="text-xs text-[#1a472a]/60 mt-0.5">{kpi.label}</p>
+                <p className="text-xs text-[#1a472a]/80 mt-0.5">{kpi.label}</p>
               </CardContent>
             </Card>
           );
@@ -87,11 +87,11 @@ export function AdminGovernancePanel() {
               {stats.topHolders.map((holder: any, i: number) => (
                 <div key={i} className="flex items-center justify-between py-1.5 border-b border-[#1a472a]/5 last:border-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-[#1a472a]/40 w-5">{i + 1}</span>
+                    <span className="text-xs text-[#1a472a]/70 w-5">{i + 1}</span>
                     <div>
                       <p className="text-sm font-medium text-[#1a472a]">{holder.displayName || "Unnamed"}</p>
                       {holder.walletAddress && (
-                        <p className="text-[10px] text-[#1a472a]/40 font-mono">{truncateAddress(holder.walletAddress)}</p>
+                        <p className="text-xs text-[#1a472a]/60 font-mono">{truncateAddress(holder.walletAddress)}</p>
                       )}
                     </div>
                     {holder.isVerified ? (
@@ -99,7 +99,7 @@ export function AdminGovernancePanel() {
                     ) : null}
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-[#7dd87d] font-semibold">{(holder.rvoiceBalance || 0).toLocaleString()} RV</p>
+                    <p className="text-xs text-[#2d7a3a] font-semibold">{(holder.rvoiceBalance || 0).toLocaleString()} RV</p>
                     <p className="text-xs text-emerald-600">{(holder.rgenBalance || 0).toLocaleString()} RG</p>
                   </div>
                 </div>

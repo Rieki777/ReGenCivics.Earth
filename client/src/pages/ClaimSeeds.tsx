@@ -10,6 +10,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { PageWrapper } from "@/components/PageWrapper";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -94,6 +96,7 @@ const INITIAL_FORM_DATA: ClaimFormData = {
 };
 
 export default function ClaimSeeds() {
+  const { isAuthenticated, user } = useAuth();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<ClaimFormData>(() => {
     const draft = loadDraft();
@@ -103,6 +106,15 @@ export default function ClaimSeeds() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedClaimId, setSubmittedClaimId] = useState<string | null>(null);
+
+  // Pre-fill the email field from the signed-in account so users do not have
+  // to retype it. Only fills when the field is currently empty.
+  useEffect(() => {
+    if (isAuthenticated && user?.email && !formData.email) {
+      setFormData(f => ({ ...f, email: user.email ?? "" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.email]);
 
   // Autosave to localStorage (debounced)
   const lsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -679,20 +691,40 @@ export default function ClaimSeeds() {
                   </p>
                 </div>
 
-                <div className="bg-muted border border-border rounded-lg p-4">
-                  <p className="text-sm text-foreground">
-                    Sign up at{" "}
-                    <a
-                      href="https://regencivics.earth"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium underline hover:text-amber-800"
-                    >
-                      regencivics.earth
-                    </a>{" "}
-                    for updates and to start playing.
-                  </p>
-                </div>
+                {isAuthenticated ? (
+                  <div className="rounded-lg border border-[#7dd87d]/50 bg-[#7dd87d]/10 p-4">
+                    <p className="text-sm text-white/90">
+                      <span className="font-semibold text-[#7dd87d]">Signed in.</span>{" "}
+                      We'll send claim updates to{" "}
+                      <span className="font-mono text-white">{user?.email ?? "your account email"}</span>{" "}
+                      and link this claim to your player profile so you can start playing
+                      right after submission.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-[#7dd87d]/30 bg-[#0d2818]/60 p-4 space-y-3">
+                    <p className="text-sm text-white/90">
+                      Sign in to link this claim to your player profile and pick up
+                      right where you left off after submission.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // The draft is already auto-saved to localStorage so the
+                          // form will repopulate after the OAuth round-trip.
+                          window.location.href = getLoginUrl();
+                        }}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors"
+                      >
+                        Sign in / Create account
+                      </button>
+                      <span className="text-xs text-white/55 self-center">
+                        Or continue as a guest. Your draft is auto-saved.
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Navigation */}
                 <div className="flex gap-3 pt-6 border-t">

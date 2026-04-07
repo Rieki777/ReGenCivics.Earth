@@ -42,7 +42,7 @@ export function AdminAlertBanner({ onTabChange }: { onTabChange: (tab: string) =
         <button
           key={i}
           onClick={() => onTabChange(alert.tab)}
-          className="w-full flex items-center gap-2 px-4 py-2 bg-amber-900/20 hover:bg-amber-900/40 text-amber-300 text-sm text-left transition-colors"
+          className="w-full flex items-center gap-2 px-4 py-2 bg-amber-900/20 hover:bg-amber-900/40 text-amber-200 text-sm text-left transition-colors"
         >
           <Clock size={14} className="flex-shrink-0" />
           {alert.message}

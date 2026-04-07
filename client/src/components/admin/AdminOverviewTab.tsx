@@ -361,7 +361,7 @@ export function AdminOverviewTab({
                 <>
                   <div className="bg-white/10 rounded-xl p-4 text-center">
                     <p className="text-3xl font-bold text-[#7dd87d]">{projectCount}</p>
-                    <p className="text-white/70 text-sm">Projects Applied</p>
+                    <p className="text-white/80 text-sm">Projects Applied</p>
                   </div>
                   <div className="bg-white/10 rounded-xl p-4 text-center">
                     <p className="text-3xl font-bold text-[#7dd87d]">{totalAcres.toLocaleString()}</p>

@@ -1,4 +1,4 @@
-import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, FileDown, Printer } from "lucide-react";
+import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
@@ -755,17 +755,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
             <Button variant="ghost" onClick={onClose}>
               Close
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-[#1a472a]/50 hover:text-[#1a472a] gap-1.5 print:hidden"
-              onClick={() => window.print()}
-              title="Print this quest guide"
-              aria-label="Print quest guide"
-            >
-              <Printer className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs">Print</span>
-            </Button>
+
           </div>
           <div className="flex flex-col sm:flex-row gap-2 order-1 sm:order-2">
             {/* Start Quest Button - Links to video, disabled if no video */}

@@ -3362,7 +3362,7 @@ function AdminDashboard() {
                     </span>
                   )}
                 </div>
-                <p className="text-white/70 text-sm md:text-base">
+                <p className="text-white/85 text-sm md:text-base">
                   {stats.totalApplications + stats.totalInvestors + stats.totalInquiries} total submissions
                 </p>
               </div>
@@ -3452,7 +3452,8 @@ function AdminDashboard() {
                   if (first) first();
                 }
               }}
-              className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full pl-9 pr-8 py-2 text-sm border border-[#1a472a]/40 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/80 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              aria-label="Search contacts, projects, posts"
             />
             {globalSearch && (
               <button onClick={() => { setGlobalSearch(''); setGlobalSearchOpen(false); }} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#1a472a]/65 hover:text-[#1a472a]">

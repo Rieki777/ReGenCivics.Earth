@@ -24,7 +24,7 @@ This document continues from `FIXES_TO_MAKE_2026-04-01.md`. Fixes from Rye's Wha
 
 ## Fix 2 -- ClaimSeeds signup step should be an inline form (High)
 
-**Status:** CODED
+**Status:** SHIPPED 2026-04-07
 
 **Symptom:** Step in the ClaimSeeds flow shows "Sign up at regencivics.earth for updates and to start playing" as a static text link. Users have to leave the flow, sign up separately, and come back. This breaks the experience.
 
@@ -219,3 +219,118 @@ Keep the MP4 preview clip as a poster/thumbnail if `AutoplayVideo` supports it. 
 6. Migration: `drizzle/0102_add_video_pitch_url.sql`
 
 **Files changed:** `client/src/components/HowToApplySection.tsx`, `client/src/components/RolePortalCard.tsx`, `client/src/pages/Connect.tsx`, `server/routes/investors.ts`, `drizzle/schema.ts`, `drizzle/0102_add_video_pitch_url.sql`
+
+---
+
+## Fix 9 -- Quest card Repeatable tag overlaps title (Medium)
+
+**Status:** CODED
+
+**Symptom:** The "Repeatable" badge on featured quest cards overlaps the quest title text.
+
+**Root cause:** Badge uses `absolute top-4 right-4` in a card with no right padding on the title.
+
+**Fix:** Added `pr-24` padding to the title/header flex containers on all 3 featured repeatable quest cards. Added `flex-1` to text content divs. Improved subtitle opacity from `text-white/60` to `text-white/70`.
+
+**Files changed:** `client/src/pages/Quest.tsx`
+
+---
+
+## Fix 10 -- Download Quest Image broken (High)
+
+**Status:** CODED
+
+**Symptom:** "Download Quest Image" button shows "File wasn't available on site." Image never downloads.
+
+**Root cause:** The `<a download>` attribute doesn't work cross-origin. Images are served from `assets.regencivics.earth` CDN, and the browser cannot trigger a download from a different origin.
+
+**Fix:** Added `downloadImage()` helper function that fetches the image as a blob, creates a blob URL, and triggers the download programmatically. Falls back to opening in a new tab if fetch fails. Replaced the `<a>` tag with a `<button>` calling this function.
+
+**Files changed:** `client/src/pages/Quest.tsx`
+
+---
+
+## Fix 11 -- Print button broken on quest detail modal (High)
+
+**Status:** SHIPPED 2026-04-07
+
+**Symptom:** Print button calls `window.print()` which prints 19 screenshots of the entire site.
+
+**Root cause:** `window.print()` prints the full page, not just the modal. No print-specific CSS was set up.
+
+**Fix:** Removed the Print button entirely. PDF field guides already exist for all 15 quests in `/public/quest-guides/`. The "Download Field Guide" button serves the same purpose better. Also removed unused `Printer` import.
+
+**Files changed:** `client/src/components/QuestDetailModal.tsx`
+
+---
+
+## Fix 12 -- Quest-to-forum post wiring check (Medium)
+
+**Status:** VERIFIED (no code change needed)
+
+**Symptom:** Quests may not link to their correct forum posts.
+
+**Root cause:** Checked all 15 quests in questData.ts. Forum URLs are sequential from /community/post/607 through /community/post/623 (gap at 622). Mappings appear correct and consistent.
+
+**Fix:** No code change. If specific posts are wrong, Rye should verify by visiting each /community/post/607-623 in the browser.
+
+---
+
+## Fix 13 -- Connect form already has video field + role prefill (Low)
+
+**Status:** VERIFIED (no code change needed)
+
+**Symptom:** Rye asked for video upload spot on connect form and role prefill.
+
+**Root cause:** Already implemented in Fix 8. Connect.tsx has `videoPitchUrl` field. Reads `?role=`, `?circle=`, `?purpose=` query params. HowToApplySection Step 3 already links to `/connect?path=role`. RolePortalCard already passes role info via URL params.
+
+---
+
+## Fix 14 -- Admin dashboard readability: 13 contrast/accessibility fixes (High)
+
+**Status:** SHIPPED 2026-04-07
+
+**Symptom:** Multiple text elements fail WCAG AA contrast requirements. 6 critical failures, 4 serious failures.
+
+**Root cause:** Heavy reliance on opacity-based color variants that produce contrast ratios well below 4.5:1.
+
+**Fix:** Applied fixes across 5 files:
+- AdminAlertBanner.tsx: `text-amber-300` to `text-amber-200`
+- AdminSidebar.tsx: `text-white/30` to `text-white/50` on group labels
+- AdminGovernancePanel.tsx: token holder index `text-[#1a472a]/40` to `/70`, wallet address `text-[10px]` to `text-xs` + `/40` to `/60`, KPI labels `/60` to `/80`, RV token `text-[#7dd87d]` to `text-[#2d7a3a]`
+- Admin.tsx: header subtitle `text-white/70` to `/85`, search placeholder `/65` to `/80`, added `aria-label`, border `/20` to `/40`
+- AdminOverviewTab.tsx: stats subtitle `text-white/70` to `/80`
+
+**Files changed:** `client/src/components/admin/AdminAlertBanner.tsx`, `client/src/components/admin/AdminSidebar.tsx`, `client/src/components/admin/AdminGovernancePanel.tsx`, `client/src/pages/Admin.tsx`, `client/src/components/admin/AdminOverviewTab.tsx`
+
+---
+
+## Updated Handoff Breakdown -- Who Does What
+
+### YOU (Rye) -- things only you can do
+
+| # | Task | Why only you | Command / Where |
+|---|------|-------------|-----------------|
+| 5 | Check generatedImageUrl in DB for broken forum post | Railway DB access | `SELECT id, title, generatedImageUrl FROM forumPosts WHERE title LIKE '%Historical Contributions%';` |
+| 8 | Run migration for video pitch URL column | Railway DB access | `npx tsx scripts/run-migration.ts drizzle/0102_add_video_pitch_url.sql` |
+| 12 | Verify forum post IDs match quest mappings | Browser check | Visit /community/post/607 through /community/post/623 |
+| ALL | Git push after review | Git access | `git add -A && git commit -m "fixes batch 2026-04-03" && git push` |
+
+### CLAUDE CODE -- already done or can be done without you
+
+| # | Task | Status |
+|---|------|--------|
+| 1 | Crowdpooling button styling | CODED |
+| 2 | ClaimSeeds inline signup form | CODED |
+| 3 | ClaimSeeds form readability | CODED |
+| 4 | Landing page video inline | CODED |
+| 5 | Forum post image fallback | CODED |
+| 6 | "community socials" text fix | CODED |
+| 7 | Cowork referral link integration | CODED |
+| 8 | Connect form video field + role prefill | CODED |
+| 9 | Quest card Repeatable tag overlap fix | CODED |
+| 10 | Quest image download (blob fetch) | CODED |
+| 11 | Print button removed from quest modal | CODED |
+| 12 | Quest-to-forum wiring verified | VERIFIED |
+| 13 | Connect form video + prefill verified | VERIFIED |
+| 14 | Admin dashboard 13 contrast fixes | CODED |

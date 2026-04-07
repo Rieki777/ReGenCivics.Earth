@@ -89,7 +89,7 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
         {NAV_GROUPS.map(group => (
           <div key={group.label} className="mb-2">
             {!collapsed && (
-              <div className="px-3 py-1 text-xs font-semibold text-white/30 uppercase tracking-wider">{group.label}</div>
+              <div className="px-3 py-1 text-xs font-semibold text-white/50 uppercase tracking-wider">{group.label}</div>
             )}
             {group.items.map(item => {
               const Icon = item.icon
