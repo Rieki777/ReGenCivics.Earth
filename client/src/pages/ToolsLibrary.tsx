@@ -261,16 +261,18 @@ export default function ToolsLibrary() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tools.map((tool: {
-              id: number;
-              slug: string;
-              name: string;
-              summary: string;
-              logoUrl?: string;
-              categories: string[];
-              pricing: string;
-              clickCount: number;
-            }) => (
+            {(tools as any[]).map((tool) => {
+              const pricingModel: string = tool.pricingModel ?? "free";
+              const categories: { name: string; slug?: string; color?: string }[] = Array.isArray(tool.categories)
+                ? tool.categories
+                : [];
+              const summary: string = tool.shortSummary ?? "";
+              const clickCount: number = tool.totalClicks ?? 0;
+              const pricingLabel =
+                pricingModel === "open_source"
+                  ? "Open Source"
+                  : pricingModel.charAt(0).toUpperCase() + pricingModel.slice(1);
+              return (
               <Link key={tool.id} href={`/tools/${tool.slug}`}>
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-[#7dd87d]/30 transition-colors cursor-pointer h-full flex flex-col">
                   {/* Logo + Name */}
@@ -290,15 +292,15 @@ export default function ToolsLibrary() {
                       <h3 className="text-white font-semibold text-sm leading-tight">{tool.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge className={`text-[10px] ${
-                          tool.pricing === "free"
+                          pricingModel === "free"
                             ? "bg-[#7dd87d]/10 text-[#7dd87d] border-[#7dd87d]/20"
-                            : tool.pricing === "open_source"
+                            : pricingModel === "open_source"
                             ? "bg-blue-500/10 text-blue-300 border-blue-500/20"
-                            : tool.pricing === "freemium"
+                            : pricingModel === "freemium"
                             ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                             : "bg-purple-500/10 text-purple-300 border-purple-500/20"
                         }`}>
-                          {tool.pricing === "open_source" ? "Open Source" : tool.pricing.charAt(0).toUpperCase() + tool.pricing.slice(1)}
+                          {pricingLabel}
                         </Badge>
                       </div>
                     </div>
@@ -306,17 +308,17 @@ export default function ToolsLibrary() {
 
                   {/* Summary */}
                   <p className="text-white/50 text-xs leading-relaxed mb-3 flex-1 line-clamp-3">
-                    {tool.summary}
+                    {summary}
                   </p>
 
                   {/* Category pills */}
                   <div className="flex flex-wrap gap-1 mb-3">
-                    {tool.categories.slice(0, 3).map((cat) => (
+                    {categories.slice(0, 3).map((cat, i) => (
                       <span
-                        key={cat}
+                        key={cat.slug ?? `${cat.name}-${i}`}
                         className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/10"
                       >
-                        {cat}
+                        {cat.name}
                       </span>
                     ))}
                   </div>
@@ -324,7 +326,7 @@ export default function ToolsLibrary() {
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-2 border-t border-white/5">
                     <span className="text-white/30 text-xs flex items-center gap-1">
-                      <Users className="w-3 h-3" /> {tool.clickCount} views
+                      <Users className="w-3 h-3" /> {clickCount} views
                     </span>
                     <span className="text-[#7dd87d] text-xs font-medium flex items-center gap-1">
                       Explore <ExternalLink className="w-3 h-3" />
@@ -332,7 +334,8 @@ export default function ToolsLibrary() {
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

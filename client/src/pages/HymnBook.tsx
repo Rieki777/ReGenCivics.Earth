@@ -1,5 +1,5 @@
 /**
- * Hymn Book — community song submissions and seasonal vote.
+ * Hymn Book: community song submissions and seasonal vote.
  * Players submit one song per season, vote on submissions, and the
  * highest-voted song is added to the Hymn Book.
  */
@@ -39,7 +39,7 @@ export default function HymnBook() {
   return (
     <PageTransition>
       <SEO
-        title="Hymn Book — Community Song Submissions"
+        title="Hymn Book: Community Song Submissions"
         description="Submit your songs to add to the Hymns of the ReGeneration. Each season the highest voted community song joins the Hymn Book and the musician receives 3,333 $ReGen."
       />
       <div className="min-h-screen bg-[#0d2818] text-white py-16 px-4">
