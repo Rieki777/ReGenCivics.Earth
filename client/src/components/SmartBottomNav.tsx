@@ -148,7 +148,7 @@ export default function SmartBottomNav() {
             className={`flex flex-col items-center justify-center gap-1 transition-colors ${
               panelOpen ? "text-[#7dd87d]" : "text-white/60 hover:text-white/70"
             }`}
-            aria-label={panelOpen ? "Close player" : "Open player"}
+            aria-label={panelOpen ? "More: close player" : "More: open player"}
           >
             <ChevronUp className={`w-5 h-5 transition-transform duration-200 ${panelOpen ? "rotate-180" : ""}`} />
             <span className="text-[10px] font-medium">More</span>

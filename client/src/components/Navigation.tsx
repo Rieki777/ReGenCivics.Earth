@@ -95,7 +95,7 @@ export default function Navigation() {
   const isSeasonsActive = location === '/seasons' || location === '/schedule';
 
   // Check if current location is in Explore + Connect
-  const isSocialsBlogActive = location === '/blog' || location.startsWith('/blog/') || location === '/socials' || location.startsWith('/community') || location === '/economy';
+  const isSocialsBlogActive = location === '/blog' || location.startsWith('/blog/') || location === '/socials' || location.startsWith('/community') || location === '/economy' || location === '/bionomics' || location === '/tokenomics' || location === '/game-mechanics';
 
   return (
     <>
@@ -114,7 +114,7 @@ export default function Navigation() {
             className="flex items-center gap-2 text-[#7dd87d] hover:text-[#9de89d] transition-colors"
           >
             <img
-              src={cdnImg("https://assets.regencivics.earth/DUOLILquhPlWMUAF.png")}
+              src="/icon-192.webp"
               alt="ReGen Civics"
               width="40"
               height="40"
@@ -416,20 +416,33 @@ export default function Navigation() {
                   <Globe className="w-5 h-5 mr-3 text-[#4a9f9f]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Governance</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
+                <div className="px-2 pt-2 pb-1 flex items-center gap-2">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0">
+                    <circle cx="12" cy="12" r="11" fill="#0d2818" stroke="#7dd87d" strokeWidth="0.6" />
+                    <path d="M12 1 a11 11 0 0 1 0 22 a5.5 5.5 0 0 1 0 -11 a5.5 5.5 0 0 0 0 -11 z" fill="#d4a574" />
+                    <circle cx="12" cy="6.5" r="1.4" fill="#0d2818" />
+                    <circle cx="12" cy="17.5" r="1.4" fill="#7dd87d" />
+                  </svg>
+                  <span className="text-[10px] uppercase tracking-wider text-white/55" style={{ fontFamily: 'var(--font-accent)' }}>
+                    The Two Sides of the Bridge
+                  </span>
+                </div>
+                <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/tokenomics'}
                 >
                   <Coins className="w-5 h-5 mr-3 text-[#d4a574]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Tokenomics</span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Tokenomics <span className="text-white/40 text-xs ml-1">(the Fund)</span></span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
-                  onClick={() => window.location.href = '/economy'}
+                  onClick={() => window.location.href = '/bionomics'}
                 >
-                  <TrendingUp className="w-5 h-5 mr-3 text-[#d4a574]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Economy</span>
+                  <TrendingUp className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Bionomics <span className="text-white/40 text-xs ml-1">(the Game)</span></span>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/game-mechanics'}
@@ -1004,6 +1017,43 @@ export default function Navigation() {
                     >
                       <SlidersHorizontal className="w-4 h-4 text-[#7dd87d]" />
                       Game Mechanics
+                    </Link>
+                    <div className="px-4 pl-10 pt-3 pb-1 flex items-center gap-2">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0">
+                        <circle cx="12" cy="12" r="11" fill="#0d2818" stroke="#7dd87d" strokeWidth="0.6" />
+                        <path d="M12 1 a11 11 0 0 1 0 22 a5.5 5.5 0 0 1 0 -11 a5.5 5.5 0 0 0 0 -11 z" fill="#d4a574" />
+                        <circle cx="12" cy="6.5" r="1.4" fill="#0d2818" />
+                        <circle cx="12" cy="17.5" r="1.4" fill="#7dd87d" />
+                      </svg>
+                      <span className="text-[10px] uppercase tracking-wider text-white/55" style={{ fontFamily: 'var(--font-accent)' }}>
+                        The Two Sides of the Bridge
+                      </span>
+                    </div>
+                    <Link
+                      href="/tokenomics"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/tokenomics'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Coins className="w-4 h-4 text-[#d4a574]" />
+                      Tokenomics <span className="text-white/40 text-xs">(the Fund)</span>
+                    </Link>
+                    <Link
+                      href="/bionomics"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/bionomics'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <TrendingUp className="w-4 h-4 text-[#7dd87d]" />
+                      Bionomics <span className="text-white/40 text-xs">(the Game)</span>
                     </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
                     {socialLinks.map((social) => (

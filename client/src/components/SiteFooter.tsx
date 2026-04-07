@@ -65,12 +65,12 @@ export default function SiteFooter() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8 text-sm">
           {/* Explore */}
           <div>
-            <h4
+            <h3
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Explore
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/fund" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
@@ -97,12 +97,12 @@ export default function SiteFooter() {
 
           {/* Participate */}
           <div>
-            <h4
+            <h3
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Participate
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/seasons" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
@@ -129,12 +129,12 @@ export default function SiteFooter() {
 
           {/* Game */}
           <div>
-            <h4
+            <h3
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Game
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/game" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
@@ -177,12 +177,17 @@ export default function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/bionomics" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
+                  Bionomics
+                </Link>
+              </li>
+              <li>
                 <Link href="/tools" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
                   Tools Library
                 </Link>
               </li>
               <li>
-                <Link href="/local-food-economy" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
+                <Link href="/bionomics#local-food-economies" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
                   Local Food Economy
                 </Link>
               </li>
@@ -191,12 +196,12 @@ export default function SiteFooter() {
 
           {/* Learn */}
           <div>
-            <h4
+            <h3
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Learn
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li><Link href="/blog" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">Blog</Link></li>
               <li><Link href="/glossary" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">Glossary</Link></li>
@@ -208,12 +213,12 @@ export default function SiteFooter() {
 
           {/* Legal */}
           <div>
-            <h4
+            <h3
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Legal
-            </h4>
+            </h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/privacy-policy" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
@@ -240,12 +245,12 @@ export default function SiteFooter() {
 
           {/* Subscribe + Preferences */}
           <div className="col-span-2 md:col-span-1">
-            <h4
+            <h3
               className="text-[#7dd87d] font-bold text-xs uppercase tracking-wider mb-3"
               style={{ fontFamily: "var(--font-accent)" }}
             >
               Stay in the Loop
-            </h4>
+            </h3>
             <NewsletterSignupInline className="mb-4" />
             <ul className="space-y-2">
               <li>

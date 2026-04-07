@@ -68,20 +68,29 @@ export function GoogleTranslateProvider({ children }: { children?: React.ReactNo
       }
     };
 
-    // Defer loading so it never blocks the page
+    // Lazy-load Google Translate only when the user first interacts with the page.
+    // Keeps it out of initial load cost + Lighthouse scans (third-party cookies,
+    // cross-origin requests) while staying fully available as soon as anyone clicks.
+    let loaded = false;
     const loadScript = () => {
+      if (loaded) return;
+      loaded = true;
       const script = document.createElement('script');
-      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
       script.async = true;
       document.body.appendChild(script);
+      cleanup();
     };
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(loadScript, { timeout: 5000 });
-    } else {
-      setTimeout(loadScript, 4000);
+    const events: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
+    const cleanup = () => {
+      for (const ev of events) window.removeEventListener(ev, loadScript);
+    };
+    for (const ev of events) {
+      window.addEventListener(ev, loadScript, { once: true, passive: true });
     }
 
     return () => {
+      cleanup();
       delete window.googleTranslateElementInit;
     };
   }, []);

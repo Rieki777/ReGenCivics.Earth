@@ -52,6 +52,25 @@
     
     <!-- Preload homepage background for faster LCP (local file, not R2 which 403s for browsers) -->
     <link rel="preload" as="image" href="/images/backgrounds/home-desktop.webp?v=2" fetchpriority="high" />
+
+    <!-- Route-aware LCP preload: inject the right hero image as soon as the HTML parses -->
+    <script>
+      (function() {
+        var p = location.pathname;
+        var href = null;
+        if (p === '/bionomics' || p === '/economy' || p === '/local-food-economy') {
+          href = '/blog-hero-bridging-worlds.webp';
+        }
+        if (href) {
+          var l = document.createElement('link');
+          l.rel = 'preload';
+          l.as = 'image';
+          l.href = href;
+          l.setAttribute('fetchpriority', 'high');
+          document.head.appendChild(l);
+        }
+      })();
+    </script>
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -89,10 +108,10 @@
     <!-- Sitemap reference -->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
 
-    <!-- Prerender hints for top pages -->
-    <link rel="prefetch" href="/quest" />
-    <link rel="prefetch" href="/apply" />
-    <link rel="prefetch" href="/community" />
+    <!-- Prerender hints for top pages.
+         Navigation prefetches were removed: with upgrade-insecure-requests in CSP,
+         Chrome upgrades them to https which fails on local HTTP and throws console
+         errors. Route chunks are already prefetched on hover via Navigation.tsx. -->
     
     <!-- AI/LLM information file -->
     <link rel="alternate" type="text/plain" href="/llms.txt" title="Information for AI Language Models" />

@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navigation from "./components/Navigation";
 import { MycelialBackground } from "./components/MycelialBackground";
+import { AnimationLayer } from "./components/AnimationLayer";
 import { StructuredData } from "./components/StructuredData";
 import { TaoSpinner } from "./components/TaoSpinner";
 import { TaoErrorState } from "./components/TaoErrorState";
@@ -48,6 +49,7 @@ const Schedule = lazy(() => import("./pages/Schedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
 const Economy = lazy(() => import("./pages/Economy"));
+const Bionomics = lazy(() => import("./pages/Bionomics"));
 const HealTheLand = lazy(() => import("./pages/HealTheLand"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
@@ -238,11 +240,12 @@ function Router() {
       <Route path={"/features"}><EB><FeatureSuggestions /></EB></Route>
       <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
       <Route path={"/newsletter/confirm"}><EB><NewsletterConfirm /></EB></Route>
-      <Route path={"/economy"}><EB><Economy /></EB></Route>
+      <Route path={"/bionomics"}><EB><Bionomics /></EB></Route>
+      <Route path={"/economy"}><Redirect to="/bionomics" /></Route>
+      <Route path={"/local-food-economy"}><Redirect to="/bionomics#local-food-economies" /></Route>
       <Route path={"/heal-the-land"}><EB><HealTheLand /></EB></Route>
       <Route path={"/proposals"}><EB><Proposals /></EB></Route>
       <Route path={"/game-mechanics"}><EB><GameMechanics /></EB></Route>
-      <Route path={"/local-food-economy"}><EB><LocalFoodEconomy /></EB></Route>
       <Route path={"/tools"}><EB><ToolsLibrary /></EB></Route>
       <Route path={"/tools/submit"}><EB><ToolSubmit /></EB></Route>
       <Route path={"/tools/:slug"}><EB><ToolDetail /></EB></Route>
@@ -331,12 +334,13 @@ function App() {
             </a>
           )}
           {!adminMode && <MycelialBackground />}
+          {!adminMode && <AnimationLayer />}
           {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
           <main id="main-content" className="pb-20">
             <Router />
           </main>
-          {!adminMode && !location.startsWith("/economy") && !location.startsWith("/admin") && (
+          {!adminMode && !location.startsWith("/bionomics") && !location.startsWith("/economy") && !location.startsWith("/admin") && (
             location === "/" || location.startsWith("/play") || location.startsWith("/quest") || location.startsWith("/game") || location.startsWith("/local-food")
           ) && (
             <GameHookBanner

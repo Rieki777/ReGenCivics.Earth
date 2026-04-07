@@ -8,7 +8,7 @@ import {
   MessageCircle, Sprout, Coins, Handshake, Scale, BookOpen,
   UserPlus, Lightbulb, ArrowRight, Plus, Users,
   Leaf, Sparkles, TrendingUp, Search, Trees, Vote, Gamepad2,
-  Heart, MapPin, Pencil, Trash2, X, Check, Building2
+  Heart, MapPin, Pencil, Trash2, X, Check, Building2, Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,7 +201,7 @@ export default function Community() {
     'quests-gameplay', 'epic-quests', 'alliance-partners', 'air-conversations',
     'active-projects', 'active-organisations', 'land-projects',
     'rites-of-passage', 'welcome-aboard-quests',
-    'land-general', 'alliance-general',
+    'land-general', 'alliance-general', 'bioregions',
   ]);
 
   const filteredCategories = useMemo(() => {
@@ -713,6 +713,22 @@ export default function Community() {
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Apply</p>
                     <p className="text-white/60 text-xs">Bring your land project in</p>
                   </div>
+                </div>
+              </Link>
+            </div>
+
+            {/* Bioregions card */}
+            <div className="mb-3">
+              <Link href="/community/c/bioregions">
+                <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#d4a574]/50 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#d4a574]/15 flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-5 h-5 text-[#5c3d2e]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#5c3d2e] transition-colors">Bioregions</p>
+                    <p className="text-[#1a472a]/50 text-xs line-clamp-1">Where bioregions organising for regeneration meet, share, and find each other</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
                 </div>
               </Link>
             </div>

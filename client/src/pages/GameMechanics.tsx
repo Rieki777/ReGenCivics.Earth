@@ -577,6 +577,144 @@ export default function GameMechanics() {
           </AnimatedSection>
         </section>
 
+        {/* Citizenship Tiers (top of page) */}
+        <section className="container mx-auto px-4 pb-16">
+          <AnimatedSection animation="slide-up">
+            <h2
+              className="text-2xl md:text-3xl font-bold text-white mb-3"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              Citizenship Tiers
+            </h2>
+            <p className="text-white/70 mb-8 max-w-2xl leading-relaxed">
+              You grow into this society at your own pace. Everyone starts as an Explorer and earns deeper participation through real contribution. Each tier carries different powers, gratitude budgets, and governance weight.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                {
+                  title: "Explorer",
+                  emoji: "🧭",
+                  description: "You just got here. Welcome. Free transactions, access to quests, and your first contributions start counting immediately.",
+                  requirements: ["Create an account", "That's it"],
+                  powers: [
+                    "Free transactions",
+                    "Access to quests",
+                    "Forum participation",
+                    "Gratitude sending (starter budget)",
+                  ],
+                  accent: "#7dd87d",
+                },
+                {
+                  title: "Co-Creator",
+                  emoji: "🌱",
+                  description: "Earned through quests, invitations, and consistent participation. Your contributions start earning a share of the Harvest.",
+                  requirements: [
+                    "Complete onboarding quests",
+                    "Invite at least 1 person",
+                    "Active for 1+ season",
+                  ],
+                  powers: [
+                    "Harvest share based on contribution score",
+                    "Full gratitude budget (100/cycle, 2.0x multiplier)",
+                    "Endorsement power for land projects",
+                    "Marketplace access on LocalScale.org",
+                  ],
+                  accent: "#a8e6a8",
+                },
+                {
+                  title: "Steward",
+                  emoji: "🌳",
+                  description: "Earned through deeper contribution and longer participation. Stewards carry governance weight. You can propose, vote, and shape the rules.",
+                  requirements: [
+                    "Sustained contribution across 3+ seasons",
+                    "Reputation score above 50th percentile",
+                    "Vouching from existing Stewards",
+                  ],
+                  powers: [
+                    "Trust Tokens for governance voting",
+                    "Proposal creation rights",
+                    "Enhanced gratitude budget (3.0x multiplier)",
+                    "Land project evaluation access",
+                    "Governance on Hypha (app.hypha.earth)",
+                  ],
+                  accent: "#f0c040",
+                },
+                {
+                  title: "Sage",
+                  emoji: "🏔️",
+                  description: "The long-game players. Sages have demonstrated deep, consistent contribution across many seasons. Their voice carries the most weight in governance.",
+                  requirements: [
+                    "Sustained contribution across 6+ seasons",
+                    "Reputation score above 80th percentile",
+                    "Track record of successful proposals",
+                    "Community recognition through gratitude",
+                  ],
+                  powers: [
+                    "Maximum governance weight",
+                    "Seasonal council participation",
+                    "Endorse or flag proposals",
+                    "Mentor matching for newer players",
+                    "Enhanced Harvest multiplier (5.0x gratitude)",
+                  ],
+                  accent: "#e0b0ff",
+                },
+              ].map((tier) => (
+                <div
+                  key={tier.title}
+                  className="rounded-2xl border border-white/10 p-6 md:p-8 flex flex-col"
+                  style={{ background: "rgba(255,255,255,0.05)" }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-3xl">{tier.emoji}</span>
+                    <h3
+                      className="text-xl md:text-2xl font-bold text-white"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {tier.title}
+                    </h3>
+                  </div>
+                  <p className="text-white/80 mb-5 leading-relaxed">{tier.description}</p>
+                  <div className="mb-4">
+                    <h4
+                      className="text-sm uppercase tracking-wider mb-2"
+                      style={{ color: tier.accent, fontFamily: "var(--font-display)" }}
+                    >
+                      Requirements
+                    </h4>
+                    <ul className="space-y-1">
+                      {tier.requirements.map((req, i) => (
+                        <li key={i} className="text-white/70 text-sm flex items-start gap-2">
+                          <span style={{ color: tier.accent }} className="mt-0.5">+</span>
+                          {req}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="mt-auto">
+                    <h4
+                      className="text-sm uppercase tracking-wider mb-2"
+                      style={{ color: tier.accent, fontFamily: "var(--font-display)" }}
+                    >
+                      Powers
+                    </h4>
+                    <ul className="space-y-1">
+                      {tier.powers.map((power, i) => (
+                        <li key={i} className="text-white/70 text-sm flex items-start gap-2">
+                          <span style={{ color: tier.accent }} className="mt-0.5">+</span>
+                          {power}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-white/60 text-sm mt-6 max-w-2xl leading-relaxed">
+              Tier promotion happens automatically through a nightly batch job that recalculates your reputation, contribution score, and seasonal activity. There's a grace period before demotion. You don't lose tiers from a quiet week.
+            </p>
+          </AnimatedSection>
+        </section>
+
         {/* Section A: Live Variables */}
         <section className="container mx-auto px-4 pb-16">
           <AnimatedSection animation="slide-up">

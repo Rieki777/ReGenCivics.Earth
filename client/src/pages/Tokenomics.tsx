@@ -128,7 +128,7 @@ function AnimatedTokenFlow() {
           <button
             key={s.id}
             onClick={() => { setIsPlaying(false); setStep(i); }}
-            className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+            className={`focus-ring flex-1 flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
               i === step
                 ? 'bg-white/15 scale-105'
                 : i < step
@@ -195,20 +195,20 @@ function AnimatedTokenFlow() {
         <button
           onClick={handlePlay}
           disabled={isPlaying}
-          className="px-6 py-3 bg-[#7dd87d] text-[#1a472a] rounded-xl font-bold hover:bg-[#6bc76b] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="focus-ring px-6 py-3 bg-[#7dd87d] text-[#1a472a] rounded-xl font-bold hover:bg-[#6bc76b] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           {isPlaying ? 'Playing...' : '▶ Play Full Cycle'}
         </button>
         <div className="flex gap-2">
           <button
             onClick={() => { setIsPlaying(false); setStep(s => Math.max(0, s - 1)); }}
-            className="px-4 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
+            className="focus-ring px-4 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
           >
             ←
           </button>
           <button
             onClick={() => { setIsPlaying(false); setStep(s => Math.min(steps.length - 1, s + 1)); }}
-            className="px-4 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
+            className="focus-ring px-4 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
           >
             →
           </button>
@@ -245,7 +245,7 @@ function HowReturnsFlowToggle() {
       <div className="flex gap-4 justify-center flex-wrap">
         <button
           onClick={() => setActiveTab('profits')}
-          className={`px-8 py-4 rounded-xl font-bold text-lg transition-all ${
+          className={`focus-ring px-8 py-4 rounded-xl font-bold text-lg transition-all ${
             activeTab === 'profits'
               ? 'bg-[#7dd87d] text-[#1a472a] shadow-lg shadow-[#7dd87d]/30'
               : 'bg-[#1a472a]/60 border-2 border-[#7dd87d]/40 text-[#7dd87d] hover:border-[#7dd87d]/60'
@@ -255,7 +255,7 @@ function HowReturnsFlowToggle() {
         </button>
         <button
           onClick={() => setActiveTab('fees')}
-          className={`px-8 py-4 rounded-xl font-bold text-lg transition-all ${
+          className={`focus-ring px-8 py-4 rounded-xl font-bold text-lg transition-all ${
             activeTab === 'fees'
               ? 'bg-[#d4a574] text-[#1a472a] shadow-lg shadow-[#d4a574]/30'
               : 'bg-[#1a472a]/60 border-2 border-[#d4a574]/40 text-[#d4a574] hover:border-[#d4a574]/60'
@@ -430,7 +430,7 @@ function PhaseCard({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
+      className={`focus-ring w-full text-left rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
         active
           ? `border-[${color}] bg-[${color}]/10`
           : "border-white/10 bg-white/5 hover:border-white/20"
@@ -641,7 +641,7 @@ function AcquisitionRoutes() {
         >
           <button
             onClick={() => setOpen(open === i ? null : i)}
-            className="w-full p-5 text-left hover:bg-white/5 transition-colors"
+            className="focus-ring w-full p-5 text-left hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-4">
               <div
@@ -740,7 +740,7 @@ function LiquidityPoolVisual() {
           <button
             key={i}
             onClick={() => setStep(i)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            className={`focus-ring px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               step === i
                 ? "bg-[#4a9f9f] text-[#0d2818]"
                 : "bg-white/10 text-white/60 hover:bg-white/20"
@@ -911,7 +911,7 @@ export default function Tokenomics() {
       <div className="container px-4 pt-8">
         <div className="max-w-4xl mx-auto border-l-4 border-[#7dd87d]/60 bg-[#7dd87d]/10 rounded-r-xl px-5 py-4">
           <p className="text-white/90 text-sm leading-relaxed">
-            <strong className="text-[#7dd87d]">A note on $ReGen:</strong> This page focuses on $RCivics, which has the clearest design so far. $ReGen, the token for the Infinite Game, is intentionally less specified here. How $ReGen evolves is something the Game community governs together over time. As that work matures, this page will reflect it.
+            <strong className="text-[#7dd87d]">A note on $ReGen:</strong> This page focuses on $RCivics, the Fund's token. $ReGen is the token for the Infinite Game, anchored in local food systems and the bioregions playing it. Its full design lives on the other side of the bridge. <Link href="/bionomics" className="underline text-[#7dd87d] hover:text-white">Read the Bionomics page</Link> for how $ReGen, gratitude, and the living economy fit together.
           </p>
         </div>
       </div>
@@ -1026,7 +1026,7 @@ export default function Tokenomics() {
                 <button
                   key={i}
                   onClick={() => setActivePhase(i)}
-                  className="flex flex-col items-center gap-1"
+                  className="focus-ring flex flex-col items-center gap-1"
                 >
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"

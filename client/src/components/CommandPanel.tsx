@@ -76,6 +76,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={guide.toggle}
+            aria-label="Guide"
             className={`flex flex-col items-center gap-1 py-2 rounded-lg transition-colors ${
               guide.isOpen
                 ? 'bg-[#7dd87d]/20 text-[#7dd87d] ring-1 ring-[#7dd87d]/40'
@@ -85,7 +86,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
             <HelpCircle className="w-4 h-4" />
             <span className="text-[9px]">Guide</span>
           </button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+          <button onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))} aria-label="Search" className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
             <Search className="w-4 h-4" />
             <span className="text-[9px]">Search</span>
           </button>
@@ -127,6 +128,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
         <div>
           <input
             type="range"
+            aria-label="Song progress"
             min={0}
             max={duration || 1}
             value={currentTime}
@@ -161,6 +163,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
           <Volume2 className="w-4 h-4 text-white/60" />
           <input
             type="range"
+            aria-label="Volume"
             min={0}
             max={1}
             step={0.05}

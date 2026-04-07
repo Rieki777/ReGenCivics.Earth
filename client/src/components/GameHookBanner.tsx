@@ -28,6 +28,10 @@ const HOOK_VARIANTS: Record<string, { hook: string; subtext: string }> = {
     hook: "Local food systems start with local action.",
     subtext: "Rate producers, support regenerative farms, build food sovereignty in your bioregion.",
   },
+  bionomics: {
+    hook: "Bionomics is the living side of the bridge.",
+    subtext: "An economy rooted in bioregions, food, gratitude, and the people who play the Game.",
+  },
 };
 
 interface Props {
@@ -39,7 +43,7 @@ export function GameHookBanner({ variant = "home", className = "" }: Props) {
   const content = HOOK_VARIANTS[variant] ?? HOOK_VARIANTS.home;
 
   return (
-    <Link href="/economy">
+    <Link href="/bionomics">
       <div
         className={`w-full py-6 px-4 border-y border-[#7dd87d]/25 cursor-pointer group transition-all relative overflow-hidden ${className}`}
         style={{
