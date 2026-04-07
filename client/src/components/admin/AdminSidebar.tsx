@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Building2, Handshake, UserCheck,
   TrendingUp, FileText, Globe2, Shield, Megaphone, Search,
   BarChart3, Image, Gamepad2, Settings, ChevronLeft, ChevronRight,
-  ScrollText, Wallet, Map, ClipboardList, Video, Calendar, Coins
+  ScrollText, Wallet, Map, ClipboardList, Video, Calendar, Coins, Award
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -14,6 +14,7 @@ const NAV_GROUPS = [
       { id: 'applications', label: 'Applications', icon: Building2 },
       { id: 'alliance', label: 'Alliance', icon: Handshake },
       { id: 'roles', label: 'Players', icon: UserCheck },
+      { id: 'citizenship-tiers', label: 'Citizenship Tiers', icon: Award },
     ]
   },
   {

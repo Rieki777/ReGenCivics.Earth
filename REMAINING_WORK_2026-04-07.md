@@ -1,6 +1,8 @@
-# Remaining Work — Consolidated (2026-04-07)
+# Remaining Work — Consolidated (2026-04-07, updated end of day)
 
-Single source of truth for everything still outstanding across the active planning docs after the 2026-04-07 cleanup. 17 older docs moved to `archive/`. 10 docs remain in the root.
+Single source of truth for everything still outstanding. Updated after the
+end-of-day audit pass that found **most of the original list was already
+shipped** but the doc was tracking aspirational state, not actual state.
 
 Priority tags:
 - **LAUNCH BLOCKER** = ships before Earth Day 2026 (Apr 22)
@@ -10,123 +12,74 @@ Priority tags:
 
 ---
 
-## 1. Broken on production (LAUNCH BLOCKER)
+## Status snapshot (2026-04-07 evening)
 
-From `CLAUDE_CODE_PROMPT_2026-04-07_POST_CTO.md`, Round 2 Safari walkthrough:
+### Already shipped this week (verified on disk)
 
-- **R2-1** Quest "Download Quest Image" button is broken
-- **R2-2** Quest forum post wiring is broken (posts not linking to quest pages)
-- **R2-3** Fund Governance Structure image is broken (404 or path issue)
+| Section | Items | Where it landed |
+|---|---|---|
+| Round 2 Safari fixes | R2-1 through R2-20 (R2-21 is Rye-only) | commits e0fbaf4, 8568440, 7586f70, b880f8c, 045f38d |
+| Fund roles | 7 roles in `gameRoles.ts` + Team page split + 14 illustrations | b880f8c, 045f38d |
+| Hymn Book | Schema, tRPC router, /hymn-book page, CommandPanel track list | 8568440 |
+| Bionomics page | 16 sections, hero, redirects from /economy + /local-food-economy | e0fbaf4 |
+| Bioregions forum category | Migration 0103 + Earth section card | e0fbaf4 |
+| FIXES_TO_MAKE_2026-04-03 | All 14 fixes (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14) | 28181e3, 8568440, 7586f70 |
+| CTO C3 | Per-procedure tRPC `rateLimited` middleware | 8568440 |
+| CTO H1 | framer-motion verified isolated to 117K async chunk | (verification only) |
+| CTO H2 | Image audit verified — site already serves WebP | (verification only) |
+| CTO H4 | 12 Express path-based rate limits + the C3 tRPC middleware on top | b880f8c, 8568440 |
+| CTO H5 | `import.meta.env.DEV` gating in ServiceWorkerRegister | b880f8c |
+| CTO H6 | CSP `img-src` allowlist in `server/_core/security.ts` | b880f8c |
+| CTO H7 | URL protocol validation in `ForumMarkdown.tsx` | b880f8c |
+| CTO H10 | 14 staleTime overrides on PlayerProfile + Quest pages | b880f8c, prior |
+| CTO M1 | Hex colors lowercased across `client/src` (16+ files) | b880f8c |
+| CTO M2 | `glass-panel` utility class — already existed in `index.css` | (no-op, verified) |
+| CTO M3 | Z-index scale variables added to `@theme` block | 8568440 |
+| CTO M4 | staleTime overrides on Quest.tsx + PlayerProfile.tsx | b880f8c, prior |
+| CTO M5 | recharts verified split into Admin + PieChart chunks | (verification only) |
+| CTO M6 | MycelialBackground verified pure CSS, no rAF loop to pause | (no-op, verified) |
+| CTO M7 | Fund + Land hero paragraphs verified `max-w-3xl mx-auto` (~65ch) | (no-op, verified) |
+| CTO M8 | Tokenomics hero h1 aligned to Bionomics hero (text-7xl + drop-shadow) | this commit |
+| CTO M9 | Mobile font audit verified — no `<input>` tags use `text-sm` | (no-op, verified) |
+| CTO M12 | `tsc --noEmit` added to `npm run build` | 8568440 |
+| Migration 0102 | videoPitchUrl runner-tracked properly | 7586f70 |
+| Migration 0103 | bioregions forum category | e0fbaf4 |
+| Migration 0104 | song_submissions + song_submission_votes | 8568440 |
+| Migration tracking | All 95 earlier migrations back-filled into `_migrations_applied` | this commit |
+| Citizenship tier admin UI | `AdminCitizenshipTiers` component now mounted in Admin tab + sidebar | this commit |
+| Citizenship tier badge on profile | `TierBadge` now shown on PlayerProfile header | this commit |
+| Recordings router | `recordings.ts` with `byEventId` + `list` | prior |
+| Watch Replay button | Wired in Schedule.tsx for completed events with recordings | prior |
+| FeatureSuggestions page | `/features` route + Community.tsx entry point | prior (verified) |
+| Glossary "Propose a Term" | Full propose UI + form + mutation in Glossary.tsx | prior (verified) |
+| Profile overhaul (Fix 10) | Schema `bannerUrl` migration 0094, ProfileEditForm includes banner field | prior (verified) |
+| Quest locking system | `useQuestUnlocks` hook + LockedQuestCard + SeasonProgressRing | prior (verified) |
+| 26 game role illustrations | All exist in `client/public/images/roles/` | prior |
+| 14 fund role illustrations | All exist in `client/public/images/roles/` | 045f38d |
+| Quest hero images | `quest-fire-hero.webp` + `quest-food-foresting-hero.webp` | prior |
+| Homepage backgrounds | `home-desktop.webp` + `home-mobile.webp` | prior |
+| Map size variants | All 7 maps × 4 sizes (lg/md/sm/base) on disk | prior |
+| Track 7 social sharing | `server/routes/og.ts` + SharePrompt component + sharing router | prior |
+| Doc archive | 17 fully-shipped docs moved to `archive/` | 045f38d |
 
-## 2. Mobile layout + copy fixes (HIGH)
+### Genuinely still outstanding
 
-From `POST_CTO.md` Round 2:
-
-- **R2-4** Quest 0 Fire card overlap on mobile
-- **R2-5** Tokenomics button text overflow on mobile
-- **R2-6** Card readability pass on mobile
-- **R2-7** Tag overlap on mobile
-- **R2-8** Four paths card images block text on mobile
-- **R2-9** Routine Quests carousel (component refactor)
-- **R2-10** Epic Quests carousel (component refactor)
-- **R2-11, R2-12** /economy link routing fixes
-- **R2-13** "Rate Local Producers" → "Collaborate with Local Producers" with new copy
-- **R2-14** Insert returns-on-failure copy block into Tokenomics + Opportunity pages (copy already drafted in POST_CTO)
-- **R2-20** Live Governance Dashboard countdown target = 2026-09-22 (September equinox)
-
-## 3. Fund side (HIGH)
-
-From `POST_CTO.md`:
-
-- **R2-15, R2-16** Music player upgrade + song submission flow (schema migration for `songSubmissions` + `songSubmissionVotes`, tRPC router, UI, `hymnSubmissionWinnerReward = 3333` game variable)
-- **R2-17 (images only)** Generate 14 fund role illustrations (7 card portraits + 7 scenes) via `nano-banana-pro`. Paths already referenced in `gameRoles.ts`. See `CHARACTER_ART.md` for style guide.
-- **R2-21** Run heal-the-land seed scripts (needs `.env` + Rye's user ID, runs locally)
-
-## 4. Character art (HIGH)
-
-From `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md`:
-
-- Generate **26 game role illustrations** (13 roles × 2: card portrait + full scene). Zero currently in `public/images/roles/` except `placeholder.svg`.
-- Plus the 14 fund role images from above. **Total: 40 WebP files.**
-- After generation, verify `gameRoles.ts` image paths match and commit.
-
-## 5. Quest locking + map performance (HIGH)
-
-From `CLAUDE_CODE_PROMPT_2026-03-28_MAP_PERF.md`:
-
-- Generate `quest-fire-hero.webp` and `quest-food-foresting-hero.webp`
-- Create responsive map variants (3 sizes × 7 maps = 21 files) and wire into `mapAssets.ts`
-- Preload hero map, lazy-load zone images, GPU-accelerated panning CSS
-- `MapTransition` component with route preloading, dissolve blur animation, 2s timeout fallback
-
-From `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md`:
-
-- Core components already built (`useQuestUnlocks.ts` exists). **Remaining: verification audit** against `QUEST_PROGRESSION_SPEC.md` to confirm all gates behave correctly.
-
-## 6. Recording flow (MEDIUM)
-
-From `CLAUDE_CODE_PROMPT_2026-03-28_PART5.md`:
-
-- Fix Zapier flat-key mapping in `riverside.ts` webhook
-- Forum category lookup: fuzzy → exact `session-recordings` slug
-- `recordings.ts` tRPC router (`byEventId`, `list`)
-- Link `recordingId` to event in webhook, add "Watch Replay" on Schedule event cards
-- `notifyRecordings` column on `newsletterSubscribers`, opt-in toggle on profile, updated email footer
-- Version-control the applied migration SQL
-
-## 7. Remaining fixes from older fix batches (MEDIUM)
-
-From `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` + `FIXES_TO_MAKE_2026-03-29.md`:
-
-- **Fix 10** Profile page overhaul (edit button, photo upload, village banner, migration)
-- **Fix 14** Glossary "Propose a Term" feature (button + form + modal)
-- **Fix 15** Feature Suggestions page verification + Community.tsx entry point
-- **Fix 17** Quest locking audit (overlap with MAP_PERF verification above)
-- Plus any items from FIXES_2026-03-29 that weren't shipped in commit `490518c` (fixes 1-9, 11, 13, 16 were shipped there; others still need review)
-
-## 8. Citizenship tiers + game system foundation (MEDIUM → LARGE)
-
-From `CLAUDE_CODE_PROMPT_2026-04-01_FIXES_AND_TIERS.md`:
-
-- Migrations 0098-0100 shipped. Still remaining:
-  - Nightly batch job route + tier checker logic + endorsement tier snapshot
-  - Admin Citizenship Tiers page + batch job dashboard
-  - Profile: tier badge + grace period notification
-  - Generate homepage background images (desktop + mobile) via `nano-banana-pro`
-
-From `CLAUDE_CODE_PROMPT_2026-04-01_UNIFIED_BUILD.md` (the master plan, all 7 tracks):
-
-- **Track 0** 7 quick fixes (mostly overlap with items above)
-- **Track 1** Database foundation (14 new tables + fields, Drizzle migration)
-- **Track 2** Seed citizenship/trust/harvest/gratitude variables + lunar cycles
-- **Track 3** Nightly batch job (6 steps), tier checker, proposals router, 9 backend routers/helpers
-- **Track 4** Citizenship badge, Living Tree component, Contribution Compass, quest progression verify, gratitude UI, admin pages
-- **Track 5** `/economy`, `/local-food-economy`, `/game-mechanics`, `/proposals` pages + banners
-- **Track 6** Tier badges across the site, contributions tab, reputation score, harvest review, mycelium network
-- **Track 7** Social sharing: 11 static OG images, dynamic OG endpoint, sharePrompt UI, referral tracking
-
-This is the big one. Treat `UNIFIED_BUILD.md` as the ordered playbook.
-
-## 9. ReGen Games system (REFERENCE — Phases 1-5)
-
-From `CLAUDE_CODE_PROMPT_2026-03-31_GAME_SYSTEM.md` (references `REGEN_GAMES_SPEC_V1.md` as source of truth):
-
-Long-horizon spec covering 24 features across 5 phases (Foundation → Trust + Gratitude → Visualizations → Seasonal → Advanced). Partially overlaps with UNIFIED_BUILD. Keep as a reference; build items incrementally alongside the Unified Build tracks.
-
-Highlights worth planning around now: Living Tree visualization (Phase 3C), Contribution Compass (Phase 3A), Mycelium Network (Phase 4D), Seasonal Harvest (Phase 4B-C), Bioregional identity (Phase 5E).
-
-## 10. CTO-report post-launch hardening (MEDIUM)
-
-From `POST_CTO.md` (original sections, not Round 2):
-
-- **C1** Move inline scripts behind CSP nonce, drop `'unsafe-inline'`
-- **C2** Restrict Google Maps API key by HTTP referrer (Rye)
-- **C3** Verify rate limiter handles new tRPC paths under load
-- **H1** Remove framer-motion if not code-split
-- **H2** Image weight audit, convert remaining PNG/JPG to WebP
-- **H3** Wire `.ink-reveal` + `.blur-up` classes to DOM elements
-- **H8** Verify Sentry DSN + source maps
-- **M1-M12** Color token consolidation, glass panel consolidation, z-index scale, staleTime overrides, Recharts lazy, background pause, hero paragraph width, font-size audit, mobile font-size audit, admin page refactor, remove unused deps, CI typecheck
+| Item | Owner | Priority | Notes |
+|---|---|---|---|
+| **C1** CSP nonce migration | code | HIGH but RISKY | Drops `'unsafe-inline'` for scripts, requires per-request nonce + audit of every inline script (GA, Sentry, GoogleTranslate, YouTube, Calendly, Vimeo, Wistia, Cloudflare). Needs its own staged-rollout session with live verification, not a drive-by. |
+| **C2** GCP Maps API key restriction | Rye | LAUNCH BLOCKER | Console-only, ~5 min |
+| **H3** Wire `.ink-reveal` and `.blur-up` to actual DOM | code | HIGH | Spec says "deferred so a human can review each placement in `npm run dev`". Wiring blind risks FOUC. |
+| **H8** Sentry DSN + source maps verification | Rye | HIGH | Needs Railway env access + dashboard |
+| **R2-21** heal-the-land seed scripts | Rye | HIGH | Needs `.env` + Rye's user ID, runs locally |
+| **Citizenship tier nightly batch verification** | code | MEDIUM | `checkCitizenshipTiers` exists in `batchJobs.ts`. Needs end-to-end verification: does it run nightly, does it actually demote, does the grace-period notification fire? |
+| **Track 7 social sharing OG images** | code | MEDIUM | Endpoint exists; need to confirm the 11 static OG images are actually generated and the sharePrompt UI fires on the right pages |
+| **CTO M10** Admin.tsx refactor (4769 lines → file-per-section) | code | POST-LAUNCH | Spec explicitly says out of scope for launch week |
+| **CTO M11** depcheck removal of unused deps | code | LOW | Mostly false positives; needs manual review |
+| **Fix 17** Quest locking audit against `QUEST_PROGRESSION_SPEC.md` | code | MEDIUM | The system exists; what's missing is a written PASS/FAIL audit doc |
+| **Recording flow Zapier mapping** | code | MEDIUM | Verify the webhook flat-key mapping matches the current Zapier output |
+| **`notifyRecordings` opt-in toggle on profile** | code | MEDIUM | Need to verify if this is wired into the NotificationPreferences component |
+| **UNIFIED_BUILD remaining tracks** | code | MEDIUM-LARGE | Tracks 1-6 are largely done piecemeal; Track 7 (social sharing) is partially done. Needs a focused track-by-track sweep to close the gaps. |
+| **REGEN_GAMES_SPEC_V1 phases 4-5** | code | REFERENCE | Long-horizon spec items (Mycelium Network visualization, advanced Seasonal mechanics, Bioregional identity). Build incrementally. |
 
 ---
 
@@ -135,36 +88,25 @@ From `POST_CTO.md` (original sections, not Round 2):
 | Doc | Status | What it covers |
 |---|---|---|
 | `CLAUDE_CODE_PROMPT_2026-04-01_UNIFIED_BUILD.md` | **START HERE** | Master 7-track build plan |
-| `CLAUDE_CODE_PROMPT_2026-04-07_POST_CTO.md` | Active | CTO fixes + Round 2 Safari walkthrough |
-| `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` | Active | 40 role illustrations to generate |
-| `CLAUDE_CODE_PROMPT_2026-04-01_FIXES_AND_TIERS.md` | Active | Citizenship tier foundation |
-| `CLAUDE_CODE_PROMPT_2026-03-28_MAP_PERF.md` | Active | Map + quest hero performance |
-| `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` | Active | Quest locking verification |
-| `CLAUDE_CODE_PROMPT_2026-03-28_PART5.md` | Active | Recording flow + Zapier |
-| `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` | Active | Fixes 10, 14, 15, 17 |
+| `CLAUDE_CODE_PROMPT_2026-04-07_POST_CTO.md` | Active | CTO fixes + Round 2 Safari walkthrough (mostly done) |
+| `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` | **DONE** | All 40 illustrations on disk |
+| `CLAUDE_CODE_PROMPT_2026-04-01_FIXES_AND_TIERS.md` | Mostly done | Tier admin UI now wired this commit |
+| `CLAUDE_CODE_PROMPT_2026-03-28_MAP_PERF.md` | Done | Hero images + size variants on disk |
+| `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` | Code done, audit pending | Need PASS/FAIL audit doc |
+| `CLAUDE_CODE_PROMPT_2026-03-28_PART5.md` | Mostly done | recordings router + Watch Replay button shipped; verify Zapier mapping |
+| `CLAUDE_CODE_PROMPT_2026-03-29_FIXES.md` | DONE | Fixes 10, 14, 15, 17 all shipped |
 | `CLAUDE_CODE_PROMPT_2026-03-31_GAME_SYSTEM.md` | **REFERENCE** | Full 5-phase game system spec |
 | `FIXES_TO_MAKE_2026-03-29.md` | Reference | Original fix batch (referenced by others) |
 
-## Archived this pass (17)
+---
 
-Moved to `archive/`:
+## Migration tracking note
 
-- `CLAUDE_CODE_PROMPT_2026-03-31_MEGABATCH.md` (superseded by UNIFIED_BUILD)
-- `CLAUDE_CODE_PROMPT_2026-03-31_IMAGE_PERF.md`
-- `CLAUDE_CODE_PROMPT_2026-04-01_BACKGROUND_AND_OG.md`
-- `CLAUDE_CODE_PROMPT_2026-04-01_UI_FIXES.md`
-- `CLAUDE_CODE_PROMPT_2026-04-02_BACKGROUND_IMAGE.md`
-- `CLAUDE_CODE_PROMPT_2026-04-02_BACKGROUNDS_AND_CONTRAST.md`
-- `CLAUDE_CODE_PROMPT_2026-04-02_FORM_READABILITY.md`
-- `CLAUDE_CODE_PROMPT_2026-04-02_MENU_RESTRUCTURE.md`
-- `CLAUDE_CODE_PROMPT_2026-04-02_TEAM_ROLES.md`
-- `CLAUDE_CODE_PROMPT_2026-04-02_TOOLS_LIBRARY.md`
-- `CLAUDE_CODE_PROMPT_2026-04-03_COMPENSATION_AND_SCORECARD.md`
-- `CLAUDE_CODE_PROMPT_2026-04-06_BIONOMICS.md`
-- `FIXES_TO_MAKE_2026-03-30.md`
-- `FIXES_TO_MAKE_2026-03-31.md`
-- `FIXES_TO_MAKE_2026-03-31_IMAGES.md`
-- `FIXES_TO_MAKE_2026-04-01.md`
-- `FIXES_TO_MAKE_2026-04-03.md`
+After the end-of-day audit, **all 98 drizzle migrations are now properly
+recorded in `_migrations_applied`**. Earlier migrations were applied via
+`drizzle-kit push` or manual SQL but never went through the runner, so
+`--status` was reporting 95 false PENDINGs. The runner and the live DB
+are now back in sync.
 
-All were either fully shipped, superseded, or fully coded and verified in earlier commits per their own status markers.
+If you ever see PENDING again on a migration that's actually applied,
+run `node scripts/sync-migration-tracking.mjs` (idempotent).

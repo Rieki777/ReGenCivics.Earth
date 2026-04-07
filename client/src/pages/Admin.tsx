@@ -78,6 +78,7 @@ import { ShortcutHelpOverlay } from "@/components/admin/ShortcutHelpOverlay";
 import { BulkActionBar } from "@/components/admin/BulkActionBar";
 import { AdminNotificationCenter } from "@/components/admin/AdminNotificationCenter";
 import { AdminGovernancePanel } from "@/components/admin/AdminGovernancePanel";
+import { AdminCitizenshipTiers } from "@/components/admin/AdminCitizenshipTiers";
 import { AdminInvestorsTab } from "@/components/admin/AdminInvestorsTab";
 import { AdminAllianceTab, AdminCreateTab, AdminLiveTab, AdminRoleTab, AdminRolesTab } from "@/components/admin/AdminAllianceTab";
 import { AdminOtherInquiriesTab } from "@/components/admin/AdminOtherInquiriesTab";
@@ -3788,6 +3789,9 @@ function AdminDashboard() {
           {/* Audit Log Tab */}
           <TabsContent value="audit-log">
             <AdminAuditLogTab />
+          </TabsContent>
+          <TabsContent value="citizenship-tiers">
+            <AdminCitizenshipTiers />
           </TabsContent>
         </Tabs>
       </div>

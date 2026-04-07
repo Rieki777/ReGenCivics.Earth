@@ -65,6 +65,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
 import { ProfileEditForm } from '@/components/ProfileEditForm';
+import { TierBadge } from '@/components/game/TierBadge';
 import { SEO } from '@/components/SEO';
 import { SeedOfLifeIcon } from '@/components/SeedOfLifeIcon';
 import { trpc } from '@/lib/trpc';
@@ -481,6 +482,13 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
                 {profile.displayName}
               </h2>
               <div className="flex items-center gap-2 flex-wrap mt-1">
+                {profile.citizenshipTier && (
+                  <TierBadge
+                    tier={profile.citizenshipTier as "explorer" | "co_creator" | "steward" | "sage"}
+                    size="sm"
+                    showLabel
+                  />
+                )}
                 {profile.isVerified ? (
                   <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
                     <CheckCircle2 className="w-3 h-3 mr-1" />
