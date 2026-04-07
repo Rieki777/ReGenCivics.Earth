@@ -9,14 +9,14 @@ export function EconomyHeroIllustration({ className = "" }: { className?: string
     <svg viewBox="0 0 800 400" className={className} aria-hidden="true">
       <defs>
         <radialGradient id="eco-hero-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#D4A017" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#D4A017" stopOpacity="0" />
+          <stop offset="0%" stopColor="#d4a017" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#d4a017" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="eco-hero-line" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#7dd87d" stopOpacity="0" />
           <stop offset="30%" stopColor="#7dd87d" stopOpacity="0.6" />
-          <stop offset="70%" stopColor="#D4A017" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#D4A017" stopOpacity="0" />
+          <stop offset="70%" stopColor="#d4a017" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#d4a017" stopOpacity="0" />
         </linearGradient>
       </defs>
 
@@ -27,7 +27,7 @@ export function EconomyHeroIllustration({ className = "" }: { className?: string
       <ellipse cx="400" cy="200" rx="160" ry="80" fill="none" stroke="#7dd87d" strokeWidth="1" strokeOpacity="0.2" strokeDasharray="8 6">
         <animateTransform attributeName="transform" type="rotate" from="0 400 200" to="360 400 200" dur="60s" repeatCount="indefinite" />
       </ellipse>
-      <ellipse cx="400" cy="200" rx="220" ry="110" fill="none" stroke="#D4A017" strokeWidth="0.8" strokeOpacity="0.15" strokeDasharray="12 8">
+      <ellipse cx="400" cy="200" rx="220" ry="110" fill="none" stroke="#d4a017" strokeWidth="0.8" strokeOpacity="0.15" strokeDasharray="12 8">
         <animateTransform attributeName="transform" type="rotate" from="360 400 200" to="0 400 200" dur="80s" repeatCount="indefinite" />
       </ellipse>
       <ellipse cx="400" cy="200" rx="280" ry="140" fill="none" stroke="#7dd87d" strokeWidth="0.6" strokeOpacity="0.1" strokeDasharray="16 12">
@@ -61,7 +61,7 @@ export function EconomyHeroIllustration({ className = "" }: { className?: string
 
       {/* Floating tokens on the orbits */}
       {[0, 1, 2, 3, 4].map((i) => (
-        <circle key={`token-${i}`} r="3" fill="#D4A017" fillOpacity="0.7">
+        <circle key={`token-${i}`} r="3" fill="#d4a017" fillOpacity="0.7">
           <animateMotion dur={`${12 + i * 4}s`} repeatCount="indefinite">
             <mpath href={`#orbit-${i % 2}`} />
           </animateMotion>
@@ -83,8 +83,8 @@ export function ThreeToolsIllustration({ className = "" }: { className?: string 
           <stop offset="100%" stopColor="#7dd87d" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="tool-glow-2" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#D4A017" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#D4A017" stopOpacity="0" />
+          <stop offset="0%" stopColor="#d4a017" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#d4a017" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="tool-glow-3" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#a8e6a8" stopOpacity="0.25" />
@@ -93,10 +93,10 @@ export function ThreeToolsIllustration({ className = "" }: { className?: string 
       </defs>
 
       {/* Connecting threads */}
-      <path d="M 200 150 Q 400 100 400 150" fill="none" stroke="#D4A017" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="4 4">
+      <path d="M 200 150 Q 400 100 400 150" fill="none" stroke="#d4a017" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="4 4">
         <animate attributeName="strokeDashoffset" values="0;-16" dur="4s" repeatCount="indefinite" />
       </path>
-      <path d="M 400 150 Q 400 100 600 150" fill="none" stroke="#D4A017" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="4 4">
+      <path d="M 400 150 Q 400 100 600 150" fill="none" stroke="#d4a017" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="4 4">
         <animate attributeName="strokeDashoffset" values="0;-16" dur="4s" repeatCount="indefinite" />
       </path>
       <path d="M 200 150 Q 400 200 600 150" fill="none" stroke="#7dd87d" strokeWidth="0.8" strokeOpacity="0.2" strokeDasharray="6 6">
@@ -142,11 +142,11 @@ export function ThreeToolsIllustration({ className = "" }: { className?: string 
       {/* Tool 2: Gratitude - Heart */}
       <g transform="translate(400, 150)">
         <circle r="70" fill="url(#tool-glow-2)" />
-        <circle r="45" fill="none" stroke="#D4A017" strokeWidth="1" strokeOpacity="0.3" />
+        <circle r="45" fill="none" stroke="#d4a017" strokeWidth="1" strokeOpacity="0.3" />
         {/* Heart shape */}
         <path
           d="M 0 8 C -4 -4, -18 -8, -18 2 C -18 12, 0 22, 0 22 C 0 22, 18 12, 18 2 C 18 -8, 4 -4, 0 8 Z"
-          fill="#D4A017"
+          fill="#d4a017"
           fillOpacity="0.5"
           transform="scale(1.3)"
         >
@@ -160,7 +160,7 @@ export function ThreeToolsIllustration({ className = "" }: { className?: string 
             y1={Math.sin((angle * Math.PI) / 180) * 22}
             x2={Math.cos((angle * Math.PI) / 180) * 32}
             y2={Math.sin((angle * Math.PI) / 180) * 32}
-            stroke="#D4A017"
+            stroke="#d4a017"
             strokeWidth="1.5"
             strokeOpacity="0.4"
             strokeLinecap="round"
@@ -168,7 +168,7 @@ export function ThreeToolsIllustration({ className = "" }: { className?: string 
             <animate attributeName="strokeOpacity" values="0.2;0.6;0.2" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
           </line>
         ))}
-        <text y="32" textAnchor="middle" fill="#D4A017" fillOpacity="0.5" fontSize="10" fontFamily="var(--font-display)">GRATITUDE</text>
+        <text y="32" textAnchor="middle" fill="#d4a017" fillOpacity="0.5" fontSize="10" fontFamily="var(--font-display)">GRATITUDE</text>
       </g>
 
       {/* Tool 3: Proposals - Council circle */}
@@ -226,13 +226,13 @@ export function FoodFoundationIllustration({ className = "" }: { className?: str
         "M 600 160 Q 580 190 560 230 Q 540 260 530 280",
         "M 600 160 Q 630 200 660 240 Q 680 265 700 280",
       ].map((d, i) => (
-        <path key={i} d={d} fill="none" stroke="#D4A017" strokeWidth="1.5" strokeOpacity="0.3" strokeLinecap="round">
+        <path key={i} d={d} fill="none" stroke="#d4a017" strokeWidth="1.5" strokeOpacity="0.3" strokeLinecap="round">
           <animate attributeName="strokeOpacity" values="0.15;0.4;0.15" dur={`${4 + i * 0.5}s`} repeatCount="indefinite" />
         </path>
       ))}
 
       {/* Root network connections underground */}
-      <path d="M 150 240 Q 250 230 340 240 Q 450 250 560 230" fill="none" stroke="#D4A017" strokeWidth="0.8" strokeOpacity="0.15" strokeDasharray="4 6">
+      <path d="M 150 240 Q 250 230 340 240 Q 450 250 560 230" fill="none" stroke="#d4a017" strokeWidth="0.8" strokeOpacity="0.15" strokeDasharray="4 6">
         <animate attributeName="strokeDashoffset" values="0;-20" dur="8s" repeatCount="indefinite" />
       </path>
 
@@ -254,10 +254,10 @@ export function FoodFoundationIllustration({ className = "" }: { className?: str
         <circle cx="-15" cy="-60" r="18" fill="#7dd87d" fillOpacity="0.3" />
         <circle cx="12" cy="-65" r="15" fill="#5a9e3a" fillOpacity="0.4" />
         {/* Fruit */}
-        <circle cx="-10" cy="-52" r="4" fill="#D4A017" fillOpacity="0.7">
+        <circle cx="-10" cy="-52" r="4" fill="#d4a017" fillOpacity="0.7">
           <animate attributeName="fillOpacity" values="0.5;0.8;0.5" dur="4s" repeatCount="indefinite" />
         </circle>
-        <circle cx="15" cy="-58" r="3.5" fill="#D4A017" fillOpacity="0.6">
+        <circle cx="15" cy="-58" r="3.5" fill="#d4a017" fillOpacity="0.6">
           <animate attributeName="fillOpacity" values="0.4;0.7;0.4" dur="5s" repeatCount="indefinite" />
         </circle>
       </g>
@@ -273,10 +273,10 @@ export function FoodFoundationIllustration({ className = "" }: { className?: str
       </g>
 
       {/* Sun/light effect */}
-      <circle cx="700" cy="30" r="40" fill="#D4A017" fillOpacity="0.08">
+      <circle cx="700" cy="30" r="40" fill="#d4a017" fillOpacity="0.08">
         <animate attributeName="fillOpacity" values="0.05;0.12;0.05" dur="6s" repeatCount="indefinite" />
       </circle>
-      <circle cx="700" cy="30" r="20" fill="#D4A017" fillOpacity="0.15" />
+      <circle cx="700" cy="30" r="20" fill="#d4a017" fillOpacity="0.15" />
     </svg>
   );
 }
@@ -287,11 +287,11 @@ export function HarvestIllustration({ className = "" }: { className?: string }) 
     <svg viewBox="0 0 800 400" className={className} aria-hidden="true">
       <defs>
         <radialGradient id="harvest-trunk-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#D4A017" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#D4A017" stopOpacity="0" />
+          <stop offset="0%" stopColor="#d4a017" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#d4a017" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="harvest-trunk" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#8B6914" />
+          <stop offset="0%" stopColor="#8b6914" />
           <stop offset="100%" stopColor="#5a3a1a" />
         </linearGradient>
       </defs>
@@ -301,10 +301,10 @@ export function HarvestIllustration({ className = "" }: { className?: string }) 
       <circle cx="400" cy="200" r="60" fill="url(#harvest-trunk-glow)" />
 
       {/* Branches */}
-      <path d="M 400 140 Q 350 100 300 80" fill="none" stroke="#8B6914" strokeWidth="4" strokeOpacity="0.5" strokeLinecap="round" />
-      <path d="M 400 140 Q 450 100 500 80" fill="none" stroke="#8B6914" strokeWidth="4" strokeOpacity="0.5" strokeLinecap="round" />
-      <path d="M 400 160 Q 340 130 280 120" fill="none" stroke="#8B6914" strokeWidth="3" strokeOpacity="0.4" strokeLinecap="round" />
-      <path d="M 400 160 Q 460 130 520 120" fill="none" stroke="#8B6914" strokeWidth="3" strokeOpacity="0.4" strokeLinecap="round" />
+      <path d="M 400 140 Q 350 100 300 80" fill="none" stroke="#8b6914" strokeWidth="4" strokeOpacity="0.5" strokeLinecap="round" />
+      <path d="M 400 140 Q 450 100 500 80" fill="none" stroke="#8b6914" strokeWidth="4" strokeOpacity="0.5" strokeLinecap="round" />
+      <path d="M 400 160 Q 340 130 280 120" fill="none" stroke="#8b6914" strokeWidth="3" strokeOpacity="0.4" strokeLinecap="round" />
+      <path d="M 400 160 Q 460 130 520 120" fill="none" stroke="#8b6914" strokeWidth="3" strokeOpacity="0.4" strokeLinecap="round" />
 
       {/* Canopy */}
       <ellipse cx="400" cy="90" rx="140" ry="70" fill="#4a7c59" fillOpacity="0.25" />
@@ -322,7 +322,7 @@ export function HarvestIllustration({ className = "" }: { className?: string }) 
         { x: 310, delay: 2.8 },
         { x: 490, delay: 0.5 },
       ].map((token, i) => (
-        <circle key={i} r="4" fill="#D4A017" fillOpacity="0.7">
+        <circle key={i} r="4" fill="#d4a017" fillOpacity="0.7">
           <animate attributeName="cx" values={`${token.x};${token.x + (i % 2 === 0 ? -30 : 30)}`} dur="6s" begin={`${token.delay}s`} repeatCount="indefinite" />
           <animate attributeName="cy" values="130;320" dur="6s" begin={`${token.delay}s`} repeatCount="indefinite" />
           <animate attributeName="fillOpacity" values="0.8;0.3;0" dur="6s" begin={`${token.delay}s`} repeatCount="indefinite" />
@@ -339,7 +339,7 @@ export function HarvestIllustration({ className = "" }: { className?: string }) 
       ].map((pos, i) => (
         <g key={i}>
           <circle cx={pos.x} cy={pos.y} r="20" fill="#1a472a" stroke="#7dd87d" strokeWidth="1" strokeOpacity="0.3" />
-          <circle cx={pos.x} cy={pos.y} r="8" fill="#D4A017" fillOpacity="0.2">
+          <circle cx={pos.x} cy={pos.y} r="8" fill="#d4a017" fillOpacity="0.2">
             <animate attributeName="fillOpacity" values="0.15;0.4;0.15" dur={`${3 + i * 0.4}s`} repeatCount="indefinite" />
           </circle>
           {/* Small dots representing people */}
@@ -357,7 +357,7 @@ export function HarvestIllustration({ className = "" }: { className?: string }) 
       ))}
 
       {/* Underground root connections */}
-      <path d="M 200 360 Q 260 375 320 365 Q 360 360 400 370 Q 440 380 480 365 Q 540 355 600 360" fill="none" stroke="#D4A017" strokeWidth="1.5" strokeOpacity="0.15" strokeDasharray="6 4">
+      <path d="M 200 360 Q 260 375 320 365 Q 360 360 400 370 Q 440 380 480 365 Q 540 355 600 360" fill="none" stroke="#d4a017" strokeWidth="1.5" strokeOpacity="0.15" strokeDasharray="6 4">
         <animate attributeName="strokeDashoffset" values="0;-20" dur="8s" repeatCount="indefinite" />
       </path>
     </svg>

@@ -5,21 +5,21 @@
 
 // Contribution score tiers (percentile-based)
 const CONTRIBUTION_TIER_VISUALS: Record<string, { emoji: string; color: string; bgColor: string }> = {
-  Seedling: { emoji: "🌰", color: "#8B7355", bgColor: "#8B735520" },
-  Sprout: { emoji: "🌱", color: "#7C9A7E", bgColor: "#7C9A7E20" },
-  Sapling: { emoji: "🌿", color: "#5A8C5A", bgColor: "#5A8C5A20" },
-  Grower: { emoji: "🌳", color: "#4A7C4A", bgColor: "#4A7C4A20" },
-  Cultivator: { emoji: "🌲", color: "#3A6C3A", bgColor: "#3A6C3A20" },
-  Elder: { emoji: "🌸", color: "#C4785B", bgColor: "#C4785B20" },
-  Guardian: { emoji: "🍎", color: "#B85C3A", bgColor: "#B85C3A20" },
+  Seedling: { emoji: "🌰", color: "#8b7355", bgColor: "#8b735520" },
+  Sprout: { emoji: "🌱", color: "#7c9a7e", bgColor: "#7c9a7e20" },
+  Sapling: { emoji: "🌿", color: "#5a8c5a", bgColor: "#5a8c5a20" },
+  Grower: { emoji: "🌳", color: "#4a7c4a", bgColor: "#4a7c4a20" },
+  Cultivator: { emoji: "🌲", color: "#3a6c3a", bgColor: "#3a6c3a20" },
+  Elder: { emoji: "🌸", color: "#c4785b", bgColor: "#c4785b20" },
+  Guardian: { emoji: "🍎", color: "#b85c3a", bgColor: "#b85c3a20" },
 };
 
 // Citizenship tiers (requirement-based)
 const CITIZENSHIP_TIER_VISUALS: Record<string, { emoji: string; color: string; bgColor: string; label: string }> = {
-  explorer: { emoji: "🧭", color: "#7C9A7E", bgColor: "#7C9A7E20", label: "Explorer" },
-  co_creator: { emoji: "🔥", color: "#E8A838", bgColor: "#E8A83820", label: "Co-Creator" },
-  steward: { emoji: "🏔️", color: "#6B8DD6", bgColor: "#6B8DD620", label: "Steward" },
-  sage: { emoji: "✨", color: "#C084FC", bgColor: "#C084FC20", label: "Sage" },
+  explorer: { emoji: "🧭", color: "#7c9a7e", bgColor: "#7c9a7e20", label: "Explorer" },
+  co_creator: { emoji: "🔥", color: "#e8a838", bgColor: "#e8a83820", label: "Co-Creator" },
+  steward: { emoji: "🏔️", color: "#6b8dd6", bgColor: "#6b8dd620", label: "Steward" },
+  sage: { emoji: "✨", color: "#c084fc", bgColor: "#c084fc20", label: "Sage" },
 };
 
 interface Props {

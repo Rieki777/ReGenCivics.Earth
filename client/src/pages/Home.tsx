@@ -133,7 +133,7 @@ const insightCards = [
     icon: TrendingUp,
     title: "$10.1 Trillion Opportunity",
     lede: 'Nature-positive transitions could generate $10.1 trillion in business value by 2030.',
-    body: 'Nature-positive transitions could generate <a href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/" target="_blank" rel="noopener noreferrer" class="text-[#7dd87d] underline hover:text-[#a3e635]">$10.1 trillion in business value</a> by 2030 and create 395 million jobs. Regenerative development is where the capital is flowing.<br/><br/><span class="text-white/50 text-xs">Source: World Economic Forum / PwC, 2024</span>',
+    body: 'Nature-positive transitions could generate <a href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/" target="_blank" rel="noopener noreferrer" class="text-[#7dd87d] underline hover:text-[#a3e635]">$10.1 trillion in business value</a> by 2030 and create 395 million jobs. Regenerative development is where the capital is flowing.<br/><br/><span class="text-white/75 text-xs">Source: World Economic Forum / PwC, 2024</span>',
     borderColor: "border-[#7dd87d]/30",
   },
   {
@@ -290,7 +290,7 @@ export default function Home() {
               </p>
             </AnimatedSection>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="mycelium-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {pathCards.map((card, index) => (
                 <AnimatedSection
                   key={card.id}
@@ -299,7 +299,7 @@ export default function Home() {
                 >
                   <Link href={card.href}>
                     <div
-                      className={`glass-panel p-6 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} relative ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'} ${userCardId === card.id ? 'ring-2 ring-offset-1 ring-offset-transparent' : ''}`}
+                      className={`mycelium-card card-tilt glass-panel p-6 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} relative ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'} ${userCardId === card.id ? 'ring-2 ring-offset-1 ring-offset-transparent' : ''}`}
                       style={userCardId === card.id ? { '--tw-ring-color': card.accentColor } as React.CSSProperties : undefined}
                     >
                       {/* "Your Path" badge for logged-in users */}
@@ -366,7 +366,7 @@ export default function Home() {
               </p>
             </AnimatedSection>
 
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
               {insightCards.map((card, idx) => {
                 const Icon = card.icon;
                 return (
@@ -412,7 +412,7 @@ export default function Home() {
                 <blockquote className="text-white/90 text-base md:text-lg lg:text-xl italic leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
                   "Over half [sic ALL] of global GDP depends on nature. Investing in regeneration is not charity, it is the most strategic allocation of capital in our lifetime."
                 </blockquote>
-                <p className="text-white/50 text-xs md:text-sm mt-3">
+                <p className="text-white/70 text-xs md:text-sm mt-3">
                   - Adapted from{" "}
                   <a
                     href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/"
@@ -482,7 +482,7 @@ export default function Home() {
               </p>
             </AnimatedSection>
 
-            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {/* Venture Fund - Collapsible */}
               <AnimatedSection animation="slide-up" delay={100}>
                 <Collapsible open={fundOpen} onOpenChange={setFundOpen}>
@@ -620,7 +620,7 @@ export default function Home() {
                     </CollapsibleContent>
 
                     <Link href="/game">
-                      <Button className="w-full rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-base py-3 h-auto">
+                      <Button data-ripple className="w-full rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-base py-3 h-auto breath-pulse">
                         Play the Game <ArrowRight className="ml-2 w-5 h-5" />
                       </Button>
                     </Link>

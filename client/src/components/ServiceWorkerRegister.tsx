@@ -69,7 +69,7 @@ export function ServiceWorkerRegister() {
 function notifyUpdate() {
   // Show a toast or notification to user
   const message = 'New version available! Refresh to update.';
-  console.log('[SW]', message);
+  if (import.meta.env.DEV) console.log('[SW]', message);
 
   // You can integrate with your notification system here
   // For example: toast.info(message, { action: 'Refresh' })

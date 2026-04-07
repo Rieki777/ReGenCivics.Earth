@@ -43,15 +43,15 @@ interface LivingTreeProps {
 
 /** Earthy, distinct hue per capital type. */
 const CAPITAL_COLORS: Record<CapitalType, string> = {
-  financial: "#C4785B",
-  social: "#6BA3BE",
-  cultural: "#B07CB5",
-  living: "#7DD87D",
-  intellectual: "#D4A574",
-  experiential: "#E8A87C",
-  material: "#8B7355",
-  spiritual: "#E8D4A0",
-  health: "#E06C75",
+  financial: "#c4785b",
+  social: "#6ba3be",
+  cultural: "#b07cb5",
+  living: "#7dd87d",
+  intellectual: "#d4a574",
+  experiential: "#e8a87c",
+  material: "#8b7355",
+  spiritual: "#e8d4a0",
+  health: "#e06c75",
 };
 
 type LifeStage =
@@ -80,24 +80,24 @@ function getSeasonPalette(seasonCount: number): VisualSeason {
 }
 
 const SEASON_CANOPY: Record<VisualSeason, string> = {
-  spring: "#88B87A",
-  summer: "#5E9A52",
-  autumn: "#C8824A",
-  winter: "#9BA5A0",
+  spring: "#88b87a",
+  summer: "#5e9a52",
+  autumn: "#c8824a",
+  winter: "#9ba5a0",
 };
 
 const SEASON_FLOWER: Record<VisualSeason, string> = {
-  spring: "#F0B4CC",
-  summer: "#F5D76E",
-  autumn: "#E0825C",
-  winter: "#D0DDE4",
+  spring: "#f0b4cc",
+  summer: "#f5d76e",
+  autumn: "#e0825c",
+  winter: "#d0dde4",
 };
 
 const SEASON_SKY_TOP: Record<VisualSeason, string> = {
-  spring: "#E8F0E8",
-  summer: "#E4EDE0",
-  autumn: "#F0E8DD",
-  winter: "#C8D6E5",
+  spring: "#e8f0e8",
+  summer: "#e4ede0",
+  autumn: "#f0e8dd",
+  winter: "#c8d6e5",
 };
 
 // ---------------------------------------------------------------------------
@@ -216,17 +216,18 @@ export function LivingTree({
       height={size}
       role="img"
       aria-label={`Living Tree, ${stage} stage, score ${totalScore}`}
+      className="tree-breathe"
       style={{ transition: "width 0.4s ease, height 0.4s ease" }}
     >
       {/* ----- Defs ----- */}
       <defs>
         <linearGradient id="lt-sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={SEASON_SKY_TOP[season]} />
-          <stop offset="100%" stopColor="#FAF8F3" />
+          <stop offset="100%" stopColor="#faf8f3" />
         </linearGradient>
         <linearGradient id="lt-trunk" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#7A6347" />
-          <stop offset="100%" stopColor="#5C4833" />
+          <stop offset="0%" stopColor="#7a6347" />
+          <stop offset="100%" stopColor="#5c4833" />
         </linearGradient>
       </defs>
 
@@ -234,7 +235,7 @@ export function LivingTree({
       <rect width={vb} height={vb} fill="url(#lt-sky)" rx={8} />
 
       {/* ----- Ground ----- */}
-      <ellipse cx={cx} cy={groundY + 12} rx={80} ry={18} fill="#4A3728" opacity={0.1} />
+      <ellipse cx={cx} cy={groundY + 12} rx={80} ry={18} fill="#4a3728" opacity={0.1} />
 
       {/* ----- Root arteries (9 lines fanning downward) ----- */}
       {CAPITAL_TYPES.map((key, i) => {
@@ -273,13 +274,13 @@ export function LivingTree({
             y1={groundY}
             x2={cx}
             y2={groundY - 14}
-            stroke="#7A6347"
+            stroke="#7a6347"
             strokeWidth={2}
             strokeLinecap="round"
           />
           {/* Two small leaves */}
-          <Leaf cx={cx - 5} cy={groundY - 12} r={3.5} fill="#88B87A" delay={0} />
-          <Leaf cx={cx + 5} cy={groundY - 15} r={3} fill="#7DB86F" delay={0.5} />
+          <Leaf cx={cx - 5} cy={groundY - 12} r={3.5} fill="#88b87a" delay={0} />
+          <Leaf cx={cx + 5} cy={groundY - 15} r={3} fill="#7db86f" delay={0.5} />
         </g>
       ) : (
         <g>
@@ -302,7 +303,7 @@ export function LivingTree({
               y1={groundY - trunkH * 0.3 + i * (trunkH * 0.06)}
               x2={cx + trunkW / 2 - 1}
               y2={groundY - trunkH * 0.3 + i * (trunkH * 0.06)}
-              stroke="#4A3728"
+              stroke="#4a3728"
               strokeWidth={0.5}
               opacity={0.2}
             />
@@ -311,8 +312,8 @@ export function LivingTree({
           {/* Ancient stage extras: moss patches on trunk */}
           {stage === "ancient" && (
             <>
-              <ellipse cx={cx - trunkW / 2 + 2} cy={groundY - trunkH * 0.5} rx={3} ry={5} fill="#6B8E5A" opacity={0.35} />
-              <ellipse cx={cx + trunkW / 2 - 2} cy={groundY - trunkH * 0.7} rx={2} ry={4} fill="#6B8E5A" opacity={0.3} />
+              <ellipse cx={cx - trunkW / 2 + 2} cy={groundY - trunkH * 0.5} rx={3} ry={5} fill="#6b8e5a" opacity={0.35} />
+              <ellipse cx={cx + trunkW / 2 - 2} cy={groundY - trunkH * 0.7} rx={2} ry={4} fill="#6b8e5a" opacity={0.3} />
             </>
           )}
 
@@ -347,7 +348,7 @@ export function LivingTree({
             const lx = cx + Math.cos(angle) * canopyRx * rFactor;
             const ly = canopyCy + Math.sin(angle) * canopyRy * rFactor;
             const lr = 2 + seededOffset(i + 50, 2);
-            const shade = season === "autumn" ? "#C87A3E" : season === "winter" ? "#AAB2AD" : "#6BA35A";
+            const shade = season === "autumn" ? "#c87a3e" : season === "winter" ? "#aab2ad" : "#6ba35a";
             return (
               <Leaf
                 key={`leaf-${i}`}
@@ -400,8 +401,8 @@ export function LivingTree({
                   cx={fx}
                   cy={fy}
                   r={3}
-                  fill="#C4785B"
-                  stroke="#A5603F"
+                  fill="#c4785b"
+                  stroke="#a5603f"
                   strokeWidth={0.5}
                   opacity={0.9}
                 />
@@ -413,7 +414,7 @@ export function LivingTree({
             <path
               d={`M${cx + canopyRx * 0.6} ${canopyCy - canopyRy * 0.7}
                   q3 -4 6 0 q3 4 6 0`}
-              stroke="#4A3728"
+              stroke="#4a3728"
               strokeWidth={1}
               fill="none"
               opacity={0.3}
@@ -427,7 +428,7 @@ export function LivingTree({
         x={cx}
         y={vb - 6}
         textAnchor="middle"
-        fill="#4A3728"
+        fill="#4a3728"
         fontSize={7}
         opacity={0.4}
         fontFamily="sans-serif"
@@ -484,13 +485,13 @@ export function LivingTreeIcon({
       aria-label={`Living Tree icon, ${stage}`}
     >
       {/* Ground shadow */}
-      <ellipse cx={16} cy={26} rx={10} ry={3} fill="#4A3728" opacity={0.1} />
+      <ellipse cx={16} cy={26} rx={10} ry={3} fill="#4a3728" opacity={0.1} />
 
       {stage === "seedling" ? (
         <g>
-          <line x1={16} y1={24} x2={16} y2={19} stroke="#7A6347" strokeWidth={1.5} strokeLinecap="round" />
-          <circle cx={14.5} cy={18.5} r={2.2} fill="#88B87A" opacity={0.8} />
-          <circle cx={17.5} cy={17} r={2} fill="#7DB86F" opacity={0.8} />
+          <line x1={16} y1={24} x2={16} y2={19} stroke="#7a6347" strokeWidth={1.5} strokeLinecap="round" />
+          <circle cx={14.5} cy={18.5} r={2.2} fill="#88b87a" opacity={0.8} />
+          <circle cx={17.5} cy={17} r={2} fill="#7db86f" opacity={0.8} />
         </g>
       ) : (
         <g>
@@ -501,7 +502,7 @@ export function LivingTreeIcon({
             width={trunkW}
             height={8 + growth * 6}
             rx={trunkW / 3}
-            fill="#7A6347"
+            fill="#7a6347"
           />
           {/* Canopy */}
           <circle

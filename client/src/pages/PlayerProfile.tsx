@@ -104,7 +104,7 @@ const badgeDefinitions: Record<string, { name: string; icon: string; description
 
 // Small helper used in the Step 3 review to display the selected bioregion name
 function BioregionPreviewRow({ bioregionId }: { bioregionId: number }) {
-  const { data: bioregions = [] } = trpc.bioregions.list.useQuery();
+  const { data: bioregions = [] } = trpc.bioregions.list.useQuery(undefined, { staleTime: 10 * 60_000 });
   const name = bioregions.find((b) => b.id === bioregionId)?.name;
   if (!name) return null;
   return (
@@ -659,7 +659,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
   });
 
   // Load saved bioregions from the junction table
-  const { data: savedBioregions = [] } = trpc.userBioregions.list.useQuery();
+  const { data: savedBioregions = [] } = trpc.userBioregions.list.useQuery(undefined, { staleTime: 5 * 60_000 });
   React.useEffect(() => {
     if (savedBioregions.length > 0) {
       setBioregionIds(savedBioregions.map((b: any) => b.bioregionId));
@@ -797,7 +797,7 @@ type GiftNeedType = "skill" | "resource" | "time" | "knowledge" | "land" | "capi
 
 function GiftsNeedsPanel() {
   const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.marketplace.myEntries.useQuery();
+  const { data, isLoading } = trpc.marketplace.myEntries.useQuery(undefined, { staleTime: 5 * 60_000 });
 
   const [showGiftForm, setShowGiftForm] = useState(false);
   const [showNeedForm, setShowNeedForm] = useState(false);
@@ -1012,8 +1012,8 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
   const [landForm, setLandForm] = useState<LandProjectFormData>(EMPTY_LAND_FORM);
   const [orgForm, setOrgForm] = useState<AllianceOrgFormData>(EMPTY_ORG_FORM);
 
-  const { data: claims, refetch: refetchClaims } = trpc.orgClaims.mine.useQuery();
-  const { data: joinRequests, refetch: refetchJoinRequests } = trpc.projectJoinRequests.myRequests.useQuery();
+  const { data: claims, refetch: refetchClaims } = trpc.orgClaims.mine.useQuery(undefined, { staleTime: 5 * 60_000 });
+  const { data: joinRequests, refetch: refetchJoinRequests } = trpc.projectJoinRequests.myRequests.useQuery(undefined, { staleTime: 5 * 60_000 });
   const claimMutation = trpc.orgClaims.claim.useMutation({
     onSuccess: () => {
       refetchClaims();
@@ -1027,7 +1027,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
     onSuccess: () => refetchJoinRequests(),
   });
 
-  const { data: mapApps = [] } = trpc.applications.mapData.useQuery();
+  const { data: mapApps = [] } = trpc.applications.mapData.useQuery(undefined, { staleTime: 10 * 60_000 });
 
   const approvedClaims = claims?.filter(c => c.status === 'approved') ?? [];
   const pendingClaims = claims?.filter(c => c.status === 'pending') ?? [];
@@ -1311,10 +1311,10 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
 }
 
 function RssFeedManager() {
-  const feedsQuery = trpc.rssFeed.list.useQuery();
+  const feedsQuery = trpc.rssFeed.list.useQuery(undefined, { staleTime: 5 * 60_000 });
   const addFeed = trpc.rssFeed.add.useMutation({ onSuccess: () => feedsQuery.refetch() });
   const removeFeed = trpc.rssFeed.remove.useMutation({ onSuccess: () => feedsQuery.refetch() });
-  const promptQuery = trpc.rssFeed.checkPrompt.useQuery();
+  const promptQuery = trpc.rssFeed.checkPrompt.useQuery(undefined, { staleTime: 5 * 60_000 });
   const dismissPrompt = trpc.rssFeed.dismissPrompt.useMutation({ onSuccess: () => promptQuery.refetch() });
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -1462,7 +1462,7 @@ const ALL_QUESTS = [
 ];
 
 function QuestEndorsementManager() {
-  const endorsementsQuery = trpc.quest.myEndorsements.useQuery();
+  const endorsementsQuery = trpc.quest.myEndorsements.useQuery(undefined, { staleTime: 5 * 60_000 });
   const setEndorsements = trpc.quest.setQuestEndorsements.useMutation({
     onSuccess: () => endorsementsQuery.refetch(),
   });
@@ -1636,7 +1636,7 @@ function EventAttendanceBalance() {
 }
 
 function ReferralStatsCard() {
-  const { data: stats } = trpc.sharing.myStats.useQuery();
+  const { data: stats } = trpc.sharing.myStats.useQuery(undefined, { staleTime: 5 * 60_000 });
   if (!stats || (stats.totalReferrals === 0 && stats.totalShares === 0)) return null;
   return (
     <div className="bg-purple-500/5 border border-purple-500/15 rounded-xl p-4">
@@ -1677,8 +1677,8 @@ function ContributionsTab({
   onSyncTokens?: () => void;
   syncIsPending?: boolean;
 }) {
-  const { data: contributions, isLoading, refetch } = trpc.playerContributions.list.useQuery();
-  const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery();
+  const { data: contributions, isLoading, refetch } = trpc.playerContributions.list.useQuery(undefined, { staleTime: 2 * 60_000 });
+  const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery(undefined, { staleTime: 5 * 60_000 });
   const [showForm, setShowForm] = useState(false);
   const [showManualLog, setShowManualLog] = useState(false);
   const [capitalType, setCapitalType] = useState<CapitalType>("financial");
@@ -2437,7 +2437,7 @@ function SubmissionsTab() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const { data: applications = [] } = trpc.applications.myApplications.useQuery(undefined, { enabled: isAdmin });
-  const { data: campaigns = [] } = trpc.campaigns.myCampaigns.useQuery();
+  const { data: campaigns = [] } = trpc.campaigns.myCampaigns.useQuery(undefined, { staleTime: 5 * 60_000 });
   const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery();
   const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery(undefined, { enabled: isAdmin });
   const { data: orgClaims = [] } = trpc.orgClaims.mine.useQuery();
@@ -2549,7 +2549,7 @@ function NoteField({ completionId, initialNote }: { completionId: number; initia
 
 // ─── Quest Journal ────────────────────────────────────────────────────────────
 function QuestJournal({ userId }: { userId: number }) {
-  const completionsQuery = trpc.quest.myCompletions.useQuery();
+  const completionsQuery = trpc.quest.myCompletions.useQuery(undefined, { staleTime: 5 * 60_000 });
 
   function formatDate(date: Date | string) {
     return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });

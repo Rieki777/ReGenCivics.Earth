@@ -42,14 +42,14 @@ const CAPITAL_LABELS: Record<string, string> = {
 
 const CAPITAL_COLORS: Record<string, string> = {
   social: "#7dd87d",
-  financial: "#E8A838",
-  living: "#5ABB8A",
-  material: "#C4785B",
-  intellectual: "#6B8DD6",
-  experiential: "#C084FC",
-  spiritual: "#F472B6",
-  cultural: "#FB923C",
-  influence: "#A78BFA",
+  financial: "#e8a838",
+  living: "#5abb8a",
+  material: "#c4785b",
+  intellectual: "#6b8dd6",
+  experiential: "#c084fc",
+  spiritual: "#f472b6",
+  cultural: "#fb923c",
+  influence: "#a78bfa",
 };
 
 function getPercentileLabel(p: number): string {
@@ -244,8 +244,8 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
 
           {/* Card 3: Tokens Earned */}
           <Card>
-            <Coins className="w-10 h-10 text-[#E8A838] mb-4" />
-            <p className="text-sm uppercase tracking-widest text-[#E8A838] mb-2 font-medium">
+            <Coins className="w-10 h-10 text-[#e8a838] mb-4" />
+            <p className="text-sm uppercase tracking-widest text-[#e8a838] mb-2 font-medium">
               $ReGen Earned
             </p>
             <span
@@ -288,8 +288,8 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
 
           {/* Card 4: Community Impact */}
           <Card>
-            <Users className="w-10 h-10 text-[#6B8DD6] mb-4" />
-            <p className="text-sm uppercase tracking-widest text-[#6B8DD6] mb-2 font-medium">
+            <Users className="w-10 h-10 text-[#6b8dd6] mb-4" />
+            <p className="text-sm uppercase tracking-widest text-[#6b8dd6] mb-2 font-medium">
               Community Impact
             </p>
 
@@ -323,8 +323,8 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
 
           {/* Card 5: Your Growth */}
           <Card>
-            <TrendingUp className="w-10 h-10 text-[#C084FC] mb-4" />
-            <p className="text-sm uppercase tracking-widest text-[#C084FC] mb-2 font-medium">
+            <TrendingUp className="w-10 h-10 text-[#c084fc] mb-4" />
+            <p className="text-sm uppercase tracking-widest text-[#c084fc] mb-2 font-medium">
               Your Growth
             </p>
 
@@ -436,8 +436,8 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
 
           {/* Card 7: Gratitude */}
           <Card>
-            <Heart className="w-10 h-10 text-[#F472B6] mb-4" />
-            <p className="text-sm uppercase tracking-widest text-[#F472B6] mb-2 font-medium">
+            <Heart className="w-10 h-10 text-[#f472b6] mb-4" />
+            <p className="text-sm uppercase tracking-widest text-[#f472b6] mb-2 font-medium">
               Gratitude
             </p>
 
@@ -451,7 +451,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
               className="w-full rounded-xl p-4 mb-4 text-center"
               style={{ backgroundColor: "rgba(244, 114, 182, 0.08)", border: "1px solid rgba(244, 114, 182, 0.15)" }}
             >
-              <MessageCircle className="w-5 h-5 text-[#F472B6]/60 mx-auto mb-2" />
+              <MessageCircle className="w-5 h-5 text-[#f472b6]/60 mx-auto mb-2" />
               <p className="text-white/60 text-xs">
                 Gratitude messages from your community will appear here.
               </p>
@@ -459,7 +459,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
 
             <Button
               variant="outline"
-              className="gap-2 border-[#F472B6]/30 text-[#F472B6] hover:bg-[#F472B6]/10"
+              className="gap-2 border-[#f472b6]/30 text-[#f472b6] hover:bg-[#f472b6]/10"
             >
               <Heart className="w-4 h-4" />
               Send end-of-season gratitude

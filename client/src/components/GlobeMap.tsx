@@ -948,14 +948,14 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     const globe = globeInstanceRef.current;
 
     const getColor = (type: EntityType, isGlobal?: boolean) => {
-      if (isGlobal) return "#87CEEB"; // sky blue for orbiting
+      if (isGlobal) return "#87ceeb"; // sky blue for orbiting
       switch (type) {
         case "land_project":
           return "#7dd87d";
         case "organization":
           return "#d4a574";
         case "applicant":
-          return "#87CEEB";
+          return "#87ceeb";
       }
     };
 
@@ -1055,8 +1055,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               + hoverPopup
               + `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`
               // Trunk - tapered
-              + `<path d="M${cx - trunkW/2},${canopyBot - 1} L${cx - trunkW*0.35},${h} L${cx + trunkW*0.35},${h} L${cx + trunkW/2},${canopyBot - 1} Z" fill="#5D3A1A" />`
-              + `<path d="M${cx - trunkW*0.2},${canopyBot} L${cx - trunkW*0.15},${h - 1} L${cx + trunkW*0.05},${h - 1} L${cx + trunkW*0.1},${canopyBot}" fill="#7A4F2B" opacity="0.5" />`
+              + `<path d="M${cx - trunkW/2},${canopyBot - 1} L${cx - trunkW*0.35},${h} L${cx + trunkW*0.35},${h} L${cx + trunkW/2},${canopyBot - 1} Z" fill="#5d3a1a" />`
+              + `<path d="M${cx - trunkW*0.2},${canopyBot} L${cx - trunkW*0.15},${h - 1} L${cx + trunkW*0.05},${h - 1} L${cx + trunkW*0.1},${canopyBot}" fill="#7a4f2b" opacity="0.5" />`
               // Conifer canopy layers
               + triangles
               // Snow/highlight on top
@@ -1101,15 +1101,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               + palmHoverPopup
               + `<svg width="${palmW}" height="${palmH}" viewBox="0 0 ${palmW} ${palmH}">`
               // Trunk: slightly curved, tapered
-              + `<path d="M${cx},${trunkBot} Q${cx + 2},${(trunkTop + trunkBot)/2} ${cx},${trunkTop}" stroke="#8B6914" stroke-width="4" fill="none" stroke-linecap="round" />`
-              + `<path d="M${cx + 0.5},${trunkBot} Q${cx + 2.5},${(trunkTop + trunkBot)/2} ${cx + 0.5},${trunkTop}" stroke="#A07D2E" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4" />`
+              + `<path d="M${cx},${trunkBot} Q${cx + 2},${(trunkTop + trunkBot)/2} ${cx},${trunkTop}" stroke="#8b6914" stroke-width="4" fill="none" stroke-linecap="round" />`
+              + `<path d="M${cx + 0.5},${trunkBot} Q${cx + 2.5},${(trunkTop + trunkBot)/2} ${cx + 0.5},${trunkTop}" stroke="#a07d2e" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.4" />`
               // Trunk rings
-              + `<line x1="${cx - 1.5}" y1="${trunkTop + 6}" x2="${cx + 2.5}" y2="${trunkTop + 5}" stroke="#6B4F1D" stroke-width="0.5" opacity="0.5" />`
-              + `<line x1="${cx - 1.5}" y1="${trunkTop + 12}" x2="${cx + 2.5}" y2="${trunkTop + 11}" stroke="#6B4F1D" stroke-width="0.5" opacity="0.5" />`
-              + `<line x1="${cx - 1.5}" y1="${trunkTop + 18}" x2="${cx + 2.5}" y2="${trunkTop + 17}" stroke="#6B4F1D" stroke-width="0.5" opacity="0.5" />`
+              + `<line x1="${cx - 1.5}" y1="${trunkTop + 6}" x2="${cx + 2.5}" y2="${trunkTop + 5}" stroke="#6b4f1d" stroke-width="0.5" opacity="0.5" />`
+              + `<line x1="${cx - 1.5}" y1="${trunkTop + 12}" x2="${cx + 2.5}" y2="${trunkTop + 11}" stroke="#6b4f1d" stroke-width="0.5" opacity="0.5" />`
+              + `<line x1="${cx - 1.5}" y1="${trunkTop + 18}" x2="${cx + 2.5}" y2="${trunkTop + 17}" stroke="#6b4f1d" stroke-width="0.5" opacity="0.5" />`
               // Coconuts at crown
-              + `<circle cx="${cx - 2}" cy="${frondCenter + 2}" r="1.8" fill="#8B6914" />`
-              + `<circle cx="${cx + 2}" cy="${frondCenter + 2.5}" r="1.5" fill="#7A5C12" />`
+              + `<circle cx="${cx - 2}" cy="${frondCenter + 2}" r="1.8" fill="#8b6914" />`
+              + `<circle cx="${cx + 2}" cy="${frondCenter + 2.5}" r="1.5" fill="#7a5c12" />`
               // Fronds
               + fronds
               + `</svg></div>`;
@@ -1134,7 +1134,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           // Satellite marker (50% smaller: 40px instead of 80px)
           el.style.cssText = "cursor:pointer;transform:translate(-50%,-50%);pointer-events:auto;";
           const shortName = d.name.length > 12 ? d.name.split(" ")[0] : d.name;
-          el.innerHTML = '<div style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#87CEEB,#2563eb,#1e3a5f);box-shadow:0 0 15px rgba(135,206,235,0.6),0 0 30px rgba(135,206,235,0.3),inset 0 0 10px rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;position:relative;"><div style="position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(135,206,235,0.3);"></div><div style="color:white;font-size:7px;font-weight:700;text-align:center;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,0.8);font-family:var(--font-display);padding:2px;">' + escapeHtml(shortName) + '</div></div><div style="text-align:center;margin-top:2px;color:#87CEEB;font-size:8px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.9);white-space:nowrap;font-family:var(--font-display);">' + escapeHtml(d.name) + '</div>';
+          el.innerHTML = '<div style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#87ceeb,#2563eb,#1e3a5f);box-shadow:0 0 15px rgba(135,206,235,0.6),0 0 30px rgba(135,206,235,0.3),inset 0 0 10px rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;position:relative;"><div style="position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(135,206,235,0.3);"></div><div style="color:white;font-size:7px;font-weight:700;text-align:center;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,0.8);font-family:var(--font-display);padding:2px;">' + escapeHtml(shortName) + '</div></div><div style="text-align:center;margin-top:2px;color:#87ceeb;font-size:8px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.9);white-space:nowrap;font-family:var(--font-display);">' + escapeHtml(d.name) + '</div>';
           el.onclick = () => {
             setSelectedEntity(d);
             setSidebarOpen(true);
@@ -1256,7 +1256,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 count={f === "all" ? allEntities.length : allEntities.filter(e => e.type === f).length}
                 active={filter === f}
                 onClick={() => setFilter(f)}
-                color={f === "all" ? "bg-white/20 text-white" : f === "land_project" ? "bg-[#4a7c59] text-white" : f === "organization" ? "bg-[#d4a574] text-[#1a472a]" : "bg-[#87CEEB] text-[#1a472a]"}
+                color={f === "all" ? "bg-white/20 text-white" : f === "land_project" ? "bg-[#4a7c59] text-white" : f === "organization" ? "bg-[#d4a574] text-[#1a472a]" : "bg-[#87ceeb] text-[#1a472a]"}
               />
             ))}
           </div>
@@ -1279,7 +1279,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         entity.type === "land_project" ? "bg-[#4a7c59]/20 text-[#4a7c59]" :
                         entity.type === "organization" ? "bg-[#d4a574]/20 text-[#d4a574]" :
-                        "bg-[#87CEEB]/20 text-[#87CEEB]"
+                        "bg-[#87ceeb]/20 text-[#87ceeb]"
                       }`}>
                         {entity.type === "land_project" ? "Land Project" : entity.type === "organization" ? "Alliance Org" : "Applicant"}
                       </span>
@@ -1361,7 +1361,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           <FilterTab label="Land Projects" count={counts.land_project} active={filter === "land_project"} onClick={() => setFilter("land_project")} color="bg-[#4a7c59] text-white" />
           <FilterTab label="Organizations" count={counts.organization} active={filter === "organization"} onClick={() => setFilter("organization")} color="bg-[#d4a574] text-[#1a472a]" />
           {counts.applicant > 0 && (
-            <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#87CEEB] text-[#1a472a]" />
+            <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#87ceeb] text-[#1a472a]" />
           )}
         </div>
 
@@ -1498,19 +1498,19 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               <p className="text-white/60 text-[10px] uppercase tracking-wider mb-1.5">Legend</p>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <svg width="14" height="20" viewBox="0 0 14 20"><polygon points="7,1 12,8 2,8" fill="#7dd87d" opacity="0.9" /><polygon points="7,4 13,13 1,13" fill="#5cb85c" opacity="0.85" /><polygon points="7,7 14,17 0,17" fill="#7dd87d" opacity="0.8" /><rect x="5.5" y="16" width="3" height="4" rx="1" fill="#5D3A1A" /></svg>
+                  <svg width="14" height="20" viewBox="0 0 14 20"><polygon points="7,1 12,8 2,8" fill="#7dd87d" opacity="0.9" /><polygon points="7,4 13,13 1,13" fill="#5cb85c" opacity="0.85" /><polygon points="7,7 14,17 0,17" fill="#7dd87d" opacity="0.8" /><rect x="5.5" y="16" width="3" height="4" rx="1" fill="#5d3a1a" /></svg>
                   <span className="text-white/70 text-[10px]">Season 1 Projects (sized by acreage)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg width="14" height="20" viewBox="0 0 14 20"><polygon points="7,1 12,8 2,8" fill="#a3e635" opacity="0.9" /><polygon points="7,4 13,13 1,13" fill="#84cc16" opacity="0.85" /><polygon points="7,7 14,17 0,17" fill="#a3e635" opacity="0.8" /><rect x="5.5" y="16" width="3" height="4" rx="1" fill="#5D3A1A" /></svg>
+                  <svg width="14" height="20" viewBox="0 0 14 20"><polygon points="7,1 12,8 2,8" fill="#a3e635" opacity="0.9" /><polygon points="7,4 13,13 1,13" fill="#84cc16" opacity="0.85" /><polygon points="7,7 14,17 0,17" fill="#a3e635" opacity="0.8" /><rect x="5.5" y="16" width="3" height="4" rx="1" fill="#5d3a1a" /></svg>
                   <span className="text-white/70 text-[10px]">Season 2 Projects (lime green)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg width="14" height="20" viewBox="0 0 14 20"><path d="M7,20 Q9,14 7,8" stroke="#8B6914" strokeWidth="2" fill="none" strokeLinecap="round" /><path d="M7,8 Q3,2 1,4" stroke="#d4a574" strokeWidth="1.5" fill="none" strokeLinecap="round" /><path d="M7,8 Q11,2 13,4" stroke="#d4a574" strokeWidth="1.5" fill="none" strokeLinecap="round" /><path d="M7,8 Q7,1 7,2" stroke="#d4a574" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>
+                  <svg width="14" height="20" viewBox="0 0 14 20"><path d="M7,20 Q9,14 7,8" stroke="#8b6914" strokeWidth="2" fill="none" strokeLinecap="round" /><path d="M7,8 Q3,2 1,4" stroke="#d4a574" strokeWidth="1.5" fill="none" strokeLinecap="round" /><path d="M7,8 Q11,2 13,4" stroke="#d4a574" strokeWidth="1.5" fill="none" strokeLinecap="round" /><path d="M7,8 Q7,1 7,2" stroke="#d4a574" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>
                   <span className="text-white/70 text-[10px]">Alliance Organizations (palm tree)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gradient-to-br from-[#87CEEB] to-[#2563eb]" style={{ boxShadow: '0 0 4px rgba(135,206,235,0.6)' }} />
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-br from-[#87ceeb] to-[#2563eb]" style={{ boxShadow: '0 0 4px rgba(135,206,235,0.6)' }} />
                   <span className="text-white/70 text-[10px]">Global / Orbiting Satellites</span>
                 </div>
                 {/* Size scale */}
@@ -1518,15 +1518,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                   <p className="text-white/60 text-[9px] mb-1">Tree size by acreage:</p>
                   <div className="flex items-end gap-3 pl-1">
                     <div className="flex flex-col items-center">
-                      <svg width="8" height="14" viewBox="0 0 8 14"><polygon points="4,1 7,6 1,6" fill="#7dd87d" opacity="0.8" /><polygon points="4,3 8,10 0,10" fill="#5cb85c" opacity="0.7" /><rect x="3" y="9" width="2" height="4" fill="#5D3A1A" /></svg>
+                      <svg width="8" height="14" viewBox="0 0 8 14"><polygon points="4,1 7,6 1,6" fill="#7dd87d" opacity="0.8" /><polygon points="4,3 8,10 0,10" fill="#5cb85c" opacity="0.7" /><rect x="3" y="9" width="2" height="4" fill="#5d3a1a" /></svg>
                       <span className="text-white/30 text-[8px]">1-10</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <svg width="12" height="20" viewBox="0 0 12 20"><polygon points="6,1 10,7 2,7" fill="#7dd87d" opacity="0.8" /><polygon points="6,4 11,13 1,13" fill="#5cb85c" opacity="0.7" /><rect x="4.5" y="12" width="3" height="6" fill="#5D3A1A" /></svg>
+                      <svg width="12" height="20" viewBox="0 0 12 20"><polygon points="6,1 10,7 2,7" fill="#7dd87d" opacity="0.8" /><polygon points="6,4 11,13 1,13" fill="#5cb85c" opacity="0.7" /><rect x="4.5" y="12" width="3" height="6" fill="#5d3a1a" /></svg>
                       <span className="text-white/30 text-[8px]">100+</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <svg width="16" height="26" viewBox="0 0 16 26"><polygon points="8,1 13,8 3,8" fill="#7dd87d" opacity="0.9" /><polygon points="8,4 14,14 2,14" fill="#5cb85c" opacity="0.85" /><polygon points="8,8 16,20 0,20" fill="#7dd87d" opacity="0.8" /><rect x="6" y="19" width="4" height="7" fill="#5D3A1A" /></svg>
+                      <svg width="16" height="26" viewBox="0 0 16 26"><polygon points="8,1 13,8 3,8" fill="#7dd87d" opacity="0.9" /><polygon points="8,4 14,14 2,14" fill="#5cb85c" opacity="0.85" /><polygon points="8,8 16,20 0,20" fill="#7dd87d" opacity="0.8" /><rect x="6" y="19" width="4" height="7" fill="#5d3a1a" /></svg>
                       <span className="text-white/30 text-[8px]">1000+</span>
                     </div>
                   </div>
@@ -1569,7 +1569,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           <FilterTab label="Projects" count={counts.land_project} active={filter === "land_project"} onClick={() => setFilter("land_project")} color="bg-[#4a7c59] text-white" />
           <FilterTab label="Orgs" count={counts.organization} active={filter === "organization"} onClick={() => setFilter("organization")} color="bg-[#d4a574] text-[#1a472a]" />
           {counts.applicant > 0 && (
-            <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#87CEEB] text-[#1a472a]" />
+            <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#87ceeb] text-[#1a472a]" />
           )}
         </div>
 

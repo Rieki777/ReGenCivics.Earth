@@ -519,7 +519,7 @@ export default function Economy() {
         {/* Hook Banner */}
         <section
           className="py-16 md:py-20 px-4 md:px-8"
-          style={{ background: "#2D2A26" }}
+          style={{ background: "#2d2a26" }}
         >
           <div className="max-w-3xl mx-auto text-center">
             <AnimatedSection>
@@ -527,7 +527,7 @@ export default function Economy() {
                 className="text-2xl md:text-4xl font-bold mb-6 leading-tight"
                 style={{
                   fontFamily: "var(--font-display)",
-                  color: "#FAF8F3",
+                  color: "#faf8f3",
                 }}
               >
                 If enough of us play the Game, it's real.

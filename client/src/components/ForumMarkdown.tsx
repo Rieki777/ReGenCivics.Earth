@@ -32,10 +32,22 @@ const markdownComponents: Components = {
     <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>
   ),
   a: ({ href, children }) => {
-    const isExternal = href?.startsWith('http');
+    // URL protocol validation: only allow http/https/mailto, block javascript: and data: etc.
+    let safeHref: string | undefined = href;
+    if (href) {
+      try {
+        const parsed = new URL(href, typeof window !== 'undefined' ? window.location.href : 'https://regencivics.earth');
+        if (!['http:', 'https:', 'mailto:'].includes(parsed.protocol)) {
+          safeHref = '#';
+        }
+      } catch {
+        safeHref = '#';
+      }
+    }
+    const isExternal = safeHref?.startsWith('http');
     return (
       <a
-        href={href}
+        href={safeHref}
         target={isExternal ? '_blank' : undefined}
         rel={isExternal ? 'noopener noreferrer' : undefined}
         className="text-[#7dd87d] underline hover:text-white transition-colors"

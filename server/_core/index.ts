@@ -153,6 +153,18 @@ async function startServer() {
   app.use('/api/trpc/game.sendGratitude', rateLimitMiddleware(60 * 1000, 10));
   app.use('/api/trpc/proposals.create', rateLimitMiddleware(60 * 60 * 1000, 5));
   app.use('/api/trpc/proposals.signalVote', rateLimitMiddleware(60 * 1000, 20));
+  // H4 additions: forum likes, profile updates, campaign contributions, profile/avatar updates
+  app.use('/api/trpc/forum.toggleLike', rateLimitMiddleware(60 * 1000, 30));
+  app.use('/api/trpc/forum.editPost', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/forum.editReply', rateLimitMiddleware(60 * 1000, 15));
+  app.use('/api/trpc/forum.deletePost', rateLimitMiddleware(60 * 1000, 5));
+  app.use('/api/trpc/forum.deleteReply', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/profiles.update', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/profiles.updateAvatar', rateLimitMiddleware(60 * 1000, 5));
+  app.use('/api/trpc/players.updateProfile', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/campaigns.contribute', rateLimitMiddleware(60 * 1000, 20));
+  app.use('/api/trpc/campaigns.create', rateLimitMiddleware(60 * 60 * 1000, 10));
+  app.use('/api/trpc/campaigns.update', rateLimitMiddleware(60 * 1000, 20));
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

@@ -27,7 +27,7 @@ export const SOCIAL_LINKS = {
     name: "YouTube",
     url: "https://www.youtube.com/@SEEDSRegenerativeEconomies",
     icon: Youtube,
-    color: "#FF0000",
+    color: "#ff0000",
     hoverBg: "hover:bg-red-500/20",
   },
 };

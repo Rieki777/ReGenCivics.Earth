@@ -84,32 +84,32 @@ export function ShareButtons({
             <Button
               variant="outline"
               size="sm"
-              className="p-2 h-10 hover:bg-[#1DA1F2]/10 hover:border-[#1DA1F2]"
+              className="p-2 h-10 hover:bg-[#1da1f2]/10 hover:border-[#1da1f2]"
               onClick={() => openShareWindow(shareLinks.twitter)}
               title="Share on Twitter"
               aria-label="Share on Twitter"
             >
-              <Twitter className="w-4 h-4 text-[#1DA1F2]" />
+              <Twitter className="w-4 h-4 text-[#1da1f2]" />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="p-2 h-10 hover:bg-[#4267B2]/10 hover:border-[#4267B2]"
+              className="p-2 h-10 hover:bg-[#4267b2]/10 hover:border-[#4267b2]"
               onClick={() => openShareWindow(shareLinks.facebook)}
               title="Share on Facebook"
               aria-label="Share on Facebook"
             >
-              <Facebook className="w-4 h-4 text-[#4267B2]" />
+              <Facebook className="w-4 h-4 text-[#4267b2]" />
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="p-2 h-10 hover:bg-[#0A66C2]/10 hover:border-[#0A66C2]"
+              className="p-2 h-10 hover:bg-[#0a66c2]/10 hover:border-[#0a66c2]"
               onClick={() => openShareWindow(shareLinks.linkedin)}
               title="Share on LinkedIn"
               aria-label="Share on LinkedIn"
             >
-              <Linkedin className="w-4 h-4 text-[#0A66C2]" />
+              <Linkedin className="w-4 h-4 text-[#0a66c2]" />
             </Button>
             <Button
               variant="outline"

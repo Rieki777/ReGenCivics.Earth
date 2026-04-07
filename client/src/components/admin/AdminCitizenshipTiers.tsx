@@ -14,10 +14,10 @@ import { toast } from "sonner";
 import { CitizenshipBadge } from "@/components/game/TierBadge";
 
 const TIERS = [
-  { key: "explorer", label: "Explorer", emoji: "🧭", color: "#7C9A7E" },
-  { key: "co_creator", label: "Co-Creator", emoji: "🔥", color: "#E8A838" },
-  { key: "steward", label: "Steward", emoji: "🏔️", color: "#6B8DD6" },
-  { key: "sage", label: "Sage", emoji: "✨", color: "#C084FC" },
+  { key: "explorer", label: "Explorer", emoji: "🧭", color: "#7c9a7e" },
+  { key: "co_creator", label: "Co-Creator", emoji: "🔥", color: "#e8a838" },
+  { key: "steward", label: "Steward", emoji: "🏔️", color: "#6b8dd6" },
+  { key: "sage", label: "Sage", emoji: "✨", color: "#c084fc" },
 ];
 
 export function AdminCitizenshipTiers() {

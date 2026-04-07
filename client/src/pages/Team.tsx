@@ -4,7 +4,7 @@
  * Focus: Dynamic organization, Hypha link, how we work
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { gameRoles } from '@/data/gameRoles';
 import { RolePortalCard } from '@/components/RolePortalCard';
@@ -339,9 +339,39 @@ function IkigaiCircle({
   );
 }
 
+type RoleView = "game" | "fund" | "all";
+
 export default function Team() {
   // Role portal cards handle their own modal state via RolePortalCard
-  
+  const [roleView, setRoleView] = useState<RoleView>("game");
+
+  // Sync with URL param on mount so /team?view=fund links work
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("view");
+    if (v === "fund" || v === "game" || v === "all") {
+      setRoleView(v);
+    }
+  }, []);
+
+  const setViewAndUrl = (v: RoleView) => {
+    setRoleView(v);
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (v === "game") {
+      params.delete("view");
+    } else {
+      params.set("view", v);
+    }
+    const qs = params.toString();
+    const newUrl = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
+    window.history.replaceState(null, "", newUrl);
+  };
+
+  const gameOnly = gameRoles.filter((r) => r.kind !== "fund");
+  const fundOnly = gameRoles.filter((r) => r.kind === "fund");
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
       <SEO {...pageSEO.team} />
@@ -570,55 +600,152 @@ export default function Team() {
         </div>
       </section>
 
-      {/* Game Roles Section */}
+      {/* Roles Section: Narrative Story + Toggle + Role Cards */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 bg-[#fbbf24]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-[#fbbf24]/30">
-              <span className="text-lg">🎮</span>
-              <span className="text-[#fbbf24] font-medium text-sm uppercase tracking-wide">Choose Your Role</span>
+              <span className="text-lg">🌉</span>
+              <span className="text-[#fbbf24] font-medium text-sm uppercase tracking-wide">How the Roles Work Together</span>
             </div>
             <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Roles of the <span className="text-[#7dd87d]">Infinite Game</span>
+              Two sides of the <span className="text-[#7dd87d]">same bridge</span>
             </h2>
-            <p className="text-lg text-white/70 max-w-3xl mx-auto">
-              Every role is a way to play. Each one has specific powers, rights, responsibilities, and token rewards. Roles belong to the Game, filled by players each season through community vote. Click any role to enter its portal.
+          </div>
+
+          {/* The Narrative Story — always visible, explains how Game and Fund weave together */}
+          <div className="max-w-4xl mx-auto mb-10 space-y-5 text-white/85 leading-relaxed">
+            <p>
+              ReGen Civics runs on two sides of one bridge. The{' '}
+              <button
+                onClick={() => setViewAndUrl('game')}
+                className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors"
+              >
+                Infinite Game
+              </button>{' '}
+              is where players, quests, forum life, and the living economy unfold. The{' '}
+              <button
+                onClick={() => setViewAndUrl('fund')}
+                className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors"
+              >
+                ReGen Civics Fund
+              </button>{' '}
+              is where capital meets land and regeneration gets paid for. Each side has its own roles, its own token, its own rhythm. They hand things to each other across the middle.
+            </p>
+
+            <p>
+              Every investment flows through the same spine. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Due Diligence Lead</button>{' '}
+              visits the land, reads the team, and writes the memo. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Fund Steward</button>{' '}
+              drafts the Hypha DAO proposal. The committee (Steward, Diligence Lead, Capital Weaver, and Portfolio Tender once seated) reviews it together. The Hypha DAO casts its weighted $RCivics voice and the call is made.
+            </p>
+
+            <p>
+              After deployment, the{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Portfolio Tender</button>{' '}
+              walks beside the project month to month. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Impact Witness</button>{' '}
+              measures what is actually happening on the ground. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Fund Treasurer</button>{' '}
+              tracks the money and keeps the fund audit-ready. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Structure Keeper</button>{' '}
+              makes sure every step lives inside a real legal vessel. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Capital Weaver</button>{' '}
+              is the loop back to investors, narrating the whole cycle.
+            </p>
+
+            <p>
+              The Game side weaves the other half.{' '}
+              <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Alliance Weaver</button>{' '}
+              connects partner organizations into the ecosystem.{' '}
+              <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Season Facilitator</button>{' '}
+              walks with incubator projects through their quests. The{' '}
+              <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Storyteller</button>{' '}
+              holds the public narrative of what the fund and the Game are building together. Different waters, same river. Game roles are compensated in $ReGen. Fund roles are compensated in $RCivics.
+            </p>
+
+            <p className="text-white/70 text-sm italic">
+              Pick a side below to see the roles that live there. Or view all the roles together.
             </p>
           </div>
 
-          {/* Game-side clarifier */}
-          <div className="max-w-3xl mx-auto mb-6 bg-[#0d2818]/60 border border-[#7dd87d]/30 rounded-2xl p-4 md:p-5 text-center">
-            <p className="text-white/85 text-sm md:text-base leading-relaxed">
-              These roles coordinate the <span className="font-bold text-[#7dd87d]">ReGen Infinite Game</span>.
-              They steward quests, players, the forum, and the Living Game economy. Compensated in $ReGen.
-            </p>
+          {/* Segmented toggle */}
+          <div className="flex justify-center mb-8" role="tablist" aria-label="Role view selector">
+            <div className="inline-flex items-center gap-1 bg-[#0d2818]/70 border border-white/15 rounded-full p-1 backdrop-blur-sm">
+              <button
+                role="tab"
+                aria-selected={roleView === 'game'}
+                onClick={() => setViewAndUrl('game')}
+                className={`px-5 py-2 rounded-full text-sm md:text-base font-semibold transition-all focus-ring ${
+                  roleView === 'game'
+                    ? 'bg-[#7dd87d] text-[#0d2818] shadow-[0_0_20px_rgba(125,216,125,0.35)]'
+                    : 'text-white/75 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span className="mr-1.5">🎮</span>Game Roles
+              </button>
+              <button
+                role="tab"
+                aria-selected={roleView === 'fund'}
+                onClick={() => setViewAndUrl('fund')}
+                className={`px-5 py-2 rounded-full text-sm md:text-base font-semibold transition-all focus-ring ${
+                  roleView === 'fund'
+                    ? 'bg-[#d4a574] text-[#0d2818] shadow-[0_0_20px_rgba(212,165,116,0.35)]'
+                    : 'text-white/75 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span className="mr-1.5">🏛️</span>Fund Roles
+              </button>
+              <button
+                role="tab"
+                aria-selected={roleView === 'all'}
+                onClick={() => setViewAndUrl('all')}
+                className={`px-5 py-2 rounded-full text-sm md:text-base font-semibold transition-all focus-ring ${
+                  roleView === 'all'
+                    ? 'bg-white/90 text-[#0d2818]'
+                    : 'text-white/75 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                All
+              </button>
+            </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {gameRoles.filter(r => r.kind !== 'fund').map((role, index) => (
-              <RolePortalCard key={index} role={role} />
-            ))}
-          </div>
-
-          {/* Fund-side clarifier (only shown if any fund roles exist) */}
-          {gameRoles.some(r => r.kind === 'fund') && (
-            <>
-              <div className="max-w-3xl mx-auto mt-12 mb-6 bg-[#0d2818]/60 border border-[#d4a574]/40 rounded-2xl p-4 md:p-5 text-center">
+          {/* Game Roles block */}
+          {(roleView === 'game' || roleView === 'all') && (
+            <div className="mb-10">
+              <div className="max-w-3xl mx-auto mb-6 bg-[#0d2818]/60 border border-[#7dd87d]/30 rounded-2xl p-4 md:p-5 text-center">
                 <p className="text-white/85 text-sm md:text-base leading-relaxed">
-                  These roles coordinate the <span className="font-bold text-[#d4a574]">ReGen Infinite Fund</span>.
+                  These roles coordinate the <span className="font-bold text-[#7dd87d]">ReGen Infinite Game</span>.
+                  They steward quests, players, the forum, and the Living Game economy. Compensated in $ReGen.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {gameOnly.map((role, index) => (
+                  <RolePortalCard key={`g-${index}`} role={role} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fund Roles block */}
+          {(roleView === 'fund' || roleView === 'all') && fundOnly.length > 0 && (
+            <div className="mb-6">
+              <div className="max-w-3xl mx-auto mb-6 bg-[#0d2818]/60 border border-[#d4a574]/40 rounded-2xl p-4 md:p-5 text-center">
+                <p className="text-white/85 text-sm md:text-base leading-relaxed">
+                  These roles coordinate the <span className="font-bold text-[#d4a574]">ReGen Civics Fund</span>.
                   They steward capital, due diligence, and investor relationships. Compensated in $RCivics.
                 </p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {gameRoles.filter(r => r.kind === 'fund').map((role, index) => (
-                  <RolePortalCard key={index} role={role} />
+                {fundOnly.map((role, index) => (
+                  <RolePortalCard key={`f-${index}`} role={role} />
                 ))}
               </div>
-            </>
+            </div>
           )}
-          
-          {/* Missing Role Callout */}
-          
+
           {/* Missing Role Callout */}
           <div className="mt-4 bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-[#7dd87d]/20 text-center">
             <p className="text-white/70 text-sm">

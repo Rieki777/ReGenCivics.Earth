@@ -750,7 +750,7 @@ export default function GameMechanics() {
               className="text-2xl md:text-3xl font-bold text-white mb-8 flex items-center gap-3"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              <Heart className="w-6 h-6 text-[#D4A017]" />
+              <Heart className="w-6 h-6 text-[#d4a017]" />
               Gratitude System Variables
             </h2>
             <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
@@ -774,7 +774,7 @@ export default function GameMechanics() {
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-white text-base flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#D4A017]" />
+                    <Sparkles className="w-4 h-4 text-[#d4a017]" />
                     Tier Multipliers
                   </CardTitle>
                 </CardHeader>

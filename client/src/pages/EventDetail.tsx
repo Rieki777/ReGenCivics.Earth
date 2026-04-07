@@ -256,7 +256,7 @@ export default function EventDetail() {
                     href={event.riversideRoomUrl ?? event.zoomUrl ?? '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-2 ${event.riversideRoomUrl ? 'bg-purple-600 hover:bg-purple-700' : 'bg-[#2D8CFF] hover:bg-[#2681eb]'} text-white px-5 py-3 rounded-xl font-semibold transition-colors`}
+                    className={`inline-flex items-center gap-2 ${event.riversideRoomUrl ? 'bg-purple-600 hover:bg-purple-700' : 'bg-[#2d8cff] hover:bg-[#2681eb]'} text-white px-5 py-3 rounded-xl font-semibold transition-colors`}
                   >
                     <Video className="w-5 h-5" />
                     {event.riversideRoomUrl ? 'Join on Riverside' : 'Join on Zoom'}

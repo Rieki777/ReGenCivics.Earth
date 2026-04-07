@@ -32,7 +32,7 @@ export function HeroQuestCard({
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
-      className={`relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-xl ${
+      className={`quest-shimmer relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-xl ${
         pulse ? "ring-2 ring-amber-400/40 animate-pulse" : ""
       } ${className}`}
       style={{ minHeight: 160 }}

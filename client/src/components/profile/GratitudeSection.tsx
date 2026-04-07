@@ -149,7 +149,7 @@ function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={isComplete ? "#D4A017" : "#7dd87d"}
+          stroke={isComplete ? "#d4a017" : "#7dd87d"}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -162,7 +162,7 @@ function ProgressRing({
         <span
           className="text-lg font-bold"
           style={{
-            color: isComplete ? "#D4A017" : "#ffffff",
+            color: isComplete ? "#d4a017" : "#ffffff",
             fontFamily: "var(--font-display)",
           }}
         >
@@ -231,7 +231,7 @@ export function GratitudeSection({
           className="text-lg font-bold text-white flex items-center gap-2"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          <Heart className="w-5 h-5 text-[#D4A017]" />
+          <Heart className="w-5 h-5 text-[#d4a017]" />
           Gratitude
         </h3>
         <div className="flex items-center gap-2 text-xs text-white/50">
@@ -262,7 +262,7 @@ export function GratitudeSection({
               people this cycle ({perPerson} each)
             </p>
             {streakCycles > 0 && (
-              <p className="text-xs text-[#D4A017] mt-1">
+              <p className="text-xs text-[#d4a017] mt-1">
                 {streakCycles} cycle streak (+{Math.min(streakCycles * 3, 30)}%)
               </p>
             )}
@@ -288,7 +288,7 @@ export function GratitudeSection({
         <Card className="bg-white/10 border border-white/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Heart className="w-4 h-4 text-[#D4A017]" />
+              <Heart className="w-4 h-4 text-[#d4a017]" />
               <span className="text-xs text-white/60 uppercase tracking-wider">
                 Received
               </span>
@@ -327,7 +327,7 @@ export function GratitudeSection({
                   href="https://app.hypha.earth"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#D4A017] hover:underline inline-flex items-center gap-1"
+                  className="text-[#d4a017] hover:underline inline-flex items-center gap-1"
                 >
                   Claim on Hypha
                   <ExternalLink className="w-3 h-3" />
@@ -361,7 +361,7 @@ export function GratitudeSection({
               {journalReceived.map((entry) => (
                 <div
                   key={`r-${entry.id}`}
-                  className="flex gap-3 text-sm border-l-2 border-[#D4A017]/40 pl-3"
+                  className="flex gap-3 text-sm border-l-2 border-[#d4a017]/40 pl-3"
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-white/70 leading-relaxed">

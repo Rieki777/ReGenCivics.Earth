@@ -84,7 +84,7 @@ const socialLinks = [
     description: "Join our active community chat for real-time updates and discussions",
     icon: MessageCircle,
     url: "https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34",
-    color: "#25D366",
+    color: "#25d366",
     recommended: false,
   },
   {
@@ -92,7 +92,7 @@ const socialLinks = [
     description: "Connect with regenerators, ask questions, and find collaboration opportunities",
     icon: Users,
     url: "https://discord.gg/8aTzTxH3Qe",
-    color: "#5865F2",
+    color: "#5865f2",
     recommended: false,
   },
   {
@@ -100,7 +100,7 @@ const socialLinks = [
     description: "Watch season recordings, project introductions, and educational content",
     icon: Youtube,
     url: "https://www.youtube.com/@SEEDSRegenerativeEconomies",
-    color: "#FF0000",
+    color: "#ff0000",
     recommended: false,
   },
 ];

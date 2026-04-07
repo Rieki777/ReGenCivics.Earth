@@ -164,7 +164,7 @@ const defaultCapitalWeights: CapitalType[] = [
     id: 'financial',
     name: 'Financial Capital',
     icon: Coins,
-    color: '#FFD700',
+    color: '#ffd700',
     description: 'Money, currencies, securities, and other financial instruments',
     example: {
       scenario: 'You connect a land project to a $50,000 grant',
@@ -183,7 +183,7 @@ const defaultCapitalWeights: CapitalType[] = [
     id: 'material',
     name: 'Material Capital',
     icon: Package,
-    color: '#8B4513',
+    color: '#8b4513',
     description: 'Physical assets, tools, equipment, infrastructure, and resources',
     example: {
       scenario: 'You donate a $2,000 irrigation system to a food forest',
@@ -202,7 +202,7 @@ const defaultCapitalWeights: CapitalType[] = [
     id: 'living',
     name: 'Living Capital',
     icon: Leaf,
-    color: '#228B22',
+    color: '#228b22',
     description: 'Soil, water, trees, animals, ecosystems, and all living systems',
     example: {
       scenario: 'You plant 100 fruit trees and build 4 inches of topsoil with 50% organic matter increase',
@@ -223,7 +223,7 @@ const defaultCapitalWeights: CapitalType[] = [
     id: 'social',
     name: 'Social Capital',
     icon: Users,
-    color: '#FF6B6B',
+    color: '#ff6b6b',
     description: 'Relationships, trust, goodwill, community connections, and networks',
     example: {
       scenario: 'You form 3 new partnerships and engage 50 community members',
@@ -242,7 +242,7 @@ const defaultCapitalWeights: CapitalType[] = [
     id: 'intellectual',
     name: 'Intellectual Capital',
     icon: Brain,
-    color: '#9B59B6',
+    color: '#9b59b6',
     description: 'Knowledge, ideas, intellectual property, systems, and innovations',
     example: {
       scenario: 'You create 2 guides that get adopted by 5 land projects',
@@ -261,7 +261,7 @@ const defaultCapitalWeights: CapitalType[] = [
     id: 'experiential',
     name: 'Experiential Capital',
     icon: Compass,
-    color: '#3498DB',
+    color: '#3498db',
     description: 'Skills, expertise, hands-on experience, and practical wisdom',
     example: {
       scenario: 'You mentor 4 new contributors and train 20 people in a workshop',
@@ -280,7 +280,7 @@ const defaultCapitalWeights: CapitalType[] = [
     id: 'spiritual',
     name: 'Spiritual Capital',
     icon: Sparkles,
-    color: '#E91E63',
+    color: '#e91e63',
     description: 'Purpose, meaning, inspiration, faith, and meaningful experiences',
     example: {
       scenario: 'You facilitate 2 vision sessions with 30 attendees total',
@@ -299,7 +299,7 @@ const defaultCapitalWeights: CapitalType[] = [
     id: 'cultural',
     name: 'Cultural Capital',
     icon: Globe,
-    color: '#00BCD4',
+    color: '#00bcd4',
     description: 'Stories, art, traditions, heritage, and shared meaning-making',
     example: {
       scenario: 'You create 3 art pieces and write 5 blog posts with 10,000 total views',
