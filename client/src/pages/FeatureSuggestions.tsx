@@ -45,7 +45,12 @@ export default function FeatureSuggestions() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
-      <SEO title="Feature Suggestions | ReGen Civics" description="Propose and vote on features for the ReGen Civics platform." />
+      <SEO
+        title="Feature Suggestions | ReGen Civics"
+        description="Propose and vote on features for the ReGen Civics platform."
+        image="/og/features.webp"
+        url="/features"
+      />
       <BackButton />
 
       <section className="relative pt-24 pb-10 px-4">

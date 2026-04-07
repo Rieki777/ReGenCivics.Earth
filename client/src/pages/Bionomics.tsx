@@ -669,6 +669,7 @@ export default function Bionomics() {
       <SEO
         title="Bionomics | The Living Economy of ReGen Civics"
         description="Bionomics is the Game side of ReGen Civics: $ReGen, bioregional financing, local food systems, gratitude, and the Index Fund for the Regenerative Renaissance. Built on the BioFi framework and the SEEDS lineage."
+        image="/og/bionomics.webp"
         url="/bionomics"
       />
 

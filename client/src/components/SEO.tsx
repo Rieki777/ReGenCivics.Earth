@@ -148,7 +148,7 @@ export const pageSEO = {
     title: 'Quests: Regenerative Actions & Rewards',
     description: 'Quests are how you participate. Each one moves healing into the world: your body, your land, your community. Earn rewards doing the work that actually matters.',
     keywords: 'regenerative quests, impact actions, earn tokens, food forest, gut health, regenerative lifestyle, sustainable living',
-    image: '/og/quest.jpg',
+    image: '/og/quest.webp',
     url: '/quest'
   },
   team: {
@@ -260,7 +260,7 @@ export const pageSEO = {
     title: 'Community Forum | ReGen Civics',
     description: 'The ReGen Civics forum. Where players, investors, land stewards, and builders connect, coordinate, and tell the truth.',
     keywords: 'regenerative community forum, impact investing discussion, ecovillage community, regenerative economy discussion, land project forum',
-    image: '/og/community.jpg',
+    image: '/og/community.webp',
     url: '/community'
   },
   land: {
@@ -366,7 +366,7 @@ export const pageSEO = {
     title: 'Regen Civilization Tools Library | ReGen Civics',
     description: 'Every tool the regenerative renaissance needs. Software, hardware, governance, currency, food systems. Describe your challenge, find your tools.',
     keywords: 'regenerative tools, community tools, governance tools, DAO tools, food systems, permaculture tools, open source',
-    image: `${BASE_URL}/og-default.jpg`,
+    image: '/og/tools.webp',
     url: '/tools'
   },
   healTheLand: {

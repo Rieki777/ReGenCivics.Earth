@@ -194,6 +194,7 @@ export default function Land() {
       <SEO
         title="Land Projects - ReGen Civics"
         description="Design your economic game, build governance, access alliance support, and attract investment for your regenerative land project."
+        image="/og/land.webp"
         url="/land"
         breadcrumbs={[{ name: "Home", url: "/" }, { name: "Land Projects", url: "/land" }]}
       />

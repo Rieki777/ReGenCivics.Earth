@@ -79,6 +79,7 @@ export default function ToolsLibrary() {
       <SEO
         title="Tools Library | ReGen Civics"
         description="Browse regenerative tools for land management, governance, finance, and community building. Find the right tools for your project."
+        image="/og/tools.webp"
         url="/tools"
       />
       <BackButton />

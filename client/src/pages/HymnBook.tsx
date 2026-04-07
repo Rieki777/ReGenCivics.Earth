@@ -41,6 +41,8 @@ export default function HymnBook() {
       <SEO
         title="Hymn Book: Community Song Submissions"
         description="Submit your songs to add to the Hymns of the ReGeneration. Each season the highest voted community song joins the Hymn Book and the musician receives 3,333 $ReGen."
+        image="/og/hymn-book.webp"
+        url="/hymn-book"
       />
       <div className="min-h-screen bg-[#0d2818] text-white py-16 px-4">
         <div className="container max-w-3xl mx-auto">
