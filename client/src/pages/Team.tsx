@@ -390,7 +390,7 @@ export default function Team() {
           <LazyImage
             src={cdnImg("https://assets.regencivics.earth/PPEoXqTcNBKerkDe.jpg")}
             alt="Regenerative Ikigai"
-            className="w-full h-full object-cover"
+            className="blur-up w-full h-full object-cover"
             placeholder={<div className="w-full h-full bg-[#1a472a]" />}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a]/85 via-[#1a472a]/75 to-[#1a472a]" />
@@ -922,28 +922,10 @@ export default function Team() {
           </p>
           
           <div className="flex flex-wrap justify-center gap-4">
-            <a 
-              href="https://app.hypha.earth/en/dho/regen-civics"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
-            >
-              <TreeDeciduous className="w-5 h-5" />
-              Explore ReGen Civics DAO Space
-              <ExternalLink className="w-4 h-4" />
-            </a>
-            <Link href="/quest">
-              <Button size="lg" variant="outline" className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 rounded-xl">
-                Start With Quests
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
+          
           </div>
         </div>
       </section>
-
-      {/* Related Content */}
-      <RelatedContent pages={relatedContentMap.team.pages} />
     </div>
   );
 }

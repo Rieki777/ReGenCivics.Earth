@@ -68,8 +68,23 @@ export function AnimationLayer() {
         });
       }, 120);
     };
+    // Catch both back/forward and React Router pushState navigations
+    const origPush = history.pushState.bind(history);
+    const origReplace = history.replaceState.bind(history);
+    history.pushState = function (...args: Parameters<typeof history.pushState>) {
+      origPush(...args);
+      onRouteChange();
+    };
+    history.replaceState = function (...args: Parameters<typeof history.replaceState>) {
+      origReplace(...args);
+      onRouteChange();
+    };
     window.addEventListener("popstate", onRouteChange);
-    return () => window.removeEventListener("popstate", onRouteChange);
+    return () => {
+      window.removeEventListener("popstate", onRouteChange);
+      history.pushState = origPush;
+      history.replaceState = origReplace;
+    };
   }, []);
 
   return (

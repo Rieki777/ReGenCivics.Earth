@@ -143,8 +143,8 @@ export function useInkReveal() {
 
 export function useBlurUp() {
   useEffect(() => {
-    const imgs = Array.from(document.querySelectorAll<HTMLImageElement>("img.blur-up"));
-    imgs.forEach((img) => {
+    const activate = (img: HTMLImageElement) => {
+      if (img.classList.contains("blur-up-loaded")) return;
       if (img.complete && img.naturalWidth > 0) {
         img.classList.add("blur-up-loaded");
       } else {
@@ -152,7 +152,23 @@ export function useBlurUp() {
         img.addEventListener("load", done, { once: true });
         img.addEventListener("error", done, { once: true });
       }
+    };
+    // Handle images already in the DOM on mount
+    document.querySelectorAll<HTMLImageElement>("img.blur-up").forEach(activate);
+    // Watch for images added by route changes
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const node of Array.from(m.addedNodes)) {
+          if (node instanceof HTMLImageElement && node.classList.contains("blur-up")) {
+            activate(node);
+          } else if (node instanceof HTMLElement) {
+            node.querySelectorAll<HTMLImageElement>("img.blur-up").forEach(activate);
+          }
+        }
+      }
     });
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => mo.disconnect();
   }, []);
 }
 
@@ -267,13 +283,12 @@ export function useScrollProgress() {
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", compute);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", compute);
+      if (raf) cancelAnimationFrame(raf);
     };
   }, []);
-
   return progress;
 }
