@@ -121,7 +121,7 @@ async function recalculateTrustScores(db: any): Promise<number> {
 
 // ─── Step 4: Citizenship Tier Checks + Grace Period ────────────────────────
 
-async function checkCitizenshipTiers(db: any): Promise<{ promotions: number; demotions: number }> {
+export async function checkCitizenshipTiers(db: any): Promise<{ promotions: number; demotions: number }> {
   let promotions = 0;
   let demotions = 0;
 

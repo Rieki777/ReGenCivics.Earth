@@ -631,6 +631,22 @@ export default function Fund() {
       {/* Bottom CTA */}
       <section id="fund-cta" className="py-16 md:py-24 px-4">
         <div className="max-w-3xl mx-auto text-center">
+          {/*
+            M-2 rewrite proposal (Rye to swap in when ready).
+            Trips Writing Rule 5 ("Begin your journey" is vague filler).
+            Replacement, in Rye's voice, leads with affirmative + specific:
+
+              <h2 ...>Read the <span ...>Thesis</span></h2>
+              <p ...>
+                The fund is open. Read the investment thesis, then sign a
+                Letter of Intent so we know you are coming. We will get
+                you onboarded for the next close.
+              </p>
+
+            Leaving the live copy untouched per the spec ("draft in
+            comment block above the current copy. Do not replace the
+            live copy without Rye's sign-off").
+          */}
           <AnimatedSection animation="scale-in">
             <div className="glass-panel p-8 md:p-12 border-amber-400/20">
               <SeedOfLifeIcon className="w-12 h-12 text-amber-400/40 mx-auto mb-6" />
