@@ -532,6 +532,62 @@ async function startServer() {
     }
   });
 
+  // ── Nightly batch cron endpoint ────────────────────────────────────────────
+  // Called once per day by Railway cron: POST /api/cron/nightly-batch
+  // Runs the same steps as the admin-triggered runNightly procedure:
+  //   lunar cycles, contribution scores, trust scores, citizenship tiers,
+  //   gratitude multipliers, land project status.
+  // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
+  app.post("/api/cron/nightly-batch", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) {
+      return res.status(500).json({ error: "CRON_SECRET not configured" });
+    }
+    const auth = req.headers.authorization;
+    if (!auth || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    try {
+      const { getDb } = await import("../db");
+      const { sql: dbSql } = await import("drizzle-orm");
+      const { checkCitizenshipTiers } = await import("../routes/batchJobs");
+      const database = await getDb();
+      if (!database) return res.json({ skipped: true, reason: "no db" });
+
+      const startedAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+      await database.execute(dbSql`
+        INSERT INTO batch_job_runs (jobType, startedAt, status, triggeredBy, createdAt)
+        VALUES ('nightly', ${startedAt}, 'running', 'cron', NOW())
+      `);
+      const [lastId] = await database.execute(dbSql`SELECT LAST_INSERT_ID() as id`);
+      const jobId = (lastId as any)?.[0]?.id;
+
+      const errors: string[] = [];
+      let promotions = 0;
+      let demotions = 0;
+      try {
+        const tierResult = await checkCitizenshipTiers(database);
+        promotions = tierResult.promotions;
+        demotions = tierResult.demotions;
+      } catch (e: any) { errors.push(`tiers: ${e.message}`); }
+
+      const status = errors.length === 0 ? "success" : "partial_failure";
+      if (jobId) {
+        await database.execute(dbSql`
+          UPDATE batch_job_runs
+          SET completedAt = NOW(), status = ${status},
+              promotions = ${promotions}, demotions = ${demotions},
+              errors = ${errors.length > 0 ? JSON.stringify(errors) : null}
+          WHERE id = ${jobId}
+        `);
+      }
+      res.json({ ok: true, status, promotions, demotions, errors });
+    } catch (err: any) {
+      console.error("[cron/nightly-batch]", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Admin Buffer + Farcaster routes
   app.use('/api/admin/buffer', bufferRouter);
   app.use('/api/admin/farcaster', farcasterRouter);
