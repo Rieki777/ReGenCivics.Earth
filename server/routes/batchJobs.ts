@@ -90,7 +90,7 @@ async function recalculateTrustScores(db: any): Promise<number> {
        AND ge.endorserType = 'player' AND ge.status = 'active') as playerEndorsements,
       (SELECT COUNT(*) FROM quest_completions qc WHERE qc.userId = pp.userId) as questsCount,
       (SELECT COUNT(*) FROM gratitude_transactions gt
-       WHERE gt.recipientId = pp.userId) as gratitudeReceived,
+       WHERE gt.receiverId = pp.userId) as gratitudeReceived,
       (SELECT COUNT(*) FROM game_flags gf
        WHERE gf.flaggedType = 'player' AND gf.flaggedId = pp.userId
        AND gf.status = 'validated') as flagsValidated
@@ -155,7 +155,7 @@ export async function checkCitizenshipTiers(db: any): Promise<{ promotions: numb
       pp.graceStartedAt, pp.seasonsCompleted,
       (SELECT COUNT(*) FROM quest_completions qc WHERE qc.userId = pp.userId) as questsCount,
       (SELECT COUNT(*) FROM gratitude_transactions gt WHERE gt.senderId = pp.userId) as gratitudeSent,
-      (SELECT COUNT(*) FROM gratitude_transactions gt WHERE gt.recipientId = pp.userId) as gratitudeReceived,
+      (SELECT COUNT(*) FROM gratitude_transactions gt WHERE gt.receiverId = pp.userId) as gratitudeReceived,
       (SELECT COUNT(*) FROM game_endorsements ge
        WHERE ge.endorsedType = 'player' AND ge.endorsedId = pp.userId
        AND ge.endorserType = 'project' AND ge.status = 'active') as projectEndorsements,
@@ -272,7 +272,7 @@ async function updateGratitudeMultipliers(db: any): Promise<number> {
   const [players] = await db.execute(sql`
     SELECT pp.userId, pp.citizenshipTier,
       (SELECT COUNT(*) FROM gratitude_transactions gt
-       WHERE gt.recipientId = pp.userId) as gratitudeReceived
+       WHERE gt.receiverId = pp.userId) as gratitudeReceived
     FROM player_profiles pp
     WHERE pp.userId IS NOT NULL
   `);
