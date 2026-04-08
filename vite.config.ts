@@ -15,11 +15,17 @@ export default defineConfig(({ mode }): UserConfig => ({
       workbox: {
         // 5 MB limit to accommodate large vendor JS chunks
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        // Exclude OG images — social crawlers always fetch fresh, no offline value
-        globPatterns: ["**/*.{js,css,html,ico,webp,svg,woff2,png}"],
-        globIgnores: ["og/**", "og-default.*"],
-        // Serve index.html (SPA shell) for all navigation requests, with offline.html as the actual offline fallback
-        navigateFallback: "/index.html",
+        // Exclude OG images — social crawlers always fetch fresh, no offline value.
+        // Exclude HTML from precache so navigations always hit the network and
+        // pick up the per-request CSP nonce. Caching HTML in the SW would
+        // serve a stale body whose embedded nonce no longer matches the live
+        // CSP header, and every inline script would be blocked.
+        globPatterns: ["**/*.{js,css,ico,webp,svg,woff2,png}"],
+        globIgnores: ["og/**", "og-default.*", "**/*.html"],
+        // navigateFallback removed: with HTML out of the precache, the SW
+        // no longer has a precached shell to serve. Navigations always go
+        // to network. offline.html is still in client/public for the
+        // browser's built-in offline behavior.
         navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /^\/assets\//],
         runtimeCaching: [
           {

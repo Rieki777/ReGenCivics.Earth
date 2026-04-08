@@ -72,13 +72,87 @@ export function serveStatic(app: Express) {
     );
   }
 
+  // Per-request nonce substitution helper. Replaces every `{{NONCE}}`
+  // placeholder AND adds `nonce="..."` to every external <script src>
+  // tag and every <link rel="modulepreload"> tag that does not already
+  // have one. CSP `'strict-dynamic'` requires a nonce on every script
+  // load (including modulepreload, which is governed by script-src-elem).
+  // Without this, the main bundle and its preloaded chunks are blocked.
+  const applyNonce = (html: string, nonce: string): string => {
+    return html
+      .replaceAll("{{NONCE}}", nonce)
+      .replace(
+        /<script(?![^>]*\bnonce=)([^>]*\bsrc=)/g,
+        `<script nonce="${nonce}"$1`
+      )
+      .replace(
+        /<link(?![^>]*\bnonce=)([^>]*\brel="modulepreload")/g,
+        `<link nonce="${nonce}"$1`
+      );
+  };
+
+  // Dedicated HTML handlers MUST run BEFORE express.static so we can
+  // substitute the per-request CSP nonce into the inline <style> and
+  // <script> blocks. Without this, the static middleware would serve the
+  // raw template with `{{NONCE}}` placeholders intact and the page would
+  // be blocked by strict CSP.
+  let offlineHtmlCache: string | null = null;
+  app.get("/offline.html", (_req, res) => {
+    const offlinePath = path.resolve(distPath, "offline.html");
+    if (!offlineHtmlCache || process.env.NODE_ENV === "development") {
+      try { offlineHtmlCache = fs.readFileSync(offlinePath, "utf-8"); } catch { /* fall through */ }
+    }
+    if (!offlineHtmlCache) {
+      res.sendFile(offlinePath);
+      return;
+    }
+    const nonce = (res.locals.nonce as string) || "";
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    // no-store (not no-cache): prevents browsers from revalidating via
+    // 304 with a stale body. With nonce-based CSP, a 304 response would
+    // serve cached HTML carrying an old nonce alongside a fresh CSP
+    // header carrying a new nonce, and the browser would block every
+    // inline script and style as a nonce mismatch.
+    res.setHeader("Cache-Control", "no-store, must-revalidate");
+    res.send(applyNonce(offlineHtmlCache, nonce));
+  });
+
+  // Same treatment for the root index.html: serve the substituted template
+  // for `/` directly so the static middleware does not return the raw file
+  // with placeholders. The catch-all below handles every other SPA route.
+  let rootIndexHtmlCache: string | null = null;
+  app.get("/", (_req, res) => {
+    const indexPath = path.resolve(distPath, "index.html");
+    if (!rootIndexHtmlCache || process.env.NODE_ENV === "development") {
+      try { rootIndexHtmlCache = fs.readFileSync(indexPath, "utf-8"); } catch { /* fall through */ }
+    }
+    if (!rootIndexHtmlCache) {
+      res.sendFile(indexPath);
+      return;
+    }
+    const nonce = (res.locals.nonce as string) || "";
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    // no-store (not no-cache): prevents browsers from revalidating via
+    // 304 with a stale body. With nonce-based CSP, a 304 response would
+    // serve cached HTML carrying an old nonce alongside a fresh CSP
+    // header carrying a new nonce, and the browser would block every
+    // inline script and style as a nonce mismatch.
+    res.setHeader("Cache-Control", "no-store, must-revalidate");
+    res.send(applyNonce(rootIndexHtmlCache, nonce));
+  });
+
   // Vite hashes all asset filenames (e.g. index-abc123.js), so it's safe to
-  // cache them for 1 year. HTML is excluded (served via the catch-all below
-  // with no-cache so deploys are picked up immediately).
+  // cache them for 1 year. HTML is explicitly excluded so every .html
+  // request flows through the nonce-substituting handlers above and the
+  // catch-all below. Without this skip, express.static would serve the
+  // raw template files with `{{NONCE}}` placeholders intact and strict
+  // CSP would block every inline script and style.
   app.use(express.static(distPath, {
     maxAge: "1y",
     immutable: true,
     etag: true,
+    extensions: false,
+    index: false,
     setHeaders(res, filePath) {
       // Don't cache HTML or service worker files, they must always reflect the latest deploy
       if (filePath.endsWith(".html") || filePath.endsWith("sw.js") || filePath.endsWith("registerSW.js")) {
@@ -214,8 +288,15 @@ export function serveStatic(app: Express) {
       .replace(/(<link rel="canonical" href=")[^"]*(")/,
         `$1${canonical}$2`);
 
+    // Per-request CSP nonce substitution. Same applyNonce helper used
+    // by the dedicated /offline.html and / handlers above.
+    const nonce = (res.locals.nonce as string) || "";
+    const withNonce = applyNonce(injected, nonce);
+
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "no-cache");
-    res.send(injected);
+    // See note above about no-store: prevents 304 revalidation from
+    // serving cached HTML with stale nonces alongside fresh CSP headers.
+    res.setHeader("Cache-Control", "no-store, must-revalidate");
+    res.send(withNonce);
   });
 }

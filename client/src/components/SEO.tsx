@@ -105,6 +105,11 @@ export function SEO({
       const script = document.createElement('script');
       script.type = 'application/ld+json';
       script.id = 'seo-breadcrumb-ld';
+      // Strict CSP: tag the script with the per-request nonce so the
+      // dynamically-created element passes CSP. ld+json is data, not code,
+      // but Chromium checks CSP at element creation time regardless.
+      const nonce = (window as any).__NONCE__;
+      if (nonce) script.setAttribute('nonce', nonce);
       script.textContent = JSON.stringify(schemas.breadcrumb(breadcrumbItems));
       document.head.appendChild(script);
     }

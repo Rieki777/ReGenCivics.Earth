@@ -49,7 +49,7 @@ import * as db from "../db";
 import { createRequire } from "module";
 const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
-import { cspMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
+import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
 import { isCacheAvailable } from "../cache";
 import path from "path";
 
@@ -130,7 +130,9 @@ async function startServer() {
     next();
   });
 
-  // Security middleware
+  // Security middleware. cspNonceMiddleware MUST run before cspMiddleware
+  // so res.locals.nonce is set in time to be embedded in the CSP header.
+  app.use(cspNonceMiddleware);
   app.use(cspMiddleware);
   app.use(securityHeadersMiddleware);
   app.set('trust proxy', 1);

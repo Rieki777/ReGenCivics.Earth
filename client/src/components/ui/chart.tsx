@@ -76,8 +76,14 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Read the per-request CSP nonce that index.html injects via the
+  // window.__NONCE__ global. Strict CSP requires this on every <style>
+  // block created via dangerouslySetInnerHTML.
+  const nonce = typeof window !== "undefined" ? (window as any).__NONCE__ : undefined;
+
   return (
     <style
+      nonce={nonce}
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(

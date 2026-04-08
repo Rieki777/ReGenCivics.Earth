@@ -90,6 +90,8 @@ function loadMapScript() {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
     script.async = true;
     script.crossOrigin = "anonymous";
+    const nonce = (window as any).__NONCE__;
+    if (nonce) script.setAttribute("nonce", nonce);
     script.onload = () => {
       resolve(null);
       script.remove(); // Clean up immediately

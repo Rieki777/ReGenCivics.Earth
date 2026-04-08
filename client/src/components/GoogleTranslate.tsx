@@ -78,6 +78,8 @@ export function GoogleTranslateProvider({ children }: { children?: React.ReactNo
       const script = document.createElement('script');
       script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
       script.async = true;
+      const nonce = (window as any).__NONCE__;
+      if (nonce) script.setAttribute('nonce', nonce);
       document.body.appendChild(script);
       cleanup();
     };

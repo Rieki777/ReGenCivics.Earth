@@ -28,6 +28,8 @@ export default function AnalyticsLoader() {
         script.defer = true;
         script.src = `${endpoint}/umami`;
         script.dataset.websiteId = websiteId;
+        const nonce = (window as any).__NONCE__;
+        if (nonce) script.setAttribute("nonce", nonce);
         document.head.appendChild(script);
       }
     }

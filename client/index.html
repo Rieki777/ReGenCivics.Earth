@@ -54,7 +54,7 @@
     <link rel="preload" as="image" href="/images/backgrounds/home-desktop.webp?v=2" fetchpriority="high" />
 
     <!-- Route-aware LCP preload: inject the right hero image as soon as the HTML parses -->
-    <script>
+    <script nonce="{{NONCE}}">
       (function() {
         var p = location.pathname;
         var href = null;
@@ -182,7 +182,7 @@
     </script>
 
     <!-- Inline critical CSS for faster first paint -->
-    <style>
+    <style nonce="{{NONCE}}">
       /* Critical CSS for initial render */
       body { margin: 0; background: #1a472a; }
       #root { min-height: 100vh; }
@@ -201,6 +201,10 @@
       <!-- Loading placeholder for better perceived performance -->
       <div class="loading-placeholder" aria-label="Loading ReGen Civics..."></div>
     </div>
+    <!-- Expose the per-request CSP nonce to React components that need it
+         (e.g. Recharts theming via dangerouslySetInnerHTML). This script
+         tag itself is nonce-authorized so it executes under strict CSP. -->
+    <script nonce="{{NONCE}}">window.__NONCE__="{{NONCE}}";</script>
     <script type="module" src="/src/main.tsx"></script>
     <!-- Analytics loaded conditionally via AnalyticsLoader component based on cookie consent -->
   

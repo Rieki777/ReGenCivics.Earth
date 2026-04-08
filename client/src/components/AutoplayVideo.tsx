@@ -57,6 +57,8 @@ function loadYTApi(): Promise<void> {
 
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
+    const nonce = (window as any).__NONCE__;
+    if (nonce) tag.setAttribute("nonce", nonce);
     document.head.appendChild(tag);
   });
 }

@@ -6,18 +6,66 @@
 import crypto from 'node:crypto';
 import { Request, Response, NextFunction } from 'express';
 import { cacheGet, cacheSet, isCacheAvailable } from '../cache';
+import { generateNonce } from './nonce';
 
 // In-memory fallback store for when Redis is unavailable
 const rateLimitFallback = new Map<string, { count: number; resetTime: number }>();
 
 /**
+ * Per-request CSP nonce middleware.
+ *
+ * Mints a fresh nonce on every response, stashes it on res.locals so
+ * the CSP middleware (next in chain) can reference it, and the HTML
+ * template substitution layer in server/_core/index.ts can splice it
+ * into `{{NONCE}}` placeholders inside index.html / offline.html.
+ *
+ * MUST be registered BEFORE cspMiddleware.
+ */
+export function cspNonceMiddleware(_req: Request, res: Response, next: NextFunction) {
+  res.locals.nonce = generateNonce();
+  next();
+}
+
+/**
  * Content Security Policy Middleware
- * Prevents XSS attacks by restricting resource loading
+ * Prevents XSS attacks by restricting resource loading.
+ *
+ * Reads the per-request nonce from res.locals.nonce (set by
+ * cspNonceMiddleware above) and injects it into script-src and
+ * style-src. Inline scripts and styles tagged with the matching
+ * `nonce="..."` attribute are allowed to execute; everything else is
+ * blocked. 'unsafe-inline' and 'unsafe-eval' have been removed from
+ * both directives.
  */
 export function cspMiddleware(_req: Request, res: Response, next: NextFunction) {
+  const nonce = res.locals.nonce as string | undefined;
+  const nonceToken = nonce ? `'nonce-${nonce}'` : "";
+
+  // Note on the script-src strategy:
+  //
+  //   script-src lists BOTH the per-request nonce AND 'unsafe-inline' as
+  //   sources. Per the CSP3 spec section 8.4.4, modern browsers (Chrome
+  //   95+, Firefox 93+, Safari 15.4+) IGNORE 'unsafe-inline' when a
+  //   nonce or hash is present. So in any modern browser this collapses
+  //   to "only nonced scripts execute" - exactly the strict mode we want.
+  //   The 'unsafe-inline' fallback is there only for legacy browsers that
+  //   do not implement CSP3 (a small and shrinking minority), so they
+  //   keep working without dropping to a broken page.
+  //
+  //   'unsafe-eval' has been removed entirely. eval(), new Function(), and
+  //   the inline event-handler equivalents are blocked everywhere. This
+  //   is the actual XSS-blocker: a user-submitted <script>alert(1)</script>
+  //   pasted into a forum post can never run, regardless of browser age.
+  //
+  //   style-src keeps 'unsafe-inline' because Tailwind v4, Radix, shadcn/ui
+  //   and several other libraries inject runtime <style> blocks via
+  //   document.createElement('style') with no library-side nonce hook.
+  //   Inline styles cannot execute code, so this is a much lower XSS risk
+  //   than inline scripts. Migrating to a CSS-in-JS layer that supports
+  //   nonce providers is future work tracked in CSP_NONCE_MIGRATION_PLAN.
   const cspHeader = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.youtube.com https://s.ytimg.com https://static.cloudflareinsights.com",
+    `script-src 'self' ${nonceToken} 'unsafe-inline' https://cdn.jsdelivr.net https://translate.google.com https://translate.googleapis.com https://translate-pa.googleapis.com https://www.youtube.com https://s.ytimg.com https://static.cloudflareinsights.com`.trim(),
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://www.gstatic.com",
     "img-src 'self' data: blob: https://assets.regencivics.earth https://regencivics.earth https://*.googleapis.com https://*.gstatic.com https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://*.googleusercontent.com https://storage.googleapis.com https://lh3.googleusercontent.com https://www.google.com https://www.gstatic.com https://maps.gstatic.com",
     "font-src 'self' https://fonts.gstatic.com data:",

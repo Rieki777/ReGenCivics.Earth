@@ -237,10 +237,12 @@ export function StructuredData() {
       courseSchema
     ];
 
+    const nonce = (window as any).__NONCE__;
     schemas.forEach((schema, index) => {
       const script = document.createElement('script');
       script.type = 'application/ld+json';
       script.id = `structured-data-${index}`;
+      if (nonce) script.setAttribute('nonce', nonce);
       script.textContent = JSON.stringify(schema);
       document.head.appendChild(script);
     });
