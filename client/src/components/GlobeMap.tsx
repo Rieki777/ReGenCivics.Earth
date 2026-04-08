@@ -766,6 +766,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
   const globeInstanceRef = useRef<any>(null);
   const [selectedEntity, setSelectedEntity] = useState<MapEntity | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [showInactive, setShowInactive] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [globeReady, setGlobeReady] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -832,9 +833,13 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     return Array.from(set).sort();
   }, [allEntities]);
 
+  // Track filter dependencies including showInactive
   // Filter entities by type, search query, and country
   const filteredEntities = useMemo(() => {
     let result = allEntities;
+    if (!showInactive) {
+      result = result.filter((e) => !e.inactive);
+    }
     if (filter !== "all") {
       result = result.filter((e) => e.type === filter);
     }
@@ -858,7 +863,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
       );
     }
     return result;
-  }, [allEntities, filter, searchQuery, countryFilter, meetingFreqFilter, dietaryFilter]);
+  }, [allEntities, filter, showInactive, searchQuery, countryFilter, meetingFreqFilter, dietaryFilter]);
 
   // Separate pinned vs global/orbiting entities
   const pinnedEntities = useMemo(() => filteredEntities.filter((e) => !e.isGlobal), [filteredEntities]);
@@ -1366,6 +1371,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           {counts.applicant > 0 && (
             <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#87ceeb] text-[#1a472a]" />
           )}
+          <button
+            onClick={() => setShowInactive(s => !s)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              showInactive ? 'bg-white/20 text-white' : 'bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30'
+            }`}
+            title={showInactive ? 'Showing all projects' : 'Hiding inactive projects'}
+          >
+            {showInactive ? 'Show All' : 'Active Only'}
+          </button>
         </div>
 
         {/* Sidebar - Entity List (desktop overlay) */}
@@ -1683,4 +1697,3 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     </div>
   );
 }
-      

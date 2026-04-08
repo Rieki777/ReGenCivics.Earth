@@ -124,12 +124,12 @@ export default function TreasuryDashboard() {
   return (
     <div className="space-y-8">
       {/* Model Dashboard Notice */}
-      <div className="bg-amber-500/20 border-2 border-amber-500/50 rounded-xl p-4 text-center">
-        <p className="text-amber-400 font-bold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
+      <div className="bg-gradient-to-r from-amber-500/30 via-amber-500/20 to-amber-500/30 border-2 border-amber-500/60 rounded-2xl p-6 md:p-8 text-center shadow-lg shadow-amber-500/10">
+        <p className="text-amber-300 font-extrabold text-3xl md:text-4xl tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
           📊 MODEL DASHBOARD
         </p>
-        <p className="text-amber-300/80 text-sm mt-1">
-          Distributions won't begin until fund reaches $20M committed
+        <p className="text-amber-100/90 text-base md:text-lg mt-3 max-w-2xl mx-auto leading-relaxed">
+          This is a projection. Distributions won't begin until the fund reaches $20M committed.
         </p>
       </div>
 

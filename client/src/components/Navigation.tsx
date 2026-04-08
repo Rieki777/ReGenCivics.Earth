@@ -409,12 +409,12 @@ export default function Navigation() {
                   <BookOpen className="w-5 h-5 mr-3 text-amber-400" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Learn + Blog</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
-                  onClick={() => window.location.href = '/governance'}
+                  onClick={() => window.location.href = '/community'}
                 >
-                  <Globe className="w-5 h-5 mr-3 text-[#4a9f9f]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Governance</span>
+                  <MessageCircle className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Community Forum</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 <div className="px-2 pt-2 pb-1 flex items-center gap-2">
@@ -452,10 +452,10 @@ export default function Navigation() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
-                  onClick={() => window.location.href = '/community'}
+                  onClick={() => window.location.href = '/governance'}
                 >
-                  <MessageCircle className="w-5 h-5 mr-3 text-[#7dd87d]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Community Forum</span>
+                  <Globe className="w-5 h-5 mr-3 text-[#4a9f9f]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Governance</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"

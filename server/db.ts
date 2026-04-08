@@ -3305,4 +3305,4 @@ export async function getUserCommunityAgreementVotes(userId: number) {
   const votes = await db.select().from(communityAgreementVotes)
     .where(eq(communityAgreementVotes.userId, userId));
   return votes.map(v => v.agreementId);
-}      
+}

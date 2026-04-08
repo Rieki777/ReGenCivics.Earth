@@ -119,9 +119,15 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
           </div>
         </div>
 
-        {/* Song title + track list toggle */}
+        {/* Song title + add your voice + track list toggle */}
         <div className="text-center">
           <p className="text-[#7dd87d] text-sm font-medium">{currentSong?.title ?? 'No song loaded'}</p>
+          <a
+            href="/hymn-book"
+            className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[#7dd87d]/80 hover:text-[#7dd87d] transition-colors"
+          >
+            + Add Your Voice
+          </a>
           {currentSong?.artist && (
             <p className="text-white/60 text-[11px]">{currentSong.artist}</p>
           )}
@@ -165,23 +171,12 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="block text-xs font-medium truncate">{track.title}</span>
-                        {track.artist && (
-                          <span className="block text-[10px] text-white/45 truncate">{track.artist}</span>
-                        )}
                       </span>
                     </button>
                   </li>
                 )
               })}
             </ul>
-            <div className="px-3 py-2 border-t border-white/5 text-center">
-              <a
-                href="/hymn-book"
-                className="inline-flex items-center gap-1 text-[11px] text-[#7dd87d] hover:text-white transition-colors"
-              >
-                + Add Your Voice
-              </a>
-            </div>
           </div>
         )}
 

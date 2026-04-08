@@ -237,10 +237,10 @@ export default function Land() {
 
           <AnimatedSection animation="slide-up" delay={200}>
             <h1
-              className="ink-reveal text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white leading-tight text-shadow-strong"
+              className="ink-reveal text-2xl md:text-4xl lg:text-5xl font-bold mb-4 text-white leading-tight text-shadow-strong"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Stewards of <span className="text-[#7dd87d]">Regeneration</span>
+              We help you design the economic, financial, and governance <span className="text-[#7dd87d]">Game</span> your land project needs to thrive and access diverse forms of capital to help you thrive!
             </h1>
           </AnimatedSection>
 
@@ -1100,4 +1100,31 @@ export default function Land() {
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Stewardship labor from gardening day participants</li>
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Free Game Building for your local food system</li>
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Custom quest curriculum for your ecosystem</li>
-                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> $ReGen token rewa
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> $ReGen token rewards for contributors</li>
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Governance design and community onboarding</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <Link href="/connect?path=land_project&program=heal-the-land">
+                <Button size="lg" className="bg-[#d4a574] hover:bg-[#c49564] text-[#1a472a] font-bold rounded-xl" style={{ fontFamily: 'var(--font-accent)' }}>
+                  Apply as a Land Project Partner
+                </Button>
+              </Link>
+              <p className="text-white/40 text-xs mt-3">
+                <Link href="/heal-the-land" className="text-[#7dd87d] hover:underline">Learn more about the program</Link>
+              </p>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* Related Content */}
+      <RelatedContent pages={relatedContentMap.land.pages} blog={relatedContentMap.land.blog} />
+        </div>
+      </section>
+    </PageBackground>
+    </HeroPageLoader>
+  );
+}

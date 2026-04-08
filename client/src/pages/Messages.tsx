@@ -181,7 +181,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
               setSelectedUserName("");
             }}
             onKeyDown={handleKeyDown}
-            className="border-[#1a472a]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30 bg-white"
+            className="border-[#1a472a]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/55"
           />
 
           {showDropdown && (
