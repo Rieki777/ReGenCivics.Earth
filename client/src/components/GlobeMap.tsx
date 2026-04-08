@@ -129,7 +129,6 @@ const LAND_PROJECTS: MapEntity[] = [
     description: "3,350-acre living lab in the Yucatan peninsula, exploring regenerative land stewardship at scale.",
     size: "3,350 acres",
     url: "https://www.tabiregeneration.com/",
-    image: cdnImg("https://assets.regencivics.earth/tAiFiPiWRBOxUGZV.jpg"),
     inactive: true,
     season: "Season 1",
   },
@@ -531,6 +530,10 @@ function EntityCard({
             alt={entity.name}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={(e) => {
+              const container = (e.target as HTMLImageElement).parentElement;
+              if (container) container.style.display = 'none';
+            }}
           />
         </div>
       )}
@@ -1680,3 +1683,4 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     </div>
   );
 }
+      

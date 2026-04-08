@@ -482,7 +482,7 @@ export default function Play() {
               className="text-white/60 text-center mb-8 max-w-xl mx-auto text-lg text-shadow-subtle"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Ready to go deeper? These paths require more commitment and offer more impact.
+              These paths require more time and offer more impact. Good for people who want to build, lead, or root in.
             </p>
           </AnimatedSection>
 
@@ -628,4 +628,4 @@ export default function Play() {
     </PageBackground>
     </HeroPageLoader>
   );
-}
+}   

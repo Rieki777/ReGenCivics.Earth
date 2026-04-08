@@ -1577,8 +1577,8 @@ export default function Bionomics() {
               <p className="text-white/90 text-base md:text-lg leading-relaxed mb-10 max-w-2xl mx-auto">
                 This page will keep growing. The Game is just getting started. If any of
                 this resonates, find a quest, talk to a land project, or just sit with the
-                bridge image for a minute. The world on the other side is real. We are
-                walking toward it together.
+                bridge image for a minute. The world on the other side is real. People are
+                already building it.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
@@ -1592,38 +1592,4 @@ export default function Bionomics() {
                   </Button>
                 </Link>
                 <Link href="/connect">
-                  <Button
-                    size="lg"
-                    className="w-full rounded-2xl bg-[#a8e6a8] hover:bg-[#9bd99b] text-[#0d2818] font-bold"
-                    style={{ fontFamily: "var(--font-accent)" }}
-                  >
-                    For food producers <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-                <Link href="/quest">
-                  <Button
-                    size="lg"
-                    className="w-full rounded-2xl bg-[#f0c040] hover:bg-[#e3b035] text-[#0d2818] font-bold"
-                    style={{ fontFamily: "var(--font-accent)" }}
-                  >
-                    For players <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-                <Link href="/tokenomics">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full rounded-2xl border-2 border-[#d4a574]/60 text-[#d4a574] hover:bg-[#d4a574]/15 font-bold"
-                    style={{ fontFamily: "var(--font-accent)" }}
-                  >
-                    For investors <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-    </PageWrapper>
-  );
-}
+         

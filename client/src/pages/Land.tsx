@@ -249,9 +249,8 @@ export default function Land() {
               className="text-lg md:text-xl lg:text-2xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto text-shadow-subtle"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              We help you design your economic, financial, and organizational game to take your
-              regenerative land project to the next level, while providing a better investment vehicle
-              to raise funds.
+              We help you design the economic, financial, and governance game your land project needs to
+              thrive and access capital from the regenerative fund.
             </p>
           </AnimatedSection>
 
@@ -1040,8 +1039,8 @@ export default function Land() {
                 Ready to <span className="text-[#7dd87d]">Begin?</span>
               </h2>
               <p className="text-white/60 text-base md:text-lg mb-6 max-w-xl mx-auto">
-                Season 2 applications are open now for September 2026. Join the next cohort of regenerative land
-                projects and receive the support your vision deserves.
+                Season 2 applications are open now for September 2026. Applications take around 15 minutes.
+                The team reviews every submission and follows up directly.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link href="/apply">
@@ -1101,31 +1100,4 @@ export default function Land() {
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Stewardship labor from gardening day participants</li>
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Free Game Building for your local food system</li>
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Custom quest curriculum for your ecosystem</li>
-                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> $ReGen token rewards for contributors</li>
-                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Governance design and community onboarding</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <Link href="/connect?path=land_project&program=heal-the-land">
-                <Button size="lg" className="bg-[#d4a574] hover:bg-[#c49564] text-[#1a472a] font-bold rounded-xl" style={{ fontFamily: 'var(--font-accent)' }}>
-                  Apply as a Land Project Partner
-                </Button>
-              </Link>
-              <p className="text-white/40 text-xs mt-3">
-                <Link href="/heal-the-land" className="text-[#7dd87d] hover:underline">Learn more about the program</Link>
-              </p>
-            </div>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      {/* Related Content */}
-      <RelatedContent pages={relatedContentMap.land.pages} blog={relatedContentMap.land.blog} />
-        </div>
-      </section>
-    </PageBackground>
-    </HeroPageLoader>
-  );
-}
+                  <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> $ReGen token rewa
