@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, not, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
@@ -2911,7 +2911,15 @@ export async function getRecentForumPostsForDigest(): Promise<{ id: number; titl
     replyCount: forumPosts.replyCount,
     viewCount: forumPosts.viewCount,
   }).from(forumPosts)
-    .where(gt(forumPosts.createdAt, weekAgo))
+    .where(
+      and(
+        gt(forumPosts.createdAt, weekAgo),
+        // Exclude automated test posts from Vitest and CI runs
+        not(like(forumPosts.title, 'Test%')),
+        not(like(forumPosts.title, '%Vitest%')),
+        not(like(forumPosts.title, '%[test]%')),
+      )
+    )
     .orderBy(desc(forumPosts.replyCount))
     .limit(10);
   return rows;
@@ -3297,4 +3305,4 @@ export async function getUserCommunityAgreementVotes(userId: number) {
   const votes = await db.select().from(communityAgreementVotes)
     .where(eq(communityAgreementVotes.userId, userId));
   return votes.map(v => v.agreementId);
-}
+}      
