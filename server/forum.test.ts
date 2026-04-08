@@ -138,9 +138,20 @@ describe("forum.postById", () => {
   it.skipIf(skipIfNoDb)("returns a post by id", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
-    const post = await caller.forum.postById({ id: 1 });
+    // Don't hardcode id 1: forum reseeds and id sequence drift make
+    // any specific id fragile. Pull the first post from the list and
+    // assert that postById returns the same row.
+    const list = await caller.forum.posts({ limit: 1 });
+    const firstId = list.posts[0]?.id;
+    if (!firstId) {
+      // Empty forum (fresh DB); the assertion below would not be
+      // meaningful. Just verify postById errors cleanly for a
+      // missing id, which the next test already covers.
+      return;
+    }
+    const post = await caller.forum.postById({ id: firstId });
     expect(post).toBeTruthy();
-    expect(post!.id).toBe(1);
+    expect(post!.id).toBe(firstId);
     expect(post!.title).toBeTruthy();
   });
 
