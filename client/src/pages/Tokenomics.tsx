@@ -684,7 +684,7 @@ function ReturnsFlowDiagram() {
   return (
     <div ref={ref} className="bg-[#0d2818]/60 rounded-2xl border border-[#7dd87d]/20 p-6">
       <h4 className="text-lg font-bold text-white mb-2" style={{ fontFamily: "var(--font-display)" }}>
-        How Returns Flow
+        Distribution Breakdown
       </h4>
       <p className="text-white/60 text-sm mb-6">
         Portfolio Distributions go to <strong className="text-[#7dd87d]">$RCivics holders</strong>. Management fees split 50% Council / 50% all RCVoice holders.

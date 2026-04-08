@@ -272,8 +272,29 @@ export const pageSEO = {
     title: 'Land Projects | ReGen Civics',
     description: 'Real land projects doing the hard work of regenerating soil, water, community, and local economy. These are the projects we\'re backing.',
     keywords: 'regenerative land projects, ecovillages, sustainable farms, land-backed investment',
-    image: `${BASE_URL}/og-default.jpg`,
+    image: '/og/land.jpg',
     url: '/land'
+  },
+  bionomics: {
+    title: 'Bionomics | ReGen Civics',
+    description: 'A living economy modelled on ecosystems. How ReGen Civics builds bioregional value flows that work like mycelium and forests.',
+    keywords: 'bionomics, regenerative economy, living systems economics, bioregional finance, ecosystem economics',
+    image: '/og/bionomics.jpg',
+    url: '/bionomics'
+  },
+  hymnBook: {
+    title: 'Hymn Book | ReGen Civics',
+    description: 'Songs of the Regenerative Renaissance. A growing collection of hymns from the movement.',
+    keywords: 'regenerative hymns, hymn book, regenerative music, songs of the renaissance',
+    image: '/og/hymn-book.jpg',
+    url: '/hymn-book'
+  },
+  features: {
+    title: 'Feature Suggestions | ReGen Civics',
+    description: 'Suggest and vote on new features for the ReGen Civics platform. Help shape the tools that build the Regenerative Renaissance.',
+    keywords: 'feature suggestions, community voting, regenerative platform, product feedback',
+    image: '/og/features.jpg',
+    url: '/features'
   },
   ally: {
     title: 'Alliance Organizations | ReGen Civics',

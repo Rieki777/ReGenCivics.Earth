@@ -209,10 +209,12 @@ export function serveStatic(app: Express) {
     "/privacy-policy": { title: "Privacy Policy: ReGen Civics", description: "How ReGen Civics handles your data." },
     "/disclaimers": { title: "Disclaimers: ReGen Civics", description: "Legal disclaimers for the ReGen Civics platform and fund." },
     "/glossary":    { title: "Glossary: ReGen Civics", description: "Key terms and concepts in the ReGen Civics ecosystem." },
-    "/features":    { title: "Feature Suggestions: ReGen Civics", description: "Suggest and vote on new features for the ReGen Civics platform." },
+    "/features":    { title: "Feature Suggestions: ReGen Civics", description: "Suggest and vote on new features for the ReGen Civics platform.", image: `${BASE_URL}/og/features.jpg` },
+    "/bionomics":   { title: "Bionomics: ReGen Civics", description: "A living economy modelled on ecosystems. How ReGen Civics builds bioregional value flows.", image: `${BASE_URL}/og/bionomics.jpg` },
+    "/hymn-book":   { title: "Hymn Book: ReGen Civics", description: "Songs of the Regenerative Renaissance. A growing collection of hymns from the movement.", image: `${BASE_URL}/og/hymn-book.jpg` },
     "/investor":    { title: "Investor Journey: ReGen Civics", description: "Begin your journey as a regenerative investor. Explore the fund and connect with land projects." },
     "/loi":         { title: "Letter of Intent: ReGen Civics", description: "Submit a letter of intent to invest in the ReGen Civics Fund." },
-    "/tools":       { title: "Regen Civilization Tools Library", description: "Every tool the regenerative renaissance needs. Software, hardware, governance, currency, food systems." },
+    "/tools":       { title: "Regen Civilization Tools Library", description: "Every tool the regenerative renaissance needs. Software, hardware, governance, currency, food systems.", image: `${BASE_URL}/og/tools.jpg` },
     "/heal-the-land": { title: "Heal the Land, Heal Ourselves | Church of the Regenerative Earth", description: "A community healing ministry offering free food, gardening days, and land residency. For land project sponsors: free Game Building." },
   };
 
