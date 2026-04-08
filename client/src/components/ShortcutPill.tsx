@@ -1,5 +1,5 @@
 /**
- * ShortcutPill — subtle ⌘K prompt that appears briefly for first-time visitors,
+ * ShortcutPill, subtle ⌘K prompt that appears briefly for first-time visitors,
  * then stays as a small hint in the corner. Clicking it opens the CommandPalette.
  */
 import { useEffect, useState } from "react";

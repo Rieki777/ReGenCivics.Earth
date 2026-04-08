@@ -199,7 +199,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
     <div className="space-y-4">
       <ProgressBar />
 
-      {/* Step 1 — Who Are You? */}
+      {/* Step 1. Who Are You? */}
       {step === 1 && (
         <div className="space-y-5">
           <div>
@@ -249,7 +249,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
       )}
 
-      {/* Step 2 — Link Hypha Account (optional) */}
+      {/* Step 2. Link Hypha Account (optional) */}
       {step === 2 && (
         <div className="space-y-5">
           <div className="bg-[#f0ebe3] p-4 rounded-lg space-y-4">
@@ -303,7 +303,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
       )}
 
-      {/* Step 3 — Review & Create */}
+      {/* Step 3. Review & Create */}
       {step === 3 && (
         <div className="space-y-5">
           <div className="bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-xl p-4 space-y-3">
@@ -521,7 +521,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
       </div>
       
       <CardContent className="p-6 space-y-6">
-        {/* Bio — structured soul questions or plain text fallback */}
+        {/* Bio, structured soul questions or plain text fallback */}
         {profile.bio && (() => {
           let parsed: { role?: string; soul?: string; desires?: string; gifts?: string } | null = null;
           try { parsed = JSON.parse(profile.bio); } catch { /* plain text */ }
@@ -1623,7 +1623,7 @@ const CAPITAL_TYPES = [
 
 type CapitalType = typeof CAPITAL_TYPES[number]["value"];
 
-// ─── #23 — Event Attendance Token Balance ────────────────────────────────────
+// ─── #23. Event Attendance Token Balance ────────────────────────────────────
 function EventAttendanceBalance() {
   const { data: tokenData } = trpc.events.myTokenBalance.useQuery(undefined);
   if (!tokenData || tokenData.balance === 0) return null;
@@ -1808,7 +1808,7 @@ function ContributionsTab({
         )}
       </div>
 
-      {/* #23 — Event Attendance Token Balance */}
+      {/* #23. Event Attendance Token Balance */}
       <EventAttendanceBalance />
 
       {/* Referral Stats */}

@@ -6,7 +6,7 @@
 
 import { Resend } from 'resend';
 
-// Lazy Resend client initialization — avoids crashing at module load when key is missing
+// Lazy Resend client initialization, avoids crashing at module load when key is missing
 let _resend: Resend | null = null;
 function getResend(): Resend {
   if (!_resend) {
@@ -180,7 +180,7 @@ function wrapLinksWithTracking(html: string, emailLogId?: number): string {
 //     Set EMAIL_RATE_LIMIT_PER_HOUR to override. Use a high value (e.g. 500) to
 //     effectively disable it for bulk sends you've consciously triggered.
 //
-// These are in-memory and reset on restart. They supplement EMAIL_HOLD — not replace it.
+// These are in-memory and reset on restart. They supplement EMAIL_HOLD, not replace it.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SERVER_START_TIME = Date.now();
@@ -202,7 +202,7 @@ function checkRateLimits(recipientCount: number, subject: string): { blocked: bo
     if (startupEmailCount + recipientCount > STARTUP_LIMIT) {
       return {
         blocked: true,
-        reason: `STARTUP_BURST_BLOCK — ${startupEmailCount + recipientCount} recipients would exceed the ${STARTUP_LIMIT}-recipient startup limit (${Math.round(ageMs / 1000)}s since start). Set STARTUP_EMAIL_LIMIT env var to raise this. Subject: "${subject}"`,
+        reason: `STARTUP_BURST_BLOCK, ${startupEmailCount + recipientCount} recipients would exceed the ${STARTUP_LIMIT}-recipient startup limit (${Math.round(ageMs / 1000)}s since start). Set STARTUP_EMAIL_LIMIT env var to raise this. Subject: "${subject}"`,
       };
     }
   }
@@ -215,7 +215,7 @@ function checkRateLimits(recipientCount: number, subject: string): { blocked: bo
   if (sentThisHour + recipientCount > HOURLY_LIMIT) {
     return {
       blocked: true,
-      reason: `HOURLY_RATE_LIMIT — ${sentThisHour} already sent this hour, ${recipientCount} more would exceed the ${HOURLY_LIMIT}-recipient/hr limit. Set EMAIL_RATE_LIMIT_PER_HOUR env var to raise this. Subject: "${subject}"`,
+      reason: `HOURLY_RATE_LIMIT, ${sentThisHour} already sent this hour, ${recipientCount} more would exceed the ${HOURLY_LIMIT}-recipient/hr limit. Set EMAIL_RATE_LIMIT_PER_HOUR env var to raise this. Subject: "${subject}"`,
     };
   }
 
@@ -241,7 +241,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
   // to re-enable. Emails that hit this gate are logged but never sent.
   if (process.env.EMAIL_HOLD === "true") {
     const recipients = Array.isArray(params.to) ? params.to.join(", ") : params.to;
-    console.log(`[Email] HELD (EMAIL_HOLD=true) — would have sent "${params.subject}" to: ${recipients}`);
+    console.log(`[Email] HELD (EMAIL_HOLD=true), would have sent "${params.subject}" to: ${recipients}`);
     return { id: null };
   }
   // ─────────────────────────────────────────────────────────────────────────
@@ -251,12 +251,12 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
   const recipientCount = toList.length;
   const { blocked, reason } = checkRateLimits(recipientCount, params.subject);
   if (blocked) {
-    console.error(`[Email] BLOCKED by rate limiter — ${reason}`);
+    console.error(`[Email] BLOCKED by rate limiter, ${reason}`);
     // In production, this would ideally fire a Sentry alert or admin notification.
     try { const Sentry = await import("@sentry/node"); Sentry.captureMessage(`Email rate limit hit: ${reason}`, "error"); } catch {}
     return { id: null };
   }
-  // Record send before dispatching (optimistic — prevents races)
+  // Record send before dispatching (optimistic, prevents races)
   recordSend(recipientCount);
   // ─────────────────────────────────────────────────────────────────────────
 

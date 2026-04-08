@@ -1,6 +1,6 @@
 import "dotenv/config";
 import crypto from "node:crypto";
-/** Inline cookie parser — replaces the `cookie` npm package to avoid CJS/ESM
+/** Inline cookie parser, replaces the `cookie` npm package to avoid CJS/ESM
  *  interop issues in the esbuild ESM bundle (Sentry: "Dynamic require of cookie"). */
 function parseCookieHeader(str: string): Record<string, string> {
   const result: Record<string, string> = {};
@@ -169,7 +169,7 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-  // CSRF token endpoint — issues a CSRF token tied to the session cookie.
+  // CSRF token endpoint, issues a CSRF token tied to the session cookie.
   // The tRPC CSRF middleware validates this token on mutations.
   app.get("/api/csrf-token", (req, res) => {
     const cookies = parseCookieHeader(req.headers.cookie || "");
@@ -244,7 +244,7 @@ async function startServer() {
   let sitemapCache: { xml: string; generatedAt: number } | null = null;
   const SITEMAP_TTL = 60 * 60 * 1000; // 1 hour
 
-  // Dynamic sitemap — includes static routes + DB-driven blog/campaign/forum URLs
+  // Dynamic sitemap, includes static routes + DB-driven blog/campaign/forum URLs
   app.get('/sitemap.xml', async (_req, res) => {
     // Return cached sitemap if still fresh
     if (sitemapCache && Date.now() - sitemapCache.generatedAt < SITEMAP_TTL) {
@@ -319,17 +319,17 @@ async function startServer() {
       'your-seeds-contributions-live-on',
     ];
 
-    // Dynamic DB entries (best-effort — sitemap still serves if DB is down)
+    // Dynamic DB entries (best-effort, sitemap still serves if DB is down)
     let campaignIds: number[] = [];
     let forumPostIds: number[] = [];
     try {
       const campaigns = await db.listCampaigns('active');
       campaignIds = campaigns.map((c: { id: number }) => c.id);
-    } catch { /* DB unavailable — skip dynamic campaigns */ }
+    } catch { /* DB unavailable, skip dynamic campaigns */ }
     try {
       const posts = await db.listForumPosts(undefined, 200, 0);
       forumPostIds = posts.map((p: { id: number }) => p.id);
-    } catch { /* DB unavailable — skip dynamic forum posts */ }
+    } catch { /* DB unavailable, skip dynamic forum posts */ }
 
     const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/'/g, '&apos;');
 
@@ -449,7 +449,7 @@ async function startServer() {
       const windowStart = new Date(now.getTime() + 20 * 60 * 60 * 1000); // 20h from now
       const windowEnd = new Date(now.getTime() + 28 * 60 * 60 * 1000);   // 28h from now
 
-      // #7 — Auto-update event status based on time
+      // #7. Auto-update event status based on time
       const liveThreshold = new Date(now.getTime() - 30 * 60 * 1000);   // started >30min ago
       const completedThreshold = now;                                      // endTime has passed
       // Mark events as live if they started within the last 30 min and are still "upcoming"
@@ -514,7 +514,7 @@ async function startServer() {
           totalSent += batch.length;
         }
 
-        // #4 — Send SMS reminders to those who provided a phone number
+        // #4. Send SMS reminders to those who provided a phone number
         const smsText = `ReGen Civics reminder: "${event.title}" is tomorrow at ${timeStr}. Join: ${joinUrl}`;
         for (const signup of smsSignups) {
           await sendTwilioSMS(signup.phone!, smsText).catch(() => {});
@@ -539,12 +539,12 @@ async function startServer() {
   registerEmbedRoutes(app);
   // Cache-control for slow-changing tRPC GET endpoints (public, read-only data)
   const CACHED_TRPC_PREFIXES: Array<{ prefix: string; maxAge: number }> = [
-    { prefix: "/api/trpc/forum.listCategories", maxAge: 300 },      // 5 min — forum categories change rarely
-    { prefix: "/api/trpc/glossary.list", maxAge: 3600 },            // 1 hr  — glossary is static
-    { prefix: "/api/trpc/seasons.list", maxAge: 3600 },             // 1 hr  — seasons change rarely
-    { prefix: "/api/trpc/applications.mapData", maxAge: 120 },      // 2 min — map data is near-real-time
-    { prefix: "/api/trpc/system.getPublicStats", maxAge: 300 },     // 5 min — dashboard stats
-    { prefix: "/api/trpc/orgClaims.list", maxAge: 600 },            // 10 min — org list
+    { prefix: "/api/trpc/forum.listCategories", maxAge: 300 },      // 5 min, forum categories change rarely
+    { prefix: "/api/trpc/glossary.list", maxAge: 3600 },            // 1 hr , glossary is static
+    { prefix: "/api/trpc/seasons.list", maxAge: 3600 },             // 1 hr , seasons change rarely
+    { prefix: "/api/trpc/applications.mapData", maxAge: 120 },      // 2 min, map data is near-real-time
+    { prefix: "/api/trpc/system.getPublicStats", maxAge: 300 },     // 5 min, dashboard stats
+    { prefix: "/api/trpc/orgClaims.list", maxAge: 600 },            // 10 min, org list
   ];
   app.use("/api/trpc", (req, res, next) => {
     if (req.method === "GET") {
@@ -569,14 +569,14 @@ async function startServer() {
     Sentry.setupExpressErrorHandler(app);
   }
 
-  // Branded 500 error handler — shown when the server crashes before React loads
+  // Branded 500 error handler, shown when the server crashes before React loads
   app.use((_err: unknown, _req: import("express").Request, res: import("express").Response, _next: import("express").NextFunction) => {
     res.status(500).send(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ReGen Civics — Something went wrong</title>
+  <title>ReGen Civics. Something went wrong</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(to bottom,#0a1a0a,#1a472a);font-family:system-ui,sans-serif;color:#fff;text-align:center;padding:2rem}

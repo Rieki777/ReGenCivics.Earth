@@ -1,5 +1,5 @@
 /**
- * useReducedMotion — returns true when animations should be skipped.
+ * useReducedMotion, returns true when animations should be skipped.
  * Triggers on: OS prefers-reduced-motion, or a slow/data-saving connection.
  */
 export function useReducedMotion(): boolean {

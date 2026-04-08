@@ -1,12 +1,12 @@
 /**
- * BioregionSelect — searchable combobox for selecting a bioregion by ID.
+ * BioregionSelect, searchable combobox for selecting a bioregion by ID.
  * Uses shadcn Popover + Command (cmdk) for the combobox pattern.
  *
  * Props:
- *   value      — currently selected bioregion ID (or null)
- *   onChange   — called with the new ID (or null to clear)
- *   placeholder — text shown when nothing is selected
- *   variant    — "light" (cream bg, for CreateProfileForm) | "dark" (glass bg, for Settings panel)
+ *   value     , currently selected bioregion ID (or null)
+ *   onChange  , called with the new ID (or null to clear)
+ *   placeholder, text shown when nothing is selected
+ *   variant   , "light" (cream bg, for CreateProfileForm) | "dark" (glass bg, for Settings panel)
  */
 
 import React, { useState } from "react";

@@ -12,7 +12,7 @@ import { ENV } from "../_core/env";
 import { SignJWT, jwtVerify } from "jose";
 
 export const newsletterRouter = router({
-  // Subscribe to newsletter — creates pending subscriber (isActive=0) and sends confirmation email
+  // Subscribe to newsletter, creates pending subscriber (isActive=0) and sends confirmation email
   subscribe: publicProcedure
     .input(z.object({
       email: z.string().email(),
@@ -52,7 +52,7 @@ export const newsletterRouter = router({
           `,
         });
       } catch {
-        // Email failure is non-fatal — subscriber record is created, admin can manually activate
+        // Email failure is non-fatal, subscriber record is created, admin can manually activate
       }
 
       return { id: subscriberId, success: true, pendingConfirmation: true };
@@ -86,7 +86,7 @@ export const newsletterRouter = router({
     return db.getActiveNewsletterSubscribers();
   }),
 
-  // Unsubscribe from newsletter (public — rate limited to prevent email enumeration)
+  // Unsubscribe from newsletter (public, rate limited to prevent email enumeration)
   unsubscribe: publicProcedure
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {

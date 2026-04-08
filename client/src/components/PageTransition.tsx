@@ -13,7 +13,7 @@ interface PageTransitionProps {
   className?: string;
 }
 
-// Smooth fade + slide up transition — kept as framer-motion (one-time page enter)
+// Smooth fade + slide up transition, kept as framer-motion (one-time page enter)
 export function PageTransition({ children, className = "" }: PageTransitionProps) {
   return (
     <motion.div
@@ -31,7 +31,7 @@ export function PageTransition({ children, className = "" }: PageTransitionProps
   );
 }
 
-// Scroll-triggered reveal — passthrough wrapper that adds data-reveal attribute
+// Scroll-triggered reveal, passthrough wrapper that adds data-reveal attribute
 export function ScrollRevealMotion({
   children,
   className = "",
@@ -59,7 +59,7 @@ export function ScrollRevealMotion({
   );
 }
 
-// Hover scale card — CSS only
+// Hover scale card. CSS only
 export function HoverCard({ children, className = "" }: { children: ReactNode; className?: string; scale?: number }) {
   return (
     <div className={`hover:scale-[1.02] hover:-translate-y-0.5 transition-transform duration-200 cursor-pointer ${className}`}>
@@ -68,7 +68,7 @@ export function HoverCard({ children, className = "" }: { children: ReactNode; c
   );
 }
 
-// Pulse element — CSS animation class
+// Pulse element. CSS animation class
 export function PulseElement({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <div className={`animate-pulse-green ${className}`}>
@@ -77,7 +77,7 @@ export function PulseElement({ children, className = "" }: { children: ReactNode
   );
 }
 
-// Float element — decorative, render children as-is
+// Float element, decorative, render children as-is
 export function FloatElement({ children, className = "" }: { children: ReactNode; className?: string; amplitude?: number; duration?: number }) {
   return (
     <div className={className}>
@@ -86,7 +86,7 @@ export function FloatElement({ children, className = "" }: { children: ReactNode
   );
 }
 
-// Glow pulse — decorative, render children as-is
+// Glow pulse, decorative, render children as-is
 export function GlowPulse({ children, className = "" }: { children: ReactNode; className?: string; color?: string }) {
   return (
     <div className={className}>
@@ -95,7 +95,7 @@ export function GlowPulse({ children, className = "" }: { children: ReactNode; c
   );
 }
 
-// Animated counter — plain span rendering the value
+// Animated counter, plain span rendering the value
 export function AnimatedCounter({ value, className = "" }: { value: number; duration?: number; className?: string }) {
   return (
     <span className={className}>
@@ -104,7 +104,7 @@ export function AnimatedCounter({ value, className = "" }: { value: number; dura
   );
 }
 
-// Stagger container — children animate via useGlobalScrollReveal data-reveal attributes
+// Stagger container, children animate via useGlobalScrollReveal data-reveal attributes
 export function StaggerContainer({ children, className = "" }: { children: ReactNode; className?: string; staggerDelay?: number }) {
   return (
     <div className={className}>

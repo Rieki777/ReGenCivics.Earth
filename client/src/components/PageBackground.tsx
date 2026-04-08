@@ -423,7 +423,7 @@ function SectionOverlayLayer({
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // On mobile: skip the per-scroll DOM query entirely — use a static gradient instead.
+    // On mobile: skip the per-scroll DOM query entirely, use a static gradient instead.
     // The getBoundingClientRect() loop on every scroll frame causes layout thrashing on mobile.
     const isMobileDevice = window.innerWidth < 768;
     if (!sectionOverlays || sectionOverlays.length === 0 || !containerRef.current || !overlayRef.current) return;
@@ -605,7 +605,7 @@ export default function PageBackground({
     }
   }, [mobileBackgroundImage]);
 
-  // JS parallax — translates background at parallaxSpeed so it moves slower than content.
+  // JS parallax, translates background at parallaxSpeed so it moves slower than content.
   // Only runs on desktop when parallax=true and scrollWithPage=false.
   // Uses requestAnimationFrame + translateY for GPU-accelerated smooth scroll on all browsers
   // including iOS Safari (which breaks background-attachment: fixed).
@@ -697,7 +697,7 @@ export default function PageBackground({
         containerRef={containerRef}
       />
 
-      {/* Theme-specific particles — disabled on mobile to prevent scroll jank */}
+      {/* Theme-specific particles, disabled on mobile to prevent scroll jank */}
       {!isMobile && <ThemeParticles theme={theme} />}
 
       {/* Content layer */}

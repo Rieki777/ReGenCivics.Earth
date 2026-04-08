@@ -1,5 +1,5 @@
 // server/blockchain.ts
-// Read-only Base blockchain queries — no wallet, no signing.
+// Read-only Base blockchain queries, no wallet, no signing.
 
 console.log('[blockchain] BASE_RPC:', process.env.BASE_RPC_URL ? 'custom (Alchemy)' : 'fallback (public mainnet.base.org)');
 

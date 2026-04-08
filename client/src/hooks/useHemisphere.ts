@@ -1,5 +1,5 @@
 /**
- * useHemisphere — detects northern/southern hemisphere via IP geolocation
+ * useHemisphere, detects northern/southern hemisphere via IP geolocation
  * and derives the current season for the user's location.
  * Caches result in sessionStorage so it only runs once per session.
  */

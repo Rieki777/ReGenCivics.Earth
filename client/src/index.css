@@ -1803,7 +1803,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   H9 — Consistent focus ring utility for any raw <button>
+   H9. Consistent focus ring utility for any raw <button>
    that we don't want to swap to <Button> (tab pills, accordion
    triggers, card-as-button patterns).
    ════════════════════════════════════════════════════════════ */
@@ -2055,7 +2055,7 @@
   height: 32px;
 }
 
-/* 29. LIVING TREE BREATHE — gentle scale + glow loop */
+/* 29. LIVING TREE BREATHE, gentle scale + glow loop */
 @keyframes tree-breathe {
   0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(125, 216, 125, 0.18)); }
   50%      { transform: scale(1.018); filter: drop-shadow(0 0 18px rgba(125, 216, 125, 0.32)); }
@@ -2066,7 +2066,7 @@
   will-change: transform, filter;
 }
 
-/* 12. LEAF DRIFT — three ambient leaves drifting subtly across
+/* 12. LEAF DRIFT, three ambient leaves drifting subtly across
    the body. Sparse and slow so it never distracts. */
 @keyframes leaf-drift-1 {
   0%   { transform: translate(-20vw, 0) rotate(0deg); opacity: 0; }
@@ -2097,14 +2097,14 @@
 .leaf-drift-layer .leaf:nth-child(2) { top: 52%; animation: leaf-drift-2 46s linear infinite; animation-delay: 10s; }
 .leaf-drift-layer .leaf:nth-child(3) { top: 78%; animation: leaf-drift-1 42s linear infinite; animation-delay: 22s; background: radial-gradient(ellipse at 30% 30%, rgba(212, 165, 116, 0.85), rgba(212, 165, 116, 0.05) 70%); }
 
-/* 14. MAGNETIC BUTTONS — JS hook sets transform inline, CSS just
+/* 14. MAGNETIC BUTTONS. JS hook sets transform inline, CSS just
    gives the smooth easing. */
 .magnetic {
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
-/* 15. NAV UNDERLINE MORPH — pseudo-element underline grows
+/* 15. NAV UNDERLINE MORPH, pseudo-element underline grows
    from center on hover, parent uses position: relative. */
 .nav-underline {
   position: relative;
@@ -2129,7 +2129,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   COMPLEX ANIMATION LAYER — reduced motion overrides
+   COMPLEX ANIMATION LAYER, reduced motion overrides
    ════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
   .mycelium-card::before,

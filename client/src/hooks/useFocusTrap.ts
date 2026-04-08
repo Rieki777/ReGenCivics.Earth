@@ -1,5 +1,5 @@
 /**
- * useFocusTrap — Traps keyboard focus within a container element while it is active.
+ * useFocusTrap. Traps keyboard focus within a container element while it is active.
  *
  * Usage:
  *   const trapRef = useFocusTrap(isOpen);

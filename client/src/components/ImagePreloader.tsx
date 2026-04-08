@@ -61,7 +61,7 @@ interface ImagePreloaderProps {
 }
 
 export function ImagePreloader({ children, images = HOME_IMAGES, loading = false }: ImagePreloaderProps) {
-  // Preload images in the background — don't block render
+  // Preload images in the background, don't block render
   useImagePreload(images);
 
   if (loading) {

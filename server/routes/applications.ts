@@ -609,7 +609,7 @@ export const orgClaimsRouter = router({
       orgType: z.enum(["land_project", "alliance_org"]),
       orgId: z.string().min(1),
       orgName: z.string().min(1),
-      // Detailed form data — land project or alliance org variant
+      // Detailed form data, land project or alliance org variant
       formData: z.record(z.string(), z.unknown()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {

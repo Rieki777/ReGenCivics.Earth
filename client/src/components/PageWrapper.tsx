@@ -1,5 +1,5 @@
 /**
- * PageWrapper — Wraps page content with a mount-fade transition to prevent
+ * PageWrapper. Wraps page content with a mount-fade transition to prevent
  * flash-of-unstyled-content (FOUC) during hydration.
  * Also serves as a natural slot for per-page Suspense boundaries.
  */

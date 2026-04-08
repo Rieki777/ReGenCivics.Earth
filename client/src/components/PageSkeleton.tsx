@@ -1,5 +1,5 @@
 /**
- * PageSkeleton — Shimmer loading placeholder for page content.
+ * PageSkeleton. Shimmer loading placeholder for page content.
  * Used as the Suspense fallback while lazy-loaded pages are fetching.
  * Matches the approximate shape of a standard content page.
  */

@@ -18,7 +18,7 @@ import * as db from "../db";
 import crypto from "crypto";
 
 // ─────────────────────────────────────────────────────────────
-// Seed data — used to pre-populate the DB if it's empty
+// Seed data, used to pre-populate the DB if it's empty
 // These are the 15 events that were previously hardcoded in Schedule.tsx
 // ─────────────────────────────────────────────────────────────
 const SEED_EVENTS = [
@@ -107,7 +107,7 @@ async function ensureEventsSeed() {
       await database.insert(events).values(SEED_EVENTS as any);
     }
   } catch {
-    // Non-fatal — seed runs once, fails silently if table not ready yet
+    // Non-fatal, seed runs once, fails silently if table not ready yet
   }
 }
 
@@ -246,7 +246,7 @@ export const eventsRouter = router({
         .limit(1);
       if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Event not found" });
 
-      // #11 — check capacity for waitlist
+      // #11, check capacity for waitlist
       let signupType: "reminder" | "waitlist" = "reminder";
       if (event.maxAttendees) {
         const [{ count }] = await database
@@ -256,7 +256,7 @@ export const eventsRouter = router({
         if (Number(count) >= event.maxAttendees) signupType = "waitlist";
       }
 
-      // Upsert (ignore duplicate — unique constraint on eventId+email)
+      // Upsert (ignore duplicate, unique constraint on eventId+email)
       try {
         await database.insert(eventSignups).values({
           eventId: input.eventId,
@@ -270,7 +270,7 @@ export const eventsRouter = router({
         throw e;
       }
 
-      // #1 — Signup confirmation email (fire-and-forget)
+      // #1. Signup confirmation email (fire-and-forget)
       const dateStr = event.startTime.toLocaleDateString("en-US", {
         weekday: "long", year: "numeric", month: "long", day: "numeric",
       });
@@ -358,7 +358,7 @@ export const eventsRouter = router({
       return { success: true };
     }),
 
-  // ── Public: get all events for a season (#21 — series landing page) ──
+  // ── Public: get all events for a season (#21, series landing page) ──
   getBySeason: publicProcedure
     .input(z.object({ season: z.string() }))
     .query(async ({ input }) => {
@@ -491,12 +491,12 @@ export const eventsRouter = router({
         guestSpeakerBio: input.guestSpeakerBio ?? null,
         guestSpeakerTopic: input.guestSpeakerTopic ?? null,
         status: "upcoming",
-        checkinToken: crypto.randomUUID(), // #16 — auto-generate check-in token
+        checkinToken: crypto.randomUUID(), // #16, auto-generate check-in token
       });
 
       const newEventId = (result as any).insertId;
 
-      // #6 — Create a pre-event forum discussion thread
+      // #6. Create a pre-event forum discussion thread
       const forumPostId = await db.createForumPost({
         categoryId: 1, // General; swap for your community events category ID
         authorId: 1,
@@ -510,7 +510,7 @@ export const eventsRouter = router({
         await database.update(events).set({ forumThreadId: forumPostId }).where(eq(events.id, newEventId));
       }
 
-      // #2 — Push to Google Calendar (fire-and-forget)
+      // #2. Push to Google Calendar (fire-and-forget)
       pushEventToGoogleCalendar({
         title: input.title,
         description: input.description ?? "",
@@ -586,7 +586,7 @@ export const eventsRouter = router({
       id: z.number(),
       customSubject: z.string().max(200).optional(), // overrides default subject
       customBody: z.string().max(2000).optional(),   // overrides default body paragraph
-      scheduledFor: z.string().optional(), // #24 — ISO date string; if set, delay sending
+      scheduledFor: z.string().optional(), // #24. ISO date string; if set, delay sending
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
@@ -599,7 +599,7 @@ export const eventsRouter = router({
         .limit(1);
       if (!event) throw new TRPCError({ code: "NOT_FOUND" });
 
-      // #24 — If scheduledFor is provided, defer sending via setTimeout
+      // #24. If scheduledFor is provided, defer sending via setTimeout
       if (input.scheduledFor) {
         const scheduledTime = new Date(input.scheduledFor).getTime();
         const delayMs = scheduledTime - Date.now();
@@ -666,7 +666,7 @@ export const eventsRouter = router({
         .where(and(
           eq(eventSignups.eventId, input.id),
           eq(eventSignups.signupType, "reminder"),
-          isNull(eventSignups.cancelledAt), // #18 — skip unsubscribed
+          isNull(eventSignups.cancelledAt), // #18, skip unsubscribed
         ));
 
       if (!signups.length) return { sent: 0, message: "No signups for this event" };
@@ -687,7 +687,7 @@ export const eventsRouter = router({
       const subject = input.customSubject?.trim() || `Reminder: ${event.title} is tomorrow`;
       const bodyText = input.customBody?.trim() || (event.description ?? "");
 
-      // #14 — Pull most recent recording AI summary from same season for context
+      // #14. Pull most recent recording AI summary from same season for context
       let prevSummaryBlock = "";
       if (event.season) {
         // Find the most recently completed event in the same season
@@ -715,7 +715,7 @@ export const eventsRouter = router({
         }
       }
 
-      // #18 — Send individually so each email gets a personalized unsubscribe link
+      // #18. Send individually so each email gets a personalized unsubscribe link
       let totalSent = 0;
       for (const signup of signups) {
         const unsubscribeUrl = `${APP_BASE_URL}/schedule?unsubscribe=${event.id}&email=${encodeURIComponent(signup.email)}`;
@@ -892,14 +892,14 @@ export const eventsRouter = router({
       return { email: input.email, balance, ledger };
     }),
 
-  /** $ReGen leaderboard — top earners across all events and contributions. */
+  /** $ReGen leaderboard, top earners across all events and contributions. */
   tokenLeaderboard: adminProcedure
     .input(z.object({ limit: z.number().min(1).max(100).default(20) }))
     .query(async ({ input }) => {
       return db.getTokenLeaderboard(input.limit);
     }),
 
-  // ── #19 — Public: get single event by ID ──────────────────
+  // ── #19. Public: get single event by ID ──────────────────
   getById: publicProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
@@ -931,7 +931,7 @@ export const eventsRouter = router({
       return { ...event, signupCount: Number(count), recording };
     }),
 
-  // ── #16 — Public: self-service check-in ───────────────────
+  // ── #16. Public: self-service check-in ───────────────────
   checkin: publicProcedure
     .input(z.object({
       token: z.string().min(1),
@@ -986,7 +986,7 @@ export const eventsRouter = router({
       return { success: true, alreadyCheckedIn: false, tokensAwarded: 33, eventTitle: event.title };
     }),
 
-  // ── #18 — Public: unsubscribe from event reminders ────────
+  // ── #18. Public: unsubscribe from event reminders ────────
   unsubscribe: publicProcedure
     .input(z.object({
       eventId: z.number(),
@@ -1006,7 +1006,7 @@ export const eventsRouter = router({
       return { success: true };
     }),
 
-  // ── #17 — Admin: send post-event follow-up email ──────────
+  // ── #17. Admin: send post-event follow-up email ──────────
   sendFollowup: adminProcedure
     .input(z.object({ eventId: z.number() }))
     .mutation(async ({ input }) => {
@@ -1071,7 +1071,7 @@ export const eventsRouter = router({
       return { sent: totalSent };
     }),
 
-  // ── #23 — User-facing: get own $ReGen token balance ─────
+  // ── #23. User-facing: get own $ReGen token balance ─────
   myTokenBalance: protectedProcedure
     .query(async ({ ctx }) => {
       const email = ctx.user.email;
@@ -1081,7 +1081,7 @@ export const eventsRouter = router({
       return { balance, entries: ledger };
     }),
 
-  // ── #25 — Admin: send guest speaker introduction email ──
+  // ── #25. Admin: send guest speaker introduction email ──
   sendSpeakerIntro: adminProcedure
     .input(z.object({ eventId: z.number() }))
     .mutation(async ({ input }) => {

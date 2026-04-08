@@ -1,11 +1,11 @@
 /**
- * BioregionMultiSelect — searchable multi-select combobox for bioregion selection.
+ * BioregionMultiSelect, searchable multi-select combobox for bioregion selection.
  * Selected bioregions appear as removable chips above the search input.
  *
  * Props:
- *   values    — array of currently selected bioregion IDs
- *   onChange  — called with the new array of IDs
- *   variant   — "light" (cream bg) | "dark" (glass bg)
+ *   values   , array of currently selected bioregion IDs
+ *   onChange , called with the new array of IDs
+ *   variant  , "light" (cream bg) | "dark" (glass bg)
  */
 
 import React, { useState } from "react";

@@ -109,7 +109,7 @@ export async function checkRateLimit(
 
 /**
  * Get rate limit stats for monitoring (admin use).
- * Returns in-memory stats only — Redis stats should be read from Redis directly.
+ * Returns in-memory stats only. Redis stats should be read from Redis directly.
  */
 export function getRateLimitStats(): {
   backend: "redis" | "memory";

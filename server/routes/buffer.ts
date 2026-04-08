@@ -50,7 +50,7 @@ router.get("/profiles", requireAdmin, async (_req: Request, res: Response): Prom
   }
 });
 
-// POST /api/admin/buffer/token — save a new access token to the DB
+// POST /api/admin/buffer/token, save a new access token to the DB
 router.post("/token", requireAdmin, async (req: Request, res: Response): Promise<void> => {
   const { token } = req.body as { token?: string };
   if (!token || typeof token !== "string" || token.trim().length < 10) {

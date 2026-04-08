@@ -155,7 +155,7 @@ export function ProfileEditForm() {
         />
       </div>
 
-      {/* Structured soul questions — stored as JSON in bio field */}
+      {/* Structured soul questions, stored as JSON in bio field */}
       <div className="space-y-3">
         <p className="text-white/70 text-sm font-medium">About You</p>
         {form.legacyBio ? (

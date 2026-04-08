@@ -1,7 +1,7 @@
 /**
- * LocationPicker — coordinate-based location picker for player profiles.
+ * LocationPicker, coordinate-based location picker for player profiles.
  * Provides lat/lng input, privacy precision selector, and nomadic/Earth options.
- * The embedded map view is a future enhancement — for now we show a clean form.
+ * The embedded map view is a future enhancement, for now we show a clean form.
  */
 
 import React, { useState } from "react";
@@ -155,7 +155,7 @@ export function LocationPicker({ value, onChange, variant = "dark" }: LocationPi
   );
 }
 
-/** Compact display for profile card — shows nomadic/earth icons or location label */
+/** Compact display for profile card, shows nomadic/earth icons or location label */
 export function LocationDisplay({ profile }: { profile: any }) {
   if (profile.locationNomadic) {
     return (

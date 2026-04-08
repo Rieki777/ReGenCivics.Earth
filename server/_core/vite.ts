@@ -80,7 +80,7 @@ export function serveStatic(app: Express) {
     immutable: true,
     etag: true,
     setHeaders(res, filePath) {
-      // Don't cache HTML or service worker files — they must always reflect the latest deploy
+      // Don't cache HTML or service worker files, they must always reflect the latest deploy
       if (filePath.endsWith(".html") || filePath.endsWith("sw.js") || filePath.endsWith("registerSW.js")) {
         res.setHeader("Cache-Control", "no-cache");
       }
@@ -91,7 +91,7 @@ export function serveStatic(app: Express) {
   // Google's crawler often sees the empty <div id="root"></div> SPA shell before
   // React hydrates. This catch-all handler injects per-route meta tags directly
   // into the served HTML so crawlers see real titles/descriptions immediately.
-  // This is NOT full SSR — it's lightweight meta tag pre-population.
+  // This is NOT full SSR, it's lightweight meta tag pre-population.
   //
   // The meta tag map mirrors client/src/components/SEO.tsx `pageSEO`. Keep them in sync.
   const BASE_URL = "https://regencivics.earth";
@@ -184,7 +184,7 @@ export function serveStatic(app: Express) {
       ogImage = `${BASE_URL}/api/og?type=forum&id=${forumMatch[1]}`;
     }
 
-    // Inject into the <head> — replace placeholder tags written into index.html
+    // Inject into the <head>, replace placeholder tags written into index.html
     // Covers both Open Graph and Twitter Card tags so social crawlers see correct data.
     const escapedTitle = meta.title.replace(/"/g, "&quot;");
     const escapedDesc = meta.description.replace(/"/g, "&quot;");

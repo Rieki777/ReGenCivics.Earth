@@ -1,5 +1,5 @@
 /**
- * BadgeRingAvatar — wraps an avatar with a glowing badge ring.
+ * BadgeRingAvatar, wraps an avatar with a glowing badge ring.
  * Shows a colored gradient ring when the user has earned badges.
  * Falls back to an initials-based circle when no avatarUrl is provided.
  * Optionally renders an SVG quest-completion progress ring around the avatar.

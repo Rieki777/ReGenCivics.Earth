@@ -112,7 +112,7 @@ export const messagesRouter = router({
             );
           unreadCount = Number(unreadRows[0]?.count ?? 0);
         } else {
-          // Never read — count all messages not sent by self
+          // Never read, count all messages not sent by self
           const unreadRows = await db2
             .select({ count: sql<number>`count(*)` })
             .from(directMessages)

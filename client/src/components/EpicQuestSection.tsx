@@ -1,5 +1,5 @@
 /**
- * EpicQuestSection — full-width dark section showing Epic quests.
+ * EpicQuestSection, full-width dark section showing Epic quests.
  * Data from epicQuestsData.ts. Placed at the bottom of the Quest page.
  */
 

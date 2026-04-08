@@ -1,7 +1,7 @@
 /**
  * CampaignMilestones Component
  * Vertical timeline derived from campaign data and contribution history.
- * No separate milestones table — milestones are inferred from existing fields.
+ * No separate milestones table, milestones are inferred from existing fields.
  */
 
 import { useMemo } from "react";

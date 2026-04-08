@@ -1,5 +1,5 @@
 /**
- * Shape the Next Session — Agenda Suggestion Form
+ * Shape the Next Session. Agenda Suggestion Form
  *
  * Route: /shape-next-session
  * Purpose: Linked from recording-ready emails and forum posts.

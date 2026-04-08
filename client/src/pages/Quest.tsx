@@ -774,7 +774,7 @@ export default function Quest() {
             
             {whyQuestsExpanded && (
               <div className="bg-white p-8 rounded-2xl border-3 border-[#7dd87d]/30 shadow-lg mb-8 animate-in slide-in-from-top-2 duration-300">
-                {/* Section illustration — acts */}
+                {/* Section illustration, acts */}
                 <img
                   src="/images/quests/quest-acts.webp"
                   alt="Hands planting a seedling into rich soil"
@@ -863,7 +863,7 @@ export default function Quest() {
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">RGVoice tokens give you a say in the governance of the Game itself, so the Game is always governed by those who are playing it.</p>
 
                   <hr className="border-[#1a472a]/20 my-6" />
-                  {/* Section illustration — remembers */}
+                  {/* Section illustration, remembers */}
                   <img
                     src="/images/quests/quest-remembers.webp"
                     alt="Aerial view of regenerative land plots connected by glowing threads"
@@ -892,7 +892,7 @@ export default function Quest() {
         </div>
       </section>
 
-      {/* Token info is shown on quest cards — removed duplicate callout per Fix 110-C */}
+      {/* Token info is shown on quest cards, removed duplicate callout per Fix 110-C */}
 
       {/* Quest 0 - Starting Point */}
       <section className="py-16">
@@ -981,7 +981,7 @@ export default function Quest() {
           <p className="text-center text-[#1a472a]/70 max-w-2xl mx-auto mb-6">
             Quests can be done at any time and in any order - the seasonal framing is a gentle suggestion. <strong>A key focus is growing and having fun!</strong>
           </p>
-          {/* Season filter tabs — selecting one updates "What's Alive" above */}
+          {/* Season filter tabs, selecting one updates "What's Alive" above */}
           <div className="flex flex-wrap justify-center gap-2 mb-6">
             {(["spring", "summer", "fall", "winter"] as const).map((s) => {
               const labels: Record<string, string> = { spring: "🌱 Spring", summer: "☀️ Summer", fall: "🍂 Fall", winter: "❄️ Winter" };

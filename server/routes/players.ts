@@ -555,7 +555,7 @@ export const questsRouter = router({
       return { ok: true };
     }),
 
-  // Mark a quest complete — logs to quest_completions and updates the profile JSON blob
+  // Mark a quest complete, logs to quest_completions and updates the profile JSON blob
   complete: protectedProcedure
     .input(z.object({
       questId: z.string().min(1).max(100),

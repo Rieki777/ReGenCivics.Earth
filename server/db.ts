@@ -2736,7 +2736,7 @@ export async function updateOrgClaimStatus(
 
 /**
  * Ensure a forum thread exists for a land project or alliance org.
- * Called on claim approval. Idempotent — safe to call multiple times.
+ * Called on claim approval. Idempotent, safe to call multiple times.
  * Checks by title in the relevant category, creates if missing.
  */
 export async function ensureEntityForumThread(
@@ -3086,7 +3086,7 @@ export async function markEventAttendance(data: {
   });
   const insertId = (result as any).insertId;
 
-  // Award 33 $ReGen tokens — insert into ledger first
+  // Award 33 $ReGen tokens, insert into ledger first
   const [ledgerResult] = await db.insert(regenTokenLedger).values({
     email: data.email,
     amount: 33,

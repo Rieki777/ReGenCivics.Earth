@@ -14,7 +14,7 @@ export async function runDigestJob() {
       const age = Date.now() - new Date(latest.generatedAt).getTime();
       if (age < DIGEST_INTERVAL_MS) {
         const hoursAgo = Math.round(age / (60 * 60 * 1000));
-        console.log(`[DigestJob] Skipping — last digest was ${hoursAgo}h ago (< 7 days).`);
+        console.log(`[DigestJob] Skipping, last digest was ${hoursAgo}h ago (< 7 days).`);
         return;
       }
     }

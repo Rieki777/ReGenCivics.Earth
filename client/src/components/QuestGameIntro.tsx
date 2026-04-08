@@ -1,5 +1,5 @@
 /**
- * QuestGameIntro — cinematic 4-panel intro shown to first-time visitors.
+ * QuestGameIntro, cinematic 4-panel intro shown to first-time visitors.
  * Only renders when localStorage "regen_game_entered" !== "true".
  */
 
@@ -86,7 +86,7 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
         }
       `}</style>
 
-      {/* Skip — top right */}
+      {/* Skip, top right */}
       <button
         onClick={handleEnter}
         className="absolute top-6 right-6 text-white/35 hover:text-white/60 text-sm transition-colors underline-offset-4 hover:underline"

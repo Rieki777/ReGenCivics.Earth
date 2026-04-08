@@ -42,7 +42,7 @@ function isAdminRoute(path: string) {
 const Home = lazy(() => import("./pages/Home"));
 const Quest = lazy(() => import("./pages/Quest"));
 const Opportunity = lazy(() => import("./pages/Opportunity"));
-// Form and InvestmentForm removed — both routes redirect to /connect and /investor respectively
+// Form and InvestmentForm removed, both routes redirect to /connect and /investor respectively
 const Socials = lazy(() => import("./pages/Socials"));
 const Seasons = lazy(() => import("./pages/Seasons"));
 const Schedule = lazy(() => import("./pages/Schedule"));
@@ -303,7 +303,7 @@ function App() {
   // Capture referral params on first load
   captureReferral();
 
-  // Maintenance mode — toggle VITE_MAINTENANCE_MODE=true in Railway env vars before risky deploys
+  // Maintenance mode, toggle VITE_MAINTENANCE_MODE=true in Railway env vars before risky deploys
   if (import.meta.env.VITE_MAINTENANCE_MODE === "true") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a1a0a]">

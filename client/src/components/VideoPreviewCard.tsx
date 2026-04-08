@@ -17,7 +17,7 @@ interface VideoPreviewCardProps {
   mp4Url: string;
   /** Static poster image shown before video loads (and on slow connections) */
   posterUrl?: string;
-  /** URL to the full YouTube (or other) video — opens in new tab on click */
+  /** URL to the full YouTube (or other) video, opens in new tab on click */
   youtubeUrl?: string;
   /** Card title shown above the play button overlay */
   title?: string;
@@ -50,7 +50,7 @@ export default function VideoPreviewCard({
       video.remove();
       return;
     }
-    video.play().catch(() => {/* autoplay blocked — poster shows instead */});
+    video.play().catch(() => {/* autoplay blocked, poster shows instead */});
   }, []);
 
   const handleClick = () => {
@@ -61,7 +61,7 @@ export default function VideoPreviewCard({
 
   return (
     <div className={`relative w-full overflow-hidden rounded-xl ${className}`} style={{ aspectRatio: "16/9" }}>
-      {/* Autoplay MP4 — muted, loops, no controls. preload=none saves ~4MB on slow connections. */}
+      {/* Autoplay MP4, muted, loops, no controls. preload=none saves ~4MB on slow connections. */}
       <video
         ref={videoRef}
         src={mp4Url}

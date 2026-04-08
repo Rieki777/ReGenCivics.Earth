@@ -1,5 +1,5 @@
 /**
- * CustomGameWaitlistForm — Waitlist inquiry form for /custom-games.
+ * CustomGameWaitlistForm. Waitlist inquiry form for /custom-games.
  * Collects project details and submits to the customGameInquiries tRPC router.
  */
 import { useState } from "react";

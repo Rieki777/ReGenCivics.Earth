@@ -1,5 +1,5 @@
 /**
- * DiscoverTab — personalized member discovery section shown in the PlayerProfile Overview tab.
+ * DiscoverTab, personalized member discovery section shown in the PlayerProfile Overview tab.
  * Shows people in the same bioregion and people dreaming of similar things.
  */
 

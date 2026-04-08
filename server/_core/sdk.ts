@@ -1,6 +1,6 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
-/** Inline cookie parser — avoids CJS/ESM interop issues with the `cookie` package. */
+/** Inline cookie parser, avoids CJS/ESM interop issues with the `cookie` package. */
 function parseCookieHeader(str: string): Record<string, string> {
   const result: Record<string, string> = {};
   if (!str) return result;

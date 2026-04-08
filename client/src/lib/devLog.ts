@@ -1,5 +1,5 @@
 /**
- * devLog — gated console logging utility
+ * devLog, gated console logging utility
  *
  * Strips diagnostic logs from production builds. In dev/preview, logs flow as
  * usual. In production, log/info/debug become no-ops while warn/error still

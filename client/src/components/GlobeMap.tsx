@@ -1322,7 +1322,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           aria-label={`Interactive 3D globe showing ${filteredEntities.length} regenerative land projects and alliance organizations worldwide`}
         />
 
-        {/* Screen reader data table — visually hidden, content matches globe pins */}
+        {/* Screen reader data table, visually hidden, content matches globe pins */}
         <table className="sr-only" aria-label="Regenerative land projects and organizations on the map">
           <caption>Map entities: {filteredEntities.length} total</caption>
           <thead>
@@ -1585,7 +1585,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
             />
           </div>
-          {/* Filters toggle — mobile */}
+          {/* Filters toggle, mobile */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full px-3 py-1.5 transition-colors"

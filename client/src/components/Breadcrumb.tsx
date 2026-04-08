@@ -1,5 +1,5 @@
 /**
- * Breadcrumb — simple path navigation for nested pages.
+ * Breadcrumb, simple path navigation for nested pages.
  * Usage: <Breadcrumb items={[{ label: 'Community', href: '/community' }, { label: 'Land Projects' }]} />
  */
 import { Link } from "wouter";

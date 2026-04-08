@@ -275,7 +275,7 @@ function QuestAnimationVideo() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             video.play().catch(() => {
-              // Autoplay blocked — video stays paused, controls are available
+              // Autoplay blocked, video stays paused, controls are available
             });
           } else {
             video.pause();

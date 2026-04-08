@@ -13,7 +13,7 @@ window.addEventListener("vite:preloadError", (e: Event) => {
 // Clear the flag on successful page loads so future deploys also auto-reload
 window.addEventListener("load", () => sessionStorage.removeItem("vite-chunk-reload"), { once: true });
 
-// Sentry is deferred until after page load — it's non-essential for rendering
+// Sentry is deferred until after page load, it's non-essential for rendering
 if (import.meta.env.VITE_SENTRY_DSN) {
   window.addEventListener("load", () => {
     import("@sentry/react").then((Sentry) => {
@@ -42,11 +42,11 @@ import { getCsrfToken } from "@/hooks/useCsrfToken";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Keep data fresh for 60s — prevents redundant refetches on tab switch / navigation
+      // Keep data fresh for 60s, prevents redundant refetches on tab switch / navigation
       staleTime: 60_000,
       // Keep unused query data in cache for 5 minutes
       gcTime: 5 * 60_000,
-      // Don't retry on 4xx errors (auth failures, not-found) — only on network errors
+      // Don't retry on 4xx errors (auth failures, not-found), only on network errors
       retry: (failureCount, error: unknown) => {
         if (error instanceof Error && error.message.includes("UNAUTHORIZED")) return false;
         if (error instanceof Error && error.message.includes("FORBIDDEN")) return false;

@@ -753,7 +753,7 @@ export default function Messages() {
         />
       </div>
 
-      {/* Right panel — thread */}
+      {/* Right panel, thread */}
       <div className="flex-1 overflow-hidden">
         {selectedConversationId ? (
           <ThreadPanel

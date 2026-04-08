@@ -1,5 +1,5 @@
 /**
- * notify.ts — Channel announcements for ReGen Civics
+ * notify.ts. Channel announcements for ReGen Civics
  *
  * Sends brief announcements to Telegram and WhatsApp when:
  *  - A new event is created (admin)
@@ -23,7 +23,7 @@ async function sendTelegram(message: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) {
-    console.log("[notify/telegram] Skipped — TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set");
+    console.log("[notify/telegram] Skipped. TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set");
     return;
   }
   try {
@@ -55,7 +55,7 @@ async function sendWhatsApp(message: string): Promise<void> {
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
   const toNumber = process.env.WHATSAPP_TO_NUMBER;
   if (!phoneNumberId || !accessToken || !toNumber) {
-    console.log("[notify/whatsapp] Skipped — WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, or WHATSAPP_TO_NUMBER not set");
+    console.log("[notify/whatsapp] Skipped. WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, or WHATSAPP_TO_NUMBER not set");
     return;
   }
   try {
@@ -95,7 +95,7 @@ export async function sendSMS(toPhone: string, message: string): Promise<void> {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
   if (!accountSid || !authToken || !fromNumber) {
-    console.log("[notify/sms] Skipped — TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_FROM_NUMBER not set");
+    console.log("[notify/sms] Skipped. TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_FROM_NUMBER not set");
     return;
   }
   try {

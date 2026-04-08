@@ -96,7 +96,7 @@ export const songsRouter = router({
 
   /**
    * List all submissions for the current season, ordered by vote count desc.
-   * Public — anyone can listen and see vote counts.
+   * Public, anyone can listen and see vote counts.
    */
   list: publicProcedure
     .input(z.object({

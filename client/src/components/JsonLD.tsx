@@ -78,7 +78,7 @@ export const schemas = {
     eventStatus: "https://schema.org/EventScheduled",
   }),
 
-  /** BlogPosting — for individual blog post pages. Enables Google Article rich results. */
+  /** BlogPosting, for individual blog post pages. Enables Google Article rich results. */
   blogPosting: (post: {
     title: string;
     excerpt: string;

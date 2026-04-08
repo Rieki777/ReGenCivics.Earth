@@ -398,7 +398,7 @@ export const forumRouter = router({
     };
   }),
 
-  // Get all posts in a chain (by chainId — returns the idea root + all experiment/result posts linked to it)
+  // Get all posts in a chain (by chainId, returns the idea root + all experiment/result posts linked to it)
   chainPosts: publicProcedure
     .input(z.object({ chainId: z.number() }))
     .query(async ({ input }) => {

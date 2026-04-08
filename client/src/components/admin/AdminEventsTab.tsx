@@ -218,7 +218,7 @@ export function AdminEventsTab() {
                 <Input value={formData.youtubeUrl} onChange={e => setFormData(f => ({ ...f, youtubeUrl: e.target.value }))}
                   placeholder="https://youtube.com/live/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
-              {/* #25 — Guest Speaker Fields */}
+              {/* #25. Guest Speaker Fields */}
               <div className="md:col-span-2 border-t border-white/10 pt-3 mt-1">
                 <p className="text-white/50 text-xs font-medium uppercase tracking-wide mb-2">Guest Speaker (optional)</p>
               </div>
@@ -306,7 +306,7 @@ export function AdminEventsTab() {
                           <Bell size={11} className="mr-1" />
                           {reminderEditorOpen === ev.id ? 'Cancel' : 'Send Reminders'}
                         </Button>}
-                    {/* #17 — Send Follow-up for completed events */}
+                    {/* #17. Send Follow-up for completed events */}
                     {ev.status === 'completed' && (
                       followupSuccess === ev.id
                         ? <Button size="sm" variant="ghost" disabled className="text-green-400 h-7 px-2 text-xs">
@@ -329,7 +329,7 @@ export function AdminEventsTab() {
                             {followupMutation.isPending ? 'Sending...' : 'Send Follow-up'}
                           </Button>
                     )}
-                    {/* #25 — Send Speaker Intro (only if event has a guest speaker) */}
+                    {/* #25. Send Speaker Intro (only if event has a guest speaker) */}
                     {(ev as any).guestSpeakerName && (
                       speakerIntroSuccess === ev.id
                         ? <Button size="sm" variant="ghost" disabled className="text-purple-400 h-7 px-2 text-xs">
@@ -367,7 +367,7 @@ export function AdminEventsTab() {
                   </div>
                 )}
 
-                {/* #16 — Check-in URL and copy button */}
+                {/* #16. Check-in URL and copy button */}
                 {(ev as any).checkinToken && (
                   <div className="border-t border-white/10 px-4 py-2 flex items-center gap-2 flex-wrap">
                     <span className="text-xs text-white/60">Check-in URL:</span>
@@ -451,7 +451,7 @@ export function AdminEventsTab() {
                           : `Review & Send to ${Number(countMap[ev.id] ?? 0)} ${Number(countMap[ev.id] ?? 0) === 1 ? 'person' : 'people'}`}
                       </Button>
 
-                      {/* #24 — Schedule for later */}
+                      {/* #24. Schedule for later */}
                       <div className="flex items-end gap-1.5">
                         <div>
                           <Label className="text-white/60 text-xs">Schedule for...</Label>
@@ -612,7 +612,7 @@ export function AdminEventsTab() {
         </CardContent>
       </Card>
 
-      {/* #10 — Season Rollup Email */}
+      {/* #10. Season Rollup Email */}
       <Card className="bg-[#0a1f14] border-[#7dd87d]/20 mt-4">
         <CardHeader className="pb-2">
           <CardTitle className="text-[#7dd87d] text-sm flex items-center gap-2"><Bell size={14} /> Season Rollup Email</CardTitle>
@@ -645,7 +645,7 @@ export function AdminEventsTab() {
         </CardContent>
       </Card>
 
-      {/* #9 — Agenda Suggestions from Community */}
+      {/* #9. Agenda Suggestions from Community */}
       {agendaSuggestions.length > 0 && (
         <Card className="bg-[#0a1f14] border-purple-800/30 mt-4">
           <CardHeader className="pb-2">
@@ -680,7 +680,7 @@ export function AdminEventsTab() {
         </Card>
       )}
 
-      {/* #8 revised — Attendance Tracking + $ReGen Token Awards */}
+      {/* #8 revised. Attendance Tracking + $ReGen Token Awards */}
       <Card className="bg-white/5 border border-white/10">
         <CardHeader className="pb-2">
           <CardTitle className="text-amber-400 text-sm flex items-center gap-2">

@@ -1,5 +1,5 @@
 /**
- * Seasonal quests — the 18 new quests from QUEST_MASTER_SHEET Part 4.
+ * Seasonal quests, the 18 new quests from QUEST_MASTER_SHEET Part 4.
  * These are not yet in the seasons carousel; they render in SeasonalQuestFeed.
  */
 
@@ -320,7 +320,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     reward: { regen: 99, rvoice: 1 },
   },
 
-  // Ringing Cedars — Wave 1.6
+  // Ringing Cedars. Wave 1.6
   {
     id: "ringing-cedars",
     title: "The Ringing Cedars",

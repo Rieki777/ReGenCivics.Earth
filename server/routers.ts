@@ -1,4 +1,4 @@
-// server/routers.ts — thin orchestrator
+// server/routers.ts, thin orchestrator
 // All router implementations live in server/routes/*.ts
 import { systemRouter } from "./_core/systemRouter";
 import { router } from "./_core/trpc";

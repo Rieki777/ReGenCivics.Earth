@@ -144,7 +144,7 @@ function QuestCard({
         </button>
       </div>
 
-      {/* Collapsible body — max-h transition instead of abrupt show/hide */}
+      {/* Collapsible body, max-h transition instead of abrupt show/hide */}
       <div
         className="overflow-hidden transition-all duration-300"
         style={{ maxHeight: expanded ? "600px" : "0" }}
@@ -188,7 +188,7 @@ export function WelcomeAboardQuests({ profile, onUpdate }: WelcomeAboardQuestsPr
       onUpdate();
     },
     onError: () => {
-      // Quest toggle failed silently — user can retry
+      // Quest toggle failed silently, user can retry
     },
   });
 
@@ -222,7 +222,7 @@ export function WelcomeAboardQuests({ profile, onUpdate }: WelcomeAboardQuestsPr
         </div>
         <p className="text-white/60 text-xs mb-3">Ten ways to root yourself in the Regenerative Renaissance.</p>
 
-        {/* Progress bar — golden gradient until complete, then green */}
+        {/* Progress bar, golden gradient until complete, then green */}
         <div className="w-full bg-white/10 rounded-full h-1.5 mb-3 overflow-hidden">
           <div
             className={`h-1.5 rounded-full transition-all duration-500 ${allDone ? "bg-[#7dd87d]" : ""}`}

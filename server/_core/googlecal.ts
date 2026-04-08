@@ -1,5 +1,5 @@
 /**
- * googlecal.ts — Google Calendar auto-push
+ * googlecal.ts. Google Calendar auto-push
  *
  * When an event is created in Admin, it is also written to the ReGen Civics
  * public Google Calendar so subscribers see it immediately without a manual step.
@@ -25,7 +25,7 @@ interface CalendarEvent {
   timezone: string;
 }
 
-/** Minimal JWT for Google service account — avoids the 100kB googleapis dependency. */
+/** Minimal JWT for Google service account, avoids the 100kB googleapis dependency. */
 async function getGoogleAccessToken(serviceAccountJson: string): Promise<string | null> {
   try {
     const sa = JSON.parse(serviceAccountJson);
@@ -73,7 +73,7 @@ export async function pushEventToGoogleCalendar(event: CalendarEvent): Promise<v
   const calendarId = process.env.GOOGLE_CALENDAR_ID;
 
   if (!b64 || !calendarId) {
-    console.log("[googlecal] Skipped — GOOGLE_SERVICE_ACCOUNT_JSON_B64 or GOOGLE_CALENDAR_ID not set");
+    console.log("[googlecal] Skipped. GOOGLE_SERVICE_ACCOUNT_JSON_B64 or GOOGLE_CALENDAR_ID not set");
     return;
   }
 

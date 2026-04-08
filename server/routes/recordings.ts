@@ -172,7 +172,7 @@ export const recordingsRouter = router({
       return { sent: totalSent };
     }),
 
-  // Admin: delete a recording record (doesn't touch Riverside — just removes from our DB)
+  // Admin: delete a recording record (doesn't touch Riverside, just removes from our DB)
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {

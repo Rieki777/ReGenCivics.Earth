@@ -116,7 +116,7 @@ export function ExitIntentCapture() {
     }
   }, [subscribedData?.subscribed]);
 
-  // Suppress popup entirely on /investor page — after all hooks
+  // Suppress popup entirely on /investor page, after all hooks
   if (location === '/investor') return null;
 
   // Two-step show: mount first, then trigger CSS transition

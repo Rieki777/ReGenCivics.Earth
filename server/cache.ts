@@ -218,7 +218,7 @@ export const cacheTTL = {
 
 /**
  * Redis sliding-window rate limit check.
- * Uses a sorted set per key — members are timestamps, scores are timestamps.
+ * Uses a sorted set per key, members are timestamps, scores are timestamps.
  * Returns { allowed, count, resetAt } so callers can craft useful error messages.
  * Falls back gracefully (allows) when Redis is unavailable.
  */
@@ -247,7 +247,7 @@ export async function redisRateLimit(
 
     return { allowed: count <= maxRequests, count, resetAt };
   } catch {
-    // Redis error — fail open so rate limit never breaks the app
+    // Redis error, fail open so rate limit never breaks the app
     return { allowed: true, count: 0, resetAt };
   }
 }

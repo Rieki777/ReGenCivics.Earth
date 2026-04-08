@@ -1,5 +1,5 @@
 /**
- * Badge definitions — shared constant used by client and (via import) server.
+ * Badge definitions, shared constant used by client and (via import) server.
  * Adding a new badge: add an entry to BADGE_DEFS. No DB migration required.
  */
 

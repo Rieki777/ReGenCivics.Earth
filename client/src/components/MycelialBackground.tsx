@@ -149,7 +149,7 @@ export function MycelialBackground() {
           />
         </g>
 
-        {/* Node points where threads connect — 13 visually balanced nodes */}
+        {/* Node points where threads connect, 13 visually balanced nodes */}
         {[
           { x: 400, y: 220 }, { x: 800, y: 200 }, { x: 1200, y: 240 },
           { x: 500, y: 420 }, { x: 900, y: 400 }, { x: 1300, y: 440 },

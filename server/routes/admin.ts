@@ -248,7 +248,7 @@ export const adminRouter = router({
       }),
   }),
 
-  // Audit log — immutable record of all admin actions
+  // Audit log, immutable record of all admin actions
   auditLog: adminProcedure
     .input(z.object({
       adminUserId: z.number().optional(),
@@ -510,7 +510,7 @@ export const bannersRouter = router({
     }),
 });
 
-// Discovery router — personalized recommendations for members
+// Discovery router, personalized recommendations for members
 export const discoveryRouter = router({
   getRecommendations: protectedProcedure.query(async ({ ctx }) => {
     const d = await getDb();

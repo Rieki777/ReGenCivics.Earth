@@ -648,7 +648,7 @@ export const gameRoles: GameRole[] = [
   },
 
   /* ═══════════════════════════════════════════════════════════════
-     FUND ROLES — ReGen Civics Fund ($RCivics)
+     FUND ROLES. ReGen Civics Fund ($RCivics)
      7 roles that coordinate the capital side of the bridge.
      Governance flows through Hypha DAO + committee review.
      Primary compensation: $RCivics tokens. Optional fiat draw from

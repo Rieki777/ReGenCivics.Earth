@@ -1,5 +1,5 @@
 /**
- * Quest static data — extracted from Quest.tsx for code-splitting.
+ * Quest static data, extracted from Quest.tsx for code-splitting.
  */
 import {
   Flame, Droplets, Sprout, TreeDeciduous, HomeIcon, Heart, Users,

@@ -289,7 +289,7 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
         const createdAt = new Date(user.createdAt as string | Date);
         const isNewAccount = Date.now() - createdAt.getTime() < NEW_ACCOUNT_WINDOW_MS;
         if (!isNewAccount) {
-          // Account is older than 7 days — mark complete and skip
+          // Account is older than 7 days, mark complete and skip
           localStorage.setItem(STORAGE_KEY, "true");
           return;
         }
@@ -297,7 +297,7 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
 
       setVisible(true);
     } catch {
-      // localStorage unavailable or date parse error — skip silently
+      // localStorage unavailable or date parse error, skip silently
     }
   }, [user]);
 

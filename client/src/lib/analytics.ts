@@ -1,5 +1,5 @@
 /**
- * analytics.ts — Thin wrapper around window.umami for event tracking.
+ * analytics.ts. Thin wrapper around window.umami for event tracking.
  * Only fires when Umami has been injected (i.e. after cookie consent).
  * All calls are fire-and-forget; failures are silently swallowed.
  */
@@ -13,7 +13,7 @@ function track(eventName: string, props?: EventProperties) {
       umami.track(eventName, props ?? {});
     }
   } catch {
-    // Silently ignore — analytics should never break the app
+    // Silently ignore, analytics should never break the app
   }
 }
 

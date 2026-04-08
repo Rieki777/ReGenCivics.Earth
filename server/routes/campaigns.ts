@@ -132,7 +132,7 @@ export const campaignsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const campaignId = await db.createCampaign(ctx.user.id, input);
-      // Fire-and-forget image generation — don't block mutation response
+      // Fire-and-forget image generation, don't block mutation response
       generateImage({
         contentType: "campaign",
         contentId: campaignId,
@@ -561,7 +561,7 @@ export const campaignsRouter = router({
 });
 
 export const crowdPoolingProjectsRouter = router({
-  // Get all active projects (public — cached 2 min)
+  // Get all active projects (public, cached 2 min)
   list: publicProcedure.query(async () => {
     const CACHE_KEY = 'crowdpooling:active';
     const cached = await cacheGet<CrowdPoolingProject[]>(CACHE_KEY);

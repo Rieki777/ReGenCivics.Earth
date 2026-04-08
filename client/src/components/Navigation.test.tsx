@@ -20,7 +20,7 @@ vi.mock('@/components/AuthDialog', () => ({
     open ? <div data-testid="auth-dialog">Auth Dialog</div> : null,
 }));
 
-// Mock SocialLinks — icon must be a valid component (not null) to avoid React render errors
+// Mock SocialLinks, icon must be a valid component (not null) to avoid React render errors
 vi.mock('@/components/SocialLinks', () => ({
   SOCIAL_LINKS: {
     discord: { name: 'Discord', icon: () => null, url: 'https://discord.gg/test' },

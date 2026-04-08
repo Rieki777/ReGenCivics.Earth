@@ -1,5 +1,5 @@
 /**
- * SeasonalQuestFeed — shows featured quests for the current season.
+ * SeasonalQuestFeed, shows featured quests for the current season.
  * Data comes from seasonalQuestsData (static). Season is detected via useHemisphere.
  */
 

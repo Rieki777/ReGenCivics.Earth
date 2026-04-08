@@ -1,5 +1,5 @@
 /**
- * Crowd Pooling Projects Page — Fix 150 World-Class Revamp
+ * Crowd Pooling Projects Page. Fix 150 World-Class Revamp
  * All 20 upgrades implemented.
  */
 
@@ -36,7 +36,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { cdnImg } from "@/lib/utils";
 
 // ────────────────────────────────────────────────────────────────────────────────
-// Project data — enhanced with lat/lng, phases, impact formula, momentum
+// Project data, enhanced with lat/lng, phases, impact formula, momentum
 // ────────────────────────────────────────────────────────────────────────────────
 const sampleProjects = [
   {
@@ -301,7 +301,7 @@ const currencySymbols: Record<string, string> = {
 // Unique tags from all projects
 const ALL_TAGS = Array.from(new Set(sampleProjects.flatMap(p => p.tags)));
 
-// Avatar color palette — deterministic from index
+// Avatar color palette, deterministic from index
 const AVATAR_COLORS = [
   "bg-[#7dd87d] text-[#1a472a]",
   "bg-amber-400 text-amber-900",
@@ -527,7 +527,7 @@ function MomentumBadge({ recentContributions }: { recentContributions: number })
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
-// Impact Preview Overlay (150-13) — slides up on hover
+// Impact Preview Overlay (150-13), slides up on hover
 // ────────────────────────────────────────────────────────────────────────────────
 function ImpactOverlay({ project }: { project: typeof sampleProjects[0] }) {
   const symbol = currencySymbols[project.currency] || project.currency;
@@ -773,9 +773,9 @@ function ProjectDetailModal({
           </div>
         </div>
 
-        {/* Body — two columns on desktop */}
+        {/* Body, two columns on desktop */}
         <div className="flex flex-col lg:flex-row overflow-auto">
-          {/* Left column — 60% */}
+          {/* Left column, 60% */}
           <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-5">
             {/* Hero image + optional video */}
             <div className="rounded-xl overflow-hidden aspect-video relative group">
@@ -822,7 +822,7 @@ function ProjectDetailModal({
               <MilestoneTracker phases={project.phases} currentPhaseIndex={project.currentPhaseIndex} />
             </div>
 
-            {/* Collapsible — Regenerative Systems */}
+            {/* Collapsible. Regenerative Systems */}
             <Collapsible open={sysOpen} onOpenChange={setSysOpen}>
               <CollapsibleTrigger className="flex items-center justify-between w-full py-3 border-t border-white/10 text-white/80 hover:text-white transition-colors">
                 <span className="flex items-center gap-2 font-medium"><Leaf className="w-4 h-4 text-[#7dd87d]" />Regenerative Systems</span>
@@ -835,7 +835,7 @@ function ProjectDetailModal({
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Collapsible — Governance */}
+            {/* Collapsible. Governance */}
             <Collapsible open={govOpen} onOpenChange={setGovOpen}>
               <CollapsibleTrigger className="flex items-center justify-between w-full py-3 border-t border-white/10 text-white/80 hover:text-white transition-colors">
                 <span className="flex items-center gap-2 font-medium"><Users className="w-4 h-4 text-[#7dd87d]" />Governance & Membership</span>
@@ -848,7 +848,7 @@ function ProjectDetailModal({
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Collapsible — Education */}
+            {/* Collapsible. Education */}
             <Collapsible open={eduOpen} onOpenChange={setEduOpen}>
               <CollapsibleTrigger className="flex items-center justify-between w-full py-3 border-t border-white/10 text-white/80 hover:text-white transition-colors">
                 <span className="flex items-center gap-2 font-medium"><GraduationCap className="w-4 h-4 text-[#7dd87d]" />Education & Community</span>
@@ -877,7 +877,7 @@ function ProjectDetailModal({
             )}
           </div>
 
-          {/* Right column — 40%, sticky sidebar */}
+          {/* Right column, 40%, sticky sidebar */}
           <div className="lg:w-80 xl:w-96 flex-shrink-0 bg-[#0d2818]/80 border-t lg:border-t-0 lg:border-l border-[#7dd87d]/20 p-4 sm:p-6 space-y-5 overflow-y-auto">
 
             {/* Funding progress */}

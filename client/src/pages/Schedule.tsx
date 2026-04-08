@@ -63,7 +63,7 @@ const RIVERSIDE_INFO = {
 // YouTube playlist for Season 1 recordings
 const YOUTUBE_PLAYLIST = "https://www.youtube.com/watch?v=AJZI0OiRPeU&list=PL3Xi8vZSmBTSUZsQ82awoNIQS8ceBQ4io";
 
-// Fallback hardcoded events — used only if the DB events table is empty or unreachable
+// Fallback hardcoded events, used only if the DB events table is empty or unreachable
 // The DB is the real source of truth once migrations have run.
 const upcomingEventsFallback = [
   {
@@ -277,21 +277,21 @@ export default function Schedule() {
   const [reminderEmail, setReminderEmail] = useState<string>('');
   const [reminderPhone, setReminderPhone] = useState<string>(''); // #4 SMS
   const [reminderSuccess, setReminderSuccess] = useState<{ id: number; type: 'reminder' | 'waitlist' } | null>(null);
-  // #9 — Agenda suggestions
+  // #9. Agenda suggestions
   const [agendaOpenFor, setAgendaOpenFor] = useState<number | null>(null);
   const [agendaEmail, setAgendaEmail] = useState('');
   const [agendaText, setAgendaText] = useState('');
   const [agendaSuccess, setAgendaSuccess] = useState<number | null>(null);
-  // #12 — User's local timezone for display
+  // #12. User's local timezone for display
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  // #23 — Token balance for signed-in users
+  // #23. Token balance for signed-in users
   const { user } = useAuth();
   const { data: tokenData } = trpc.events.myTokenBalance.useQuery(undefined, { enabled: !!user });
 
   // Fetch events from DB (falls back gracefully while loading)
   const { data: dbEvents } = trpc.events.list.useQuery();
-  // #8 — Signup counts for social proof
+  // #8. Signup counts for social proof
   const { data: signupCountsData } = trpc.events.publicSignupCounts.useQuery();
   const signupCountMap: Record<number, number> = Object.fromEntries(
     (signupCountsData ?? []).map(({ eventId, count }) => [eventId, Number(count)])
@@ -305,7 +305,7 @@ export default function Schedule() {
     appleCalendarUrl: (ev as any).appleCalendarUrl ?? ((ev as any).startTime ? buildIcsDataUrl(ev as any) : ''),
   }));
 
-  // First upcoming event — auto-expand it
+  // First upcoming event, auto-expand it
   const firstUpcomingId = upcomingEvents.find(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')?.id ?? null;
   const effectiveExpanded = expandedEvent !== null ? expandedEvent : firstUpcomingId;
 
@@ -313,7 +313,7 @@ export default function Schedule() {
   const agendaMutation = trpc.events.suggestAgendaItem.useMutation();
   const unsubscribeMutation = trpc.events.unsubscribe.useMutation();
 
-  // #18 — Handle unsubscribe query param on mount
+  // #18. Handle unsubscribe query param on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const unsubEventId = params.get('unsubscribe');
@@ -628,7 +628,7 @@ export default function Schedule() {
         </div>
       </section>
 
-      {/* #23 — Token balance widget for signed-in users */}
+      {/* #23. Token balance widget for signed-in users */}
       {user && tokenData && tokenData.balance > 0 && (
         <section className="px-4 pt-4">
           <div className="container mx-auto max-w-4xl">
@@ -688,7 +688,7 @@ export default function Schedule() {
                           {(event as any).startTime ? (() => {
                             const d = new Date((event as any).startTime);
                             const stored = `${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ${(event as any).timezone ?? 'UTC'}`;
-                            // #12 — show user's local time if different timezone
+                            // #12, show user's local time if different timezone
                             const localTime = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: userTz, timeZoneName: 'short' });
                             const storedTz = (event as any).timezone ?? 'UTC';
                             const localTzAbbr = new Intl.DateTimeFormat('en-US', { timeZone: userTz, timeZoneName: 'short' }).format(d).split(' ').pop() ?? '';
@@ -700,7 +700,7 @@ export default function Schedule() {
                           <MapPin className="w-4 h-4" />
                           Online
                         </span>
-                        {/* #8 — Social proof signup count */}
+                        {/* #8. Social proof signup count */}
                         {signupCountMap[event.id] > 0 && (
                           <span className="flex items-center gap-1 text-[#7dd87d]/80">
                             <Users className="w-4 h-4" />
@@ -723,7 +723,7 @@ export default function Schedule() {
                 {effectiveExpanded === event.id && (
                   <div className="px-6 pb-6 pt-0 border-t border-white/10">
                     <p className="text-white/70 mb-6 mt-4">{event.description}</p>
-                    {/* #25 — Guest speaker info */}
+                    {/* #25. Guest speaker info */}
                     {(event as any).guestSpeakerName && (
                       <div className="bg-[#7dd87d]/10 border border-[#7dd87d]/20 rounded-xl px-4 py-3 mb-4 flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -741,7 +741,7 @@ export default function Schedule() {
                     )}
                     
                     <div className="flex flex-wrap gap-3">
-                      {/* #5 — Save to Calendar buttons, more prominent */}
+                      {/* #5. Save to Calendar buttons, more prominent */}
                       {event.googleCalendarUrl ? (
                         <a
                           href={event.googleCalendarUrl}
@@ -845,7 +845,7 @@ export default function Schedule() {
                               ✕
                             </button>
                           </div>
-                          {/* #4 — Optional SMS */}
+                          {/* #4. Optional SMS */}
                           <input
                             type="tel"
                             placeholder="+1 555 000 0000 (optional, get a text reminder too)"
@@ -864,7 +864,7 @@ export default function Schedule() {
                         </button>
                       )}
 
-                      {/* #9 — Suggest agenda item */}
+                      {/* #9. Suggest agenda item */}
                       {agendaSuccess === event.id ? (
                         <span className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-300 px-4 py-2 rounded-xl font-medium text-sm border border-purple-500/30">
                           <Check className="w-4 h-4" />

@@ -9,7 +9,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "../_core/cookies";
 import { newsletterSubscribers, userProfiles } from "../../drizzle/schema";
 
-// Debounce lastActiveAt writes — only update once per 5 minutes per user
+// Debounce lastActiveAt writes, only update once per 5 minutes per user
 const lastActivePings = new Map<number, number>();
 function pingLastActive(userId: number) {
   const now = Date.now();
@@ -19,7 +19,7 @@ function pingLastActive(userId: number) {
   getDb().then(db2 => {
     if (!db2) return;
     db2.execute(sql`UPDATE userProfiles SET lastActiveAt = NOW() WHERE userId = ${userId}`)
-      .catch(() => {}); // graceful — column may not exist until migration runs
+      .catch(() => {}); // graceful, column may not exist until migration runs
   }).catch(() => {});
 }
 
@@ -90,7 +90,7 @@ export const userProfilesRouter = router({
       return { success: true };
     }),
 
-  // Public member list — searchable, paginated
+  // Public member list, searchable, paginated
   list: publicProcedure
     .input(z.object({
       search: z.string().max(100).optional(),

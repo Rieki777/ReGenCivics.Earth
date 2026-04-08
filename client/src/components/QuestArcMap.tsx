@@ -1,5 +1,5 @@
 /**
- * QuestArcMap — SVG constellation map of the quest arc (Quests 0-13).
+ * QuestArcMap. SVG constellation map of the quest arc (Quests 0-13).
  * Nodes are arranged in a loose spiral on a dark starfield background.
  * Element colors distinguish quest types. Completed quests glow.
  */

@@ -18,7 +18,7 @@ function prefersReducedMotion(): boolean {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 13. Seasonal backdrop shift — set data-season on <html>
+// 13. Seasonal backdrop shift, set data-season on <html>
 // ─────────────────────────────────────────────────────────────
 
 export type Season = "winter" | "spring" | "summer" | "autumn";
@@ -39,7 +39,7 @@ export function useSeasonalTheme() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 14. Magnetic button — pointer-tracking nudge
+// 14. Magnetic button, pointer-tracking nudge
 // ─────────────────────────────────────────────────────────────
 
 export function useMagnetic<T extends HTMLElement = HTMLElement>(
@@ -89,7 +89,7 @@ export function useMagnetic<T extends HTMLElement = HTMLElement>(
 }
 
 // ─────────────────────────────────────────────────────────────
-// 19. Ripple on click — inject a span at the click point
+// 19. Ripple on click, inject a span at the click point
 // ─────────────────────────────────────────────────────────────
 
 export function useRipple() {
@@ -110,7 +110,7 @@ export function useRipple() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 17. Ink reveal — IntersectionObserver adds the -on class
+// 17. Ink reveal. IntersectionObserver adds the -on class
 // ─────────────────────────────────────────────────────────────
 
 export function useInkReveal() {
@@ -138,7 +138,7 @@ export function useInkReveal() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 22. Blur-up image loader — flips .blur-up-loaded on img.load
+// 22. Blur-up image loader, flips .blur-up-loaded on img.load
 // ─────────────────────────────────────────────────────────────
 
 export function useBlurUp() {
@@ -239,7 +239,7 @@ export function useGlobalRipple() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 25. Scroll progress ring — hook returning 0..1
+// 25. Scroll progress ring, hook returning 0..1
 // ─────────────────────────────────────────────────────────────
 
 export function useScrollProgress() {

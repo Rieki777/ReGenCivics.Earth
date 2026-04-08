@@ -1,5 +1,5 @@
 /**
- * LiveActivityFeed — polls for recent forum posts every 30s.
+ * LiveActivityFeed, polls for recent forum posts every 30s.
  * Shows a compact scrolling list of the latest community activity.
  */
 import { trpc } from "@/lib/trpc";

@@ -1,5 +1,5 @@
 /**
- * EPIC Quests data — long-form challenges for committed regenerators.
+ * EPIC Quests data, long-form challenges for committed regenerators.
  * Rendered in EpicQuestSection.tsx at the bottom of the /quest page.
  * Placeholder content; will be updated from QUEST_MASTER_SHEET Part 5.
  */

@@ -1,5 +1,5 @@
 /**
- * AMABanner — sticky site-wide banner for upcoming Ask Me Anything sessions.
+ * AMABanner, sticky site-wide banner for upcoming Ask Me Anything sessions.
  * Fetches the next active AMA from the DB and shows a dismissible banner.
  * Hidden if no active AMA or user has dismissed it in this session.
  */

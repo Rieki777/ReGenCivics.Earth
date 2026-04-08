@@ -26,8 +26,8 @@ import * as db from "../db";
 
 /**
  * Riverside sends different event types. We handle:
- *  - recording.complete  (primary — fired when upload + processing finishes)
- *  - recording.transcribed  (optional — fired when AI transcript is ready)
+ *  - recording.complete  (primary, fired when upload + processing finishes)
+ *  - recording.transcribed  (optional, fired when AI transcript is ready)
  *
  * The exact payload shape may vary. We store rawWebhook for debugging.
  */
@@ -161,11 +161,11 @@ export function registerRiversideWebhookRoutes(app: Express) {
       // Verify signature if secret is configured
       if (secret) {
         if (!verifySignature(rawBody, signature, secret)) {
-          console.warn("[riverside-webhook] Invalid signature — rejected");
+          console.warn("[riverside-webhook] Invalid signature, rejected");
           return res.status(401).json({ error: "Invalid signature" });
         }
       } else {
-        console.warn("[riverside-webhook] RIVERSIDE_WEBHOOK_SECRET not set — skipping signature check");
+        console.warn("[riverside-webhook] RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check");
       }
 
       let payload: RiversideWebhookPayload;
@@ -177,7 +177,7 @@ export function registerRiversideWebhookRoutes(app: Express) {
 
       console.log(`[riverside-webhook] Event: ${payload.event}`);
 
-      // Acknowledge immediately — Riverside expects a fast 200
+      // Acknowledge immediately. Riverside expects a fast 200
       res.status(200).json({ received: true });
 
       // Process asynchronously so we don't block the response
@@ -191,7 +191,7 @@ export function registerRiversideWebhookRoutes(app: Express) {
   app.post(
     "/api/webhooks/riverside/resend-email/:recordingId",
     async (req: Request, res: Response) => {
-      // Only allow from admin sessions — check x-admin-secret header
+      // Only allow from admin sessions, check x-admin-secret header
       const adminSecret = process.env.ADMIN_WEBHOOK_SECRET;
       if (!adminSecret) {
         console.error("[riverside-webhook] ADMIN_WEBHOOK_SECRET not set");
@@ -301,7 +301,7 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
   // ── 2. Create forum post or reply to existing event thread ────────────────
   if (!recording.forumPostId) {
     try {
-      // #6 — Try to match this recording to a pre-existing event forum thread
+      // #6. Try to match this recording to a pre-existing event forum thread
       const { events: eventsTable } = await import("../../drizzle/schema");
       const { gte: gteOp, lte: lteOp, isNotNull: isNotNullOp, and: andOp } = await import("drizzle-orm");
       const recordingTime = sessionDate instanceof Date ? sessionDate : new Date();
@@ -348,7 +348,7 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
           .where(eq(eventsTable.id, matchedEvent.id));
         console.log(`[riverside-webhook] Linked recording ${recordingId} to event ${matchedEvent.id}`);
       } else {
-        // No matching event thread — create a fresh forum post
+        // No matching event thread, create a fresh forum post
         forumPostId = await createRecordingForumPost(recording);
       }
 
@@ -377,7 +377,7 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
     }
   }
 
-  // ── 4. Channel announcements (Telegram + WhatsApp) — fire-and-forget ────────
+  // ── 4. Channel announcements (Telegram + WhatsApp), fire-and-forget ────────
   notifyRecordingReady({
     title: recording.title,
     youtubeUrl: recording.youtubeUrl,
@@ -397,7 +397,7 @@ async function createRecordingForumPost(recording: {
   aiSummary: string | null;
   durationSeconds: number | null;
 }): Promise<number | null> {
-  // System author ID — use 1 (admin) as fallback; update if you have a dedicated bot user
+  // System author ID, use 1 (admin) as fallback; update if you have a dedicated bot user
   const SYSTEM_AUTHOR_ID = 1;
 
   // Look up the "episodes" forum category
@@ -459,7 +459,7 @@ async function sendRecordingEmail(recording: {
 }) {
   const subscribers = await db.getRecordingSubscribers();
   if (!subscribers.length) {
-    console.log("[riverside-webhook] No recording subscribers — skipping email");
+    console.log("[riverside-webhook] No recording subscribers, skipping email");
     return;
   }
 
