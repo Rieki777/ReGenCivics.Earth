@@ -50,12 +50,17 @@ vi.mock('@/components/SmartBottomNav', () => ({
   default: () => <nav data-testid="smart-bottom-nav">Smart Nav</nav>,
 }));
 
-// Mock trpc (Navigation calls trpc.messages.unreadCount.useQuery)
+// Mock trpc (Navigation calls trpc.messages.unreadCount.useQuery and trpc.userProfiles.getMe.useQuery)
 vi.mock('@/lib/trpc', () => ({
   trpc: {
     messages: {
       unreadCount: {
         useQuery: () => ({ data: { count: 0 } }),
+      },
+    },
+    userProfiles: {
+      getMe: {
+        useQuery: () => ({ data: null }),
       },
     },
   },
