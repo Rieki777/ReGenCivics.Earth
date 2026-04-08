@@ -706,7 +706,7 @@ export default function Bionomics() {
                   <img
                     src="/blog-hero-bridging-worlds.webp"
                     alt="Bridging Worlds: a phoenix bridge between the dominant grey city and the regenerative living world"
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="blur-up absolute inset-0 w-full h-full object-cover"
                     loading="eager"
                     fetchPriority="high"
                     width="1920"

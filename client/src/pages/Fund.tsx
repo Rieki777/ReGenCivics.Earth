@@ -210,7 +210,7 @@ export default function Fund() {
 
           <AnimatedSection animation="slide-up" delay={200}>
             <h1
-              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white leading-tight text-shadow-strong"
+              className="ink-reveal text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white leading-tight text-shadow-strong"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Fund the <span className="text-amber-400">Renaissance</span>

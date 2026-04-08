@@ -837,7 +837,7 @@ export default function Tokenomics() {
               <span>Token Economics for the Regenerative Renaissance</span>
             </div>
             <h1
-              className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 leading-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)]"
+              className="ink-reveal text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 leading-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)]"
               style={{ fontFamily: "var(--font-display)" }}
             >
               <span className="text-[#7dd87d]">$RCivics</span> Tokenomics

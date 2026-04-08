@@ -404,7 +404,7 @@ export default function Team() {
             <span className="text-[#7dd87d] font-medium">A Dynamic, Self-Organizing Team</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="ink-reveal text-5xl md:text-7xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
             Who <span className="text-[#7dd87d]">We Are</span>
           </h1>
           

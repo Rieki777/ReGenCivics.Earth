@@ -286,8 +286,8 @@ export default function Game() {
             <span className="text-[#7dd87d] font-semibold">{pageCopy.game.hero.badge}</span>
           </div>
           
-          <h1 
-            className="text-4xl md:text-6xl font-bold text-white mb-6"
+          <h1
+            className="ink-reveal text-4xl md:text-6xl font-bold text-white mb-6"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             {pageCopy.game.hero.heading}

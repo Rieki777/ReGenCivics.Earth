@@ -246,7 +246,7 @@ export default function Home() {
             <AnimatedSection animation="fade-in" className="max-w-5xl mx-auto">
               <div className="text-center mb-8">
                 <h1
-                  className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white leading-tight text-shadow-strong"
+                  className="ink-reveal text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white leading-tight text-shadow-strong"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   <span className="text-[#7dd87d]">ReGen</span> Civics
