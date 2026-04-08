@@ -20,7 +20,7 @@ export function AnimatedSection({
   delay = 0,
   className = '',
   as: Component = 'div',
-  threshold = 0.1,
+  threshold = 0,
   staggerChildren = false,
   staggerDelay = 100,
 }: AnimatedSectionProps) {
@@ -31,6 +31,21 @@ export function AnimatedSection({
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
+
+    // On-mount rect check: if any part of the element is already in (or
+    // above) the viewport when this effect runs, reveal immediately. This
+    // fixes two real bugs:
+    //   1. Long sections (Live Variables on /game-mechanics is ~9800px tall)
+    //      whose top is above the viewport never trigger IntersectionObserver
+    //      with threshold > 0 because no fraction of them is ever in view.
+    //   2. Elements rendered above the fold on first paint stayed at opacity 0
+    //      until the user scrolled because the observer fires asynchronously.
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    if (rect.top < viewportHeight && rect.bottom > 0) {
+      setIsVisible(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -126,6 +141,14 @@ export function StaggeredContainer({
     const element = ref.current;
     if (!element) return;
 
+    // Same on-mount rect check as AnimatedSection above.
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    if (rect.top < viewportHeight && rect.bottom > 0) {
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -133,7 +156,7 @@ export function StaggeredContainer({
           observer.unobserve(element);
         }
       },
-      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
+      { threshold: 0, rootMargin: '0px 0px -30px 0px' }
     );
 
     observer.observe(element);
