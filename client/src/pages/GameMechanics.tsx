@@ -19,6 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Search,
   SlidersHorizontal,
   Calculator,
@@ -29,7 +34,149 @@ import {
   Heart,
   Shield,
   Moon,
+  HelpCircle,
+  Network,
 } from "lucide-react";
+
+/* ─── HelpTip: small info icon that reveals a plain-language explanation ─ */
+
+function HelpTip({ text }: { text?: string | null }) {
+  if (!text) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label="Explain this variable"
+          className="inline-flex items-center justify-center text-white/40 hover:text-white/90 focus:text-white/90 focus:outline-none transition-colors shrink-0"
+        >
+          <HelpCircle className="w-3.5 h-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-[260px] whitespace-normal bg-[#1a472a] text-white border border-[#7dd87d]/30 text-xs leading-relaxed px-3 py-2 shadow-xl"
+      >
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/* ─── Plain-language explanations for specific variable keys ─────────────
+ * Keyed by the game_variables.key column. When a live variable has an
+ * entry here, this copy is used in its HelpTip instead of the terse DB
+ * description. Covers the keys most visible in the simulator + gratitude
+ * section. Anything not listed falls back to the DB description.
+ */
+const VARIABLE_HELP: Record<string, string> = {
+  "scoring.weights.quest_routine": "Points you earn for completing a routine quest. Routine quests are the small, repeatable actions that build a habit of showing up.",
+  "scoring.weights.quest_seasonal": "Points for completing a seasonal rite. These are bigger, once-a-season quests tied to the wheel of the year.",
+  "scoring.weights.quest_epic": "Points for completing an epic quest. These are multi-week, high-effort quests reserved for deep contributors.",
+  "scoring.weights.quest_welcome": "Points for completing a welcome aboard quest. Lower value because they're designed to be easy first wins.",
+  "scoring.weights.forum_post": "Points for writing a forum post. Small per-post value encourages quality over spam.",
+  "scoring.weights.forum_quality_reply": "Bonus points when one of your forum replies gets enough reactions to count as quality.",
+  "scoring.weights.event_attended": "Points for showing up to an event in person or on a call.",
+  "scoring.weights.contribution_base": "The floor value for any logged contribution before quality weighting kicks in.",
+  "scoring.weights.contribution_max": "The ceiling for a single highly-valued contribution.",
+  "scoring.weights.contribution_verified_bonus": "Extra points added on top when an admin verifies that a contribution actually happened.",
+  "scoring.weights.crowdpool_contribution": "Points you earn when you pledge to a crowd-pooling campaign for a land project.",
+  "scoring.weights.referral_signup": "Points you get when someone you invited creates an account.",
+  "scoring.weights.referral_first_quest": "Bonus points when your referral completes their first quest. Rewards actually onboarding people, not just signups.",
+  "scoring.weights.endorsement_from_project": "Points you receive when a land project endorses you. Worth more than a player endorsement because projects are rarer.",
+  "scoring.weights.endorsement_from_player": "Points you receive when another player endorses you.",
+  "scoring.weights.endorsement_given": "Small points for giving an endorsement. Kept low so endorsements stay meaningful.",
+  "scoring.weights.lunar_streak": "Points added per week when you keep engaging consistently. Compounds over the season.",
+  "scoring.weights.gratitude_received": "Points you earn for every gratitude token sent to you.",
+  "scoring.weights.gratitude_sent": "Small points for sending gratitude. Kept low so you can't farm score by spamming gratitude.",
+  "scoring.weights.flag_validated_penalty": "Points deducted if you're flagged and the flag is confirmed. Negative to discourage bad behavior.",
+  "scoring.weights.cascading_endorsement_penalty": "Small penalty if you endorsed someone who later gets flagged. Makes endorsements feel weighty.",
+
+  "trust.multiplier.min": "The lowest trust multiplier possible. A new player with zero endorsements sits near here.",
+  "trust.multiplier.max": "The highest trust multiplier possible. Long-time Stewards and Sages with lots of endorsements sit near here.",
+  "trust.multiplier.default": "The trust multiplier new players start with before any endorsements.",
+  "trust.endorsement_project_weight": "How much each project endorsement moves your trust score. Projects matter more than individual players.",
+  "trust.endorsement_player_weight": "How much each player endorsement moves your trust score.",
+  "trust.account_age_weight": "Trust bonus per completed season. Rewards people who stick around.",
+  "trust.flag_penalty_weight": "Trust loss per confirmed flag against you.",
+  "trust.endorsements_for_max": "How many weighted endorsements you need to reach the maximum trust multiplier.",
+  "trust.composting_rate": "Percentage of your trust score that composts away each season if you're inactive. Keeps trust current, not historical.",
+
+  "composting.decay_rate": "The percentage of your raw score that composts back to the pool each season. Keeps the game fresh by rewarding current effort over past glory.",
+  "composting.minimum_floor": "Your score never composts below this floor. Protects long-time players from losing everything during a quiet season.",
+  "composting.is_active": "Whether seasonal composting is turned on right now. Off in early seasons while the game is still calibrating.",
+
+  "harvest.pool_size": "The total $ReGen distributed as Harvest at the end of each season. Players get a share based on their contribution percentile.",
+  "harvest.is_active": "Whether seasonal Harvest distribution is turned on. Off until the game has enough players, orgs, and land projects.",
+  "harvest.min_score_percentile": "Players below this percentile get zero Harvest. Prevents dust-level payouts and rewards meaningful contribution.",
+  "harvest.distribution_curve": "Higher values concentrate Harvest at the top. Lower values flatten the curve.",
+  "harvest.split.contributors": "Share of the Harvest pool that goes to individual player contributors.",
+  "harvest.split.bffs": "Share of the Harvest pool that goes to Bioregional Financing Facilities.",
+  "harvest.split.orgs": "Share of the Harvest pool that goes to alliance organisations.",
+  "harvest.split.treasury": "Share of the Harvest pool retained in the treasury for ongoing work.",
+
+  "gratitude.budget_base": "Your starting gratitude budget per cycle. Multiplied by your citizenship tier, then boosted by streaks.",
+  "gratitude.budget_per_percentile": "Extra gratitude you get per percentile point of contribution. Rewards top contributors with more voice.",
+  "gratitude.max_budget": "The absolute ceiling on gratitude you can have in a single cycle.",
+  "gratitude.message_max_chars": "Character limit on the message you attach to a gratitude send. Short because gratitude is supposed to feel quick.",
+  "gratitude.multiplier.explorer": "How much weight an Explorer's gratitude carries when distributing the $ReGen pool.",
+  "gratitude.multiplier.co_creator": "How much weight a Co-Creator's gratitude carries.",
+  "gratitude.multiplier.steward": "How much weight a Steward's gratitude carries.",
+  "gratitude.multiplier.sage": "How much weight a Sage's gratitude carries. Sages have the most influence on where $ReGen flows.",
+  "gratitude.trust_graph.received_weight": "How much each gratitude you've received adds to your trust multiplier in the gratitude graph.",
+  "gratitude.trust_graph.max_bonus": "The maximum bonus you can earn from the gratitude trust graph. Caps the snowball effect.",
+
+  "citizenship.co_creator.min_percentile": "Contribution percentile you need to reach Co-Creator.",
+  "citizenship.co_creator.min_fire_quest": "Whether you must complete the Fire quest to reach Co-Creator.",
+  "citizenship.co_creator.min_rites": "Seasonal rites you need to complete to reach Co-Creator.",
+  "citizenship.co_creator.min_gratitude_sent": "Gratitude tokens you need to have sent to reach Co-Creator.",
+  "citizenship.co_creator.min_seasons": "Seasons of activity needed to reach Co-Creator.",
+  "citizenship.steward.min_percentile": "Contribution percentile needed to reach Steward.",
+  "citizenship.steward.min_epic_quests": "Epic quests you need to complete to reach Steward.",
+  "citizenship.steward.min_endorsements_project": "Project endorsements needed to reach Steward.",
+  "citizenship.steward.min_gratitude_received": "Gratitude you need to have received from others to reach Steward.",
+  "citizenship.steward.min_seasons": "Seasons of activity needed to reach Steward.",
+  "citizenship.sage.min_percentile": "Contribution percentile needed to reach Sage.",
+  "citizenship.sage.min_seasons": "Seasons of activity needed to reach Sage. Sage is a long-game tier.",
+  "citizenship.sage.min_contributions": "Total verified contributions needed to reach Sage.",
+  "citizenship.sage.min_endorsements_total": "Total endorsements received needed to reach Sage.",
+  "citizenship.grace_period_days": "Days you have to re-qualify before you're demoted. Protects you from losing a tier on a quiet week.",
+  "citizenship.gratitude_budget.explorer": "Gratitude tokens an Explorer gets per season.",
+  "citizenship.gratitude_budget.co_creator": "Gratitude tokens a Co-Creator gets per season.",
+  "citizenship.gratitude_budget.steward": "Gratitude tokens a Steward gets per season.",
+  "citizenship.gratitude_budget.sage": "Gratitude tokens a Sage gets per season.",
+
+  "projects.status.active_endorsements": "Player endorsements a land project needs to move into Active status.",
+  "projects.status.active_contributions": "Logged contributions a land project needs to move into Active status.",
+  "projects.status.established_endorsements": "Endorsements needed for Established status.",
+  "projects.status.established_campaigns": "Funded crowd-pooling campaigns needed for Established status.",
+  "projects.status.anchor_endorsements": "Endorsements needed for Anchor status. Anchors are the cornerstone land projects of the network.",
+  "projects.status.anchor_seasons": "Seasons of continuous activity needed for Anchor status.",
+
+  "forum.vote_weight_min": "Lowest forum vote weight. A brand new player's vote carries this much.",
+  "forum.vote_weight_max": "Highest forum vote weight. A Guardian's vote carries this much.",
+  "forum.quality_reply_min_reactions": "Reactions a forum reply needs to count as quality and earn bonus points.",
+
+  "quests.tier_steward_min": "Contribution percentile needed to unlock Steward-tier quests.",
+  "quests.tier_elder_min": "Contribution percentile needed to unlock Elder-tier quests.",
+  "quests.tier_guardian_min": "Contribution percentile needed to unlock Guardian-tier quests.",
+  "quests.require_rites_complete": "Whether all 13 Rites of Passage must be complete before tier quests unlock.",
+
+  "governance.council_seats": "Seats on the seasonal council each season.",
+  "governance.council_min_score": "Minimum contribution percentile needed to qualify for the council.",
+  "governance.council_require_rites": "Whether council members must have completed the Rites.",
+  "governance.cocreator_threshold_percentile": "Top contribution percentile eligible for a Co-Creator invite.",
+
+  "referral.reward.signup": "$ReGen you earn when someone you invited creates an account.",
+  "referral.reward.first_quest": "$ReGen you earn when your referral completes their first quest.",
+  "referral.reward.seasonal_rite": "$ReGen you earn when your referral completes a seasonal rite.",
+  "referral.reward.crowdpooling": "$ReGen you earn when your referral contributes to a crowd-pooling campaign.",
+  "referral.reward.second_degree": "$ReGen you earn from the activity of people your referrals invited.",
+  "referral.max_rewards_per_month": "Cap on total referral rewards per user per month. Prevents referral farming.",
+  "referral.max_second_degree_per_month": "Cap on second-degree referral rewards per month.",
+
+  "proposals.signal_threshold": "Upvotes a proposal needs before it graduates from the community forum to Hypha governance.",
+};
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
 
@@ -207,32 +354,38 @@ function LiveVariablesDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {vars.map((v) => (
-                    <div
-                      key={v.id}
-                      className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm text-white/90 font-medium truncate">
-                          {v.displayName}
-                        </p>
-                        {v.description && (
-                          <p className="text-xs text-white/60 truncate mt-0.5">{v.description}</p>
-                        )}
+                  {vars.map((v) => {
+                    const helpText = VARIABLE_HELP[v.key] ?? v.description ?? "";
+                    return (
+                      <div
+                        key={v.id}
+                        className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm text-white/90 font-medium truncate">
+                              {v.displayName}
+                            </p>
+                            <HelpTip text={helpText} />
+                          </div>
+                          <p className="text-[10px] text-white/40 font-mono truncate mt-0.5">
+                            {v.key}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-sm font-mono text-[#7dd87d]">
+                            {formatValue(v.value, v.valueType)}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] ${valueTypeBadgeColor(v.valueType)}`}
+                          >
+                            {v.valueType}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-sm font-mono text-[#7dd87d]">
-                          {formatValue(v.value, v.valueType)}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] ${valueTypeBadgeColor(v.valueType)}`}
-                        >
-                          {v.valueType}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </CardContent>
               </Card>
             ))}
@@ -251,10 +404,11 @@ interface SliderRowProps {
   max: number;
   step: number;
   unit?: string;
+  help?: string;
   onChange: (val: number) => void;
 }
 
-function SliderRow({ label, value, min, max, step, unit, onChange }: SliderRowProps) {
+function SliderRow({ label, value, min, max, step, unit, help, onChange }: SliderRowProps) {
   const display = unit === "%"
     ? `${(value * 100).toFixed(0)}%`
     : unit === "x"
@@ -266,7 +420,10 @@ function SliderRow({ label, value, min, max, step, unit, onChange }: SliderRowPr
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm text-white/80">{label}</label>
+        <div className="flex items-center gap-1.5">
+          <label className="text-sm text-white/80">{label}</label>
+          <HelpTip text={help} />
+        </div>
         <span className="text-sm font-mono text-[#7dd87d]">{display}</span>
       </div>
       <Slider
@@ -348,6 +505,7 @@ function GameSimulator() {
         <CardContent className="space-y-6">
           <SliderRow
             label="Quest Points (per quest)"
+            help="How many points you earn each time you complete a routine quest. Drag this up to see how a more generous scoring rule changes your end-of-season Harvest."
             value={sim.questWeight}
             min={1}
             max={50}
@@ -356,6 +514,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="Forum Points (per post)"
+            help="How many points you earn for each forum post. Kept lower than quests because posting is easier than completing a quest."
             value={sim.forumWeight}
             min={1}
             max={30}
@@ -364,6 +523,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="Trust Multiplier (min)"
+            help="The lowest trust multiplier in the game. A brand-new Explorer with no endorsements sits near here. Your raw score gets multiplied by your trust multiplier to get your boosted score."
             value={sim.trustMultiplierMin}
             min={0.5}
             max={2.0}
@@ -373,6 +533,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="Trust Multiplier (max)"
+            help="The highest trust multiplier in the game. Long-time Stewards and Sages with lots of endorsements sit near here. A 3x multiplier triples your raw score."
             value={sim.trustMultiplierMax}
             min={1.0}
             max={5.0}
@@ -382,6 +543,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="Composting Decay Rate"
+            help="The percentage of last season's score that composts back to the pool each new season. Keeps the game fresh so current effort matters more than past glory. Zero = nothing decays."
             value={sim.compostingDecay}
             min={0}
             max={0.5}
@@ -391,6 +553,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="Harvest Pool Size"
+            help="The total $ReGen distributed at the end of each season. Your share depends on your contribution percentile and the distribution curve."
             value={sim.harvestPoolSize}
             min={10000}
             max={200000}
@@ -400,6 +563,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="Gratitude Base Budget (per cycle)"
+            help="Your starting gratitude budget each lunar cycle, before any tier multiplier or streak bonus. This is what everyone begins with."
             value={sim.gratitudeBudget}
             min={50}
             max={200}
@@ -408,6 +572,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="People Acknowledged (this cycle)"
+            help="How many different people you send gratitude to this cycle. The first 10 get your full impact. After 10, your impact per person starts diluting."
             value={sim.gratitudeRecipients}
             min={1}
             max={30}
@@ -416,6 +581,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="Streak (consecutive 10+ cycles)"
+            help="Number of cycles in a row where you acknowledged at least 10 people. Each streak cycle adds 3% to your effective budget, maxing at 30% after 10 cycles."
             value={sim.streakCycles}
             min={0}
             max={10}
@@ -424,6 +590,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="$ReGen Distribution Pool (per cycle)"
+            help="The pool of $ReGen tokens distributed each gratitude cycle. Split proportionally among everyone who received gratitude, weighted by sender tier."
             value={sim.regenDistributionPool}
             min={1000}
             max={50000}
@@ -433,6 +600,7 @@ function GameSimulator() {
           />
           <SliderRow
             label="$ReGen Claim Threshold"
+            help="How much $ReGen you need to accumulate before you can claim it on Hypha. Prevents tiny dust claims from clogging the system. Lower = easier to claim, higher = more meaningful claims."
             value={sim.claimThreshold}
             min={100}
             max={1000}
@@ -523,15 +691,20 @@ function GratVarRow({
   label,
   value,
   detail,
+  help,
 }: {
   label: string;
   value: string;
   detail: string;
+  help?: string;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
       <div className="min-w-0 flex-1">
-        <p className="text-sm text-white/90 font-medium">{label}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm text-white/90 font-medium">{label}</p>
+          <HelpTip text={help} />
+        </div>
         <p className="text-xs text-white/50 mt-0.5">{detail}</p>
       </div>
       <span className="text-sm font-mono text-[#7dd87d] shrink-0">{value}</span>
@@ -763,10 +936,30 @@ export default function GameMechanics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <GratVarRow label="Cycle Duration" value="~29.5 days" detail="New moon to new moon" />
-                  <GratVarRow label="Base Budget" value="100" detail="Same for all tiers" />
-                  <GratVarRow label="Full-Power Threshold" value="10 people" detail="Max impact per person" />
-                  <GratVarRow label="Streak Bonus" value="+3% / cycle" detail="Max 30% (10 cycles)" />
+                  <GratVarRow
+                    label="Cycle Duration"
+                    value="~29.5 days"
+                    detail="New moon to new moon"
+                    help="A gratitude cycle runs one lunar month. Every cycle, your budget resets and the $ReGen pool is distributed to whoever received gratitude."
+                  />
+                  <GratVarRow
+                    label="Base Budget"
+                    value="100"
+                    detail="Same for all tiers"
+                    help="Everyone starts every cycle with 100 base budget, regardless of tier. Your tier multiplier is applied on top of this."
+                  />
+                  <GratVarRow
+                    label="Full-Power Threshold"
+                    value="10 people"
+                    detail="Max impact per person"
+                    help="The first 10 people you acknowledge each cycle receive your full per-person impact. After 10, your budget starts diluting so each additional person gets a smaller share."
+                  />
+                  <GratVarRow
+                    label="Streak Bonus"
+                    value="+3% / cycle"
+                    detail="Max 30% (10 cycles)"
+                    help="Each cycle in a row where you acknowledge at least 10 people adds 3% to your effective budget. Caps at 30% after 10 consecutive cycles. Rewards showing up consistently."
+                  />
                 </CardContent>
               </Card>
 
@@ -779,10 +972,30 @@ export default function GameMechanics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <GratVarRow label="Explorer" value="1.0x" detail="100 effective budget" />
-                  <GratVarRow label="Co-Creator" value="2.0x" detail="200 effective budget" />
-                  <GratVarRow label="Steward" value="3.0x" detail="300 effective budget" />
-                  <GratVarRow label="Sage" value="5.0x" detail="500 effective budget" />
+                  <GratVarRow
+                    label="Explorer"
+                    value="1.0x"
+                    detail="100 effective budget"
+                    help="Explorers get the base budget with no multiplier. You can still send gratitude, you just don't carry extra weight yet."
+                  />
+                  <GratVarRow
+                    label="Co-Creator"
+                    value="2.0x"
+                    detail="200 effective budget"
+                    help="Co-Creators double the base budget. Earned by completing onboarding quests, inviting at least one person, and staying active for a season."
+                  />
+                  <GratVarRow
+                    label="Steward"
+                    value="3.0x"
+                    detail="300 effective budget"
+                    help="Stewards triple the base budget. Earned by sustained contribution across 3+ seasons and reputation above the 50th percentile."
+                  />
+                  <GratVarRow
+                    label="Sage"
+                    value="5.0x"
+                    detail="500 effective budget"
+                    help="Sages get five times the base budget. The long-game tier, earned through 6+ seasons of deep contribution and community recognition."
+                  />
                 </CardContent>
               </Card>
 
@@ -795,9 +1008,24 @@ export default function GameMechanics() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <GratVarRow label="Pool per Cycle" value="10,000 $ReGen" detail="Split by gratitude received" />
-                  <GratVarRow label="Claim Threshold" value="333 $ReGen" detail="Accumulate before claiming on Hypha" />
-                  <GratVarRow label="Distribution" value="Proportional" detail="Weighted by sender's effective budget" />
+                  <GratVarRow
+                    label="Pool per Cycle"
+                    value="10,000 $ReGen"
+                    detail="Split by gratitude received"
+                    help="Every cycle, 10,000 $ReGen is released and split among everyone who received gratitude. Your share depends on how much gratitude you got and who it came from."
+                  />
+                  <GratVarRow
+                    label="Claim Threshold"
+                    value="333 $ReGen"
+                    detail="Accumulate before claiming on Hypha"
+                    help="You need to have accumulated at least 333 $ReGen before you can claim it on Hypha. Prevents tiny dust claims and encourages meaningful withdrawals."
+                  />
+                  <GratVarRow
+                    label="Distribution"
+                    value="Proportional"
+                    detail="Weighted by sender's effective budget"
+                    help="Your share isn't just how many gratitudes you got. Each gratitude is weighted by the sender's effective budget, so a gratitude from a Sage counts more than one from an Explorer."
+                  />
                 </CardContent>
               </Card>
 
@@ -805,14 +1033,35 @@ export default function GameMechanics() {
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-white text-base flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-blue-400" />
-                    Trust Graph Bonus
+                    <Network className="w-4 h-4 text-blue-400" />
+                    Trust Graph
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <GratVarRow label="Enabled" value="Yes" detail="Builds on base tier multiplier" />
-                  <GratVarRow label="Received Weight" value="0.1x" detail="Per gratitude received last season" />
-                  <GratVarRow label="Max Bonus" value="+2.0x" detail="Cap on trust graph boost" />
+                  <GratVarRow
+                    label="Received Weight"
+                    value="0.10 / gratitude"
+                    detail="How much each gratitude nudges your multiplier"
+                    help="Each gratitude you receive adds 0.10 to your gratitude trust multiplier. The more people who appreciate your work, the more your own gratitude carries weight."
+                  />
+                  <GratVarRow
+                    label="Max Bonus"
+                    value="+0.50"
+                    detail="Ceiling on trust graph snowball"
+                    help="The gratitude trust graph bonus is capped at +0.50 so it can't snowball forever. Keeps influence bounded no matter how much gratitude you've accumulated."
+                  />
+                  <GratVarRow
+                    label="Composting Rate"
+                    value="5% / season"
+                    detail="Unused trust composts back"
+                    help="If you go quiet, 5% of your trust score composts back to the pool each season. Keeps the graph current instead of frozen around early adopters."
+                  />
+                  <GratVarRow
+                    label="Reciprocity"
+                    value="Tracked"
+                    detail="Two-way edges are stronger"
+                    help="When two people both send gratitude to each other, the connection counts more than a one-way edge. Rewards mutual recognition."
+                  />
                 </CardContent>
               </Card>
             </div>
