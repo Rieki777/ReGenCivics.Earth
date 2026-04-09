@@ -23,6 +23,71 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    id: 'food-producers-first',
+    slug: 'food-producers-first',
+    title: 'Why Food Producers First',
+    excerpt: 'Food producers are where a regenerative economy actually anchors. Food is the daily, local, repeatable transaction that couples a currency to real regenerative work.',
+    content: `Food producers are where a regenerative economy actually anchors.
+
+Food is the daily, local, repeatable transaction that couples a currency to real regenerative work. Every meal a household eats is a vote for a soil practice, a labor relationship, a watershed, a way of being on land. Money that flows alongside food flows through every layer of the regenerative stack: the seed saver, the grower, the courier, the cook, the eater, and the neighbor who comes back tomorrow.
+
+This is why ReGen Civics begins with food producers.
+
+## The 2017 sketch
+
+A sketch from 2017 still holds up. A grower sells food to a courier. The courier delivers to a cook. The cook feeds an eater. The eater is also a neighbor who comes back. The cycle repeats. Alongside the food, $ReGen circulates with each handoff. The currency is not separate from the food. The currency tracks the food.
+
+![The 2017 sketch of a peer-to-peer food economy](/images/economy/p2p-food-system-2017.webp)
+
+## A farmer joining today
+
+Here is what a farmer who finds ReGen Civics today actually does, in order:
+
+1. Sign up. Two minutes. No wallet required for the first step.
+2. Claim a handle. Pick a short name. This is how the rest of the community thanks you.
+3. Connect to your nearest bioregion node. We list active land projects on the map. Find the one closest to you. Send a message.
+4. Complete the Welcome Aboard quest. Ten short steps. Each one teaches you a piece of how the system works.
+5. List your first offering. Could be a CSA share, a market day, a single jar of honey. The size doesn't matter.
+6. Receive your first gratitude. Someone will thank you in the forum or on your profile. That's not just a nice gesture. It writes to the gratitude log and counts toward the season harvest.
+7. Appear on the Living Tree. Once you have a few completed quests and one offering listed, your project shows up on the visualization that maps the whole network.
+
+## Three days, three people
+
+**The grower (Maya, near Asheville).** Wakes up, checks the day's harvest, posts the available shares to her local channel. By afternoon she's packed three CSA boxes for couriers and one bulk order for a co-op kitchen. Each transaction is logged. At the end of the cycle, the gratitude she received from eaters compounds into her contribution score for the season.
+
+**The courier-cook (Jordan, in Detroit).** Picks up boxes from three growers in a single morning loop, drops them at the kitchen, and starts prep for tonight's communal dinner. Jordan is paid in dollars for the transport and in $ReGen for the regenerative work the meal enables. The meal feeds twenty people who would otherwise eat industrial food.
+
+**The eater and neighbor (Priya, in Brooklyn).** Eats dinner at the community kitchen. Sends gratitude to Jordan and to Maya. Picks up next week's CSA box. Comes back the following week with a friend. Her gratitude budget compounds when she shows up consistently, so her thanks carries more weight.
+
+## Why this works
+
+The reason food producers go first is structural.
+
+Food is daily. The transaction repeats. A currency that circulates with food gets exercised constantly. The demand is already there. People are already eating. Food is already happening.
+
+Food is local. The regenerative gain is real. Soil that holds more carbon, water that runs cleaner, livelihoods that stay in the watershed. None of this is speculative. It is observable.
+
+Food is shared. The supply chain is short and visible. Every link in the chain knows the others. That is the social fabric a regenerative currency needs to be honest.
+
+Start where the economy is already real. Build out from there.
+
+## What's next
+
+If you grow food, list your project. If you cook food, find a grower. If you eat food, find a community kitchen and start showing up. Each role plugs into the same system from a different angle.
+
+The grower's path: [/land](/land)
+The cook and courier path: [/play](/play)
+The eater and neighbor path: [/community](/community)
+
+This is how a regenerative economy actually anchors. One meal at a time.`,
+    author: 'Rieki Cordon',
+    date: '2026-04-08',
+    readTime: '8 min',
+    image: '/images/economy/p2p-food-system-2017.webp',
+    tags: ['Food Systems', 'Local Economy', 'Regenerative Producers'],
+    featured: true,
+  },
+  {
     id: '1',
     slug: 'what-makes-regen-civics-different',
     title: 'What Makes ReGen Civics Different: 7 Unique Features of Our Regenerative Platform',
