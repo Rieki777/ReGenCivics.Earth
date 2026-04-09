@@ -411,7 +411,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
                 {percentileLabel}
               </Badge>
 
-              <p className="text-white/20 text-[9px] mt-2">regen.civics</p>
+              <p className="text-white/50 text-[9px] mt-2">regen.civics</p>
             </div>
 
             <Button
@@ -481,7 +481,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
               <ArrowLeft className="w-5 h-5" />
             </button>
 
-            <p className="text-white/30 text-xs">
+            <p className="text-white/55 text-xs">
               {activeCard + 1} of {CARD_COUNT}
             </p>
 

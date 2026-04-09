@@ -144,7 +144,7 @@ export default function QuestSuggestions() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Regenerative Agriculture Challenge"
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]/50 transition-colors"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/50 transition-colors"
                     maxLength={300}
                   />
                 </div>
@@ -175,7 +175,7 @@ export default function QuestSuggestions() {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe the quest, its goals, and why it matters to the regenerative movement..."
                     rows={4}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]/50 transition-colors resize-none"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/50 transition-colors resize-none"
                     maxLength={5000}
                   />
                 </div>

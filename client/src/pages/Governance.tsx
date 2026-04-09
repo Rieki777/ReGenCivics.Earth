@@ -76,6 +76,17 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
             </div>
           </div>
 
+          {/* Who Holds the Vote: pie/donut visual */}
+          <div className="mb-6 flex justify-center">
+            <img
+              src="/images/governance/who-holds-vote.png"
+              alt="Vote distribution: Stewardship Council 40%, Investors 20%, Land Projects 20%, Alliance Partners 20%"
+              className="w-full max-w-2xl rounded-xl"
+              loading="lazy"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            />
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="bg-[#0d2818]/60 rounded-xl p-5 border border-[#d4a574]/30">
               <p className="text-[#d4a574] font-bold text-lg mb-3">How It's Distributed</p>
@@ -988,8 +999,19 @@ export default function Governance() {
               The ReGen Civics Fund is governed by four distinct groups, each bringing unique perspectives and expertise. Together, they make strategic decisions about capital allocation, land project selection, and alliance partnerships.
             </p>
             
-            {/* Fund Governance Structure Diagram */}
+            {/* Fund Governance Structure Diagram (image first, SVG fallback below) */}
             <div className="mb-12 flex justify-center">
+              <img
+                src="/images/governance/voice-holders-diagram.png"
+                alt="Four voice-holder groups connected to the ReGen Civics Fund: Council of Domain Experts, Land Project Stewards, Alliance Partners, Investor Voice"
+                className="w-full max-w-2xl rounded-xl"
+                loading="lazy"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+
+            {/* Fallback: inline SVG version (kept for accessibility + when image is missing) */}
+            <div className="hidden mb-12 flex justify-center">
               <svg
                 viewBox="0 0 600 420"
                 className="w-full max-w-2xl rounded-xl shadow-2xl bg-[#0d2818]"
@@ -1089,24 +1111,6 @@ export default function Governance() {
               </div>
             </div>
 
-            {/* Governance Evolution Graphic */}
-            <div className="mb-12">
-              <h3 className="text-2xl font-bold text-white mb-6 text-center">Governance Evolution: Three Phases</h3>
-              <p className="text-white/80 text-sm mb-8 text-center">
-                The fund's governance intentionally evolves to include "The People" - those living and working in land projects and organizations:
-              </p>
-              <div className="flex justify-center">
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/governance-evolution-v2_66ad1937.webp"
-                  alt="ReGen Civics Governance Evolution"
-                  width="1200"
-                  height="800"
-                  className="w-full rounded-xl shadow-2xl"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-
             {/* Seasonal Voting Process */}
             <div className="mb-12">
               <h3 className="text-2xl font-bold text-white mb-6 text-center">Seasonal Voting Process</h3>
@@ -1115,12 +1119,11 @@ export default function Governance() {
               </p>
               <div className="flex justify-center mb-8">
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/seasonal-voting-v2_08cf1fa6.webp"
-                  alt="ReGen Civics Seasonal Voting Process"
-                  width="1200"
-                  height="800"
-                  className="w-full rounded-xl shadow-2xl"
+                  src="/images/governance/seasonal-cycle.png"
+                  alt="Seasonal cycle showing the four seasons and the Seasonal Ceremony that begins each new cycle"
+                  className="w-full max-w-2xl rounded-xl"
                   loading="lazy"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                 />
               </div>
               <div className="bg-[#0d2818]/50 rounded-lg p-6 border border-[#7dd87d]/30">

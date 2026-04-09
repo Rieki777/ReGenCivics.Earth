@@ -24,7 +24,7 @@ export function HelpTooltip({ text, className = "", iconSize = 14, side = "top" 
         <TooltipTrigger asChild>
           <button
             type="button"
-            className={`inline-flex items-center justify-center text-white/30 hover:text-[#7dd87d] transition-colors ${className}`}
+            className={`inline-flex items-center justify-center text-white/55 hover:text-[#7dd87d] transition-colors ${className}`}
             aria-label="Help"
           >
             <HelpCircle style={{ width: iconSize, height: iconSize }} />

@@ -231,14 +231,14 @@ export default function AllocationCalculator() {
                     <div key={p.year} className="text-center">
                       <p className="text-white/50 text-xs mb-1.5">Year {p.year}</p>
                       {p.distributionYears === 0 ? (
-                        <p className="text-white/30 text-sm font-medium"> - </p>
+                        <p className="text-white/55 text-sm font-medium"> - </p>
                       ) : (
                         <>
                           <p className="text-[#7dd87d] font-bold text-sm md:text-base">
                             {fmt(p.netDistributions)}
                           </p>
                           {p.carryPaid > 0 && (
-                            <p className="text-white/30 text-[10px] mt-0.5">
+                            <p className="text-white/55 text-[10px] mt-0.5">
                               +{fmt(p.carryPaid)} carry
                             </p>
                           )}

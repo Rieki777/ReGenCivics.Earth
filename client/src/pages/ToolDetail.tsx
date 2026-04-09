@@ -48,7 +48,7 @@ export default function ToolDetail() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
         <div className="text-center">
-          <Wrench className="w-12 h-12 text-white/20 mx-auto mb-4" />
+          <Wrench className="w-12 h-12 text-white/50 mx-auto mb-4" />
           <h2 className="text-white text-xl font-semibold mb-2">Tool not found</h2>
           <p className="text-white/50 mb-6">This tool may have been removed or the link is incorrect.</p>
           <Link href="/tools">
@@ -166,11 +166,11 @@ export default function ToolDetail() {
                     </Button>
                   </a>
                 )}
-                <span className="text-white/30 text-xs flex items-center gap-1">
+                <span className="text-white/55 text-xs flex items-center gap-1">
                   <Users className="w-3 h-3" /> {tool.clickCount ?? 0} views
                 </span>
                 {tool.endorsementCount > 0 && (
-                  <span className="text-white/30 text-xs flex items-center gap-1">
+                  <span className="text-white/55 text-xs flex items-center gap-1">
                     <ThumbsUp className="w-3 h-3" /> {tool.endorsementCount} endorsements
                   </span>
                 )}
@@ -195,7 +195,7 @@ export default function ToolDetail() {
                   value={endorseText}
                   onChange={(e) => setEndorseText(e.target.value)}
                   placeholder="Share why you recommend this tool and how you have used it..."
-                  className="w-full bg-transparent text-white placeholder:text-white/30 text-sm resize-none min-h-[60px] focus:outline-none mb-3"
+                  className="w-full bg-transparent text-white placeholder:text-white/55 text-sm resize-none min-h-[60px] focus:outline-none mb-3"
                 />
                 <div className="flex justify-end">
                   <Button
@@ -240,7 +240,7 @@ export default function ToolDetail() {
                         {e.userName.charAt(0).toUpperCase()}
                       </div>
                       <span className="text-white/70 text-sm font-medium">{e.userName}</span>
-                      <span className="text-white/25 text-xs">
+                      <span className="text-white/55 text-xs">
                         {new Date(e.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -249,7 +249,7 @@ export default function ToolDetail() {
                 ))}
               </div>
             ) : (
-              <p className="text-white/30 text-sm">No endorsements yet. Be the first to share your experience.</p>
+              <p className="text-white/55 text-sm">No endorsements yet. Be the first to share your experience.</p>
             )}
           </AnimatedSection>
         </div>
@@ -277,12 +277,12 @@ export default function ToolDetail() {
                         )}
                         <div>
                           <p className="text-white font-medium text-sm">{rt.name}</p>
-                          <Badge className="text-[10px] bg-white/5 text-white/40 border-white/10 mt-0.5">
+                          <Badge className="text-[10px] bg-white/5 text-white/65 border-white/10 mt-0.5">
                             {rt.pricing === "open_source" ? "Open Source" : rt.pricing.charAt(0).toUpperCase() + rt.pricing.slice(1)}
                           </Badge>
                         </div>
                       </div>
-                      <p className="text-white/40 text-xs line-clamp-2">{rt.summary}</p>
+                      <p className="text-white/65 text-xs line-clamp-2">{rt.summary}</p>
                     </div>
                   </Link>
                 ))}

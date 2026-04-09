@@ -127,7 +127,7 @@ export default function Marketplace() {
         {items.length === 0 && (
           <div className="text-center py-20 border border-white/8 rounded-2xl bg-white/2">
             <p className="text-white/50 text-lg mb-2">No entries yet</p>
-            <p className="text-white/35 text-sm mb-6">
+            <p className="text-white/60 text-sm mb-6">
               Be the first to share what you can offer and what you could use help with.
             </p>
             <Link href="/profile">
@@ -231,7 +231,7 @@ export default function Marketplace() {
         </div>
 
         {items.length > 0 && (
-          <p className="text-center text-white/30 text-xs mt-8">
+          <p className="text-center text-white/55 text-xs mt-8">
             {items.length} member{items.length !== 1 ? "s" : ""} in the connection hub
           </p>
         )}

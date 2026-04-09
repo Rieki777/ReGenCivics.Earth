@@ -47,7 +47,7 @@ export function SharePanel({ questTitle, questTagline, forumUrl }: SharePanelPro
       {/* Share trigger button */}
       <button
         onClick={() => setFlipped(true)}
-        className="flex items-center gap-1 text-white/30 hover:text-[#7dd87d] transition-colors text-xs"
+        className="flex items-center gap-1 text-white/55 hover:text-[#7dd87d] transition-colors text-xs"
         aria-label="Share this quest"
         title="Share"
       >

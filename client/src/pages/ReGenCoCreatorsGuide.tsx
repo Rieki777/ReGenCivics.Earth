@@ -291,7 +291,7 @@ export default function ReGenCoCreatorsGuide() {
                         <Icon className={`w-5 h-5 ${s.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-1">When</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-300 mb-1">When</p>
                         <h3 className="font-bold text-gray-900 text-lg leading-snug">{s.scenario}</h3>
                       </div>
                     </div>
@@ -299,7 +299,7 @@ export default function ReGenCoCreatorsGuide() {
                     <p className="text-gray-600 text-sm leading-relaxed mb-4">{s.explanation}</p>
 
                     <div className="bg-white/70 rounded-xl px-4 py-3 mb-4 border border-gray-200">
-                      <p className="text-xs font-semibold text-gray-400 mb-1">Example</p>
+                      <p className="text-xs font-semibold text-gray-300 mb-1">Example</p>
                       <p className="text-sm text-gray-700 italic">{s.example}</p>
                     </div>
 
@@ -460,7 +460,7 @@ export default function ReGenCoCreatorsGuide() {
                 {["Contribution", "Tokens Earned", "Governance Weight Grows", "Regenerative Loop"].map((step, i, arr) => (
                   <div key={step} className="flex items-center gap-3">
                     <div className="px-4 py-2 bg-emerald-100 rounded-lg text-sm font-medium text-emerald-900">{step}</div>
-                    {i < arr.length - 1 && <ArrowRight className="w-5 h-5 text-gray-400" />}
+                    {i < arr.length - 1 && <ArrowRight className="w-5 h-5 text-gray-300" />}
                   </div>
                 ))}
               </div>

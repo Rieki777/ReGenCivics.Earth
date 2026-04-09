@@ -89,7 +89,7 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
       {/* Skip, top right */}
       <button
         onClick={handleEnter}
-        className="absolute top-6 right-6 text-white/35 hover:text-white/60 text-sm transition-colors underline-offset-4 hover:underline"
+        className="absolute top-6 right-6 text-white/60 hover:text-white/60 text-sm transition-colors underline-offset-4 hover:underline"
       >
         Skip
       </button>

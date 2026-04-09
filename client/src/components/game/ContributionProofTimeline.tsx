@@ -154,7 +154,7 @@ export function ContributionProofTimeline({ userId, className = "" }: Props) {
   if (!isLoading && entries.length === 0) {
     return (
       <div className={`text-center py-12 ${className}`}>
-        <Leaf className="w-8 h-8 mx-auto mb-3 text-white/20" />
+        <Leaf className="w-8 h-8 mx-auto mb-3 text-white/50" />
         <p className="text-sm text-white/60 max-w-xs mx-auto leading-relaxed">
           Your contribution timeline grows as you complete quests and log contributions.
         </p>
@@ -276,7 +276,7 @@ function TimelineEntryCard({ entry }: { entry: TimelineEntry }) {
                 </span>
               )}
               {isPrivate && (
-                <span className="text-[10px] text-white/30 flex items-center gap-0.5">
+                <span className="text-[10px] text-white/55 flex items-center gap-0.5">
                   <Lock className="w-2.5 h-2.5" />
                   {entry.visibility}
                 </span>
@@ -308,7 +308,7 @@ function ArtifactPreview({ artifact }: { artifact: Artifact }) {
             />
           ) : (
             <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-              <Image className="w-4 h-4 text-white/20" />
+              <Image className="w-4 h-4 text-white/50" />
             </div>
           )}
           {artifact.excerpt && (
@@ -320,7 +320,7 @@ function ArtifactPreview({ artifact }: { artifact: Artifact }) {
     case "text":
       return artifact.excerpt ? (
         <div className="mt-2 flex items-start gap-1.5">
-          <FileText className="w-3.5 h-3.5 text-white/20 mt-0.5 flex-shrink-0" />
+          <FileText className="w-3.5 h-3.5 text-white/50 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-white/60 line-clamp-3 italic leading-relaxed">
             {artifact.excerpt}
           </p>

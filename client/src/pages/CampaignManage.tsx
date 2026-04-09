@@ -238,14 +238,14 @@ export default function CampaignManage() {
             <span className="font-medium">{contribution.contributorName}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Mail className="w-4 h-4 text-gray-400" />
+            <Mail className="w-4 h-4 text-gray-300" />
             <a href={`mailto:${contribution.contributorEmail}`} className="hover:underline">
               {contribution.contributorEmail}
             </a>
           </div>
           {contribution.contributorPhone && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Phone className="w-4 h-4 text-gray-400" />
+              <Phone className="w-4 h-4 text-gray-300" />
               <span>{contribution.contributorPhone}</span>
             </div>
           )}
@@ -283,7 +283,7 @@ export default function CampaignManage() {
         )}
         
         {/* Submitted date */}
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-300">
           Submitted: {new Date(contribution.submittedAt).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',

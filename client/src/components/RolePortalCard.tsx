@@ -170,7 +170,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
           <p className="text-[#7dd87d] text-[10px] font-bold uppercase tracking-wider mb-1">
             {role.title}
           </p>
-          <p className="text-white/40 text-xs italic mb-3">
+          <p className="text-white/65 text-xs italic mb-3">
             {role.tagline}
           </p>
 
@@ -178,7 +178,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
           <div className="flex items-center justify-between pt-3 border-t border-white/10">
             <SeasonDots activeSeasons={role.seasons} />
             <div className="flex items-center gap-2">
-              <span className="text-white/40 text-xs">~{role.hoursPerWeek}h/wk</span>
+              <span className="text-white/65 text-xs">~{role.hoursPerWeek}h/wk</span>
               <span className="bg-[#7dd87d]/20 text-[#7dd87d] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                 B{role.band}
               </span>
@@ -227,7 +227,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                     >
                       {role.characterName}
                     </span>
-                    <span className="text-white/40 text-lg ml-2">{role.title}</span>
+                    <span className="text-white/65 text-lg ml-2">{role.title}</span>
                   </div>
                 </div>
               </DialogTitle>
@@ -324,7 +324,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-lg">🌱</span>
                     <span className="text-[#7dd87d] font-semibold text-sm">Seed</span>
-                    <span className="text-white/40 text-xs ml-auto">Did you plant it?</span>
+                    <span className="text-white/65 text-xs ml-auto">Did you plant it?</span>
                   </div>
                   <p className="text-white/70 text-sm">{role.seed}</p>
                 </div>
@@ -332,12 +332,12 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-lg">🌾</span>
                     <span className="text-[#fbbf24] font-semibold text-sm">Harvest</span>
-                    <span className="text-white/40 text-xs ml-auto">Did it grow?</span>
+                    <span className="text-white/65 text-xs ml-auto">Did it grow?</span>
                   </div>
                   <p className="text-white/70 text-sm">{role.harvest}</p>
                 </div>
               </div>
-              <p className="text-white/40 text-xs mt-3 text-center">
+              <p className="text-white/65 text-xs mt-3 text-center">
                 Both met = +30% bonus on base. One met = +15%. Reviewed at the Season Festival.
               </p>
             </div>
@@ -357,7 +357,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                     Band {role.band}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-white/40">
+                <div className="flex items-center justify-between text-xs text-white/65">
                   <span>~{role.hoursPerWeek} hrs/week</span>
                   <span>Up to {role.maxTokenAward.split(" ")[0]} with Seed + Harvest</span>
                 </div>

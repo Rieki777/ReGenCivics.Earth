@@ -136,7 +136,7 @@ export function AuthDialog({
               {/* Divider */}
               <div className="flex items-center gap-3 my-1">
                 <div className="flex-1 h-px bg-white/10" />
-                <span className="text-white/30 text-xs">or</span>
+                <span className="text-white/55 text-xs">or</span>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
 
@@ -148,7 +148,7 @@ export function AuthDialog({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full h-11 rounded-xl bg-[#1a472a]/40 border border-[#7dd87d]/20 text-white placeholder-white/30 px-4 text-sm focus:outline-none focus:border-[#7dd87d]/50"
+                  className="w-full h-11 rounded-xl bg-[#1a472a]/40 border border-[#7dd87d]/20 text-white placeholder-white/55 px-4 text-sm focus:outline-none focus:border-[#7dd87d]/50"
                 />
                 {emailError && (
                   <p className="text-red-400 text-xs text-left">{emailError}</p>

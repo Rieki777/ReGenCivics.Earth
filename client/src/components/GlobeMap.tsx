@@ -650,7 +650,7 @@ function EntityCard({
               </a>
             )}
             {entity.url && entity.inactive && (
-              <span className="inline-flex items-center gap-1 text-xs text-white/30 line-through cursor-not-allowed">
+              <span className="inline-flex items-center gap-1 text-xs text-white/55 line-through cursor-not-allowed">
                 <ExternalLink className="w-3 h-3" /> Website (offline)
               </span>
             )}
@@ -1299,8 +1299,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                           <ExternalLink className="w-3 h-3" /> Visit
                         </a>
                       ) : entity.inactive ? (
-                        <span className="text-white/30 text-xs line-through">Offline</span>
-                      ) : <span className="text-white/30 text-xs">-</span>}
+                        <span className="text-white/55 text-xs line-through">Offline</span>
+                      ) : <span className="text-white/55 text-xs">-</span>}
                     </td>
                   </tr>
                 ))}
@@ -1536,15 +1536,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                   <div className="flex items-end gap-3 pl-1">
                     <div className="flex flex-col items-center">
                       <svg width="8" height="14" viewBox="0 0 8 14"><polygon points="4,1 7,6 1,6" fill="#7dd87d" opacity="0.8" /><polygon points="4,3 8,10 0,10" fill="#5cb85c" opacity="0.7" /><rect x="3" y="9" width="2" height="4" fill="#5d3a1a" /></svg>
-                      <span className="text-white/30 text-[8px]">1-10</span>
+                      <span className="text-white/55 text-[8px]">1-10</span>
                     </div>
                     <div className="flex flex-col items-center">
                       <svg width="12" height="20" viewBox="0 0 12 20"><polygon points="6,1 10,7 2,7" fill="#7dd87d" opacity="0.8" /><polygon points="6,4 11,13 1,13" fill="#5cb85c" opacity="0.7" /><rect x="4.5" y="12" width="3" height="6" fill="#5d3a1a" /></svg>
-                      <span className="text-white/30 text-[8px]">100+</span>
+                      <span className="text-white/55 text-[8px]">100+</span>
                     </div>
                     <div className="flex flex-col items-center">
                       <svg width="16" height="26" viewBox="0 0 16 26"><polygon points="8,1 13,8 3,8" fill="#7dd87d" opacity="0.9" /><polygon points="8,4 14,14 2,14" fill="#5cb85c" opacity="0.85" /><polygon points="8,8 16,20 0,20" fill="#7dd87d" opacity="0.8" /><rect x="6" y="19" width="4" height="7" fill="#5d3a1a" /></svg>
-                      <span className="text-white/30 text-[8px]">1000+</span>
+                      <span className="text-white/55 text-[8px]">1000+</span>
                     </div>
                   </div>
                 </div>

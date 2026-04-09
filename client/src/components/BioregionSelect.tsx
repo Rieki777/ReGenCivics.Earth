@@ -60,7 +60,7 @@ export function BioregionSelect({
       : "w-full flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors focus:outline-none bg-white border-[#1a472a]/20 text-[#1a472a] hover:bg-[#f0f7f0] focus:border-[#7dd87d]/60";
 
   const placeholderClass =
-    variant === "dark" ? "text-white/30" : "text-[#1a472a]/40";
+    variant === "dark" ? "text-white/55" : "text-[#1a472a]/40";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

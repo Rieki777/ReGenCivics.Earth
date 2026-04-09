@@ -282,7 +282,7 @@ export default function TreasuryDashboard() {
             <div className="text-xs text-white/50 mt-1">Jobs<br/>Created</div>
           </div>
         </div>
-        <p className="text-white/30 text-xs mt-2 text-center italic">Model projections based on portfolio targets. Actual metrics tracked via HEIST framework.</p>
+        <p className="text-white/55 text-xs mt-2 text-center italic">Model projections based on portfolio targets. Actual metrics tracked via HEIST framework.</p>
       </div>
 
       {/* Two Column Layout */}

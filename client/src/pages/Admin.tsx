@@ -1224,7 +1224,7 @@ function ReviewerEmailManager() {
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full ${reviewer.isActive ? 'bg-[#7dd87d]/20' : 'bg-gray-200'} flex items-center justify-center`}>
-                    <Mail className={`w-5 h-5 ${reviewer.isActive ? 'text-[#1a472a]' : 'text-gray-400'}`} />
+                    <Mail className={`w-5 h-5 ${reviewer.isActive ? 'text-[#1a472a]' : 'text-gray-300'}`} />
                   </div>
                   <div>
                     <p className="font-semibold text-[#1a472a]">
@@ -4085,7 +4085,7 @@ function AdminEventsTab() {
   const statusColors: Record<string, string> = {
     upcoming: 'bg-yellow-500/20 text-yellow-300',
     live: 'bg-red-500/20 text-red-300 animate-pulse',
-    completed: 'bg-gray-500/20 text-gray-400',
+    completed: 'bg-gray-500/20 text-gray-300',
     cancelled: 'bg-gray-700/30 text-gray-500',
   };
 
@@ -4159,7 +4159,7 @@ function AdminEventsTab() {
                   placeholder="1" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/30 font-normal">(leave blank for unlimited)</span></Label>
+                <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/55 font-normal">(leave blank for unlimited)</span></Label>
                 <Input type="number" value={formData.maxAttendees} onChange={e => setFormData(f => ({ ...f, maxAttendees: e.target.value }))}
                   placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
@@ -4169,7 +4169,7 @@ function AdminEventsTab() {
                   placeholder="https://riverside.fm/studio/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/30 font-normal">(fallback, only shown if no Riverside)</span></Label>
+                <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/55 font-normal">(fallback, only shown if no Riverside)</span></Label>
                 <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
                   placeholder="https://us06web.zoom.us/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
@@ -4212,7 +4212,7 @@ function AdminEventsTab() {
       )}
 
       {/* Events List */}
-      {isLoading && <div className="text-center py-8 text-white/40"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
+      {isLoading && <div className="text-center py-8 text-white/65"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
 
       <div className="space-y-2">
         {allEvents.map(ev => {
@@ -4228,11 +4228,11 @@ function AdminEventsTab() {
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[ev.type] ?? ''}`}>{ev.type}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[ev.status] ?? ''}`}>{ev.status}</span>
-                      {ev.season && <span className="text-xs text-white/40">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
+                      {ev.season && <span className="text-xs text-white/65">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
                     </div>
                     <p className="font-medium text-white text-sm truncate">{ev.title}</p>
                     <p className="text-xs text-white/50 mt-0.5">{dateStr} {timeStr} {ev.timezone ?? ''}</p>
-                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/40">
+                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/65">
                       <span><Bell size={11} className="inline mr-1" />{signupCount} reminder signup{signupCount !== 1 ? 's' : ''}</span>
                       {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
                       {ev.youtubeUrl && <a href={ev.youtubeUrl} target="_blank" rel="noreferrer" className="text-red-400 hover:underline">YouTube ↗</a>}
@@ -4332,7 +4332,7 @@ function AdminEventsTab() {
                 {/* #16 - Check-in URL and copy button */}
                 {(ev as any).checkinToken && (
                   <div className="border-t border-white/10 px-4 py-2 flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-white/40">Check-in URL:</span>
+                    <span className="text-xs text-white/65">Check-in URL:</span>
                     <code className="text-xs text-[#7dd87d] bg-white/5 px-2 py-0.5 rounded break-all">
                       {window.location.origin}/checkin/{(ev as any).checkinToken}
                     </code>
@@ -4342,7 +4342,7 @@ function AdminEventsTab() {
                         setCheckinCopied(ev.id);
                         setTimeout(() => setCheckinCopied(null), 2000);
                       }}
-                      className="text-xs text-white/40 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
+                      className="text-xs text-white/65 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
                     >
                       {checkinCopied === ev.id ? <><CheckCheck size={11} /> Copied!</> : <><ClipboardList size={11} /> Copy</>}
                     </button>
@@ -4380,7 +4380,7 @@ function AdminEventsTab() {
                         <p className="text-[#a8e6a8] text-xs mt-1 m-0">Event reminder</p>
                       </div>
                       <div className="bg-white px-5 py-5 space-y-2">
-                        <p className="text-gray-400 text-xs m-0">Starting in ~24 hours</p>
+                        <p className="text-gray-300 text-xs m-0">Starting in ~24 hours</p>
                         <p className="text-[#1a472a] font-bold text-base m-0">{ev.title}</p>
                         <p className="text-gray-500 text-sm m-0">
                           {ev.startTime ? new Date(ev.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : ''}
@@ -4395,12 +4395,12 @@ function AdminEventsTab() {
                         </div>
                       </div>
                       <div className="bg-[#f0f7f0] px-5 py-3 text-center">
-                        <p className="text-gray-400 text-xs m-0">You signed up for a reminder for this event.</p>
+                        <p className="text-gray-300 text-xs m-0">You signed up for a reminder for this event.</p>
                       </div>
                     </div>
 
-                    <p className="text-xs text-white/40">Subject: <span className="text-white/70">{customSubject || `Reminder: ${ev.title} is tomorrow`}</span></p>
-                    <p className="text-xs text-white/40">Sending to <span className="text-white/70">{Number(countMap[ev.id] ?? 0)} people</span> who signed up for this event.</p>
+                    <p className="text-xs text-white/65">Subject: <span className="text-white/70">{customSubject || `Reminder: ${ev.title} is tomorrow`}</span></p>
+                    <p className="text-xs text-white/65">Sending to <span className="text-white/70">{Number(countMap[ev.id] ?? 0)} people</span> who signed up for this event.</p>
 
                     <div className="flex flex-wrap items-end gap-2">
                       <Button
@@ -4416,7 +4416,7 @@ function AdminEventsTab() {
                       {/* #24 - Schedule for later */}
                       <div className="flex items-end gap-1.5">
                         <div>
-                          <Label className="text-white/40 text-xs">Schedule for...</Label>
+                          <Label className="text-white/65 text-xs">Schedule for...</Label>
                           <Input
                             type="datetime-local"
                             value={scheduleFor}
@@ -4678,7 +4678,7 @@ function AdminEventsTab() {
                     <div key={a.id} className="flex items-center justify-between gap-2">
                       <div>
                         <span className="text-white text-sm">{a.name || a.email}</span>
-                        {a.name && <span className="text-white/40 text-xs ml-2">{a.email}</span>}
+                        {a.name && <span className="text-white/65 text-xs ml-2">{a.email}</span>}
                         <span className="text-amber-400 text-xs ml-2">+{a.tokensAwarded} $ReGen</span>
                       </div>
                       <button
@@ -4687,7 +4687,7 @@ function AdminEventsTab() {
                             removeAttendanceMutation.mutate({ eventId: attendanceEventId, email: a.email });
                           }
                         }}
-                        className="text-white/30 hover:text-red-400 text-xs px-2 py-1 rounded"
+                        className="text-white/55 hover:text-red-400 text-xs px-2 py-1 rounded"
                       >✕</button>
                     </div>
                   ))}
@@ -4702,7 +4702,7 @@ function AdminEventsTab() {
                   onChange={e => setAttendanceInput(e.target.value)}
                   placeholder="jane@example.com&#10;alex@example.com"
                   rows={4}
-                  className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/20 placeholder:text-white/30 font-mono"
+                  className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/20 placeholder:text-white/55 font-mono"
                 />
                 <button
                   onClick={() => {

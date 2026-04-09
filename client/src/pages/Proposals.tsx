@@ -168,14 +168,14 @@ export default function Proposals() {
                       value={title}
                       onChange={e => setTitle(e.target.value)}
                       placeholder="Proposal title"
-                      className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
+                      className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
                       maxLength={200}
                     />
                     <textarea
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       placeholder="Describe your proposal. What should change and why?"
-                      className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
+                      className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
                     />
                     <select
                       value={category}
@@ -295,7 +295,7 @@ export default function Proposals() {
                             </Badge>
                           </div>
                           <p className="text-white/60 text-sm mb-2 line-clamp-2">{p.description}</p>
-                          <div className="flex items-center gap-3 text-white/30 text-xs">
+                          <div className="flex items-center gap-3 text-white/55 text-xs">
                             <span>{p.authorName ?? `User #${p.authorId}`}</span>
                             {p.createdAt && <span>{formatDate(p.createdAt)}</span>}
                           </div>

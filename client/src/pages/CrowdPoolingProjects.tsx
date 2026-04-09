@@ -1093,7 +1093,7 @@ function GetNotifiedForm() {
             placeholder="Your name"
             value={name}
             onChange={e => setName(e.target.value)}
-            className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+            className="bg-white/5 border-white/20 text-white placeholder:text-white/55"
           />
           <Input
             type="email"
@@ -1101,7 +1101,7 @@ function GetNotifiedForm() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+            className="bg-white/5 border-white/20 text-white placeholder:text-white/55"
           />
           <Button type="submit" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] font-semibold whitespace-nowrap">
             Notify Me
@@ -1447,7 +1447,7 @@ export default function CrowdPoolingProjects() {
               {[1, 2].map(i => (
                 <div key={i} className="relative bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
                   <div className="absolute inset-0 bg-[#0d2818]/80 z-10 flex flex-col items-center justify-center p-6 text-center">
-                    <Lock className="w-8 h-8 text-white/30 mb-3" />
+                    <Lock className="w-8 h-8 text-white/55 mb-3" />
                     <p className="text-white/70 font-medium mb-1">Coming this season</p>
                     <p className="text-white/60 text-sm mb-4">
                       Our first round of Season 2 projects is live. More join as the season progresses.
@@ -1527,7 +1527,7 @@ export default function CrowdPoolingProjects() {
                           />
                         ) : (
                           <div className="absolute inset-0 bg-gradient-to-br from-[#1a472a] to-[#2d5a3d] flex items-center justify-center">
-                            <SeedOfLifeIcon className="w-16 h-16 text-white/20" size={64} />
+                            <SeedOfLifeIcon className="w-16 h-16 text-white/50" size={64} />
                           </div>
                         )}
                         {/* Gradient overlay */}

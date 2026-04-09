@@ -77,7 +77,7 @@ export default function ThreadRoots({ replies, onNodeClick }: ThreadRootsProps) 
 
   return (
     <details open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
-      <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-200">
+      <summary className="cursor-pointer text-sm text-gray-300 hover:text-gray-200">
         Thread tree ({replies.length} replies)
       </summary>
       <ul className="mt-2">

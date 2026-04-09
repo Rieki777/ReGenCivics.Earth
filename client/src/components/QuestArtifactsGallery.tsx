@@ -88,11 +88,11 @@ export function QuestArtifactsGallery() {
               <section>
                 <p className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-3">Recent completions</p>
                 {completions.isLoading ? (
-                  <p className="text-white/30 text-sm text-center py-6">Loading...</p>
+                  <p className="text-white/55 text-sm text-center py-6">Loading...</p>
                 ) : completions.data?.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-white/60 text-sm">No completions yet.</p>
-                    <p className="text-white/30 text-xs mt-1">Be the first to complete a quest and share your artifact.</p>
+                    <p className="text-white/55 text-xs mt-1">Be the first to complete a quest and share your artifact.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -108,7 +108,7 @@ export function QuestArtifactsGallery() {
                             <p className="text-white/60 text-xs mt-1 line-clamp-2">{c.caption ?? c.artifactText}</p>
                           )}
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="text-white/30 text-xs">{timeAgo(c.completedAt)}</span>
+                            <span className="text-white/55 text-xs">{timeAgo(c.completedAt)}</span>
                             {c.artifactUrl && (
                               <a
                                 href={c.artifactUrl}

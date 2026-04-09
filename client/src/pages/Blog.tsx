@@ -76,7 +76,7 @@ function VideoSuggestionCard({
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             suggestion.status === 'in_production' ? 'bg-amber-500/20 text-amber-400' :
             suggestion.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-            'bg-gray-500/20 text-gray-400'
+            'bg-gray-500/20 text-gray-300'
           }`}>
             {suggestion.status === 'in_production' ? '🎬 In Production' :
              suggestion.status === 'completed' ? '✅ Completed' :
@@ -394,7 +394,7 @@ export default function Blog() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <Video className="w-12 h-12 text-white/30 mx-auto mb-3" />
+                    <Video className="w-12 h-12 text-white/55 mx-auto mb-3" />
                     <p className="text-white/60">How-To videos coming soon!</p>
                     <p className="text-white/60 text-sm mt-1">Vote below for the videos you want to see first</p>
                   </div>

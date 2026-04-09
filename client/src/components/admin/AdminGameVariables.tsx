@@ -89,7 +89,7 @@ export function AdminGameVariables() {
                       {v.category}
                     </Badge>
                   </div>
-                  <p className="text-white/30 text-xs font-mono truncate">{v.key}</p>
+                  <p className="text-white/55 text-xs font-mono truncate">{v.key}</p>
                 </div>
                 {editingKey === v.key ? (
                   <div className="flex items-center gap-1">
@@ -123,12 +123,12 @@ export function AdminGameVariables() {
                     {v.value}
                   </button>
                 )}
-                <span className="text-white/20 text-[10px] w-16 text-right">{v.valueType}</span>
+                <span className="text-white/50 text-[10px] w-16 text-right">{v.valueType}</span>
               </div>
             ))}
           </div>
         )}
-        <p className="text-white/30 text-xs mt-4 text-center">
+        <p className="text-white/55 text-xs mt-4 text-center">
           {filtered.length} variable{filtered.length !== 1 ? "s" : ""} shown
         </p>
       </CardContent>

@@ -745,7 +745,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
           onChange={(e) => setDreaming(e.target.value)}
           placeholder="A food forest in the highlands, a new form of school, a way of living that heals rather than harms..."
           rows={2}
-          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-[#7dd87d]/40"
+          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/55 resize-none focus:outline-none focus:border-[#7dd87d]/40"
         />
       </div>
 
@@ -756,9 +756,9 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
           onChange={(e) => setWorkingOn(e.target.value)}
           placeholder="Building a seed library, writing a grant, planting trees..."
           maxLength={200}
-          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#7dd87d]/40"
+          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/55 focus:outline-none focus:border-[#7dd87d]/40"
         />
-        <p className="text-white/30 text-[10px]">Shows on your profile card. 200 chars max.</p>
+        <p className="text-white/55 text-[10px]">Shows on your profile card. 200 chars max.</p>
       </div>
 
       <div className="space-y-1.5">
@@ -869,7 +869,7 @@ function GiftsNeedsPanel() {
           <div key={g.id} className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2.5">
             <span className="text-[10px] bg-[#7dd87d]/15 text-[#5ab85a] border border-[#7dd87d]/25 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">{g.type}</span>
             <span className="text-white/75 text-sm flex-1">{g.description}</span>
-            <button onClick={() => removeGift.mutate({ id: g.id })} className="text-white/25 hover:text-white/60 flex-shrink-0 mt-0.5">
+            <button onClick={() => removeGift.mutate({ id: g.id })} className="text-white/55 hover:text-white flex-shrink-0 mt-0.5">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -889,7 +889,7 @@ function GiftsNeedsPanel() {
               placeholder="Describe what you can offer..."
               rows={2}
               maxLength={500}
-              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/30 resize-none focus:outline-none focus:border-[#7dd87d]/40"
+              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/55 resize-none focus:outline-none focus:border-[#7dd87d]/40"
             />
             <div className="flex gap-2">
               <button
@@ -924,7 +924,7 @@ function GiftsNeedsPanel() {
           <div key={n.id} className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2.5">
             <span className="text-[10px] bg-[#d4a574]/15 text-[#b8843d] border border-[#d4a574]/25 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">{n.type}</span>
             <span className="text-white/75 text-sm flex-1">{n.description}</span>
-            <button onClick={() => removeNeed.mutate({ id: n.id })} className="text-white/25 hover:text-white/60 flex-shrink-0 mt-0.5">
+            <button onClick={() => removeNeed.mutate({ id: n.id })} className="text-white/55 hover:text-white flex-shrink-0 mt-0.5">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -944,7 +944,7 @@ function GiftsNeedsPanel() {
               placeholder="Describe what you are looking for..."
               rows={2}
               maxLength={500}
-              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/30 resize-none focus:outline-none focus:border-[#d4a574]/40"
+              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/55 resize-none focus:outline-none focus:border-[#d4a574]/40"
             />
             <div className="flex gap-2">
               <button
@@ -1111,44 +1111,44 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 value={landForm.yourRole}
                 onChange={e => setLandForm(f => ({ ...f, yourRole: e.target.value }))}
                 placeholder="Your role (e.g. co-founder, steward, project lead)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.landStatus}
                 onChange={e => setLandForm(f => ({ ...f, landStatus: e.target.value }))}
                 placeholder="Land status (e.g. owned, leased, in negotiation)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.communityStage}
                 onChange={e => setLandForm(f => ({ ...f, communityStage: e.target.value }))}
                 placeholder="Community stage (e.g. forming, established, 3 years running)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.annualBudget}
                 onChange={e => setLandForm(f => ({ ...f, annualBudget: e.target.value }))}
                 placeholder="Rough annual budget range (optional)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.governanceModel}
                 onChange={e => setLandForm(f => ({ ...f, governanceModel: e.target.value }))}
                 placeholder="Governance model (e.g. sociocracy, consensus, steward)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.website}
                 onChange={e => setLandForm(f => ({ ...f, website: e.target.value }))}
                 placeholder="Project website (optional)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
               />
               <textarea
                 value={landForm.whyClaimNow}
                 onChange={e => setLandForm(f => ({ ...f, whyClaimNow: e.target.value }))}
                 placeholder="Why are you claiming this listing now? What would you like to do with it?"
                 rows={3}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm resize-none"
               />
             </div>
           )}
@@ -1161,27 +1161,27 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 value={orgForm.yourRole}
                 onChange={e => setOrgForm(f => ({ ...f, yourRole: e.target.value }))}
                 placeholder="Your role (e.g. co-founder, community manager, ambassador)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={orgForm.website}
                 onChange={e => setOrgForm(f => ({ ...f, website: e.target.value }))}
                 placeholder="Organisation website"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm"
               />
               <textarea
                 value={orgForm.orgDescription}
                 onChange={e => setOrgForm(f => ({ ...f, orgDescription: e.target.value }))}
                 placeholder="Brief description of what this org does and your connection to it"
                 rows={2}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm resize-none"
               />
               <textarea
                 value={orgForm.collaborationInterest}
                 onChange={e => setOrgForm(f => ({ ...f, collaborationInterest: e.target.value }))}
                 placeholder="What kind of collaboration are you hoping to find here?"
                 rows={2}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/55 rounded-lg px-3 py-2 text-sm resize-none"
               />
             </div>
           )}
@@ -1424,21 +1424,21 @@ function RssFeedManager() {
           ))}
         </div>
       ) : feedsQuery.data?.length === 0 ? (
-        <p className="text-white/30 text-xs">No RSS feeds connected yet.</p>
+        <p className="text-white/55 text-xs">No RSS feeds connected yet.</p>
       ) : (
         <div className="space-y-2">
           {feedsQuery.data?.map((feed: any) => (
             <div key={feed.id} className="flex items-center justify-between bg-[#1a472a]/20 border border-white/5 rounded-lg px-3 py-2">
               <div className="min-w-0">
                 <p className="text-white/80 text-xs font-medium truncate">{feed.label}</p>
-                <p className="text-white/30 text-xs truncate">{feed.feedUrl}</p>
+                <p className="text-white/55 text-xs truncate">{feed.feedUrl}</p>
                 {feed.lastFetchedAt && (
-                  <p className="text-white/20 text-xs">Last fetched: {new Date(feed.lastFetchedAt).toLocaleDateString()}</p>
+                  <p className="text-white/50 text-xs">Last fetched: {new Date(feed.lastFetchedAt).toLocaleDateString()}</p>
                 )}
               </div>
               <button
                 onClick={() => removeFeed.mutate({ feedId: feed.id })}
-                className="text-white/30 hover:text-red-400 text-xs ml-3 flex-shrink-0 transition-colors"
+                className="text-white/55 hover:text-red-400 text-xs ml-3 flex-shrink-0 transition-colors"
                 title="Remove feed"
               >
                 Remove
@@ -1528,7 +1528,7 @@ function QuestEndorsementManager() {
         ))}
       </div>
       {setEndorsements.isPending && (
-        <p className="text-white/30 text-xs mt-2">Saving...</p>
+        <p className="text-white/55 text-xs mt-2">Saving...</p>
       )}
     </div>
   );
@@ -1800,7 +1800,7 @@ function ContributionsTab({
               {syncIsPending ? "Syncing…" : "Refresh balances"}
             </button>
             {lastTokenSync && (
-              <span className="text-white/25 text-xs">
+              <span className="text-white/55 text-xs">
                 Updated {new Date(lastTokenSync).toLocaleTimeString()}
               </span>
             )}
@@ -1963,7 +1963,7 @@ function ContributionsTab({
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g. Designed brand identity for ReGen Civics"
-              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
+              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55"
             />
           </div>
 
@@ -1975,7 +1975,7 @@ function ContributionsTab({
               onChange={e => setDescription(e.target.value)}
               rows={2}
               placeholder="More context about this contribution..."
-              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30 resize-none"
+              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55 resize-none"
             />
           </div>
 
@@ -1989,7 +1989,7 @@ function ContributionsTab({
                 value={estimatedValue}
                 onChange={e => setEstimatedValue(e.target.value)}
                 placeholder="0"
-                className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
+                className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55"
               />
             </div>
             <div>
@@ -1998,7 +1998,7 @@ function ContributionsTab({
                 value={projectName}
                 onChange={e => setProjectName(e.target.value)}
                 placeholder="e.g. ReGen Civics"
-                className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
+                className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55"
               />
             </div>
           </div>
@@ -2010,7 +2010,7 @@ function ContributionsTab({
               value={evidenceUrl}
               onChange={e => setEvidenceUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/30"
+              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55"
             />
           </div>
 
@@ -2049,7 +2049,7 @@ function ContributionsTab({
         </div>
       ) : byType.length === 0 ? (
         <div className="text-center py-12">
-          <Leaf className="w-10 h-10 text-white/20 mx-auto mb-3" />
+          <Leaf className="w-10 h-10 text-white/50 mx-auto mb-3" />
           <p className="text-white/60 text-sm">No contributions logged yet.</p>
           <p className="text-white/50 text-xs mt-1">Use the button above to record your first contribution.</p>
         </div>
@@ -2156,7 +2156,7 @@ function QuestsTab({ profile }: { profile: any }) {
   if (completed.length === 0) {
     return (
       <div className="text-center py-12">
-        <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
+        <BookOpen className="w-10 h-10 text-white/50 mx-auto mb-3" />
         <p className="text-white/60 text-sm">No quests completed yet.</p>
         <a href="/quest" className="inline-flex items-center gap-1 mt-3 text-[#7dd87d] text-sm hover:underline">
           Browse quests <ArrowRight className="w-3.5 h-3.5" />
@@ -2392,7 +2392,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
             placeholder="Search by project or organisation name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-[#7dd87d]/60"
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/60"
           />
           {searchResults && searchResults.length > 0 && !selectedOrg && (
             <div className="bg-[#0d2b1a] border border-white/10 rounded-lg divide-y divide-white/10 max-h-48 overflow-y-auto">
@@ -2550,7 +2550,7 @@ function NoteField({ completionId, initialNote }: { completionId: number; initia
       onBlur={handleBlur}
       rows={2}
       placeholder="Add a private note about this experience..."
-      className="w-full mt-2 text-sm text-white/80 bg-white/5 border border-white/10 rounded p-2 resize-none placeholder:text-white/30 focus:outline-none focus:border-[#7dd87d]/50"
+      className="w-full mt-2 text-sm text-white/80 bg-white/5 border border-white/10 rounded p-2 resize-none placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50"
     />
   );
 }

@@ -69,7 +69,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
     >
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
         {/* Close handle */}
-        <button onClick={onClose} className="w-full flex justify-center py-0.5 -mt-2 mb-1 text-white/30 hover:text-white/60 transition-colors" aria-label="Close panel">
+        <button onClick={onClose} className="w-full flex justify-center py-0.5 -mt-2 mb-1 text-white/55 hover:text-white transition-colors" aria-label="Close panel">
           <ChevronDown className="w-5 h-5" />
         </button>
 
@@ -167,7 +167,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
                       <span className="w-5 flex-shrink-0 flex items-center justify-center">
                         {isCurrent && isPlaying
                           ? <Music className="w-3 h-3 text-[#7dd87d] animate-pulse" />
-                          : <span className="text-[10px] text-white/35 tabular-nums">{(i + 1).toString().padStart(2, '0')}</span>}
+                          : <span className="text-[10px] text-white/60 tabular-nums">{(i + 1).toString().padStart(2, '0')}</span>}
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="block text-xs font-medium truncate">{track.title}</span>

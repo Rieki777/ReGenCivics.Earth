@@ -661,7 +661,7 @@ export default function Quest() {
                   <span className="text-[#7dd87d] text-xs bg-[#4a7c59]/30 px-2 py-0.5 rounded-full">
                     {spotlightQuery.data.questTitle}
                   </span>
-                  <span className="text-white/30 text-xs">From the Field</span>
+                  <span className="text-white/55 text-xs">From the Field</span>
                 </div>
                 {(spotlightQuery.data.caption || spotlightQuery.data.artifactText) && (
                   <p className="text-white/60 text-xs italic line-clamp-2">

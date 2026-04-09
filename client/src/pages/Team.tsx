@@ -749,8 +749,8 @@ export default function Team() {
           {/* Missing Role Callout */}
           <div className="mt-4 bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-[#7dd87d]/20 text-center">
             <p className="text-white/70 text-sm">
-              <span className="text-[#7dd87d] font-semibold">See a role missing?</span> Let us know in our{' '}
-              <a href="/community" className="text-[#7dd87d] underline hover:text-[#9de89d] transition-colors">community</a>!
+              <span className="text-[#7dd87d] font-semibold">See a role missing?</span>{' '}
+              <a href="/community/post/634" className="text-[#7dd87d] underline hover:text-[#9de89d] transition-colors">Tell us in the Roles Dialogue thread.</a>
             </p>
           </div>
         </div>

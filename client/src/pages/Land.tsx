@@ -1112,7 +1112,7 @@ export default function Land() {
                   Apply as a Land Project Partner
                 </Button>
               </Link>
-              <p className="text-white/40 text-xs mt-3">
+              <p className="text-white/65 text-xs mt-3">
                 <Link href="/heal-the-land" className="text-[#7dd87d] hover:underline">Learn more about the program</Link>
               </p>
             </div>

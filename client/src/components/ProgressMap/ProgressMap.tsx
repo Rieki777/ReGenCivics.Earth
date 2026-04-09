@@ -78,7 +78,7 @@ export default function ProgressMap({ onClose }: Props) {
                   <span className="text-white font-semibold text-sm" style={{ fontFamily: "var(--font-display)" }}>
                     {path.name}
                   </span>
-                  <span className="text-white/30 text-xs ml-auto">{pp.completed}/{pp.total}</span>
+                  <span className="text-white/55 text-xs ml-auto">{pp.completed}/{pp.total}</span>
                 </div>
 
                 {/* Dot progress */}
@@ -183,7 +183,7 @@ export default function ProgressMap({ onClose }: Props) {
               >
                 <span>{path.emoji}</span>
                 {path.name}
-                <span className="text-white/30">{pp?.completed}/{pp?.total}</span>
+                <span className="text-white/55">{pp?.completed}/{pp?.total}</span>
               </button>
             );
           })}
@@ -198,7 +198,7 @@ export default function ProgressMap({ onClose }: Props) {
                 <p className="text-white text-xs font-medium">Next: {activeProgress.nextNode.label}</p>
                 <p className="text-white/60 text-[10px]">{activeProgress.nextNode.landmark}</p>
               </div>
-              <ExternalLink className="w-4 h-4 text-white/30" />
+              <ExternalLink className="w-4 h-4 text-white/55" />
             </Link>
           </div>
         )}

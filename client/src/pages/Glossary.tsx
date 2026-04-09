@@ -302,8 +302,8 @@ export default function Glossary() {
             )}
             {showPropose && (
               <div className="max-w-md mx-auto mt-4 bg-white/10 border border-white/20 rounded-2xl p-4 space-y-3 text-left">
-                <input value={proposeTerm} onChange={e => setProposeTerm(e.target.value)} placeholder="Term (e.g. 'Bioregion')" className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={200} />
-                <textarea value={proposeDefinition} onChange={e => setProposeDefinition(e.target.value)} placeholder="Definition..." className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[80px] resize-y" maxLength={5000} />
+                <input value={proposeTerm} onChange={e => setProposeTerm(e.target.value)} placeholder="Term (e.g. 'Bioregion')" className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={200} />
+                <textarea value={proposeDefinition} onChange={e => setProposeDefinition(e.target.value)} placeholder="Definition..." className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[80px] resize-y" maxLength={5000} />
                 <Button onClick={() => { if (proposeTerm.trim() && proposeDefinition.trim()) proposeMutation.mutate({ term: proposeTerm.trim(), definition: proposeDefinition.trim() }); }} disabled={!proposeTerm.trim() || !proposeDefinition.trim() || proposeMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold rounded-full px-5 text-sm">
                   <Send className="w-3 h-3 mr-1" /> {proposeMutation.isPending ? "Submitting..." : "Submit"}
                 </Button>
@@ -344,7 +344,7 @@ export default function Glossary() {
           <div className="max-w-3xl mx-auto space-y-3">
             {filtered.length === 0 && (
               <div className="text-center py-12">
-                <SeedOfLifeIcon className="w-12 h-12 text-white/35 mx-auto mb-4" size={48} />
+                <SeedOfLifeIcon className="w-12 h-12 text-white/60 mx-auto mb-4" size={48} />
                 <p className="text-white/60 text-sm">No terms match your search.</p>
               </div>
             )}

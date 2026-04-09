@@ -218,7 +218,7 @@ export function NotificationPreferences() {
                     >
                       <Icon
                         className={`w-4 h-4 ${
-                          enabled ? "text-[#7dd87d]" : "text-gray-400"
+                          enabled ? "text-[#7dd87d]" : "text-gray-300"
                         }`}
                       />
                     </div>
@@ -226,7 +226,7 @@ export function NotificationPreferences() {
                       <div className="flex items-center gap-2">
                         <Label
                           className={`text-sm font-semibold cursor-pointer ${
-                            enabled ? "text-[#1a472a]" : "text-gray-400"
+                            enabled ? "text-[#1a472a]" : "text-gray-300"
                           }`}
                         >
                           {type.label}

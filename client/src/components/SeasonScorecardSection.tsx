@@ -36,7 +36,7 @@ export function SeasonScorecardSection() {
                   <span className="text-lg">{role.emoji}</span>
                   <div>
                     <span className="text-white font-semibold text-sm">{role.characterName}</span>
-                    <span className="text-white/40 text-xs ml-2">{role.title}</span>
+                    <span className="text-white/65 text-xs ml-2">{role.title}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 mb-2">
@@ -47,7 +47,7 @@ export function SeasonScorecardSection() {
                   }`}>
                     {role.assignment}
                   </span>
-                  <span className="text-white/30 text-xs">Band {role.band}</span>
+                  <span className="text-white/55 text-xs">Band {role.band}</span>
                 </div>
                 {isActive && (
                   <div className="space-y-2 mt-3">
@@ -56,19 +56,19 @@ export function SeasonScorecardSection() {
                       <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                         <div className="h-full bg-[#7dd87d]/40 rounded-full" style={{ width: "0%" }} />
                       </div>
-                      <span className="text-white/30 text-[10px]">Seed</span>
+                      <span className="text-white/55 text-[10px]">Seed</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs">🌾</span>
                       <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                         <div className="h-full bg-[#fbbf24]/40 rounded-full" style={{ width: "0%" }} />
                       </div>
-                      <span className="text-white/30 text-[10px]">Harvest</span>
+                      <span className="text-white/55 text-[10px]">Harvest</span>
                     </div>
                   </div>
                 )}
                 {!isActive && (
-                  <p className="text-white/30 text-xs mt-2">Resting this season</p>
+                  <p className="text-white/55 text-xs mt-2">Resting this season</p>
                 )}
               </div>
             );
@@ -97,7 +97,7 @@ export function SeasonScorecardSection() {
 
         {/* Past seasons placeholder */}
         <div className="mt-8 bg-white/5 rounded-xl p-6 border border-white/10 text-center">
-          <p className="text-white/40 text-sm">Past season archives will appear here after the first Season Festival.</p>
+          <p className="text-white/65 text-sm">Past season archives will appear here after the first Season Festival.</p>
         </div>
       </div>
     </section>

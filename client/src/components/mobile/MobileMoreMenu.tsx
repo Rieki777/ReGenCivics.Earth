@@ -111,7 +111,7 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
                 <h3 className="text-[#7dd87d] text-[10px] uppercase tracking-widest font-bold">
                   {section.heading}
                 </h3>
-                <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-white/65 transition-transform ${isOpen ? "rotate-180" : ""}`} />
               </button>
               {isOpen && (
                 <div className="grid grid-cols-1 gap-2">

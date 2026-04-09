@@ -596,8 +596,8 @@ function EmailTemplatePreview() {
                 <div className="border rounded-lg overflow-hidden">
                   <div className="bg-gray-100 px-3 py-1.5 border-b flex items-center gap-2">
                     <span className="text-xs text-gray-500">HTML Source</span>
-                    <span className="text-xs text-gray-400">|</span>
-                    <span className="text-xs text-gray-400">Tip: Edit the HTML below and see changes in the live preview</span>
+                    <span className="text-xs text-gray-300">|</span>
+                    <span className="text-xs text-gray-300">Tip: Edit the HTML below and see changes in the live preview</span>
                   </div>
                   <Textarea
                     value={editingBody}

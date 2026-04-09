@@ -28,7 +28,7 @@ export default function SeasonalIntention({
         <p className="text-sm text-gray-200">{intention.text}</p>
       ) : (
         <div>
-          <p className="mb-2 text-sm text-gray-400">
+          <p className="mb-2 text-sm text-gray-300">
             Set your intention for this season.
           </p>
           <form

@@ -91,10 +91,10 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
                 placeholder="What are you grateful for?"
                 rows={3}
                 maxLength={500}
-                className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#7dd87d]/50 resize-none"
+                className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/55 outline-none focus:border-[#7dd87d]/50 resize-none"
               />
               <div className="flex items-center justify-between mt-2">
-                <span className="text-[10px] text-white/40">{message.length}/500</span>
+                <span className="text-[10px] text-white/65">{message.length}/500</span>
                 <button
                   onClick={handleSubmit}
                   disabled={message.trim().length < 3 || sendMutation.isPending}

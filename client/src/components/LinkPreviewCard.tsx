@@ -45,7 +45,7 @@ export function LinkPreviewCard({ url, title, description, image, siteName, load
       )}
       <div className="flex-1 p-3 min-w-0">
         {siteName && (
-          <p className="text-xs text-gray-400 mb-0.5 truncate">{siteName}</p>
+          <p className="text-xs text-gray-300 mb-0.5 truncate">{siteName}</p>
         )}
         <p className="text-sm font-bold text-[#1a472a] truncate leading-snug">
           {title}

@@ -92,7 +92,7 @@ function QuestCard({
                 {completed ? (
                   <CheckCircle className="w-5 h-5 text-[#7dd87d]" />
                 ) : (
-                  <Circle className="w-5 h-5 text-white/30 hover:text-white/60 transition-colors" />
+                  <Circle className="w-5 h-5 text-white/55 hover:text-white transition-colors" />
                 )}
               </button>
             </div>

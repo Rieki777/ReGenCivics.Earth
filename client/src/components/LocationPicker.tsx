@@ -37,7 +37,7 @@ export function LocationPicker({ value, onChange, variant = "dark" }: LocationPi
 
   const isDark = variant === "dark";
   const inputClass = isDark
-    ? "w-full bg-white/5 border border-white/15 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-[#7dd87d]/40 placeholder-white/30"
+    ? "w-full bg-white/5 border border-white/15 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-[#7dd87d]/40 placeholder-white/55"
     : "w-full bg-white border border-[#1a472a]/20 text-[#1a472a] text-sm rounded-md px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60 placeholder-[#1a472a]/30";
   const labelClass = isDark ? "text-white/60 text-xs" : "text-[#1a472a]/70 text-xs";
   const chipBase = isDark

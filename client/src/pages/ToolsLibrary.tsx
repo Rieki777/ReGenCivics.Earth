@@ -138,7 +138,7 @@ export default function ToolsLibrary() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-white font-bold text-base group-hover:text-[#7dd87d] transition-colors">{tool.name}</h3>
-                      <ExternalLink className="w-3 h-3 text-white/40" />
+                      <ExternalLink className="w-3 h-3 text-white/65" />
                     </div>
                     <p className="text-[#7dd87d]/70 text-xs mb-2">{tool.tagline}</p>
                     <p className="text-white/60 text-sm leading-relaxed">{tool.description}</p>
@@ -159,7 +159,7 @@ export default function ToolsLibrary() {
                   value={matcherInput}
                   onChange={(e) => setMatcherInput(e.target.value)}
                   placeholder="e.g., I need to coordinate water management across three neighboring properties..."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px]"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/55 min-h-[80px]"
                 />
                 <Button
                   onClick={handleMatch}
@@ -291,9 +291,9 @@ export default function ToolsLibrary() {
           </div>
         ) : tools.length === 0 ? (
           <div className="text-center py-20 border border-white/8 rounded-2xl bg-white/[0.02]">
-            <Wrench className="w-10 h-10 text-white/20 mx-auto mb-3" />
+            <Wrench className="w-10 h-10 text-white/50 mx-auto mb-3" />
             <p className="text-white/50 text-lg mb-2">No tools found</p>
-            <p className="text-white/35 text-sm">
+            <p className="text-white/60 text-sm">
               Try adjusting your filters or submit a tool the community should know about.
             </p>
           </div>
@@ -354,7 +354,7 @@ export default function ToolsLibrary() {
                     {categories.slice(0, 3).map((cat, i) => (
                       <span
                         key={cat.slug ?? `${cat.name}-${i}`}
-                        className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/10"
+                        className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/65 border border-white/10"
                       >
                         {cat.name}
                       </span>
@@ -363,7 +363,7 @@ export default function ToolsLibrary() {
 
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                    <span className="text-white/30 text-xs flex items-center gap-1">
+                    <span className="text-white/55 text-xs flex items-center gap-1">
                       <Users className="w-3 h-3" /> {clickCount} views
                     </span>
                     <span className="text-[#7dd87d] text-xs font-medium flex items-center gap-1">

@@ -136,7 +136,7 @@ export default function AdminModeration() {
         <div className="text-center">
           <Shield className="w-16 h-16 text-red-400/40 mx-auto mb-4" />
           <h2 className="text-white/60 text-lg mb-2">Access Denied</h2>
-          <p className="text-white/40 text-sm mb-4">Admin access required for moderation tools.</p>
+          <p className="text-white/65 text-sm mb-4">Admin access required for moderation tools.</p>
           <Link href="/community" className="text-[#7dd87d] hover:underline text-sm">Back to Forum</Link>
         </div>
       </div>
@@ -240,7 +240,7 @@ export default function AdminModeration() {
               return (
             <div className="space-y-3">
               {reportsQuery.isLoading ? (
-                <div className="text-white/40 text-center py-8">Loading reports...</div>
+                <div className="text-white/65 text-center py-8">Loading reports...</div>
               ) : displayedReports.length === 0 ? (
                 <div className="text-center py-12">
                   <Check className="w-12 h-12 text-[#7dd87d]/40 mx-auto mb-3" />
@@ -344,7 +344,7 @@ export default function AdminModeration() {
               {moderatorsQuery.data?.length === 0 ? (
                 <div className="text-center py-8">
                   <Shield className="w-10 h-10 text-white/45 mx-auto mb-3" />
-                  <p className="text-white/40 text-sm">No moderators assigned yet</p>
+                  <p className="text-white/65 text-sm">No moderators assigned yet</p>
                 </div>
               ) : (
                 moderatorsQuery.data?.map((mod) => (
@@ -417,17 +417,17 @@ export default function AdminModeration() {
               {bannedUsersQuery.data?.length === 0 ? (
                 <div className="text-center py-8">
                   <Check className="w-10 h-10 text-[#7dd87d]/40 mx-auto mb-3" />
-                  <p className="text-white/40 text-sm">No banned users</p>
+                  <p className="text-white/65 text-sm">No banned users</p>
                 </div>
               ) : (
                 bannedUsersQuery.data?.map((ban) => (
                   <div key={ban.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between">
                     <div>
                       <p className="text-white font-medium text-sm">{ban.userName}</p>
-                      <p className="text-white/40 text-xs">
+                      <p className="text-white/65 text-xs">
                         Banned by {ban.bannedByName} | {ban.reason || 'No reason given'}
                       </p>
-                      <p className="text-white/30 text-xs">
+                      <p className="text-white/55 text-xs">
                         {ban.expiresAt ? `Expires: ${new Date(ban.expiresAt).toLocaleDateString()}` : 'Permanent'}
                       </p>
                     </div>

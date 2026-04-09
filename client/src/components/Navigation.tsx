@@ -199,15 +199,15 @@ export default function Navigation() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Play the Game Dropdown - Game-related items only */}
+            {/* Play the Game Dropdown - ghost variant of the gold Participate CTA */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`flex items-center gap-2 rounded-full px-4 ${
+                  className={`flex items-center gap-2 rounded-full px-4 border-2 transition-all ${
                     isPlayGameActive
-                      ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]'
-                      : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
+                      ? 'bg-[#7dd87d] text-[#1a472a] border-[#7dd87d] hover:bg-[#7dd87d] hover:text-[#1a472a]'
+                      : 'text-[#ffd700] border-[#ffd700]/60 hover:bg-[#ffd700]/10 hover:text-[#ffd700] hover:border-[#ffd700] shadow-[0_0_8px_rgba(255,215,0,0.15)]'
                   }`}
                   style={{ fontFamily: 'var(--font-accent)' }}
                   onMouseEnter={() => { prefetch("/game"); prefetch("/quest"); prefetch("/play"); }}
@@ -236,7 +236,7 @@ export default function Navigation() {
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Play</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  className="text-[#7dd87d] bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-lg hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer my-1 mx-1 font-semibold"
                   onClick={() => window.location.href = '/quest'}
                 >
                   <WizardsFamilyIcon size={20} className="mr-3 text-[#7dd87d]" />
@@ -435,14 +435,14 @@ export default function Navigation() {
                   onClick={() => window.location.href = '/tokenomics'}
                 >
                   <Coins className="w-5 h-5 mr-3 text-[#d4a574]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Tokenomics <span className="text-white/40 text-xs ml-1">(the Fund)</span></span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Tokenomics <span className="text-white/65 text-xs ml-1">(the Fund)</span></span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/bionomics'}
                 >
                   <TrendingUp className="w-5 h-5 mr-3 text-[#7dd87d]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Bionomics <span className="text-white/40 text-xs ml-1">(the Game)</span></span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Bionomics <span className="text-white/65 text-xs ml-1">(the Game)</span></span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 <DropdownMenuItem
@@ -1042,7 +1042,7 @@ export default function Navigation() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Coins className="w-4 h-4 text-[#d4a574]" />
-                      Tokenomics <span className="text-white/40 text-xs">(the Fund)</span>
+                      Tokenomics <span className="text-white/65 text-xs">(the Fund)</span>
                     </Link>
                     <Link
                       href="/bionomics"
@@ -1055,7 +1055,7 @@ export default function Navigation() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <TrendingUp className="w-4 h-4 text-[#7dd87d]" />
-                      Bionomics <span className="text-white/40 text-xs">(the Game)</span>
+                      Bionomics <span className="text-white/65 text-xs">(the Game)</span>
                     </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
                     {socialLinks.map((social) => (

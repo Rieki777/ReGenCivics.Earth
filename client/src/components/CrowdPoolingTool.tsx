@@ -627,7 +627,7 @@ export default function CrowdPoolingTool() {
                   onChange={(e) => setTargetAmount(parseFloat(e.target.value) || 100000)}
                   placeholder={hasNoTarget ? "No target set" : "100,000"}
                   disabled={hasNoTarget}
-                  className="pl-8 bg-white border-[#7dd87d]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 disabled:bg-gray-100 disabled:text-gray-400"
+                  className="pl-8 bg-white border-[#7dd87d]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 disabled:bg-gray-100 disabled:text-gray-300"
                 />
               </div>
             </div>

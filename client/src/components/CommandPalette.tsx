@@ -154,12 +154,12 @@ export function CommandPalette() {
               autoFocus
               value={query}
               onValueChange={setQuery}
-              className="flex-1 bg-transparent text-white placeholder-white/30 text-sm outline-none"
+              className="flex-1 bg-transparent text-white placeholder-white/55 text-sm outline-none"
             />
             <button
               onClick={() => setOpen(false)}
               aria-label="Close command palette"
-              className="text-white/30 hover:text-white/60 transition-colors"
+              className="text-white/55 hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -275,7 +275,7 @@ export function CommandPalette() {
           </Command.List>
 
           {/* Footer hint */}
-          <div className="border-t border-[#7dd87d]/20 px-4 py-2 flex items-center gap-3 text-[10px] text-white/25">
+          <div className="border-t border-[#7dd87d]/20 px-4 py-2 flex items-center gap-3 text-[10px] text-white/55">
             <span><kbd className="font-mono">↑↓</kbd> navigate</span>
             <span><kbd className="font-mono">↵</kbd> select</span>
             <span><kbd className="font-mono">Esc</kbd> close</span>

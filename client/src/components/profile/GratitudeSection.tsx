@@ -88,7 +88,7 @@ function PowerMeter({
         />
       </div>
       {/* Labels */}
-      <div className="flex justify-between text-[10px] text-white/40">
+      <div className="flex justify-between text-[10px] text-white/65">
         <span>0</span>
         <span style={{ position: "relative", left: "-15%" }}>5</span>
         <span style={{ position: "relative", left: "-5%" }}>10</span>
@@ -299,7 +299,7 @@ export function GratitudeSection({
             <p className="text-xs text-white/50 mt-1">
               people last cycle
             </p>
-            <p className="text-xs text-white/40 mt-2">
+            <p className="text-xs text-white/65 mt-2">
               Lifetime: {lifetimePeopleReceived} people, {lifetimeTimesReceived}{" "}
               times
             </p>
@@ -338,7 +338,7 @@ export function GratitudeSection({
                 </>
               )}
             </p>
-            <p className="text-[10px] text-white/30 mt-1 text-center leading-tight">
+            <p className="text-[10px] text-white/55 mt-1 text-center leading-tight">
               Reach {claimThreshold} to make a formal claim. This reduces
               governance burden until we automate.
             </p>
@@ -367,7 +367,7 @@ export function GratitudeSection({
                     <p className="text-white/70 leading-relaxed">
                       "{entry.message}"
                     </p>
-                    <p className="text-xs text-white/40 mt-0.5">
+                    <p className="text-xs text-white/65 mt-0.5">
                       from{" "}
                       <Link
                         href={`/profile/${entry.personId}`}
@@ -390,7 +390,7 @@ export function GratitudeSection({
                     <p className="text-white/60 leading-relaxed">
                       "{entry.message}"
                     </p>
-                    <p className="text-xs text-white/40 mt-0.5">
+                    <p className="text-xs text-white/65 mt-0.5">
                       to{" "}
                       <Link
                         href={`/profile/${entry.personId}`}

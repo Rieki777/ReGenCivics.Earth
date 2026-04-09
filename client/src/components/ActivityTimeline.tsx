@@ -20,7 +20,7 @@ type TimelineItem =
 function statusIcon(status: string) {
   if (status === "delivered") return <CheckCircle className="w-3 h-3 text-green-500" />;
   if (status === "bounced" || status === "failed") return <XCircle className="w-3 h-3 text-red-500" />;
-  return <Clock className="w-3 h-3 text-gray-400" />;
+  return <Clock className="w-3 h-3 text-gray-300" />;
 }
 
 export function ActivityTimeline({ email, contactType, contactId }: ActivityTimelineProps) {

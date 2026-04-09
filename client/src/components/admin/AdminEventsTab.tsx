@@ -125,7 +125,7 @@ export function AdminEventsTab() {
   const statusColors: Record<string, string> = {
     upcoming: 'bg-yellow-500/20 text-yellow-300',
     live: 'bg-red-500/20 text-red-300 animate-pulse',
-    completed: 'bg-gray-500/20 text-gray-400',
+    completed: 'bg-gray-500/20 text-gray-300',
     cancelled: 'bg-gray-700/30 text-gray-500',
   };
 
@@ -199,7 +199,7 @@ export function AdminEventsTab() {
                   placeholder="1" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/30 font-normal">(leave blank for unlimited)</span></Label>
+                <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/55 font-normal">(leave blank for unlimited)</span></Label>
                 <Input type="number" value={formData.maxAttendees} onChange={e => setFormData(f => ({ ...f, maxAttendees: e.target.value }))}
                   placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
@@ -209,7 +209,7 @@ export function AdminEventsTab() {
                   placeholder="https://riverside.fm/studio/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/30 font-normal">(fallback, only shown if no Riverside)</span></Label>
+                <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/55 font-normal">(fallback, only shown if no Riverside)</span></Label>
                 <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
                   placeholder="https://us06web.zoom.us/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
@@ -418,7 +418,7 @@ export function AdminEventsTab() {
                         <p className="text-[#a8e6a8] text-xs mt-1 m-0">Event reminder</p>
                       </div>
                       <div className="bg-white px-5 py-5 space-y-2">
-                        <p className="text-gray-400 text-xs m-0">Starting in ~24 hours</p>
+                        <p className="text-gray-300 text-xs m-0">Starting in ~24 hours</p>
                         <p className="text-[#1a472a] font-bold text-base m-0">{ev.title}</p>
                         <p className="text-gray-500 text-sm m-0">
                           {ev.startTime ? new Date(ev.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : ''}
@@ -433,7 +433,7 @@ export function AdminEventsTab() {
                         </div>
                       </div>
                       <div className="bg-[#f0f7f0] px-5 py-3 text-center">
-                        <p className="text-gray-400 text-xs m-0">You signed up for a reminder for this event.</p>
+                        <p className="text-gray-300 text-xs m-0">You signed up for a reminder for this event.</p>
                       </div>
                     </div>
 
@@ -725,7 +725,7 @@ export function AdminEventsTab() {
                             removeAttendanceMutation.mutate({ eventId: attendanceEventId, email: a.email });
                           }
                         }}
-                        className="text-white/30 hover:text-red-400 text-xs px-2 py-1 rounded"
+                        className="text-white/55 hover:text-red-400 text-xs px-2 py-1 rounded"
                       >✕</button>
                     </div>
                   ))}
@@ -740,7 +740,7 @@ export function AdminEventsTab() {
                   onChange={e => setAttendanceInput(e.target.value)}
                   placeholder="jane@example.com&#10;alex@example.com"
                   rows={4}
-                  className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/20 placeholder:text-white/30 font-mono"
+                  className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/20 placeholder:text-white/55 font-mono"
                 />
                 <button
                   onClick={() => {

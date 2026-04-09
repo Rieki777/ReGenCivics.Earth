@@ -100,14 +100,14 @@ export default function HymnBook() {
                   placeholder="Song title"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/40 focus:border-[#7dd87d] focus:outline-none"
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
                 />
                 <input
                   maxLength={200}
                   placeholder="Artist or contributor (optional)"
                   value={form.artist}
                   onChange={(e) => setForm({ ...form, artist: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/40 focus:border-[#7dd87d] focus:outline-none"
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
                 />
                 <input
                   required
@@ -116,7 +116,7 @@ export default function HymnBook() {
                   placeholder="Public audio link (https://...)"
                   value={form.audioUrl}
                   onChange={(e) => setForm({ ...form, audioUrl: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/40 focus:border-[#7dd87d] focus:outline-none"
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
                 />
                 <textarea
                   maxLength={1000}
@@ -124,7 +124,7 @@ export default function HymnBook() {
                   placeholder="A few words about the song (optional)"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/40 focus:border-[#7dd87d] focus:outline-none"
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
                 />
                 {submit.error && (
                   <p className="text-red-300 text-sm">{submit.error.message}</p>
@@ -167,12 +167,12 @@ export default function HymnBook() {
                           <p className="font-bold text-white truncate">{row.title}</p>
                           {row.artist && <p className="text-white/55 text-sm truncate">{row.artist}</p>}
                           {row.submittedByName && (
-                            <p className="text-white/40 text-xs">submitted by {row.submittedByName}</p>
+                            <p className="text-white/65 text-xs">submitted by {row.submittedByName}</p>
                           )}
                         </div>
                         <div className="flex-shrink-0 text-right">
                           <p className="text-[#7dd87d] font-bold tabular-nums">{row.voteCount}</p>
-                          <p className="text-white/40 text-[10px] uppercase tracking-wider">votes</p>
+                          <p className="text-white/65 text-[10px] uppercase tracking-wider">votes</p>
                         </div>
                       </div>
                       {row.description && (
@@ -208,7 +208,7 @@ export default function HymnBook() {
               </ul>
             )}
 
-            <p className="text-white/40 text-xs text-center mt-6">
+            <p className="text-white/65 text-xs text-center mt-6">
               One vote per player per season. You can move your vote at any time before the season closes.
             </p>
           </section>

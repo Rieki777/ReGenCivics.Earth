@@ -175,7 +175,7 @@ export default function ProjectComparison() {
             value ? (
               <Check className="w-5 h-5 text-green-500 mx-auto" />
             ) : (
-              <Minus className="w-5 h-5 text-gray-400 mx-auto" />
+              <Minus className="w-5 h-5 text-gray-300 mx-auto" />
             )
           ) : type === 'currency' ? (
             <span className="font-semibold">{formatCurrency(value as number)}</span>
@@ -190,7 +190,7 @@ export default function ProjectComparison() {
       ))}
       {/* Fill empty columns */}
       {Array(3 - values.length).fill(null).map((_, idx) => (
-        <td key={`empty-${idx}`} className="py-3 px-4 text-center text-gray-400">-</td>
+        <td key={`empty-${idx}`} className="py-3 px-4 text-center text-gray-300">-</td>
       ))}
     </tr>
   );

@@ -1111,6 +1111,18 @@ export default function Community() {
                   </div>
                 </div>
               </Link>
+
+              {/* Roles Dialogue */}
+              <Link href="/community/post/634">
+                <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/roles-dialogue.png" alt="Roles dialogue" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Roles Dialogue</p>
+                    <p className="text-white/60 text-xs">What roles are missing?</p>
+                  </div>
+                </div>
+              </Link>
             </div>
 
             {airLoading ? (
@@ -1139,7 +1151,7 @@ export default function Community() {
                   <Link key={thread.id} href={`/community/post/${thread.id}`}>
                     <div className="bg-[#f8f5f0] rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group">
                       <div className="h-20 bg-slate-100 relative overflow-hidden flex items-center justify-center">
-                        <MessageCircle className="w-8 h-8 text-slate-400/40" />
+                        <MessageCircle className="w-8 h-8 text-slate-300/40" />
                       </div>
                       <div className="px-4 py-3 flex items-center justify-between">
                         <div className="min-w-0">

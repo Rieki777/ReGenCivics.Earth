@@ -59,7 +59,7 @@ function HelpTip({ text }: { text?: string | null }) {
         <button
           type="button"
           aria-label="Explain this variable"
-          className="inline-flex items-center justify-center text-white/40 hover:text-white/90 focus:text-white/90 focus:outline-none transition-colors shrink-0"
+          className="inline-flex items-center justify-center text-white/65 hover:text-white/90 focus:text-white/90 focus:outline-none transition-colors shrink-0"
         >
           <HelpCircle className="w-3.5 h-3.5" />
         </button>
@@ -331,7 +331,7 @@ function LiveVariablesDashboard() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter variables..."
-          className="pl-9 bg-white/5 border-white/10 text-white text-sm placeholder:text-white/30"
+          className="pl-9 bg-white/5 border-white/10 text-white text-sm placeholder:text-white/55"
         />
       </div>
 
@@ -379,7 +379,7 @@ function LiveVariablesDashboard() {
                             </p>
                             <HelpTip text={helpText} />
                           </div>
-                          <p className="text-[10px] text-white/40 font-mono truncate mt-0.5">
+                          <p className="text-[10px] text-white/65 font-mono truncate mt-0.5">
                             {v.key}
                           </p>
                         </div>
@@ -458,7 +458,7 @@ function SliderRow({ label, value, min, max, step, unit, help, onChange, traject
             />
           )}
           {compare && baselineDisplay && (
-            <span className="text-xs font-mono text-white/40 line-through">{baselineDisplay}</span>
+            <span className="text-xs font-mono text-white/65 line-through">{baselineDisplay}</span>
           )}
           <span className={`text-sm font-mono ${changed ? "text-[#7dd87d]" : "text-white/70"}`}>{display}</span>
         </div>
@@ -746,7 +746,7 @@ function GameSimulator() {
                   <p>{s.message}</p>
                   {roles.length > 0 && (
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] uppercase tracking-wide text-white/40 mr-1">Touches</span>
+                      <span className="text-[10px] uppercase tracking-wide text-white/65 mr-1">Touches</span>
                       {roles.map((role) => (
                         <span
                           key={role}

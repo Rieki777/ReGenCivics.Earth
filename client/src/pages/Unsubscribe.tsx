@@ -207,7 +207,7 @@ export default function Unsubscribe() {
           </div>
 
           {/* Additional links */}
-          <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs text-white/30">
+          <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs text-white/55">
             <Link href="/privacy-policy" className="hover:text-white/50 transition-colors">
               Privacy Policy
             </Link>

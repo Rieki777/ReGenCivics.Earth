@@ -1,8 +1,54 @@
 # Community Agreements Feature + Forum UI Polish
 
-**Date:** 2026-03-27 (CTO reviewed and corrected 2026-04-08)
+**Date:** 2026-03-27 (CTO reviewed 2026-04-08, status verified 2026-04-09)
 **For:** Claude Code implementation session
 **What this is:** Full build plan for the interactive Community Agreements page and several forum UI changes. Read this entire doc before writing any code.
+
+---
+
+## STATUS SUMMARY (verified 2026-04-09)
+
+All parts 1-15 shipped.
+
+| Part | Description | Status |
+|------|-------------|--------|
+| 1 | Community Agreements interactive page | DONE |
+| 2A | Air section renamed "Clarity & Agreements" | DONE |
+| 2B | Card 1 renamed "Healthy Conversations" | DONE |
+| 2C | Air section image paths corrected | DONE |
+| 2D | Add Category form image upload wired | DONE |
+| 2E | Category image audit (1 broken path fixed) | DONE |
+| 3 | Migrations 0086-0090 created and applied | DONE |
+| 4 | Land Projects routing fix (db.ts + applications.ts + Community.tsx card) | DONE |
+| 5 | Alliance Partners routing fix (db.ts + forum.ts + Community.tsx card) | DONE |
+| 6 | Schedule calendar button standardization | DONE |
+| 7 | Zoom replaced with Riverside, recordings section live | DONE |
+| 8 | CommandPanel music player layout (Add Your Voice position, remove artist from rows) | DONE |
+| 9 | Messenger readability audit | DONE |
+| 10 | Nav menu order (Community Forum before Governance) | DONE |
+| 11 | Land.tsx header text | DONE |
+| 12 | TreasuryDashboard MODEL DASHBOARD prominence | DONE |
+| 13 | GlobeMap defaults to Active Only | DONE |
+| 14 | Roles Dialogue: card, forum post #634, team section link | DONE 2026-04-09 |
+| 15A | Site readability audit + fixes (217 + 48 replacements, 67 + 13 files) | DONE 2026-04-09 |
+| 15B | Seasonal Voting Process image (PIL placeholder, wired) | DONE 2026-04-09 |
+| 15C | Removed Governance Evolution: Three Phases section | DONE 2026-04-09 |
+| 15D | Who Holds the Vote pie/donut image (PIL placeholder, wired) | DONE 2026-04-09 |
+| 15E | Four Voice-Holder Groups node diagram image (PIL placeholder, wired; SVG kept as hidden fallback) | DONE 2026-04-09 |
+| 15F | Nav highlights: Explore Quests bg + Play the Game ghost gold border | DONE 2026-04-09 |
+
+Notes for Part 14A and 15B/D/E images: the Gemini API key in `.env` is expired
+("API_KEY_INVALID. API key expired. Please renew the API key."). All four image
+generation scripts fell back to PIL placeholders that match the spec'd content
+(seasonal cycle, donut chart, hub-and-spoke node diagram, watercolor circle).
+When Rye refreshes the API key, re-run the scripts to upgrade to AI-generated art
+without any code changes (paths are stable).
+
+### What remains (human steps only)
+
+- [HUMAN] Turn ON the Zapier automation: "New YouTube videos to Riverside webhook POST" (currently OFF in Zapier dashboard)
+- [HUMAN] Verify Riverside Pro plan covers Season 2 hours (13 episodes x 2 hours = 26 hours)
+- [FOLLOW-UP] Fix migration runner bug in `scripts/run-migration.ts`: chunks starting with `--` comments silently drop the first SQL statement. Strip comment-only lines from chunk starts, not the whole chunk. See details in the "Known Issues" section below.
 
 ---
 
@@ -972,11 +1018,271 @@ For any new migrations created in this build, either:
 - "All Episodes via Zoom" section renamed and updated with Riverside join flow
 - Dynamic calendar URL builders use Riverside room URL instead of Zoom
 - Event card join buttons say "Join on Riverside"
-- `RIVERSIDE_INFO.roomUrl` set to `https://riverside.com/studio/rieki-cordon-riekis-studio`
-- Music player: "Add Your Voice" appears directly below song title in now-playing area
-- Music player: Album name removed from individual track rows in queue
-- Messenger modal: "Search by display name" input has readable contrast
-- Nav: Community Forum appears above Governance in Explore + Connect dropdown
-- Land page h1 updated to new text about designing the economic/financial/governance Game
-- Fund page: Model Dashboard section is visually prominent (large, bold, clear)
-- Globe map defaults to active-only (inactive projects hidden on load)
+- "Roles Dialogue" card appears in the Air section of Community.tsx
+- Roles Dialogue forum post exists in `air-conversations` category (pinned)
+- Team/Roles page links "See a role missing? Let us know in our community!" to the Roles Dialogue forum post
+
+---
+
+## Part 14: Roles Dialogue Card, Forum Post, and Team Link
+
+Added 2026-04-09. Three connected pieces.
+
+### 14A. Generate the card image
+
+A script has been created at `scripts/generate-roles-dialogue-image.py`. Run it to generate the image before the card goes live:
+
+```bash
+python3 scripts/generate-roles-dialogue-image.py
+```
+
+Output: `client/public/images/quests/roles-dialogue.png`
+
+The image uses Imagen 3 via the GEMINI_API_KEY in `.env`. Requires `pip install google-genai` if not already installed.
+
+### 14B. Apply migration 0107
+
+Migration `drizzle/0107_roles_dialogue_forum_post.sql` creates the forum post in the `air-conversations` category with `isPinned = 1`. Run it:
+
+```bash
+npx tsx scripts/run-migration.ts drizzle/0107_roles_dialogue_forum_post.sql
+```
+
+After applying, get the ID of the new post:
+
+```sql
+SELECT id FROM forumPosts WHERE title = 'Roles Dialogue: what roles are missing from the game?' LIMIT 1;
+```
+
+Store this ID. You will need it for 14C and 14D.
+
+### 14C. Add the Roles Dialogue card to Community.tsx
+
+In `client/src/pages/Community.tsx`, inside the Air panel (around line 1090, after the "Community Agreements" card), add a third card:
+
+```tsx
+{/* Roles Dialogue */}
+<Link href="/community/post/FORUM_POST_ID">
+  <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+    <img src="/images/quests/roles-dialogue.png" alt="Roles dialogue" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+    <div className="absolute bottom-0 left-0 right-0 p-3">
+      <p className="text-white font-semibold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Roles Dialogue</p>
+      <p className="text-white/70 text-xs mt-0.5">What roles are missing?</p>
+    </div>
+  </div>
+</Link>
+```
+
+Replace `FORUM_POST_ID` with the real ID from step 14B.
+
+The Air section uses a `grid grid-cols-2 gap-3 mb-4` container for its cards. Adding a third card will make the grid wrap to a third slot. That is fine. If the design needs adjustment, change the grid to `grid-cols-3` or keep `grid-cols-2` with the new card spanning full width via `col-span-2`. Use `grid-cols-2` wrapping as the default; only change if it looks wrong visually.
+
+### 14D. Update the Team/Roles section
+
+Find where the text "See a role missing? Let us know in our community!" appears in the codebase. It is likely in `client/src/pages/Team.tsx` or a roles component. Update it to link to the forum post:
+
+```tsx
+{/* before */}
+<p>See a role missing? Let us know in our community!</p>
+
+{/* after */}
+<p>See a role missing? <Link href="/community/post/FORUM_POST_ID" className="underline hover:text-[#1a472a] transition-colors">Let us know in our community!</Link></p>
+```
+
+Replace `FORUM_POST_ID` with the real ID from step 14B.
+
+If the text doesn't exist yet, add it near the roles listing. Find the roles section and add the line after the last role card or at the bottom of the section.
+
+Search for it:
+```bash
+grep -r "role missing\|Let us know in our community\|missing.*role" client/src --include="*.tsx" -l
+```
+
+### Notes
+
+- The forum post content is plain text with line breaks. Do not add markdown formatting to it; the forum renders plain paragraphs.
+- Migration 0107 uses a subquery to find the `air-conversations` categoryId. If the migration runner has the leading-comment bug, strip any `--` comments from the file header before running.
+- The image path in the card (`/images/quests/roles-dialogue.png`) must match the output of the generation script exactly.
+- `RIVERSIDE_INFO.roomUrl` is set to `https://riverside.com/studio/rieki-cordon-riekis-studio` in Schedule.tsx. This is the live value. Do not change it.
+
+---
+
+## Part 15: Governance Page Fixes + Nav Highlights
+
+Added 2026-04-09. Six independent items. All are self-contained; complete in any order.
+
+---
+
+### 15A. Site Readability Audit
+
+**Scope:** all pages and components in `client/src/`
+
+Run a systematic readability audit across every page and component. Look for:
+
+- Text with contrast ratio below WCAG AA (4.5:1 for normal text, 3:1 for large text). Common offenders: `text-white/40`, `text-white/30`, `text-gray-400` on light backgrounds, `text-slate-400` on dark backgrounds.
+- Placeholder text on low-contrast inputs (grey placeholder on grey/dark background).
+- Small font sizes used for meaningful content: anything `text-xs` that carries important information (labels, descriptions, instructions) rather than purely decorative use.
+- Long lines without wrapping constraints in body copy sections.
+- Any instance of light text on a similarly light background or dark text on a similarly dark background.
+
+**Fix all found issues directly.** Do not produce a report without fixing. Changes should be minimal: increase text opacity, darken text color, lighten background slightly, or add a contrasting text shadow.
+
+After fixing, add a short comment in `COMMUNITY_AGREEMENTS_PLAN.md` (or a standalone `READABILITY_NOTES.md` in the project root) listing:
+- What was found
+- What was changed
+- One rule to prevent it recurring (e.g., "never use text-white/30 or lower for content text")
+
+---
+
+### 15B. Seasonal Voting Process Image (Governance Page)
+
+**File:** `client/src/pages/Governance.tsx` (or wherever the Seasonal Voting Process section lives)
+
+There is a broken image in the Seasonal Voting Process section. Replace it with a generated image.
+
+**Image concept:** A circular seasonal cycle diagram showing 4 seasons arranged in a ring (Winter at top or left, then Spring, Summer, Fall going clockwise). At the transition between Fall and Winter (the very start/end of the cycle), place a "Seasonal Ceremony" callout. The Seasonal Ceremony is:
+
+- A moment at the end of each season where the community reflects on what happened
+- Where shared agreements for the next season are made
+- Where bulk governance actions happen (ratifying new agreements, adjusting existing ones, electing stewards)
+
+The visual should feel like a living cycle: regenerative, grounded, not corporate. Think earthy colors (greens, ochre, deep blue for winter). The ceremony marker should be prominent but integrated into the flow.
+
+**How to generate:**
+
+Use the existing Imagen 3 / Nano Banana Pro setup (same as the roles-dialogue image). Write a generation script at `scripts/generate-seasonal-cycle-image.py`. Save output to `client/public/images/governance/seasonal-cycle.png`.
+
+Then in the Governance page, replace the broken `<img src="...">` for the seasonal voting process with:
+
+```tsx
+<img
+  src="/images/governance/seasonal-cycle.png"
+  alt="Seasonal cycle showing the four seasons and the Seasonal Ceremony that begins each new cycle"
+  className="w-full rounded-xl"
+  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+/>
+```
+
+---
+
+### 15C. Remove "Governance Evolution: Three Phases" Section
+
+**File:** `client/src/pages/Governance.tsx`
+
+Find and completely remove the section titled "Governance Evolution: Three Phases" (or similar). It contains a broken image and content that is no longer wanted.
+
+Delete the entire section block: heading, any descriptive text, the broken image, and any surrounding container divs that exist solely for this section. Do not leave empty wrapper divs.
+
+Search:
+
+```bash
+grep -n "Governance Evolution\|Three Phases\|three.*phase\|phase.*three" client/src/pages/Governance.tsx -i
+```
+
+Remove whatever block contains those strings.
+
+---
+
+### 15D. "Who Holds the Vote" Image (Governance Page)
+
+**File:** `client/src/pages/Governance.tsx`
+
+There is a "Who Holds the Vote" section on the governance page. It currently has either a broken image or no image. The image should show a 4-group breakdown:
+
+- Stewardship Council: 40%
+- Investors: 20%
+- Land Projects: 20%
+- Alliance Partners: 20%
+
+**Check first:** does an existing image file exist at `client/public/images/governance/` with a name like `who-holds-vote.png`, `vote-distribution.png`, `voting-weights.png`, or similar?
+
+If yes and the file is not corrupt: wire it up in the Governance page with a proper `<img>` tag and `onError` fallback.
+
+If no file exists: generate one using the same Imagen 3 setup. Write a script at `scripts/generate-who-holds-vote-image.py`. The image should be a clean pie chart or proportional diagram showing the 4 groups and their percentages. Style: matches the site aesthetic (dark greens, earthy tones, minimal). Save to `client/public/images/governance/who-holds-vote.png`.
+
+Then in Governance.tsx, replace any broken image or placeholder with:
+
+```tsx
+<img
+  src="/images/governance/who-holds-vote.png"
+  alt="Vote distribution: Stewardship Council 40%, Investors 20%, Land Projects 20%, Alliance Partners 20%"
+  className="w-full rounded-xl"
+  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+/>
+```
+
+---
+
+### 15E. "Four Voice-Holder Groups" Node Diagram Image (Governance Page)
+
+**File:** `client/src/pages/Governance.tsx`
+
+There is a broken node diagram image showing the 4 voice-holder groups connected to the ReGen Civics Fund. Generate a replacement.
+
+**Image concept:** A node diagram (hub and spoke layout). Center node: "ReGen Civics Fund". Four outer nodes, one in each quadrant:
+
+- Council of Domain Experts (top left or top)
+- Land Project Stewards (top right or right)
+- Alliance Partners (bottom right or bottom)
+- Investor Voice (bottom left or left)
+
+Each outer node connects to the center with a line or arrow. Style: clean, minimal, site-consistent colors (deep greens, warm earth tones, white labels). Not a corporate org chart. Should feel like an ecosystem diagram.
+
+Generate via script at `scripts/generate-voice-holders-image.py`. Save to `client/public/images/governance/voice-holders-diagram.png`.
+
+In Governance.tsx, replace the broken image with:
+
+```tsx
+<img
+  src="/images/governance/voice-holders-diagram.png"
+  alt="Four voice-holder groups connected to the ReGen Civics Fund: Council of Domain Experts, Land Project Stewards, Alliance Partners, Investor Voice"
+  className="w-full rounded-xl"
+  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+/>
+```
+
+---
+
+### 15F. Nav Highlights: "Explore Quests" and "Play the Game"
+
+**File:** `client/src/components/Navigation.tsx`
+
+Two related changes.
+
+**Change 1: Highlight "Explore Quests" in the Play the Game dropdown**
+
+In the Play the Game dropdown, find the "Explore Quests" link. Add a visual highlight to it so it stands out as the primary action in the dropdown. Look at how other nav items are styled and apply a similar treatment: a green background chip, a badge, a colored border, or a subtle highlight. Match whatever the site's existing "featured item" pattern is. If none exists, use:
+
+```tsx
+className="... bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-lg"
+```
+
+on the link's container, and make the text slightly bolder or colored `text-[#7dd87d]`.
+
+**Change 2: Style "Play the Game" in the nav like "Participate"**
+
+Find how "Participate" is styled in the main nav. It likely has a special treatment (colored background, border, or distinct visual weight) compared to plain nav items. Apply the same or equivalent treatment to the "Play the Game" nav item.
+
+Search for the "Participate" nav item:
+
+```bash
+grep -n "Participate\|play.*game\|Play.*Game" client/src/components/Navigation.tsx -i
+```
+
+Copy the class structure from "Participate" and apply it to "Play the Game". If "Participate" is a button-style link with `bg-[#7dd87d]` or similar, do the same for "Play the Game". If they are meant to be two distinct styles (one primary, one secondary), make "Play the Game" secondary (outline or ghost variant of the same color).
+
+---
+
+## Handoff Breakdown (Part 15)
+
+| Task | Who |
+|------|-----|
+| 15A: Readability audit + fixes | Claude Code |
+| 15B: Generate seasonal cycle image, wire it up | Claude Code |
+| 15C: Remove Governance Evolution section | Claude Code |
+| 15D: Check for existing image or generate, wire up | Claude Code |
+| 15E: Generate voice-holders diagram, wire up | Claude Code |
+| 15F: Nav highlights for Explore Quests + Play the Game | Claude Code |
+| Verify GEMINI_API_KEY is in .env before running image scripts | Rye |
+| Review generated images before deploying | Rye |

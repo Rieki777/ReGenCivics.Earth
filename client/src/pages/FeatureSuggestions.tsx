@@ -84,8 +84,8 @@ export default function FeatureSuggestions() {
               <button onClick={() => setFormType("bug")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "bug" ? "bg-red-500/20 text-red-400" : "text-white/50"}`}>Report a Bug</button>
             </div>
 
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
-            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/30 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
+            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
             <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none">
               <option value="" className="bg-[#1a3a1f]">Category (optional)</option>
               {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a3a1f]">{c}</option>)}
@@ -125,7 +125,7 @@ export default function FeatureSuggestions() {
                         {s.category && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/10">{s.category}</span>}
                       </div>
                       <p className="text-white/60 text-sm mb-2">{s.description}</p>
-                      <div className="flex items-center gap-3 text-white/30 text-xs">
+                      <div className="flex items-center gap-3 text-white/55 text-xs">
                         <span>{s.authorName}</span>
                         {s.forumThreadId && (
                           <Link href={`/community/post/${s.forumThreadId}`} className="inline-flex items-center gap-1 text-[#7dd87d]/60 hover:text-[#7dd87d]">

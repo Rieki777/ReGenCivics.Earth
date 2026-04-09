@@ -90,10 +90,10 @@ function EpicCard({ quest }: { quest: EpicQuest }) {
         {/* Meta row */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-auto pt-2 border-t border-white/8 text-xs text-white/45">
           <span>
-            <span className="text-white/30">Duration:</span> {quest.duration}
+            <span className="text-white/55">Duration:</span> {quest.duration}
           </span>
           <span>
-            <span className="text-white/30">Effort:</span> {quest.commitment}
+            <span className="text-white/55">Effort:</span> {quest.commitment}
           </span>
           <span className="ml-auto flex items-center gap-1.5">
             <span className="text-sm leading-none">{ELEMENT_ICONS[quest.element]}</span>
@@ -141,7 +141,7 @@ function TierRow({ tier }: { tier: "easy" | "hard" | "expert" }) {
             </div>
           ))}
         </div>
-        <p className="text-white/40 text-xs text-center mt-2">Swipe to see more →</p>
+        <p className="text-white/65 text-xs text-center mt-2">Swipe to see more →</p>
       </div>
       <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
         {quests.map((quest) => (
@@ -201,7 +201,7 @@ export function EpicQuestSection() {
               Join the Quest
             </span>
           </Link>
-          <p className="mt-4 text-white/35 text-sm">
+          <p className="mt-4 text-white/60 text-sm">
             Connect with others working on these in the community forum.
           </p>
         </div>

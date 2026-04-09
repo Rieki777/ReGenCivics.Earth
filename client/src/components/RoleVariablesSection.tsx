@@ -79,7 +79,7 @@ export function RoleVariablesSection() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-white/40 text-xs uppercase tracking-wider border-b border-white/10">
+                  <tr className="text-white/65 text-xs uppercase tracking-wider border-b border-white/10">
                     <th className="text-left py-3 px-2">Band</th>
                     <th className="text-left py-3 px-2">$ReGen/Season</th>
                     <th className="text-left py-3 px-2">USD Value</th>

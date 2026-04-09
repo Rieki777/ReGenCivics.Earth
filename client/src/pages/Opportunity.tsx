@@ -1210,7 +1210,7 @@ export default function Opportunity() {
               </p>
               <div className="mb-5">
                 <MarketBars />
-                <p className="text-[10px] text-white/30 mt-2">Sources: Forbes/Analysts 2025, Global Wellness Institute, Precedence Research, Global Sustainable Investment Review</p>
+                <p className="text-[10px] text-white/55 mt-2">Sources: Forbes/Analysts 2025, Global Wellness Institute, Precedence Research, Global Sustainable Investment Review</p>
               </div>
               <p className="mb-5 text-sm">
                 The market for regenerative communities, eco-villages, and sustainable land development sits at the intersection of all these trends. ReGen Civics is positioned at the frontier of this emerging market, providing the infrastructure, governance tools, and capital pathways that regenerative land projects need to succeed. BCG research confirms that commercial investors can expect <strong className="text-white">15-30% IRR</strong> in regenerative landscapes.
@@ -1854,7 +1854,7 @@ export default function Opportunity() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-                <p className="text-[10px] text-white/30 text-center mt-1">Sources: Industry benchmarks. ReGen Civics target IRR is projected, not guaranteed.</p>
+                <p className="text-[10px] text-white/55 text-center mt-1">Sources: Industry benchmarks. ReGen Civics target IRR is projected, not guaranteed.</p>
               </div>
             </CollapsibleSection>
 
@@ -2270,7 +2270,7 @@ export default function Opportunity() {
             </AnimatedSection>
 
             {/* ===== SEC COMPLIANCE STRIP ===== */}
-            <div className="text-center py-3 border-t border-white/5 text-xs text-white/30 tracking-wider mb-6">
+            <div className="text-center py-3 border-t border-white/5 text-xs text-white/55 tracking-wider mb-6">
               Regulation D 506(c) &nbsp;&middot;&nbsp; Accredited Investors Only &nbsp;&middot;&nbsp; SEC-Exempt Offering
             </div>
 
@@ -2299,7 +2299,7 @@ export default function Opportunity() {
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex flex-col items-center gap-3 text-center">
-                    <Lock className="w-8 h-8 text-white/30" />
+                    <Lock className="w-8 h-8 text-white/55" />
                     <div>
                       <p className="font-bold text-white text-sm">Term Sheet</p>
                       <p className="text-white/50 text-xs">Available after LOI submission</p>

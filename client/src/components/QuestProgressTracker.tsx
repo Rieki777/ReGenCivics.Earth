@@ -250,7 +250,7 @@ export function MarkCompleteButton({ questId, size = "sm" }: { questId: string; 
             e.stopPropagation();
             toggleQuest(questId);
           }}
-          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+          className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
           title="Reset progress"
         >
           <X className="w-4 h-4" />
@@ -386,7 +386,7 @@ export function QuestProgressTracker() {
                       </div>
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-[#4a7c59]">+{rewards.regen}</span>
-                        <span className="text-gray-400">|</span>
+                        <span className="text-gray-300">|</span>
                         <span className="text-[#2e7d32]">+{rewards.rvoice}</span>
                       </div>
                     </button>

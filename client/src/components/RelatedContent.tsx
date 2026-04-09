@@ -58,7 +58,7 @@ export function RelatedContent({ pages, blog, className = "" }: RelatedContentPr
                         {page.description}
                       </p>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-[#7dd87d] transition-colors flex-shrink-0 mt-0.5" />
+                    <ArrowRight className="w-4 h-4 text-white/55 group-hover:text-[#7dd87d] transition-colors flex-shrink-0 mt-0.5" />
                   </div>
                 </div>
               </Link>

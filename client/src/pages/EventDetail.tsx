@@ -163,7 +163,7 @@ export default function EventDetail() {
                   <span className="text-xs text-white/60">{event.season}{event.episodeNumber ? ` · Episode ${event.episodeNumber}` : ''}</span>
                 )}
                 {isCompleted && (
-                  <span className="bg-gray-500/20 text-gray-400 text-xs font-medium px-2 py-1 rounded-full">Completed</span>
+                  <span className="bg-gray-500/20 text-gray-300 text-xs font-medium px-2 py-1 rounded-full">Completed</span>
                 )}
               </div>
 
@@ -277,7 +277,7 @@ export default function EventDetail() {
                       placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]/60"
+                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/60"
                     />
                     <button
                       type="submit"
