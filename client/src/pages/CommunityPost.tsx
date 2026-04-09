@@ -32,6 +32,8 @@ import { CitizenshipBadge } from "@/components/game/TierBadge";
 import { EmojiReactions } from "@/components/EmojiReactions";
 import { GratitudeButton } from "@/components/GratitudeButton";
 import { ForumThreadDecisionBanner } from "@/components/governance/ForumThreadDecisionBanner";
+import { PromotionModal } from "@/components/governance/PromotionModal";
+import { Vote } from "lucide-react";
 import ThreadRoots from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
@@ -132,6 +134,7 @@ export default function CommunityPost() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
+  const [promotionOpen, setPromotionOpen] = useState(false);
   const replyRef = useRef<RichEditorHandle>(null);
   const replyFormRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
@@ -601,7 +604,21 @@ export default function CommunityPost() {
             {/* Living backlink banner: shows if this thread has been promoted to a Loomio decision */}
             <div className="px-4 md:px-6 pb-2">
               <ForumThreadDecisionBanner threadId={post.id} />
+              {isAuthenticated && (
+                <div className="flex items-center justify-end mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setPromotionOpen(true)}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#7dd87d] hover:text-[#6bc86b] transition-colors"
+                    title="Promote this thread to a formal Loomio decision"
+                  >
+                    <Vote className="w-3 h-3" />
+                    Promote to decision
+                  </button>
+                </div>
+              )}
             </div>
+            <PromotionModal threadId={post.id} open={promotionOpen} onClose={() => setPromotionOpen(false)} />
 
             {/* Emoji Reactions + Gratitude on post */}
             <div className="px-4 md:px-6 pb-2 flex items-center gap-2 flex-wrap">

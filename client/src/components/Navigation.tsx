@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb, Wrench, TrendingUp, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb, Wrench, TrendingUp, SlidersHorizontal, Vote } from "lucide-react";
 import { Drawer } from "vaul";
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -458,6 +458,13 @@ export default function Navigation() {
                 >
                   <Globe className="w-5 h-5 mr-3 text-[#4a9f9f]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Governance</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/community/decisions'}
+                >
+                  <Vote className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Decisions</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
