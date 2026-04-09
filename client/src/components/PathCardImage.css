@@ -30,6 +30,8 @@
 /* Alliance needs overflow visible for the beam, but images still get rounded */
 .path-card-ally {
   overflow: visible;
+  /* Extra bottom padding so beam/glow effects don't visually crowd the card title */
+  padding-bottom: 0.5rem;
 }
 
 /* Clip the images themselves for ally card so rounded corners still apply */

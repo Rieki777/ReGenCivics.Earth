@@ -244,7 +244,7 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
             <AnimatedSection key={card.id} animation="slide-up" delay={index * 80}>
               <Link href={card.href}>
                 <div
-                  className={`relative glass-panel p-4 md:p-5 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} cursor-pointer overflow-hidden`}
+                  className={`relative glass-panel p-4 md:p-5 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} cursor-pointer ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'}`}
                 >
                   {/* YOUR PATH badge */}
                   {userPaths[card.id as keyof typeof userPaths] && (
@@ -253,7 +253,7 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
                     </span>
                   )}
                   {/* Card image */}
-                  <div className="mb-3 h-24 md:h-32 flex items-center justify-center">
+                  <div className="mb-4">
                     <PathCardImage
                       cardId={card.id as "fund" | "land" | "ally" | "play"}
                       image={card.image}

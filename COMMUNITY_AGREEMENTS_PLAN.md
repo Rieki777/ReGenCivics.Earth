@@ -1,8 +1,50 @@
 # Community Agreements Feature + Forum UI Polish
 
-**Date:** 2026-03-27
+**Date:** 2026-03-27 (CTO reviewed and corrected 2026-04-08)
 **For:** Claude Code implementation session
 **What this is:** Full build plan for the interactive Community Agreements page and several forum UI changes. Read this entire doc before writing any code.
+
+---
+
+## CTO REVIEW NOTES (read first, 2026-04-08)
+
+A full verification pass was run against the codebase on 2026-04-08. Several parts of this plan were already done, and several referenced the wrong names. Corrections:
+
+### Already done in the codebase, skip these
+
+- **Part 2B/2C (Air section rename + image paths):** Community.tsx already says "Air: Clarity & Agreements" (line 1083). Card 1 already uses `quest-10-communication-patterns.webp` (line 1094). Card 2 already uses `quest-12-breathplay-future-dreaming.webp` (line 1106). Card 1 is already titled "Healthy Conversations", Card 2 "Community Agreements".
+- **Part 1E (Route fix):** The `/community/guidelines` link in Community.tsx is already correct (line 1104). No change needed.
+- **Part 4 & 5 (slug routing in ensureEntityForumThread + applications.ts):** `server/db.ts` `ensureEntityForumThread` (line 2742) already uses `land-projects` for land_project and `alliance-partners` for alliance_org. `server/routes/applications.ts` `updateStatus` (line 241) already creates the approved thread in `land-projects` (line 323). Migrations 0089 and 0090 already moved legacy threads. **The only thing left for Parts 4 and 5 is the Community.tsx card/section work below.**
+- **Part 7 (Zoom to Riverside on Schedule page):** Schedule.tsx already uses `RIVERSIDE_INFO` (line 57). No ZOOM_INFO constant remains, no Zoom references. This part is DONE at the Schedule page level. What is NOT yet verified: whether a live Recordings section pulls from the `recordings` table (which does exist, schema.ts line 1998). See "Still to do" below.
+- **Part 12 (TreasuryDashboard.tsx):** Does not exist as a file. Either the Model Dashboard banner lives in a different component or was already removed. Re-scope this as: in `client/src/pages/Fund.tsx`, find any existing "Model Dashboard" notice and make it prominent. If none exists, skip this part.
+- **SECTION_SLUGS already includes land-general and alliance-general** (lines 200-205 of Community.tsx). Only the Earth and Alliance section card rendering needs to be added.
+- **forumCategories.imageUrl column** already exists (schema.ts line 1262). Migration 0088 is applied. Schema change does NOT need redoing.
+- **recordings table** already exists at schema.ts line 1998 with `forumPostId`, `rawWebhook`, and full metadata. Use this as the data source for any Recordings section.
+
+### Wrong names in the plan, use these instead
+
+- **questSuggestions helper functions**: the plan says `toggleQuestSuggestionVote` and `getUserQuestSuggestionVotes`. The actual names in `server/db.ts` are `toggleQuestVote` (line 2412) and `listQuestSuggestions` (line 2386). `getUserQuestSuggestionVotes` does not exist. When writing the communityAgreements equivalents, use `toggleCommunityAgreementVote` and `getUserCommunityAgreementVotes` as the plan already says, and do NOT try to import a non-existent `getUserQuestSuggestionVotes` as a reference template. Read `listQuestSuggestions` and `toggleQuestVote` directly for the pattern.
+- **useAuth hook import path**: `@/_core/hooks/useAuth` (NOT `@/hooks/useAuth`).
+- **`db.getUsersByIds`**: exists at `server/db.ts` line 114. OK to use.
+- **`activeOrganisationThreads` fallback**: the plan says to remove a fallback from lines 306-313 of `server/routes/forum.ts`. Actual location is lines 310-316 and it already returns empty array when the category is missing. Minor edit, still worth doing for clarity.
+
+### Still to do (the real scope for Claude Code)
+
+1. **Part 1 (Community Agreements page)** in full. Nothing pre-built. Tables and seed migrations (0086, 0087) exist as files but verify they have been applied before assuming the data is in the DB.
+2. **Part 2A (section header copy):** confirm Community.tsx line 578 and line 1103 are consistent with the new "Clarity & Agreements" name. The hero label on line 1083 is already done.
+3. **Part 2D (Add Category form image upload):** Column exists in DB. Still need: FileUpload wire-up in Community.tsx Add Category form, `imageUrl` in createCategory/updateCategory tRPC inputs, and `imageUrl` rendered on category cards with icon fallback.
+4. **Part 2E (audit category images):** do the audit, flag any missing files to Rye.
+5. **Parts 4 and 5 (Community.tsx card work only):**
+   - Add a "Land General" card in the Earth section linking to `/community/c/land-general`
+   - Add an "Alliance General" card in the Alliance section linking to `/community/c/alliance-general`
+   - Make sure the Earth section's "Land Projects" card links to `/community/c/land-projects` (confirm)
+6. **Part 6 (Schedule calendar button standardization):** still needed. Schedule.tsx already switched to Riverside but the 3 calendar cards still have inconsistent styling.
+7. **Part 7 (Recordings section on Schedule page):** verify whether Schedule.tsx pulls from the `recordings` table. If not, wire it up. Use the existing table.
+8. **Parts 8 through 13:** unchanged, still to do. EXCEPT Part 12 (TreasuryDashboard) should be re-scoped as described above.
+
+### Mandatory implementation pattern for the Agreements router
+
+Mirror `listQuestSuggestions` and `toggleQuestVote` in `server/db.ts`. The plan's code skeleton for `listCommunityAgreements`, `toggleCommunityAgreementVote`, and `getUserCommunityAgreementVotes` is correct in shape. Just do not try to match a non-existent sibling function.
 
 ---
 
@@ -724,6 +766,138 @@ Check if a `recordings` table exists in the schema. If not, the webhook handler 
 
 ---
 
+## Part 8: Music Player Layout (CommandPanel.tsx)
+
+**File:** `client/src/components/CommandPanel.tsx`
+
+### Change 1: Move "Add Your Voice" to below the song title
+
+Currently the "Add Your Voice" link appears at the bottom of the collapsible queue (lines 178-184). Move it to right below the song title in the now-playing area (around line 138, after the song title).
+
+The now-playing area structure should be:
+1. Song title (current line 124)
+2. **"+ Add Your Voice"** link (moved here, styled as a small secondary action)
+3. Collapsible track list toggle (current line 126+)
+
+The link goes to wherever song submissions are handled (check existing href on the element).
+
+### Change 2: Remove album name from individual track rows
+
+Track rows currently show `track.title` and `track.artist` (line 169). Remove `track.artist` from individual rows since the collapsible header already shows "Hymns of the ReGeneration (7) ^" at the top. The album name doesn't need to repeat on every row.
+
+---
+
+## Part 9: Messenger Readability Audit
+
+**File:** `client/src/pages/Messages.tsx` (and search all other client components)
+
+### Known issue: "Search by display name" placeholder on grey input
+
+In the New Conversation modal (around line 176), the input has a grey placeholder on what appears to be a low-contrast background. Fix by ensuring placeholder text meets contrast requirements, or adjust input background to white with clearer border.
+
+### Broader audit
+
+Search across all client components for similar low-contrast text patterns:
+- Grey placeholder text on grey/dark backgrounds
+- Light text on light backgrounds
+- Any `text-white/40`, `text-white/30`, or similar low-opacity text used for interactive labels or instructions (not just decorative text)
+- `bg-gray-*/50` or `bg-*/20` backgrounds with white text
+
+Fix any found instances by increasing contrast: either darken the text or lighten the background.
+
+---
+
+## Part 10: Nav Menu Order Swap
+
+**File:** `client/src/components/Navigation.tsx`
+
+### Swap "Community Forum" and "Governance" positions
+
+Currently in the Explore + Connect dropdown (lines ~405-469):
+1. Learn + Blog
+2. **Governance** (line 417)
+3. [separator]
+4. Tokenomics (the Fund)
+5. Bionomics (the Game)
+6. [separator]
+7. Game Mechanics
+8. **Community Forum** (line 458)
+9. Glossary
+
+Swap so the order becomes:
+1. Learn + Blog
+2. **Community Forum**
+3. [separator]
+4. Tokenomics (the Fund)
+5. Bionomics (the Game)
+6. [separator]
+7. Game Mechanics
+8. **Governance**
+9. Glossary
+
+---
+
+## Part 11: Land Page Header Text Change
+
+**File:** `client/src/pages/Land.tsx`
+
+**Line ~243:** The current h1 text is `Stewards of <span>Regeneration</span>`.
+
+Replace with:
+
+```
+We help you design the economic, financial, and governance "Game" your land project needs to thrive and access diverse forms of capital to help you thrive!
+```
+
+Keep the same font styling. You can use `<span className="text-[#7dd87d]">` on "Game" to highlight it if appropriate.
+
+---
+
+## Part 12: Fund Page - Make "Model Dashboard" More Prominent
+
+**File:** `client/src/components/TreasuryDashboard.tsx` (lines 126-134), rendered in `client/src/pages/Fund.tsx` (line ~251)
+
+Currently the Model Dashboard notice is a small amber banner:
+```tsx
+<div className="bg-amber-500/20 border-2 border-amber-500/50 rounded-xl p-4 text-center">
+  <p className="text-amber-400 font-bold text-lg">📊 MODEL DASHBOARD</p>
+  <p className="text-amber-300/80 text-sm mt-1">Distributions won't begin until fund reaches $20M committed</p>
+</div>
+```
+
+Make this significantly more prominent. Use a larger, bolder treatment at the top of the TreasuryDashboard component. Options:
+- Increase font size to `text-2xl` or larger
+- Expand padding to `p-6` or `p-8`
+- Add a background with more contrast
+- Make the notice span the full width of the dashboard with a clear header treatment
+- The message should be clearly readable as a section header, not a small notice
+
+---
+
+## Part 13: Map - Default to "Active Only"
+
+**File:** `client/src/components/GlobeMap.tsx`
+
+**Line 768:** `const [filter, setFilter] = useState<FilterType>("all");`
+
+Add a separate "active only" toggle state that defaults to true:
+
+```tsx
+const [showInactive, setShowInactive] = useState(false); // default: hide inactive
+```
+
+Then in the entity filtering logic (around line 838), add:
+
+```tsx
+if (!showInactive && entity.inactive) return false;
+```
+
+Add a toggle button in the filter controls (alongside the existing type filter tabs) labeled "Active Only" / "Show All" that toggles `showInactive`. Default state hides inactive land projects.
+
+Alternatively, if there's a simpler approach (e.g., a "Active Only" checkbox), use that. The key is: the map loads with inactive projects hidden by default.
+
+---
+
 ## What NOT To Do
 
 - Do NOT run any DB migrations. Just create the SQL files.
@@ -760,3 +934,10 @@ Check if a `recordings` table exists in the schema. If not, the webhook handler 
 - Dynamic calendar URL builders use Riverside room URL instead of Zoom
 - Event card join buttons say "Join on Riverside"
 - `RIVERSIDE_INFO.roomUrl` set to `https://riverside.com/studio/rieki-cordon-riekis-studio`
+- Music player: "Add Your Voice" appears directly below song title in now-playing area
+- Music player: Album name removed from individual track rows in queue
+- Messenger modal: "Search by display name" input has readable contrast
+- Nav: Community Forum appears above Governance in Explore + Connect dropdown
+- Land page h1 updated to new text about designing the economic/financial/governance Game
+- Fund page: Model Dashboard section is visually prominent (large, bold, clear)
+- Globe map defaults to active-only (inactive projects hidden on load)

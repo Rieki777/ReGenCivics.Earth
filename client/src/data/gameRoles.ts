@@ -103,7 +103,7 @@ export const gameRoles: GameRole[] = [
     tagline: "Connects what wants to be connected",
     emoji: "\u{1F578}\uFE0F",
     characterImage: "/images/roles/alliance-weaver-card.webp",
-    cardImagePosition: "center 15%",
+    cardImagePosition: "center top",
     sceneImage: "/images/roles/alliance-weaver-scene.webp",
     purpose:
       "Build and tend the web of relationships with investors, partner organizations, and land project referral networks that keep the ecosystem alive.",
@@ -239,7 +239,7 @@ export const gameRoles: GameRole[] = [
     tagline: "Designs the rules we play by",
     emoji: "\u{1F3B2}",
     characterImage: "/images/roles/game-designer-card.webp",
-    cardImagePosition: "center 20%",
+    cardImagePosition: "center top",
     sceneImage: "/images/roles/game-designer-scene.webp",
     purpose:
       "Design and evolve the game mechanics, contribution scoring, citizenship tiers, seasonal events, and quest progression that make the Infinite Game playable and meaningful.",
@@ -375,7 +375,7 @@ export const gameRoles: GameRole[] = [
     tagline: "Builds the world one tool at a time",
     emoji: "\u{1F528}",
     characterImage: "/images/roles/grand-builder-card.webp",
-    cardImagePosition: "center 15%",
+    cardImagePosition: "center top",
     sceneImage: "/images/roles/grand-builder-scene.webp",
     purpose:
       "Maintain the codebase, review community PRs, and keep the technical systems running. The person who makes sure the tools work.",
