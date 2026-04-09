@@ -62,12 +62,22 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
       <button
         type="button"
         onClick={handleClick}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 transition-colors"
+        className="group inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-amber-500/90 to-amber-400/90 hover:from-amber-400 hover:to-amber-300 text-[#1a472a] shadow-lg shadow-amber-500/20 hover:shadow-amber-400/40 ring-1 ring-amber-300/40 hover:ring-amber-200 transition-all"
         aria-label="Send gratitude"
-        title="Send gratitude"
       >
-        <Sparkles className="w-3.5 h-3.5" />
-        {!compact && <span>Thanks</span>}
+        <Sparkles className="w-4 h-4" />
+        {!compact && (
+          <span className="inline-flex items-center gap-1">
+            Gratitude
+            <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
+          </span>
+        )}
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-[#0f2a1a] border border-amber-300/30 px-3 py-2 text-[11px] leading-snug text-amber-100 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity z-50 shadow-xl"
+        >
+          Sending gratitude is your way of distributing a shared budget to people you think should get it.
+        </span>
       </button>
 
       {open && (
