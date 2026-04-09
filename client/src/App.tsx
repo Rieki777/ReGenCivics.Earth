@@ -85,6 +85,10 @@ const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 const PlayerProfileByHandle = lazy(() => import("./pages/PlayerProfileByHandle"));
 const BridgeHypha = lazy(() => import("./pages/BridgeHypha"));
 const DecisionsDashboard = lazy(() => import("./pages/DecisionsDashboard"));
+const GovCreate = lazy(() => import("./pages/GovCreate"));
+const GovTenant = lazy(() => import("./pages/GovTenant"));
+const StorytellerStories = lazy(() => import("./pages/StorytellerStories"));
+const GovBackField = lazy(() => import("./pages/GovBackField"));
 const CreateCampaign = lazy(() => import("./pages/CreateCampaign"));
 const CrowdPoolingCampaigns = lazy(() => import("./pages/CrowdPoolingCampaigns"));
 const CampaignDetail = lazy(() => import("./pages/CampaignDetail"));
@@ -217,6 +221,10 @@ function Router() {
       <Route path={"/profile/:handle"}><EB><PlayerProfileByHandle /></EB></Route>
       <Route path={"/bridge/hypha/:bridgeKey"}><EB><BridgeHypha /></EB></Route>
       <Route path={"/community/decisions"}><EB><DecisionsDashboard /></EB></Route>
+      <Route path={"/community/decisions/stories"}><EB><StorytellerStories /></EB></Route>
+      <Route path={"/gov/create"}><EB><GovCreate /></EB></Route>
+      <Route path={"/gov/:slug/backfield"}><EB><GovBackField /></EB></Route>
+      <Route path={"/gov/:slug"}><EB><GovTenant /></EB></Route>
       <Route path={"/create-campaign"}><EB><CreateCampaign /></EB></Route>
       <Route path={"/campaigns"}>{() => { window.location.href = '/crowd-pooling-projects'; return null; }}</Route>
       <Route path={"/campaign/:id"}><EB><CampaignDetail /></EB></Route>

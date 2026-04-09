@@ -312,6 +312,100 @@ export const governanceRouter = router({
     return { total, byTenant };
   }),
 
+  // ─── Phase 3: Tenant management (multi-tenant governance) ────────────────
+
+  /** Create a new governance tenant. Bioregions, land projects, organizations,
+   * or sub-orgs of the platform. The creator becomes the first admin. */
+  createTenant: protectedProcedure
+    .input(z.object({
+      slug: z.string().min(2).max(80).regex(/^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/),
+      tenantType: z.enum(["bioregion", "land_project", "organization"]),
+      displayName: z.string().min(2).max(200),
+      description: z.string().max(2000).optional(),
+      hyphaDhoSlug: z.string().max(80).optional(),
+      bannerUrl: z.string().url().optional(),
+      logoUrl: z.string().url().optional(),
+      accentColor: z.string().max(20).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+      // Reject if slug already taken
+      const existing = await db.select().from(governanceTenants).where(eq(governanceTenants.slug, input.slug)).limit(1);
+      if (existing.length > 0) throw new TRPCError({ code: "BAD_REQUEST", message: "That slug is already taken" });
+
+      const result = await db.insert(governanceTenants).values({
+        slug: input.slug,
+        tenantType: input.tenantType,
+        displayName: input.displayName,
+        description: input.description ?? null,
+        bannerUrl: input.bannerUrl ?? null,
+        logoUrl: input.logoUrl ?? null,
+        accentColor: input.accentColor ?? null,
+        hyphaDhoSlug: input.hyphaDhoSlug ?? null,
+        ownerUserId: ctx.user.id,
+      } as any);
+      const tenantId = (result as any)[0]?.insertId ?? (result as any).insertId;
+
+      // Auto-add the creator as admin
+      await db.insert((await import("../../drizzle/schema")).governanceTenantMembers).values({
+        tenantId,
+        userId: ctx.user.id,
+        role: "admin",
+      } as any);
+
+      return { id: tenantId, slug: input.slug };
+    }),
+
+  /** List all tenants visible to the current user. Used by /gov directory. */
+  listAllTenants: publicProcedure
+    .input(z.object({ tenantType: z.enum(["bioregion", "land_project", "organization", "platform"]).optional() }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const where = input?.tenantType ? eq(governanceTenants.tenantType, input.tenantType) : undefined;
+      return where
+        ? db.select().from(governanceTenants).where(where).orderBy(governanceTenants.displayName)
+        : db.select().from(governanceTenants).orderBy(governanceTenants.displayName);
+    }),
+
+  /** Get a single tenant by slug. */
+  getTenantBySlug: publicProcedure
+    .input(z.object({ slug: z.string().min(2).max(80) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const rows = await db.select().from(governanceTenants).where(eq(governanceTenants.slug, input.slug)).limit(1);
+      if (rows.length === 0) return null;
+      const tenant = rows[0];
+      // Pull member count
+      const memberRows = await db.execute(sql`SELECT COUNT(*) AS c FROM governanceTenantMembers WHERE tenantId = ${tenant.id} AND leftAt IS NULL`).then((r: any) => r[0] ?? []);
+      const memberCount = Number(memberRows[0]?.c ?? 0);
+      return { ...tenant, memberCount };
+    }),
+
+  /** Join a tenant. Self-service membership for tenants that allow it. */
+  joinTenant: protectedProcedure
+    .input(z.object({ slug: z.string().min(2).max(80) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const tenants = await db.select().from(governanceTenants).where(eq(governanceTenants.slug, input.slug)).limit(1);
+      if (tenants.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Tenant not found" });
+      const tenant = tenants[0];
+      try {
+        await db.insert((await import("../../drizzle/schema")).governanceTenantMembers).values({
+          tenantId: tenant.id,
+          userId: ctx.user.id,
+          role: "member",
+        } as any);
+      } catch (err: any) {
+        if (err?.code !== "ER_DUP_ENTRY") throw err;
+      }
+      return { ok: true };
+    }),
+
   // ─── Phase 2: Lineage ────────────────────────────────────────────────────
 
   /** Decision lineage: cite a parent decision when promoting a new one. */

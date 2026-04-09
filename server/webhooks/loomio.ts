@@ -22,7 +22,9 @@ import {
   forumPromotionRequests,
   governanceAgreements,
   governanceTokenLedger,
+  users,
 } from "../../drizzle/schema";
+import { bridgeToHypha } from "../lib/hypha-bridge";
 
 const LOOMIO_HMAC_SECRET = process.env.LOOMIO_WEBHOOK_HMAC_SECRET ?? "";
 
@@ -156,6 +158,45 @@ async function handleLoomioEvent(event: LoomioEvent): Promise<{ ok: boolean; not
           await db.execute(sql`UPDATE forumPostDecisions SET storytellerId = NULL WHERE id = ${d.id}`);
         }
       }
+
+      // If ratified AND moves tokens, auto-create the Hypha Bridge so the
+      // proposer can hand off to Hypha when ready. The bridge URL gets
+      // attached to the decision row via hyphaBridgeId.
+      if (event.ratified && event.tokenAmount && event.tokenAmount > 0) {
+        try {
+          const proposerRows = await db.select().from(users).where(eq(users.id, d.proposerId)).limit(1);
+          const wallet = (proposerRows[0] as any)?.baseWalletAddress as `0x${string}` | undefined;
+          const targetDhoSlug = d.track === "fund"
+            ? (process.env.HYPHA_DHO_REGEN_CIVICS_SLUG ?? "regen-civics")
+            : (process.env.HYPHA_DHO_REGEN_GAMES_SLUG ?? "regen-games");
+          const tokenAddress = d.track === "fund"
+            ? (process.env.RCIVICS_TOKEN_ADDRESS_BASE ?? "0x72e9B17a2F93A923D63666eC0a1c096B1443ef26")
+            : (process.env.REGEN_TOKEN_ADDRESS_BASE ?? "0x4E617cd113364193d215d107AdD6fa50418AA2E4");
+
+          const bridgeResult = await bridgeToHypha("decision-to-contribution", {
+            sourceId: String(d.id),
+            targetDhoSlug,
+            title: event.outcomeSummary?.slice(0, 200) ?? `Decision ${d.id}`,
+            description: event.outcomeReasoning ?? event.outcomeSummary ?? "",
+            recipient: wallet,
+            payouts: wallet ? [{ amount: String(event.tokenAmount), token: tokenAddress as `0x${string}` }] : undefined,
+            initiatorUserId: d.proposerId,
+            metadata: { loomioPollKey: event.pollKey, decisionId: d.id, track: d.track },
+          });
+          // Look up the bridge id from the key and link it to the decision
+          const bridgeRows = await db.execute(sql`SELECT id FROM hyphaBridges WHERE bridgeKey = ${bridgeResult.bridgeKey} LIMIT 1`).then((r: any) => r[0] ?? []);
+          if (bridgeRows[0]) {
+            await db
+              .update(forumPostDecisions)
+              .set({ hyphaBridgeId: bridgeRows[0].id } as any)
+              .where(eq(forumPostDecisions.id, d.id));
+          }
+          console.log("[loomio] auto-created bridge for ratified decision", { decisionId: d.id, bridgeKey: bridgeResult.bridgeKey });
+        } catch (err) {
+          console.error("[loomio] failed to auto-create bridge for ratified decision", err);
+        }
+      }
+
       return { ok: true };
     }
 
