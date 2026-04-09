@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS seasonSnapshots (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  seasonId INT NOT NULL,
+  seasonName VARCHAR(100) DEFAULT NULL,
+  variables JSON NOT NULL,
+  snapshotAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX season_idx (seasonId)
+);

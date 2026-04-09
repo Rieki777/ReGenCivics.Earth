@@ -11,6 +11,8 @@ import { SIMULATOR_PRESETS } from "@/config/simulatorPresets";
 import { computeImpactSummaries, type ImpactSummary } from "@/config/impactRules";
 import { checkInvariants } from "@/config/simulatorInvariants";
 import { VARIABLE_EXPLAINERS } from "@/config/variableExplainers";
+import { VARIABLE_ROLE_MAP } from "@/config/variableRoleMap";
+import { Sparkline } from "@/components/simulator/Sparkline";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";
@@ -166,10 +168,10 @@ const VARIABLE_HELP: Record<string, string> = {
   "forum.vote_weight_max": "Highest forum vote weight. A Guardian's vote carries this much.",
   "forum.quality_reply_min_reactions": "Reactions a forum reply needs to count as quality and earn bonus points.",
 
-  "quests.tier_steward_min": "Contribution percentile needed to unlock Steward-tier quests.",
-  "quests.tier_elder_min": "Contribution percentile needed to unlock Elder-tier quests.",
-  "quests.tier_guardian_min": "Contribution percentile needed to unlock Guardian-tier quests.",
-  "quests.require_rites_complete": "Whether all 13 Rites of Passage must be complete before tier quests unlock.",
+  "quests.tier_steward_min": "Contribution percentile required to access Steward-tier quests.",
+  "quests.tier_elder_min": "Contribution percentile required to access Elder-tier quests.",
+  "quests.tier_guardian_min": "Contribution percentile required to access Guardian-tier quests.",
+  "quests.require_rites_complete": "Whether all 13 Rites of Passage must be complete before tier quests become available.",
 
   "governance.council_seats": "Seats on the seasonal council each season.",
   "governance.council_min_score": "Minimum contribution percentile needed to qualify for the council.",
@@ -415,25 +417,51 @@ interface SliderRowProps {
   unit?: string;
   help?: string;
   onChange: (val: number) => void;
+  /** Trajectory of this variable across the current session. */
+  trajectory?: number[];
+  /** Baseline value (what the slider started at). */
+  baseline?: number;
+  /** Previous-season value, for the ghost reference line. */
+  ghost?: number;
+  /** Compare mode: show baseline value next to current. */
+  compare?: boolean;
 }
 
-function SliderRow({ label, value, min, max, step, unit, help, onChange }: SliderRowProps) {
-  const display = unit === "%"
-    ? `${(value * 100).toFixed(0)}%`
-    : unit === "x"
-      ? `${value.toFixed(1)}x`
-      : unit === "$"
-        ? `$${value.toLocaleString()}`
-        : String(value);
+function formatSimValue(value: number, unit?: string): string {
+  if (unit === "%") return `${(value * 100).toFixed(0)}%`;
+  if (unit === "x") return `${value.toFixed(1)}x`;
+  if (unit === "$") return `$${value.toLocaleString()}`;
+  return String(value);
+}
+
+function SliderRow({ label, value, min, max, step, unit, help, onChange, trajectory, baseline, ghost, compare }: SliderRowProps) {
+  const display = formatSimValue(value, unit);
+  const baselineDisplay = baseline != null ? formatSimValue(baseline, unit) : null;
+  const changed = baseline != null && value !== baseline;
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <label className="text-sm text-white/80">{label}</label>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <label className="text-sm text-white/80 truncate">{label}</label>
           <HelpTip text={help} />
         </div>
-        <span className="text-sm font-mono text-[#7dd87d]">{display}</span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {trajectory && trajectory.length > 0 && (
+            <Sparkline
+              values={trajectory}
+              baseline={baseline}
+              ghost={ghost}
+              width={80}
+              height={22}
+              color={changed ? "#7dd87d" : "#7dd87d80"}
+            />
+          )}
+          {compare && baselineDisplay && (
+            <span className="text-xs font-mono text-white/40 line-through">{baselineDisplay}</span>
+          )}
+          <span className={`text-sm font-mono ${changed ? "text-[#7dd87d]" : "text-white/70"}`}>{display}</span>
+        </div>
       </div>
       <Slider
         min={min}
@@ -466,6 +494,11 @@ function GameSimulator() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+
+  // Pull the previous-season snapshot for ghost-curve overlays.
+  const { data: previousSeason } = trpc.game.previousVariables.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const ghostMap = (previousSeason?.variables ?? {}) as Record<string, number>;
 
   const pushHistory = useCallback((label: string, next: SimState) => {
     setHistory((h) => [...h, { label, state: next, at: Date.now() }]);
@@ -521,6 +554,19 @@ function GameSimulator() {
   );
   const violations = useMemo(() => checkInvariants(currentRecord), [currentRecord]);
   const hasErrors = violations.some((v) => v.severity === "error");
+
+  // Per-variable trajectories: walk history and pull each variable's value
+  // at every history step. Always seeds with the baseline value first so the
+  // sparkline has a reference point even before any edits.
+  const trajectories = useMemo(() => {
+    const result: Record<string, number[]> = {};
+    for (const key of Object.keys(baseline) as Array<keyof SimState>) {
+      const series: number[] = [baseline[key] as number];
+      for (const h of history) series.push(h.state[key] as number);
+      result[key] = series;
+    }
+    return result;
+  }, [baseline, history]);
 
   // Permalink encoder
   const buildPermalinkHash = useCallback(() => {
@@ -625,8 +671,18 @@ function GameSimulator() {
         </div>
       </div>
 
-      {/* Toolbar: undo, reset, copy link, copy as forum post */}
+      {/* Toolbar: compare, undo, reset, copy link, copy as forum post */}
       <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => setCompareMode((s) => !s)}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+            compareMode
+              ? "bg-[#7dd87d]/20 border-[#7dd87d]/50 text-[#7dd87d]"
+              : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
+          }`}
+        >
+          {compareMode ? "Compare on" : "Compare to baseline"}
+        </button>
         <button
           onClick={undo}
           disabled={history.length === 0}
@@ -678,17 +734,38 @@ function GameSimulator() {
         </div>
       )}
 
-      {/* Overall impact summary */}
+      {/* Overall impact summary with role chips */}
       {impactSummaries.length > 0 && (
         <div className="rounded-xl border border-[#7dd87d]/40 bg-[#7dd87d]/8 p-4">
           <p className="text-[10px] uppercase tracking-widest text-[#7dd87d] mb-2 font-bold">Expected impact</p>
-          <ul className="space-y-2">
-            {impactSummaries.map((s) => (
-              <li key={s.variable} className="text-sm text-white/85 leading-relaxed">
-                {s.message}
-              </li>
-            ))}
+          <ul className="space-y-3">
+            {impactSummaries.map((s) => {
+              const roles = VARIABLE_ROLE_MAP[s.variable] ?? [];
+              return (
+                <li key={s.variable} className="text-sm text-white/85 leading-relaxed">
+                  <p>{s.message}</p>
+                  {roles.length > 0 && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] uppercase tracking-wide text-white/40 mr-1">Touches</span>
+                      {roles.map((role) => (
+                        <span
+                          key={role}
+                          className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/15 capitalize"
+                        >
+                          {role.replace(/-/g, " ")}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
+          {previousSeason && (
+            <p className="text-[10px] text-[#d4a574]/80 mt-3">
+              Sparklines show a dashed amber line for the {previousSeason.seasonName ?? `Season ${previousSeason.seasonId}`} value.
+            </p>
+          )}
         </div>
       )}
 
@@ -723,6 +800,10 @@ function GameSimulator() {
             max={50}
             step={1}
             onChange={update("questWeight")}
+            trajectory={trajectories.questWeight}
+            baseline={baseline.questWeight}
+            ghost={ghostMap.questWeight}
+            compare={compareMode}
           />
           <SliderRow
             label="Forum Points (per post)"
@@ -732,6 +813,10 @@ function GameSimulator() {
             max={30}
             step={1}
             onChange={update("forumWeight")}
+            trajectory={trajectories.forumWeight}
+            baseline={baseline.forumWeight}
+            ghost={ghostMap.forumWeight}
+            compare={compareMode}
           />
           <SliderRow
             label="Trust Multiplier (min)"
@@ -742,6 +827,10 @@ function GameSimulator() {
             step={0.1}
             unit="x"
             onChange={update("trustMultiplierMin")}
+            trajectory={trajectories.trustMultiplierMin}
+            baseline={baseline.trustMultiplierMin}
+            ghost={ghostMap.trustMultiplierMin}
+            compare={compareMode}
           />
           <SliderRow
             label="Trust Multiplier (max)"
@@ -752,6 +841,10 @@ function GameSimulator() {
             step={0.1}
             unit="x"
             onChange={update("trustMultiplierMax")}
+            trajectory={trajectories.trustMultiplierMax}
+            baseline={baseline.trustMultiplierMax}
+            ghost={ghostMap.trustMultiplierMax}
+            compare={compareMode}
           />
           <SliderRow
             label="Composting Decay Rate"
@@ -762,6 +855,10 @@ function GameSimulator() {
             step={0.01}
             unit="%"
             onChange={update("compostingDecay")}
+            trajectory={trajectories.compostingDecay}
+            baseline={baseline.compostingDecay}
+            ghost={ghostMap.compostingDecay}
+            compare={compareMode}
           />
           <SliderRow
             label="Harvest Pool Size"
@@ -772,6 +869,10 @@ function GameSimulator() {
             step={5000}
             unit="$"
             onChange={update("harvestPoolSize")}
+            trajectory={trajectories.harvestPoolSize}
+            baseline={baseline.harvestPoolSize}
+            ghost={ghostMap.harvestPoolSize}
+            compare={compareMode}
           />
           <SliderRow
             label="Gratitude Base Budget (per cycle)"
@@ -781,6 +882,10 @@ function GameSimulator() {
             max={200}
             step={10}
             onChange={update("gratitudeBudget")}
+            trajectory={trajectories.gratitudeBudget}
+            baseline={baseline.gratitudeBudget}
+            ghost={ghostMap.gratitudeBudget}
+            compare={compareMode}
           />
           <SliderRow
             label="People Acknowledged (this cycle)"
@@ -790,6 +895,10 @@ function GameSimulator() {
             max={30}
             step={1}
             onChange={update("gratitudeRecipients")}
+            trajectory={trajectories.gratitudeRecipients}
+            baseline={baseline.gratitudeRecipients}
+            ghost={ghostMap.gratitudeRecipients}
+            compare={compareMode}
           />
           <SliderRow
             label="Streak (consecutive 10+ cycles)"
@@ -799,6 +908,10 @@ function GameSimulator() {
             max={10}
             step={1}
             onChange={update("streakCycles")}
+            trajectory={trajectories.streakCycles}
+            baseline={baseline.streakCycles}
+            ghost={ghostMap.streakCycles}
+            compare={compareMode}
           />
           <SliderRow
             label="$ReGen Distribution Pool (per cycle)"
@@ -809,6 +922,10 @@ function GameSimulator() {
             step={1000}
             unit="$"
             onChange={update("regenDistributionPool")}
+            trajectory={trajectories.regenDistributionPool}
+            baseline={baseline.regenDistributionPool}
+            ghost={ghostMap.regenDistributionPool}
+            compare={compareMode}
           />
           <SliderRow
             label="$ReGen Claim Threshold"
@@ -818,6 +935,10 @@ function GameSimulator() {
             max={1000}
             step={50}
             onChange={update("claimThreshold")}
+            trajectory={trajectories.claimThreshold}
+            baseline={baseline.claimThreshold}
+            ghost={ghostMap.claimThreshold}
+            compare={compareMode}
           />
         </CardContent>
       </Card>

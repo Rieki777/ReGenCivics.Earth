@@ -10,6 +10,32 @@ import { sql, desc, eq } from "drizzle-orm";
 import { getGameVariable, invalidateGameVariable, getCurrentSeason, recordScoreEvent, logActivityEvent, getTierFromPercentile } from "../game";
 
 export const gameRouter = router({
+  // ─── Season snapshots (public, for the Game Mechanics simulator ghost curve) ─
+
+  /**
+   * Returns the most recent finalized season snapshot's variables map, or
+   * null if no snapshots exist yet. The simulator uses this to draw a
+   * dashed "previous season" line behind each variable's sparkline.
+   */
+  previousVariables: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return null;
+    const rows = await db.execute(sql`SELECT seasonId, seasonName, variables FROM seasonSnapshots ORDER BY snapshotAt DESC LIMIT 1`).then((r: any) => r[0] ?? []);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0];
+    let variables: Record<string, number> = {};
+    try {
+      variables = typeof row.variables === "string" ? JSON.parse(row.variables) : (row.variables ?? {});
+    } catch {
+      variables = {};
+    }
+    return {
+      seasonId: row.seasonId as number,
+      seasonName: (row.seasonName as string | null) ?? null,
+      variables,
+    };
+  }),
+
   // ─── Game Variables (Admin) ─────────────────────────────────────────────
 
   listVariables: adminProcedure

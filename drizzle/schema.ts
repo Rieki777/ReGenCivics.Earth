@@ -1474,6 +1474,21 @@ export const gratitudeLog = mysqlTable("gratitudeLog", {
 export type GratitudeLog = typeof gratitudeLog.$inferSelect;
 
 /**
+ * Season Snapshots
+ * Frozen state of all game variables at the end of each season. Powers the
+ * "ghost curve" comparison line in the Game Mechanics simulator and any
+ * other historical-trend visualization.
+ */
+export const seasonSnapshots = mysqlTable("seasonSnapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  seasonId: int("seasonId").notNull(),
+  seasonName: varchar("seasonName", { length: 100 }),
+  variables: json("variables").notNull(),
+  snapshotAt: timestamp("snapshotAt").defaultNow().notNull(),
+});
+export type SeasonSnapshot = typeof seasonSnapshots.$inferSelect;
+
+/**
  * Feature Suggestions table
  * Community-driven propose-and-vote for site features
  */

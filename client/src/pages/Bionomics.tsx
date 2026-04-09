@@ -442,55 +442,55 @@ const TIMELINE: TimelineNode[] = [
     year: "2017",
     title: "The seed question",
     body:
-      "If Bitcoin can spend billions a year on energy to back its currency, what if we spent that money setting up local food systems to back a new currency, one backed by local, regenerative, and delicious food? This is the question that started everything.",
+      "Bitcoin can spend billions a year on energy to back its currency. What if we spent that money setting up local food systems to back a new currency, one backed by local, regenerative, and delicious food? This is the question that started everything. A democratic financial system backed by local food systems.",
   },
   {
     year: "2018 to 2020",
     title: "SEEDS era",
     body:
-      "Helping design and launch SEEDS, the first serious attempt at a regenerative currency with citizenship, harvest cycles, and a constitution. We learned what worked and what wanted to grow differently.",
+      "Helping design and launch SEEDS, the first serious attempt at a regenerative currency with citizenship, harvest cycles, and a constitution. We learned what worked and what wanted to grow differently. Most of our work centered on figuring out the democratic and decentralized nature of that question. ReGen Civics is picking up the baton to focus again on food systems and regenerative land projects.",
   },
   {
     year: "2021 to 2022",
     title: "Tools and infrastructure",
     body:
-      "Building the early versions of the Game's core tools. Hypha DAO tooling, the first experiments with forum, quests, incubator scaffolding, and the first land project conversations.",
+      "Building the early versions of the Game's core tools. Hypha DAO tooling, the first experiments with forum, quests, incubator scaffolding, and land project Season 1 where we tested and built out much of our infrastructure and processes.",
   },
   {
     year: "2022",
-    title: "The first incubator season",
+    title: "The first incubator: Spring Season 1",
     body:
       "Land projects, mentors, and the first version of the seasonal rhythm. ReGen Civics is formed.",
   },
   {
     year: "2022 to 2025",
-    title: "The long winter",
+    title: "The long Winter Season 1",
     body:
       "Rest, recuperation, consideration, research, and listening. Composting what came before so something truer could grow next.",
   },
   {
     year: "2025",
-    title: "The Fund takes shape",
+    title: "The Fund takes shape (Winter)",
     body:
       "$RCivics and $ReGen dynamics. The Game and Bionomics. Tier system, gratitude protocol, Game Mechanics, and the foundations of what you see on the site, designed and ready to build.",
   },
   {
     year: "Early 2026",
-    title: "Building starts",
+    title: "Building starts (Winter)",
     body:
       "We rapidly develop and deploy the Bioregional Games, Land-Based Games, and the ReGen Civics home site. The first land project pilots adopt and adapt the Game structure.",
   },
   {
     year: "Fall 2026",
-    title: "Season 2",
+    title: "Season 2 (Spring)",
     body:
-      "Thirteen land projects go through the open-source process of co-creating their Games. The season ends with the first Crowdpooling Season, where projects pool various forms of capital to evolve their work.",
+      "Thirteen land projects will go through the open-source process of co-creating their Games. The season ends with the first Crowdpooling Season, where projects pool various forms of capital to evolve their work.",
   },
   {
     year: "Looking ahead",
     title: "A networked Game",
     body:
-      "A network of land-based and bioregional Games, each sovereign, all connected, all playing toward the Regenerative Renaissance.",
+      "A network of land-based and bioregional Games, each sovereign, all connected, all playing toward the ReGenerative Renaissance.",
   },
 ];
 
@@ -677,8 +677,9 @@ export default function Bionomics() {
                       <span>Bionomics</span>
                     </h1>
                     <p className="text-sm md:text-lg text-white/95 max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
-                      The Game, $ReGen, and the bioregional infrastructure we have been
-                      growing since 2017.
+                      The living-economy side of ReGen Civics where we are living into the
+                      future of how we need our economic systems to be. The Game, $ReGen,
+                      and the bioregional infrastructure we have been growing since 2017.
                     </p>
                   </div>
                 </div>
@@ -687,7 +688,8 @@ export default function Bionomics() {
                   className="text-center text-sm md:text-base italic text-white/75 mt-4 md:mt-5 max-w-xl mx-auto"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
-                  Tokenomics is the bridge. Bionomics is the world we are walking into.
+                  Tokenomics is the bridge to the dominant Games. Bionomics is the Games
+                  we are co-creating.
                 </p>
 
                 {/* Hero CTA row */}
@@ -728,7 +730,7 @@ export default function Bionomics() {
             <div className="container max-w-4xl">
               <SectionHeading
                 eyebrow="The Word"
-                title="Bio. Bioregion. Nomics."
+                title="Bio. Bioregion. Economics."
                 accent={C.greenSoft}
               />
               <div
@@ -738,26 +740,28 @@ export default function Bionomics() {
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
                   <strong className="text-[#7dd87d]">Bio.</strong> Life. The pulse of cells,
                   soil, mycelium, bird, river, person. The first economy was always the one
-                  life was already running.
+                  life was already running. It is currently still running, and it is asking
+                  us humans to reorient towards it.
                 </p>
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
-                  <strong className="text-[#7dd87d]">Bio also means bioregion.</strong> The
-                  scale at which living systems actually organize themselves. A watershed.
-                  A foodshed. A continent's nervous system of mountains and migration paths.
-                  The scale our work coordinates at.
+                  <strong className="text-[#7dd87d]">Bio also short for bioregion.</strong>{" "}
+                  The scale at which living systems actually organize themselves. A
+                  watershed. A foodshed. A continent's nervous system of mountains and
+                  migration paths. The scale our work coordinates at.
                 </p>
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
-                  <strong className="text-[#7dd87d]">Nomics.</strong> The patterns and
+                  <strong className="text-[#7dd87d]">Economics.</strong> The patterns and
                   principles by which a household manages itself. From{" "}
-                  <em className="text-[#d4a574]">oikonomia</em>, the Ancient Greek root for
+                  <em className="text-[#d4a574]">oikonomia</em>, the original word for
                   economy.
                 </p>
                 <div className="border-t border-[#7dd87d]/20 pt-5 md:pt-6">
                   <p className="text-white text-base md:text-lg leading-relaxed">
-                    <strong className="text-[#f0c040]">Bionomics</strong> is the study of
-                    how life organizes its own economy at the scale of a bioregion. It is
-                    the work of remembering that we are part of an economy that has been
-                    running for billions of years, and learning to play inside it.
+                    <strong className="text-[#f0c040]">Bionomics</strong>, then, is the
+                    study of how life organizes its own economy and how we can mimic those
+                    patterns. It is the work of remembering that we are part of an economy
+                    that has been running for billions of years, and learning to play inside
+                    it instead of around it.
                   </p>
                 </div>
               </div>
@@ -770,7 +774,7 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="The Two Sides"
                 title="Two sides of one bridge"
-                blurb="Tokenomics covers the Fund and $RCivics: how capital walks across the bridge. Bionomics covers the Game and $ReGen: the world that grows on the other side. They need each other."
+                blurb="The Fund draws capital from the current Games (capitalism and everything downstream of it). The Game grows the new economies that capital is flowing toward. They need each other."
               />
 
               <div className="mycelium-grid grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 items-stretch">
@@ -884,27 +888,38 @@ export default function Bionomics() {
               >
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
                   We are investing in local food, regenerative land, community, and the
-                  organizations that hold them. It is a full-suite investment into the
-                  regenerative renaissance and the cultures growing inside it.
+                  organizations that support them. It is a full-suite investment into the
+                  ReGenerative Renaissance and the cultures growing inside it.
                 </p>
                 <p className="text-white/85 text-base leading-relaxed">
-                  Most funds pick a single thesis and ride it. We are doing something
-                  different. We are funding the whole portfolio of practices and
-                  infrastructures that a regenerative civilization needs to take root.
-                  Land projects. Food producers. Tools. Governance experiments. Bioregional
-                  organizing. Stories. Each one is a position in the index. Together they
-                  are the Regenerative Renaissance.
+                  Generally funds pick a single thesis and ride it. Our thesis is simply
+                  that we must invest in the foundations for regenerative civilizations,
+                  for a myriad of reasons. For this reason, we look to fund the whole
+                  portfolio of practices and infrastructures that a regenerative
+                  civilization needs to take root. Land projects. Food producers. Tools.
+                  Governance experiments. Bioregional organizing. Stories. Each one is a
+                  position in the index. Together we are the ReGenerative Renaissance.
+                  Because the mission is so big, we need to have the governance be
+                  decentralized and democratic to play this vital role of our future
+                  civilizations.
                 </p>
                 <p className="text-white text-base md:text-lg font-semibold">
-                  Think of it as the index fund for everything that is becoming.
+                  Think of it as the index fund for Regenerative Civilizations.
                 </p>
-                <div className="pt-2">
+                <div className="pt-2 flex flex-wrap gap-5">
                   <Link
                     href="/tokenomics"
                     className="inline-flex items-center gap-1.5 text-sm font-semibold hover:gap-2.5 transition-all"
                     style={{ color: C.amber }}
                   >
                     See how the Fund works on Tokenomics <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href="/governance"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold hover:gap-2.5 transition-all"
+                    style={{ color: C.green }}
+                  >
+                    See how we make decisions in Governance <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
@@ -917,13 +932,13 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="The Framework"
                 title="Bioregional Financing Facilities"
-                blurb="Bionomics builds on the Bioregional Financing Facilities (BFF) framework developed by the BioFi Project, Dark Matter Labs, and the Buckminster Fuller Institute. We have a lot of love for this work."
+                blurb="Bionomics unites with the Bioregional Financing Facilities (BFF) framework developed by the BioFi Project, Dark Matter Labs, and the Buckminster Fuller Institute. We have a lot of love for this work. ReGen Civics is one expression of where it can go when you weave it together with what we learned in the SEEDS era and braid it into a Game that bioregions and land projects can actually play."
               />
               <p className="text-white/80 text-base leading-relaxed mb-6">
                 A BFF is a financial body designed to take capital from the current
                 economic systems and grow regenerative bioregional economies in its place.
                 It is a semi-permeable membrane between two worlds. We are building tools,
-                infrastructure, and a Game to help bioregions create their own.
+                infrastructure, and a Game to help bioregions create their own Games.
               </p>
 
               <div className="space-y-3 md:space-y-4">
@@ -955,6 +970,10 @@ export default function Bionomics() {
                     grow differently, and what we needed to add. The Game is what came from
                     that learning.
                   </p>
+                  <p>
+                    We are not trying to own the bioregional economy. We are trying to help
+                    it grow everywhere it wants to.
+                  </p>
                 </Accordion>
 
                 <Accordion title="Read the source" icon={<Library className="w-5 h-5" />} accent={C.amber}>
@@ -983,32 +1002,32 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="How We Measure"
                 title="The 4 Returns Framework"
-                blurb="The BioFi framework organizes regenerative success around four kinds of return. Bionomics is built around all four. Here is what each one looks like inside the Game."
+                blurb="The BioFi framework organizes regenerative success around four kinds of return: Inspiration, Ecological, Social, and Economic-Financial. Bionomics is built around all four. Here is what each one looks like inside the Game."
                 accent={C.greenSoft}
               />
               <div className="mycelium-grid grid sm:grid-cols-2 gap-4 md:gap-5">
                 <ReturnCard
                   title="Inspiration Return"
                   icon={<Sparkles className="w-5 h-5" />}
-                  body="Stories, art, quests, and the felt sense that something better is real and within reach. Tracked through the quest system, the Living Tree on every player profile, and the seasonal harvest rituals."
+                  body="Stories, art, quests, and the felt sense that something better is real and within reach. The Game's quest system, the Living Tree on every player profile, and the seasonal harvest rituals are all designed to generate this return. When players complete a Quest, we share our stories, our wisdom, and our inspiration, and we grow together."
                   accent={C.gold}
                 />
                 <ReturnCard
                   title="Ecological Return"
                   icon={<TreeDeciduous className="w-5 h-5" />}
-                  body="Soil rebuilt, water restored, biodiversity returning, carbon drawn down. Tracked through land project reports, bioregional health indicators, and the regenerative metrics each project commits to in its Game."
+                  body="Soil rebuilt, water restored, biodiversity returning, carbon drawn down. Tracked through land project reports, bioregional health indicators, and the regenerative metrics each project commits to in its Game. Many of the Quests are centered around direct action to regenerate our bioregions and communities."
                   accent={C.green}
                 />
                 <ReturnCard
                   title="Social Return"
                   icon={<Users className="w-5 h-5" />}
-                  body="Trust, belonging, repaired relationships, new councils, healthier communities. Tracked through gratitude flows, forum reputation, the trust graph, and the seasonal council structure."
+                  body="Trust, belonging, repaired relationships, new councils, healthier communities. Tracked through gratitude flows, forum reputation, the trust graph, and the seasonal council structure. Co-creating this Game is the most challenging, rewarding, and ambitious part of our work, the human side of co-creation at a grand scale."
                   accent={C.teal}
                 />
                 <ReturnCard
                   title="Economic-Financial Return"
                   icon={<Wallet className="w-5 h-5" />}
-                  body="Patient capital that earns honest returns inside a regenerative thesis. Held inside the Index Fund for the Regenerative Renaissance and circulated through $RCivics and $ReGen."
+                  body="Patient capital that earns honest returns inside a regenerative thesis. Held inside the Index Fund for the Regenerative Renaissance and circulated through $RCivics and $ReGen. Explore the Fund and Opportunity pages for more on this."
                   accent={C.amber}
                 />
               </div>
@@ -1058,7 +1077,8 @@ export default function Bionomics() {
               <div className="space-y-2.5">
                 <BFFAttributeRow num={1} title="Place-based and bioregionally rooted" status="Reaching">
                   Our global Game is the trellis. bioregion.regencivics.earth will host
-                  place-based Games starting with the first pilot bioregions later this year.
+                  place-based Games starting with the first pilot bioregions later this
+                  year or next, as soon as a bioregion is ready to receive the Game.
                 </BFFAttributeRow>
                 <BFFAttributeRow num={2} title="Long-term and patient" status="Building">
                   The Fund is structured for multi-season cycles, not quarterly returns.
@@ -1086,9 +1106,10 @@ export default function Bionomics() {
                 <BFFAttributeRow num={7} title="Innovative financial instruments" status="Experimenting">
                   Gratitude tokens as eco-credits, seasonal harvests as a form of
                   retroactive public goods funding, contribution-weighted voting, future
-                  obligation clearing pilots, Crowdpooling as a direct-governance financial
-                  primitive, and the tooling communities need to experiment with their own
-                  financial and economic systems.
+                  obligation clearing pilots, and Crowdpooling as a direct-governance
+                  financial primitive. The Game gives communities the tools to experiment
+                  with their own financial and economic systems instead of waiting for
+                  someone else's.
                 </BFFAttributeRow>
                 <BFFAttributeRow num={8} title="Right relationship with regenerators" status="Building">
                   Land projects sit at the table as co-designers. The Incubator runs as
@@ -1360,15 +1381,20 @@ export default function Bionomics() {
               >
                 <p className="text-white/85 text-base md:text-lg leading-relaxed">
                   The BioFi ebook gathers a long list of innovative mechanisms that
-                  bioregional economies are experimenting with. Eco-credits, conviction
-                  voting, retroactive public goods funding, obligation clearing, bioregional
-                  vouchers, advance market commitments, profit pooling, and more.
+                  bioregional economies are experimenting with. Eco-credits, quadratic and
+                  conviction voting, retroactive public goods funding, obligation clearing,
+                  bioregional vouchers, advance market commitments, profit pooling, and
+                  more.
                 </p>
                 <p className="text-white/85 text-base md:text-lg leading-relaxed">
-                  Our work is to make them buildable. ReGen Civics is the open-source foundation that bioregions,
-                  land projects, and their communities can use to experiment with their
-                  own. Crowdpooling is the first one we are shipping as a first-class
-                  primitive. Many more will follow.
+                  Our work is to make them buildable. ReGen Civics is the open-source
+                  foundation that bioregions, land projects, and their communities can use
+                  to experiment with their own. Crowdpooling is the first one we are
+                  shipping as a first-class primitive. Many more will follow, and we aim
+                  to integrate with any experiments and tools that want to make themselves
+                  compatible with our tooling. We use Base, one of the most widely adopted
+                  blockchains, as our foundation, which lets us easily integrate with other
+                  tooling built on it.
                 </p>
                 <Link href="/tools">
                   <Button
@@ -1402,9 +1428,11 @@ export default function Bionomics() {
                 <p className="text-white/85 text-base md:text-lg leading-relaxed">
                   ReGen Civics is a global network that supports bioregions with tooling,
                   infrastructure, and Game design. Our work is to help every bioregion
-                  grow its own BFF. We are open to connect
-                  with bioregions that are actively organizing. If that is you, the door is
-                  open.
+                  grow its own BFF. We are open to connect with bioregions that are
+                  actively organizing. If that is you, the door is open. We aim to play
+                  the global connective tissue that helps land projects, bioregions, and
+                  the organizations that support them rally around a shared fund and
+                  raise shared capital for our efforts.
                 </p>
                 <Link href="/community">
                   <Button
@@ -1436,7 +1464,8 @@ export default function Bionomics() {
                   The Game's design holds this everywhere. Quests heal players. Players
                   heal communities. Communities heal land. Land heals players back. The
                   loop only works when all four are in motion at once. Bionomics is what
-                  happens when an economy is built around that loop.
+                  happens when an economy is built around that loop instead of around
+                  extraction.
                 </p>
               </div>
             </div>
@@ -1514,8 +1543,8 @@ export default function Bionomics() {
               <p className="text-white/90 text-base md:text-lg leading-relaxed mb-10 max-w-2xl mx-auto">
                 This page will keep growing. The Game is just getting started. If any of
                 this resonates, find a quest, talk to a land project, or just sit with the
-                bridge image for a minute. The world on the other side is real. People are
-                already building it.
+                bridge image for a minute. The world on the other side is real. We are
+                walking toward it together.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
