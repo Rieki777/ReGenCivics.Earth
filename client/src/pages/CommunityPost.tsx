@@ -31,6 +31,7 @@ import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import { CitizenshipBadge } from "@/components/game/TierBadge";
 import { EmojiReactions } from "@/components/EmojiReactions";
 import { GratitudeButton } from "@/components/GratitudeButton";
+import { ForumThreadDecisionBanner } from "@/components/governance/ForumThreadDecisionBanner";
 import ThreadRoots from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
@@ -596,6 +597,11 @@ export default function CommunityPost() {
               <ContentLinkPreview content={post.content} />
             </div>
             )}
+
+            {/* Living backlink banner: shows if this thread has been promoted to a Loomio decision */}
+            <div className="px-4 md:px-6 pb-2">
+              <ForumThreadDecisionBanner threadId={post.id} />
+            </div>
 
             {/* Emoji Reactions + Gratitude on post */}
             <div className="px-4 md:px-6 pb-2 flex items-center gap-2 flex-wrap">

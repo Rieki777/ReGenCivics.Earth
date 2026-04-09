@@ -434,6 +434,26 @@ async function startServer() {
   // Presence heartbeat and count
   registerPresenceRoutes(app);
 
+  // ── Governance jobs cron endpoint ──────────────────────────────────────────
+  // Called hourly by Railway cron: POST /api/cron/governance-jobs
+  // Runs the full sweep: expire promotions, ship signed ones to Loomio,
+  // mark closing-soon, assign storytellers, create renewal threads, reconcile
+  // stuck Hypha bridges. Set CRON_SECRET env var; pass as Bearer token.
+  app.post("/api/cron/governance-jobs", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    if (!auth || auth !== `Bearer ${secret}`) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runAllGovernanceJobs } = await import("../jobs/governanceJobs");
+      const reports = await runAllGovernanceJobs();
+      return res.json({ ok: true, reports });
+    } catch (err: any) {
+      console.error("[cron] governance-jobs failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Event reminder cron endpoint ────────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/event-reminders
   // Finds events starting in 20–28 hours, sends reminder to all event_signups.

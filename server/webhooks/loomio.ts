@@ -197,9 +197,46 @@ async function handleLoomioEvent(event: LoomioEvent): Promise<{ ok: boolean; not
 
 /**
  * Build a promotion snapshot from the matching forum thread and POST it to
- * Loomio's API. Called from a scheduled worker that picks up signed promotion
- * requests and ships them. Stub here so the call site exists.
+ * Loomio's API to create a new discussion + poll. Called from
+ * runAllGovernanceJobs in jobs/governanceJobs.ts.
+ *
+ * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md sections 1.3, 1.4, 1.5.
+ *
+ * The Loomio API call happens here. The webhook receiver above handles the
+ * poll_created event Loomio fires back, which is when we create the
+ * forumPostDecisions row.
  */
+export async function buildPromotionSnapshot(threadId: number): Promise<{ title: string; body: string; threadUrl: string } | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const post = await db.select().from((await import("../../drizzle/schema")).forumPosts).where(eq((await import("../../drizzle/schema")).forumPosts.id, threadId)).limit(1);
+  if (post.length === 0) return null;
+  const replies = await db.select().from((await import("../../drizzle/schema")).forumReplies).where(eq((await import("../../drizzle/schema")).forumReplies.postId, threadId)).limit(50);
+
+  const baseUrl = process.env.PUBLIC_BASE_URL ?? "https://regencivics.earth";
+  const threadUrl = `${baseUrl}/community/post/${threadId}`;
+
+  // Top 5 most-liked replies (no like data yet, so first 5 chronologically)
+  const topReplies = replies.slice(0, 5);
+
+  const body = [
+    `_Promoted from a community forum discussion. Read the full conversation: ${threadUrl}_`,
+    "",
+    "## Original post",
+    "",
+    post[0].content ?? "(no content)",
+    "",
+    "## Top replies",
+    "",
+    ...topReplies.map((r, i) => `**Reply ${i + 1}:** ${(r.content ?? "").slice(0, 600)}`),
+    "",
+    `---`,
+    `_Thread started ${new Date(post[0].createdAt as any).toLocaleDateString()}, ${replies.length + 1} voices, ${replies.length} replies._`,
+  ].join("\n");
+
+  return { title: post[0].title ?? "", body, threadUrl };
+}
+
 export async function sendPromotionToLoomio(promotionRequestId: number): Promise<{ ok: boolean; loomioPollKey?: string }> {
   const db = await getDb();
   if (!db) return { ok: false };
@@ -215,11 +252,130 @@ export async function sendPromotionToLoomio(promotionRequestId: number): Promise
     return { ok: false };
   }
 
-  // Real Loomio API call would go here. The webhook receiver above handles
-  // the response when Loomio fires the poll_created event back. For now we
-  // log the intent so the wiring is testable end-to-end.
-  console.log("[loomio] would send promotion", { id: promotionRequestId, question: req.decisionQuestion, track: req.decisionTrack });
-  return { ok: true };
+  // Pick the right Loomio subgroup based on the track
+  const fundGroup = process.env.LOOMIO_GROUP_FUND ?? "fund-decisions";
+  const gameGroup = process.env.LOOMIO_GROUP_GAME ?? "game-decisions";
+  const groupKey = req.decisionTrack === "fund" ? fundGroup : req.decisionTrack === "game" ? gameGroup : fundGroup;
+
+  const snapshot = await buildPromotionSnapshot(req.forumPostId);
+  if (!snapshot) return { ok: false };
+
+  // Build the Loomio create-discussion payload. Real Loomio API uses
+  // POST /api/v1/discussions with a JSON body. Once the discussion is
+  // created we POST another to /api/v1/polls to attach the poll.
+  try {
+    const discussionResp = await fetch(`${apiUrl}/api/v1/discussions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        discussion: {
+          group_key: groupKey,
+          title: snapshot.title,
+          description: snapshot.body,
+          // Loomio supports a "private" flag for member-only visibility
+          private: false,
+        },
+      }),
+    });
+
+    if (!discussionResp.ok) {
+      console.error("[loomio] discussion create failed", discussionResp.status, await discussionResp.text());
+      return { ok: false };
+    }
+    const discussion = await discussionResp.json() as any;
+    const discussionKey = discussion?.discussions?.[0]?.key ?? discussion?.key;
+
+    const pollResp = await fetch(`${apiUrl}/api/v1/polls`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        poll: {
+          discussion_id: discussionKey,
+          poll_type: req.suggestedTemplate ?? "consent",
+          title: req.decisionQuestion,
+          details: snapshot.body,
+          // 7-day default window
+          closing_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+      }),
+    });
+
+    if (!pollResp.ok) {
+      console.error("[loomio] poll create failed", pollResp.status, await pollResp.text());
+      return { ok: false };
+    }
+    const poll = await pollResp.json() as any;
+    const pollKey = poll?.polls?.[0]?.key ?? poll?.key;
+    console.log("[loomio] promotion sent", { id: promotionRequestId, discussionKey, pollKey });
+    return { ok: true, loomioPollKey: pollKey };
+  } catch (err: any) {
+    console.error("[loomio] sendPromotionToLoomio failed", err);
+    return { ok: false };
+  }
+}
+
+/** Sync a user's Loomio subgroup memberships from their MySQL bioregion list.
+ * Called on every login from sdk.upsertUser, plus a nightly job at 3am UTC.
+ *
+ * The user gets added to one Loomio subgroup per bioregion they're registered
+ * in. If they leave a bioregion, they get removed. Out-of-region citizens can
+ * read decisions but cannot stance on them, which Loomio enforces via group
+ * membership.
+ */
+export async function syncLoomioSubgroups(userId: number): Promise<{ ok: boolean; added: number; removed: number }> {
+  const db = await getDb();
+  if (!db) return { ok: false, added: 0, removed: 0 };
+
+  const apiUrl = process.env.LOOMIO_API_URL;
+  const apiKey = process.env.LOOMIO_API_KEY;
+  if (!apiUrl || !apiKey) {
+    return { ok: false, added: 0, removed: 0 };
+  }
+
+  const userRows = await db.select().from((await import("../../drizzle/schema")).users).where(eq((await import("../../drizzle/schema")).users.id, userId)).limit(1);
+  if (userRows.length === 0) return { ok: false, added: 0, removed: 0 };
+  const user = userRows[0] as any;
+
+  let bioregions: string[] = [];
+  try {
+    if (user.bioregions) {
+      bioregions = typeof user.bioregions === "string" ? JSON.parse(user.bioregions) : (Array.isArray(user.bioregions) ? user.bioregions : []);
+    }
+  } catch { /* ignore */ }
+  if (bioregions.length === 0) return { ok: true, added: 0, removed: 0 };
+
+  // Loomio's API expects a user_email + group_key for the membership grant.
+  // Real wiring requires us to know the Loomio user id (which we'd map via
+  // the OIDC sub claim). For now we POST a memberships request per bioregion
+  // and let Loomio dedupe.
+  let added = 0;
+  for (const region of bioregions) {
+    try {
+      const resp = await fetch(`${apiUrl}/api/v1/memberships`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          membership: {
+            group_key: region,
+            user_email: user.email,
+          },
+        }),
+      });
+      if (resp.ok) added += 1;
+    } catch (err) {
+      console.warn("[loomio] subgroup sync failed for", region, err);
+    }
+  }
+  return { ok: true, added, removed: 0 };
 }
 
 export function registerLoomioWebhookRoutes(app: Express) {

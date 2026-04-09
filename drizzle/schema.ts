@@ -2864,3 +2864,100 @@ export const hyphaBridges = mysqlTable("hyphaBridges", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type HyphaBridge = typeof hyphaBridges.$inferSelect;
+
+/* ════════════════════════════════════════════════════════════════════
+ * Governance Phase 2 (lineage, back field, straw polls, storytellers, delegations)
+ * Migration: 0110_governance_phase2.sql
+ * ════════════════════════════════════════════════════════════════════ */
+
+export const decisionLineage = mysqlTable("decisionLineage", {
+  id: int("id").autoincrement().primaryKey(),
+  childDecisionId: int("childDecisionId").notNull(),
+  parentDecisionId: int("parentDecisionId").notNull(),
+  relationship: mysqlEnum("relationship", ["builds_on", "supersedes", "references"]).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type DecisionLineage = typeof decisionLineage.$inferSelect;
+
+/** The Back Field. Good ideas resting until they're ready. Renamed from
+ * "parking lot" per Rye, echoing fallow agricultural fields. */
+export const governanceBackField = mysqlTable("governanceBackField", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  forumPostId: int("forumPostId"),
+  proposerId: int("proposerId").notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+  summary: text("summary").notNull(),
+  reason: varchar("reason", { length: 500 }),
+  status: mysqlEnum("status", ["parked", "reviewing", "promoted", "retired"]).default("parked").notNull(),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewedBy: int("reviewedBy"),
+  promotedToDecisionId: int("promotedToDecisionId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GovernanceBackField = typeof governanceBackField.$inferSelect;
+
+export const decisionStorytellerNarratives = mysqlTable("decisionStorytellerNarratives", {
+  id: int("id").autoincrement().primaryKey(),
+  forumPostDecisionId: int("forumPostDecisionId").notNull(),
+  storytellerId: int("storytellerId").notNull(),
+  title: varchar("title", { length: 300 }).notNull(),
+  narrativeBody: text("narrativeBody").notNull(),
+  wordCount: int("wordCount").default(0).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  status: mysqlEnum("status", ["drafting", "submitted", "published"]).default("drafting").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DecisionStorytellerNarrative = typeof decisionStorytellerNarratives.$inferSelect;
+
+/** Lightweight in-thread polls. Non-binding temperature checks. */
+export const forumStrawPolls = mysqlTable("forumStrawPolls", {
+  id: int("id").autoincrement().primaryKey(),
+  forumPostId: int("forumPostId").notNull(),
+  forumReplyId: int("forumReplyId"),
+  creatorId: int("creatorId").notNull(),
+  question: varchar("question", { length: 300 }).notNull(),
+  options: json("options").notNull(),
+  closesAt: timestamp("closesAt").notNull(),
+  closedAt: timestamp("closedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ForumStrawPoll = typeof forumStrawPolls.$inferSelect;
+
+export const forumStrawPollVotes = mysqlTable("forumStrawPollVotes", {
+  id: int("id").autoincrement().primaryKey(),
+  strawPollId: int("strawPollId").notNull(),
+  userId: int("userId").notNull(),
+  choice: varchar("choice", { length: 80 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ForumStrawPollVote = typeof forumStrawPollVotes.$inferSelect;
+
+/** Proxy delegation: a citizen delegates their stance on specific topic tags
+ * to another citizen. Revocable per-decision. Max hop count enforced in code. */
+export const governanceDelegations = mysqlTable("governanceDelegations", {
+  id: int("id").autoincrement().primaryKey(),
+  delegatorId: int("delegatorId").notNull(),
+  delegateId: int("delegateId").notNull(),
+  topicTags: json("topicTags").notNull(),
+  tenantId: int("tenantId"),
+  revokedAt: timestamp("revokedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GovernanceDelegation = typeof governanceDelegations.$inferSelect;
+
+/** Pre-mortem concerns posted on the companion sub-poll. The proposer has to
+ * write a brief response to the top-N before the main decision can close. */
+export const governancePreMortemConcerns = mysqlTable("governancePreMortemConcerns", {
+  id: int("id").autoincrement().primaryKey(),
+  forumPostDecisionId: int("forumPostDecisionId").notNull(),
+  authorId: int("authorId").notNull(),
+  concernText: varchar("concernText", { length: 800 }).notNull(),
+  agreeCount: int("agreeCount").default(0).notNull(),
+  proposerResponse: text("proposerResponse"),
+  proposerRespondedAt: timestamp("proposerRespondedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GovernancePreMortemConcern = typeof governancePreMortemConcerns.$inferSelect;
