@@ -20,6 +20,8 @@ import { recordingsRouter } from "./routes/recordings";
 import { eventsRouter } from "./routes/events";
 import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
+import { hyphaBridgeRouter } from "./routes/hyphaBridge";
+import { governanceRouter } from "./routes/governance";
 import { featuresRouter } from "./routes/features";
 import { sharingRouter } from "./routes/sharing";
 import { gameRouter } from "./routes/game";
@@ -126,6 +128,12 @@ export const appRouter = router({
 
   // Gratitude (forum + command palette surface)
   gratitude: gratitudeRouter,
+
+  // Hypha Bridge (every ReGen Civics -> Hypha handoff goes through here)
+  hyphaBridge: hyphaBridgeRouter,
+
+  // Governance pipeline (Stage 1: forum readiness + promotion patterns)
+  governance: governanceRouter,
 
   // Feature Suggestions
   features: featuresRouter,

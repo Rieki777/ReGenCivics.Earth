@@ -45,6 +45,9 @@ import farcasterRouter from "../routes/farcaster";
 import { registerImageOptimization } from "../routes/global";
 import { registerOgRoutes } from "../routes/og";
 import { registerEmbedRoutes } from "../routes/embed";
+import { registerHyphaWebhookRoutes } from "../lib/hypha-bridge/webhook-receiver";
+import { registerLoomioWebhookRoutes } from "../webhooks/loomio";
+import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
 import { createRequire } from "module";
 const _require = createRequire(import.meta.url);
@@ -422,6 +425,12 @@ async function startServer() {
   registerResendWebhookRoutes(app);
   // Riverside recording webhook
   registerRiversideWebhookRoutes(app);
+  // Hypha Bridge: Alchemy webhook for Base chain governance events
+  registerHyphaWebhookRoutes(app);
+  // Loomio governance webhook (HMAC-signed)
+  registerLoomioWebhookRoutes(app);
+  // OIDC provider for shared auth with Loomio at gov.regencivics.earth
+  registerOidcRoutes(app);
   // Presence heartbeat and count
   registerPresenceRoutes(app);
 
