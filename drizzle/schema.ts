@@ -21,6 +21,18 @@ export const users = mysqlTable("users", {
   /** When the user last changed their handle (for rate limiting handle changes). */
   handleLastChangedAt: timestamp("handleLastChangedAt"),
   role: mysqlEnum("role", ["user", "admin", "superadmin"]).default("user").notNull(),
+  /** Bioregion slugs the user is registered in. Used for governance scoping. */
+  bioregions: json("bioregions"),
+  /** Voice weight on Fund-track decisions. Drives Loomio stance weighting. */
+  rcVoiceWeight: int("rcVoiceWeight").default(1).notNull(),
+  /** Voice weight on Game-track decisions. */
+  rgVoiceWeight: int("rgVoiceWeight").default(1).notNull(),
+  /** Whether this user opted in to be assigned as a storyteller for high-stakes decisions. */
+  availableAsStoryteller: tinyint("availableAsStoryteller").default(0).notNull(),
+  /** Privy decentralized identifier when the user has linked a Hypha-side wallet. */
+  privyDid: varchar("privyDid", { length: 120 }),
+  /** Base chain wallet address for receiving Hypha proposal payouts. */
+  baseWalletAddress: varchar("baseWalletAddress", { length: 60 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -2670,3 +2682,185 @@ export const songSubmissionVotes = mysqlTable("song_submission_votes", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type SongSubmissionVote = typeof songSubmissionVotes.$inferSelect;
+
+/* ════════════════════════════════════════════════════════════════════
+ * Governance Pipeline (Forum -> Loomio -> Hypha)
+ * Migration: 0109_governance_pipeline.sql
+ * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md
+ * ════════════════════════════════════════════════════════════════════ */
+
+/** Computed readiness fields per forum thread. Persisted so the gate checks
+ * stay cheap and so the green Ready-to-promote button can be derived from
+ * a single column read. Recomputed when the thread changes. */
+export const forumThreadReadiness = mysqlTable("forumThreadReadiness", {
+  forumPostId: int("forumPostId").primaryKey().notNull(),
+  ageHours: int("ageHours").default(0).notNull(),
+  uniqueVoiceCount: int("uniqueVoiceCount").default(0).notNull(),
+  hasDecisionQuestion: tinyint("hasDecisionQuestion").default(0).notNull(),
+  trackTagged: mysqlEnum("trackTagged", ["fund", "game", "both"]),
+  heatScore: int("heatScore").default(0).notNull(),
+  isReadyToPromote: tinyint("isReadyToPromote").default(0).notNull(),
+  computedAt: timestamp("computedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ForumThreadReadiness = typeof forumThreadReadiness.$inferSelect;
+
+/** Watchers waiting for a thread's promotion gates to all pass so they can be notified. */
+export const forumThreadWatchers = mysqlTable("forumThreadWatchers", {
+  id: int("id").autoincrement().primaryKey(),
+  forumPostId: int("forumPostId").notNull(),
+  userId: int("userId").notNull(),
+  watchType: mysqlEnum("watchType", ["promotion_ready", "decision_open", "decision_closed"]).default("promotion_ready").notNull(),
+  notifiedAt: timestamp("notifiedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ForumThreadWatcher = typeof forumThreadWatchers.$inferSelect;
+
+/** Dual-key promotion requests. A proposer files one, a co-signer either signs
+ * within the cosigner_window_hours or it expires. */
+export const forumPromotionRequests = mysqlTable("forumPromotionRequests", {
+  id: int("id").autoincrement().primaryKey(),
+  forumPostId: int("forumPostId").notNull(),
+  proposerId: int("proposerId").notNull(),
+  coSignerId: int("coSignerId"),
+  decisionTrack: mysqlEnum("decisionTrack", ["fund", "game", "both"]).notNull(),
+  decisionQuestion: varchar("decisionQuestion", { length: 500 }).notNull(),
+  suggestedTemplate: varchar("suggestedTemplate", { length: 40 }).default("consent").notNull(),
+  reversibility: mysqlEnum("reversibility", ["reversible", "semi_reversible", "one_way_door"]).default("reversible").notNull(),
+  bioregionScope: json("bioregionScope"),
+  sunsetAt: timestamp("sunsetAt"),
+  status: mysqlEnum("status", ["pending", "signed", "expired", "cancelled"]).default("pending").notNull(),
+  coSignedAt: timestamp("coSignedAt"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ForumPromotionRequest = typeof forumPromotionRequests.$inferSelect;
+
+/** Decisions that originated from a forum thread. One row per (thread, decision) pair. */
+export const forumPostDecisions = mysqlTable("forumPostDecisions", {
+  id: int("id").autoincrement().primaryKey(),
+  forumPostId: int("forumPostId").notNull(),
+  loomioGroupKey: varchar("loomioGroupKey", { length: 40 }),
+  loomioDiscussionId: varchar("loomioDiscussionId", { length: 80 }),
+  loomioPollKey: varchar("loomioPollKey", { length: 80 }),
+  loomioDecisionUrl: varchar("loomioDecisionUrl", { length: 500 }),
+  track: mysqlEnum("track", ["fund", "game", "both"]).default("game").notNull(),
+  reversibility: mysqlEnum("reversibility", ["reversible", "semi_reversible", "one_way_door"]).default("reversible").notNull(),
+  bioregionScope: json("bioregionScope"),
+  sunsetAt: timestamp("sunsetAt"),
+  status: mysqlEnum("status", ["draft", "open", "closing_soon", "closed", "ratified", "declined", "cancelled"]).default("draft").notNull(),
+  closesAt: timestamp("closesAt"),
+  closedAt: timestamp("closedAt"),
+  outcomeSummary: text("outcomeSummary"),
+  outcomeReasoning: text("outcomeReasoning"),
+  stanceCount: int("stanceCount").default(0).notNull(),
+  weightedStanceSummary: json("weightedStanceSummary"),
+  hyphaBridgeId: int("hyphaBridgeId"),
+  storytellerId: int("storytellerId"),
+  storytellerNarrativeId: int("storytellerNarrativeId"),
+  proposerId: int("proposerId").notNull(),
+  coSignerId: int("coSignerId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ForumPostDecision = typeof forumPostDecisions.$inferSelect;
+
+/** Multi-tenant governance: bioregions, land projects, organizations, and the platform itself. */
+export const governanceTenants = mysqlTable("governanceTenants", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 80 }).notNull().unique(),
+  tenantType: mysqlEnum("tenantType", ["platform", "bioregion", "land_project", "organization"]).notNull(),
+  displayName: varchar("displayName", { length: 200 }).notNull(),
+  description: text("description"),
+  logoUrl: varchar("logoUrl", { length: 400 }),
+  bannerUrl: varchar("bannerUrl", { length: 400 }),
+  accentColor: varchar("accentColor", { length: 20 }),
+  hyphaDhoSlug: varchar("hyphaDhoSlug", { length: 80 }),
+  loomioGroupKey: varchar("loomioGroupKey", { length: 40 }),
+  parentTenantId: int("parentTenantId"),
+  ownerUserId: int("ownerUserId").notNull(),
+  allowedBioregions: json("allowedBioregions"),
+  config: json("config"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GovernanceTenant = typeof governanceTenants.$inferSelect;
+
+export const governanceTenantMembers = mysqlTable("governanceTenantMembers", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["member", "moderator", "steward", "admin"]).default("member").notNull(),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+  leftAt: timestamp("leftAt"),
+});
+export type GovernanceTenantMember = typeof governanceTenantMembers.$inferSelect;
+
+/** Internal token ledger. Per-tenant, per-user. Tokens accumulate here and
+ * are claimed to Hypha on Base when the user crosses the claim threshold. */
+export const governanceTokenLedger = mysqlTable("governanceTokenLedger", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId").notNull(),
+  amount: double("amount").notNull(),
+  type: mysqlEnum("type", ["harvest", "gratitude", "grant", "expense", "adjustment", "claim"]).notNull(),
+  sourceRef: varchar("sourceRef", { length: 120 }),
+  description: varchar("description", { length: 400 }),
+  claimedAt: timestamp("claimedAt"),
+  hyphaBridgeId: int("hyphaBridgeId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GovernanceTokenLedger = typeof governanceTokenLedger.$inferSelect;
+
+/** Ratified agreements that came out of a Loomio decision. The living rule book per tenant. */
+export const governanceAgreements = mysqlTable("governanceAgreements", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  loomioDecisionId: varchar("loomioDecisionId", { length: 80 }),
+  loomioPollKey: varchar("loomioPollKey", { length: 80 }),
+  forumPostDecisionId: int("forumPostDecisionId"),
+  title: varchar("title", { length: 300 }).notNull(),
+  text: text("text").notNull(),
+  ratifiedAt: timestamp("ratifiedAt").defaultNow().notNull(),
+  sunsetAt: timestamp("sunsetAt"),
+  renewalThreadId: int("renewalThreadId"),
+  status: mysqlEnum("status", ["active", "sunsetted", "superseded", "withdrawn"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GovernanceAgreement = typeof governanceAgreements.$inferSelect;
+
+/** The Hypha Bridge: every handoff from ReGen Civics to Hypha on Base goes through here.
+ * One source of truth for forum decisions, crowdpool, contribution claims, expenses, exits. */
+export const hyphaBridges = mysqlTable("hyphaBridges", {
+  id: int("id").autoincrement().primaryKey(),
+  bridgeKey: varchar("bridgeKey", { length: 16 }).notNull().unique(),
+  source: mysqlEnum("source", ["loomio_decision", "crowdpool", "contribution_claim", "fund_grant", "expense", "exit", "redeem_tokens", "other"]).notNull(),
+  sourceId: varchar("sourceId", { length: 80 }).notNull(),
+  targetDhoSlug: varchar("targetDhoSlug", { length: 80 }).notNull(),
+  formKind: mysqlEnum("formKind", [
+    "propose_contribution",
+    "deploy_funds",
+    "pay_for_expenses",
+    "membership_exit",
+    "buy_hypha_tokens",
+    "redeem_tokens",
+    "activate_spaces",
+    "change_entry_method",
+    "change_voting_method",
+    "space_settings_transparency",
+    "space_to_space_membership",
+  ]).notNull(),
+  initiatorUserId: int("initiatorUserId").notNull(),
+  payload: json("payload").notNull(),
+  status: mysqlEnum("status", ["created", "handoff_sent", "on_chain_detected", "passed", "failed", "cancelled"]).default("created").notNull(),
+  hyphaProposalId: varchar("hyphaProposalId", { length: 80 }),
+  hyphaTxHash: varchar("hyphaTxHash", { length: 80 }),
+  hyphaPassedAt: timestamp("hyphaPassedAt"),
+  hyphaTokenAmount: double("hyphaTokenAmount"),
+  hyphaTokenSymbol: varchar("hyphaTokenSymbol", { length: 20 }),
+  hyphaRecipientWallet: varchar("hyphaRecipientWallet", { length: 60 }),
+  basescanUrl: varchar("basescanUrl", { length: 200 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type HyphaBridge = typeof hyphaBridges.$inferSelect;
