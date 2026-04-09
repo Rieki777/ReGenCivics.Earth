@@ -1,17 +1,32 @@
 /**
  * JsonLD - Injects JSON-LD structured data into the document head.
  * Used for rich results in search engines.
+ *
+ * Security note: JSON.stringify by itself does NOT escape `</script>` or
+ * Unicode separators that can break out of an inline <script> tag. Author-
+ * controlled fields (blog title, excerpt) flow through here, so we replace
+ * the dangerous sequences with their \uXXXX escapes before injecting.
  */
 
 interface JsonLDProps {
   data: Record<string, unknown>;
 }
 
+/** Escape characters that can break out of a <script> tag context. */
+function safeJsonForScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 export function JsonLD({ data }: JsonLDProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: safeJsonForScript(data) }}
     />
   );
 }

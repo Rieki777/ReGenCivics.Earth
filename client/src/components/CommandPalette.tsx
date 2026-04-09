@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Command } from "cmdk";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { blogPosts } from "@/data/blogPosts";
 import {
   Coins, Sprout, Handshake, Heart, Users, Calendar,
@@ -65,6 +66,7 @@ export function CommandPalette() {
   const [debouncedQ, setDebouncedQ] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, navigate] = useLocation();
+  const { isAuthenticated } = useAuth();
 
   // Debounce search query
   useEffect(() => {
@@ -78,10 +80,11 @@ export function CommandPalette() {
     { enabled: debouncedQ.length >= 2, staleTime: 30_000 }
   );
 
-  // People search by handle / name (auth-gated; tRPC returns empty if not signed in)
+  // People search by handle / name. Only enabled when signed in since the
+  // backend is a protectedProcedure and would otherwise throw on every keystroke.
   const { data: peopleResults } = trpc.gratitude.searchUsers.useQuery(
     { query: debouncedQ },
-    { enabled: debouncedQ.length >= 2, staleTime: 30_000 }
+    { enabled: isAuthenticated && debouncedQ.length >= 2, staleTime: 30_000 }
   );
 
   // Blog posts filtered client-side

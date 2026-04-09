@@ -6,7 +6,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getDb, getUserByHandle } from "../db";
 import { gratitudeLog, users, playerProfiles } from "../../drizzle/schema";
-import { eq, or, like, sql } from "drizzle-orm";
+import { eq, or, like, sql, and, gte } from "drizzle-orm";
 import { sanitizeInput } from "../_core/security";
 
 export const gratitudeRouter = router({
@@ -26,6 +26,37 @@ export const gratitudeRouter = router({
       if (!recipient) throw new TRPCError({ code: "NOT_FOUND", message: "No one with that handle" });
       if (recipient.id === ctx.user.id) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot send gratitude to yourself" });
+      }
+
+      // Spam guard: at most 30 sends per hour per sender. The lunar-cycle
+      // budget system in GRATITUDE_SYSTEM_SPEC.md will replace this with a
+      // proper budget once it ships, but until then we need a hard ceiling.
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const recentSends = await db
+        .select({ id: gratitudeLog.id })
+        .from(gratitudeLog)
+        .where(and(eq(gratitudeLog.senderId, ctx.user.id), gte(gratitudeLog.createdAt, oneHourAgo)));
+      if (recentSends.length >= 30) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "You've sent a lot of gratitude in the last hour. Take a breath, come back soon.",
+        });
+      }
+
+      // Same recipient cooldown: at most 3 messages to the same person per hour.
+      const recentToRecipient = recentSends.length === 0 ? [] : await db
+        .select({ id: gratitudeLog.id })
+        .from(gratitudeLog)
+        .where(and(
+          eq(gratitudeLog.senderId, ctx.user.id),
+          eq(gratitudeLog.recipientId, recipient.id),
+          gte(gratitudeLog.createdAt, oneHourAgo),
+        ));
+      if (recentToRecipient.length >= 3) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "You've already sent this person several thank-yous recently. Try again in a little while.",
+        });
       }
 
       await db.insert(gratitudeLog).values({
