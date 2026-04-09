@@ -15,6 +15,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { BackButton } from "@/components/BackButton";
 import { Link } from "wouter";
 import { TaoSpinner } from "@/components/TaoSpinner";
+import { EXTERNAL_TOOLS } from "@/config/externalTools";
 
 const CATEGORIES = [
   "All",
@@ -109,6 +110,42 @@ export default function ToolsLibrary() {
               <Sparkles className="w-4 h-4 mr-2" />
               {showMatcher ? "Close Problem Matcher" : "Describe Your Problem"}
             </Button>
+          </AnimatedSection>
+
+          {/* Tools we use (external partners) */}
+          <AnimatedSection className="mt-10">
+            <h2 className="text-white text-lg font-bold mb-4 text-left max-w-3xl mx-auto" style={{ fontFamily: "var(--font-display)" }}>
+              Tools we use
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+              {EXTERNAL_TOOLS.map((tool) => (
+                <a
+                  key={tool.slug}
+                  href={tool.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group bg-white/5 hover:bg-white/8 border border-white/10 hover:border-[#7dd87d]/40 rounded-2xl p-5 text-left transition-colors flex gap-4"
+                >
+                  <img
+                    src={tool.logo}
+                    alt={`${tool.name} logo`}
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-white/10"
+                    loading="lazy"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-white font-bold text-base group-hover:text-[#7dd87d] transition-colors">{tool.name}</h3>
+                      <ExternalLink className="w-3 h-3 text-white/40" />
+                    </div>
+                    <p className="text-[#7dd87d]/70 text-xs mb-2">{tool.tagline}</p>
+                    <p className="text-white/60 text-sm leading-relaxed">{tool.description}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
           </AnimatedSection>
 
           {/* AI Matcher */}

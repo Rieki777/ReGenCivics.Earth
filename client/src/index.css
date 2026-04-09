@@ -1974,10 +1974,22 @@
 
 /* 25. SCROLL PROGRESS RING. The component sets --progress: 0..1
    on its root, the CSS draws the ring. */
+/* Mobile Safari A1: prevent any element wider than the viewport from
+   leaking horizontal scroll. Pages should still cap their own widths,
+   but this is a global safety net. */
+html, body {
+  overflow-x: hidden;
+}
+body {
+  max-width: 100vw;
+}
+
 .scroll-progress-ring {
   --progress: 0;
   position: fixed;
-  top: 18px;
+  /* Mobile Safari A2: keep the progress ring out of the hamburger button.
+     Push it below the top bar on small screens. */
+  top: calc(64px + env(safe-area-inset-top, 0px));
   right: 18px;
   width: 38px;
   height: 38px;
@@ -2003,6 +2015,12 @@
 }
 .scroll-progress-ring.is-hidden {
   opacity: 0;
+}
+@media (min-width: 768px) {
+  .scroll-progress-ring {
+    /* Desktop has plenty of room next to the nav, restore tighter top inset. */
+    top: 18px;
+  }
 }
 
 /* 26. CARD TILT (CSS-only soft 3D on hover). For premium feel

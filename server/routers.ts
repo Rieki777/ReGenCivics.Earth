@@ -19,6 +19,7 @@ import { messagesRouter } from "./routes/messages";
 import { recordingsRouter } from "./routes/recordings";
 import { eventsRouter } from "./routes/events";
 import { agreementsRouter } from "./routes/agreements";
+import { gratitudeRouter } from "./routes/gratitude";
 import { featuresRouter } from "./routes/features";
 import { sharingRouter } from "./routes/sharing";
 import { gameRouter } from "./routes/game";
@@ -122,6 +123,9 @@ export const appRouter = router({
 
   // Community Agreements
   agreements: agreementsRouter,
+
+  // Gratitude (forum + command palette surface)
+  gratitude: gratitudeRouter,
 
   // Feature Suggestions
   features: featuresRouter,

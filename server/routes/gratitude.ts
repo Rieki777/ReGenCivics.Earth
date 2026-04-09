@@ -1,0 +1,82 @@
+// server/routes/gratitude.ts
+// Forum + command-palette surface for sending gratitude. Lunar-cycle budget and
+// $ReGen distribution batch jobs come later (see GRATITUDE_SYSTEM_SPEC.md).
+import { protectedProcedure, router } from "../_core/trpc";
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { getDb, getUserByHandle } from "../db";
+import { gratitudeLog, users, playerProfiles } from "../../drizzle/schema";
+import { eq, or, like, sql } from "drizzle-orm";
+import { sanitizeInput } from "../_core/security";
+
+export const gratitudeRouter = router({
+  // Send a gratitude message to another user identified by handle.
+  send: protectedProcedure
+    .input(z.object({
+      recipientHandle: z.string().min(3).max(40),
+      message: z.string().min(3).max(500),
+      sourceType: z.enum(["forum_post", "forum_reply", "profile", "command_center"]).optional(),
+      sourceId: z.number().int().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      const recipient = await getUserByHandle(input.recipientHandle);
+      if (!recipient) throw new TRPCError({ code: "NOT_FOUND", message: "No one with that handle" });
+      if (recipient.id === ctx.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot send gratitude to yourself" });
+      }
+
+      await db.insert(gratitudeLog).values({
+        senderId: ctx.user.id,
+        recipientId: recipient.id,
+        message: sanitizeInput(input.message),
+        sourceType: input.sourceType ?? null,
+        sourceId: input.sourceId ?? null,
+      });
+      return { ok: true };
+    }),
+
+  // Search users by handle, name, or display name. Used by the command palette People group.
+  searchUsers: protectedProcedure
+    .input(z.object({ query: z.string().min(2).max(40) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const q = `%${input.query.toLowerCase()}%`;
+
+      const rows = await db
+        .select({
+          id: users.id,
+          handle: users.handle,
+          name: users.name,
+          displayName: playerProfiles.displayName,
+          avatarUrl: playerProfiles.avatarUrl,
+        })
+        .from(users)
+        .leftJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+        .where(
+          or(
+            like(users.handle, q),
+            sql`LOWER(${users.name}) LIKE ${q}`,
+            sql`LOWER(${playerProfiles.displayName}) LIKE ${q}`,
+          ),
+        )
+        .limit(12);
+
+      return rows;
+    }),
+
+  // List the current user's recent received gratitude. For a future "received" inbox view.
+  myRecent: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    return db
+      .select()
+      .from(gratitudeLog)
+      .where(eq(gratitudeLog.recipientId, ctx.user.id))
+      .orderBy(sql`${gratitudeLog.createdAt} DESC`)
+      .limit(50);
+  }),
+});

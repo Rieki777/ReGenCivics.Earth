@@ -16,6 +16,10 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  /** Unique human-readable handle (3-40 chars, lowercase, [a-z0-9-]). Used for @mentions, gratitude, /profile/{handle}. */
+  handle: varchar("handle", { length: 40 }).unique(),
+  /** When the user last changed their handle (for rate limiting handle changes). */
+  handleLastChangedAt: timestamp("handleLastChangedAt"),
   role: mysqlEnum("role", ["user", "admin", "superadmin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1452,6 +1456,22 @@ export const communityAgreementVotes = mysqlTable("communityAgreementVotes", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type CommunityAgreementVote = typeof communityAgreementVotes.$inferSelect;
+
+/**
+ * Gratitude Log
+ * Simple record of "thank you" messages between users. The lunar-cycle gratitude
+ * budget and $ReGen distribution batch jobs come later (see GRATITUDE_SYSTEM_SPEC.md).
+ */
+export const gratitudeLog = mysqlTable("gratitudeLog", {
+  id: int("id").autoincrement().primaryKey(),
+  senderId: int("senderId").notNull(),
+  recipientId: int("recipientId").notNull(),
+  message: varchar("message", { length: 500 }).notNull(),
+  sourceType: varchar("sourceType", { length: 32 }),
+  sourceId: int("sourceId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GratitudeLog = typeof gratitudeLog.$inferSelect;
 
 /**
  * Feature Suggestions table

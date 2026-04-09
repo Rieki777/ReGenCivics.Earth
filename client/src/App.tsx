@@ -80,6 +80,7 @@ const Showcase = lazy(() => import("./pages/Showcase"));
 const CrowdPooling = lazy(() => import("./pages/CrowdPooling"));
 const CrowdPoolingProjects = lazy(() => import("./pages/CrowdPoolingProjects"));
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
+const PlayerProfileByHandle = lazy(() => import("./pages/PlayerProfileByHandle"));
 const CreateCampaign = lazy(() => import("./pages/CreateCampaign"));
 const CrowdPoolingCampaigns = lazy(() => import("./pages/CrowdPoolingCampaigns"));
 const CampaignDetail = lazy(() => import("./pages/CampaignDetail"));
@@ -209,6 +210,7 @@ function Router() {
       <Route path={"/crowd-pooling-projects"}><EB><CrowdPoolingProjects /></EB></Route>
       <Route path={"/compare-projects"}><EB><ProjectComparison /></EB></Route>
       <Route path={"/profile"}><EB><PlayerProfile /></EB></Route>
+      <Route path={"/profile/:handle"}><EB><PlayerProfileByHandle /></EB></Route>
       <Route path={"/create-campaign"}><EB><CreateCampaign /></EB></Route>
       <Route path={"/campaigns"}>{() => { window.location.href = '/crowd-pooling-projects'; return null; }}</Route>
       <Route path={"/campaign/:id"}><EB><CampaignDetail /></EB></Route>

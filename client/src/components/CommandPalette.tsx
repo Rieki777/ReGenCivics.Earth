@@ -11,8 +11,9 @@ import { blogPosts } from "@/data/blogPosts";
 import {
   Coins, Sprout, Handshake, Heart, Users, Calendar,
   BookOpen, Globe, FileText, Shield, AlertTriangle, Map, MessageCircle,
-  Layers, Search, X,
+  Layers, Search, X, Sparkles,
 } from "lucide-react";
+import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
 
 type PageEntry = {
   label: string;
@@ -35,7 +36,7 @@ const PAGES: PageEntry[] = [
   { label: "Investor Form", description: "Submit investor interest", href: "/investor", icon: <Coins className="w-4 h-4 text-[#ffd700]" />, group: "Invest" },
   // Play
   { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
-  { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <span className="text-sm">🧙</span>, group: "Play" },
+  { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <WizardsFamilyIcon size={16} className="text-[#7dd87d]" />, group: "Play" },
   { label: "Crowd Pool Campaigns", description: "Browse active campaigns", href: "/crowd-pooling-projects", icon: <Users className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   // Community
   { label: "Community Forum", description: "Join the discussion", href: "/community", icon: <MessageCircle className="w-4 h-4 text-[#7dd87d]" />, group: "Community" },
@@ -74,6 +75,12 @@ export function CommandPalette() {
 
   const { data: liveResults } = trpc.globalSearch.query.useQuery(
     { q: debouncedQ },
+    { enabled: debouncedQ.length >= 2, staleTime: 30_000 }
+  );
+
+  // People search by handle / name (auth-gated; tRPC returns empty if not signed in)
+  const { data: peopleResults } = trpc.gratitude.searchUsers.useQuery(
+    { query: debouncedQ },
     { enabled: debouncedQ.length >= 2, staleTime: 30_000 }
   );
 
@@ -174,6 +181,30 @@ export function CommandPalette() {
                     <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
                     <span className="flex-1 min-w-0">
                       <span className="font-medium">{post.title}</span>
+                    </span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
+            {/* Dynamic: People results */}
+            {peopleResults && peopleResults.length > 0 && (
+              <Command.Group heading="People">
+                {peopleResults.map((p) => (
+                  <Command.Item
+                    key={`u-${p.id}`}
+                    value={`person ${p.handle ?? ''} ${p.displayName ?? ''} ${p.name ?? ''}`}
+                    onSelect={() => p.handle && runCommand(`/profile/${p.handle}`)}
+                    className="flex items-center gap-3 px-3 py-2.5 mx-1 rounded-lg cursor-pointer text-sm text-white/80 hover:text-white data-[selected=true]:bg-[#1a472a] data-[selected=true]:text-white transition-colors"
+                  >
+                    {p.avatarUrl ? (
+                      <img src={p.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                    )}
+                    <span className="flex-1 min-w-0">
+                      <span className="font-medium">{p.displayName || p.name || 'Unnamed'}</span>
+                      {p.handle && <span className="block text-xs text-[#7dd87d]/70 truncate">@{p.handle}</span>}
                     </span>
                   </Command.Item>
                 ))}

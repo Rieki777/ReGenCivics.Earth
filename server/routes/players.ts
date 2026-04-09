@@ -5,7 +5,7 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql, count } from "drizzle-orm";
-import { playerProfiles, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails } from "../../drizzle/schema";
+import { playerProfiles, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
 // ─── Player Profiles ──────────────────────────────────────────────────────────
@@ -78,6 +78,50 @@ export const playerProfilesRouter = router({
         ...(input.bioregionId != null ? { bioregionId: input.bioregionId } : {}),
       });
       return { id, success: true };
+    }),
+
+  // Look up a profile by handle (public). Resolves the handle -> userId, then returns the profile.
+  getByHandle: publicProcedure
+    .input(z.object({ handle: z.string().min(3).max(40) }))
+    .query(async ({ input }) => {
+      const user = await db.getUserByHandle(input.handle);
+      if (!user) return null;
+      const profile = await db.getPlayerProfileByUserId(user.id);
+      return profile ? { ...profile, handle: user.handle, userName: user.name } : null;
+    }),
+
+  // Update the current user's handle. Validates regex, uniqueness, and rate limit.
+  updateHandle: protectedProcedure
+    .input(z.object({ handle: z.string().min(3).max(40) }))
+    .mutation(async ({ ctx, input }) => {
+      const handle = input.handle.toLowerCase().trim();
+      if (!db.isValidHandle(handle)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Handle must be 3-40 characters, lowercase letters, numbers, and hyphens only. Cannot start or end with a hyphen.",
+        });
+      }
+
+      // Check rate limit: one change per 30 days
+      const me = await db.getUserById(ctx.user.id);
+      if (me?.handleLastChangedAt) {
+        const daysSince = (Date.now() - new Date(me.handleLastChangedAt).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSince < 30) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `You can change your handle once every 30 days. Try again in ${Math.ceil(30 - daysSince)} days.`,
+          });
+        }
+      }
+
+      // Check uniqueness
+      const existing = await db.getUserByHandle(handle);
+      if (existing && existing.id !== ctx.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "That handle is taken, try another." });
+      }
+
+      await db.updateUserHandle(ctx.user.id, handle);
+      return { handle };
     }),
 
   // Update player profile

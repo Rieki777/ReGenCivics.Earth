@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN handle VARCHAR(40) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN handleLastChangedAt DATETIME DEFAULT NULL;
+ALTER TABLE users ADD UNIQUE INDEX users_handle_unique (handle);

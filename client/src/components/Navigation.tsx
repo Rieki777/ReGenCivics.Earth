@@ -21,6 +21,7 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
 import { NotificationBell } from "@/components/NotificationBell";
+import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -233,11 +234,11 @@ export default function Navigation() {
                   <Heart className="w-5 h-5 mr-3 text-purple-400" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Play</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/quest'}
                 >
-                  <span className="text-lg mr-3">🌲</span>
+                  <WizardsFamilyIcon size={20} className="mr-3 text-[#7dd87d]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Explore Quests</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
@@ -773,17 +774,17 @@ export default function Navigation() {
                       <Heart className="w-4 h-4" />
                       Play
                     </Link>
-                    <Link 
+                    <Link
                       href="/quest"
                       className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
-                        location === '/quest' 
-                          ? 'bg-[#7dd87d] text-[#1a472a]' 
+                        location === '/quest'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
                           : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
                       }`}
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <span className="text-lg">🌲</span>
+                      <WizardsFamilyIcon size={18} />
                       Explore Quests
                     </Link>
                     <Link 

@@ -406,89 +406,26 @@ function ReturnCard({
   );
 }
 
-/* ─── P2P Food Economy Diagram (inline SVG, redrawn) ─────────────────── */
+/* ─── P2P Food Economy Diagram ─────────────────────────────────────────
+ * The 2017 watercolor sketch lives at /images/economy/p2p-food-system-2017.webp.
+ * If the file is missing, the onError handler hides the broken image so the
+ * page degrades gracefully.
+ */
 
-function P2PFoodEconomySVG() {
+function P2PFoodEconomyImage() {
   return (
-    <svg
-      viewBox="0 0 600 380"
-      className="w-full"
-      role="img"
-      aria-label="A peer-to-peer food economy: grower, courier, cook, eater, neighbor returning to grower"
-    >
-      <defs>
-        <linearGradient id="p2pSky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#1a472a" stopOpacity="0.65" />
-          <stop offset="1" stopColor="#0d2818" stopOpacity="0.4" />
-        </linearGradient>
-        <radialGradient id="p2pSun" cx="50%" cy="50%" r="50%">
-          <stop offset="0" stopColor="#f0c040" />
-          <stop offset="1" stopColor="#d4a574" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <rect x="0" y="0" width="600" height="380" rx="24" fill="url(#p2pSky)" />
-      <circle cx="300" cy="190" r="80" fill="url(#p2pSun)" opacity="0.5" />
-      {/* Cycle arrows */}
-      {/** node positions: 5-step ring */}
-      {(() => {
-        const nodes = [
-          { x: 110, y: 130, label: "Grower", emoji: "🌱" },
-          { x: 230, y: 80, label: "Courier", emoji: "🚲" },
-          { x: 380, y: 90, label: "Cook", emoji: "🍲" },
-          { x: 500, y: 180, label: "Eater", emoji: "🥗" },
-          { x: 360, y: 290, label: "Neighbor", emoji: "🤝" },
-        ];
-        const lines: ReactNode[] = [];
-        for (let i = 0; i < nodes.length; i++) {
-          const a = nodes[i];
-          const b = nodes[(i + 1) % nodes.length];
-          lines.push(
-            <line
-              key={`l${i}`}
-              x1={a.x}
-              y1={a.y}
-              x2={b.x}
-              y2={b.y}
-              stroke="#7dd87d"
-              strokeOpacity="0.55"
-              strokeWidth="2.5"
-              strokeDasharray="6 6"
-            />
-          );
-        }
-        const dots = nodes.map((n, i) => (
-          <g key={`n${i}`}>
-            <circle cx={n.x} cy={n.y} r="34" fill="#1a472a" stroke="#7dd87d" strokeWidth="2.5" />
-            <text x={n.x} y={n.y + 8} textAnchor="middle" fontSize="28">
-              {n.emoji}
-            </text>
-            <text
-              x={n.x}
-              y={n.y + 56}
-              textAnchor="middle"
-              fontSize="13"
-              fontWeight="700"
-              fill="#fff"
-            >
-              {n.label}
-            </text>
-          </g>
-        ));
-        return (
-          <g>
-            {lines}
-            {dots}
-          </g>
-        );
-      })()}
-      {/* Center label */}
-      <text x="300" y="195" textAnchor="middle" fontSize="14" fontWeight="700" fill="#f0c040">
-        $ReGen
-      </text>
-      <text x="300" y="215" textAnchor="middle" fontSize="11" fill="#fff" opacity="0.75">
-        circulates with the food
-      </text>
-    </svg>
+    <figure className="my-8">
+      <img
+        src="/images/economy/p2p-food-system-2017.webp"
+        alt="Peer-to-peer food economy sketch from 2017: grower, courier, cook, eater, neighbor cycling back to grower, with $ReGen circulating alongside the food."
+        className="w-full max-w-2xl mx-auto rounded-lg"
+        loading="lazy"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+      />
+      <figcaption className="mt-2 text-sm text-center text-white/60">
+        The 2017 sketch. Local food systems as the energy backing a regenerative currency.
+      </figcaption>
+    </figure>
   );
 }
 
@@ -608,7 +545,7 @@ function TimelineRiver() {
                 {node.body}
                 {i === 0 && (
                   <div className="mt-4">
-                    <P2PFoodEconomySVG />
+                    <P2PFoodEconomyImage />
                     <p className="text-xs italic text-white/55 text-center mt-2">
                       The 2017 sketch. Local food systems as the energy backing a regenerative currency.
                     </p>
@@ -1309,7 +1246,7 @@ export default function Bionomics() {
                 className="rounded-3xl border border-[#7dd87d]/25 p-3 md:p-5 mb-6"
                 style={{ background: "rgba(13,40,24,0.55)" }}
               >
-                <P2PFoodEconomySVG />
+                <P2PFoodEconomyImage />
                 <p className="text-xs italic text-white/55 text-center mt-2 mb-1">
                   The 2017 sketch, redrawn. Local food systems as the energy backing a
                   regenerative currency.

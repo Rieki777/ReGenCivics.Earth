@@ -30,6 +30,7 @@ import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import { CitizenshipBadge } from "@/components/game/TierBadge";
 import { EmojiReactions } from "@/components/EmojiReactions";
+import { GratitudeButton } from "@/components/GratitudeButton";
 import ThreadRoots from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
@@ -596,9 +597,14 @@ export default function CommunityPost() {
             </div>
             )}
 
-            {/* Emoji Reactions on post */}
-            <div className="px-4 md:px-6 pb-2">
+            {/* Emoji Reactions + Gratitude on post */}
+            <div className="px-4 md:px-6 pb-2 flex items-center gap-2 flex-wrap">
               <EmojiReactions postId={post.id} />
+              <GratitudeButton
+                recipientHandle={(post as any).authorHandle}
+                sourceType="forum_post"
+                sourceId={post.id}
+              />
             </div>
 
             {/* Post Actions */}
@@ -777,8 +783,15 @@ export default function CommunityPost() {
                           )}
                           <ContentLinkPreview content={reply.content} />
                         </div>
-                        {/* Emoji Reactions on reply */}
-                        <EmojiReactions replyId={reply.id} />
+                        {/* Emoji Reactions + Gratitude on reply */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <EmojiReactions replyId={reply.id} />
+                          <GratitudeButton
+                            recipientHandle={(reply as any).authorHandle}
+                            sourceType="forum_reply"
+                            sourceId={reply.id}
+                          />
+                        </div>
 
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <button

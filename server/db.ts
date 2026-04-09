@@ -86,6 +86,16 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     await db.insert(users).values(values).onDuplicateKeyUpdate({
       set: updateSet,
     });
+
+    // Make sure the user has a handle. Idempotent: returns early if handle already set.
+    try {
+      const fresh = await db.select().from(users).where(eq(users.openId, user.openId)).limit(1);
+      if (fresh.length && !fresh[0].handle) {
+        await ensureHandleForUser(fresh[0].id);
+      }
+    } catch (handleErr) {
+      console.warn("[Database] Failed to assign handle on upsert (non-fatal):", handleErr);
+    }
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
@@ -118,6 +128,77 @@ export async function getUsersByIds(ids: number[]): Promise<Record<number, typeo
   const unique = Array.from(new Set(ids));
   const rows = await db.select().from(users).where(inArray(users.id, unique));
   return Object.fromEntries(rows.map(u => [u.id, u]));
+}
+
+// ============================================
+// Handle helpers
+// ============================================
+
+const HANDLE_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])?$/;
+
+export function isValidHandle(h: string): boolean {
+  return HANDLE_RE.test(h);
+}
+
+/** Normalize a name into a base handle slug. Returns "" if no usable chars. */
+export function slugifyHandle(name: string | null | undefined): string {
+  if (!name) return "";
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 38);
+}
+
+/** Find an unused handle by appending -2, -3, ... if needed. */
+export async function pickAvailableHandle(base: string, fallbackId?: number): Promise<string> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  let candidate = base || (fallbackId != null ? `player-${fallbackId}` : "");
+  if (!candidate || !isValidHandle(candidate)) {
+    candidate = fallbackId != null ? `player-${fallbackId}` : `player-${Date.now()}`;
+  }
+  let suffix = 1;
+  let attempt = candidate;
+  // Loop until we find a free handle
+  while (true) {
+    const existing = await db.select({ id: users.id }).from(users).where(eq(users.handle, attempt)).limit(1);
+    if (existing.length === 0) return attempt;
+    suffix += 1;
+    attempt = `${candidate}-${suffix}`.slice(0, 40);
+    if (suffix > 999) {
+      // Defensive: shouldn't happen in practice
+      return `${candidate}-${Date.now().toString(36)}`.slice(0, 40);
+    }
+  }
+}
+
+export async function getUserByHandle(handle: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.handle, handle.toLowerCase())).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/** Assign a handle to a user that does not yet have one. No-op if user already has a handle. */
+export async function ensureHandleForUser(userId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const existing = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!existing.length) return null;
+  const user = existing[0];
+  if (user.handle) return user.handle;
+  const base = slugifyHandle(user.name) || (user.email ? slugifyHandle(user.email.split("@")[0]) : "");
+  const handle = await pickAvailableHandle(base, user.id);
+  await db.update(users).set({ handle }).where(eq(users.id, userId));
+  return handle;
+}
+
+/** Update a user's handle. Caller is responsible for validation, uniqueness check happens at DB level. */
+export async function updateUserHandle(userId: number, handle: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ handle: handle.toLowerCase(), handleLastChangedAt: new Date() }).where(eq(users.id, userId));
 }
 
 // ============================================

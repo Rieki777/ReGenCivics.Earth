@@ -228,6 +228,7 @@ export const forumRouter = router({
       return {
         ...post,
         authorName: author?.name || 'Anonymous',
+        authorHandle: author?.handle || null,
         authorAvatar: authorProfile?.avatarUrl || null,
         authorBadges,
         authorCitizenshipTier: authorProfile?.citizenshipTier || 'explorer',
@@ -261,6 +262,7 @@ export const forumRouter = router({
         return {
           ...reply,
           authorName: author?.name || 'Anonymous',
+          authorHandle: author?.handle || null,
           authorAvatar: authorProfile?.avatarUrl || null,
           authorBadges,
           authorCitizenshipTier: authorProfile?.citizenshipTier || 'explorer',
