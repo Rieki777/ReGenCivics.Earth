@@ -7,6 +7,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Navigation from "./components/Navigation";
 import { MycelialBackground } from "./components/MycelialBackground";
 import { AnimationLayer } from "./components/AnimationLayer";
+import { WizardRadialMenu } from "./components/mobile/WizardRadialMenu";
+import { MobileMoreMenu } from "./components/mobile/MobileMoreMenu";
 import { StructuredData } from "./components/StructuredData";
 import { TaoSpinner } from "./components/TaoSpinner";
 import { TaoErrorState } from "./components/TaoErrorState";
@@ -366,6 +368,8 @@ function App() {
           {!adminMode && <Suspense fallback={null}><ExitIntentCapture /></Suspense>}
           {!adminMode && <Suspense fallback={null}><CommandPalette /></Suspense>}
           {!adminMode && <Suspense fallback={null}><ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} /></Suspense>}
+          {!adminMode && <WizardRadialMenu />}
+          {!adminMode && <MobileMoreMenu />}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!adminMode && <OnboardingController />}
           <ReturnToHandler />

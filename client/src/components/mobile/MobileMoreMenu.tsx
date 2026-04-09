@@ -1,0 +1,143 @@
+/**
+ * MobileMoreMenu: full-screen overlay launched from the bottom nav "More" button.
+ *
+ * Layout (top to bottom):
+ *   1. Header band with the wizards hero icon
+ *   2. Search input (jumps to anything via the existing CommandPalette)
+ *   3. Next-quest card (context-aware)
+ *   4. Play section (cards)
+ *   5. Learn section (collapsed)
+ *   6. Invest & Apply section (collapsed)
+ *   7. Footer strip
+ *
+ * Body scroll is locked while open.
+ */
+import { useEffect, useState } from "react";
+import { X, ChevronDown, Search } from "lucide-react";
+import { MOBILE_MENU_SECTIONS, MOBILE_MENU_FOOTER } from "@/config/mobileMenu";
+import { MenuCard } from "./MenuCard";
+import { NextQuestCard } from "./NextQuestCard";
+import { useSeasonTint } from "@/hooks/useSeasonTint";
+import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
+import { Link } from "wouter";
+
+type Props = { open?: boolean; onClose?: () => void };
+
+/**
+ * Self-contained version: also listens for the global "open-mobile-more"
+ * custom event so it can be triggered from anywhere without prop drilling.
+ */
+export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props = {}) {
+  const tint = useSeasonTint();
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const open = openProp ?? internalOpen;
+  const onClose = onCloseProp ?? (() => setInternalOpen(false));
+
+  useEffect(() => {
+    const handler = () => setInternalOpen(true);
+    window.addEventListener("open-mobile-more", handler);
+    return () => window.removeEventListener("open-mobile-more", handler);
+  }, []);
+
+  // Initialize collapsed defaults from config on mount
+  useEffect(() => {
+    const init: Record<string, boolean> = {};
+    for (const section of MOBILE_MENU_SECTIONS) {
+      init[section.id] = !section.collapsed;
+    }
+    setExpanded(init);
+  }, []);
+
+  // Body scroll lock
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  // Open the existing command palette for site-wide search
+  const openSearch = () => {
+    window.dispatchEvent(new CustomEvent("open-command-palette"));
+    onClose();
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-[#0d2818] overflow-y-auto" role="dialog" aria-modal="true" aria-label="More menu">
+      {/* Header band with wizards hero + close */}
+      <div className={`relative bg-gradient-to-br ${tint.bgGradient} px-4 pt-5 pb-6`}>
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/30 backdrop-blur flex items-center justify-center text-white hover:bg-black/50 transition-colors"
+          aria-label="Close menu"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <div className="flex flex-col items-center text-center">
+          <WizardsFamilyIcon size={56} color={tint.primary} />
+          <h2 className="text-white text-xl font-bold mt-2" style={{ fontFamily: "var(--font-display)" }}>
+            ReGen Civics
+          </h2>
+          <p className="text-white/70 text-xs">{tint.season} season</p>
+        </div>
+      </div>
+
+      <div className="px-4 pb-12 -mt-4 space-y-5">
+        {/* Search input (opens command palette) */}
+        <button
+          onClick={openSearch}
+          className="w-full flex items-center gap-3 bg-white/10 backdrop-blur border border-white/15 rounded-2xl px-4 py-3 text-left text-white/60 hover:bg-white/15 transition-colors"
+        >
+          <Search className="w-4 h-4 text-[#7dd87d]" />
+          <span className="text-sm">Jump to anything</span>
+        </button>
+
+        {/* Next quest card */}
+        <NextQuestCard onSelect={onClose} />
+
+        {/* Sections */}
+        {MOBILE_MENU_SECTIONS.map((section) => {
+          const isOpen = expanded[section.id];
+          return (
+            <section key={section.id}>
+              <button
+                onClick={() => setExpanded((s) => ({ ...s, [section.id]: !s[section.id] }))}
+                className="w-full flex items-center justify-between mb-2"
+              >
+                <h3 className="text-[#7dd87d] text-[10px] uppercase tracking-widest font-bold">
+                  {section.heading}
+                </h3>
+                <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isOpen && (
+                <div className="grid grid-cols-1 gap-2">
+                  {section.cards.map((card) => (
+                    <MenuCard key={card.href} {...card} onSelect={onClose} />
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+
+        {/* Footer strip */}
+        <div className="pt-4 border-t border-white/10 flex flex-wrap items-center gap-x-4 gap-y-2">
+          {MOBILE_MENU_FOOTER.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onClose}
+              className="text-white/50 hover:text-[#7dd87d] text-xs"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
