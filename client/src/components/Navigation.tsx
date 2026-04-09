@@ -33,6 +33,7 @@ import {
 import { SOCIAL_LINKS } from "@/components/SocialLinks";
 import { cdnImg } from "@/lib/utils";
 import SmartBottomNav from "@/components/SmartBottomNav";
+import MobileTabBar from "@/components/mobile/MobileTabBar";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 // Prefetch a route chunk on hover  -  import() is cached by the module system
@@ -1168,8 +1169,12 @@ export default function Navigation() {
       />
     </header>
 
-      {/* Smart Mobile Bottom Nav */}
-      <SmartBottomNav />
+      {/* Mobile bottom nav: 5-slot tab bar (Home, Quests, Community, Profile, More) */}
+      <MobileTabBar />
+      {/* Desktop keeps the legacy adaptive bottom nav with music + tool panel */}
+      <div className="hidden md:block">
+        <SmartBottomNav />
+      </div>
     </>
   );
 }
