@@ -12,7 +12,9 @@ Output:
 import os
 import sys
 
-# Load .env manually (no dotenv dependency needed)
+# Load .env manually (no dotenv dependency needed). The .env value takes
+# precedence over any pre-existing shell env var so a stale exported
+# GEMINI_API_KEY from .bashrc / .zshrc cannot mask a fresh .env value.
 env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 if os.path.exists(env_path):
     with open(env_path) as f:
@@ -20,7 +22,7 @@ if os.path.exists(env_path):
             line = line.strip()
             if '=' in line and not line.startswith('#'):
                 key, _, val = line.partition('=')
-                os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+                os.environ[key.strip()] = val.strip().strip('"').strip("'")
 
 api_key = os.environ.get('GEMINI_API_KEY')
 if not api_key:
@@ -45,7 +47,7 @@ prompt = (
 
 print("Generating image...")
 response = client.models.generate_images(
-    model='imagen-3.0-generate-002',
+    model='imagen-4.0-generate-001',
     prompt=prompt,
     config=genai.types.GenerateImagesConfig(
         number_of_images=1,
