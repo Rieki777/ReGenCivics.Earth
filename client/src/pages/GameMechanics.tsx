@@ -6,7 +6,11 @@
  * Section B: Client-side Game Simulator with sliders and projected outcomes
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { SIMULATOR_PRESETS } from "@/config/simulatorPresets";
+import { computeImpactSummaries, type ImpactSummary } from "@/config/impactRules";
+import { checkInvariants } from "@/config/simulatorInvariants";
+import { VARIABLE_EXPLAINERS } from "@/config/variableExplainers";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";
@@ -36,6 +40,11 @@ import {
   Moon,
   HelpCircle,
   Network,
+  Undo2,
+  Link2,
+  Copy,
+  AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 
 /* ─── HelpTip: small info icon that reveals a plain-language explanation ─ */
@@ -438,15 +447,120 @@ function SliderRow({ label, value, min, max, step, unit, help, onChange }: Slide
   );
 }
 
+type HistoryEntry = { label: string; state: SimState; at: number };
+
 function GameSimulator() {
-  const [sim, setSim] = useState<SimState>(SIM_DEFAULTS);
+  // Initial state can be loaded from URL hash (Permalinks, MEGA 5.6).
+  const [sim, setSim] = useState<SimState>(() => {
+    if (typeof window === "undefined") return SIM_DEFAULTS;
+    const hash = window.location.hash;
+    if (hash.startsWith("#v1:")) {
+      try {
+        const decoded = JSON.parse(atob(hash.slice(4))) as Partial<SimState>;
+        return { ...SIM_DEFAULTS, ...decoded };
+      } catch { /* ignore bad hash */ }
+    }
+    return SIM_DEFAULTS;
+  });
+  const baseline = SIM_DEFAULTS;
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [copyToast, setCopyToast] = useState<string | null>(null);
+
+  const pushHistory = useCallback((label: string, next: SimState) => {
+    setHistory((h) => [...h, { label, state: next, at: Date.now() }]);
+  }, []);
 
   const update = useCallback(
     <K extends keyof SimState>(key: K) =>
-      (val: SimState[K]) =>
-        setSim((prev) => ({ ...prev, [key]: val })),
+      (val: SimState[K]) => {
+        setSim((prev) => {
+          const next = { ...prev, [key]: val };
+          // Slider drag pushes a single history entry per change
+          setHistory((h) => [...h, { label: `Set ${String(key)} to ${val}`, state: next, at: Date.now() }]);
+          return next;
+        });
+      },
     []
   );
+
+  const applyPreset = useCallback((presetId: string) => {
+    const preset = SIMULATOR_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    setSim((prev) => {
+      const next = { ...prev, ...preset.delta } as SimState;
+      pushHistory(preset.label, next);
+      return next;
+    });
+  }, [pushHistory]);
+
+  const undo = useCallback(() => {
+    setHistory((h) => {
+      if (h.length === 0) return h;
+      const next = h.slice(0, -1);
+      const restoreTo = next.length > 0 ? next[next.length - 1].state : baseline;
+      setSim(restoreTo);
+      return next;
+    });
+  }, [baseline]);
+
+  const reset = useCallback(() => {
+    setSim(baseline);
+    setHistory([]);
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, [baseline]);
+
+  // Compute deltas as plain Records for the impact + invariant helpers.
+  const baselineRecord = useMemo(() => baseline as unknown as Record<string, number>, [baseline]);
+  const currentRecord = useMemo(() => sim as unknown as Record<string, number>, [sim]);
+  const impactSummaries = useMemo(
+    () => computeImpactSummaries(baselineRecord, currentRecord),
+    [baselineRecord, currentRecord],
+  );
+  const violations = useMemo(() => checkInvariants(currentRecord), [currentRecord]);
+  const hasErrors = violations.some((v) => v.severity === "error");
+
+  // Permalink encoder
+  const buildPermalinkHash = useCallback(() => {
+    const delta: Record<string, number> = {};
+    for (const k of Object.keys(sim)) {
+      const key = k as keyof SimState;
+      if (sim[key] !== baseline[key]) delta[key] = sim[key] as number;
+    }
+    if (Object.keys(delta).length === 0) return "";
+    return "#v1:" + btoa(JSON.stringify(delta));
+  }, [sim, baseline]);
+
+  const copyPermalink = useCallback(() => {
+    const hash = buildPermalinkHash();
+    const url = window.location.origin + window.location.pathname + hash;
+    navigator.clipboard.writeText(url);
+    if (typeof window !== "undefined") window.history.replaceState(null, "", url);
+    setCopyToast("Link copied");
+    setTimeout(() => setCopyToast(null), 1500);
+  }, [buildPermalinkHash]);
+
+  const copyAsForumPost = useCallback(() => {
+    if (hasErrors) return;
+    const lines: string[] = ["# Proposed game variable change", ""];
+    for (const k of Object.keys(sim)) {
+      const key = k as keyof SimState;
+      if (sim[key] !== baseline[key]) {
+        lines.push(`- **${String(key)}**: ${baseline[key]} -> ${sim[key]}`);
+      }
+    }
+    if (impactSummaries.length > 0) {
+      lines.push("", "## Expected impact", "");
+      for (const s of impactSummaries) lines.push(`- ${s.message}`);
+    }
+    const link = window.location.origin + window.location.pathname + buildPermalinkHash();
+    lines.push("", `Permalink: ${link}`);
+    navigator.clipboard.writeText(lines.join("\n"));
+    setCopyToast("Markdown copied");
+    setTimeout(() => setCopyToast(null), 1500);
+  }, [sim, baseline, impactSummaries, hasErrors, buildPermalinkHash]);
 
   // Projected calculations
   const questsCompleted = 10;
@@ -493,7 +607,105 @@ function GameSimulator() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Presets row */}
+      <div>
+        <p className="text-[10px] uppercase tracking-widest text-[#7dd87d] mb-2 font-bold">Scenario presets</p>
+        <div className="flex flex-wrap gap-2">
+          {SIMULATOR_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => applyPreset(p.id)}
+              title={p.description}
+              className="px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-white/80 hover:bg-[#7dd87d]/15 hover:border-[#7dd87d]/40 hover:text-[#7dd87d] transition-colors"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Toolbar: undo, reset, copy link, copy as forum post */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={undo}
+          disabled={history.length === 0}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Undo2 className="w-3.5 h-3.5" /> Undo
+        </button>
+        <button
+          onClick={reset}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
+        >
+          <RotateCcw className="w-3.5 h-3.5" /> Reset
+        </button>
+        <button
+          onClick={copyPermalink}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
+        >
+          <Link2 className="w-3.5 h-3.5" /> Copy link
+        </button>
+        <button
+          onClick={copyAsForumPost}
+          disabled={hasErrors}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/25 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Copy className="w-3.5 h-3.5" /> Copy as forum post
+        </button>
+        <button
+          onClick={() => setShowHistory((s) => !s)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 ml-auto"
+        >
+          History ({history.length})
+        </button>
+        {copyToast && <span className="text-xs text-[#7dd87d]">{copyToast}</span>}
+      </div>
+
+      {/* Guardrail banner */}
+      {violations.length > 0 && (
+        <div className="rounded-xl border-2 border-red-500/60 bg-red-500/15 p-4">
+          <div className="flex items-center gap-2 text-red-300 font-bold text-sm mb-2">
+            <AlertTriangle className="w-4 h-4" /> Guardrails violated
+          </div>
+          <ul className="space-y-1">
+            {violations.map((v) => (
+              <li key={v.id} className={`text-xs ${v.severity === "error" ? "text-red-200" : "text-amber-200"}`}>
+                {v.severity === "error" ? "ERROR: " : "WARN: "}{v.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Overall impact summary */}
+      {impactSummaries.length > 0 && (
+        <div className="rounded-xl border border-[#7dd87d]/40 bg-[#7dd87d]/8 p-4">
+          <p className="text-[10px] uppercase tracking-widest text-[#7dd87d] mb-2 font-bold">Expected impact</p>
+          <ul className="space-y-2">
+            {impactSummaries.map((s) => (
+              <li key={s.variable} className="text-sm text-white/85 leading-relaxed">
+                {s.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* History panel */}
+      {showHistory && history.length > 0 && (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4 max-h-60 overflow-y-auto">
+          <p className="text-[10px] uppercase tracking-widest text-white/50 mb-2 font-bold">Your changes</p>
+          <ol className="space-y-1">
+            {history.slice(-12).reverse().map((h, i) => (
+              <li key={`${h.at}-${i}`} className="text-xs text-white/70">
+                {h.label}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       {/* Sliders */}
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
         <CardHeader>
