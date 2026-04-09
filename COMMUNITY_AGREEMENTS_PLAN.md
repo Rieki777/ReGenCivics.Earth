@@ -6,6 +6,16 @@
 
 ---
 
+## Image audit findings (2026-04-09)
+
+Walked every `<img src=...>` in `client/src/pages/Community.tsx`. One broken path found and fixed:
+
+- `quest-03-healing-whole.webp` → real file is `quest-03-healing-wholes.webp` (with `s`). Updated `Community.tsx` line 698 inline. No new image needed from Rye.
+
+All other paths resolve. Land project asset paths in `client/public/community/` (the 8 STATIC_PROJECT_META entries) were not exhaustively audited; only the two referenced in Community.tsx (finca-sagrada.webp, liminal-village.webp) were checked and exist.
+
+---
+
 ## CTO REVIEW NOTES (read first, 2026-04-08)
 
 A full verification pass was run against the codebase on 2026-04-08. Several parts of this plan were already done, and several referenced the wrong names. Corrections:
@@ -895,6 +905,35 @@ if (!showInactive && entity.inactive) return false;
 Add a toggle button in the filter controls (alongside the existing type filter tabs) labeled "Active Only" / "Show All" that toggles `showInactive`. Default state hides inactive land projects.
 
 Alternatively, if there's a simpler approach (e.g., a "Active Only" checkbox), use that. The key is: the map loads with inactive projects hidden by default.
+
+---
+
+## Part 8: Known Issues and Outstanding Assets
+
+### Assets Still Needed from Rye
+
+These have working placeholders or graceful fallbacks today. Final art will replace them with no code changes required. Do NOT block on these. Do NOT invent art or swap to different assets. Leave the current behavior in place.
+
+- `client/public/images/icons/wizards-family.svg` (currently a 3-hat placeholder)
+- `client/public/images/economy/p2p-food-system-2017.webp` (currently missing, image gracefully hidden via `onError`)
+- `client/public/images/tools/hypha.webp` (currently missing, hidden via `onError`, card still renders)
+- `client/public/images/tools/localscale.webp` (same)
+- `client/public/images/tools/gitcoin.webp` (same)
+- `client/public/images/tools/hylo.webp` (same)
+
+When Rye drops these files in, everything wires up automatically.
+
+### Migration Runner Bug (Follow-Up)
+
+`scripts/run-migration.ts` has a bug: it filters out any SQL statement chunk that begins with `--`, which means leading file comments cause the first SQL statement to silently get dropped.
+
+**Workaround used for 0091 and 0092:** leading comments were stripped from those files, and the partial state of 0091 was recovered with a one-shot ALTER + INSERT into `_migrations_applied`.
+
+**Follow-up task:** Fix the runner properly so this doesn't bite future migrations. The fix is to strip comment-only lines from the start of chunks, not to skip chunks where the first line begins with `--`. A chunk that starts with a comment and then has real SQL below should still run.
+
+For any new migrations created in this build, either:
+1. Put no leading comment in the file, OR
+2. Use `/* ... */` block comments instead of `--` for file-level notes.
 
 ---
 

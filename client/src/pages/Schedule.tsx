@@ -53,6 +53,67 @@ function ReplayButton({ eventId }: { eventId: number }) {
   );
 }
 
+/**
+ * RecordingsSection: shows the most recent episode recordings published via
+ * the Riverside webhook. Pulled from the recordings table on the server.
+ * Renders nothing if there are no recordings yet.
+ */
+function RecordingsSection() {
+  const { data: recordings = [] } = trpc.recordings.list.useQuery({ limit: 12 });
+  if (!recordings || recordings.length === 0) return null;
+
+  return (
+    <section className="py-8 px-4">
+      <div className="container mx-auto max-w-4xl">
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20">
+          <h3 className="text-2xl font-bold text-white mb-1">Episode Recordings</h3>
+          <p className="text-white/60 text-sm mb-5">Catch up on past sessions.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {recordings.map((r: any) => {
+              const url = r.youtubeUrl ?? null;
+              const date = r.sessionDate ? new Date(r.sessionDate).toLocaleDateString() : null;
+              return (
+                <a
+                  key={r.id}
+                  href={url ?? (r.forumPostId ? `/community/post/${r.forumPostId}` : "#")}
+                  target={url ? "_blank" : undefined}
+                  rel={url ? "noopener noreferrer" : undefined}
+                  className="group flex gap-3 bg-white/5 hover:bg-white/8 rounded-xl p-3 border border-white/10 hover:border-[#7dd87d]/40 transition-colors"
+                >
+                  {r.thumbnailUrl ? (
+                    <img
+                      src={r.thumbnailUrl}
+                      alt=""
+                      width={120}
+                      height={68}
+                      className="w-30 h-17 rounded-lg object-cover flex-shrink-0"
+                      loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-30 h-17 rounded-lg bg-[#1a472a] flex-shrink-0 flex items-center justify-center">
+                      <Video className="w-6 h-6 text-[#7dd87d]/60" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-white font-semibold text-sm group-hover:text-[#7dd87d] transition-colors line-clamp-2">
+                      {r.title || "Untitled session"}
+                    </h4>
+                    {date && <p className="text-white/50 text-xs mt-1">{date}</p>}
+                    {r.forumPostId && (
+                      <p className="text-[#7dd87d]/70 text-[11px] mt-1">Discuss in forum</p>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // Riverside studio details
 const RIVERSIDE_INFO = {
   topic: "ReGen Civics Season 2",
@@ -586,6 +647,9 @@ export default function Schedule() {
           </div>
         </div>
       </section>
+
+      {/* Episode Recordings */}
+      <RecordingsSection />
 
       {/* Follow Along with YouTube */}
       <section className="py-8 px-4">

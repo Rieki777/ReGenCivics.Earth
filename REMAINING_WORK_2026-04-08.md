@@ -55,7 +55,7 @@ Track 7 social sharing scaffolding, all 98 migrations tracked in _migrations_app
 
 | Item | Owner | Priority | Spec doc |
 |---|---|---|---|
-| **COMMUNITY_AGREEMENTS_PLAN Parts 1-7** | code | HIGH (launch target) | `COMMUNITY_AGREEMENTS_PLAN.md` |
+| ~~**COMMUNITY_AGREEMENTS_PLAN Parts 1-7**~~ | ~~code~~ | **DONE 2026-04-09 (archive candidate)** | `COMMUNITY_AGREEMENTS_PLAN.md` + `COMMUNITY_AGREEMENTS_IMPLEMENTATION_LOG.md` |
 | **C1** CSP nonce migration | code | HIGH but RISKY | `CLAUDE_CODE_PROMPT_2026-04-07_POST_AUDIT_CLEANUP.md` + `CSP_NONCE_MIGRATION_PLAN_2026-04-07.md` |
 | **H3** Wire `.ink-reveal` and `.blur-up` to actual DOM | code | HIGH | `CLAUDE_CODE_PROMPT_2026-04-07_INK_REVEAL.md` |
 | **Citizenship tier nightly batch verification** | code | MEDIUM | `CLAUDE_CODE_PROMPT_2026-04-07_CITIZENSHIP_BATCH.md` |

@@ -695,7 +695,7 @@ export default function Community() {
               {/* Land Project Spaces */}
               <Link href="/community/c/land-projects">
                 <div className="relative rounded-xl overflow-hidden border border-[#d4a574]/40 hover:border-[#d4a574]/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-03-healing-whole.webp" alt="Land project spaces" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <img src="/images/quests/quest-03-healing-wholes.webp" alt="Land project spaces" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-emerald-950/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Land Project Spaces</p>
