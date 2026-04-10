@@ -23,6 +23,7 @@ import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
 import { governanceRouter } from "./routes/governance";
 import { walletRouter } from "./routes/wallet";
+import { govProposalsRouter } from "./routes/govProposals";
 import { featuresRouter } from "./routes/features";
 import { sharingRouter } from "./routes/sharing";
 import { gameRouter } from "./routes/game";
@@ -138,6 +139,9 @@ export const appRouter = router({
 
   // Wallet on-chain balance reads
   wallet: walletRouter,
+
+  // Gov App: proposal lifecycle (Sprint 2)
+  govProposals: govProposalsRouter,
 
   // Feature Suggestions
   features: featuresRouter,

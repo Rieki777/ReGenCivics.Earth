@@ -2963,3 +2963,68 @@ export const governancePreMortemConcerns = mysqlTable("governancePreMortemConcer
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type GovernancePreMortemConcern = typeof governancePreMortemConcerns.$inferSelect;
+
+/* ════════════════════════════════════════════════════════════════════
+ * Gov App Sprint 2: Proposals, Comments, Votes
+ * Migration: 0114_gov_proposals.sql
+ * ════════════════════════════════════════════════════════════════════ */
+
+export const govProposals = mysqlTable("govProposals", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  authorId: int("authorId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  body: text("body").notNull(),
+  status: mysqlEnum("status", ["draft", "discussion", "polling", "staged", "sent_to_hypha", "ratified", "declined", "withdrawn"]).default("draft"),
+  decisionMethod: mysqlEnum("decisionMethod", ["consent", "advice", "consensus", "mandate"]).default("consent"),
+  track: mysqlEnum("track", ["fund", "game", "operational"]).default("game"),
+  urgentTag: tinyint("urgentTag").default(0),
+  bioregionId: int("bioregionId"),
+  seasonId: int("seasonId"),
+  sourceForumThreadId: int("sourceForumThreadId"),
+  minDiscussionDays: int("minDiscussionDays").default(3),
+  pollingDurationDays: int("pollingDurationDays").default(5),
+  discussionOpenedAt: timestamp("discussionOpenedAt"),
+  pollingOpenedAt: timestamp("pollingOpenedAt"),
+  pollingClosesAt: timestamp("pollingClosesAt"),
+  outcomeText: text("outcomeText"),
+  outcomeAuthorId: int("outcomeAuthorId"),
+  hyphaProposalId: varchar("hyphaProposalId", { length: 255 }),
+  hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GovProposal = typeof govProposals.$inferSelect;
+
+export const govComments = mysqlTable("govComments", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  authorId: int("authorId").notNull(),
+  parentId: int("parentId"),
+  body: text("body").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GovComment = typeof govComments.$inferSelect;
+
+export const govVotes = mysqlTable("govVotes", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  voterId: int("voterId").notNull(),
+  stance: mysqlEnum("stance", ["agree", "disagree", "abstain", "block"]).notNull(),
+  reason: text("reason"),
+  delegatedFromId: int("delegatedFromId"),
+  weight: int("weight").default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GovVote = typeof govVotes.$inferSelect;
+
+export const govDashboardPrefs = mysqlTable("govDashboardPrefs", {
+  userId: int("userId").primaryKey().notNull(),
+  primaryBioregionId: int("primaryBioregionId"),
+  dashboardLayout: mysqlEnum("dashboardLayout", ["compact", "full"]).default("compact"),
+  notificationPrefs: json("notificationPrefs"),
+  hasSeenWelcome: tinyint("hasSeenWelcome").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
