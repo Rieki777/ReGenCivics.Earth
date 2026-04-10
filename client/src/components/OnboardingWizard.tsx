@@ -79,7 +79,7 @@ const ACTION_CARDS: { title: string; description: string; href: string; cta: str
   },
   {
     title: "Complete Your Profile",
-    description: "Set up your player profile to unlock quests and connect with others.",
+    description: "Set up your player profile to start questing and connect with others.",
     href: "/profile",
     cta: "Build Profile",
   },

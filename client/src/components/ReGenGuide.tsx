@@ -11,7 +11,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useReGenGuide } from "@/contexts/ReGenGuideContext";
 
 const PATH_WELCOMES: Record<string, string> = {
-  investor: "Welcome back! I'm your personal ReGen Guide, here to help you navigate the Fund: exploring the investment thesis, understanding the seasonal accelerator, or figuring out your next step. What's on your mind?",
+  investor: "Welcome back! I'm your personal ReGen Guide, here to walk you through the Fund: the investment thesis, the seasonal accelerator, or your next step. What's on your mind?",
   land_project: "Welcome back! Glad you're here. I'm your guide for everything on the land project journey: showcasing your work, connecting with investors, or making the most of the accelerator. Where would you like to start?",
   ally: "Welcome back! I'm here to help you find where your organisation fits in the ReGen Civics ecosystem: understanding alliance partnerships, the value exchange model, or how to get involved. What would you like to explore?",
   player: "Welcome back, Player! I'm your guide to Quests, the Infinite Game, and all the ways you can contribute and co-create in the regenerative movement. What would you like to know?",

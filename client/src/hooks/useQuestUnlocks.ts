@@ -98,16 +98,16 @@ export function useQuestUnlocks() {
     /** Get a human-readable lock reason for a season */
     const getSeasonLockReason = (season: Season): string | null => {
       if (unlockedSeasons.includes(season)) return null;
-      if (!fireComplete) return "Complete the Fire quest to unlock " + SEASON_LABELS[season] + " Rites";
+      if (!fireComplete) return "Complete the Fire quest to open " + SEASON_LABELS[season] + " Rites";
       // Find which previous season hasn't been completed
       const idx = SEASON_ORDER.indexOf(season);
       for (let i = idx - 1; i >= 0; i--) {
         const prevSeason = SEASON_ORDER[(startIdx + i) % 4];
         if (!completedSeasons.includes(prevSeason)) {
-          return "Complete one quest in " + SEASON_LABELS[prevSeason] + " to unlock " + SEASON_LABELS[season];
+          return "Complete one quest in " + SEASON_LABELS[prevSeason] + " to open " + SEASON_LABELS[season];
         }
       }
-      return "Complete one quest in the previous season to unlock " + SEASON_LABELS[season];
+      return "Complete one quest in the previous season to open " + SEASON_LABELS[season];
     };
 
     /** Count completed rites */
