@@ -157,6 +157,18 @@ async function startServer() {
   app.use('/api/trpc/playerContributions.create', rateLimitMiddleware(60 * 1000, 10));
   app.use('/api/trpc/game.sendGratitude', rateLimitMiddleware(60 * 1000, 10));
   app.use('/api/trpc/proposals.create', rateLimitMiddleware(60 * 60 * 1000, 5));
+
+  // Governance pipeline rate limits
+  app.use('/api/trpc/governance.requestPromotion', rateLimitMiddleware(60 * 60 * 1000, 3));
+  app.use('/api/trpc/governance.coSignPromotion', rateLimitMiddleware(60 * 60 * 1000, 10));
+  app.use('/api/trpc/governance.watchForReady', rateLimitMiddleware(60 * 1000, 20));
+  app.use('/api/trpc/governance.parkInBackField', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/governance.createStrawPoll', rateLimitMiddleware(60 * 1000, 5));
+  app.use('/api/trpc/governance.voteStrawPoll', rateLimitMiddleware(60 * 1000, 30));
+  app.use('/api/trpc/governance.createTenant', rateLimitMiddleware(60 * 60 * 1000, 3));
+  app.use('/api/trpc/governance.suggestTemplate', rateLimitMiddleware(60 * 1000, 5));
+  app.use('/api/trpc/governance.draftDecision', rateLimitMiddleware(60 * 1000, 3));
+  app.use('/api/trpc/hyphaBridge.create', rateLimitMiddleware(60 * 60 * 1000, 5));
   app.use('/api/trpc/proposals.signalVote', rateLimitMiddleware(60 * 1000, 20));
   // H4 additions: forum likes, profile updates, campaign contributions, profile/avatar updates
   app.use('/api/trpc/forum.toggleLike', rateLimitMiddleware(60 * 1000, 30));

@@ -224,11 +224,45 @@ async function handleLoomioEvent(event: LoomioEvent): Promise<{ ok: boolean; not
     }
 
     case "new_comment": {
-      // Mirror Loomio comment as a forum reply tagged [Governance].
-      // Implementation depends on the forum reply DB shape; left as TODO until
-      // the full Loomio<->forum sync is wired. For now, we log and return ok.
-      console.log("[loomio] new_comment received, mirror not yet wired:", event.discussionKey);
-      return { ok: true, note: "mirror not yet wired" };
+      if (!event.discussionKey || !event.commentBody) {
+        return { ok: true, note: "new_comment missing discussionKey or body" };
+      }
+
+      // Find the matching forumPostDecisions row via loomioDiscussionId
+      const decisionRows = await db
+        .select()
+        .from(forumPostDecisions)
+        .where(eq(forumPostDecisions.loomioDiscussionId, event.discussionKey))
+        .limit(1);
+      if (decisionRows.length === 0) {
+        console.log("[loomio] new_comment: no matching thread for discussion", event.discussionKey);
+        return { ok: true, note: "no matching thread" };
+      }
+      const threadId = decisionRows[0].forumPostId;
+
+      // Post as ReGen Guide system user (the mirror is attributed to Guide,
+      // prefixed with the original Loomio author name)
+      const guideRows = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.openId, "regen-guide-system"))
+        .limit(1);
+      const authorId = guideRows[0]?.id ?? decisionRows[0].proposerId;
+
+      const authorName = event.commentAuthorName ?? "Someone";
+      const body = `[Governance] ${authorName} on the decision:\n\n${event.commentBody}`;
+
+      try {
+        await db.insert((await import("../../drizzle/schema")).forumReplies).values({
+          postId: threadId,
+          authorId,
+          content: body,
+        } as any);
+        return { ok: true };
+      } catch (err) {
+        console.error("[loomio] new_comment mirror insert failed", err);
+        return { ok: false, note: "insert failed" };
+      }
     }
 
     default:

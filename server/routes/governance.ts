@@ -312,6 +312,19 @@ export const governanceRouter = router({
     return { total, byTenant };
   }),
 
+  /** Claim eligibility: has the player crossed the internal token threshold? */
+  getClaimEligibility: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { balance: 0, threshold: 1000, eligible: false };
+    const threshold = await readGovernanceVariable("governance.claim_threshold_tokens", 1000);
+    const rows = await db
+      .select({ total: sql`SUM(amount)` })
+      .from(governanceTokenLedger)
+      .where(and(eq(governanceTokenLedger.userId, ctx.user.id), sql`${governanceTokenLedger.claimedAt} IS NULL`));
+    const balance = Number((rows as any)[0]?.total ?? 0);
+    return { balance, threshold, eligible: balance >= threshold };
+  }),
+
   // ─── Phase 3: Tenant management (multi-tenant governance) ────────────────
 
   /** Create a new governance tenant. Bioregions, land projects, organizations,

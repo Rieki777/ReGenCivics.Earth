@@ -211,6 +211,16 @@ export const playerProfilesRouter = router({
       return { success: true };
     }),
 
+  // Toggle storyteller availability for governance decisions
+  setStoryteller: protectedProcedure
+    .input(z.object({ available: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const drizzle = await getDb();
+      if (!drizzle) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      await drizzle.update(users).set({ availableAsStoryteller: input.available ? 1 : 0 } as any).where(eq(users.id, ctx.user.id));
+      return { ok: true };
+    }),
+
   // Update user notification preferences (community updates, quest announcements)
   updateNotificationPrefs: protectedProcedure
     .input(z.object({
@@ -620,6 +630,24 @@ export const questsRouter = router({
         caption: null,
         visibility: "public",
       });
+
+      // Governance token ledger: credit 10 tokens for quest completion.
+      // Uses the platform-level tenant (tenantId 1 if it exists).
+      try {
+        const { governanceTokenLedger, governanceTenants } = await import("../../drizzle/schema");
+        const tenants = await db2.select({ id: governanceTenants.id }).from(governanceTenants).where(eq(governanceTenants.slug, "platform")).limit(1);
+        const tenantId = tenants[0]?.id ?? 1;
+        await db2.insert(governanceTokenLedger).values({
+          userId: ctx.user.id,
+          tenantId,
+          amount: 10,
+          type: "harvest",
+          sourceRef: `quest:${input.questId}`,
+          description: `Quest completed: ${input.questTitle}`,
+        } as any);
+      } catch (err) {
+        console.warn("[quest.complete] governance token credit failed (non-fatal):", err);
+      }
 
       // Also update the questsCompleted JSON on playerProfiles
       const profile = await db.getPlayerProfileByUserId(ctx.user.id);

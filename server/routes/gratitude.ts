@@ -59,13 +59,32 @@ export const gratitudeRouter = router({
         });
       }
 
-      await db.insert(gratitudeLog).values({
+      const [result] = await db.insert(gratitudeLog).values({
         senderId: ctx.user.id,
         recipientId: recipient.id,
         message: sanitizeInput(input.message),
         sourceType: input.sourceType ?? null,
         sourceId: input.sourceId ?? null,
       });
+
+      // Governance token ledger: credit 5 tokens to the recipient for
+      // receiving gratitude.
+      try {
+        const { governanceTokenLedger, governanceTenants } = await import("../../drizzle/schema");
+        const tenants = await db.select({ id: governanceTenants.id }).from(governanceTenants).where(eq(governanceTenants.slug, "platform")).limit(1);
+        const tenantId = tenants[0]?.id ?? 1;
+        await db.insert(governanceTokenLedger).values({
+          userId: recipient.id,
+          tenantId,
+          amount: 5,
+          type: "gratitude",
+          sourceRef: `gratitude:${(result as any).insertId ?? 0}`,
+          description: `Gratitude received from @${ctx.user.handle ?? ctx.user.id}`,
+        } as any);
+      } catch (err) {
+        console.warn("[gratitude.send] governance token credit failed (non-fatal):", err);
+      }
+
       return { ok: true };
     }),
 
