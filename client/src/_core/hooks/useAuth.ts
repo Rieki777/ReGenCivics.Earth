@@ -2,6 +2,7 @@ import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
+import { usePrivyAuth } from "./usePrivyAuth";
 
 const AUTH_PROVIDER = import.meta.env.VITE_AUTH_PROVIDER ?? "privy";
 const HAS_PRIVY = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
@@ -27,9 +28,6 @@ export function useAuth(options?: UseAuthOptions) {
 function usePrivyAuthWrapper(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } = options ?? {};
 
-  // Dynamic require so the Privy bundle is only loaded when needed
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { usePrivyAuth } = require("./usePrivyAuth") as typeof import("./usePrivyAuth");
   const auth = usePrivyAuth();
 
   useEffect(() => {
