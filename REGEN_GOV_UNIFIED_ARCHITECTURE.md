@@ -16,7 +16,7 @@
 
 ## The One-Sentence Version
 
-ReGen Gov is a mobile-first passport and command center for coordinating the regenerative civilization, built as a new Next.js app at gov.regencivics.earth that shares auth, database, and player identity with the main site, renders governance natively (no more sending people to raw Loomio), and gives every player a beautiful 90-second daily loop: open passport, see what needs your attention, act, get back to real life.
+ReGen Gov is a mobile-first passport and command center for coordinating the regenerative civilization, built as a new Next.js app at gov.regencivics.earth that shares auth, database, and player identity with the main site, renders governance natively, and gives every player a beautiful 90-second daily loop: open passport, see what needs your attention, act, get back to real life.
 
 ---
 
@@ -24,9 +24,7 @@ ReGen Gov is a mobile-first passport and command center for coordinating the reg
 
 ### The Problem
 
-Right now gov.regencivics.earth is a stock Loomio instance. It's ugly, disconnected from the main site, requires separate login, and shows none of the economic, ecological, or game data that makes ReGen Civics alive. Players who navigate there feel like they left the movement and landed in a generic SaaS tool.
-
-Meanwhile, the main site at regencivics.earth has an incredible governance pipeline already built (151 tRPC procedures, Loomio webhook integration, Hypha bridge, multi-tenant governance spaces, straw polls, storyteller narratives, internal token ledger). But all of that power is scattered across pages like `/governance`, `/community/decisions`, `/gov/:slug`, and `/bridge/hypha/:key`. There's no single place where a player can see the full picture of their governance life.
+Right now governance lives scattered across the main site: `/governance`, `/community/decisions`, `/gov/:slug`, `/bridge/hypha/:key`. There's no single place where a player can see the full picture of their governance life. The main site has an incredible governance pipeline already built (151 tRPC procedures, Hypha bridge, multi-tenant governance spaces, straw polls, storyteller narratives, internal token ledger). But it's all fragmented. Players have to know where to look, and nothing ties the economic, ecological, and governance data together into one experience.
 
 ### The Solution
 
@@ -34,7 +32,7 @@ Build a new Next.js app at gov.regencivics.earth that:
 
 1. **Shares everything with the main site.** Same JWT cookie (domain: `.regencivics.earth`), same MySQL database, same tRPC procedures (imported as a package or running on the same server behind a reverse proxy). A player logged into regencivics.earth is automatically logged into gov.regencivics.earth.
 
-2. **Renders governance natively.** Proposals, discussions, votes, and outcomes are pulled from Loomio via its REST API (`/api/b1/`) and rendered in our own dark forest UI. Players never see raw Loomio. Loomio becomes the deliberation engine under the hood, the way a database is under the hood. Invisible to the player.
+2. **Renders governance natively.** Proposals, discussions, votes, and outcomes live in our own database and render in our own dark forest UI. The full deliberation lifecycle (Draft -> Discussion -> Polling -> Staged -> Hypha) runs inside the app. No external governance tools.
 
 3. **Adds the passport/dashboard layer on top.** Economic metrics (live $ReGen and $RCivics prices from Base via viem), bioregion health, gratitude flows, contribution scores, governance participation. Everything from the SEEDS Passport vision, executed at a higher standard.
 
@@ -326,7 +324,7 @@ From the 155 ideas, here's what doesn't belong in the first build:
 **Kept and prioritized (forms the 6 sprints):**
 - The welcome experience
 - Attention inbox (action-oriented home screen)
-- Native proposal rendering (replacing raw Loomio)
+- Native proposal rendering and deliberation
 - Inline voting
 - Bioregion dashboard with health visualization
 - Economic dashboard with live token data

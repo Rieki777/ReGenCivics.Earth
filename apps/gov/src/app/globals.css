@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: #0d2818;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Glass-panel backdrop: for use with backdrop-blur on older Safari */
+@supports not (backdrop-filter: blur(12px)) {
+  .backdrop-blur-\[12px\] {
+    background: rgba(26, 71, 42, 0.95);
+  }
+}
