@@ -24,6 +24,7 @@ import { hyphaBridgeRouter } from "./routes/hyphaBridge";
 import { governanceRouter } from "./routes/governance";
 import { walletRouter } from "./routes/wallet";
 import { govProposalsRouter } from "./routes/govProposals";
+import { govBioregionRouter } from "./routes/govBioregion";
 import { featuresRouter } from "./routes/features";
 import { sharingRouter } from "./routes/sharing";
 import { gameRouter } from "./routes/game";
@@ -142,6 +143,9 @@ export const appRouter = router({
 
   // Gov App: proposal lifecycle (Sprint 2)
   govProposals: govProposalsRouter,
+
+  // Gov App: bioregion health + doughnut economics (Sprint 3)
+  govBioregion: govBioregionRouter,
 
   // Feature Suggestions
   features: featuresRouter,
