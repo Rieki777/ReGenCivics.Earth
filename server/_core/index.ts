@@ -168,6 +168,15 @@ async function startServer() {
   app.use('/api/trpc/governance.createTenant', rateLimitMiddleware(60 * 60 * 1000, 3));
   app.use('/api/trpc/governance.suggestTemplate', rateLimitMiddleware(60 * 1000, 5));
   app.use('/api/trpc/governance.draftDecision', rateLimitMiddleware(60 * 1000, 3));
+  app.use('/api/trpc/governance.joinTenant', rateLimitMiddleware(60 * 60 * 1000, 10));
+  app.use('/api/trpc/governance.addLineage', rateLimitMiddleware(60 * 60 * 1000, 5));
+  app.use('/api/trpc/governance.toggleStorytellerOptIn', rateLimitMiddleware(60 * 60 * 1000, 10));
+  app.use('/api/trpc/governance.publishStorytellerNarrative', rateLimitMiddleware(60 * 60 * 1000, 5));
+  app.use('/api/trpc/governance.postPreMortemConcern', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/trpc/governance.setDelegation', rateLimitMiddleware(60 * 60 * 1000, 10));
+  app.use('/api/trpc/governance.revokeDelegation', rateLimitMiddleware(60 * 60 * 1000, 10));
+  app.use('/api/trpc/governance.promoteFromBackField', rateLimitMiddleware(60 * 60 * 1000, 5));
+  app.use('/api/trpc/players.setStoryteller', rateLimitMiddleware(60 * 60 * 1000, 10));
   app.use('/api/trpc/hyphaBridge.create', rateLimitMiddleware(60 * 60 * 1000, 5));
   app.use('/api/trpc/proposals.signalVote', rateLimitMiddleware(60 * 1000, 20));
   // H4 additions: forum likes, profile updates, campaign contributions, profile/avatar updates
@@ -773,18 +782,4 @@ setTimeout(async () => {
   }, 7 * 24 * 60 * 60 * 1000);
 }, 60 * 1000); // first run after 1 minute
 
-// ─── Weekly glossary job ─────────────────────────────────────────────────────
-setTimeout(async () => {
-  try { await runGlossaryJob(); } catch (e) { console.error("[GlossaryJob] Error:", e); }
-  setInterval(async () => {
-    try { await runGlossaryJob(); } catch (e) { console.error("[GlossaryJob] Error:", e); }
-  }, 7 * 24 * 60 * 60 * 1000);
-}, 90 * 1000); // first run after 90 seconds (staggered after digest)
-
-// ─── Daily draft cleanup job ──────────────────────────────────────────────────
-setTimeout(async () => {
-  try { await runDraftCleanupJob(); } catch (e) { console.error("[DraftCleanup] Error:", e); }
-  setInterval(async () => {
-    try { await runDraftCleanupJob(); } catch (e) { console.error("[DraftCleanup] Error:", e); }
-  }, 24 * 60 * 60 * 1000);
-}, 120 * 1000); // first run after 2 minutes (staggered)
+// ─── Weekly glossary job ─────────────────────────────────────

@@ -28,6 +28,35 @@ export const gratitudeRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot send gratitude to yourself" });
       }
 
+      // Block gratitude to system/team accounts. These are identified by
+      // handles starting with "regen-" that are team-managed, or by the
+      // openId "regen-guide-system". Players should only send to other players.
+      const SYSTEM_HANDLES = ["regen-civics-team", "regen-guide", "regen-guide-system", "system", "admin"];
+      if (SYSTEM_HANDLES.includes(input.recipientHandle.toLowerCase()) || (recipient as any).openId === "regen-guide-system") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Gratitude can only be sent to other players, not to team accounts." });
+      }
+
+      // Duplicate guard: prevent sending gratitude for the exact same source twice.
+      // A source is a unique (sourceType + sourceId) pair.
+      if (input.sourceType && input.sourceId) {
+        const existing = await db
+          .select({ id: gratitudeLog.id })
+          .from(gratitudeLog)
+          .where(and(
+            eq(gratitudeLog.senderId, ctx.user.id),
+            eq(gratitudeLog.recipientId, recipient.id),
+            sql`${gratitudeLog.sourceType} = ${input.sourceType}`,
+            sql`${gratitudeLog.sourceId} = ${input.sourceId}`,
+          ))
+          .limit(1);
+        if (existing.length > 0) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "You've already sent gratitude for this. Each contribution gets one thank-you.",
+          });
+        }
+      }
+
       // Spam guard: at most 30 sends per hour per sender. The lunar-cycle
       // budget system in GRATITUDE_SYSTEM_SPEC.md will replace this with a
       // proper budget once it ships, but until then we need a hard ceiling.
@@ -107,26 +136,9 @@ export const gratitudeRouter = router({
         .from(users)
         .leftJoin(playerProfiles, eq(playerProfiles.userId, users.id))
         .where(
-          or(
-            like(users.handle, q),
-            sql`LOWER(${users.name}) LIKE ${q}`,
-            sql`LOWER(${playerProfiles.displayName}) LIKE ${q}`,
-          ),
+          sql`LOWER(${users.handle}) LIKE ${q} OR LOWER(${users.name}) LIKE ${q} OR LOWER(${playerProfiles.displayName}) LIKE ${q}`
         )
-        .limit(12);
-
+        .limit(10);
       return rows;
     }),
-
-  // List the current user's recent received gratitude. For a future "received" inbox view.
-  myRecent: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return [];
-    return db
-      .select()
-      .from(gratitudeLog)
-      .where(eq(gratitudeLog.recipientId, ctx.user.id))
-      .orderBy(sql`${gratitudeLog.createdAt} DESC`)
-      .limit(50);
-  }),
 });

@@ -29,6 +29,7 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
     heading: "Play",
     cards: [
       { label: "Quests", sub: "The questing journey", href: "/quest", icon: "wizards", primary: true },
+      { label: "Governance", sub: "Decisions, proposals, and the pipeline", href: "/governance", icon: "Vote" },
       { label: "Decisions", sub: "Governance pipeline mission control", href: "/community/decisions", icon: "Vote" },
       { label: "Command Center", sub: "Your home base on the site", href: "/command-center", icon: "Compass" },
       { label: "The Game", sub: "Bionomics: how it all fits together", href: "/bionomics", icon: "Sparkles" },

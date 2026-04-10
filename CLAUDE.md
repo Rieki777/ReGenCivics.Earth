@@ -115,6 +115,28 @@ Migration files live in `drizzle/` and follow the pattern `NNNN_description.sql`
 
 For Drizzle ORM schema changes (generating migrations from schema.ts): use `npm run db:push` which runs `drizzle-kit generate && drizzle-kit migrate`.
 
+## Hypha Bridge (ReGen Civics to Hypha on Base)
+
+Hypha runs on Base (Coinbase L2, chain ID 8453). Anytime a player moves from ReGen Civics to Hypha to act on-chain (formalizing a forum decision as a DHO proposal, bringing a crowdpool contribution proposal to a land project DHO, submitting a historical contribution claim, buying Hypha tokens through our flow, etc.), the handoff MUST go through the Hypha Bridge module.
+
+The Hypha Bridge module lives at `apps/web/src/lib/hypha-bridge/` and is responsible for:
+
+1. Collecting player context from our MySQL ledger (internal token balance, citizenship tier, bioregion, recent quests, contribution history, Harvest/Gratitude pool state)
+2. Packaging that context into the field names Hypha's create-proposal forms expect (title, description, leadImage, attachments, spaceId, creatorId, recipient, payouts, label, etc.)
+3. Generating a signed, short-lived pre-fill token keyed to a bridge key (title marker plus fuzzy match fallback) so Hypha can pick the context up on arrival
+4. Redirecting the player to the correct Hypha route for the intent (the 11 creation routes: activate-spaces, buy-hypha-tokens, change-entry-method, change-voting-method, deploy-funds, membership-exit, pay-for-expenses, propose-contribution, redeem-tokens, space-settings-transparency, space-to-space-membership)
+5. Watching Base via Alchemy webhooks for on-chain execution and writing events back to our ledger so claim thresholds, storyteller triggers, and citizenship tier updates all flow
+
+Three pre-fill strategies are used in order of preference: (A) upstream PR to hypha-dao adding searchParams support to the creation forms, (B) our own `useResubmitProposalData` style hook wrapped around Hypha's form, (C) our own formalization page that renders the same fields and posts through the bridge.
+
+Token contracts on Base:
+- `$REGEN`: `0x4E617cd113364193d215d107AdD6fa50418AA2E4`
+- `$RCivics`: `0x72e9B17a2F93A923D63666eC0a1c096B1443ef26`
+
+Relevant DHO slugs: `regen-games`, `regen-civics`. Hypha app base URL: `https://app.hypha.earth`.
+
+**Rule for any future Claude Code instance**: if the task involves moving a player or their data from ReGen Civics to Hypha for any reason, use the Hypha Bridge. Do not hand-roll new redirect logic. Extend the bridge with the new intent type instead. The full flow spec lives in `FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md`.
+
 ## Installed Skills (ln- pipeline)
 This project uses a structured delivery pipeline via the ln- skills (in ~/.claude/skills/):
 - `ln-1000-pipeline-orchestrator` — kick off full feature delivery

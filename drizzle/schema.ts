@@ -33,6 +33,8 @@ export const users = mysqlTable("users", {
   privyDid: varchar("privyDid", { length: 120 }),
   /** Base chain wallet address for receiving Hypha proposal payouts. */
   baseWalletAddress: varchar("baseWalletAddress", { length: 60 }),
+  /** Hash of last Privy access token, used for session binding during dual-auth period. */
+  privyAccessTokenHash: varchar("privyAccessTokenHash", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

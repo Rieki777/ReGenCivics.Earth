@@ -22,6 +22,7 @@ import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
 import { governanceRouter } from "./routes/governance";
+import { walletRouter } from "./routes/wallet";
 import { featuresRouter } from "./routes/features";
 import { sharingRouter } from "./routes/sharing";
 import { gameRouter } from "./routes/game";
@@ -134,6 +135,9 @@ export const appRouter = router({
 
   // Governance pipeline (Stage 1: forum readiness + promotion patterns)
   governance: governanceRouter,
+
+  // Wallet on-chain balance reads
+  wallet: walletRouter,
 
   // Feature Suggestions
   features: featuresRouter,

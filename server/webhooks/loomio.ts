@@ -425,36 +425,68 @@ export async function syncLoomioSubgroups(userId: number): Promise<{ ok: boolean
   } catch { /* ignore */ }
   if (bioregions.length === 0) return { ok: true, added: 0, removed: 0 };
 
-  // Loomio's API expects a user_email + group_key for the membership grant.
-  // Real wiring requires us to know the Loomio user id (which we'd map via
-  // the OIDC sub claim). For now we POST a memberships request per bioregion
-  // and let Loomio dedupe.
+  const userEmail = user.email as string | undefined;
+  if (!userEmail) return { ok: true, added: 0, removed: 0 };
+
+  // 1. Fetch current Loomio memberships for this user by email.
+  let currentMemberships: Array<{ id: number; group_key: string }> = [];
+  try {
+    const listResp = await fetch(
+      `${apiUrl}/api/v1/memberships?user_email=${encodeURIComponent(userEmail)}`,
+      { headers: { Authorization: `Bearer ${apiKey}` } },
+    );
+    if (listResp.ok) {
+      const listData = await listResp.json() as any;
+      currentMemberships = (listData?.memberships ?? []).map((m: any) => ({
+        id: m.id,
+        group_key: m.group?.key ?? m.group_key ?? "",
+      })).filter((m: any) => m.group_key);
+    }
+  } catch { /* non-fatal, fall through to add-only mode */ }
+
+  // 2. Remove memberships for groups not in the user's current bioregion list.
+  let removed = 0;
+  for (const membership of currentMemberships) {
+    if (!bioregions.includes(membership.group_key)) {
+      try {
+        const delResp = await fetch(`${apiUrl}/api/v1/memberships/${membership.id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+        if (delResp.ok) removed++;
+      } catch { /* non-fatal */ }
+    }
+  }
+
+  // 3. Add memberships for bioregions not already present in Loomio.
+  const existingGroupKeys = new Set(currentMemberships.map((m) => m.group_key));
   let added = 0;
   for (const region of bioregions) {
+    if (existingGroupKeys.has(region)) continue;
     try {
       const resp = await fetch(`${apiUrl}/api/v1/memberships`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           membership: {
             group_key: region,
-            user_email: user.email,
+            user_email: userEmail,
           },
         }),
       });
-      if (resp.ok) added += 1;
-    } catch (err) {
-      console.warn("[loomio] subgroup sync failed for", region, err);
-    }
+      if (resp.ok) added++;
+    } catch { /* non-fatal */ }
   }
-  return { ok: true, added, removed: 0 };
+
+  return { ok: true, added, removed };
 }
 
-export function registerLoomioWebhookRoutes(app: Express) {
-  app.post("/api/webhooks/loomio", async (req: Request, res: Response) => {
+/** Register the Loomio webhook Express endpoint. */
+export function registerLoomioWebhookRoutes(app: import("express").Express) {
+  app.post("/api/webhooks/loomio", async (req: import("express").Request, res: import("express").Response) => {
     const sig = req.header("x-loomio-signature") ?? req.header("X-Loomio-Signature");
     const rawBody = JSON.stringify(req.body ?? {});
     if (!verifyLoomioSignature(rawBody, sig)) {

@@ -36,8 +36,11 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
     },
   });
 
-  // Don't show on yourself or when there's no handle to send to
+  // Don't show on yourself, system accounts, or when there's no handle to send to
+  const SYSTEM_HANDLES = ["regen-civics-team", "regen-guide", "regen-guide-system", "system", "admin"];
   if (!recipientHandle) return null;
+  if (SYSTEM_HANDLES.includes(recipientHandle.toLowerCase())) return null;
+  if (user && user.handle === recipientHandle) return null;
 
   const handleClick = () => {
     if (!isAuthenticated) {

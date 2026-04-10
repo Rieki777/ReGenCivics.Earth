@@ -92,7 +92,10 @@ export function SiteTour() {
         currentPage,
         userRole: "guest",
       });
-      setMessages([...newMessages, { role: "assistant", content: result.content }]);
+      const replyText = typeof result.reply === "string"
+        ? result.reply
+        : (result.reply as any)?.choices?.[0]?.message?.content ?? "Hmm, I'm not sure what to say.";
+      setMessages([...newMessages, { role: "assistant", content: replyText }]);
     } catch {
       setMessages([
         ...newMessages,

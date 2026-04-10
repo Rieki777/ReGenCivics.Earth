@@ -333,76 +333,277 @@ This page is the "mission control" for engaged citizens. Stewards can see aggreg
 
 **Implementation:** New page at `/community/decisions`. Data sources: Loomio API for open/closed decisions, MySQL `forumPostDecisions` for status, a computed `governanceLoadIndex` service that compares rolling 30-day decision count to baseline.
 
-## Stage 3: Hypha bridge (the tricky part)
+## Stage 3: The Hypha Bridge (grounded in the actual codebase)
 
-This is where the user's questions on #8, #9, and #19 live. Short answer: we can do most of this without a Hypha API. Here's how.
+This section supersedes any earlier assumption that Hypha runs on Telos. It doesn't anymore. After studying github.com/hypha-dao/hypha-web I can ground every answer in real files and real behavior.
 
-### 3.1 Pre-filling the Hypha form (answer to #8)
+### 3.0 What Hypha actually is (the verified reality)
 
-We have three levers, in order of preference:
+- **Chain: Base** (Coinbase L2, chain ID 8453). Confirmed in `packages/evm/src/config.ts`, which imports `base` from `@wagmi/core/chains`. Local dev targets `hardhat`. No Telos anywhere in the modern monorepo.
+- **Frontend: Next.js 15 + React 19**, monorepo managed with pnpm + Turbo, primary repo `hypha-dao/hypha-web`.
+- **Wallet and auth: Privy** (`@privy-io/node` plus `@privy-io/wagmi` wrapping the wagmi config). Privy gives Hypha email login, social login, and embedded wallets. Users don't need to bring their own wallet to file a proposal.
+- **Form library: react-hook-form + Zod.** The shared schema for any agreement creation form is `schemaCreateAgreementForm`, exported from `@hypha-platform/core/client`.
+- **The propose-contribution route** lives at `apps/web/src/app/[lang]/dho/[id]/@aside/agreements/create/propose-contribution/page.tsx`. The `[id]` is the DHO slug (e.g. `regen-games` or `regen-civics`). The `@aside` parallel route means the form opens as a side panel over the main DHO page.
+- **The actual form** is `CreateProposeAContributionForm` at `packages/epics/src/governance/components/create-propose-a-contribution-form.tsx`. Its field set is narrower than my earlier guess: `title`, `description`, `leadImage`, `attachments`, `spaceId`, `creatorId`, `recipient` (wallet address), `payouts: [{ amount, token }]`, `label: 'Contribution'`.
+- **Submit flow.** The form calls `useCreateProposeAContributionOrchestrator`, which signs and sends a transaction via wagmi to Hypha's Base smart contracts. On success, the user is redirected to `successfulUrl`.
+- **All 11 creation routes** exist under `/agreements/create/`: activate-spaces, buy-hypha-tokens, change-entry-method, change-voting-method, deploy-funds, membership-exit, pay-for-expenses, propose-contribution, redeem-tokens, space-settings-transparency, space-to-space-membership. Four of these are the ones ReGen Civics actually needs to bridge to.
 
-**Lever 1: URL query parameters.** If the Hypha form at `app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution` accepts query params like `?title=...&amount=...&recipient=...`, we pre-fill by constructing the URL on our side and redirecting. This is the cleanest path and requires zero changes on Hypha's side if their Vue form already reads query params. **Action item:** inspect the Hypha codebase to confirm or add this. Most Vue forms that use `vue-router` can read `$route.query` in their `setup()` or `mounted()` hook. If it's not there, a 10-line PR to Hypha would add it, and the team might merge it upstream.
+### 3.1 Pre-filling any Hypha form (revised answer to #8)
 
-**Lever 2: A formalization page on our side.** Before redirecting, we show a "Formalize in Hypha" page on regencivics.earth that collects the exact payload from the decision outcome: title, description, token amount, recipient wallet, milestones. The proposer reviews and confirms. Then we either:
-- URL-param redirect (Lever 1), or
-- Generate a formatted payload card the proposer can copy, paste into Hypha manually, and check a box "I've submitted this to Hypha" with the proposal link.
+The page component is a Next.js server component that currently reads `params` but not `searchParams`. That means URL query params are not picked up today. Three paths from here, in order of preference:
 
-**Lever 3: Browser automation / bookmarklet.** A small JS snippet that the proposer can install as a bookmarklet, which reads the payload from our page and programmatically fills the Hypha form. This is a fallback if neither of the above works, and it lives entirely on the user's device so there's no security concern on Hypha's end.
+**Path A: Upstream a small PR to hypha-web.** Add `searchParams` to `PageProps`, parse a validated payload, and pass it as `initialValues` into `CreateProposeAContributionForm`. The form is already built on react-hook-form's `defaultValues` so the change on their side is under 30 lines. This is cleanly upstreamable because it benefits any external tool that wants to bridge into Hypha, not only us. We offer to write the PR. This is the cleanest long-term answer and it works for all 11 creation routes with the same pattern.
 
-**Recommendation:** Start with Lever 2 (formalization page) since we need it for data integrity anyway, then add Lever 1 (URL params) once we've inspected the Hypha code. Lever 3 only if the first two don't land.
+**Path B: Use Hypha's existing `useResubmitProposalData` hook.** I found this hook already imported in `create-propose-a-contribution-form.tsx`. It loads resubmit data for a user, which means Hypha already has a mechanism for pre-filling a form from external data. We need to trace where that hook reads from (likely localStorage, session storage, or a REST endpoint). If it reads from localStorage, we set the same key on our side right before redirecting to Hypha, and the hook picks it up. If it reads from a backend endpoint, we either get write access to it or fall back to Path A. **Action:** read `packages/epics/src/governance/hooks/use-localized-proposal-resolver.ts` and any resubmit-related hooks to understand the source.
 
-**Action item for Rye:** share the Hypha codebase path so we can grep the form component for `$route.query` usage.
+**Path C: A formalization page on our side with copy-to-clipboard fallback.** We build this regardless of A or B, because it gives us data integrity and a clean checkpoint. On `regencivics.earth/bridge/hypha/<bridgeKey>`, we render a beautiful card with the exact payload: title, description, recipient wallet, amount, token, attachments. The user clicks "Continue to Hypha." We then attempt Path A (if the PR merged) or Path B (localStorage seed) or fall through to a manual paste mode where the card has copy buttons next to each field.
 
-### 3.2 Two-way status sync via Telos blockchain (answer to #9 and #19)
+**Recommendation:** Ship Path C immediately (it's a pure React page on our side, no external dependencies). In parallel, open Path A as a PR to hypha-web and investigate Path B to see if we can land a zero-change integration. If Path A merges, it becomes the primary mechanism and Path C stays as a safety net for fields that don't fit cleanly into a URL.
 
-Hypha runs on the Telos blockchain. Every DHO action (proposal created, voted, passed, failed, tokens sent) is an on-chain event. This means we can read Hypha's state without a Hypha API, as long as we run a Telos indexer.
+### 3.2 Two-way status sync via Base (revised answer to #9 and #19)
 
-Options:
+Hypha is on Base. Every agreement/proposal creation results in on-chain events emitted by their governance contracts (`packages/storage-evm` and the Solidity code in `hypha-smart-contracts`). This gives us four concrete options for reading Hypha state without asking Hypha for an API:
 
-**Option A: Public Telos RPC / Hyperion.** Use a hosted Telos Hyperion endpoint (telos.caleos.io, eosphere.io, etc.) to query the DHO smart contract's history. We poll every 60 seconds for new actions involving our known DHO account (`regen-games` or `regen-civics`). This is the lowest-effort path. No infrastructure, just HTTP calls.
+**Option A: Alchemy webhooks (recommended).** Alchemy offers address activity and custom webhooks for any Base contract. We subscribe to the DHO governance contracts for the `regen-games` and `regen-civics` DHOs, filtered to events like `ProposalCreated`, `Voted`, `ProposalPassed`, `ProposalExecuted`, `Transfer`. Alchemy pushes the event to our webhook endpoint as soon as it confirms. Latency: a few seconds. Cost: free tier is enough for our volume. Setup: 10 minutes. **This is the right default.**
 
-**Option B: Self-hosted Hyperion or dfuse.** Run our own Telos indexer. More reliable, but significant infrastructure cost. Only worth it if public endpoints become unreliable or rate-limit us.
+**Option B: viem `watchContractEvent` inside our Next.js app.** We run a long-lived watcher in a background worker that subscribes via a Base RPC to the same events. Good if we want to keep everything inside our own infrastructure. Slightly more ops work. Works over websockets to a Base RPC like `wss://base-mainnet.g.alchemy.com/v2/<key>`.
 
-**Option C: Shared indexer with the Hypha team.** Hypha likely already runs an indexer. We reach out, ask if we can consume their read-only feed. Best long-term outcome if they're willing.
+**Option C: A Ponder indexer.** Ponder is a TypeScript-native indexer for EVM chains. We define the events, it builds a queryable database of them. Good if we want rich historical queries and to render our own governance explorer. More infrastructure than Options A or B, but it gives us a real dataset to build on.
 
-**Recommendation:** Start with Option A (public Hyperion). Build a scheduled job `watchHyphaProposals` that runs every 60 seconds, queries recent actions for our two DHOs, matches them to our `forumPostDecisions` records by looking for a tag or memo field we inject at submission time, and updates `hyphaProposalStatus` on the match. If Hypha's form supports a free-text memo field, we embed a `rc-decision-<id>` marker there at submission time for unambiguous matching. If not, we fall back to fuzzy matching by title, amount, and submitter.
+**Option D: The Graph subgraph.** If Hypha publishes a Base subgraph (or if we write one), we query GraphQL. Works, but usually more work to set up than Alchemy webhooks.
 
-**What we can track from blockchain alone:**
-- Proposal created (with our marker → links to our decision)
-- Vote cast (aggregate counts)
-- Proposal passed
-- Proposal failed
-- Tokens sent (amount, recipient, timestamp)
+**Recommendation:** Start with **Option A (Alchemy webhooks)**. Our endpoint at `/api/webhooks/hypha-indexer` receives events, matches the on-chain transaction to our stored `bridgeKey` via an event field we inject at submission time (see 3.4), and updates our DB. If Alchemy's free tier ever becomes a constraint, graduate to Option C (Ponder self-hosted).
 
-**What we need a Hypha API for (nice to have, not blocking):**
-- Rich proposal metadata (description, images, full body)
-- Comment thread on the Hypha side
-- User profiles of voters
+### 3.3 Hypha outcome receipts on the forum (revised answer to #19)
 
-The blockchain path gives us everything we need to close the loop. The Hypha API would just make the UX slightly richer.
+When the Alchemy webhook receives a `ProposalExecuted` event for one of our bridge keys:
 
-### 3.3 Hypha outcome receipts on the forum (Improvement #19 implemented)
-
-When `watchHyphaProposals` detects that a Hypha proposal has passed and tokens have been sent:
-
-1. The matching row in `forumPostDecisions` gets `hyphaStatus: 'passed'`, `hyphaPassedAt`, `hyphaTokensAmount`, `hyphaRecipientWallet`, `hyphaTxHash`.
-2. A receipt reply is automatically posted to the original forum thread:
+1. We update the matching row: `hyphaStatus: 'passed'`, `hyphaPassedAt`, `hyphaTokenAmount`, `hyphaTokenSymbol`, `hyphaRecipientWallet`, `hyphaTxHash`, `hyphaProposalId`.
+2. A receipt reply posts automatically to the originating forum thread (or crowdpool card, or contribution claim page, depending on where the bridge started):
 
    ```
    ✅ Decision funded
    Passed on Hypha: April 14, 2026
-   Amount: 2,500 $ReGen
-   Recipient: rye.regen@telos
-   Transaction: https://explorer.telos.net/transaction/abc123...
+   Amount: 2,500 $REGEN
+   Recipient: 0x7a3c...b421
+   Transaction: https://basescan.org/tx/0xabc123...
    ```
 
-3. The living backlink banner on the forum thread updates to "✅ Funded" and shows the amount and date.
-4. The recipient (if they're a ReGen Civics citizen) gets a notification: "Your proposal has been funded. Here are your next steps."
-5. The storyteller (if assigned) gets a notification that tokens have shipped, so they can write the "what happened next" addendum to their narrative.
+3. The living backlink banner updates to "✅ Funded."
+4. The recipient gets a notification. If the recipient is a ReGen Civics citizen with a linked wallet, the notification includes "Here are your next steps" and links to their quest or project page.
+5. The storyteller (if one was assigned) gets nudged to write the follow-up.
 
-This closes the loop visibly for everyone who was in the early conversation, from the first forum reply all the way to tokens hitting a wallet.
+**Implementation:** New columns on `hyphaBridges` (see 3.5 for why this is its own table now): `status`, `hyphaProposalId`, `hyphaTxHash`, `hyphaPassedAt`, `hyphaTokenAmount`, `hyphaTokenSymbol`, `hyphaRecipientWallet`, `basescanUrl`.
 
-**Implementation:** New columns on `forumPostDecisions`: `hyphaStatus` (enum), `hyphaProposalId`, `hyphaTxHash`, `hyphaPassedAt`, `hyphaTokensAmount`, `hyphaRecipientWallet`. New service `watchHyphaProposals` as a scheduled task. Receipt reply is posted by a system user "regen-guide-bot".
+### 3.4 The bridge key: how we correlate our records to Hypha transactions
+
+Since we can't inject arbitrary metadata into Hypha's on-chain proposal (the current Zod schema is fixed), we need a deterministic way to match a Hypha `ProposalCreated` event back to our bridge. Three techniques, used in combination:
+
+1. **Title prefix marker.** We prepend an invisible marker to the title field: `[rc:<bridgeKey>] Skagit Seed Library`. On our webhook side we strip and match. The marker is 12 characters and survives as the proposal title. Users see it on Hypha. We ask them to please not remove it.
+2. **Recipient + amount + submitter fingerprint.** If the title marker is removed, we fall back to fuzzy matching: recipient wallet, amount, token symbol, submitter wallet, block time within a 10-minute window of our bridge creation. This catches 95 percent of the remaining cases.
+3. **Opt-in user confirmation.** On our bridge page, after the user clicks "Continue to Hypha," we show a "Link back to ReGen Civics" button that returns them to `regencivics.earth/bridge/hypha/<bridgeKey>/confirm?txHash=0x...`. They paste the Basescan transaction URL (or we auto-read it from their clipboard if the browser allows). This is the belt-and-braces manual confirm.
+
+In practice, most bridges will match via technique 1. The rest get cleaned up by technique 2 or 3.
+
+### 3.5 The Hypha Bridge: a reusable pattern for every ReGen Civics → Hypha handoff
+
+This is the part Rye asked about specifically: the same flow will be reused anywhere a ReGen Civics player needs to end up on a Hypha form with pre-filled data. Rather than writing a bespoke integration for each touchpoint, we build a single **Hypha Bridge** module and every touchpoint calls into it.
+
+**Touchpoints we already know about:**
+
+| Source | User action | Hypha route | Hypha form |
+|---|---|---|---|
+| Forum → Loomio decision | Ratified proposal that moves tokens | `/dho/[space]/agreements/create/propose-contribution` | Contribution proposal |
+| Crowdpool card | Player bringing contribution proposal to a land project DAO | `/dho/[land-project-slug]/agreements/create/propose-contribution` | Contribution proposal |
+| Contribution history claim | Player claiming a historical contribution for recognition/compensation | `/dho/[space]/agreements/create/propose-contribution` | Contribution proposal |
+| Fund grant disbursement | Fund moving tokens out to a project | `/dho/regen-civics/agreements/create/deploy-funds` | Deploy funds |
+| Expense reimbursement | Contributor submitting a receipt for expense reimbursement | `/dho/[space]/agreements/create/pay-for-expenses` | Pay for expenses |
+| Membership exit | Contributor leaving a space | `/dho/[space]/agreements/create/membership-exit` | Membership exit |
+
+Any future touchpoint (a new quest reward system, a new alliance payment flow, an investor top-up) plugs into the same bridge without new code.
+
+#### The Hypha Bridge module
+
+One module. Three responsibilities.
+
+**Responsibility 1: Accept a payload from any source and normalize it to a Hypha form schema.**
+
+```ts
+// apps/web/src/lib/hypha-bridge/types.ts
+
+export type HyphaFormKind =
+  | 'propose-contribution'
+  | 'deploy-funds'
+  | 'pay-for-expenses'
+  | 'membership-exit'
+  | 'buy-hypha-tokens';
+
+export interface HyphaBridgePayload {
+  source: 'loomio-decision' | 'crowdpool' | 'contribution-claim' | 'fund-grant' | 'expense' | 'exit' | 'other';
+  sourceId: string;                 // the ID in our system
+  targetDhoSlug: string;            // 'regen-games' or 'regen-civics' or a land project slug
+  formKind: HyphaFormKind;
+  title: string;
+  description: string;
+  recipient?: `0x${string}`;        // Base wallet address
+  payouts?: Array<{
+    amount: string;
+    token: string;                  // token contract address on Base
+  }>;
+  attachments?: Array<{ url: string; filename: string }>;
+  leadImageUrl?: string;
+  initiatorUserId: number;          // ReGen Civics user id
+  metadata?: Record<string, unknown>;
+}
+```
+
+**Responsibility 2: Persist the bridge and generate a bridge key.**
+
+```ts
+// Creates a hyphaBridges row, returns { bridgeKey, bridgeUrl }
+export async function createHyphaBridge(payload: HyphaBridgePayload) {
+  const bridgeKey = generateShortKey(); // 8-char base32
+  await db.insert(hyphaBridges).values({
+    bridgeKey,
+    ...payload,
+    status: 'created',
+    createdAt: new Date(),
+  });
+  return {
+    bridgeKey,
+    bridgeUrl: `https://regencivics.earth/bridge/hypha/${bridgeKey}`,
+  };
+}
+```
+
+**Responsibility 3: Render a single bridge page that handles every source and every form kind.**
+
+The page at `/bridge/hypha/[bridgeKey]` is the one visual interface for all of this. It shows:
+
+1. A branded header: "You're heading to Hypha. Here's what we're bringing with you."
+2. The payload fields rendered as a read-only card.
+3. Any context back to the source: "This came from Decision #47 in the community forum" with a link.
+4. One button: "Continue to Hypha." Clicking this triggers the handoff.
+5. A smaller link: "Something looks wrong. Edit before continuing." This opens the payload as an editable form so the user can fix anything before it goes to Hypha.
+
+On click of "Continue to Hypha," the bridge page:
+
+1. Constructs the Hypha URL: `https://app.hypha.earth/en/dho/[targetDhoSlug]/agreements/create/[formKind]?bridgeKey=<key>` (once Path A PR merges) or just `https://app.hypha.earth/en/dho/[targetDhoSlug]/agreements/create/[formKind]` (Path C fallback, with the payload copied to clipboard).
+2. Marks the bridge status as `handoff_sent`.
+3. Redirects the user.
+
+The bridge page never asks the user to copy a wallet address or type an amount. Everything is pre-filled because it came from an authoritative source in our system.
+
+#### Source-specific callers
+
+Each source just constructs the payload and calls `createHyphaBridge`. Here's what that looks like for the three sources Rye called out:
+
+**From a ratified Loomio decision:**
+```ts
+const { bridgeUrl } = await createHyphaBridge({
+  source: 'loomio-decision',
+  sourceId: decision.id.toString(),
+  targetDhoSlug: decision.track === 'fund' ? 'regen-civics' : 'regen-games',
+  formKind: 'propose-contribution',
+  title: decision.outcomeTitle,
+  description: decision.outcomeReasoning,
+  recipient: decision.recipientWallet,
+  payouts: [{ amount: decision.amount, token: REGEN_TOKEN_ADDRESS }],
+  initiatorUserId: decision.proposerId,
+  metadata: { loomioPollKey: decision.loomioPollKey },
+});
+```
+
+**From a crowdpool contribution proposal:**
+```ts
+const { bridgeUrl } = await createHyphaBridge({
+  source: 'crowdpool',
+  sourceId: crowdpoolContribution.id.toString(),
+  targetDhoSlug: crowdpoolContribution.landProjectSlug,
+  formKind: 'propose-contribution',
+  title: crowdpoolContribution.title,
+  description: crowdpoolContribution.description,
+  recipient: crowdpoolContribution.recipientWallet,
+  payouts: crowdpoolContribution.requestedPayouts,
+  attachments: crowdpoolContribution.attachments,
+  initiatorUserId: crowdpoolContribution.contributorId,
+});
+```
+
+**From a historical contribution claim:**
+```ts
+const { bridgeUrl } = await createHyphaBridge({
+  source: 'contribution-claim',
+  sourceId: claim.id.toString(),
+  targetDhoSlug: claim.spaceSlug,
+  formKind: 'propose-contribution',
+  title: `Historical contribution: ${claim.summary}`,
+  description: claim.evidenceNarrative,
+  recipient: claim.claimantWallet,
+  payouts: [{ amount: claim.requestedAmount, token: claim.requestedToken }],
+  attachments: claim.evidenceFiles,
+  initiatorUserId: claim.claimantId,
+  metadata: { seasonId: claim.seasonId, contributionType: claim.type },
+});
+```
+
+All three end up on the same `/bridge/hypha/[bridgeKey]` page with the same visual experience. All three result in the same Hypha form being pre-filled the same way. All three get tracked by the same Alchemy webhook and closed out with a receipt on the source page.
+
+**One bridge. Many callers. Zero copy-paste.**
+
+#### Data model: the `hyphaBridges` table
+
+```sql
+CREATE TABLE hyphaBridges (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  bridgeKey VARCHAR(16) NOT NULL UNIQUE,
+  source ENUM('loomio_decision','crowdpool','contribution_claim','fund_grant','expense','exit','other') NOT NULL,
+  sourceId VARCHAR(80) NOT NULL,
+  targetDhoSlug VARCHAR(80) NOT NULL,
+  formKind ENUM('propose_contribution','deploy_funds','pay_for_expenses','membership_exit','buy_hypha_tokens') NOT NULL,
+  initiatorUserId INT NOT NULL,
+  payload JSON NOT NULL,
+  status ENUM('created','handoff_sent','on_chain_detected','passed','failed','cancelled') NOT NULL DEFAULT 'created',
+  hyphaProposalId VARCHAR(80) DEFAULT NULL,
+  hyphaTxHash VARCHAR(80) DEFAULT NULL,
+  hyphaPassedAt TIMESTAMP NULL DEFAULT NULL,
+  hyphaTokenAmount DECIMAL(30,6) DEFAULT NULL,
+  hyphaTokenSymbol VARCHAR(20) DEFAULT NULL,
+  hyphaRecipientWallet VARCHAR(60) DEFAULT NULL,
+  basescanUrl VARCHAR(200) DEFAULT NULL,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_hb_source (source, sourceId),
+  INDEX idx_hb_status (status),
+  INDEX idx_hb_target (targetDhoSlug)
+);
+```
+
+This replaces the earlier approach of stuffing Hypha fields into `forumPostDecisions`. Now `forumPostDecisions.hyphaBridgeId` is a foreign key to `hyphaBridges.id`. Crowdpool contributions, contribution claims, and any other source get the same foreign key on their own tables. One source of truth for every bridge.
+
+#### Privy and identity
+
+Since Hypha uses Privy for auth and embedded wallets, we have three options for making this feel like one continuous user session across the handoff:
+
+1. **Shared Privy app.** Register ReGen Civics as an additional app under the same Privy tenant as Hypha (coordinate with the Hypha team). User logs in once on regencivics.earth, their Privy session is also valid on app.hypha.earth.
+2. **Privy user linking.** Hypha generates a one-time linking token that we accept on our side. We store the mapping between ReGen Civics user ID and Privy user DID. Next time the user bridges, they're silently signed in.
+3. **Plain SSO via Privy's sign-in widget, embedded on our bridge page.** The bridge page offers "Sign in to Hypha" as a one-click step if they're not signed in there yet. Then the handoff redirects them into the form already authenticated.
+
+**Recommendation:** start with Option 3 (no coordination needed with Hypha team), move to Option 2 once we have bandwidth, revisit Option 1 if Hypha is open to a deeper integration.
+
+### 3.6 What else I need from the Hypha side
+
+After studying the codebase, here's what I'd still want to look at before we ship. These are questions for either a read of additional files or a conversation with the Hypha team.
+
+1. **`useResubmitProposalData` source.** Read `packages/epics/src/governance/hooks/` to find this hook. If it reads from localStorage or an accessible endpoint, we can use it as our zero-change path. File not yet read.
+2. **Space resolution.** `findSpaceBySlug` is called in the page component. I want to confirm that ReGen Civics can control its own DHO slugs (`regen-games`, `regen-civics`, plus one per land project) and that slugs are stable. File to read: `packages/core/server/space.ts` or similar.
+3. **Token address constants.** We need the Base contract addresses for $REGEN and $RCivics (if they exist yet), or we need to know how Hypha represents the token in the payouts field. This determines the `token` field we pass in payouts. Probably in `packages/storage-evm/src/constants.ts` or the smart contracts repo.
+4. **Event signature for `ProposalCreated`.** Needed for the Alchemy webhook filter. Will be in `hypha-smart-contracts` Solidity, under the governance contract ABI.
+5. **Whether `recipient` must be a Base wallet owned by a Privy user, or any Base address.** This affects our UX: can a player who doesn't yet have a Privy wallet be a recipient? Testing in a throwaway DHO would answer this.
+6. **Attachment handling.** The form accepts `attachments`. What storage do these hit? IPFS? Arweave? An S3 bucket? We need to match. Probably in `packages/core/client/` somewhere.
+7. **PR policy.** Does the Hypha team accept community PRs to `hypha-web`? Their `.github/` and `CONTRIBUTING.md` will tell us. This governs whether Path A (searchParams support) is viable.
+
+These are all answerable by another pass through the repo or a short email to the Hypha team. None of them block Phase 1 of the bridge (Path C works with what we know today).
 
 ## ReGen Guide (Claude) integration across the whole pipeline
 
@@ -435,21 +636,41 @@ Building on `LOOMIO_INTEGRATION_SPEC_2026-04-09.md` which already introduced `fo
 
 ```sql
 -- Extend the forumPostDecisions table from the Loomio spec
+-- Note: Hypha-specific columns now live on hyphaBridges (see Section 3.5)
 ALTER TABLE forumPostDecisions
   ADD COLUMN track ENUM('fund','game','both') NOT NULL DEFAULT 'game',
   ADD COLUMN reversibility ENUM('reversible','semi_reversible','one_way_door') NOT NULL DEFAULT 'reversible',
   ADD COLUMN sunsetAt TIMESTAMP NULL DEFAULT NULL,
   ADD COLUMN bioregionScope JSON DEFAULT NULL,
-  ADD COLUMN hyphaStatus ENUM('not_applicable','pending','submitted','passed','failed') NOT NULL DEFAULT 'not_applicable',
-  ADD COLUMN hyphaProposalId VARCHAR(80) DEFAULT NULL,
-  ADD COLUMN hyphaTxHash VARCHAR(80) DEFAULT NULL,
-  ADD COLUMN hyphaPassedAt TIMESTAMP NULL DEFAULT NULL,
-  ADD COLUMN hyphaTokensAmount DECIMAL(20,4) DEFAULT NULL,
-  ADD COLUMN hyphaTokensSymbol VARCHAR(10) DEFAULT NULL,
-  ADD COLUMN hyphaRecipientWallet VARCHAR(40) DEFAULT NULL,
+  ADD COLUMN hyphaBridgeId INT DEFAULT NULL,
   ADD COLUMN storytellerId INT DEFAULT NULL,
   ADD COLUMN storytellerNarrativeId INT DEFAULT NULL,
   ADD COLUMN weightedStanceSummary JSON DEFAULT NULL;
+
+-- The reusable Hypha Bridge table (Section 3.5)
+CREATE TABLE hyphaBridges (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  bridgeKey VARCHAR(16) NOT NULL UNIQUE,
+  source ENUM('loomio_decision','crowdpool','contribution_claim','fund_grant','expense','exit','other') NOT NULL,
+  sourceId VARCHAR(80) NOT NULL,
+  targetDhoSlug VARCHAR(80) NOT NULL,
+  formKind ENUM('propose_contribution','deploy_funds','pay_for_expenses','membership_exit','buy_hypha_tokens') NOT NULL,
+  initiatorUserId INT NOT NULL,
+  payload JSON NOT NULL,
+  status ENUM('created','handoff_sent','on_chain_detected','passed','failed','cancelled') NOT NULL DEFAULT 'created',
+  hyphaProposalId VARCHAR(80) DEFAULT NULL,
+  hyphaTxHash VARCHAR(80) DEFAULT NULL,
+  hyphaPassedAt TIMESTAMP NULL DEFAULT NULL,
+  hyphaTokenAmount DECIMAL(30,6) DEFAULT NULL,
+  hyphaTokenSymbol VARCHAR(20) DEFAULT NULL,
+  hyphaRecipientWallet VARCHAR(60) DEFAULT NULL,
+  basescanUrl VARCHAR(200) DEFAULT NULL,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_hb_source (source, sourceId),
+  INDEX idx_hb_status (status),
+  INDEX idx_hb_target (targetDhoSlug)
+);
 
 -- Dual-key promotion requests
 CREATE TABLE forumPromotionRequests (
@@ -550,9 +771,12 @@ governance.regenGuide.draftDecision(threadId, template) -> DecisionDraft
 governance.regenGuide.summarizeDecision(decisionId, audience) -> string
 governance.regenGuide.draftOutcomeReasoning(decisionId) -> string
 
-governance.decisions.createFormalizationPayload(decisionId) -> HyphaFormalization
-governance.decisions.submitToHypha(decisionId, formalizationPayload) -> HyphaSubmission
-governance.decisions.getHyphaStatus(decisionId) -> HyphaStatus
+hyphaBridge.create(payload) -> { bridgeKey, bridgeUrl }
+hyphaBridge.get(bridgeKey) -> HyphaBridge
+hyphaBridge.updatePayload(bridgeKey, edits) -> HyphaBridge
+hyphaBridge.markHandoffSent(bridgeKey) -> HyphaBridge
+hyphaBridge.getBySource(source, sourceId) -> HyphaBridge | null
+hyphaBridge.listForUser(userId) -> HyphaBridge[]
 
 governance.lineage.addParent(childId, parentId, relationship)
 governance.lineage.getGraph(decisionId, depth)
@@ -569,7 +793,7 @@ governance.loadDashboard.getCommunityLoad() -> LoadIndex
 
 ```
 POST /api/webhooks/loomio           (HMAC signed, handles poll events from Loomio)
-POST /api/webhooks/hypha-indexer    (internal, from our own watchHyphaProposals service)
+POST /api/webhooks/hypha-alchemy    (Alchemy webhook for Base chain events from Hypha governance contracts)
 ```
 
 ## Scheduled jobs
@@ -577,7 +801,7 @@ POST /api/webhooks/hypha-indexer    (internal, from our own watchHyphaProposals 
 ```
 nightlyUserSync            -> refresh Loomio subgroup memberships from MySQL
 checkSunsetting            -> create renewal threads at T-7 for sunsetting decisions
-watchHyphaProposals        -> poll Telos Hyperion every 60s for our DHO actions
+reconcileHyphaBridges      -> hourly safety net that re-checks any bridges in 'handoff_sent' state via direct Base RPC, in case an Alchemy webhook was missed
 assignStorytellers         -> pick storytellers for newly-opened high-stakes decisions
 preMortemTrigger           -> create pre-mortem poll 24h after parent decision opens
 expirePromotionRequests    -> close out unsigned promotion requests after 24h
@@ -611,12 +835,15 @@ Phase 1 ships the core pipeline end-to-end with a deliberately reduced feature s
 - Bioregional subgroup sync.
 - Webhook receiver for `poll_created`, `poll_closed`, `outcome_created`.
 
-### Week 4: Hypha bridge
+### Week 4: Hypha Bridge (the reusable module)
 
-- Formalization page on Next.js side.
-- Lever 1 (URL param pre-fill) investigation of Hypha codebase.
-- `watchHyphaProposals` scheduled job reading from Telos Hyperion.
-- Receipt reply posting to forum threads on Hypha pass.
+- `hyphaBridges` table and tRPC router.
+- Bridge page at `/bridge/hypha/[bridgeKey]`.
+- Bridge caller wired from Loomio-decision webhook path (Path C, manual handoff with pre-filled card).
+- Read `useResubmitProposalData` hook to assess Path B feasibility.
+- Draft a PR to `hypha-dao/hypha-web` adding `searchParams` reading to the create pages (Path A).
+- Alchemy webhook set up for `regen-games` and `regen-civics` DHO contracts on Base.
+- Receipt reply posting to forum threads, crowdpool cards, and contribution claims on Hypha pass.
 
 ### Week 5: Polish and the missing improvements
 
@@ -765,6 +992,250 @@ ReGen Guide periodically reviews its own drafted decisions and asks the facilita
 ### 20. Annual governance retrospective
 At the end of each season, a community-wide retrospective runs on Loomio using the consent template: "What should change about how we decide things?" Changes that ratify become amendments to the community agreements. Meta-governance that evolves itself.
 
+## Rev 3 resolutions (2026-04-09)
+
+Rye answered every open question and picked which improvements to build. All of this is baked into the pipeline now. Phase 1 grows to include these additions since the site has not launched yet.
+
+### Answers to the eight open questions
+
+1. **Hypha codebase.** Studied `github.com/hypha-dao/hypha-web`. Findings written into Section 3.0. The remaining file reads are listed in Section 3.6 and will be done as a follow-up pass.
+2. **OIDC implementation.** We use `oidc-provider` (the `panva/node-oidc-provider` library). Correctness-first. One dependency, battle-tested, fewer footguns than rolling our own. Wrapped in a thin adapter that reads from our existing session middleware.
+3. **Loomio hosting.** Railway, same project as the main site. Shared ops, shared observability, shared deploy pipeline. Loomio gets its own Postgres addon; the main MySQL stays separate.
+4. **Telos assumption.** Corrected. Hypha runs on Base. The entire Stage 3 section has been rewritten. What I still need from the Hypha side is in Section 3.6; none of it blocks Phase 1.
+5. **Storyteller threshold.** Set to 100,000 tokens (either $ReGen or $RCivics equivalent). Stored as a game variable `governance.storyteller_threshold_tokens` so it can be tuned without a deploy.
+6. **Weighted voting defaults and Game Mechanics integration.** Tier weights approved (Visitor 1, Citizen 2, Contributor 3, Steward 5). All governance variables are added to the Game Mechanics page under a new "Governance Mechanics" section following the existing section conventions. Migration `drizzle/0108_governance_mechanics_variables.sql` seeds them.
+7. **Cookie domain rollout.** Done now, pre-launch. No risk of invalidating deployed sessions because there are no deployed sessions yet.
+8. **Existing communityAgreements rows.** Start fresh at launch. We do not retroactively create Loomio decisions for pre-launch rows.
+
+### The 17 approved improvements (building now, before launch)
+
+All approved improvements get built in Phase 1. Here is the delta from what was already specified, with Rye's specific notes folded in.
+
+**#1 Forum thread heat scoring.** Composite signal from reply velocity, reaction density, unique voices, ReGen Guide urgency detection. Threshold triggers the green "Ready to promote" button on the thread automatically. New game variable: `governance.heat_score_threshold`.
+
+**#2 Governance dojos.** Deferred per Rye. Not in Phase 1.
+
+**#3 Proxy delegation with revocation.** Citizens delegate their stance on topic tags (watershed, food sovereignty, legal, etc.) to another citizen. Revocable per-decision. Max hop count of 2. New tables: `governanceDelegations` (delegator, delegate, topicTags, revokedAt), enforced in the weighted-tally service.
+
+**#4 ReGen Guide as commenter and poster.** This got an upgrade based on Rye's note. ReGen Guide is not only a neutral devil's advocate on near-unanimous decisions. It is also a named poster with its own voice and point of view. Full details in Section 5 below.
+
+**#5 Emotional temperature snapshot.** One-tap at vote time: "How does this decision feel to you? Excited / Neutral / Uneasy." Aggregate visible only to facilitator and storyteller. Catches consent-with-dread patterns. New column on the per-vote table.
+
+**#6 The Back Field.** Renamed from "parking lot" per Rye. Good ideas that don't yet have consensus or capacity get moved to a Back Field backlog with reasons. Searchable, reviewable by Stewards quarterly. New table `governanceBackField`. The name echoes agricultural fallow fields: ideas resting until they're ready.
+
+**#7 Bioregion-specific decision templates.** Each bioregion instance has its own default templates. Best practices get shared across bioregions as "templates recommended by Cascadia" etc. Lives in the multi-tenant instance config (Section 4 below).
+
+**#8 Sunset renewal one-click vote.** When a sunset renewal thread auto-creates, if the decision has no concerns and the facilitator signals it, the renewal becomes a one-click "renew as-is" consent poll with a 48-hour window.
+
+**#9 Cross-decision bundle proposals.** Facilitators can bundle N related decisions into one vote with "accept all / accept some / accept none" choices. Careful UI guards against hiding opposition.
+
+**#10 Personal templates.** Any citizen can save a decision configuration as a personal template. Facilitators running the same kind of decision every cycle save time.
+
+**#11 Budget-split decisions with internal token accounting.** Rye's note rewrites how tokens work across the whole pipeline. Writing out the model explicitly here because it touches every subsequent section:
+
+> Tokens that move inside `gov.regencivics.earth` (and any bioregion or land project instance) are **internal tracked tokens in our MySQL database**, not direct blockchain transfers. They accumulate in each player's Harvest and Gratitude pools. Players then **claim actual blockchain tokens from Hypha** when they want, after they reach certain thresholds.
+
+This means:
+- `gov.regencivics.earth` proposals that allocate "tokens" are moving internal balance sheet entries, not signing Base transactions.
+- Our `harvest_balances` and `gratitude_pools` tables accumulate these entries.
+- When a player hits a claim threshold (default 1,000 tokens, tunable via `governance.claim_threshold_tokens`), they see a "Claim to Hypha" button on their profile.
+- Clicking it runs the Hypha Bridge (Section 3.5) with `formKind: 'propose-contribution'` and the internal ledger entries as the payload.
+- Once the on-chain proposal executes and the Alchemy webhook fires, the internal balance is marked `claimed` and the on-chain transaction is recorded.
+
+This separation is valuable: it lets internal governance move fast and cheap, keeps a high signal-to-noise ratio on-chain, and gives players a single moment of blockchain friction instead of dozens. Budget-split decisions work on internal balances, no gas, no wallet popup, and still land on-chain when the player is ready.
+
+**#12 Governance reputation badges on profiles.** Decisions participated in, outcomes where the user was on the eventual-consensus side, storyteller narratives authored. Rewards engagement with substance.
+
+**#13 Minority protection.** Deferred per Rye. Not in Phase 1.
+
+**#14 Hypha proposal bundling at claim time.** When a player has multiple internal balance entries ready to claim, the Bridge bundles them into a single Hypha proposal. Reduces on-chain cost and cognitive load.
+
+**#15 Snapshot voting.** For genuinely urgent decisions (wildfire response, acute resource need), a 6-hour window mode that requires Steward sign-off to enable and sends loud notifications to scoped citizens. New game variable: `governance.snapshot_window_hours`.
+
+**#16 Live decision rooms and weekly roundup integration.** Scheduled synchronous discussion time for high-stakes decisions, embedded video call, ReGen Guide takes notes. **Plus** ReGen Guide weaves governance decisions into the weekly roundup email and any other AI-generated email digest. New integration: the `weeklyRoundup` email generator pulls open and recently-closed decisions from the user's scoped instances.
+
+**#17 Multi-tenant alliance decisions (big change).** Per Rye's note, bioregions **and** land projects and organizations all get their own instances of the governance tool. This is a multi-tenant expansion, not only a cross-bioregion feature. Full architecture in Section 4 below.
+
+**#18 Public API for civic researchers.** Deferred per Rye. Not in Phase 1.
+
+**#19 ReGen Guide self-critique.** Guide periodically reviews its own drafted decisions, asks facilitators "did my draft steer you in a direction you wished it hadn't?", feedback loops into the guide's system prompt.
+
+**#20 Annual governance retrospective during winter seasons.** At the end of each winter season, a community-wide retrospective runs on Loomio: "What should change about how we decide things?" Changes that ratify become amendments to the community agreements. Timing is specifically winter because that's when the land is resting and reflection fits the seasonal rhythm.
+
+## Section 4: Multi-tenant governance (bioregions, land projects, organizations)
+
+Rye's instruction #17 turns the governance subdomain into a multi-tenant platform. Any bioregion, land project, or organization can spin up its own instance. This is a substantial expansion over the single-subdomain design.
+
+### 4.1 The architecture shift
+
+Instead of one Loomio instance at `gov.regencivics.earth`, we run Loomio with multi-tenancy support. Each tenant gets:
+
+- A subdomain or path: `gov.regencivics.earth/skagit-watershed` (path-based for simplicity) or `skagit.gov.regencivics.earth` (subdomain-based if we want stronger visual separation).
+- Its own Loomio group tree (group, subgroups, members).
+- Its own branding knobs: logo, banner image, accent color.
+- Its own set of default decision templates.
+- Its own set of citizenship tiers if the tenant wants to diverge from the platform defaults.
+- Its own internal token ledger scoped to its members.
+- Its own Hypha DHO mapping: which DHO slug on `app.hypha.earth` does this tenant claim to.
+
+**Recommendation:** path-based routing in Phase 1 (`/gov/<tenantSlug>/...`), subdomain-based in Phase 2 if we need stronger separation. Path-based keeps SSL, cookies, and deployment simple.
+
+### 4.2 Tenant types
+
+Three tenant types, each with slightly different defaults:
+
+| Type | Example slugs | Default DHO mapping | Default membership rule |
+|---|---|---|---|
+| `bioregion` | `cascadia`, `great-lakes`, `south-bay` | `regen-games` (or none) | Open to citizens marked in this bioregion |
+| `land-project` | `skagit-seed-library`, `mendocino-farm` | A project-specific DHO slug | Invite-only by project stewards |
+| `organization` | `regen-civics`, `alliance-watershed` | `regen-civics` (Fund) or own DHO | Custom per-org rules |
+| `platform` | `regen-civics` (root) | `regen-civics` | All citizens |
+
+### 4.3 Data model for multi-tenancy
+
+```sql
+CREATE TABLE governanceTenants (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(80) NOT NULL UNIQUE,
+  tenantType ENUM('platform','bioregion','land_project','organization') NOT NULL,
+  displayName VARCHAR(200) NOT NULL,
+  description TEXT,
+  logoUrl VARCHAR(400),
+  bannerUrl VARCHAR(400),
+  accentColor VARCHAR(20),
+  hyphaDhoSlug VARCHAR(80),
+  loomioGroupKey VARCHAR(40) NOT NULL,
+  parentTenantId INT DEFAULT NULL,
+  ownerUserId INT NOT NULL,
+  config JSON DEFAULT NULL,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_gt_type (tenantType),
+  INDEX idx_gt_parent (parentTenantId)
+);
+
+CREATE TABLE governanceTenantMembers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  tenantId INT NOT NULL,
+  userId INT NOT NULL,
+  role ENUM('member','moderator','steward','admin') NOT NULL DEFAULT 'member',
+  joinedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  leftAt TIMESTAMP NULL DEFAULT NULL,
+  UNIQUE KEY uq_gtm (tenantId, userId)
+);
+```
+
+### 4.4 Creating a new tenant (UX)
+
+Any citizen with sufficient tier can create a tenant via a guided flow on `regencivics.earth/gov/create`:
+
+1. Pick a type (bioregion, land project, organization).
+2. Set slug, name, description, branding.
+3. Pick a default decision template set.
+4. Optionally map to a Hypha DHO slug (or leave blank to use the platform default).
+5. Invite initial members.
+6. Land on the new tenant's governance page.
+
+Under the hood this runs a provisioning service that creates a Loomio group via API, writes the `governanceTenants` row, syncs initial members, and returns the new URL. The whole thing is programmatic; no manual Loomio admin work.
+
+### 4.5 Internal token ledgers per tenant
+
+Each tenant has its own internal token ledger. Proposals that move tokens move them against the tenant's ledger. When a member of a tenant crosses a claim threshold, the Hypha Bridge is called with `targetDhoSlug = tenant.hyphaDhoSlug` and the claim proceeds against that DHO on Base.
+
+This gives each land project its own economic sovereignty: a Skagit Seed Library member earns Skagit tokens in-platform, then claims those tokens to the Skagit DHO on Hypha when ready. The platform's Fund and Game DHOs handle cross-tenant and cross-bioregion flows.
+
+### 4.6 Dashboards across tenants
+
+A citizen who participates in multiple tenants sees a unified "Your governance" page at `regencivics.earth/community/decisions` that aggregates:
+
+- Open decisions across all tenants where they are a member.
+- Recently ratified decisions across all tenants.
+- Internal token balances per tenant.
+- Claim status (ready to claim, recently claimed).
+- Governance load indicators per tenant.
+
+Tenant-scoped notifications ("Skagit has a new decision open") flow through the unified notification bell.
+
+## Section 5: ReGen Guide as a named poster and commenter (expansion of Improvement #4)
+
+Rye's note turned this from a passive "devil's advocate" role into a full participant role. ReGen Guide shows up as a named poster on both the forum and the governance side, with its own avatar, its own voice, and clearly labeled AI provenance. Here is how.
+
+### 5.1 Guide identity
+
+- Display name: **ReGen Guide**
+- Avatar: the existing ReGen Guide illustration from the site.
+- Byline: "ReGen Guide, AI companion. Comments are drafted by Claude and may include interpretations, suggestions, or questions from a systems-thinking point of view."
+- Every post and comment has a small "AI" badge next to the name. No disguising what it is.
+
+### 5.2 Where the Guide shows up
+
+1. **Forum threads.** The Guide can be `@regen-guide` mentioned in any thread. It reads the thread and responds. It can also proactively comment on threads that cross a "worth engaging with" threshold (heat score + topic match to known Guide interests). Proactive posting is rate-limited to avoid flooding.
+2. **Decision pages.** The Guide can be invited by the facilitator to post a point of view at decision open time. The POV is framed as "here's how I see this from a systems-thinking angle" and is explicitly labeled as optional input.
+3. **Pre-mortems.** The Guide seeds the pre-mortem with common failure modes for the decision type.
+4. **Near-unanimous consent decisions.** The Guide steps in one day before close with "here are three reasons this could be wrong that I don't see being discussed." Optional, opt-in by facilitator.
+5. **Weekly roundup emails.** The Guide authors a short commentary on the week's governance activity, included in the weekly roundup.
+6. **Sunset renewal reviews.** Before a sunset renewal thread opens, the Guide writes a short "how did this decision age" note based on what happened since ratification.
+
+### 5.3 Guardrails
+
+- The Guide never casts a stance on behalf of a user.
+- The Guide cannot be the sole author of a decision proposal (it can draft, but a human has to submit).
+- The Guide posts are always labeled, always in a visually distinct card, and always reviewable by facilitators.
+- The Guide respects bioregional scoping: it does not comment on decisions scoped to a bioregion it has no context for unless invited.
+- The Guide cites its reasoning when possible: "I'm drawing on the SEEDS vision doc and last season's retrospective for this."
+- Users can mute the Guide per-thread or per-tenant if they find it intrusive.
+
+### 5.4 Implementation
+
+- A system user `regen-guide` exists in the `users` table with a special role flag `isAiAgent: true`.
+- Posts authored by this user always render with the AI badge.
+- A background worker watches for mentions and trigger conditions and calls Claude with a short system prompt scoped to the context.
+- All Guide outputs are stored as normal forum posts or Loomio comments, so the content is searchable, quotable, and auditable.
+
+## Section 6: Weekly roundup email integration
+
+Governance activity flows into the weekly roundup email for every citizen. New sections added to the existing `weeklyRoundup` email template:
+
+1. **Open decisions you can vote on.** Personalized to the user's tenant memberships and bioregion.
+2. **Decisions closing soon.** Things that will close within the next 7 days.
+3. **Recently ratified.** Short list with outcomes and storyteller narrative links.
+4. **Your internal token balance.** "You have 2,340 tokens ready to claim when you reach 10,000" kind of nudge.
+5. **ReGen Guide commentary.** One paragraph the Guide writes weekly about what's moving in governance.
+6. **Back Field updates.** If any ideas you flagged moved out of the Back Field and became active decisions.
+
+The weekly roundup generator already exists. We add a new section builder `buildGovernanceSection(userId)` that queries the tenants, decisions, and balances relevant to this user, and returns a rendered HTML block that the main generator stitches into the email.
+
+## Section 7: Future-proofing the Hypha Bridge pattern
+
+Rye's final instruction: "For this bridge going forward make sure future Claude Code instances know of this so anytime we're moving from ReGen Civics to Hypha this bridge will be updated to bring player data with them to help them fill forms."
+
+This is addressed in three places so no future Claude instance misses it:
+
+1. **CLAUDE.md entry.** A new section "The Hypha Bridge pattern" is added to the project CLAUDE.md explicitly stating: any time a feature sends a user to Hypha, it must call the Hypha Bridge. Never link directly to `app.hypha.earth`.
+2. **tRPC router convention.** The `hyphaBridge` router is the only code path that constructs a Hypha URL. Other code cannot build Hypha URLs directly. A lint rule (comment in source, escalating to an ESLint rule later) prevents raw `app.hypha.earth` strings from appearing anywhere outside the bridge module.
+3. **The bridge module README.** `apps/web/src/lib/hypha-bridge/README.md` documents the contract: what source systems call in, what payload shape is expected, what comes back. Every new source system adds itself to the source enum and the README.
+
+## Section 8: Token contracts on Base
+
+From Rye:
+
+- `$REGEN` contract address on Base: `0x4E617cd113364193d215d107AdD6fa50418AA2E4`
+- `$RCivics` contract address on Base: `0x72e9B17a2F93A923D63666eC0a1c096B1443ef26`
+
+These go into `.env.example` as:
+
+```
+# ── Hypha / Base chain ────────────────────────────────────────────────────────
+BASE_RPC_URL=https://mainnet.base.org
+ALCHEMY_BASE_API_KEY=your-alchemy-key
+REGEN_TOKEN_ADDRESS_BASE=0x4E617cd113364193d215d107AdD6fa50418AA2E4
+RCIVICS_TOKEN_ADDRESS_BASE=0x72e9B17a2F93A923D63666eC0a1c096B1443ef26
+HYPHA_DHO_REGEN_GAMES_SLUG=regen-games
+HYPHA_DHO_REGEN_CIVICS_SLUG=regen-civics
+```
+
+The Bridge module imports these via `process.env` and validates them at boot.
+
 ## Credits (repeat)
 
-This pipeline is powered by Loomio, built over more than a decade by the team at loomio.com. If you find governance tools useful, please support their work at loomio.com. Our gratitude is part of this doc and part of every page at gov.regencivics.earth.
+This pipeline is powered by Loomio, built over more than a decade by the team at loomio.com. If you find governance tools useful, please support their work at loomio.com. Our gratitude is part of this doc and part of every page at gov.regencivics.earth and every tenant instance.

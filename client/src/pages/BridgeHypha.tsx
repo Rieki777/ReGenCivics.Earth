@@ -14,7 +14,7 @@ import { useParams, Link } from "wouter";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";
-import { ArrowRight, ExternalLink, AlertCircle, ArrowLeft, Sparkles, FileText, Wallet, Coins } from "lucide-react";
+import { ArrowRight, ExternalLink, AlertCircle, ArrowLeft, Sparkles, FileText, Wallet, Coins, Zap } from "lucide-react";
 
 export default function BridgeHypha() {
   const params = useParams<{ bridgeKey: string }>();
@@ -27,6 +27,9 @@ export default function BridgeHypha() {
     { enabled: bridgeKey.length >= 6 },
   );
   const markSent = trpc.hyphaBridge.markHandoffSent.useMutation();
+  const claimQuery = trpc.governance.getClaimEligibility.useQuery(undefined, {
+    staleTime: 60 * 1000,
+  });
 
   if (bridgeQuery.isLoading || redirectQuery.isLoading) {
     return (
@@ -50,6 +53,8 @@ export default function BridgeHypha() {
   }
 
   const bridge = bridgeQuery.data;
+  const intent = (bridge as any)?.intent as string | undefined;
+  const claimData = claimQuery.data;
   const payload = (bridge as any).payload as
     | {
         title: string;
@@ -150,6 +155,38 @@ export default function BridgeHypha() {
           ) : (
             <div className="bg-amber-500/15 border border-amber-500/30 rounded-xl p-4 mb-6">
               <p className="text-amber-200 text-sm">This bridge has no payload. It may have been corrupted in transit.</p>
+            </div>
+          )}
+
+          {/* Claim eligibility banner for redeem-internal-tokens intent */}
+          {intent === "redeem-internal-tokens" && claimData && (
+            <div className={`border rounded-xl p-4 mb-4 flex items-start gap-3 ${claimData.eligible ? "bg-[#7dd87d]/10 border-[#7dd87d]/40" : "bg-white/5 border-white/15"}`}>
+              <Zap className={`w-5 h-5 shrink-0 mt-0.5 ${claimData.eligible ? "text-[#7dd87d]" : "text-white/40"}`} />
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Governance token balance: {claimData.balance.toLocaleString()} / {claimData.threshold.toLocaleString()}
+                </p>
+                {claimData.eligible ? (
+                  <p className="text-[#7dd87d] text-xs mt-0.5">
+                    You have reached the claim threshold. Continuing will let you bring these tokens on-chain via Hypha.
+                  </p>
+                ) : (
+                  <p className="text-white/50 text-xs mt-0.5">
+                    You need {(claimData.threshold - claimData.balance).toLocaleString()} more tokens to reach the claim threshold.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Small governance token indicator for non-redeem intents */}
+          {intent !== "redeem-internal-tokens" && claimData && claimData.balance > 0 && (
+            <div className="mb-4 flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+              <Zap className={`w-3.5 h-3.5 shrink-0 ${claimData.eligible ? "text-[#7dd87d]" : "text-white/40"}`} />
+              <p className="text-white/60 text-xs">
+                Governance balance: <span className={claimData.eligible ? "text-[#7dd87d] font-semibold" : "text-white/80"}>{claimData.balance.toLocaleString()}</span>
+                {claimData.eligible && <span className="text-[#7dd87d] ml-1">(claimable)</span>}
+              </p>
             </div>
           )}
 

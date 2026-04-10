@@ -865,7 +865,7 @@ export const governanceRouter = router({
     const rolling30Day = Number(rows[0]?.c ?? 0);
     const warning = await readGovernanceVariable("governance.load.warning_threshold", 15);
     const critical = await readGovernanceVariable("governance.load.critical_threshold", 30);
-    const level = rolling30Day >= critical ? "critical" : rolling30Day >= warning ? "warning" : "ok";
+    const level: "ok" | "warning" | "critical" = rolling30Day >= critical ? "critical" : rolling30Day >= warning ? "warning" : "ok";
     return { rolling30Day, warning, critical, level };
   }),
 

@@ -10,6 +10,8 @@
  *   - markClosingSoon: flip status to closing_soon for decisions inside the window
  */
 import { eq, and, lte, isNull, sql, gt, lt } from "drizzle-orm";
+import { createPublicClient, http, parseAbiItem } from "viem";
+import { base } from "viem/chains";
 import { getDb } from "../db";
 import {
   forumPromotionRequests,
@@ -217,10 +219,11 @@ export async function checkSunsetting(): Promise<JobReport> {
   }
 }
 
-/** Re-check any bridges stuck in handoff_sent for more than 1 hour. The
- * Alchemy webhook is supposed to flip them to on_chain_detected. If it's
- * been a while, log it so a human can investigate. The actual Base RPC
- * lookup is left as a TODO since it requires a Base RPC URL + viem setup. */
+/** Re-check any bridges stuck in handoff_sent for more than 1 hour.
+ * If BASE_RPC_URL is configured, query Base logs for a ProposalCreated
+ * event whose title field contains the bridge key marker. If found,
+ * flip the bridge to on_chain_detected. Falls back to a log-and-return
+ * if the env var is absent. */
 export async function reconcileHyphaBridges(): Promise<JobReport> {
   try {
     const db = await getDb();
@@ -231,10 +234,64 @@ export async function reconcileHyphaBridges(): Promise<JobReport> {
       .from(hyphaBridges)
       .where(and(eq(hyphaBridges.status, "handoff_sent"), lt(hyphaBridges.updatedAt, oneHourAgo)))
       .limit(50);
-    if (stuck.length > 0) {
-      console.warn(`[reconcileHyphaBridges] ${stuck.length} bridges stuck in handoff_sent > 1h`);
+
+    if (stuck.length === 0) {
+      return { job: "reconcileHyphaBridges", ok: true, count: 0 };
     }
-    return { job: "reconcileHyphaBridges", ok: true, count: stuck.length };
+
+    const rpcUrl = process.env.BASE_RPC_URL;
+    if (!rpcUrl) {
+      console.warn(`[reconcileHyphaBridges] ${stuck.length} bridges stuck; BASE_RPC_URL not set, skipping on-chain check`);
+      return { job: "reconcileHyphaBridges", ok: true, count: stuck.length };
+    }
+
+    const publicClient = createPublicClient({ chain: base, transport: http(rpcUrl) });
+    const twoHoursAgo = BigInt(Math.floor((Date.now() - 2 * 60 * 60 * 1000) / 1000));
+
+    // Hypha emits a ProposalCreated(uint256 indexed proposalId, string title, address creator)
+    // event when a proposal is created on-chain. We look for the bridge key marker
+    // (e.g. "[RC-bridge:<id>]") in the title to match it to one of our stuck bridges.
+    const REGEN_ADDR = process.env.REGEN_TOKEN_ADDRESS_BASE as `0x${string}` | undefined;
+    const RCIVICS_ADDR = process.env.RCIVICS_TOKEN_ADDRESS_BASE as `0x${string}` | undefined;
+
+    let resolved = 0;
+    for (const bridge of stuck) {
+      if (!bridge.bridgeKey) continue;
+      const marker = bridge.bridgeKey;
+      try {
+        const contractAddresses = [REGEN_ADDR, RCIVICS_ADDR].filter(Boolean) as `0x${string}`[];
+        if (contractAddresses.length === 0) break;
+
+        // getLogs scans recent blocks; use a block range for the last 2 hours (~3600 blocks at 2s)
+        const latestBlock = await publicClient.getBlockNumber();
+        const fromBlock = latestBlock > BigInt(3600) ? latestBlock - BigInt(3600) : BigInt(0);
+
+        const logs = await publicClient.getLogs({
+          address: contractAddresses,
+          event: parseAbiItem("event ProposalCreated(uint256 indexed proposalId, string title, address indexed creator)"),
+          fromBlock,
+          toBlock: "latest",
+        });
+
+        const match = logs.find((log) => {
+          const title = (log.args as any).title as string | undefined;
+          return title && title.includes(marker);
+        });
+
+        if (match) {
+          await db
+            .update(hyphaBridges)
+            .set({ status: "on_chain_detected", updatedAt: new Date() })
+            .where(eq(hyphaBridges.id, bridge.id));
+          console.log(`[reconcileHyphaBridges] bridge ${bridge.id} flipped to on_chain_detected via Base log`);
+          resolved++;
+        }
+      } catch (rpcErr: any) {
+        console.warn(`[reconcileHyphaBridges] RPC error for bridge ${bridge.id}:`, rpcErr.message);
+      }
+    }
+
+    return { job: "reconcileHyphaBridges", ok: true, count: stuck.length, resolved } as any;
   } catch (err: any) {
     return { job: "reconcileHyphaBridges", ok: false, error: err.message };
   }

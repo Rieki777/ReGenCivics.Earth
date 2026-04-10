@@ -43,6 +43,27 @@ export const authRouter = router({
       success: true,
     } as const;
   }),
+
+  /** Link a Privy identity to the current legacy-auth user. */
+  linkPrivy: protectedProcedure
+    .input(z.object({
+      privyDid: z.string().min(1),
+      baseWalletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await db.getUserByPrivyDid(input.privyDid);
+      if (existing && existing.id !== ctx.user.id) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "This Privy identity is already linked to another account.",
+        });
+      }
+      await db.updateUser(ctx.user.id, {
+        privyDid: input.privyDid,
+        baseWalletAddress: input.baseWalletAddress ?? (ctx.user as any).baseWalletAddress,
+      });
+      return { success: true };
+    }),
 });
 
 export const statsRouter = router({

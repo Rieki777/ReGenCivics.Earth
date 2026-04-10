@@ -75,6 +75,7 @@ import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
 import { DigestPreferences } from "@/components/DigestPreferences";
 import { UserNotificationPreferences } from "@/components/UserNotificationPreferences";
+import { StorytellerToggle } from "@/components/StorytellerToggle";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { WelcomeAboardQuests } from "@/components/WelcomeAboardQuests";
 import { QuestStartPopup, flagShowQuestPrompt } from "@/components/QuestStartPopup";
@@ -3151,53 +3152,11 @@ export default function PlayerProfile() {
         <div className="container mx-auto max-w-4xl text-center">
           <Link href="/">
             <Button variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10">
-              <HomeIcon className="w-4 h-4 mr-2" />
               Back to Home
             </Button>
           </Link>
         </div>
       </section>
-    </div>
-  );
-}
-
-/** Storyteller availability toggle. Wired to players.setStoryteller. */
-function StorytellerToggle() {
-  const { data: me } = trpc.playerProfiles.me.useQuery();
-  const utils = trpc.useUtils();
-  const mutation = trpc.playerProfiles.setStoryteller.useMutation({
-    onSuccess: () => utils.playerProfiles.me.invalidate(),
-  });
-  // Read the flag from the user row, not the profile
-  const [isAvailable, setIsAvailable] = React.useState(false);
-  React.useEffect(() => {
-    if (me && (me as any).availableAsStoryteller !== undefined) {
-      setIsAvailable(!!(me as any).availableAsStoryteller);
-    }
-  }, [me]);
-  return (
-    <div className="glass-panel p-5 rounded-xl">
-      <h2 className="text-base font-bold text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-        Storyteller availability
-      </h2>
-      <p className="text-white/60 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
-        When a governance decision is ratified with high stakes, a non-voting community member writes the narrative. Toggle this on to be in the pool.
-      </p>
-      <label className="flex items-center gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={isAvailable}
-          onChange={() => {
-            const next = !isAvailable;
-            setIsAvailable(next);
-            mutation.mutate({ available: next });
-          }}
-          className="accent-[#7dd87d] w-5 h-5"
-        />
-        <span className="text-white/85 text-sm">
-          {isAvailable ? "You're in the storyteller pool" : "Opt in to be a storyteller"}
-        </span>
-      </label>
     </div>
   );
 }

@@ -187,6 +187,39 @@ const VARIABLE_HELP: Record<string, string> = {
   "referral.max_second_degree_per_month": "Cap on second-degree referral rewards per month.",
 
   "proposals.signal_threshold": "Upvotes a proposal needs before it graduates from the community forum to Hypha governance.",
+
+  // Governance Mechanics (added 2026-04-09)
+  "governance.vote_weight.visitor": "How much a Visitor's stance counts in a Loomio decision. Visitors are still finding their footing, so their vote carries the base weight.",
+  "governance.vote_weight.citizen": "How much a Citizen's stance counts. Citizens have rooted in and carry a slightly stronger voice.",
+  "governance.vote_weight.contributor": "How much a Contributor's stance counts. Contributors are actively running quests and holding work.",
+  "governance.vote_weight.steward": "How much a Steward's stance counts. Stewards are the elders of the community and hold the most governance weight.",
+  "governance.promotion.min_thread_age_hours": "Hours a forum thread must exist before anyone can promote it to a formal decision. Gives ideas time to breathe.",
+  "governance.promotion.min_unique_voices": "Distinct citizens who must have replied in a thread before it can be promoted. Prevents one person railroading a decision.",
+  "governance.promotion.cosigner_window_hours": "Hours for a second citizen to co-sign a promotion. Dual-key promotion so decisions do not start alone.",
+  "governance.promotion.heat_score_threshold": "Composite heat score at which the green Ready-to-promote button lights up on a forum thread.",
+  "governance.default_decision_window_days": "Default days a new decision stays open for voting before it auto-closes.",
+  "governance.reflection_window_hours": "Hours after a decision opens during which people can read and discuss but not yet vote. A pause so the loudest voice does not set the tone.",
+  "governance.closing_soon_window_hours": "How many hours before close a decision gets marked closing soon so people can catch up before the window shuts.",
+  "governance.snapshot_window_hours": "Hours for a snapshot-mode urgent decision. Requires a Steward sign-off and is reserved for true emergencies.",
+  "governance.default_sunset_days": "Default days before a decision sunsets if nobody renews it. Keeps the rulebook fresh and reversible.",
+  "governance.sunset_renewal_warning_days": "Days before a sunset date that a renewal thread auto-creates in the forum so the decision can be re-examined.",
+  "governance.one_way_door_min_window_hours": "Minimum voting window in hours for one-way-door decisions. Hard to reverse moves get extra time.",
+  "governance.storyteller_threshold_tokens": "Internal token value above which a decision auto-assigns a storyteller to write its narrative for the weekly roundup.",
+  "governance.storyteller_narrative_min_words": "Minimum word count for a storyteller narrative to publish.",
+  "governance.storyteller_narrative_max_words": "Maximum word count for a storyteller narrative. Keeps stories tight.",
+  "governance.premortem.auto_create_delay_hours": "Hours after a main decision opens before the pre-mortem sub-poll auto-creates. Pre-mortems ask: if this fails, why?",
+  "governance.premortem.top_concerns_to_address": "Number of top-agreed concerns the proposer must respond to before a decision closes.",
+  "governance.claim_threshold_tokens": "Internal token balance a player must reach before they can claim to Hypha on Base. Batches small wins into meaningful on-chain moves.",
+  "governance.claim_bundle_max_items": "Maximum internal ledger entries bundled into a single Hypha claim proposal. Keeps proposals readable.",
+  "governance.claim_cooldown_days": "Days a player must wait between successful Hypha claims. Smooths on-chain traffic.",
+  "governance.delegation_max_hops": "Maximum transitive hops for proxy delegation. If A delegates to B and B to C, the vote stops flowing after this many hops.",
+  "governance.delegation_is_active": "Whether proxy delegation is turned on right now. Starts off so the community gets used to direct voting first.",
+  "governance.guide.proactive_posts_per_week": "Maximum proactive ReGen Guide posts per tenant per week. Rate limit so the Guide stays in service of the community.",
+  "governance.guide.devil_advocate_unanimity_pct": "Percentage of unanimous agreement at which the ReGen Guide chimes in with a devil-advocate perspective so group-think does not close a decision.",
+  "governance.guide.is_active": "Whether the ReGen Guide can post and comment in governance contexts at all.",
+  "governance.load.warning_threshold": "Rolling 30-day decision count above which the community load bar turns yellow. Signals the community is getting busy.",
+  "governance.load.critical_threshold": "Rolling 30-day decision count above which the load bar turns red and suggests a pause. Prevents governance burnout.",
+  "governance.backfield.review_cadence_days": "Days between Steward reviews of the Back Field backlog. The Back Field is an agricultural metaphor for fallow ideas resting until they are ready.",
 };
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
@@ -244,6 +277,8 @@ function categoryIcon(category: string) {
       return <Leaf className="w-4 h-4" />;
     case "gratitude":
       return <Heart className="w-4 h-4" />;
+    case "governance":
+      return <Network className="w-4 h-4" />;
     default:
       return <Sparkles className="w-4 h-4" />;
   }

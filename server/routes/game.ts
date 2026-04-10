@@ -211,13 +211,31 @@ export const gameRouter = router({
       if (Number(todayCount) > 0) throw new Error("You can send gratitude to this person once per day");
 
       // Record transaction
-      await db.execute(sql`INSERT INTO gratitude_transactions (senderId, receiverId, amount, message, seasonId) VALUES (${ctx.user.id}, ${input.receiverId}, ${input.amount}, ${input.message}, ${season.id})`);
+      const insertResult: any = await db.execute(sql`INSERT INTO gratitude_transactions (senderId, receiverId, amount, message, seasonId) VALUES (${ctx.user.id}, ${input.receiverId}, ${input.amount}, ${input.message}, ${season.id})`);
       await db.execute(sql`UPDATE gratitude_budgets SET spent = spent + ${input.amount} WHERE userId = ${ctx.user.id} AND seasonId = ${season.id}`);
+
+      const gratitudeId = insertResult?.insertId ?? insertResult?.[0]?.insertId ?? null;
 
       // Score events
       try {
         await recordScoreEvent(input.receiverId, "gratitude_received", "scoring.weights.gratitude_received", "gratitude", ctx.user.id);
         await recordScoreEvent(ctx.user.id, "gratitude_sent", "scoring.weights.gratitude_sent", "gratitude", input.receiverId);
+      } catch { /* non-fatal */ }
+
+      // Governance token ledger: credit 5 tokens to recipient for receiving gratitude.
+      try {
+        const { governanceTokenLedger, governanceTenants } = await import("../../drizzle/schema");
+        const { eq: eqDrizzle } = await import("drizzle-orm");
+        const tenants = await db.select({ id: governanceTenants.id }).from(governanceTenants).where(eqDrizzle(governanceTenants.slug, "platform")).limit(1);
+        const tenantId = tenants[0]?.id ?? 1;
+        await db.insert(governanceTokenLedger).values({
+          userId: input.receiverId,
+          tenantId,
+          amount: 5,
+          type: "harvest",
+          sourceRef: gratitudeId ? `gratitude:${gratitudeId}` : "gratitude",
+          description: "Gratitude received",
+        } as any);
       } catch { /* non-fatal */ }
 
       return { ok: true };

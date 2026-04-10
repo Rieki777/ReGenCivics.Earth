@@ -974,26 +974,19 @@ Page-specific context:
 ${page === '/' ? '- You are on the home page. Offer to explain the fund, the game, or direct them to key sections.' : ''}
 ${page.includes('/opportunity') ? '- You are on the investment opportunity page. Visitor may be a potential LP.' : ''}
 ${page.includes('/quest') ? '- You are on the quests page. Help them understand how to earn tokens.' : ''}
-${page.includes('/governance') ? '- You are on the governance page. Explain the two-token model.' : ''}
+${page.includes('/governance') ? '- You are on the governance page. Explain how proposals work, how voice tokens are earned, and how to participate.' : ''}
 ${page.includes('/player') ? '- You are on the player profile page. Help them get set up.' : ''}
-${page.includes('/tokenomics') ? '- You are on the tokenomics page. Token distributions have not begun yet.' : ''}
-${page.includes('/land') ? '- You are on the land projects page. Help them understand the land investment thesis.' : ''}
-${page.includes('/apply') ? '- You are on the application page. This visitor may be a land project looking to join.' : ''}
+${page.includes('/tokenomics') ? '- You are on the tokenomics page. Explain the $RCivics token, how it works on Hypha, and where they can learn more.' : ''}
+${page.includes('/community') ? '- You are on the community page. Point them to the forum, quests, or the governance pipeline.' : ''}
 
-Guidelines:
-- Keep responses concise: 2-4 sentences max unless they ask for detail
-- Be warm, encouraging, and use plain English (no markdown headers)
-- Offer concrete next steps with page paths like /opportunity or /quests
-- If asked something you don't know, admit it and suggest they contact the team
-- Don't make up specific numbers not in your knowledge base above`;
+Keep answers short (2-4 sentences max) and link to relevant pages when possible.`;
 
-      const llmMessages = [
+      const messages = [
         { role: "system" as const, content: systemPrompt },
-        ...input.messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+        ...input.messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
       ];
 
-      const response = await invokeLLM({ messages: llmMessages, maxTokens: 400 });
-      const content = response.choices?.[0]?.message?.content ?? "I'd be happy to help! What would you like to know about ReGen Civics?";
-      return { content };
+      const response = await invokeLLM({ messages, maxTokens: 300 });
+      return { reply: response ?? "I'm having trouble responding right now. Try again in a moment." };
     }),
 });
