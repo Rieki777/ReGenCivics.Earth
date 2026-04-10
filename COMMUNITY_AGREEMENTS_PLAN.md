@@ -635,9 +635,11 @@ There is also `db.ensureEntityForumThread()` in `server/db.ts` (lines 2684-2741)
 
 **5. New general categories already created in DB (no migration needed):**
 
-The old `active-projects` (id 11) and `active-organisations` (id 10) categories have been repurposed:
-- id 11: renamed to "Land General", slug `land-general`, sortOrder 3, icon "Sprout"
-- id 10: renamed to "Alliance General", slug `alliance-general`, sortOrder 7, icon "Users"
+`active-projects` (id 11) and `active-organisations` (id 10) remain untouched with their original slugs -- the server code in `db.ts` and `routes/forum.ts` hardcodes these slugs and the site breaks if they change.
+
+Two new rows were added alongside them:
+- id 26: slug `land-general`, name "Land General", sortOrder 25
+- id 27: slug `alliance-general`, name "Alliance General", sortOrder 26
 
 These are already live in the database. Claude Code needs to:
 - Add `'land-general'` and `'alliance-general'` to `SECTION_SLUGS` in `Community.tsx` so they show in their dedicated sections (not General)
