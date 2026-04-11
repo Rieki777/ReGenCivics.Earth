@@ -38,7 +38,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { GoogleTranslateProvider } from "@/components/GoogleTranslate";
 import "./index.css";
 import { getCsrfToken } from "@/hooks/useCsrfToken";
-import { PrivyAuthProvider } from "./_core/providers/PrivyAuthProvider";
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,11 +115,6 @@ const trpcClient = trpc.createClient({
         if (csrfToken) {
           headers.set("x-csrf-token", csrfToken);
         }
-        // Attach Privy access token when available (dual-auth)
-        const privyToken = typeof window !== "undefined" ? (window as any).__privyAccessToken : null;
-        if (privyToken) {
-          headers.set("Authorization", `Bearer ${privyToken}`);
-        }
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
@@ -134,17 +129,15 @@ const trpcClient = trpc.createClient({
 // clear caches and reload so they don't get stuck on a broken screen.
 try {
   createRoot(document.getElementById("root")!).render(
-    <PrivyAuthProvider>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <GoogleTranslateProvider>
-            <LanguageProvider>
-              <App />
-            </LanguageProvider>
-          </GoogleTranslateProvider>
-        </QueryClientProvider>
-      </trpc.Provider>
-    </PrivyAuthProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <GoogleTranslateProvider>
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
+        </GoogleTranslateProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 // Force SW update on deploy: reload when a new service worker activates
 if ('serviceWorker' in navigator) {

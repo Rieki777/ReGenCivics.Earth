@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Vote, Globe, BarChart3, UserCircle, BookOpen, Lightbulb, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Vote, Globe, BarChart3, UserCircle, BookOpen, Lightbulb, ChevronLeft, ChevronRight, Gamepad2, Shield } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { useCurrentUser } from "@/lib/useCurrentUser";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", Icon: Home },
+  { href: "/game", label: "Game", Icon: Gamepad2 },
   { href: "/proposals", label: "Proposals", Icon: Vote },
   { href: "/bioregion", label: "Bioregion", Icon: Globe },
   { href: "/economy", label: "Economy", Icon: BarChart3 },
@@ -22,6 +24,10 @@ const SECONDARY = [
 export function DesktopSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { isAdmin } = useCurrentUser();
+  const secondary = isAdmin
+    ? [...SECONDARY, { href: "/game/admin/review", label: "Claim Review", Icon: Shield }]
+    : SECONDARY;
 
   return (
     <aside className={cn(
@@ -65,7 +71,7 @@ export function DesktopSidebar() {
 
         <div className="border-t border-[rgba(125,216,125,0.1)] mx-4 my-3" />
 
-        {SECONDARY.map(({ href, label, Icon }) => {
+        {secondary.map(({ href, label, Icon }) => {
           const active = pathname === href;
           return (
             <Link

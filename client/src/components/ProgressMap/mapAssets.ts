@@ -8,6 +8,12 @@ interface ResponsiveAsset {
 }
 
 export const MAP_ASSETS: Record<string, ResponsiveAsset> = {
+  /** New solarpunk village canvas (Sprint Fix 5, 2026-04-11) */
+  village_canvas: {
+    sm: "/map/village-canvas-lg.webp",
+    md: "/map/village-canvas-lg.webp",
+    lg: "/map/village-canvas-lg.webp",
+  },
   hero: {
     sm: "/map/progress-map-full-sm.webp",
     md: "/map/progress-map-full-md.webp",
@@ -52,4 +58,9 @@ export function getMapSrc(asset: ResponsiveAsset): string {
   if (w < 768) return asset.sm;
   if (w < 1280) return asset.md;
   return asset.lg;
+}
+
+/** Per-landmark illustrations, keyed by mapData node id (Fix 5). */
+export function getLandmarkSrc(nodeId: string): string {
+  return `/map/landmarks/${nodeId}.webp`;
 }

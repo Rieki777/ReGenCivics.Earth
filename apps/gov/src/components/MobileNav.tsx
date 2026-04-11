@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Vote, Globe, BarChart3, UserCircle } from "lucide-react";
+import { Home, Vote, Globe, BarChart3, UserCircle, Gamepad2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", Icon: Home },
+  { href: "/game", label: "Game", Icon: Gamepad2 },
   { href: "/proposals", label: "Proposals", Icon: Vote },
   { href: "/bioregion", label: "Bioregion", Icon: Globe },
   { href: "/economy", label: "Economy", Icon: BarChart3 },

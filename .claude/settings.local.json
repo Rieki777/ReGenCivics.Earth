@@ -26,7 +26,12 @@
       "Bash(wc -l echo \"All 1200x630?\" python3 -c \":*)",
       "Bash(grep -c \"api/og\" server/_core/vite.ts echo \"\" echo \"--- Phase 3: Share Prompts + Referral ---\" echo \"SharePrompt.tsx exists:\")",
       "Bash(grep -c \"captureReferral\" client/src/App.tsx echo \"\" echo \"--- Phase 4: Referral System ---\" echo \"sharing.ts router:\")",
-      "Bash(grep -c \"referrals\\\\|shareEvents\" drizzle/schema.ts echo \"\" echo \"--- ROUTE_META Coverage ---\" grep -c \"image:\" server/_core/vite.ts echo \"routes with images in ROUTE_META\" echo \"\" echo \"--- pageSEO CDN check ---\" echo \"Remaining CDN proxy references in SEO.tsx:\" grep -c \"cdnImg\\\\|assets.regencivics\" client/src/components/SEO.tsx echo \"\" echo \"--- Build + Tests ---\" echo \"Build: PASS \\(checked above\\)\" echo \"Tests: 202 passed, 0 failed\")"
+      "Bash(grep -c \"referrals\\\\|shareEvents\" drizzle/schema.ts echo \"\" echo \"--- ROUTE_META Coverage ---\" grep -c \"image:\" server/_core/vite.ts echo \"routes with images in ROUTE_META\" echo \"\" echo \"--- pageSEO CDN check ---\" echo \"Remaining CDN proxy references in SEO.tsx:\" grep -c \"cdnImg\\\\|assets.regencivics\" client/src/components/SEO.tsx echo \"\" echo \"--- Build + Tests ---\" echo \"Build: PASS \\(checked above\\)\" echo \"Tests: 202 passed, 0 failed\")",
+      "Bash(python3:*)",
+      "Bash(git rm:*)",
+      "Bash(npx skills:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsx:*)"
     ]
   }
 }

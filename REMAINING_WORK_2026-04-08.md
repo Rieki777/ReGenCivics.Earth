@@ -102,6 +102,22 @@ The new primary active build prompt. Seven parts, roughly in order:
 | `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` | Code done, audit pending | Quest locking audit doc needed |
 | `CLAUDE_CODE_PROMPT_2026-03-31_GAME_SYSTEM.md` | **REFERENCE** | Full 5-phase game system spec |
 | `FIXES_TO_MAKE_2026-03-29.md` | Reference | Original 22-fix batch (referenced by others) |
+| `FIXES_TO_MAKE_2026-04-10.md` | **NEW -- Active** | 6 new fixes: remove Magicians song, regen intro video gate, map filter overlap, crowd pool card readability, quest village redesign (blocked on art), menu top bar overlap |
+
+---
+
+## New fixes batch (2026-04-10)
+
+| Fix | Priority | Status |
+|---|---|---|
+| Remove "We are ReGen Magicians" song from playlist | Medium | READY TO CODE |
+| First-time visitor "What is Regeneration?" video gate | High | READY TO CODE |
+| Map page: filter bar hidden behind bottom nav | High | READY TO CODE (one-line CSS) |
+| Crowd pooling card readability (opacity, contrast, HD) | Medium | READY TO CODE (needs visual review) |
+| Quest map village illustration redesign | Post-Launch | BLOCKED on art assets from Rye |
+| Menu top bar overlap issues | High | NEEDS MORE DETAIL from Rye |
+
+See `FIXES_TO_MAKE_2026-04-10.md` for full specs and file paths.
 
 ---
 

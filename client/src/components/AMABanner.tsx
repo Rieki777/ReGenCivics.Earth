@@ -45,7 +45,7 @@ export default function AMABanner() {
     <div
       role="banner"
       aria-label="Upcoming AMA announcement"
-      className="fixed top-0 left-0 right-0 z-[200] bg-gradient-to-r from-[#1a3a1a] via-[#0f2a0f] to-[#1a3a1a] border-b border-[#7dd87d]/25 shadow-lg"
+      className="relative z-[60] bg-gradient-to-r from-[#1a3a1a] via-[#0f2a0f] to-[#1a3a1a] border-b border-[#7dd87d]/25 shadow-lg"
     >
       <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center gap-3">
         <Calendar className="w-4 h-4 text-[#7dd87d] flex-shrink-0" aria-hidden="true" />

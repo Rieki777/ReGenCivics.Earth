@@ -27,7 +27,6 @@ import { SEO, pageSEO } from '@/components/SEO';
 import { JsonLD, schemas } from '@/components/JsonLD';
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
-import AMABanner from "@/components/AMABanner";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from '@/lib/trpc';
 import { cdnImg } from "@/lib/utils";
@@ -451,7 +450,6 @@ export default function Schedule() {
   return (
     <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
-      <AMABanner />
       {/* Open Session Announcement Banner */}
       <div className="bg-[#7dd87d]/20 border-b border-[#7dd87d]/30 px-4 py-3 text-center">
         <p className="text-[#7dd87d] font-medium text-sm md:text-base">
@@ -866,7 +864,7 @@ export default function Schedule() {
                           </a>
                         ) : (
                           <a
-                            href={(event as any).zoomUrl ?? RIVERSIDE_INFO.roomUrl}
+                            href={(event as any).riversideRoomUrl ?? RIVERSIDE_INFO.roomUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-medium transition-colors"

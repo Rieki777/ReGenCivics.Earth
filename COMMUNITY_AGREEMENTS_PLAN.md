@@ -36,6 +36,7 @@ All parts 1-15 shipped.
 | 15D | Who Holds the Vote pie/donut image (PIL placeholder, wired) | DONE 2026-04-09 |
 | 15E | Four Voice-Holder Groups node diagram image (PIL placeholder, wired; SVG kept as hidden fallback) | DONE 2026-04-09 |
 | 15F | Nav highlights: Explore Quests bg + Play the Game ghost gold border | DONE 2026-04-09 |
+| 16 | Privy wallet email capture (EmailCaptureModal + auth.syncEmail route) | DONE 2026-04-11 |
 
 Notes for Part 14A and 15B/D/E images: the Gemini API key in `.env` is expired
 ("API_KEY_INVALID. API key expired. Please renew the API key."). All four image
@@ -49,6 +50,60 @@ without any code changes (paths are stable).
 - [HUMAN] Turn ON the Zapier automation: "New YouTube videos to Riverside webhook POST" (currently OFF in Zapier dashboard)
 - [HUMAN] Verify Riverside Pro plan covers Season 2 hours (13 episodes x 2 hours = 26 hours)
 - [FOLLOW-UP] Fix migration runner bug in `scripts/run-migration.ts`: chunks starting with `--` comments silently drop the first SQL statement. Strip comment-only lines from chunk starts, not the whole chunk. See details in the "Known Issues" section below.
+
+---
+
+## Part 16: Privy wallet email capture (2026-04-11)
+
+**Status:** SHIPPED (code written, needs deploy)
+
+Wallet-only users (no email or Google account in `linkedAccounts`) get a one-time
+post-login prompt to add their email via Privy's native `linkEmail()` flow.
+
+### Files changed
+
+**`apps/gov/src/components/EmailCaptureModal.tsx`** (new file)
+- Uses `usePrivy()` from `@privy-io/react-auth`
+- Shows only when `ready && authenticated && !hasEmailOrGoogle && !dismissed`
+- `hasEmailOrGoogle`: checks `user.linkedAccounts` for type `"email"` or `"google_oauth"`
+- `dismissed`: reads `"regen-gov-email-prompt-dismissed"` from localStorage
+- "Skip for now" writes that key and hides forever
+- "Add email" button: stores current `linkedAccounts.length`, then calls `linkEmail()`
+- useEffect watches `user.linkedAccounts` for new entries after linking starts
+- On detection: extracts the email address, calls `fetchFromMainSite("auth.syncEmail", ...)`
+  to write it to `users.email` in MySQL, shows success state for 1.8s, then closes
+
+**`apps/gov/src/app/layout.tsx`** (updated)
+- Added `import { EmailCaptureModal }` and `<EmailCaptureModal />` inside `<PrivyProviderWrapper>`
+
+**`server/routes/auth.ts`** (updated)
+- Added `syncEmail: protectedProcedure` mutation to `authRouter`
+- Input: `z.object({ email: z.string().email().max(320) })`
+- Calls `db.updateUser(ctx.user.id, { email: input.email.toLowerCase().trim() })`
+
+### tRPC call pattern
+
+```ts
+fetchFromMainSite<{ success: boolean }>(
+  "auth.syncEmail",
+  { json: { email: address } },
+  token ?? undefined
+)
+```
+
+Note: the `fetchFromMainSite` helper wraps input as `{ json: ... }` for tRPC mutations
+(matches the tRPC HTTP transport batch format). The `accessToken` is obtained via
+`getAccessToken()` from `usePrivy()` and passed as `Authorization: Bearer <token>`.
+
+### What can go wrong
+
+- If the user dismisses without linking, they won't be prompted again (intended).
+  They can add their email later from their Privy account settings or profile page.
+- Privy's `linkEmail()` opens its own UI overlay. The modal stays visible underneath
+  until Privy's flow resolves.
+- If the backend sync call fails, the modal still closes (Privy already has the email;
+  the backend can re-sync on next login via `linkOrCreatePrivyUser` in `server/db.ts`
+  which reads all linked accounts on every auth).
 
 ---
 

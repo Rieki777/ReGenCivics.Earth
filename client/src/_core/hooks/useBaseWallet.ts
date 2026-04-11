@@ -1,12 +1,8 @@
 /**
- * useBaseWallet: returns the user's Base chain wallet address.
- * Privy mode: reads from embedded wallet.
- * Legacy mode: reads from user.baseWalletAddress in the database.
+ * useBaseWallet: returns the user's Base chain wallet address
+ * from the database (user.baseWalletAddress).
  */
 import { useAuth } from "./useAuth";
-
-const AUTH_PROVIDER = import.meta.env.VITE_AUTH_PROVIDER ?? "privy";
-const HAS_PRIVY = Boolean(import.meta.env.VITE_PRIVY_APP_ID);
 
 export function useBaseWallet(): {
   address: string | null;
@@ -14,14 +10,6 @@ export function useBaseWallet(): {
   loading: boolean;
 } {
   const auth = useAuth();
-
-  if (AUTH_PROVIDER === "privy" && HAS_PRIVY && auth.embeddedWallet) {
-    return {
-      address: auth.embeddedWallet.address,
-      isEmbedded: true,
-      loading: false,
-    };
-  }
 
   return {
     address: (auth.user as any)?.baseWalletAddress ?? null,

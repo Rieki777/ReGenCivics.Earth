@@ -37,6 +37,7 @@ import { orgRatingsRouter } from "./routes/orgRatings";
 import { seedsClaimsRouter } from "./routes/seedsClaims";
 import { toolsRouter } from "./routes/tools";
 import { songsRouter } from "./routes/songs";
+import { claimsRouter } from "./routes/claims";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -170,6 +171,9 @@ export const appRouter = router({
 
   // Hymn Book community song submissions
   songs: songsRouter,
+
+  // Sprint 7: Historical Contribution Claim Flow
+  claims: claimsRouter,
 });
 
 export type AppRouter = typeof appRouter;

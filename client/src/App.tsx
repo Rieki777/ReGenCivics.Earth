@@ -34,6 +34,7 @@ import { useEffect, useState } from "react";
 import { useLocation as useWouterLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 const OnboardingWizard = lazy(() => import("./components/OnboardingWizard").then(m => ({ default: m.OnboardingWizard })));
+const RegenIntroGate = lazy(() => import("./components/RegenIntroGate").then(m => ({ default: m.RegenIntroGate })));
 
 // Routes that bypass site chrome (nav, footer, background effects)
 const ADMIN_ROUTES = ["/admin", "/admin/"];
@@ -397,6 +398,7 @@ function App() {
           {!adminMode && <MobileMoreMenu />}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!adminMode && <OnboardingController />}
+          {!adminMode && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
           <ReturnToHandler />
         </TooltipProvider>
       </ThemeProvider>

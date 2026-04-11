@@ -64,17 +64,11 @@ export default function Navigation() {
   const [mobilePlayGameOpen, setMobilePlayGameOpen] = useState(false);
   const [mobileSeasonsOpen, setMobileSeasonsOpen] = useState(false);
   const [mobileSocialsOpen, setMobileSocialsOpen] = useState(false);
-  const { user, isAuthenticated, loading, logout, login } = useAuth();
+  const { user, isAuthenticated, loading, logout } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
-  // Open Privy modal when available; fall back to the built-in AuthDialog for
-  // self-hosted / legacy-auth forks that don't have Privy configured.
   const handleSignIn = () => {
-    if (login) {
-      login();
-    } else {
-      setAuthDialogOpen(true);
-    }
+    setAuthDialogOpen(true);
   };
 
   const { data: _msgUnreadData } = trpc.messages.unreadCount.useQuery(

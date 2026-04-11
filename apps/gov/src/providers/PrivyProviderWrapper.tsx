@@ -22,7 +22,7 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
           logo: "/regen-gov-icon.svg",
           showWalletLoginFirst: false,
         },
-        loginMethods: ["email", "google", "apple", "wallet"],
+        loginMethods: ["email", "google", "wallet"],
       }}
     >
       {children}

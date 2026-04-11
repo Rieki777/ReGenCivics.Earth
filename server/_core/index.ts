@@ -139,6 +139,30 @@ async function startServer() {
   app.use(cspMiddleware);
   app.use(securityHeadersMiddleware);
   app.set('trust proxy', 1);
+
+  // CORS: allow gov.regencivics.earth (and localhost in dev) to call our API.
+  // This covers the OIDC discovery/JWKS endpoints fetched by the gov app's
+  // backend, and any tRPC calls the gov frontend makes cross-origin.
+  const CORS_ALLOWED_ORIGINS = new Set([
+    "https://gov.regencivics.earth",
+    "https://regencivics.earth",
+    "http://localhost:3000",
+    "http://localhost:5173",
+  ]);
+  app.use("/api", (req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && CORS_ALLOWED_ORIGINS.has(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,X-CSRF-Token");
+      res.setHeader("Vary", "Origin");
+    }
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+    next();
+  });
   
   // Rate limiting on public endpoints
   app.use('/api/trpc/newsletter.subscribe', rateLimitMiddleware(15 * 60 * 1000, 5));

@@ -11,7 +11,6 @@ export interface Song {
 
 export const PLAYLIST: Song[] = [
   { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land", artist: "ReGen Transition Team" },
-  { title: "We are ReGen Magicians", src: "/audio/we-are-regen-magicians.mp3", page: "/quest", artist: "ReGen Transition Team" },
   { title: "We are the Land", src: "/audio/we-are-the-land.mp3", page: "/community", artist: "ReGen Transition Team" },
   { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play", artist: "ReGen Transition Team" },
   { title: "Better & Better & Better", src: "/audio/better-and-better-v2.mp3", page: "/team", artist: "Hymns of the ReGeneration" },
@@ -44,14 +43,14 @@ function loadPersisted(): PersistedState | null {
 
 const PAGE_START_INDEX: Record<string, number> = {
   "/land": 0,
-  "/quest": 1,
-  "/community": 2,
-  "/play": 3,
-  "/team": 4,
-  "/game": 5,
-  "/governance": 6,
-  "/economy": 6,
-  "/tokenomics": 6,
+  "/quest": 0,
+  "/community": 1,
+  "/play": 2,
+  "/team": 3,
+  "/game": 4,
+  "/governance": 5,
+  "/economy": 5,
+  "/tokenomics": 5,
 }
 
 interface AudioContextValue {

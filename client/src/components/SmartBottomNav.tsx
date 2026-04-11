@@ -32,7 +32,6 @@ const PAGE_ACCENTS: Record<string, string> = {
 // Short labels for songs, shown in the music slot when playing
 const SONG_SHORT_LABELS: Record<string, string> = {
   "Wasteland into Wonderland": "Wonderland",
-  "We are ReGen Magicians": "Magicians",
   "We are the Land": "Land",
   "ReGen Transition Team": "Transition",
 };

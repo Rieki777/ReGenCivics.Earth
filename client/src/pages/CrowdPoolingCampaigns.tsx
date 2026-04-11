@@ -93,7 +93,7 @@ export default function CrowdPoolingCampaigns() {
             alt="Crowd Pooling - Community members bringing diverse resources together"
             width="1920"
             height="1080"
-            className="w-full h-full object-cover opacity-30"
+            className="w-full h-full object-cover opacity-40"
             loading="lazy"
           />
         </div>
@@ -112,7 +112,7 @@ export default function CrowdPoolingCampaigns() {
             >
               Crowd Pooling Campaigns
             </h1>
-            <p className="text-white/80 text-lg mb-8">
+            <p className="text-white/95 text-lg mb-8 drop-shadow-sm">
               Discover regenerative land projects and contribute what they actually need, not just money
             </p>
             
@@ -164,13 +164,13 @@ export default function CrowdPoolingCampaigns() {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#7dd87d]"></div>
-            <p className="mt-4 text-[#1a472a]/60">Loading campaigns...</p>
+            <p className="mt-4 text-[#1a472a]/80">Loading campaigns...</p>
           </div>
         ) : filteredCampaigns && filteredCampaigns.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCampaigns.map(campaign => (
               <Link key={campaign.id} href={`/campaign/${campaign.id}`}>
-                <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all border border-[#7dd87d]/20 h-full flex flex-col">
+                <div className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all border border-[#7dd87d]/40 h-full flex flex-col">
                   {/* Cover Image */}
                   <div className="h-44 bg-gradient-to-br from-[#1a472a] to-[#2d5a3d] relative">
                     {(campaign as any).coverImage ? (
@@ -202,9 +202,9 @@ export default function CrowdPoolingCampaigns() {
                     >
                       {campaign.title}
                     </h3>
-                    <p className="text-sm text-[#1a472a]/60 mb-1">{campaign.projectName}</p>
+                    <p className="text-sm text-[#1a472a]/85 mb-1 font-medium">{campaign.projectName}</p>
                     {campaign.location && (
-                      <div className="flex items-center gap-1 text-sm text-[#1a472a]/60">
+                      <div className="flex items-center gap-1 text-sm text-[#1a472a]/85">
                         <MapPin className="w-3 h-3" />
                         {campaign.location}
                       </div>
@@ -212,12 +212,12 @@ export default function CrowdPoolingCampaigns() {
                   </div>
                   
                   {/* Vision / Description */}
-                  <p className="text-[#1a472a]/70 text-sm mb-3 line-clamp-3 flex-grow">
+                  <p className="text-[#1a472a]/90 text-sm mb-3 line-clamp-3 flex-grow leading-relaxed">
                     {campaign.vision || campaign.description}
                   </p>
-                  
+
                   {/* Quick Stats */}
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-[#1a472a]/60">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-[#1a472a]/80">
                     {campaign.landStatus && (
                       <span className="flex items-center gap-1">
                         <Leaf className="w-3 h-3 text-[#4a7c59]" />

@@ -71,7 +71,7 @@ export function cspMiddleware(_req: Request, res: Response, next: NextFunction) 
     "font-src 'self' https://fonts.gstatic.com data:",
     "media-src 'self' https: blob:",
     "connect-src 'self' https: wss:",
-    "frame-src 'self' https://calendly.com https://www.youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://www.vimeo.com https://fast.wistia.net https://www.loom.com https://www.dailymotion.com",
+    "frame-src 'self' https://verify.walletconnect.com https://accounts.google.com https://calendly.com https://www.youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://www.vimeo.com https://fast.wistia.net https://www.loom.com https://www.dailymotion.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -106,7 +106,9 @@ export function securityHeadersMiddleware(_req: Request, res: Response, next: Ne
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 
   // Cross-origin isolation headers
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  // Note: same-origin-allow-popups is required for OAuth popup flows (Google, Apple).
+  // Using same-origin would block OAuth popup windows from communicating back to the parent.
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
 
   next();

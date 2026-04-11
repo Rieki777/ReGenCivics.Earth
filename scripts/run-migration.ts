@@ -70,12 +70,27 @@ async function runMigrationFile(conn: mysql.Connection, filePath: string): Promi
     return false;
   }
 
-  // Read and parse SQL
+  // Read and parse SQL.
+  // Split on semicolons, then for each chunk strip leading comment-only lines
+  // (lines starting with `--` or blank). A chunk that begins with a file-level
+  // comment and then has a real CREATE/INSERT/etc below must still run.
   const sql = fs.readFileSync(filePath, "utf-8");
   const statements = sql
     .split(";")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.startsWith("--"));
+    .map((chunk) => {
+      const lines = chunk.split("\n");
+      let firstReal = 0;
+      while (firstReal < lines.length) {
+        const trimmed = lines[firstReal].trim();
+        if (trimmed.length === 0 || trimmed.startsWith("--")) {
+          firstReal++;
+          continue;
+        }
+        break;
+      }
+      return lines.slice(firstReal).join("\n").trim();
+    })
+    .filter((s) => s.length > 0);
 
   if (statements.length === 0) {
     console.log(`  SKIP: ${filename} (no SQL statements found)`);

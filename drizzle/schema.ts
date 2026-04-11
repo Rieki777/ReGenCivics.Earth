@@ -1,4 +1,4 @@
-import { index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique } from "drizzle-orm/mysql-core";
+import { bigint, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -29,11 +29,11 @@ export const users = mysqlTable("users", {
   rgVoiceWeight: int("rgVoiceWeight").default(1).notNull(),
   /** Whether this user opted in to be assigned as a storyteller for high-stakes decisions. */
   availableAsStoryteller: tinyint("availableAsStoryteller").default(0).notNull(),
-  /** Privy decentralized identifier when the user has linked a Hypha-side wallet. */
+  /** Deprecated: was used for Privy auth integration. Column kept for data preservation. */
   privyDid: varchar("privyDid", { length: 120 }),
   /** Base chain wallet address for receiving Hypha proposal payouts. */
   baseWalletAddress: varchar("baseWalletAddress", { length: 60 }),
-  /** Hash of last Privy access token, used for session binding during dual-auth period. */
+  /** Deprecated: was used for Privy session binding. Column kept for data preservation. */
   privyAccessTokenHash: varchar("privyAccessTokenHash", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -3028,3 +3028,104 @@ export const govDashboardPrefs = mysqlTable("govDashboardPrefs", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
+
+/* ════════════════════════════════════════════════════════════════════
+ * Gov App Sprint 7: Historical Contribution Claim Flow
+ * Migration: 0117_historical_claims.sql
+ * ════════════════════════════════════════════════════════════════════ */
+
+export const historicalClaims = mysqlTable("historicalClaims", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  claimType: mysqlEnum("claimType", ["individual", "organization"]).notNull(),
+  displayName: varchar("displayName", { length: 255 }).notNull(),
+  orgDescription: text("orgDescription"),
+
+  formsOfCapital: json("formsOfCapital").notNull(),
+  duration: mysqlEnum("duration", ["under_1_year", "1_3_years", "3_5_years", "5_10_years", "10_plus_years"]),
+  reach: varchar("reach", { length: 50 }),
+  tangibleOutputs: json("tangibleOutputs").notNull(),
+  description: text("description"),
+  evidenceLinks: json("evidenceLinks").notNull(),
+  whatsAlive: text("whatsAlive"),
+
+  suggestedTier: varchar("suggestedTier", { length: 50 }),
+  suggestedTierUsd: int("suggestedTierUsd"),
+  suggestedTierTokens: bigint("suggestedTierTokens", { mode: "number" }),
+  contributorOverride: mysqlEnum("contributorOverride", ["accept", "higher", "lower"]).default("accept"),
+  overrideReason: text("overrideReason"),
+
+  routeToToolsLibrary: tinyint("routeToToolsLibrary").default(0),
+  routeToLocalScale: tinyint("routeToLocalScale").default(0),
+  routeToGovernance: tinyint("routeToGovernance").default(0),
+  routeToMentoring: tinyint("routeToMentoring").default(0),
+  routeToFundPathway: tinyint("routeToFundPathway").default(0),
+
+  status: mysqlEnum("status", ["draft", "submitted", "under_review", "approved", "adjusted", "flagged", "ratified", "published"]).notNull().default("draft"),
+  currentStep: int("currentStep").notNull().default(1),
+
+  reviewerId: int("reviewerId"),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewDecision: mysqlEnum("reviewDecision", ["confirmed", "adjusted", "flagged"]),
+  reviewNote: text("reviewNote"),
+  adjustedTier: varchar("adjustedTier", { length: 50 }),
+  adjustedTierUsd: int("adjustedTierUsd"),
+  adjustedTierTokens: bigint("adjustedTierTokens", { mode: "number" }),
+
+  finalTier: varchar("finalTier", { length: 50 }),
+  finalTierUsd: int("finalTierUsd"),
+  finalTierTokens: bigint("finalTierTokens", { mode: "number" }),
+  ratifiedAt: timestamp("ratifiedAt"),
+  proposalPartyId: int("proposalPartyId"),
+
+  improvementSuggestion: text("improvementSuggestion"),
+  improvementPostedToForum: tinyint("improvementPostedToForum").default(0),
+  improvementForumPostId: int("improvementForumPostId"),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  submittedAt: timestamp("submittedAt"),
+  publishedAt: timestamp("publishedAt"),
+});
+export type HistoricalClaim = typeof historicalClaims.$inferSelect;
+
+export const toolsLibraryEntries = mysqlTable("toolsLibraryEntries", {
+  id: int("id").autoincrement().primaryKey(),
+  claimId: int("claimId").notNull(),
+  contributorUserId: int("contributorUserId").notNull(),
+  toolName: varchar("toolName", { length: 255 }).notNull(),
+  toolDescription: text("toolDescription").notNull(),
+  toolType: mysqlEnum("toolType", [
+    "tool_software",
+    "curriculum_course",
+    "methodology_framework",
+    "templates_guides",
+    "physical_space",
+    "network_community",
+    "publications_research",
+    "art_media",
+    "financial_infrastructure",
+    "other",
+  ]).notNull(),
+  capitalForm: varchar("capitalForm", { length: 50 }),
+  accessLink: text("accessLink"),
+  usageNotes: text("usageNotes"),
+  status: mysqlEnum("status", ["pending", "published"]).notNull().default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ToolsLibraryEntry = typeof toolsLibraryEntries.$inferSelect;
+
+export const proposalParties = mysqlTable("proposalParties", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  scheduledAt: timestamp("scheduledAt").notNull(),
+  season: int("season").notNull().default(1),
+  videoLink: text("videoLink"),
+  recordingLink: text("recordingLink"),
+  status: mysqlEnum("status", ["scheduled", "in_progress", "completed"]).notNull().default("scheduled"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ProposalParty = typeof proposalParties.$inferSelect;

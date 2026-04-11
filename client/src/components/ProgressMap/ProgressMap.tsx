@@ -7,7 +7,7 @@ import { useState } from "react";
 import { X, ChevronRight, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { PATHS, type MapNode, type PathId } from "./mapData";
-import { MAP_ASSETS, getMapSrc } from "./mapAssets";
+import { MAP_ASSETS } from "./mapAssets";
 import { ProgressMapSVG } from "./ProgressMapSVG";
 import { useProgressMap } from "./useProgressMap";
 import { MapTransition } from "./MapTransition";
@@ -30,9 +30,8 @@ export default function ProgressMap({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#0a1a10] flex flex-col" data-map-overlay>
-      {/* Preload hero map illustration (responsive) */}
-      <link rel="preload" href={MAP_ASSETS.hero.md} as="image" type="image/webp" media="(min-width: 768px)" />
-      <link rel="preload" href={MAP_ASSETS.hero.sm} as="image" type="image/webp" media="(max-width: 767px)" />
+      {/* Preload village canvas (Fix 5) */}
+      <link rel="preload" href={MAP_ASSETS.village_canvas.lg} as="image" type="image/webp" />
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
         <h1

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { PrivyProviderWrapper } from "@/providers/PrivyProviderWrapper";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { MobileNav } from "@/components/MobileNav";
+import { EmailCaptureModal } from "@/components/EmailCaptureModal";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <main className="flex-1 pb-20 md:pb-0">{children}</main>
           </div>
           <MobileNav />
+          <EmailCaptureModal />
         </PrivyProviderWrapper>
       </body>
     </html>

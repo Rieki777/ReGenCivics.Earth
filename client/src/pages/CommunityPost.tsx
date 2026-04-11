@@ -204,7 +204,7 @@ export default function CommunityPost() {
   );
 
   // Detect if this is a land project or alliance org forum space
-  const isEntitySpace = post?.categorySlug === 'active-projects' || post?.categorySlug === 'active-organisations';
+  const isEntitySpace = post?.categorySlug === 'land-projects' || post?.categorySlug === 'alliance-partners';
   const entityOrgName = post?.title
     ?.replace(/ - Land Project Forum$/, '')
     ?.replace(/ - Alliance Organisation Forum$/, '')

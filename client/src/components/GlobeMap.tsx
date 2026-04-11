@@ -1231,7 +1231,9 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
 
   // Mobile-first: on small screens, globe and cards stack vertically
   // On desktop (md+), use the overlay sidebar layout
-  const globeHeight = fullPage ? "calc(100dvh - 64px)" : "500px";
+  // Subtract top Navigation (64px) AND SmartBottomNav (~80px incl. safe-area)
+  // so pins near the bottom of the globe aren't hidden behind the command center.
+  const globeHeight = fullPage ? "calc(100dvh - 144px)" : "500px";
   const mobileGlobeHeight = fullPage ? "50vh" : "300px";
 
   // WebGL fallback: render accessible table when WebGL is unavailable
@@ -1320,7 +1322,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
   return (
     <div className={fullPage ? "min-h-screen bg-[#0a1f14]" : ""}>
       {/* Desktop layout: globe with overlay sidebar */}
-      <div className="hidden md:block relative w-full" style={{ minHeight: fullPage ? "calc(100dvh - 64px)" : "600px" }}>
+      <div className="hidden md:block relative w-full" style={{ minHeight: fullPage ? "calc(100dvh - 144px)" : "600px" }}>
         {/* Globe Container */}
         <div
           ref={globeRef}
@@ -1363,7 +1365,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           </div>
         )}
 
-        {/* Filter Tabs - bottom center */}
+        {/* Filter Tabs - bottom center of the (now shortened) globe */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-[#1a472a]/90 backdrop-blur-md p-2 rounded-full border border-[#4a7c59]/30 z-10">
           <FilterTab label="All" count={counts.all} active={filter === "all"} onClick={() => setFilter("all")} color="bg-white/20 text-white" />
           <FilterTab label="Land Projects" count={counts.land_project} active={filter === "land_project"} onClick={() => setFilter("land_project")} color="bg-[#4a7c59] text-white" />

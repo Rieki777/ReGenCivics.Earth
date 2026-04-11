@@ -302,7 +302,7 @@ export const forumRouter = router({
   activeProjectThreads: publicProcedure.query(async () => {
     const cats = await getCachedCategories();
     // Try multiple slugs that might hold land project threads
-    const LAND_SLUGS = ["active-projects", "land-project-spaces", "land-projects-spaces"];
+    const LAND_SLUGS = ["land-projects", "land-project-spaces", "land-projects-spaces"];
     const cat = cats.find(c => LAND_SLUGS.includes(c.slug));
     if (!cat) return [];
     const posts = await db.listForumPosts(cat.id, 200, 0);

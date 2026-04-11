@@ -25,7 +25,6 @@ import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { isNewsletterSubscribed } from "@/utils/newsletter";
-import AMABanner from "@/components/AMABanner";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
 
@@ -199,7 +198,7 @@ export default function Community() {
   // Slugs shown in dedicated section panels - exclude from General list
   const SECTION_SLUGS = new Set([
     'quests-gameplay', 'epic-quests', 'alliance-partners', 'air-conversations',
-    'active-projects', 'active-organisations', 'land-projects',
+    'land-projects',
     'rites-of-passage', 'welcome-aboard-quests',
     'land-general', 'alliance-general', 'bioregions',
   ]);
@@ -240,7 +239,6 @@ export default function Community() {
     <PageTransition>
     <div className="min-h-screen bg-[#f8f5f0]">
       <SEO {...pageSEO.community} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Community", url: "/community" }]} />
-      <AMABanner />
       <BannerDisplay bannerKey="community-banner" />
 
       {/* Hero Section */}
