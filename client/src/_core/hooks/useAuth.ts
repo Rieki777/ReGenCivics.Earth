@@ -46,6 +46,7 @@ function usePrivyAuthWrapper(options?: UseAuthOptions) {
     isAuthenticated: auth.isAuthenticated,
     refresh: auth.refresh,
     logout: auth.logout,
+    login: auth.login,
     // Privy-specific extras (ignored by legacy consumers)
     privyUser: auth.privyUser,
     embeddedWallet: auth.embeddedWallet,
@@ -121,6 +122,7 @@ function useLegacyAuth(options?: UseAuthOptions) {
     ...state,
     refresh: () => meQuery.refetch(),
     logout,
+    login: null as null, // legacy path: caller should use AuthDialog instead
     privyUser: null,
     embeddedWallet: null,
   };

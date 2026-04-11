@@ -64,8 +64,18 @@ export default function Navigation() {
   const [mobilePlayGameOpen, setMobilePlayGameOpen] = useState(false);
   const [mobileSeasonsOpen, setMobileSeasonsOpen] = useState(false);
   const [mobileSocialsOpen, setMobileSocialsOpen] = useState(false);
-  const { user, isAuthenticated, loading, logout } = useAuth();
+  const { user, isAuthenticated, loading, logout, login } = useAuth();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+
+  // Open Privy modal when available; fall back to the built-in AuthDialog for
+  // self-hosted / legacy-auth forks that don't have Privy configured.
+  const handleSignIn = () => {
+    if (login) {
+      login();
+    } else {
+      setAuthDialogOpen(true);
+    }
+  };
 
   const { data: _msgUnreadData } = trpc.messages.unreadCount.useQuery(
     undefined,
@@ -616,7 +626,7 @@ export default function Navigation() {
                 variant="ghost" 
                 className="flex items-center gap-2 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] hover:text-[#1a472a] rounded-full px-4"
                 style={{ fontFamily: 'var(--font-accent)' }}
-                onClick={() => setAuthDialogOpen(true)}
+                onClick={handleSignIn}
               >
                 <LogIn className="w-4 h-4" />
                 Sign In
@@ -1169,7 +1179,7 @@ export default function Navigation() {
                     className="flex items-center justify-center gap-2 mx-4 py-3 w-[calc(100%-2rem)] bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] rounded-xl transition-all font-medium"
                     style={{ fontFamily: 'var(--font-accent)' }}
                     onClick={() => {
-                      setAuthDialogOpen(true);
+                      handleSignIn();
                       setMobileMenuOpen(false);
                     }}
                   >
