@@ -93,7 +93,7 @@ export default function CrowdPoolingCampaigns() {
             alt="Crowd Pooling - Community members bringing diverse resources together"
             width="1920"
             height="1080"
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover opacity-60"
             loading="lazy"
           />
         </div>
@@ -325,7 +325,4 @@ export default function CrowdPoolingCampaigns() {
             </Link>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
+      </di

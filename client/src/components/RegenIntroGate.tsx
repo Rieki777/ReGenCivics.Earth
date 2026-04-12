@@ -90,22 +90,22 @@ export function RegenIntroGate() {
               We're a fund and a game for healing land and community.
             </p>
             <p className="text-white/55 text-sm max-w-md mx-auto mb-8">
-              First time hearing the word regeneration? We have a short video. Already in the movement? Come on in.
+              Here's a short video that was shared with us. We think they did a beautiful job sharing what the word "regeneration" means. Or jump right on in if you already know the word.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
-                onClick={() => setShowVideo(true)}
+                onClick={dismiss}
                 className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#6bc86b] font-bold"
               >
-                <Play className="w-4 h-4 mr-2" />
-                What is Regeneration?
+                Skip, I'm ready
               </Button>
               <Button
-                onClick={dismiss}
+                onClick={() => setShowVideo(true)}
                 variant="outline"
                 className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 hover:text-[#7dd87d]"
               >
-                Skip, I'm ready
+                <Play className="w-4 h-4 mr-2" />
+                What is Regeneration?
               </Button>
             </div>
           </div>
