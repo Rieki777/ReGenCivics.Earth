@@ -17,6 +17,9 @@ import {
 } from "../lib/hypha-bridge";
 import type { HyphaBridgePayload, HyphaFormKind, HyphaBridgeSource } from "../lib/hypha-bridge/types";
 
+/** $ReGen token contract address on Base. */
+const REGEN_TOKEN_ADDRESS = "0x4E617cd113364193d215d107AdD6fa50418AA2E4" as const;
+
 const formKindSchema = z.enum([
   "propose_contribution",
   "deploy_funds",
@@ -111,4 +114,72 @@ export const hyphaBridgeRouter = router({
 
   /** List the available intents. Useful for admin / debug surfaces. */
   listIntents: publicProcedure.query(() => Object.values(KNOWN_INTENTS)),
+
+  /**
+   * Create a Hypha bridge pre-filled from a quest completion.
+   *
+   * The client sends quest metadata and the player's deliverable URL.
+   * The server builds a full bridge payload and returns bridgeKey + bridgeUrl.
+   * The player is then redirected to /bridge/hypha/:bridgeKey where they
+   * review and click through to Hypha with all fields pre-filled via URL params.
+   */
+  createFromQuest: protectedProcedure
+    .input(
+      z.object({
+        /** e.g. "quest-5" */
+        questId: z.string().min(1).max(40),
+        /** e.g. "Quest 5: Rites of Love" */
+        questTitle: z.string().min(1).max(200),
+        /** Short description of the quest */
+        questDescription: z.string().min(1).max(2000),
+        /** e.g. "A written or recorded reflection on a rite you designed" */
+        questDeliverable: z.string().min(1).max(500),
+        /** How many $ReGen tokens this quest awards */
+        regenReward: z.number().int().positive().max(10000),
+        /** The player's video, article, or other deliverable URL */
+        deliverableUrl: z.string().url(),
+        /** Optional quest card image URL to use as lead image on the proposal */
+        leadImageUrl: z.string().url().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const description = [
+        input.questDescription,
+        "",
+        `Deliverable: ${input.questDeliverable}`,
+        "",
+        `My work: ${input.deliverableUrl}`,
+        "",
+        `Requesting ${input.regenReward} $ReGen tokens + 1 RGVoice for completing ${input.questTitle} in the ReGen Civics Game.`,
+      ].join("\n");
+
+      const payload: HyphaBridgePayload = {
+        source: "quest_completion",
+        sourceId: input.questId,
+        targetDhoSlug: "regen-games",
+        formKind: "propose_contribution",
+        title: input.questTitle,
+        description,
+        payouts: [
+          { amount: String(input.regenReward), token: REGEN_TOKEN_ADDRESS },
+        ],
+        attachments: [
+          {
+            url: input.deliverableUrl,
+            filename: "My deliverable",
+            contentType: "text/html",
+          },
+        ],
+        ...(input.leadImageUrl ? { leadImageUrl: input.leadImageUrl } : {}),
+        initiatorUserId: ctx.user.id,
+        metadata: {
+          questId: input.questId,
+          questTitle: input.questTitle,
+          regenReward: input.regenReward,
+          deliverableUrl: input.deliverableUrl,
+        },
+      };
+
+      return createHyphaBridge(payload);
+    }),
 });

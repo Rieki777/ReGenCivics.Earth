@@ -37,6 +37,7 @@ import { cdnImg } from "@/lib/utils";
 import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
 import { LockedQuestCard } from "@/components/LockedQuestCard";
 import { SeasonProgressRing } from "@/components/SeasonProgressRing";
+import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.webp to this path
 const QUEST_IMG_BASE = cdnImg("https://assets.regencivics.earth/quests");
@@ -155,6 +156,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
   const slug = quest.slug;
   const imgUrl = slug ? questImageUrl(quest.id, slug) : null;
   const shimmerClass = ORIGINAL_QUEST_IDS.has(quest.id) ? 'quest-card-gold' : 'quest-card-green';
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
   return (
     <div
@@ -324,16 +326,24 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
                   Download Quest Image
                 </button>
               )}
-              <a
-                href="https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
                 className="flex items-center gap-1.5 text-xs bg-[#1a472a] hover:bg-[#0f2d1a] text-white px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setSubmitModalOpen(true); }}
               >
                 <ExternalLink className="w-3 h-3" />
                 Submit Proposal on DAO
-              </a>
+              </button>
+              <SubmitToDAOModal
+                isOpen={submitModalOpen}
+                onClose={() => setSubmitModalOpen(false)}
+                questId={questId}
+                questTitle={proposalName}
+                questDescription={quest.description}
+                questDeliverable={quest.deliverable}
+                regenReward={quest.reward.regen}
+                leadImageUrl={imgUrl ?? undefined}
+              />
             </div>
           )}
         </div>
@@ -943,6 +953,30 @@ export default function Quest() {
                 <span className="px-3 py-1 bg-[#7dd87d]/50 text-[#1a472a] rounded-full font-bold">+111 $Regen</span>
                 <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-bold">+1 RGVoice</span>
               </div>
+              {/* Old-Map Style Checklist */}
+              <div className="mt-4 p-5 rounded-xl border-2 border-[#8b7355]/40 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f5e6c8 0%, #e8d5a8 40%, #dcc89a 100%)', boxShadow: 'inset 0 0 20px rgba(139,115,85,0.15), 0 2px 8px rgba(0,0,0,0.1)' }}>
+                <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+                <h4 className="relative text-sm font-bold text-[#5a4230] mb-3 uppercase tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>The Food Foresting Loop</h4>
+                <div className="relative space-y-2">
+                  {[
+                    "Get Delicious Local Fruits",
+                    "Bring Yummy Fruits on a Forest/Nature Walk",
+                    "Eat Yummy Fruits, Save Seeds, Enjoy the Walk",
+                    "Plant Seeds in Good New Homes for Seeds",
+                    "Harvest Wild Fruits Grown by You and Other Players",
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-[#4a7c59] text-base mt-0.5">&#10003;</span>
+                      <span className="text-[#5a4230] text-sm leading-snug" style={{ fontFamily: 'Georgia, serif' }}>{step}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-[#4a7c59] text-base">&#8634;</span>
+                    <span className="text-[#5a4230] text-sm font-semibold italic" style={{ fontFamily: 'Georgia, serif' }}>Repeat</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Mark Complete Button */}
               <div className="pt-4 border-t border-[#7dd87d]/30">
                 <MarkCompleteButton questId="food-foresting" size="md" />
@@ -1016,10 +1050,10 @@ export default function Quest() {
               <Sprout className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h3 className="text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)' }}>
                 Spring Quests
               </h3>
-              <p className="text-[#4a7c59] font-medium">Season of New Beginnings</p>
+              <p className="text-white/90 font-medium" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)' }}>Season of New Beginnings</p>
             </div>
           </div>
           {unlocks && !unlocks.unlockedSeasons.includes("spring") && (
@@ -1047,10 +1081,10 @@ export default function Quest() {
               <Sun className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h3 className="text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)' }}>
                 Summer Quests
               </h3>
-              <p className="text-[#2e7d32] font-medium">Season of Adventure</p>
+              <p className="text-white/90 font-medium" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)' }}>Season of Adventure</p>
             </div>
           </div>
           {unlocks && !unlocks.unlockedSeasons.includes("summer") && (
@@ -1078,10 +1112,10 @@ export default function Quest() {
               <Leaf className="w-7 h-7 text-[#1a472a]" />
             </div>
             <div>
-              <h3 className="text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)' }}>
                 Fall Quests
               </h3>
-              <p className="text-[#d4a574] font-medium">Season of Harvest</p>
+              <p className="text-white/90 font-medium" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)' }}>Season of Harvest</p>
             </div>
           </div>
           {unlocks && !unlocks.unlockedSeasons.includes("fall") && (
@@ -1109,10 +1143,10 @@ export default function Quest() {
               <Snowflake className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h3 className="text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
+              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)' }}>
                 Winter Quests
               </h3>
-              <p className="text-[#8b7355] font-medium">Season of Reflection</p>
+              <p className="text-white/90 font-medium" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)' }}>Season of Reflection</p>
             </div>
           </div>
           {unlocks && !unlocks.unlockedSeasons.includes("winter") && (

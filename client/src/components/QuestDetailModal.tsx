@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
 
 interface QuestStep {
   step: number;
@@ -343,6 +345,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     rewards: { regen: 177, rvoice: 1 },
     deliverable: "A written reflection, video, or recorded conversation showing your NVC practice",
     estimatedTime: "1-2 hours initial, ongoing practice",
+    videoUrl: "https://www.youtube.com/watch?v=nWb2B2uPfMo",
     steps: [
       { step: 1, title: "Take the NVC course", description: "Find the recommended NVC materials and watch the attached course. Online courses, Rosenberg's books, and free recordings of his workshops are all valid starting points." },
       { step: 2, title: "Practice the four components", description: "Observation, Feeling, Need, Request. Apply them in your daily conversations. Start with low-stakes situations before bringing them into high-stakes ones." },
@@ -399,7 +402,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
     deliverable: "A sensory, specific written or recorded account of a future you visited during and after a breathwork session",
     estimatedTime: "3-5 hours (breathwork session + reflection)",
     steps: [
-      { step: 1, title: "Learn your breathwork approach", description: "Holotropic breathwork, Wim Hof, transformational breathing, or any intentional breathing practice. If new to breathwork, start with a guided online session before doing a full session alone." },
+      { step: 1, title: "Learn your breathwork approach", description: "Kriya, Kundalini, Holotropic breathwork, Wim Hof, transformational breathing, or any intentional breathing practice. If new to breathwork, start with a guided online session before doing a full session alone." },
       { step: 2, title: "Prepare your space", description: "Create a comfortable lying-down space where you will not be interrupted for 45-90 minutes. Low light, comfortable temperature. Have a journal nearby for immediately afterward." },
       { step: 3, title: "Set your intention", description: "You are going into this session to vision a specific future: the world 20+ years from now, if things go well. Hold that intention lightly as you begin." },
       { step: 4, title: "Do a full breathwork session", description: "Follow your chosen method for 30-60 minutes. Let the visioning emerge naturally. You may find yourself somewhere unexpected. Go there." },
@@ -473,6 +476,8 @@ export const questDetailsData: Record<string, QuestDetails> = {
 };
 
 export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalProps) {
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+
   if (!isOpen || !quest) return null;
 
   return (
@@ -582,6 +587,29 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
               </a>
             </div>
           )}
+          {/* Video Embed for Quest 10 - NVC */}
+          {quest.id === "quest-10" && (
+            <div className="mb-6">
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/nWb2B2uPfMo"
+                  title="Quest 10: NVC - Introduction Video"
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <a
+                href="https://www.youtube.com/watch?v=nWb2B2uPfMo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-center text-[#4a7c59] hover:text-[#2e7d32] mt-2 block underline"
+              >
+                Watch on YouTube
+              </a>
+            </div>
+          )}
+
           {/* Story card */}
           {quest.storyCard && (
             <div className="mb-6 bg-[#f0ebe3] border border-[#d4a574]/30 rounded-xl px-5 py-4">
@@ -772,16 +800,23 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
               <PlayCircle className="w-4 h-4 mr-2" />
               {quest.videoUrl ? 'Start this Quest' : 'Video Coming Soon'}
             </Button>
-            {/* Finish Quest Button - Links to Hypha contribution page */}
+            {/* Finish Quest Button - opens the SubmitToDAOModal */}
             <Button
               className="bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] hover:from-[#3d6b4a] hover:to-[#256b29] text-white"
-              onClick={() => {
-                window.open('https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution', '_blank');
-              }}
+              onClick={() => setSubmitModalOpen(true)}
             >
               <Send className="w-4 h-4 mr-2" />
               Finish this Quest
             </Button>
+            <SubmitToDAOModal
+              isOpen={submitModalOpen}
+              onClose={() => setSubmitModalOpen(false)}
+              questId={quest.id}
+              questTitle={quest.title}
+              questDescription={quest.description}
+              questDeliverable={quest.deliverable}
+              regenReward={quest.rewards.regen}
+            />
           </div>
         </div>
       </div>

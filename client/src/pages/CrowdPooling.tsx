@@ -49,7 +49,7 @@ export default function CrowdPooling() {
       <SEO {...pageSEO.crowdPooling} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Crowd Pooling", url: "/crowd-pooling" }]} />
       
       {/* Header with Background Image */}
-      <header className="relative bg-[#1a472a] text-white py-4 px-4 sticky top-0 z-50 overflow-hidden">
+      <header className="relative bg-[#1a472a] text-white py-4 px-4 sticky top-16 z-40 overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <img

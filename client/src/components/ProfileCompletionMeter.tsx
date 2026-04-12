@@ -1,9 +1,9 @@
 /**
  * ProfileCompletionMeter
  * Shows profile completeness as a horizontal progress bar + checklist.
+ * Incomplete items are clickable -- clicking them navigates to the right
+ * section/field on the profile so the player knows exactly what to do.
  */
-
-import { useState } from "react";
 
 interface ProfileCompletionMeterProps {
   profile: {
@@ -14,6 +14,8 @@ interface ProfileCompletionMeterProps {
     [key: string]: unknown;
   };
   questsCompleted: string[];
+  /** Called when an incomplete step is clicked. Receives the step label. */
+  onItemClick?: (label: string) => void;
 }
 
 interface Step {
@@ -49,9 +51,11 @@ function getSteps(
   ];
 }
 
-export function ProfileCompletionMeter({ profile, questsCompleted }: ProfileCompletionMeterProps) {
-  const [tooltip, setTooltip] = useState<number | null>(null);
-
+export function ProfileCompletionMeter({
+  profile,
+  questsCompleted,
+  onItemClick,
+}: ProfileCompletionMeterProps) {
   const steps = getSteps(profile, questsCompleted);
   const doneCount = steps.filter((s) => s.done).length;
   const percentage = Math.round((doneCount / steps.length) * 100);
@@ -118,10 +122,10 @@ export function ProfileCompletionMeter({ profile, questsCompleted }: ProfileComp
 
       {/* Checklist */}
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
-        {steps.map((step, idx) => (
+        {steps.map((step) => (
           <li
             key={step.label}
-            style={{ display: "flex", alignItems: "center", gap: "8px", position: "relative" }}
+            style={{ display: "flex", alignItems: "center", gap: "8px" }}
           >
             <span
               style={{
@@ -134,35 +138,34 @@ export function ProfileCompletionMeter({ profile, questsCompleted }: ProfileComp
             >
               {step.done ? "✓" : "○"}
             </span>
-            <span
-              style={{
-                fontSize: "13px",
-                color: step.done ? "#1a472a" : "#4a7c59",
-                opacity: step.done ? 1 : 0.75,
-                cursor: step.done ? "default" : "pointer",
-              }}
-              onMouseEnter={() => { if (!step.done) setTooltip(idx); }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              {step.label}
-            </span>
-            {tooltip === idx && !step.done && (
-              <span
+            {!step.done && onItemClick ? (
+              <button
+                onClick={() => onItemClick(step.label)}
                 style={{
-                  position: "absolute",
-                  left: "140px",
-                  top: "-2px",
-                  background: "#1a472a",
-                  color: "#fff",
-                  fontSize: "11px",
-                  padding: "3px 8px",
-                  borderRadius: "4px",
-                  whiteSpace: "nowrap",
-                  pointerEvents: "none",
-                  zIndex: 10,
+                  fontSize: "13px",
+                  color: "#4a7c59",
+                  opacity: 0.85,
+                  cursor: "pointer",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  textAlign: "left",
+                  textDecoration: "underline",
+                  textDecorationColor: "rgba(74,124,89,0.4)",
+                  textUnderlineOffset: "2px",
                 }}
               >
-                Visit your profile to update.
+                {step.label}
+              </button>
+            ) : (
+              <span
+                style={{
+                  fontSize: "13px",
+                  color: step.done ? "#1a472a" : "#4a7c59",
+                  opacity: step.done ? 1 : 0.75,
+                }}
+              >
+                {step.label}
               </span>
             )}
           </li>

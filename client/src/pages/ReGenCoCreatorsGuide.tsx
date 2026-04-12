@@ -235,7 +235,7 @@ export default function ReGenCoCreatorsGuide() {
       </section>
 
       {/* QUICK NAV */}
-      <section className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-200">
+      <section className="sticky top-16 z-40 bg-white/95 backdrop-blur border-b border-gray-200">
         <div className="container py-4">
           <div className="overflow-x-auto">
             <div className="flex gap-2 min-w-min">

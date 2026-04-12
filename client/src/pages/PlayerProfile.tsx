@@ -585,7 +585,25 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
         {/* Profile Completion */}
         {isOwner && (() => {
           const qc: string[] = (() => { try { return JSON.parse(profile.questsCompleted || "[]"); } catch { return []; } })();
-          return <ProfileCompletionMeter profile={profile} questsCompleted={qc} />;
+          return (
+            <ProfileCompletionMeter
+              profile={profile}
+              questsCompleted={qc}
+              onItemClick={(label) => {
+                if (label === "First quest completed") {
+                  window.location.href = "/quest";
+                  return;
+                }
+                // Switch to settings tab then scroll to the edit panel
+                setActiveTab("settings");
+                setSettingsSection("profile");
+                setTimeout(() => {
+                  const el = document.getElementById("profile-settings-panel");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 150);
+              }}
+            />
+          );
         })()}
 
         {/* Badges */}
@@ -2996,7 +3014,7 @@ export default function PlayerProfile() {
                   </nav>
 
                   {/* Content area */}
-                  <div className="flex-1 min-w-0 space-y-6">
+                  <div id="profile-settings-panel" className="flex-1 min-w-0 space-y-6">
                     {/* Profile section */}
                     {settingsSection === "profile" && (
                       <>
@@ -3048,6 +3066,9 @@ export default function PlayerProfile() {
                         <AnimatedSection animation="slide-up">
                           <GiftsNeedsPanel />
                         </AnimatedSection>
+                        <AnimatedSection animation="slide-up">
+                          <StorytellerToggle />
+                        </AnimatedSection>
                       </>
                     )}
 
@@ -3059,9 +3080,6 @@ export default function PlayerProfile() {
                         </AnimatedSection>
                         <AnimatedSection animation="slide-up">
                           <UserNotificationPreferences currentPrefs={(profile as any).notificationPrefs} />
-                        </AnimatedSection>
-                        <AnimatedSection animation="slide-up">
-                          <StorytellerToggle />
                         </AnimatedSection>
                         <AnimatedSection animation="slide-up">
                           <div className="glass-panel p-5 rounded-xl">

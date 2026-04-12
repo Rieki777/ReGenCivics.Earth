@@ -1366,7 +1366,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         )}
 
         {/* Filter Tabs - bottom center of the (now shortened) globe */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-[#1a472a]/90 backdrop-blur-md p-2 rounded-full border border-[#4a7c59]/30 z-10">
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-[#1a472a]/90 backdrop-blur-md p-2 rounded-full border border-[#4a7c59]/30 z-10">
           <FilterTab label="All" count={counts.all} active={filter === "all"} onClick={() => setFilter("all")} color="bg-white/20 text-white" />
           <FilterTab label="Land Projects" count={counts.land_project} active={filter === "land_project"} onClick={() => setFilter("land_project")} color="bg-[#4a7c59] text-white" />
           <FilterTab label="Organizations" count={counts.organization} active={filter === "organization"} onClick={() => setFilter("organization")} color="bg-[#d4a574] text-[#1a472a]" />
@@ -1693,9 +1693,4 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         {/* Mobile CTAs */}
         <div className="bg-[#0a1f14] px-4 pb-6 flex flex-col gap-2">
           <a href="/apply" className="block w-full text-center text-sm bg-[#7dd87d] text-[#1a472a] py-3 rounded-full font-bold hover:bg-[#6bc86b] transition-colors">Apply as a New Land Project</a>
-          <a href="/connect?path=alliance" className="block w-full text-center text-sm border border-[#d4a574] text-[#d4a574] py-3 rounded-full font-semibold hover:bg-[#d4a574]/10 transition-colors">Join as Alliance Partner</a>
-        </div>
-      </div>
-    </div>
-  );
-}
+          <a href="/connect?path=alliance" className="block w-full text-center text-s

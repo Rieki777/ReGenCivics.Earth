@@ -31,6 +31,7 @@ export type HyphaBridgeSource =
   | "expense"
   | "exit"
   | "redeem_tokens"
+  | "quest_completion"
   | "other";
 
 /** Status of a single bridge instance as it moves through the lifecycle. */

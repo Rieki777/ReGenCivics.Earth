@@ -18,7 +18,8 @@ export type IntentName =
   | "fund-grant-to-deploy-funds"
   | "expense-reimbursement"
   | "membership-exit"
-  | "redeem-internal-tokens";
+  | "redeem-internal-tokens"
+  | "quest-completion";
 
 export interface IntentDescriptor {
   name: IntentName;
@@ -70,5 +71,11 @@ export const KNOWN_INTENTS: Record<IntentName, IntentDescriptor> = {
     source: "redeem_tokens",
     formKind: "redeem_tokens",
     description: "Redeem accumulated internal tokens for on-chain Hypha tokens",
+  },
+  "quest-completion": {
+    name: "quest-completion",
+    source: "quest_completion",
+    formKind: "propose_contribution",
+    description: "Submit a completed quest as a contribution proposal to the ReGen Games DHO",
   },
 };
