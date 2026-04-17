@@ -595,8 +595,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
                   return;
                 }
                 // Switch to settings tab then scroll to the edit panel
-                setActiveTab("settings");
-                setSettingsSection("profile");
+                onGoToSettings?.();
                 setTimeout(() => {
                   const el = document.getElementById("profile-settings-panel");
                   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
