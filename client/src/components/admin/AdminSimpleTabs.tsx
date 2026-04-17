@@ -78,7 +78,7 @@ export function AdminWidgetsTab() {
             <code className="flex-1 text-xs bg-white border border-[#e8e4de] rounded-lg p-3 font-mono text-[#1a472a]/80 break-all select-all">{w.code}</code>
             <button
               onClick={() => navigator.clipboard.writeText(w.code)}
-              className="px-3 py-2 bg-[#7dd87d] text-[#1a472a] text-xs font-bold rounded-lg hover:bg-[#6bc86b] flex-shrink-0"
+              className="px-3 py-2 bg-[#7dd87d] text-[#1a472a] text-xs font-bold rounded-lg hover:bg-[#9de89d] flex-shrink-0"
             >
               Copy
             </button>

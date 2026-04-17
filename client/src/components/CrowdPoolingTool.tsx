@@ -518,7 +518,7 @@ export default function CrowdPoolingTool() {
   // Project setup screen
   if (showSetup) {
     return (
-      <div className="bg-gradient-to-br from-[#f0f7f0] to-[#e8f5e9] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
+      <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0ebe3] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-xl bg-[#7dd87d]/20 flex items-center justify-center">
@@ -711,7 +711,7 @@ export default function CrowdPoolingTool() {
           <Button
             onClick={() => setShowSetup(false)}
             disabled={!isGenericMode && !projectName}
-            className="w-full mt-3 rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white"
+            className="w-full mt-3 rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
           >
             Start Adding Contributions
             <ChevronRight className="w-4 h-4 ml-2" />
@@ -759,7 +759,7 @@ export default function CrowdPoolingTool() {
                 <Button
                   onClick={confirmSaveToProfile}
                   disabled={createSavedContribution.isPending}
-                  className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white"
+                  className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
                 >
                   {createSavedContribution.isPending ? 'Saving...' : 'Save'}
                 </Button>
@@ -854,7 +854,7 @@ export default function CrowdPoolingTool() {
   // Results screen
   if (showResults) {
     return (
-      <div className="bg-gradient-to-br from-[#f0f7f0] to-[#e8f5e9] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
+      <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0ebe3] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
         {/* Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#7dd87d]/20 mb-4">
@@ -880,7 +880,7 @@ export default function CrowdPoolingTool() {
             />
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-[#2e7d32] font-bold">{formatCurrency(grandTotal, currencySymbol)}</span>
+            <span className="text-[#1a472a] font-bold">{formatCurrency(grandTotal, currencySymbol)}</span>
             <span className="text-[#1a472a]/60">of {formatCurrency(targetAmount, currencySymbol)}</span>
           </div>
         </div>
@@ -894,7 +894,7 @@ export default function CrowdPoolingTool() {
                 <Package className="w-5 h-5 text-[#4a7c59]" />
                 <span className="font-bold text-[#1a472a]">Immediate Contributions</span>
               </div>
-              <span className="font-bold text-[#2e7d32]">{formatCurrency(immediateTotal, currencySymbol)}</span>
+              <span className="font-bold text-[#1a472a]">{formatCurrency(immediateTotal, currencySymbol)}</span>
             </div>
             {immediateContributions.length > 0 ? (
               <div className="space-y-2">
@@ -924,7 +924,7 @@ export default function CrowdPoolingTool() {
                 <Clock className="w-5 h-5 text-[#4a7c59]" />
                 <span className="font-bold text-[#1a472a]">Future Value Commitments</span>
               </div>
-              <span className="font-bold text-[#2e7d32]">{formatCurrency(futureTotal, currencySymbol)}</span>
+              <span className="font-bold text-[#1a472a]">{formatCurrency(futureTotal, currencySymbol)}</span>
             </div>
             {futureContributions.length > 0 ? (
               <div className="space-y-2">
@@ -1019,7 +1019,7 @@ export default function CrowdPoolingTool() {
               </p>
               <a
                 href="/crowd-pooling-projects"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#4a7c59] hover:bg-[#2e7d32] text-white text-sm font-medium rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <Users className="w-4 h-4" />
                 View Projects Crowd Pooling
@@ -1033,7 +1033,7 @@ export default function CrowdPoolingTool() {
   
   // Main contribution form
   return (
-    <div className="bg-gradient-to-br from-[#f0f7f0] to-[#e8f5e9] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
+    <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0ebe3] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
       {/* Header with progress */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -1061,7 +1061,7 @@ export default function CrowdPoolingTool() {
       <div className="bg-white rounded-xl p-4 mb-6 border border-[#7dd87d]/30">
         <div className="flex justify-between text-sm mb-2">
           <span className="text-[#1a472a]/60">Your Contribution</span>
-          <span className="font-bold text-[#2e7d32]">
+          <span className="font-bold text-[#1a472a]">
             {formatCurrency(grandTotal, currencySymbol)} / {formatCurrency(targetAmount, currencySymbol)}
           </span>
         </div>
@@ -1119,7 +1119,7 @@ export default function CrowdPoolingTool() {
             <Button
               onClick={addImmediateContribution}
               size="sm"
-              className="bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-lg"
+              className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add
@@ -1217,7 +1217,7 @@ export default function CrowdPoolingTool() {
             <Button
               onClick={addFutureContribution}
               size="sm"
-              className="bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-lg"
+              className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add Role
@@ -1312,7 +1312,7 @@ export default function CrowdPoolingTool() {
                         <p className="text-xs text-[#1a472a]/60 mt-1">
                           {suggestion.weeks} weeks × {suggestion.hoursPerWeek} hrs × {currencySymbol}{suggestion.hourlyRate}/hr
                         </p>
-                        <p className="text-xs font-medium text-[#2e7d32] mt-1">
+                        <p className="text-xs font-medium text-[#1a472a] mt-1">
                           = {formatCurrency(suggestion.weeks * suggestion.hoursPerWeek * suggestion.hourlyRate, currencySymbol)}
                         </p>
                       </button>
@@ -1402,7 +1402,7 @@ export default function CrowdPoolingTool() {
                         </div>
                         <div className="text-right text-sm">
                           <span className="text-[#1a472a]/60">Total: </span>
-                          <span className="font-bold text-[#2e7d32]">{formatCurrency(totalValue, currencySymbol)}</span>
+                          <span className="font-bold text-[#1a472a]">{formatCurrency(totalValue, currencySymbol)}</span>
                         </div>
                       </div>
                       <Button
@@ -1428,7 +1428,7 @@ export default function CrowdPoolingTool() {
         <Button
           onClick={() => setShowResults(true)}
           disabled={grandTotal === 0}
-          className="w-full rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white"
+          className="w-full rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
         >
           View Summary & Download PDF
           <ChevronRight className="w-4 h-4 ml-2" />

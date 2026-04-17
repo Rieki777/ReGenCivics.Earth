@@ -477,7 +477,7 @@ export function ContributionModal({
               <Button
                 onClick={handleSubmit}
                 disabled={submitMutation.isPending}
-                className="flex-1 bg-[#4a7c59] hover:bg-[#2e7d32]"
+                className="flex-1 bg-[#4a7c59] hover:bg-[#1a472a]"
               >
                 {submitMutation.isPending ? (
                   <>
@@ -504,7 +504,7 @@ export function ContributionModal({
             <p className="text-gray-600 mb-6">
               The project team will review your contribution and get back to you soon.
             </p>
-            <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#2e7d32]">
+            <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#1a472a]">
               Close
             </Button>
           </div>

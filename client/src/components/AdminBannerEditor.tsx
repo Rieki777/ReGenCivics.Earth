@@ -152,7 +152,7 @@ export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
               >
                 {isSaving ? (
                   <>
@@ -181,7 +181,7 @@ export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
           </TabsContent>
 
           <TabsContent value="preview" className="space-y-4">
-            <div className="bg-gradient-to-r from-[#7dd87d] via-[#4a9f4a] to-[#7dd87d] text-[#1a472a] py-6 px-4 rounded-lg">
+            <div className="bg-gradient-to-r from-[#7dd87d] via-[#4a7c59] to-[#7dd87d] text-[#1a472a] py-6 px-4 rounded-lg">
               <div className="text-sm sm:text-base font-semibold">
                 <Suspense fallback={<span>...</span>}>
                   <Streamdown>{content}</Streamdown>

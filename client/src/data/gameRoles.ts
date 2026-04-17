@@ -3,6 +3,8 @@
  * 13 sociocratic roles of the Infinite Game + 4 seasonal rhythms.
  */
 
+import { spring, amber, forest } from "@/lib/design-tokens";
+
 export interface GameRole {
   title: string;
   characterName: string;
@@ -95,7 +97,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Land projects report feeling supported (Season Festival survey, target: 4+/5 average)",
     seasons: ["spring"],
     assignment: "Filled, seeking 1-2 co-facilitators",
-    color: "#7dd87d",
+    color: spring.base,
   },
   {
     title: "Alliance Weaver",
@@ -141,7 +143,7 @@ export const gameRoles: GameRole[] = [
     harvest: "At least one partnership that resulted in tangible support for a land project",
     seasons: ["spring", "summer"],
     assignment: "Open",
-    color: "#d4a574",
+    color: amber.tan,
   },
   {
     title: "Incubator Guide",
@@ -186,7 +188,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Guided projects hitting their own self-set milestones (target: 70%+ on track)",
     seasons: ["spring", "summer"],
     assignment: "Open, 2 positions",
-    color: "#4a9f4a",
+    color: forest.sage,
   },
   {
     title: "Forum Gardener",
@@ -231,7 +233,7 @@ export const gameRoles: GameRole[] = [
     harvest: "New members who came back and posted more than once (community retention)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Open",
-    color: "#7dd87d",
+    color: spring.base,
   },
   {
     title: "Game Designer",
@@ -277,7 +279,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Players completing those quests (measured by quest completion count)",
     seasons: ["winter", "spring"],
     assignment: "Partially filled, support needed",
-    color: "#fbbf24",
+    color: amber.tan,
   },
   {
     title: "Treasury Steward",
@@ -322,7 +324,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Community reports zero confusion about where money went (Season Festival survey, target: 4+/5)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Partially filled, seeking support",
-    color: "#4a9f4a",
+    color: forest.sage,
   },
   {
     title: "Storyteller",
@@ -367,7 +369,7 @@ export const gameRoles: GameRole[] = [
     harvest: "New community members who say content brought them here (signup source tracking, target: 10+/season)",
     seasons: ["winter", "spring", "summer"],
     assignment: "Open",
-    color: "#d4a574",
+    color: amber.tan,
   },
   {
     title: "Grand Builder",
@@ -413,7 +415,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Community contributors who merged their first PR (people you enabled)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Partially filled, builders needed",
-    color: "#7dd87d",
+    color: spring.base,
   },
   {
     title: "Security Reviewer",
@@ -458,7 +460,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Zero critical vulnerabilities reaching production",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Golden opportunity",
-    color: "#fbbf24",
+    color: amber.tan,
   },
   {
     title: "Tool Curator",
@@ -503,7 +505,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Tools actually getting used by land projects (usage tracking)",
     seasons: ["winter", "spring"],
     assignment: "Open",
-    color: "#fbbf24",
+    color: amber.tan,
   },
   {
     title: "Quest Steward",
@@ -548,7 +550,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Players completing those specific quests (completion count)",
     seasons: ["winter", "spring", "summer"],
     assignment: "Open",
-    color: "#7dd87d",
+    color: spring.base,
   },
   {
     title: "Outreach Writer",
@@ -593,7 +595,7 @@ export const gameRoles: GameRole[] = [
     harvest: "People who responded or applied (actual human engagement, not open rates)",
     seasons: ["spring", "summer"],
     assignment: "Open",
-    color: "#d4a574",
+    color: amber.tan,
   },
   {
     title: "Skills Builder",
@@ -638,7 +640,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Other contributors actively using those skills (adoption tracking)",
     seasons: ["winter"],
     assignment: "Open",
-    color: "#fbbf24",
+    color: amber.tan,
     specialContent: {
       title: "Build Tools, Get Rewarded",
       body: "You can build tools on your own Claude account and submit them independently. Get a free week of Claude Cowork to start building: https://claude.ai/referral/v8oHxjZJxg?s=cowork&v=apps. If the tools you build end up helping our community, they can earn you revenue for use. Build helpful tools, get rewarded. You choose how to take or distribute the pay. If you apply for and fill the official role, the tools you build become community-owned infrastructure that benefits everyone, just like every other part of this public site. The Game runs for free as a public resource. The core team covers infrastructure and hosting costs. There are no fees on this site unless the community votes to create them.",
@@ -701,7 +703,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Council of Domain Experts seated and operating by Season 3 launch, with at least 5 domain experts participating in committee reviews",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Filled by Rye through Season 2, transitioning to shared Council stewardship in Season 3",
-    color: "#d4a574",
+    color: amber.tan,
     kind: "fund",
   },
   {
@@ -751,7 +753,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Fund reaches its seasonal capital target (Season Festival check, target: 100% or hand-off to next season with clear forward pipeline)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Open, hiring now",
-    color: "#d4a574",
+    color: amber.tan,
     kind: "fund",
   },
   {
@@ -800,7 +802,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Funded projects show positive 12-month regen trajectory on the scoring rubric (Impact Witness verification, target: 80% of portfolio)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Open, hiring now",
-    color: "#d4a574",
+    color: amber.tan,
     kind: "fund",
   },
   {
@@ -849,7 +851,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Portfolio project health scores trend upward quarter over quarter (target: 75% of projects in green or improving status)",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Applications open, activates Q3 2026",
-    color: "#d4a574",
+    color: amber.tan,
     kind: "fund",
   },
   {
@@ -899,7 +901,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Fund passes its annual audit with zero material findings",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Applications open, activates Q3 2026",
-    color: "#d4a574",
+    color: amber.tan,
     kind: "fund",
   },
   {
@@ -948,7 +950,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Annual Impact Report published on time and referenced in the next LP letter",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Applications open, activates Q4 2026",
-    color: "#d4a574",
+    color: amber.tan,
     kind: "fund",
   },
   {
@@ -997,7 +999,7 @@ export const gameRoles: GameRole[] = [
     harvest: "Zero compliance misses across the year and every approved proposal executed in legal form within 30 days",
     seasons: ["winter", "spring", "summer", "fall"],
     assignment: "Applications open, activates Q2 2026",
-    color: "#d4a574",
+    color: amber.tan,
     kind: "fund",
   },
 ];
@@ -1018,7 +1020,7 @@ export const seasons: Season[] = [
       "Tool Curator",
       "Quest Author",
     ],
-    color: "#93c5fd",
+    color: spring.base,
     current: true,
   },
   {
@@ -1036,7 +1038,7 @@ export const seasons: Season[] = [
       "Forum Gardener",
       "Storyteller",
     ],
-    color: "#7dd87d",
+    color: spring.base,
     current: false,
   },
   {
@@ -1052,7 +1054,7 @@ export const seasons: Season[] = [
       "Storyteller",
       "Incubator Guide",
     ],
-    color: "#fbbf24",
+    color: amber.tan,
     current: false,
   },
   {
@@ -1063,7 +1065,7 @@ export const seasons: Season[] = [
     description:
       "We step out of our Infinite Game roles and focus on family, in-person village life, personal projects. The community rests. The treasury and forum roles keep a gentle rhythm, but the pace slows intentionally. We compost what we learned.",
     activeRoles: ["Treasury Steward", "Forum Gardener"],
-    color: "#d4a574",
+    color: amber.tan,
     current: false,
   },
 ];

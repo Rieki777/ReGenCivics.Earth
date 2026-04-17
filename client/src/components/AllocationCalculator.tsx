@@ -19,7 +19,7 @@ import {
 
 const RETURN_SCENARIOS = [
   { label: "Conservative", netIRR: 0.10, cashYield: 0.05, color: "#7dd87d" },
-  { label: "Target", netIRR: 0.15, cashYield: 0.07, color: "#fbbf24" },
+  { label: "Target", netIRR: 0.15, cashYield: 0.07, color: "#d4a574" },
   { label: "Optimistic", netIRR: 0.18, cashYield: 0.09, color: "#f97316" },
 ];
 
@@ -285,7 +285,7 @@ export default function AllocationCalculator() {
               {earmarking && (
                 <div className="mt-4 pt-4 border-t border-white/10 text-sm text-white/70 space-y-2">
                   <p>
-                    <span className="text-[#fbbf24] font-medium">Due Diligence Fee:</span>{" "}
+                    <span className="text-[#d4a574] font-medium">Due Diligence Fee:</span>{" "}
                     If your chosen project doesn't pass our council review, your capital is returned less a{" "}
                     <strong className="text-white">3% fee (max $20,000)</strong> to cover evaluation costs.
                   </p>

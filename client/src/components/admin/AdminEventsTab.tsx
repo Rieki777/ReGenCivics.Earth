@@ -634,7 +634,7 @@ export function AdminEventsTab() {
                 }
               }}
               disabled={rollupMutation.isPending || !rollupSeason.trim()}
-              className="bg-[#7dd87d] hover:bg-[#6bc86b] disabled:opacity-50 text-[#1a472a] px-4 py-1.5 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
+              className="bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-50 text-[#1a472a] px-4 py-1.5 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
             >
               {rollupMutation.isPending ? 'Sending...' : 'Send Rollup'}
             </button>

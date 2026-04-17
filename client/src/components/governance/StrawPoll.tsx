@@ -93,7 +93,7 @@ export function StrawPoll({ strawPollId, onPromote }: Props) {
         <button
           type="button"
           onClick={onPromote}
-          className="mt-3 w-full inline-flex items-center justify-center gap-1.5 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold text-xs py-2 rounded-lg transition-colors"
+          className="mt-3 w-full inline-flex items-center justify-center gap-1.5 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold text-xs py-2 rounded-lg transition-colors"
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
           Strong consensus. Promote to a formal decision?

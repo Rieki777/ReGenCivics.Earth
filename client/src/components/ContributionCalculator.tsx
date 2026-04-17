@@ -472,7 +472,7 @@ export function ContributionCalculator() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button type="button" className="text-[#4a7c59] hover:text-[#2e7d32]">
+                      <button type="button" className="text-[#4a7c59] hover:text-[#1a472a]">
                         <Info className="w-3.5 h-3.5" />
                       </button>
                     </TooltipTrigger>
@@ -507,7 +507,7 @@ export function ContributionCalculator() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button type="button" className="text-[#4a7c59] hover:text-[#2e7d32]">
+                  <button type="button" className="text-[#4a7c59] hover:text-[#1a472a]">
                     <Info className="w-3.5 h-3.5" />
                   </button>
                 </TooltipTrigger>
@@ -557,7 +557,7 @@ export function ContributionCalculator() {
         {/* Total Value */}
         <div className="bg-white rounded-xl p-6 mb-6 text-center border border-[#7dd87d]/30 shadow-lg">
           <p className="text-sm text-[#1a472a]/60 mb-2">Estimated Total Value</p>
-          <p className="text-4xl md:text-5xl font-bold text-[#2e7d32]" style={{ fontFamily: 'var(--font-display)' }}>
+          <p className="text-4xl md:text-5xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
             {formatCurrency(totalValue)}
           </p>
           <p className="text-sm text-[#1a472a]/60 mt-2">across 8 forms of capital</p>
@@ -622,7 +622,7 @@ export function ContributionCalculator() {
               onClick={copyToClipboard}
               variant="outline"
               className={`flex-1 rounded-xl border-[#4a7c59] hover:bg-[#7dd87d]/10 transition-colors ${
-                copied ? 'bg-[#7dd87d]/20 text-[#2e7d32]' : 'text-[#4a7c59]'
+                copied ? 'bg-[#7dd87d]/20 text-[#1a472a]' : 'text-[#4a7c59]'
               }`}
             >
               {copied ? (
@@ -649,7 +649,7 @@ export function ContributionCalculator() {
             </Button>
             <Button
               onClick={() => window.open('https://app.hypha.earth/en/dho/regen-games/agreements', '_blank')}
-              className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white"
+              className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
             >
               Submit Proposal
               <ChevronRight className="w-4 h-4 ml-2" />
@@ -810,7 +810,7 @@ export function ContributionCalculator() {
         {/* Current Capital Value */}
         <div className="mt-4 pt-4 border-t border-[#7dd87d]/20 flex justify-between items-center">
           <span className="text-sm text-[#1a472a]/60">Subtotal for {currentCapital.name}:</span>
-          <span className="font-bold text-[#2e7d32]">{formatCurrency(calculateCapitalValue(currentCapital.id))}</span>
+          <span className="font-bold text-[#1a472a]">{formatCurrency(calculateCapitalValue(currentCapital.id))}</span>
         </div>
       </div>
 
@@ -837,7 +837,7 @@ export function ContributionCalculator() {
         {currentStep < capitalForms.length - 1 ? (
           <Button
             onClick={() => setCurrentStep(currentStep + 1)}
-            className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white"
+            className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
           >
             Next
             <ChevronRight className="w-4 h-4 ml-2" />
@@ -845,7 +845,7 @@ export function ContributionCalculator() {
         ) : (
           <Button
             onClick={() => setShowResults(true)}
-            className="flex-1 rounded-xl bg-[#2e7d32] hover:bg-[#1b5e20] text-white"
+            className="flex-1 rounded-xl bg-[#1a472a] hover:bg-[#0d2818] text-white"
           >
             <Target className="w-4 h-4 mr-2" />
             See Results

@@ -12,12 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Play, AlertTriangle, Users, Shield, Clock, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { CitizenshipBadge } from "@/components/game/TierBadge";
+import { spring, amber, forest } from "@/lib/design-tokens";
 
 const TIERS = [
-  { key: "explorer", label: "Explorer", emoji: "🧭", color: "#7c9a7e" },
-  { key: "co_creator", label: "Co-Creator", emoji: "🔥", color: "#e8a838" },
-  { key: "steward", label: "Steward", emoji: "🏔️", color: "#6b8dd6" },
-  { key: "sage", label: "Sage", emoji: "✨", color: "#c084fc" },
+  { key: "explorer", label: "Explorer", emoji: "🧭", color: spring.soft },
+  { key: "co_creator", label: "Co-Creator", emoji: "🔥", color: amber.tan },
+  { key: "steward", label: "Steward", emoji: "🏔️", color: forest.moss },
+  { key: "sage", label: "Sage", emoji: "✨", color: amber.gold },
 ];
 
 export function AdminCitizenshipTiers() {
@@ -83,7 +84,7 @@ export function AdminCitizenshipTiers() {
           <Button
             onClick={() => runJobMutation.mutate()}
             disabled={runJobMutation.isPending}
-            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]"
+            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
           >
             <Play className="w-4 h-4 mr-1" />
             {runJobMutation.isPending ? "Running..." : "Run Now"}

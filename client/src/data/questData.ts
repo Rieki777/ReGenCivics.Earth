@@ -5,6 +5,7 @@ import {
   Flame, Droplets, Sprout, TreeDeciduous, HomeIcon, Heart, Users,
   Apple, Circle, MessageSquare, GitBranch, Wind, Brain, Sparkles, HeartPulse,
 } from "lucide-react";
+import { forest, amber } from "@/lib/design-tokens";
 
 export const questData = {
   intro: {
@@ -265,19 +266,19 @@ export const QUEST_BEST_SEASONS: Record<string, string[]> = {
 
 export const SEASON_HERO: Record<string, { gradient: string; tagline: string }> = {
   spring: {
-    gradient: "linear-gradient(to bottom, #1a472a, #2d6a4f)",
+    gradient: `linear-gradient(to bottom, ${forest.base}, ${forest.moss})`,
     tagline: "Spring is a good time to plant",
   },
   summer: {
-    gradient: "linear-gradient(to bottom, #1a472a, #40916c)",
+    gradient: `linear-gradient(to bottom, ${forest.base}, ${forest.sage})`,
     tagline: "Summer calls for action",
   },
   fall: {
-    gradient: "linear-gradient(to bottom, #2d3a1e, #52400a)",
+    gradient: `linear-gradient(to bottom, ${forest.deepest}, ${amber.dim})`,
     tagline: "Autumn is the season of harvest",
   },
   winter: {
-    gradient: "linear-gradient(to bottom, #0d1b2a, #1a2f4a)",
+    gradient: `linear-gradient(to bottom, ${forest.deep}, ${forest.moss})`,
     tagline: "Winter is for reflection",
   },
 };

@@ -3,6 +3,8 @@
  * Single source of truth for season ordering, rite IDs, emojis, labels, and palette.
  */
 
+import { season } from "@/lib/design-tokens";
+
 export type Season = "spring" | "summer" | "fall" | "winter";
 
 export const SEASON_ORDER: Season[] = ["spring", "summer", "fall", "winter"];
@@ -43,7 +45,20 @@ export const SEASON_EMOJI: Record<Season, string> = {
   winter: "\u2744\uFE0F",
 };
 
-/** Season color palette for UI components */
+/**
+ * Season color palette for UI components.
+ *
+ * Accent values consume the locked `season.*` tokens from design-tokens.ts.
+ * iconBg and cardBorder Tailwind arbitrary classes must remain as literal
+ * hex strings (Tailwind JIT can only scan static strings) but every hex
+ * below MUST equal the corresponding token. If a token value changes,
+ * update the string here.
+ *
+ * Winter iconBg uses `forest.moss` (not the locked `season.winter` /
+ * `forest.deep`) because forest.deep would render invisibly against
+ * the primary app background. The accent still points at the locked
+ * season.winter token.
+ */
 export const SEASON_PALETTE: Record<Season, {
   iconBg: string;
   parallax: string;
@@ -51,28 +66,28 @@ export const SEASON_PALETTE: Record<Season, {
   accent: string;
 }> = {
   spring: {
-    iconBg: "bg-[#4a7c59]",
+    iconBg: "bg-[#7dd87d]", // = season.spring
     parallax: "/backgrounds/quest-spring-baked.webp",
-    cardBorder: "hover:border-[#4a7c59]/50",
-    accent: "#4a7c59",
+    cardBorder: "hover:border-[#7dd87d]/50", // = season.spring
+    accent: season.spring,
   },
   summer: {
-    iconBg: "bg-[#2e7d32]",
+    iconBg: "bg-[#4a7c59]", // = season.summer
     parallax: "/backgrounds/quest-summer-baked.webp",
-    cardBorder: "hover:border-[#2e7d32]/50",
-    accent: "#2e7d32",
+    cardBorder: "hover:border-[#4a7c59]/50", // = season.summer
+    accent: season.summer,
   },
   fall: {
-    iconBg: "bg-[#d4a574]",
+    iconBg: "bg-[#d4a574]", // = season.autumn
     parallax: "/backgrounds/quest-fall-baked.webp",
-    cardBorder: "hover:border-[#d4a574]/50",
-    accent: "#d4a574",
+    cardBorder: "hover:border-[#d4a574]/50", // = season.autumn
+    accent: season.autumn,
   },
   winter: {
-    iconBg: "bg-[#8b7355]",
+    iconBg: "bg-[#2d5a3d]", // = forest.moss (visible substitute; accent uses locked season.winter)
     parallax: "/backgrounds/quest-winter-baked.webp",
-    cardBorder: "hover:border-[#8b7355]/50",
-    accent: "#8b7355",
+    cardBorder: "hover:border-[#2d5a3d]/50", // = forest.moss
+    accent: season.winter,
   },
 };
 

@@ -137,7 +137,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
             <p className="text-[10px] uppercase tracking-widest text-[#7dd87d] font-bold mb-1">Your decision question</p>
             <p className="text-white/80 text-sm">{decisionQuestion}</p>
           </div>
-          <Button onClick={handleClose} className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold w-full">
+          <Button onClick={handleClose} className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold w-full">
             Done
           </Button>
         </div>
@@ -402,7 +402,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
             <Button
               onClick={handleSubmit}
               disabled={cannotSubmit}
-              className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+              className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {requestMutation.isPending ? "Submitting..." : "Open dual-key promotion"}
             </Button>

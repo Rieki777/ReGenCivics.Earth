@@ -645,6 +645,12 @@ async function startServer() {
         demotions = tierResult.demotions;
       } catch (e: any) { errors.push(`tiers: ${e.message}`); }
 
+      // Event status sweep: upcoming -> live -> completed
+      try {
+        const { sweepEventStatuses } = await import("../lib/eventStatusSweep");
+        await sweepEventStatuses();
+      } catch (e: any) { errors.push(`eventSweep: ${e.message}`); }
+
       const status = errors.length === 0 ? "success" : "partial_failure";
       if (jobId) {
         await database.execute(dbSql`

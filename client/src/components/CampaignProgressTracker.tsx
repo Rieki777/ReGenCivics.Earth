@@ -73,7 +73,7 @@ export function CampaignProgressTracker({
   const progressColor = useMemo(() => {
     if (fundingPercent >= 100) return 'bg-[#4a7c59]';
     if (fundingPercent >= 75) return 'bg-[#7dd87d]';
-    if (fundingPercent >= 50) return 'bg-[#f59e0b]';
+    if (fundingPercent >= 50) return 'bg-[#d4a574]';
     return 'bg-[#4a7c59]';
   }, [fundingPercent]);
 
@@ -81,7 +81,7 @@ export function CampaignProgressTracker({
     return (
       <div className="space-y-2">
         {/* Progress bar */}
-        <div className="w-full bg-[#e8f5e9] rounded-full h-2.5 overflow-hidden">
+        <div className="w-full bg-[#f0f7f0] rounded-full h-2.5 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
             style={{ width: `${fundingPercent}%` }}
@@ -124,7 +124,7 @@ export function CampaignProgressTracker({
   return (
     <div className="bg-white rounded-2xl border border-[#7dd87d]/30 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] px-5 py-4 text-white">
+      <div className="bg-gradient-to-r from-[#4a7c59] to-[#1a472a] px-5 py-4 text-white">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-lg flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
             <TrendingUp className="w-5 h-5" />

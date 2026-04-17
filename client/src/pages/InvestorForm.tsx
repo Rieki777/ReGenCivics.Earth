@@ -338,7 +338,7 @@ export default function InvestorForm() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link href="/">
                   <Button
-                    className="rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#6bc86b] text-[#1a472a]"
+                    className="rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffd700] hover:to-[#9de89d] text-[#1a472a]"
                     style={{ fontFamily: 'var(--font-accent)' }}
                   >
                     Return Home
@@ -999,7 +999,7 @@ export default function InvestorForm() {
               <Button
                 onClick={() => setStep(s => s + 1)}
                 disabled={!canProceed()}
-                className="rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#6bc86b] text-[#1a472a]"
+                className="rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffd700] hover:to-[#9de89d] text-[#1a472a]"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 Continue
@@ -1015,7 +1015,7 @@ export default function InvestorForm() {
               <Button
                 onClick={handleSubmit}
                 disabled={submitMutation.isPending}
-                className="rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#6bc86b] text-[#1a472a]"
+                className="rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffd700] hover:to-[#9de89d] text-[#1a472a]"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 {submitMutation.isPending ? (

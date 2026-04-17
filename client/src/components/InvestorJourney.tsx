@@ -39,7 +39,7 @@ const journeySteps: JourneyStep[] = [
     action: "View Schedule",
     href: "/schedule",
     icon: MessageSquare,
-    color: "#60a5fa",
+    color: "#7dd87d",
   },
   {
     id: "explore",
@@ -48,7 +48,7 @@ const journeySteps: JourneyStep[] = [
     action: "See Projects",
     href: "/map",
     icon: FileText,
-    color: "#fbbf24",
+    color: "#d4a574",
   },
   {
     id: "invest",
@@ -137,7 +137,7 @@ export default function InvestorJourney() {
             </div>
             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[#7dd87d] to-[#fbbf24] rounded-full transition-all duration-700 ease-out"
+                className="h-full bg-gradient-to-r from-[#7dd87d] to-[#d4a574] rounded-full transition-all duration-700 ease-out"
                 style={{ width: `${progress}%` }}
               />
             </div>
