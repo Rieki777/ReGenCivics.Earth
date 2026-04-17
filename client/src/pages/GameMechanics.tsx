@@ -1178,7 +1178,7 @@ export default function GameMechanics() {
                     "Land project evaluation access",
                     "Governance on Hypha (app.hypha.earth)",
                   ],
-                  accent: "#ffd700",
+                  accent: "#f0c040",
                 },
                 {
                   title: "Sage",
@@ -1434,4 +1434,8 @@ export default function GameMechanics() {
               </Card>
             </div>
           </AnimatedSection>
-        </sectio
+        </section>
+      </div>
+    </PageTransition>
+  );
+}

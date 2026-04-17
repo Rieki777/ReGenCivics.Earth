@@ -679,4 +679,7 @@ export default function Fund() {
       {/* Related Content */}
       <RelatedContent pages={relatedContentMap.fund.pages} blog={relatedContentMap.fund.blog} />
     </PageBackground>
-    </Pa
+    </PageWrapper>
+    </HeroPageLoader>
+  );
+}

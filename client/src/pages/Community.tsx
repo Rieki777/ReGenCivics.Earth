@@ -301,7 +301,7 @@ export default function Community() {
             {isAuthenticated ? (
               <Button
                 onClick={() => navigate('/community/new')}
-                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-6 py-2.5 rounded-full"
+                className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold px-6 py-2.5 rounded-full"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -310,7 +310,7 @@ export default function Community() {
             ) : (
               <Button
                 onClick={() => window.location.href = getLoginUrl()}
-                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-6 py-2.5 rounded-full"
+                className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold px-6 py-2.5 rounded-full"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <UserPlus className="w-4 h-4 mr-2" />
@@ -471,7 +471,7 @@ export default function Community() {
           {/* Water */}
           <button
             onClick={() => handleSectionClick('water')}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'water' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'water' ? 'ring-2 ring-[#60a5fa] shadow-lg shadow-[#60a5fa]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a5f] to-[#2d5a7f]" />
             <img src="/community/liminal-village.webp" alt="Liminal Village land project" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:opacity-45 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -481,7 +481,7 @@ export default function Community() {
               <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Water</p>
               <p className="text-white/60 text-xs">Alliance Partners</p>
             </div>
-            {activeSection === 'water' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#7dd87d]" />}
+            {activeSection === 'water' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#60a5fa]" />}
           </button>
 
           {/* Fire */}
@@ -554,10 +554,10 @@ export default function Community() {
                 {searchQuery && (
                   isAuthenticated ? (
                     <Link href="/community/new">
-                      <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">Start a Discussion</Button>
+                      <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">Start a Discussion</Button>
                     </Link>
                   ) : (
-                    <Button onClick={() => window.location.href = getLoginUrl()} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
+                    <Button onClick={() => window.location.href = getLoginUrl()} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">
                       <UserPlus className="w-4 h-4 mr-2" /> Sign In to Participate
                     </Button>
                   )
@@ -584,7 +584,7 @@ export default function Community() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => updateCategoryMutation.mutate({ id: category.id, name: editCategoryName, description: editCategoryDesc })}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"
                           >
                             <Check className="w-3.5 h-3.5" /> Save
                           </button>
@@ -665,7 +665,7 @@ export default function Community() {
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
-                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
+                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
                     </div>
                   </div>
@@ -817,7 +817,7 @@ export default function Community() {
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
-                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
+                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
                     </div>
                   </div>
@@ -903,7 +903,7 @@ export default function Community() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {organisationThreads.map((thread: { id: number; title: string }) => (
                     <Link key={thread.id} href={`/community/post/${thread.id}`}>
-                      <div className="bg-[#f8f5f0] rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="bg-[#f8f5f0] rounded-xl overflow-hidden border border-[#e8e4de] hover:border-[#60a5fa]/40 hover:shadow-md transition-all cursor-pointer group">
                         <div className="h-20 bg-blue-500/10 relative overflow-hidden flex items-center justify-center">
                           <Building2 className="w-8 h-8 text-[#0369a1]/30" />
                         </div>
@@ -914,7 +914,7 @@ export default function Community() {
                             </p>
                             <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                          <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#60a5fa] group-hover:translate-x-1 transition-all flex-shrink-0" />
                         </div>
                       </div>
                     </Link>
@@ -940,7 +940,7 @@ export default function Community() {
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
-                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
+                      <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#6bc86b] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
                     </div>
                   </div>
@@ -1267,4 +1267,9 @@ export default function Community() {
           </div>
         </ScrollRevealMotion>
 
-      </sec
+      </section>
+
+    </div>
+    </PageTransition>
+  );
+}

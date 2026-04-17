@@ -767,4 +767,7 @@ export default function Messages() {
         ) : (
           <EmptyThread />
         )}
-     
+      </div>
+    </div>
+  );
+}

@@ -408,4 +408,7 @@ export default function LOI() {
             <DataProtectionBadge compact className="mt-3 justify-center" />
           </form>
         </Card>
- 
+      </div>
+    </div>
+  );
+}

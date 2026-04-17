@@ -242,7 +242,7 @@ export function MarkCompleteButton({ questId, size = "sm" }: { questId: string; 
             e.stopPropagation();
             markComplete(questId);
           }}
-          className={`flex items-center ${sizeClasses} bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold hover:bg-[#9de89d] transition-colors`}
+          className={`flex items-center ${sizeClasses} bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold hover:bg-[#6bc86b] transition-colors`}
         >
           <RotateCcw className="w-4 h-4" />
           <span>{experiencedLabel}</span>
@@ -295,7 +295,7 @@ export function QuestProgressTracker() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#1a472a] to-[#1a472a] p-6 text-white relative">
+            <div className="bg-gradient-to-r from-[#1a472a] to-[#2e7d32] p-6 text-white relative">
               <button
                 onClick={() => setIsOpen(false)}
                 className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-full transition-colors"
@@ -389,7 +389,7 @@ export function QuestProgressTracker() {
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-[#4a7c59]">+{rewards.regen}</span>
                         <span className="text-gray-300">|</span>
-                        <span className="text-[#1a472a]">+{rewards.rvoice}</span>
+                        <span className="text-[#2e7d32]">+{rewards.rvoice}</span>
                       </div>
                     </button>
                   );
@@ -398,4 +398,18 @@ export function QuestProgressTracker() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t bg-gray-50 flex justify-between i
+            <div className="p-4 border-t bg-gray-50 flex justify-between items-center">
+              <p className="text-xs text-gray-500">
+                Progress saved locally in your browser
+              </p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Sparkles className="w-4 h-4 text-[#7dd87d]" />
+                <span>Click to toggle</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

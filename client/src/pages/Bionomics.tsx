@@ -57,7 +57,7 @@ const C = {
   green: "#7dd87d",
   greenSoft: "#a8e6a8",
   amber: "#d4a574",
-  gold: "#ffd700",
+  gold: "#f0c040",
   teal: "#4a9f9f",
   deep: "#0d2818",
   forest: "#1a472a",
@@ -81,7 +81,7 @@ function BridgeYinYang({ size = 56 }: { size?: number }) {
       <defs>
         <linearGradient id="yyAmber" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#d4a574" />
-          <stop offset="1" stopColor="#ffd700" />
+          <stop offset="1" stopColor="#f0c040" />
         </linearGradient>
         <linearGradient id="yyGreen" x1="1" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#7dd87d" />
@@ -195,7 +195,7 @@ type AttrStatus = "Building" | "Experimenting" | "Reaching";
 
 function statusColor(s: AttrStatus): string {
   if (s === "Building") return "#7dd87d";
-  if (s === "Experimenting") return "#ffd700";
+  if (s === "Experimenting") return "#f0c040";
   return "#7fb8d6";
 }
 
@@ -349,7 +349,7 @@ function ThreeLegsTriangle() {
       <line x1="160" y1="30" x2="160" y2="155" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="3 4" />
       <line x1="290" y1="240" x2="160" y2="155" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="3 4" />
       <line x1="30" y1="240" x2="160" y2="155" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" strokeDasharray="3 4" />
-      <circle cx="160" cy="155" r="6" fill="#ffd700" />
+      <circle cx="160" cy="155" r="6" fill="#f0c040" />
       {/* Top vertex: Hub */}
       <circle cx="160" cy="30" r="22" fill="#1a472a" stroke="#7dd87d" strokeWidth="2" />
       <text x="160" y="36" textAnchor="middle" fontSize="20" fill="#7dd87d">🏡</text>
@@ -741,7 +741,7 @@ export default function Bionomics() {
                 </p>
                 <div className="border-t border-[#7dd87d]/20 pt-5 md:pt-6">
                   <p className="text-white text-base md:text-lg leading-relaxed">
-                    <strong className="text-[#ffd700]">Bionomics</strong>, then, is the
+                    <strong className="text-[#f0c040]">Bionomics</strong>, then, is the
                     study of how life organizes its own economy and how we can mimic those
                     patterns. It is the work of remembering that we are part of an economy
                     that has been running for billions of years, and learning to play inside
@@ -867,7 +867,7 @@ export default function Bionomics() {
                 accent={C.gold}
               />
               <div
-                className="rounded-3xl border border-[#ffd700]/30 p-6 md:p-10 space-y-5 safe-prose"
+                className="rounded-3xl border border-[#f0c040]/30 p-6 md:p-10 space-y-5 safe-prose"
                 style={{ background: "rgba(13,40,24,0.55)" }}
               >
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
@@ -1360,7 +1360,7 @@ export default function Bionomics() {
                 accent={C.gold}
               />
               <div
-                className="rounded-3xl border border-[#ffd700]/25 p-6 md:p-9 space-y-5 safe-prose"
+                className="rounded-3xl border border-[#f0c040]/25 p-6 md:p-9 space-y-5 safe-prose"
                 style={{ background: "rgba(13,40,24,0.55)" }}
               >
                 <p className="text-white/85 text-base md:text-lg leading-relaxed">
@@ -1382,7 +1382,7 @@ export default function Bionomics() {
                 </p>
                 <Link href="/tools">
                   <Button
-                    className="rounded-full bg-[#ffd700] hover:bg-[#e3b035] text-[#0d2818] font-bold px-6"
+                    className="rounded-full bg-[#f0c040] hover:bg-[#e3b035] text-[#0d2818] font-bold px-6"
                     style={{ fontFamily: "var(--font-accent)" }}
                   >
                     See the Tools we are building <ArrowRight className="w-4 h-4 ml-2" />
@@ -1519,7 +1519,7 @@ export default function Bionomics() {
           {/* ════ 16. THE CLOSING ══════════════════════════════════ */}
           <section className="px-4 py-12 md:py-20">
             <div className="container max-w-3xl text-center">
-              <Flame className="w-10 h-10 text-[#ffd700] mx-auto mb-4" />
+              <Flame className="w-10 h-10 text-[#f0c040] mx-auto mb-4" />
               <p className="text-white/70 italic mb-6 max-w-2xl mx-auto">
                 The BioFi Project's 2024 ebook concludes with a clear charge: financial
                 architecture must serve regeneration. Bionomics is one answer.
@@ -1553,7 +1553,7 @@ export default function Bionomics() {
                 <Link href="/quest">
                   <Button
                     size="lg"
-                    className="w-full rounded-2xl bg-[#ffd700] hover:bg-[#e3b035] text-[#0d2818] font-bold"
+                    className="w-full rounded-2xl bg-[#f0c040] hover:bg-[#e3b035] text-[#0d2818] font-bold"
                     style={{ fontFamily: "var(--font-accent)" }}
                   >
                     For players <ArrowRight className="w-4 h-4 ml-1" />
@@ -1577,4 +1577,3 @@ export default function Bionomics() {
     </PageWrapper>
   );
 }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       

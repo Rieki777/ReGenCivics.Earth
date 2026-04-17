@@ -235,4 +235,107 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
                 <button
                   onClick={togglePlay}
                   className="w-10 h-10 bg-[#7dd87d] rounded-full flex items-center justify-center text-[#1a472a] hover:bg-[#9de89d] transition-colors"
-                  ar
+                  aria-label={isPlaying ? 'Pause' : 'Play'}
+                >
+                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                </button>
+                <button onClick={nextSong} className="text-white/60 hover:text-white transition-colors p-2" aria-label="Next song">
+                  <SkipForward className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Volume */}
+              <div className="flex items-center gap-2">
+                <Volume2 className="w-4 h-4 text-white/60" />
+                <input
+                  type="range"
+                  aria-label="Volume"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={volume}
+                  onChange={e => setVolume(Number(e.target.value))}
+                  className="flex-1 accent-[#7dd87d] h-1"
+                />
+              </div>
+
+              {/* Online indicator */}
+              <div className="flex items-center justify-center text-xs">
+                <div className="flex items-center gap-1.5 text-white/60">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                  </span>
+                  <span>Online</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Search tab */}
+          {tab === 'search' && <SearchTab />}
+
+          {/* Recent & Favorites tab */}
+          {tab === 'recent' && <RecentFavoritesTab />}
+
+          {/* Assist tab */}
+          {tab === 'assist' && <AssistTab />}
+
+          {/* Tools tab */}
+          {tab === 'tools' && (
+            <div className="py-2 space-y-3">
+              {pageTools.length > 0 ? (
+                <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${Math.min(pageTools.length, 5)}, 1fr)` }}>
+                  {pageTools.map((tool, i) => (
+                    <button key={i} onClick={tool.action} className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+                      <NavIcon name={tool.icon} className="w-4 h-4" />
+                      <span className="text-[9px]">{tool.label}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-white/30 text-center py-4">No page-specific tools on this page.</p>
+              )}
+
+              {/* Guide + Search quick buttons */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+                <button
+                  onClick={guide.toggle}
+                  aria-label="Guide"
+                  className={`flex flex-col items-center gap-1 py-2 rounded-lg transition-colors ${
+                    guide.isOpen
+                      ? 'bg-[#7dd87d]/20 text-[#7dd87d] ring-1 ring-[#7dd87d]/40'
+                      : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white/80'
+                  }`}
+                >
+                  <span className="text-sm">?</span>
+                  <span className="text-[9px]">Guide</span>
+                </button>
+                <button onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))} aria-label="Search" className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
+                  <Search className="w-4 h-4" />
+                  <span className="text-[9px]">Search</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Map tab */}
+          {tab === 'map' && (
+            <div className="py-2">
+              <ProgressMapMini onExpand={() => setShowMap(true)} />
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+
+    {/* Full-screen map overlay */}
+    {showMap && (
+      <Suspense fallback={null}>
+        <ProgressMap onClose={() => setShowMap(false)} />
+      </Suspense>
+    )}
+    </>
+  )
+}

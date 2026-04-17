@@ -89,4 +89,7 @@ export default function ThreadRoots({ replies, onNodeClick }: ThreadRootsProps) 
             onNodeClick={onNodeClick}
           />
         ))}
-      </u
+      </ul>
+    </details>
+  );
+}

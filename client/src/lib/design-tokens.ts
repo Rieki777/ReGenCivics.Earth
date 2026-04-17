@@ -118,7 +118,7 @@ export const DEPRECATED_COLORS = {
   "#2e7d32": forest.base,    // material green -> forest.base
   "#a5d6a7": spring.soft,
   "#e8f5e9": parchment.whisper,
-  "#4a9f9f": forest.sage,    // teal drift -> sage
+  "#4a9f9f": amber.gold,     // alliance teal -> amber.gold (matches governanceSlices)
   "#fbbf24": amber.tan,      // tailwind amber -> amber.tan
   "#f59e0b": amber.dim,
   "#d4a017": amber.dim,

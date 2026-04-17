@@ -1014,7 +1014,7 @@ export default function Governance() {
               >
                 <defs>
                   <radialGradient id="fundCenter" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#ffd700" stopOpacity="0.95" />
+                    <stop offset="0%" stopColor="#f0c040" stopOpacity="0.95" />
                     <stop offset="60%" stopColor="#d4a574" stopOpacity="0.55" />
                     <stop offset="100%" stopColor="#1a472a" stopOpacity="0" />
                   </radialGradient>
@@ -1026,16 +1026,16 @@ export default function Governance() {
                 <line x1="300" y1="210" x2="480" y2="340" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
                 {/* Center: The Fund */}
                 <circle cx="300" cy="210" r="80" fill="url(#fundCenter)" />
-                <circle cx="300" cy="210" r="58" fill="#1a472a" stroke="#ffd700" strokeWidth="2" />
-                <text x="300" y="200" textAnchor="middle" fill="#ffd700" fontFamily="serif" fontSize="14" fontWeight="700">ReGen Civics</text>
-                <text x="300" y="220" textAnchor="middle" fill="#ffd700" fontFamily="serif" fontSize="14" fontWeight="700">Fund</text>
+                <circle cx="300" cy="210" r="58" fill="#1a472a" stroke="#f0c040" strokeWidth="2" />
+                <text x="300" y="200" textAnchor="middle" fill="#f0c040" fontFamily="serif" fontSize="14" fontWeight="700">ReGen Civics</text>
+                <text x="300" y="220" textAnchor="middle" fill="#f0c040" fontFamily="serif" fontSize="14" fontWeight="700">Fund</text>
                 <text x="300" y="240" textAnchor="middle" fill="#7dd87d" fontFamily="sans-serif" fontSize="10">$RCivics</text>
                 {/* 4 voice-holder nodes */}
                 {[
                   { cx: 120, cy: 80, label1: 'Council of', label2: 'Domain Experts', accent: '#d4a574' },
                   { cx: 480, cy: 80, label1: 'Land Project', label2: 'Stewards', accent: '#7dd87d' },
                   { cx: 120, cy: 340, label1: 'Alliance', label2: 'Partners', accent: '#4a9f9f' },
-                  { cx: 480, cy: 340, label1: 'Investor', label2: 'Voice', accent: '#ffd700' },
+                  { cx: 480, cy: 340, label1: 'Investor', label2: 'Voice', accent: '#f0c040' },
                 ].map((n) => (
                   <g key={`${n.cx}-${n.cy}`}>
                     <circle cx={n.cx} cy={n.cy} r="50" fill="#0d2818" stroke={n.accent} strokeWidth="2" />
@@ -1062,8 +1062,8 @@ export default function Governance() {
                 <p className="text-white/60 text-sm"><strong>Selection:</strong> Domain experts selected by all voice holders</p>
               </div>
               
-              <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#4a7c59]">
-                <h3 className="text-xl font-bold text-[#4a7c59] mb-3">2. Land Project Representatives</h3>
+              <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#4a9f4a]">
+                <h3 className="text-xl font-bold text-[#4a9f4a] mb-3">2. Land Project Representatives</h3>
                 <p className="text-white/80 mb-3"><strong>Role:</strong> Ground-truth perspective on regenerative implementation</p>
                 <ul className="text-white/70 text-sm space-y-1 ml-4 mb-3">
                   <li>• Provide feedback on fund mechanisms and support structures</li>
@@ -1330,4 +1330,15 @@ export default function Governance() {
                 </Button>
               </a>
               <a href="https://app.hypha.earth/en/dho/regen-games/agreements" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 font-b
+                <Button size="lg" variant="outline" className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 font-bold">
+                  Explore Game Governance →
+                </Button>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    </PageWrapper>
+  );
+}

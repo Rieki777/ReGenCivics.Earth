@@ -401,6 +401,7 @@ For each route, write a small `AUDIT_{route}.md` summary under `audits/` with pa
 | V5 | Sweep Tier 2 and Tier 3 drift hexes to canonical tokens across `client/src`, `server/`, `apps/gov/src/` (sed mass-replace, 190+ occurrences cleaned, including uppercase variants). Only remaining hexes are `DEPRECATED_COLORS` docs in `design-tokens.ts`, archived one-pagers, and the seed-forum-posts script. | DONE |
 | V6 | Remove blue and purple drift from investor flow | DONE |
 | V6b | Normalize `#f0c040` → `amber.gold` across Governance SVG and Game page gradients | DONE |
+| V6c | Swap Alliance teal `#4a9f9f` → `amber.gold` (`#ffd700`) across Tokenomics (18), Governance (10), apps/gov economy page (1), and update `DEPRECATED_COLORS` comment. Matches `governanceSlices` Alliance Partners slot. | DONE |
 | V7 | Audit remaining Tier 3 routes | QUEUED |
 | V8 | Consolidate radius, shadow, button primitives | QUEUED |
 | V9 | Enforce typography scale in `index.css` `@layer base` | QUEUED |

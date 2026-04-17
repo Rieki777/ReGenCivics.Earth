@@ -5,7 +5,7 @@ const REGEN_STATS = [
   { label: "Total supply", value: "10,000,000", icon: Coins, color: "#7dd87d" },
   { label: "Active holders", value: "247", icon: Wallet, color: "#7dd87d" },
   { label: "Staked in governance", value: "1,240,000", icon: TrendingUp, color: "#d4a574" },
-  { label: "In escrow (milestones)", value: "380,000", icon: Activity, color: "#4a9f9f" },
+  { label: "In escrow (milestones)", value: "380,000", icon: Activity, color: "#ffd700" },
 ];
 
 const DISTRIBUTION = [

@@ -148,4 +148,16 @@ export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbac
                   className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                     currentSection === section.id
                       ? 'bg-[#7dd87d] text-[#1a472a] font-semibold'
-                      : 'bg-whi
+                      : 'bg-white/5 text-white hover:bg-white/10'
+                  }`}
+                >
+                  {section.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

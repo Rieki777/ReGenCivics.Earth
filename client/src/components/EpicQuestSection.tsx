@@ -195,4 +195,42 @@ export function EpicQuestSection() {
             </span>
           </div>
           {isLocked && unlocks && (
-            <div className="mt-4 inline-flex items-center gap-2 bg-white/5 border border-wh
+            <div className="mt-4 inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2">
+              <Lock className="w-4 h-4 text-emerald-400/70" />
+              <span className="text-white/60 text-sm">
+                Complete all 13 Rites of Passage to access Epic Quests
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Epic carousel - all quests in one carousel, ordered by tier */}
+        <div className={isLocked ? "opacity-40 grayscale pointer-events-none" : ""}>
+          <QuestCarousel totalCount={sortedQuests.length}>
+            {sortedQuests.map((quest, i) => (
+              <EpicCard
+                key={quest.id}
+                quest={quest}
+                staggerDelay={celebrating ? i * 100 : undefined}
+              />
+            ))}
+          </QuestCarousel>
+        </div>
+
+        {/* CTA */}
+        <div className="text-center mt-8">
+          <Link href="/community">
+            <span className="inline-block px-8 py-3 rounded-full font-bold text-base cursor-pointer transition-colors shadow-lg shadow-[#7dd87d]/10 hover:bg-[#6bc86b]"
+              style={{ backgroundColor: "#7dd87d", color: "#0a1f0f" }}
+            >
+              Join the Quest
+            </span>
+          </Link>
+          <p className="mt-4 text-white/60 text-sm">
+            Connect with others working on these in the community forum.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}

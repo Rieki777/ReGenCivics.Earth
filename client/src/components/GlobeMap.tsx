@@ -659,7 +659,7 @@ function EntityCard({
               <a
                 href={applyUrl}
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs bg-[#7dd87d] text-[#1a472a] px-3 py-1.5 rounded-full font-semibold hover:bg-[#9de89d] transition-colors"
+                className="inline-flex items-center gap-1 text-xs bg-[#7dd87d] text-[#1a472a] px-3 py-1.5 rounded-full font-semibold hover:bg-[#6bc86b] transition-colors"
               >
                 {entity.type === "organization" ? "Work with ReGens" : "Apply"}
               </a>
@@ -956,14 +956,14 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     const globe = globeInstanceRef.current;
 
     const getColor = (type: EntityType, isGlobal?: boolean) => {
-      if (isGlobal) return "#f0f7f0"; // sky blue for orbiting
+      if (isGlobal) return "#87ceeb"; // sky blue for orbiting
       switch (type) {
         case "land_project":
           return "#7dd87d";
         case "organization":
           return "#d4a574";
         case "applicant":
-          return "#f0f7f0";
+          return "#87ceeb";
       }
     };
 
@@ -1046,7 +1046,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               const layerBot = canopyTop + (canopyBot - canopyTop) * ((i + 1.3) / layers) * 0.75;
               const widthFrac = 0.35 + (i / layers) * 0.65;
               const halfW = cx * widthFrac;
-              const darkGreen = i % 2 === 0 ? color : (color === "#a3e635" ? "#84cc16" : color === "#7dd87d" ? "#5cb85c" : "#4a7c59");
+              const darkGreen = i % 2 === 0 ? color : (color === "#a3e635" ? "#84cc16" : color === "#7dd87d" ? "#5cb85c" : "#4a9f4a");
               const opacity = 0.75 + (layers - i) * 0.06;
               triangles += `<polygon points="${cx},${layerTop} ${cx + halfW},${layerBot} ${cx - halfW},${layerBot}" fill="${darkGreen}" opacity="${opacity}" />`;
             }
@@ -1142,7 +1142,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           // Satellite marker (50% smaller: 40px instead of 80px)
           el.style.cssText = "cursor:pointer;transform:translate(-50%,-50%);pointer-events:auto;";
           const shortName = d.name.length > 12 ? d.name.split(" ")[0] : d.name;
-          el.innerHTML = '<div style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f0f7f0,#2563eb,#1e3a5f);box-shadow:0 0 15px rgba(135,206,235,0.6),0 0 30px rgba(135,206,235,0.3),inset 0 0 10px rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;position:relative;"><div style="position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(135,206,235,0.3);"></div><div style="color:white;font-size:7px;font-weight:700;text-align:center;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,0.8);font-family:var(--font-display);padding:2px;">' + escapeHtml(shortName) + '</div></div><div style="text-align:center;margin-top:2px;color:#f0f7f0;font-size:8px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.9);white-space:nowrap;font-family:var(--font-display);">' + escapeHtml(d.name) + '</div>';
+          el.innerHTML = '<div style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#87ceeb,#2563eb,#1e3a5f);box-shadow:0 0 15px rgba(135,206,235,0.6),0 0 30px rgba(135,206,235,0.3),inset 0 0 10px rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;position:relative;"><div style="position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(135,206,235,0.3);"></div><div style="color:white;font-size:7px;font-weight:700;text-align:center;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,0.8);font-family:var(--font-display);padding:2px;">' + escapeHtml(shortName) + '</div></div><div style="text-align:center;margin-top:2px;color:#87ceeb;font-size:8px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.9);white-space:nowrap;font-family:var(--font-display);">' + escapeHtml(d.name) + '</div>';
           el.onclick = () => {
             setSelectedEntity(d);
             setSidebarOpen(true);
@@ -1266,7 +1266,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 count={f === "all" ? allEntities.length : allEntities.filter(e => e.type === f).length}
                 active={filter === f}
                 onClick={() => setFilter(f)}
-                color={f === "all" ? "bg-white/20 text-white" : f === "land_project" ? "bg-[#4a7c59] text-white" : f === "organization" ? "bg-[#d4a574] text-[#1a472a]" : "bg-[#f0f7f0] text-[#1a472a]"}
+                color={f === "all" ? "bg-white/20 text-white" : f === "land_project" ? "bg-[#4a7c59] text-white" : f === "organization" ? "bg-[#d4a574] text-[#1a472a]" : "bg-[#87ceeb] text-[#1a472a]"}
               />
             ))}
           </div>
@@ -1289,7 +1289,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         entity.type === "land_project" ? "bg-[#4a7c59]/20 text-[#4a7c59]" :
                         entity.type === "organization" ? "bg-[#d4a574]/20 text-[#d4a574]" :
-                        "bg-[#f0f7f0]/20 text-[#f0f7f0]"
+                        "bg-[#87ceeb]/20 text-[#87ceeb]"
                       }`}>
                         {entity.type === "land_project" ? "Land Project" : entity.type === "organization" ? "Alliance Org" : "Applicant"}
                       </span>
@@ -1371,7 +1371,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           <FilterTab label="Land Projects" count={counts.land_project} active={filter === "land_project"} onClick={() => setFilter("land_project")} color="bg-[#4a7c59] text-white" />
           <FilterTab label="Organizations" count={counts.organization} active={filter === "organization"} onClick={() => setFilter("organization")} color="bg-[#d4a574] text-[#1a472a]" />
           {counts.applicant > 0 && (
-            <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#f0f7f0] text-[#1a472a]" />
+            <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#87ceeb] text-[#1a472a]" />
           )}
           <button
             onClick={() => setShowInactive(s => !s)}
@@ -1492,7 +1492,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 )}
               </div>
               <div className="p-3 border-t border-[#4a7c59]/20">
-                <a href="/apply" className="block w-full text-center text-xs bg-[#7dd87d] text-[#1a472a] py-2 rounded-full font-bold hover:bg-[#9de89d] transition-colors">Apply as a New Land Project</a>
+                <a href="/apply" className="block w-full text-center text-xs bg-[#7dd87d] text-[#1a472a] py-2 rounded-full font-bold hover:bg-[#6bc86b] transition-colors">Apply as a New Land Project</a>
               </div>
             </div>
           )}
@@ -1529,7 +1529,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                   <span className="text-white/70 text-[10px]">Alliance Organizations (palm tree)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gradient-to-br from-[#f0f7f0] to-[#2563eb]" style={{ boxShadow: '0 0 4px rgba(135,206,235,0.6)' }} />
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-br from-[#87ceeb] to-[#2563eb]" style={{ boxShadow: '0 0 4px rgba(135,206,235,0.6)' }} />
                   <span className="text-white/70 text-[10px]">Global / Orbiting Satellites</span>
                 </div>
                 {/* Size scale */}
@@ -1588,7 +1588,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           <FilterTab label="Projects" count={counts.land_project} active={filter === "land_project"} onClick={() => setFilter("land_project")} color="bg-[#4a7c59] text-white" />
           <FilterTab label="Orgs" count={counts.organization} active={filter === "organization"} onClick={() => setFilter("organization")} color="bg-[#d4a574] text-[#1a472a]" />
           {counts.applicant > 0 && (
-            <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#f0f7f0] text-[#1a472a]" />
+            <FilterTab label="Applicants" count={counts.applicant} active={filter === "applicant"} onClick={() => setFilter("applicant")} color="bg-[#87ceeb] text-[#1a472a]" />
           )}
         </div>
 
@@ -1692,5 +1692,10 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
 
         {/* Mobile CTAs */}
         <div className="bg-[#0a1f14] px-4 pb-6 flex flex-col gap-2">
-          <a href="/apply" className="block w-full text-center text-sm bg-[#7dd87d] text-[#1a472a] py-3 rounded-full font-bold hover:bg-[#9de89d] transition-colors">Apply as a New Land Project</a>
-          <a href="/connect?path=alliance" className="block w-full text-center text-s
+          <a href="/apply" className="block w-full text-center text-sm bg-[#7dd87d] text-[#1a472a] py-3 rounded-full font-bold hover:bg-[#6bc86b] transition-colors">Apply as a New Land Project</a>
+          <a href="/connect?path=alliance" className="block w-full text-center text-sm bg-[#7dd87d]/20 text-[#7dd87d] py-3 rounded-full font-bold border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30 transition-colors">Become an Alliance Partner</a>
+        </div>
+      </div>
+    </div>
+  );
+}

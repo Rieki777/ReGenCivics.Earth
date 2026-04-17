@@ -861,4 +861,10 @@ export default function ClaimSeeds() {
                   </Button>
                 </div>
               </CardContent>
-  
+            </Card>
+          )}
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}

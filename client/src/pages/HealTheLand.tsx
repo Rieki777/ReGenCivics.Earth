@@ -328,4 +328,10 @@ export default function HealTheLand() {
                   </Button>
                 </Link>
               </div>
-         
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
