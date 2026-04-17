@@ -29,9 +29,9 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
     heading: "Play",
     cards: [
       { label: "Quests", sub: "The questing journey", href: "/quest", icon: "wizards", primary: true },
+      { label: "Schedule", sub: "Upcoming and past sessions", href: "/schedule", icon: "Calendar" },
       { label: "Governance", sub: "Decisions, proposals, and the pipeline", href: "/governance", icon: "Vote" },
       { label: "Decisions", sub: "Governance pipeline mission control", href: "/community/decisions", icon: "Vote" },
-      { label: "Command Center", sub: "Your home base on the site", href: "/command-center", icon: "Compass" },
       { label: "The Game", sub: "Bionomics: how it all fits together", href: "/bionomics", icon: "Sparkles" },
       { label: "Game Mechanics", sub: "Tune the simulator", href: "/game-mechanics", icon: "SlidersHorizontal" },
       { label: "Tools", sub: "Things we use and recommend", href: "/tools", icon: "Wrench" },
@@ -66,7 +66,6 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
 
 export const MOBILE_MENU_FOOTER = [
   { label: "Forum", href: "/community", icon: "MessageCircle" },
-  { label: "Schedule", href: "/schedule", icon: "Calendar" },
   { label: "Privacy", href: "/privacy-policy", icon: "Shield" },
   { label: "Contact", href: "/contact", icon: "Mail" },
 ];

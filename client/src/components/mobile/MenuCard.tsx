@@ -6,7 +6,7 @@ import {
   Compass, Sparkles, SlidersHorizontal, Wrench, Map, Sprout, Coins, Globe,
   Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote,
 } from "lucide-react";
-import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
+import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Compass, Sparkles, SlidersHorizontal, Wrench, Map, Sprout, Coins, Globe,
@@ -27,7 +27,7 @@ export function MenuCard({ label, sub, href, icon, primary = false, onSelect }: 
 
   const renderIcon = () => {
     if (icon === "wizards") {
-      return <WizardsFamilyIcon size={28} className={primary ? "text-[#1a472a]" : "text-[#7dd87d]"} />;
+      return <TreeOfLifeIcon size={28} className={primary ? "text-[#1a472a]" : "text-[#7dd87d]"} />;
     }
     if (Icon) return <Icon className={`w-6 h-6 ${primary ? "text-[#1a472a]" : "text-[#7dd87d]"}`} />;
     return <Compass className={`w-6 h-6 ${primary ? "text-[#1a472a]" : "text-[#7dd87d]"}`} />;

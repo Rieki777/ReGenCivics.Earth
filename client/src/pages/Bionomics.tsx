@@ -636,52 +636,36 @@ export default function Bionomics() {
           <section className="relative overflow-hidden">
             <div className="container px-4 pt-8 md:pt-12 pb-10 md:pb-16">
               <div className="max-w-5xl mx-auto">
-                <div
-                  className="relative rounded-3xl overflow-hidden border border-white/10"
-                  style={{ aspectRatio: "16 / 9" }}
-                >
+                {/* Hero image */}
+                <div className="rounded-2xl overflow-hidden shadow-2xl">
                   <img
                     src="/blog-hero-bridging-worlds.webp"
                     alt="Bridging Worlds: a phoenix bridge between the dominant grey city and the regenerative living world"
-                    className="blur-up absolute inset-0 w-full h-full object-cover"
+                    className="blur-up w-full h-auto object-cover"
                     loading="eager"
                     fetchPriority="high"
                     width="1920"
                     height="1080"
                   />
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(180deg, rgba(13,40,24,0.55) 0%, rgba(13,40,24,0.15) 35%, rgba(13,40,24,0.85) 100%)",
-                    }}
-                  />
-                  {/* Ambient fireflies in the hero */}
-                  <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-                    <span className="firefly-drift" />
-                    <span className="firefly-drift" />
-                    <span className="firefly-drift" />
-                    <span className="firefly-drift" />
-                    <span className="firefly-drift" />
-                    <span className="firefly-drift" />
-                  </div>
-                  <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-4 pb-6 md:pb-10">
-                    <Badge className="mb-3 bg-[#7dd87d]/90 text-[#0d2818] border-0 text-[11px] md:text-xs font-bold px-3 py-1">
-                      <Leaf className="w-3.5 h-3.5 mr-1.5 inline" />
-                      The Living Economy
-                    </Badge>
-                    <h1
-                      className="word-reveal text-4xl sm:text-5xl md:text-7xl font-bold text-white leading-none mb-2 md:mb-3 drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)]"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      <span>Bionomics</span>
-                    </h1>
-                    <p className="text-sm md:text-lg text-white/95 max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
-                      The living-economy side of ReGen Civics where we are living into the
-                      future of how we need our economic systems to be. The Game, $ReGen,
-                      and the bioregional infrastructure we have been growing since 2017.
-                    </p>
-                  </div>
+                </div>
+
+                {/* Hero title and description below the image */}
+                <div className="mt-6 text-center px-4">
+                  <Badge className="mb-3 bg-[#7dd87d]/90 text-[#0d2818] border-0 text-[11px] md:text-xs font-bold px-3 py-1">
+                    <Leaf className="w-3.5 h-3.5 mr-1.5 inline" />
+                    The Living Economy
+                  </Badge>
+                  <h1
+                    className="word-reveal text-4xl sm:text-5xl md:text-7xl font-bold text-white leading-none mb-2 md:mb-3"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    <span>Bionomics</span>
+                  </h1>
+                  <p className="text-sm md:text-lg text-white/95 max-w-2xl mx-auto">
+                    The living-economy side of ReGen Civics where we are living into the
+                    future of how we need our economic systems to be. The Game, $ReGen,
+                    and the bioregional infrastructure we have been growing since 2017.
+                  </p>
                 </div>
 
                 <p
@@ -734,7 +718,7 @@ export default function Bionomics() {
                 accent={C.greenSoft}
               />
               <div
-                className="rounded-3xl border border-[#7dd87d]/20 p-6 md:p-10 space-y-5 md:space-y-6"
+                className="rounded-3xl border border-[#7dd87d]/20 p-6 md:p-10 space-y-5 md:space-y-6 safe-prose"
                 style={{ background: "rgba(13,40,24,0.5)", backdropFilter: "blur(8px)" }}
               >
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
@@ -883,7 +867,7 @@ export default function Bionomics() {
                 accent={C.gold}
               />
               <div
-                className="rounded-3xl border border-[#f0c040]/30 p-6 md:p-10 space-y-5"
+                className="rounded-3xl border border-[#f0c040]/30 p-6 md:p-10 space-y-5 safe-prose"
                 style={{ background: "rgba(13,40,24,0.55)" }}
               >
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
@@ -934,7 +918,7 @@ export default function Bionomics() {
                 title="Bioregional Financing Facilities"
                 blurb="Bionomics unites with the Bioregional Financing Facilities (BFF) framework developed by the BioFi Project, Dark Matter Labs, and the Buckminster Fuller Institute. We have a lot of love for this work. ReGen Civics is one expression of where it can go when you weave it together with what we learned in the SEEDS era and braid it into a Game that bioregions and land projects can actually play."
               />
-              <p className="text-white/80 text-base leading-relaxed mb-6">
+              <p className="text-white/80 text-base leading-relaxed mb-6 safe-prose">
                 A BFF is a financial body designed to take capital from the current
                 economic systems and grow regenerative bioregional economies in its place.
                 It is a semi-permeable membrane between two worlds. We are building tools,
@@ -1376,7 +1360,7 @@ export default function Bionomics() {
                 accent={C.gold}
               />
               <div
-                className="rounded-3xl border border-[#f0c040]/25 p-6 md:p-9 space-y-5"
+                className="rounded-3xl border border-[#f0c040]/25 p-6 md:p-9 space-y-5 safe-prose"
                 style={{ background: "rgba(13,40,24,0.55)" }}
               >
                 <p className="text-white/85 text-base md:text-lg leading-relaxed">
@@ -1417,7 +1401,7 @@ export default function Bionomics() {
                 accent={C.teal}
               />
               <div
-                className="rounded-3xl border border-[#4a9f9f]/30 p-6 md:p-9 space-y-5"
+                className="rounded-3xl border border-[#4a9f9f]/30 p-6 md:p-9 space-y-5 safe-prose"
                 style={{ background: "rgba(13,40,24,0.55)" }}
               >
                 <p className="text-white/85 text-base md:text-lg leading-relaxed">
@@ -1455,7 +1439,7 @@ export default function Bionomics() {
                 title="Biocultural regeneration"
                 accent={C.greenSoft}
               />
-              <div className="space-y-4 text-white/85 text-base md:text-lg leading-relaxed">
+              <div className="space-y-4 text-white/85 text-base md:text-lg leading-relaxed safe-prose">
                 <p>
                   Healing land and healing culture are inseparable. The BioFi ebook calls
                   this biocultural regeneration. We call it the whole point.

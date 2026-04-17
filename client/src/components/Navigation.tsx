@@ -21,7 +21,7 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
 import { NotificationBell } from "@/components/NotificationBell";
-import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
+import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -243,7 +243,7 @@ export default function Navigation() {
                   className="text-[#7dd87d] bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-lg hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer my-1 mx-1 font-semibold"
                   onClick={() => window.location.href = '/quest'}
                 >
-                  <WizardsFamilyIcon size={20} className="mr-3 text-[#7dd87d]" />
+                  <TreeOfLifeIcon size={20} className="mr-3 text-[#7dd87d]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Explore Quests</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
@@ -812,7 +812,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <WizardsFamilyIcon size={18} />
+                      <TreeOfLifeIcon size={18} />
                       Explore Quests
                     </Link>
                     <Link 

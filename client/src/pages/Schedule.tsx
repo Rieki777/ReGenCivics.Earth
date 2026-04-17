@@ -331,6 +331,7 @@ function buildIcsDataUrl(event: { title: string; startTime: string | Date; endTi
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Schedule() {
+  const [activeTab, setActiveTab] = useState<"upcoming" | "historical">("upcoming");
   const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
   // Per-event reminder signup
   const [reminderOpenFor, setReminderOpenFor] = useState<number | null>(null);
@@ -350,7 +351,8 @@ export default function Schedule() {
   const { data: tokenData } = trpc.events.myTokenBalance.useQuery(undefined, { enabled: !!user });
 
   // Fetch events from DB (falls back gracefully while loading)
-  const { data: dbEvents } = trpc.events.list.useQuery();
+  // includeCompleted so historical tab has data
+  const { data: dbEvents } = trpc.events.list.useQuery({ includeCompleted: true });
   // #8. Signup counts for social proof
   const { data: signupCountsData } = trpc.events.publicSignupCounts.useQuery();
   const signupCountMap: Record<number, number> = Object.fromEntries(
@@ -365,8 +367,19 @@ export default function Schedule() {
     appleCalendarUrl: (ev as any).appleCalendarUrl ?? ((ev as any).startTime ? buildIcsDataUrl(ev as any) : ''),
   }));
 
+  // Filter events based on the active tab
+  const filteredEvents = activeTab === "upcoming"
+    ? upcomingEvents.filter(e => (e as any).status !== "completed" && (e as any).status !== "cancelled")
+    : upcomingEvents
+        .filter(e => (e as any).status === "completed")
+        .sort((a, b) => {
+          const aTime = (a as any).startTime ? new Date((a as any).startTime).getTime() : 0;
+          const bTime = (b as any).startTime ? new Date((b as any).startTime).getTime() : 0;
+          return bTime - aTime; // newest first
+        });
+
   // First upcoming event, auto-expand it
-  const firstUpcomingId = upcomingEvents.find(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')?.id ?? null;
+  const firstUpcomingId = filteredEvents.find(e => (e as any).status !== 'completed' && (e as any).status !== 'cancelled')?.id ?? null;
   const effectiveExpanded = expandedEvent !== null ? expandedEvent : firstUpcomingId;
 
   const reminderMutation = trpc.events.signup.useMutation();
@@ -708,12 +721,41 @@ export default function Schedule() {
       {/* Events List */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-3xl font-bold text-white mb-8 text-center" style={{ fontFamily: 'var(--font-display)' }}>
-            Upcoming <span className="text-[#7dd87d]">Events</span>
+          <h2 className="text-3xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'var(--font-display)' }}>
+            {activeTab === "upcoming" ? <>Upcoming <span className="text-[#7dd87d]">Events</span></> : <>Past <span className="text-[#7dd87d]">Events</span></>}
           </h2>
-          
+
+          {/* Tabs */}
+          <div className="flex justify-center gap-2 mb-8">
+            <button
+              onClick={() => { setActiveTab("upcoming"); setExpandedEvent(null); }}
+              className={`px-5 py-2 rounded-xl font-medium text-sm transition-colors ${
+                activeTab === "upcoming"
+                  ? "bg-[#7dd87d] text-[#1a472a]"
+                  : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
+              }`}
+            >
+              Upcoming
+            </button>
+            <button
+              onClick={() => { setActiveTab("historical"); setExpandedEvent(null); }}
+              className={`px-5 py-2 rounded-xl font-medium text-sm transition-colors ${
+                activeTab === "historical"
+                  ? "bg-[#7dd87d] text-[#1a472a]"
+                  : "bg-white/10 text-white/60 hover:bg-white/15 hover:text-white"
+              }`}
+            >
+              Historical
+            </button>
+          </div>
+
           <div className="space-y-4">
-            {upcomingEvents.map((event) => (
+            {filteredEvents.length === 0 && (
+              <p className="text-center text-white/50 py-8">
+                {activeTab === "upcoming" ? "No upcoming events scheduled yet." : "No past events to show."}
+              </p>
+            )}
+            {filteredEvents.map((event) => (
               <div 
                 key={event.id}
                 className={`bg-white/5 backdrop-blur-sm rounded-2xl border transition-all duration-300 overflow-hidden ${(event as any).status === 'completed' ? 'opacity-60' : ''} ${

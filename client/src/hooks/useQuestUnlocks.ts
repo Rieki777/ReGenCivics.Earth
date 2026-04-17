@@ -8,27 +8,13 @@
  */
 import { useMemo } from "react";
 import { useQuestProgressContext } from "@/components/QuestProgressTracker";
+import {
+  SEASON_ORDER, RITES_BY_SEASON, ALL_RITE_IDS, SEASON_LABELS,
+  type Season,
+} from "@/data/seasonConstants";
 
-export type Season = "spring" | "summer" | "fall" | "winter";
-
-const SEASON_ORDER: Season[] = ["spring", "summer", "fall", "winter"];
-
-const RITES_BY_SEASON: Record<Season, string[]> = {
-  spring: ["quest-1", "quest-2", "quest-3"],
-  summer: ["quest-4", "quest-5", "quest-6"],
-  fall: ["quest-7", "quest-8", "quest-9"],
-  winter: ["quest-10", "quest-11", "quest-12"],
-};
-
-/** All rite quest IDs (0-12, Fire through the full Rites of Passage series = 13 quests) */
-const ALL_RITE_IDS = new Set(["quest-0", ...Object.values(RITES_BY_SEASON).flat()]);
-
-const SEASON_LABELS: Record<Season, string> = {
-  spring: "Spring",
-  summer: "Summer",
-  fall: "Fall",
-  winter: "Winter",
-};
+// Re-export Season for backward compatibility
+export type { Season } from "@/data/seasonConstants";
 
 function getCurrentSeason(): Season {
   const month = new Date().getMonth();
@@ -99,12 +85,12 @@ export function useQuestUnlocks() {
     const getSeasonLockReason = (season: Season): string | null => {
       if (unlockedSeasons.includes(season)) return null;
       if (!fireComplete) return "Complete the Fire quest to open " + SEASON_LABELS[season] + " Rites";
-      // Find which previous season hasn't been completed
-      const idx = SEASON_ORDER.indexOf(season);
-      for (let i = idx - 1; i >= 0; i--) {
-        const prevSeason = SEASON_ORDER[(startIdx + i) % 4];
-        if (!completedSeasons.includes(prevSeason)) {
-          return "Complete one quest in " + SEASON_LABELS[prevSeason] + " to open " + SEASON_LABELS[season];
+      // Find which previous season in the rotation hasn't been completed
+      for (let i = 1; i < 4; i++) {
+        const checkSeason = SEASON_ORDER[(startIdx + i - 1) % 4];
+        const targetSeason = SEASON_ORDER[(startIdx + i) % 4];
+        if (targetSeason === season && !completedSeasons.includes(checkSeason)) {
+          return "Complete one quest in " + SEASON_LABELS[checkSeason] + " to open " + SEASON_LABELS[season];
         }
       }
       return "Complete one quest in the previous season to open " + SEASON_LABELS[season];

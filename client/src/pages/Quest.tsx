@@ -12,7 +12,7 @@ import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Use
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { Link } from "wouter";
 import { ParallaxSection } from "@/components/ParallaxSection";
-import { QuestProgressTracker, QuestProgressProvider, QuestCompletionBadge, MarkCompleteButton } from "@/components/QuestProgressTracker";
+import { QuestProgressTracker, QuestProgressProvider, QuestCompletionBadge, MarkCompleteButton, useQuestProgressContext } from "@/components/QuestProgressTracker";
 import { QuestDetailModal, questDetailsData } from "@/components/QuestDetailModal";
 import { QuestBadges } from "@/components/QuestBadges";
 import { QuestArtifactsGallery } from "@/components/QuestArtifactsGallery";
@@ -25,9 +25,10 @@ import { BackButton } from "@/components/BackButton";
 import { QuestCarousel } from "@/components/QuestCarousel";
 import { QuestGameIntro } from "@/components/QuestGameIntro";
 import { EpicQuestSection } from "@/components/EpicQuestSection";
-import { SeasonalQuestFeed } from "@/components/SeasonalQuestFeed";
+import { SeasonalDepthCard } from "@/components/SeasonalDepthCard";
 import { QuestArcMap } from "@/components/QuestArcMap";
 import { useHemisphere, setHemisphereOverride } from "@/hooks/useHemisphere";
+import { useNextQuest } from "@/hooks/useNextQuest";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { questData, QUEST_BEST_SEASONS, SEASON_HERO } from "@/data/questData";
 import { JsonLD } from "@/components/JsonLD";
@@ -38,6 +39,11 @@ import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
 import { LockedQuestCard } from "@/components/LockedQuestCard";
 import { SeasonProgressRing } from "@/components/SeasonProgressRing";
 import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
+import {
+  SEASON_ORDER as SEASON_ORDER_ALL, SEASON_EMOJI as SHARED_SEASON_EMOJI,
+  SEASON_LABELS as SHARED_SEASON_LABELS, SEASON_PALETTE,
+  getRotatedSeasons, type Season as SeasonKey,
+} from "@/data/seasonConstants";
 
 // Image base URL for quest art  -  drop files matching quest-NN-slug.webp to this path
 const QUEST_IMG_BASE = cdnImg("https://assets.regencivics.earth/quests");
@@ -283,7 +289,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
           {isAuthenticated && (
             <button
               onClick={(e) => { e.stopPropagation(); onToggleActive?.(); }}
-              className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+              className={`flex items-center gap-1.5 text-xs font-medium px-3 py-2 min-h-[36px] rounded-full transition-colors ${
                 isActive
                   ? "bg-[#4a7c59] text-white"
                   : "bg-[#1a472a]/10 text-[#1a472a] hover:bg-[#1a472a]/20"
@@ -468,6 +474,255 @@ function Quest0FlipCard() {
   );
 }
 
+// ── Season carousel config ──────────────────────────────────────────────
+
+const SEASON_TAGLINES: Record<SeasonKey, string> = {
+  spring: "Season of New Beginnings",
+  summer: "Season of Adventure",
+  fall: "Season of Harvest",
+  winter: "Season of Reflection",
+};
+
+const SEASON_ICONS: Record<SeasonKey, React.ComponentType<{ className?: string }>> = {
+  spring: Sprout,
+  summer: Sun,
+  fall: Leaf,
+  winter: Snowflake,
+};
+
+const RITES_BY_SEASON_DATA: Record<SeasonKey, typeof questData.spring> = {
+  spring: questData.spring,
+  summer: questData.summer,
+  fall: questData.fall,
+  winter: questData.winter,
+};
+
+/** Pre-compute depth quests per season to avoid re-filtering on every render */
+const DEPTH_QUESTS_BY_SEASON: Record<string, typeof seasonalQuestsData> = {};
+for (const season of SEASON_ORDER_ALL) {
+  DEPTH_QUESTS_BY_SEASON[season] = seasonalQuestsData.filter(sq => sq.season === season);
+}
+DEPTH_QUESTS_BY_SEASON["any"] = seasonalQuestsData.filter(sq => sq.season === "any");
+
+// ── Continue Your Journey Banner ────────────────────────────────────────
+function ContinueYourJourneyBanner() {
+  let unlocks: ReturnType<typeof useQuestUnlocks> | null = null;
+  try { unlocks = useQuestUnlocks(); } catch { /* outside provider */ }
+  let nextQuest: ReturnType<typeof useNextQuest> = null;
+  try { nextQuest = useNextQuest(); } catch { /* outside provider */ }
+
+  if (!unlocks) return null;
+
+  const completedRites = unlocks.ritesProgress.completed;
+  const totalRites = unlocks.ritesProgress.total || 1; // guard against division by zero
+  const progressPct = Math.round((completedRites / totalRites) * 100);
+
+  let bannerSub = "";
+  if (nextQuest) {
+    // Fire quest title already includes "Quest 0:", other rites don't
+    const qNum = nextQuest.questNumber !== null && nextQuest.type !== "fire" ? `Quest ${nextQuest.questNumber}: ` : "";
+    const se = nextQuest.season ? (SHARED_SEASON_EMOJI[nextQuest.season] ?? "") + " " : "";
+    bannerSub = `${se}${qNum}${nextQuest.title}`;
+  } else {
+    bannerSub = "All Rites complete. Explore Epic Quests and seasonal depth quests.";
+  }
+
+  return (
+    <section className="py-10 bg-gradient-to-b from-[#f0ebe3] to-[#faf6f1]">
+      <div className="container max-w-3xl mx-auto text-center">
+        <h2 className="text-2xl md:text-3xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: "var(--font-display)" }}>
+          Continue Your Journey
+        </h2>
+        <p className="text-[#1a472a]/70 text-base mb-4">{bannerSub}</p>
+        {nextQuest?.prompt && (
+          <p className="text-[#4a7c59] font-medium text-sm mb-4">{nextQuest.prompt}</p>
+        )}
+        {/* Progress bar */}
+        <div className="max-w-md mx-auto">
+          <div className="flex items-center justify-between text-xs text-[#1a472a]/60 mb-1">
+            <span>{completedRites} of {totalRites} Rites completed</span>
+            <span>{progressPct}%</span>
+          </div>
+          <div className="h-2 bg-[#1a472a]/10 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full relative transition-all duration-700"
+              style={{
+                width: `${progressPct}%`,
+                background: "linear-gradient(90deg, #4a7c59, #7dd87d)",
+              }}
+            >
+              {/* Gold shimmer on leading edge */}
+              {progressPct > 0 && progressPct < 100 && (
+                <div className="absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-r from-transparent to-amber-400/60 rounded-full" />
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <SeasonProgressRing completedSeasons={unlocks.completedSeasons} compact />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Season Carousels (combined Rites + depth quests) ────────────────────
+type SeasonCarouselProps = {
+  unlocks: ReturnType<typeof useQuestUnlocks> | null;
+  shouldShowQuest: (id: string) => boolean;
+  openQuestDetails: (id: string) => void;
+  hemisphereLoading: boolean;
+  currentSeason: string;
+  activeSeasonFilter: SeasonKey | null;
+  /** Quest activity state */
+  activity: {
+    counts: Record<string, number>;
+    myActiveIds: Set<string>;
+    isAuthenticated: boolean;
+    signalActive: { mutate: (v: { questId: string; questTitle: string }) => void };
+    clearActive: { mutate: (v: { questId: string }) => void };
+    endorsementsMap: Record<string, Array<{ orgId: string; endorsementType: "recommended" | "required" }>>;
+  };
+};
+
+function SeasonCarousels({
+  unlocks, shouldShowQuest, openQuestDetails, hemisphereLoading, currentSeason,
+  activeSeasonFilter, activity,
+}: SeasonCarouselProps) {
+  const { isQuestCompleted: checkCompleted } = useQuestProgressContext();
+  const rotated = getRotatedSeasons(currentSeason as SeasonKey);
+  const seasonsToShow = activeSeasonFilter ? [activeSeasonFilter] : rotated;
+
+  return (
+    <>
+      {seasonsToShow.map((season) => {
+        const palette = SEASON_PALETTE[season];
+        const rites = RITES_BY_SEASON_DATA[season];
+        const depthQuests = DEPTH_QUESTS_BY_SEASON[season] ?? [];
+        const isCurrentSeason = season === currentSeason;
+        const isSeasonLocked = unlocks ? !unlocks.unlockedSeasons.includes(season) : false;
+        const depthLocked = unlocks ? !unlocks.isSeasonalPracticeUnlocked : true;
+        const SeasonIcon = SEASON_ICONS[season];
+        const emoji = SHARED_SEASON_EMOJI[season];
+        const label = SHARED_SEASON_LABELS[season];
+        const tagline = SEASON_TAGLINES[season];
+
+        // Count completed rites in this season
+        const completedInSeason = rites.filter(q => checkCompleted(`quest-${q.id}`)).length;
+
+        return (
+          <ParallaxSection key={season} imageSrc={palette.parallax}>
+            <div className="container">
+              {/* Season header */}
+              <div className={`flex items-center gap-3 mb-2 ${isCurrentSeason ? "bg-white/10 backdrop-blur-sm -mx-4 px-4 py-3 rounded-xl border border-white/20" : ""}`}>
+                <div className={`w-14 h-14 rounded-full ${palette.iconBg} flex items-center justify-center shadow-lg`}>
+                  <SeasonIcon className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)" }}>
+                      {emoji} {label} Rites &amp; Quests
+                    </h3>
+                    {isCurrentSeason && (
+                      <span className="text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30">
+                        Current Season
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-white/90 font-medium" style={{ textShadow: "0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)" }}>
+                    {tagline}
+                  </p>
+                </div>
+                {/* Rites progress count */}
+                <div className="hidden sm:flex items-center gap-1 bg-white/10 px-3 py-1.5 rounded-full">
+                  <span className="text-white/70 text-xs font-medium">
+                    {completedInSeason}/{rites.length} Rites
+                  </span>
+                </div>
+              </div>
+
+              {/* Lock notice */}
+              {isSeasonLocked && unlocks && unlocks.getSeasonLockReason(season) && (
+                <div className="mb-6 mt-4 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
+                  <span className="text-white/50 text-lg">{"\uD83D\uDD12"}</span>
+                  <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason(season)}</span>
+                </div>
+              )}
+
+              {/* Combined carousel: Rites (gold) + Depth quests (green) */}
+              <div className="mt-6">
+                <QuestCarousel totalCount={rites.length + depthQuests.length}>
+                  {/* Rites of Passage cards first */}
+                  {rites.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
+                    <div key={quest.id} id={`quest-${quest.id}`} className="relative">
+                      {/* Rite number badge */}
+                      <div className="absolute top-3 left-3 z-10">
+                        <span className="bg-amber-500/90 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                          Rite {quest.id}
+                        </span>
+                      </div>
+                      <QuestCard
+                        quest={quest}
+                        colorClass={`${palette.cardBorder} bg-white/95 backdrop-blur-sm border-amber-400/40`}
+                        onOpenDetails={openQuestDetails}
+                        isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))}
+                        activePlayers={activity.counts[`quest-${quest.id}`] ?? 0}
+                        isActive={activity.myActiveIds.has(`quest-${quest.id}`)}
+                        isAuthenticated={activity.isAuthenticated}
+                        onToggleActive={() => {
+                          if (activity.myActiveIds.has(`quest-${quest.id}`)) {
+                            activity.clearActive.mutate({ questId: `quest-${quest.id}` });
+                          } else {
+                            activity.signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` });
+                          }
+                        }}
+                        endorsements={activity.endorsementsMap[`quest-${quest.id}`] ?? []}
+                        isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false}
+                      />
+                    </div>
+                  ))}
+                  {/* Seasonal depth quest cards */}
+                  {depthQuests.map((sq) => (
+                    <div key={sq.id} id={sq.id}>
+                      <SeasonalDepthCard quest={sq} isLocked={depthLocked} />
+                    </div>
+                  ))}
+                </QuestCarousel>
+
+                {rites.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && depthQuests.length === 0 && (
+                  <p className="text-center text-white/70 py-8">No quests match your current filters</p>
+                )}
+              </div>
+            </div>
+          </ParallaxSection>
+        );
+      })}
+
+      {/* Anytime Quests Section */}
+      <ParallaxSection imageSrc="/backgrounds/quest-anytime-baked.webp">
+        <div className="container">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-14 h-14 rounded-full bg-[#4a7c59] flex items-center justify-center shadow-lg">
+              <Sparkles className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
+                Anytime Quests
+              </h3>
+              <p className="text-[#7dd87d] font-medium">No season required. Do these whenever you are ready.</p>
+            </div>
+          </div>
+          <QuestCarousel totalCount={seasonalQuestsData.filter(q => q.season === "any").length}>
+            {seasonalQuestsData.filter(q => q.season === "any").map((sq) => (
+              <SeasonalDepthCard key={sq.id} quest={sq} isLocked={unlocks ? !unlocks.isSeasonalPracticeUnlocked : true} />
+            ))}
+          </QuestCarousel>
+        </div>
+      </ParallaxSection>
+    </>
+  );
+}
+
 const QUEST_VISIT_KEY = 'regen_civics_quest_visit_count';
 
 // QUEST_BEST_SEASONS and SEASON_HERO are imported from @/data/questData
@@ -558,7 +813,7 @@ export default function Quest() {
         setShowIntro(false);
       }} />
     )}
-    <div className="min-h-screen bg-[#faf6f1]">
+    <div className="min-h-screen bg-[#faf6f1] pb-24 md:pb-0">
       <SEO {...pageSEO.quest} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Quests", url: "/quest" }]} />
       <JsonLD data={{
         "@context": "https://schema.org",
@@ -583,13 +838,14 @@ export default function Quest() {
       </div>
 
       {/* Quest Hero Image */}
-      <div className="w-full overflow-hidden" style={{ maxHeight: '480px' }}>
+      <div className="w-full overflow-hidden max-h-[240px] sm:max-h-[360px] md:max-h-[480px]">
         <img
           src="/images/quests/quest-hero.webp"
           alt="A forest path at golden hour"
           loading="eager"
           width={1920}
           height={1047}
+          sizes="100vw"
           className="w-full object-cover"
           style={{ objectPosition: 'center 40%' }}
         />
@@ -633,10 +889,10 @@ export default function Quest() {
               <p className="text-white/60 text-sm italic">
                 {pageCopy.quest.hero.seasonalTagline}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <button
                   onClick={() => { setHemisphereOverride("northern"); window.location.reload(); }}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                  className={`text-xs px-4 py-2.5 min-h-[44px] rounded-full border transition-colors ${
                     hemisphere === "northern"
                       ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
                       : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
@@ -646,7 +902,7 @@ export default function Quest() {
                 </button>
                 <button
                   onClick={() => { setHemisphereOverride("southern"); window.location.reload(); }}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                  className={`text-xs px-4 py-2.5 min-h-[44px] rounded-full border transition-colors ${
                     hemisphere === "southern"
                       ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
                       : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
@@ -1000,8 +1256,8 @@ export default function Quest() {
         </div>
       </section>
 
-      {/* Seasonal Quest Feed */}
-      <SeasonalQuestFeed forceSeason={activeSeasonFilter ?? undefined} />
+      {/* Continue Your Journey Banner */}
+      <ContinueYourJourneyBanner />
 
       {/* All Quests by Season - Header */}
       <section className="py-12 bg-[#f0ebe3]">
@@ -1010,28 +1266,27 @@ export default function Quest() {
             className="text-3xl md:text-4xl font-bold mb-4 text-[#1a472a] text-center"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            All Quests by <span className="text-[#7dd87d]">Season</span>
+            Rites &amp; Quests by <span className="text-[#7dd87d]">Season</span>
           </h2>
           <p className="text-center text-[#1a472a]/70 max-w-2xl mx-auto mb-6">
-            Quests can be done at any time and in any order - the seasonal framing is a gentle suggestion. <strong>A key focus is growing and having fun!</strong>
+            Each season combines Rites of Passage (gold cards) with seasonal depth quests. Quests can be done at any time and in any order. <strong>A key focus is growing and having fun!</strong>
           </p>
-          {/* Season filter tabs, selecting one updates "What's Alive" above */}
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            {(["spring", "summer", "fall", "winter"] as const).map((s) => {
-              const labels: Record<string, string> = { spring: "🌱 Spring", summer: "☀️ Summer", fall: "🍂 Fall", winter: "❄️ Winter" };
+          {/* Season filter tabs */}
+          <div className="flex flex-wrap justify-center gap-2.5 mb-6">
+            {SEASON_ORDER_ALL.map((s) => {
               const active = activeSeasonFilter === s;
               return (
                 <button
                   key={s}
                   onClick={() => setActiveSeasonFilter(active ? null : s)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all border ${
+                  className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all border min-h-[44px] ${
                     active
                       ? "bg-[#1a472a] text-white border-[#1a472a]"
                       : "bg-white text-[#1a472a] border-[#1a472a]/20 hover:border-[#1a472a]/50"
                   }`}
                   style={{ fontFamily: 'var(--font-accent)' }}
                 >
-                  {labels[s]}
+                  {SHARED_SEASON_EMOJI[s]} {SHARED_SEASON_LABELS[s]}
                 </button>
               );
             })}
@@ -1042,177 +1297,23 @@ export default function Quest() {
         </div>
       </section>
 
-      {/* Spring Quests Section */}
-      <ParallaxSection imageSrc="/backgrounds/quest-spring-baked.webp">
-        <div className="container">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-full bg-[#4a7c59] flex items-center justify-center shadow-lg">
-              <Sprout className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)' }}>
-                Spring Quests
-              </h3>
-              <p className="text-white/90 font-medium" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)' }}>Season of New Beginnings</p>
-            </div>
-          </div>
-          {unlocks && !unlocks.unlockedSeasons.includes("spring") && (
-            <div className="mb-6 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
-              <span className="text-white/50 text-lg">🔒</span>
-              <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason("spring")}</span>
-            </div>
-          )}
-          <QuestCarousel totalCount={questData.spring.length}>
-            {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#4a7c59]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
-            ))}
-          </QuestCarousel>
-          {questData.spring.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
-            <p className="text-center text-white/70 py-8">No quests match your current filters</p>
-          )}
-        </div>
-      </ParallaxSection>
-
-      {/* Summer Quests Section */}
-      <ParallaxSection imageSrc="/backgrounds/quest-summer-baked.webp">
-        <div className="container">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-full bg-[#2e7d32] flex items-center justify-center shadow-lg">
-              <Sun className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)' }}>
-                Summer Quests
-              </h3>
-              <p className="text-white/90 font-medium" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)' }}>Season of Adventure</p>
-            </div>
-          </div>
-          {unlocks && !unlocks.unlockedSeasons.includes("summer") && (
-            <div className="mb-6 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
-              <span className="text-white/50 text-lg">🔒</span>
-              <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason("summer")}</span>
-            </div>
-          )}
-          <QuestCarousel totalCount={questData.summer.length}>
-            {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#2e7d32]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
-            ))}
-          </QuestCarousel>
-          {questData.summer.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
-            <p className="text-center text-white/70 py-8">No quests match your current filters</p>
-          )}
-        </div>
-      </ParallaxSection>
-
-      {/* Fall Quests Section */}
-      <ParallaxSection imageSrc="/backgrounds/quest-fall-baked.webp">
-        <div className="container">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-full bg-[#d4a574] flex items-center justify-center shadow-lg">
-              <Leaf className="w-7 h-7 text-[#1a472a]" />
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)' }}>
-                Fall Quests
-              </h3>
-              <p className="text-white/90 font-medium" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)' }}>Season of Harvest</p>
-            </div>
-          </div>
-          {unlocks && !unlocks.unlockedSeasons.includes("fall") && (
-            <div className="mb-6 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
-              <span className="text-white/50 text-lg">🔒</span>
-              <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason("fall")}</span>
-            </div>
-          )}
-          <QuestCarousel totalCount={questData.fall.length}>
-            {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#d4a574]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
-            ))}
-          </QuestCarousel>
-          {questData.fall.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
-            <p className="text-center text-white/70 py-8">No quests match your current filters</p>
-          )}
-        </div>
-      </ParallaxSection>
-
-      {/* Winter Quests Section */}
-      <ParallaxSection imageSrc="/backgrounds/quest-winter-baked.webp">
-        <div className="container">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-full bg-[#8b7355] flex items-center justify-center shadow-lg">
-              <Snowflake className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4)' }}>
-                Winter Quests
-              </h3>
-              <p className="text-white/90 font-medium" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4)' }}>Season of Reflection</p>
-            </div>
-          </div>
-          {unlocks && !unlocks.unlockedSeasons.includes("winter") && (
-            <div className="mb-6 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
-              <span className="text-white/50 text-lg">🔒</span>
-              <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason("winter")}</span>
-            </div>
-          )}
-          <QuestCarousel totalCount={questData.winter.length}>
-            {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
-              <QuestCard key={quest.id} quest={quest} colorClass="hover:border-[#8b7355]/50 bg-white/95 backdrop-blur-sm" onOpenDetails={openQuestDetails} isGreatNow={!hemisphereLoading && (QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes(currentSeason) || QUEST_BEST_SEASONS[`quest-${quest.id}`]?.includes("any"))} activePlayers={activeCountsData[`quest-${quest.id}`] ?? 0} isActive={myActiveQuestIds.has(`quest-${quest.id}`)} isAuthenticated={!!user} onToggleActive={() => { if (myActiveQuestIds.has(`quest-${quest.id}`)) { clearActive.mutate({ questId: `quest-${quest.id}` }); } else { signalActive.mutate({ questId: `quest-${quest.id}`, questTitle: quest.title ?? `quest-${quest.id}` }); } }} endorsements={endorsementsMap[`quest-${quest.id}`] ?? []} isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false} />
-            ))}
-          </QuestCarousel>
-          {questData.winter.filter(quest => shouldShowQuest(`quest-${quest.id}`)).length === 0 && (
-            <p className="text-center text-white/70 py-8">No quests match your current filters</p>
-          )}
-        </div>
-      </ParallaxSection>
-
-      {/* Anytime Quests Section */}
-      <ParallaxSection
-        imageSrc="/backgrounds/quest-anytime-baked.webp"
-      >
-        <div className="container">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-full bg-[#4a7c59] flex items-center justify-center shadow-lg">
-              <Sparkles className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
-                Anytime Quests
-              </h3>
-              <p className="text-[#7dd87d] font-medium">No season required. Do these whenever you are ready.</p>
-            </div>
-          </div>
-          <QuestCarousel totalCount={seasonalQuestsData.filter(q => q.season === "any").length}>
-            {seasonalQuestsData.filter(q => q.season === "any").map((quest) => (
-              <div key={quest.id} className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 border border-[#7dd87d]/20 hover:border-[#7dd87d]/50 hover:shadow-xl transition-all duration-200 cursor-pointer min-w-0">
-                <div className="mb-3">
-                  <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-[#7dd87d]/20 text-[#1a472a] mb-2">
-                    {quest.element ?? "any"}
-                  </span>
-                  <h4 className="font-bold text-[#1a472a] text-base leading-snug" style={{ fontFamily: 'var(--font-display)' }}>
-                    {quest.title}
-                  </h4>
-                  {quest.tagline && (
-                    <p className="text-[#4a7c59] text-xs italic mt-0.5">{quest.tagline}</p>
-                  )}
-                </div>
-                <p className="text-[#1a472a]/70 text-sm line-clamp-3 mb-3">{quest.description}</p>
-                {quest.deliverable && (
-                  <p className="text-xs text-[#4a7c59] font-medium">
-                    🌱 {quest.deliverable}
-                  </p>
-                )}
-                {quest.forumUrl && (
-                  <Link href={quest.forumUrl} className="inline-flex items-center gap-1.5 text-xs text-[#4a7c59] hover:text-[#1a472a] font-medium mt-2 transition-colors">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Discuss in Forum
-                  </Link>
-                )}
-              </div>
-            ))}
-          </QuestCarousel>
-        </div>
-      </ParallaxSection>
+      {/* Combined Season Carousels - current season first */}
+      <SeasonCarousels
+        unlocks={unlocks}
+        shouldShowQuest={shouldShowQuest}
+        openQuestDetails={openQuestDetails}
+        hemisphereLoading={hemisphereLoading}
+        currentSeason={currentSeason}
+        activeSeasonFilter={activeSeasonFilter}
+        activity={{
+          counts: activeCountsData,
+          myActiveIds: myActiveQuestIds,
+          isAuthenticated: !!user,
+          signalActive,
+          clearActive,
+          endorsementsMap,
+        }}
+      />
 
       {/* Routine Quest Section */}
       <ParallaxSection

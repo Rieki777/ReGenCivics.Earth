@@ -1,12 +1,16 @@
 /**
  * EpicQuestSection, full-width dark section showing Epic quests.
- * Data from epicQuestsData.ts. Placed at the bottom of the Quest page.
+ * Data from epicQuestsData.ts. Uses QuestCarousel for horizontal scroll.
+ * Includes one-time unlock celebration animation.
  */
 
-import { EPIC_QUESTS, EpicQuest, EpicElement } from "@/data/epicQuestsData";
+import { useState, useEffect, useMemo } from "react";
+import { EPIC_QUESTS, EpicQuest } from "@/data/epicQuestsData";
+import { ELEMENT_EMOJI, DEFAULT_ELEMENT_EMOJI } from "@/data/seasonConstants";
 import { Link } from "wouter";
 import { Lock } from "lucide-react";
 import { SeasonProgressRing } from "@/components/SeasonProgressRing";
+import { QuestCarousel } from "@/components/QuestCarousel";
 import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
 
 const TIER_CONFIG = {
@@ -17,6 +21,7 @@ const TIER_CONFIG = {
     badgeBg: "rgba(125,216,125,0.15)",
     badgeText: "#7dd87d",
     borderColor: "rgba(125,216,125,0.4)",
+    dot: "bg-green-500",
   },
   hard: {
     label: "Hard",
@@ -25,6 +30,7 @@ const TIER_CONFIG = {
     badgeBg: "rgba(212,165,116,0.15)",
     badgeText: "#d4a574",
     borderColor: "rgba(212,165,116,0.4)",
+    dot: "bg-amber-500",
   },
   expert: {
     label: "Expert",
@@ -33,25 +39,22 @@ const TIER_CONFIG = {
     badgeBg: "rgba(239,68,68,0.15)",
     badgeText: "#ef4444",
     borderColor: "rgba(239,68,68,0.4)",
+    dot: "bg-red-500",
   },
 };
 
-const ELEMENT_ICONS: Record<EpicElement, string> = {
-  earth: "🌱",
-  water: "💧",
-  fire: "🔥",
-  air: "🌬",
-};
+// Element icons from shared constants with safe fallback
 
-function EpicCard({ quest }: { quest: EpicQuest }) {
+function EpicCard({ quest, staggerDelay }: { quest: EpicQuest; staggerDelay?: number }) {
   const cfg = TIER_CONFIG[quest.tier];
 
   return (
     <div
-      className="relative flex flex-col rounded-xl overflow-hidden border transition-colors hover:border-white/25"
+      className="relative flex flex-col rounded-xl overflow-hidden border transition-all hover:border-white/25"
       style={{
         backgroundColor: cfg.accentBg,
         borderColor: "rgba(255,255,255,0.1)",
+        animationDelay: staggerDelay ? `${staggerDelay}ms` : undefined,
       }}
     >
       {/* Top accent stripe */}
@@ -72,7 +75,7 @@ function EpicCard({ quest }: { quest: EpicQuest }) {
 
           {/* EPIC badge */}
           <span
-            className="flex-shrink-0 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border"
+            className="flex-shrink-0 text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border"
             style={{
               color: cfg.badgeText,
               borderColor: cfg.accent,
@@ -87,16 +90,20 @@ function EpicCard({ quest }: { quest: EpicQuest }) {
         {/* Description */}
         <p className="text-white/65 text-sm leading-relaxed">{quest.description}</p>
 
-        {/* Meta row */}
+        {/* Meta row with duration and commitment badges */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-auto pt-2 border-t border-white/8 text-xs text-white/45">
-          <span>
+          {/* Duration badge */}
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
             <span className="text-white/55">Duration:</span> {quest.duration}
           </span>
-          <span>
-            <span className="text-white/55">Effort:</span> {quest.commitment}
+          {/* Commitment dot */}
+          <span className="inline-flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+            <span className="text-white/55">{cfg.label}</span>
           </span>
+          {/* Element + reward */}
           <span className="ml-auto flex items-center gap-1.5">
-            <span className="text-sm leading-none">{ELEMENT_ICONS[quest.element]}</span>
+            <span className="text-sm leading-none">{ELEMENT_EMOJI[quest.element as keyof typeof ELEMENT_EMOJI] ?? DEFAULT_ELEMENT_EMOJI}</span>
             <span
               className="font-bold text-xs"
               style={{ color: cfg.badgeText }}
@@ -110,86 +117,104 @@ function EpicCard({ quest }: { quest: EpicQuest }) {
   );
 }
 
-function TierRow({ tier }: { tier: "easy" | "hard" | "expert" }) {
-  const cfg = TIER_CONFIG[tier];
-  const quests = EPIC_QUESTS.filter((q) => q.tier === tier);
-
-  if (quests.length === 0) return null;
-
-  return (
-    <div className="mb-12">
-      <div className="flex items-center gap-3 mb-6">
-        <div
-          className="w-1.5 h-5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: cfg.accent }}
-        />
-        <h3
-          className="text-sm font-bold uppercase tracking-widest"
-          style={{ color: cfg.accent, fontFamily: "var(--font-accent, sans-serif)" }}
-        >
-          {cfg.label}
-        </h3>
-        <div className="flex-1 h-px" style={{ backgroundColor: `${cfg.accent}20` }} />
-      </div>
-
-      {/* Mobile: horizontal snap carousel. Desktop: 2-col grid. */}
-      <div className="md:hidden -mx-4 px-4">
-        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
-          {quests.map((quest) => (
-            <div key={quest.id} className="snap-start shrink-0 w-[85vw] max-w-sm">
-              <EpicCard quest={quest} />
-            </div>
-          ))}
-        </div>
-        <p className="text-white/65 text-xs text-center mt-2">Swipe to see more →</p>
-      </div>
-      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
-        {quests.map((quest) => (
-          <EpicCard key={quest.id} quest={quest} />
-        ))}
-      </div>
-    </div>
-  );
-}
+const EPIC_UNLOCK_KEY = "epic_unlock_celebrated";
 
 export function EpicQuestSection() {
   let unlocks: ReturnType<typeof useQuestUnlocks> | null = null;
   try { unlocks = useQuestUnlocks(); } catch { /* outside provider */ }
   const isLocked = unlocks ? !unlocks.isEpicUnlocked : false;
+  const [celebrating, setCelebrating] = useState(false);
+
+  // One-time unlock celebration
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (!isLocked && unlocks?.isEpicUnlocked) {
+      try {
+        if (!localStorage.getItem(EPIC_UNLOCK_KEY)) {
+          localStorage.setItem(EPIC_UNLOCK_KEY, "true");
+          setCelebrating(true);
+          timer = setTimeout(() => setCelebrating(false), 2000);
+        }
+      } catch { /* localStorage unavailable */ }
+    }
+    return () => { if (timer) clearTimeout(timer); };
+  }, [isLocked, unlocks?.isEpicUnlocked]);
+
+  // Sort all epics by tier order: easy -> hard -> expert
+  const sortedQuests = useMemo(() => {
+    const tierOrder = ["easy", "hard", "expert"] as const;
+    return [...EPIC_QUESTS].sort(
+      (a, b) => tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier)
+    );
+  }, []);
 
   return (
-    <section className="py-20 px-4" style={{ backgroundColor: "#0a1f0f" }}>
+    <section id="epic-quests" className="py-20 px-4" style={{ backgroundColor: "#0a1f0f" }}>
       <div className="container max-w-5xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-14">
-          <div className="inline-block text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border border-[#7dd87d]/30 text-[#7dd87d]/70 mb-5">
-            Long-Form Challenges
+        <div className="text-center mb-14 relative">
+          {/* One-shot gold shimmer overlay on unlock */}
+          {celebrating && (
+            <div
+              className="absolute inset-0 pointer-events-none rounded-2xl"
+              style={{
+                background: "radial-gradient(ellipse at center, rgba(251,191,36,0.25) 0%, transparent 70%)",
+                animation: "epicUnlockGlow 2s ease-out forwards",
+              }}
+            />
+          )}
+          <style>{`
+            @keyframes epicUnlockGlow {
+              0% { opacity: 0; transform: scale(0.8); }
+              20% { opacity: 1; transform: scale(1.05); }
+              100% { opacity: 0; transform: scale(1.2); }
+            }
+          `}</style>
+          <div className={`inline-block text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border mb-5 transition-colors ${
+            isLocked
+              ? "border-[#7dd87d]/30 text-[#7dd87d]/70"
+              : "border-amber-400/50 text-amber-400"
+          }`}>
+            {isLocked ? "Long-Form Challenges" : "Unlocked"}
           </div>
           <h2
-            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4"
+            className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-4 transition-colors ${
+              isLocked ? "text-white/50" : "text-white"
+            }`}
             style={{ fontFamily: "var(--font-display, serif)" }}
           >
-            EPIC Quests
+            Epic Quests {isLocked && <Lock className="inline w-7 h-7 text-white/30 ml-2" />}
           </h2>
           <p className="text-white/55 text-lg max-w-xl mx-auto">
-            Long-form challenges for committed regenerators. These are not short quests. They are seasons of real work.
+            Land Transformation Journeys. Long-form challenges for committed regenerators. These are seasons of real work.
           </p>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <SeasonProgressRing completedSeasons={unlocks?.completedSeasons ?? []} compact />
+            <span className="text-white/50 text-sm">
+              {unlocks?.completedRitesCount ?? 0}/13 Rites Complete
+            </span>
+          </div>
           {isLocked && unlocks && (
-            <div className="mt-6 inline-flex flex-col items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-6 py-4">
-              <div className="flex items-center gap-2 text-white/60 text-sm">
-                <Lock className="w-4 h-4 text-emerald-400/70" />
-                <span>Complete all 13 Rites of Passage to access Epic Quests ({unlocks.completedRitesCount}/13)</span>
-              </div>
-              <SeasonProgressRing completedSeasons={unlocks.completedSeasons} />
+            <div className="mt-4 inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2">
+              <Lock className="w-4 h-4 text-emerald-400/70" />
+              <span className="text-white/60 text-sm">
+                Complete all 13 Rites of Passage to access Epic Quests
+              </span>
             </div>
           )}
         </div>
 
-        {/* Tier rows */}
+        {/* Epic carousel - all quests in one carousel, ordered by tier */}
         <div className={isLocked ? "opacity-40 grayscale pointer-events-none" : ""}>
-          <TierRow tier="easy" />
-          <TierRow tier="hard" />
-          <TierRow tier="expert" />
+          <QuestCarousel totalCount={sortedQuests.length}>
+            {sortedQuests.map((quest, i) => (
+              <EpicCard
+                key={quest.id}
+                quest={quest}
+                staggerDelay={celebrating ? i * 100 : undefined}
+              />
+            ))}
+          </QuestCarousel>
         </div>
 
         {/* CTA */}

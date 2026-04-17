@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Compass, MessageCircle, User, Sparkles, LayoutGrid } from "lucide-react";
-import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
+import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
 
 type Action = {
@@ -78,7 +78,7 @@ export function WizardRadialMenu() {
         aria-label={open ? "Close shortcuts" : "Open shortcuts"}
         aria-expanded={open}
       >
-        <WizardsFamilyIcon size={26} color="#1a472a" />
+        <TreeOfLifeIcon size={26} color="#1a472a" />
       </button>
     </div>
   );

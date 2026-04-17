@@ -77,15 +77,20 @@ export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbac
   return (
     <>
       {/* Sticky Current Section Pill - Mobile Only */}
-      <div className="fixed top-20 left-0 right-0 z-40 md:hidden px-4 py-2">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="w-full bg-[#7dd87d]/90 hover:bg-[#7dd87d] backdrop-blur-sm text-[#1a472a] px-4 py-2 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-        >
-          <Compass className="w-4 h-4" />
-          <span className="truncate">{currentSectionTitle}</span>
-          <ChevronUp className="w-4 h-4" />
-        </button>
+      <div
+        className="fixed left-0 right-0 z-40 md:hidden bg-[#0d2818]/95 backdrop-blur-sm border-b border-[#7dd87d]/20"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + var(--top-nav-height, 56px))" }}
+      >
+        <div className="px-4 py-2 overflow-x-auto">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="w-full bg-[#7dd87d]/90 hover:bg-[#7dd87d] backdrop-blur-sm text-[#1a472a] px-4 py-2 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+          >
+            <Compass className="w-4 h-4" />
+            <span className="truncate">{currentSectionTitle}</span>
+            <ChevronUp className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Action buttons removed - use top sticky pill and drawer instead */}

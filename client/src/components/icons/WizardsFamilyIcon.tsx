@@ -1,9 +1,7 @@
 /**
- * WizardsFamilyIcon: unified Quests glyph used everywhere Quests appears.
- * Loads the public SVG so Rye can swap the file without code changes.
- *
- * Replace `client/public/images/icons/wizards-family.svg` with the final
- * art and this component will pick it up automatically.
+ * @deprecated Use TreeOfLifeIcon instead.
+ * WizardsFamilyIcon: legacy quest icon kept for backward compatibility.
+ * New code should import from "@/components/icons/TreeOfLifeIcon".
  */
 
 type Props = {

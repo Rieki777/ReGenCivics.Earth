@@ -146,6 +146,8 @@
 }
 
 :root {
+  --top-nav-height: 56px;
+
   /* Enchanted Forest Color Palette */
   --forest-deep: oklch(0.30 0.08 145); /* Deep forest green */
   --forest-medium: oklch(0.40 0.10 145); /* Medium forest green */
@@ -379,6 +381,17 @@
   .animate-pulse-subtle {
     animation: pulse-subtle 3s ease-in-out infinite;
   }
+}
+
+/* Scroll-margin for section anchors to clear sticky header + sub-nav */
+[id] {
+  scroll-margin-top: calc(var(--top-nav-height, 56px) + 56px);
+}
+
+/* Mobile overflow protection for prose and long URLs */
+.safe-prose {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* iOS Safe Area Utilities */

@@ -10,7 +10,7 @@
  */
 import { Link, useLocation } from "wouter";
 import { Home, MessageCircle, User, LayoutGrid } from "lucide-react";
-import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
+import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
 
 type TabSlot = {
@@ -37,7 +37,7 @@ function SlotIcon({ icon, active, primary }: { icon: TabSlot["icon"]; active: bo
     : active
       ? "text-[#7dd87d]"
       : "text-white/65";
-  if (icon === "wizards") return <WizardsFamilyIcon size={size} className={baseClass} />;
+  if (icon === "wizards") return <TreeOfLifeIcon size={size} className={baseClass} />;
   if (icon === "home") return <Home className={`w-5 h-5 ${baseClass}`} />;
   if (icon === "community") return <MessageCircle className={`w-5 h-5 ${baseClass}`} />;
   if (icon === "profile") return <User className={`w-5 h-5 ${baseClass}`} />;

@@ -12,7 +12,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { X, ExternalLink, Link2, Leaf, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface SubmitToDAOModalProps {
   isOpen: boolean;

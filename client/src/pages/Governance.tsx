@@ -9,6 +9,7 @@ import { SEO, pageSEO } from "@/components/SEO";
 import { JsonLD, schemas } from "@/components/JsonLD";
 import { cdnImg } from "@/lib/utils";
 import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
+import { WhoHoldsVoteChart } from "@/components/governance/WhoHoldsVoteChart";
 
 const GOVERNANCE_SECTIONS: TocSection[] = [
   { id: 'gov-comparison', title: 'Fund vs Game' },
@@ -76,16 +77,9 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
             </div>
           </div>
 
-          {/* Who Holds the Vote: pie/donut visual */}
-          <div className="mb-6 flex justify-center">
-            <img
-              src="/images/governance/who-holds-vote.png"
-              alt="Vote distribution: Stewardship Council 40%, Investors 20%, Land Projects 20%, Alliance Partners 20%"
-              className="w-full max-w-2xl rounded-xl"
-              loading="lazy"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-            />
-          </div>
+          {/* Who Holds the Vote: inline SVG pie chart */}
+          <h4 className="text-lg font-bold text-[#d4a574] mb-3 text-center">Fund Governance: Who Holds the Vote</h4>
+          <WhoHoldsVoteChart />
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="bg-[#0d2818]/60 rounded-xl p-5 border border-[#d4a574]/30">
@@ -688,28 +682,28 @@ function EarthDayCountdown() {
       </div>
 
       {/* Countdown */}
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <p className="text-center text-white/60 text-sm mb-6">Dashboard launches in:</p>
-        <div className="grid grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-10">
           {[{ label: "Days", value: timeLeft.days }, { label: "Hours", value: timeLeft.hours }, { label: "Minutes", value: timeLeft.minutes }, { label: "Seconds", value: timeLeft.seconds }].map(({ label, value }) => (
-            <div key={label} className="bg-[#1a472a]/60 rounded-xl p-4 text-center border border-[#7dd87d]/20">
-              <p className="text-3xl md:text-4xl font-bold text-[#7dd87d] tabular-nums">{String(value).padStart(2, "0")}</p>
+            <div key={label} className="bg-[#1a472a]/60 rounded-xl p-2 sm:p-4 text-center border border-[#7dd87d]/20 min-w-0">
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#7dd87d] tabular-nums">{String(value).padStart(2, "0")}</p>
               <p className="text-white/50 text-xs mt-1">{label}</p>
             </div>
           ))}
         </div>
 
         {/* Preview wireframe */}
-        <div className="opacity-40 pointer-events-none select-none">
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
+        <div className="opacity-40 pointer-events-none select-none max-w-full overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="bg-[#1a472a]/50 rounded-xl p-5 border border-[#7dd87d]/20">
               <p className="text-[#7dd87d] font-semibold text-sm mb-3">Voice Distribution</p>
               <div className="space-y-2">
                 {[{ label: "Council of Experts", pct: 40, color: "#d4a574" }, { label: "Land Projects", pct: 20, color: "#4a7c59" }, { label: "Alliance Orgs", pct: 20, color: "#4a9f9f" }, { label: "Investors", pct: 20, color: "#c17f3a" }].map(g => (
                   <div key={g.label}>
                     <div className="flex justify-between text-xs text-white/60 mb-1">
-                      <span>{g.label}</span>
-                      <span>{g.pct}%</span>
+                      <span className="min-w-0 truncate">{g.label}</span>
+                      <span className="flex-shrink-0">{g.pct}%</span>
                     </div>
                     <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${g.pct}%`, backgroundColor: g.color }} />
@@ -724,7 +718,7 @@ function EarthDayCountdown() {
                 {["Q2 Portfolio Allocation", "New Alliance Partner: EcoLegal", "Seasonal Festival Agenda"].map(p => (
                   <div key={p} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
                     <span className="w-2 h-2 rounded-full bg-[#7dd87d] flex-shrink-0" />
-                    <span className="text-white/60 text-xs">{p}</span>
+                    <span className="text-white/60 text-xs min-w-0">{p}</span>
                   </div>
                 ))}
               </div>
@@ -774,7 +768,7 @@ export default function Governance() {
               How We Govern Regenerative Systems
             </h1>
             
-            <p className="text-xl text-white/90 leading-relaxed">
+            <p className="text-xl text-white/90 leading-relaxed safe-prose">
               ReGen Civics coordinates through three tools: Contribution Scores, Gratitude, and Proposals. Internal signaling happens here. Formal governance and binding votes happen on <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a>, where vote weight comes from RGVoice held.
             </p>
           </div>
@@ -804,7 +798,7 @@ export default function Governance() {
               <div className="bg-white/5 border border-white/10 rounded-xl p-5">
                 <div className="text-2xl mb-2">📜</div>
                 <h3 className="text-white font-bold mb-1">Proposals</h3>
-                <p className="text-white/60 text-sm">Any Co-Creator can submit a proposal. The community signals support. Proposals that reach threshold move to <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a> for formal governance.</p>
+                <p className="text-white/60 text-sm safe-prose">Any Co-Creator can submit a proposal. The community signals support. Proposals that reach threshold move to <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a> for formal governance.</p>
                 <Link href="/proposals" className="text-[#7dd87d] text-xs mt-2 block hover:underline">View proposals</Link>
               </div>
             </div>
@@ -817,7 +811,7 @@ export default function Governance() {
         <div className="container">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Fund vs Game: Governance at a Glance</h2>
-            <p className="text-white/80 text-lg leading-relaxed mb-12 text-center max-w-3xl mx-auto">
+            <p className="text-white/80 text-lg leading-relaxed mb-12 text-center max-w-3xl mx-auto safe-prose">
               Two spaces, two governance systems, one shared mission. Here's how they compare side by side.
             </p>
 
@@ -941,7 +935,7 @@ export default function Governance() {
             <div className="mt-8 grid sm:grid-cols-2 gap-4">
               <div className="bg-[#d4a574]/10 rounded-xl p-5 border border-[#d4a574]/30 text-center">
                 <p className="text-[#d4a574] font-bold mb-2">Fund Governance</p>
-                <p className="text-white/70 text-sm">Structured for institutional trust and long-term capital deployment. Designed to be credible to investors and regulators while remaining community-led.</p>
+                <p className="text-white/70 text-sm safe-prose">Structured for institutional trust and long-term capital deployment. Designed to be credible to investors and regulators while remaining community-led.</p>
                 <a href="https://app.hypha.earth/en/dho/regen-civics/agreements" target="_blank" rel="noopener noreferrer" className="inline-block mt-3">
                   <Button size="sm" className="bg-[#d4a574] text-[#1a472a] hover:bg-[#c49060] font-bold">
                     Explore Fund Governance &rarr;
@@ -950,7 +944,7 @@ export default function Governance() {
               </div>
               <div className="bg-purple-900/20 rounded-xl p-5 border border-purple-500/30 text-center">
                 <p className="text-purple-400 font-bold mb-2">Game Governance</p>
-                <p className="text-white/70 text-sm">Designed for active community participation. The 3% decay rule ensures governance always belongs to those who are currently playing and contributing.</p>
+                <p className="text-white/70 text-sm safe-prose">Designed for active community participation. The 3% decay rule ensures governance always belongs to those who are currently playing and contributing.</p>
                 <a href="https://app.hypha.earth/en/dho/regen-games/agreements" target="_blank" rel="noopener noreferrer" className="inline-block mt-3">
                   <Button size="sm" className="bg-purple-700 text-white hover:bg-purple-800 font-bold">
                     Explore Game Governance &rarr;
@@ -967,13 +961,13 @@ export default function Governance() {
         <div className="container">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Two Tokens, Two Powers</h2>
-            <p className="text-white/80 text-lg leading-relaxed mb-10 text-center max-w-3xl mx-auto">
+            <p className="text-white/80 text-lg leading-relaxed mb-10 text-center max-w-3xl mx-auto safe-prose">
               ReGen Civics uses two distinct tokens, each serving a fundamentally different purpose. Voice governs decisions. Tokens distribute rewards. These two systems are designed to be complementary.
             </p>
             <div className="flex justify-center mb-8">
               <img
-                src="/images/governance/rcvoice-vs-rgvoice.webp"
-                alt="RCVoice vs RGVoice: Two Tokens Coordinating Systemic Regeneration"
+                src="/images/governance/two-tokens-bridge.webp"
+                alt="Two rivers meeting at a living bridge: the Fund (RCVoice) and the Game (RGVoice) coordinating systemic regeneration"
                 width="1200"
                 height="675"
                 className="w-full rounded-xl shadow-2xl"
@@ -990,12 +984,12 @@ export default function Governance() {
       <section id="gov-fund-structure" className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 flex items-center gap-3">
-              <Users className="w-8 h-8" />
-              ReGen Civics Fund: Four Voice-Holder Groups
+            <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 flex items-center gap-3 min-w-0">
+              <Users className="w-8 h-8 flex-shrink-0" />
+              <span className="min-w-0">ReGen Civics Fund: Four Voice-Holder Groups</span>
             </h2>
             
-            <p className="text-white/90 text-lg leading-relaxed mb-12">
+            <p className="text-white/90 text-lg leading-relaxed mb-12 safe-prose">
               The ReGen Civics Fund is governed by four distinct groups, each bringing unique perspectives and expertise. Together, they make strategic decisions about capital allocation, land project selection, and alliance partnerships.
             </p>
             
@@ -1053,7 +1047,7 @@ export default function Governance() {
             </div>
             
             {/* Four Voice-Holder Groups */}
-            <div className="space-y-6 mb-12">
+            <div className="space-y-6 mb-12 safe-prose">
               <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#d4a574]">
                 <h3 className="text-xl font-bold text-[#d4a574] mb-3">1. Council of Domain Experts</h3>
                 <p className="text-white/80 mb-3"><strong>Role:</strong> Operational leadership and strategic guidance</p>
@@ -1119,7 +1113,7 @@ export default function Governance() {
               </p>
               <div className="flex justify-center mb-8">
                 <img
-                  src="/images/governance/seasonal-cycle.png"
+                  src="/images/governance/seasonal-cycle.webp"
                   alt="Seasonal cycle showing the four seasons and the Seasonal Ceremony that begins each new cycle"
                   className="w-full max-w-2xl rounded-xl"
                   loading="lazy"
@@ -1141,12 +1135,12 @@ export default function Governance() {
       <section id="gov-game-structure" className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 flex items-center gap-3">
-              <ZapIcon className="w-8 h-8" />
-              ReGen Game: By the Players, For the Players
+            <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 flex items-center gap-3 min-w-0">
+              <ZapIcon className="w-8 h-8 flex-shrink-0" />
+              <span className="min-w-0">ReGen Game: By the Players, For the Players</span>
             </h2>
             
-            <p className="text-white/90 text-lg leading-relaxed mb-12">
+            <p className="text-white/90 text-lg leading-relaxed mb-12 safe-prose">
               The ReGen Game operates on a fundamentally different principle: <strong>governance by active participation</strong>. Players earn voice through Quest completion and contributions, ensuring that those who are most engaged in the Game's mission have the greatest say in its direction.
             </p>
             
@@ -1295,11 +1289,11 @@ export default function Governance() {
               Governance as Movement Infrastructure
             </h2>
             
-            <p className="text-white/90 text-lg leading-relaxed mb-8 text-center">
+            <p className="text-white/90 text-lg leading-relaxed mb-8 text-center safe-prose">
               The governance systems we build today become the templates for tomorrow's regenerative societies. By creating transparent, participatory, and adaptive governance structures, we're not just managing a fund and a Game - we're demonstrating what's possible when we trust people to make wise decisions about their own futures.
             </p>
             
-            <p className="text-white/90 text-lg leading-relaxed text-center">
+            <p className="text-white/90 text-lg leading-relaxed text-center safe-prose">
               The Regenerative Renaissance requires governance that evolves with our understanding, includes those most affected by decisions, and aligns incentives toward collective wellbeing. ReGen Civics governance is designed to do exactly that.
             </p>
           </div>
@@ -1311,7 +1305,7 @@ export default function Governance() {
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Live Governance Dashboard</h2>
-            <p className="text-white/80 text-lg leading-relaxed mb-10 text-center max-w-3xl mx-auto">
+            <p className="text-white/80 text-lg leading-relaxed mb-10 text-center max-w-3xl mx-auto safe-prose">
               Real-time voice distribution and active proposals from Hypha, live for all to see.
             </p>
             <EarthDayCountdown />
@@ -1326,7 +1320,7 @@ export default function Governance() {
             <h2 className="text-3xl font-bold text-white mb-6">
               Access Live Governance Spaces
             </h2>
-            <p className="text-xl text-white/90 mb-8">
+            <p className="text-xl text-white/90 mb-8 safe-prose">
               Explore our live governance systems, join the next Seasonal Festival, or apply to become a land project or alliance partner.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

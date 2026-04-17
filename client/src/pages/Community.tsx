@@ -790,8 +790,8 @@ export default function Community() {
                             )}
                           </div>
                           <div className="px-4 py-3 flex items-center justify-between">
-                            <div>
-                              <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors truncate">
                                 {projectName}
                               </p>
                               <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
@@ -1134,7 +1134,7 @@ export default function Community() {
               </div>
             ) : !airThreads || airThreads.length === 0 ? (
               <div className="flex items-center justify-between gap-3 bg-[#f8f5f0] rounded-xl p-4 border border-slate-200/60">
-                <p className="text-[#1a472a]/50 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+                <p className="text-[#1a472a]/50 text-sm min-w-0" style={{ fontFamily: 'var(--font-body)' }}>
                   No threads yet. Be the first to clear the air.
                 </p>
                 <Link href="/community/c/air-conversations">
@@ -1188,7 +1188,7 @@ export default function Community() {
         )}
 
         {/* Tag filter and chain shortcuts */}
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-2 overflow-x-auto">
           <Link href="/community/lessons">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#fef3c7] border border-[#d97706]/20 text-[#92400e] text-sm font-medium hover:border-[#d97706]/50 transition-colors cursor-pointer">
               <BookOpen className="w-3.5 h-3.5" />

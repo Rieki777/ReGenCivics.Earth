@@ -7,6 +7,7 @@
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
+import { sweepEventStatuses } from "../lib/eventStatusSweep";
 import { events, eventSignups, eventAttendance, regenTokenLedger, agendaSuggestions } from "../../drizzle/schema";
 import { newsletterSubscribers, recordings } from "../../drizzle/schema";
 import { and, asc, desc, eq, gte, lte, lt, isNull, sql, inArray } from "drizzle-orm";
@@ -200,6 +201,7 @@ export const eventsRouter = router({
       if (!database) return [];
 
       await ensureEventsSeed();
+      await sweepEventStatuses();
 
       const all = await database
         .select()

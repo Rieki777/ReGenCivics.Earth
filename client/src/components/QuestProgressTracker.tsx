@@ -14,23 +14,24 @@ interface QuestProgress {
 
 const STORAGE_KEY = "regen-civics-quest-progress";
 
-// Default rewards per quest (simplified)
+// Rewards per quest - must match questData.ts values exactly
 const QUEST_REWARDS: Record<string, { regen: number; rvoice: number }> = {
-  "quest-0": { regen: 111, rvoice: 1 },
-  "quest-1": { regen: 111, rvoice: 1 },
-  "quest-2": { regen: 22, rvoice: 1 },
-  "quest-3": { regen: 111, rvoice: 1 },
-  "quest-4": { regen: 111, rvoice: 1 },
-  "quest-5": { regen: 111, rvoice: 1 },
-  "quest-6": { regen: 111, rvoice: 1 },
-  "quest-7": { regen: 111, rvoice: 1 },
-  "quest-8": { regen: 111, rvoice: 1 },
-  "quest-9": { regen: 111, rvoice: 1 },
-  "quest-10": { regen: 111, rvoice: 1 },
-  "quest-11": { regen: 111, rvoice: 1 },
-  "quest-12": { regen: 111, rvoice: 1 },
-  "quest-13": { regen: 111, rvoice: 1 },
-  "food-foresting": { regen: 33, rvoice: 1 },
+  "quest-0": { regen: 111, rvoice: 1 },   // Fire
+  "quest-1": { regen: 111, rvoice: 1 },   // Potion Brewing
+  "quest-2": { regen: 111, rvoice: 1 },   // Saving Seeds
+  "quest-3": { regen: 144, rvoice: 1 },   // Healing Wholes
+  "quest-4": { regen: 111, rvoice: 1 },   // Dreaming Spaces
+  "quest-5": { regen: 99, rvoice: 1 },    // Rites of Love
+  "quest-6": { regen: 144, rvoice: 1 },   // Healing Circles
+  "quest-7": { regen: 111, rvoice: 1 },   // Wild Foraging
+  "quest-8": { regen: 222, rvoice: 1 },   // Medicine Journey
+  "quest-9": { regen: 99, rvoice: 1 },    // Tree Talk
+  "quest-10": { regen: 177, rvoice: 1 },  // Communication Patterns
+  "quest-11": { regen: 177, rvoice: 1 },  // Coordination Patterns
+  "quest-12": { regen: 111, rvoice: 1 },  // Breathplay & Future Dreaming
+  "quest-13": { regen: 77, rvoice: 1 },   // Fasting
+  "quest-14": { regen: 111, rvoice: 1 },  // Love to Heal Your Body
+  "food-foresting": { regen: 111, rvoice: 1 }, // Food Foresting
 };
 
 const ALL_QUESTS = Object.keys(QUEST_REWARDS);
@@ -50,8 +51,9 @@ const QUEST_MAX_COMPLETIONS: Record<string, number> = {
   "quest-10": 3,
   "quest-11": 3,
   "quest-12": 3,
-  "quest-13": 999, // Fasting - can do many times
-  "food-foresting": 999, // Infinite - can do unlimited times
+  "quest-13": 999, // Fasting - repeatable
+  "quest-14": 999, // Love to Heal Your Body - repeatable
+  "food-foresting": 999, // Food Foresting - repeatable
 };
 
 export const getMaxCompletions = (questId: string) => QUEST_MAX_COMPLETIONS[questId] || 3;

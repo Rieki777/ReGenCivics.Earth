@@ -48,7 +48,7 @@ function TreeNode({
           alt={reply.authorName}
           className="h-5 w-5 rounded-full"
         />
-        <span>{reply.authorName}</span>
+        <span className="min-w-0 truncate">{reply.authorName}</span>
       </button>
       {children.length > 0 && (
         <ul className="border-l border-gray-600 pl-2">

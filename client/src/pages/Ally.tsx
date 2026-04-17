@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   Play,
+  Plus,
   ChevronDown,
   ChevronUp,
   Users,
@@ -216,14 +217,14 @@ export default function Ally() {
                   Apply as Alliance Partner
                 </Button>
               </Link>
-              <Link href="/connect">
+              <Link href="/tools">
                 <Button
                   variant="outline"
                   className="border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto"
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Contact Us
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add Your Tool
                 </Button>
               </Link>
             </div>
@@ -466,14 +467,14 @@ export default function Ally() {
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <Link href="/connect">
+                <Link href="/tools">
                   <Button
                     variant="outline"
                     className="border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 font-bold px-8 py-4 text-lg h-auto"
                     style={{ fontFamily: "var(--font-accent)" }}
                   >
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    Contact Us
+                    <Plus className="w-5 h-5 mr-2" />
+                    Add Your Tool
                   </Button>
                 </Link>
               </div>

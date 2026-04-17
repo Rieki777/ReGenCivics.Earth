@@ -14,7 +14,7 @@ import {
   BookOpen, Globe, FileText, Shield, AlertTriangle, Map, MessageCircle,
   Layers, Search, X, Sparkles,
 } from "lucide-react";
-import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
+import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 
 type PageEntry = {
   label: string;
@@ -37,8 +37,9 @@ const PAGES: PageEntry[] = [
   { label: "Investor Form", description: "Submit investor interest", href: "/investor", icon: <Coins className="w-4 h-4 text-[#ffd700]" />, group: "Invest" },
   // Play
   { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
-  { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <WizardsFamilyIcon size={16} className="text-[#7dd87d]" />, group: "Play" },
+  { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <TreeOfLifeIcon size={16} className="text-[#7dd87d]" />, group: "Play" },
   { label: "Crowd Pool Campaigns", description: "Browse active campaigns", href: "/crowd-pooling-projects", icon: <Users className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
+  { label: "Schedule", description: "Book a call or join a session", href: "/schedule", icon: <Calendar className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   // Community
   { label: "Community Forum", description: "Join the discussion", href: "/community", icon: <MessageCircle className="w-4 h-4 text-[#7dd87d]" />, group: "Community" },
   { label: "Blog", description: "Learn about regeneration", href: "/blog", icon: <BookOpen className="w-4 h-4 text-amber-400" />, group: "Community" },
@@ -46,7 +47,6 @@ const PAGES: PageEntry[] = [
   { label: "Map", description: "Explore projects on the map", href: "/map", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Community" },
   // Seasons
   { label: "Seasons", description: "Seasonal accelerator model", href: "/seasons", icon: <Layers className="w-4 h-4 text-[#7dd87d]" />, group: "Seasons" },
-  { label: "Schedule", description: "Book a call or join a session", href: "/schedule", icon: <Calendar className="w-4 h-4 text-[#7dd87d]" />, group: "Seasons" },
   // Apply
   { label: "Apply", description: "Apply as land project or alliance", href: "/apply", icon: <Sprout className="w-4 h-4 text-[#7dd87d]" />, group: "Apply" },
   // Legal

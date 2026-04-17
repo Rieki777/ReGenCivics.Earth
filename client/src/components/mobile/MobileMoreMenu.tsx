@@ -18,7 +18,7 @@ import { MOBILE_MENU_SECTIONS, MOBILE_MENU_FOOTER } from "@/config/mobileMenu";
 import { MenuCard } from "./MenuCard";
 import { NextQuestCard } from "./NextQuestCard";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
-import { WizardsFamilyIcon } from "@/components/icons/WizardsFamilyIcon";
+import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { Link } from "wouter";
 
 type Props = { open?: boolean; onClose?: () => void };
@@ -78,7 +78,7 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           <X className="w-5 h-5" />
         </button>
         <div className="flex flex-col items-center text-center">
-          <WizardsFamilyIcon size={56} color={tint.primary} />
+          <TreeOfLifeIcon size={56} color={tint.primary} />
           <h2 className="text-white text-xl font-bold mt-2" style={{ fontFamily: "var(--font-display)" }}>
             ReGen Civics
           </h2>
