@@ -325,4 +325,7 @@ export default function CrowdPoolingCampaigns() {
             </Link>
           </div>
         )}
-      </di
+      </div>
+    </div>
+  );
+}

@@ -1693,4 +1693,9 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         {/* Mobile CTAs */}
         <div className="bg-[#0a1f14] px-4 pb-6 flex flex-col gap-2">
           <a href="/apply" className="block w-full text-center text-sm bg-[#7dd87d] text-[#1a472a] py-3 rounded-full font-bold hover:bg-[#6bc86b] transition-colors">Apply as a New Land Project</a>
-          <a href="/connect?path=alliance" className="block w-full text-center text-s
+          <a href="/connect?path=alliance" className="block w-full text-center text-sm bg-[#7dd87d]/20 text-[#7dd87d] py-3 rounded-full font-bold border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30 transition-colors">Become an Alliance Partner</a>
+        </div>
+      </div>
+    </div>
+  );
+}
