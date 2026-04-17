@@ -38,7 +38,7 @@ function StageCard({
         {title}
       </h3>
       <p
-        className="text-white/80 leading-relaxed"
+        className="text-white/80 leading-relaxed safe-prose"
         style={{ fontFamily: "var(--font-body)" }}
       >
         {description}
@@ -112,13 +112,13 @@ export default function HealTheLand() {
               </h2>
               <div className="space-y-6">
                 <p
-                  className="text-white/85 text-lg leading-relaxed"
+                  className="text-white/85 text-lg leading-relaxed safe-prose prose-readable"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   We frame land health and human health as two separate problems. They are the same problem. When the land loses its living complexity, we lose ours. When the land heals, we feel it in our bodies, our moods, our sense of purpose.
                 </p>
                 <p
-                  className="text-white/85 text-lg leading-relaxed"
+                  className="text-white/85 text-lg leading-relaxed safe-prose prose-readable"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   The Church of the Regenerative Earth was built on this belief: we are the land. Not symbolically. We are literally made of the same stuff. Healing one heals the other.
@@ -313,7 +313,7 @@ export default function HealTheLand() {
               <h3 className="text-xl font-bold text-white mb-3" style={{ fontFamily: "var(--font-display)" }}>
                 The Church of the Regenerative Earth
               </h3>
-              <p className="text-white/60 text-sm leading-relaxed mb-4">
+              <p className="text-white/60 text-sm leading-relaxed mb-4 safe-prose">
                 We are a faith community. A 508(c)(1)(a) ministry. Our beliefs are simple: we are the land, we are one, and life is meant to be better and better and better. Our land projects are our places of worship. Our quests are our spiritual formation. Healing the land and healing ourselves are the same act.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">

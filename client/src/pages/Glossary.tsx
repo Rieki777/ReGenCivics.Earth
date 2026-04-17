@@ -275,7 +275,7 @@ export default function Glossary() {
             <h1 className="text-3xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
               ReGen Glossary
             </h1>
-            <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto mb-8">
+            <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto mb-8 safe-prose">
               Definitions for the key terms, frameworks, and concepts used throughout the ReGen Civics ecosystem.
             </p>
 
@@ -361,7 +361,7 @@ export default function Glossary() {
                       </span>
                     </div>
                   </div>
-                  <p className="text-white/70 text-sm leading-relaxed mt-2">
+                  <p className="text-white/70 text-sm leading-relaxed mt-2 safe-prose">
                     {entry.definition}
                   </p>
                   {entry.relatedLink && (

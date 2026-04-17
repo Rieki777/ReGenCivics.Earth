@@ -502,7 +502,7 @@ export default function Schedule() {
             Upcoming <span className="text-[#7dd87d]">Episodes</span>
           </h1>
           
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
+          <p className="text-xl text-white/80 max-w-2xl mx-auto safe-prose">
             Join our gatherings and be part of the regenerative renaissance. Add events to your calendar and tune in!
           </p>
         </div>
@@ -769,7 +769,7 @@ export default function Schedule() {
                   className="w-full p-6 text-left"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       {event.type === 'open' && (
                         <span className="inline-block bg-[#7dd87d] text-[#1a472a] text-xs font-bold px-2 py-1 rounded-full mb-2">
                           OPEN ACCESS
@@ -826,7 +826,7 @@ export default function Schedule() {
                 
                 {effectiveExpanded === event.id && (
                   <div className="px-6 pb-6 pt-0 border-t border-white/10">
-                    <p className="text-white/70 mb-6 mt-4">{event.description}</p>
+                    <p className="text-white/70 mb-6 mt-4 safe-prose">{event.description}</p>
                     {/* #25. Guest speaker info */}
                     {(event as any).guestSpeakerName && (
                       <div className="bg-[#7dd87d]/10 border border-[#7dd87d]/20 rounded-xl px-4 py-3 mb-4 flex items-start gap-3">
@@ -1065,7 +1065,7 @@ export default function Schedule() {
           <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
             Want to Join <span className="text-[#7dd87d]">Season 2</span>?
           </h2>
-          <p className="text-white/70 mb-8">
+          <p className="text-white/70 mb-8 safe-prose">
             Applications are now open for land projects interested in joining the next Season cohort.
           </p>
           

@@ -58,7 +58,7 @@ export default function FeatureSuggestions() {
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
             Feature Suggestions
           </h1>
-          <p className="text-white/70 text-base max-w-xl mx-auto mb-8">
+          <p className="text-white/70 text-base max-w-xl mx-auto mb-8 safe-prose">
             This site belongs to everyone building here. Propose features, vote on what matters, and help shape what gets built next.
           </p>
 
@@ -119,12 +119,12 @@ export default function FeatureSuggestions() {
                       <span className="text-sm font-bold">{s.voteCount}</span>
                     </button>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap min-w-0">
                         <h3 className="font-bold text-white text-sm">{s.title}</h3>
                         {badge && <span className={`text-[10px] px-2 py-0.5 rounded-full border ${badge.color}`}>{badge.label}</span>}
                         {s.category && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/10">{s.category}</span>}
                       </div>
-                      <p className="text-white/60 text-sm mb-2">{s.description}</p>
+                      <p className="text-white/60 text-sm mb-2 safe-prose">{s.description}</p>
                       <div className="flex items-center gap-3 text-white/55 text-xs">
                         <span>{s.authorName}</span>
                         {s.forumThreadId && (

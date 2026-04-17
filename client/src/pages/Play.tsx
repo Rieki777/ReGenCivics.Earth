@@ -371,7 +371,7 @@ export default function Play() {
 
           <AnimatedSection animation="slide-up" delay={400}>
             <p
-              className="text-lg md:text-xl lg:text-2xl text-white/90 mb-4 leading-relaxed max-w-3xl mx-auto"
+              className="text-lg md:text-xl lg:text-2xl text-white/90 mb-4 leading-relaxed max-w-3xl mx-auto safe-prose"
               style={{ fontFamily: "var(--font-body)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
             >
               Everyone can play. Whether you have five minutes or five years, there is a way to
@@ -565,7 +565,7 @@ export default function Play() {
               >
                 Want to Learn <span className="text-amber-400">More?</span>
               </h2>
-              <p className="text-white/70 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+              <p className="text-white/70 text-lg md:text-xl mb-8 max-w-2xl mx-auto safe-prose">
                 Dive deep into the game mechanics, token economics, seasonal cycles, and how the Infinite Game creates real-world regenerative impact.
               </p>
               <Link href="/game">
@@ -591,7 +591,7 @@ export default function Play() {
               >
                 Ready to <span className="text-[#7dd87d]">Start?</span>
               </h2>
-              <p className="text-white/70 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+              <p className="text-white/70 text-lg md:text-xl mb-8 max-w-2xl mx-auto safe-prose">
                 Jump straight into your first quest. No sign-up required. Just pick a quest and begin your journey in the Infinite Game.
               </p>
               <Link href="/quest">

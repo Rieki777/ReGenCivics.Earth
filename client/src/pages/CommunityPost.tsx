@@ -579,7 +579,7 @@ export default function CommunityPost() {
                 </div>
               </div>
             ) : (
-            <div className="px-4 md:px-6 py-4 text-[#1a472a]/80 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+            <div className="px-4 md:px-6 py-4 text-[#1a472a]/80 text-sm leading-relaxed safe-prose min-w-0" style={{ fontFamily: 'var(--font-body)' }}>
               {translatedPost ? (
                 <div>
                   <div className="mb-2 px-2 py-1 bg-[#f0f7f0] rounded text-xs text-[#4a7c59] inline-flex items-center gap-1">
@@ -786,7 +786,7 @@ export default function CommunityPost() {
                           )}
                           <span className="text-[#1a472a]/30 text-[10px]">{timeAgo(reply.createdAt)}</span>
                         </div>
-                        <div className="text-[#1a472a]/70 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+                        <div className="text-[#1a472a]/70 text-sm leading-relaxed safe-prose" style={{ fontFamily: 'var(--font-body)' }}>
                           {translatedReplies[reply.id] ? (
                             <div>
                               <div className="mb-1 px-1.5 py-0.5 bg-[#f0f7f0] rounded text-[10px] text-[#4a7c59] inline-flex items-center gap-1">

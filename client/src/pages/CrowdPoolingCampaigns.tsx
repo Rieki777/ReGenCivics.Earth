@@ -194,7 +194,7 @@ export default function CrowdPoolingCampaigns() {
                   </div>
                   
                   {/* Campaign Header */}
-                  <div className="p-6 flex flex-col flex-grow">
+                  <div className="p-6 flex flex-col flex-grow min-w-0">
                   <div className="mb-4">
                     <h3 
                       className="text-xl font-bold text-[#1a472a] mb-2"
@@ -212,7 +212,7 @@ export default function CrowdPoolingCampaigns() {
                   </div>
                   
                   {/* Vision / Description */}
-                  <p className="text-[#1a472a]/90 text-sm mb-3 line-clamp-3 flex-grow leading-relaxed">
+                  <p className="text-[#1a472a]/90 text-sm mb-3 line-clamp-3 flex-grow leading-relaxed safe-prose">
                     {campaign.vision || campaign.description}
                   </p>
 

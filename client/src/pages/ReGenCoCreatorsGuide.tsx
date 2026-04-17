@@ -222,7 +222,7 @@ export default function ReGenCoCreatorsGuide() {
               <h1 className="font-display text-5xl md:text-6xl font-bold mb-6 leading-tight">
                 The ReGen Civics Game Guide
               </h1>
-              <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-2xl mx-auto safe-prose">
                 How this game works. How the economy works. How decisions get made, how to use
                 Hypha, and what the path from Explorer to Guide looks like.
               </p>
@@ -296,7 +296,7 @@ export default function ReGenCoCreatorsGuide() {
                       </div>
                     </div>
 
-                    <p className="text-gray-600 text-sm leading-relaxed mb-4">{s.explanation}</p>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-4 safe-prose">{s.explanation}</p>
 
                     <div className="bg-white/70 rounded-xl px-4 py-3 mb-4 border border-gray-200">
                       <p className="text-xs font-semibold text-gray-300 mb-1">Example</p>
@@ -320,7 +320,7 @@ export default function ReGenCoCreatorsGuide() {
             {/* Summary rule */}
             <div className="mt-10 rounded-2xl bg-emerald-900 text-white p-6 md:p-8 text-center">
               <h3 className="font-bold text-xl mb-3">The simple rule</h3>
-              <p className="text-emerald-100 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-emerald-100 max-w-2xl mx-auto leading-relaxed safe-prose">
                 Before you start something new, open an <strong>Agreement</strong>. After you've done
                 the work, file a <strong>Contribution</strong>. If you had costs, submit an{" "}
                 <strong>Expense</strong>. That's the whole loop.
@@ -402,7 +402,7 @@ export default function ReGenCoCreatorsGuide() {
               <h2 className="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-3">
                 The Token Economy
               </h2>
-              <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              <p className="text-gray-500 text-lg max-w-2xl mx-auto safe-prose">
                 Tokens track the value you contribute to the Regenerative Renaissance. Every
                 meaningful act creates a record. As the ecosystem grows, that record converts
                 to real economic participation.
@@ -456,7 +456,7 @@ export default function ReGenCoCreatorsGuide() {
             {/* Flow */}
             <div className="bg-white rounded-xl p-6 border border-gray-100 text-center">
               <h3 className="font-bold text-gray-900 mb-4">How Tokens Flow Through the Game</h3>
-              <div className="flex flex-col md:flex-row items-center justify-center gap-3 flex-wrap">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-3 flex-wrap min-w-0">
                 {["Contribution", "Tokens Earned", "Governance Weight Grows", "Regenerative Loop"].map((step, i, arr) => (
                   <div key={step} className="flex items-center gap-3">
                     <div className="px-4 py-2 bg-emerald-100 rounded-lg text-sm font-medium text-emerald-900">{step}</div>
@@ -481,7 +481,7 @@ export default function ReGenCoCreatorsGuide() {
               <h2 className="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-3">
                 Voice & Governance
               </h2>
-              <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              <p className="text-gray-500 text-lg max-w-2xl mx-auto safe-prose">
                 ReGen Civics uses consent-based decision-making. Everyone holds a voice.
                 That voice carries more weight the more you contribute.
               </p>
@@ -549,7 +549,7 @@ export default function ReGenCoCreatorsGuide() {
               <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-4 mt-2">
                 Hypha
               </h2>
-              <p className="text-teal-100 text-lg">
+              <p className="text-teal-100 text-lg safe-prose">
                 Where governance happens in practice. Open-source, transparent, and owned by its
                 contributors. No CEO. No board doling out budgets. Every proposal asks: does this
                 contribution serve the mission equal to what's being requested?
@@ -577,7 +577,7 @@ export default function ReGenCoCreatorsGuide() {
                   <h3 className="font-semibold text-white text-lg mb-2">
                     Value In = Value Out
                   </h3>
-                  <p className="text-teal-100 text-sm leading-relaxed">
+                  <p className="text-teal-100 text-sm leading-relaxed safe-prose">
                     Every proposal asks the community one question: does this contribution serve
                     ReGen Civics equal to the tokens being requested? Not time spent. Time is
                     not a contribution. What matters is value created, clearly articulated, and
@@ -610,7 +610,7 @@ export default function ReGenCoCreatorsGuide() {
                         <p className={`text-xs font-medium ${action.iconColor}`}>{action.subtitle}</p>
                       </div>
                     </div>
-                    <p className="text-gray-500 text-sm leading-relaxed mb-5">
+                    <p className="text-gray-500 text-sm leading-relaxed mb-5 safe-prose">
                       {action.description}
                     </p>
                     <a
@@ -736,7 +736,7 @@ export default function ReGenCoCreatorsGuide() {
           <h2 className="font-display text-3xl font-bold text-gray-900 mb-4">
             Ready to Start Playing?
           </h2>
-          <p className="text-gray-500 mb-8">
+          <p className="text-gray-500 mb-8 safe-prose">
             Open Hypha, find a quest that fits your R-Ikigai, and make your first proposal.
             The game is waiting for your gifts.
           </p>

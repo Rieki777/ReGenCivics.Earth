@@ -1110,7 +1110,7 @@ export default function GameMechanics() {
               How the Game Works
             </h1>
 
-            <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto leading-relaxed safe-prose">
               Every variable in the ReGen Games is visible and tunable. Browse live values or use
               the simulator to see how changes would affect scoring, harvest shares, and gratitude
               budgets.
@@ -1127,7 +1127,7 @@ export default function GameMechanics() {
             >
               Citizenship Tiers
             </h2>
-            <p className="text-white/70 mb-8 max-w-2xl leading-relaxed">
+            <p className="text-white/70 mb-8 max-w-2xl leading-relaxed safe-prose">
               You grow into this society at your own pace. Everyone starts as an Explorer and earns deeper participation through real contribution. Each tier carries different powers, gratitude budgets, and governance weight.
             </p>
             <div className="grid md:grid-cols-2 gap-6">
@@ -1214,7 +1214,7 @@ export default function GameMechanics() {
                       {tier.title}
                     </h3>
                   </div>
-                  <p className="text-white/80 mb-5 leading-relaxed">{tier.description}</p>
+                  <p className="text-white/80 mb-5 leading-relaxed safe-prose">{tier.description}</p>
                   <div className="mb-4">
                     <h4
                       className="text-sm uppercase tracking-wider mb-2"
@@ -1250,7 +1250,7 @@ export default function GameMechanics() {
                 </div>
               ))}
             </div>
-            <p className="text-white/60 text-sm mt-6 max-w-2xl leading-relaxed">
+            <p className="text-white/60 text-sm mt-6 max-w-2xl leading-relaxed safe-prose">
               Tier promotion happens automatically through a nightly batch job that recalculates your reputation, contribution score, and seasonal activity. There's a grace period before demotion. You don't lose tiers from a quiet week.
             </p>
           </AnimatedSection>

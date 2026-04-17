@@ -54,7 +54,7 @@ export default function DecisionsDashboard() {
             Decisions
           </h1>
         </div>
-        <p className="text-white/65 text-sm max-w-2xl">
+        <p className="text-white/65 text-sm max-w-2xl safe-prose">
           Mission control for the governance pipeline. Forum threads become formal decisions, ratified outcomes become agreements, and decisions that move tokens cross the Hypha Bridge to Base.
         </p>
       </section>
@@ -110,7 +110,7 @@ export default function DecisionsDashboard() {
                       href={`/community/post/${d.forumPostId}`}
                       className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/8 border border-white/10 transition-colors"
                     >
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 safe-prose">
                         <p className="text-white text-sm font-semibold truncate">Decision #{d.id}</p>
                         <p className="text-white/55 text-xs">
                           {TRACK_LABEL[d.track] ?? d.track} track
@@ -132,7 +132,7 @@ export default function DecisionsDashboard() {
             <p className="text-3xl font-bold text-amber-300 mb-1">
               {balanceQuery.data?.total.toLocaleString() ?? 0}
             </p>
-            <p className="text-white/65 text-xs leading-relaxed">
+            <p className="text-white/65 text-xs leading-relaxed safe-prose">
               Internal tokens accumulated across all your tenants. Claim to Hypha when you cross the threshold.
             </p>
             <Link
@@ -161,7 +161,7 @@ export default function DecisionsDashboard() {
               {(recentlyRatifiedQuery.data ?? []).map((d: any) => (
                 <li key={d.id} className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 safe-prose">
                     <Link href={`/community/post/${d.forumPostId}`} className="text-white text-sm font-semibold hover:text-[#7dd87d] transition-colors">
                       Decision #{d.id}
                     </Link>

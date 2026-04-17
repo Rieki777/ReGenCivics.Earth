@@ -661,7 +661,7 @@ export default function Bionomics() {
                   >
                     <span>Bionomics</span>
                   </h1>
-                  <p className="text-sm md:text-lg text-white/95 max-w-2xl mx-auto">
+                  <p className="text-sm md:text-lg text-white/95 max-w-2xl mx-auto safe-prose">
                     The living-economy side of ReGen Civics where we are living into the
                     future of how we need our economic systems to be. The Game, $ReGen,
                     and the bioregional infrastructure we have been growing since 2017.
@@ -1472,7 +1472,7 @@ export default function Bionomics() {
                 decoding="async"
                 className="w-full h-auto rounded-2xl border border-white/10 mb-6"
               />
-              <p className="text-white/85 text-base md:text-lg leading-relaxed mb-8">
+              <p className="text-white/85 text-base md:text-lg leading-relaxed mb-8 safe-prose">
                 The BioFi framework centers regenerators. People, projects, and practices
                 that heal place. Bionomics is built to resource them, connect them, and
                 amplify them. Inside ReGen Civics, regenerators show up as land projects in
@@ -1524,7 +1524,7 @@ export default function Bionomics() {
                 The BioFi Project's 2024 ebook concludes with a clear charge: financial
                 architecture must serve regeneration. Bionomics is one answer.
               </p>
-              <p className="text-white/90 text-base md:text-lg leading-relaxed mb-10 max-w-2xl mx-auto">
+              <p className="text-white/90 text-base md:text-lg leading-relaxed mb-10 max-w-2xl mx-auto safe-prose">
                 This page will keep growing. The Game is just getting started. If any of
                 this resonates, find a quest, talk to a land project, or just sit with the
                 bridge image for a minute. The world on the other side is real. We are

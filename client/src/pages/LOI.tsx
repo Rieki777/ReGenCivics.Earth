@@ -122,7 +122,7 @@ export default function LOI() {
               <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                 Fund in Formation
               </h2>
-              <p className="text-white/90 mb-3">
+              <p className="text-white/90 mb-3 safe-prose">
                 We are currently only accepting Letters of Intent (LOIs) from capital partners. The fund will activate once we reach:
               </p>
               <ul className="space-y-2 text-white/80">
@@ -143,11 +143,11 @@ export default function LOI() {
           </div>
         </Card>
 
-        <Card className="p-8 bg-white/95 backdrop-blur-sm">
+        <Card className="p-8 bg-white/95 backdrop-blur-sm min-w-0">
           <h1 className="text-4xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Letter of Intent
           </h1>
-          <p className="text-[#1a472a]/70 mb-8">
+          <p className="text-[#1a472a]/70 mb-8 safe-prose">
             Express your interest in becoming a capital partner for the ReGen Civics Fund. This is not a binding commitment, but helps us understand the level of interest and plan accordingly.
           </p>
 

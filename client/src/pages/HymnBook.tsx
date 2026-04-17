@@ -55,7 +55,7 @@ export default function HymnBook() {
             <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: "var(--font-display)" }}>
               Add Your Voice
             </h1>
-            <p className="text-white/85 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+            <p className="text-white/85 text-base md:text-lg max-w-xl mx-auto leading-relaxed safe-prose">
               Submit your songs to add to the Hymns of the ReGeneration. Each season,
               the highest voted community song joins the Hymn Book. The musician
               receives <span className="text-[#7dd87d] font-semibold">3,333 $ReGen</span>.
@@ -162,7 +162,7 @@ export default function HymnBook() {
                         isMyVote ? "border-[#7dd87d]/60" : "border-white/10"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-4 mb-2">
+                      <div className="flex items-start justify-between gap-4 mb-2 min-w-0">
                         <div className="min-w-0">
                           <p className="font-bold text-white truncate">{row.title}</p>
                           {row.artist && <p className="text-white/55 text-sm truncate">{row.artist}</p>}

@@ -115,7 +115,7 @@ function CollapsibleSection({
                 ))}
               </div>
             )}
-            <div className="text-white/70 text-base leading-relaxed">{children}</div>
+            <div className="text-white/70 text-base leading-relaxed safe-prose">{children}</div>
           </div>
         </div>
       )}
@@ -219,7 +219,7 @@ export default function Fund() {
 
           <AnimatedSection animation="slide-up" delay={400}>
             <p
-              className="text-lg md:text-xl lg:text-2xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto text-shadow-subtle"
+              className="text-lg md:text-xl lg:text-2xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto text-shadow-subtle safe-prose"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Vision: Billions in resources effectively serving regenerative land projects. A venture
@@ -421,7 +421,7 @@ export default function Fund() {
                     <CollapsibleContent>
                       <div className="px-5 md:px-6 pb-5 md:pb-6 pt-0 pl-20 md:pl-[5.5rem]">
                         <p
-                          className="text-white/70 text-base leading-relaxed mb-4"
+                          className="text-white/70 text-base leading-relaxed mb-4 safe-prose"
                           style={{ fontFamily: "var(--font-body)" }}
                         >
                           {item.desc}
@@ -656,7 +656,7 @@ export default function Fund() {
               >
                 Begin Your <span className="text-amber-400">Investor Journey</span>
               </h2>
-              <p className="text-white/60 text-base md:text-lg mb-6 max-w-xl mx-auto">
+              <p className="text-white/60 text-base md:text-lg mb-6 max-w-xl mx-auto safe-prose">
                 Or, if you are already in, signal your support by signing a Letter of Intent.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">

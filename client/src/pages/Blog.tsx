@@ -44,7 +44,7 @@ function VideoSuggestionCard({
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-[#7dd87d]/20 hover:border-[#7dd87d]/40 transition-all">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg">{category?.icon || '💡'}</span>
             <span className="text-xs text-[#7dd87d] bg-[#7dd87d]/20 px-2 py-0.5 rounded-full">
@@ -294,7 +294,7 @@ export default function Blog() {
               The <span className="text-[#7dd87d]">ReGen</span> Blog
             </h1>
             
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+            <p className="text-xl text-white/80 max-w-2xl mx-auto safe-prose">
               Stories, insights, and updates from our journey toward a regenerative civilization.
             </p>
           </AnimatedSection>
@@ -313,7 +313,7 @@ export default function Blog() {
               <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                 A Conversation with a Land Steward
               </h2>
-              <p className="text-white/70 text-base max-w-xl mx-auto">
+              <p className="text-white/70 text-base max-w-xl mx-auto safe-prose">
                 A grounded overview of ReGen Civics from the perspective of someone stewarding a land project.
               </p>
             </div>
@@ -534,7 +534,7 @@ export default function Blog() {
                     <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 group-hover:text-[#7dd87d] transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
                       {featuredPost.title}
                     </h3>
-                    <p className="text-white/70 mb-6 line-clamp-2">{featuredPost.excerpt}</p>
+                    <p className="text-white/70 mb-6 line-clamp-2 safe-prose">{featuredPost.excerpt}</p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 text-white/50 text-sm">
                         <span className="flex items-center gap-1">
@@ -630,7 +630,7 @@ export default function Blog() {
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 Stay in the <span className="text-[#7dd87d]">Loop</span>
               </h2>
-              <p className="text-white/70 mb-6">
+              <p className="text-white/70 mb-6 safe-prose">
                 Get updates on new blog posts, Season 2 announcements, and community events.
               </p>
               <Link href="/socials">

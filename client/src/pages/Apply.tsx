@@ -269,7 +269,7 @@ export default function Apply() {
     <PageWrapper>
     <div className="min-h-screen bg-[#f0ebe3] py-12">
       <BannerDisplay bannerKey="apply-banner" />
-      <div className="container max-w-4xl">
+      <div className="container max-w-4xl min-w-0">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[#1a472a] mb-2">
@@ -1006,7 +1006,7 @@ export default function Apply() {
                 <p className="text-[#1a472a] font-medium mb-2">
                   Ready to submit?
                 </p>
-                <p className="text-[#1a472a] text-sm">
+                <p className="text-[#1a472a] text-sm safe-prose">
                   By submitting this application, you agree that, if picked, you'll participate in ReGen Civics next Season and commit to the time requirements (1 day / week) outlined in the program. Or, let us know ASAP if you're not going to be able to participate, so we can offer to another project if you were to be selected.
                 </p>
               </div>

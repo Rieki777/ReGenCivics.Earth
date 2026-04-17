@@ -96,7 +96,7 @@ export default function CrowdPooling() {
             >
               {pageCopy.crowdPooling.heading}
             </h1>
-            <p className="text-[#1a472a]/85 max-w-xl mx-auto">
+            <p className="text-[#1a472a]/85 max-w-xl mx-auto safe-prose">
               {pageCopy.crowdPooling.subtext}
             </p>
             <p className="mt-3 text-[#1a472a]/70 text-sm max-w-xl mx-auto">
@@ -152,7 +152,7 @@ export default function CrowdPooling() {
           <div className="bg-white rounded-xl p-4 mb-8 border border-[#7dd87d]/30 shadow-sm">
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-[#4a7c59] flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-[#1a472a]/80">
+              <div className="text-sm text-[#1a472a]/80 safe-prose min-w-0">
                 <p className="mb-2">
                   <strong>How to use this tool:</strong>
                 </p>
@@ -211,7 +211,7 @@ export default function CrowdPooling() {
                 {pageCopy.crowdPooling.philosophy.heading}
               </h3>
             </div>
-            <p className="text-[#1a472a]/85 text-sm mb-4">
+            <p className="text-[#1a472a]/85 text-sm mb-4 safe-prose">
               {pageCopy.crowdPooling.philosophy.body}
             </p>
             <div className="aspect-video rounded-xl overflow-hidden bg-[#1a472a]/10">

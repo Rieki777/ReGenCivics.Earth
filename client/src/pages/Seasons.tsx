@@ -86,7 +86,7 @@ export default function Seasons() {
             <span className="text-[#7dd87d]">"Spring"</span> Season
           </h1>
           
-          <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-8">
+          <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-8 safe-prose">
             13 weeks of transformation, learning, and growth to take your regenerative land project from a few core team members to a thriving village and minimum viable economy.
           </p>
           
@@ -257,7 +257,7 @@ export default function Seasons() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
               The Incubator <span className="text-[#7dd87d]">Structure</span>
             </h2>
-            <p className="text-lg text-white/70 max-w-3xl mx-auto">
+            <p className="text-lg text-white/70 max-w-3xl mx-auto safe-prose">
               Each week is designed to bring you down the path of being ready to create and/or expand your Game into a thriving village and "minimum viable economy" designed to meet all your community needs.
             </p>
           </div>
@@ -411,7 +411,7 @@ export default function Seasons() {
             </div>
             <div>
               <h3 className="text-lg font-bold text-[#7dd87d] mb-1">Currently Free to Apply and Participate</h3>
-              <p className="text-white/70 text-sm leading-relaxed">
+              <p className="text-white/70 text-sm leading-relaxed safe-prose">
                 Applying and participating in the Season is currently free for selected projects. As the program grows and matures, we intend to introduce application and participation fees to sustain the ecosystem. For now, if you are chosen, your commitment and full participation is your contribution.
               </p>
             </div>
@@ -469,7 +469,7 @@ export default function Seasons() {
                 </div>
                 <div>
                   <h4 className="font-bold text-amber-400 mb-2">Priority Given to Projects That Support More Projects</h4>
-                  <p className="text-white/70 text-sm leading-relaxed">
+                  <p className="text-white/70 text-sm leading-relaxed safe-prose">
                     We give priority to land projects that are actively working toward becoming a case-study and incubator themselves. This means projects that are tracking and mapping their process, developing a unique "play" (a replicable protocol others can learn from), and intending to host teams who come to learn and implement those protocols on their own land. Our deepest priority is to support the projects that want to support more projects.
                   </p>
                 </div>
@@ -540,7 +540,7 @@ export default function Seasons() {
                   <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Season 2 - September 2026</h3>
                 </div>
               </div>
-              <p className="text-white/80 mb-4">
+              <p className="text-white/80 mb-4 safe-prose">
                 <strong className="text-[#7dd87d]">Building the Portfolio:</strong> Season 2 focuses on onboarding quality regenerative land projects into our portfolio, conducting token swaps with founding alliance and land projects, creating the initial governance systems for the fund, and expanding the portfolio pipeline.
               </p>
               <ul className="space-y-2 text-white/70 text-sm">
@@ -578,7 +578,7 @@ export default function Seasons() {
                   <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>Season 3</h3>
                 </div>
               </div>
-              <p className="text-white/80 mb-4">
+              <p className="text-white/80 mb-4 safe-prose">
                 <strong className="text-amber-400">Fund Activation:</strong> Season 3 will focus on getting our fund ready to send and receive capital for land project investments.
               </p>
               <ul className="space-y-2 text-white/70 text-sm">
@@ -726,7 +726,7 @@ export default function Seasons() {
           <h2 className="text-4xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
             Ready to Begin Your <span className="text-[#7dd87d]">Journey</span>?
           </h2>
-          <p className="text-lg text-white/70 mb-8">
+          <p className="text-lg text-white/70 mb-8 safe-prose">
             Season 2 starts September 2026. Join us for an open access session to learn more, or apply now to be considered for the next cohort.
           </p>
           
@@ -863,7 +863,7 @@ export default function Seasons() {
                   </div>
 
                   {/* Content */}
-                  <div className={`flex-1 glass-panel rounded-2xl p-5 ${item.side === "right" ? "sm:mr-6" : "sm:ml-6"}`}>
+                  <div className={`flex-1 min-w-0 glass-panel rounded-2xl p-5 ${item.side === "right" ? "sm:mr-6" : "sm:ml-6"}`}>
                     <div className={`flex items-center gap-3 mb-3 flex-wrap ${item.side === "right" ? "sm:justify-end" : ""}`}>
                       <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
                         {item.season}

@@ -83,7 +83,7 @@ function CollapsibleSection({
       {isOpen && (
         <div className="px-5 pb-5 pt-0">
           <div className="ml-13 pl-4 border-l-2 border-cyan-400/20">
-            <div className="text-white/70 text-base leading-relaxed space-y-3">
+            <div className="text-white/70 text-base leading-relaxed space-y-3 safe-prose">
               {children}
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function Ally() {
 
           <AnimatedSection animation="slide-up" delay={400}>
             <p
-              className="text-lg md:text-xl lg:text-2xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto text-shadow-subtle"
+              className="text-lg md:text-xl lg:text-2xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto text-shadow-subtle safe-prose"
               style={{ fontFamily: "var(--font-body)" }}
             >
               Your organization already does important work. Together, we can do what none of us
@@ -426,7 +426,7 @@ export default function Ally() {
                       <div className="px-5 md:px-6 pb-5 md:pb-6 pt-0 glass-panel border-t-0 rounded-t-none">
                         <div className="ml-16">
                           <p
-                            className="text-white/70 text-base leading-relaxed"
+                            className="text-white/70 text-base leading-relaxed safe-prose"
                             style={{ fontFamily: "var(--font-body)" }}
                           >
                             {item.desc}
@@ -454,7 +454,7 @@ export default function Ally() {
               >
                 Join the <span className="text-cyan-400">Alliance</span>
               </h2>
-              <p className="text-white/60 text-base md:text-lg mb-6 max-w-xl mx-auto">
+              <p className="text-white/60 text-base md:text-lg mb-6 max-w-xl mx-auto safe-prose">
                 Or reach out to explore collaboration.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">

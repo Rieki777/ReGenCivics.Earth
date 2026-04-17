@@ -206,7 +206,7 @@ function FAQItem({ question, children }: { question: string; children: ReactNode
       <div 
         className={`transition-all duration-400 ease-in-out overflow-hidden ${isOpen ? 'max-h-[2000px] opacity-100 pb-4' : 'max-h-0 opacity-0'}`}
       >
-        <div className="text-white/70 text-sm md:text-[15px] leading-relaxed space-y-3">
+        <div className="text-white/70 text-sm md:text-[15px] leading-relaxed space-y-3 safe-prose min-w-0">
           {children}
         </div>
       </div>
@@ -663,7 +663,7 @@ export default function Opportunity() {
       <section className="pt-24 pb-16">
         <div className="container mx-auto px-4">
           {/* On large screens, shift content left to make room for TOC sidebar (w-72 + 2rem gap = ~320px) */}
-          <div className="max-w-4xl mx-auto lg:mr-80 xl:mr-80">
+          <div className="max-w-4xl mx-auto lg:mr-80 xl:mr-80 min-w-0">
 
             {/* ===== LEGAL BANNER ===== */}
             <AnimatedSection animation="fade-in">
@@ -674,7 +674,7 @@ export default function Opportunity() {
                     <h2 className="text-base md:text-lg font-bold text-[#ffd700] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
                       NOT AN OFFER TO SELL SECURITIES
                     </h2>
-                    <p className="text-white/80 text-sm leading-relaxed">
+                    <p className="text-white/80 text-sm leading-relaxed safe-prose">
                       This is not an offer to sell securities. An offering will only be made through a confidential private placement memorandum to accredited investors in compliance with applicable securities laws. Past performance does not guarantee future results. Projected returns are estimates and may not be achieved.
                     </p>
                   </div>
@@ -712,7 +712,7 @@ export default function Opportunity() {
                 >
                   The Regenerative Transition, <span className="text-[#7dd87d]">As an Asset Class</span>
                 </h1>
-                <p className="text-base md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed relative z-10">
+                <p className="text-base md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed relative z-10 safe-prose">
                   A pioneering hybrid REIT + VC fund combining land-backed stability with venture growth across the full regenerative ecosystem: startup villages, regenerative communities, and the organizations rethinking housing, infrastructure, energy, governance, and other core services needed for thriving regenerative civilizations. Targeting 12-18% net IRR while financing systemic change.
                 </p>
                 <p className="text-sm text-white/50 max-w-2xl mx-auto mt-3 relative z-10">

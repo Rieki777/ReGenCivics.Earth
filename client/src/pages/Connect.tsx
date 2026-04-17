@@ -1108,8 +1108,8 @@ export default function Connect() {
                 Hi Friend! <span className="text-[#7dd87d]">Which Path Calls to You?</span>
               </h1>
               
-              <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
-                This short form helps us know what types of opportunities to connect with you about, 
+              <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed safe-prose">
+                This short form helps us know what types of opportunities to connect with you about,
                 so all our communications are relevant to you.
               </p>
               
@@ -1260,7 +1260,7 @@ export default function Connect() {
       <div className="container py-4 md:py-8 pb-16">
         <div className="max-w-2xl mx-auto">
           <div className="rounded-2xl border-2 border-[#7dd87d]/30 bg-[#1a472a]/90 backdrop-blur-sm shadow-xl overflow-hidden">
-            <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8 overflow-x-hidden">
+            <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8 overflow-x-hidden min-w-0 safe-prose">
               {/* Path-specific fields */}
               {renderPathFields()}
               

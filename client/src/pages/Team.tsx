@@ -408,11 +408,11 @@ export default function Team() {
             Who <span className="text-[#7dd87d]">We Are</span>
           </h1>
           
-          <p className="text-xl text-white/80 max-w-3xl mx-auto mb-4">
+          <p className="text-xl text-white/80 max-w-3xl mx-auto mb-4 safe-prose">
             We're not your average organisation. We use the same tools we help Land Projects adopt to co-create a constantly evolving organism of passionate individuals united by a shared purpose: catalyzing the Regenerative Renaissance.
           </p>
           
-          <p className="text-base text-white/60 max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-base text-white/60 max-w-2xl mx-auto mb-8 leading-relaxed safe-prose">
             Over 150 people have helped build this infrastructure. No single face is more important than another, so we list none.
           </p>
           
@@ -614,7 +614,7 @@ export default function Team() {
           </div>
 
           {/* The Narrative Story, always visible, explains how Game and Fund weave together */}
-          <div className="max-w-4xl mx-auto mb-10 space-y-5 text-white/85 leading-relaxed">
+          <div className="max-w-4xl mx-auto mb-10 space-y-5 text-white/85 leading-relaxed safe-prose">
             <p>
               ReGen Civics runs on two sides of one bridge. The{' '}
               <button
@@ -844,7 +844,7 @@ export default function Team() {
           </AnimatedSection>
 
           <AnimatedSection animation="slide-up" delay={200}>
-            <p className="text-xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto">
+            <p className="text-xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto safe-prose">
               Explore our <span className="text-[#7dd87d] font-semibold">Hypha Space</span> to see how we transparently govern, send funds, and make decisions. Everything is open.
             </p>
           </AnimatedSection>
@@ -917,7 +917,7 @@ export default function Team() {
           <h2 className="text-4xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
             Ready to <span className="text-[#7dd87d]">Explore</span>?
           </h2>
-          <p className="text-lg text-white/70 mb-8">
+          <p className="text-lg text-white/70 mb-8 safe-prose">
             Dive into our living organization on Hypha to see who's currently contributing, what projects are active, and how you might find your place in the regenerative movement.
           </p>
           

@@ -274,7 +274,7 @@ function ConversationRow({
     >
       <Avatar name={otherUser.name} avatarUrl={otherUser.avatarUrl} size="md" />
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 safe-prose">
         <div className="flex items-center justify-between gap-2">
           <span className={`font-medium text-sm truncate ${unreadCount > 0 ? "text-[#1a472a]" : "text-[#1a472a]/80"}`}>
             {otherUser.name}
@@ -571,12 +571,12 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                     />
                   )}
 
-                  <div className={`flex flex-col max-w-[70%] ${isSelf ? "items-end" : "items-start"}`}>
+                  <div className={`flex flex-col max-w-[70%] min-w-0 ${isSelf ? "items-end" : "items-start"}`}>
                     {!isSelf && (
                       <span className="text-xs text-[#1a472a]/50 mb-1 ml-1">{msg.senderName}</span>
                     )}
                     <div
-                      className={`px-4 py-2 rounded-2xl text-sm leading-relaxed break-words ${
+                      className={`px-4 py-2 rounded-2xl text-sm leading-relaxed break-words safe-prose ${
                         isSelf
                           ? "bg-[#1a472a] text-white rounded-br-sm"
                           : "bg-white text-[#1a472a] border border-[#1a472a]/10 rounded-bl-sm"

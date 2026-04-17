@@ -252,7 +252,7 @@ export default function Home() {
                   <span className="text-[#7dd87d]">ReGen</span> Civics
                 </h1>
                 <p
-                  className="text-white/90 text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto mb-8 text-shadow-subtle leading-relaxed"
+                  className="text-white/90 text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto mb-8 text-shadow-subtle leading-relaxed safe-prose"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   A venture fund and alliance helping regenerative land projects grow their
@@ -475,7 +475,7 @@ export default function Home() {
                 Two Spaces, One Vision
               </h2>
               <p
-                className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle"
+                className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle safe-prose"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 Two legally distinct yet interconnected ways to participate in the regenerative movement
@@ -656,7 +656,7 @@ export default function Home() {
             <AnimatedSection animation="fade-in">
               <div className="glass-panel p-8 md:p-10 text-center border-[#7dd87d]/20">
                 <Leaf className="w-12 h-12 text-[#7dd87d] mx-auto mb-4" />
-                <p className="text-white/70 mb-6 text-base">
+                <p className="text-white/70 mb-6 text-base safe-prose">
                   Join our community newsletter for updates on new seasons, project spotlights, and opportunities to participate in the infinite game.
                 </p>
                 <NewsletterSignup />

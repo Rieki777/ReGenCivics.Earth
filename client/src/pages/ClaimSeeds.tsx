@@ -231,7 +231,7 @@ export default function ClaimSeeds() {
                   Your SEEDS contribution claim has been received.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 min-w-0">
                 <div className="bg-muted border border-border rounded-lg p-4 space-y-2">
                   <p className="text-sm font-medium text-foreground">Claim ID</p>
                   <p className="font-mono text-lg text-primary">{submittedClaimId}</p>
@@ -316,7 +316,7 @@ export default function ClaimSeeds() {
             <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle className="text-2xl">Claim Your SEEDS Contributions</CardTitle>
-                <CardDescription>
+                <CardDescription className="safe-prose">
                   Your financial contributions to SEEDS are being honored in ReGen Civics.
                   Enter your SEEDS account name to look up your contribution records.
                   Claims are open until September 22, 2026.
@@ -484,9 +484,9 @@ export default function ClaimSeeds() {
 
                     {/* Fraud Warning */}
                     <div className="bg-muted border border-border rounded-lg p-3 mt-4">
-                      <p className="text-xs font-medium text-foreground flex gap-2">
+                      <p className="text-xs font-medium text-foreground flex gap-2 min-w-0">
                         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                        <span>
+                        <span className="safe-prose">
                           We will verify all claims against the Telos blockchain before minting.
                           The full transaction history for your account is public. Any claim that
                           doesn't match the on-chain record will be denied, and you will lose your
@@ -631,7 +631,7 @@ export default function ClaimSeeds() {
             <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle>Base Wallet Address</CardTitle>
-                <CardDescription>
+                <CardDescription className="safe-prose">
                   ReGen Civics runs on Base (Coinbase's blockchain). Your $ReGen tokens
                   will be sent to your Base wallet address.
                 </CardDescription>
