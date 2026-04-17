@@ -26,7 +26,7 @@ export function BannerDisplay({ bannerKey, className = '' }: BannerDisplayProps)
   }
 
   return (
-    <div className={`bg-gradient-to-r from-[#7dd87d] via-[#4a9f4a] to-[#7dd87d] text-[#1a472a] py-3 px-4 text-center relative overflow-hidden ${className}`}>
+    <div className={`bg-gradient-to-r from-[#7dd87d] via-[#4a7c59] to-[#7dd87d] text-[#1a472a] py-3 px-4 text-center relative overflow-hidden ${className}`}>
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0icmdiYSgyNiw3MSw0MiwwLjEpIi8+PC9zdmc+')] opacity-50" />
       
       <div className="relative z-10">

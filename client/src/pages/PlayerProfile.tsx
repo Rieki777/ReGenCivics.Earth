@@ -244,7 +244,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
               variant="light"
             />
           </div>
-          <Button onClick={() => { if (!displayName.trim()) { toast.error('Please enter a display name'); return; } setStep(2); }} className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold">
+          <Button onClick={() => { if (!displayName.trim()) { toast.error('Please enter a display name'); return; } setStep(2); }} className="w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold">
             Continue <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
@@ -294,7 +294,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setStep(1)} className="flex-1 border-[#1a472a]/20 text-[#1a472a]">← Back</Button>
-            <Button onClick={() => setStep(3)} className="flex-1 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold">
+            <Button onClick={() => setStep(3)} className="flex-1 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold">
               Continue <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -320,7 +320,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setStep(2)} className="flex-1 border-[#1a472a]/20 text-[#1a472a]">← Back</Button>
-            <Button onClick={handleSubmit} className="flex-1 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold" disabled={createMutation.isPending}>
+            <Button onClick={handleSubmit} className="flex-1 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold" disabled={createMutation.isPending}>
               {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating…</> : <>Looks good, create my profile</>}
             </Button>
           </div>
@@ -432,7 +432,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
           
           <Button 
             type="submit" 
-            className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+            className="w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
             disabled={linkMutation.isPending}
           >
             {linkMutation.isPending ? 'Linking...' : 'Link Account'}
@@ -1218,7 +1218,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 formData: formData as Record<string, unknown> | undefined,
               });
             }}
-            className="w-full py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#6bc86b] transition-colors"
+            className="w-full py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#9de89d] transition-colors"
           >
             {claimMutation.isPending ? "Submitting…" : "Submit Claim"}
           </button>
@@ -1612,7 +1612,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
         <button
           disabled={saving}
           onClick={() => { onSave({ websiteUrl, videoUrl, additionalNotes: notes }); setOpen(false); }}
-          className="flex-1 py-1.5 text-xs rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold disabled:opacity-50 hover:bg-[#6bc86b] transition-colors"
+          className="flex-1 py-1.5 text-xs rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold disabled:opacity-50 hover:bg-[#9de89d] transition-colors"
         >
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
@@ -1634,7 +1634,7 @@ const CAPITAL_TYPES = [
   { value: "cultural",      label: "Cultural",      icon: Palette,    color: "#f97316", desc: "Art, stories, rituals, values" },
   { value: "living",        label: "Living",        icon: Sprout,     color: "#22c55e", desc: "Land, ecosystems, biodiversity" },
   { value: "intellectual",  label: "Intellectual",  icon: Lightbulb,  color: "#a78bfa", desc: "Knowledge, skills, IP, research" },
-  { value: "experiential",  label: "Experiential",  icon: Zap,        color: "#fbbf24", desc: "Skills gained through doing" },
+  { value: "experiential",  label: "Experiential",  icon: Zap,        color: "#d4a574", desc: "Skills gained through doing" },
   { value: "material",      label: "Material",      icon: Hammer,     color: "#94a3b8", desc: "Tools, equipment, infrastructure" },
   { value: "spiritual",     label: "Spiritual",     icon: Heart,      color: "#f43f5e", desc: "Vision, meaning, purpose" },
 ] as const;
@@ -2036,7 +2036,7 @@ function ContributionsTab({
             <button
               type="submit"
               disabled={createMutation.isPending}
-              className="flex-1 py-2.5 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#6bc86b] transition-colors"
+              className="flex-1 py-2.5 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#9de89d] transition-colors"
             >
               {createMutation.isPending ? "Logging…" : "Log Contribution"}
             </button>
@@ -2277,7 +2277,7 @@ function SubmissionCard({
           </a>
         )}
         {primaryAction && (
-          <a href={primaryAction.href} className="text-[#1a472a] bg-[#7dd87d] hover:bg-[#6bc86b] text-xs px-3 py-1.5 rounded font-medium transition-colors">
+          <a href={primaryAction.href} className="text-[#1a472a] bg-[#7dd87d] hover:bg-[#9de89d] text-xs px-3 py-1.5 rounded font-medium transition-colors">
             {primaryAction.label}
           </a>
         )}
@@ -2371,7 +2371,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
           <div className="flex gap-2">
             <a
               href={`/community/post/${newThread.threadId}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#7dd87d] text-[#1a472a] text-sm font-bold hover:bg-[#6bc86b] transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#7dd87d] text-[#1a472a] text-sm font-bold hover:bg-[#9de89d] transition-colors"
             >
               Go to your forum space →
             </a>
@@ -2445,7 +2445,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
             <button
               disabled={!selectedOrg || claimMutation.isPending}
               onClick={handleClaim}
-              className="bg-[#7dd87d] text-[#1a472a] text-sm font-medium px-4 py-1.5 rounded disabled:opacity-40 hover:bg-[#6bc86b] transition-colors"
+              className="bg-[#7dd87d] text-[#1a472a] text-sm font-medium px-4 py-1.5 rounded disabled:opacity-40 hover:bg-[#9de89d] transition-colors"
             >
               {claimMutation.isPending ? "Submitting..." : "Submit Claim"}
             </button>
@@ -2754,7 +2754,7 @@ export default function PlayerProfile() {
                 </CardHeader>
                 <CardContent className="text-center">
                   <a href={getLoginUrl()}>
-                    <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]">
+                    <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
                       Sign In to Continue
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -3176,4 +3176,4 @@ export default function PlayerProfile() {
       </section>
     </div>
   );
-}
+}                                                      

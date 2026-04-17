@@ -13,9 +13,9 @@ interface QuestArcMapProps {
 
 const ELEMENT_COLORS: Record<string, string> = {
   earth: "#7dd87d",
-  water: "#60a5fa",
+  water: "#7dd87d",
   fire:  "#fb923c",
-  air:   "#c084fc",
+  air:   "#7dd87d",
 };
 
 // Element per quest index (0-13)

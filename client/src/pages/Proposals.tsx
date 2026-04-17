@@ -154,7 +154,7 @@ export default function Proposals() {
             {isCoCreatorPlus ? (
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-6 py-3 rounded-full">
+                  <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full">
                     <Plus className="w-4 h-4 mr-2" />
                     New Proposal
                   </Button>
@@ -200,7 +200,7 @@ export default function Proposals() {
                     <Button
                       onClick={handleSubmit}
                       disabled={!title.trim() || !description.trim() || !category || createMutation.isPending}
-                      className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold rounded-full px-6 w-full"
+                      className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6 w-full"
                     >
                       <Send className="w-4 h-4 mr-2" />
                       {createMutation.isPending ? "Submitting..." : "Submit Proposal"}

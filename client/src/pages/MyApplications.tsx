@@ -69,7 +69,7 @@ export default function MyApplications() {
           </p>
           <Button
             onClick={() => window.location.href = getLoginUrl()}
-            className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
           >
             Login to Continue
           </Button>
@@ -92,7 +92,7 @@ export default function MyApplications() {
             </p>
           </div>
           <Link href="/apply">
-            <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]">
+            <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
               <Plus className="w-4 h-4 mr-2" />
               New Application
             </Button>
@@ -110,7 +110,7 @@ export default function MyApplications() {
               Start your journey by submitting your first application
             </p>
             <Link href="/apply">
-              <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]">
+              <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Application
               </Button>

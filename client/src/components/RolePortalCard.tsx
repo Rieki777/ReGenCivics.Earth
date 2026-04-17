@@ -19,7 +19,7 @@ function getAssignmentStyle(assignment: string) {
   const lower = assignment.toLowerCase();
   if (lower.includes("golden")) {
     return {
-      className: "role-golden-opportunity bg-[#fbbf24]/20 text-[#fbbf24] border-[#fbbf24]/40",
+      className: "role-golden-opportunity bg-[#d4a574]/20 text-[#d4a574] border-[#d4a574]/40",
       label: "Golden opportunity",
     };
   }
@@ -297,9 +297,9 @@ export function RolePortalCard({ role }: { role: GameRole }) {
 
             {/* Special content (Skills Builder) */}
             {role.specialContent && (
-              <div className="bg-[#fbbf24]/10 border border-[#fbbf24]/30 rounded-xl p-5">
+              <div className="bg-[#d4a574]/10 border border-[#d4a574]/30 rounded-xl p-5">
                 <h4
-                  className="text-[#fbbf24] font-bold text-base mb-3"
+                  className="text-[#d4a574] font-bold text-base mb-3"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {role.specialContent.title}
@@ -328,10 +328,10 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                   </div>
                   <p className="text-white/70 text-sm">{role.seed}</p>
                 </div>
-                <div className="bg-[#fbbf24]/10 border border-[#fbbf24]/20 rounded-xl p-4">
+                <div className="bg-[#d4a574]/10 border border-[#d4a574]/20 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-lg">🌾</span>
-                    <span className="text-[#fbbf24] font-semibold text-sm">Harvest</span>
+                    <span className="text-[#d4a574] font-semibold text-sm">Harvest</span>
                     <span className="text-white/65 text-xs ml-auto">Did it grow?</span>
                   </div>
                   <p className="text-white/70 text-sm">{role.harvest}</p>
@@ -390,7 +390,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
             {/* Apply button */}
             <a
               href={`/connect?path=role&role=${encodeURIComponent(role.title)}&circle=${encodeURIComponent(role.circle)}&purpose=${encodeURIComponent(role.purpose)}`}
-              className="block w-full text-center bg-[#7dd87d] hover:bg-[#6bc86b] text-[#0d2818] font-bold py-3 rounded-xl transition-colors text-sm"
+              className="block w-full text-center bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] font-bold py-3 rounded-xl transition-colors text-sm"
             >
               Apply for This Role
             </a>

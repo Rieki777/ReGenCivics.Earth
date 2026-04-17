@@ -286,7 +286,7 @@ function RoleModal({ role, onClose }: { role: typeof openRoles[0], onClose: () =
         <div className="mt-8 flex gap-4">
           <Link 
             href={`/connect?path=role&role=${encodeURIComponent(role.title)}&circle=${encodeURIComponent(role.circle)}&purpose=${encodeURIComponent(role.purpose)}`}
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-3 rounded-xl font-semibold transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-3 rounded-xl font-semibold transition-colors"
           >
             Apply for This Role
             <ArrowRight className="w-4 h-4" />
@@ -420,7 +420,7 @@ export default function Team() {
             href="https://app.hypha.earth/en/dho/regen-civics"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
+            className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
           >
             <TreeDeciduous className="w-5 h-5" />
             Explore Our Living Organization
@@ -604,9 +604,9 @@ export default function Team() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-[#fbbf24]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-[#fbbf24]/30">
+            <div className="inline-flex items-center gap-2 bg-[#d4a574]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-[#d4a574]/30">
               <span className="text-lg">🌉</span>
-              <span className="text-[#fbbf24] font-medium text-sm uppercase tracking-wide">How the Roles Work Together</span>
+              <span className="text-[#d4a574] font-medium text-sm uppercase tracking-wide">How the Roles Work Together</span>
             </div>
             <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
               Two sides of the <span className="text-[#7dd87d]">same bridge</span>
@@ -857,7 +857,7 @@ export default function Team() {
             >
               <Button
                 size="lg"
-                className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] text-lg px-10 py-6 h-auto"
+                className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-lg px-10 py-6 h-auto"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 <span className="flex items-center gap-2">
@@ -924,8 +924,3 @@ export default function Team() {
           <div className="flex flex-wrap justify-center gap-4">
           
           </div>
-        </div>
-      </section>
-    </div>
-  );
-}

@@ -194,7 +194,7 @@ export default function BridgeHypha() {
           <button
             onClick={handleContinue}
             disabled={redirecting || !redirectQuery.data?.url}
-            className="w-full inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold py-3 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold py-3 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {redirecting ? "Redirecting..." : "Continue to Hypha"}
             <ArrowRight className="w-4 h-4" />

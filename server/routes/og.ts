@@ -91,11 +91,11 @@ function campaignTemplate(campaign: { title: string; location?: string; raised: 
   const pct = campaign.goal > 0 ? Math.min(Math.round((campaign.raised / campaign.goal) * 100), 100) : 0;
   const funded = pct >= 100;
   return baseCard([
-    { type: "div", props: { style: { fontSize: 14, color: funded ? "#fbbf24" : "#7dd87d", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }, children: funded ? "FUNDED" : "CROWD POOLING" } },
+    { type: "div", props: { style: { fontSize: 14, color: funded ? "#d4a574" : "#7dd87d", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }, children: funded ? "FUNDED" : "CROWD POOLING" } },
     { type: "div", props: { style: { fontSize: 36, fontWeight: 700, lineHeight: 1.2, marginBottom: 8 }, children: truncate(campaign.title, 60) } },
     campaign.location ? { type: "div", props: { style: { fontSize: 16, color: "rgba(255,255,255,0.5)", marginBottom: 16 }, children: campaign.location } } : null,
     { type: "div", props: { style: { display: "flex", alignItems: "center", gap: 8, height: 12, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 6, overflow: "hidden", marginBottom: 12 }, children: [
-      { type: "div", props: { style: { width: `${pct}%`, height: "100%", backgroundColor: funded ? "#fbbf24" : "#7dd87d", borderRadius: 6 } } },
+      { type: "div", props: { style: { width: `${pct}%`, height: "100%", backgroundColor: funded ? "#d4a574" : "#7dd87d", borderRadius: 6 } } },
     ] } },
     { type: "div", props: { style: { display: "flex", justifyContent: "space-between", fontSize: 16, color: "rgba(255,255,255,0.6)" }, children: [
       { type: "span", props: { children: `$${campaign.raised.toLocaleString()} of $${campaign.goal.toLocaleString()}` } },

@@ -200,9 +200,9 @@ export function ProgressMapSVG({ progress, onNodeClick, selectedPath }: Props) {
       {/* Underground mycelium lines connecting shared nodes to the tree */}
       <g opacity={0.25}>
         <line x1={350} y1={480} x2={REGEN_TREE.x} y2={REGEN_TREE.y} stroke="#7dd87d" strokeWidth={1.5} strokeDasharray="6 4" />
-        <line x1={350} y1={200} x2={REGEN_TREE.x} y2={REGEN_TREE.y} stroke="#60a5fa" strokeWidth={1.5} strokeDasharray="6 4" />
+        <line x1={350} y1={200} x2={REGEN_TREE.x} y2={REGEN_TREE.y} stroke="#7dd87d" strokeWidth={1.5} strokeDasharray="6 4" />
         <line x1={920} y1={570} x2={REGEN_TREE.x} y2={REGEN_TREE.y} stroke="#f97316" strokeWidth={1.5} strokeDasharray="6 4" />
-        <line x1={900} y1={370} x2={REGEN_TREE.x} y2={REGEN_TREE.y} stroke="#c084fc" strokeWidth={1.5} strokeDasharray="6 4" />
+        <line x1={900} y1={370} x2={REGEN_TREE.x} y2={REGEN_TREE.y} stroke="#7dd87d" strokeWidth={1.5} strokeDasharray="6 4" />
       </g>
 
       {/* Path curves (walking trails between landmarks) */}

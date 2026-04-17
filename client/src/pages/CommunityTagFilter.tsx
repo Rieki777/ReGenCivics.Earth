@@ -150,7 +150,7 @@ export default function CommunityTagFilter() {
                 Be the first to tag a post with {meta.label}.
               </p>
               <Link href="/community/new">
-                <span className="inline-block bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full px-5 py-2 text-sm cursor-pointer" style={{ fontFamily: "var(--font-display)" }}>
+                <span className="inline-block bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full px-5 py-2 text-sm cursor-pointer" style={{ fontFamily: "var(--font-display)" }}>
                   Start a Thread
                 </span>
               </Link>

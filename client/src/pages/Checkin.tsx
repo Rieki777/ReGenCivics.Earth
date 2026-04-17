@@ -114,7 +114,7 @@ export default function Checkin() {
                 <button
                   type="submit"
                   disabled={checkinMutation.isPending || !email.trim()}
-                  className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] disabled:opacity-50 text-[#1a472a] px-6 py-3 rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-50 text-[#1a472a] px-6 py-3 rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2"
                 >
                   {checkinMutation.isPending ? (
                     <>

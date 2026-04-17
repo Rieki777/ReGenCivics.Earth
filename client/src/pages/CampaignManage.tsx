@@ -90,7 +90,7 @@ export default function CampaignManage() {
           <CardContent>
             <Button 
               onClick={() => window.location.href = getLoginUrl()}
-              className="w-full bg-[#4a7c59] hover:bg-[#2e7d32]"
+              className="w-full bg-[#4a7c59] hover:bg-[#1a472a]"
             >
               Login to Continue
             </Button>
@@ -115,7 +115,7 @@ export default function CampaignManage() {
           <CardContent>
             <Button 
               onClick={() => navigate('/campaigns')}
-              className="w-full bg-[#4a7c59] hover:bg-[#2e7d32]"
+              className="w-full bg-[#4a7c59] hover:bg-[#1a472a]"
             >
               Browse All Campaigns
             </Button>
@@ -148,7 +148,7 @@ export default function CampaignManage() {
             </Button>
             <Button 
               onClick={() => navigate('/campaigns')}
-              className="w-full bg-[#4a7c59] hover:bg-[#2e7d32]"
+              className="w-full bg-[#4a7c59] hover:bg-[#1a472a]"
             >
               Browse All Campaigns
             </Button>

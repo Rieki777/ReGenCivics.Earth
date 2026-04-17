@@ -62,7 +62,7 @@ export default function ApplyStatus() {
             <h2 className="text-xl font-semibold text-[#1a472a] mb-2">No application yet</h2>
             <p className="text-[#1a472a]/60 mb-6">Start your application to join the ReGen Civics alliance.</p>
             <Link href="/apply">
-              <button className="bg-[#7dd87d] text-[#1a472a] px-6 py-2 rounded-full font-semibold hover:bg-[#6bc86b] transition-colors">
+              <button className="bg-[#7dd87d] text-[#1a472a] px-6 py-2 rounded-full font-semibold hover:bg-[#9de89d] transition-colors">
                 Begin Application
               </button>
             </Link>

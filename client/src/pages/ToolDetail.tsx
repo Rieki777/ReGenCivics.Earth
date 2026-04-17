@@ -52,7 +52,7 @@ export default function ToolDetail() {
           <h2 className="text-white text-xl font-semibold mb-2">Tool not found</h2>
           <p className="text-white/50 mb-6">This tool may have been removed or the link is incorrect.</p>
           <Link href="/tools">
-            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">
+            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to Tools Library
             </Button>
           </Link>
@@ -161,7 +161,7 @@ export default function ToolDetail() {
               <div className="flex flex-wrap items-center gap-4">
                 {tool.websiteUrl && (
                   <a href={tool.websiteUrl} target="_blank" rel="noopener noreferrer">
-                    <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold">
+                    <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
                       <ExternalLink className="w-4 h-4 mr-2" /> Visit Website
                     </Button>
                   </a>
@@ -202,7 +202,7 @@ export default function ToolDetail() {
                     onClick={() => endorseMutation.mutate({ toolId: tool!.id, comment: endorseText })}
                     disabled={!endorseText.trim() || endorseMutation.isPending}
                     size="sm"
-                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold"
+                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
                   >
                     {endorseMutation.isPending ? (
                       <Loader2 className="w-4 h-4 mr-1 animate-spin" />

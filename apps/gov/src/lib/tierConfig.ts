@@ -16,8 +16,8 @@ export interface TierDef {
 export const individualTiers: TierDef[] = [
   { tier: "seed",       label: "Seed",       usd: 750,     tokens: 75_000,     color: "#8BC34A", description: "A beginning. Early steps, personal practice, or a small contribution that still matters." },
   { tier: "sprout",     label: "Sprout",     usd: 3_500,   tokens: 350_000,    color: "#4CAF50", description: "Work that has taken root. Months or a few years of consistent contribution." },
-  { tier: "sapling",    label: "Sapling",    usd: 15_000,  tokens: 1_500_000,  color: "#2E7D32", description: "Years of showing up. Real outputs that others have used or built on." },
-  { tier: "grove",      label: "Grove",      usd: 50_000,  tokens: 5_000_000,  color: "#1B5E20", description: "Wide reach across capitals. Work that has shaped a field or held a community." },
+  { tier: "sapling",    label: "Sapling",    usd: 15_000,  tokens: 1_500_000,  color: "#1a472a", description: "Years of showing up. Real outputs that others have used or built on." },
+  { tier: "grove",      label: "Grove",      usd: 50_000,  tokens: 5_000_000,  color: "#0d2818", description: "Wide reach across capitals. Work that has shaped a field or held a community." },
   { tier: "old_growth", label: "Old Growth", usd: 150_000, tokens: 15_000_000, color: "#004D40", description: "Decades of deep work. Generational reach. A keystone contributor." },
 ];
 

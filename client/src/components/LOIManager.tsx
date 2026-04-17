@@ -135,7 +135,7 @@ export function LOIManager() {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
-                className="bg-gradient-to-r from-[#7dd87d] to-[#4a9f4a] h-3 rounded-full transition-all duration-500"
+                className="bg-gradient-to-r from-[#7dd87d] to-[#4a7c59] h-3 rounded-full transition-all duration-500"
                 style={{ width: `${Math.min(((stats?.totalAmount || 0) / 20000000) * 100, 100)}%` }}
               />
             </div>

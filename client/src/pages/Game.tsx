@@ -457,12 +457,12 @@ export default function Game() {
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-4 mt-8">
               <Link href="/tokenomics">
-                <Button size="lg" className="rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white">
+                <Button size="lg" className="rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white">
                   Explore Tokenomics <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
               <Link href="/governance">
-                <Button size="lg" className="rounded-xl bg-[#4a7c59] hover:bg-[#2e7d32] text-white">
+                <Button size="lg" className="rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white">
                   Explore Governance <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
@@ -520,7 +520,7 @@ export default function Game() {
       </section>
 
       {/* Animated Transition - Gold to Green */}
-      <div className="h-16 bg-gradient-to-b from-[#ffd700] via-[#e8f5e9] to-[#f0f7f0] relative overflow-hidden">
+      <div className="h-16 bg-gradient-to-b from-[#ffd700] via-[#f0f7f0] to-[#f0f7f0] relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-px h-full bg-gradient-to-b from-[#1a472a]/20 via-[#7dd87d]/40 to-transparent" />
         </div>
@@ -528,7 +528,7 @@ export default function Game() {
       </div>
 
       {/* Quest Animation Video Section */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-[#f0f7f0] to-[#e8f5e9] relative overflow-hidden">
+      <section className="py-12 md:py-16 bg-gradient-to-b from-[#f0f7f0] to-[#f0f7f0] relative overflow-hidden">
         <div className="container px-4">
           <AnimatedSection animation="slide-up" className="max-w-5xl mx-auto">
             <div className="text-center mb-6">
@@ -593,7 +593,7 @@ export default function Game() {
       </section>
 
       {/* Mission Statement Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-[#f0f7f0] via-white to-[#e8f5e9] relative overflow-hidden">
+      <section className="py-16 md:py-24 bg-gradient-to-br from-[#f0f7f0] via-white to-[#f0f7f0] relative overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-10 left-10 w-32 h-32 bg-[#7dd87d]/10 rounded-full blur-3xl animate-pulse" />
@@ -683,7 +683,7 @@ export default function Game() {
       </section>
 
       {/* Join the Movement Section - Player Invitation - MOVED HIGHER */}
-      <section className="py-16 bg-gradient-to-b from-[#f0ebe3] to-[#e8f5e9] relative overflow-hidden">
+      <section className="py-16 bg-gradient-to-b from-[#f0ebe3] to-[#f0f7f0] relative overflow-hidden">
         <div className="container px-4">
           <AnimatedSection animation="slide-up" className="text-center mb-12">
             <h2 
@@ -973,7 +973,7 @@ export default function Game() {
                       href="https://app.hypha.earth/en/dho/regen-games/agreements"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-[#4a7c59] hover:text-[#2e7d32] font-semibold text-sm"
+                      className="inline-flex items-center gap-2 text-[#4a7c59] hover:text-[#1a472a] font-semibold text-sm"
                     >
                       Go to ReGen Game Space <ExternalLink className="w-4 h-4" />
                     </a>
@@ -1299,7 +1299,7 @@ export default function Game() {
           <div className="max-w-4xl mx-auto">
             <Collapsible open={whyGamesOpen} onOpenChange={setWhyGamesOpen}>
               <CollapsibleTrigger className="w-full">
-                <div className="bg-gradient-to-r from-[#e8f5e9] to-[#c8e6c9] p-4 rounded-xl border-2 border-[#4a7c59]/30 shadow-lg flex items-center justify-between hover:bg-[#d4e8d4] transition-colors cursor-pointer">
+                <div className="bg-gradient-to-r from-[#f0f7f0] to-[#c8e6c9] p-4 rounded-xl border-2 border-[#4a7c59]/30 shadow-lg flex items-center justify-between hover:bg-[#d4e8d4] transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#4a7c59] flex items-center justify-center">
                       <BookOpen className="w-5 h-5 text-white" />
@@ -1337,13 +1337,13 @@ export default function Game() {
                   
                   {/* Research Cards */}
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9] p-4 rounded-xl border border-[#4a7c59]/30 text-center">
-                      <div className="w-12 h-12 rounded-full bg-[#2e7d32] flex items-center justify-center mx-auto mb-3">
+                    <div className="bg-gradient-to-br from-[#f0f7f0] to-[#c8e6c9] p-4 rounded-xl border border-[#4a7c59]/30 text-center">
+                      <div className="w-12 h-12 rounded-full bg-[#1a472a] flex items-center justify-center mx-auto mb-3">
                         <Lightbulb className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="font-bold text-[#1a472a] text-sm mb-1">Faster Learning</h4>
                       <p className="text-xs text-[#1a472a]/70 mb-2">Play accelerates skill acquisition</p>
-                      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3574776/" target="_blank" rel="noopener noreferrer" className="text-xs text-[#2e7d32] hover:underline">
+                      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3574776/" target="_blank" rel="noopener noreferrer" className="text-xs text-[#1a472a] hover:underline">
                         Research &rarr;
                       </a>
                     </div>
@@ -1367,7 +1367,7 @@ export default function Game() {
                         Research &rarr;
                       </a>
                     </div>
-                    <div className="bg-gradient-to-br from-[#e8f5e9] to-[#a5d6a7] p-4 rounded-xl border border-[#388e3c]/30 text-center">
+                    <div className="bg-gradient-to-br from-[#f0f7f0] to-[#a8e6a8] p-4 rounded-xl border border-[#388e3c]/30 text-center">
                       <div className="w-12 h-12 rounded-full bg-[#388e3c] flex items-center justify-center mx-auto mb-3">
                         <Zap className="w-6 h-6 text-white" />
                       </div>
@@ -1380,7 +1380,7 @@ export default function Game() {
                   </div>
                   
                   {/* Wellbeing Card */}
-                  <div className="bg-gradient-to-br from-[#e8f5e9] to-[#81c784] p-6 rounded-xl border-2 border-[#43a047]/30">
+                  <div className="bg-gradient-to-br from-[#f0f7f0] to-[#81c784] p-6 rounded-xl border-2 border-[#43a047]/30">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-12 h-12 rounded-full bg-[#43a047] flex items-center justify-center">
                         <Heart className="w-6 h-6 text-white" />
@@ -1509,7 +1509,7 @@ export default function Game() {
                 href="https://www.youtube.com/playlist?list=PL3Xi8vZSmBTSUZsQ82awoNIQS8ceBQ4io" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#7dd87d] text-[#1a472a] font-bold rounded-full hover:bg-[#6bc86b] transition-colors shadow-lg"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#7dd87d] text-[#1a472a] font-bold rounded-full hover:bg-[#9de89d] transition-colors shadow-lg"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 <Play className="w-5 h-5" />

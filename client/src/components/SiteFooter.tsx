@@ -303,22 +303,4 @@ export default function SiteFooter() {
             <a
               href="https://creativecommons.org/licenses/by-sa/4.0/"
               target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-white/50"
-            >
-              Creative Commons Attribution Sharealike 4.0
-            </a>{" "}
-            ReGen Civics Alliance. Growing the ReGenerative Renaissance.
-          </p>
-          <p className="text-white/60 text-[10px] mt-1">
-            This site does not constitute financial advice. Please review our{" "}
-            <Link href="/risk-disclosure" className="underline hover:text-white/50">
-              risk disclosures
-            </Link>{" "}
-            before making any investment decisions.
-          </p>
-        </div>
-      </div>
-    </footer>
-  );
-}
+              rel="noope

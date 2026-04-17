@@ -89,7 +89,7 @@ export default function GovTenant() {
             <Button
               onClick={() => joinMutation.mutate({ slug: slug ?? "" })}
               disabled={joinMutation.isPending}
-              className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold flex-shrink-0"
+              className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold flex-shrink-0"
             >
               {joinMutation.isPending ? "Joining..." : "Join"}
             </Button>

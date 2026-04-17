@@ -832,7 +832,7 @@
   }
   
   .regen-animated-text {
-    background: linear-gradient(90deg, #7dd87d, #4a9f4a, #39ff14, #7dd87d);
+    background: linear-gradient(90deg, #7dd87d, #4a7c59, #9de89d, #7dd87d);
     background-size: 300% 100%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -2148,60 +2148,4 @@ body {
    gives the smooth easing. */
 .magnetic {
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform;
-}
-
-/* 15. NAV UNDERLINE MORPH, pseudo-element underline grows
-   from center on hover, parent uses position: relative. */
-.nav-underline {
-  position: relative;
-}
-.nav-underline::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  right: 50%;
-  bottom: -4px;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(125, 216, 125, 0.85), rgba(212, 165, 116, 0.85));
-  transition: left 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-              right 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  border-radius: 2px;
-}
-.nav-underline:hover::after,
-.nav-underline:focus-visible::after,
-.nav-underline.is-active::after {
-  left: 0;
-  right: 0;
-}
-
-/* ════════════════════════════════════════════════════════════
-   COMPLEX ANIMATION LAYER, reduced motion overrides
-   ════════════════════════════════════════════════════════════ */
-@media (prefers-reduced-motion: reduce) {
-  .mycelium-card::before,
-  .mycelium-card::after,
-  .mycelium-grid:hover .mycelium-card:not(:hover),
-  .quest-shimmer::before,
-  .ink-reveal,
-  .ink-reveal.ink-reveal-on,
-  .blur-up,
-  .blur-up.blur-up-loaded,
-  .reply-entrance,
-  .scroll-progress-ring,
-  .card-tilt,
-  .card-tilt:hover,
-  .vine-corner::before,
-  .vine-corner::after,
-  .tree-breathe,
-  .leaf-drift-layer .leaf,
-  .magnetic,
-  .nav-underline::after {
-    transition: none !important;
-    animation: none !important;
-  }
-  .ink-reveal { -webkit-mask-image: none !important; mask-image: none !important; }
-  .blur-up { filter: none !important; transform: none !important; }
-  .card-tilt:hover { transform: none !important; }
-  .leaf-drift-layer { display: none !important; }
-}
+  will-change: t

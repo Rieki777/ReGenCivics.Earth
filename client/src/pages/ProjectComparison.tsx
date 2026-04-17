@@ -252,7 +252,7 @@ export default function ProjectComparison() {
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {project.focusAreas.slice(0, 2).map(area => (
-                        <Badge key={area} variant="secondary" className="text-xs bg-[#e8f5e9] text-[#1a472a]">
+                        <Badge key={area} variant="secondary" className="text-xs bg-[#f0f7f0] text-[#1a472a]">
                           {area}
                         </Badge>
                       ))}
@@ -304,7 +304,7 @@ export default function ProjectComparison() {
                             {project.location}
                           </p>
                         </div>
-                        <Badge variant="secondary" className="bg-[#e8f5e9] text-[#1a472a]">
+                        <Badge variant="secondary" className="bg-[#f0f7f0] text-[#1a472a]">
                           {getProgressPercent(project.currentAmount, project.targetAmount)}% funded
                         </Badge>
                       </div>
@@ -472,7 +472,7 @@ export default function ProjectComparison() {
             </p>
             <Button 
               onClick={() => setShowProjectSelector(true)}
-              className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]"
+              className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Project
@@ -484,7 +484,7 @@ export default function ProjectComparison() {
         {projects.length > 0 && (
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/crowd-pooling">
-              <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">
+              <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
                 Create Contribution Proposal
               </Button>
             </Link>

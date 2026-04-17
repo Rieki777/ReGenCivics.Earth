@@ -11,9 +11,9 @@ export function SeasonScorecardSection() {
     <section className="py-16 px-4 bg-[#0d2818]">
       <div className="container mx-auto max-w-5xl">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-[#fbbf24]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-[#fbbf24]/30">
+          <div className="inline-flex items-center gap-2 bg-[#d4a574]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-[#d4a574]/30">
             <span className="text-lg">📊</span>
-            <span className="text-[#fbbf24] font-medium text-sm uppercase tracking-wide">Season Scorecard</span>
+            <span className="text-[#d4a574] font-medium text-sm uppercase tracking-wide">Season Scorecard</span>
           </div>
           <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
             Season 1: <span className="text-[#7dd87d]">The First Build</span>
@@ -41,8 +41,8 @@ export function SeasonScorecardSection() {
                 </div>
                 <div className="flex items-center gap-3 mb-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    role.assignment === "Open" ? "bg-[#fbbf24]/20 text-[#fbbf24]" :
-                    role.assignment === "Golden opportunity" ? "bg-[#fbbf24]/30 text-[#fbbf24] font-semibold" :
+                    role.assignment === "Open" ? "bg-[#d4a574]/20 text-[#d4a574]" :
+                    role.assignment === "Golden opportunity" ? "bg-[#d4a574]/30 text-[#d4a574] font-semibold" :
                     "bg-[#7dd87d]/20 text-[#7dd87d]"
                   }`}>
                     {role.assignment}
@@ -61,7 +61,7 @@ export function SeasonScorecardSection() {
                     <div className="flex items-center gap-2">
                       <span className="text-xs">🌾</span>
                       <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#fbbf24]/40 rounded-full" style={{ width: "0%" }} />
+                        <div className="h-full bg-[#d4a574]/40 rounded-full" style={{ width: "0%" }} />
                       </div>
                       <span className="text-white/55 text-[10px]">Harvest</span>
                     </div>
@@ -82,7 +82,7 @@ export function SeasonScorecardSection() {
             <div className="text-white/50 text-xs uppercase tracking-wide mt-1">Total Roles</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4 border border-white/10 text-center">
-            <div className="text-2xl font-bold text-[#fbbf24]">9</div>
+            <div className="text-2xl font-bold text-[#d4a574]">9</div>
             <div className="text-white/50 text-xs uppercase tracking-wide mt-1">Open Roles</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4 border border-white/10 text-center">
@@ -90,7 +90,7 @@ export function SeasonScorecardSection() {
             <div className="text-white/50 text-xs uppercase tracking-wide mt-1">$ReGen Base Budget</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4 border border-white/10 text-center">
-            <div className="text-2xl font-bold text-[#fbbf24]">9.6M</div>
+            <div className="text-2xl font-bold text-[#d4a574]">9.6M</div>
             <div className="text-white/50 text-xs uppercase tracking-wide mt-1">$ReGen Max Budget</div>
           </div>
         </div>

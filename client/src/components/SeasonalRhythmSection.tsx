@@ -25,7 +25,7 @@ export default function SeasonalRhythmSection() {
     {
       emoji: "☀️",
       name: "Summer",
-      color: "#fbbf24",
+      color: "#d4a574",
       months: "Jun – Sep",
       theme: "Festivals & Village Building",
       description:

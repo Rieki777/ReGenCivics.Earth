@@ -60,7 +60,7 @@ export default function CommunitySeekingTeam() {
               </div>
               {isAuthenticated && (
                 <Link href="/community/new">
-                  <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full text-sm flex-shrink-0">
+                  <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full text-sm flex-shrink-0">
                     <Users className="w-4 h-4 mr-2" />
                     Post a Seeking Team
                   </Button>
@@ -81,12 +81,12 @@ export default function CommunitySeekingTeam() {
               </p>
               {isAuthenticated ? (
                 <Link href="/community/new">
-                  <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full">
+                  <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full">
                     Post in Seeking Team
                   </Button>
                 </Link>
               ) : (
-                <Button onClick={() => window.location.href = getLoginUrl()} className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full">
+                <Button onClick={() => window.location.href = getLoginUrl()} className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full">
                   Sign in to post
                 </Button>
               )}

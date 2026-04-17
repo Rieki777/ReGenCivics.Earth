@@ -132,7 +132,7 @@ export default function HymnBook() {
                 <button
                   type="submit"
                   disabled={submit.isPending}
-                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#0d2818] font-bold px-5 py-2.5 rounded-xl disabled:opacity-50"
+                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] font-bold px-5 py-2.5 rounded-xl disabled:opacity-50"
                 >
                   {submit.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Music className="w-4 h-4" />}
                   Submit Song
@@ -214,6 +214,4 @@ export default function HymnBook() {
           </section>
         </div>
       </div>
-    </PageTransition>
-  );
-}
+    </PageTra

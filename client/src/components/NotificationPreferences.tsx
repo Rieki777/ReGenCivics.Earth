@@ -280,7 +280,7 @@ export function NotificationPreferences() {
                             size="sm"
                             onClick={() => saveEmailRouting(type.emailKey)}
                             disabled={updatePreferences.isPending}
-                            className="h-9 px-3 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] text-xs"
+                            className="h-9 px-3 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-xs"
                           >
                             <Save className="w-3.5 h-3.5 mr-1" />
                             Save

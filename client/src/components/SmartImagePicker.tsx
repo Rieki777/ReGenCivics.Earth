@@ -274,7 +274,7 @@ export function SmartImagePicker({
               type="button"
               onClick={handleGenerate}
               disabled={!genPrompt.trim() || generating || genCount >= maxGenerations}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#6bc86b] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {generating ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

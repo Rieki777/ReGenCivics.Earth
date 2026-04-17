@@ -19,7 +19,7 @@ export const SEASON_THEMES: Record<
   },
   summer: {
     gradient: "from-amber-900 to-yellow-800",
-    accent: "#f59e0b",
+    accent: "#d4a017",
     bgOpacity: 0.12,
   },
   fall: {

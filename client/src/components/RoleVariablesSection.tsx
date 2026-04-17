@@ -27,7 +27,7 @@ export function RoleVariablesSection() {
             <span className="text-[#7dd87d] font-medium text-sm uppercase tracking-wide">Role Variables</span>
           </div>
           <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
-            Seed & <span className="text-[#fbbf24]">Harvest</span>
+            Seed & <span className="text-[#d4a574]">Harvest</span>
           </h2>
           <p className="text-lg text-white/70 max-w-3xl mx-auto">
             Every role has a planting commitment and an ecosystem impact metric. At the end of each season, the community reviews what got planted and what grew.
@@ -41,7 +41,7 @@ export function RoleVariablesSection() {
             <h3 className="text-white font-bold mb-2" style={{ fontFamily: "var(--font-display)" }}>Plant Your Seeds</h3>
             <p className="text-white/60 text-sm">Each role has specific deliverables you commit to. Ship the work, and your seeds are planted.</p>
           </div>
-          <div className="bg-[#fbbf24]/10 border border-[#fbbf24]/20 rounded-2xl p-6 text-center">
+          <div className="bg-[#d4a574]/10 border border-[#d4a574]/20 rounded-2xl p-6 text-center">
             <div className="text-4xl mb-3">🌾</div>
             <h3 className="text-white font-bold mb-2" style={{ fontFamily: "var(--font-display)" }}>Watch the Harvest</h3>
             <p className="text-white/60 text-sm">Did other people benefit from your work? New contributors, completed quests, projects on track. The ecosystem tells us.</p>
@@ -93,7 +93,7 @@ export function RoleVariablesSection() {
                       <td className="py-3 px-2"><span className="bg-[#7dd87d]/20 text-[#7dd87d] text-xs font-bold px-2 py-0.5 rounded-full">{row.band}</span></td>
                       <td className="py-3 px-2 font-mono text-[#7dd87d]">{row.base}</td>
                       <td className="py-3 px-2">{row.usd}</td>
-                      <td className="py-3 px-2 text-[#fbbf24]">{row.max}</td>
+                      <td className="py-3 px-2 text-[#d4a574]">{row.max}</td>
                       <td className="py-3 px-2 text-white/50 hidden md:table-cell">{row.roles}</td>
                     </tr>
                   ))}
@@ -118,7 +118,7 @@ export function RoleVariablesSection() {
                       <span className="text-white/60">{role.seed}</span>
                     </div>
                     <div className="flex items-start gap-2 text-xs">
-                      <span className="text-[#fbbf24] mt-0.5">🌾</span>
+                      <span className="text-[#d4a574] mt-0.5">🌾</span>
                       <span className="text-white/60">{role.harvest}</span>
                     </div>
                   </div>

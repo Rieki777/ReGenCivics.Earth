@@ -495,7 +495,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#1a472a] via-[#2e7d32] to-[#4a7c59] p-6 text-white relative">
+        <div className="bg-gradient-to-r from-[#1a472a] via-[#1a472a] to-[#4a7c59] p-6 text-white relative">
           <button
             onClick={onClose}
             aria-label="Close quest details"
@@ -581,7 +581,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
                 href="https://youtu.be/pbhGgg2GZUM?si=A-H9B9lRjX8m_mrg" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-sm text-center text-[#4a7c59] hover:text-[#2e7d32] mt-2 block underline"
+                className="text-sm text-center text-[#4a7c59] hover:text-[#1a472a] mt-2 block underline"
               >
                 Watch on YouTube
               </a>
@@ -603,7 +603,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
                 href="https://www.youtube.com/watch?v=nWb2B2uPfMo"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-center text-[#4a7c59] hover:text-[#2e7d32] mt-2 block underline"
+                className="text-sm text-center text-[#4a7c59] hover:text-[#1a472a] mt-2 block underline"
               >
                 Watch on YouTube
               </a>
@@ -630,7 +630,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
                   <a
                     href={`/quest-guides/${QUEST_PDF_SLUGS[quest.id]}.pdf`}
                     download
-                    className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] hover:from-[#3d6b4a] hover:to-[#256b29] text-white rounded-xl font-semibold transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#4a7c59] to-[#1a472a] hover:from-[#3d6b4a] hover:to-[#256b29] text-white rounded-xl font-semibold transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     Download Field Guide
@@ -755,7 +755,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
           })()}
 
           {/* Submit Quest Link */}
-          <div className="p-4 bg-gradient-to-r from-[#4a7c59]/10 to-[#2e7d32]/10 rounded-xl border border-[#4a7c59]/20">
+          <div className="p-4 bg-gradient-to-r from-[#4a7c59]/10 to-[#1a472a]/10 rounded-xl border border-[#4a7c59]/20">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-semibold text-[#1a472a] text-sm flex items-center gap-2">
@@ -802,7 +802,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
             </Button>
             {/* Finish Quest Button - opens the SubmitToDAOModal */}
             <Button
-              className="bg-gradient-to-r from-[#4a7c59] to-[#2e7d32] hover:from-[#3d6b4a] hover:to-[#256b29] text-white"
+              className="bg-gradient-to-r from-[#4a7c59] to-[#1a472a] hover:from-[#3d6b4a] hover:to-[#256b29] text-white"
               onClick={() => setSubmitModalOpen(true)}
             >
               <Send className="w-4 h-4 mr-2" />

@@ -68,7 +68,7 @@ export default function AdminApplicationDetail() {
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Login Required</h2>
           <Button
             onClick={() => window.location.href = getLoginUrl()}
-            className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
           >
             Login to Continue
           </Button>
@@ -84,7 +84,7 @@ export default function AdminApplicationDetail() {
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Access Denied</h2>
           <Button
             onClick={() => navigate("/")}
-            className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
           >
             Back to Home
           </Button>
@@ -100,7 +100,7 @@ export default function AdminApplicationDetail() {
           <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Application Not Found</h2>
           <Button
             onClick={() => navigate("/admin/applications")}
-            className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
           >
             Back to Applications
           </Button>
@@ -207,7 +207,7 @@ export default function AdminApplicationDetail() {
                       try {
                         const uses = JSON.parse(application.mixedUse);
                         return uses.map((use: string, i: number) => (
-                          <span key={i} className="px-2 py-1 bg-[#e8f5e9] text-[#4a7c59] rounded text-sm capitalize">
+                          <span key={i} className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded text-sm capitalize">
                             {use}
                           </span>
                         ));

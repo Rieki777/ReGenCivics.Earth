@@ -92,7 +92,7 @@ export default function GovBackField() {
               <Textarea value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="What's the idea?" rows={4} className="bg-white/10 border-white/15 text-white resize-none" />
               <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why park it for now? (optional)" maxLength={500} className="bg-white/10 border-white/15 text-white" />
               <div className="flex gap-2">
-                <Button onClick={handleSubmit} disabled={!title || !summary || parkMutation.isPending} className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold">
+                <Button onClick={handleSubmit} disabled={!title || !summary || parkMutation.isPending} className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold">
                   {parkMutation.isPending ? "Parking..." : "Park it"}
                 </Button>
                 <Button onClick={() => setShowForm(false)} variant="outline" className="border-white/20 text-white/75">

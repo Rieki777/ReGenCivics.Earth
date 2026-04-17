@@ -464,7 +464,7 @@ export default function CommunityNewPost() {
             <Button
               type="submit"
               disabled={!isValid || createPostMutation.isPending}
-              className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full px-6"
+              className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full px-6"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               {createPostMutation.isPending ? (

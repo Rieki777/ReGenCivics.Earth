@@ -114,7 +114,7 @@ function ActionCard({
                   <a key={i} href={link.href} target="_blank" rel="noopener noreferrer" className="block">
                     <Button
                       className={isPrimary
-                        ? `w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold py-3 text-base h-auto`
+                        ? `w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold py-3 text-base h-auto`
                         : `w-full font-bold py-3 text-base h-auto border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10`
                       }
                       variant={isPrimary ? "default" : "outline"}
@@ -130,7 +130,7 @@ function ActionCard({
                 <Link key={i} href={link.href}>
                   <Button
                     className={isPrimary
-                      ? `w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold py-3 text-base h-auto`
+                      ? `w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold py-3 text-base h-auto`
                       : `w-full font-bold py-3 text-base h-auto border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10`
                     }
                     variant={isPrimary ? "default" : "outline"}
@@ -596,7 +596,7 @@ export default function Play() {
               </p>
               <Link href="/quest">
                 <Button
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-12 py-6 text-xl md:text-2xl h-auto shadow-lg shadow-[#7dd87d]/20"
+                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-12 py-6 text-xl md:text-2xl h-auto shadow-lg shadow-[#7dd87d]/20"
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
                   <Compass className="w-7 h-7 mr-3" />
@@ -626,6 +626,3 @@ export default function Play() {
         </div>
       </section>
     </PageBackground>
-    </HeroPageLoader>
-  );
-}

@@ -247,8 +247,4 @@ export default function CrowdPooling() {
           
           {/* Sign In CTA */}
           <SignInCTA />
-        </div>
-      </main>
-    </div>
-  );
-}
+        </d

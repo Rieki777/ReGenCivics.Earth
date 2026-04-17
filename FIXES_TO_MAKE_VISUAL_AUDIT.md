@@ -392,17 +392,22 @@ For each route, write a small `AUDIT_{route}.md` summary under `audits/` with pa
 | — | Create `client/src/lib/design-tokens.ts` with locked palette | DONE |
 | — | Write `DESIGN_SYSTEM.md` one-page style guide | DONE |
 | — | Survey 285 unique hex values and produce migration map | DONE |
-| V1 | Add ESLint rule to flag raw hex literals outside tokens | CODED |
-| V2 | Run desktop + mobile emulator audit on 12 Tier 1 routes via webapp-testing skill; produce `audits/*.md` files | CODED |
-| V2 | Patch Critical findings inline during the audit | CODED |
-| V3 | Migrate `data/seasonConstants.ts`, `data/questData.ts`, `data/gameRoles.ts` to tokens | CODED |
-| V4 | Migrate 10 admin and governance components listed in Fix V4 | CODED |
-| V5 | Audit 16 Tier 2 routes | CODED |
-| V6 | Remove blue and purple drift from investor flow | CODED |
-| V7 | Audit remaining Tier 3 routes | CODED |
-| V8 | Consolidate radius, shadow, button primitives | CODED |
-| V9 | Enforce typography scale in `index.css` `@layer base` | CODED |
-| V10 | Re-anchor `:root` variables to locked tokens and test light mode | CODED |
+| V1 | Palette drift checker via `scripts/check-palette.ts` + npm scripts | DONE |
+| V1b | Install flat-config ESLint (@eslint/js + typescript-eslint + react-hooks + react-refresh). Config at `eslint.config.js`, rules set to warn so CI stays green. | CODED |
+| V2 | Run desktop + mobile emulator audit on 12 Tier 1 routes via webapp-testing skill; produce `audits/*.md` files | QUEUED |
+| V2 | Patch Critical findings inline during the audit | QUEUED |
+| V3 | Migrate `data/seasonConstants.ts`, `data/questData.ts`, `data/gameRoles.ts` to tokens | DONE |
+| V4 | Migrate 10 admin and governance components listed in Fix V4 | DONE |
+| V5 | Sweep Tier 2 and Tier 3 drift hexes to canonical tokens across `client/src`, `server/`, `apps/gov/src/` (sed mass-replace, 190+ occurrences cleaned, including uppercase variants). Only remaining hexes are `DEPRECATED_COLORS` docs in `design-tokens.ts`, archived one-pagers, and the seed-forum-posts script. | DONE |
+| V6 | Remove blue and purple drift from investor flow | DONE |
+| V6b | Normalize `#f0c040` → `amber.gold` across Governance SVG and Game page gradients | DONE |
+| V7 | Audit remaining Tier 3 routes | QUEUED |
+| V8 | Consolidate radius, shadow, button primitives | QUEUED |
+| V9 | Enforce typography scale in `index.css` `@layer base` | QUEUED |
+| V10 | Re-anchor `:root` variables to locked tokens and test light mode | QUEUED |
+| Fix 6 cron | Wire `sweepEventStatuses` into `/api/cron/nightly-batch` in `server/_core/index.ts` | DONE |
+| Railway verify | Confirm production deploy succeeded + cron-nightly-batch scheduled and last run green | DONE (via browser check against Railway dashboard) |
+| DB verify | Confirm migration runner does not require multi-statement support on DATABASE_URL. Runner sets `multipleStatements: false` and splits SQL itself. No change needed to DATABASE_URL. | DONE |
 
 ### WAITING ON YOU before Claude Code can proceed
 

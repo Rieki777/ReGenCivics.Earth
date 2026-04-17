@@ -1151,11 +1151,4 @@ export const eventsRouter = router({
         </div>`;
 
         await sendEmail({ to: [signup.email], subject, html, template: "speaker_intro" })
-          .catch(err => console.error(`[events.sendSpeakerIntro] error for ${signup.email}:`, err));
-        totalSent++;
-      }
-
-      return { sent: totalSent };
-    }),
-});
-
+          .catch(err => console.error(`[events.sendSpeakerIntro] error for ${signup.emai

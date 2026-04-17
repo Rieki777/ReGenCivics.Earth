@@ -19,7 +19,7 @@ const CITIZENSHIP_TIER_VISUALS: Record<string, { emoji: string; color: string; b
   explorer: { emoji: "🧭", color: "#7c9a7e", bgColor: "#7c9a7e20", label: "Explorer" },
   co_creator: { emoji: "🔥", color: "#e8a838", bgColor: "#e8a83820", label: "Co-Creator" },
   steward: { emoji: "🏔️", color: "#6b8dd6", bgColor: "#6b8dd620", label: "Steward" },
-  sage: { emoji: "✨", color: "#c084fc", bgColor: "#c084fc20", label: "Sage" },
+  sage: { emoji: "✨", color: "#7dd87d", bgColor: "#7dd87d20", label: "Sage" },
 };
 
 interface Props {

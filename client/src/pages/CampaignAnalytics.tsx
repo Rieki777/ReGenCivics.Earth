@@ -134,7 +134,7 @@ export default function CampaignAnalytics() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#e8f5e9] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[#f0f7f0] flex items-center justify-center">
                   <Eye className="w-5 h-5 text-[#4a7c59]" />
                 </div>
                 <div>
@@ -262,7 +262,7 @@ export default function CampaignAnalytics() {
                             <span className="capitalize text-[#1a472a]">{device}</span>
                             <span className="text-[#4a7c59]">{views} ({percentage}%)</span>
                           </div>
-                          <div className="h-2 bg-[#e8f5e9] rounded-full overflow-hidden">
+                          <div className="h-2 bg-[#f0f7f0] rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-[#7dd87d] rounded-full transition-all"
                               style={{ width: `${percentage}%` }}
@@ -305,7 +305,7 @@ export default function CampaignAnalytics() {
                             </span>
                             <span className="text-[#4a7c59]">{views} ({percentage}%)</span>
                           </div>
-                          <div className="h-2 bg-[#e8f5e9] rounded-full overflow-hidden">
+                          <div className="h-2 bg-[#f0f7f0] rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-[#4a7c59] rounded-full transition-all"
                               style={{ width: `${percentage}%` }}
@@ -339,7 +339,7 @@ export default function CampaignAnalytics() {
           <CardContent>
             <div className="flex items-center justify-center gap-4 py-4">
               <div className="text-center">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#e8f5e9] flex items-center justify-center mx-auto mb-2">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#f0f7f0] flex items-center justify-center mx-auto mb-2">
                   <div>
                     <p className="text-2xl md:text-3xl font-bold text-[#1a472a]">
                       {analytics?.totalViews || 0}

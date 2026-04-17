@@ -641,7 +641,7 @@ export const emailRouter = router({
                 <p style="color: #1a472a; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">Connect With Us</p>
                 <p style="color: #4a7c59; font-size: 12px;">WhatsApp | Discord | YouTube</p>
               </div>
-              <div style="background: #e8f5e9; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+              <div style="background: #f0f7f0; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
                 <p style="color: #1a472a; font-size: 13px; margin: 0; text-align: center;">
                   <strong>Questions or want to engage?</strong><br>
                   <span style="color: #4a7c59;">We don't respond to emails directly. Please join our community on WhatsApp or Discord!</span>

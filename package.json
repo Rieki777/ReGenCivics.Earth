@@ -11,6 +11,10 @@
     "build": "tsc --noEmit && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
+    "check:palette": "tsx scripts/check-palette.ts",
+    "check:palette:warn": "tsx scripts/check-palette.ts --warn-only",
+    "lint": "eslint . --max-warnings=9999",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "test": "vitest run --exclude \"**/node_modules/**\" --exclude \"**/dist/**\" --exclude \"server/applications.test.ts\" --exclude \"server/forum.test.ts\" --exclude \"server/citizenship-tiers.test.ts\" --exclude \"server/notification-prefs.test.ts\" --exclude \"server/loi.test.ts\" --exclude \"server/forms.test.ts\" --exclude \"server/contributions.test.ts\"",
     "test:integration": "vitest run server/applications.test.ts server/forum.test.ts server/citizenship-tiers.test.ts server/notification-prefs.test.ts server/loi.test.ts server/forms.test.ts server/contributions.test.ts",
@@ -129,6 +133,12 @@
     "csv-parse": "^6.1.0",
     "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.0",
+    "eslint": "^9.25.0",
+    "@eslint/js": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "typescript-eslint": "^8.30.0",
+    "globals": "^16.0.0",
     "jsdom": "^29.0.1",
     "playwright": "^1.58.2",
     "playwright-lighthouse": "^4.0.0",
@@ -149,6 +159,14 @@
   "pnpm": {
     "overrides": {
       "tailwindcss>nanoid": "3.3.7"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@reown/appkit",
+      "bufferutil",
+      "core-js",
+      "esbuild",
+      "sharp",
+      "utf-8-validate"
+    ]
   }
 }

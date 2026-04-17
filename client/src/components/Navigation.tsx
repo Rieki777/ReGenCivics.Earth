@@ -490,7 +490,7 @@ export default function Navigation() {
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/glossary'}
                 >
-                  <BookOpen className="w-5 h-5 mr-3 text-[#c084fc]" />
+                  <BookOpen className="w-5 h-5 mr-3 text-[#7dd87d]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Glossary</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -1204,4 +1204,4 @@ export default function Navigation() {
       </div>
     </>
   );
-}
+}            

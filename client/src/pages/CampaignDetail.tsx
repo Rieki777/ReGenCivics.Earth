@@ -123,7 +123,7 @@ export default function CampaignDetail() {
           <CardContent>
             <Button 
               onClick={() => window.location.href = '/campaigns'}
-              className="w-full bg-[#4a7c59] hover:bg-[#2e7d32]"
+              className="w-full bg-[#4a7c59] hover:bg-[#1a472a]"
             >
               Browse All Campaigns
             </Button>
@@ -262,7 +262,7 @@ export default function CampaignDetail() {
               />
               <Button
                 size="sm"
-                className="bg-[#4a7c59] hover:bg-[#2e7d32] text-white flex-1 md:flex-none"
+                className="bg-[#4a7c59] hover:bg-[#1a472a] text-white flex-1 md:flex-none"
                 onClick={() => setShowContributionModal(true)}
                 disabled={campaign.status !== 'active'}
               >

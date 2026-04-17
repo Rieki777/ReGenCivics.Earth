@@ -154,7 +154,7 @@ export default function ProgressMap({ onClose }: Props) {
                 <MapTransition
                   targetPath={selectedNode.href}
                   onTransitionStart={onClose}
-                  className="inline-flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-xs hover:bg-[#6bc86b] transition-colors"
+                  className="inline-flex items-center gap-2 mt-1 px-4 py-2 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-xs hover:bg-[#9de89d] transition-colors"
                 >
                   Go there <ChevronRight className="w-3 h-3" />
                 </MapTransition>

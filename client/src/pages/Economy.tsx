@@ -396,7 +396,7 @@ export default function Economy() {
                     "Land project evaluation access",
                     "Governance on Hypha (app.hypha.earth)",
                   ]}
-                  accentColor="#f0c040"
+                  accentColor="#ffd700"
                 />
               </AnimatedSection>
 
@@ -471,7 +471,7 @@ export default function Economy() {
                   <HarvestSplit
                     label="To Organizations"
                     percent={20}
-                    color="#f0c040"
+                    color="#ffd700"
                     description="Qualifying organizations, including local food producers, earn based on regenerative reputation. The more regenerative the operation (rated by community members), the bigger the multiplier."
                   />
                   <HarvestSplit
@@ -544,7 +544,7 @@ export default function Economy() {
               <Link href="/play">
                 <Button
                   size="lg"
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold text-lg px-8 py-6 rounded-xl"
+                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold text-lg px-8 py-6 rounded-xl"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   Start Playing
@@ -577,7 +577,7 @@ export default function Economy() {
                 <Link href="/quest">
                   <Button
                     size="lg"
-                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold text-lg px-8 py-6 rounded-xl w-full sm:w-auto"
+                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold text-lg px-8 py-6 rounded-xl w-full sm:w-auto"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
                     <Sprout className="w-5 h-5 mr-2" />

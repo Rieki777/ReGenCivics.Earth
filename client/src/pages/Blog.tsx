@@ -187,7 +187,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
       
       <Button 
         type="submit" 
-        className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+        className="w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
         disabled={createMutation.isPending}
       >
         {createMutation.isPending ? (
@@ -487,7 +487,7 @@ export default function Blog() {
             />
             <Button 
               onClick={handleVoteSubmit}
-              className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+              className="w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
               disabled={voteMutation.isPending}
             >
               {voteMutation.isPending ? 'Voting...' : 'Submit Vote'}
@@ -626,7 +626,7 @@ export default function Blog() {
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-3xl">
           <AnimatedSection animation="slide-up">
-            <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a9f4a]/20 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-[#7dd87d]/30 text-center">
+            <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-[#7dd87d]/30 text-center">
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 Stay in the <span className="text-[#7dd87d]">Loop</span>
               </h2>
@@ -634,7 +634,7 @@ export default function Blog() {
                 Get updates on new blog posts, Season 2 announcements, and community events.
               </p>
               <Link href="/socials">
-                <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-semibold px-8 py-3 rounded-xl">
+                <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold px-8 py-3 rounded-xl">
                   Join Our Community
                 </Button>
               </Link>
@@ -653,8 +653,4 @@ export default function Blog() {
             </Button>
           </Link>
         </div>
-      </section>
-    </div>
-    </PageWrapper>
-  );
-}
+      <

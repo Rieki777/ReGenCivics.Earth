@@ -370,7 +370,7 @@ function AnimatedProgressBar({
   const animatedFinancial = useCountUp(financialPct, 1200, isVisible);
 
   const isAlmostFunded = totalPct >= 80;
-  const barGoldClass = isAlmostFunded ? "from-amber-400 to-amber-500" : "from-[#7dd87d] to-[#4a9f4a]";
+  const barGoldClass = isAlmostFunded ? "from-amber-400 to-amber-500" : "from-[#7dd87d] to-[#4a7c59]";
   const labelColor = dark ? "text-white/80" : "text-[#1a472a]/80";
   const textColor = dark ? "text-[#7dd87d]" : "text-[#336644]";
   const amberTextColor = dark ? "text-amber-300" : "text-amber-600";

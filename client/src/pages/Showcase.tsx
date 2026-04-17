@@ -291,7 +291,7 @@ export default function Showcase() {
         
         <div className="container relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <Badge className="mb-6 bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">
+            <Badge className="mb-6 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
               <Sprout className="w-4 h-4 mr-2" />
               Project Showcase
             </Badge>
@@ -307,7 +307,7 @@ export default function Showcase() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link href="/apply">
-                <Button size="lg" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">
+                <Button size="lg" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
                   <TreePine className="w-5 h-5 mr-2" />
                   Apply as a Land Project
                 </Button>
@@ -543,7 +543,7 @@ export default function Showcase() {
                           </Button>
                         </a>
                         <Link href={`/connect?path=create_with_regens&org=${org.id}`}>
-                          <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">
+                          <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
                             <ArrowRight className="w-4 h-4" />
                           </Button>
                         </Link>
@@ -581,7 +581,7 @@ export default function Showcase() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link href="/apply">
-                <Button size="lg" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]">
+                <Button size="lg" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
                   Apply as Land Project
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>

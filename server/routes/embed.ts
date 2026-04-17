@@ -62,7 +62,7 @@ export function registerEmbedRoutes(app: Express) {
     const raised = Number(campaign.pledgedTotal) || 0;
     const pct = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
     const funded = pct >= 100;
-    const color = funded ? "#fbbf24" : "#7dd87d";
+    const color = funded ? "#d4a574" : "#7dd87d";
 
     const body = `
 <div style="font-size:18px;font-weight:700;line-height:1.3">${title}</div>

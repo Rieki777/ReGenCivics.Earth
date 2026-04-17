@@ -228,7 +228,7 @@ export function CSVImportDialog({ type, onImport }: CSVImportDialogProps) {
                 file:rounded-full file:border-0
                 file:text-sm file:font-semibold
                 file:bg-[#7dd87d] file:text-white
-                hover:file:bg-[#4a9f4a] cursor-pointer"
+                hover:file:bg-[#4a7c59] cursor-pointer"
             />
           </div>
 
@@ -321,7 +321,7 @@ export function CSVImportDialog({ type, onImport }: CSVImportDialogProps) {
             <Button
               onClick={handleImport}
               disabled={csvData.length === 0 || errors.length > 0}
-              className="bg-[#7dd87d] hover:bg-[#4a9f4a] text-white"
+              className="bg-[#7dd87d] hover:bg-[#4a7c59] text-white"
             >
               Import {csvData.length} Items
             </Button>

@@ -33,8 +33,8 @@ export interface MapPath {
 // Colors match QuestArcMap element coding
 const COLORS = {
   land: "#7dd87d",
-  ally: "#60a5fa",
-  play: "#c084fc",
+  ally: "#7dd87d",
+  play: "#7dd87d",
   fund: "#f97316",
 } as const;
 

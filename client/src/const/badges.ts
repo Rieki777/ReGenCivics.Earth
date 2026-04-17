@@ -40,8 +40,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Contributed to a ReGen Civics campaign",
     tier: "bronze",
     icon: "🌱",
-    ringColor: "#60a5fa",
-    ringGradient: "linear-gradient(135deg, #60a5fa, #93c5fd, #60a5fa)",
+    ringColor: "#7dd87d",
+    ringGradient: "linear-gradient(135deg, #7dd87d, #93c5fd, #7dd87d)",
   },
   {
     id: "campaign_launcher",
@@ -49,8 +49,8 @@ export const BADGE_DEFS: BadgeDef[] = [
     description: "Launched a ReGen Civics crowd-pooling campaign",
     tier: "silver",
     icon: "🚀",
-    ringColor: "#c084fc",
-    ringGradient: "linear-gradient(135deg, #c084fc, #e9d5ff, #c084fc)",
+    ringColor: "#7dd87d",
+    ringGradient: "linear-gradient(135deg, #7dd87d, #e9d5ff, #7dd87d)",
   },
   {
     id: "cedar_keeper",

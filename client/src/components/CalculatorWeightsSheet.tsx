@@ -706,7 +706,7 @@ export function CalculatorWeightsSheet() {
                   variant={isEditing ? "default" : "outline"}
                   size="sm"
                   onClick={() => setIsEditing(!isEditing)}
-                  className={isEditing ? "bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]" : ""}
+                  className={isEditing ? "bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]" : ""}
                 >
                   <Pencil className="w-3 h-3 mr-1" />
                   {isEditing ? 'Editing Mode' : 'Enable Editing'}
@@ -759,7 +759,7 @@ export function CalculatorWeightsSheet() {
                     href={generateConsolidatedProposalUrl(changes)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 mt-3 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-medium px-3 py-1.5 rounded-lg transition-colors text-sm"
+                    className="inline-flex items-center gap-2 mt-3 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-medium px-3 py-1.5 rounded-lg transition-colors text-sm"
                   >
                     Submit All Changes as Proposal
                     <ExternalLink className="w-3 h-3" />
@@ -899,7 +899,7 @@ export function CalculatorWeightsSheet() {
                   </p>
                   <Button
                     onClick={() => setIsEditing(true)}
-                    className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+                    className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                   >
                     <Pencil className="w-4 h-4 mr-2" />
                     Start Editing Weights
@@ -1082,7 +1082,7 @@ export function CalculatorWeightsSheet() {
                     href={generateConsolidatedProposalUrl(changes)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+                    className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-medium px-4 py-2 rounded-lg transition-colors text-sm"
                   >
                     Submit Proposal to Hypha
                     <ExternalLink className="w-4 h-4" />
@@ -1142,7 +1142,7 @@ export function CalculatorWeightsSheet() {
                     />
                     <Button
                       onClick={addIdea}
-                      className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+                      className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                     >
                       <Plus className="w-4 h-4 mr-1" />
                       Add Idea
@@ -1240,7 +1240,7 @@ export function CalculatorWeightsSheet() {
                   href="https://app.hypha.earth/en/dho/regen-games/agreements/create"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-medium px-4 py-2 rounded-lg transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Submit Proposal to Hypha
@@ -1344,7 +1344,7 @@ export function CalculatorWeightsSheet() {
                     setActiveTab('weights');
                     setIsEditing(true);
                   }}
-                  className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+                  className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                 >
                   <Pencil className="w-4 h-4 mr-2" />
                   Edit Weights

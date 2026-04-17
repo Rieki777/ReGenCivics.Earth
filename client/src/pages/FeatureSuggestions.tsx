@@ -63,7 +63,7 @@ export default function FeatureSuggestions() {
           </p>
 
           {isAuthenticated ? (
-            <Button onClick={() => setShowForm(!showForm)} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-6 py-3 rounded-full">
+            <Button onClick={() => setShowForm(!showForm)} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full">
               {showForm ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
               {showForm ? "Close" : "Suggest a Feature"}
             </Button>
@@ -90,7 +90,7 @@ export default function FeatureSuggestions() {
               <option value="" className="bg-[#1a3a1f]">Category (optional)</option>
               {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a3a1f]">{c}</option>)}
             </select>
-            <Button onClick={() => { if (title.trim() && description.trim()) createMutation.mutate({ title: `[${formType === "bug" ? "Bug" : "Feature"}] ${title.trim()}`, description: description.trim(), category: category || undefined }); }} disabled={!title.trim() || !description.trim() || createMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold rounded-full px-6">
+            <Button onClick={() => { if (title.trim() && description.trim()) createMutation.mutate({ title: `[${formType === "bug" ? "Bug" : "Feature"}] ${title.trim()}`, description: description.trim(), category: category || undefined }); }} disabled={!title.trim() || !description.trim() || createMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6">
               <Send className="w-4 h-4 mr-2" /> {createMutation.isPending ? "Submitting..." : "Submit"}
             </Button>
           </div>
@@ -140,7 +140,4 @@ export default function FeatureSuggestions() {
             );
           })}
         </div>
-      </div>
-    </div>
-  );
-}
+     

@@ -259,7 +259,7 @@ export default function Land() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/apply">
                 <Button
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto shadow-[0_0_20px_rgba(125,216,125,0.4),0_0_40px_rgba(125,216,125,0.2)]"
+                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto shadow-[0_0_20px_rgba(125,216,125,0.4),0_0_40px_rgba(125,216,125,0.2)]"
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
                   <Sprout className="w-5 h-5 mr-2" />
@@ -383,7 +383,7 @@ export default function Land() {
           <AnimatedSection animation="slide-up" className="text-center mb-10">
             <Link href="/apply">
               <div
-                className="inline-flex items-center gap-2 px-5 py-2 mb-6 rounded-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] transition-colors cursor-pointer text-base font-bold"
+                className="inline-flex items-center gap-2 px-5 py-2 mb-6 rounded-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] transition-colors cursor-pointer text-base font-bold"
                 style={{ fontFamily: "var(--font-accent)" }}
               >
                 <Calendar className="w-5 h-5" />
@@ -657,7 +657,7 @@ export default function Land() {
                 </CollapsibleSection>
                 <div className="mt-4">
                   <Link href="/apply">
-                    <Button className="w-full rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] text-base py-3 h-auto">
+                    <Button className="w-full rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-base py-3 h-auto">
                       Apply <ExternalLink className="ml-2 w-4 h-4" />
                     </Button>
                   </Link>
@@ -1045,7 +1045,7 @@ export default function Land() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link href="/apply">
                   <Button
-                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-8 py-4 text-lg h-auto"
+                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-8 py-4 text-lg h-auto"
                     style={{ fontFamily: "var(--font-accent)" }}
                   >
                     Apply for Next Season

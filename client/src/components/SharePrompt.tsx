@@ -84,7 +84,7 @@ export function SharePrompt({ url, text, moment, onClose, className = "" }: Shar
       {/* Copy link (primary action) */}
       <button
         onClick={handleCopy}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#6bc86b] transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors"
       >
         {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
         {copied ? "Copied!" : "Copy link"}

@@ -1042,7 +1042,7 @@ function ReviewerEmailManager() {
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]">
+              <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Reviewer
               </Button>
@@ -4596,7 +4596,7 @@ function AdminEventsTab() {
                 }
               }}
               disabled={rollupMutation.isPending || !rollupSeason.trim()}
-              className="bg-[#7dd87d] hover:bg-[#6bc86b] disabled:opacity-50 text-[#1a472a] px-4 py-1.5 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
+              className="bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-50 text-[#1a472a] px-4 py-1.5 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
             >
               {rollupMutation.isPending ? 'Sending...' : 'Send Rollup'}
             </button>

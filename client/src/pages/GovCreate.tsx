@@ -177,7 +177,7 @@ export default function GovCreate() {
           <Button
             onClick={handleSubmit}
             disabled={!slug || !slugValid || !displayName || createMutation.isPending}
-            className="w-full bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold py-3 rounded-xl"
+            className="w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold py-3 rounded-xl"
           >
             {createMutation.isPending ? "Creating..." : "Create governance space"}
             <ArrowRight className="w-4 h-4 ml-2" />

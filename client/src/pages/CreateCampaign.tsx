@@ -419,7 +419,7 @@ export default function CreateCampaign() {
           <p className="text-sm text-[#1a472a]/60 mb-4">You need to be signed in to create campaigns.</p>
           <a
             href={getLoginUrl()}
-            className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#4a7c59] hover:bg-[#2e7d32] text-white text-sm font-semibold rounded-lg transition-colors"
+            className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#4a7c59] hover:bg-[#1a472a] text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Sign In
           </a>
@@ -459,7 +459,7 @@ export default function CreateCampaign() {
               onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
             />
             {passwordError && <p className="text-red-500 text-xs">Incorrect password</p>}
-            <Button type="submit" className="w-full bg-[#4a7c59] hover:bg-[#2e7d32] text-white">
+            <Button type="submit" className="w-full bg-[#4a7c59] hover:bg-[#1a472a] text-white">
               Access Campaign Creator
             </Button>
           </form>
@@ -678,7 +678,7 @@ export default function CreateCampaign() {
   // Project selection screen (replaces password)
   if (!selectedApplication) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f0f7f0] to-[#e8f5e9]">
+      <div className="min-h-screen bg-gradient-to-br from-[#f0f7f0] to-[#f0f7f0]">
         <BackButton />
         
         {/* Hero Image */}
@@ -729,11 +729,11 @@ export default function CreateCampaign() {
                         <button
                           key={`my-${app.id}`}
                           onClick={() => handleSelectApplication(app)}
-                          className="w-full p-4 text-left bg-[#e8f5e9] hover:bg-[#d4edda] rounded-xl border-2 border-[#7dd87d]/50 transition-colors group"
+                          className="w-full p-4 text-left bg-[#f0f7f0] hover:bg-[#d4edda] rounded-xl border-2 border-[#7dd87d]/50 transition-colors group"
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="font-bold text-[#1a472a] group-hover:text-[#2e7d32]">{app.projectName}</div>
+                              <div className="font-bold text-[#1a472a] group-hover:text-[#1a472a]">{app.projectName}</div>
                               <div className="text-xs text-[#1a472a]/60 mt-1">
                                 {app.location} {app.projectType === 'early_stage' ? '(Early Stage)' : '(Mature)'}
                               </div>
@@ -777,7 +777,7 @@ export default function CreateCampaign() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-[#1a472a] group-hover:text-[#2e7d32] truncate">{app.projectName}</div>
+                            <div className="font-bold text-[#1a472a] group-hover:text-[#1a472a] truncate">{app.projectName}</div>
                             <div className="text-xs text-[#1a472a]/60 mt-1 truncate">
                               {app.contactName && <span>{app.contactName} - </span>}
                               {app.location}
@@ -809,7 +809,7 @@ export default function CreateCampaign() {
                   </p>
                   <Button
                     onClick={() => window.location.href = '/api/oauth/login'}
-                    className="bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-xl"
+                    className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl"
                   >
                     Sign In
                   </Button>
@@ -824,7 +824,7 @@ export default function CreateCampaign() {
 
   // Main campaign creator
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f0f7f0] to-[#e8f5e9]">
+    <div className="min-h-screen bg-gradient-to-br from-[#f0f7f0] to-[#f0f7f0]">
       
       {/* Hero Image */}
       <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden">
@@ -863,16 +863,16 @@ export default function CreateCampaign() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="px-2 py-1 bg-[#e8f5e9] rounded-full text-[#4a7c59]">
+              <span className="px-2 py-1 bg-[#f0f7f0] rounded-full text-[#4a7c59]">
                 Land: {formatCurrency(landTotal, currencySymbol)}
               </span>
-              <span className="px-2 py-1 bg-[#e8f5e9] rounded-full text-[#4a7c59]">
+              <span className="px-2 py-1 bg-[#f0f7f0] rounded-full text-[#4a7c59]">
                 Equipment: {formatCurrency(equipmentTotal, currencySymbol)}
               </span>
-              <span className="px-2 py-1 bg-[#e8f5e9] rounded-full text-[#4a7c59]">
+              <span className="px-2 py-1 bg-[#f0f7f0] rounded-full text-[#4a7c59]">
                 Roles: {formatCurrency(rolesTotal, currencySymbol)}
               </span>
-              <span className="px-2 py-1 bg-[#e8f5e9] rounded-full text-[#4a7c59]">
+              <span className="px-2 py-1 bg-[#f0f7f0] rounded-full text-[#4a7c59]">
                 Other: {formatCurrency(otherTotal, currencySymbol)}
               </span>
             </div>
@@ -889,7 +889,7 @@ export default function CreateCampaign() {
             {/* Template Selector */}
             <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="border-[#f59e0b] text-[#f59e0b] text-sm">
+                <Button variant="outline" className="border-[#d4a017] text-[#d4a017] text-sm">
                   <Sparkles className="w-4 h-4 mr-2" />
                   Use Template
                 </Button>
@@ -951,20 +951,20 @@ export default function CreateCampaign() {
                             setShowTemplateDialog(false);
                             toast.success(`${template.name} template loaded! Customize as needed.`);
                           }}
-                          className="flex flex-col items-start gap-3 p-4 bg-gradient-to-br from-[#f0f7f0] to-white rounded-xl border-2 border-[#7dd87d]/30 hover:border-[#f59e0b] transition-all text-left group"
+                          className="flex flex-col items-start gap-3 p-4 bg-gradient-to-br from-[#f0f7f0] to-white rounded-xl border-2 border-[#7dd87d]/30 hover:border-[#d4a017] transition-all text-left group"
                         >
-                          <div className="w-12 h-12 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#f59e0b]/20 transition-colors">
-                            <IconComponent className="w-6 h-6 text-[#4a7c59] group-hover:text-[#f59e0b]" />
+                          <div className="w-12 h-12 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#d4a017]/20 transition-colors">
+                            <IconComponent className="w-6 h-6 text-[#4a7c59] group-hover:text-[#d4a017]" />
                           </div>
                           <div>
                             <h3 className="font-bold text-[#1a472a] mb-1">{template.name}</h3>
                             <p className="text-xs text-[#1a472a]/60 leading-relaxed">{template.description}</p>
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs">
-                            <span className="px-2 py-1 bg-[#e8f5e9] text-[#4a7c59] rounded-full">
+                            <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
                               {template.equipment.length} equipment items
                             </span>
-                            <span className="px-2 py-1 bg-[#e8f5e9] text-[#4a7c59] rounded-full">
+                            <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
                               {template.roles.length} roles
                             </span>
                           </div>
@@ -1012,7 +1012,7 @@ export default function CreateCampaign() {
                           setShowImportDialog(false);
                           toast.success('Application data imported!');
                         }}
-                        className="w-full p-3 text-left bg-[#f0f7f0] hover:bg-[#e8f5e9] rounded-lg border border-[#7dd87d]/30 transition-colors"
+                        className="w-full p-3 text-left bg-[#f0f7f0] hover:bg-[#f0f7f0] rounded-lg border border-[#7dd87d]/30 transition-colors"
                       >
                         <div className="font-medium text-[#1a472a]">{app.projectName}</div>
                         <div className="text-xs text-[#1a472a]/60">
@@ -1107,7 +1107,7 @@ export default function CreateCampaign() {
             {/* Additional Project Info - Collapsible */}
             <div className="md:col-span-2 mt-4">
               <details className="group">
-                <summary className="cursor-pointer text-sm font-medium text-[#4a7c59] hover:text-[#2e7d32] flex items-center gap-2">
+                <summary className="cursor-pointer text-sm font-medium text-[#4a7c59] hover:text-[#1a472a] flex items-center gap-2">
                   <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
                   Additional Project Information (from application)
                 </summary>
@@ -1364,7 +1364,7 @@ export default function CreateCampaign() {
           {currentStep < steps.length - 1 ? (
             <Button
               onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
-              className="bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-xl"
+              className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl"
             >
               Next Step
               <ChevronRight className="w-4 h-4 ml-2" />
@@ -1373,7 +1373,7 @@ export default function CreateCampaign() {
             <Button
               onClick={handleSubmitCampaign}
               disabled={isSubmitting || !campaignName || !campaignDescription || !daoLink}
-              className="bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-xl px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
@@ -1554,7 +1554,7 @@ function LandSection({
                     className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                       (formData.regions || []).includes(region)
                         ? 'bg-[#4a7c59] text-white'
-                        : 'bg-white text-[#1a472a] hover:bg-[#e8f5e9]'
+                        : 'bg-white text-[#1a472a] hover:bg-[#f0f7f0]'
                     }`}
                   >
                     {region}
@@ -1579,7 +1579,7 @@ function LandSection({
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                         isSelected
                           ? 'bg-[#4a7c59] text-white'
-                          : 'bg-white text-[#1a472a] hover:bg-[#e8f5e9]'
+                          : 'bg-white text-[#1a472a] hover:bg-[#f0f7f0]'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -1658,7 +1658,7 @@ function LandSection({
               <Button
                 onClick={handleAddLand}
                 disabled={(formData.hectares || 0) <= 0}
-                className="flex-1 bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-xl"
+                className="flex-1 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl"
               >
                 Add Land Requirement
               </Button>
@@ -1796,14 +1796,14 @@ function EquipmentSection({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    className="w-7 h-7 rounded bg-white text-[#1a472a] hover:bg-[#e8f5e9] text-sm"
+                    className="w-7 h-7 rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
                   >
                     -
                   </button>
                   <span className="w-8 text-center text-sm">{item.quantity}</span>
                   <button
                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="w-7 h-7 rounded bg-white text-[#1a472a] hover:bg-[#e8f5e9] text-sm"
+                    className="w-7 h-7 rounded bg-white text-[#1a472a] hover:bg-[#f0f7f0] text-sm"
                   >
                     +
                   </button>
@@ -1830,7 +1830,7 @@ function EquipmentSection({
       {/* Template Categories */}
       <div className="space-y-4 mb-6">
         <h3 className="font-medium text-[#1a472a] flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-[#f59e0b]" />
+          <Lightbulb className="w-4 h-4 text-[#d4a017]" />
           Suggested Equipment (click to add)
         </h3>
         
@@ -1853,7 +1853,7 @@ function EquipmentSection({
                   <button
                     key={item.name}
                     onClick={() => handleAddFromTemplate(cat.category, item)}
-                    className="flex items-center justify-between px-3 py-2 bg-white rounded-lg hover:bg-[#e8f5e9] transition-colors text-left"
+                    className="flex items-center justify-between px-3 py-2 bg-white rounded-lg hover:bg-[#f0f7f0] transition-colors text-left"
                   >
                     <span className="text-sm text-[#1a472a]">{item.name}</span>
                     <span className="text-sm font-medium text-[#4a7c59]">
@@ -1918,7 +1918,7 @@ function EquipmentSection({
             <Button
               onClick={handleAddCustom}
               disabled={!formData.name}
-              className="flex-1 bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-xl"
+              className="flex-1 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl"
             >
               Add Equipment
             </Button>
@@ -2109,7 +2109,7 @@ function RolesSection({
       {/* Template Categories */}
       <div className="space-y-4 mb-6">
         <h3 className="font-medium text-[#1a472a] flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-[#f59e0b]" />
+          <Lightbulb className="w-4 h-4 text-[#d4a017]" />
           Common Roles (click to add)
         </h3>
         
@@ -2132,7 +2132,7 @@ function RolesSection({
                   <button
                     key={role.title}
                     onClick={() => handleAddFromTemplate(cat.category, role)}
-                    className="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg hover:bg-[#e8f5e9] transition-colors text-left"
+                    className="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg hover:bg-[#f0f7f0] transition-colors text-left"
                   >
                     <div>
                       <span className="text-sm font-medium text-[#1a472a]">{role.title}</span>
@@ -2233,7 +2233,7 @@ function RolesSection({
             <Button
               onClick={handleAddCustom}
               disabled={!formData.title}
-              className="flex-1 bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-xl"
+              className="flex-1 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl"
             >
               Add Role
             </Button>
@@ -2364,7 +2364,7 @@ function OtherNeedsSection({
       {/* Highly Suggested Needs */}
       <div className="mb-6" ref={listRef}>
         <h3 className="font-medium text-[#1a472a] mb-3 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#f59e0b]" />
+          <Sparkles className="w-4 h-4 text-[#d4a017]" />
           Highly Suggested
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
@@ -2374,10 +2374,10 @@ function OtherNeedsSection({
               <button
                 key={cat.id}
                 onClick={() => openFormWithCategory(cat.id)}
-                className="flex items-center gap-3 p-4 bg-gradient-to-r from-[#f59e0b]/10 to-[#7dd87d]/10 rounded-xl border-2 border-[#f59e0b]/30 hover:border-[#f59e0b] transition-colors text-left"
+                className="flex items-center gap-3 p-4 bg-gradient-to-r from-[#d4a017]/10 to-[#7dd87d]/10 rounded-xl border-2 border-[#d4a017]/30 hover:border-[#d4a017] transition-colors text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-[#f59e0b]/20 flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5 text-[#f59e0b]" />
+                <div className="w-10 h-10 rounded-full bg-[#d4a017]/20 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-5 h-5 text-[#d4a017]" />
                 </div>
                 <div>
                   <span className="font-medium text-[#1a472a] block">{cat.label}</span>
@@ -2451,7 +2451,7 @@ function OtherNeedsSection({
               <Button
                 onClick={handleAdd}
                 disabled={!formData.title}
-                className="flex-1 bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-xl"
+                className="flex-1 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl"
               >
                 Add Item
               </Button>
@@ -2510,7 +2510,7 @@ function FinancialTargetSection({
       </div>
       
       {/* Summary */}
-      <div className="bg-gradient-to-br from-[#4a7c59] to-[#2e7d32] rounded-2xl p-6 text-white mb-6">
+      <div className="bg-gradient-to-br from-[#4a7c59] to-[#1a472a] rounded-2xl p-6 text-white mb-6">
         <h3 className="text-lg font-medium mb-4 opacity-90">Campaign Summary</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div>
@@ -2539,9 +2539,9 @@ function FinancialTargetSection({
       </div>
       
       {/* Financial Target Input */}
-      <div className="bg-[#fff8e1] rounded-2xl p-6 border border-[#f59e0b]/30 mb-6">
+      <div className="bg-[#fff8e1] rounded-2xl p-6 border border-[#d4a017]/30 mb-6">
         <div className="flex items-start gap-3 mb-4">
-          <Info className="w-5 h-5 text-[#f59e0b] flex-shrink-0 mt-0.5" />
+          <Info className="w-5 h-5 text-[#d4a017] flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-medium text-[#1a472a]">Why set a financial target?</h3>
             <p className="text-sm text-[#1a472a]/70 mt-1">
@@ -2552,7 +2552,7 @@ function FinancialTargetSection({
           </div>
         </div>
         
-        <div className="bg-white rounded-xl p-4 border border-[#f59e0b]/20">
+        <div className="bg-white rounded-xl p-4 border border-[#d4a017]/20">
           <label className="block text-sm font-medium text-[#1a472a] mb-2">
             Financial Target ({currencySymbol})
           </label>
@@ -2595,10 +2595,10 @@ function FinancialTargetSection({
               step="1"
               value={Math.min(50, Math.max(5, financialPercentage))}
               onChange={(e) => setFinancialTarget(Math.round(grandTotal * (parseInt(e.target.value) / 100)))}
-              className="w-full h-3 bg-gradient-to-r from-[#e8f5e9] via-[#7dd87d] to-[#4a7c59] rounded-full appearance-none cursor-pointer"
+              className="w-full h-3 bg-gradient-to-r from-[#f0f7f0] via-[#7dd87d] to-[#4a7c59] rounded-full appearance-none cursor-pointer"
               style={{
                 WebkitAppearance: 'none',
-                background: `linear-gradient(to right, #e8f5e9 0%, #7dd87d ${((financialPercentage - 5) / 45) * 100}%, #e0e0e0 ${((financialPercentage - 5) / 45) * 100}%, #e0e0e0 100%)`
+                background: `linear-gradient(to right, #f0f7f0 0%, #7dd87d ${((financialPercentage - 5) / 45) * 100}%, #e0e0e0 ${((financialPercentage - 5) / 45) * 100}%, #e0e0e0 100%)`
               }}
             />
             <div className="flex justify-between text-xs">
@@ -2660,7 +2660,7 @@ function FinancialTargetSection({
             max={365}
             value={durationDays}
             onChange={(e) => setDurationDays(parseInt(e.target.value))}
-            className="w-full h-2 bg-gradient-to-r from-[#e8f5e9] to-[#4a7c59] rounded-full appearance-none cursor-pointer"
+            className="w-full h-2 bg-gradient-to-r from-[#f0f7f0] to-[#4a7c59] rounded-full appearance-none cursor-pointer"
           />
           <div className="flex justify-between text-xs text-[#1a472a]/40 mt-1">
             <span>1 day</span>

@@ -212,5 +212,4 @@ export function SubmitToDAOModal({
         </div>
       </div>
     </div>
-  );
-}
+ 

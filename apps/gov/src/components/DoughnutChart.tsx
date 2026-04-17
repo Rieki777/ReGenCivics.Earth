@@ -26,7 +26,7 @@ const ECO_DIMS = ["Soil health", "Water quality", "Biodiversity", "Carbon", "Lan
 
 function scoreColor(value: number): string {
   if (value >= 70) return "#7dd87d";
-  if (value >= 40) return "#f0c040";
+  if (value >= 40) return "#ffd700";
   return "#ef4444";
 }
 

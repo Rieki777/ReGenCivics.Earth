@@ -254,7 +254,7 @@ export default function Apply() {
           </p>
           <Button
             onClick={() => window.location.href = getLoginUrl()}
-            className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
           >
             Login to Continue
           </Button>
@@ -1002,7 +1002,7 @@ export default function Apply() {
                 />
               </div>
 
-              <div className="bg-[#e8f5e9] border-2 border-[#7dd87d]/50 rounded-lg p-4">
+              <div className="bg-[#f0f7f0] border-2 border-[#7dd87d]/50 rounded-lg p-4">
                 <p className="text-[#1a472a] font-medium mb-2">
                   Ready to submit?
                 </p>
@@ -1047,7 +1047,7 @@ export default function Apply() {
                 <Button
                   onClick={handleNext}
                   disabled={isLoading}
-                  className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] w-full sm:w-auto"
+                  className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] w-full sm:w-auto"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1062,7 +1062,7 @@ export default function Apply() {
                 <Button
                   onClick={handleSubmit}
                   disabled={isLoading}
-                  className="bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#6bc86b] text-[#1a472a] w-full sm:w-auto"
+                  className="bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#9de89d] text-[#1a472a] w-full sm:w-auto"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1080,6 +1080,4 @@ export default function Apply() {
         </Card>
       </div>
     </div>
-    </PageWrapper>
-  );
-}
+    </P

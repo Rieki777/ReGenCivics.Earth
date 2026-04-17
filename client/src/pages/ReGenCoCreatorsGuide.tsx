@@ -754,11 +754,4 @@ export default function ReGenCoCreatorsGuide() {
               <button className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-emerald-700 text-emerald-700 font-medium hover:bg-emerald-50 transition-colors">
                 Browse Quests
                 <ArrowRight className="w-4 h-4" />
-              </button>
-            </Link>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}
+         

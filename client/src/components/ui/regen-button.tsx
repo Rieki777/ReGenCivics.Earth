@@ -18,7 +18,7 @@ export const PrimaryButton = forwardRef<HTMLButtonElement, RegenButtonProps>(
         ref={ref}
         className={cn(
           "inline-flex items-center justify-center gap-2 font-semibold rounded-xl",
-          "bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] active:bg-[#6bc86b]",
+          "bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] active:bg-[#9de89d]",
           "shadow-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd87d]/50",
           sizeClasses[size],
           className

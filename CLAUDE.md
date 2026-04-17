@@ -137,6 +137,14 @@ Relevant DHO slugs: `regen-games`, `regen-civics`. Hypha app base URL: `https://
 
 **Rule for any future Claude Code instance**: if the task involves moving a player or their data from ReGen Civics to Hypha for any reason, use the Hypha Bridge. Do not hand-roll new redirect logic. Extend the bridge with the new intent type instead. The full flow spec lives in `FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md`.
 
+## Hypha PR Contributions
+
+**GitHub account for all Hypha PRs: `Rieki777`** (not Rieki7)
+
+- Fork: `https://github.com/Rieki777/hypha-web` (fork of `hypha-dao/hypha-web`)
+- Use the `hypha-pr-workflow` skill (in `.claude/skills/hypha-pr-workflow/`) for all Hypha PR work
+- The skill contains the full technique for automating the CM6 web editor, committing files, and responding to CodeRabbit reviews
+
 ## Installed Skills (ln- pipeline)
 This project uses a structured delivery pipeline via the ln- skills (in ~/.claude/skills/):
 - `ln-1000-pipeline-orchestrator` — kick off full feature delivery

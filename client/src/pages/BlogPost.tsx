@@ -94,7 +94,7 @@ export default function BlogPost() {
           <h1 className="text-4xl font-bold text-white mb-4">Post Not Found</h1>
           <p className="text-white/60 mb-8">The blog post you are looking for does not exist.</p>
           <Link href="/blog">
-            <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]">
+            <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Blog
             </Button>
@@ -335,7 +335,7 @@ export default function BlogPost() {
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#6bc86b] font-semibold"
+                  className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-semibold"
                   onClick={() => saveOverride.mutate({ slug: params.slug || '', content: editContent })}
                   disabled={saveOverride.isPending}
                 >
@@ -488,7 +488,7 @@ export default function BlogPost() {
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-3xl">
           <AnimatedSection animation="slide-up">
-            <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a9f4a]/20 backdrop-blur-sm rounded-2xl p-8 border border-[#7dd87d]/30">
+            <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-8 border border-[#7dd87d]/30">
               <h2 className="text-2xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 Ready to Join the <span className="text-[#7dd87d]">Game</span>?
               </h2>
@@ -497,7 +497,7 @@ export default function BlogPost() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link href="/quest">
-                  <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-semibold">
+                  <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold">
                     <Rocket className="w-4 h-4 mr-2" />
                     Start Your Quest
                   </Button>

@@ -109,7 +109,7 @@ export default function QuestSuggestions() {
             {isAuthenticated ? (
               <Button
                 onClick={() => setShowForm(!showForm)}
-                className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-6 py-3 rounded-full text-base"
+                className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full text-base"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 {showForm ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
@@ -118,7 +118,7 @@ export default function QuestSuggestions() {
             ) : (
               <a
                 href={getLoginUrl()}
-                className="inline-flex items-center gap-2 bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-6 py-3 rounded-full text-base transition-colors"
+                className="inline-flex items-center gap-2 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full text-base transition-colors"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 {t('auth.loginToPost')}
@@ -191,7 +191,7 @@ export default function QuestSuggestions() {
                   <Button
                     onClick={handleSubmit}
                     disabled={!title.trim() || !description.trim() || createMutation.isPending}
-                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold"
+                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
                   >
                     <Send className="w-4 h-4 mr-2" />
                     {createMutation.isPending ? t('common.loading') : t('quest.submitSuggestion')}
@@ -257,7 +257,7 @@ export default function QuestSuggestions() {
               {isAuthenticated && (
                 <Button
                   onClick={() => setShowForm(true)}
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold rounded-full"
+                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full"
                 >
                   <Plus className="w-4 h-4 mr-2" /> Suggest a Quest
                 </Button>

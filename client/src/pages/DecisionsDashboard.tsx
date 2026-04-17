@@ -216,8 +216,4 @@ export default function DecisionsDashboard() {
       )}
 
       <p className="text-white/35 text-[11px] text-center pb-8 px-4">
-        Governance powered by Loomio. <a href="https://loomio.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/55">Support their work at loomio.com</a>.
-      </p>
-    </div>
-  );
-}
+        Governance powered by Loomio. <a href="https://loomio.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/55">Support their work at l

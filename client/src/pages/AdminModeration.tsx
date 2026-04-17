@@ -331,7 +331,7 @@ export default function AdminModeration() {
                 <Button
                   onClick={() => newModUserId && addModMutation.mutate({ userId: parseInt(newModUserId) })}
                   disabled={!newModUserId || addModMutation.isPending}
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b]"
+                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
                 >
                   <Plus className="w-4 h-4 mr-1" /> Add
                 </Button>

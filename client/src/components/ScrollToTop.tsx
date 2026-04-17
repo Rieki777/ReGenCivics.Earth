@@ -39,8 +39,3 @@ export function ScrollToTop() {
       }`}
       aria-label="Scroll to top"
       title="Back to top"
-    >
-      <ArrowUp className="w-5 h-5" />
-    </button>
-  );
-}

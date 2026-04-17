@@ -50,7 +50,7 @@ export default function BioregionPage({ params }: { params: { id: string } }) {
           </p>
           <div className="flex justify-center gap-4 mt-3 text-[10px] text-white/55">
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#7dd87d]" /> Healthy (70+)</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#f0c040]" /> Watch (40-69)</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#ffd700]" /> Watch (40-69)</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Critical (&lt;40)</span>
           </div>
         </GlassCard>
@@ -66,10 +66,10 @@ export default function BioregionPage({ params }: { params: { id: string } }) {
               <div key={d.dimension}>
                 <div className="flex items-center justify-between text-sm mb-1">
                   <span className="text-white/80">{d.dimension}</span>
-                  <span className="font-bold" style={{ color: d.value >= 70 ? "#7dd87d" : d.value >= 40 ? "#f0c040" : "#ef4444" }}>{d.value}</span>
+                  <span className="font-bold" style={{ color: d.value >= 70 ? "#7dd87d" : d.value >= 40 ? "#ffd700" : "#ef4444" }}>{d.value}</span>
                 </div>
                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${d.value}%`, backgroundColor: d.value >= 70 ? "#7dd87d" : d.value >= 40 ? "#f0c040" : "#ef4444" }} />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${d.value}%`, backgroundColor: d.value >= 70 ? "#7dd87d" : d.value >= 40 ? "#ffd700" : "#ef4444" }} />
                 </div>
               </div>
             ))}
@@ -78,10 +78,10 @@ export default function BioregionPage({ params }: { params: { id: string } }) {
               <div key={d.dimension}>
                 <div className="flex items-center justify-between text-sm mb-1">
                   <span className="text-white/80">{d.dimension}</span>
-                  <span className="font-bold" style={{ color: d.value >= 70 ? "#7dd87d" : d.value >= 40 ? "#f0c040" : "#ef4444" }}>{d.value}</span>
+                  <span className="font-bold" style={{ color: d.value >= 70 ? "#7dd87d" : d.value >= 40 ? "#ffd700" : "#ef4444" }}>{d.value}</span>
                 </div>
                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${d.value}%`, backgroundColor: d.value >= 70 ? "#7dd87d" : d.value >= 40 ? "#f0c040" : "#ef4444" }} />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${d.value}%`, backgroundColor: d.value >= 70 ? "#7dd87d" : d.value >= 40 ? "#ffd700" : "#ef4444" }} />
                 </div>
               </div>
             ))}

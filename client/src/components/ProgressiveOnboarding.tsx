@@ -28,7 +28,7 @@ const pathCards = [
     borderColor: "border-amber-400/40",
     glowColor: "shadow-amber-400/20",
     iconColor: "text-amber-300",
-    accentColor: "#fbbf24",
+    accentColor: "#d4a574",
     image: cdnImg("https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png"),
     activatedImage: cdnImg("https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png"),
   },
@@ -56,7 +56,7 @@ const pathCards = [
     borderColor: "border-blue-400/40",
     glowColor: "shadow-blue-400/20",
     iconColor: "text-blue-300",
-    accentColor: "#60a5fa",
+    accentColor: "#7dd87d",
     image: cdnImg("https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png"),
     activatedImage: cdnImg("https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png"),
   },
@@ -70,7 +70,7 @@ const pathCards = [
     borderColor: "border-purple-400/40",
     glowColor: "shadow-purple-400/20",
     iconColor: "text-purple-300",
-    accentColor: "#c084fc",
+    accentColor: "#7dd87d",
     image: cdnImg("https://assets.regencivics.earth/LAizfmKwiZguwYMz.png"),
     activatedImage: cdnImg("https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png"),
   },
@@ -139,10 +139,10 @@ function PersonalizedCards() {
     cards.push({ id: 'journey-quests', title: 'Journey Quests', subtitle: 'Welcome to the Journey Quests', href: '/profile#quests', image: '/images/return-cards/journey-quests.webp', accentColor: '#7dd87d', icon: Map });
   }
   if (completedQuests.length > 0 && completedQuests.length < 12) {
-    cards.push({ id: 'next-quest', title: 'Continue Your Quest', subtitle: `Quest ${completedQuests.length + 1} of 12 awaits`, href: '/quest', image: '/images/return-cards/next-quest.webp', accentColor: '#fbbf24', icon: Compass });
+    cards.push({ id: 'next-quest', title: 'Continue Your Quest', subtitle: `Quest ${completedQuests.length + 1} of 12 awaits`, href: '/quest', image: '/images/return-cards/next-quest.webp', accentColor: '#d4a574', icon: Compass });
   }
   if (hasVisitedForum) {
-    cards.push({ id: 'community', title: 'Back to the Forum', subtitle: 'Continue the conversation', href: '/community', image: '/images/return-cards/community.webp', accentColor: '#60a5fa', icon: MessageSquare });
+    cards.push({ id: 'community', title: 'Back to the Forum', subtitle: 'Continue the conversation', href: '/community', image: '/images/return-cards/community.webp', accentColor: '#7dd87d', icon: MessageSquare });
   }
   if (profile.path === 'investor' && (profile as any).investorFormSubmitted) {
     cards.push({ id: 'opportunity', title: 'Investor Dashboard', subtitle: 'View the opportunity', href: '/opportunity', image: '/images/return-cards/opportunity.webp', accentColor: '#a78bfa', icon: TrendingUp });

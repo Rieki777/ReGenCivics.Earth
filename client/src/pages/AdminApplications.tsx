@@ -69,7 +69,7 @@ export default function AdminApplications() {
           </p>
           <Button
             onClick={() => window.location.href = getLoginUrl()}
-            className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
           >
             Login to Continue
           </Button>
@@ -88,7 +88,7 @@ export default function AdminApplications() {
           </p>
           <Button
             onClick={() => navigate("/")}
-            className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
           >
             Back to Home
           </Button>

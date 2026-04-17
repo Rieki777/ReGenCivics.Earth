@@ -513,7 +513,7 @@ export default function Schedule() {
         <div className="container mx-auto max-w-4xl">
           <div className="grid md:grid-cols-3 gap-6">
             {/* Add Whole Season */}
-            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-[#4a9f4a]/10 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
+            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-[#4a7c59]/10 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-[#7dd87d]" />
@@ -526,7 +526,7 @@ export default function Schedule() {
                   href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Episode&dates=20260926T150000Z/20260926T170000Z&details=ReGen+Civics+Season+2+Incubator+weekly+episode.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside&recur=RRULE:FREQ=WEEKLY;COUNT=13"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
+                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
                     <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285f4"/>
@@ -548,7 +548,7 @@ export default function Schedule() {
             </div>
 
             {/* Subscribe to All Events */}
-            <div className="bg-gradient-to-br from-[#4a9f4a]/20 to-[#2d5a3d]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20">
+            <div className="bg-gradient-to-br from-[#4a7c59]/20 to-[#2d5a3d]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-[#7dd87d]" />
@@ -561,7 +561,7 @@ export default function Schedule() {
                   href="https://calendar.google.com/calendar/u/0?cid=63ce71cca81ab47fb9986b4bc1dd379eba3da72ecc93a9b8424c5c49812fa69f%40group.calendar.google.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
+                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
                     <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285f4"/>
@@ -593,7 +593,7 @@ export default function Schedule() {
             </div>
 
             {/* Add Next Event */}
-            <div className="bg-gradient-to-br from-[#7dd87d]/30 to-[#4a9f4a]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/40 ring-2 ring-[#7dd87d]/20">
+            <div className="bg-gradient-to-br from-[#7dd87d]/30 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/40 ring-2 ring-[#7dd87d]/20">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-[#7dd87d]/30 flex items-center justify-center">
                   <Plus className="w-5 h-5 text-[#7dd87d]" />
@@ -610,7 +610,7 @@ export default function Schedule() {
                   href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Open+Access+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
+                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
                     <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285f4"/>
@@ -637,7 +637,7 @@ export default function Schedule() {
       {/* Riverside Studio Info */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-4xl">
-          <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a9f4a]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
+          <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
             <div className="flex items-center gap-3 mb-4">
               <Video className="w-6 h-6 text-[#7dd87d]" />
               <h2 className="text-xl font-bold text-white">All Episodes via Riverside</h2>
@@ -649,7 +649,7 @@ export default function Schedule() {
               href={RIVERSIDE_INFO.roomUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
             >
               <Video className="w-5 h-5" />
               Join on Riverside
@@ -665,7 +665,7 @@ export default function Schedule() {
       {/* Follow Along with YouTube */}
       <section className="py-8 px-4">
         <div className="container mx-auto max-w-4xl">
-          <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a9f4a]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
+          <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
             <div className="text-center">
               <h3 className="text-2xl font-bold text-white mb-3">Follow Along with the Whole Season!</h3>
               <p className="text-[#7dd87d] text-lg font-semibold mb-2">
@@ -851,7 +851,7 @@ export default function Schedule() {
                           href={event.googleCalendarUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors"
+                          className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors"
                         >
                           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
                             <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285f4"/>
@@ -909,7 +909,7 @@ export default function Schedule() {
                             href={(event as any).riversideRoomUrl ?? RIVERSIDE_INFO.roomUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-2 rounded-xl font-medium transition-colors"
+                            className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-medium transition-colors"
                           >
                             <Video className="w-5 h-5" />
                             Join on Riverside
@@ -938,7 +938,7 @@ export default function Schedule() {
                             <button
                               onClick={() => submitReminder(event)}
                               disabled={reminderMutation.isPending || !reminderEmail.trim()}
-                              className="bg-[#7dd87d] hover:bg-[#6bc86b] disabled:opacity-50 text-[#1a472a] px-4 py-2 rounded-xl font-medium text-sm transition-colors whitespace-nowrap"
+                              className="bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-50 text-[#1a472a] px-4 py-2 rounded-xl font-medium text-sm transition-colors whitespace-nowrap"
                             >
                               {reminderMutation.isPending ? '...' : 'Notify me'}
                             </button>
@@ -1045,48 +1045,4 @@ export default function Schedule() {
             </div>
             
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20 text-center">
-              <div className="w-12 h-12 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-[#7dd87d]">2</div>
-              <h3 className="font-bold text-white mb-2">Join on Riverside or YouTube</h3>
-              <p className="text-white/60 text-sm">Open the room link in your browser at the scheduled time. No download needed.</p>
-            </div>
-            
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20 text-center">
-              <div className="w-12 h-12 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-[#7dd87d]">3</div>
-              <h3 className="font-bold text-white mb-2">Participate</h3>
-              <p className="text-white/60 text-sm">Engage in discussions, ask questions, and connect with the community.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Want to Join <span className="text-[#7dd87d]">Season 2</span>?
-          </h2>
-          <p className="text-white/70 mb-8 safe-prose">
-            Applications are now open for land projects interested in joining the next Season cohort.
-          </p>
-          
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/seasons">
-              <Button size="lg" variant="outline" className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 rounded-xl">
-                Learn About Next Season
-              </Button>
-            </Link>
-            <Link href="/apply">
-              <Button size="lg" className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] rounded-xl">
-                Apply Now
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Related Content */}
-      <RelatedContent pages={relatedContentMap.schedule.pages} blog={relatedContentMap.schedule.blog} />
-    </div>
-    </PageWrapper>
-  );
-}
+              <div className="w-12 h-12 bg-[#7dd87d]/20 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl f

@@ -61,7 +61,7 @@ function PowerMeter({
   // Color zones
   const getColor = () => {
     if (sent <= threshold) return "#7dd87d"; // green: full power
-    if (sent <= 20) return "#f0c040"; // yellow: diluting
+    if (sent <= 20) return "#ffd700"; // yellow: diluting
     return "#a0a0a0"; // grey: spread thin
   };
 
@@ -103,7 +103,7 @@ function PowerMeter({
             full-power sends remaining
           </>
         ) : (
-          <span className="text-[#f0c040]">
+          <span className="text-[#ffd700]">
             Spreading across {sent} people (diluting)
           </span>
         )}

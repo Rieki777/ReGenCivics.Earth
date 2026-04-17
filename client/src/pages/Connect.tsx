@@ -46,7 +46,7 @@ const paths = [
     description: "I want to co-create with one/some of the Alliance Organizations",
     icon: Users,
     color: "from-[#2d5a3d] to-[#4a7c59]",
-    iconBg: "bg-[#a5d6a7]",
+    iconBg: "bg-[#a8e6a8]",
     iconColor: "text-[#1a472a]",
   },
   {
@@ -75,7 +75,7 @@ const paths = [
     subtitle: "Join a Community",
     description: "I want to co-create with one/some of the ReGen Land Projects",
     icon: Home,
-    color: "from-[#4a7c59] to-[#a5d6a7]",
+    color: "from-[#4a7c59] to-[#a8e6a8]",
     iconBg: "bg-[#7dd87d]",
     iconColor: "text-[#1a472a]",
   },
@@ -1213,7 +1213,7 @@ export default function Connect() {
                     setEmail("");
                     setFullName("");
                   }}
-                  className="bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#6bc86b] text-[#1a472a] font-semibold"
+                  className="bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#9de89d] text-[#1a472a] font-semibold"
                 >
                   Submit Another Inquiry
                 </Button>
@@ -1327,7 +1327,7 @@ export default function Connect() {
                 <Button
                   onClick={handleSubmit}
                   disabled={!email || isSubmitting}
-                  className="w-full bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#6bc86b] text-[#1a472a] py-6 text-lg font-semibold shadow-lg"
+                  className="w-full bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#9de89d] text-[#1a472a] py-6 text-lg font-semibold shadow-lg"
                 >
                   {isSubmitting ? (
                     <>
@@ -1348,6 +1348,3 @@ export default function Connect() {
         </div>
       </div>
     </div>
-    </PageWrapper>
-  );
-}

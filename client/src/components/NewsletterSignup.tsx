@@ -21,7 +21,7 @@ export default function NewsletterSignup() {
       {/* CTA Button - Links to /connect */}
       <Link href="/connect">
         <Button
-          className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold px-8 py-6 h-auto text-lg transition-all hover:scale-105"
+          className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-8 py-6 h-auto text-lg transition-all hover:scale-105"
           style={{ fontFamily: 'var(--font-accent)' }}
         >
           <Mail className="w-5 h-5 mr-2" />
@@ -93,7 +93,7 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
         type="submit"
         disabled={subscribeMutation.isPending || !email.trim()}
         size="sm"
-        className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full px-4 flex-shrink-0"
+        className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full px-4 flex-shrink-0"
         style={{ fontFamily: "var(--font-display)" }}
       >
         {subscribeMutation.isPending ? (

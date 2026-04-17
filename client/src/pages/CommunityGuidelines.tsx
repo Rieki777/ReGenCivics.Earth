@@ -107,7 +107,7 @@ export default function CommunityGuidelines() {
           {isAuthenticated ? (
             <Button
               onClick={() => setShowForm(!showForm)}
-              className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold px-6 py-3 rounded-full text-base"
+              className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full text-base"
               style={{ fontFamily: 'var(--font-accent)' }}
             >
               {showForm ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
@@ -116,7 +116,7 @@ export default function CommunityGuidelines() {
           ) : (
             <a
               href={getLoginUrl()}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#6bc86b] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#9de89d] transition-colors"
               style={{ fontFamily: 'var(--font-accent)' }}
             >
               Sign In to Propose
@@ -161,7 +161,7 @@ export default function CommunityGuidelines() {
                 <Button
                   onClick={handleSubmit}
                   disabled={!title.trim() || !description.trim() || createMutation.isPending}
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold rounded-full px-6"
+                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6"
                 >
                   <Send className="w-4 h-4 mr-2" />
                   {createMutation.isPending ? 'Submitting...' : 'Submit Proposal'}

@@ -210,7 +210,7 @@ export default function CommunityCategory() {
             {isAuthenticated ? (
               <Button 
                 onClick={() => navigate(`/community/new?category=${category.id}`)}
-                className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold px-5 py-2 rounded-full text-sm"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-5 py-2 rounded-full text-sm"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Plus className="w-4 h-4 mr-1.5" />
@@ -219,7 +219,7 @@ export default function CommunityCategory() {
             ) : (
               <Button 
                 onClick={() => window.location.href = getLoginUrl()}
-                className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold px-5 py-2 rounded-full text-sm"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-5 py-2 rounded-full text-sm"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <UserPlus className="w-4 h-4 mr-1.5" />
@@ -259,7 +259,7 @@ export default function CommunityCategory() {
             {isAuthenticated && (
               <Button 
                 onClick={() => navigate(`/community/new?category=${category.id}`)}
-                className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Plus className="w-4 h-4 mr-1.5" />

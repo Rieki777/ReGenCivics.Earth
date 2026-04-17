@@ -99,7 +99,7 @@ function getEmailFooter(): string {
         </div>
       </div>
       
-      <div style="background: #e8f5e9; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+      <div style="background: #f0f7f0; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
         <p style="color: #1a472a; font-size: 13px; margin: 0; text-align: center;">
           <strong>Questions or want to engage?</strong><br>
           <span style="color: #4a7c59;">We don't respond to emails directly. Please join our community on WhatsApp or Discord for questions, discussions, and engagement!</span>
@@ -418,8 +418,8 @@ export const emailTemplates = {
       <h2 style="color: #1a472a; margin-top: 0;">Thank You, ${recipientName}!</h2>
       <p style="color: #333; line-height: 1.6;">We've received your application for <strong>${projectName}</strong> to join ReGen Civics.</p>
       
-      <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-        <p style="color: #2e7d32; font-size: 18px; margin: 0;">Your application is now in our review queue</p>
+      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+        <p style="color: #1a472a; font-size: 18px; margin: 0;">Your application is now in our review queue</p>
       </div>
       
       <h3 style="color: #4a7c59;">What Happens Next?</h3>
@@ -502,7 +502,7 @@ export const emailTemplates = {
       <h2 style="color: #1a472a; margin-top: 0;">Welcome to the Journey, ${recipientName || 'Friend'}!</h2>
       <p style="color: #333; line-height: 1.6;">You're now part of the ReGen Civics community. Get ready for updates on regenerative land projects, community events, and the infinite game of building a better world.</p>
       
-      <div style="background: linear-gradient(135deg, #e8f5e9 0%, #f0f7f0 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+      <div style="background: linear-gradient(135deg, #f0f7f0 0%, #f0f7f0 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
         <p style="color: #1a472a; font-size: 18px; margin: 0 0 10px 0; font-weight: bold;">What to Expect</p>
         <p style="color: #4a7c59; margin: 0;">Monthly updates, project spotlights, community stories, and invitations to participate in the regenerative renaissance.</p>
       </div>
@@ -521,8 +521,8 @@ export const emailTemplates = {
       <h2 style="color: #1a472a; margin-top: 0;">Congratulations, ${recipientName}!</h2>
       <p style="color: #333; line-height: 1.6;">Your contribution <strong>"${contributionTitle}"</strong> to the campaign <strong>"${campaignTitle}"</strong> has been accepted!</p>
       
-      <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border-left: 4px solid #4caf50;">
-        <p style="color: #2e7d32; font-size: 18px; margin: 0;">Your contribution is now part of this regenerative project!</p>
+      <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border-left: 4px solid #4caf50;">
+        <p style="color: #1a472a; font-size: 18px; margin: 0;">Your contribution is now part of this regenerative project!</p>
       </div>
       
       ${ownerNotes ? `
@@ -711,8 +711,8 @@ export const emailTemplates = {
       <h2 style="color: #1a472a; margin-top: 0;">Thank You, ${recipientName}!</h2>
       <p style="color: #333; line-height: 1.6;">Your contribution <strong>"${contributionTitle}"</strong> to <strong>"${campaignTitle}"</strong> has been marked as fulfilled!</p>
       
-      <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
-        <p style="color: #2e7d32; font-size: 20px; margin: 0 0 10px 0; font-weight: bold;">You Made a Difference!</p>
+      <div style="background: linear-gradient(135deg, #f0f7f0 0%, #c8e6c9 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
+        <p style="color: #1a472a; font-size: 20px; margin: 0 0 10px 0; font-weight: bold;">You Made a Difference!</p>
         <p style="color: #4a7c59; margin: 0;">Your contribution has helped bring this regenerative vision closer to reality.</p>
       </div>
       

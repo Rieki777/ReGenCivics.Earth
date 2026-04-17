@@ -27,7 +27,7 @@ interface GeographicAnalyticsProps {
 
 const COLORS = [
   "#7dd87d", // Primary green
-  "#4a9f4a", // Darker green
+  "#4a7c59", // Darker green
   "#a8e6a8", // Light green
   "#2d7a2d", // Deep green
   "#c4f0c4", // Pale green

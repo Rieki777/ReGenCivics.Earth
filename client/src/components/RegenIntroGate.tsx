@@ -71,7 +71,7 @@ export function RegenIntroGate() {
             <div className="flex justify-end">
               <Button
                 onClick={dismiss}
-                className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#6bc86b] font-bold"
+                className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-bold"
               >
                 Enter the site
               </Button>
@@ -95,7 +95,7 @@ export function RegenIntroGate() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 onClick={dismiss}
-                className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#6bc86b] font-bold"
+                className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-bold"
               >
                 Skip, I'm ready
               </Button>

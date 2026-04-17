@@ -485,7 +485,4 @@ export default function Ally() {
       <RelatedContent pages={relatedContentMap.ally.pages} blog={relatedContentMap.ally.blog} />
         </div>
       </section>
-    </PageBackground>
-    </HeroPageLoader>
-  );
-}
+    </PageBackgrou

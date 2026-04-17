@@ -164,7 +164,7 @@ export default function ToolsLibrary() {
                 <Button
                   onClick={handleMatch}
                   disabled={!matcherInput.trim() || aiMatch.isPending}
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold w-full"
+                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold w-full"
                 >
                   {aiMatch.isPending ? (
                     <>

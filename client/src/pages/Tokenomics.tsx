@@ -1254,15 +1254,4 @@ export default function Tokenomics() {
                   variant="outline"
                   className="rounded-xl border-2 border-[#7dd87d]/50 text-[#7dd87d] hover:bg-[#7dd87d]/10 px-8"
                   style={{ fontFamily: "var(--font-accent)" }}
-                >
-                  Governance Model <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-    </PageWrapper>
-  );
-}
+      

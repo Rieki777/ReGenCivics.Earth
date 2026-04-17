@@ -209,11 +209,11 @@ export default function ContributionAggregation({
         
         <div className="bg-[#fff8e1] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-5 h-5 text-[#f59e0b]" />
+            <Clock className="w-5 h-5 text-[#d4a017]" />
             <span className="text-xs text-[#1a472a]/60">Pending</span>
           </div>
           <p className="text-2xl font-bold text-[#1a472a]">{formatCurrency(pendingTotals.total, currencySymbol)}</p>
-          <p className="text-xs text-[#f59e0b]">{pendingTotals.contributors} awaiting review</p>
+          <p className="text-xs text-[#d4a017]">{pendingTotals.contributors} awaiting review</p>
         </div>
       </div>
       
@@ -245,7 +245,7 @@ export default function ContributionAggregation({
           </div>
           <div className="flex justify-between text-xs mt-1">
             <span className="text-[#4a7c59]">Accepted: {formatCurrency(acceptedTotals.total, currencySymbol)}</span>
-            <span className="text-[#f59e0b]">Pending: {formatCurrency(pendingTotals.total, currencySymbol)}</span>
+            <span className="text-[#d4a017]">Pending: {formatCurrency(pendingTotals.total, currencySymbol)}</span>
           </div>
         </div>
         
@@ -259,7 +259,7 @@ export default function ContributionAggregation({
           </div>
           <div className="relative w-full bg-gray-200 rounded-full h-6">
             <div 
-              className="absolute h-6 rounded-full bg-gradient-to-r from-[#2e7d32] to-[#4caf50] transition-all duration-500"
+              className="absolute h-6 rounded-full bg-gradient-to-r from-[#1a472a] to-[#4caf50] transition-all duration-500"
               style={{ width: `${Math.min((acceptedTotals.financial / (targetAmount * 0.2)) * 100, 100)}%` }}
             />
             <div 
@@ -272,8 +272,8 @@ export default function ContributionAggregation({
             />
           </div>
           <div className="flex justify-between text-xs mt-1">
-            <span className="text-[#2e7d32]">Accepted: {formatCurrency(acceptedTotals.financial, currencySymbol)}</span>
-            <span className="text-[#f59e0b]">Pending: {formatCurrency(pendingTotals.financial, currencySymbol)}</span>
+            <span className="text-[#1a472a]">Accepted: {formatCurrency(acceptedTotals.financial, currencySymbol)}</span>
+            <span className="text-[#d4a017]">Pending: {formatCurrency(pendingTotals.financial, currencySymbol)}</span>
           </div>
         </div>
       </div>
@@ -338,7 +338,7 @@ export default function ContributionAggregation({
                           ? 'bg-[#4a7c59] text-white'
                           : proposal.status === 'rejected'
                           ? 'bg-red-500 text-white'
-                          : 'bg-[#f59e0b] text-white'
+                          : 'bg-[#d4a017] text-white'
                       }`}>
                         {proposal.contributorName?.charAt(0).toUpperCase() || 'A'}
                       </div>
@@ -359,7 +359,7 @@ export default function ContributionAggregation({
                           ? 'bg-[#4a7c59] text-white'
                           : proposal.status === 'rejected'
                           ? 'bg-red-500 text-white'
-                          : 'bg-[#f59e0b] text-white'
+                          : 'bg-[#d4a017] text-white'
                       }`}>
                         {proposal.status}
                       </div>
@@ -430,7 +430,7 @@ export default function ContributionAggregation({
                             status: 'accepted' 
                           })}
                           disabled={updateStatusMutation.isPending}
-                          className="flex-1 bg-[#4a7c59] hover:bg-[#2e7d32] text-white rounded-xl"
+                          className="flex-1 bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl"
                         >
                           <Check className="w-4 h-4 mr-2" />
                           Accept

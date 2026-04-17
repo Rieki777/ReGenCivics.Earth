@@ -450,7 +450,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                     </div>
                     <div className="mt-2 pt-2 border-t border-[#1a472a]/10 flex items-center justify-between text-xs">
                       <span className="text-[#1a472a]/50">Typical total value:</span>
-                      <span className="font-medium text-[#2e7d32]">
+                      <span className="font-medium text-[#1a472a]">
                         ${(role.suggestedRate * role.typicalHours * role.typicalWeeks).toLocaleString()}
                       </span>
                     </div>
@@ -519,7 +519,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                     </select>
                     <Button
                       onClick={addIdea}
-                      className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+                      className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                     >
                       <Plus className="w-4 h-4 mr-1" />
                       Add Idea
@@ -627,7 +627,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                                   <Button
                                     size="sm"
                                     onClick={() => addComment(idea.id)}
-                                    className="h-8 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+                                    className="h-8 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                                   >
                                     <Send className="w-3 h-3" />
                                   </Button>
@@ -652,7 +652,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                   href="https://app.hypha.earth/en/dho/regen-games/agreements/select-create-action"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-medium px-4 py-2 rounded-lg transition-colors text-sm"
                 >
                   Submit Proposal to DAO
                   <ExternalLink className="w-4 h-4" />

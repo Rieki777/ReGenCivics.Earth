@@ -240,7 +240,7 @@ export function QuestBadges() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#1a472a] to-[#2e7d32] p-6 text-white">
+            <div className="bg-gradient-to-r from-[#1a472a] to-[#1a472a] p-6 text-white">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold flex items-center gap-2">

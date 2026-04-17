@@ -104,7 +104,7 @@ export default function ToolSubmit() {
           <h2 className="text-white text-xl font-semibold mb-2">Sign in to submit a tool</h2>
           <p className="text-white/50 text-sm mb-6">You need an account to add tools to the library.</p>
           <a href={getLoginUrl()}>
-            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold">
+            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
               Sign In
             </Button>
           </a>
@@ -165,7 +165,7 @@ export default function ToolSubmit() {
                   <Button
                     onClick={handleAnalyze}
                     disabled={!url.trim()}
-                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold"
+                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
                   >
                     Analyze
                   </Button>
@@ -311,7 +311,7 @@ export default function ToolSubmit() {
                   <Button
                     onClick={handleSubmit}
                     disabled={!name.trim() || !summary.trim() || submitTool.isPending}
-                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold flex-1"
+                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold flex-1"
                   >
                     {submitTool.isPending ? (
                       <>
@@ -341,7 +341,7 @@ export default function ToolSubmit() {
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Link href="/tools">
-                    <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc86b] font-bold">
+                    <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
                       Browse Tools
                     </Button>
                   </Link>

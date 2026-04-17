@@ -46,7 +46,7 @@ const CAPITAL_COLORS: Record<string, string> = {
   living: "#5abb8a",
   material: "#c4785b",
   intellectual: "#6b8dd6",
-  experiential: "#c084fc",
+  experiential: "#7dd87d",
   spiritual: "#f472b6",
   cultural: "#fb923c",
   influence: "#a78bfa",
@@ -323,8 +323,8 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
 
           {/* Card 5: Your Growth */}
           <Card>
-            <TrendingUp className="w-10 h-10 text-[#c084fc] mb-4" />
-            <p className="text-sm uppercase tracking-widest text-[#c084fc] mb-2 font-medium">
+            <TrendingUp className="w-10 h-10 text-[#7dd87d] mb-4" />
+            <p className="text-sm uppercase tracking-widest text-[#7dd87d] mb-2 font-medium">
               Your Growth
             </p>
 

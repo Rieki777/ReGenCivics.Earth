@@ -540,7 +540,7 @@ export function ContributionCalculator() {
 
   if (showResults) {
     return (
-      <div className="bg-gradient-to-br from-[#f0f7f0] to-[#e8f5e9] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
+      <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0f7f0] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
         {/* Results Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#7dd87d]/20 mb-4">
@@ -661,7 +661,7 @@ export function ContributionCalculator() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-[#f0f7f0] to-[#e8f5e9] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
+    <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0f7f0] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-xl bg-[#7dd87d]/20 flex items-center justify-center">

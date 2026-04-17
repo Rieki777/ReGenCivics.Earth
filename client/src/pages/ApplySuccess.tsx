@@ -22,7 +22,7 @@ export default function ApplySuccess() {
             Thank you for applying to the ReGen Civics next Season. We've received your application and our team will review it carefully.
           </p>
 
-          <div className="bg-[#e8f5e9] border-2 border-[#7dd87d]/50 rounded-lg p-6 mb-8 text-left">
+          <div className="bg-[#f0f7f0] border-2 border-[#7dd87d]/50 rounded-lg p-6 mb-8 text-left">
             <h2 className="font-bold text-[#1a472a] mb-3">What happens next?</h2>
             <ul className="space-y-2 text-[#1a472a]/80">
               <li className="flex items-start gap-2">
@@ -46,7 +46,7 @@ export default function ApplySuccess() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/">
-              <Button className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]">
+              <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
                 <Home className="w-4 h-4 mr-2" />
                 Back to Home
               </Button>

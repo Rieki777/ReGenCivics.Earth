@@ -109,13 +109,13 @@ export default function ShapeNextSession() {
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold text-white">Got it. Thank you.</h1>
-            <p className="text-[#a5d6a7] text-base leading-relaxed">
+            <p className="text-[#a8e6a8] text-base leading-relaxed">
               We read every suggestion. At the start of the next session, we'll open with what came back most often.
             </p>
           </div>
           <div className="pt-2 flex flex-col gap-3">
             <Link href="/schedule">
-              <Button className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#a5d6a7] font-semibold">
+              <Button className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#a8e6a8] font-semibold">
                 View the full schedule
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -150,7 +150,7 @@ export default function ShapeNextSession() {
           <h1 className="text-3xl font-bold text-white leading-tight">
             Shape the next session
           </h1>
-          <p className="text-[#a5d6a7] text-base leading-relaxed">
+          <p className="text-[#a8e6a8] text-base leading-relaxed">
             We build each session from what you bring. Tell us what you want covered and we'll incorporate as much as we can.
           </p>
         </div>
@@ -159,7 +159,7 @@ export default function ShapeNextSession() {
         {eventsLoading ? (
           <div className="rounded-xl border border-[#7dd87d]/20 bg-[#1a472a]/40 p-4 flex items-center gap-3">
             <Loader2 className="w-4 h-4 text-[#7dd87d] animate-spin" />
-            <span className="text-[#a5d6a7] text-sm">Loading next session...</span>
+            <span className="text-[#a8e6a8] text-sm">Loading next session...</span>
           </div>
         ) : nextEvent ? (
           <div className="rounded-xl border border-[#7dd87d]/25 bg-[#1a472a]/50 p-5 space-y-1">
@@ -168,13 +168,13 @@ export default function ShapeNextSession() {
               <span>Next session</span>
             </div>
             <p className="text-white font-semibold text-base">{nextEvent.title}</p>
-            <p className="text-[#a5d6a7] text-sm">
+            <p className="text-[#a8e6a8] text-sm">
               {formatEventDate(nextEvent.startTime)} at {formatEventTime(nextEvent.startTime)}
             </p>
           </div>
         ) : (
           <div className="rounded-xl border border-[#7dd87d]/20 bg-[#1a472a]/40 p-4">
-            <p className="text-[#a5d6a7] text-sm">No upcoming session found. Check back soon or browse the schedule.</p>
+            <p className="text-[#a8e6a8] text-sm">No upcoming session found. Check back soon or browse the schedule.</p>
           </div>
         )}
 
@@ -184,7 +184,7 @@ export default function ShapeNextSession() {
           {/* Field 1: Name + Email (optional) */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[#a5d6a7] text-sm font-medium">
+              <Label htmlFor="name" className="text-[#a8e6a8] text-sm font-medium">
                 Name <span className="text-[#7dd87d]/40 font-normal">(optional)</span>
               </Label>
               <Input
@@ -197,7 +197,7 @@ export default function ShapeNextSession() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[#a5d6a7] text-sm font-medium">
+              <Label htmlFor="email" className="text-[#a8e6a8] text-sm font-medium">
                 Email <span className="text-[#7dd87d]/40 font-normal">(optional)</span>
               </Label>
               <Input
@@ -213,7 +213,7 @@ export default function ShapeNextSession() {
 
           {/* Field 2: Topic */}
           <div className="space-y-2">
-            <Label htmlFor="topic" className="text-[#a5d6a7] text-sm font-medium">
+            <Label htmlFor="topic" className="text-[#a8e6a8] text-sm font-medium">
               What do you want us to cover or go deeper on?
             </Label>
             <Textarea
@@ -231,7 +231,7 @@ export default function ShapeNextSession() {
 
           {/* Field 3: Attending */}
           <div className="space-y-3">
-            <Label className="text-[#a5d6a7] text-sm font-medium block">
+            <Label className="text-[#a8e6a8] text-sm font-medium block">
               Will you be at the next session?
             </Label>
             <div className="grid gap-2">
@@ -271,7 +271,7 @@ export default function ShapeNextSession() {
           <Button
             type="submit"
             disabled={submitMutation.isPending || !nextEvent}
-            className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#a5d6a7] font-semibold h-12 text-base"
+            className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#a8e6a8] font-semibold h-12 text-base"
           >
             {submitMutation.isPending ? (
               <>
