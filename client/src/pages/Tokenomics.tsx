@@ -38,6 +38,7 @@ import {
   Layers,
   Star,
 } from "lucide-react";
+import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 
 // Animated Token Flow Component
 function AnimatedTokenFlow() {
@@ -829,6 +830,7 @@ export default function Tokenomics() {
 
       {/* ── Hero ── */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden pt-16">
+        <LandscapeSVG seed="tokenomics" className="absolute inset-0 text-[#7dd87d] pointer-events-none z-0" />
         <FlowingParticles />
         <div className="container relative z-10 py-16 px-4">
           <div className="max-w-4xl mx-auto text-center">

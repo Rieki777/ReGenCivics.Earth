@@ -21,6 +21,7 @@ import { BackButton } from "@/components/BackButton";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { Pullquote } from "@/components/Pullquote";
 import {
   Leaf,
   Sprout,
@@ -50,6 +51,7 @@ import {
   Library,
   Sparkles,
 } from "lucide-react";
+import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 
 /* ─── Color tokens ────────────────────────────────────────────────────── */
 
@@ -567,11 +569,13 @@ function SectionHeading({
   title,
   blurb,
   accent = C.green,
+  titleClassName,
 }: {
   eyebrow?: string;
   title: string;
   blurb?: string;
   accent?: string;
+  titleClassName?: string;
 }) {
   return (
     <div className="max-w-3xl mb-8 md:mb-10">
@@ -584,7 +588,7 @@ function SectionHeading({
         </p>
       )}
       <h2
-        className="text-3xl md:text-4xl font-bold text-white mb-3 leading-tight"
+        className={`text-3xl md:text-4xl font-bold text-white mb-3 leading-tight ${titleClassName || ""}`}
         style={{ fontFamily: "var(--font-display)" }}
       >
         {title}
@@ -634,7 +638,8 @@ export default function Bionomics() {
 
           {/* ════ 1. HERO ════════════════════════════════════════════ */}
           <section className="relative overflow-hidden">
-            <div className="container px-4 pt-8 md:pt-12 pb-10 md:pb-16">
+            <LandscapeSVG seed="bionomics" className="absolute inset-0 text-[#7dd87d] pointer-events-none z-0" />
+            <div className="container px-4 pt-8 md:pt-12 pb-10 md:pb-16 relative z-10">
               <div className="max-w-5xl mx-auto">
                 {/* Hero image */}
                 <div className="rounded-2xl overflow-hidden shadow-2xl">
@@ -716,6 +721,7 @@ export default function Bionomics() {
                 eyebrow="The Word"
                 title="Bio. Bioregion. Economics."
                 accent={C.greenSoft}
+                titleClassName="story-grow"
               />
               <div
                 className="rounded-3xl border border-[#7dd87d]/20 p-6 md:p-10 space-y-5 md:space-y-6 safe-prose"
@@ -752,6 +758,8 @@ export default function Bionomics() {
             </div>
           </section>
 
+          <Pullquote>The first economy was always the one life was already running. Bionomics is the work of remembering we are part of it.</Pullquote>
+
           {/* ════ 3. THE BRIDGE ═════════════════════════════════════ */}
           <section className="px-4 py-10 md:py-16" style={{ background: "rgba(0,0,0,0.18)" }}>
             <div className="container max-w-5xl">
@@ -759,6 +767,7 @@ export default function Bionomics() {
                 eyebrow="The Two Sides"
                 title="Two sides of one bridge"
                 blurb="The Fund draws capital from the current Games (capitalism and everything downstream of it). The Game grows the new economies that capital is flowing toward. They need each other."
+                titleClassName="story-grow"
               />
 
               <div className="mycelium-grid grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 items-stretch">
@@ -853,6 +862,7 @@ export default function Bionomics() {
                 title="Since 2017"
                 blurb="A meandering river of seasons, lessons, and seeds planted. Tap any year to descend."
                 accent={C.amber}
+                titleClassName="story-grow"
               />
               <TimelineRiver />
             </div>

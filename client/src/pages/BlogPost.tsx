@@ -348,7 +348,7 @@ export default function BlogPost() {
           <AnimatedSection animation="fade-in">
             <article className="prose prose-lg prose-invert max-w-none">
               <div
-                className="text-white/80 leading-relaxed space-y-6"
+                className="drop-cap text-white/80 leading-relaxed space-y-6"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
                 {(() => {

@@ -105,7 +105,7 @@ export default function HealTheLand() {
           <div className="max-w-3xl mx-auto">
             <AnimatedSection animation="slide-up">
               <h2
-                className="text-3xl md:text-4xl font-bold text-white mb-8 text-center"
+                className="story-grow text-3xl md:text-4xl font-bold text-white mb-8 text-center"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 The Belief
@@ -133,7 +133,7 @@ export default function HealTheLand() {
           <div className="max-w-6xl mx-auto">
             <AnimatedSection animation="slide-up">
               <h2
-                className="text-3xl md:text-4xl font-bold text-white mb-12 text-center"
+                className="story-grow text-3xl md:text-4xl font-bold text-white mb-12 text-center"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 The Three Stages

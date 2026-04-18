@@ -27,6 +27,7 @@ import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { isNewsletterSubscribed } from "@/utils/newsletter";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
+import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 
 // Icon mapping for categories
 const iconMap: Record<string, React.ReactNode> = {
@@ -243,6 +244,7 @@ export default function Community() {
 
       {/* Hero Section */}
       <section className="relative pt-24 pb-12 md:pt-32 md:pb-16 overflow-hidden">
+        <LandscapeSVG seed="community" className="absolute inset-0 text-[#7dd87d] pointer-events-none z-0" />
         {/* Background image */}
         <picture>
           <source media="(max-width: 767px)" srcSet="/images/backgrounds/community-hero-mobile.webp" />
@@ -301,7 +303,7 @@ export default function Community() {
             {isAuthenticated ? (
               <Button
                 onClick={() => navigate('/community/new')}
-                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-6 py-2.5 rounded-full"
+                className="breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] font-bold px-6 py-2.5 rounded-full"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -310,7 +312,7 @@ export default function Community() {
             ) : (
               <Button
                 onClick={() => window.location.href = getLoginUrl()}
-                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-6 py-2.5 rounded-full"
+                className="breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] font-bold px-6 py-2.5 rounded-full"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <UserPlus className="w-4 h-4 mr-2" />

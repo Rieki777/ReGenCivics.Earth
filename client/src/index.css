@@ -147,6 +147,8 @@
 
 :root {
   --top-nav-height: 56px;
+  --font-size-hero: clamp(2rem, 1rem + 3vw, 4rem);
+  --font-size-h2: clamp(1.5rem, 0.9rem + 1.6vw, 2.25rem);
 
   /* Enchanted Forest Color Palette */
   --forest-deep: oklch(0.30 0.08 145); /* Deep forest green */
@@ -2470,4 +2472,37 @@ body {
 .group:focus-within .quest-card-tier2 {
   max-height: 200px;
   opacity: 1;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Idea 6. Drop cap for blog/article first paragraphs
+   ════════════════════════════════════════════════════════════ */
+.drop-cap::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 0.8;
+  color: #7dd87d;
+  margin-right: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Idea 20. High contrast mode
+   ════════════════════════════════════════════════════════════ */
+html[data-contrast="high"] {
+  --foreground: 0 0% 100%;
+  --background: 0 0% 0%;
+}
+html[data-contrast="high"] *:focus-visible {
+  outline: 3px solid #ffeb00 !important;
+  outline-offset: 2px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Parallax hero utility
+   ════════════════════════════════════════════════════════════ */
+.parallax-hero {
+  will-change: transform;
+  transition: transform 0.1s linear;
 }

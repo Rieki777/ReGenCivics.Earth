@@ -8,6 +8,7 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { SEO, pageSEO } from "@/components/SEO";
 import { JsonLD, schemas } from "@/components/JsonLD";
 import { cdnImg } from "@/lib/utils";
+import { Pullquote } from "@/components/Pullquote";
 import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
 import { WhoHoldsVoteChart } from "@/components/governance/WhoHoldsVoteChart";
 
@@ -805,6 +806,8 @@ export default function Governance() {
           </div>
         </div>
       </section>
+
+      <Pullquote>Two spaces, two governance systems, one shared mission. Voice is earned, and it stays with the people doing the work.</Pullquote>
 
       {/* Fund vs Game Governance Comparison Chart - moved to top */}
       <section id="gov-comparison" data-reveal className="py-16 px-4 bg-[#0d2818]/50">

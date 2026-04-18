@@ -47,6 +47,9 @@ import { trpc } from "@/lib/trpc";
 import { PageWrapper } from "@/components/PageWrapper";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { cdnImg } from "@/lib/utils";
+import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
+import { ForYouLabel } from "@/components/ForYouLabel";
+import { AmbientParticles } from "@/components/AmbientParticles";
 
 // Path card data
 const pathCards = [
@@ -242,7 +245,9 @@ export default function Home() {
 
         {/* Hero Section with Video */}
         <section className="relative min-h-[60vh] flex items-center py-12 md:py-16 hero-gradient-shift">
-          <div className="container">
+          <AmbientParticles />
+          <LandscapeSVG seed="home" className="absolute inset-0 text-[#7dd87d] pointer-events-none z-0" />
+          <div className="container relative z-10">
             <AnimatedSection animation="fade-in" className="max-w-5xl mx-auto">
               <div className="text-center mb-8">
                 <h1
@@ -280,7 +285,7 @@ export default function Home() {
                 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 text-shadow-strong"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Four Paths to Play
+                Four Paths to Play {userCardId && <ForYouLabel label="Your Path Highlighted" />}
               </h2>
               <p
                 className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle"
@@ -311,7 +316,7 @@ export default function Home() {
                           Your Path
                         </div>
                       )}
-                      {/* Card illustration — full-bleed at card top */}
+                      {/* Card illustration: full-bleed at card top */}
                       <div className="-mx-6 -mt-6 mb-5">
                         <PathCardImage
                           cardId={card.id as "fund" | "land" | "ally" | "play"}
@@ -548,7 +553,7 @@ export default function Home() {
                     </CollapsibleContent>
 
                     <Link href="/seasons">
-                      <Button className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-base py-3 h-auto">
+                      <Button className="w-full rounded-xl breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] text-base py-3 h-auto font-bold">
                         Explore Seasons <ArrowRight className="ml-2 w-5 h-5" />
                       </Button>
                     </Link>
@@ -620,7 +625,7 @@ export default function Home() {
                     </CollapsibleContent>
 
                     <Link href="/game">
-                      <Button data-ripple className="w-full rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-base py-3 h-auto breath-pulse">
+                      <Button data-ripple className="w-full rounded-xl breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] text-base py-3 h-auto font-bold">
                         Play the Game <ArrowRight className="ml-2 w-5 h-5" />
                       </Button>
                     </Link>

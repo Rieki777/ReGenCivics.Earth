@@ -50,6 +50,7 @@ import InvestorJourney from "@/components/InvestorJourney";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { PageWrapper } from "@/components/PageWrapper";
 import { cdnImg } from "@/lib/utils";
+import { Pullquote } from "@/components/Pullquote";
 
 // Collapsible section component
 function CollapsibleSection({
@@ -184,7 +185,7 @@ export default function Fund() {
             <Link href="/loi">
               <Button
                 size="sm"
-                className="bg-[#1a472a] hover:bg-[#0d2818] text-white text-xs sm:text-sm px-5 py-3 min-h-[44px] h-auto"
+                className="breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] text-xs sm:text-sm px-5 py-3 min-h-[44px] h-auto font-bold"
               >
                 Submit LOI
               </Button>
@@ -258,7 +259,7 @@ export default function Fund() {
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up">
             <h2
-              className="text-3xl md:text-5xl font-bold text-white mb-3 text-center text-shadow-strong"
+              className="story-grow text-3xl md:text-5xl font-bold text-white mb-3 text-center text-shadow-strong"
               style={{ fontFamily: "var(--font-display)" }}
             >
               The <span className="text-amber-400">Opportunity</span>
@@ -344,12 +345,14 @@ export default function Fund() {
         </div>
       </section>
 
+      <Pullquote>We need to redesign how humans inhabit the Earth, and that redesign is the investment opportunity of our generation.</Pullquote>
+
       {/* How It Works */}
       <section id="fund-how-it-works" className="py-12 md:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up">
             <h2
-              className="text-3xl md:text-5xl font-bold text-white mb-8 text-center text-shadow-strong"
+              className="story-grow text-3xl md:text-5xl font-bold text-white mb-8 text-center text-shadow-strong"
               style={{ fontFamily: "var(--font-display)" }}
             >
               How It <span className="text-amber-400">Works</span>

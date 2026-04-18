@@ -282,6 +282,18 @@ export default function SiteFooter() {
               <li>
                 <PWAInstallButton />
               </li>
+              <li>
+                <button
+                  onClick={() => {
+                    const isHigh = document.documentElement.dataset.contrast === "high";
+                    document.documentElement.dataset.contrast = isHigh ? "" : "high";
+                    localStorage.setItem("rc-contrast-mode", isHigh ? "" : "high");
+                  }}
+                  className="text-white/50 hover:text-[#7dd87d] text-xs"
+                >
+                  High contrast
+                </button>
+              </li>
             </ul>
           </div>
         </div>

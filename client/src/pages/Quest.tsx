@@ -28,6 +28,8 @@ import { EpicQuestSection } from "@/components/EpicQuestSection";
 import { SeasonalDepthCard } from "@/components/SeasonalDepthCard";
 import { QuestArcMap } from "@/components/QuestArcMap";
 import { useHemisphere, setHemisphereOverride } from "@/hooks/useHemisphere";
+import { ForYouLabel } from "@/components/ForYouLabel";
+import { VineDivider } from "@/components/dividers/VineDivider";
 import { useNextQuest } from "@/hooks/useNextQuest";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { questData, QUEST_BEST_SEASONS, SEASON_HERO } from "@/data/questData";
@@ -531,7 +533,7 @@ function ContinueYourJourneyBanner() {
     <section className="py-10 bg-gradient-to-b from-[#f0ebe3] to-[#faf6f1]">
       <div className="container max-w-3xl mx-auto text-center">
         <h2 className="text-2xl md:text-3xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: "var(--font-display)" }}>
-          Continue Your Journey
+          Continue Your Journey <ForYouLabel />
         </h2>
         <p className="text-[#1a472a]/70 text-base mb-4">{bannerSub}</p>
         {nextQuest?.prompt && (
@@ -1113,7 +1115,7 @@ export default function Quest() {
                 </div>
 
                 <div className="mt-6">
-                  <hr className="border-[#1a472a]/20 my-6" />
+                  <VineDivider className="my-6" />
                   <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">The Arc</h4>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">We begin with Fire. Before we can build anything new we have to be willing to let go of the old.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Next we focus on our physical health - the healthier we are - the more capable we become.</p>
@@ -1123,12 +1125,12 @@ export default function Quest() {
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">From there, the quests move outward. From personal vitality into relationships, communication, creation, community, and so much more.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The seasonal quests are something you can do in a few days while the EPIC Quests are acts of collective transformation and require years of dedication.</p>
 
-                  <hr className="border-[#1a472a]/20 my-6" />
+                  <VineDivider className="my-6" />
                   <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">What the Tokens Mean</h4>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">$ReGen tokens are earned by completing quests and contributing to the mission. They represent your participation in building a regenerative civilization. As the Game grows, so do the opportunities for the tokens to carry value.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">RGVoice tokens give you a say in the governance of the Game itself, so the Game is always governed by those who are playing it.</p>
 
-                  <hr className="border-[#1a472a]/20 my-6" />
+                  <VineDivider className="my-6" />
                   {/* Section illustration, remembers */}
                   <img
                     src="/images/quests/quest-remembers.webp"
@@ -1266,7 +1268,7 @@ export default function Quest() {
             className="text-3xl md:text-4xl font-bold mb-4 text-[#1a472a] text-center"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Rites &amp; Quests by <span className="text-[#7dd87d]">Season</span>
+            Rites &amp; Quests by <span className="text-[#7dd87d]">Season</span> <ForYouLabel label="Track Progress" />
           </h2>
           <p className="text-center text-[#1a472a]/70 max-w-2xl mx-auto mb-6">
             Each season combines Rites of Passage (gold cards) with seasonal depth quests. Quests can be done at any time and in any order. <strong>A key focus is growing and having fun!</strong>
