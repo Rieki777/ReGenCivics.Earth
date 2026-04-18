@@ -6,7 +6,7 @@ const slices: Slice[] = [
   { label: "Stewardship Council", share: 40, color: "#4a7c59" },
   { label: "Investors",           share: 20, color: "#7dd87d" },
   { label: "Land Projects",       share: 20, color: "#f0ebe3" },
-  { label: "Alliance Partners",   share: 20, color: "#ffd166" },
+  { label: "Alliance Partners",   share: 20, color: "#4a9f9f" },
 ];
 
 export function WhoHoldsVoteChart() {

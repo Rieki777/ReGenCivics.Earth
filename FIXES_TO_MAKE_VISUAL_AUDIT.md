@@ -401,7 +401,10 @@ For each route, write a small `AUDIT_{route}.md` summary under `audits/` with pa
 | V5 | Sweep Tier 2 and Tier 3 drift hexes to canonical tokens across `client/src`, `server/`, `apps/gov/src/` (sed mass-replace, 190+ occurrences cleaned, including uppercase variants). Only remaining hexes are `DEPRECATED_COLORS` docs in `design-tokens.ts`, archived one-pagers, and the seed-forum-posts script. | DONE |
 | V6 | Remove blue and purple drift from investor flow | DONE |
 | V6b | Normalize `#f0c040` → `amber.gold` across Governance SVG and Game page gradients | DONE |
-| V6c | Swap Alliance teal `#4a9f9f` → `amber.gold` (`#ffd700`) across Tokenomics (18), Governance (10), apps/gov economy page (1), and update `DEPRECATED_COLORS` comment. Matches `governanceSlices` Alliance Partners slot. | DONE |
+| V6c | Keep Alliance teal `#4a9f9f`. Added new `alliance.teal` token namespace in `design-tokens.ts`. Updated `governanceSlices` Alliance Partners to `alliance.teal`. Removed `#4a9f9f` from `DEPRECATED_COLORS`. Tokenomics (18) and Governance (10) still use the literal hex; refactor to `alliance.teal` token is a follow-up under V5. | DONE |
+| A1 | Post-deploy audit: `WhoHoldsVoteChart.tsx` had its own local slices array using `#ffd166` (gold) for Alliance, so the deployed pie chart was gold instead of teal. Swapped to `#4a9f9f` (alliance.teal). Live site still shows gold pending next deploy. | CODED |
+| A2 | Post-deploy audit: V5 drift sweep was rolled back by commit `a5dfd31 "restore 51 files corrupted by formatter"`. Drift back in: #6bc86b (16 files), #6cc86c (8), #4a9f4a (7), #f0c040 (3), #60a5fa (2), #c084fc (2), #87ceeb (1, GlobeMap 8 occurrences), #2e7d32 (1), #a5d6a7 (1), #fbbf24 (3), #e8f5e9 (1). Re-sweep needed. | QUEUED (sed re-run) |
+| A3 | Audit walked 11 live routes: `/`, `/community`, `/bionomics`, `/tokenomics`, `/game`, `/land`, `/ally`, `/schedule`, `/apply`, `/crowd-pooling`, `/governance`. All render, no horizontal overflow at 1707px desktop, no console errors. | DONE |
 | V7 | Audit remaining Tier 3 routes | QUEUED |
 | V8 | Consolidate radius, shadow, button primitives | QUEUED |
 | V9 | Enforce typography scale in `index.css` `@layer base` | QUEUED |

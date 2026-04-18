@@ -59,6 +59,15 @@ export const amber = {
 } as const;
 
 /**
+ * Alliance: distinct teal reserved for Alliance Partners across governance,
+ * tokenomics, and movement-partner pages. Kept separate from amber so the
+ * 4-way governance chart stays visually distinct.
+ */
+export const alliance = {
+  teal: "#4a9f9f",    // alliance partners accent
+} as const;
+
+/**
  * Alert: destructive / warning. Use sparingly. One red. One warning tone.
  */
 export const alert = {
@@ -97,7 +106,7 @@ export const governanceSlices = [
   { label: "Stewardship Council", share: 40, color: forest.sage },
   { label: "Investors",           share: 20, color: spring.base },
   { label: "Land Projects",       share: 20, color: parchment.base },
-  { label: "Alliance Partners",   share: 20, color: amber.gold },
+  { label: "Alliance Partners",   share: 20, color: alliance.teal },
 ] as const;
 
 // ============================================================================
@@ -118,7 +127,6 @@ export const DEPRECATED_COLORS = {
   "#2e7d32": forest.base,    // material green -> forest.base
   "#a5d6a7": spring.soft,
   "#e8f5e9": parchment.whisper,
-  "#4a9f9f": amber.gold,     // alliance teal -> amber.gold (matches governanceSlices)
   "#fbbf24": amber.tan,      // tailwind amber -> amber.tan
   "#f59e0b": amber.dim,
   "#d4a017": amber.dim,
@@ -226,6 +234,7 @@ export const colors = {
   spring,
   parchment,
   amber,
+  alliance,
   alert,
   brand,
   season,
