@@ -3,7 +3,7 @@
  * Manages page-specific meta tags, Open Graph, and Twitter cards
  */
 
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { useLocation } from 'wouter';
 import { schemas } from "@/components/JsonLD";
 
@@ -40,7 +40,7 @@ export function SEO({
   const fullUrl = effectiveUrl.startsWith('http') ? effectiveUrl : `${BASE_URL}${effectiveUrl}`;
   const fullImage = image.startsWith('http') ? image : `${BASE_URL}${image}`;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Update document title
     document.title = fullTitle;
 

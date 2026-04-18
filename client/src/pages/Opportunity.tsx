@@ -85,14 +85,13 @@ function FundStatusBanner() {
   if (minimized) {
     return (
       <div className="fixed top-[73px] right-4 z-40">
-        <Link href="/loi">
-          <button
-            className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] px-4 py-2 rounded-full font-bold text-sm shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6)] transition-all flex items-center gap-2"
-            style={{ fontFamily: 'var(--font-accent)' }}
-          >
-            <FileText className="w-4 h-4" />
-            Submit LOI
-          </button>
+        <Link
+          href="/loi"
+          className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] px-4 py-2 rounded-full font-bold text-sm shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6)] transition-all flex items-center gap-2"
+          style={{ fontFamily: 'var(--font-accent)' }}
+        >
+          <FileText className="w-4 h-4" />
+          Submit LOI
         </Link>
       </div>
     );
@@ -104,16 +103,14 @@ function FundStatusBanner() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-[#1a472a]">
           <div className="flex items-center gap-2 font-bold text-sm sm:text-base">
             <PulsingDot color="#1a472a" />
-            <span>Fund In Formation  -  Currently Accepting Letters of Intent</span>
+            <span>Fund In Formation. Currently Accepting Letters of Intent</span>
           </div>
           <span className="hidden sm:inline text-[#1a472a]/60">|</span>
-          <Link href="/loi">
-            <Button 
-              size="sm" 
-              className="bg-[#1a472a] hover:bg-[#0d2818] text-white text-xs sm:text-sm px-3 py-1 h-auto"
-            >
-              Submit LOI
-            </Button>
+          <Link
+            href="/loi"
+            className="inline-flex items-center bg-[#1a472a] hover:bg-[#0d2818] text-white text-xs sm:text-sm px-3 py-1 rounded-md font-medium transition-colors"
+          >
+            Submit LOI
           </Link>
         </div>
       </div>
@@ -2121,7 +2118,7 @@ export default function Opportunity() {
                 </FAQItem>
 
                 <FAQItem question="What if you don't reach the target fund size?">
-                  <p>We won't accept any capital until we have &gt;$20M committed  -  at that point we'll have all investors wire the funds and start operations. Until then, your Letter of Intent is a non-binding expression of interest; no money moves. Above minimum, we can deploy effectively with adjusted portfolio allocation across fewer but well-diversified projects. The fund can operate successfully anywhere between $20M and $50M.</p>
+                  <p>We won't accept any capital until we have &gt;$20M committed. At that point we'll have all investors wire the funds and start operations. Until then, your Letter of Intent is a non-binding expression of interest; no money moves. Above minimum, we can deploy effectively with adjusted portfolio allocation across fewer but well-diversified projects. The fund can operate successfully anywhere between $20M and $50M.</p>
                 </FAQItem>
 
                 <FAQItem question="Why is the minimum investment $250,000?">

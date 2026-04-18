@@ -133,7 +133,13 @@ export default function ToolsLibrary() {
                     height={48}
                     className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-white/10"
                     loading="lazy"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    onError={(e) => {
+                      const img = e.currentTarget as HTMLImageElement;
+                      const fallback = document.createElement('div');
+                      fallback.className = 'w-12 h-12 rounded-lg flex-shrink-0 bg-[#7dd87d]/20 text-[#7dd87d] font-bold text-lg flex items-center justify-center';
+                      fallback.textContent = (tool.name[0] || '?').toUpperCase();
+                      img.replaceWith(fallback);
+                    }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

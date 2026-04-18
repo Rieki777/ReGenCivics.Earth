@@ -275,6 +275,34 @@
     font-size: 16px;
     line-height: 1.6;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  /* Tap + text polish across the site */
+  button, a, [role="button"], input, textarea, select, summary {
+    -webkit-tap-highlight-color: rgba(125, 216, 125, 0.15);
+    touch-action: manipulation;
+  }
+  /* Selection in brand spring */
+  ::selection {
+    background: rgba(125, 216, 125, 0.35);
+    color: #f0ebe3;
+  }
+  /* Smooth scroll with reduced-motion respect */
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
   /* Accessibility: minimum readable font sizes */
   p, li, span, td, th, label, a {
@@ -402,7 +430,33 @@
 .prose-scale h4 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); line-height: 1.4; }
 
 /* Max-width utility for readable long-form text */
-.prose-readable { max-width: 65ch; }
+.prose-readable { max-width: 68ch; }
+
+/* Breathing gradient on primary CTAs */
+.breathing-cta {
+  background: linear-gradient(135deg, #7dd87d, #9de89d, #7dd87d);
+  background-size: 200% 200%;
+  animation: breathing-gradient 8s ease-in-out infinite;
+}
+
+@keyframes breathing-gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Seasonal color wash overlay */
+.seasonal-wash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+  opacity: 0.03;
+}
+.seasonal-wash--spring { background: #7dd87d; }
+.seasonal-wash--summer { background: #ffd700; }
+.seasonal-wash--fall { background: #d4a574; }
+.seasonal-wash--winter { background: #4a7c59; }
 
 /* Forest-tinted shadows */
 .shadow-forest-sm { box-shadow: 0 1px 2px rgba(13, 40, 24, 0.08); }
@@ -699,7 +753,8 @@
     .animate-glow,
     .animate-bounce-gentle,
     .animate-gradient-text,
-    .animate-pulse-subtle {
+    .animate-pulse-subtle,
+    .breathing-cta {
       animation: none !important;
       opacity: 1 !important;
       transform: none !important;
@@ -1091,13 +1146,15 @@
 
 /* Global focus-visible ring for keyboard navigation */
 :focus-visible {
-  outline: 2px solid #4ade80;
+  outline: 2px solid #7dd87d;
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .focus-visible:focus-visible {
-  outline: 2px solid #4ade80;
+  outline: 2px solid #7dd87d;
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Smooth focus ring for accessibility */
@@ -1105,6 +1162,26 @@
   outline: 2px solid #7dd87d;
   outline-offset: 2px;
   border-radius: 0.5rem;
+}
+
+/* Touch target: ensure 44px minimum hit area on coarse-pointer devices */
+@media (pointer: coarse) {
+  button:not([disabled]):not(.no-touch-extend),
+  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend) {
+    position: relative;
+  }
+  button:not([disabled]):not(.no-touch-extend)::after,
+  [role="button"]:not([aria-disabled="true"]):not(.no-touch-extend)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-height: 44px;
+    min-width: 44px;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+  }
 }
 
 /* Number count-up animation helper */
@@ -2149,4 +2226,4 @@ body {
 .magnetic {
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
-}
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           

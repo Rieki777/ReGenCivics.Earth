@@ -393,7 +393,7 @@ export default function Community() {
 
       {/* Welcome Card */}
       <div className="mx-4 mt-4 p-4 rounded-xl bg-[#f0f7f0] border border-[#7dd87d]/30">
-        <h3 className="text-[#1a472a] font-semibold text-base mb-1">Welcome to the Community Space</h3>
+        <h2 className="text-[#1a472a] font-semibold text-base mb-1">Welcome to the Community Space</h2>
         <p className="text-[#4a7c59] text-sm">
           This is where land projects and regenerative orgs host their forum spaces. Join a conversation,
           share a quest completion, or ask a question in the quest threads.

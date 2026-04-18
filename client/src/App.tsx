@@ -25,6 +25,7 @@ const ShortcutPill = lazy(() => import("./components/ShortcutPill").then(m => ({
 import { AudioProvider } from "./contexts/AudioContext";
 import { ReGenGuideProvider } from "./contexts/ReGenGuideContext";
 
+import { getCurrentSeason } from "@/lib/seasons";
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { usePageVisitTracker } from "./hooks/usePageVisitTracker";
 import { captureReferral } from "./components/SharePrompt";
@@ -365,6 +366,7 @@ function App() {
               Skip to main content
             </a>
           )}
+          {!adminMode && <div className={`seasonal-wash seasonal-wash--${getCurrentSeason()}`} />}
           {!adminMode && <MycelialBackground />}
           {!adminMode && <AnimationLayer />}
           {!adminMode && <AMABanner />}

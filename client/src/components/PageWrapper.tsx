@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { ReadingProgressBar } from "./ReadingProgressBar";
 
 interface PageWrapperProps {
   children: ReactNode;
@@ -19,14 +20,17 @@ export function PageWrapper({ children, className }: PageWrapperProps) {
   }, []);
 
   return (
-    <div
-      className={cn(
-        "transition-opacity duration-150",
-        mounted ? "opacity-100" : "opacity-0",
-        className
-      )}
-    >
-      {children}
-    </div>
+    <>
+      <ReadingProgressBar />
+      <div
+        className={cn(
+          "transition-opacity duration-150",
+          mounted ? "opacity-100" : "opacity-0",
+          className
+        )}
+      >
+        {children}
+      </div>
+    </>
   );
 }

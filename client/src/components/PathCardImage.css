@@ -7,15 +7,17 @@
    + React state .is-tapped for mobile touch
    ============================================ */
 
-/* --- Container --- */
+/* --- Container ---
+   Full-bleed image: extends edge-to-edge at top of card.
+   Mobile uses a slightly taller 4/5 portrait ratio for dramatic tarot framing.
+   Tablet+ uses square 1/1 since 4 cards sit in one row. */
 .path-card-image {
   position: relative;
   width: 100%;
-  /* On mobile, cap height so the image does not push title + body below the fold.
-     Above sm, return to a square aspect ratio for the cleaner desktop look. */
-  aspect-ratio: 16 / 9;
-  max-height: 180px;
-  border-radius: 1.25rem;
+  aspect-ratio: 4 / 5;
+  /* Round only the top corners to match the parent card's border-radius (1rem) */
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
   overflow: hidden;
   cursor: pointer;
 }
@@ -23,20 +25,18 @@
 @media (min-width: 640px) {
   .path-card-image {
     aspect-ratio: 1 / 1;
-    max-height: none;
   }
 }
 
 /* Alliance needs overflow visible for the beam, but images still get rounded */
 .path-card-ally {
   overflow: visible;
-  /* Extra bottom padding so beam/glow effects don't visually crowd the card title */
-  padding-bottom: 0.5rem;
 }
 
 /* Clip the images themselves for ally card so rounded corners still apply */
 .path-card-ally .path-card-img {
-  border-radius: 1.25rem;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
   overflow: hidden;
 }
 
@@ -46,7 +46,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
   will-change: opacity;
 }
 
@@ -392,3 +393,4 @@
     height: 0%;
   }
 }
+                                                                                                                                                                                                                                                                                                                                                                                                          

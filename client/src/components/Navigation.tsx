@@ -524,18 +524,17 @@ export default function Navigation() {
 
             {/* Messages icon */}
             {isAuthenticated && user && (
-              <Link href="/messages">
-                <button
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors relative"
-                  aria-label="Messages"
-                >
-                  <MessageCircle className="w-5 h-5 text-white" />
-                  {messagesUnreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-[#7dd87d] text-[#1a472a] text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                      {messagesUnreadCount > 9 ? '9+' : messagesUnreadCount}
-                    </span>
-                  )}
-                </button>
+              <Link
+                href="/messages"
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors relative inline-flex items-center justify-center"
+                aria-label={messagesUnreadCount > 0 ? `Messages, ${messagesUnreadCount} unread` : 'Messages'}
+              >
+                <MessageCircle className="w-5 h-5 text-white" />
+                {messagesUnreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#7dd87d] text-[#1a472a] text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                    {messagesUnreadCount > 9 ? '9+' : messagesUnreadCount}
+                  </span>
+                )}
               </Link>
             )}
 
