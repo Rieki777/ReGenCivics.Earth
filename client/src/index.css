@@ -2327,6 +2327,34 @@ body {
   100% { transform: scale(1); filter: brightness(1); }
 }
 
+/* ════════════════════════════════════════════════════════════
+   H2. BLOOM MARKERS — map activity flowers
+   ════════════════════════════════════════════════════════════ */
+.bloom-enter { animation: bloomGrow 1.2s ease-out forwards; }
+.bloom-fade { transition: opacity 8s ease-out; opacity: 0; }
+@keyframes bloomGrow {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   H3. BENTO GRID — land project card layout
+   ════════════════════════════════════════════════════════════ */
+.bento-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .bento-grid {
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: minmax(180px, auto);
+  }
+  .bento-hero { grid-column: span 4; grid-row: span 2; }
+  .bento-mid { grid-column: span 3; grid-row: span 1; }
+  .bento-small { grid-column: span 2; grid-row: span 1; }
+}
+
 /* Reduced motion: disable divider animations */
 @media (prefers-reduced-motion: reduce) {
   .vine-draw {
@@ -2340,4 +2368,106 @@ body {
   .easter-egg-pulse {
     animation: none !important;
   }
+  .bloom-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .bloom-fade {
+    transition: none !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   H4. Scroll-driven story animations
+   Parallax-style effects tied to scroll position. Uses the
+   Scroll-driven Animations API (Chrome 115+ / Safari 18+).
+   Falls back gracefully on unsupported browsers.
+   ════════════════════════════════════════════════════════════ */
+.story-grow {
+  animation: storyGrowIn linear both;
+  animation-timeline: view();
+  animation-range: entry 20% cover 60%;
+}
+@keyframes storyGrowIn {
+  from { transform: scale(0.9) translateY(30px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.story-river {
+  animation: storyRiverFlow linear both;
+  animation-timeline: scroll(root);
+  animation-range: 0% 100%;
+}
+@keyframes storyRiverFlow {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100px); }
+}
+
+.story-tree {
+  animation: storyTreeGrow linear both;
+  animation-timeline: scroll(root);
+  animation-range: 20% 80%;
+}
+@keyframes storyTreeGrow {
+  from { transform: scaleY(0.1); transform-origin: bottom; }
+  to   { transform: scaleY(1); transform-origin: bottom; }
+}
+
+@supports not (animation-timeline: scroll()) {
+  .story-grow, .story-river, .story-tree {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Reduced motion: disable scroll-driven story animations */
+@media (prefers-reduced-motion: reduce) {
+  .story-grow,
+  .story-river,
+  .story-tree {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Idea 13. Toast notification garden: forest-themed sonner overrides
+   ════════════════════════════════════════════════════════════ */
+[data-sonner-toaster] [data-sonner-toast] {
+  --normal-bg: #1a472a;
+  --normal-border: rgba(125, 216, 125, 0.2);
+  --normal-text: #f0ebe3;
+  border-radius: 1rem;
+  border: 1px solid var(--normal-border);
+  box-shadow: 0 4px 24px rgba(13, 40, 24, 0.4);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type="success"] {
+  --normal-bg: #1a472a;
+  --normal-border: rgba(125, 216, 125, 0.4);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] {
+  --normal-bg: #2a1a1a;
+  --normal-border: rgba(239, 68, 68, 0.3);
+}
+[data-sonner-toaster] [data-sonner-toast][data-type="warning"] {
+  --normal-bg: #2a2418;
+  --normal-border: rgba(212, 165, 116, 0.3);
+}
+
+/* ════════════════════════════════════════════════════════════
+   Idea 14. Quest card progressive disclosure (three-tier)
+   ════════════════════════════════════════════════════════════ */
+.quest-card-tier2 {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+.group:hover .quest-card-tier2,
+.group:focus-within .quest-card-tier2 {
+  max-height: 200px;
+  opacity: 1;
 }
