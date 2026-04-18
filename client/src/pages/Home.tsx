@@ -311,8 +311,8 @@ export default function Home() {
                           Your Path
                         </div>
                       )}
-                      {/* Card illustration with hover animation */}
-                      <div className="mb-4">
+                      {/* Card illustration — full-bleed at card top */}
+                      <div className="-mx-6 -mt-6 mb-5">
                         <PathCardImage
                           cardId={card.id as "fund" | "land" | "ally" | "play"}
                           image={card.image}

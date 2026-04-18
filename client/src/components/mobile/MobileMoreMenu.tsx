@@ -13,13 +13,14 @@
  * Body scroll is locked while open.
  */
 import { useEffect, useState } from "react";
-import { X, ChevronDown, Search } from "lucide-react";
+import { X, ChevronDown, Search, SkipBack, SkipForward, Play, Pause, Music } from "lucide-react";
 import { MOBILE_MENU_SECTIONS, MOBILE_MENU_FOOTER } from "@/config/mobileMenu";
 import { MenuCard } from "./MenuCard";
 import { NextQuestCard } from "./NextQuestCard";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
 import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { Link } from "wouter";
+import { useAudio } from "@/contexts/AudioContext";
 
 type Props = { open?: boolean; onClose?: () => void };
 
@@ -29,6 +30,7 @@ type Props = { open?: boolean; onClose?: () => void };
  */
 export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props = {}) {
   const tint = useSeasonTint();
+  const audio = useAudio();
   const [internalOpen, setInternalOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
@@ -95,6 +97,28 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           <Search className="w-4 h-4 text-[#7dd87d]" />
           <span className="text-sm">Jump to anything</span>
         </button>
+
+        {/* Music player row */}
+        <div className="flex items-center gap-3 bg-white/10 backdrop-blur border border-white/15 rounded-2xl px-4 py-3">
+          <Music className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
+          <span className="flex-1 min-w-0 text-white/70 text-sm truncate">
+            {audio.currentSong?.title ?? "Hymns for the ReGeneration"}
+          </span>
+          <div className="flex items-center gap-1">
+            <button onClick={audio.prevSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Previous track">
+              <SkipBack className="w-4 h-4" />
+            </button>
+            <button onClick={audio.togglePlay} className="p-2 text-[#7dd87d] hover:text-[#9de89d]" aria-label={audio.isPlaying ? "Pause" : "Play"}>
+              {audio.isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </button>
+            <button onClick={audio.nextSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Next track">
+              <SkipForward className="w-4 h-4" />
+            </button>
+          </div>
+          <Link href="/hymn-book" onClick={onClose} className="text-[#7dd87d] text-xs hover:underline flex-shrink-0">
+            Hymns
+          </Link>
+        </div>
 
         {/* Next quest card */}
         <NextQuestCard onSelect={onClose} />

@@ -32,7 +32,7 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
       { label: "Schedule", sub: "Upcoming and past sessions", href: "/schedule", icon: "Calendar" },
       { label: "Governance", sub: "Decisions, proposals, and the pipeline", href: "/governance", icon: "Vote" },
       { label: "Decisions", sub: "Governance pipeline mission control", href: "/community/decisions", icon: "Vote" },
-      { label: "The Game", sub: "Bionomics: how it all fits together", href: "/bionomics", icon: "Sparkles" },
+      { label: "The Game", sub: "Bionomics: how it all fits together", href: "/bionomics", icon: "wizards" },
       { label: "Game Mechanics", sub: "Tune the simulator", href: "/game-mechanics", icon: "SlidersHorizontal" },
       { label: "Tools", sub: "Things we use and recommend", href: "/tools", icon: "Wrench" },
       { label: "Map", sub: "Land projects and partners", href: "/map", icon: "Map" },
