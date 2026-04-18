@@ -220,7 +220,7 @@ export function EpicQuestSection() {
         {/* CTA */}
         <div className="text-center mt-8">
           <Link href="/community">
-            <span className="inline-block px-8 py-3 rounded-full font-bold text-base cursor-pointer transition-colors shadow-lg shadow-[#7dd87d]/10 hover:bg-[#6bc86b]"
+            <span className="inline-block px-8 py-3 rounded-full font-bold text-base cursor-pointer transition-colors shadow-lg shadow-[#7dd87d]/10 hover:bg-[#9de89d]"
               style={{ backgroundColor: "#7dd87d", color: "#0a1f0f" }}
             >
               Join the Quest

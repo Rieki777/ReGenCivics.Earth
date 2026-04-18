@@ -286,7 +286,7 @@ function RoleModal({ role, onClose }: { role: typeof openRoles[0], onClose: () =
         <div className="mt-8 flex gap-4">
           <Link 
             href={`/connect?path=role&role=${encodeURIComponent(role.title)}&circle=${encodeURIComponent(role.circle)}&purpose=${encodeURIComponent(role.purpose)}`}
-            className="flex-1 inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-4 py-3 rounded-xl font-semibold transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-3 rounded-xl font-semibold transition-colors"
           >
             Apply for This Role
             <ArrowRight className="w-4 h-4" />
@@ -420,7 +420,7 @@ export default function Team() {
             href="https://app.hypha.earth/en/dho/regen-civics"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
+            className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-6 py-3 rounded-xl font-semibold transition-colors"
           >
             <TreeDeciduous className="w-5 h-5" />
             Explore Our Living Organization
@@ -604,9 +604,9 @@ export default function Team() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-[#fbbf24]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-[#fbbf24]/30">
+            <div className="inline-flex items-center gap-2 bg-[#d4a574]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4 border border-[#d4a574]/30">
               <span className="text-lg">🌉</span>
-              <span className="text-[#fbbf24] font-medium text-sm uppercase tracking-wide">How the Roles Work Together</span>
+              <span className="text-[#d4a574] font-medium text-sm uppercase tracking-wide">How the Roles Work Together</span>
             </div>
             <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
               Two sides of the <span className="text-[#7dd87d]">same bridge</span>
@@ -626,7 +626,7 @@ export default function Team() {
               is where players, quests, forum life, and the living economy unfold. The{' '}
               <button
                 onClick={() => setViewAndUrl('fund')}
-                className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors"
+                className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors"
               >
                 ReGen Civics Fund
               </button>{' '}
@@ -635,23 +635,23 @@ export default function Team() {
 
             <p>
               Every investment flows through the same spine. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Due Diligence Lead</button>{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Due Diligence Lead</button>{' '}
               visits the land, reads the team, and writes the memo. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Fund Steward</button>{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Fund Steward</button>{' '}
               drafts the Hypha DAO proposal. The committee (Steward, Diligence Lead, Capital Weaver, and Portfolio Tender once seated) reviews it together. The Hypha DAO casts its weighted $RCivics voice and the call is made.
             </p>
 
             <p>
               After deployment, the{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Portfolio Tender</button>{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Portfolio Tender</button>{' '}
               walks beside the project month to month. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Impact Witness</button>{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Impact Witness</button>{' '}
               measures what is actually happening on the ground. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Fund Treasurer</button>{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Fund Treasurer</button>{' '}
               tracks the money and keeps the fund audit-ready. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Structure Keeper</button>{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Structure Keeper</button>{' '}
               makes sure every step lives inside a real legal vessel. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#e8c088] transition-colors">Capital Weaver</button>{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Capital Weaver</button>{' '}
               is the loop back to investors, narrating the whole cycle.
             </p>
 
@@ -857,7 +857,7 @@ export default function Team() {
             >
               <Button
                 size="lg"
-                className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] text-lg px-10 py-6 h-auto"
+                className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] text-lg px-10 py-6 h-auto"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 <span className="flex items-center gap-2">

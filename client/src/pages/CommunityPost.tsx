@@ -427,7 +427,7 @@ export default function CommunityPost() {
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#dcfce7] text-[#166534]">Idea</span>
               )}
               {post.threadStage === 'experiment' && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#dbeafe] text-[#1e40af]">Experiment</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0f7f0] text-[#1a472a]">Experiment</span>
               )}
               {post.threadStage === 'result' && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#fef3c7] text-[#92400e]">Result</span>
@@ -609,7 +609,7 @@ export default function CommunityPost() {
                   <button
                     type="button"
                     onClick={() => setPromotionOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#7dd87d] hover:text-[#6bc86b] transition-colors"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#7dd87d] hover:text-[#9de89d] transition-colors"
                     title="Promote this thread to a formal Loomio decision"
                   >
                     <Vote className="w-3 h-3" />
@@ -980,7 +980,7 @@ export default function CommunityPost() {
               <Button
                 onClick={handleSubmitReply}
                 disabled={!replyContent.trim() || createReplyMutation.isPending}
-                className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full px-5 text-sm"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full px-5 text-sm"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 {createReplyMutation.isPending ? (
@@ -999,7 +999,7 @@ export default function CommunityPost() {
             </p>
             <Button 
               onClick={() => window.location.href = getLoginUrl()}
-              className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] font-bold rounded-full"
+              className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               Sign In

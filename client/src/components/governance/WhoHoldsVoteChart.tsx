@@ -1,13 +1,13 @@
 import { useMemo } from "react";
+import { governanceSlices } from "@/lib/design-tokens";
 
 type Slice = { label: string; share: number; color: string };
 
-const slices: Slice[] = [
-  { label: "Stewardship Council", share: 40, color: "#4a7c59" },
-  { label: "Investors",           share: 20, color: "#7dd87d" },
-  { label: "Land Projects",       share: 20, color: "#f0ebe3" },
-  { label: "Alliance Partners",   share: 20, color: "#4a9f9f" },
-];
+const slices: Slice[] = governanceSlices.map((s) => ({
+  label: s.label,
+  share: s.share,
+  color: s.color,
+}));
 
 export function WhoHoldsVoteChart() {
   const total = slices.reduce((s, x) => s + x.share, 0);

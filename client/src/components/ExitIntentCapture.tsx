@@ -304,7 +304,7 @@ export function ExitIntentCapture() {
                   <Button
                     type="submit"
                     disabled={newsletterMutation.isPending}
-                    className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] font-bold"
+                    className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
                   >
                     {newsletterMutation.isPending ? "Sending..." : config.cta}
                   </Button>

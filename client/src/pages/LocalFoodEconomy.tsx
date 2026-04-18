@@ -575,7 +575,7 @@ export default function LocalFoodEconomy() {
                   <Button
                     type="submit"
                     disabled={applyMutation.isPending}
-                    className="w-full bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#6cc86c] disabled:opacity-50"
+                    className="w-full bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#9de89d] disabled:opacity-50"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
                     {applyMutation.isPending ? (
@@ -676,7 +676,7 @@ export default function LocalFoodEconomy() {
                 to the food systems that feed your bioregion.
               </p>
               <Link href="/economy">
-                <Button className="bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#6cc86c] px-8 py-3">
+                <Button className="bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#9de89d] px-8 py-3">
                   See the Full Economy
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

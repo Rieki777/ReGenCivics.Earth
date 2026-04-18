@@ -294,7 +294,7 @@ function HowReturnsFlowToggle() {
       )}
 
       {activeTab === 'fees' && (
-        <div className="bg-gradient-to-br from-[#d4a574]/20 to-[#c17f3a]/20 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
+        <div className="bg-gradient-to-br from-[#d4a574]/20 to-[#d4a574]/20 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
           <h3 className="text-2xl font-bold text-[#d4a574] text-center">Management Fees Split</h3>
           <div className="grid sm:grid-cols-2 gap-6 mt-6">
             <div className="bg-[#1a472a]/60 rounded-xl p-6 border-2 border-[#d4a574]/40">
@@ -321,8 +321,8 @@ function HowReturnsFlowToggle() {
               <p className="text-[#4a9f9f] font-bold mb-1">🍄 Alliance Orgs</p>
               <p className="text-white/60 text-xs">20% Voice</p>
             </div>
-            <div className="bg-[#1a472a]/40 rounded-lg p-4 text-center border border-[#c17f3a]/20">
-              <p className="text-[#c17f3a] font-bold mb-1">🌾 Investors</p>
+            <div className="bg-[#1a472a]/40 rounded-lg p-4 text-center border border-[#d4a574]/20">
+              <p className="text-[#d4a574] font-bold mb-1">🌾 Investors</p>
               <p className="text-white/60 text-xs">20% Voice</p>
             </div>
           </div>
@@ -367,7 +367,7 @@ function RewardsFlowAnimation() {
       { label: "Council", sublabel: "40% Voice", color: "#d4a574", angle: -90, icon: "🌳" },
       { label: "Land Projects", sublabel: "20% Voice", color: "#4a7c59", angle: 0, icon: "🌱" },
       { label: "Alliance Orgs", sublabel: "20% Voice", color: "#4a9f9f", angle: 90, icon: "🍄" },
-      { label: "Investors", sublabel: "20% Voice", color: "#c17f3a", angle: 180, icon: "🌾" },
+      { label: "Investors", sublabel: "20% Voice", color: "#d4a574", angle: 180, icon: "🌾" },
     ];
 
     const radius = Math.min(W, H) * 0.32;
@@ -699,7 +699,7 @@ function EarthDayCountdown() {
             <div className="bg-[#1a472a]/50 rounded-xl p-5 border border-[#7dd87d]/20">
               <p className="text-[#7dd87d] font-semibold text-sm mb-3">Voice Distribution</p>
               <div className="space-y-2">
-                {[{ label: "Council of Experts", pct: 40, color: "#d4a574" }, { label: "Land Projects", pct: 20, color: "#4a7c59" }, { label: "Alliance Orgs", pct: 20, color: "#4a9f9f" }, { label: "Investors", pct: 20, color: "#c17f3a" }].map(g => (
+                {[{ label: "Council of Experts", pct: 40, color: "#d4a574" }, { label: "Land Projects", pct: 20, color: "#4a7c59" }, { label: "Alliance Orgs", pct: 20, color: "#4a9f9f" }, { label: "Investors", pct: 20, color: "#d4a574" }].map(g => (
                   <div key={g.label}>
                     <div className="flex justify-between text-xs text-white/60 mb-1">
                       <span className="min-w-0 truncate">{g.label}</span>
@@ -1014,7 +1014,7 @@ export default function Governance() {
               >
                 <defs>
                   <radialGradient id="fundCenter" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#f0c040" stopOpacity="0.95" />
+                    <stop offset="0%" stopColor="#ffd700" stopOpacity="0.95" />
                     <stop offset="60%" stopColor="#d4a574" stopOpacity="0.55" />
                     <stop offset="100%" stopColor="#1a472a" stopOpacity="0" />
                   </radialGradient>
@@ -1026,16 +1026,16 @@ export default function Governance() {
                 <line x1="300" y1="210" x2="480" y2="340" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
                 {/* Center: The Fund */}
                 <circle cx="300" cy="210" r="80" fill="url(#fundCenter)" />
-                <circle cx="300" cy="210" r="58" fill="#1a472a" stroke="#f0c040" strokeWidth="2" />
-                <text x="300" y="200" textAnchor="middle" fill="#f0c040" fontFamily="serif" fontSize="14" fontWeight="700">ReGen Civics</text>
-                <text x="300" y="220" textAnchor="middle" fill="#f0c040" fontFamily="serif" fontSize="14" fontWeight="700">Fund</text>
+                <circle cx="300" cy="210" r="58" fill="#1a472a" stroke="#ffd700" strokeWidth="2" />
+                <text x="300" y="200" textAnchor="middle" fill="#ffd700" fontFamily="serif" fontSize="14" fontWeight="700">ReGen Civics</text>
+                <text x="300" y="220" textAnchor="middle" fill="#ffd700" fontFamily="serif" fontSize="14" fontWeight="700">Fund</text>
                 <text x="300" y="240" textAnchor="middle" fill="#7dd87d" fontFamily="sans-serif" fontSize="10">$RCivics</text>
                 {/* 4 voice-holder nodes */}
                 {[
                   { cx: 120, cy: 80, label1: 'Council of', label2: 'Domain Experts', accent: '#d4a574' },
                   { cx: 480, cy: 80, label1: 'Land Project', label2: 'Stewards', accent: '#7dd87d' },
                   { cx: 120, cy: 340, label1: 'Alliance', label2: 'Partners', accent: '#4a9f9f' },
-                  { cx: 480, cy: 340, label1: 'Investor', label2: 'Voice', accent: '#f0c040' },
+                  { cx: 480, cy: 340, label1: 'Investor', label2: 'Voice', accent: '#ffd700' },
                 ].map((n) => (
                   <g key={`${n.cx}-${n.cy}`}>
                     <circle cx={n.cx} cy={n.cy} r="50" fill="#0d2818" stroke={n.accent} strokeWidth="2" />
@@ -1062,8 +1062,8 @@ export default function Governance() {
                 <p className="text-white/60 text-sm"><strong>Selection:</strong> Domain experts selected by all voice holders</p>
               </div>
               
-              <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#4a9f4a]">
-                <h3 className="text-xl font-bold text-[#4a9f4a] mb-3">2. Land Project Representatives</h3>
+              <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#4a7c59]">
+                <h3 className="text-xl font-bold text-[#4a7c59] mb-3">2. Land Project Representatives</h3>
                 <p className="text-white/80 mb-3"><strong>Role:</strong> Ground-truth perspective on regenerative implementation</p>
                 <ul className="text-white/70 text-sm space-y-1 ml-4 mb-3">
                   <li>• Provide feedback on fund mechanisms and support structures</li>

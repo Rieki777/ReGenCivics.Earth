@@ -90,7 +90,7 @@ function AnimatedTokenFlow() {
       id: 'distribute',
       label: 'Rewards Distributed',
       icon: '🎯',
-      color: '#c17f3a',
+      color: '#d4a574',
       from: 'Success Fees Pool',
       to: '$RCivics Holders',
       description: 'Success fees are distributed proportionally to all $RCivics token holders. Own 10% of $RCivics, receive 10% of all distributions. The cycle then repeats.',
@@ -382,7 +382,7 @@ function SupplyTable() {
     { contributor: "1,000 ETH investment (CHF 1,518,930)", rcivics: "1,518,930 $RCivics", value: "CHF 1,518,930", color: "#d4a574" },
     { contributor: "CHF 200k financial models (Knowledge Capital)", rcivics: "200,000 $RCivics", value: "CHF 1,718,930", color: "#7dd87d" },
     { contributor: "CHF 1M software open-sourced (Material Capital)", rcivics: "1,000,000 $RCivics", value: "CHF 2,718,930", color: "#4a9f9f" },
-    { contributor: "CHF 1M ProjectX land-backed token swap", rcivics: "1,000,000 $RCivics", value: "CHF 3,718,930", color: "#c17f3a" },
+    { contributor: "CHF 1M ProjectX land-backed token swap", rcivics: "1,000,000 $RCivics", value: "CHF 3,718,930", color: "#d4a574" },
     { contributor: "CHF 10M land as future ReGen Civics site", rcivics: "10,000,000 $RCivics", value: "CHF 13,718,930", color: "#ffd700" },
   ];
 
@@ -420,7 +420,7 @@ function TokenComparison() {
   return (
     <div className="grid md:grid-cols-2 gap-6">
       {/* RCVoice */}
-      <div className="bg-gradient-to-br from-[#d4a574]/10 to-[#c17f3a]/5 rounded-2xl border border-[#d4a574]/30 p-6">
+      <div className="bg-gradient-to-br from-[#d4a574]/10 to-[#d4a574]/5 rounded-2xl border border-[#d4a574]/30 p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-[#d4a574] flex items-center justify-center">
             <Vote className="w-6 h-6 text-[#1a472a]" />
@@ -678,7 +678,7 @@ function ReturnsFlowDiagram() {
     { label: "Council of Experts", pct: "Majority", color: "#d4a574", icon: "🌳" },
     { label: "Land Projects", pct: "Pro-rata", color: "#4a7c59", icon: "🌱" },
     { label: "Alliance Orgs", pct: "Pro-rata", color: "#4a9f9f", icon: "🤝" },
-    { label: "Investors", pct: "Pro-rata", color: "#c17f3a", icon: "💛" },
+    { label: "Investors", pct: "Pro-rata", color: "#d4a574", icon: "💛" },
   ];
 
   return (

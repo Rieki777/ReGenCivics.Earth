@@ -63,7 +63,7 @@ const pathCards = [
     glowColor: "shadow-amber-400/20",
     iconBg: "bg-amber-400/20",
     iconColor: "text-amber-300",
-    accentColor: "#fbbf24",
+    accentColor: "#d4a574",
     image: cdnImg("https://assets.regencivics.earth/lbnKFdCSSCxSsgLa.png", 480, 75),
     activatedImage: cdnImg("https://assets.regencivics.earth/ryfVYMtjiLnLKYwN.png", 480, 75),
   },
@@ -97,7 +97,7 @@ const pathCards = [
     glowColor: "shadow-blue-400/20",
     iconBg: "bg-blue-400/20",
     iconColor: "text-blue-300",
-    accentColor: "#60a5fa",
+    accentColor: "#7dd87d",
     image: cdnImg("https://assets.regencivics.earth/xlNRfxzajiAdMyaP.png", 480, 75),
     activatedImage: cdnImg("https://assets.regencivics.earth/HQpqacLKyIAkXOdS.png", 480, 75),
   },
@@ -114,7 +114,7 @@ const pathCards = [
     glowColor: "shadow-purple-400/20",
     iconBg: "bg-purple-400/20",
     iconColor: "text-purple-300",
-    accentColor: "#c084fc",
+    accentColor: "#7dd87d",
     image: cdnImg("https://assets.regencivics.earth/LAizfmKwiZguwYMz.png", 480, 75),
     activatedImage: cdnImg("https://assets.regencivics.earth/qDmGFHBsFPyCECbM.png", 480, 75),
   },
@@ -223,7 +223,7 @@ export default function Home() {
         {/* Fund Launch Announcement Banner */}
         <BannerDisplay
           bannerKey="fund-launch-banner"
-          className="bg-gradient-to-r from-[#7dd87d] via-[#4a9f4a] to-[#7dd87d] text-[#1a472a] py-3 px-4 text-center"
+          className="bg-gradient-to-r from-[#7dd87d] via-[#4a7c59] to-[#7dd87d] text-[#1a472a] py-3 px-4 text-center"
         />
 
         {/* Welcome Short Intro Video */}

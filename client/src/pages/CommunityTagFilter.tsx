@@ -28,8 +28,8 @@ const TAG_META: Record<ValidTag, { label: string; description: string; color: st
   "seeking-support": {
     label: "#seeking-support",
     description: "Members looking for help, feedback, or expertise.",
-    color: "#1e40af",
-    bg: "#dbeafe",
+    color: "#1a472a",
+    bg: "#f0f7f0",
     icon: <Heart className="w-5 h-5" />,
   },
   "offering-support": {

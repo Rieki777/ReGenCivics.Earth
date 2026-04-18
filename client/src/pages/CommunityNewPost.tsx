@@ -282,7 +282,7 @@ export default function CommunityNewPost() {
                     <div className="flex flex-wrap gap-2">
                       {([
                         { value: "idea" as ThreadStage, label: "Idea", emoji: "Seed", color: "#166534", bg: "#dcfce7" },
-                        { value: "experiment" as ThreadStage, label: "Experiment", emoji: "Flask", color: "#1e40af", bg: "#dbeafe" },
+                        { value: "experiment" as ThreadStage, label: "Experiment", emoji: "Flask", color: "#1a472a", bg: "#f0f7f0" },
                         { value: "result" as ThreadStage, label: "Result", emoji: "Leaf", color: "#92400e", bg: "#fef3c7" },
                       ]).map(opt => (
                         <button
@@ -403,7 +403,7 @@ export default function CommunityNewPost() {
             <div className="space-y-2">
               {([
                 { tag: "lesson" as PostTag, label: "#lesson", description: "This post documents a real-world insight or learning", color: "#92400e", bg: "#fef3c7" },
-                { tag: "seeking-support" as PostTag, label: "#seeking-support", description: "I need help, feedback, or expertise", color: "#1e40af", bg: "#dbeafe" },
+                { tag: "seeking-support" as PostTag, label: "#seeking-support", description: "I need help, feedback, or expertise", color: "#1a472a", bg: "#f0f7f0" },
                 { tag: "offering-support" as PostTag, label: "#offering-support", description: "I have something to offer or want to help", color: "#166534", bg: "#dcfce7" },
               ]).map(({ tag, label, description, color, bg }) => {
                 const isChecked = selectedTags.includes(tag) || (tag === "lesson" && postType === "case_study");

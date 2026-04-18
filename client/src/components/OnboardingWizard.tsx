@@ -414,7 +414,7 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
           <Button
             onClick={handleNext}
             disabled={!canProceed}
-            className="bg-[#7dd87d] hover:bg-[#6cc86c] text-[#1a472a] font-bold px-6 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-6 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isLastStep ? "Get Started" : "Next"}
             {!isLastStep && <ChevronRight className="w-4 h-4 ml-1" />}

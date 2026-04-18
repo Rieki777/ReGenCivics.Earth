@@ -14,7 +14,7 @@ import { PageTransition } from "@/components/PageTransition";
 
 const STAGE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   idea: { label: "Idea", color: "#166534", bg: "#dcfce7" },
-  experiment: { label: "Experiment", color: "#1e40af", bg: "#dbeafe" },
+  experiment: { label: "Experiment", color: "#1a472a", bg: "#f0f7f0" },
   result: { label: "Result", color: "#92400e", bg: "#fef3c7" },
 };
 

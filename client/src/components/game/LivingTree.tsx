@@ -235,7 +235,7 @@ export function LivingTree({
       <rect width={vb} height={vb} fill="url(#lt-sky)" rx={8} />
 
       {/* ----- Ground ----- */}
-      <ellipse cx={cx} cy={groundY + 12} rx={80} ry={18} fill="#4a3728" opacity={0.1} />
+      <ellipse cx={cx} cy={groundY + 12} rx={80} ry={18} fill="#1a472a" opacity={0.1} />
 
       {/* ----- Root arteries (9 lines fanning downward) ----- */}
       {CAPITAL_TYPES.map((key, i) => {
@@ -303,7 +303,7 @@ export function LivingTree({
               y1={groundY - trunkH * 0.3 + i * (trunkH * 0.06)}
               x2={cx + trunkW / 2 - 1}
               y2={groundY - trunkH * 0.3 + i * (trunkH * 0.06)}
-              stroke="#4a3728"
+              stroke="#1a472a"
               strokeWidth={0.5}
               opacity={0.2}
             />
@@ -414,7 +414,7 @@ export function LivingTree({
             <path
               d={`M${cx + canopyRx * 0.6} ${canopyCy - canopyRy * 0.7}
                   q3 -4 6 0 q3 4 6 0`}
-              stroke="#4a3728"
+              stroke="#1a472a"
               strokeWidth={1}
               fill="none"
               opacity={0.3}
@@ -428,7 +428,7 @@ export function LivingTree({
         x={cx}
         y={vb - 6}
         textAnchor="middle"
-        fill="#4a3728"
+        fill="#1a472a"
         fontSize={7}
         opacity={0.4}
         fontFamily="sans-serif"
@@ -485,7 +485,7 @@ export function LivingTreeIcon({
       aria-label={`Living Tree icon, ${stage}`}
     >
       {/* Ground shadow */}
-      <ellipse cx={16} cy={26} rx={10} ry={3} fill="#4a3728" opacity={0.1} />
+      <ellipse cx={16} cy={26} rx={10} ry={3} fill="#1a472a" opacity={0.1} />
 
       {stage === "seedling" ? (
         <g>

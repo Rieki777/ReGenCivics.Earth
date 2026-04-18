@@ -92,7 +92,7 @@ export default function Seasons() {
           
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/schedule">
-              <Button size="lg" className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] rounded-xl">
+              <Button size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl">
                 <Calendar className="mr-2 w-5 h-5" />
                 View Schedule & RSVP
               </Button>
@@ -118,7 +118,7 @@ export default function Seasons() {
         <div className="container mx-auto max-w-4xl">
           <Collapsible open={whoWeAreLookingForOpen} onOpenChange={setWhoWeAreLookingForOpen}>
             <CollapsibleTrigger className="w-full">
-              <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a9f4a]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30 hover:border-[#7dd87d]/50 transition-all cursor-pointer">
+              <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30 hover:border-[#7dd87d]/50 transition-all cursor-pointer">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-[#7dd87d]/30 rounded-full flex items-center justify-center">
@@ -238,7 +238,7 @@ export default function Seasons() {
                 {/* Apply CTA */}
                 <div className="mt-8 text-center">
                   <Link href="/apply">
-                    <Button size="lg" className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] rounded-xl">
+                    <Button size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl">
                       🌱 Apply for Season 2 Now
                       <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
@@ -732,7 +732,7 @@ export default function Seasons() {
           
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/schedule">
-              <Button size="lg" className="bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a] rounded-xl">
+              <Button size="lg" className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] rounded-xl">
                 <Calendar className="mr-2 w-5 h-5" />
                 RSVP for Open Session
               </Button>

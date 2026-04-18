@@ -32,6 +32,7 @@ export default function MapPage() {
         title="Global Network Map | ReGen Civics"
         description="Explore our global network of regenerative land projects and alliance organizations building regenerative societies around the world."
       />
+      <h1 className="sr-only">ReGen Civics Project Map</h1>
       <Suspense fallback={<GlobePlaceholder />}>
         <GlobeMap fullPage />
       </Suspense>

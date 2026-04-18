@@ -686,7 +686,7 @@ function RoleCard({
         <Button variant="outline" size="sm" className="flex-1 border-white/20 text-white hover:bg-white/10" onClick={copyToProposal}>
           <Copy className="w-3 h-3 mr-1" />{copied ? "Copied!" : "Add to Proposal"}
         </Button>
-        <Button size="sm" className="flex-1 bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c]" onClick={() => window.open(daoLink, '_blank')}>
+        <Button size="sm" className="flex-1 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]" onClick={() => window.open(daoLink, '_blank')}>
           <Send className="w-3 h-3 mr-1" />Apply in DAO
         </Button>
       </div>
@@ -950,7 +950,7 @@ function ProjectDetailModal({
             {/* CTAs */}
             <div className="space-y-2 pt-2">
               <Button
-                className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] font-bold text-base h-12"
+                className="w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold text-base h-12"
                 onClick={() => window.open(project.daoLink, '_blank')}
               >
                 <Send className="w-4 h-4 mr-2" />
@@ -1103,7 +1103,7 @@ function GetNotifiedForm() {
             required
             className="bg-white/5 border-white/20 text-white placeholder:text-white/55"
           />
-          <Button type="submit" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] font-semibold whitespace-nowrap">
+          <Button type="submit" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-semibold whitespace-nowrap">
             Notify Me
           </Button>
         </form>
@@ -1279,7 +1279,7 @@ export default function CrowdPoolingProjects() {
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
                 <Link href="/crowd-pooling">
-                  <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] w-full sm:w-auto font-semibold">
+                  <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] w-full sm:w-auto font-semibold">
                     <FileText className="w-4 h-4 mr-2" />
                     {pageCopy.crowdPoolingProjects.hero.CTAs.createProposal}
                   </Button>
@@ -1636,7 +1636,7 @@ export default function CrowdPoolingProjects() {
                         {/* Action row */}
                         <div className="flex items-center gap-2">
                           <Button
-                            className={`flex-1 font-medium ${isAlmost ? "bg-amber-400 text-amber-900 hover:bg-amber-300" : "bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c]"}`}
+                            className={`flex-1 font-medium ${isAlmost ? "bg-amber-400 text-amber-900 hover:bg-amber-300" : "bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"}`}
                             onClick={(e) => { e.stopPropagation(); handleOpenDetail(project); }}
                           >
                             View Details
@@ -1695,7 +1695,7 @@ export default function CrowdPoolingProjects() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/seasons">
-                <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6cc86c] w-full sm:w-auto font-semibold">
+                <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] w-full sm:w-auto font-semibold">
                   Apply for Season 2
                 </Button>
               </Link>

@@ -159,7 +159,7 @@ export default function CookieConsent() {
           <Button
             size="sm"
             onClick={handleAccept}
-            className="bg-[#7dd87d] hover:bg-[#6cc86c] text-[#1a472a] font-bold text-xs md:text-sm h-10 sm:h-9 rounded-xl"
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold text-xs md:text-sm h-10 sm:h-9 rounded-xl"
           >
             Accept All Cookies
           </Button>

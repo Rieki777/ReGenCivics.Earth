@@ -951,7 +951,7 @@ export default function Quest() {
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Button
               size="lg"
-              className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc86b] text-[#1a472a]"
+              className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
               style={{ fontFamily: 'var(--font-accent)' }}
               onClick={() => {
                 window.open('https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution', '_blank');

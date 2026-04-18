@@ -109,7 +109,7 @@ export default function Unsubscribe() {
                   Unsubscribe Another Email
                 </Button>
                 <Link href="/">
-                  <Button className="bg-[#7dd87d] hover:bg-[#6cc86c] text-[#1a472a] font-bold rounded-xl w-full sm:w-auto">
+                  <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-xl w-full sm:w-auto">
                     Return Home
                   </Button>
                 </Link>
@@ -163,7 +163,7 @@ export default function Unsubscribe() {
               <Button
                 type="submit"
                 disabled={state === "loading" || !email.trim()}
-                className="w-full bg-[#7dd87d] hover:bg-[#6cc86c] text-[#1a472a] font-bold rounded-xl h-12 text-base disabled:opacity-50"
+                className="w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-xl h-12 text-base disabled:opacity-50"
               >
                 {state === "loading" ? (
                   <span className="flex items-center gap-2">
