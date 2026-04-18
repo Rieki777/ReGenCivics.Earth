@@ -516,7 +516,11 @@
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
   }
-  
+
+  @keyframes skeleton-shimmer {
+    100% { transform: translateX(100%); }
+  }
+
   @keyframes glow {
     0%, 100% { box-shadow: 0 0 20px rgba(125, 216, 125, 0.3); }
     50% { box-shadow: 0 0 40px rgba(125, 216, 125, 0.6); }
@@ -1906,6 +1910,8 @@
   .hover-lift { transition: none !important; }
   .hover-lift:hover { transform: none !important; }
   .root-underline::after { transition: none !important; }
+  .hero-gradient-shift { animation: none !important; }
+  .tier-badge-glow { animation: none !important; }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2226,4 +2232,112 @@ body {
 .magnetic {
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
+}
+
+/* ════════════════════════════════════════════════════════════
+   H1. oklch color-shift hero gradient
+   ════════════════════════════════════════════════════════════ */
+.hero-gradient-shift {
+  background: linear-gradient(
+    135deg,
+    oklch(0.75 0.18 145) 0%,
+    oklch(0.70 0.12 85) 33%,
+    oklch(0.65 0.10 195) 66%,
+    oklch(0.75 0.18 145) 100%
+  );
+  background-size: 300% 300%;
+  animation: hero-gradient-shift 30s ease-in-out infinite;
+}
+
+@keyframes hero-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  33% { background-position: 50% 100%; }
+  66% { background-position: 100% 0%; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Idea 11. Confetti fall animation for tier promotion
+   ════════════════════════════════════════════════════════════ */
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Idea 12. Tier badge living glow
+   ════════════════════════════════════════════════════════════ */
+.tier-badge-glow {
+  animation: tier-glow 4s ease-in-out infinite;
+}
+
+@keyframes tier-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(125, 216, 125, 0.15); }
+  50% { box-shadow: 0 0 16px rgba(125, 216, 125, 0.25); }
 }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+/* ════════════════════════════════════════════════════════════
+   SACRED GEOMETRY DIVIDERS (Idea 7)
+   Draw-on animations for VineDivider and StarsDivider SVGs.
+   ════════════════════════════════════════════════════════════ */
+.vine-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: vine-draw-in 1.5s ease-out forwards;
+}
+.vine-dot {
+  opacity: 0;
+  animation: vine-dot-in 0.4s ease-out forwards;
+}
+@keyframes vine-draw-in {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes vine-dot-in {
+  to { opacity: 1; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   CSS VIEW TRANSITIONS (Idea 10)
+   Smooth cross-fade between routes on Chrome 111+ / Safari 18+.
+   Graceful no-op on older browsers.
+   ════════════════════════════════════════════════════════════ */
+@view-transition { navigation: auto; }
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: ease-in-out;
+}
+
+/* ════════════════════════════════════════════════════════════
+   FORUM CATEGORY ACCENT BARS (Idea 17)
+   ════════════════════════════════════════════════════════════ */
+.category-accent-bar {
+  border-left: 3px solid var(--category-color, #7dd87d);
+  padding-left: 12px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Idea 24. Easter egg pulse (triple-tap on Wizard trigger)
+   ════════════════════════════════════════════════════════════ */
+.easter-egg-pulse {
+  animation: easter-pulse 0.6s ease-out;
+}
+@keyframes easter-pulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.3); filter: brightness(1.5) hue-rotate(30deg); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* Reduced motion: disable divider animations */
+@media (prefers-reduced-motion: reduce) {
+  .vine-draw {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+  .vine-dot {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+  .easter-egg-pulse {
+    animation: none !important;
+  }
+}

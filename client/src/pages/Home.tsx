@@ -241,7 +241,7 @@ export default function Home() {
         </section>
 
         {/* Hero Section with Video */}
-        <section className="relative min-h-[60vh] flex items-center py-12 md:py-16">
+        <section className="relative min-h-[60vh] flex items-center py-12 md:py-16 hero-gradient-shift">
           <div className="container">
             <AnimatedSection animation="fade-in" className="max-w-5xl mx-auto">
               <div className="text-center mb-8">

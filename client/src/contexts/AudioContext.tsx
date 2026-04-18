@@ -1,21 +1,23 @@
 import { createContext, useContext, useRef, useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'wouter'
+import { indexFromSlug } from '@/utils/songSlug'
 
 export interface Song {
   title: string
   src: string
   page: string
+  slug: string
   /** Optional artist/contributor credit shown in the track list. */
   artist?: string
 }
 
 export const PLAYLIST: Song[] = [
-  { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land", artist: "ReGen Transition Team" },
-  { title: "We are the Land", src: "/audio/we-are-the-land.mp3", page: "/community", artist: "ReGen Transition Team" },
-  { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play", artist: "ReGen Transition Team" },
-  { title: "Better & Better & Better", src: "/audio/better-and-better-v2.mp3", page: "/team", artist: "Hymns of the ReGeneration" },
-  { title: "Addiction 2 Addition", src: "/audio/addiction-2-addition-hymns-of-the-regeneration.mp3", page: "/game", artist: "Hymns of the ReGeneration" },
-  { title: "Cult to Culture", src: "/audio/cult-to-culture-hymns-of-the-regeneration.mp3", page: "/governance", artist: "Hymns of the ReGeneration" },
+  { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land", slug: "wasteland-into-wonderland", artist: "ReGen Transition Team" },
+  { title: "We are the Land", src: "/audio/we-are-the-land.mp3", page: "/community", slug: "we-are-the-land", artist: "ReGen Transition Team" },
+  { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play", slug: "regen-transition-team", artist: "ReGen Transition Team" },
+  { title: "Better & Better & Better", src: "/audio/better-and-better-v2.mp3", page: "/team", slug: "better-and-better", artist: "Hymns of the ReGeneration" },
+  { title: "Addiction 2 Addition", src: "/audio/addiction-2-addition-hymns-of-the-regeneration.mp3", page: "/game", slug: "addiction-2-addition", artist: "Hymns of the ReGeneration" },
+  { title: "Cult to Culture", src: "/audio/cult-to-culture-hymns-of-the-regeneration.mp3", page: "/governance", slug: "cult-to-culture", artist: "Hymns of the ReGeneration" },
 ]
 
 const PERSIST_KEY = 'regen-audio-state-v1'
@@ -63,6 +65,10 @@ interface AudioContextValue {
   prevSong: () => void
   /** Jump straight to a track by index (used by the track list UI). */
   playSong: (index: number) => void
+  /** Jump to a track by slug and start playback. Returns false if slug not found. */
+  playSongBySlug: (slug: string) => boolean
+  /** Jump to a track by slug without starting playback. Returns false if slug not found. */
+  queueSongBySlug: (slug: string) => boolean
   volume: number
   setVolume: (v: number) => void
   duration: number
@@ -185,11 +191,32 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }, 0)
   }, [])
 
+  const playSongBySlug = useCallback((slug: string) => {
+    const i = indexFromSlug(slug)
+    if (i === -1) return false
+    hasInteracted.current = true
+    setCurrentIndex(i)
+    setTimeout(() => {
+      const audio = audioRef.current
+      if (!audio) return
+      audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
+    }, 0)
+    return true
+  }, [])
+
+  const queueSongBySlug = useCallback((slug: string) => {
+    const i = indexFromSlug(slug)
+    if (i === -1) return false
+    hasInteracted.current = true
+    setCurrentIndex(i)
+    return true
+  }, [])
+
   return (
     <AudioCtx.Provider value={{
       isPlaying, currentSong: PLAYLIST[currentIndex], currentIndex,
       playlist: PLAYLIST,
-      togglePlay, nextSong, prevSong, playSong, volume, setVolume,
+      togglePlay, nextSong, prevSong, playSong, playSongBySlug, queueSongBySlug, volume, setVolume,
       duration, currentTime, seek,
     }}>
       {children}

@@ -56,6 +56,7 @@ const Economy = lazy(() => import("./pages/Economy"));
 const Bionomics = lazy(() => import("./pages/Bionomics"));
 const HealTheLand = lazy(() => import("./pages/HealTheLand"));
 const HymnBook = lazy(() => import("./pages/HymnBook"));
+const HymnPlayer = lazy(() => import("./pages/HymnPlayer"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
 const LocalFoodEconomy = lazy(() => import("./pages/LocalFoodEconomy"));
@@ -159,6 +160,7 @@ const CommunityGuidelines = lazy(() => import("./pages/CommunityGuidelines"));
 const ShapeNextSession = lazy(() => import("./pages/ShapeNextSession"));
 const Checkin = lazy(() => import("./pages/Checkin"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
+const Accessibility = lazy(() => import("./pages/Accessibility"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -268,6 +270,7 @@ function Router() {
       <Route path={"/community/quests"}><EB><QuestSuggestions /></EB></Route>
       <Route path={"/community/user/:id"}><EB><UserForumProfile /></EB></Route>
       <Route path={"/admin/moderation"}><EB><AdminModeration /></EB></Route>
+      <Route path={"/accessibility"}><EB><Accessibility /></EB></Route>
       <Route path={"/glossary"}><EB><Glossary /></EB></Route>
       <Route path={"/features"}><EB><FeatureSuggestions /></EB></Route>
       <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
@@ -276,6 +279,7 @@ function Router() {
       <Route path={"/economy"}><Redirect to="/bionomics" /></Route>
       <Route path={"/local-food-economy"}><Redirect to="/bionomics#local-food-economies" /></Route>
       <Route path={"/heal-the-land"}><EB><HealTheLand /></EB></Route>
+      <Route path={"/hymn-book/:slug"}><EB><HymnPlayer /></EB></Route>
       <Route path={"/hymn-book"}><EB><HymnBook /></EB></Route>
       <Route path={"/proposals"}><EB><Proposals /></EB></Route>
       <Route path={"/game-mechanics"}><EB><GameMechanics /></EB></Route>

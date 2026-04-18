@@ -349,7 +349,7 @@ on/off state. Delightful for long reading sessions.
 
 **25. Seasonal festival confetti**
 
-On season transition days (Equinox, Solstice, Cross-quarters), the first
+On season transition days after an announcement that we've changed seasons - which will need to be in the database or stored somewhere what Season we're in, currently it's Winter and our Spring will start in September when Season 2 begins (Equinox, Solstice, Cross-quarters), the first
 visit of the day shows a 2-second burst of season-appropriate confetti
 (green leaves in Spring, amber leaves in Autumn, snow in Winter, blossoms
 in Summer). One-per-day via localStorage. Reinforces the Living Tree

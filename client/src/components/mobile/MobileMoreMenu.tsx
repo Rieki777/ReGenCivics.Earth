@@ -13,12 +13,13 @@
  * Body scroll is locked while open.
  */
 import { useEffect, useState } from "react";
-import { X, ChevronDown, Search, SkipBack, SkipForward, Play, Pause, Music } from "lucide-react";
+import { X, ChevronDown, Search, SkipBack, SkipForward, Play, Pause, Music, ListMusic, Plus } from "lucide-react";
 import { MOBILE_MENU_SECTIONS, MOBILE_MENU_FOOTER } from "@/config/mobileMenu";
 import { MenuCard } from "./MenuCard";
 import { NextQuestCard } from "./NextQuestCard";
+import { MobilePlaylistPanel } from "./MobilePlaylistPanel";
+import { CopyLinkButton } from "@/components/audio/CopyLinkButton";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
-import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { Link } from "wouter";
 import { useAudio } from "@/contexts/AudioContext";
 
@@ -33,6 +34,7 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
   const audio = useAudio();
   const [internalOpen, setInternalOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [playlistOpen, setPlaylistOpen] = useState(false);
 
   const open = openProp ?? internalOpen;
   const onClose = onCloseProp ?? (() => setInternalOpen(false));
@@ -80,7 +82,15 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           <X className="w-5 h-5" />
         </button>
         <div className="flex flex-col items-center text-center">
-          <TreeOfLifeIcon size={56} color={tint.primary} />
+          <img
+            src="/images/logos/regencivics-logo-light-transparent-rounded.webp"
+            alt="ReGen Civics"
+            width={72}
+            height={72}
+            className="rounded-full shadow-lg"
+            loading="eager"
+            decoding="async"
+          />
           <h2 className="text-white text-xl font-bold mt-2" style={{ fontFamily: "var(--font-display)" }}>
             ReGen Civics
           </h2>
@@ -98,26 +108,56 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           <span className="text-sm">Jump to anything</span>
         </button>
 
-        {/* Music player row */}
-        <div className="flex items-center gap-3 bg-white/10 backdrop-blur border border-white/15 rounded-2xl px-4 py-3">
-          <Music className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
-          <span className="flex-1 min-w-0 text-white/70 text-sm truncate">
-            {audio.currentSong?.title ?? "Hymns for the ReGeneration"}
-          </span>
-          <div className="flex items-center gap-1">
-            <button onClick={audio.prevSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Previous track">
-              <SkipBack className="w-4 h-4" />
-            </button>
-            <button onClick={audio.togglePlay} className="p-2 text-[#7dd87d] hover:text-[#9de89d]" aria-label={audio.isPlaying ? "Pause" : "Play"}>
-              {audio.isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-            </button>
-            <button onClick={audio.nextSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Next track">
-              <SkipForward className="w-4 h-4" />
-            </button>
+        {/* Music player row + actions + playlist */}
+        <div className="space-y-2">
+          {/* Music player row */}
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur border border-white/15 rounded-2xl px-4 py-3">
+            <Music className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
+            <span className="flex-1 min-w-0 text-white/70 text-sm truncate">
+              {audio.currentSong?.title ?? "Hymns for the ReGeneration"}
+            </span>
+            <div className="flex items-center gap-1">
+              <button onClick={audio.prevSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Previous track">
+                <SkipBack className="w-4 h-4" />
+              </button>
+              <button onClick={audio.togglePlay} className="p-2 text-[#7dd87d] hover:text-[#9de89d]" aria-label={audio.isPlaying ? "Pause" : "Play"}>
+                {audio.isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              </button>
+              <button onClick={audio.nextSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Next track">
+                <SkipForward className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <Link href="/hymn-book" onClick={onClose} className="text-[#7dd87d] text-xs hover:underline flex-shrink-0">
-            Hymns
-          </Link>
+
+          {/* Three action buttons */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setPlaylistOpen((s) => !s)}
+              className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/15 rounded-2xl py-2.5 text-white text-xs font-semibold transition-colors"
+              aria-expanded={playlistOpen}
+              aria-controls="mobile-playlist-panel"
+            >
+              <ListMusic className="w-4 h-4 text-[#7dd87d]" />
+              {playlistOpen ? "Hide" : "Playlist"}
+            </button>
+            <Link
+              href="/hymn-book#add-your-voice"
+              onClick={onClose}
+              className="flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] rounded-2xl py-2.5 text-xs font-bold transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add song
+            </Link>
+            <CopyLinkButton song={audio.currentSong} variant="mobile" />
+          </div>
+
+          {/* Inline playlist panel */}
+          {playlistOpen && (
+            <div id="mobile-playlist-panel">
+              <MobilePlaylistPanel onSelect={onClose} />
+            </div>
+          )}
         </div>
 
         {/* Next quest card */}
