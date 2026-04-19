@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <defs>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7dd87d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5bb85b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Icon (mini version) -->
+  <circle cx="35" cy="40" r="28" fill="#1a472a" stroke="#7dd87d" stroke-width="1.5"/>
+  <path d="M35 50 C35 42, 30 37, 25 32 C30 34, 33 37, 35 42 C37 37, 40 34, 45 32 C40 37, 35 42, 35 50Z" fill="#7dd87d" opacity="0.9"/>
+  <line x1="35" y1="50" x2="35" y2="56" stroke="#7dd87d" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Text -->
+  <text x="75" y="35" fill="#7dd87d" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" letter-spacing="0.5">
+    ReGen Gov
+  </text>
+  <text x="75" y="55" fill="#7dd87d" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="400" letter-spacing="1.5" opacity="0.6">
+    POWERED BY LOOMIO
+  </text>
+</svg>

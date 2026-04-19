@@ -20,6 +20,7 @@
     "test:integration": "vitest run server/applications.test.ts server/forum.test.ts server/citizenship-tiers.test.ts server/notification-prefs.test.ts server/loi.test.ts server/forms.test.ts server/contributions.test.ts",
     "test:all": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "sync:quest-content": "tsx scripts/sync-quest-content.ts",
     "seed:forum": "tsx scripts/seed-forum-posts.ts",
     "seed:forum:reset": "tsx scripts/seed-forum-posts.ts --reset",
     "seed:seeds": "tsx scripts/seed-seeds-contributions.ts",
