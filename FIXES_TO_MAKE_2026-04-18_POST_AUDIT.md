@@ -316,28 +316,48 @@ Verify on a 390px-wide viewport (iPhone 14 Pro) in the browser, not only by math
 
 | # | Task | Why only you | Command / Where |
 |---|------|--------------|-----------------|
-| H1 | After Claude Code ships V3, V5, V6, V7, V10, V14, N1-N4: git push from Windows | Claude Code can hold the index.lock on VM | `git add -A && git commit -m "..." && git push` from Windows terminal |
-| H2 | Mobile browser smoke test on a real phone after deploy | Subjective visual QA on Safari/Chrome mobile | regencivics.earth |
-| H3 | Decide V12 and V13: ship or defer | Scoping call | Answer here, Claude Code will follow |
+| H1 | `git add -A && git commit -m "..." && git push` from Windows | VM cannot write `.git/index.lock` or `.git/objects/` | Windows terminal in repo root |
+| H2 | Run `pnpm typecheck` locally (Gate 3) | VM has I/O errors on `node_modules/typescript` | Windows terminal: `pnpm typecheck` |
+| H3 | Mobile browser smoke test on a real phone after deploy | Subjective visual QA on Safari/Chrome mobile | regencivics.earth |
+| H4 | Decide V12 and V13: ship or defer | Scoping call | Answer here, Claude Code will follow |
+| H5 | Verify N1 logo visually — the `-rounded` variant was chosen based on filename convention; confirm it is actually text-free. If it still shows baked-in wordmark, reply and Claude Code will try CSS cropping instead | No way to view image from VM | In the mobile More menu after deploy |
 
-### CLAUDE CODE — can do without Rye
+### CLAUDE CODE — already done in this session
 
-| # | Task | Status |
-|---|------|--------|
-| V3 | Change LOI.tsx line 87 `<h1>` to `<h2>` | HUMAN STEP REQUIRED |
-| V5 | Add `@keyframes confetti-fall` + reduced-motion rule to index.css | HUMAN STEP REQUIRED |
-| V6 | Add `@keyframes tier-badge-breathe` + `.tier-badge-glow` rule to index.css | HUMAN STEP REQUIRED |
-| V7 | Wire VineDivider into Community.tsx, Bionomics.tsx, Governance.tsx | HUMAN STEP REQUIRED |
-| V10 | Add `animation-timeline: view()` story-grow rule with fallback | HUMAN STEP REQUIRED |
-| V14 | Add `.category-accent-bar::before` CSS rule | HUMAN STEP REQUIRED |
-| N1 | Swap mobile More menu header logo to a text-free phoenix variant | HUMAN STEP REQUIRED |
-| N2 | Rename "Copy link" to "Share song" in `CopyLinkButton.tsx` | HUMAN STEP REQUIRED |
-| N3 | Widen WizardRadialMenu arc to ~160deg at radius ~128 | HUMAN STEP REQUIRED |
-| N4 | Rename Feature Suggestions to Feature + Bug Reports across page, SEO, nav, footer, intro copy | HUMAN STEP REQUIRED |
+| # | Task | Status | Evidence |
+|---|------|--------|----------|
+| V3 | LOI.tsx line 87 `<h1>` → `<h2>` | VERIFIED | `client/src/pages/LOI.tsx:87` reads `<h2 className="text-3xl font-bold text-[#1a472a] mb-4"` |
+| V5 | `@keyframes confetti-fall` in index.css | VERIFIED | `client/src/index.css:2263` `@keyframes confetti-fall { 0% {...} 100% {...} }` |
+| V6 | `.tier-badge-glow` + `@keyframes tier-glow` in index.css | VERIFIED | `client/src/index.css:2271` `.tier-badge-glow { animation: tier-glow 4s ease-in-out infinite; }` and keyframe at `:2275` |
+| V7 | VineDivider/RiverDivider/StarsDivider on 3 pages | VERIFIED | `Community.tsx:31,397,1253` (VineDivider), `Bionomics.tsx:55,858,1249` (RiverDivider), `Governance.tsx:14,963,1322` (StarsDivider) |
+| V10 | `.story-grow` with `animation-timeline: view()` + fallback + reduced-motion | VERIFIED | `client/src/index.css:2389` rule, `:2391` `animation-timeline: view()`, `:2419` `@supports not` fallback, `:2428` reduced-motion |
+| V14 | `.category-accent-bar` CSS rule | VERIFIED | `client/src/index.css:2315` `.category-accent-bar { border-left: 3px solid var(--category-color, #7dd87d); padding-left: 12px; }` (uses border-left approach rather than ::before pseudo-element — same visual outcome) |
+| N1 | Mobile More menu logo swapped to `-rounded` variant | CODED | `client/src/components/mobile/MobileMoreMenu.tsx:86` now `regencivics-logo-light-transparent-rounded.webp` + `object-contain`. Matches pattern used in SiteFooter, Admin, StructuredData, JsonLD. Visual verification on mobile is H5. |
+| N2 | "Copy link" → "Share song" in CopyLinkButton.tsx | VERIFIED | `client/src/components/audio/CopyLinkButton.tsx:44` `aria-label={copied ? "Link copied" : "Share song"}`, `:46` renders `Share song` with `Share2` icon |
+| N3 | WizardRadialMenu arc widened to 160deg at radius 128 | VERIFIED | `client/src/components/mobile/WizardRadialMenu.tsx:85-88` `// Fan 5 buttons in a 160-degree arc (190 to 350 deg) at radius 128.` + `const angle = (190 + (i / (ACTIONS.length - 1)) * 160) * (Math.PI / 180); const radius = 128;` |
+| N4 | Feature Suggestions → Features & Bug Reports (page + SEO + nav + footer + intro + CTA + count label) | CODED | `FeatureSuggestions.tsx:49` SEO title "Features & Bug Reports", `:59` h1, `:62` intro copy, `:68` CTA "Suggest or Report", `:102` count label "item"/"items"; `SiteFooter.tsx:70` "Suggest or Report"; `Navigation.tsx:501` "Suggest or Report"; `SEO.tsx:293` default SEO title updated |
+| Gate 1 | Truncation audit | VERIFIED | `python3 scripts/audit-truncation.py` exits 0 across 665 files after restoring MobileMoreMenu.tsx, WizardRadialMenu.tsx, HealTheLand.tsx, index.css from HEAD |
+| Audit upgrade | Add deep-indent heuristic + CSS coverage | CODED | `scripts/audit-truncation.py` now scans `.css`/`.scss` and catches JSX truncations ending on valid close chars via last-line indent check. `.claude/skills/regen-ship-gate/SKILL.md` updated with new signals. |
 
 ### WAITING ON YOU before Claude Code can proceed
 
-Nothing. All items above are pure frontend code, CSS, or asset swaps. Zero Railway access, zero DB queries, zero env var changes needed.
+- **H2 (typecheck)** — VM cannot run `tsc`. If typecheck fails on Rye's machine, paste the errors back here and Claude Code will fix them before H1.
+- **V12 (toast garden)** and **V13 (quest card disclosure)** — need H4 decision. Recommend DEFER, consistent with original audit priority order.
+
+### Gate 3 status — BLOCKED on VM
+
+`pnpm typecheck` cannot run in this environment (`node_modules/typescript` I/O error, missing tsc binary). Gate 1 (truncation) and Gate 2 (className/keyframes grep) are green. Rye runs Gate 3 locally as H2 above before H1.
+
+### Truncation recovery log (2026-04-18, continuing)
+
+Four additional files were found truncated during this session's Ship Gate runs and restored from HEAD:
+
+1. `client/src/index.css` — was 2246 lines ending mid-rule at `oklch(0.70 0.12 85) 33%, o` → restored to 2512 lines. This restore also recovered V5, V6, V10, V14 CSS rules that had been silently wiped.
+2. `client/src/components/mobile/MobileMoreMenu.tsx` — was 196 lines ending mid-JSX at `href={item.href}` → restored to 207 lines. N1 edit re-applied on top.
+3. `client/src/components/mobile/WizardRadialMenu.tsx` — was truncated mid-`<Link>` with `aria-label={a.` → restored to 134 lines. N3 arc settings preserved in HEAD.
+4. `client/src/pages/HealTheLand.tsx` — was truncated at indented `</Link>` → restored to 337 lines.
+
+The original audit only caught the first class of truncation (files ending on alphanumeric chars). The upgraded audit now catches all four.
 
 ---
 

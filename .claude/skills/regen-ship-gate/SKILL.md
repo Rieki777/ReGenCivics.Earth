@@ -29,6 +29,15 @@ python3 scripts/audit-truncation.py
 
 Exit code 0 means clean. Non-zero means one or more files are truncated.
 
+The audit covers `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.css`, and `.scss` files in `client/src`, `server`, `shared`, `drizzle`, and `scripts`. It checks four signals:
+
+1. Last non-whitespace character is alphanumeric (ends mid-identifier)
+2. Last non-whitespace character is an unclosed quote (ends mid-string)
+3. CSS files with unbalanced `{}`, `()`, or `[]` counts
+4. JS/TS files where the last non-blank line is indented 16+ chars (ends mid-JSX even if the last char is a valid close like `}`)
+
+Signal 4 specifically catches the pattern that shipped `MobileMoreMenu.tsx` truncated mid-`<Link>` on 2026-04-18: the file ended with `href={item.href}\r\n    ` — last char `}` passed the old check, but the deep indent revealed the truncation.
+
 If truncations found, restore from HEAD before continuing:
 
 ```bash

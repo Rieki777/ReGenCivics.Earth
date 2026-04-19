@@ -290,9 +290,9 @@ export const pageSEO = {
     url: '/hymn-book'
   },
   features: {
-    title: 'Feature Suggestions | ReGen Civics',
-    description: 'Suggest and vote on new features for the ReGen Civics platform. Help shape the tools that build the Regenerative Renaissance.',
-    keywords: 'feature suggestions, community voting, regenerative platform, product feedback',
+    title: 'Features & Bug Reports | ReGen Civics',
+    description: 'Propose features, report bugs, vote on what matters, and help shape the tools that build the Regenerative Renaissance.',
+    keywords: 'feature suggestions, bug reports, community voting, regenerative platform, product feedback',
     image: '/og/features.jpg',
     url: '/features'
   },

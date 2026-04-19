@@ -1,5 +1,6 @@
 /**
- * Feature Suggestions - Community-driven propose-and-vote for site features.
+ * Features & Bug Reports - Community-driven propose-and-vote for features
+ * and bug reports. The form branches on formType ("feature" | "bug").
  */
 import { useState, useMemo } from "react";
 import { ChevronUp, MessageCircle, Plus, X, Send, Lightbulb, CheckCircle2, Hammer, Rocket } from "lucide-react";
@@ -99,7 +100,7 @@ export default function FeatureSuggestions() {
 
       <div className="max-w-3xl mx-auto px-4 pb-20">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-white/60 text-sm">{suggestions.length} suggestions</span>
+          <span className="text-white/60 text-sm">{suggestions.length} {suggestions.length === 1 ? "item" : "items"}</span>
           <div className="flex gap-1 bg-white/5 rounded-lg p-0.5 border border-white/10">
             <button onClick={() => setSortBy("votes")} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === "votes" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/50"}`}>Top</button>
             <button onClick={() => setSortBy("newest")} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === "newest" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/50"}`}>New</button>

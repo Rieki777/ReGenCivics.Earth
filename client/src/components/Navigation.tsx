@@ -498,7 +498,7 @@ export default function Navigation() {
                   onClick={() => window.location.href = '/features'}
                 >
                   <Lightbulb className="w-5 h-5 mr-3 text-amber-400" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Suggest a Feature</span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Suggest or Report</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 {socialLinks.map((social) => (

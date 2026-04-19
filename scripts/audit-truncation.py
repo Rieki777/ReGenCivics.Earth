@@ -28,7 +28,7 @@ import subprocess
 import json
 
 TARGET_DIRS = ["client/src", "server", "shared", "drizzle", "scripts"]
-EXTS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")
+EXTS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".css", ".scss")
 
 # Files that are intentional stubs ending with a comment, not truncated
 INTENTIONAL_STUBS = {
@@ -36,6 +36,97 @@ INTENTIONAL_STUBS = {
     "client/src/_core/providers/PrivyAuthProvider.tsx",
     "server/_core/privy.ts",
 }
+
+
+def _strip_strings_and_comments(text: str) -> str:
+    """Crude pass that removes double-quoted, single-quoted, and backtick
+    strings plus // line comments and /* */ block comments. Good enough
+    for brace-balance heuristics on TS/TSX/JS files."""
+    out = []
+    i = 0
+    n = len(text)
+    in_str = None  # one of ", ', ` or None
+    in_line_comment = False
+    in_block_comment = False
+    while i < n:
+        c = text[i]
+        nxt = text[i + 1] if i + 1 < n else ""
+        if in_line_comment:
+            if c == "\n":
+                in_line_comment = False
+                out.append(c)
+            i += 1
+            continue
+        if in_block_comment:
+            if c == "*" and nxt == "/":
+                in_block_comment = False
+                i += 2
+                continue
+            i += 1
+            continue
+        if in_str is not None:
+            if c == "\\" and i + 1 < n:
+                i += 2
+                continue
+            if c == in_str:
+                in_str = None
+            i += 1
+            continue
+        # not in any string/comment
+        if c == "/" and nxt == "/":
+            in_line_comment = True
+            i += 2
+            continue
+        if c == "/" and nxt == "*":
+            in_block_comment = True
+            i += 2
+            continue
+        if c in ('"', "'", "`"):
+            in_str = c
+            i += 1
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def _brace_balance(path: str, text: str):
+    """CSS-only brace-balance check. JS/TS source has too many false positives
+    from template literals and regex, so we restrict this to .css/.scss where
+    the balance is reliably meaningful."""
+    if not path.endswith((".css", ".scss")):
+        return None
+    pairs = [("{", "}"), ("(", ")"), ("[", "]")]
+    for open_c, close_c in pairs:
+        opens = text.count(open_c)
+        closes = text.count(close_c)
+        if opens != closes:
+            diff = opens - closes
+            return (
+                "TRUNCATED",
+                f"{open_c}{close_c} imbalance: {opens} vs {closes} (diff {diff:+d})",
+            )
+    return None
+
+
+def _deep_indent_close(text: str):
+    """If the last non-blank line is indented 4+ levels deep (16+ spaces)
+    AND the file has a module-like extension (js/ts/jsx/tsx), the file is
+    probably truncated mid-JSX even if it ends on a valid closing char.
+
+    A clean module-level end-of-file has close-to-zero indent on the last
+    line: e.g. `}` or `);` or `export default X;` at column 0.
+    """
+    lines = text.splitlines()
+    for line in reversed(lines):
+        if line.strip():
+            leading = len(line) - len(line.lstrip(" \t"))
+            if leading >= 16:
+                # Last meaningful line is deeply nested — suspicious
+                ctx = line.rstrip()[:120]
+                return ("TRUNCATED", f"last non-blank line indented {leading} chars: {ctx!r}")
+            return None
+    return None
 
 
 def classify(path: str):
@@ -65,6 +156,20 @@ def classify(path: str):
         ctx = stripped[-80:].decode("utf-8", errors="replace")
         # Legit case: ends with export default 'foo' but usually has a semicolon
         return ("SUSPICIOUS", f"ends with {last!r} | ...{ctx!r}")
+
+    # CSS brace balance (reliable for .css) + deep-indent last-line check
+    # (catches JSX truncations that end on a valid closing char like `}`).
+    try:
+        text = stripped.decode("utf-8", errors="replace")
+        bal = _brace_balance(path, text)
+        if bal:
+            return bal
+        if path.endswith((".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")):
+            indent_issue = _deep_indent_close(text)
+            if indent_issue:
+                return indent_issue
+    except Exception:
+        pass
 
     return None
 
