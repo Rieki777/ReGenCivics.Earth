@@ -1,38 +1,71 @@
 /**
- * WizardRadialMenu: floating wizard button bottom-right that opens a small
- * radial menu with five shortcuts. Playful escape hatch from anywhere.
+ * WizardRadialMenu: floating FAB bottom-right that blooms a 5-button radial
+ * menu into the upper-left quadrant around the trigger.
  *
- * Hidden on desktop. The button sits above the existing bottom nav.
+ * Actions (from farthest-left to straight-up, matching thumb ergonomics for a
+ * right-handed user): Music - Profile - Community - Context - Quests.
+ *
+ * The FAB owns three anchor routes (Quests, Community, Profile) so the
+ * MobileTabBar is free to surface deeper, context-aware suggestions.
+ *
+ * Anchor self-awareness: when the user is already on an anchor route, that
+ * button swaps to a useful in-place action (Community -> New post,
+ * Quest -> Resume, Profile -> Edit) instead of routing to itself.
+ *
+ * Context slot: pulls the first usePageTools() action for the current route,
+ * falling back to Search (opens the command palette).
+ *
+ * Hidden on desktop. Sits above the MobileTabBar (bottom-24).
  */
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Link } from "wouter";
-import { MessageCircle, User, LayoutGrid, Music, Pause } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import {
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Sparkles,
+} from "lucide-react";
 import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
 import { useAudio } from "@/contexts/AudioContext";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { usePageTools } from "@/hooks/usePageTools";
+import { NavIcon } from "@/components/SmartBottomNav";
 
 type Action = {
+  key: string;
   label: string;
-  href?: string;
   Icon: React.ComponentType<{ className?: string }>;
-  /** Custom event name to dispatch instead of navigating. */
+  /** Route to navigate to. */
+  href?: string;
+  /** Custom window event name to dispatch. */
   event?: string;
-  /** Run a callback instead of navigating. */
+  /** Callback to run on click (wins over href/event). */
   onClick?: () => void;
-  /** Visual accent for the button when active (e.g. music playing). */
+  /** Accent when active (e.g. music playing). */
   active?: boolean;
 };
 
+// Quarter arc from due-left (180deg) to straight-up (90deg) in math degrees,
+// with sin flipped for CSS (positive y goes down).
+const ARC_START_DEG = 180;
+const ARC_END_DEG = 90;
+const ARC_RADIUS = 86;
+
 export function WizardRadialMenu() {
   const [open, setOpen] = useState(false);
+  const [location] = useLocation();
   const tint = useSeasonTint();
   const { isPlaying, togglePlay } = useAudio();
+  const { isAuthenticated } = useAuth();
+  const pageTools = usePageTools();
 
-  // Triple-tap easter egg on trigger button
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const currentPath = location.split("?")[0].replace(/\/$/, "") || "/";
+  const onCommunity = currentPath === "/community" || currentPath.startsWith("/community/");
+  const onQuest = currentPath === "/quest" || currentPath.startsWith("/quest/");
+  const onProfile = currentPath === "/profile" || currentPath.startsWith("/profile/");
 
   const handleTriggerClick = useCallback(() => {
     tapCountRef.current += 1;
@@ -40,7 +73,6 @@ export function WizardRadialMenu() {
 
     if (tapCountRef.current >= 3) {
       tapCountRef.current = 0;
-      // Apply easter egg pulse
       const btn = triggerRef.current;
       if (btn) {
         btn.classList.add("easter-egg-pulse");
@@ -63,72 +95,153 @@ export function WizardRadialMenu() {
     return () => document.removeEventListener("click", close);
   }, [open]);
 
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Anchor slot: Community. When already on /community, swap to "New post".
+  const communityAction: Action = onCommunity
+    ? isAuthenticated
+      ? { key: "new-post", label: "New post", href: "/community/new", Icon: PenLine }
+      : { key: "forum-search", label: "Search forum", event: "open-command-palette", Icon: Search }
+    : { key: "community", label: "Community", href: "/community", Icon: MessageCircle };
+
+  // Anchor slot: Quests. When on /quest, swap to "Resume" (still routes to /quest but labelled differently).
+  const questsAction: Action = onQuest
+    ? { key: "resume", label: "Resume", href: "/quest", Icon: Play }
+    : { key: "quests", label: "Quests", href: "/quest", Icon: TreeOfLifeIcon };
+
+  // Anchor slot: Profile. When on /profile, swap to "Edit".
+  const profileAction: Action = onProfile
+    ? { key: "profile-edit", label: "Edit profile", href: "/profile/edit", Icon: Edit3 }
+    : { key: "profile", label: "Profile", href: "/profile", Icon: User };
+
+  // Music slot
+  const musicAction: Action = {
+    key: "music",
+    label: isPlaying ? "Pause" : "Play music",
+    onClick: togglePlay,
+    Icon: isPlaying ? Pause : Music,
+    active: isPlaying,
+  };
+
+  // Context slot: first page tool, fallback to site Search.
+  const contextAction: Action = pageTools.length > 0
+    ? {
+        key: `ctx-${pageTools[0].label}`,
+        label: pageTools[0].label,
+        Icon: (props: { className?: string }) => <NavIcon name={pageTools[0].icon} className={props.className} />,
+        onClick: () => pageTools[0].action(),
+      }
+    : {
+        key: "search",
+        label: "Search",
+        event: "open-command-palette",
+        Icon: Search,
+      };
+
+  // Arc order: outer-left to straight-up. Quests is closest to the thumb.
   const ACTIONS: Action[] = [
-    { label: "More menu", event: "open-mobile-more", Icon: LayoutGrid },
-    { label: "Next quest", href: "/quest", Icon: TreeOfLifeIcon },
-    {
-      label: isPlaying ? "Pause music" : "Play music",
-      onClick: togglePlay,
-      Icon: isPlaying ? Pause : Music,
-      active: isPlaying,
-    },
-    { label: "Forum", href: "/community", Icon: MessageCircle },
-    { label: "Profile", href: "/profile", Icon: User },
+    musicAction,      // 180 deg - left (farthest from thumb)
+    profileAction,    // 157.5 deg
+    communityAction,  // 135 deg
+    contextAction,    // 112.5 deg
+    questsAction,     // 90 deg - straight up (closest to thumb)
   ];
 
   return (
     <div className="fixed bottom-24 right-4 z-40 md:hidden" onClick={(e) => e.stopPropagation()}>
-      {/* Radial action buttons (visible when open) */}
-      {open && (
-        <div className="absolute bottom-14 right-0 w-72 h-72 pointer-events-none">
-          {ACTIONS.map((a, i) => {
-            // Fan 5 buttons in a 160-degree arc (190 to 350 deg) at radius 128.
-            // At 128px radius with 40-deg spacing, arc gap between 44px buttons is ~45px.
-            const angle = (190 + (i / (ACTIONS.length - 1)) * 160) * (Math.PI / 180);
-            const radius = 128;
-            const cx = 144; // half of 288px (w-72)
-            const x = Math.cos(angle) * radius + cx;
-            const y = Math.sin(angle) * radius + cx;
-            const activeClass = a.active
-              ? "bg-[#7dd87d] border-[#7dd87d] text-[#1a472a]"
-              : "bg-[#1a472a] border-[#7dd87d]/50 text-[#7dd87d]";
-            const sharedClass = `pointer-events-auto absolute w-11 h-11 rounded-full border flex items-center justify-center shadow-lg hover:scale-110 transition-transform ${activeClass}`;
-            const style = { left: x - 22, top: y - 22 };
-            const onClick = () => {
-              setOpen(false);
-              if (a.onClick) {
-                a.onClick();
-                return;
-              }
-              if (a.event) window.dispatchEvent(new CustomEvent(a.event));
-            };
-            if (a.href) {
-              return (
-                <Link key={a.label} href={a.href} onClick={onClick} className={sharedClass} style={style} aria-label={a.label} title={a.label}>
-                  <a.Icon className="w-4 h-4" />
-                </Link>
-              );
-            }
-            return (
-              <button key={a.label} type="button" onClick={onClick} className={sharedClass} style={style} aria-label={a.label} title={a.label}>
-                <a.Icon className="w-4 h-4" />
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {/* Relative wrapper sized to the trigger. Buttons position absolutely
+          around the trigger's center. */}
+      <div className="relative w-12 h-12">
+        {/* Radial action buttons. Animate scale + opacity so they feel like
+            they bloom from the trigger. */}
+        {ACTIONS.map((a, i) => {
+          const fraction = i / (ACTIONS.length - 1);
+          const angleDeg = ARC_START_DEG + (ARC_END_DEG - ARC_START_DEG) * fraction;
+          const angleRad = (angleDeg * Math.PI) / 180;
+          const dx = Math.cos(angleRad) * ARC_RADIUS;
+          // Math y is positive-up, CSS is positive-down, so flip.
+          const dy = -Math.sin(angleRad) * ARC_RADIUS;
 
-      {/* Floating trigger button (Flower of Life sacred geometry) */}
-      <button
-        ref={triggerRef}
-        onClick={handleTriggerClick}
-        className="w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105"
-        style={{ backgroundColor: tint.primary, color: "#1a472a" }}
-        aria-label={open ? "Close shortcuts" : "Open shortcuts"}
-        aria-expanded={open}
-      >
-        <FlowerOfLifeIcon size={26} className="text-[#1a472a]" />
-      </button>
+          // Trigger center sits at (24, 24) within the 48px wrapper.
+          const left = 24 + dx - 22;
+          const top = 24 + dy - 22;
+
+          const accent = a.active
+            ? "bg-[#7dd87d] border-[#7dd87d] text-[#1a472a]"
+            : "bg-[#1a472a] border-[#7dd87d]/55 text-[#7dd87d]";
+          const sharedClass = `absolute w-11 h-11 rounded-full border flex items-center justify-center shadow-lg transition-all duration-200 ${accent} ${
+            open ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-50 pointer-events-none"
+          }`;
+          // Stagger bloom: each button waits a touch longer than the last.
+          const style: React.CSSProperties = {
+            left,
+            top,
+            transitionDelay: open ? `${i * 30}ms` : "0ms",
+          };
+
+          const closeThenRun = () => {
+            setOpen(false);
+            if (a.onClick) {
+              a.onClick();
+              return;
+            }
+            if (a.event) {
+              window.dispatchEvent(new CustomEvent(a.event));
+            }
+          };
+
+          if (a.href) {
+            return (
+              <Link
+                key={a.key}
+                href={a.href}
+                onClick={closeThenRun}
+                className={sharedClass}
+                style={style}
+                aria-label={a.label}
+                title={a.label}
+                tabIndex={open ? 0 : -1}
+              >
+                <a.Icon className="w-4 h-4" />
+              </Link>
+            );
+          }
+          return (
+            <button
+              key={a.key}
+              type="button"
+              onClick={closeThenRun}
+              className={sharedClass}
+              style={style}
+              aria-label={a.label}
+              title={a.label}
+              tabIndex={open ? 0 : -1}
+            >
+              <a.Icon className="w-4 h-4" />
+            </button>
+          );
+        })}
+
+        {/* Floating trigger (Flower of Life) */}
+        <button
+          ref={triggerRef}
+          onClick={handleTriggerClick}
+          className="absolute inset-0 w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105"
+          style={{ backgroundColor: tint.primary, color: "#1a472a" }}
+          aria-label={open ? "Close shortcuts" : "Open shortcuts"}
+          aria-expanded={open}
+        >
+          <FlowerOfLifeIcon size={26} className="text-[#1a472a]" />
+        </button>
+      </div>
     </div>
   );
 }

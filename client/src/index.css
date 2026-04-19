@@ -2462,20 +2462,15 @@ body {
 /* ════════════════════════════════════════════════════════════
    Idea 14. Quest card progressive disclosure (three-tier)
    ════════════════════════════════════════════════════════════ */
-.quest-card-tier2 {
-  display: grid;
-  grid-template-rows: 0fr;
-  overflow: hidden;
-  transition: grid-template-rows 0.3s ease, opacity 0.3s ease;
-  opacity: 0;
+/* Tier 2 expansion is now data-attribute driven, not hover driven */
+.quest-card[data-expanded="true"] {
+  z-index: 10;
 }
-.quest-card-tier2 > * {
-  overflow: hidden;
-}
-.group:hover .quest-card-tier2,
-.group:focus-within .quest-card-tier2 {
-  grid-template-rows: 1fr;
-  opacity: 1;
+
+@media (prefers-reduced-motion: no-preference) {
+  .quest-card {
+    transition: box-shadow 0.2s ease-out;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════

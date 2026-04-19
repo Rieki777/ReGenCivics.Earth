@@ -119,7 +119,27 @@ export function clearCustomSlots() {
   try { localStorage.removeItem(CUSTOM_KEY); } catch {}
 }
 
-export function useSmartNav(): { slots: NavSlot[] } {
+export interface SmartNavOptions {
+  /**
+   * Routes to drop from ranking entirely. Used by MobileTabBar so the adaptive
+   * slots never suggest the anchor routes (Quests, Community, Profile) that
+   * the FAB already pins.
+   */
+  excludePaths?: string[];
+  /**
+   * Total nav slots to return, including slot 1 (Quests) and slot 4 (contextual CTA).
+   * Default 4. MobileTabBar passes 4.
+   */
+  slotCount?: number;
+  /**
+   * Whether slot 1 is pinned to /quest. When false (MobileTabBar with FAB that
+   * already owns Quests), every slot is adaptive.
+   */
+  pinQuestsSlot?: boolean;
+}
+
+export function useSmartNav(options: SmartNavOptions = {}): { slots: NavSlot[] } {
+  const { excludePaths = [], slotCount = 4, pinQuestsSlot = true } = options;
   const [location] = useLocation();
   const { counts, totalVisits } = useNavVisits();
   const { user } = useAuth();
@@ -135,11 +155,25 @@ export function useSmartNav(): { slots: NavSlot[] } {
     const currentPath = location.split("?")[0].replace(/\/$/, "") || "/";
     const customSlots = getCustomSlots();
     const effectivePath = userPath || "default";
+    const excluded = new Set(excludePaths);
 
     // If very few visits, use pure defaults
     if (totalVisits <= 1) {
       const defaults = PATH_DEFAULTS[effectivePath] || PATH_DEFAULTS.default;
-      return applyCurrentPageAwareness(defaults, currentPath, cta);
+      const filtered = defaults.filter((s) =>
+        (pinQuestsSlot && s.path === "/quest") || !excluded.has(s.path)
+      );
+      const sized = filtered.slice(0, slotCount);
+      // Backfill from fallback if we dropped any
+      while (sized.length < slotCount) {
+        const fb = ["/", "/play", "/fund", "/blog", "/seasons", "/map", "/schedule"].find(
+          (p) => !sized.some((x) => x.path === p) && !excluded.has(p)
+        );
+        if (!fb) break;
+        const meta = PAGE_META[fb];
+        if (meta) sized.push({ path: fb, icon: meta.icon, label: meta.label });
+      }
+      return applyCurrentPageAwareness(sized, currentPath, cta, excluded);
     }
 
     // Compute blend weights
@@ -162,7 +196,8 @@ export function useSmartNav(): { slots: NavSlot[] } {
     const allPages = Array.from(new Set([...Object.keys(affinity), ...Object.keys(counts)]));
 
     for (const page of allPages) {
-      if (page === "/quest") continue; // slot 1 is hardcoded
+      if (pinQuestsSlot && page === "/quest") continue; // slot 1 is hardcoded when pinned
+      if (excluded.has(page)) continue;
       const affinityScore = (affinity[page] || 0) / 10;
       const visitScore = (counts[page] || 0) / maxVisits;
       const blended = affinityWeight * affinityScore + visitWeight * visitScore;
@@ -175,18 +210,21 @@ export function useSmartNav(): { slots: NavSlot[] } {
     const result: NavSlot[] = [];
     const used = new Set<string>();
 
-    // Slot 1: Always quests
-    result.push({ path: "/quest", icon: "Scroll", label: "Quests" });
-    used.add("/quest");
+    // Slot 1: quests (only if pinned)
+    if (pinQuestsSlot) {
+      result.push({ path: "/quest", icon: "Scroll", label: "Quests" });
+      used.add("/quest");
+    }
 
-    // Determine slot 4 first (contextual CTA or fallback)
-    let slot4: NavSlot | null = null;
-    if (cta) {
-      slot4 = { path: cta.path, icon: cta.icon, label: cta.label, isContextual: true };
+    // Determine final slot (contextual CTA) first
+    let ctaSlot: NavSlot | null = null;
+    if (cta && !excluded.has(cta.path)) {
+      ctaSlot = { path: cta.path, icon: cta.icon, label: cta.label, isContextual: true };
       used.add(cta.path);
     }
 
-    // Slots 2-3: highest scoring not used
+    // Fill middle slots from ranked scores, leaving room for the CTA slot at the end
+    const middleTarget = ctaSlot ? slotCount - 1 : slotCount;
     for (const { path } of scores) {
       if (used.has(path)) continue;
       const meta = PAGE_META[path];
@@ -194,7 +232,7 @@ export function useSmartNav(): { slots: NavSlot[] } {
       // Apply custom override
       const slotKey = `slot${result.length + 1}`;
       const customPath = customSlots[slotKey];
-      if (customPath && PAGE_META[customPath]) {
+      if (customPath && PAGE_META[customPath] && !excluded.has(customPath)) {
         const cm = PAGE_META[customPath];
         result.push({ path: customPath, icon: cm.icon, label: cm.label });
         used.add(customPath);
@@ -202,42 +240,46 @@ export function useSmartNav(): { slots: NavSlot[] } {
         result.push({ path, icon: meta.icon, label: meta.label });
         used.add(path);
       }
-      if (result.length >= 3) break;
+      if (result.length >= middleTarget) break;
     }
 
-    // Fill remaining slots 2-3 if scores were sparse
-    const fallbackPages = ["/play", "/fund", "/community", "/connect", "/blog"];
-    while (result.length < 3) {
-      const fb = fallbackPages.find((p) => !used.has(p));
+    // Fill remaining middle slots from fallback list
+    const fallbackPages = ["/play", "/fund", "/community", "/connect", "/blog", "/seasons", "/map", "/schedule", "/opportunity"];
+    while (result.length < middleTarget) {
+      const fb = fallbackPages.find((p) => !used.has(p) && !excluded.has(p));
       if (!fb) break;
       const meta = PAGE_META[fb]!;
       result.push({ path: fb, icon: meta.icon, label: meta.label });
       used.add(fb);
     }
 
-    // Slot 4
-    if (slot4) {
-      // Apply custom override for slot 4
-      const custom4 = customSlots["slot4"];
-      if (custom4 && PAGE_META[custom4]) {
+    // Final slot: CTA or next-best
+    if (ctaSlot) {
+      const custom4 = customSlots[`slot${slotCount}`];
+      if (custom4 && PAGE_META[custom4] && !excluded.has(custom4)) {
         const cm = PAGE_META[custom4];
         result.push({ path: custom4, icon: cm.icon, label: cm.label });
       } else {
-        result.push(slot4);
+        result.push(ctaSlot);
       }
-    } else {
-      // Fallback: next highest scoring page
-      const nextBest = scores.find((s) => !used.has(s.path) && PAGE_META[s.path]);
+    } else if (result.length < slotCount) {
+      const nextBest = scores.find((s) => !used.has(s.path) && PAGE_META[s.path] && !excluded.has(s.path));
       if (nextBest) {
         const meta = PAGE_META[nextBest.path]!;
         result.push({ path: nextBest.path, icon: meta.icon, label: meta.label });
       } else {
-        result.push({ path: "/", icon: "Compass", label: "Explore" });
+        const fb = fallbackPages.find((p) => !used.has(p) && !excluded.has(p));
+        if (fb) {
+          const meta = PAGE_META[fb]!;
+          result.push({ path: fb, icon: meta.icon, label: meta.label });
+        } else {
+          result.push({ path: "/", icon: "Compass", label: "Explore" });
+        }
       }
     }
 
-    return applyCurrentPageAwareness(result, currentPath, cta);
-  }, [location, counts, totalVisits, userPath, cta]);
+    return applyCurrentPageAwareness(result, currentPath, cta, excluded);
+  }, [location, counts, totalVisits, userPath, cta, excludePaths.join(","), slotCount, pinQuestsSlot]);
 
   return { slots };
 }
@@ -246,15 +288,18 @@ export function useSmartNav(): { slots: NavSlot[] } {
 function applyCurrentPageAwareness(
   slots: NavSlot[],
   currentPath: string,
-  cta: CtaSlot | null
+  cta: CtaSlot | null,
+  excluded: Set<string> = new Set()
 ): NavSlot[] {
-  const fallbackPages = ["/community", "/blog", "/connect", "/play", "/fund", "/governance", "/map"];
+  const fallbackPages = ["/community", "/blog", "/connect", "/play", "/fund", "/governance", "/map", "/seasons", "/schedule", "/opportunity", "/"];
 
   return slots.map((slot) => {
     if (slot.path === currentPath) {
       // Find a replacement not already in the slot list
       const usedPaths = new Set(slots.map((s) => s.path));
-      const replacement = fallbackPages.find((p) => !usedPaths.has(p) && p !== currentPath);
+      const replacement = fallbackPages.find(
+        (p) => !usedPaths.has(p) && p !== currentPath && !excluded.has(p)
+      );
       if (replacement && PAGE_META[replacement]) {
         return { path: replacement, icon: PAGE_META[replacement].icon, label: PAGE_META[replacement].label };
       }

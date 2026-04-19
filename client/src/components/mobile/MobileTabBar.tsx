@@ -1,54 +1,36 @@
 /**
- * MobileTabBar: 5-slot bottom nav per MEGA_BUILD_SPEC Part 3.
+ * MobileTabBar: adaptive 5-slot bottom nav ("command center").
  *
- * Slots: Home / Quests / Community / Profile / More
- * - Quests is visually primary (larger, accent color, family-of-wizards icon)
- * - More opens MobileMoreMenu via the "open-mobile-more" custom event
+ * Slots 1 through 4: adaptive, learned from user behavior plus path affinity,
+ * never show the current page, never show anchors owned by the FAB
+ * (Quests, Community, Profile) since those are always one tap away there.
+ * Slot 5 is always "More" which opens MobileMoreMenu via the
+ * "open-mobile-more" event.
  *
- * Mobile only. Hidden on md+ where SmartBottomNav still ships the
- * desktop nav + music controls.
+ * Mobile only. Desktop keeps SmartBottomNav.
  */
 import { Link, useLocation } from "wouter";
-import { Home, MessageCircle, User, LayoutGrid } from "lucide-react";
-import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
+import { LayoutGrid } from "lucide-react";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
+import { useSmartNav } from "@/hooks/useSmartNav";
+import { NavIcon } from "@/components/SmartBottomNav";
 
-type TabSlot = {
-  label: string;
-  href?: string;
-  icon: "home" | "wizards" | "community" | "profile" | "more";
-  primary?: boolean;
-  /** Custom event to dispatch instead of navigating. */
-  event?: string;
-};
-
-const SLOTS: TabSlot[] = [
-  { label: "Home", href: "/", icon: "home" },
-  { label: "Quests", href: "/quest", icon: "wizards", primary: true },
-  { label: "Community", href: "/community", icon: "community" },
-  { label: "Profile", href: "/profile", icon: "profile" },
-  { label: "More", icon: "more", event: "open-mobile-more" },
-];
-
-function SlotIcon({ icon, active, primary }: { icon: TabSlot["icon"]; active: boolean; primary?: boolean }) {
-  const size = primary ? 28 : 22;
-  const baseClass = primary
-    ? "text-[#1a472a]"
-    : active
-      ? "text-[#7dd87d]"
-      : "text-white/65";
-  if (icon === "wizards") return <TreeOfLifeIcon size={size} className={baseClass} />;
-  if (icon === "home") return <Home className={`w-5 h-5 ${baseClass}`} />;
-  if (icon === "community") return <MessageCircle className={`w-5 h-5 ${baseClass}`} />;
-  if (icon === "profile") return <User className={`w-5 h-5 ${baseClass}`} />;
-  if (icon === "more") return <LayoutGrid className={`w-5 h-5 ${baseClass}`} />;
-  return null;
-}
+// Routes the FAB radial menu pins. The adaptive TabBar never ranks these,
+// so the bar and the FAB never show the same destination at the same time.
+const FAB_ANCHOR_PATHS = ["/quest", "/community", "/profile"];
 
 export default function MobileTabBar() {
   const [location] = useLocation();
   const tint = useSeasonTint();
-  const currentPath = (location.split("?")[0].replace(/\/$/, "") || "/");
+  const currentPath = location.split("?")[0].replace(/\/$/, "") || "/";
+
+  // 4 adaptive slots, nothing pinned (Quests lives in the FAB now),
+  // anchors excluded, current page replaced by next-best.
+  const { slots } = useSmartNav({
+    excludePaths: FAB_ANCHOR_PATHS,
+    slotCount: 4,
+    pinQuestsSlot: false,
+  });
 
   return (
     <nav
@@ -62,62 +44,41 @@ export default function MobileTabBar() {
         style={{ background: `linear-gradient(to right, transparent, ${tint.primary}, transparent)` }}
       />
       <div className="grid grid-cols-5 h-16 items-stretch max-w-2xl mx-auto">
-        {SLOTS.map((slot) => {
-          const active = !!slot.href && (slot.href === "/" ? currentPath === "/" : currentPath.startsWith(slot.href));
-          const handleClick = (e: React.MouseEvent) => {
-            if (slot.event) {
-              e.preventDefault();
-              window.dispatchEvent(new CustomEvent(slot.event));
-            }
-          };
+        {slots.map((slot) => {
+          const active = slot.path === "/"
+            ? currentPath === "/"
+            : currentPath === slot.path || currentPath.startsWith(slot.path + "/");
 
-          // Visually elevated Quests tab with accent background
-          if (slot.primary) {
-            return (
-              <Link
-                key={slot.label}
-                href={slot.href ?? "/"}
-                className="flex items-center justify-center -mt-4"
-                aria-label={slot.label}
-              >
-                <div
-                  className="w-14 h-14 rounded-full shadow-lg flex flex-col items-center justify-center"
-                  style={{ backgroundColor: tint.primary }}
-                >
-                  <SlotIcon icon={slot.icon} active={active} primary />
-                </div>
-              </Link>
-            );
-          }
-
-          const inner = (
-            <div className={`flex flex-col items-center justify-center h-full gap-0.5 transition-colors ${
-              active ? "text-[#7dd87d]" : "text-white/65 hover:text-white/85"
-            }`}>
-              <SlotIcon icon={slot.icon} active={active} />
-              <span className="text-[10px] font-medium">{slot.label}</span>
-            </div>
-          );
-
-          if (slot.href) {
-            return (
-              <Link key={slot.label} href={slot.href} onClick={handleClick} aria-label={slot.label}>
-                {inner}
-              </Link>
-            );
-          }
           return (
-            <button
-              key={slot.label}
-              type="button"
-              onClick={handleClick}
+            <Link
+              key={slot.path}
+              href={slot.path}
               aria-label={slot.label}
-              className="w-full h-full"
+              className={`flex flex-col items-center justify-center gap-0.5 transition-colors relative ${
+                active ? "text-[#7dd87d]" : "text-white/65 hover:text-white/85"
+              }`}
             >
-              {inner}
-            </button>
+              <div className="relative">
+                <NavIcon name={slot.icon} className="w-5 h-5" />
+                {slot.isContextual && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#ffd700] rounded-full" />
+                )}
+              </div>
+              <span className="text-[10px] font-medium">{slot.label}</span>
+            </Link>
           );
         })}
+
+        {/* Slot 5: More (always pinned, opens MobileMoreMenu) */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-more"))}
+          aria-label="More"
+          className="flex flex-col items-center justify-center gap-0.5 transition-colors text-white/65 hover:text-white/85"
+        >
+          <LayoutGrid className="w-5 h-5" />
+          <span className="text-[10px] font-medium">More</span>
+        </button>
       </div>
     </nav>
   );

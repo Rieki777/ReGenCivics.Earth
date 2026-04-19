@@ -8,7 +8,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
-import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon, Info, Map, HeartPulse } from "lucide-react";
+import { ExternalLink, Flame, Sprout, Sun, Leaf, Snowflake, Sparkles, Heart, Users, Vote, Coins, BookOpen, TreeDeciduous, Droplets, Home as HomeIcon, Music, Circle, Wind, MessageSquare, GitBranch, Brain, Apple, Play, RotateCcw, ArrowRight, ChevronDown, Copy, Check, ClipboardCopy, Download, ImageIcon, Info, Map, HeartPulse, Clock } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { Link } from "wouter";
 import { ParallaxSection } from "@/components/ParallaxSection";
@@ -41,6 +41,7 @@ import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
 import { LockedQuestCard } from "@/components/LockedQuestCard";
 import { SeasonProgressRing } from "@/components/SeasonProgressRing";
 import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
+import { QUEST_MASTER_CONTENT } from "@/data/questMasterContent";
 import {
   SEASON_ORDER as SEASON_ORDER_ALL, SEASON_EMOJI as SHARED_SEASON_EMOJI,
   SEASON_LABELS as SHARED_SEASON_LABELS, SEASON_PALETTE,
@@ -142,7 +143,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 // Original quest IDs (0–12) get gold shimmer; future quests get green shimmer
 const ORIGINAL_QUEST_IDS = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12]);
 
-const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated, endorsements, isLocked }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean, endorsements?: Array<{ orgId: string; endorsementType: "recommended" | "required" }>, isLocked?: boolean }) {
+const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetails, isGreatNow, activePlayers, isActive, onToggleActive, isAuthenticated, endorsements, isLocked, isExpanded, onExpand, onCollapse }: { quest: typeof questData.spring[0] & { slug?: string }, colorClass: string, onOpenDetails?: (questId: string) => void, isGreatNow?: boolean, activePlayers?: number, isActive?: boolean, onToggleActive?: () => void, isAuthenticated?: boolean, endorsements?: Array<{ orgId: string; endorsementType: "recommended" | "required" }>, isLocked?: boolean, isExpanded?: boolean, onExpand?: () => void, onCollapse?: () => void }) {
   // Locked state: show greyed card with lock icon
   if (isLocked) {
     return (
@@ -154,236 +155,173 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
     );
   }
 
-  const Icon = quest.icon;
-  const hasDetails = questDetailsData[`quest-${quest.id}`];
   const questId = `quest-${quest.id}`;
-  const [showHowTo, setShowHowTo] = useState(false);
   const [imgError, setImgError] = useState(false);
-
-  const proposalName = `Quest ${quest.id}: ${quest.title}`;
+  const cardRef = useRef<HTMLDivElement>(null);
   const slug = quest.slug;
   const imgUrl = slug ? questImageUrl(quest.id, slug) : null;
   const shimmerClass = ORIGINAL_QUEST_IDS.has(quest.id) ? 'quest-card-gold' : 'quest-card-green';
-  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const masterContent = (QUEST_MASTER_CONTENT as Record<number | string, any>)[quest.id];
+
+  // Scroll into view when expanded
+  useEffect(() => {
+    if (!isExpanded || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const overflow = rect.bottom - window.innerHeight;
+    if (overflow > 0) {
+      window.scrollBy({ top: overflow + 16, behavior: 'smooth' });
+    }
+  }, [isExpanded]);
+
+  const handleCardClick = () => {
+    if (isExpanded) {
+      onOpenDetails?.(questId);
+    } else {
+      onExpand?.();
+    }
+  };
 
   return (
     <div
-      className={`relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-lg transition-all hover:-translate-y-1 ${colorClass} ${shimmerClass} group ${hasDetails ? 'cursor-pointer' : ''}`}
-      onClick={() => hasDetails && onOpenDetails?.(questId)}
+      ref={cardRef}
+      data-quest-card="true"
+      data-expanded={isExpanded ? "true" : "false"}
+      role="button"
+      tabIndex={0}
+      aria-expanded={isExpanded}
+      aria-label={isExpanded ? `Quest ${quest.id}: ${quest.title} expanded. Tap again to open full quest, press Escape to close.` : `Quest ${quest.id}: ${quest.title}. Tap to see details.`}
+      className={`quest-card relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-lg transition-all ${colorClass} ${shimmerClass} cursor-pointer`}
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); }
+        if (e.key === 'Escape' && isExpanded) { e.preventDefault(); onCollapse?.(); }
+      }}
     >
-      {/* Quest image */}
-      <div className="relative w-full h-36 bg-gradient-to-br from-[#1a472a]/10 to-[#4a7c59]/10 rounded-t-xl overflow-hidden">
-        {imgUrl ? (
-          <img
-            src={imgError ? questImageFallback(quest.id, slug!) : imgUrl}
-            alt={`Quest ${quest.id}: ${quest.title}`}
-            width={640}
-            height={360}
-            className="w-full h-full object-cover"
-            onError={() => setImgError(true)}
-            loading="lazy"
-            decoding="async"
-          />
-        ) : null}
-        {/* Completion Badge */}
-        <QuestCompletionBadge questId={questId} />
-      </div>
-
-      <div className="p-5">
-        <div className="flex items-start gap-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-[#4a7c59] flex items-center justify-center flex-shrink-0">
-            <Icon className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h4 className="font-bold text-[#1a472a] text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+      {/* ── TIER 1: Netflix poster ── */}
+      {!isExpanded && (
+        <>
+          <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-[#1a472a]/10 to-[#4a7c59]/10 rounded-t-xl overflow-hidden">
+            {imgUrl && (
+              <img
+                src={imgError ? questImageFallback(quest.id, slug!) : imgUrl}
+                alt={`Quest ${quest.id}: ${quest.title}`}
+                width={640} height={360}
+                className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
+                loading="lazy" decoding="async"
+              />
+            )}
+            {/* Dark gradient for title legibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            {/* Title overlay */}
+            <h4 className="absolute bottom-3 left-4 right-4 text-white font-semibold text-lg leading-snug line-clamp-2" style={{ fontFamily: 'var(--font-display)' }}>
               Quest {quest.id}: {quest.title}
             </h4>
-            <p className="text-xs text-[#1a472a]/70">{quest.subtitle}</p>
-            {QUEST_METADATA[questId]?.experience && (
-              <p className="text-[10px] italic text-[#4a7c59]/80 mt-0.5">{QUEST_METADATA[questId].experience}</p>
-            )}
-          </div>
-        </div>
-
-        {isGreatNow && (
-          <div className="mb-2">
-            <span className="text-[10px] bg-[#7dd87d]/20 text-[#7dd87d] px-1.5 py-0.5 rounded-full">
-              Good for right now
-            </span>
-          </div>
-        )}
-
-        <p className="text-sm text-[#1a472a]/80 mb-3">{quest.description}</p>
-
-        <div className="quest-card-tier2">
-          <div>
-            {quest.focus && (
-              <p className="text-xs text-[#1a472a]/60 mb-2">
-                <strong>Focus:</strong> {quest.focus}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs mb-2">
-          <span className="flex items-center gap-1 px-2 py-0.5 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">
-            +{quest.reward.regen}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex items-center gap-0.5 cursor-help">
-                  $ReGen <Info className="w-3 h-3 text-[#7dd87d]/60" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[200px] text-xs">
-                $ReGen tokens are earned by completing quests and track your regenerative contributions.
-              </TooltipContent>
-            </Tooltip>
-          </span>
-          <span className="flex items-center gap-1 px-2 py-0.5 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold">
-            +{quest.reward.rvoice}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex items-center gap-0.5 cursor-help">
-                  RGVoice <Info className="w-3 h-3 text-[#7dd87d]/60" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[200px] text-xs">
-                RGVoice tokens represent your governance voting weight in the ReGen Civics Game.
-              </TooltipContent>
-            </Tooltip>
-          </span>
-        </div>
-
-        <p className="text-xs text-[#1a472a]/60 italic mb-3">
-          <strong>Deliverable:</strong> {quest.deliverable}
-        </p>
-
-        {quest.forumUrl && (
-          <Link href={quest.forumUrl} className="inline-flex items-center gap-1.5 text-xs text-[#4a7c59] hover:text-[#1a472a] font-medium mb-3 transition-colors">
-            <MessageSquare className="w-3.5 h-3.5" />
-            Discuss in Forum
-          </Link>
-        )}
-
-        {/* Endorsement badges from DB */}
-        {endorsements && endorsements.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {endorsements.slice(0, 2).map((e) => (
-              <span
-                key={`${e.orgId}-${e.endorsementType}`}
-                className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                  e.endorsementType === "required"
-                    ? "bg-amber-100 text-amber-800 border-amber-300"
-                    : "bg-[#7dd87d]/20 text-[#1a472a] border-[#7dd87d]/30"
-                }`}
-              >
-                {e.endorsementType === "required" ? "⭐ Required by" : "🌱 Recommended by"} {e.orgId}
+            {/* Floating chips */}
+            <QuestCompletionBadge questId={questId} />
+            {masterContent?.videoUrl && (
+              <span className="absolute top-3 left-3 rounded-full bg-black/60 text-white backdrop-blur px-2 py-0.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1">
+                <Play className="w-3 h-3" />Trailer
               </span>
-            ))}
-            {endorsements.length > 2 && (
-              <span
-                className="text-[10px] px-2 py-0.5 bg-[#7dd87d]/20 text-[#1a472a] rounded-full border border-[#7dd87d]/30 cursor-help"
-                title={endorsements.slice(2).map(e => `${e.endorsementType === "required" ? "Required" : "Recommended"} by ${e.orgId}`).join(", ")}
-              >
-                +{endorsements.length - 2} more
+            )}
+            {isGreatNow && (
+              <span className="absolute bottom-3 right-3 text-xs bg-[#7dd87d]/20 text-[#7dd87d] px-1.5 py-0.5 rounded-full backdrop-blur">
+                Good for right now
               </span>
             )}
           </div>
-        )}
-
-        {/* Active players pill and I'm on this quest toggle */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          {(activePlayers ?? 0) > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-              🌿 {activePlayers} in the field
+          {/* Metadata row */}
+          <div className="flex items-center justify-between px-4 py-2 text-xs text-[#1a472a]/60">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-[#4a7c59]" />
+              {masterContent?.timeEstimate || 'Ongoing'}
             </span>
-          )}
-          {isAuthenticated && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleActive?.(); }}
-              className={`flex items-center gap-1.5 text-xs font-medium px-3 py-2 min-h-[36px] rounded-full transition-colors ${
-                isActive
-                  ? "bg-[#4a7c59] text-white"
-                  : "bg-[#1a472a]/10 text-[#1a472a] hover:bg-[#1a472a]/20"
-              }`}
-            >
-              <Leaf className={`w-3.5 h-3.5 ${isActive ? "fill-current" : ""}`} />
-              {isActive ? "In the field" : "I'm on this quest"}
-            </button>
-          )}
-        </div>
+            <span className="flex items-center gap-1 text-[#4a7c59] font-medium">
+              <Info className="w-3 h-3" /> See details
+            </span>
+          </div>
+        </>
+      )}
 
-        {/* How to Complete Section */}
-        <div className="mt-3 pt-3 border-t border-[#1a472a]/10">
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowHowTo(!showHowTo); }}
-            className="flex items-center gap-1.5 text-xs font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors mb-2"
-          >
-            <ClipboardCopy className="w-3.5 h-3.5" />
-            How to complete & claim tokens
-            <ChevronDown className={`w-3 h-3 transition-transform ${showHowTo ? 'rotate-180' : ''}`} />
-          </button>
-
-          {showHowTo && (
-            <div className="space-y-1.5 mb-3" onClick={(e) => e.stopPropagation()}>
-              <CopyButton text={proposalName} label="Proposal Name" />
-              <div className="text-[10px] text-[#1a472a]/50 px-2 py-1 bg-[#f8f5f0] rounded-md">
-                <strong>Details:</strong> Share your deliverables here: {quest.deliverable}
-              </div>
-              <CopyButton text={String(quest.reward.regen)} label="ReGen tokens" />
-              <CopyButton text="1" label="RGVoice" />
-              {imgUrl && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    downloadImage(imgUrl, `quest-${String(quest.id).padStart(2,'0')}-${slug}.webp`);
-                  }}
-                  className="flex items-center gap-1.5 text-xs bg-[#d4a574]/20 hover:bg-[#d4a574]/40 text-[#d4a574] border border-[#d4a574]/40 px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
-                >
-                  <Download className="w-3 h-3" />
-                  Download Quest Image
-                </button>
-              )}
-              <button
-                type="button"
-                className="flex items-center gap-1.5 text-xs bg-[#1a472a] hover:bg-[#0d2818] text-white px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
-                onClick={(e) => { e.stopPropagation(); setSubmitModalOpen(true); }}
-              >
-                <ExternalLink className="w-3 h-3" />
-                Submit Proposal on DAO
-              </button>
-              <SubmitToDAOModal
-                isOpen={submitModalOpen}
-                onClose={() => setSubmitModalOpen(false)}
-                questId={questId}
-                questTitle={proposalName}
-                questDescription={quest.description}
-                questDeliverable={quest.deliverable}
-                regenReward={quest.reward.regen}
-                leadImageUrl={imgUrl ?? undefined}
+      {/* ── TIER 2: About layer (expanded) ── */}
+      {isExpanded && (
+        <div className="p-5" id={`quest-${quest.id}-tier2`}>
+          {/* Header strip */}
+          <div className="flex items-start gap-3 mb-4">
+            {imgUrl && (
+              <img
+                src={imgError ? questImageFallback(quest.id, slug!) : imgUrl}
+                alt="" className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                loading="lazy" onError={() => setImgError(true)}
               />
+            )}
+            <div className="min-w-0">
+              <h4 className="font-bold text-[#1a472a] text-base leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                Quest {quest.id}: {quest.title}
+              </h4>
+              <p className="text-xs text-[#4a7c59] italic">{quest.subtitle}</p>
+              {QUEST_METADATA[questId]?.experience && (
+                <p className="text-xs italic text-[#4a7c59]/80 mt-0.5">{QUEST_METADATA[questId].experience}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Rewards + time */}
+          <div className="flex items-center gap-2 text-xs mb-3 flex-wrap">
+            <span className="px-2 py-0.5 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">+{quest.reward.regen} $ReGen</span>
+            <span className="px-2 py-0.5 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold">+{quest.reward.rvoice} RGVoice</span>
+            <span className="px-2 py-0.5 bg-[#1a472a]/5 text-[#1a472a]/60 rounded-full flex items-center gap-1">
+              <Clock className="w-3 h-3" /> {masterContent?.timeEstimate || 'Ongoing'}
+            </span>
+          </div>
+
+          {/* Story teaser */}
+          {masterContent?.storyTeaser?.length > 0 && (
+            <div className="mb-3 text-sm text-[#1a472a]/80 leading-relaxed space-y-2">
+              {masterContent.storyTeaser.map((p: string, i: number) => <p key={i}>{p}</p>)}
+              <button
+                onClick={(e) => { e.stopPropagation(); onOpenDetails?.(questId); }}
+                className="text-xs text-[#4a7c59] font-medium hover:text-[#1a472a] transition-colors"
+              >
+                Read full story in the guide &rarr;
+              </button>
             </div>
           )}
-        </div>
 
-        {/* Mark Complete Button */}
-        <div className="flex items-center justify-between mt-2 pt-3 border-t border-[#1a472a]/10">
-          <MarkCompleteButton questId={questId} size="sm" />
-          {hasDetails ? (
-            <p className="text-xs text-[#4a7c59] flex items-center gap-1 opacity-40 group-hover:opacity-80 transition-opacity">
-              <RotateCcw className="w-3 h-3" />
-              tap to explore
-            </p>
-          ) : quest.id >= 4 ? (
-            <p className="text-xs text-[#1a472a]/50 italic">Details coming soon</p>
-          ) : (
-            <p className="text-xs text-[#4a7c59] flex items-center gap-1 opacity-40 group-hover:opacity-80 transition-opacity">
-              <RotateCcw className="w-3 h-3" />
-              tap to explore
-            </p>
+          {/* Endorsements */}
+          {endorsements && endorsements.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {endorsements.slice(0, 2).map((e) => (
+                <span key={`${e.orgId}-${e.endorsementType}`} className={`text-xs px-2 py-0.5 rounded-full border ${e.endorsementType === "required" ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-[#7dd87d]/20 text-[#1a472a] border-[#7dd87d]/30"}`}>
+                  {e.endorsementType === "required" ? "⭐ Required by" : "🌱 Recommended by"} {e.orgId}
+                </span>
+              ))}
+            </div>
           )}
+
+          {/* Social proof */}
+          <div className="flex flex-wrap items-center gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
+            {(activePlayers ?? 0) > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                🌿 {activePlayers} in the field
+              </span>
+            )}
+            {quest.forumUrl && (
+              <Link href={quest.forumUrl} className="inline-flex items-center gap-1.5 text-xs text-[#4a7c59] hover:text-[#1a472a] font-medium transition-colors" onClick={(e) => e.stopPropagation()}>
+                <MessageSquare className="w-3.5 h-3.5" /> Discuss in Forum
+              </Link>
+            )}
+          </div>
+
+          {/* Primary CTA */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenDetails?.(questId); }}
+            className="w-full flex items-center justify-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white px-4 py-3 rounded-xl font-semibold transition-colors"
+          >
+            Do this quest <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 });
@@ -602,6 +540,30 @@ function SeasonCarousels({
   activeSeasonFilter, activity,
 }: SeasonCarouselProps) {
   const { isQuestCompleted: checkCompleted } = useQuestProgressContext();
+  const [expandedQuestId, setExpandedQuestId] = useState<string | null>(null);
+
+  // Outside-click to collapse
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (!target.closest('[data-quest-card="true"]')) {
+        setExpandedQuestId(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Escape to collapse
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && expandedQuestId) {
+        setExpandedQuestId(null);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [expandedQuestId]);
   const rotated = getRotatedSeasons(currentSeason as SeasonKey);
   const seasonsToShow = activeSeasonFilter ? [activeSeasonFilter] : rotated;
 
@@ -690,6 +652,9 @@ function SeasonCarousels({
                         }}
                         endorsements={activity.endorsementsMap[`quest-${quest.id}`] ?? []}
                         isLocked={unlocks ? !unlocks.isQuestUnlocked(`quest-${quest.id}`) : false}
+                        isExpanded={expandedQuestId === `quest-${quest.id}`}
+                        onExpand={() => setExpandedQuestId(`quest-${quest.id}`)}
+                        onCollapse={() => setExpandedQuestId(null)}
                       />
                     </div>
                   ))}

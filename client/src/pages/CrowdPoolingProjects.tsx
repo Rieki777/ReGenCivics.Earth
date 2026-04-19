@@ -1537,8 +1537,8 @@ export default function CrowdPoolingProjects() {
                         {/* Impact hover overlay (150-13) */}
                         <ImpactOverlay project={project} />
 
-                        {/* Funding % badge */}
-                        <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                        {/* Funding % badge - fades out on hover so the impact overlay has room */}
+                        <div className="absolute bottom-3 left-3 flex items-center gap-2 transition-opacity duration-200 group-hover:opacity-0 pointer-events-none">
                           <span className={`font-bold text-base px-3 py-1 rounded-lg leading-tight ${isAlmost ? "bg-amber-400 text-amber-900" : "bg-[#7dd87d] text-[#1a472a]"}`}>
                             {pct}%
                           </span>
@@ -1557,9 +1557,9 @@ export default function CrowdPoolingProjects() {
                           </Badge>
                         )}
 
-                        {/* Example badge */}
+                        {/* Example badge - fades out on hover so the impact overlay has room */}
                         {!(project as any).isFromDatabase && (
-                          <Badge className="absolute bottom-3 right-3 bg-amber-500/70 text-white text-[10px]">
+                          <Badge className="absolute bottom-3 right-3 bg-amber-500/70 text-white text-[10px] transition-opacity duration-200 group-hover:opacity-0 pointer-events-none">
                             Example
                           </Badge>
                         )}
