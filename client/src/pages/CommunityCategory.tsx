@@ -41,21 +41,21 @@ function getInitials(name: string): string {
 }
 
 const TAG_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  lesson: { label: "#lesson", color: "#92400e", bg: "#fef3c7" },
+  lesson: { label: "#lesson", color: "#92400e", bg: "#f0ebe3" },
   "seeking-support": { label: "#seeking-support", color: "#1a472a", bg: "#f0f7f0" },
-  "offering-support": { label: "#offering-support", color: "#166534", bg: "#dcfce7" },
+  "offering-support": { label: "#offering-support", color: "#1a472a", bg: "#f0f7f0" },
 };
 
 const POST_TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  case_study: { label: "Case Study", color: "#92400e", bg: "#fef3c7" },
+  case_study: { label: "Case Study", color: "#92400e", bg: "#f0ebe3" },
   seeking_team: { label: "Seeking Team", color: "#5b21b6", bg: "#ede9fe" },
-  discussion: { label: "Discussion", color: "#1a472a", bg: "#dcfce7" },
+  discussion: { label: "Discussion", color: "#1a472a", bg: "#f0f7f0" },
 };
 
 const THREAD_STAGE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  idea: { label: "Idea", color: "#166534", bg: "#dcfce7" },
+  idea: { label: "Idea", color: "#1a472a", bg: "#f0f7f0" },
   experiment: { label: "Experiment", color: "#1a472a", bg: "#f0f7f0" },
-  result: { label: "Result", color: "#92400e", bg: "#fef3c7" },
+  result: { label: "Result", color: "#92400e", bg: "#f0ebe3" },
 };
 
 function ThreadStageBadge({ stage }: { stage: string }) {
@@ -180,7 +180,7 @@ export default function CommunityCategory() {
       <BackButton />
 
       {/* Category Header */}
-      <section className="pt-24 pb-6 md:pt-28 md:pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]">
+      <section className="pt-24 pb-6 md:pt-28 md:pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
         <div className="container px-4 max-w-4xl mx-auto">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-white/50 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
@@ -358,7 +358,7 @@ export default function CommunityCategory() {
 
       {/* Newsletter CTA */}
       <section className="container px-4 max-w-4xl mx-auto pb-10">
-        <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
+        <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d2818]/40">
           <p className="text-white/70 text-sm font-medium mb-3" style={{ fontFamily: 'var(--font-display)' }}>
             Stay updated: get the ReGen Civics digest in your inbox
           </p>

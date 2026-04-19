@@ -152,9 +152,9 @@ export default function CommunityGuidelines() {
                 onChange={e => setCategory(e.target.value)}
                 className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
               >
-                <option value="" className="bg-[#1a3a1f]">Category (optional)</option>
+                <option value="" className="bg-[#1a472a]">Category (optional)</option>
                 {AGREEMENT_CATEGORIES.map(c => (
-                  <option key={c.value} value={c.value} className="bg-[#1a3a1f]">{c.icon} {c.label}</option>
+                  <option key={c.value} value={c.value} className="bg-[#1a472a]">{c.icon} {c.label}</option>
                 ))}
               </select>
               <div className="flex items-center gap-3">

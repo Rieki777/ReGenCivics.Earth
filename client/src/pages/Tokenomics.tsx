@@ -196,7 +196,7 @@ function AnimatedTokenFlow() {
         <button
           onClick={handlePlay}
           disabled={isPlaying}
-          className="focus-ring px-6 py-3 bg-[#7dd87d] text-[#1a472a] rounded-xl font-bold hover:bg-[#6bc76b] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="focus-ring px-6 py-3 bg-[#7dd87d] text-[#1a472a] rounded-xl font-bold hover:bg-[#9de89d] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           {isPlaying ? 'Playing...' : '▶ Play Full Cycle'}
         </button>
@@ -857,7 +857,7 @@ export default function Tokenomics() {
               <Link href="/loi">
                 <Button
                   size="lg"
-                  className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc76b] text-[#1a472a] font-bold px-8"
+                  className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-8"
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
                   <Wallet className="mr-2 w-5 h-5" /> Acquire $RCivics
@@ -1244,7 +1244,7 @@ export default function Tokenomics() {
               <Link href="/investor">
                 <Button
                   size="lg"
-                  className="rounded-xl bg-[#7dd87d] hover:bg-[#6bc76b] text-[#1a472a] font-bold px-8"
+                  className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-8"
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
                   <Wallet className="mr-2 w-5 h-5" /> Invest in the Movement

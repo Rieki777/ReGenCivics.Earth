@@ -372,7 +372,7 @@ function AnimatedProgressBar({
   const isAlmostFunded = totalPct >= 80;
   const barGoldClass = isAlmostFunded ? "from-amber-400 to-amber-500" : "from-[#7dd87d] to-[#4a7c59]";
   const labelColor = dark ? "text-white/80" : "text-[#1a472a]/80";
-  const textColor = dark ? "text-[#7dd87d]" : "text-[#336644]";
+  const textColor = dark ? "text-[#7dd87d]" : "text-[#4a7c59]";
   const amberTextColor = dark ? "text-amber-300" : "text-amber-600";
   const trackColor = dark ? "bg-white/10" : "bg-[#1a472a]/10";
 

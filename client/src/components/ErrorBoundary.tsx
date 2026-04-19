@@ -37,7 +37,7 @@ function DefaultFallback() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <a
             href="/"
-            className="inline-block px-6 py-2.5 rounded-full bg-[#1a472a] text-white text-sm font-semibold hover:bg-[#2d6a4f] transition-colors"
+            className="inline-block px-6 py-2.5 rounded-full bg-[#1a472a] text-white text-sm font-semibold hover:bg-[#4a7c59] transition-colors"
           >
             Go to Home
           </a>

@@ -49,7 +49,7 @@ export function QuestArtifactsGallery() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
-          <div className="relative w-full sm:max-w-md max-h-[85vh] bg-[#0f2d1a] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+          <div className="relative w-full sm:max-w-md max-h-[85vh] bg-[#0d2818] rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-white/10">
               <div>

@@ -232,7 +232,7 @@ export default function ToolsLibrary() {
             className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
           >
             {PRICING_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-[#1a2f1a]">
+              <option key={opt.value} value={opt.value} className="bg-[#1a472a]">
                 {opt.label}
               </option>
             ))}
@@ -244,7 +244,7 @@ export default function ToolsLibrary() {
             className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
           >
             {TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-[#1a2f1a]">
+              <option key={opt.value} value={opt.value} className="bg-[#1a472a]">
                 {opt.label}
               </option>
             ))}
@@ -256,7 +256,7 @@ export default function ToolsLibrary() {
             className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
           >
             {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-[#1a2f1a]">
+              <option key={opt.value} value={opt.value} className="bg-[#1a472a]">
                 {opt.label}
               </option>
             ))}

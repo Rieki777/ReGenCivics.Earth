@@ -76,7 +76,7 @@ export function HeroPageLoader({
       {/* Loading screen - removed from DOM after fade to free GPU layers */}
       {!loaderDismissed && (
         <div
-          className={`fixed inset-0 z-[9999] bg-[#0a1a0a] flex items-center justify-center transition-opacity duration-700 ${
+          className={`fixed inset-0 z-[9999] bg-[#0d2818] flex items-center justify-center transition-opacity duration-700 ${
             revealed ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
           onTransitionEnd={() => {

@@ -39,7 +39,7 @@ export function BannerDisplay({ bannerKey, className = '' }: BannerDisplayProps)
           
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-1 text-[#1a472a] hover:text-[#0f2d1a] font-semibold transition-colors flex-shrink-0"
+            className="flex items-center gap-1 text-[#1a472a] hover:text-[#0d2818] font-semibold transition-colors flex-shrink-0"
           >
             {isExpanded ? (
               <>

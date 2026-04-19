@@ -730,7 +730,7 @@ function EarthDayCountdown() {
 
         <div className="text-center mt-6">
           <a href="https://app.hypha.earth/en/dho/regen-civics/agreements" target="_blank" rel="noopener noreferrer">
-            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc76b] font-bold">
+            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
               Preview on Hypha Now →
             </Button>
           </a>
@@ -1333,7 +1333,7 @@ export default function Governance() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="https://app.hypha.earth/en/dho/regen-civics/agreements" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#6bc76b] font-bold">
+                <Button size="lg" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
                   Explore Fund Governance →
                 </Button>
               </a>

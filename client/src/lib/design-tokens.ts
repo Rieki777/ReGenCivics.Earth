@@ -77,6 +77,34 @@ export const alert = {
 } as const;
 
 /**
+ * Earth: warm brown and decorative tones used in character art, the Living
+ * Tree dimensions, and heritage illustrations. Not UI chrome.
+ */
+export const earth = {
+  deep: "#5a3a1a",      // deep soil / character art shadow
+  warm: "#8b6914",      // golden earth, heritage
+  clay: "#c4785b",      // financial dimension (LivingTree)
+  ochre: "#e8a838",     // warm highlight, gold variant
+  terracotta: "#7a6347", // neutral earth
+} as const;
+
+/**
+ * Decorative: intentional off-palette accents for specific components.
+ * Each has a documented owner. Do not use these for general UI.
+ */
+export const decorative = {
+  pink: "#f472b6",      // spiritual dimension (LivingTree, game)
+  sky: "#6ba3be",       // social dimension (LivingTree)
+  lavender: "#b07cb5",  // cultural dimension (LivingTree)
+  violet: "#a78bfa",    // game/player accent
+  orange: "#f97316",    // energy, urgency
+  tangerine: "#fb923c", // soft warm accent
+  slate: "#94a3b8",     // muted secondary text
+  nightForest: "#0a1f0f", // deepest dark bg variant
+  nightShade: "#0d1f10",  // dark bg variant
+} as const;
+
+/**
  * Brand: reserved for third-party brand buttons. These are the only
  * off-palette colors allowed, and only on buttons that link to those
  * services.
@@ -84,6 +112,9 @@ export const alert = {
 export const brand = {
   twitter: "#1da1f2",
   linkedin: "#0a66c2",
+  google: "#4285f4",    // Google Maps / Google sign-in
+  youtube: "#e91e63",   // YouTube embeds
+  whatsapp: "#4caf50",  // WhatsApp share
 } as const;
 
 /**

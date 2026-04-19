@@ -3,7 +3,7 @@ export default function SeasonalRhythmSection() {
     {
       emoji: "❄️",
       name: "Winter",
-      color: "#93c5fd",
+      color: "#7dd87d",
       months: "Dec – Mar",
       theme: "Building & Preparing",
       description:
@@ -73,7 +73,7 @@ export default function SeasonalRhythmSection() {
     <section
       style={{
         background: "linear-gradient(180deg, #0d2818 0%, #1a472a 50%, #0d2818 100%)",
-        color: "#e2e8f0",
+        color: "#e8e4de",
         padding: "5rem 1.5rem",
       }}
     >
@@ -83,7 +83,7 @@ export default function SeasonalRhythmSection() {
           <span
             style={{
               display: "inline-block",
-              background: "linear-gradient(135deg, #b8860b, #daa520)",
+              background: "linear-gradient(135deg, #d4a574, #ffd700)",
               color: "#1a1a1a",
               fontSize: "0.75rem",
               fontWeight: 700,
@@ -137,7 +137,7 @@ export default function SeasonalRhythmSection() {
             >
               Macro: The Four Seasons
             </h3>
-            <p style={{ margin: 0, lineHeight: 1.6, color: "#cbd5e1" }}>
+            <p style={{ margin: 0, lineHeight: 1.6, color: "#e8e4de" }}>
               Solstice to solstice, roughly 91 days each. The big arcs of our
               year, from building to growing to gathering to resting.
             </p>
@@ -161,7 +161,7 @@ export default function SeasonalRhythmSection() {
             >
               Micro: The Lunar Cycle
             </h3>
-            <p style={{ margin: 0, lineHeight: 1.6, color: "#cbd5e1" }}>
+            <p style={{ margin: 0, lineHeight: 1.6, color: "#e8e4de" }}>
               New moon to new moon, roughly 29.5 days. The heartbeat within each
               season. Gratitude, reflection, and energy follow the moon.
             </p>
@@ -232,13 +232,13 @@ export default function SeasonalRhythmSection() {
                 style={{
                   fontSize: "0.875rem",
                   fontWeight: 600,
-                  color: "#e2e8f0",
+                  color: "#e8e4de",
                   margin: "0 0 0.5rem",
                 }}
               >
                 {s.theme}
               </p>
-              <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "#cbd5e1", margin: "0 0 0.75rem" }}>
+              <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "#e8e4de", margin: "0 0 0.75rem" }}>
                 {s.description}
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
@@ -338,7 +338,7 @@ export default function SeasonalRhythmSection() {
                 >
                   {step.label}
                 </h4>
-                <p style={{ fontSize: "0.85rem", color: "#cbd5e1", margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontSize: "0.85rem", color: "#e8e4de", margin: 0, lineHeight: 1.5 }}>
                   {step.description}
                 </p>
               </div>
@@ -372,7 +372,7 @@ export default function SeasonalRhythmSection() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              background: "linear-gradient(90deg, #1e293b 0%, #334155 25%, #e2e8f0 50%, #334155 75%, #1e293b 100%)",
+              background: "linear-gradient(90deg, #1e293b 0%, #334155 25%, #e8e4de 50%, #334155 75%, #1e293b 100%)",
               borderRadius: "9999px",
               padding: "0.75rem 1.5rem",
               marginBottom: "1.5rem",
@@ -408,13 +408,13 @@ export default function SeasonalRhythmSection() {
                   fontFamily: "var(--font-display)",
                   fontSize: "1.05rem",
                   fontWeight: 600,
-                  color: "#e2e8f0",
+                  color: "#e8e4de",
                   margin: "0 0 0.375rem",
                 }}
               >
                 Full Moon Energy
               </h4>
-              <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "#cbd5e1", margin: 0 }}>
+              <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "#e8e4de", margin: 0 }}>
                 Peak visibility. Gratitude rounds happen here. Players recognize each other's
                 contributions, and the community celebrates what's been built since the last full
                 moon.
@@ -434,13 +434,13 @@ export default function SeasonalRhythmSection() {
                   fontFamily: "var(--font-display)",
                   fontSize: "1.05rem",
                   fontWeight: 600,
-                  color: "#e2e8f0",
+                  color: "#e8e4de",
                   margin: "0 0 0.375rem",
                 }}
               >
                 New Moon Energy
               </h4>
-              <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "#cbd5e1", margin: 0 }}>
+              <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "#e8e4de", margin: 0 }}>
                 Quiet beginnings. Intentions are set, new quests open, and the cycle resets. A
                 good time to start something, plant a seed, or simply rest.
               </p>
@@ -480,7 +480,7 @@ export default function SeasonalRhythmSection() {
                   gap: "0.75rem",
                   fontSize: "0.925rem",
                   lineHeight: 1.6,
-                  color: "#cbd5e1",
+                  color: "#e8e4de",
                 }}
               >
                 <span

@@ -411,8 +411,8 @@ function CountUpStat({ label, value, note, numericValue, suffix = '' }: {
 
 // Allocation donut chart
 const allocationData = [
-  { name: 'Land Projects', value: 60, color: '#4ade80' },
-  { name: 'Operations', value: 30, color: '#86efac' },
+  { name: 'Land Projects', value: 60, color: '#7dd87d' },
+  { name: 'Operations', value: 30, color: '#9de89d' },
   { name: 'Reserve', value: 10, color: '#bbf7d0' },
 ];
 
@@ -1704,16 +1704,16 @@ export default function Opportunity() {
                   <PieChart width={160} height={160}>
                     <Pie
                       data={[
-                        { name: 'Council of Domain Experts', value: 40, color: '#4ade80' },
-                        { name: 'Land Projects', value: 20, color: '#86efac' },
+                        { name: 'Council of Domain Experts', value: 40, color: '#7dd87d' },
+                        { name: 'Land Projects', value: 20, color: '#9de89d' },
                         { name: 'Alliance Organizations', value: 20, color: '#bbf7d0' },
                         { name: 'Investors (YOU)', value: 20, color: '#ffd700' },
                       ]}
                       cx={80} cy={80} innerRadius={45} outerRadius={75} dataKey="value" isAnimationActive
                     >
                       {[
-                        { name: 'Council of Domain Experts', value: 40, color: '#4ade80' },
-                        { name: 'Land Projects', value: 20, color: '#86efac' },
+                        { name: 'Council of Domain Experts', value: 40, color: '#7dd87d' },
+                        { name: 'Land Projects', value: 20, color: '#9de89d' },
                         { name: 'Alliance Organizations', value: 20, color: '#bbf7d0' },
                         { name: 'Investors (YOU)', value: 20, color: '#ffd700' },
                       ].map((entry, i) => <Cell key={i} fill={entry.color} />)}
@@ -1722,8 +1722,8 @@ export default function Opportunity() {
                   </PieChart>
                   <div className="space-y-1.5 flex-1 text-xs">
                     {[
-                      { pct: '40%', label: 'Council of Domain Experts', color: '#4ade80' },
-                      { pct: '20%', label: 'Land Projects', color: '#86efac' },
+                      { pct: '40%', label: 'Council of Domain Experts', color: '#7dd87d' },
+                      { pct: '20%', label: 'Land Projects', color: '#9de89d' },
                       { pct: '20%', label: 'Alliance Organizations', color: '#bbf7d0' },
                       { pct: '20%', label: 'Investors (YOU)', color: '#ffd700' },
                     ].map((d, i) => (
@@ -1830,8 +1830,8 @@ export default function Opportunity() {
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart
                     data={[
-                      { name: 'PE Sustainable\nReal Assets', irr: 14, color: '#86efac' },
-                      { name: 'Venture Capital', irr: 18, color: '#86efac' },
+                      { name: 'PE Sustainable\nReal Assets', irr: 14, color: '#9de89d' },
+                      { name: 'Venture Capital', irr: 18, color: '#9de89d' },
                       { name: 'ReGen Civics\n(Target)', irr: 15, color: '#ffd700' },
                     ]}
                     margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
@@ -1842,8 +1842,8 @@ export default function Opportunity() {
                     <Tooltip formatter={(value) => `${value}% IRR`} />
                     <Bar dataKey="irr" radius={[4, 4, 0, 0]}>
                       {[
-                        { color: '#86efac' },
-                        { color: '#86efac' },
+                        { color: '#9de89d' },
+                        { color: '#9de89d' },
                         { color: '#ffd700' },
                       ].map((entry, i) => (
                         <Cell key={i} fill={entry.color} />

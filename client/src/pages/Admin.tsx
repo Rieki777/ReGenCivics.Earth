@@ -2585,7 +2585,7 @@ function AdminAMAPanel() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => toggleMut.mutate({ id: ama.id, isActive: !ama.isActive })}
-                className={`text-xs px-2 py-1 rounded-full border ${ama.isActive ? "bg-[#7dd87d]/15 text-[#5ab85a] border-[#7dd87d]/25" : "bg-white/5 text-white/70 border-white/15"}`}
+                className={`text-xs px-2 py-1 rounded-full border ${ama.isActive ? "bg-[#7dd87d]/15 text-[#7dd87d] border-[#7dd87d]/25" : "bg-white/5 text-white/70 border-white/15"}`}
               >
                 {ama.isActive ? "Active" : "Inactive"}
               </button>

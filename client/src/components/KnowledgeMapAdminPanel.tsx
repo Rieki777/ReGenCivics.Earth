@@ -58,7 +58,7 @@ export default function KnowledgeMapAdminPanel() {
       </div>
 
       {/* AI Suggest */}
-      <div className="bg-[#0d1f0d]/60 border border-[#7dd87d]/20 rounded-xl p-4 space-y-3">
+      <div className="bg-[#0d2818]/60 border border-[#7dd87d]/20 rounded-xl p-4 space-y-3">
         <p className="text-sm font-medium text-white/80 flex items-center gap-1.5">
           <Sparkles className="w-4 h-4 text-[#7dd87d]" />
           Ask Claude to suggest entries
@@ -67,11 +67,11 @@ export default function KnowledgeMapAdminPanel() {
           <select
             value={suggestCatId}
             onChange={e => setSuggestCatId(Number(e.target.value))}
-            className="flex-1 bg-[#1a2e1a] border border-[#7dd87d]/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60"
+            className="flex-1 bg-[#1a472a] border border-[#7dd87d]/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60"
           >
-            <option value={0} className="bg-[#1a2e1a] text-white">Select category…</option>
+            <option value={0} className="bg-[#1a472a] text-white">Select category…</option>
             {categories.map(c => (
-              <option key={c.id} value={c.id} className="bg-[#1a2e1a] text-white">{c.name}</option>
+              <option key={c.id} value={c.id} className="bg-[#1a472a] text-white">{c.name}</option>
             ))}
           </select>
           <Button
@@ -82,7 +82,7 @@ export default function KnowledgeMapAdminPanel() {
               if (!cat) return;
               suggestMut.mutate({ categoryId: cat.id, categoryName: cat.name });
             }}
-            className="bg-[#336644] hover:bg-[#3d7a52] text-white"
+            className="bg-[#4a7c59] hover:bg-[#3d7a52] text-white"
           >
             {suggestMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Suggest"}
           </Button>
@@ -108,7 +108,7 @@ export default function KnowledgeMapAdminPanel() {
               <div className="flex gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => approveMut.mutate({ id: entry.id })}
-                  className="p-1.5 rounded-md bg-[#336644]/40 hover:bg-[#336644] text-[#7dd87d] transition-colors"
+                  className="p-1.5 rounded-md bg-[#4a7c59]/40 hover:bg-[#4a7c59] text-[#7dd87d] transition-colors"
                   title="Approve"
                 >
                   <Check className="w-3.5 h-3.5" />
@@ -128,7 +128,7 @@ export default function KnowledgeMapAdminPanel() {
       )}
 
       {/* Add manually */}
-      <div className="bg-[#0d1f0d]/60 border border-[#7dd87d]/20 rounded-xl p-4 space-y-3">
+      <div className="bg-[#0d2818]/60 border border-[#7dd87d]/20 rounded-xl p-4 space-y-3">
         <p className="text-sm font-medium text-white/80 flex items-center gap-1.5">
           <Plus className="w-4 h-4 text-[#7dd87d]" />
           Add entry manually
@@ -137,44 +137,44 @@ export default function KnowledgeMapAdminPanel() {
           <select
             value={form.categoryId}
             onChange={e => setForm(f => ({ ...f, categoryId: Number(e.target.value) }))}
-            className="col-span-2 bg-[#1a2e1a] border border-[#7dd87d]/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60"
+            className="col-span-2 bg-[#1a472a] border border-[#7dd87d]/30 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#7dd87d]/60"
           >
-            <option value={0} className="bg-[#1a2e1a] text-white">Select category…</option>
+            <option value={0} className="bg-[#1a472a] text-white">Select category…</option>
             {categories.map(c => (
-              <option key={c.id} value={c.id} className="bg-[#1a2e1a] text-white">{c.name}</option>
+              <option key={c.id} value={c.id} className="bg-[#1a472a] text-white">{c.name}</option>
             ))}
           </select>
           <Input
             placeholder="Title"
             value={form.title}
             onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-            className="col-span-2 bg-[#1a2e1a] border-[#7dd87d]/30 text-white text-sm"
+            className="col-span-2 bg-[#1a472a] border-[#7dd87d]/30 text-white text-sm"
           />
           <Textarea
             placeholder="Short summary (optional)"
             value={form.summary}
             onChange={e => setForm(f => ({ ...f, summary: e.target.value }))}
             rows={2}
-            className="col-span-2 bg-[#1a2e1a] border-[#7dd87d]/30 text-white text-sm resize-none"
+            className="col-span-2 bg-[#1a472a] border-[#7dd87d]/30 text-white text-sm resize-none"
           />
           <Input
             placeholder="Post ID (if forum post)"
             value={form.postId}
             onChange={e => setForm(f => ({ ...f, postId: e.target.value }))}
-            className="bg-[#1a2e1a] border-[#7dd87d]/30 text-white text-sm"
+            className="bg-[#1a472a] border-[#7dd87d]/30 text-white text-sm"
           />
           <Input
             placeholder="URL (if external)"
             value={form.url}
             onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
-            className="bg-[#1a2e1a] border-[#7dd87d]/30 text-white text-sm"
+            className="bg-[#1a472a] border-[#7dd87d]/30 text-white text-sm"
           />
         </div>
         <Button
           size="sm"
           disabled={addMut.isPending}
           onClick={handleAdd}
-          className="bg-[#336644] hover:bg-[#3d7a52] text-white"
+          className="bg-[#4a7c59] hover:bg-[#3d7a52] text-white"
         >
           {addMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Entry"}
         </Button>
@@ -190,7 +190,7 @@ export default function KnowledgeMapAdminPanel() {
           <p className="text-sm text-white/55">No entries yet. Use AI or add manually.</p>
         )}
         {approved.map(entry => (
-          <div key={entry.id} className="flex items-start gap-3 bg-[#0d1f0d]/40 border border-[#7dd87d]/15 rounded-lg p-3">
+          <div key={entry.id} className="flex items-start gap-3 bg-[#0d2818]/40 border border-[#7dd87d]/15 rounded-lg p-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white">{entry.title}</p>
               {entry.summary && <p className="text-xs text-white/60 mt-0.5">{entry.summary}</p>}

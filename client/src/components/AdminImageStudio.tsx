@@ -231,7 +231,7 @@ export function AdminImageStudio() {
               <button
                 onClick={handleApply}
                 disabled={isApplying}
-                className="flex items-center gap-2 bg-[#7dd87d] hover:bg-[#6bc96b] text-[#1a472a] font-bold px-6 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-6 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isApplying ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Applying…</>

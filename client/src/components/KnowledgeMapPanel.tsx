@@ -21,7 +21,7 @@ export default function KnowledgeMapPanel({ categoryId, categoryName }: Props) {
   if (isLoading || entries.length === 0) return null;
 
   return (
-    <div className="mb-6 rounded-xl border border-[#7dd87d]/25 bg-[#0d1f0d]/60 p-4">
+    <div className="mb-6 rounded-xl border border-[#7dd87d]/25 bg-[#0d2818]/60 p-4">
       <div className="flex items-center gap-2 mb-3">
         <BookOpen className="w-4 h-4 text-[#7dd87d]" />
         <span className="text-sm font-semibold text-[#7dd87d]">

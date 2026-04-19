@@ -41,7 +41,7 @@ export const BADGE_DEFS: BadgeDef[] = [
     tier: "bronze",
     icon: "🌱",
     ringColor: "#7dd87d",
-    ringGradient: "linear-gradient(135deg, #7dd87d, #93c5fd, #7dd87d)",
+    ringGradient: "linear-gradient(135deg, #7dd87d, #7dd87d, #7dd87d)",
   },
   {
     id: "campaign_launcher",

@@ -170,7 +170,7 @@ export function SubmitToDAOModal({
                 <button
                   type="submit"
                   disabled={createBridge.isPending}
-                  className="w-full flex items-center justify-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+                  className="w-full flex items-center justify-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
                 >
                   {createBridge.isPending ? (
                     "Preparing your proposal..."

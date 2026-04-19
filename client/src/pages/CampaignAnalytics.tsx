@@ -55,7 +55,7 @@ export default function CampaignAnalytics() {
           </CardHeader>
           <CardContent>
             <Link href="/campaigns">
-              <Button className="w-full bg-[#4a7c59] hover:bg-[#3d6b4a]">
+              <Button className="w-full bg-[#4a7c59] hover:bg-[#4a7c59]">
                 Back to Campaigns
               </Button>
             </Link>
@@ -81,7 +81,7 @@ export default function CampaignAnalytics() {
           </CardHeader>
           <CardContent>
             <Link href="/campaigns">
-              <Button className="w-full bg-[#4a7c59] hover:bg-[#3d6b4a]">
+              <Button className="w-full bg-[#4a7c59] hover:bg-[#4a7c59]">
                 Browse Campaigns
               </Button>
             </Link>

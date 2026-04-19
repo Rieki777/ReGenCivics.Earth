@@ -49,7 +49,7 @@ const CAPITAL_COLORS: Record<CapitalType, string> = {
   living: "#7dd87d",
   intellectual: "#d4a574",
   experiential: "#e8a87c",
-  material: "#8b7355",
+  material: "#2d5a3d",
   spiritual: "#e8d4a0",
   health: "#e06c75",
 };

@@ -635,7 +635,7 @@ function EntityCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs text-[#d4a574] hover:text-[#e8c49a] underline"
+                className="inline-flex items-center gap-1 text-xs text-[#d4a574] hover:text-[#d4a574] underline"
               >
                 <ExternalLink className="w-3 h-3" /> Website
               </a>
@@ -644,7 +644,7 @@ function EntityCard({
               <a
                 href={entity.forumThreadUrl}
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs text-[#7dd87d] hover:text-[#9fe89f] underline"
+                className="inline-flex items-center gap-1 text-xs text-[#7dd87d] hover:text-[#9de89d] underline"
               >
                 <MessageCircle className="w-3 h-3" /> Forum thread
               </a>
@@ -1009,7 +1009,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           // Seasonal color variations: Season 1 = classic deep green, Season 2 = brighter lime green
           const isSeason2 = d.season === "Season 2";
           const baseColor = getColor(d.type, d.isGlobal);
-          const color = (d.type === "land_project" || d.type === "applicant") && isSeason2 ? "#a3e635" : baseColor;
+          const color = (d.type === "land_project" || d.type === "applicant") && isSeason2 ? "#9de89d" : baseColor;
           const isLandProject = d.type === "land_project" || d.type === "applicant";
 
           // Unique animation delay per entity for staggered sprout effect
@@ -1046,7 +1046,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               const layerBot = canopyTop + (canopyBot - canopyTop) * ((i + 1.3) / layers) * 0.75;
               const widthFrac = 0.35 + (i / layers) * 0.65;
               const halfW = cx * widthFrac;
-              const darkGreen = i % 2 === 0 ? color : (color === "#a3e635" ? "#84cc16" : color === "#7dd87d" ? "#5cb85c" : "#4a7c59");
+              const darkGreen = i % 2 === 0 ? color : (color === "#9de89d" ? "#84cc16" : color === "#7dd87d" ? "#7dd87d" : "#4a7c59");
               const opacity = 0.75 + (layers - i) * 0.06;
               triangles += `<polygon points="${cx},${layerTop} ${cx + halfW},${layerBot} ${cx - halfW},${layerBot}" fill="${darkGreen}" opacity="${opacity}" />`;
             }
@@ -1063,7 +1063,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               + hoverPopup
               + `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`
               // Trunk - tapered
-              + `<path d="M${cx - trunkW/2},${canopyBot - 1} L${cx - trunkW*0.35},${h} L${cx + trunkW*0.35},${h} L${cx + trunkW/2},${canopyBot - 1} Z" fill="#5d3a1a" />`
+              + `<path d="M${cx - trunkW/2},${canopyBot - 1} L${cx - trunkW*0.35},${h} L${cx + trunkW*0.35},${h} L${cx + trunkW/2},${canopyBot - 1} Z" fill="#1a472a" />`
               + `<path d="M${cx - trunkW*0.2},${canopyBot} L${cx - trunkW*0.15},${h - 1} L${cx + trunkW*0.05},${h - 1} L${cx + trunkW*0.1},${canopyBot}" fill="#7a4f2b" opacity="0.5" />`
               // Conifer canopy layers
               + triangles
@@ -1517,11 +1517,11 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               <p className="text-white/60 text-[10px] uppercase tracking-wider mb-1.5">Legend</p>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <svg width="14" height="20" viewBox="0 0 14 20"><polygon points="7,1 12,8 2,8" fill="#7dd87d" opacity="0.9" /><polygon points="7,4 13,13 1,13" fill="#5cb85c" opacity="0.85" /><polygon points="7,7 14,17 0,17" fill="#7dd87d" opacity="0.8" /><rect x="5.5" y="16" width="3" height="4" rx="1" fill="#5d3a1a" /></svg>
+                  <svg width="14" height="20" viewBox="0 0 14 20"><polygon points="7,1 12,8 2,8" fill="#7dd87d" opacity="0.9" /><polygon points="7,4 13,13 1,13" fill="#7dd87d" opacity="0.85" /><polygon points="7,7 14,17 0,17" fill="#7dd87d" opacity="0.8" /><rect x="5.5" y="16" width="3" height="4" rx="1" fill="#1a472a" /></svg>
                   <span className="text-white/70 text-[10px]">Season 1 Projects (sized by acreage)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg width="14" height="20" viewBox="0 0 14 20"><polygon points="7,1 12,8 2,8" fill="#a3e635" opacity="0.9" /><polygon points="7,4 13,13 1,13" fill="#84cc16" opacity="0.85" /><polygon points="7,7 14,17 0,17" fill="#a3e635" opacity="0.8" /><rect x="5.5" y="16" width="3" height="4" rx="1" fill="#5d3a1a" /></svg>
+                  <svg width="14" height="20" viewBox="0 0 14 20"><polygon points="7,1 12,8 2,8" fill="#9de89d" opacity="0.9" /><polygon points="7,4 13,13 1,13" fill="#84cc16" opacity="0.85" /><polygon points="7,7 14,17 0,17" fill="#9de89d" opacity="0.8" /><rect x="5.5" y="16" width="3" height="4" rx="1" fill="#1a472a" /></svg>
                   <span className="text-white/70 text-[10px]">Season 2 Projects (lime green)</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1537,15 +1537,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                   <p className="text-white/60 text-[9px] mb-1">Tree size by acreage:</p>
                   <div className="flex items-end gap-3 pl-1">
                     <div className="flex flex-col items-center">
-                      <svg width="8" height="14" viewBox="0 0 8 14"><polygon points="4,1 7,6 1,6" fill="#7dd87d" opacity="0.8" /><polygon points="4,3 8,10 0,10" fill="#5cb85c" opacity="0.7" /><rect x="3" y="9" width="2" height="4" fill="#5d3a1a" /></svg>
+                      <svg width="8" height="14" viewBox="0 0 8 14"><polygon points="4,1 7,6 1,6" fill="#7dd87d" opacity="0.8" /><polygon points="4,3 8,10 0,10" fill="#7dd87d" opacity="0.7" /><rect x="3" y="9" width="2" height="4" fill="#1a472a" /></svg>
                       <span className="text-white/55 text-[8px]">1-10</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <svg width="12" height="20" viewBox="0 0 12 20"><polygon points="6,1 10,7 2,7" fill="#7dd87d" opacity="0.8" /><polygon points="6,4 11,13 1,13" fill="#5cb85c" opacity="0.7" /><rect x="4.5" y="12" width="3" height="6" fill="#5d3a1a" /></svg>
+                      <svg width="12" height="20" viewBox="0 0 12 20"><polygon points="6,1 10,7 2,7" fill="#7dd87d" opacity="0.8" /><polygon points="6,4 11,13 1,13" fill="#7dd87d" opacity="0.7" /><rect x="4.5" y="12" width="3" height="6" fill="#1a472a" /></svg>
                       <span className="text-white/55 text-[8px]">100+</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <svg width="16" height="26" viewBox="0 0 16 26"><polygon points="8,1 13,8 3,8" fill="#7dd87d" opacity="0.9" /><polygon points="8,4 14,14 2,14" fill="#5cb85c" opacity="0.85" /><polygon points="8,8 16,20 0,20" fill="#7dd87d" opacity="0.8" /><rect x="6" y="19" width="4" height="7" fill="#5d3a1a" /></svg>
+                      <svg width="16" height="26" viewBox="0 0 16 26"><polygon points="8,1 13,8 3,8" fill="#7dd87d" opacity="0.9" /><polygon points="8,4 14,14 2,14" fill="#7dd87d" opacity="0.85" /><polygon points="8,8 16,20 0,20" fill="#7dd87d" opacity="0.8" /><rect x="6" y="19" width="4" height="7" fill="#1a472a" /></svg>
                       <span className="text-white/55 text-[8px]">1000+</span>
                     </div>
                   </div>

@@ -73,7 +73,7 @@ function kindColor(kind: EntryKind): string {
     case "quest":
       return "#7dd87d";
     case "contribution":
-      return "#7c9a7e";
+      return "#4a7c59";
     case "endorsement":
       return "#e8a838";
   }

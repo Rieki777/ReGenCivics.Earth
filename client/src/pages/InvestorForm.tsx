@@ -592,7 +592,7 @@ export default function InvestorForm() {
                                 href="/risk-disclosure" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-[#336644] underline hover:text-[#7dd87d] font-medium"
+                                className="text-[#4a7c59] underline hover:text-[#7dd87d] font-medium"
                               >
                                 View Risk Disclosures
                               </a>

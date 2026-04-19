@@ -239,7 +239,7 @@ export function FoodFoundationIllustration({ className = "" }: { className?: str
       {/* Plants above ground */}
       {/* Plant 1: small crop */}
       <g transform="translate(200, 155)">
-        <line x1="0" y1="0" x2="0" y2="-30" stroke="#5a9e3a" strokeWidth="2" strokeLinecap="round" />
+        <line x1="0" y1="0" x2="0" y2="-30" stroke="#4a7c59" strokeWidth="2" strokeLinecap="round" />
         <ellipse cx="-8" cy="-25" rx="8" ry="5" fill="#7dd87d" fillOpacity="0.6" transform="rotate(-30 -8 -25)" />
         <ellipse cx="8" cy="-20" rx="7" ry="4.5" fill="#7dd87d" fillOpacity="0.5" transform="rotate(25 8 -20)" />
         <ellipse cx="-5" cy="-35" rx="6" ry="4" fill="#7dd87d" fillOpacity="0.7" transform="rotate(-15 -5 -35)" />
@@ -252,7 +252,7 @@ export function FoodFoundationIllustration({ className = "" }: { className?: str
         <line x1="0" y1="-40" x2="18" y2="-55" stroke="#5a3a1a" strokeWidth="2" strokeLinecap="round" />
         <circle cx="0" cy="-70" r="30" fill="#4a7c59" fillOpacity="0.5" />
         <circle cx="-15" cy="-60" r="18" fill="#7dd87d" fillOpacity="0.3" />
-        <circle cx="12" cy="-65" r="15" fill="#5a9e3a" fillOpacity="0.4" />
+        <circle cx="12" cy="-65" r="15" fill="#4a7c59" fillOpacity="0.4" />
         {/* Fruit */}
         <circle cx="-10" cy="-52" r="4" fill="#d4a017" fillOpacity="0.7">
           <animate attributeName="fillOpacity" values="0.5;0.8;0.5" dur="4s" repeatCount="indefinite" />
@@ -264,9 +264,9 @@ export function FoodFoundationIllustration({ className = "" }: { className?: str
 
       {/* Plant 3: smaller crop */}
       <g transform="translate(600, 152)">
-        <line x1="0" y1="0" x2="0" y2="-25" stroke="#5a9e3a" strokeWidth="2" strokeLinecap="round" />
-        <line x1="0" y1="-10" x2="-12" y2="-22" stroke="#5a9e3a" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="0" y1="-12" x2="14" y2="-20" stroke="#5a9e3a" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="0" y1="0" x2="0" y2="-25" stroke="#4a7c59" strokeWidth="2" strokeLinecap="round" />
+        <line x1="0" y1="-10" x2="-12" y2="-22" stroke="#4a7c59" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="0" y1="-12" x2="14" y2="-20" stroke="#4a7c59" strokeWidth="1.5" strokeLinecap="round" />
         <ellipse cx="0" cy="-30" rx="6" ry="4" fill="#7dd87d" fillOpacity="0.6" />
         <ellipse cx="-14" cy="-25" rx="5" ry="3.5" fill="#7dd87d" fillOpacity="0.5" />
         <ellipse cx="16" cy="-23" rx="5.5" ry="3" fill="#7dd87d" fillOpacity="0.55" />
@@ -309,7 +309,7 @@ export function HarvestIllustration({ className = "" }: { className?: string }) 
       {/* Canopy */}
       <ellipse cx="400" cy="90" rx="140" ry="70" fill="#4a7c59" fillOpacity="0.25" />
       <ellipse cx="360" cy="85" rx="80" ry="50" fill="#7dd87d" fillOpacity="0.1" />
-      <ellipse cx="440" cy="80" rx="70" ry="45" fill="#5a9e3a" fillOpacity="0.12" />
+      <ellipse cx="440" cy="80" rx="70" ry="45" fill="#4a7c59" fillOpacity="0.12" />
 
       {/* Falling tokens */}
       {[

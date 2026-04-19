@@ -379,7 +379,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <button className="inline-flex items-center gap-1.5 text-sm text-[#7dd87d] hover:text-[#5bc85b] transition-colors underline underline-offset-2 decoration-[#7dd87d]/40 hover:decoration-[#5bc85b]">
+        <button className="inline-flex items-center gap-1.5 text-sm text-[#7dd87d] hover:text-[#7dd87d] transition-colors underline underline-offset-2 decoration-[#7dd87d]/40 hover:decoration-[#7dd87d]">
           <Wrench className="w-4 h-4" />
           Suggest Upgrades to the Tool
         </button>
@@ -397,7 +397,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
 
         <div className="py-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 bg-[#f8fdf8]">
+            <TabsList className="grid w-full grid-cols-3 bg-[#f0f7f0]">
               <TabsTrigger value="roles" className="text-xs data-[state=active]:bg-[#7dd87d] data-[state=active]:text-[#1a472a]">
                 <Briefcase className="w-3 h-3 mr-1" />
                 Role Suggestions
@@ -480,7 +480,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
 
               {/* Add new idea section */}
               {showAddIdea ? (
-                <div className="bg-[#f8fdf8] rounded-lg p-4 border border-[#7dd87d]/30">
+                <div className="bg-[#f0f7f0] rounded-lg p-4 border border-[#7dd87d]/30">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-medium text-[#1a472a] flex items-center gap-2">
                       <Plus className="w-4 h-4 text-[#7dd87d]" />
@@ -530,7 +530,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                 <Button
                   onClick={() => setShowAddIdea(true)}
                   variant="outline"
-                  className="w-full border-dashed border-[#7dd87d]/50 text-[#7dd87d] hover:bg-[#7dd87d]/10 hover:text-[#5bc85b]"
+                  className="w-full border-dashed border-[#7dd87d]/50 text-[#7dd87d] hover:bg-[#7dd87d]/10 hover:text-[#7dd87d]"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Your Idea
@@ -561,7 +561,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                           className={`flex flex-col items-center justify-center min-w-[50px] py-2 rounded-lg transition-all ${
                             hasVoted 
                               ? 'bg-[#7dd87d]/20 text-[#7dd87d] cursor-default' 
-                              : 'bg-[#f8fdf8] text-[#1a472a]/60 hover:bg-[#7dd87d]/10 hover:text-[#7dd87d] cursor-pointer'
+                              : 'bg-[#f0f7f0] text-[#1a472a]/60 hover:bg-[#7dd87d]/10 hover:text-[#7dd87d] cursor-pointer'
                           }`}
                         >
                           <ChevronUp className={`w-5 h-5 ${hasVoted ? 'text-[#7dd87d]' : ''}`} />
@@ -611,7 +611,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                             {showComments && (
                               <div className="mt-2 space-y-2">
                                 {idea.comments?.map(comment => (
-                                  <div key={comment.id} className="bg-[#f8fdf8] rounded p-2 text-xs">
+                                  <div key={comment.id} className="bg-[#f0f7f0] rounded p-2 text-xs">
                                     <p className="text-[#1a472a]/80">{comment.text}</p>
                                     <p className="text-[#1a472a]/40 mt-1">{comment.author} - {comment.createdAt}</p>
                                   </div>

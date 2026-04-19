@@ -341,7 +341,7 @@ function App() {
   // Maintenance mode, toggle VITE_MAINTENANCE_MODE=true in Railway env vars before risky deploys
   if (import.meta.env.VITE_MAINTENANCE_MODE === "true") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a1a0a]">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d2818]">
         <TaoSpinner size={72} showQuote={false} fullPage={false} className="mb-6" />
         <p
           className="text-[#d4a574] text-lg font-light tracking-wide mt-2"

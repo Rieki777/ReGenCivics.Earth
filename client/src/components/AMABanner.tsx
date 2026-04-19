@@ -61,7 +61,7 @@ export default function AMABanner() {
               href={ama.forumThreadUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs font-semibold text-[#1a472a] bg-[#7dd87d] hover:bg-[#6bc96b] px-3 py-1.5 rounded-full transition-colors"
+              className="flex items-center gap-1 text-xs font-semibold text-[#1a472a] bg-[#7dd87d] hover:bg-[#9de89d] px-3 py-1.5 rounded-full transition-colors"
             >
               Join us <ExternalLink className="w-3 h-3" aria-hidden="true" />
             </a>

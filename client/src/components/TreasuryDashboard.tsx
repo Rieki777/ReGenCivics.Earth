@@ -97,9 +97,9 @@ const sampleTransactions = [
 const projectAllocations = [
   { name: "La Tierra Regenerativa", allocation: 28, color: "#7dd87d", type: "Land Project" },
   { name: "StarSeed Village", allocation: 22, color: "#9de89d", type: "Land Project" },
-  { name: "Ubuntu Village", allocation: 18, color: "#5ab85a", type: "Land Project" },
+  { name: "Ubuntu Village", allocation: 18, color: "#7dd87d", type: "Land Project" },
   { name: "Hypha DAO", allocation: 15, color: "#4a7c59", type: "Alliance Partner" },
-  { name: "SEEDS Ecosystem", allocation: 10, color: "#3d6b4a", type: "Alliance Partner" },
+  { name: "SEEDS Ecosystem", allocation: 10, color: "#4a7c59", type: "Alliance Partner" },
   { name: "Operations Reserve", allocation: 7, color: "#2d5a3b", type: "Reserve" }
 ];
 

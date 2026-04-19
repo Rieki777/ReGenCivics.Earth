@@ -801,7 +801,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
       <button
         onClick={handleSave}
         disabled={updateMut.isPending || updateBioregionsMut.isPending}
-        className="px-5 py-2 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#6bc96b] transition-colors disabled:opacity-50"
+        className="px-5 py-2 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors disabled:opacity-50"
       >
         {updateMut.isPending || updateBioregionsMut.isPending ? "Saving..." : "Save"}
       </button>
@@ -885,7 +885,7 @@ function GiftsNeedsPanel() {
         </div>
         {myGifts.map(g => (
           <div key={g.id} className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2.5">
-            <span className="text-[10px] bg-[#7dd87d]/15 text-[#5ab85a] border border-[#7dd87d]/25 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">{g.type}</span>
+            <span className="text-[10px] bg-[#7dd87d]/15 text-[#7dd87d] border border-[#7dd87d]/25 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">{g.type}</span>
             <span className="text-white/75 text-sm flex-1">{g.description}</span>
             <button onClick={() => removeGift.mutate({ id: g.id })} className="text-white/55 hover:text-white flex-shrink-0 mt-0.5">
               <X className="w-3.5 h-3.5" />
@@ -899,7 +899,7 @@ function GiftsNeedsPanel() {
               onChange={e => setGiftType(e.target.value as GiftNeedType)}
               className="w-full bg-white/5 border border-white/10 text-white/80 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
             >
-              {GIFT_NEED_TYPES.map(t => <option key={t.value} value={t.value} className="bg-[#1a2f1a]">{t.label}</option>)}
+              {GIFT_NEED_TYPES.map(t => <option key={t.value} value={t.value} className="bg-[#1a472a]">{t.label}</option>)}
             </select>
             <textarea
               value={giftDesc}
@@ -954,7 +954,7 @@ function GiftsNeedsPanel() {
               onChange={e => setNeedType(e.target.value as GiftNeedType)}
               className="w-full bg-white/5 border border-white/10 text-white/80 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
             >
-              {GIFT_NEED_TYPES.map(t => <option key={t.value} value={t.value} className="bg-[#1a2f1a]">{t.label}</option>)}
+              {GIFT_NEED_TYPES.map(t => <option key={t.value} value={t.value} className="bg-[#1a472a]">{t.label}</option>)}
             </select>
             <textarea
               value={needDesc}
@@ -1117,8 +1117,8 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
             onChange={e => setClaimOrgId(e.target.value)}
             className="w-full bg-white/10 border border-white/20 text-white rounded-lg px-3 py-2 text-sm"
           >
-            <option value="" className="bg-[#1a3a1f] text-white">Select {claimType === "land_project" ? "a land project" : "an alliance org"}…</option>
-            {orgOptions.map(o => <option key={o.id} value={o.id} className="bg-[#1a3a1f] text-white">{o.name}</option>)}
+            <option value="" className="bg-[#1a472a] text-white">Select {claimType === "land_project" ? "a land project" : "an alliance org"}…</option>
+            {orgOptions.map(o => <option key={o.id} value={o.id} className="bg-[#1a472a] text-white">{o.name}</option>)}
           </select>
 
           {/* Land project detail fields */}
@@ -1385,7 +1385,7 @@ function RssFeedManager() {
           <div className="flex gap-2">
             <button
               onClick={() => { setShowAddForm(true); handleDismissPrompt(); }}
-              className="text-xs bg-[#7dd87d] text-[#1a472a] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#6bc96b] transition-colors"
+              className="text-xs bg-[#7dd87d] text-[#1a472a] font-semibold px-3 py-1.5 rounded-lg hover:bg-[#9de89d] transition-colors"
             >
               Add RSS Feed
             </button>
@@ -1420,7 +1420,7 @@ function RssFeedManager() {
             <button
               onClick={handleAdd}
               disabled={!feedUrl.trim() || addFeed.isPending}
-              className="text-xs bg-[#7dd87d] text-[#1a472a] font-semibold px-4 py-2 rounded-lg hover:bg-[#6bc96b] disabled:opacity-50 transition-colors"
+              className="text-xs bg-[#7dd87d] text-[#1a472a] font-semibold px-4 py-2 rounded-lg hover:bg-[#9de89d] disabled:opacity-50 transition-colors"
             >
               {addFeed.isPending ? "Adding..." : "Add feed"}
             </button>
@@ -1760,9 +1760,9 @@ function ContributionsTab({
             href="https://app.hypha.earth"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-start gap-3 bg-[#8b5cf6]/8 border border-[#8b5cf6]/20 rounded-lg px-3 py-2.5 hover:bg-[#8b5cf6]/15 transition-colors"
+            className="flex items-start gap-3 bg-[#7dd87d]/8 border border-[#7dd87d]/20 rounded-lg px-3 py-2.5 hover:bg-[#7dd87d]/15 transition-colors"
           >
-            <div className="w-2 h-2 rounded-full bg-[#8b5cf6] mt-1.5 flex-shrink-0" />
+            <div className="w-2 h-2 rounded-full bg-[#7dd87d] mt-1.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-white/80 text-xs font-medium flex items-center gap-1">Hypha DAO <ExternalLink className="w-3 h-3 text-white/60" /></p>
               <p className="text-white/50 text-xs">Governance votes, proposals, role assignments, and payouts are recorded here.</p>
@@ -3088,7 +3088,7 @@ export default function PlayerProfile() {
                             <p className="text-white/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
                               Get the ReGen Civics digest: news, quests, and community updates in your inbox.
                             </p>
-                            <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d1f0d]/40">
+                            <div className="mt-2 p-4 rounded-xl border border-[#7dd87d]/20 bg-[#0d2818]/40">
                               <NewsletterSignupInline />
                             </div>
                           </div>

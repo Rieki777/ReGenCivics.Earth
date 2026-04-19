@@ -41,7 +41,7 @@ export function RegenIntroGate() {
 
   return (
     <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0a1a0a]/95 backdrop-blur-md p-4"
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#0d2818]/95 backdrop-blur-md p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Welcome to ReGen Civics"

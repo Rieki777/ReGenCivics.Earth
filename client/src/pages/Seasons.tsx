@@ -646,10 +646,10 @@ export default function Seasons() {
           {/* Season Details Grid */}
           <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
             {/* Winter - Assessment */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl border-2 border-[#8b7355]/40 overflow-hidden">
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl border-2 border-[#2d5a3d]/40 overflow-hidden">
               <div className="p-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[#8b7355] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-[#2d5a3d] flex items-center justify-center">
                     <Compass className="w-5 h-5 text-white" />
                   </div>
                   <div>

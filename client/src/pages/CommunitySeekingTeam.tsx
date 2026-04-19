@@ -42,7 +42,7 @@ export default function CommunitySeekingTeam() {
       <div className="min-h-screen bg-[#f8f5f0]">
         <BackButton />
 
-        <section className="pt-24 pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]">
+        <section className="pt-24 pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
           <div className="container px-4 max-w-4xl mx-auto">
             <div className="flex items-center gap-2 text-white/50 text-sm mb-3">
               <Link href="/community" className="hover:text-white/80 transition-colors">Forum</Link>

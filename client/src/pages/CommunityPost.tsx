@@ -401,7 +401,7 @@ export default function CommunityPost() {
       <BackButton />
 
       {/* Header */}
-      <section className="pt-24 pb-4 md:pt-28 md:pb-6 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]">
+      <section className="pt-24 pb-4 md:pt-28 md:pb-6 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
         <div className="container px-4 max-w-4xl mx-auto">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-white/50 text-sm mb-3 flex-wrap" style={{ fontFamily: 'var(--font-body)' }}>
@@ -418,19 +418,19 @@ export default function CommunityPost() {
           {(post.postType && post.postType !== 'discussion' || post.threadStage) && (
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               {post.postType === 'case_study' && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#fef3c7] text-[#92400e]">Case Study</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0ebe3] text-[#92400e]">Case Study</span>
               )}
               {post.postType === 'seeking_team' && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ede9fe] text-[#5b21b6]">Seeking Team</span>
               )}
               {post.threadStage === 'idea' && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#dcfce7] text-[#166534]">Idea</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0f7f0] text-[#1a472a]">Idea</span>
               )}
               {post.threadStage === 'experiment' && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0f7f0] text-[#1a472a]">Experiment</span>
               )}
               {post.threadStage === 'result' && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#fef3c7] text-[#92400e]">Result</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#f0ebe3] text-[#92400e]">Result</span>
               )}
             </div>
           )}

@@ -96,7 +96,7 @@ export default function ShapeNextSession() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a1a0a] to-[#1a472a] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] to-[#1a472a] flex items-center justify-center p-6">
         <SEO
           title="Thanks for shaping the next session"
           description="Your input helps us build sessions worth showing up for."
@@ -132,7 +132,7 @@ export default function ShapeNextSession() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a1a0a] to-[#1a472a]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0d2818] to-[#1a472a]">
       <SEO
         title="Shape the Next Session"
         description="Tell us what you want covered and whether you'll be there."

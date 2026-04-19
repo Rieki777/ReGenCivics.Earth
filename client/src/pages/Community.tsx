@@ -430,7 +430,7 @@ export default function Community() {
             <div className="grid gap-2">
               {trendingPosts.map(post => (
                 <Link key={post.id} href={`/community/post/${post.id}`} className="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-[#1a472a]/10 hover:border-[#7dd87d]/40 hover:bg-[#f0f7f0] transition-all group">
-                  <span className="text-sm font-medium text-[#1a472a] truncate group-hover:text-[#2d6a4f]">{post.title}</span>
+                  <span className="text-sm font-medium text-[#1a472a] truncate group-hover:text-[#4a7c59]">{post.title}</span>
                   <span className="text-xs text-[#1a472a]/50 ml-2 shrink-0">{post.replyCount ?? 0} replies</span>
                 </Link>
               ))}
@@ -446,7 +446,7 @@ export default function Community() {
             onClick={() => handleSectionClick('general')}
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group col-span-2 sm:col-span-1 ${activeSection === 'general' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]" />
             <img src="/game-infinite-forest.webp" alt="Infinite Forest game world" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -462,7 +462,7 @@ export default function Community() {
             onClick={() => handleSectionClick('earth')}
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'earth' ? 'ring-2 ring-[#d4a574] shadow-lg shadow-[#d4a574]/20' : 'hover:shadow-md'}`}
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-[#3d2b1f] to-[#5c3d2e]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] to-[#4a7c59]" />
             <img src="/community/finca-sagrada.webp" alt="Finca Sagrada land project" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -725,10 +725,10 @@ export default function Community() {
               <Link href="/community/c/bioregions">
                 <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#d4a574]/50 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#d4a574]/15 flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-5 h-5 text-[#5c3d2e]" />
+                    <Globe className="w-5 h-5 text-[#4a7c59]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#5c3d2e] transition-colors">Bioregions</p>
+                    <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors">Bioregions</p>
                     <p className="text-[#1a472a]/50 text-xs line-clamp-1">Where bioregions organising for regeneration meet, share, and find each other</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
@@ -741,10 +741,10 @@ export default function Community() {
               <Link href="/community/c/land-general">
                 <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de] hover:border-[#d4a574]/50 hover:shadow-md transition-all cursor-pointer group flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#d4a574]/15 flex items-center justify-center flex-shrink-0">
-                    <Sprout className="w-5 h-5 text-[#5c3d2e]" />
+                    <Sprout className="w-5 h-5 text-[#4a7c59]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#5c3d2e] transition-colors">Land General</p>
+                    <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors">Land General</p>
                     <p className="text-[#1a472a]/50 text-xs line-clamp-1">General discussion about land projects, regenerative land practices, and stewardship</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
@@ -1195,7 +1195,7 @@ export default function Community() {
         {/* Tag filter and chain shortcuts */}
         <div className="mt-6 flex flex-wrap gap-2 overflow-x-auto">
           <Link href="/community/lessons">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#fef3c7] border border-[#d97706]/20 text-[#92400e] text-sm font-medium hover:border-[#d97706]/50 transition-colors cursor-pointer">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f0ebe3] border border-[#d97706]/20 text-[#92400e] text-sm font-medium hover:border-[#d97706]/50 transition-colors cursor-pointer">
               <BookOpen className="w-3.5 h-3.5" />
               #lesson
             </span>
@@ -1207,7 +1207,7 @@ export default function Community() {
             </span>
           </Link>
           <Link href="/community/offering-support">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#dcfce7] border border-[#16a34a]/20 text-[#166534] text-sm font-medium hover:border-[#16a34a]/50 transition-colors cursor-pointer">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f0f7f0] border border-[#16a34a]/20 text-[#1a472a] text-sm font-medium hover:border-[#16a34a]/50 transition-colors cursor-pointer">
               <Users className="w-3.5 h-3.5" />
               #offering-support
             </span>

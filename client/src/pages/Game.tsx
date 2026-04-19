@@ -472,7 +472,7 @@ export default function Game() {
       </AnimatedSection>
 
       {/* Watch the Overview Section */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-[#1a472a] to-[#2d5a3e]">
+      <section className="py-12 md:py-16 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
         <div className="container px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h2
@@ -496,10 +496,10 @@ export default function Game() {
       </section>
 
       {/* Callout Banner */}
-      <section className="py-10 md:py-14 bg-gradient-to-r from-[#ffd700] via-[#f4c430] to-[#ffd700] relative overflow-hidden">
+      <section className="py-10 md:py-14 bg-gradient-to-r from-[#ffd700] via-[#ffd700] to-[#ffd700] relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/2 left-1/4 w-40 h-40 bg-[#1a472a]/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-[#2d5a3e]/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-[#2d5a3d]/10 rounded-full blur-3xl" />
         </div>
         <div className="container px-4 relative z-10">
           <AnimatedSection animation="slide-up" className="max-w-3xl mx-auto text-center">

@@ -25,13 +25,13 @@ export function ActivitySparkline() {
         <AreaChart data={last7Days}>
           <defs>
             <linearGradient id="sparkGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#4ade80" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
+              <stop offset="5%" stopColor="#7dd87d" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#7dd87d" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={{ background: '#0a1f14', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12 }} />
-          <Area type="monotone" dataKey="count" stroke="#4ade80" fill="url(#sparkGradient)" strokeWidth={2} />
+          <Area type="monotone" dataKey="count" stroke="#7dd87d" fill="url(#sparkGradient)" strokeWidth={2} />
         </AreaChart>
       </ResponsiveContainer>
     </div>

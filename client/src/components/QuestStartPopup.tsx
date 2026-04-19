@@ -68,7 +68,7 @@ export function QuestStartPopup({ onNavigateToQuests }: QuestStartPopupProps) {
         <div className="flex gap-3">
           <button
             onClick={goToQuests}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#6bc96b] text-[#1a472a] font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-5 py-2.5 rounded-xl text-sm transition-colors"
           >
             Start Questing
             <ArrowRight className="w-4 h-4" />

@@ -25,7 +25,7 @@ export function TaoErrorState({
   extraLinks,
 }: TaoErrorStateProps) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0a1a0a] to-[#1a472a] text-center px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0d2818] to-[#1a472a] text-center px-6">
       <SeedOfLifeSpinner size={72} className="text-[#7dd87d] mx-auto mb-6" />
       <p
         className="text-[#d4a574] text-lg font-light tracking-wide max-w-sm leading-relaxed mt-2"

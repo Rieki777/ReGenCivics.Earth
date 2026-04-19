@@ -22,7 +22,7 @@ const TAG_META: Record<ValidTag, { label: string; description: string; color: st
     label: "#lesson",
     description: "Real-world insights and learnings shared by the community.",
     color: "#92400e",
-    bg: "#fef3c7",
+    bg: "#f0ebe3",
     icon: <BookOpen className="w-5 h-5" />,
   },
   "seeking-support": {
@@ -35,8 +35,8 @@ const TAG_META: Record<ValidTag, { label: string; description: string; color: st
   "offering-support": {
     label: "#offering-support",
     description: "Members with something to offer or who want to help.",
-    color: "#166534",
-    bg: "#dcfce7",
+    color: "#1a472a",
+    bg: "#f0f7f0",
     icon: <Users className="w-5 h-5" />,
   },
 };
@@ -111,7 +111,7 @@ export default function CommunityTagFilter() {
         <BackButton />
 
         {/* Header */}
-        <section className="pt-24 pb-6 md:pt-28 md:pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]">
+        <section className="pt-24 pb-6 md:pt-28 md:pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
           <div className="container px-4 max-w-4xl mx-auto">
             <div className="flex items-center gap-2 text-white/50 text-sm mb-4" style={{ fontFamily: "var(--font-body)" }}>
               <Link href="/community" className="hover:text-white/80 transition-colors">Forum</Link>

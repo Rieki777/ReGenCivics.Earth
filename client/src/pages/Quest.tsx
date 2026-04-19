@@ -102,7 +102,7 @@ function SignInCTA() {
       <p className="text-[#1a472a]/70 mb-4">Sign in to track your quest progress and earn rewards</p>
       <Button
         size="lg"
-        className="rounded-xl bg-[#1a472a] hover:bg-[#0f2d1a] text-white"
+        className="rounded-xl bg-[#1a472a] hover:bg-[#0d2818] text-white"
         style={{ fontFamily: 'var(--font-accent)' }}
         onClick={() => window.location.href = getLoginUrl()}
       >
@@ -129,7 +129,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-1.5 text-xs bg-[#f0f7f0] hover:bg-[#e0f0e0] px-2 py-1 rounded-md transition-colors text-[#1a472a]/70 hover:text-[#1a472a] w-full text-left"
+      className="flex items-center gap-1.5 text-xs bg-[#f0f7f0] hover:bg-[#f0f7f0] px-2 py-1 rounded-md transition-colors text-[#1a472a]/70 hover:text-[#1a472a] w-full text-left"
       title={`Copy: ${text}`}
     >
       {copied ? <Check className="w-3 h-3 text-[#7dd87d] flex-shrink-0" /> : <Copy className="w-3 h-3 flex-shrink-0" />}
@@ -328,7 +328,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
                     e.stopPropagation();
                     downloadImage(imgUrl, `quest-${String(quest.id).padStart(2,'0')}-${slug}.webp`);
                   }}
-                  className="flex items-center gap-1.5 text-xs bg-[#d4a574]/20 hover:bg-[#d4a574]/40 text-[#8b6135] border border-[#d4a574]/40 px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
+                  className="flex items-center gap-1.5 text-xs bg-[#d4a574]/20 hover:bg-[#d4a574]/40 text-[#d4a574] border border-[#d4a574]/40 px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
                 >
                   <Download className="w-3 h-3" />
                   Download Quest Image
@@ -336,7 +336,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
               )}
               <button
                 type="button"
-                className="flex items-center gap-1.5 text-xs bg-[#1a472a] hover:bg-[#0f2d1a] text-white px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
+                className="flex items-center gap-1.5 text-xs bg-[#1a472a] hover:bg-[#0d2818] text-white px-3 py-2 rounded-lg transition-colors w-full justify-center font-semibold"
                 onClick={(e) => { e.stopPropagation(); setSubmitModalOpen(true); }}
               >
                 <ExternalLink className="w-3 h-3" />
@@ -828,7 +828,7 @@ export default function Quest() {
       }} />
 
       {/* Announcement Banner */}
-      <div className="bg-gradient-to-r from-[#7dd87d] via-[#5cb85c] to-[#7dd87d] py-3 px-4 text-center">
+      <div className="bg-gradient-to-r from-[#7dd87d] via-[#7dd87d] to-[#7dd87d] py-3 px-4 text-center">
         <p className="text-[#1a472a] font-medium flex items-center justify-center gap-2 flex-wrap">
           <Sparkles className="w-5 h-5" />
           <span>{pageCopy.quest.announcement}</span>
@@ -993,7 +993,7 @@ export default function Quest() {
       )}
 
       {/* Callout Banner */}
-      <section className="py-10 md:py-14 bg-gradient-to-r from-[#1a472a] via-[#2d5a3e] to-[#1a472a] relative overflow-hidden">
+      <section className="py-10 md:py-14 bg-gradient-to-r from-[#1a472a] via-[#2d5a3d] to-[#1a472a] relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/2 left-1/4 w-40 h-40 bg-[#7dd87d]/10 rounded-full blur-3xl" />
           <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-amber-400/10 rounded-full blur-3xl" />
@@ -1116,7 +1116,7 @@ export default function Quest() {
 
                 <div className="mt-6">
                   <VineDivider className="my-6" />
-                  <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">The Arc</h4>
+                  <h4 className="text-[#4a7c59] font-semibold mb-3 text-sm uppercase tracking-wide">The Arc</h4>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">We begin with Fire. Before we can build anything new we have to be willing to let go of the old.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Next we focus on our physical health - the healthier we are - the more capable we become.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The Potions Quest adds diversity and intelligence to our bodies and changes the information processing in all three minds; our gut, heart, and head.</p>
@@ -1126,7 +1126,7 @@ export default function Quest() {
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">The seasonal quests are something you can do in a few days while the EPIC Quests are acts of collective transformation and require years of dedication.</p>
 
                   <VineDivider className="my-6" />
-                  <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">What the Tokens Mean</h4>
+                  <h4 className="text-[#4a7c59] font-semibold mb-3 text-sm uppercase tracking-wide">What the Tokens Mean</h4>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">$ReGen tokens are earned by completing quests and contributing to the mission. They represent your participation in building a regenerative civilization. As the Game grows, so do the opportunities for the tokens to carry value.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">RGVoice tokens give you a say in the governance of the Game itself, so the Game is always governed by those who are playing it.</p>
 
@@ -1141,7 +1141,7 @@ export default function Quest() {
                     className="w-full rounded-xl mb-6 object-cover"
                     style={{ maxHeight: '240px', objectPosition: 'center' }}
                   />
-                  <h4 className="text-[#2d6a4f] font-semibold mb-3 text-sm uppercase tracking-wide">Quests as Qualifiers</h4>
+                  <h4 className="text-[#4a7c59] font-semibold mb-3 text-sm uppercase tracking-wide">Quests as Qualifiers</h4>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">Land projects and alliance organizations can require that applicants complete certain quests before applying to join or contribute. This ensures applicants have genuine lived experience with regenerative practices, builds a shared language across the community, and distributes tokens to people doing real work before they enter governance roles.</p>
                   <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">For example: voting rights in a DAO might require 5 quests plus 1 seasonal quest. Land project stewardship might require Quest 4 (Food Foresting) plus Quest 3 (Healing Wholes) plus any 2 others.</p>
                 </div>
@@ -1212,7 +1212,7 @@ export default function Quest() {
                 <span className="px-3 py-1 bg-[#7dd87d] text-[#1a472a] rounded-full font-bold">+1 RGVoice</span>
               </div>
               {/* Old-Map Style Checklist */}
-              <div className="mt-4 p-5 rounded-xl border-2 border-[#8b7355]/40 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f5e6c8 0%, #e8d5a8 40%, #dcc89a 100%)', boxShadow: 'inset 0 0 20px rgba(139,115,85,0.15), 0 2px 8px rgba(0,0,0,0.1)' }}>
+              <div className="mt-4 p-5 rounded-xl border-2 border-[#2d5a3d]/40 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f5e6c8 0%, #e8d5a8 40%, #dcc89a 100%)', boxShadow: 'inset 0 0 20px rgba(139,115,85,0.15), 0 2px 8px rgba(0,0,0,0.1)' }}>
                 <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23000000\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
                 <h4 className="relative text-sm font-bold text-[#5a4230] mb-3 uppercase tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>The Food Foresting Loop</h4>
                 <div className="relative space-y-2">
@@ -1432,7 +1432,7 @@ export default function Quest() {
             </div>
             <h2 className="text-2xl font-bold mb-3 text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>Got a Quest Idea?</h2>
             <p className="text-[#1a472a]/70 mb-6 max-w-lg mx-auto">If you've discovered a practice worth spreading, propose it. The community votes. The best ones become official quests.</p>
-            <Link href="/community/quests" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-md">
+            <Link href="/community/quests" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-md">
               Suggest a Quest <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -1471,7 +1471,7 @@ export default function Quest() {
               <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-5">
                 Every quest you complete earns $ReGen tokens, which is our in-game currency. Part of our Infinite Game involves making this a real and meaningful currency for our everyday lives in how we meet our needs and thrive together. The more you contribute, the more currency you earn.
               </p>
-              <Link href="/bionomics" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+              <Link href="/bionomics" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
                 $ReGen on the Bionomics page <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -1488,7 +1488,7 @@ export default function Quest() {
               <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-5">
                 Every quest you complete earns RGVoice tokens, giving you more say in how the game evolves. The more you contribute, the more the game is governed by players like you.
               </p>
-              <Link href="/governance" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0f2d1a] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+              <Link href="/governance" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
                 RGVoice Governance <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

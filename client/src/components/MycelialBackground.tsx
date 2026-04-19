@@ -29,7 +29,7 @@ export function MycelialBackground() {
         <defs>
           <linearGradient id="myceliumGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#7dd87d" stopOpacity="0.4"/>
-            <stop offset="50%" stopColor="#5cb85c" stopOpacity="0.2"/>
+            <stop offset="50%" stopColor="#7dd87d" stopOpacity="0.2"/>
             <stop offset="100%" stopColor="#7dd87d" stopOpacity="0.4"/>
           </linearGradient>
         </defs>

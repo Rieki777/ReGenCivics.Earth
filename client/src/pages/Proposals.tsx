@@ -159,7 +159,7 @@ export default function Proposals() {
                     New Proposal
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a3a1f] border border-white/20 text-white max-w-lg">
+                <DialogContent className="bg-[#1a472a] border border-white/20 text-white max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="text-white text-lg font-bold">Submit a Proposal</DialogTitle>
                   </DialogHeader>
@@ -182,9 +182,9 @@ export default function Proposals() {
                       onChange={e => setCategory(e.target.value)}
                       className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
                     >
-                      <option value="" className="bg-[#1a3a1f]">Select category</option>
+                      <option value="" className="bg-[#1a472a]">Select category</option>
                       {CATEGORIES.map(c => (
-                        <option key={c.value} value={c.value} className="bg-[#1a3a1f]">{c.label}</option>
+                        <option key={c.value} value={c.value} className="bg-[#1a472a]">{c.label}</option>
                       ))}
                     </select>
                     <select
@@ -192,9 +192,9 @@ export default function Proposals() {
                       onChange={e => setTemplateType(e.target.value)}
                       className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
                     >
-                      <option value="" className="bg-[#1a3a1f]">Template type (optional)</option>
+                      <option value="" className="bg-[#1a472a]">Template type (optional)</option>
                       {TEMPLATE_TYPES.map(t => (
-                        <option key={t.value} value={t.value} className="bg-[#1a3a1f]">{t.label}</option>
+                        <option key={t.value} value={t.value} className="bg-[#1a472a]">{t.label}</option>
                       ))}
                     </select>
                     <Button
@@ -233,9 +233,9 @@ export default function Proposals() {
               onChange={e => setCategoryFilter(e.target.value)}
               className="bg-white/10 border border-white/20 text-white rounded-lg px-3 py-1.5 text-sm outline-none"
             >
-              <option value="" className="bg-[#1a3a1f]">All Categories</option>
+              <option value="" className="bg-[#1a472a]">All Categories</option>
               {CATEGORIES.map(c => (
-                <option key={c.value} value={c.value} className="bg-[#1a3a1f]">{c.label}</option>
+                <option key={c.value} value={c.value} className="bg-[#1a472a]">{c.label}</option>
               ))}
             </select>
             <select
@@ -243,9 +243,9 @@ export default function Proposals() {
               onChange={e => setStatusFilter(e.target.value)}
               className="bg-white/10 border border-white/20 text-white rounded-lg px-3 py-1.5 text-sm outline-none"
             >
-              <option value="" className="bg-[#1a3a1f]">All Statuses</option>
+              <option value="" className="bg-[#1a472a]">All Statuses</option>
               {STATUS_OPTIONS.map(s => (
-                <option key={s.value} value={s.value} className="bg-[#1a3a1f]">{s.label}</option>
+                <option key={s.value} value={s.value} className="bg-[#1a472a]">{s.label}</option>
               ))}
             </select>
             <span className="text-white/60 text-sm ml-auto">

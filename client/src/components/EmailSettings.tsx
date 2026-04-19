@@ -240,7 +240,7 @@ function SendTestEmail() {
         <Button 
           onClick={handleSendTest}
           disabled={sending || !email}
-          className="bg-[#4a7c59] hover:bg-[#3d6b4a] text-white"
+          className="bg-[#4a7c59] hover:bg-[#4a7c59] text-white"
         >
           {sending ? (
             <>
@@ -559,7 +559,7 @@ function EmailTemplatePreview() {
                 <Button
                   size="sm"
                   onClick={handleSaveTemplate}
-                  className="bg-[#4a7c59] hover:bg-[#3d6b4a] text-white"
+                  className="bg-[#4a7c59] hover:bg-[#4a7c59] text-white"
                   disabled={saveTemplateMutation.isPending}
                 >
                   {saveTemplateMutation.isPending ? (
@@ -1033,7 +1033,7 @@ function BulkEmailSender() {
           <Button
             onClick={handleSendBulk}
             disabled={sending || recipients.length === 0}
-            className="bg-[#4a7c59] hover:bg-[#3d6b4a] text-white"
+            className="bg-[#4a7c59] hover:bg-[#4a7c59] text-white"
           >
             {sending ? (
               <>

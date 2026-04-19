@@ -108,7 +108,7 @@ export function SharePanel({ questTitle, questTagline, forumUrl }: SharePanelPro
               {/* Facebook */}
               <FacebookShareButton url={shareUrl} className="!flex !items-center !justify-center">
                 <div className="flex flex-col items-center gap-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl py-2.5 px-3 transition-all w-full">
-                  <svg className="w-4 h-4 text-[#1877f2]" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-4 h-4 text-[#1da1f2]" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                   </svg>
                   <span className="text-white/60 text-[10px]">Facebook</span>
@@ -122,7 +122,7 @@ export function SharePanel({ questTitle, questTagline, forumUrl }: SharePanelPro
                 rel="noopener noreferrer"
                 className="flex flex-col items-center gap-1 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl py-2.5 px-3 transition-all"
               >
-                <svg className="w-4 h-4 text-[#8b5cf6]" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-4 h-4 text-[#7dd87d]" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M11.707 0h.586L24 6.545v.91l-1.6.727V4.364H1.6v3.818L0 7.455v-.91L11.707 0zM1.6 19.636V9.091H0v-.909h24v.91h-1.6v10.544l1.6.727v.91H0v-.91l1.6-.727zM8 15.273h8v1.818H8v-1.818zm0-3.637h8v1.819H8v-1.819z"/>
                 </svg>
                 <span className="text-white/60 text-[10px]">Farcaster</span>

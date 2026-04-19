@@ -630,7 +630,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
                   <a
                     href={`/quest-guides/${QUEST_PDF_SLUGS[quest.id]}.pdf`}
                     download
-                    className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#4a7c59] to-[#1a472a] hover:from-[#3d6b4a] hover:to-[#256b29] text-white rounded-xl font-semibold transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#4a7c59] to-[#1a472a] hover:from-[#4a7c59] hover:to-[#256b29] text-white rounded-xl font-semibold transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     Download Field Guide
@@ -768,7 +768,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
                 href="https://app.hypha.earth/en/dho/regen-games/agreements"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-[#4a7c59] hover:bg-[#3d6b4a] text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-[#4a7c59] hover:bg-[#4a7c59] text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
               >
                 Go to Game Space
                 <ExternalLink className="w-4 h-4" />
@@ -802,7 +802,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
             </Button>
             {/* Finish Quest Button - opens the SubmitToDAOModal */}
             <Button
-              className="bg-gradient-to-r from-[#4a7c59] to-[#1a472a] hover:from-[#3d6b4a] hover:to-[#256b29] text-white"
+              className="bg-gradient-to-r from-[#4a7c59] to-[#1a472a] hover:from-[#4a7c59] hover:to-[#256b29] text-white"
               onClick={() => setSubmitModalOpen(true)}
             >
               <Send className="w-4 h-4 mr-2" />

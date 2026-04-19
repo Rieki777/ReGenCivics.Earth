@@ -558,13 +558,13 @@ export default function Apply() {
                         );
                       }
                     }}
-                    className="text-sm text-[#336644] hover:text-[#1a472a] underline flex items-center gap-1"
+                    className="text-sm text-[#4a7c59] hover:text-[#1a472a] underline flex items-center gap-1"
                   >
                     <MapPin className="w-3 h-3" /> Use my current location
                   </button>
                 </div>
                 {formData.latitude && formData.longitude && (
-                  <p className="text-xs text-[#336644] mt-2 flex items-center gap-1">
+                  <p className="text-xs text-[#4a7c59] mt-2 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
                     Location pinned at {formData.latitude}, {formData.longitude}
                     {formData.country && ` (${formData.country})`}
@@ -1037,7 +1037,7 @@ export default function Apply() {
                 variant="outline"
                 onClick={saveDraft}
                 disabled={isLoading}
-                className="border-[#7dd87d] text-[#336644] w-full sm:w-auto"
+                className="border-[#7dd87d] text-[#4a7c59] w-full sm:w-auto"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save Draft

@@ -135,7 +135,7 @@ export function SiteTour() {
       <div
         className={`fixed z-50 flex flex-col transition-transform duration-300 ease-in-out
           inset-0 sm:inset-auto sm:bottom-0 sm:right-0 sm:top-auto sm:h-[580px] sm:w-[380px] sm:rounded-t-2xl sm:rounded-bl-2xl
-          bg-[#0f2d1a] border border-[#7dd87d]/20 shadow-2xl
+          bg-[#0d2818] border border-[#7dd87d]/20 shadow-2xl
           ${open ? "translate-y-0 sm:translate-y-0" : "translate-y-full sm:translate-y-full"}`}
         style={{ maxHeight: "100dvh" }}
         aria-hidden={!open}
@@ -165,7 +165,7 @@ export function SiteTour() {
               <div
                 className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-[#7dd87d] text-[#0f2d1a] rounded-br-sm font-medium"
+                    ? "bg-[#7dd87d] text-[#0d2818] rounded-br-sm font-medium"
                     : "bg-[#1a472a] text-white/90 rounded-bl-sm border border-[#7dd87d]/10"
                 }`}
               >
@@ -225,7 +225,7 @@ export function SiteTour() {
           <button
             type="submit"
             disabled={!input.trim() || chatMutation.isPending}
-            className="p-2 rounded-xl bg-[#7dd87d] text-[#0f2d1a] hover:bg-[#6bc96b] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="p-2 rounded-xl bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             aria-label="Send message"
           >
             <Send className="w-4 h-4" />

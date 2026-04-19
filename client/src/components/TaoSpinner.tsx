@@ -166,7 +166,7 @@ export function TaoSpinner({
 
   if (fullPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0a1a0a] to-[#1a472a]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0d2818] to-[#1a472a]">
         {content}
       </div>
     );

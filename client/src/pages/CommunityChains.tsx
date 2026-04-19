@@ -13,9 +13,9 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
 
 const STAGE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  idea: { label: "Idea", color: "#166534", bg: "#dcfce7" },
+  idea: { label: "Idea", color: "#1a472a", bg: "#f0f7f0" },
   experiment: { label: "Experiment", color: "#1a472a", bg: "#f0f7f0" },
-  result: { label: "Result", color: "#92400e", bg: "#fef3c7" },
+  result: { label: "Result", color: "#92400e", bg: "#f0ebe3" },
 };
 
 function timeAgo(date: Date | string): string {
@@ -46,7 +46,7 @@ export default function CommunityChains() {
       <div className="min-h-screen bg-[#f8f5f0]">
         <BackButton />
 
-        <section className="pt-24 pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]">
+        <section className="pt-24 pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
           <div className="container px-4 max-w-4xl mx-auto">
             <div className="flex items-center gap-2 text-white/50 text-sm mb-3">
               <Link href="/community" className="hover:text-white/80 transition-colors">Forum</Link>

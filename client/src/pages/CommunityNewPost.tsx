@@ -169,7 +169,7 @@ export default function CommunityNewPost() {
       <BackButton />
 
       {/* Header */}
-      <section className="pt-24 pb-4 md:pt-28 md:pb-6 bg-gradient-to-b from-[#1a472a] to-[#2d5a3f]">
+      <section className="pt-24 pb-4 md:pt-28 md:pb-6 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
         <div className="container px-4 max-w-3xl mx-auto">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-white/50 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
@@ -281,9 +281,9 @@ export default function CommunityNewPost() {
                     <p className="text-[#1a472a]/60 text-xs mb-2" style={{ fontFamily: 'var(--font-body)' }}>Stage:</p>
                     <div className="flex flex-wrap gap-2">
                       {([
-                        { value: "idea" as ThreadStage, label: "Idea", emoji: "Seed", color: "#166534", bg: "#dcfce7" },
+                        { value: "idea" as ThreadStage, label: "Idea", emoji: "Seed", color: "#1a472a", bg: "#f0f7f0" },
                         { value: "experiment" as ThreadStage, label: "Experiment", emoji: "Flask", color: "#1a472a", bg: "#f0f7f0" },
-                        { value: "result" as ThreadStage, label: "Result", emoji: "Leaf", color: "#92400e", bg: "#fef3c7" },
+                        { value: "result" as ThreadStage, label: "Result", emoji: "Leaf", color: "#92400e", bg: "#f0ebe3" },
                       ]).map(opt => (
                         <button
                           key={opt.value}
@@ -402,9 +402,9 @@ export default function CommunityNewPost() {
             </Label>
             <div className="space-y-2">
               {([
-                { tag: "lesson" as PostTag, label: "#lesson", description: "This post documents a real-world insight or learning", color: "#92400e", bg: "#fef3c7" },
+                { tag: "lesson" as PostTag, label: "#lesson", description: "This post documents a real-world insight or learning", color: "#92400e", bg: "#f0ebe3" },
                 { tag: "seeking-support" as PostTag, label: "#seeking-support", description: "I need help, feedback, or expertise", color: "#1a472a", bg: "#f0f7f0" },
-                { tag: "offering-support" as PostTag, label: "#offering-support", description: "I have something to offer or want to help", color: "#166534", bg: "#dcfce7" },
+                { tag: "offering-support" as PostTag, label: "#offering-support", description: "I have something to offer or want to help", color: "#1a472a", bg: "#f0f7f0" },
               ]).map(({ tag, label, description, color, bg }) => {
                 const isChecked = selectedTags.includes(tag) || (tag === "lesson" && postType === "case_study");
                 const isDisabled = tag === "lesson" && postType === "case_study";

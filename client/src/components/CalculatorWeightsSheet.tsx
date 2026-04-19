@@ -649,7 +649,7 @@ export function CalculatorWeightsSheet() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <button className="inline-flex items-center gap-1.5 text-sm text-[#7dd87d] hover:text-[#5bc85b] transition-colors underline underline-offset-2 decoration-[#7dd87d]/40 hover:decoration-[#5bc85b]">
+        <button className="inline-flex items-center gap-1.5 text-sm text-[#7dd87d] hover:text-[#7dd87d] transition-colors underline underline-offset-2 decoration-[#7dd87d]/40 hover:decoration-[#7dd87d]">
           <Scale className="w-4 h-4" />
           View Current Weights & Details
         </button>
@@ -667,7 +667,7 @@ export function CalculatorWeightsSheet() {
 
         <div className="py-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 bg-[#f8fdf8]">
+            <TabsList className="grid w-full grid-cols-4 bg-[#f0f7f0]">
               <TabsTrigger value="weights" className="text-xs data-[state=active]:bg-[#7dd87d] data-[state=active]:text-[#1a472a]">
                 <Scale className="w-3 h-3 mr-1" />
                 Weights
@@ -788,7 +788,7 @@ export function CalculatorWeightsSheet() {
                       value={capital.id}
                       className="border border-[#1a472a]/10 rounded-lg overflow-hidden"
                     >
-                      <AccordionTrigger className="px-4 py-3 hover:bg-[#f8fdf8] hover:no-underline">
+                      <AccordionTrigger className="px-4 py-3 hover:bg-[#f0f7f0] hover:no-underline">
                         <div className="flex items-center gap-3">
                           <capital.icon className="w-5 h-5" style={{ color: capital.color }} />
                           <div className="text-left">
@@ -808,7 +808,7 @@ export function CalculatorWeightsSheet() {
                         <p className="text-sm text-[#1a472a]/70 mb-3">{capital.description}</p>
                         
                         {/* Example calculation */}
-                        <div className="bg-[#f8fdf8] rounded-lg p-3 mb-4 border border-[#1a472a]/5">
+                        <div className="bg-[#f0f7f0] rounded-lg p-3 mb-4 border border-[#1a472a]/5">
                           <div className="flex items-center gap-2 mb-2">
                             <Calculator className="w-4 h-4 text-[#7dd87d]" />
                             <span className="text-xs font-medium text-[#1a472a]">Example Calculation</span>
@@ -995,7 +995,7 @@ export function CalculatorWeightsSheet() {
                         value={capital.id}
                         className="border border-[#1a472a]/10 rounded-lg overflow-hidden"
                       >
-                        <AccordionTrigger className="px-4 py-3 hover:bg-[#f8fdf8] hover:no-underline">
+                        <AccordionTrigger className="px-4 py-3 hover:bg-[#f0f7f0] hover:no-underline">
                           <div className="flex items-center justify-between w-full pr-2">
                             <div className="flex items-center gap-3">
                               <capital.icon className="w-5 h-5" style={{ color: capital.color }} />
@@ -1030,7 +1030,7 @@ export function CalculatorWeightsSheet() {
                                 <div 
                                   key={weight.key}
                                   className={`rounded-lg p-3 border ${
-                                    isChanged ? 'bg-amber-50 border-amber-200' : 'bg-[#f8fdf8] border-[#1a472a]/10'
+                                    isChanged ? 'bg-amber-50 border-amber-200' : 'bg-[#f0f7f0] border-[#1a472a]/10'
                                   }`}
                                 >
                                   <div className="flex items-center justify-between">
@@ -1106,7 +1106,7 @@ export function CalculatorWeightsSheet() {
 
               {/* Add new idea section */}
               {showAddIdea ? (
-                <div className="bg-[#f8fdf8] rounded-lg p-4 border border-[#7dd87d]/30">
+                <div className="bg-[#f0f7f0] rounded-lg p-4 border border-[#7dd87d]/30">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-medium text-[#1a472a] flex items-center gap-2">
                       <Plus className="w-4 h-4 text-[#7dd87d]" />
@@ -1153,7 +1153,7 @@ export function CalculatorWeightsSheet() {
                 <Button
                   onClick={() => setShowAddIdea(true)}
                   variant="outline"
-                  className="w-full border-dashed border-[#7dd87d]/50 text-[#7dd87d] hover:bg-[#7dd87d]/10 hover:text-[#5bc85b]"
+                  className="w-full border-dashed border-[#7dd87d]/50 text-[#7dd87d] hover:bg-[#7dd87d]/10 hover:text-[#7dd87d]"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Your Idea
@@ -1181,7 +1181,7 @@ export function CalculatorWeightsSheet() {
                           className={`flex flex-col items-center justify-center min-w-[50px] py-2 rounded-lg transition-all ${
                             hasVoted 
                               ? 'bg-[#7dd87d]/20 text-[#7dd87d] cursor-default' 
-                              : 'bg-[#f8fdf8] text-[#1a472a]/60 hover:bg-[#7dd87d]/10 hover:text-[#7dd87d] cursor-pointer'
+                              : 'bg-[#f0f7f0] text-[#1a472a]/60 hover:bg-[#7dd87d]/10 hover:text-[#7dd87d] cursor-pointer'
                           }`}
                         >
                           <ChevronUp className={`w-5 h-5 ${hasVoted ? 'text-[#7dd87d]' : ''}`} />
@@ -1210,7 +1210,7 @@ export function CalculatorWeightsSheet() {
                           <p className="text-sm text-[#1a472a]/70 mt-1">{idea.description}</p>
                           {idea.proposedWeight && (
                             <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs bg-[#f8fdf8] px-2 py-1 rounded text-[#1a472a]/70">
+                              <span className="text-xs bg-[#f0f7f0] px-2 py-1 rounded text-[#1a472a]/70">
                                 Proposed: {idea.proposedWeight}
                               </span>
                               {idea.capitalType && (
@@ -1269,7 +1269,7 @@ export function CalculatorWeightsSheet() {
                     key={idx}
                     className={`rounded-lg border p-4 ${
                       entry.status === 'current' 
-                        ? 'border-[#7dd87d]/40 bg-[#f8fdf8]' 
+                        ? 'border-[#7dd87d]/40 bg-[#f0f7f0]' 
                         : 'border-[#1a472a]/10 bg-white'
                     }`}
                   >
@@ -1317,7 +1317,7 @@ export function CalculatorWeightsSheet() {
               </div>
 
               {/* Governance info */}
-              <div className="bg-[#f8fdf8] rounded-lg p-4 border border-[#1a472a]/10">
+              <div className="bg-[#f0f7f0] rounded-lg p-4 border border-[#1a472a]/10">
                 <h4 className="font-medium text-[#1a472a] mb-2 flex items-center gap-2">
                   <Info className="w-4 h-4 text-[#7dd87d]" />
                   How Changes Are Made

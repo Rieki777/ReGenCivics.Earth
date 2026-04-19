@@ -54,10 +54,10 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
               disabled={n > remaining}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                 n <= amount
-                  ? "bg-[#7c9a7e] text-white scale-110"
+                  ? "bg-[#4a7c59] text-white scale-110"
                   : n > remaining
                   ? "bg-[#1a472a]/5 text-[#1a472a]/20 cursor-not-allowed"
-                  : "bg-[#7c9a7e]/10 text-[#7c9a7e] hover:bg-[#7c9a7e]/20"
+                  : "bg-[#4a7c59]/10 text-[#4a7c59] hover:bg-[#4a7c59]/20"
               }`}
             >
               <Leaf className="w-5 h-5" />
@@ -74,7 +74,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
             placeholder="What are you grateful for?"
             maxLength={280}
             rows={3}
-            className="w-full bg-white border border-[#1a472a]/10 rounded-xl px-3 py-2.5 text-sm text-[#2d2a26] placeholder:text-[#1a472a]/30 outline-none focus:ring-1 focus:ring-[#7c9a7e]/50 resize-none"
+            className="w-full bg-white border border-[#1a472a]/10 rounded-xl px-3 py-2.5 text-sm text-[#2d2a26] placeholder:text-[#1a472a]/30 outline-none focus:ring-1 focus:ring-[#4a7c59]/50 resize-none"
           />
           <span className="absolute bottom-2 right-3 text-[10px] text-[#1a472a]/30">{message.length}/280</span>
         </div>
@@ -82,7 +82,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
         <button
           onClick={() => sendMutation.mutate({ receiverId: recipientId, amount, message })}
           disabled={!message.trim() || sendMutation.isPending || sent || remaining < amount}
-          className="w-full py-3 rounded-xl bg-[#7c9a7e] text-white font-semibold text-sm hover:bg-[#6a8a6e] transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-xl bg-[#4a7c59] text-white font-semibold text-sm hover:bg-[#6a8a6e] transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
         >
           {sent ? "Sent" : sendMutation.isPending ? "Sending..." : <><Send className="w-4 h-4" /> Send Gratitude</>}
         </button>

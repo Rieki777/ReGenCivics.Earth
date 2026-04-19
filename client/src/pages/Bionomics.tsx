@@ -704,7 +704,7 @@ export default function Bionomics() {
                       size="lg"
                       data-magnetic
                       data-ripple
-                      className="rounded-full bg-[#7dd87d] hover:bg-[#6bc76b] text-[#0d2818] font-bold px-5 md:px-7"
+                      className="rounded-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] font-bold px-5 md:px-7"
                       style={{ fontFamily: "var(--font-accent)" }}
                     >
                       <Sprout className="w-4 h-4 mr-2" /> Play the Game
@@ -1550,7 +1550,7 @@ export default function Bionomics() {
                 <Link href="/apply">
                   <Button
                     size="lg"
-                    className="w-full rounded-2xl bg-[#7dd87d] hover:bg-[#6bc76b] text-[#0d2818] font-bold"
+                    className="w-full rounded-2xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] font-bold"
                     style={{ fontFamily: "var(--font-accent)" }}
                   >
                     For land projects <ArrowRight className="w-4 h-4 ml-1" />

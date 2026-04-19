@@ -95,7 +95,7 @@ export default function LOI() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/opportunity">
-                <Button className="bg-[#7dd87d] hover:bg-[#6bc76b] text-[#1a472a]">
+                <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
                   View Investment Opportunity
                 </Button>
               </Link>
@@ -384,7 +384,7 @@ export default function LOI() {
               <Button
                 type="submit"
                 disabled={submitLOI.isPending}
-                className="flex-1 bg-[#7dd87d] hover:bg-[#6bc76b] text-[#1a472a] py-3 text-lg font-semibold"
+                className="flex-1 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] py-3 text-lg font-semibold"
               >
                 {submitLOI.isPending ? (
                   <>

@@ -29,7 +29,7 @@ interface PageSkeletonProps {
 export function PageSkeleton({ variant = "default", className }: PageSkeletonProps) {
   if (variant === "list") {
     return (
-      <div className={cn("min-h-screen bg-gradient-to-b from-[#0a1a0a] to-[#1a2a1a] px-4 py-8", className)}>
+      <div className={cn("min-h-screen bg-gradient-to-b from-[#0d2818] to-[#1a2a1a] px-4 py-8", className)}>
         <div className="max-w-3xl mx-auto space-y-4">
           <SkeletonBlock className="h-10 w-1/2 mb-6" />
           {Array.from({ length: 5 }).map((_, i) => (
@@ -69,7 +69,7 @@ export function PageSkeleton({ variant = "default", className }: PageSkeletonPro
 
   // Default: header + hero + content blocks
   return (
-    <div className={cn("min-h-screen bg-gradient-to-b from-[#0a1a0a] to-[#1a2a1a] px-4 py-8", className)}>
+    <div className={cn("min-h-screen bg-gradient-to-b from-[#0d2818] to-[#1a2a1a] px-4 py-8", className)}>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Hero */}
         <div className="space-y-3">
