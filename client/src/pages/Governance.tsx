@@ -720,7 +720,7 @@ function EarthDayCountdown() {
                 {["Q2 Portfolio Allocation", "New Alliance Partner: EcoLegal", "Seasonal Festival Agenda"].map(p => (
                   <div key={p} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
                     <span className="w-2 h-2 rounded-full bg-[#7dd87d] flex-shrink-0" />
-                    <span className="text-white/60 text-xs min-w-0">{p}</span>
+                    <span className="text-white/60 text-xs min-w-0 truncate">{p}</span>
                   </div>
                 ))}
               </div>

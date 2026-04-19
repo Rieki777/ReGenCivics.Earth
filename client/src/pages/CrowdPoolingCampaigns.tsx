@@ -311,7 +311,7 @@ export default function CrowdPoolingCampaigns() {
         ) : (
           <div className="text-center py-12">
             <Sparkles className="w-12 h-12 text-[#1a472a]/20 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No campaigns found</h3>
+            <h2 className="text-xl font-bold text-white mb-2">No campaigns found</h2>
             <p className="text-white/50 mb-6">
               {searchQuery || filterCategory !== 'all' 
                 ? 'Try adjusting your search or filters' 

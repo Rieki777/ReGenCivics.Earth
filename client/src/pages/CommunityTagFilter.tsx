@@ -143,9 +143,9 @@ export default function CommunityTagFilter() {
           {!posts || posts.length === 0 ? (
             <div className="text-center py-16">
               <MessageCircle className="w-16 h-16 text-[#4a7c59]/20 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-[#1a472a] mb-2" style={{ fontFamily: "var(--font-display)" }}>
+              <h2 className="text-lg font-bold text-[#1a472a] mb-2" style={{ fontFamily: "var(--font-display)" }}>
                 No posts yet
-              </h3>
+              </h2>
               <p className="text-[#1a472a]/60 text-sm mb-4" style={{ fontFamily: "var(--font-body)" }}>
                 Be the first to tag a post with {meta.label}.
               </p>

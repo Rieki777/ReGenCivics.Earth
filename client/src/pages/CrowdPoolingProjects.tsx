@@ -734,7 +734,8 @@ function ProjectDetailModal({
 
       {/* Modal panel */}
       <div
-        className="relative bg-[#0a1f10] border border-[#7dd87d]/20 w-full max-w-5xl max-h-[95vh] overflow-hidden rounded-t-2xl sm:rounded-2xl z-10 flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300"
+        className="relative bg-[#0a1f10] border border-[#7dd87d]/20 w-full max-w-5xl max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl z-10 flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300"
+        style={{ WebkitOverflowScrolling: 'touch' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header bar */}

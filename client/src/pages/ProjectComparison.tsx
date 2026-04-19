@@ -466,7 +466,7 @@ export default function ProjectComparison() {
         ) : (
           <Card className="p-12 text-center border-[#7dd87d]/30">
             <Scale className="w-16 h-16 mx-auto text-[#7dd87d]/40 mb-4" />
-            <h3 className="text-xl font-bold text-[#1a472a] mb-2">No Projects Selected</h3>
+            <h2 className="text-xl font-bold text-[#1a472a] mb-2">No Projects Selected</h2>
             <p className="text-[#4a7c59] mb-4">
               Select at least one project above to start comparing
             </p>
