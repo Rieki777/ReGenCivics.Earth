@@ -1,4 +1,5 @@
-import { Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { Sparkles, Send } from 'lucide-react'
 import { useReGenGuide } from '@/contexts/ReGenGuideContext'
 
 const STARTER_PROMPTS = [
@@ -19,6 +20,7 @@ type Props = {
  */
 export function AssistTab({ onClose }: Props = {}) {
   const guide = useReGenGuide()
+  const [input, setInput] = useState('')
 
   const launch = (prompt?: string) => {
     guide.open()
@@ -27,6 +29,18 @@ export function AssistTab({ onClose }: Props = {}) {
       // Broadcast starter prompt for ReGenGuide to pick up on open.
       window.dispatchEvent(new CustomEvent('regen-guide-prompt', { detail: prompt }))
     }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = input.trim()
+    if (!trimmed) {
+      // No question typed, just open the guide.
+      launch()
+      return
+    }
+    launch(trimmed)
+    setInput('')
   }
 
   return (
@@ -41,17 +55,35 @@ export function AssistTab({ onClose }: Props = {}) {
         </div>
       </div>
 
+      <form onSubmit={handleSubmit} className="flex items-center gap-1.5">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask anything..."
+          aria-label="Ask the ReGen Guide a question"
+          className="flex-1 min-w-0 bg-white/5 border border-white/10 focus:border-[#7dd87d]/60 focus:bg-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-white/40 outline-none transition-colors"
+        />
+        <button
+          type="submit"
+          aria-label={input.trim() ? 'Send question' : 'Open the Guide'}
+          className="flex-shrink-0 flex items-center justify-center gap-1.5 bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] rounded-lg px-3 py-2 text-xs font-bold transition-colors"
+        >
+          {input.trim() ? <Send className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+        </button>
+      </form>
+
       <button
         type="button"
         onClick={() => launch()}
-        className="w-full flex items-center justify-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] rounded-lg py-2.5 text-xs font-bold transition-colors"
+        className="w-full flex items-center justify-center gap-2 bg-[#7dd87d]/10 hover:bg-[#7dd87d]/20 border border-[#7dd87d]/30 hover:border-[#7dd87d]/50 text-[#7dd87d] rounded-lg py-2 text-xs font-semibold transition-colors"
       >
         <Sparkles className="w-3.5 h-3.5" />
         Open the Guide
       </button>
 
       <div className="space-y-1.5">
-        <p className="text-[10px] uppercase tracking-wider text-white/40 px-1">Try asking</p>
+        <p className="text-[10px] uppercase tracking-wider text-white/40 px-1">Or try</p>
         <div className="flex flex-col gap-1.5">
           {STARTER_PROMPTS.map((prompt) => (
             <button

@@ -153,6 +153,29 @@ This project uses a structured delivery pipeline via the ln- skills (in ~/.claud
 - `ln-400-story-executor` / `ln-401-task-executor` — implementation
 - `ln-500-story-quality-gate` — quality check before shipping
 
+## Ship Gate (MANDATORY before any "VERIFIED" or "DONE" claim)
+
+Three gates must pass before marking any fix, task, or feature VERIFIED, DONE,
+or shipped. Run them from repo root:
+
+```bash
+python3 scripts/audit-truncation.py      # gate 1: no truncated source files
+rg -g '*.css' '<className-you-added>' client/src/   # gate 2: per change, for any new className or @keyframes
+pnpm typecheck                                        # gate 3: exit 0
+```
+
+See `.claude/skills/regen-ship-gate/SKILL.md` for the full protocol.
+
+**Why this exists.** On 2026-04-18 an audit of commit b06b7aa found 5 of 13
+fixes marked "resolved" were false (className added, CSS missing) and 15 source
+files on disk were truncated mid-statement with NUL-byte padding (including
+App.tsx, events.ts, and 12 page components). The build would have broken on
+next `pnpm dev`. This gate prevents that pattern from shipping again.
+
+Every `FIXES_TO_MAKE_*.md` row in the CLAUDE CODE table must include an
+Evidence column (file:line, grep result, screenshot path, or script output
+line). No evidence = status stays `CODED`, never `VERIFIED`.
+
 ## Key Constraints
 - Accessibility matters — outputs must work for people outside tech circles
 - Community-first — language and tools should feel welcoming, not gatekeeping
