@@ -22,6 +22,9 @@ import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { Pullquote } from "@/components/Pullquote";
+import { ReadingTime } from "@/components/ReadingTime";
+import { TLDR } from "@/components/TLDR";
+import { Concept } from "@/components/Concept";
 import {
   Leaf,
   Sprout,
@@ -667,6 +670,7 @@ export default function Bionomics() {
                   >
                     <span>Bionomics</span>
                   </h1>
+                  <ReadingTime words={3000} />
                   <p className="text-sm md:text-lg text-white/95 max-w-2xl mx-auto safe-prose">
                     The living-economy side of ReGen Civics where we are living into the
                     future of how we need our economic systems to be. The Game, $ReGen,
@@ -714,6 +718,15 @@ export default function Bionomics() {
               </div>
             </div>
           </section>
+
+          {/* TLDR */}
+          <div className="container px-4 max-w-4xl mx-auto">
+            <TLDR points={[
+              "Bionomics is the living-economy framework behind ReGen Civics",
+              "It bridges regenerative land projects with aligned capital through the Fund",
+              "Every quest, contribution, and governance action feeds back into the system",
+            ]} />
+          </div>
 
           {/* ════ 2. THE DEFINITION ═════════════════════════════════ */}
           <section className="px-4 py-10 md:py-16">
@@ -886,7 +899,7 @@ export default function Bionomics() {
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
                   We are investing in local food, regenerative land, community, and the
                   organizations that support them. It is a full-suite investment into the
-                  ReGenerative Renaissance and the cultures growing inside it.
+                  <Concept>Regenerative Renaissance</Concept> and the cultures growing inside it.
                 </p>
                 <p className="text-white/85 text-base leading-relaxed">
                   Generally funds pick a single thesis and ride it. Our thesis is simply

@@ -39,6 +39,9 @@ import {
   Star,
 } from "lucide-react";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
+import { ReadingTime } from "@/components/ReadingTime";
+import { Pullquote } from "@/components/Pullquote";
+import { StarsDivider } from "@/components/dividers/StarsDivider";
 
 // Animated Token Flow Component
 function AnimatedTokenFlow() {
@@ -845,6 +848,7 @@ export default function Tokenomics() {
             >
               <span className="text-[#7dd87d]">$RCivics</span> Tokenomics
             </h1>
+            <ReadingTime words={2500} />
             <div className="bg-[#1a472a]/60 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/20 p-6 md:p-8 mb-8 text-left">
               <p className="text-white/90 text-lg leading-relaxed mb-4 safe-prose">
                 <strong className="text-[#7dd87d]">Tokenomics = Token Economics.</strong> Tokens are the things we create through our governance process to account for things. And economics? The word comes from the Ancient Greek{" "}
@@ -920,6 +924,8 @@ export default function Tokenomics() {
         </div>
       </section>
 
+      <Pullquote>Every token in circulation represents real value contributed to the movement. The economy pays you to grow and distribute good food.</Pullquote>
+
       {/* ── 4 Phases ── */}
       <section className="py-16 px-4 bg-[#0d2818]/40">
         <div className="container">
@@ -990,6 +996,8 @@ export default function Tokenomics() {
           </div>
         </div>
       </section>
+
+      <StarsDivider className="my-8 max-w-4xl mx-auto px-4" />
 
       {/* ── Returns Flow ── */}
       <section className="py-16 px-4 bg-[#0d2818]/40">

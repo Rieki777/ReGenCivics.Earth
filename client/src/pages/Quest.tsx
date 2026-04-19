@@ -168,7 +168,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
 
   return (
     <div
-      className={`relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-lg transition-all hover:-translate-y-1 ${colorClass} ${shimmerClass} ${hasDetails ? 'cursor-pointer group' : ''}`}
+      className={`relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-lg transition-all hover:-translate-y-1 ${colorClass} ${shimmerClass} group ${hasDetails ? 'cursor-pointer' : ''}`}
       onClick={() => hasDetails && onOpenDetails?.(questId)}
     >
       {/* Quest image */}
@@ -214,6 +214,16 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
         )}
 
         <p className="text-sm text-[#1a472a]/80 mb-3">{quest.description}</p>
+
+        <div className="quest-card-tier2">
+          <div>
+            {quest.focus && (
+              <p className="text-xs text-[#1a472a]/60 mb-2">
+                <strong>Focus:</strong> {quest.focus}
+              </p>
+            )}
+          </div>
+        </div>
 
         <div className="flex items-center gap-2 text-xs mb-2">
           <span className="flex items-center gap-1 px-2 py-0.5 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">

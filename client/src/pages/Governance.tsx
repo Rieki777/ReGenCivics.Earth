@@ -9,6 +9,7 @@ import { SEO, pageSEO } from "@/components/SEO";
 import { JsonLD, schemas } from "@/components/JsonLD";
 import { cdnImg } from "@/lib/utils";
 import { Pullquote } from "@/components/Pullquote";
+import { TLDR } from "@/components/TLDR";
 import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
 import { WhoHoldsVoteChart } from "@/components/governance/WhoHoldsVoteChart";
 import { StarsDivider } from "@/components/dividers/StarsDivider";
@@ -776,6 +777,15 @@ export default function Governance() {
           </div>
         </div>
       </section>
+
+      {/* TLDR */}
+      <div className="container max-w-4xl mx-auto px-4 mt-8">
+        <TLDR points={[
+          "Two governance tokens serve two purposes: RCVoice for Fund decisions, RGVoice for Game decisions",
+          "Four actor classes hold voice over Fund governance: Council, Investors, Land Projects, Alliance Partners",
+          "Proposals start in the community forum, graduate to Loomio for voting, then formalize on Hypha",
+        ]} />
+      </div>
 
       {/* Three Coordination Tools */}
       <section data-reveal className="py-12 px-4">

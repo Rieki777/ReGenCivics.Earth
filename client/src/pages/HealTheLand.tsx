@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO } from "@/components/SEO";
 import { ArrowRight, Leaf, Heart, Home } from "lucide-react";
+import { ReadingTime } from "@/components/ReadingTime";
+import { Pullquote } from "@/components/Pullquote";
+import { RiverDivider } from "@/components/dividers/RiverDivider";
 
 function StageCard({
   emoji,
@@ -67,6 +70,7 @@ export default function HealTheLand() {
               >
                 Heal the Land, Heal Ourselves
               </h1>
+              <ReadingTime words={1500} />
               <p
                 className="text-lg md:text-xl mb-10 leading-relaxed max-w-2xl mx-auto"
                 style={{ color: "#d4a574", fontFamily: "var(--font-body)" }}
@@ -128,6 +132,10 @@ export default function HealTheLand() {
           </div>
         </section>
 
+        <Pullquote>When the land heals, we feel it in our bodies, our moods, our sense of purpose.</Pullquote>
+
+        <RiverDivider className="my-8 max-w-4xl mx-auto px-4" />
+
         {/* The Three Stages */}
         <section className="py-16 md:py-24 px-4">
           <div className="max-w-6xl mx-auto">
@@ -167,6 +175,8 @@ export default function HealTheLand() {
             </div>
           </div>
         </section>
+
+        <RiverDivider className="my-8 max-w-4xl mx-auto px-4" />
 
         {/* For Land Project Sponsors */}
         <section className="py-16 md:py-24 px-4" style={{ background: "rgba(0,0,0,0.15)" }}>

@@ -50,6 +50,7 @@ import AutoplayVideo from "@/components/AutoplayVideo";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { pageCopy } from "@/data/pageCopy";
 import { cdnImg } from "@/lib/utils";
+import { Concept } from "@/components/Concept";
 // Calculator moved to separate page at /calculator
 
 // Game Way Card Component
@@ -388,7 +389,7 @@ export default function Game() {
                   <p>
                     In this way we continually evolve the Game to better serve us and the goal of co-creating a growing diversity of regenerative realities, villages, projects, etc.
                   </p>
-                  <p>This is why we call it an "Infinite Game".</p>
+                  <p>This is why we call it an "<Concept>Infinite Game</Concept>".</p>
 
                   <h3 className="text-xl font-bold text-[#1a472a] pt-4" style={{ fontFamily: "var(--font-display)" }}>2 main parts to this Game:</h3>
                   <p>

@@ -11,6 +11,7 @@ import { Cookie, Lightbulb, Mail } from "lucide-react";
 import { FooterSearch } from "@/components/FooterSearch";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
+import { HoverPreview } from "@/components/HoverPreview";
 
 export default function SiteFooter() {
   return (
@@ -41,18 +42,24 @@ export default function SiteFooter() {
           <Link href="/apply" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
             Apply
           </Link>
-          <Link href="/quest" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
-            Quests
-          </Link>
+          <HoverPreview href="/quest">
+            <Link href="/quest" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+              Quests
+            </Link>
+          </HoverPreview>
           <Link href="/crowd-pooling" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
             Crowd Pooling
           </Link>
-          <Link href="/fund" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
-            The Fund
-          </Link>
-          <Link href="/community" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
-            Community
-          </Link>
+          <HoverPreview href="/fund">
+            <Link href="/fund" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+              The Fund
+            </Link>
+          </HoverPreview>
+          <HoverPreview href="/community">
+            <Link href="/community" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+              Community
+            </Link>
+          </HoverPreview>
           <Link href="/glossary" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
             Glossary
           </Link>

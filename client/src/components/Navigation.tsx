@@ -53,6 +53,10 @@ const prefetch = (path: string) => {
     "/blog": () => import("@/pages/Blog"),
     "/community": () => import("@/pages/Community"),
     "/apply": () => import("@/pages/Apply"),
+    "/governance": () => import("@/pages/Governance"),
+    "/bionomics": () => import("@/pages/Bionomics"),
+    "/tokenomics": () => import("@/pages/Tokenomics"),
+    "/tools": () => import("@/pages/ToolsLibrary"),
   };
   routes[path]?.();
 };

@@ -29,6 +29,8 @@ import { BannerDisplay } from "@/components/BannerDisplay";
 import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 import { VineDivider } from "@/components/dividers/VineDivider";
+import { Pullquote } from "@/components/Pullquote";
+import { ForYouLabel } from "@/components/ForYouLabel";
 
 // Icon mapping for categories
 const iconMap: Record<string, React.ReactNode> = {
@@ -277,10 +279,11 @@ export default function Community() {
           </div>
 
           <h1
-            className="text-3xl md:text-5xl font-bold text-white mb-3"
+            className="text-3xl md:text-5xl font-bold text-white mb-3 flex items-center justify-center gap-3"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             Gathering Grove
+            <ForYouLabel label="Your Community" />
           </h1>
           <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-6" style={{ fontFamily: 'var(--font-body)' }}>
             Where regenerators connect, share wisdom, and grow together.
@@ -404,6 +407,8 @@ export default function Community() {
           share a quest completion, or ask a question in the quest threads.
         </p>
       </div>
+
+      <Pullquote>Every conversation plants a seed for the future. This is where we govern together.</Pullquote>
 
       {/* 5-Section Cards + Expandable Panels */}
       <section className="container px-4 max-w-4xl mx-auto pb-16">
