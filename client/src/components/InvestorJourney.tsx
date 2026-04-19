@@ -66,7 +66,7 @@ const journeySteps: JourneyStep[] = [
     action: "Begin",
     href: "/loi",
     icon: Rocket,
-    color: "#ef4444",
+    color: "#ef6f6c",
   },
 ];
 

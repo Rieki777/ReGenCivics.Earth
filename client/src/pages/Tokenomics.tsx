@@ -815,6 +815,7 @@ export default function Tokenomics() {
       <SEO
         title="$RCivics Tokenomics | ReGen Civics"
         description="Understand the $RCivics token economy - an index token for the Regenerative Renaissance backed by land, governed by community, and designed to keep value circulating within the ecosystem."
+        image="/og/tokenomics.jpg"
         url="/tokenomics"
       />
       <BackButton />

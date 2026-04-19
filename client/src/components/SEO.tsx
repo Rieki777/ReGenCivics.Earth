@@ -321,7 +321,7 @@ export const pageSEO = {
     title: 'Governance | ReGen Civics',
     description: 'Voice-based governance rooted in land and contribution. How ReGen Civics makes decisions, and who has a say.',
     keywords: 'regenerative governance, DAO, voice tokens, community governance',
-    image: `${BASE_URL}/og-default.jpg`,
+    image: '/og/governance.jpg',
     url: '/governance'
   },
   calculator: {

@@ -144,7 +144,7 @@ export function AdminEventsTab() {
 
       {/* Create / Edit Form */}
       {(showCreate || editingId !== null) && (
-        <Card className="bg-[#0f2a18] border-green-800/40">
+        <Card className="bg-[#0d2818] border-green-800/40">
           <CardHeader>
             <CardTitle className="text-white text-base">{editingId !== null ? 'Edit Event' : 'New Event'}</CardTitle>
           </CardHeader>
@@ -428,7 +428,7 @@ export function AdminEventsTab() {
                           <p className="text-gray-600 text-sm leading-relaxed m-0">{customBody || ev.description}</p>
                         )}
                         <div className="flex gap-2 pt-1 flex-wrap">
-                          <span className="bg-[#2d8cff] text-white px-4 py-2 rounded-lg text-xs font-bold">Join on Zoom</span>
+                          <span className="bg-[#0a66c2] text-white px-4 py-2 rounded-lg text-xs font-bold">Join on Zoom</span>
                           <span className="border-2 border-[#1a472a] text-[#1a472a] px-4 py-2 rounded-lg text-xs font-bold">View Schedule</span>
                         </div>
                       </div>
