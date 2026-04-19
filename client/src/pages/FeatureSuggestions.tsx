@@ -46,7 +46,7 @@ export default function FeatureSuggestions() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
-        title="Feature Suggestions | ReGen Civics"
+        title="Features & Bug Reports | ReGen Civics"
         description="Propose and vote on features for the ReGen Civics platform."
         image="/og/features.webp"
         url="/features"
@@ -56,16 +56,16 @@ export default function FeatureSuggestions() {
       <section className="relative pt-24 pb-10 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>
-            Feature Suggestions
+            Features & Bug Reports
           </h1>
           <p className="text-white/70 text-base max-w-xl mx-auto mb-8 safe-prose">
-            This site belongs to everyone building here. Propose features, vote on what matters, and help shape what gets built next.
+            This site belongs to everyone building here. Propose features, report bugs, vote on what matters, and help shape what gets built next.
           </p>
 
           {isAuthenticated ? (
             <Button onClick={() => setShowForm(!showForm)} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full">
               {showForm ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-              {showForm ? "Close" : "Suggest a Feature"}
+              {showForm ? "Close" : "Suggest or Report"}
             </Button>
           ) : (
             <a href={getLoginUrl()} className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold">

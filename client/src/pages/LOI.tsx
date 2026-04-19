@@ -84,9 +84,9 @@ export default function LOI() {
         <div className="container max-w-2xl mx-auto">
           <Card className="p-8 bg-white/95 backdrop-blur-sm text-center">
             <CheckCircle2 className="w-16 h-16 text-[#7dd87d] mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-3xl font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
               Thank You for Your Letter of Intent
-            </h1>
+            </h2>
             <p className="text-[#1a472a]/80 text-lg mb-6">
               We've received your LOI for <span className="font-bold text-[#7dd87d]">${parseInt(formData.pledgeAmount).toLocaleString()}</span>.
             </p>

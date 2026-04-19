@@ -62,12 +62,12 @@ export default function SiteFooter() {
         <div className="mb-8 px-4 py-5 rounded-2xl bg-gradient-to-br from-[#7dd87d]/15 to-[#4a7c59]/10 border border-[#7dd87d]/30 text-center">
           <h3 className="text-[#7dd87d] text-lg font-semibold mb-1">Help shape this platform</h3>
           <p className="text-white/70 text-sm mb-3">
-            Community governance means your ideas become the build queue. Drop what you want next.
+            Community governance means your ideas become the build queue. Propose features, report bugs, vote on what ships next.
           </p>
           <Link href="/features">
             <span className="inline-flex items-center gap-2 bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-semibold px-6 py-3 rounded-xl shadow-md min-h-[44px] transition-colors cursor-pointer">
               <Lightbulb className="w-4 h-4" />
-              Suggest a Feature
+              Suggest or Report
             </span>
           </Link>
         </div>

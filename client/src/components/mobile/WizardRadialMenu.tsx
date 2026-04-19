@@ -80,13 +80,13 @@ export function WizardRadialMenu() {
     <div className="fixed bottom-24 right-4 z-40 md:hidden" onClick={(e) => e.stopPropagation()}>
       {/* Radial action buttons (visible when open) */}
       {open && (
-        <div className="absolute bottom-14 right-0 w-52 h-52 pointer-events-none">
+        <div className="absolute bottom-14 right-0 w-72 h-72 pointer-events-none">
           {ACTIONS.map((a, i) => {
-            // Fan 5 buttons in a 135-degree arc (180 to 315 deg) at radius 110.
-            // Arc length between centers ~65px, giving ~21px gap for 44px buttons.
-            const angle = (180 + (i / (ACTIONS.length - 1)) * 135) * (Math.PI / 180);
-            const radius = 110;
-            const cx = 104; // half of 208px (w-52)
+            // Fan 5 buttons in a 160-degree arc (190 to 350 deg) at radius 128.
+            // At 128px radius with 40-deg spacing, arc gap between 44px buttons is ~45px.
+            const angle = (190 + (i / (ACTIONS.length - 1)) * 160) * (Math.PI / 180);
+            const radius = 128;
+            const cx = 144; // half of 288px (w-72)
             const x = Math.cos(angle) * radius + cx;
             const y = Math.sin(angle) * radius + cx;
             const activeClass = a.active

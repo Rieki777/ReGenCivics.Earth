@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link2, Check } from "lucide-react"
+import { Share2, Check } from "lucide-react"
 import type { Song } from "@/contexts/AudioContext"
 
 type Props = {
@@ -41,9 +41,9 @@ export function CopyLinkButton({ song, variant = "desktop" }: Props) {
       disabled={!song}
       className={`${base} ${copied ? "text-[#7dd87d]" : "text-white"}`}
       aria-live="polite"
-      aria-label={copied ? "Link copied" : "Copy share link for this song"}
+      aria-label={copied ? "Link copied" : "Share song"}
     >
-      {copied ? <><Check className="w-3.5 h-3.5 text-[#7dd87d]" /> Copied</> : <><Link2 className="w-3.5 h-3.5 text-[#7dd87d]" /> Copy link</>}
+      {copied ? <><Check className="w-3.5 h-3.5 text-[#7dd87d]" /> Copied</> : <><Share2 className="w-3.5 h-3.5 text-[#7dd87d]" /> Share song</>}
     </button>
   )
 }

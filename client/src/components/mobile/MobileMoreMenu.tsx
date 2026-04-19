@@ -83,11 +83,11 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
         </button>
         <div className="flex flex-col items-center text-center">
           <img
-            src="/images/logos/regencivics-logo-light-transparent-rounded.webp"
+            src="/images/logos/regencivics-logo-light-transparent.webp"
             alt="ReGen Civics"
-            width={72}
-            height={72}
-            className="rounded-full shadow-lg"
+            width={80}
+            height={80}
+            className="rounded-2xl shadow-lg"
             loading="eager"
             decoding="async"
           />

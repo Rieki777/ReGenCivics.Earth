@@ -3,7 +3,7 @@
  * Uses streaming SSE for real-time word-by-word responses.
  * Opened/closed via the Command Panel's Guide button (ReGenGuideContext).
  */
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { X, Sparkles } from "lucide-react";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { trpc } from "@/lib/trpc";
@@ -131,6 +131,18 @@ export default function ReGenGuide() {
     },
     [messages]
   );
+
+  // Listen for starter prompts dispatched by other panels (e.g. AssistTab).
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      if (typeof detail === "string" && detail.trim().length > 0) {
+        handleSendMessage(detail);
+      }
+    };
+    window.addEventListener("regen-guide-prompt", handler);
+    return () => window.removeEventListener("regen-guide-prompt", handler);
+  }, [handleSendMessage]);
 
   if (!isOpen) return null;
 

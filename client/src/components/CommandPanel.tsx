@@ -285,7 +285,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
           {tab === 'recent' && <RecentFavoritesTab />}
 
           {/* Assist tab */}
-          {tab === 'assist' && <AssistTab />}
+          {tab === 'assist' && <AssistTab onClose={onClose} />}
 
           {/* Tools tab */}
           {tab === 'tools' && (
