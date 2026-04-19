@@ -6,6 +6,8 @@
 import { useState, useEffect, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { ReadingProgressBar } from "./ReadingProgressBar";
+import { Breadcrumbs } from "./Breadcrumbs";
+import { useLocation } from "wouter";
 import { shouldShowConfetti, currentSeasonFromDate } from "@/lib/seasonalConfetti";
 
 const SEASON_COLORS: Record<string, string[]> = {
@@ -52,6 +54,11 @@ interface PageWrapperProps {
 
 export function PageWrapper({ children, className }: PageWrapperProps) {
   const [mounted, setMounted] = useState(false);
+  const [location] = useLocation();
+  const crumbs = location === "/" ? [] : location.split("/").filter(Boolean).map((seg, i, arr) => ({
+    label: seg.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+    href: i < arr.length - 1 ? "/" + arr.slice(0, i + 1).join("/") : undefined,
+  }));
 
   const [confetti, setConfetti] = useState(false);
 
@@ -70,6 +77,11 @@ export function PageWrapper({ children, className }: PageWrapperProps) {
   return (
     <>
       <ReadingProgressBar />
+      {crumbs.length > 0 && (
+        <div className="container px-4 pt-4">
+          <Breadcrumbs crumbs={crumbs} />
+        </div>
+      )}
       <div id="live-announcer" aria-live="polite" role="status" className="sr-only" />
       {confetti && <SeasonalConfettiOverlay />}
       <div

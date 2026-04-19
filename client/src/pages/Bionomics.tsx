@@ -52,6 +52,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
+import { RiverDivider } from "@/components/dividers/RiverDivider";
 
 /* ─── Color tokens ────────────────────────────────────────────────────── */
 
@@ -854,6 +855,8 @@ export default function Bionomics() {
             </div>
           </section>
 
+          <RiverDivider className="my-8" />
+
           {/* ════ 4. SINCE 2017 (Timeline) ══════════════════════════ */}
           <section className="px-4 py-10 md:py-16">
             <div className="container max-w-3xl">
@@ -1242,6 +1245,8 @@ export default function Bionomics() {
               </div>
             </div>
           </section>
+
+          <RiverDivider className="my-8" />
 
           {/* ════ 11. LOCAL FOOD ECONOMIES ═════════════════════════ */}
           <section

@@ -4,8 +4,9 @@ import { useAuth } from '@/_core/hooks/useAuth'
 import { getCurrentSeason, SEASON_THEMES } from '@/lib/seasons'
 import {
   SkipBack, SkipForward, Play, Pause, Volume2, ChevronDown, Music, ListMusic,
-  Search, Clock, Sparkles, Wrench, Map as MapIcon
+  Search, Clock, Sparkles, Wrench, Map as MapIcon, Plus
 } from 'lucide-react'
+import { CopyLinkButton } from '@/components/audio/CopyLinkButton'
 import { useReGenGuide } from '@/contexts/ReGenGuideContext'
 import { usePageTools } from '@/hooks/usePageTools'
 import { NavIcon } from '@/components/SmartBottomNav'
@@ -149,28 +150,33 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
           {/* Sound tab */}
           {tab === 'sound' && (
             <div className="space-y-3">
-              {/* Song title + add your voice + track list toggle */}
+              {/* Song title + artist */}
               <div className="text-center">
                 <p className="text-[#7dd87d] text-sm font-medium">{currentSong?.title ?? 'No song loaded'}</p>
-                <a
-                  href="/hymn-book"
-                  className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[#7dd87d]/80 hover:text-[#7dd87d] transition-colors"
-                >
-                  + Add Your Voice
-                </a>
                 {currentSong?.artist && (
                   <p className="text-white/60 text-[11px]">{currentSong.artist}</p>
                 )}
+              </div>
+
+              {/* Action buttons row */}
+              <div className="grid grid-cols-3 gap-2 mt-3">
                 <button
+                  type="button"
                   onClick={() => setShowTrackList(s => !s)}
-                  className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-white/55 hover:text-[#7dd87d] transition-colors"
+                  className="flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg py-2 text-white text-xs font-semibold transition-colors"
                   aria-expanded={showTrackList}
-                  aria-controls="hymn-book-track-list"
                 >
-                  <ListMusic className="w-3 h-3" />
-                  <span>Hymns of the ReGeneration ({playlist.length})</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${showTrackList ? 'rotate-180' : ''}`} />
+                  <ListMusic className="w-3.5 h-3.5 text-[#7dd87d]" />
+                  {showTrackList ? "Hide" : "Playlist"}
                 </button>
+                <a
+                  href="/hymn-book#add-your-voice"
+                  className="flex items-center justify-center gap-1.5 bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] rounded-lg py-2 text-xs font-bold transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add song
+                </a>
+                <CopyLinkButton song={playlist[currentIndex]} variant="desktop" />
               </div>
 
               {/* Expandable track list */}

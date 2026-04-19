@@ -2463,14 +2463,18 @@ body {
    Idea 14. Quest card progressive disclosure (three-tier)
    ════════════════════════════════════════════════════════════ */
 .quest-card-tier2 {
-  max-height: 0;
+  display: grid;
+  grid-template-rows: 0fr;
   overflow: hidden;
+  transition: grid-template-rows 0.3s ease, opacity 0.3s ease;
   opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+.quest-card-tier2 > * {
+  overflow: hidden;
 }
 .group:hover .quest-card-tier2,
 .group:focus-within .quest-card-tier2 {
-  max-height: 200px;
+  grid-template-rows: 1fr;
   opacity: 1;
 }
 

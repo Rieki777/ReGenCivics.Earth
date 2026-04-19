@@ -50,6 +50,7 @@ import { cdnImg } from "@/lib/utils";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 import { ForYouLabel } from "@/components/ForYouLabel";
 import { AmbientParticles } from "@/components/AmbientParticles";
+import { VineDivider } from "@/components/dividers/VineDivider";
 
 // Path card data
 const pathCards = [
@@ -350,6 +351,8 @@ export default function Home() {
           </div>
         </section>
 
+        <VineDivider className="my-8" />
+
         {/* How It Works - Interactive flow */}
         <HowItWorks />
 
@@ -645,6 +648,8 @@ export default function Home() {
             </AnimatedSection>
           </div>
         </section>
+
+        <VineDivider className="my-8" />
 
         {/* Live Community Activity */}
         <section className="relative py-8 md:py-10">

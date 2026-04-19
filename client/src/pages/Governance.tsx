@@ -11,6 +11,7 @@ import { cdnImg } from "@/lib/utils";
 import { Pullquote } from "@/components/Pullquote";
 import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
 import { WhoHoldsVoteChart } from "@/components/governance/WhoHoldsVoteChart";
+import { StarsDivider } from "@/components/dividers/StarsDivider";
 
 const GOVERNANCE_SECTIONS: TocSection[] = [
   { id: 'gov-comparison', title: 'Fund vs Game' },
@@ -959,6 +960,8 @@ export default function Governance() {
         </div>
       </section>
 
+      <StarsDivider className="my-8" />
+
       {/* Two Tokens, Two Powers */}
       <section id="gov-tokens" className="py-16 px-4">
         <div className="container">
@@ -1315,6 +1318,8 @@ export default function Governance() {
           </div>
         </div>
       </section>
+
+      <StarsDivider className="my-8" />
 
       {/* CTA Section */}
       <section id="gov-cta" className="py-20 px-4">

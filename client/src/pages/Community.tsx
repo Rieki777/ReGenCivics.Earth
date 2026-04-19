@@ -28,6 +28,7 @@ import { isNewsletterSubscribed } from "@/utils/newsletter";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
+import { VineDivider } from "@/components/dividers/VineDivider";
 
 // Icon mapping for categories
 const iconMap: Record<string, React.ReactNode> = {
@@ -393,6 +394,8 @@ export default function Community() {
         <span className="ml-auto text-xs text-[#4a7c59]/70">Live community activity</span>
       </div>
 
+      <VineDivider className="my-8" />
+
       {/* Welcome Card */}
       <div className="mx-4 mt-4 p-4 rounded-xl bg-[#f0f7f0] border border-[#7dd87d]/30">
         <h2 className="text-[#1a472a] font-semibold text-base mb-1">Welcome to the Community Space</h2>
@@ -599,7 +602,7 @@ export default function Community() {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-white rounded-xl p-4 md:p-5 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all duration-200 group">
+                      <div className="category-accent-bar bg-white rounded-xl p-4 md:p-5 border border-[#e8e4de] hover:border-[#7dd87d]/40 hover:shadow-md transition-all duration-200 group" style={{ "--category-color": category.color || "#7dd87d" } as React.CSSProperties}>
                         <div className="flex items-start gap-3 md:gap-4">
                           <Link href={`/community/c/${category.slug}`} className="flex items-start gap-3 md:gap-4 flex-1 min-w-0 cursor-pointer">
                             {category.imageUrl ? (
@@ -1246,6 +1249,8 @@ export default function Community() {
             </div>
           </div>
         </div>
+
+        <VineDivider className="my-8" />
 
         {/* Newsletter CTA */}
         <ScrollRevealMotion>

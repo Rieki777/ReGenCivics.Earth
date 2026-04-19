@@ -39,7 +39,7 @@ export function TierBadge({ tier, size = "sm", showLabel = false, className = ""
       title={tier}
     >
       <span
-        className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+        className="inline-flex items-center justify-center rounded-full flex-shrink-0 tier-badge-glow"
         style={{
           width: px,
           height: px,
@@ -76,7 +76,7 @@ export function CitizenshipBadge({ tier, size = "sm", showLabel = false, classNa
       title={visual.label}
     >
       <span
-        className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+        className="inline-flex items-center justify-center rounded-full flex-shrink-0 tier-badge-glow"
         style={{
           width: px,
           height: px,
