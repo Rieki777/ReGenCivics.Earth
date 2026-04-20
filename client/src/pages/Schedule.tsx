@@ -733,8 +733,10 @@ export default function Schedule() {
         </div>
       </section>
 
-      {/* Episode Recordings */}
-      <RecordingsSection />
+      {/* Episode Recordings are rendered inline on each completed event
+          card in the Historical tab below (Watch Recording button). The
+          standalone RecordingsSection was removed so the page has one
+          canonical place to find past sessions. */}
 
       {/* Follow Along with YouTube */}
       <section className="py-8 px-4">

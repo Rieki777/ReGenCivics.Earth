@@ -248,6 +248,29 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
   const transcript = d.transcript ?? null;
   const aiSummary = d.ai_summary ?? d.summary ?? null;
 
+  // ── Drop Zapier test pings ────────────────────────────────────────────────
+  // Zapier's "Build your first Zap with Zapier" test fires a sample payload
+  // when you set up a webhook trigger. It should never become a real recording.
+  // Detect by title, by zapier-hosted asset URLs, or by suspiciously-stale
+  // session dates (Zapier's sample uses 2018 timestamps).
+  const looksLikeZapierTest =
+    title === "Build your first Zap with Zapier" ||
+    /^https?:\/\/cdn\.zapier\.com\//i.test(youtubeUrl ?? "") ||
+    /^https?:\/\/cdn\.zapier\.com\//i.test(thumbnailUrl ?? "") ||
+    /^https?:\/\/cdn\.zapier\.com\//i.test(riversideUrl ?? "") ||
+    String(riversideId).startsWith("webhook-") && !d.id && !d.recording_id && title === "Build your first Zap with Zapier";
+  const sessionTooStale =
+    sessionDate instanceof Date &&
+    !isNaN(sessionDate.getTime()) &&
+    sessionDate.getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30;
+
+  if (looksLikeZapierTest || sessionTooStale) {
+    console.log(
+      `[riverside-webhook] Ignoring test/stale payload: title="${title}", sessionDate=${sessionDate.toISOString?.() ?? sessionDate}, youtubeUrl=${youtubeUrl}`
+    );
+    return;
+  }
+
   // ── 1. Upsert recording in DB ──────────────────────────────────────────────
   const [existing] = await database
     .select()
@@ -342,9 +365,15 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
         forumPostId = matchedEvent.forumThreadId;
         if (replyId) console.log(`[riverside-webhook] Replied to forum thread ${matchedEvent.forumThreadId} for recording ${recordingId}`);
 
-        // Link recording to event for schedule page replay button
+        // Link recording to event for schedule page replay button.
+        // Also mirror youtubeUrl onto the event so the Historical tab card can
+        // render the "Watch Recording" button without an extra join.
         await database.update(eventsTable)
-          .set({ recordingId, status: "completed" })
+          .set({
+            recordingId,
+            status: "completed",
+            ...(recording.youtubeUrl ? { youtubeUrl: recording.youtubeUrl } : {}),
+          })
           .where(eq(eventsTable.id, matchedEvent.id));
         console.log(`[riverside-webhook] Linked recording ${recordingId} to event ${matchedEvent.id}`);
       } else {
