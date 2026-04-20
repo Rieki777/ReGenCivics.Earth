@@ -206,3 +206,7 @@
          (e.g. Recharts theming via dangerouslySetInnerHTML). This script
          tag itself is nonce-authorized so it executes under strict CSP. -->
     <script nonce="{{NONCE}}">window.__NONCE__="{{NONCE}}";</script>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- Analytics loaded conditionally via AnalyticsLoader component based on cookie consent -->
+  </body>
+</html>
