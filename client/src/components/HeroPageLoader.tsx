@@ -26,30 +26,30 @@ export function HeroPageLoader({
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [revealed, setRevealed] = useState(false);
 
-  // Preload all images
+  // Preload all images with mounted guard to prevent React error #185
   useEffect(() => {
     if (images.length === 0) {
       setImagesReady(true);
       return;
     }
 
+    let mounted = true;
     let loaded = 0;
     const total = images.length;
     const onDone = () => {
       loaded++;
-      if (loaded >= total) setImagesReady(true);
+      if (loaded >= total && mounted) setImagesReady(true);
     };
 
     images.forEach((src) => {
       const img = new window.Image();
       img.onload = onDone;
-      img.onerror = onDone; // Don't block on failed images
+      img.onerror = onDone;
       img.src = src;
     });
 
-    // Safety timeout: reveal after 6s even if images haven't loaded
-    const safety = setTimeout(() => setImagesReady(true), 6000);
-    return () => clearTimeout(safety);
+    const safety = setTimeout(() => { if (mounted) setImagesReady(true); }, 6000);
+    return () => { mounted = false; clearTimeout(safety); };
   }, [images]);
 
   // Minimum display time so the spinner doesn't flash
