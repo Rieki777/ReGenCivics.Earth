@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 
 // ─── Theme Animation Types ───────────────────────────────────────────────
-export type PageTheme = "forest" | "ocean" | "garden" | "sky" | "magic";
+export type PageTheme = "forest" | "ocean" | "garden" | "sky" | "magic" | "cosmos";
 
 /** Per-section overlay config for fine-grained control */
 export interface SectionOverlay {
@@ -359,6 +359,74 @@ function MagicParticles() {
   );
 }
 
+// Cosmos: shooting stars streaking across a twinkling night sky.
+// Mix of slow-drifting twinkles (ambient starlight) and fast diagonal
+// shooting-star streaks (rare, bright moments).
+function CosmosParticles() {
+  const [particles] = useState(() =>
+    Array.from({ length: 32 }, (_, i) => ({
+      id: i,
+      // 20 twinkles (ambient), 12 shooting stars (moments)
+      type: i < 20 ? "twinkle" : "shooting",
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 18,
+      duration: i < 20 ? 3 + Math.random() * 5 : 2.5 + Math.random() * 4,
+      size: i < 20 ? 1.5 + Math.random() * 2.5 : 2 + Math.random() * 2,
+      opacity: i < 20 ? 0.3 + Math.random() * 0.5 : 0.7 + Math.random() * 0.3,
+      // shooting-star angle: mostly top-left to bottom-right, with variation
+      angle: 15 + Math.random() * 25,
+      // shooting-star travel distance in viewport units
+      travel: 40 + Math.random() * 50,
+    }))
+  );
+  const twinkles = useMemo(() => particles.filter(p => p.type === "twinkle"), [particles]);
+  const shooters = useMemo(() => particles.filter(p => p.type === "shooting"), [particles]);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+      {twinkles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute rounded-full animate-star-twinkle"
+          style={{
+            left: `${p.left}%`,
+            top: `${p.top}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            boxShadow: `0 0 ${p.size * 3}px rgba(200, 220, 255, 0.6), 0 0 ${p.size * 6}px rgba(180, 200, 255, 0.25)`,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            opacity: p.opacity,
+          }}
+        />
+      ))}
+      {shooters.map((p) => (
+        <div
+          key={p.id}
+          className="absolute animate-shooting-star"
+          style={{
+            left: `${p.left}%`,
+            top: `${p.top}%`,
+            width: `${90 + Math.random() * 80}px`,
+            height: `${p.size}px`,
+            background: "linear-gradient(90deg, transparent 0%, rgba(200, 220, 255, 0.25) 30%, rgba(255, 255, 255, 0.95) 85%, rgba(255, 255, 255, 1) 100%)",
+            borderRadius: "999px",
+            boxShadow: `0 0 ${p.size * 4}px rgba(200, 220, 255, 0.7), 0 0 ${p.size * 8}px rgba(180, 200, 255, 0.3)`,
+            opacity: 0,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            animationFillMode: "backwards",
+            ["--angle" as string]: `${p.angle}deg`,
+            ["--travel" as string]: `${p.travel}vw`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 // Theme particle selector
 function ThemeParticles({ theme }: { theme: PageTheme }) {
   switch (theme) {
@@ -367,6 +435,7 @@ function ThemeParticles({ theme }: { theme: PageTheme }) {
     case "garden": return <GardenParticles />;
     case "sky": return <SkyParticles />;
     case "magic": return <MagicParticles />;
+    case "cosmos": return <CosmosParticles />;
     default: return <ForestParticles />;
   }
 }
@@ -381,6 +450,7 @@ function ThemedLoadingShimmer({ theme, overlayColor }: { theme: PageTheme; overl
       case "garden": return { accent: "rgba(255, 180, 200, 0.15)", icon: "🌸" };
       case "sky": return { accent: "rgba(0, 220, 255, 0.15)", icon: "☁️" };
       case "magic": return { accent: "rgba(200, 150, 255, 0.15)", icon: "✨" };
+      case "cosmos": return { accent: "rgba(200, 220, 255, 0.18)", icon: "✨" };
       default: return { accent: "rgba(125, 216, 125, 0.15)", icon: "🌿" };
     }
   }, [theme]);

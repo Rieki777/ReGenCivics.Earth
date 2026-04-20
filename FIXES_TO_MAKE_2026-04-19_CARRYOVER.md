@@ -214,6 +214,130 @@ cleanly at the cosmic seam.
 
 ---
 
+### K3. Landing hero title was invisible
+
+**Status:** CODED 2026-04-19 (needs `git push` + visual QA)
+
+Rye shared a screenshot of `/` showing the night-sky panel with no
+title text visible at all. Root cause was the `.ink-reveal` CSS
+class on the hero `H1`, the subtitle `<p>`, and the "Welcome to the
+Infinite Game" line. The class defaults to `mask-position: 100% 0`
+(mask fully covering the text, making it invisible), and only
+reveals itself when an `IntersectionObserver` in `useInkReveal`
+adds the `.ink-reveal-on` class.
+
+The bug: `useInkReveal` uses `useEffect(..., [])`, so it scans the
+DOM once on mount. For return visitors, the landing page first
+renders `ProgressiveOnboarding`, then toggles in the full hero
+section later via `showFullPage`. Those hero elements mount after
+the observer's one-time scan. They never get observed, never get
+`.ink-reveal-on`, and the mask never lifts. Result: a beautiful
+sky panel with nothing on it.
+
+**What shipped.**
+
+1. `client/src/pages/Home.tsx`: removed `ink-reveal` from three
+   places:
+   - Hero `<h1>` ("ReGen Civics").
+   - Hero subtitle `<p>`.
+   - "Welcome to the Infinite Game" line lower on the page.
+2. Hero upgraded to feel gorgeous, per Rye's "In a gorgeous way"
+   request:
+   - Title scale bumped one tier (`text-6xl md:text-7xl lg:text-8xl xl:text-9xl`)
+     with tighter tracking.
+   - "ReGen" gradient lightened (`#b8f0b8 → #9de89d → #4a7c59`)
+     with a soft green drop-shadow glow.
+   - "Civics" gets its own subtle white drop-shadow glow.
+   - Subtitle rewritten as one flowing sentence with amber
+     accents on "venture fund" + "alliance" and green accents on
+     "regenerative land projects" + "thriving communities":
+     "A venture fund and alliance helping regenerative land
+     projects grow their economies, attract investment, and
+     build thriving communities."
+   - Subtitle scale up to `text-xl md:text-2xl lg:text-3xl`,
+     weight `font-light` for an elegant feel against the display
+     heading.
+3. Animation still handled reliably by the wrapping
+   `<AnimatedSection animation="fade-in">`, which has an on-mount
+   `getBoundingClientRect` check that reveals immediately when
+   elements are already in the viewport. This pattern works for
+   conditionally-rendered content; the ink-reveal pattern does
+   not.
+
+**Evidence.**
+
+```
+grep -n "ink-reveal" client/src/pages/Home.tsx  → no matches
+grep -n "ReGen\|venture fund and alliance" client/src/pages/Home.tsx
+python3 scripts/audit-truncation.py  → 0 truncated, 0 suspicious
+```
+
+**Handoff.** Rye to `git push origin main`, then open `/` on
+desktop + iPhone, let the hero render (both fresh visit and
+return-visit paths), and confirm the title reads "ReGen Civics"
+followed by the sentence above. Also scroll down and confirm
+"Welcome to the Infinite Game" is visible.
+
+**Note.** The `.ink-reveal` pattern is still used elsewhere on
+the site. If other pages show the same "text not visible" bug,
+the cleanest fix is to stop using `.ink-reveal` on conditionally-
+rendered content and rely on `AnimatedSection` fade-in instead.
+A future pass could rewrite `useInkReveal` to use a
+`MutationObserver` so it picks up elements that mount later, but
+that is out of scope for this fix.
+
+---
+
+### K4. Landing falling leaves replaced with shooting stars
+
+**Status:** CODED 2026-04-19 (needs `git push` + visual QA)
+
+Rye: "leaves are falling in the spot where it's showing a night
+sky." The landing uses `theme="forest"` on `PageBackground`,
+which renders `ForestParticles` (fireflies + leaves drifting
+downward with rotation). Against a cosmic top panel that shows a
+starfield, leaves feel out of place.
+
+**What shipped.**
+
+1. `client/src/components/PageBackground.tsx`: new `PageTheme`
+   value `"cosmos"` added. New `CosmosParticles` component
+   renders 20 twinkling starlight points (ambient) + 12 shooting
+   star streaks (rare moments). Streaks travel diagonally along
+   a per-particle angle via CSS variables, fade in, streak, fade
+   out. `ThemeParticles` dispatcher and `ThemedLoadingShimmer`
+   both updated to recognize `"cosmos"`.
+2. `client/src/index.css`: added `@keyframes star-twinkle` (gentle
+   scale + opacity pulse) and `@keyframes shooting-star`
+   (diagonal translate with fade in and fade out over the
+   configured duration). Supporting classes
+   `.animate-star-twinkle` and `.animate-shooting-star` wired in.
+   Both classes included in the `@media (prefers-reduced-motion:
+   reduce)` block so motion-sensitive visitors see a static
+   starfield instead of streaks.
+3. `client/src/pages/Home.tsx`: `theme="forest"` swapped to
+   `theme="cosmos"` on the `PageBackground`. No more leaves
+   falling through the night sky.
+
+**Evidence.**
+
+```
+grep -n "theme=\"cosmos\"" client/src/pages/Home.tsx
+grep -n "animate-shooting-star\|animate-star-twinkle" client/src/index.css
+  → 2 class definitions + reduced-motion block entry
+grep -n "CosmosParticles\|case \"cosmos\"" client/src/components/PageBackground.tsx
+python3 scripts/audit-truncation.py  → 0 truncated, 0 suspicious
+```
+
+**Handoff.** Rye to `git push origin main`, then watch the
+landing page for ~60s. Expect: steady field of white
+twinkles + an occasional diagonal shooting-star streak across
+the panel. If the streaks are too frequent or too bright, reply
+`fewer shooting stars` or `dimmer shooting stars` and Claude
+Code will tune the particle count or opacity.
+
+---
+
 ### L1. Sitewide "Quests" icon swap to Scroll
 
 **Status:** CODED 2026-04-19 (needs `git push` + visual verification)
@@ -279,7 +403,7 @@ Restored from git HEAD (a5dfd31) before the icon swap.
 | B8 | Paste Medium URL or fresh blog copy | Editorial | Paste in chat |
 | E4 | List broken tool URLs | Need the list | Paste list in chat |
 | G1 | Update DB + gcal + Riverside (or ask Cowork Claude to do it) | Railway + gcal + Riverside access | Reply "update open access to April 20" |
-| — | Push the CODED items (incl. I2, K1, K2, L1) | Holds index.lock on this machine | `git push origin main` |
+| — | Push the CODED items (incl. I2, K1, K2, K3, K4, L1) | Holds index.lock on this machine | `git push origin main` |
 | — | Approve Railway deploys | Dashboard access | Railway UI |
 | — | Test each CODED fix on a real iPhone | Physical device | — |
 | — | Visual QA the new landing background end-to-end | Taste call | Open `/` on desktop + iPhone |
@@ -291,6 +415,14 @@ Restored from git HEAD (a5dfd31) before the icon swap.
 - K2: `backgroundFit="tile-vertical"` prop added to `PageBackground`,
   wired into `Home.tsx` so the landing image renders at native
   horizontal resolution (sharp, full-width) and tiles vertically.
+- K3: Hero title now renders. `.ink-reveal` removed from the two
+  hero elements + the "Welcome to the Infinite Game" line so the
+  text is no longer masked on return-visitor paths. Hero redesigned
+  larger + with accent spans to feel gorgeous.
+- K4: Falling leaves swapped for shooting stars on the landing.
+  New `"cosmos"` `PageTheme`, new `CosmosParticles` (twinkles +
+  diagonal streaks), new keyframes in `index.css`, all honored by
+  `prefers-reduced-motion`.
 - L1: "Quests" icon swapped to lucide `Scroll` across 8 files
   (ProgressiveOnboarding, CommandPalette, WizardRadialMenu,
   NextQuestCard, MenuCard, ContributionProofTimeline, FooterSearch,

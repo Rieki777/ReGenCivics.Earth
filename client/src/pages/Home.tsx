@@ -197,7 +197,7 @@ export default function Home() {
       blurPlaceholder="/images/backgrounds/home-desktop.webp?v=5"
       mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp?v=5"
       overlayOpacity={0}
-      theme="forest"
+      theme="cosmos"
       blendColor="18, 45, 28"
       scrollWithPage={true}
       backgroundFit="tile-vertical"
@@ -237,23 +237,29 @@ export default function Home() {
             <AnimatedSection animation="fade-in">
               <div className="text-center">
                 <h1
-                  className="ink-reveal text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 md:mb-8 leading-[1.05] text-shadow-strong"
+                  className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold mb-8 md:mb-10 leading-[1.02] text-shadow-strong tracking-tight"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   <span
-                    className="bg-gradient-to-br from-[#9de89d] via-[#7dd87d] to-[#4a7c59] bg-clip-text text-transparent"
-                    style={{ WebkitTextStroke: "0.5px rgba(125,216,125,0.15)" }}
+                    className="bg-gradient-to-br from-[#b8f0b8] via-[#9de89d] via-40% to-[#4a7c59] bg-clip-text text-transparent drop-shadow-[0_2px_20px_rgba(125,216,125,0.25)]"
+                    style={{ WebkitTextStroke: "0.5px rgba(157,232,157,0.2)" }}
                   >
                     ReGen
                   </span>{" "}
-                  <span className="text-white">Civics</span>
+                  <span className="text-white drop-shadow-[0_2px_20px_rgba(255,255,255,0.15)]">Civics</span>
                 </h1>
                 <p
-                  className="ink-reveal text-white/90 text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto text-shadow-subtle leading-relaxed safe-prose"
-                  style={{ fontFamily: "var(--font-body)", transitionDelay: "0.35s" }}
+                  className="text-white/95 text-xl md:text-2xl lg:text-3xl max-w-4xl mx-auto text-shadow-subtle leading-[1.5] safe-prose font-light"
+                  style={{ fontFamily: "var(--font-body)" }}
                 >
-                  A venture fund and alliance helping regenerative land projects grow their
-                  economies, attract investment, and build thriving communities.
+                  A{" "}
+                  <span className="font-medium text-amber-200">venture fund</span>
+                  {" "}and{" "}
+                  <span className="font-medium text-amber-200">alliance</span>
+                  {" "}helping{" "}
+                  <span className="font-medium text-[#9de89d]">regenerative land projects</span>
+                  {" "}grow their economies, attract investment, and build{" "}
+                  <span className="font-medium text-[#9de89d]">thriving communities</span>.
                 </p>
               </div>
             </AnimatedSection>
@@ -303,7 +309,7 @@ export default function Home() {
               </div>
               <div className="mt-10 md:mt-12 text-center">
                 <p
-                  className="ink-reveal text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
+                  className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
                   style={{
                     fontFamily: "var(--font-display)",
                     textShadow: "0 2px 20px rgba(0,0,0,0.6), 0 0 40px rgba(125,216,125,0.25)",

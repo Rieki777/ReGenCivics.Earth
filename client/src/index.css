@@ -1405,6 +1405,56 @@
   animation: falling-leaf linear infinite;
 }
 
+/* Cosmos: twinkling ambient starlight */
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.animate-star-twinkle {
+  animation: star-twinkle ease-in-out infinite;
+}
+
+/* Cosmos: shooting-star streaks. Travels along the element's rotated X axis,
+   which means the streak naturally follows the angle set via transform: rotate().
+   Fades in, streaks across, fades out. Sparse delays keep it feeling like a
+   magical moment rather than a fireworks show. */
+@keyframes shooting-star {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle, 20deg)) translateX(-10vw) scaleX(0.4);
+  }
+  3% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+    transform: rotate(var(--angle, 20deg)) translateX(0) scaleX(1);
+  }
+  45% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 0;
+    transform: rotate(var(--angle, 20deg)) translateX(var(--travel, 60vw)) scaleX(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle, 20deg)) translateX(var(--travel, 60vw)) scaleX(1.2);
+  }
+}
+
+.animate-shooting-star {
+  animation: shooting-star ease-in infinite;
+  transform-origin: left center;
+}
+
 /* Ocean: Light rays from surface */
 @keyframes light-ray {
   0%, 100% {
@@ -1904,6 +1954,8 @@
   .glass-sweep::after,
   .firefly-drift,
   .accordion-fade-in,
+  .animate-shooting-star,
+  .animate-star-twinkle,
   .mobile-menu-stagger > * {
     animation: none !important;
   }
@@ -2505,3 +2557,4 @@ html[data-contrast="high"] *:focus-visible {
   will-change: transform;
   transition: transform 0.1s linear;
 }
+                                                                                       
