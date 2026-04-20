@@ -54,6 +54,7 @@ const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
 const Economy = lazy(() => import("./pages/Economy"));
 const Bionomics = lazy(() => import("./pages/Bionomics"));
+const BionomicsEdit = lazy(() => import("./pages/BionomicsEdit"));
 const HealTheLand = lazy(() => import("./pages/HealTheLand"));
 const HymnBook = lazy(() => import("./pages/HymnBook"));
 const HymnPlayer = lazy(() => import("./pages/HymnPlayer"));
@@ -276,6 +277,7 @@ function Router() {
       <Route path={"/features"}><EB><FeatureSuggestions /></EB></Route>
       <Route path={"/newsletter"}><EB><Newsletter /></EB></Route>
       <Route path={"/newsletter/confirm"}><EB><NewsletterConfirm /></EB></Route>
+      <Route path={"/bionomics/edit"}><EB><BionomicsEdit /></EB></Route>
       <Route path={"/bionomics"}><EB><Bionomics /></EB></Route>
       <Route path={"/economy"}><Redirect to="/bionomics" /></Route>
       <Route path={"/local-food-economy"}><Redirect to="/bionomics#local-food-economies" /></Route>

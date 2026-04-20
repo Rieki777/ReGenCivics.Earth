@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 import { RiverDivider } from "@/components/dividers/RiverDivider";
+import { getBionomicsCopy } from "@/content/bionomicsContent";
 
 /* ─── Color tokens ────────────────────────────────────────────────────── */
 
@@ -420,18 +421,34 @@ function ReturnCard({
 
 function P2PFoodEconomyImage() {
   return (
-    <figure className="my-8">
-      <img
-        src="/images/economy/p2p-food-system-2017.webp"
-        alt="Peer-to-peer food economy sketch from 2017: grower, courier, cook, eater, neighbor cycling back to grower, with $ReGen circulating alongside the food."
-        className="w-full max-w-2xl mx-auto rounded-lg"
-        loading="lazy"
-        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-      />
-      <figcaption className="mt-2 text-sm text-center text-white/60">
-        The 2017 sketch. Local food systems as the energy backing a regenerative currency.
-      </figcaption>
-    </figure>
+    <div className="my-8 space-y-6">
+      <figure>
+        <img
+          src="/images/economy/p2p-food-system-bionomics.webp"
+          alt="Peer-to-peer food economy: grower, courier, cook, eater, and neighbor cycling compost back to the grower, with $ReGen circulating alongside the food."
+          className="w-full max-w-3xl mx-auto rounded-2xl border border-white/10 shadow-xl"
+          loading="lazy"
+          width="2752"
+          height="1536"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+        />
+        <figcaption className="mt-2 text-sm text-center text-white/60">
+          {getBionomicsCopy('p2p_food_caption')}
+        </figcaption>
+      </figure>
+      <figure className="max-w-md mx-auto opacity-80">
+        <img
+          src="/images/economy/p2p-food-system-2017.webp"
+          alt="The original 2017 sketch that started the idea: grower, courier, cook, eater, neighbor cycling back to the grower with $ReGen moving alongside the food."
+          className="w-full rounded-lg"
+          loading="lazy"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+        />
+        <figcaption className="mt-2 text-xs text-center text-white/50 italic">
+          The original 2017 sketch that started the whole idea.
+        </figcaption>
+      </figure>
+    </div>
   );
 }
 
@@ -548,12 +565,12 @@ function TimelineRiver() {
             </button>
             {open && (
               <div className="px-4 md:px-5 pb-4 pt-0 pl-[5.25rem] md:pl-[7rem] text-white/80 text-sm leading-relaxed">
-                {node.body}
+                {i === 0 ? getBionomicsCopy('seed_2017_text') : node.body}
                 {i === 0 && (
                   <div className="mt-4">
                     <P2PFoodEconomyImage />
                     <p className="text-xs italic text-white/55 text-center mt-2">
-                      The 2017 sketch. Local food systems as the energy backing a regenerative currency.
+                      {getBionomicsCopy('p2p_food_caption')}
                     </p>
                   </div>
                 )}
@@ -672,9 +689,7 @@ export default function Bionomics() {
                   </h1>
                   <ReadingTime words={3000} />
                   <p className="text-sm md:text-lg text-white/95 max-w-2xl mx-auto safe-prose">
-                    The living-economy side of ReGen Civics where we are living into the
-                    future of how we need our economic systems to be. The Game, $ReGen,
-                    and the bioregional infrastructure we have been growing since 2017.
+                    {getBionomicsCopy('hero_blurb')}
                   </p>
                 </div>
 
@@ -1058,7 +1073,7 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="Honest Checklist"
                 title="The 12 BFF Attributes"
-                blurb="The BioFi ebook lists 12 attributes a Bioregional Financing Facility should embody. Here is where we honestly stand on each one. We will update this list openly as the Game evolves."
+                blurb={getBionomicsCopy('twelve_attributes_blurb')}
               />
               <img
                 src="/bionomics-12-attributes.webp"
@@ -1204,7 +1219,7 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="The Architecture"
                 title="The three legs of bioregional regeneration"
-                blurb="The BioFi framework names three legs that any bioregion needs to regenerate at scale: an Organizing Team, a Bioregional Hub, and a Bioregional Financing Facility. ReGen Civics builds tools for all three."
+                blurb={getBionomicsCopy('three_legs_blurb')}
                 accent={C.teal}
               />
               <img
@@ -1501,13 +1516,7 @@ export default function Bionomics() {
                 className="w-full h-auto rounded-2xl border border-white/10 mb-6"
               />
               <p className="text-white/85 text-base md:text-lg leading-relaxed mb-8 safe-prose">
-                The BioFi framework centers regenerators. People, projects, and practices
-                that heal place. Bionomics is built to resource them, connect them, and
-                amplify them. Inside ReGen Civics, regenerators show up as land projects in
-                the incubator, food producers on LocalScale, players doing quests in their
-                own backyards, role-holders running the Game, and bioregional teams forking
-                our tools and adapting them. If you are healing place, you are a
-                regenerator. The Game is for you.
+                {getBionomicsCopy('regenerators_paragraph_1')}
               </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1603,5 +1612,3 @@ export default function Bionomics() {
         </div>
       </div>
     </PageWrapper>
-  );
-}

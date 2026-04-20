@@ -248,6 +248,35 @@ Content source: `QUEST_MASTER_CONTENT[quest.id]`. If the entry is missing, rende
 
 Close button top-right with `aria-label="Close quest details"`. Escape key closes.
 
+### 5.1a Hypha Bridge preservation (do not skip)
+
+The "Submit Proposal on DAO" button in the new action bar MUST open the existing `SubmitToDAOModal` component. Do not replace it with `window.open('https://app.hypha.earth/...')`. Per `CLAUDE.md` rule, `server/lib/hypha-bridge` is the only module allowed to build Hypha URLs.
+
+The modal already exists at `client/src/components/SubmitToDAOModal.tsx` and already talks to `trpc.hyphaBridge.createFromQuest`. Your job is to keep the wiring intact and fix two bugs found in the pre-refactor audit:
+
+1. `leadImageUrl` is not being passed. The prop is accepted by the modal but the parent omits it. Fix while restructuring:
+
+```tsx
+// In the new action bar inside QuestDetailModal
+const [submitModalOpen, setSubmitModalOpen] = useState(false);
+// ...
+<Button onClick={() => setSubmitModalOpen(true)}>Submit Proposal on DAO</Button>
+<SubmitToDAOModal
+  isOpen={submitModalOpen}
+  onClose={() => setSubmitModalOpen(false)}
+  questId={quest.id}
+  questTitle={quest.title}
+  questDescription={quest.description}
+  questDeliverable={quest.deliverable}
+  regenReward={quest.rewards.regen}
+  leadImageUrl={quest.imageUrl}
+/>
+```
+
+2. Remove the dead import of `SubmitToDAOModal` from `client/src/pages/Quest.tsx`. It is currently imported but never rendered. The modal only mounts inside `QuestDetailModal` now.
+
+3. Run `python3 scripts/audit-truncation.py --clean-nul` after writing both files to strip the trailing NUL byte padding they currently carry (1173 bytes on `Quest.tsx`, padding on `QuestDetailModal.tsx`).
+
 ### 5.2 Add `/quest/:slug` route
 
 - Register the route in `App.tsx` (or wherever wouter `<Switch>` lives) pointing to the same `Quest` page component.
@@ -382,13 +411,17 @@ rg -g '*.css' 'quest-card-tier2' client/src/                 # exists
 rg -g '*.tsx' 'data-expanded' client/src/pages/Quest.tsx     # exists
 rg -g '*.tsx' 'QuestTier3Media' client/src/                  # wired
 rg -g '*.ts'  'QUEST_MASTER_CONTENT' client/src/              # wired
+rg -g '*.tsx' 'SubmitToDAOModal' client/src/components/QuestDetailModal.tsx  # bridge preserved (must match)
+rg -g '*.tsx' 'leadImageUrl=\{quest' client/src/components/QuestDetailModal.tsx  # leadImage wired (must match)
+rg -g '*.tsx' 'SubmitToDAOModal' client/src/pages/Quest.tsx || echo PASS  # dead import removed (must print PASS)
+rg -g '*.tsx' "window\\.open\\('https://app.hypha.earth" client/src/components/QuestDetailModal.tsx || echo PASS  # bridge not bypassed (must print PASS)
 pnpm sync:quest-content                                       # parser runs clean
 git diff --exit-code client/src/data/questMasterContent.ts    # parser output stable
 pnpm typecheck                                                # exit 0
 pnpm build                                                    # exit 0
 ```
 
-All eight must pass before announcing complete.
+All eleven must pass before announcing complete. Then do a final runtime check: `pnpm dev`, open `/quest/fire` cold, tap "Submit Proposal on DAO" in the action bar, enter any YouTube URL, click Continue. You should land on `/bridge/hypha/<8-char-key>` with the quest context visible. That confirms the bridge survives the refactor end to end.
 
 ### 6.8 Manual check list
 

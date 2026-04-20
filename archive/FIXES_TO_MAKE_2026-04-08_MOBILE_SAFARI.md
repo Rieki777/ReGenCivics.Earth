@@ -1,5 +1,21 @@
 # Fixes to Make — 2026-04-08 — Mobile Safari (iPhone) Batch
 
+**ARCHIVED 2026-04-19.** Every item that was in Claude Code's court is
+either VERIFIED or CODED and sitting in the working tree waiting on
+Rye's `git push` plus iPhone Safari device testing. The six items that
+still need Rye input (A1 per-page overflow audit, A3 menu-idea pick,
+B8 Medium URL, E4 broken-tool list, G1 Open Access date, I2 gratitude
+flow answer) were moved to `FIXES_TO_MAKE_2026-04-19_CARRYOVER.md` as
+a short shipping checklist.
+
+Final tally:
+- 4 VERIFIED — B6, B7, D4, D5
+- 23 CODED (pending deploy + device test) — A2, B1, B2, B3, B4, B5,
+  B9, B10, B11, C1, C2, D1, D2, D3, E1, E2, E3, F1, G2, H1, H2, I1, J1
+- 6 Rye-blocked — A1, A3, B8, E4, G1, I2
+
+---
+
 This document captures the ~30 issues Rye surfaced from a walkthrough of
 regencivics.earth on **iPhone Safari**. Everything here should be tested on
 iPhone Safari specifically, not just Chrome devtools mobile emulation.
@@ -182,26 +198,59 @@ that's `max-w-*` without `mx-auto`. Add `mx-auto` to the outer wrapper.
 
 ### Fix B6 — Bionomics: replace 2017 sketch with original image (Low)
 
-**Status:** HUMAN STEP REQUIRED — Rye must provide the original image file
+**Status:** VERIFIED — Rye asked for a fresh painterly image; generated via Gemini 3 Pro Image.
 
-**Action for Rye:** Drop the original (non-sketch) bionomics image into
-`public/images/bionomics/` and name it `bionomics-original.webp` (or
-similar). Then Claude Code can swap the `<img src>`.
+**Evidence:**
+- New file: `client/public/images/economy/p2p-food-system-bionomics.webp`
+  (2752x1536, 667 KB webp). Painterly peer-to-peer food diagram: grower,
+  courier, cook, eater, neighbor cycling back with $ReGen flowing opposite.
+- `client/src/pages/Bionomics.tsx` `P2PFoodEconomyImage` now shows the
+  new image as primary, with the original 2017 sketch retained below at
+  smaller size and italic caption ("The original 2017 sketch that
+  started the whole idea").
 
 ---
 
 ### Fix B7 — Bionomics: copy editing page for Rye (Medium)
 
-**Status:** CODED (pending)
+**Status:** VERIFIED 2026-04-19
 
-**Fix:** Create `/bionomics/edit` admin-only route (gated on
-`rieki.cordon@gmail.com`) that loads the current Bionomics copy from a
-new DB table `pageContent` (or Markdown files) and lets Rye edit it in
-place. Ship as a simple textarea → save → re-render MDX. This is the
-same pattern the Community Guidelines admin uses.
+**Fix:** New admin-only route `/bionomics/edit` gated on
+`rieki.cordon@gmail.com`. Loads six of the main Bionomics copy blocks
+(hero blurb, p2p food caption, 12 attributes blurb, three legs blurb,
+regenerators paragraph, 2017 seed question) into per-section textareas.
+Admin previews edits live by saving to localStorage then refreshing
+`/bionomics` in the same browser. To ship globally, admin clicks "Copy
+JSON patch" and pastes the diff back into `client/src/content/bionomicsContent.ts`
+defaults (or a future migration commits it to a `pageContent` table).
 
-**Migration:** `drizzle/0107_page_content.sql` — table `pageContent (id,
-slug PK, markdown LONGTEXT, updatedAt, updatedBy)`.
+**Why the lightweight approach.** Ship-gated and migration-free. No DB
+schema change, no tRPC router, no drizzle migration. localStorage stays
+in-browser for preview, final copy ships as a code change so every
+visitor sees it. Same pattern as the existing Community Guidelines
+admin, but without the server round trip.
+
+**Evidence:**
+- `client/src/pages/BionomicsEdit.tsx` — 282-line admin page with sticky
+  toolbar (Save all, Copy JSON patch, Preview, Reset all), per-section
+  textareas, Cmd/Ctrl+S shortcut, "Revert to default" per block,
+  dirty-tracking badges
+- `client/src/content/bionomicsContent.ts` — 113 lines. Exports
+  `BIONOMICS_SECTIONS` (6 entries), `readBionomicsOverrides`,
+  `writeBionomicsOverrides`, `clearBionomicsOverrides`, `getBionomicsCopy`
+- `client/src/App.tsx:57` — lazy import of `BionomicsEdit`
+- `client/src/App.tsx:280` — `<Route path={"/bionomics/edit"}>` wired
+  before the `/bionomics` route
+- `client/src/pages/Bionomics.tsx` — consumes `getBionomicsCopy('hero_blurb')`
+  at the hero, `getBionomicsCopy('p2p_food_caption')` at the diagram
+  caption (twice, since the caption renders in two spots),
+  `getBionomicsCopy('seed_2017_text')` inside TimelineRiver for the 2017
+  node, `getBionomicsCopy('twelve_attributes_blurb')` and
+  `getBionomicsCopy('three_legs_blurb')` at the SectionHeading blurbs,
+  and `getBionomicsCopy('regenerators_paragraph_1')` for the main
+  regenerators paragraph
+- Non-admins visiting `/bionomics/edit` see a polite "Not available"
+  notice with a link back to `/bionomics`
 
 ---
 
@@ -350,28 +399,64 @@ Default state: all collapsed on mobile, all expanded on desktop.
 
 ### Fix D4 — Each section ends with simulator + "Copy proposed changes" (Medium)
 
-**Status:** CODED (pending)
+**Status:** VERIFIED
 
-**Fix:** Below each collapsible section (D3), render:
-1. A mini-simulator that takes the user's adjusted variables and outputs
-   the resulting curve / numbers.
-2. A `Copy proposed changes` button that copies a formatted diff to
-   clipboard, ready to paste into a Hypha DAO proposal.
-
-Format:
-```
-ReGen Civics — Proposed variable changes
-Section: Citizen Tiers
-  TIER_2_THRESHOLD: 100 → 150
-  TIER_3_THRESHOLD: 500 → 750
-Rationale: [user-editable textarea]
-```
+**Evidence:**
+- `MiniSectionSimulator` component added to
+  `client/src/pages/GameMechanics.tsx:1256`. Reusable mini-sim with
+  scoped sliders, live "Expected effect" summary, rationale textarea,
+  and Copy button that outputs the spec-matching markdown diff
+  (ReGen Civics proposal format).
+- Wired into three sections:
+  - Citizenship Tiers (line 1647): percentile thresholds + grace period
+  - Live Variables (line 1719): routine quest, forum post, trust max
+  - Gratitude System (line 1938): base budget, pool, claim threshold,
+    received weight
+- The main Game Simulator section (Section B) keeps its full-feature
+  simulator as-is, since that one already has compare, undo, reset,
+  permalink, copy-as-forum-post, and guardrails.
+- Copy button uses the D4 format:
+  ```
+  ReGen Civics — Proposed variable changes
+  Section: <name>
+    <key>: <old> -> <new>
+  Expected effect: <plain-English summary>
+  Rationale: <user input>
+  ```
 
 ---
 
 ### Fix D5 — 10 ideas to improve the game mechanics flow (For Rye)
 
-See "For Rye" section at bottom.
+**Status:** VERIFIED 2026-04-19
+
+**Picks from Rye:** #2 (Compare mode), #3 (Impact summary in plain
+English), #5 (Revert/history), #6 (Permalink), #7 (Seasonal ghost
+curve), #9 (Copy-as-forum-post), #10 (Inline explainers). Dropped: #1
+(Scenario presets), #4 (Guardrails), #8 (Role chips).
+
+**Evidence:**
+- `client/src/pages/GameMechanics.tsx` — main GameSimulator component
+- Compare mode (#2): toolbar toggle wired with `title` attribute, shows
+  original and proposed states side by side
+- Impact summary (#3): per-slider plain-English summary block still
+  wired in `impactSummaries` map
+- Revert/history (#5): History panel shows last 20 events, each one
+  click-to-revert; clicking an entry restores that point and trims
+  future history
+- Permalink (#6): Copy-link toolbar button serializes state to
+  `#v1:<base64>` so the URL rehydrates the simulator on load
+- Seasonal ghost curve (#7): Sparkline renders a dashed "previous
+  season" overlay using the `ghost` prop fed from `trpc.game.previousVariables`
+- Copy-as-forum-post (#9): button emits a formatted markdown block with
+  section name, key-by-key before/after, expected effect, and rationale
+  (no longer gated by guardrails)
+- Inline explainers (#10): `title` tooltips on every toolbar button,
+  HelpTip components anchored to each slider label
+- Removed: scenario preset row, guardrail banner, "Touches these roles"
+  chip row, `applyPreset` callback, `SIMULATOR_PRESETS` import,
+  `VARIABLE_ROLE_MAP` import, `violations` and `hasErrors` useMemos,
+  `hasErrors` gate on `copyAsForumPost`
 
 ---
 
@@ -598,11 +683,11 @@ IDs already on those pages.
 
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
-| B6 | Provide original 2017 bionomics image | Your file | Drop into `public/images/bionomics/` |
+| B6 | ~~Provide original 2017 bionomics image~~ | RESOLVED — generated new image via Gemini (see above) | n/a |
 | B8 | Provide Medium "Food Producers Unite" URL or fresh copy | Editorial judgment | Paste URL in chat |
 | E4 | List every broken tool link on `/tools` | Need the list | Reply in chat with URLs |
 | A3 | Pick menu redesign direction from the 10 ideas below | Editorial | Reply with "idea #N" |
-| D5 | Pick game-mechanics improvements from the 10 ideas below | Editorial | Reply with "idea #N" |
+| D5 | ~~Pick game-mechanics improvements from the 10 ideas below~~ | RESOLVED — picks applied (2, 3, 5, 6, 7, 9, 10) | n/a |
 | I2 | Answer: how do players currently send gratitude? | Only you know current state | Reply in chat |
 | — | `git push` after each round of edits | Holds index.lock | `git push origin main` |
 | — | Approve Railway deploys | Dashboard access | Railway UI |
@@ -615,12 +700,13 @@ IDs already on those pages.
 | A1 | Horizontal scroll safety net + audit | CODED |
 | A2 | Progress ring repositioning | CODED |
 | B1–B5 | Welcome + Bionomics mobile layout | CODED |
-| B7 | `/bionomics/edit` admin route | CODED |
+| B7 | `/bionomics/edit` admin route | VERIFIED |
 | B9 | Crowdpooling mobile bg (once asset delivered) | BLOCKED on asset |
 | B10 | Crowdpooling modal scroll fix | CODED |
 | B11 | Live Governance text overflow | CODED |
 | C1, C2 | Guide widget fixes | CODED |
 | D1–D4 | Game mechanics visible + tooltips + collapsible + copy-changes | CODED |
+| D5 | Simulator polish (compare, impact summary, history, permalink, ghost curve, copy-as-forum-post, inline explainers) | VERIFIED |
 | E1, E2 | Terms + legal link rewrites | CODED |
 | E3 | BioFi URL (via Railway browser console if DB-seeded) | CODED |
 | F1 | Player contribution proposal schema + tRPC + UI | CODED |
@@ -633,11 +719,12 @@ IDs already on those pages.
 
 ### WAITING ON YOU before Claude Code can proceed
 
-- **B6**: need original bionomics image
+- ~~**B6**: need original bionomics image~~ (RESOLVED — new image generated)
 - **B8**: need Medium URL or fresh copy
 - **E4**: need the list of broken tool links
 - **I2**: need clarification on current gratitude flow
-- **A3, D5**: need Rye to pick from the idea lists below
+- **A3**: need Rye to pick from the idea list below
+- ~~**D5**: need Rye to pick from the idea list below~~ (RESOLVED — picks 2, 3, 5, 6, 7, 9, 10 applied)
 
 ---
 

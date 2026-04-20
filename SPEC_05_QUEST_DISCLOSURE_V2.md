@@ -123,6 +123,32 @@ Tier 3 is the `QuestDetailModal`, with content restructured from the master shee
 
 Close button top-right. Escape collapses back to the tier 2 expanded card underneath.
 
+### Hypha Bridge preservation (non-negotiable)
+
+The "Submit Proposal on DAO" button lives at tier 3 and must route through the existing `SubmitToDAOModal` component. That modal already talks to `trpc.hyphaBridge.createFromQuest` and redirects to `/bridge/hypha/:key`. The tier refactor must not introduce a direct `window.open('https://app.hypha.earth/...')` from the card or the modal. Per `CLAUDE.md`, the only module allowed to construct Hypha URLs is `server/lib/hypha-bridge`.
+
+Wiring requirements inside `QuestDetailModal.tsx` action bar:
+
+```tsx
+<SubmitToDAOModal
+  isOpen={submitModalOpen}
+  onClose={() => setSubmitModalOpen(false)}
+  questId={quest.id}
+  questTitle={quest.title}
+  questDescription={quest.description}
+  questDeliverable={quest.deliverable}
+  regenReward={quest.rewards.regen}
+  leadImageUrl={quest.imageUrl}
+/>
+```
+
+`leadImageUrl` was previously omitted. The modal's prop interface accepts it but the parent never passed it, so Hypha receives no lead image when the searchParams PR lands. Fix this during the refactor.
+
+Additional cleanup:
+
+- Remove the unused `import { SubmitToDAOModal } from "@/components/SubmitToDAOModal"` at the top of `client/src/pages/Quest.tsx`. The modal only renders inside `QuestDetailModal`. The dead import is a leftover from a previous wiring attempt.
+- After writing to `Quest.tsx` or `QuestDetailModal.tsx`, run `python3 scripts/audit-truncation.py --clean-nul`. Both files currently carry trailing NUL padding (1173 bytes on `Quest.tsx`, padding on `QuestDetailModal.tsx`) that the ship gate tolerates but should be scrubbed.
+
 ## Tier 3 as a shareable route
 
 Tier 3 is also reachable via canonical URL `/quest/:slug`.
@@ -440,13 +466,17 @@ rg -g '*.css' 'quest-card-tier2' client/src/                          # gate 2
 rg -g '*.tsx' 'data-expanded' client/src/pages/Quest.tsx              # gate 2
 rg -g '*.tsx' 'QuestTier3Media' client/src/                           # gate 2 (new component wired)
 rg -g '*.ts'  'QUEST_MASTER_CONTENT' client/src/                       # gate 2 (content file wired)
+rg -g '*.tsx' 'SubmitToDAOModal' client/src/components/QuestDetailModal.tsx  # gate 2 (bridge preserved)
+rg -g '*.tsx' 'leadImageUrl=\{quest' client/src/components/QuestDetailModal.tsx  # gate 2 (leadImage wired)
+rg -g '*.tsx' "SubmitToDAOModal" client/src/pages/Quest.tsx           # gate 2 (MUST return no matches: dead import removed)
+rg -g '*.tsx' "window\\.open\\('https://app.hypha.earth" client/src/components/QuestDetailModal.tsx  # gate 2 (MUST return no matches: bridge not bypassed)
 pnpm sync:quest-content                                               # parser runs clean
 git diff --exit-code client/src/data/questMasterContent.ts            # parser output stable (zero diff on second run)
 pnpm typecheck                                                        # gate 3
 pnpm build                                                            # gate 3 (belt-and-suspenders)
 ```
 
-All eight checks must pass before the fixes doc row gets VERIFIED.
+All eleven checks must pass before the fixes doc row gets VERIFIED. The two "MUST return no matches" greps are negative checks: `rg` returns non-zero on zero matches, so wrap those lines with `|| true` if you run them in a script, but interpret a zero-match outcome as pass.
 
 Manual checks on desktop + a real phone (or Chrome devtools mobile emulation):
 
@@ -466,8 +496,9 @@ Manual checks on desktop + a real phone (or Chrome devtools mobile emulation):
 14. A locked card still renders as locked with no disclosure behavior.
 15. Visit `/quest/fire` directly. Page loads, Fire card is pre-expanded at tier 2, modal is open at tier 3, focus is on the close button.
 16. Tier 1 shows the "Trailer" pill (black/60 backdrop, play-icon + TRAILER label) on Fire and Potions cards only.
+17. Open tier 3 on any quest. Click "Submit Proposal on DAO" in the action bar. Enter a YouTube URL. Continue. URL should land on `/bridge/hypha/<8-char-key>` showing the quest title, description, and `$ReGen` payout. Click "Continue to Hypha". Browser should redirect to `app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution?bridgeKey=...&title=...&description=...&payouts=...&attachments=...` with the quest card image included in the `leadImage` param.
 
-All 16 checks plus the six automated gates before the row flips to VERIFIED.
+All 17 checks plus the automated gates before the row flips to VERIFIED.
 
 ## Out of scope
 

@@ -12,11 +12,7 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { SIMULATOR_PRESETS } from "@/config/simulatorPresets";
-import { computeImpactSummaries, type ImpactSummary } from "@/config/impactRules";
-import { checkInvariants } from "@/config/simulatorInvariants";
-import { VARIABLE_EXPLAINERS } from "@/config/variableExplainers";
-import { VARIABLE_ROLE_MAP } from "@/config/variableRoleMap";
+import { computeImpactSummaries } from "@/config/impactRules";
 import { Sparkline } from "@/components/simulator/Sparkline";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -58,7 +54,6 @@ import {
   Undo2,
   Link2,
   Copy,
-  AlertTriangle,
   RotateCcw,
   ChevronDown,
   Pencil,
@@ -702,16 +697,6 @@ function GameSimulator() {
     []
   );
 
-  const applyPreset = useCallback((presetId: string) => {
-    const preset = SIMULATOR_PRESETS.find((p) => p.id === presetId);
-    if (!preset) return;
-    setSim((prev) => {
-      const next = { ...prev, ...preset.delta } as SimState;
-      pushHistory(preset.label, next);
-      return next;
-    });
-  }, [pushHistory]);
-
   const undo = useCallback(() => {
     setHistory((h) => {
       if (h.length === 0) return h;
@@ -730,15 +715,13 @@ function GameSimulator() {
     }
   }, [baseline]);
 
-  // Compute deltas as plain Records for the impact + invariant helpers.
+  // Compute deltas as plain Records for the impact helpers.
   const baselineRecord = useMemo(() => baseline as unknown as Record<string, number>, [baseline]);
   const currentRecord = useMemo(() => sim as unknown as Record<string, number>, [sim]);
   const impactSummaries = useMemo(
     () => computeImpactSummaries(baselineRecord, currentRecord),
     [baselineRecord, currentRecord],
   );
-  const violations = useMemo(() => checkInvariants(currentRecord), [currentRecord]);
-  const hasErrors = violations.some((v) => v.severity === "error");
 
   // Per-variable trajectories: walk history and pull each variable's value
   // at every history step. Always seeds with the baseline value first so the
@@ -774,7 +757,6 @@ function GameSimulator() {
   }, [buildPermalinkHash]);
 
   const copyAsForumPost = useCallback(() => {
-    if (hasErrors) return;
     const lines: string[] = ["# Proposed game variable change", ""];
     for (const k of Object.keys(sim)) {
       const key = k as keyof SimState;
@@ -791,7 +773,7 @@ function GameSimulator() {
     navigator.clipboard.writeText(lines.join("\n"));
     setCopyToast("Markdown copied");
     setTimeout(() => setCopyToast(null), 1500);
-  }, [sim, baseline, impactSummaries, hasErrors, buildPermalinkHash]);
+  }, [sim, baseline, impactSummaries, buildPermalinkHash]);
 
   // Projected calculations
   const questsCompleted = 10;
@@ -837,65 +819,65 @@ function GameSimulator() {
     category: "game_variable",
   });
 
+  // Count how many variables differ from baseline.
+  const changeCount = useMemo(() => {
+    let n = 0;
+    for (const k of Object.keys(sim)) {
+      const key = k as keyof SimState;
+      if (sim[key] !== baseline[key]) n += 1;
+    }
+    return n;
+  }, [sim, baseline]);
+
   return (
     <div className="space-y-6">
-      {/* Presets row */}
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-[#7dd87d] mb-2 font-bold">Scenario presets</p>
-        <div className="flex flex-wrap gap-2">
-          {SIMULATOR_PRESETS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => applyPreset(p.id)}
-              title={p.description}
-              className="px-3 py-1.5 rounded-full text-xs bg-white/5 border border-white/10 text-white/80 hover:bg-[#7dd87d]/15 hover:border-[#7dd87d]/40 hover:text-[#7dd87d] transition-colors"
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Toolbar: compare, undo, reset, copy link, copy as forum post */}
+      {/* Toolbar: compare, undo, reset, copy link, copy as forum post, history */}
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setCompareMode((s) => !s)}
+          title="Toggle side-by-side display of baseline vs your proposed value on every slider"
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
             compareMode
               ? "bg-[#7dd87d]/20 border-[#7dd87d]/50 text-[#7dd87d]"
               : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"
           }`}
         >
-          {compareMode ? "Compare on" : "Compare to baseline"}
+          {compareMode ? "Compare: on" : "Compare to baseline"}
         </button>
         <button
           onClick={undo}
           disabled={history.length === 0}
+          title="Step back one slider move"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Undo2 className="w-3.5 h-3.5" /> Undo
         </button>
         <button
           onClick={reset}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
+          disabled={changeCount === 0}
+          title="Reset every slider back to its current live value"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <RotateCcw className="w-3.5 h-3.5" /> Reset
         </button>
         <button
           onClick={copyPermalink}
+          title="Copy a shareable URL that loads this exact simulator state"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10"
         >
           <Link2 className="w-3.5 h-3.5" /> Copy link
         </button>
         <button
           onClick={copyAsForumPost}
-          disabled={hasErrors}
+          disabled={changeCount === 0}
+          title="Copy a markdown block ready to paste into a forum thread or Hypha proposal"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/25 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Copy className="w-3.5 h-3.5" /> Copy as forum post
         </button>
         <button
           onClick={() => setShowHistory((s) => !s)}
+          title="Review or revert any earlier slider move this session"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 ml-auto"
         >
           History ({history.length})
@@ -903,48 +885,16 @@ function GameSimulator() {
         {copyToast && <span className="text-xs text-[#7dd87d]">{copyToast}</span>}
       </div>
 
-      {/* Guardrail banner */}
-      {violations.length > 0 && (
-        <div className="rounded-xl border-2 border-red-500/60 bg-red-500/15 p-4">
-          <div className="flex items-center gap-2 text-red-300 font-bold text-sm mb-2">
-            <AlertTriangle className="w-4 h-4" /> Guardrails violated
-          </div>
-          <ul className="space-y-1">
-            {violations.map((v) => (
-              <li key={v.id} className={`text-xs ${v.severity === "error" ? "text-red-200" : "text-amber-200"}`}>
-                {v.severity === "error" ? "ERROR: " : "WARN: "}{v.message}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Overall impact summary with role chips */}
+      {/* Overall impact summary */}
       {impactSummaries.length > 0 && (
         <div className="rounded-xl border border-[#7dd87d]/40 bg-[#7dd87d]/8 p-4">
           <p className="text-[10px] uppercase tracking-widest text-[#7dd87d] mb-2 font-bold">Expected impact</p>
-          <ul className="space-y-3">
-            {impactSummaries.map((s) => {
-              const roles = VARIABLE_ROLE_MAP[s.variable] ?? [];
-              return (
-                <li key={s.variable} className="text-sm text-white/85 leading-relaxed">
-                  <p>{s.message}</p>
-                  {roles.length > 0 && (
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] uppercase tracking-wide text-white/65 mr-1">Touches</span>
-                      {roles.map((role) => (
-                        <span
-                          key={role}
-                          className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/15 capitalize"
-                        >
-                          {role.replace(/-/g, " ")}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
+          <ul className="space-y-2">
+            {impactSummaries.map((s) => (
+              <li key={s.variable} className="text-sm text-white/85 leading-relaxed">
+                {s.message}
+              </li>
+            ))}
           </ul>
           {previousSeason && (
             <p className="text-[10px] text-[#d4a574]/80 mt-3">
@@ -954,17 +904,35 @@ function GameSimulator() {
         </div>
       )}
 
-      {/* History panel */}
+      {/* History panel: click any row to revert back to that moment */}
       {showHistory && history.length > 0 && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-4 max-h-60 overflow-y-auto">
-          <p className="text-[10px] uppercase tracking-widest text-white/50 mb-2 font-bold">Your changes</p>
+          <p className="text-[10px] uppercase tracking-widest text-white/50 mb-2 font-bold">
+            Your changes (click to revert)
+          </p>
           <ol className="space-y-1">
-            {history.slice(-12).reverse().map((h, i) => (
-              <li key={`${h.at}-${i}`} className="text-xs text-white/70">
-                {h.label}
-              </li>
-            ))}
+            {history.slice(-20).reverse().map((h, i) => {
+              // Compute the original index (pre-reverse, pre-slice) so revert works correctly.
+              const originalIndex = history.length - 1 - i;
+              return (
+                <li key={`${h.at}-${i}`} className="text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSim(h.state);
+                      setHistory((prev) => prev.slice(0, originalIndex + 1));
+                    }}
+                    className="w-full text-left text-white/70 hover:text-[#7dd87d] hover:bg-white/5 rounded px-2 py-1 transition-colors"
+                  >
+                    {h.label}
+                  </button>
+                </li>
+              );
+            })}
           </ol>
+          <p className="text-[10px] text-white/45 mt-2 px-2">
+            Reverting rolls your simulator back to exactly that state and trims the history after it.
+          </p>
         </div>
       )}
 
@@ -1230,6 +1198,195 @@ function GratVarRow({
   );
 }
 
+/* ─── MiniSectionSimulator ────────────────────────────────────────────
+ * A focused mini-sim that renders at the bottom of a section. Takes a
+ * short list of variables with min/max/step/unit and baseline values and
+ * lets the user drag to see how proposed changes read as a diff. Emits
+ * a "Copy proposed changes" markdown block scoped to that section only.
+ *
+ * D4 spec: Below each collapsible section, render a mini-simulator that
+ * takes the user's adjusted variables and outputs the resulting diff,
+ * plus a Copy button that produces a Hypha-proposal-ready paste.
+ */
+
+interface MiniVar {
+  key: string;
+  label: string;
+  unit?: string;
+  min: number;
+  max: number;
+  step: number;
+  baseline: number;
+  help?: string;
+  describe?: (v: number) => string;
+}
+
+function MiniSectionSimulator({
+  sectionTitle,
+  variables,
+  summary,
+}: {
+  sectionTitle: string;
+  variables: MiniVar[];
+  summary?: (state: Record<string, number>) => string;
+}) {
+  const initial = useMemo(
+    () => Object.fromEntries(variables.map((v) => [v.key, v.baseline])) as Record<string, number>,
+    [variables],
+  );
+  const [state, setState] = useState<Record<string, number>>(initial);
+  const [rationale, setRationale] = useState("");
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const changedKeys = useMemo(
+    () => variables.filter((v) => state[v.key] !== v.baseline),
+    [variables, state],
+  );
+
+  const resetAll = useCallback(() => {
+    setState(initial);
+    setRationale("");
+  }, [initial]);
+
+  const copyProposedChanges = useCallback(() => {
+    const lines: string[] = [
+      `ReGen Civics — Proposed variable changes`,
+      `Section: ${sectionTitle}`,
+    ];
+    if (changedKeys.length === 0) {
+      lines.push("  (no variables changed yet)");
+    } else {
+      for (const v of changedKeys) {
+        const unit = v.unit ?? "";
+        lines.push(`  ${v.key}: ${v.baseline}${unit} -> ${state[v.key]}${unit}`);
+      }
+    }
+    if (summary) {
+      lines.push("", "Expected effect:");
+      lines.push(`  ${summary(state)}`);
+    }
+    lines.push("", "Rationale:");
+    lines.push(`  ${rationale.trim() || "(add a rationale before posting)"}`);
+    const text = lines.join("\n");
+    navigator.clipboard.writeText(text).then(
+      () => {
+        toast.success("Copied to clipboard", { description: "Paste into a forum post or Hypha proposal." });
+        setCopied(text);
+        setTimeout(() => setCopied(null), 2000);
+      },
+      () => toast.error("Copy failed"),
+    );
+  }, [sectionTitle, variables, state, changedKeys, rationale, summary]);
+
+  return (
+    <div className="mt-8 rounded-xl border border-[#7dd87d]/25 bg-[#7dd87d]/5 p-5">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <Calculator className="w-4 h-4 text-[#7dd87d]" />
+          <h4 className="text-sm font-bold text-white uppercase tracking-widest">
+            Propose changes to {sectionTitle.toLowerCase()}
+          </h4>
+        </div>
+        {changedKeys.length > 0 && (
+          <button
+            type="button"
+            onClick={resetAll}
+            className="text-[11px] text-white/60 hover:text-white/90 inline-flex items-center gap-1"
+          >
+            <RotateCcw className="w-3 h-3" /> Reset
+          </button>
+        )}
+      </div>
+
+      <p className="text-xs text-white/60 leading-relaxed mb-4">
+        Drag to see a proposed delta, then copy the block to paste into a forum thread or a Hypha proposal.
+      </p>
+
+      <div className="space-y-4">
+        {variables.map((v) => {
+          const current = state[v.key];
+          const changed = current !== v.baseline;
+          return (
+            <div key={v.key}>
+              <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-sm text-white/85 truncate">{v.label}</span>
+                  <HelpTip text={v.help} />
+                </div>
+                <span
+                  className={`text-xs font-mono shrink-0 ${
+                    changed ? "text-[#7dd87d] font-bold" : "text-white/60"
+                  }`}
+                >
+                  {changed ? (
+                    <>
+                      <span className="text-white/40 line-through mr-1">{v.baseline}{v.unit ?? ""}</span>
+                      {current}{v.unit ?? ""}
+                    </>
+                  ) : (
+                    <>{current}{v.unit ?? ""}</>
+                  )}
+                </span>
+              </div>
+              <Slider
+                value={[current]}
+                min={v.min}
+                max={v.max}
+                step={v.step}
+                onValueChange={([val]) => setState((s) => ({ ...s, [v.key]: val }))}
+              />
+              {v.describe && (
+                <p className="text-[11px] text-white/55 mt-1">{v.describe(current)}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {summary && (
+        <div className="mt-4 rounded-lg bg-white/5 border border-white/10 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-[#d4a574] mb-1 font-bold">
+            Expected effect
+          </p>
+          <p className="text-xs text-white/80 leading-relaxed">{summary(state)}</p>
+        </div>
+      )}
+
+      <div className="mt-4">
+        <label className="block text-[10px] uppercase tracking-wider text-white/55 mb-1.5 font-bold">
+          Rationale (plain language, optional but recommended)
+        </label>
+        <textarea
+          value={rationale}
+          onChange={(e) => setRationale(e.target.value)}
+          placeholder="Why do you want to change these values?"
+          rows={2}
+          className="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder:text-white/40 focus:outline-none focus:border-[#7dd87d]/50 resize-none"
+        />
+      </div>
+
+      <div className="mt-4 flex items-center gap-2">
+        <Button
+          size="sm"
+          onClick={copyProposedChanges}
+          disabled={changedKeys.length === 0}
+          className="bg-[#7dd87d]/15 hover:bg-[#7dd87d]/25 text-[#7dd87d] border border-[#7dd87d]/40 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Copy className="w-3.5 h-3.5 mr-1.5" />
+          Copy proposed changes
+        </Button>
+        {copied && <span className="text-[11px] text-[#7dd87d]">Copied</span>}
+        <Link href="/proposals?category=game_variable" className="ml-auto">
+          <Button size="sm" variant="ghost" className="text-white/60 hover:text-white/90 text-xs">
+            Open proposal form
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 /* ─── CollapsibleSection: used for each main section on this page ──────
  * Default state: collapsed on mobile (< 768px), expanded on desktop.
  * Header stays visible and tappable. Chevron rotates to indicate state.
@@ -1454,6 +1611,60 @@ export default function GameMechanics() {
             <p className="text-white/60 text-sm mt-6 max-w-2xl leading-relaxed safe-prose">
               Tier promotion happens automatically through a nightly batch job that recalculates your reputation, contribution score, and seasonal activity. There's a grace period before demotion. You don't lose tiers from a quiet week.
             </p>
+            <div className="max-w-2xl">
+              <MiniSectionSimulator
+                sectionTitle="Citizenship Tiers"
+                variables={[
+                  {
+                    key: "citizenship.co_creator.min_percentile",
+                    label: "Co-Creator percentile threshold",
+                    unit: "th",
+                    min: 10,
+                    max: 40,
+                    step: 1,
+                    baseline: 15,
+                    help: "Contribution percentile needed to reach Co-Creator. Lower = easier to promote new members.",
+                  },
+                  {
+                    key: "citizenship.steward.min_percentile",
+                    label: "Steward percentile threshold",
+                    unit: "th",
+                    min: 40,
+                    max: 70,
+                    step: 1,
+                    baseline: 50,
+                    help: "Contribution percentile needed to reach Steward. Higher = rarer, more weighted.",
+                  },
+                  {
+                    key: "citizenship.sage.min_percentile",
+                    label: "Sage percentile threshold",
+                    unit: "th",
+                    min: 70,
+                    max: 95,
+                    step: 1,
+                    baseline: 80,
+                    help: "Contribution percentile needed to reach Sage. Sage is the long-game tier.",
+                  },
+                  {
+                    key: "citizenship.grace_period_days",
+                    label: "Demotion grace period",
+                    unit: " days",
+                    min: 7,
+                    max: 90,
+                    step: 1,
+                    baseline: 30,
+                    help: "How long after falling below a threshold before you're demoted.",
+                  },
+                ]}
+                summary={(s) => {
+                  const co = s["citizenship.co_creator.min_percentile"];
+                  const st = s["citizenship.steward.min_percentile"];
+                  const sg = s["citizenship.sage.min_percentile"];
+                  const grace = s["citizenship.grace_period_days"];
+                  return `Explorer covers 0-${co - 1}th percentile, Co-Creator ${co}-${st - 1}th, Steward ${st}-${sg - 1}th, Sage ${sg}+. Demotion kicks in after ${grace} days below threshold.`;
+                }}
+              />
+            </div>
             </CollapsibleSection>
           </AnimatedSection>
         </section>
@@ -1472,6 +1683,48 @@ export default function GameMechanics() {
               }
             >
               <LiveVariablesDashboard />
+              <div className="max-w-2xl mx-auto">
+                <MiniSectionSimulator
+                  sectionTitle="Live Variables"
+                  variables={[
+                    {
+                      key: "scoring.weights.quest_routine",
+                      label: "Routine quest points",
+                      min: 1,
+                      max: 25,
+                      step: 1,
+                      baseline: 10,
+                      help: "Points earned per routine quest. Raising this rewards frequent small actions.",
+                    },
+                    {
+                      key: "scoring.weights.forum_post",
+                      label: "Forum post points",
+                      min: 1,
+                      max: 15,
+                      step: 1,
+                      baseline: 5,
+                      help: "Points per forum post. Lower than quests to avoid rewarding spam.",
+                    },
+                    {
+                      key: "trust.multiplier.max",
+                      label: "Max trust multiplier",
+                      unit: "x",
+                      min: 1.5,
+                      max: 5.0,
+                      step: 0.1,
+                      baseline: 3.0,
+                      help: "Ceiling for long-time Sages. Higher values widen the gap between Explorers and Sages.",
+                    },
+                  ]}
+                  summary={(s) => {
+                    const quest = s["scoring.weights.quest_routine"];
+                    const forum = s["scoring.weights.forum_post"];
+                    const trust = s["trust.multiplier.max"];
+                    const raw = quest * 10 + forum * 15;
+                    return `A Sage completing 10 quests and 15 forum posts would earn ~${Math.round(raw * trust).toLocaleString()} boosted points (${raw} raw x ${trust.toFixed(1)}x trust).`;
+                  }}
+                />
+              </div>
             </CollapsibleSection>
           </AnimatedSection>
         </section>
@@ -1648,6 +1901,59 @@ export default function GameMechanics() {
                   />
                 </CardContent>
               </Card>
+            </div>
+            <div className="max-w-2xl mx-auto mt-8">
+              <MiniSectionSimulator
+                sectionTitle="Gratitude System"
+                variables={[
+                  {
+                    key: "gratitude.budget_base",
+                    label: "Base budget per cycle",
+                    min: 50,
+                    max: 300,
+                    step: 10,
+                    baseline: 100,
+                    help: "Starting gratitude budget each lunar cycle, before tier multipliers.",
+                  },
+                  {
+                    key: "gratitude.pool_per_cycle",
+                    label: "$ReGen pool per cycle",
+                    unit: " $ReGen",
+                    min: 1000,
+                    max: 50000,
+                    step: 1000,
+                    baseline: 10000,
+                    help: "Total $ReGen released each cycle and split among gratitude receivers.",
+                  },
+                  {
+                    key: "gratitude.claim_threshold",
+                    label: "Claim threshold",
+                    unit: " $ReGen",
+                    min: 100,
+                    max: 1000,
+                    step: 10,
+                    baseline: 333,
+                    help: "Minimum $ReGen you must accumulate before claiming on Hypha.",
+                  },
+                  {
+                    key: "gratitude.trust_graph.received_weight",
+                    label: "Received weight (per gratitude)",
+                    min: 0.05,
+                    max: 0.30,
+                    step: 0.01,
+                    baseline: 0.10,
+                    help: "How much each gratitude you receive adds to your trust multiplier.",
+                  },
+                ]}
+                summary={(s) => {
+                  const base = s["gratitude.budget_base"];
+                  const pool = s["gratitude.pool_per_cycle"];
+                  const threshold = s["gratitude.claim_threshold"];
+                  const sageBudget = Math.round(base * 5);
+                  const cyclesToClaim = Math.max(1, Math.round(threshold / (pool / 50)));
+                  return `A Sage would have ${sageBudget} effective budget per cycle. At this pool size, an average receiver needs roughly ${cyclesToClaim} cycle${cyclesToClaim === 1 ? "" : "s"} to hit the ${threshold} claim threshold.`;
+                }}
+              />
             </div>
             </CollapsibleSection>
           </AnimatedSection>
