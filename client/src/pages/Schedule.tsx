@@ -123,33 +123,74 @@ const RIVERSIDE_INFO = {
 // YouTube playlist for Season 1 recordings
 const YOUTUBE_PLAYLIST = "https://www.youtube.com/watch?v=AJZI0OiRPeU&list=PL3Xi8vZSmBTSUZsQ82awoNIQS8ceBQ4io";
 
+/**
+ * Open Access Sessions run 1:00 to 3:00 PM Eastern on each new moon.
+ * Dates here are computed from astronomical new moon times converted to
+ * US Eastern, then rolled forward one year from the current active date.
+ *
+ * Timezone abbrev is whatever applies in US Eastern on that calendar date:
+ * EDT (UTC-4) during daylight saving time, EST (UTC-5) otherwise.
+ */
+type OpenAccessSession = {
+  date: string;        // local ISO date in ET, YYYY-MM-DD
+  dayName: string;     // day of week in ET for that date
+  timezone: 'EDT' | 'EST';
+  startUtc: string;    // compact UTC timestamp: YYYYMMDDTHHMMSSZ
+  endUtc: string;
+};
+
+const NEW_MOON_SESSIONS: OpenAccessSession[] = [
+  { date: '2026-05-16', dayName: 'Saturday',  timezone: 'EDT', startUtc: '20260516T170000Z', endUtc: '20260516T190000Z' },
+  { date: '2026-06-14', dayName: 'Sunday',    timezone: 'EDT', startUtc: '20260614T170000Z', endUtc: '20260614T190000Z' },
+  { date: '2026-07-14', dayName: 'Tuesday',   timezone: 'EDT', startUtc: '20260714T170000Z', endUtc: '20260714T190000Z' },
+  { date: '2026-08-12', dayName: 'Wednesday', timezone: 'EDT', startUtc: '20260812T170000Z', endUtc: '20260812T190000Z' },
+  { date: '2026-09-10', dayName: 'Thursday',  timezone: 'EDT', startUtc: '20260910T170000Z', endUtc: '20260910T190000Z' },
+  { date: '2026-10-10', dayName: 'Saturday',  timezone: 'EDT', startUtc: '20261010T170000Z', endUtc: '20261010T190000Z' },
+  { date: '2026-11-09', dayName: 'Monday',    timezone: 'EST', startUtc: '20261109T180000Z', endUtc: '20261109T200000Z' },
+  { date: '2026-12-08', dayName: 'Tuesday',   timezone: 'EST', startUtc: '20261208T180000Z', endUtc: '20261208T200000Z' },
+  { date: '2027-01-07', dayName: 'Thursday',  timezone: 'EST', startUtc: '20270107T180000Z', endUtc: '20270107T200000Z' },
+  { date: '2027-02-06', dayName: 'Saturday',  timezone: 'EST', startUtc: '20270206T180000Z', endUtc: '20270206T200000Z' },
+  { date: '2027-03-08', dayName: 'Monday',    timezone: 'EST', startUtc: '20270308T180000Z', endUtc: '20270308T200000Z' },
+  { date: '2027-04-06', dayName: 'Tuesday',   timezone: 'EDT', startUtc: '20270406T170000Z', endUtc: '20270406T190000Z' },
+];
+
+const OPEN_ACCESS_TITLE = "ReGen Civics Open Access Session";
+const OPEN_ACCESS_DESC  = "Open community session for the Regenerative Renaissance. Drop in, meet the community, ask questions, no commitment required.";
+
+function parseCompactUtc(stamp: string): Date {
+  return new Date(stamp.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, '$1-$2-$3T$4:$5:$6Z'));
+}
+
+function openAccessGoogleUrl(session: OpenAccessSession): string {
+  const details = encodeURIComponent(`${OPEN_ACCESS_DESC}\n\nRiverside: ${RIVERSIDE_INFO.roomUrl}\n\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(OPEN_ACCESS_TITLE)}&dates=${session.startUtc}/${session.endUtc}&details=${details}&location=Online+via+Riverside`;
+}
+
+function openAccessIcsUrl(session: OpenAccessSession): string {
+  const desc = `${OPEN_ACCESS_DESC}\\n\\nRiverside: ${RIVERSIDE_INFO.roomUrl}\\n\\nYouTube Livestream: https://www.youtube.com/@SEEDSRegenerativeEconomies`;
+  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:${session.startUtc}\nDTEND:${session.endUtc}\nSUMMARY:${OPEN_ACCESS_TITLE}\nDESCRIPTION:${desc}\nLOCATION:Online via Riverside\nEND:VEVENT\nEND:VCALENDAR`;
+  return `data:text/calendar;charset=utf8,${encodeURIComponent(ics)}`;
+}
+
+function openAccessFallbackEvent(session: OpenAccessSession, idx: number) {
+  return {
+    id: 200 + idx,
+    title: OPEN_ACCESS_TITLE,
+    date: session.date,
+    time: "1:00 PM",
+    timezone: session.timezone,
+    duration: "2 hours",
+    description: OPEN_ACCESS_DESC,
+    type: "open",
+    googleCalendarUrl: openAccessGoogleUrl(session),
+    appleCalendarUrl: openAccessIcsUrl(session),
+  };
+}
+
 // Fallback hardcoded events, used only if the DB events table is empty or unreachable
 // The DB is the real source of truth once migrations have run.
 const upcomingEventsFallback = [
-  {
-    id: 0,
-    title: "Season 2 Community Session",
-    date: "2026-04-05",
-    time: "1:00 PM",
-    timezone: "EDT",
-    duration: "2 hours",
-    description: "Join us for an open introduction to Season 2! Learn about the program, meet the community, discover if this journey is right for your land project, and help us select the best day/time for the 13-week episodes.",
-    type: "open",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Community+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260405T170000Z%0ADTEND:20260405T190000Z%0ASUMMARY:ReGen+Civics+Season+2+Community+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
-  },
-  {
-    id: 100,
-    title: "ReGen Civics Alliance Launch Party",
-    date: "2026-04-22",
-    time: "11:00 AM",
-    timezone: "EDT",
-    duration: "2-3 hours",
-    description: "Speaking during the main portion of this event is invite only. Apply to be an alliance member if you'd like to be considered for an invitation. However, anyone can attend the call and see the magic. We'll likely have a session at the end of the event for everyone to talk and meet.",
-    type: "open",
-    googleCalendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Alliance+Launch+Party&dates=20260422T150000Z/20260422T180000Z&details=ReGen+Civics+Alliance+Launch+Party%0A%0ASpeaking+during+the+main+portion+is+invite+only.+Apply+to+be+an+alliance+member+for+an+invitation.+Anyone+can+attend+and+see+the+magic.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside",
-    appleCalendarUrl: "data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260422T150000Z%0ADTEND:20260422T180000Z%0ASUMMARY:ReGen+Civics+Alliance+Launch+Party%0ADESCRIPTION:Speaking+during+the+main+portion+is+invite+only.+Apply+to+be+an+alliance+member+for+an+invitation.+Anyone+can+attend+and+see+the+magic.%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
-  },
+  ...NEW_MOON_SESSIONS.map(openAccessFallbackEvent),
   {
     id: 1,
     title: "Week 1: Selection Day",
@@ -350,6 +391,21 @@ export default function Schedule() {
   const { user } = useAuth();
   const { data: tokenData } = trpc.events.myTokenBalance.useQuery(undefined, { enabled: !!user });
 
+  // Upcoming Open Access Sessions (every new moon). Computed once per render so
+  // the "next" card, banner, and supporting list always reflect the same data.
+  const upcomingOpenAccessSessions = NEW_MOON_SESSIONS
+    .filter(s => parseCompactUtc(s.startUtc).getTime() > Date.now());
+  const nextOpenAccessSession = upcomingOpenAccessSessions[0] ?? null;
+  const followingOpenAccessSessions = upcomingOpenAccessSessions.slice(1, 3);
+  const formatSessionMonthDay = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+  const formatSessionLong = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
   // Fetch events from DB (falls back gracefully while loading)
   // includeCompleted so historical tab has data
   const { data: dbEvents } = trpc.events.list.useQuery({ includeCompleted: true });
@@ -464,11 +520,13 @@ export default function Schedule() {
     <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
       {/* Open Session Announcement Banner */}
-      <div className="bg-[#7dd87d]/20 border-b border-[#7dd87d]/30 px-4 py-3 text-center">
-        <p className="text-[#7dd87d] font-medium text-sm md:text-base">
-          🌿 Open Session call is Sunday April 5th with the SEEDS community and other friends of the Regenerative Renaissance
-        </p>
-      </div>
+      {nextOpenAccessSession && (
+        <div className="bg-[#7dd87d]/20 border-b border-[#7dd87d]/30 px-4 py-3 text-center">
+          <p className="text-[#7dd87d] font-medium text-sm md:text-base">
+            🌿 Next Open Access Session: {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at 1:00 PM {nextOpenAccessSession.timezone}. Every new moon, open to all.
+          </p>
+        </div>
+      )}
       <BackButton />
       <SEO {...pageSEO.schedule} />
       <JsonLD data={schemas.event({
@@ -512,40 +570,60 @@ export default function Schedule() {
       <section className="py-8 px-4">
         <div className="container mx-auto max-w-4xl">
           <div className="grid md:grid-cols-3 gap-6">
-            {/* Add Whole Season */}
-            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-[#4a7c59]/10 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-[#7dd87d]" />
+            {/* Next Open Access Session (first card) */}
+            {nextOpenAccessSession && (
+              <div className="bg-gradient-to-br from-[#7dd87d]/30 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/40 ring-2 ring-[#7dd87d]/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-[#7dd87d]/30 flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-[#7dd87d]" />
+                  </div>
+                  <div>
+                    <span className="inline-block bg-[#7dd87d] text-[#1a472a] text-xs font-bold px-2 py-0.5 rounded-full mb-1">NEXT SESSION</span>
+                    <h3 className="text-lg font-bold text-white">Open Access Session</h3>
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-white">Season 2 Episodes</h3>
+                <p className="text-white/70 text-sm mb-1">
+                  {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at 1:00 - 3:00 PM {nextOpenAccessSession.timezone}
+                </p>
+                <p className="text-white/55 text-xs mb-4">Every new moon. Open to anyone curious about the Regenerative Renaissance.</p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <a
+                    href={openAccessGoogleUrl(nextOpenAccessSession)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                      <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285f4"/>
+                      <path d="M12 8V16M8 12H16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    Google Calendar
+                  </a>
+                  <a
+                    href={openAccessIcsUrl(nextOpenAccessSession)}
+                    download="regen-civics-open-session.ics"
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17 3H7C5.9 3 5 3.9 5 5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V5C19 3.9 18.1 3 17 3ZM12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18ZM15 14H9V6H15V14Z"/>
+                    </svg>
+                    Apple/Outlook
+                  </a>
+                </div>
+                {followingOpenAccessSessions.length > 0 && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[#7dd87d]/80 font-bold mb-1">Also coming up</p>
+                    <ul className="text-white/60 text-xs space-y-0.5">
+                      {followingOpenAccessSessions.map(s => (
+                        <li key={s.date}>
+                          {s.dayName}, {formatSessionMonthDay(s.date)} - 1:00 PM {s.timezone}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-              <p className="text-white/60 text-sm mb-4">All 13 weekly episodes, Sept–Dec 2026</p>
-              <div className="flex flex-wrap gap-2">
-                <a
-                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Episode&dates=20260926T150000Z/20260926T170000Z&details=ReGen+Civics+Season+2+Incubator+weekly+episode.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside&recur=RRULE:FREQ=WEEKLY;COUNT=13"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <path d="M19.5 3H4.5C3.67 3 3 3.67 3 4.5V19.5C3 20.33 3.67 21 4.5 21H19.5C20.33 21 21 20.33 21 19.5V4.5C21 3.67 20.33 3 19.5 3Z" fill="#4285f4"/>
-                    <path d="M12 8V16M8 12H16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  Google Calendar
-                </a>
-                <a
-                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260926T150000Z%0ADTEND:20260926T170000Z%0ARRULE:FREQ=WEEKLY;COUNT=13%0ASUMMARY:ReGen+Civics+Season+2+Episode%0ADESCRIPTION:Weekly+ReGen+Civics+Season+2+Incubator+episode+(11AM-1PM+EST).%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
-                  download="regen-civics-season-2.ics"
-                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17 3H7C5.9 3 5 3.9 5 5V19C5 20.1 5.9 21 7 21H17C18.1 21 19 20.1 19 19V5C19 3.9 18.1 3 17 3ZM12 18C11.45 18 11 17.55 11 17C11 16.45 11.45 16 12 16C12.55 16 13 16.45 13 17C13 17.55 12.55 18 12 18ZM15 14H9V6H15V14Z"/>
-                  </svg>
-                  Apple/Outlook
-                </a>
-              </div>
-            </div>
+            )}
 
             {/* Subscribe to All Events */}
             <div className="bg-gradient-to-br from-[#4a7c59]/20 to-[#2d5a3d]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20">
@@ -592,22 +670,18 @@ export default function Schedule() {
               <p className="text-white/55 text-xs mt-3">Live subscription updates automatically as new events are added</p>
             </div>
 
-            {/* Add Next Event */}
-            <div className="bg-gradient-to-br from-[#7dd87d]/30 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/40 ring-2 ring-[#7dd87d]/20">
+            {/* Season 2 Episodes (last card) */}
+            <div className="bg-gradient-to-br from-[#7dd87d]/20 to-[#4a7c59]/10 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/30 flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-[#7dd87d]" />
+                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-[#7dd87d]" />
                 </div>
-                <div>
-                  <span className="inline-block bg-[#7dd87d] text-[#1a472a] text-xs font-bold px-2 py-0.5 rounded-full mb-1">NEXT EVENT</span>
-                  <h3 className="text-lg font-bold text-white">Open Access Session</h3>
-                </div>
+                <h3 className="text-lg font-bold text-white">Season 2 Episodes</h3>
               </div>
-              <p className="text-white/60 text-sm mb-2">April 5, 2026 at 1:00 PM - 3:00 PM EDT</p>
-              <p className="text-white/50 text-xs mb-4">Open introduction to Season 2 - no commitment required!</p>
+              <p className="text-white/60 text-sm mb-4">All 13 weekly episodes, Sept-Dec 2026</p>
               <div className="flex flex-wrap gap-2">
                 <a
-                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Open+Access+Session&dates=20260405T170000Z/20260405T190000Z&details=Join+us+for+an+open+introduction+to+Season+2.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside"
+                  href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=ReGen+Civics+Season+2+Episode&dates=20260926T150000Z/20260926T170000Z&details=ReGen+Civics+Season+2+Incubator+weekly+episode.%0A%0ARiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%0A%0AYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies&location=Online+via+Riverside&recur=RRULE:FREQ=WEEKLY;COUNT=13"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
@@ -619,8 +693,8 @@ export default function Schedule() {
                   Google Calendar
                 </a>
                 <a
-                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260405T170000Z%0ADTEND:20260405T190000Z%0ASUMMARY:ReGen+Civics+Season+2+Open+Access+Session%0ADESCRIPTION:Join+us+for+an+open+introduction+to+Season+2+(1PM-3PM+EDT).%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
-                  download="regen-civics-open-session.ics"
+                  href="data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:20260926T150000Z%0ADTEND:20260926T170000Z%0ARRULE:FREQ=WEEKLY;COUNT=13%0ASUMMARY:ReGen+Civics+Season+2+Episode%0ADESCRIPTION:Weekly+ReGen+Civics+Season+2+Incubator+episode+(11AM-1PM+EST).%5Cn%5CnRiverside:+https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b%5Cn%5CnYouTube+Livestream:+https://www.youtube.com/@SEEDSRegenerativeEconomies%0ALOCATION:Online+via+Riverside%0AEND:VEVENT%0AEND:VCALENDAR"
+                  download="regen-civics-season-2.ics"
                   className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
