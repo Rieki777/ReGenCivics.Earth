@@ -109,7 +109,8 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
     setMessage("");
     setSent(false);
     sendMutation.reset();
-  }, [open, sendMutation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sendMutation is stable enough; including it causes extra resets
+  }, [open]);
 
   function handleTriggerAuth() {
     if (!isAuthenticated) {
