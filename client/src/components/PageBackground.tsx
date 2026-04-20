@@ -48,6 +48,13 @@ interface PageBackgroundProps {
    *  Use this for pages with tall narrative backgrounds (e.g. Home) so the visual
    *  journey reveals top-to-bottom as the user scrolls. Default is false (fixed). */
   scrollWithPage?: boolean;
+  /** How the background image fits inside the container.
+   *  "cover" (default) scales the image to cover the entire container, cropping as needed.
+   *  "tile-vertical" anchors image to 100% width, preserves aspect ratio, repeats vertically.
+   *    Ideal for tall multi-panel illustrations on very tall pages (e.g. Home) where you
+   *    want the image at native horizontal resolution (no upscaling or cropping) and the
+   *    vertical composition loops back to the top naturally. */
+  backgroundFit?: "cover" | "tile-vertical" | "contain-width";
 }
 
 // ─── Theme-Specific Animated Particles ───────────────────────────────────
@@ -557,6 +564,7 @@ export default function PageBackground({
   mobileBlurPlaceholder,
   backgroundPositionY = "top",
   scrollWithPage = false,
+  backgroundFit = "cover",
 }: PageBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
@@ -681,9 +689,16 @@ export default function PageBackground({
         style={{
           inset: "0",
           backgroundImage: `url(${activeImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: `center ${backgroundPositionY || "top"}`,
-          backgroundRepeat: "no-repeat",
+          backgroundSize:
+            backgroundFit === "tile-vertical" || backgroundFit === "contain-width"
+              ? "100% auto"
+              : "cover",
+          backgroundPosition:
+            backgroundFit === "tile-vertical" || backgroundFit === "contain-width"
+              ? `center top`
+              : `center ${backgroundPositionY || "top"}`,
+          backgroundRepeat:
+            backgroundFit === "tile-vertical" ? "repeat-y" : "no-repeat",
           backgroundAttachment: "scroll",
           willChange: parallax && !scrollWithPage && !isMobile ? "transform" : "auto",
         }}

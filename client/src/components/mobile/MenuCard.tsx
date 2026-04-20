@@ -4,13 +4,12 @@
 import { Link } from "wouter";
 import {
   Compass, Sparkles, SlidersHorizontal, Wrench, Map, Sprout, Coins, Globe,
-  Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote,
+  Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote, Scroll,
 } from "lucide-react";
-import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Compass, Sparkles, SlidersHorizontal, Wrench, Map, Sprout, Coins, Globe,
-  Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote,
+  Users, BookOpen, FileText, MessageCircle, Calendar, Shield, Mail, Vote, Scroll,
 };
 
 type Props = {
@@ -26,8 +25,8 @@ export function MenuCard({ label, sub, href, icon, primary = false, onSelect }: 
   const Icon = ICONS[icon];
 
   const renderIcon = () => {
-    if (icon === "wizards") {
-      return <TreeOfLifeIcon size={28} className={primary ? "text-[#1a472a]" : "text-[#7dd87d]"} />;
+    if (icon === "wizards" || icon === "quests") {
+      return <Scroll className={`w-7 h-7 ${primary ? "text-[#1a472a]" : "text-[#7dd87d]"}`} />;
     }
     if (Icon) return <Icon className={`w-6 h-6 ${primary ? "text-[#1a472a]" : "text-[#7dd87d]"}`} />;
     return <Compass className={`w-6 h-6 ${primary ? "text-[#1a472a]" : "text-[#7dd87d]"}`} />;

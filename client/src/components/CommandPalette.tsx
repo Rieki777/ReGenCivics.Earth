@@ -12,9 +12,8 @@ import { blogPosts } from "@/data/blogPosts";
 import {
   Coins, Sprout, Handshake, Heart, Users, Calendar,
   BookOpen, Globe, FileText, Shield, AlertTriangle, Map, MessageCircle,
-  Layers, Search, X, Sparkles,
+  Layers, Search, X, Sparkles, Scroll,
 } from "lucide-react";
-import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 
 type PageEntry = {
   label: string;
@@ -37,7 +36,7 @@ const PAGES: PageEntry[] = [
   { label: "Investor Form", description: "Submit investor interest", href: "/investor", icon: <Coins className="w-4 h-4 text-[#ffd700]" />, group: "Invest" },
   // Play
   { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
-  { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <TreeOfLifeIcon size={16} className="text-[#7dd87d]" />, group: "Play" },
+  { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <Scroll className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Crowd Pool Campaigns", description: "Browse active campaigns", href: "/crowd-pooling-projects", icon: <Users className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Schedule", description: "Book a call or join a session", href: "/schedule", icon: <Calendar className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   // Community

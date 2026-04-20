@@ -4,9 +4,8 @@
  * Falls back to generic "start your first quest" for unauthenticated users.
  */
 import { Link } from "wouter";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Scroll } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { useNextQuest } from "@/hooks/useNextQuest";
 import { SEASON_EMOJI } from "@/data/seasonConstants";
 
@@ -34,7 +33,7 @@ export function NextQuestCard({ onSelect }: Props) {
       >
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0">
-            <TreeOfLifeIcon size={28} className="text-[#7dd87d]" />
+            <Scroll className="w-7 h-7 text-[#7dd87d]" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>
@@ -60,7 +59,7 @@ export function NextQuestCard({ onSelect }: Props) {
       >
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0">
-            <TreeOfLifeIcon size={28} className="text-[#7dd87d]" />
+            <Scroll className="w-7 h-7 text-[#7dd87d]" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>
@@ -91,7 +90,7 @@ export function NextQuestCard({ onSelect }: Props) {
     >
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-xl bg-[#7dd87d]/20 flex items-center justify-center flex-shrink-0">
-          <TreeOfLifeIcon size={28} className="text-[#7dd87d]" />
+          <Scroll className="w-7 h-7 text-[#7dd87d]" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-white/50 text-xs uppercase tracking-wider font-semibold mb-0.5">

@@ -54,6 +54,7 @@ import {
   ChevronDown,
   Compass,
   Flame,
+  Scroll,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -2631,7 +2632,7 @@ type ProfileTab = "overview" | "submissions" | "quests" | "contributions" | "set
 const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
   { id: "submissions",    label: "My Submissions",  icon: FolderOpen },
-  { id: "quests",         label: "Quests",         icon: BookOpen },
+  { id: "quests",         label: "Quests",         icon: Scroll },
   { id: "contributions",  label: "Contributions",  icon: Leaf },
   { id: "settings",       label: "Settings",       icon: Settings },
 ];

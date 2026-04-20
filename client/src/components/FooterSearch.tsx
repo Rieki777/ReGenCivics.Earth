@@ -4,7 +4,7 @@
  */
 import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Search, ArrowRight, Leaf, Coins, Users, Map, BookOpen, Calendar, FileText, Shield, Globe, HelpCircle } from "lucide-react";
+import { Search, ArrowRight, Leaf, Coins, Users, Map, BookOpen, Calendar, FileText, Shield, Globe, HelpCircle, Scroll } from "lucide-react";
 import {
   CommandDialog,
   CommandInput,
@@ -49,7 +49,7 @@ const searchItems: { group: string; items: SearchItem[] }[] = [
   {
     group: "Game & Tools",
     items: [
-      { label: "Start Questing", href: "/quest", keywords: "quest mission task earn tokens", icon: <Map className="w-4 h-4" /> },
+      { label: "Start Questing", href: "/quest", keywords: "quest mission task earn tokens", icon: <Scroll className="w-4 h-4" /> },
       { label: "Crowd Pooling", href: "/crowd-pooling", keywords: "crowd pool calculator contribute", icon: <Coins className="w-4 h-4" /> },
       { label: "Crowd Pool Campaigns", href: "/crowd-pooling-campaigns", keywords: "campaigns active crowd pool", icon: <Coins className="w-4 h-4" /> },
       { label: "Contribution Calculator", href: "/calculator", keywords: "calculator contribution 8 forms capital", icon: <Coins className="w-4 h-4" /> },

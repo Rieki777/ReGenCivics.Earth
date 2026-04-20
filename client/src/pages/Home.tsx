@@ -200,6 +200,7 @@ export default function Home() {
       theme="forest"
       blendColor="18, 45, 28"
       scrollWithPage={true}
+      backgroundFit="tile-vertical"
       sectionOverlays={[
         { id: "hero", opacity: 0 },
         { id: "four-paths", opacity: 0 },

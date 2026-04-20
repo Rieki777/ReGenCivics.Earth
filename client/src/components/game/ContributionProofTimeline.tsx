@@ -4,7 +4,7 @@
  * Lives on the player profile "Contributions" tab.
  */
 import { useState, useMemo } from "react";
-import { Compass, Leaf, Handshake, Lock, ChevronDown, Image, Link, FileText } from "lucide-react";
+import { Scroll, Leaf, Handshake, Lock, ChevronDown, Image, Link, FileText } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ function relativeTime(date: Date): string {
 function kindIcon(kind: EntryKind) {
   switch (kind) {
     case "quest":
-      return <Compass className="w-4 h-4" />;
+      return <Scroll className="w-4 h-4" />;
     case "contribution":
       return <Leaf className="w-4 h-4" />;
     case "endorsement":

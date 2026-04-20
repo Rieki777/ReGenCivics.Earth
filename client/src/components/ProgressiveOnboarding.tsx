@@ -6,7 +6,7 @@
  */
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { ArrowRight, Coins, Sprout, Handshake, Globe, ChevronDown, Map, Compass, MessageSquare, TrendingUp, Zap, CalendarDays } from 'lucide-react';
+import { ArrowRight, Coins, Sprout, Handshake, Globe, ChevronDown, Scroll, MessageSquare, TrendingUp, Zap, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { PathCardImage } from '@/components/PathCardImage';
@@ -136,10 +136,10 @@ function PersonalizedCards() {
   const isInvestor = profile.path === 'investor' || !!investorInquiry;
 
   if (profile.path) {
-    cards.push({ id: 'journey-quests', title: 'Journey Quests', subtitle: 'Welcome to the Journey Quests', href: '/profile#quests', image: '/images/return-cards/journey-quests.webp', accentColor: '#7dd87d', icon: Map });
+    cards.push({ id: 'journey-quests', title: 'Journey Quests', subtitle: 'Welcome to the Journey Quests', href: '/profile#quests', image: '/images/return-cards/journey-quests.webp', accentColor: '#7dd87d', icon: Scroll });
   }
   if (completedQuests.length > 0 && completedQuests.length < 12) {
-    cards.push({ id: 'next-quest', title: 'Continue Your Quest', subtitle: `Quest ${completedQuests.length + 1} of 12 awaits`, href: '/quest', image: '/images/return-cards/next-quest.webp', accentColor: '#d4a574', icon: Compass });
+    cards.push({ id: 'next-quest', title: 'Continue Your Quest', subtitle: `Quest ${completedQuests.length + 1} of 12 awaits`, href: '/quest', image: '/images/return-cards/next-quest.webp', accentColor: '#d4a574', icon: Scroll });
   }
   if (hasVisitedForum) {
     cards.push({ id: 'community', title: 'Back to the Forum', subtitle: 'Continue the conversation', href: '/community', image: '/images/return-cards/community.webp', accentColor: '#7dd87d', icon: MessageSquare });

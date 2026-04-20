@@ -175,6 +175,99 @@ Claude Code will raise only that opacity (leaving the rest at 0).
 
 ---
 
+### K2. Landing background sizing fix (blurry + cropped)
+
+**Status:** CODED 2026-04-19 (needs `git push` + visual QA on desktop + iPhone)
+
+Rye reported that the new multi-panel background was blurry and not
+showing at full size on the live site. Root cause: `backgroundSize:
+cover` on a 1920×3440 image in a 1697×7475 page container forced a
+2.17× upscale (blur) and a 59% horizontal crop (missing content).
+
+**What shipped.**
+
+1. `client/src/components/PageBackground.tsx`: added new prop
+   `backgroundFit?: "cover" | "tile-vertical" | "contain-width"`
+   (default `"cover"`). When `tile-vertical` is set, the background
+   style switches to `backgroundSize: "100% auto"` +
+   `backgroundRepeat: "repeat-y"`. The image renders at native
+   horizontal width (no upscaling, sharp) and tiles vertically to
+   fill the full page height. The cosmic top and cosmic bottom
+   panels were designed to blend seamlessly (see
+   `bg_prompt_desktop.txt` and `bg_prompt_mobile.txt`), so the tile
+   seam is intentional and near-invisible.
+2. `client/src/pages/Home.tsx`: passes `backgroundFit="tile-vertical"`
+   to the PageBackground on the landing page.
+
+**Evidence.**
+
+```
+grep -n "backgroundFit" client/src/components/PageBackground.tsx
+grep -n "backgroundFit" client/src/pages/Home.tsx
+python3 scripts/audit-truncation.py  → 0 truncated, 0 suspicious
+```
+
+**Handoff.** Rye to `git push origin main`, then open `/` on
+desktop + iPhone: background should be sharp, full-width, no
+horizontal crop, all five panels visible as you scroll, repeating
+cleanly at the cosmic seam.
+
+---
+
+### L1. Sitewide "Quests" icon swap to Scroll
+
+**Status:** CODED 2026-04-19 (needs `git push` + visual verification)
+
+Rye asked for the Scroll icon (the desktop nav uses it, see
+`useSmartNav.ts` and `NavCustomizeSheet.tsx`) to be used for
+"Quests" everywhere on the site.
+
+**What shipped.** Eight files updated to `Scroll` from lucide-react:
+
+1. `client/src/components/ProgressiveOnboarding.tsx`: return-visitor
+   "Journey Quests" and "Continue Your Quest" cards (was `Map` and
+   `Compass`).
+2. `client/src/components/CommandPalette.tsx`: Cmd+K search "Quests"
+   entry (was `TreeOfLifeIcon`). `TreeOfLifeIcon` import removed.
+3. `client/src/components/mobile/WizardRadialMenu.tsx`: mobile
+   radial menu "Quests" button (was `TreeOfLifeIcon`).
+   `TreeOfLifeIcon` import removed.
+4. `client/src/components/mobile/NextQuestCard.tsx`: personalized
+   next-quest card used in the mobile More menu (was
+   `TreeOfLifeIcon` in all three card variants).
+5. `client/src/components/mobile/MenuCard.tsx`: generic menu card's
+   `icon="wizards"` (and new `"quests"`) path now renders `Scroll`.
+6. `client/src/components/game/ContributionProofTimeline.tsx`:
+   timeline "quest" entry kind (was `Compass`).
+7. `client/src/components/FooterSearch.tsx`: "Start Questing" entry
+   in footer search (was `Map`).
+8. `client/src/pages/PlayerProfile.tsx`: profile tabs "Quests" tab
+   (was `BookOpen`).
+
+Already-correct references verified and left alone: `AdminSidebar.tsx`
+(`ScrollText`), `useSmartNav.ts` and `NavCustomizeSheet.tsx`
+(string name `"Scroll"`).
+
+**Evidence.**
+
+```
+grep -rn "icon: Scroll\|icon={<Scroll\|Icon: Scroll" client/src \
+  | wc -l → expected ≥ 6 occurrences across the touched files
+python3 scripts/audit-truncation.py  → 0 truncated, 0 suspicious
+```
+
+**Handoff.** Rye to `git push origin main`, then verify on at least
+one page from each surface: `/` (return-visitor cards), Cmd+K
+palette, mobile radial menu, mobile More menu, `/profile`, footer
+search. All "Quests" icons should render as the lucide scroll
+pictogram.
+
+**Side-note.** `client/src/components/mobile/NextQuestCard.tsx` was
+truncated in the working tree (60 of 110 lines) before this pass.
+Restored from git HEAD (a5dfd31) before the icon swap.
+
+---
+
 ## Handoff Breakdown — Who Does What
 
 ### YOU (Rye) — things only you can do
@@ -186,7 +279,7 @@ Claude Code will raise only that opacity (leaving the rest at 0).
 | B8 | Paste Medium URL or fresh blog copy | Editorial | Paste in chat |
 | E4 | List broken tool URLs | Need the list | Paste list in chat |
 | G1 | Update DB + gcal + Riverside (or ask Cowork Claude to do it) | Railway + gcal + Riverside access | Reply "update open access to April 20" |
-| — | Push the CODED items (incl. I2, K1) | Holds index.lock on this machine | `git push origin main` |
+| — | Push the CODED items (incl. I2, K1, K2, L1) | Holds index.lock on this machine | `git push origin main` |
 | — | Approve Railway deploys | Dashboard access | Railway UI |
 | — | Test each CODED fix on a real iPhone | Physical device | — |
 | — | Visual QA the new landing background end-to-end | Taste call | Open `/` on desktop + iPhone |
@@ -195,6 +288,15 @@ Claude Code will raise only that opacity (leaving the rest at 0).
 
 - I2: SendGratitudeModal + SiteFooter CTA wired to `trpc.gratitude.*`.
 - K1: Two new 4K backgrounds generated, overlay zeroed, cache bust bumped.
+- K2: `backgroundFit="tile-vertical"` prop added to `PageBackground`,
+  wired into `Home.tsx` so the landing image renders at native
+  horizontal resolution (sharp, full-width) and tiles vertically.
+- L1: "Quests" icon swapped to lucide `Scroll` across 8 files
+  (ProgressiveOnboarding, CommandPalette, WizardRadialMenu,
+  NextQuestCard, MenuCard, ContributionProofTimeline, FooterSearch,
+  PlayerProfile). Unused `TreeOfLifeIcon` imports removed.
+  Pre-existing truncation in `mobile/NextQuestCard.tsx` restored
+  from git HEAD before editing.
 
 ### WAITING ON YOU before Claude Code can proceed further
 

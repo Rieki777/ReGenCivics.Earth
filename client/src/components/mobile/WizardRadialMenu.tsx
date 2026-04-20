@@ -20,9 +20,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Sparkles,
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Sparkles, Scroll,
 } from "lucide-react";
-import { TreeOfLifeIcon } from "@/components/icons/TreeOfLifeIcon";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
 import { useAudio } from "@/contexts/AudioContext";
@@ -115,7 +114,7 @@ export function WizardRadialMenu() {
   // Anchor slot: Quests. When on /quest, swap to "Resume" (still routes to /quest but labelled differently).
   const questsAction: Action = onQuest
     ? { key: "resume", label: "Resume", href: "/quest", Icon: Play }
-    : { key: "quests", label: "Quests", href: "/quest", Icon: TreeOfLifeIcon };
+    : { key: "quests", label: "Quests", href: "/quest", Icon: Scroll };
 
   // Anchor slot: Profile. When on /profile, swap to "Edit".
   const profileAction: Action = onProfile
