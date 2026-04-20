@@ -2,8 +2,8 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { eq, sql } from "drizzle-orm";
-import { bioregions, userBioregions, playerProfiles } from "../../drizzle/schema";
+import { eq, sql, gte, desc } from "drizzle-orm";
+import { bioregions, userBioregions, playerProfiles, questCompletions, applications } from "../../drizzle/schema";
 
 // ─── C1: Bioregions ──────────────────────────────────────────────────────────
 export const bioregionsRouter = router({
@@ -76,4 +76,47 @@ export const userBioregionsRouter = router({
       }
       return { success: true };
     }),
+});
+
+// ─── Bloom Markers (recent map activity) ────────────────────────────────────
+export const bloomsRouter = router({
+  getRecentBlooms: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return [];
+
+    const since = new Date(Date.now() - 2 * 60 * 1000); // last 2 minutes
+
+    try {
+      // Join quest completions with applications (land projects) to get lat/lon.
+      // A quest completion's userId may match an application's userId (project owner),
+      // giving us a geographic anchor for the bloom.
+      const rows = await db
+        .select({
+          id: questCompletions.id,
+          lat: applications.latitude,
+          lon: applications.longitude,
+          completedAt: questCompletions.completedAt,
+        })
+        .from(questCompletions)
+        .innerJoin(applications, eq(questCompletions.userId, applications.userId))
+        .where(gte(questCompletions.completedAt, since))
+        .orderBy(desc(questCompletions.completedAt))
+        .limit(50);
+
+      const blooms = rows
+        .filter((r) => r.lat != null && r.lon != null)
+        .map((r) => ({
+          id: r.id,
+          lat: r.lat!,
+          lon: r.lon!,
+          kind: "quest_completed" as const,
+          occurredAt: r.completedAt,
+        }));
+
+      return blooms;
+    } catch {
+      // Table may not exist yet or columns may differ; return empty gracefully
+      return [];
+    }
+  }),
 });

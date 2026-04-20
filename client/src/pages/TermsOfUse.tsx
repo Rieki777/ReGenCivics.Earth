@@ -55,7 +55,7 @@ export default function TermsOfUse() {
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>8. Intellectual Property</h2>
-            <p>All content on this Site (text, graphics, logos, images) is owned by ReGen Civics and protected by copyright and trademark laws. You may not reproduce, distribute, or create derivative works without written permission.</p>
+            <p>The ReGen Civics codebase is released under an open source license. You are free to use, modify, and distribute the source code in accordance with the license terms displayed in the project repository. The ReGen Civics name, logos, and brand marks remain the property of ReGen Civics and require written permission for commercial use outside the scope of the open source license. User-generated content (forum posts, quest submissions, proposals) remains owned by its author, with a license granted to ReGen Civics for display and distribution within the platform.</p>
           </section>
 
           <section>
@@ -100,7 +100,7 @@ export default function TermsOfUse() {
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>17. Contact</h2>
-            <p>Questions about these Terms? Contact us at <a href="mailto:legal@regencivics.earth" className="text-[#7dd87d] underline hover:text-[#7dd87d]/80">legal@regencivics.earth</a></p>
+            <p>Questions about these Terms? Reach us through our <Link href="/connect" className="text-[#7dd87d] underline hover:text-[#7dd87d]/80">Connect page</Link> or email <a href="mailto:legal@regencivics.earth" className="text-[#7dd87d] underline hover:text-[#7dd87d]/80">legal@regencivics.earth</a></p>
           </section>
 
       </div>

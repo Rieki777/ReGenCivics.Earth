@@ -52,14 +52,17 @@ import {
 /* ─── HelpTip: small info icon that reveals a plain-language explanation ─ */
 
 function HelpTip({ text }: { text?: string | null }) {
+  const [open, setOpen] = useState(false);
   if (!text) return null;
   return (
-    <Tooltip>
+    <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger asChild>
         <button
           type="button"
           aria-label="Explain this variable"
           className="inline-flex items-center justify-center text-white/65 hover:text-white/90 focus:text-white/90 focus:outline-none transition-colors shrink-0"
+          onClick={() => setOpen((prev) => !prev)}
+          onFocus={() => setOpen(true)}
         >
           <HelpCircle className="w-3.5 h-3.5" />
         </button>
@@ -67,6 +70,7 @@ function HelpTip({ text }: { text?: string | null }) {
       <TooltipContent
         side="top"
         className="max-w-[260px] whitespace-normal bg-[#1a472a] text-white border border-[#7dd87d]/30 text-xs leading-relaxed px-3 py-2 shadow-xl"
+        onPointerDownOutside={() => setOpen(false)}
       >
         {text}
       </TooltipContent>

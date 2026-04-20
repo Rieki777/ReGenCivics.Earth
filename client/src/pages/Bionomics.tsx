@@ -582,7 +582,7 @@ function SectionHeading({
   titleClassName?: string;
 }) {
   return (
-    <div className="max-w-3xl mb-8 md:mb-10">
+    <div className="max-w-3xl mx-auto mb-8 md:mb-10">
       {eyebrow && (
         <p
           className="uppercase tracking-[0.2em] text-xs font-bold mb-2"
