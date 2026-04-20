@@ -47,7 +47,6 @@ import { trpc } from "@/lib/trpc";
 import { PageWrapper } from "@/components/PageWrapper";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { cdnImg } from "@/lib/utils";
-import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 import { ForYouLabel } from "@/components/ForYouLabel";
 import { AmbientParticles } from "@/components/AmbientParticles";
 import { VineDivider } from "@/components/dividers/VineDivider";
@@ -230,8 +229,38 @@ export default function Home() {
           className="bg-gradient-to-r from-[#7dd87d] via-[#4a7c59] to-[#7dd87d] text-[#1a472a] py-3 px-4 text-center"
         />
 
+        {/* Hero Title */}
+        <section className="relative pt-16 md:pt-24 pb-4 md:pb-6">
+          <AmbientParticles />
+          <div className="container relative z-10 max-w-5xl">
+            <AnimatedSection animation="fade-in">
+              <div className="text-center">
+                <h1
+                  className="ink-reveal text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 md:mb-8 leading-[1.05] text-shadow-strong"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  <span
+                    className="bg-gradient-to-br from-[#9de89d] via-[#7dd87d] to-[#4a7c59] bg-clip-text text-transparent"
+                    style={{ WebkitTextStroke: "0.5px rgba(125,216,125,0.15)" }}
+                  >
+                    ReGen
+                  </span>{" "}
+                  <span className="text-white">Civics</span>
+                </h1>
+                <p
+                  className="ink-reveal text-white/90 text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto text-shadow-subtle leading-relaxed safe-prose"
+                  style={{ fontFamily: "var(--font-body)", transitionDelay: "0.35s" }}
+                >
+                  A venture fund and alliance helping regenerative land projects grow their
+                  economies, attract investment, and build thriving communities.
+                </p>
+              </div>
+            </AnimatedSection>
+          </div>
+        </section>
+
         {/* Welcome Short Intro Video */}
-        <section className="relative py-10 md:py-14">
+        <section className="relative py-8 md:py-12">
           <div className="container max-w-4xl">
             <AnimatedSection animation="fade-in">
               <AutoplayVideo
@@ -244,35 +273,60 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Hero Section with Video */}
-        <section className="relative min-h-[60vh] flex items-center py-12 md:py-16 hero-gradient-shift">
-          <AmbientParticles />
-          <LandscapeSVG seed="home" className="absolute inset-0 text-[#7dd87d] pointer-events-none z-0" />
-          <div className="container relative z-10">
-            <AnimatedSection animation="fade-in" className="max-w-5xl mx-auto">
-              <div className="text-center mb-8">
-                <h1
-                  className="ink-reveal text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-white leading-tight text-shadow-strong"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  <span className="text-[#7dd87d]">ReGen</span> Civics
-                </h1>
-                <p
-                  className="text-white/90 text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto mb-8 text-shadow-subtle leading-relaxed safe-prose"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  A venture fund and alliance helping regenerative land projects grow their
-                  economies, attract investment, and build thriving communities.
+        {/* Mission Description */}
+        <section className="relative py-10 md:py-14">
+          <div className="container max-w-3xl">
+            <AnimatedSection animation="fade-in">
+              <VineDivider className="mx-auto mb-10 w-64 text-[#7dd87d]/50" />
+              <div
+                className="space-y-5 text-white/90 text-base md:text-lg lg:text-xl leading-relaxed text-shadow-subtle safe-prose text-center"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                <p>
+                  <span className="text-[#7dd87d] font-semibold">regen-civics</span>{" "}
+                  is a fund and an in-real-life game for supporting regenerative land
+                  projects and the{" "}
+                  <span className="text-amber-300 font-medium">Regenerative Renaissance</span>{" "}
+                  <span className="text-white/70">
+                    (a movement to heal ourselves, our earth, our communities, and our
+                    bioregions).
+                  </span>
+                </p>
+                <p>
+                  We create quests and{" "}
+                  <span className="text-amber-300 font-medium">Infinite Games</span>{" "}
+                  that help people heal, and in doing so build new financial, economic,
+                  and governance systems that support and network land projects across
+                  our movement.
                 </p>
               </div>
+              <div className="mt-10 md:mt-12 text-center">
+                <p
+                  className="ink-reveal text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    textShadow: "0 2px 20px rgba(0,0,0,0.6), 0 0 40px rgba(125,216,125,0.25)",
+                  }}
+                >
+                  <span className="bg-gradient-to-r from-amber-300 via-[#9de89d] to-amber-300 bg-clip-text text-transparent">
+                    Welcome to the Infinite Game
+                  </span>
+                </p>
+              </div>
+              <VineDivider className="mx-auto mt-10 w-64 text-[#7dd87d]/50" />
+            </AnimatedSection>
+          </div>
+        </section>
 
-              {/* Video Section - Autoplay on scroll */}
+        {/* 4 Paths Video */}
+        <section className="relative py-8 md:py-12">
+          <div className="container max-w-5xl">
+            <AnimatedSection animation="fade-in">
               <AutoplayVideo
                 videoId="_LO2sItSofo"
                 title="ReGen Civics - 4 Paths to Play"
                 thumbnailUrl={cdnImg("https://assets.regencivics.earth/nAJFMAHKUducxpdN.jpg")}
                 thumbnailAlt="4 Paths to Play - Investors, Land Projects, Alliance Organisations, ReGen Players"
-
               />
             </AnimatedSection>
           </div>
