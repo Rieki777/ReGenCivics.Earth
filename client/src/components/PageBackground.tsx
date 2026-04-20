@@ -11,7 +11,14 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 
 // ─── Theme Animation Types ───────────────────────────────────────────────
-export type PageTheme = "forest" | "ocean" | "garden" | "sky" | "magic" | "cosmos";
+export type PageTheme =
+  | "forest"
+  | "ocean"
+  | "garden"
+  | "sky"
+  | "magic"
+  | "cosmos"
+  | "cosmos-forest";
 
 /** Per-section overlay config for fine-grained control */
 export interface SectionOverlay {
@@ -55,6 +62,12 @@ interface PageBackgroundProps {
    *    want the image at native horizontal resolution (no upscaling or cropping) and the
    *    vertical composition loops back to the top naturally. */
   backgroundFit?: "cover" | "tile-vertical" | "contain-width";
+  /** When set, renders a subtle dark "glassy" wash over the whole background
+   *  image to improve text legibility without obscuring the art. Accepts
+   *  either a boolean (true = default 0.22 opacity) or a number between 0
+   *  and 1 for custom opacity. Rendered above the image and below the
+   *  per-section overlays. */
+  glassOverlay?: boolean | number;
 }
 
 // ─── Theme-Specific Animated Particles ───────────────────────────────────
@@ -111,6 +124,52 @@ function ForestParticles() {
           />
         )
       )}
+    </div>
+  );
+}
+
+// Leaves-only variant used for the middle slice of the landing page (forest
+// canopy through community + orchard). Same falling-leaf visual as the leaf
+// half of ForestParticles, no fireflies.
+function LeavesOnlyParticles() {
+  const [particles] = useState(() =>
+    Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 15,
+      duration: 10 + Math.random() * 18,
+      size: 8 + Math.random() * 12,
+      opacity: 0.2 + Math.random() * 0.45,
+      drift: -30 + Math.random() * 60,
+      colorIdx: i % 3,
+    }))
+  );
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute animate-falling-leaf"
+          style={{
+            left: `${p.left}%`,
+            top: `-${p.size}px`,
+            width: `${p.size}px`,
+            height: `${p.size * 0.7}px`,
+            backgroundColor: [
+              "rgba(125, 216, 125, 0.4)",
+              "rgba(180, 220, 100, 0.35)",
+              "rgba(100, 180, 80, 0.3)",
+            ][p.colorIdx],
+            borderRadius: "0 50% 50% 50%",
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            opacity: p.opacity,
+            ["--drift" as string]: `${p.drift}px`,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -427,6 +486,29 @@ function CosmosParticles() {
   );
 }
 
+// Cosmos + Forest: layered theme for the landing page. Animations are tied
+// to the 10-panel vertical illustration of the background:
+//   - Top ~12% (the starry village panel): cosmos particles (shooting stars,
+//     twinkles)
+//   - Next 50% of the page (12% to 62%: the forest canopy, deep forest,
+//     community, and orchard panels): falling leaves only
+//   - Below 62% (pollinator meadow, underground soil, mycelium, roots to
+//     Earth): no particles. The underground and cosmic sections stay still.
+// Each inner component renders with absolute inset-0 so it fills whichever
+// container wraps it.
+function CosmosForestParticles() {
+  return (
+    <>
+      <div className="absolute inset-x-0 top-0 h-[12%] overflow-hidden pointer-events-none z-10">
+        <CosmosParticles />
+      </div>
+      <div className="absolute inset-x-0 top-[12%] h-[50%] overflow-hidden pointer-events-none z-10">
+        <LeavesOnlyParticles />
+      </div>
+    </>
+  );
+}
+
 // Theme particle selector
 function ThemeParticles({ theme }: { theme: PageTheme }) {
   switch (theme) {
@@ -436,6 +518,7 @@ function ThemeParticles({ theme }: { theme: PageTheme }) {
     case "sky": return <SkyParticles />;
     case "magic": return <MagicParticles />;
     case "cosmos": return <CosmosParticles />;
+    case "cosmos-forest": return <CosmosForestParticles />;
     default: return <ForestParticles />;
   }
 }
@@ -451,6 +534,7 @@ function ThemedLoadingShimmer({ theme, overlayColor }: { theme: PageTheme; overl
       case "sky": return { accent: "rgba(0, 220, 255, 0.15)", icon: "☁️" };
       case "magic": return { accent: "rgba(200, 150, 255, 0.15)", icon: "✨" };
       case "cosmos": return { accent: "rgba(200, 220, 255, 0.18)", icon: "✨" };
+      case "cosmos-forest": return { accent: "rgba(200, 220, 255, 0.18)", icon: "✨" };
       default: return { accent: "rgba(125, 216, 125, 0.15)", icon: "🌿" };
     }
   }, [theme]);
@@ -635,6 +719,7 @@ export default function PageBackground({
   backgroundPositionY = "top",
   scrollWithPage = false,
   backgroundFit = "cover",
+  glassOverlay,
 }: PageBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
@@ -773,6 +858,30 @@ export default function PageBackground({
           willChange: parallax && !scrollWithPage && !isMobile ? "transform" : "auto",
         }}
       />
+
+      {/* Glassy wash over the whole background. Subtle dark gradient with
+          a slight cool tint and a tiny vignette at the edges. Kept above
+          the image and below the per-section overlays so authored section
+          overlays still win where configured. */}
+      {glassOverlay && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-[2] pointer-events-none"
+          style={{
+            background: (() => {
+              const base =
+                typeof glassOverlay === "number" ? glassOverlay : 0.22;
+              return `radial-gradient(ellipse at center, rgba(10, 20, 28, ${Math.max(
+                0,
+                base - 0.06
+              )}) 0%, rgba(10, 20, 28, ${base}) 65%, rgba(6, 14, 22, ${Math.min(
+                1,
+                base + 0.08
+              )}) 100%)`;
+            })(),
+          }}
+        />
+      )}
 
       {/* Per-section overlay with gradient transitions */}
       <SectionOverlayLayer

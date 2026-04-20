@@ -30,6 +30,7 @@ import {
 import PageBackground from "@/components/PageBackground";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { HeroTypewriter } from "@/components/HeroTypewriter";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import NewsletterSignup from "@/components/NewsletterSignup";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -184,8 +185,8 @@ export default function Home() {
   }, []);
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
-  const bgImage = "/images/backgrounds/home-desktop.webp?v=5";
-  const mobileBgImage = "/images/backgrounds/home-mobile.webp?v=5";
+  const bgImage = "/images/backgrounds/home-desktop.webp?v=14";
+  const mobileBgImage = "/images/backgrounds/home-mobile.webp?v=14";
   const heroImages = useMemo(() => [bgImage, mobileBgImage], [bgImage, mobileBgImage]);
 
   return (
@@ -194,13 +195,14 @@ export default function Home() {
     <PageBackground
       backgroundImage={bgImage}
       mobileBackgroundImage={mobileBgImage}
-      blurPlaceholder="/images/backgrounds/home-desktop.webp?v=5"
-      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp?v=5"
+      blurPlaceholder="/images/backgrounds/home-desktop.webp?v=14"
+      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp?v=14"
       overlayOpacity={0}
-      theme="cosmos"
+      theme="cosmos-forest"
       blendColor="18, 45, 28"
       scrollWithPage={true}
       backgroundFit="tile-vertical"
+      glassOverlay={0.22}
       sectionOverlays={[
         { id: "hero", opacity: 0 },
         { id: "four-paths", opacity: 0 },
@@ -237,30 +239,60 @@ export default function Home() {
             <AnimatedSection animation="fade-in">
               <div className="text-center">
                 <h1
-                  className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold mb-8 md:mb-10 leading-[1.02] text-shadow-strong tracking-tight"
-                  style={{ fontFamily: "var(--font-display)" }}
+                  className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold mb-8 md:mb-10 leading-[1.02] tracking-tight"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    filter: "drop-shadow(0 6px 24px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.7))",
+                  }}
                 >
                   <span
-                    className="bg-gradient-to-br from-[#b8f0b8] via-[#9de89d] via-40% to-[#4a7c59] bg-clip-text text-transparent drop-shadow-[0_2px_20px_rgba(125,216,125,0.25)]"
-                    style={{ WebkitTextStroke: "0.5px rgba(157,232,157,0.2)" }}
+                    className="bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage: "linear-gradient(135deg, #b8f0b8 0%, #7dd87d 30%, #f7d27a 55%, #9de89d 80%, #4a7c59 100%)",
+                      WebkitTextStroke: "0.5px rgba(157,232,157,0.25)",
+                    }}
                   >
                     ReGen
                   </span>{" "}
-                  <span className="text-white drop-shadow-[0_2px_20px_rgba(255,255,255,0.15)]">Civics</span>
+                  <span
+                    className="bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage: "linear-gradient(135deg, #ffffff 0%, #fff7dc 45%, #f7d27a 100%)",
+                    }}
+                  >
+                    Civics
+                  </span>
                 </h1>
-                <p
-                  className="text-white/95 text-xl md:text-2xl lg:text-3xl max-w-4xl mx-auto text-shadow-subtle leading-[1.5] safe-prose font-light"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  A{" "}
-                  <span className="font-medium text-amber-200">venture fund</span>
-                  {" "}and{" "}
-                  <span className="font-medium text-amber-200">alliance</span>
-                  {" "}helping{" "}
-                  <span className="font-medium text-[#9de89d]">regenerative land projects</span>
-                  {" "}grow their economies, attract investment, and build{" "}
-                  <span className="font-medium text-[#9de89d]">thriving communities</span>.
-                </p>
+                <HeroTypewriter
+                  className="block text-white text-xl md:text-2xl lg:text-3xl max-w-4xl mx-auto leading-[1.5] safe-prose font-light"
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    textShadow:
+                      "0 2px 8px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.85), 0 0 22px rgba(0,0,0,0.55)",
+                  }}
+                  durationMs={2800}
+                  startDelayMs={350}
+                  segments={[
+                    { text: "A " },
+                    { text: "venture fund", className: "font-medium text-amber-200" },
+                    { text: " and " },
+                    { text: "alliance", className: "font-medium text-amber-200" },
+                    { text: " helping " },
+                    {
+                      text: "regenerative land projects",
+                      className: "font-medium text-[#9de89d]",
+                    },
+                    {
+                      text:
+                        " grow their economies, attract investment, and build ",
+                    },
+                    {
+                      text: "thriving communities",
+                      className: "font-medium text-[#9de89d]",
+                    },
+                    { text: "." },
+                  ]}
+                />
               </div>
             </AnimatedSection>
           </div>
@@ -307,18 +339,56 @@ export default function Home() {
                   our movement.
                 </p>
               </div>
-              <div className="mt-10 md:mt-12 text-center">
-                <p
-                  className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    textShadow: "0 2px 20px rgba(0,0,0,0.6), 0 0 40px rgba(125,216,125,0.25)",
-                  }}
-                >
-                  <span className="bg-gradient-to-r from-amber-300 via-[#9de89d] to-amber-300 bg-clip-text text-transparent">
+              <div className="mt-10 md:mt-12 text-center flex justify-center">
+                <div className="relative inline-block px-10 md:px-20 py-5 md:py-7 max-w-[92vw]">
+                  {/* Ancient scroll body: warm parchment gradient with soft
+                       inner shadow for aged paper feel, subtle outer shadow
+                       for depth against the background. */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-6 right-6 md:left-10 md:right-10"
+                    style={{
+                      background:
+                        "linear-gradient(180deg, #f0d9a6 0%, #e8c983 30%, #decda5 55%, #e8c983 78%, #e0b86e 100%)",
+                      boxShadow:
+                        "0 14px 40px -10px rgba(0,0,0,0.55), inset 0 0 60px rgba(140,90,30,0.22), inset 0 2px 0 rgba(255,240,200,0.45)",
+                    }}
+                  />
+                  {/* Left rolled edge: darker tan with rounded cap for the
+                       cylindrical rolled-paper look. */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-0 w-6 md:w-10"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, #9b7838 0%, #c9a45f 30%, #e0c58a 65%, #f0d9a6 100%)",
+                      borderRadius: "6px 0 0 6px",
+                      boxShadow: "inset -3px 0 8px rgba(0,0,0,0.35), 0 12px 24px -8px rgba(0,0,0,0.45)",
+                    }}
+                  />
+                  {/* Right rolled edge */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-y-0 right-0 w-6 md:w-10"
+                    style={{
+                      background:
+                        "linear-gradient(270deg, #9b7838 0%, #c9a45f 30%, #e0c58a 65%, #f0d9a6 100%)",
+                      borderRadius: "0 6px 6px 0",
+                      boxShadow: "inset 3px 0 8px rgba(0,0,0,0.35), 0 12px 24px -8px rgba(0,0,0,0.45)",
+                    }}
+                  />
+                  <p
+                    className="relative text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      color: "#3a2410",
+                      textShadow:
+                        "0 1px 0 rgba(255,240,200,0.5), 0 2px 8px rgba(100,60,20,0.25)",
+                    }}
+                  >
                     Welcome to the Infinite Game
-                  </span>
-                </p>
+                  </p>
+                </div>
               </div>
               <VineDivider className="mx-auto mt-10 w-64 text-[#7dd87d]/50" />
             </AnimatedSection>
