@@ -428,15 +428,22 @@ function CosmosParticles() {
       // 20 twinkles (ambient), 12 shooting stars (moments)
       type: i < 20 ? "twinkle" : "shooting",
       left: Math.random() * 100,
-      top: Math.random() * 100,
+      // Shooting stars start in the upper 55% of the cosmos container so
+      // their downward streak has room to fade out before the container edge.
+      // Twinkles can be anywhere.
+      top: i < 20 ? Math.random() * 100 : Math.random() * 55,
       delay: Math.random() * 18,
-      duration: i < 20 ? 3 + Math.random() * 5 : 2.5 + Math.random() * 4,
+      // Shooters: 6-11s total animation so the brief visible portion
+      // (~20% of the keyframe) maps to ~1.2-2.2s of on-screen comet,
+      // with long dead time between flashes so the sky mostly twinkles.
+      duration: i < 20 ? 3 + Math.random() * 5 : 6 + Math.random() * 5,
       size: i < 20 ? 1.5 + Math.random() * 2.5 : 2 + Math.random() * 2,
       opacity: i < 20 ? 0.3 + Math.random() * 0.5 : 0.7 + Math.random() * 0.3,
       // shooting-star angle: mostly top-left to bottom-right, with variation
       angle: 15 + Math.random() * 25,
-      // shooting-star travel distance in viewport units
-      travel: 40 + Math.random() * 50,
+      // shooting-star travel distance, shorter so streaks feel like
+      // brief flashes rather than full-screen sweeps
+      travel: 22 + Math.random() * 24,
     }))
   );
   const twinkles = useMemo(() => particles.filter(p => p.type === "twinkle"), [particles]);
@@ -497,9 +504,13 @@ function CosmosParticles() {
 // Each inner component renders with absolute inset-0 so it fills whichever
 // container wraps it.
 function CosmosForestParticles() {
+  // Cosmos zone extends to 22% so shooting-star streaks finish their fade-out
+  // within the container. Previously h-[12%] clipped comets mid-trajectory and
+  // created a visible horizontal line. Leaves still start at 12% (canopy
+  // panel), so 12-22% naturally overlaps comets fading + early leaves falling.
   return (
     <>
-      <div className="absolute inset-x-0 top-0 h-[12%] overflow-hidden pointer-events-none z-10">
+      <div className="absolute inset-x-0 top-0 h-[22%] overflow-hidden pointer-events-none z-10">
         <CosmosParticles />
       </div>
       <div className="absolute inset-x-0 top-[12%] h-[50%] overflow-hidden pointer-events-none z-10">
@@ -859,25 +870,39 @@ export default function PageBackground({
         }}
       />
 
-      {/* Glassy wash over the whole background. Subtle dark gradient with
-          a slight cool tint and a tiny vignette at the edges. Kept above
-          the image and below the per-section overlays so authored section
-          overlays still win where configured. */}
+      {/* Glassy wash over the whole background. Combines a real backdrop
+          blur (so the image feels like it lives BEHIND a glass window)
+          with a cool-tinted radial wash and a soft highlight band across
+          the top. The blur is intentionally small so content stays
+          recognizable while feeling pushed behind glass, and the cool
+          tint unifies the whole page without the old dark vignette look.
+          Stays above the image and below per-section overlays and
+          particles so authored overlays and animated elements remain
+          crisp. */}
       {glassOverlay && (
         <div
           aria-hidden="true"
           className="absolute inset-0 z-[2] pointer-events-none"
           style={{
+            // Minimal blur + slight desaturation = "glass window" feel
+            // without destroying the art. Values kept small for mobile
+            // GPU performance; browsers without backdrop-filter support
+            // just see the cool tint gradient below.
+            backdropFilter: "blur(2px) saturate(0.92)",
+            WebkitBackdropFilter: "blur(2px) saturate(0.92)",
             background: (() => {
               const base =
                 typeof glassOverlay === "number" ? glassOverlay : 0.22;
-              return `radial-gradient(ellipse at center, rgba(10, 20, 28, ${Math.max(
-                0,
-                base - 0.06
-              )}) 0%, rgba(10, 20, 28, ${base}) 65%, rgba(6, 14, 22, ${Math.min(
-                1,
-                base + 0.08
-              )}) 100%)`;
+              const center = Math.max(0, base - 0.08);
+              const edge = Math.min(1, base + 0.04);
+              // Cool dark blueish radial wash (center lighter so text
+              // sits in the calm middle, edges slightly heavier for
+              // vignette) + a soft highlight band at the very top to
+              // read as a glass reflection.
+              return [
+                `linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 18%)`,
+                `radial-gradient(ellipse at center, rgba(18, 32, 42, ${center}) 0%, rgba(14, 26, 36, ${base}) 55%, rgba(8, 18, 28, ${edge}) 100%)`,
+              ].join(", ");
             })(),
           }}
         />

@@ -21,7 +21,7 @@ const banners = [
   {
     key: 'fund-launch-banner',
     title: 'Fund Launch Announcement Banner',
-    content: '🌱 Fund Launches Late 2026 — Accepting Letters of Intent Now | [Investor Info →](/investor) or [Apply for Season 2](/seasons)',
+    content: "🌱 Fund in Formation: Now Accepting LOIs. Land Projects Can [Apply for September Season 2](/seasons) | [Investor Info →](/investor)",
     isActive: 1,
   },
 ];

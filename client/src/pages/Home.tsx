@@ -48,9 +48,7 @@ import { trpc } from "@/lib/trpc";
 import { PageWrapper } from "@/components/PageWrapper";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { cdnImg } from "@/lib/utils";
-import { ForYouLabel } from "@/components/ForYouLabel";
 import { AmbientParticles } from "@/components/AmbientParticles";
-import { VineDivider } from "@/components/dividers/VineDivider";
 
 // Path card data
 const pathCards = [
@@ -269,9 +267,10 @@ export default function Home() {
                     fontFamily: "var(--font-body)",
                     textShadow:
                       "0 2px 8px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.85), 0 0 22px rgba(0,0,0,0.55)",
+                    minHeight: "6em",
                   }}
-                  durationMs={2800}
-                  startDelayMs={350}
+                  durationMs={4500}
+                  startDelayMs={900}
                   segments={[
                     { text: "A " },
                     { text: "venture fund", className: "font-medium text-amber-200" },
@@ -312,58 +311,63 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Mission Description */}
+        {/* Mission Description - ancient treasure map scroll */}
         <section className="relative py-10 md:py-14">
-          <div className="container max-w-3xl">
+          <div className="container max-w-4xl">
             <AnimatedSection animation="fade-in">
-              <VineDivider className="mx-auto mb-10 w-64 text-[#7dd87d]/50" />
-              <div
-                className="space-y-5 text-white/90 text-base md:text-lg lg:text-xl leading-relaxed text-shadow-subtle safe-prose text-center"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                <p>
-                  <span className="text-[#7dd87d] font-semibold">regen-civics</span>{" "}
-                  is a fund and an in-real-life game for supporting regenerative land
-                  projects and the{" "}
-                  <span className="text-amber-300 font-medium">Regenerative Renaissance</span>{" "}
-                  <span className="text-white/70">
-                    (a movement to heal ourselves, our earth, our communities, and our
-                    bioregions).
-                  </span>
-                </p>
-                <p>
-                  We create quests and{" "}
-                  <span className="text-amber-300 font-medium">Infinite Games</span>{" "}
-                  that help people heal, and in doing so build new financial, economic,
-                  and governance systems that support and network land projects across
-                  our movement.
-                </p>
-              </div>
-              <div className="mt-10 md:mt-12 text-center flex justify-center">
-                <div className="relative inline-block px-10 md:px-20 py-5 md:py-7 max-w-[92vw]">
-                  {/* Ancient scroll body: warm parchment gradient with soft
-                       inner shadow for aged paper feel, subtle outer shadow
-                       for depth against the background. */}
+              <div className="text-center flex justify-center">
+                <div className="relative w-full max-w-3xl px-6 md:px-16 lg:px-20 py-10 md:py-14 lg:py-16">
+                  {/* Scroll body: aged parchment with village-map image
+                       baked in. Image lives behind a warm parchment tint
+                       for legibility. If the image 404s, the gradient base
+                       still reads as ancient parchment. */}
                   <div
                     aria-hidden="true"
-                    className="absolute inset-y-0 left-6 right-6 md:left-10 md:right-10"
+                    className="absolute inset-y-0 left-6 right-6 md:left-10 md:right-10 overflow-hidden"
                     style={{
-                      background:
-                        "linear-gradient(180deg, #f0d9a6 0%, #e8c983 30%, #decda5 55%, #e8c983 78%, #e0b86e 100%)",
+                      backgroundColor: "#d6b174",
+                      backgroundImage:
+                        "url('/images/village-map-scroll.webp?v=1'), " +
+                        "linear-gradient(180deg, #eacc8a 0%, #d9b27a 28%, #c89964 55%, #d6a870 78%, #b88a4e 100%)",
+                      backgroundSize: "cover, auto",
+                      backgroundPosition: "center, center",
+                      backgroundRepeat: "no-repeat, no-repeat",
                       boxShadow:
-                        "0 14px 40px -10px rgba(0,0,0,0.55), inset 0 0 60px rgba(140,90,30,0.22), inset 0 2px 0 rgba(255,240,200,0.45)",
+                        "0 18px 50px -12px rgba(0,0,0,0.65), " +
+                        "inset 0 0 90px rgba(90,50,10,0.45), " +
+                        "inset 0 2px 0 rgba(255,240,200,0.4)",
                     }}
                   />
-                  {/* Left rolled edge: darker tan with rounded cap for the
-                       cylindrical rolled-paper look. */}
+                  {/* Parchment legibility tint: lightens the center of the
+                       map so overlaid ink text stays readable, while the
+                       edges keep the richer aged tone. */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-6 right-6 md:left-10 md:right-10 overflow-hidden"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse at center, rgba(244, 222, 176, 0.75) 0%, rgba(230, 195, 130, 0.45) 55%, rgba(150, 105, 55, 0.25) 100%)",
+                    }}
+                  />
+                  {/* Burn/fray vignette around edges for the ancient look */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-y-0 left-6 right-6 md:left-10 md:right-10 pointer-events-none"
+                    style={{
+                      boxShadow:
+                        "inset 0 0 40px rgba(60,30,8,0.55), inset 0 0 90px rgba(80,40,10,0.25)",
+                    }}
+                  />
+                  {/* Left rolled edge */}
                   <div
                     aria-hidden="true"
                     className="absolute inset-y-0 left-0 w-6 md:w-10"
                     style={{
                       background:
-                        "linear-gradient(90deg, #9b7838 0%, #c9a45f 30%, #e0c58a 65%, #f0d9a6 100%)",
+                        "linear-gradient(90deg, #6b4a20 0%, #8a6533 25%, #b08450 55%, #d4a875 85%, #e8c790 100%)",
                       borderRadius: "6px 0 0 6px",
-                      boxShadow: "inset -3px 0 8px rgba(0,0,0,0.35), 0 12px 24px -8px rgba(0,0,0,0.45)",
+                      boxShadow:
+                        "inset -3px 0 8px rgba(0,0,0,0.45), 0 12px 24px -8px rgba(0,0,0,0.55)",
                     }}
                   />
                   {/* Right rolled edge */}
@@ -372,25 +376,61 @@ export default function Home() {
                     className="absolute inset-y-0 right-0 w-6 md:w-10"
                     style={{
                       background:
-                        "linear-gradient(270deg, #9b7838 0%, #c9a45f 30%, #e0c58a 65%, #f0d9a6 100%)",
+                        "linear-gradient(270deg, #6b4a20 0%, #8a6533 25%, #b08450 55%, #d4a875 85%, #e8c790 100%)",
                       borderRadius: "0 6px 6px 0",
-                      boxShadow: "inset 3px 0 8px rgba(0,0,0,0.35), 0 12px 24px -8px rgba(0,0,0,0.45)",
+                      boxShadow:
+                        "inset 3px 0 8px rgba(0,0,0,0.45), 0 12px 24px -8px rgba(0,0,0,0.55)",
                     }}
                   />
-                  <p
-                    className="relative text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
+                  {/* All text lives on the scroll, styled as ancient ink. */}
+                  <div
+                    className="relative space-y-5 md:space-y-6 leading-relaxed text-base md:text-lg lg:text-xl text-center"
                     style={{
-                      fontFamily: "var(--font-display)",
+                      fontFamily:
+                        "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
                       color: "#3a2410",
-                      textShadow:
-                        "0 1px 0 rgba(255,240,200,0.5), 0 2px 8px rgba(100,60,20,0.25)",
+                      textShadow: "0 1px 0 rgba(255,240,200,0.35)",
                     }}
                   >
-                    Welcome to the Infinite Game
-                  </p>
+                    <p>
+                      <span style={{ color: "#2f5e2f", fontWeight: 700 }}>
+                        regen-civics
+                      </span>{" "}
+                      is a fund and an in-real-life game for supporting
+                      regenerative land projects and the{" "}
+                      <span style={{ color: "#8a4b14", fontWeight: 600, fontStyle: "italic" }}>
+                        Regenerative Renaissance
+                      </span>{" "}
+                      <span style={{ color: "#6a5240" }}>
+                        (a movement to heal ourselves, our earth, our communities,
+                        and our bioregions).
+                      </span>
+                    </p>
+                    <p>
+                      We create quests and{" "}
+                      <span style={{ color: "#8a4b14", fontWeight: 600, fontStyle: "italic" }}>
+                        Infinite Games
+                      </span>{" "}
+                      that help people heal, and in doing so build new financial,
+                      economic, and governance systems that support and network
+                      land projects across our movement.
+                    </p>
+                    <p
+                      className="pt-3 md:pt-4 text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
+                      style={{
+                        fontFamily:
+                          "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                        letterSpacing: "0.01em",
+                        color: "#2a1808",
+                        textShadow:
+                          "0 1px 0 rgba(255,240,200,0.55), 0 2px 6px rgba(100,60,20,0.3)",
+                      }}
+                    >
+                      Welcome to the Infinite Game
+                    </p>
+                  </div>
                 </div>
               </div>
-              <VineDivider className="mx-auto mt-10 w-64 text-[#7dd87d]/50" />
             </AnimatedSection>
           </div>
         </section>
@@ -417,7 +457,7 @@ export default function Home() {
                 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 text-shadow-strong"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Four Paths to Play {userCardId && <ForYouLabel label="Your Path Highlighted" />}
+                Four Paths to Play
               </h2>
               <p
                 className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle"
@@ -481,8 +521,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        <VineDivider className="my-8" />
 
         {/* How It Works - Interactive flow */}
         <HowItWorks />
@@ -779,8 +817,6 @@ export default function Home() {
             </AnimatedSection>
           </div>
         </section>
-
-        <VineDivider className="my-8" />
 
         {/* Live Community Activity */}
         <section className="relative py-8 md:py-10">

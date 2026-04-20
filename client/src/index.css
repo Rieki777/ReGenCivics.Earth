@@ -1423,36 +1423,58 @@
 
 /* Cosmos: shooting-star streaks. Travels along the element's rotated X axis,
    which means the streak naturally follows the angle set via transform: rotate().
-   Fades in, streaks across, fades out. Sparse delays keep it feeling like a
-   magical moment rather than a fireworks show. */
+   Appears briefly, streaks a short distance, then fades fast so the night
+   sky feels full of twinkling stars with occasional quick flashes rather
+   than long sweeping trails. Most of the keyframe duration is dead time
+   (opacity 0) so the spacing between appearances feels natural. */
 @keyframes shooting-star {
   0% {
     opacity: 0;
-    transform: rotate(var(--angle, 20deg)) translateX(-10vw) scaleX(0.4);
+    transform: rotate(var(--angle, 20deg)) translateX(-6vw) scaleX(0.4);
   }
-  3% {
-    opacity: 0;
-  }
-  8% {
+  6% {
     opacity: 1;
     transform: rotate(var(--angle, 20deg)) translateX(0) scaleX(1);
   }
-  45% {
+  14% {
     opacity: 1;
   }
-  65% {
+  22% {
     opacity: 0;
-    transform: rotate(var(--angle, 20deg)) translateX(var(--travel, 60vw)) scaleX(1.2);
+    transform: rotate(var(--angle, 20deg)) translateX(var(--travel, 40vw)) scaleX(1.1);
   }
   100% {
     opacity: 0;
-    transform: rotate(var(--angle, 20deg)) translateX(var(--travel, 60vw)) scaleX(1.2);
+    transform: rotate(var(--angle, 20deg)) translateX(var(--travel, 40vw)) scaleX(1.1);
   }
 }
 
 .animate-shooting-star {
   animation: shooting-star ease-in infinite;
   transform-origin: left center;
+}
+
+/* Typewriter caret: gentle green blink that fades in on appear */
+@keyframes typewriter-caret-blink {
+  0%, 45% { opacity: 0.95; }
+  50%, 95% { opacity: 0.15; }
+  100% { opacity: 0.95; }
+}
+
+.typewriter-caret {
+  display: inline-block;
+  margin-left: 2px;
+  color: #9de89d;
+  font-weight: 300;
+  animation: typewriter-caret-blink 0.95s steps(2, end) infinite;
+  text-shadow: 0 0 10px rgba(157, 232, 157, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typewriter-caret {
+    animation: none;
+    opacity: 0.6;
+  }
 }
 
 /* Ocean: Light rays from surface */

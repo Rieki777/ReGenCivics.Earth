@@ -25,6 +25,14 @@ type Props = {
   style?: React.CSSProperties;
   /** Show a blinking caret while typing and briefly after. Default true. */
   showCaret?: boolean;
+  /**
+   * When true (default), respects prefers-reduced-motion by revealing the
+   * full text immediately. Set to false for hero treatments where the
+   * typewriter is a core part of the visual identity and should still
+   * play (gently) even with reduced-motion enabled. The animation uses
+   * rAF and opacity on a single span, so it is low-cost even then.
+   */
+  respectReducedMotion?: boolean;
 };
 
 function prefersReducedMotion(): boolean {
@@ -39,13 +47,14 @@ export function HeroTypewriter({
   className,
   style,
   showCaret = true,
+  respectReducedMotion = false,
 }: Props) {
   const totalChars = segments.reduce((sum, s) => sum + s.text.length, 0);
   const [charCount, setCharCount] = useState(0);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
+    if (respectReducedMotion && prefersReducedMotion()) {
       setCharCount(totalChars);
       setDone(true);
       return;
@@ -71,7 +80,7 @@ export function HeroTypewriter({
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [durationMs, startDelayMs, totalChars]);
+  }, [durationMs, startDelayMs, totalChars, respectReducedMotion]);
 
   // Walk segments, emitting only the portion revealed so far.
   const revealed: React.ReactNode[] = [];

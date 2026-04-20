@@ -53,7 +53,6 @@ import { cdnImg } from "@/lib/utils";
 import { Pullquote } from "@/components/Pullquote";
 import { ReadingTime } from "@/components/ReadingTime";
 import { TLDR } from "@/components/TLDR";
-import { VineDivider } from "@/components/dividers/VineDivider";
 
 // Collapsible section component
 function CollapsibleSection({
@@ -479,8 +478,6 @@ export default function Fund() {
         </div>
       </section>
 
-      <VineDivider className="my-8 max-w-4xl mx-auto px-4" />
-
       {/* Fund Overview Video - Coming Soon */}
       <section id="fund-overview" className="py-12 md:py-16 px-4">
         <div className="max-w-3xl mx-auto">
@@ -619,8 +616,6 @@ export default function Fund() {
           </AnimatedSection>
         </div>
       </section>
-
-      <VineDivider className="my-8 max-w-4xl mx-auto px-4" />
 
       {/* Fund Dispersal Animation */}
       <section className="py-8 md:py-12 px-4">
