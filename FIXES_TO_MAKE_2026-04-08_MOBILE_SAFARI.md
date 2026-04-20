@@ -221,7 +221,8 @@ Code repurpose it, or (b) write a fresh short version.
 
 ### Fix B9 — Crowdpooling: unique mobile background graphic (Medium)
 
-**Status:** HUMAN STEP REQUIRED — asset needed
+**Status:** CODED 2026-04-19.
+Evidence: Generated portrait 9:16 painterly solarpunk valley via Gemini 3 Pro Image (Nano Banana Pro), resized to 1080×1920, saved as `client/public/images/crowd-pooling-hero-mobile.webp` (161 KB). Wired in `client/src/pages/CrowdPoolingProjects.tsx` with a scoped `<style>` swap under `@media (max-width: 640px)` plus two `<link rel="preload">` tags (one per breakpoint) so the browser only fetches the variant it will use.
 
 **Symptom:** The desktop background image stretches / blurs badly on
 iPhone.
@@ -302,7 +303,8 @@ animation runs.
 
 ### Fix D1 — Live variables visible to all, editable only by super admin (High)
 
-**Status:** CODED (pending)
+**Status:** CODED — visible/editable layer done 2026-04-19.
+Evidence: `server/routes/game.ts:41` now `publicProcedure` (was `adminProcedure`); `client/src/pages/GameMechanics.tsx` LiveVariablesDashboard renders inline edit UI gated on `user.email === 'rieki.cordon@gmail.com'`. `updateVariable` stays `adminProcedure` so non-admins hitting the mutation fail server-side.
 
 **Fix:**
 - Show the live game variables table (citizenship thresholds, gratitude
@@ -317,7 +319,8 @@ animation runs.
 
 ### Fix D2 — Tool tips not clicking in game simulator (High)
 
-**Status:** CODED (pending)
+**Status:** CODED 2026-04-19.
+Evidence: `client/src/pages/GameMechanics.tsx` HelpTip rewritten to use Radix Popover (click-based) instead of Radix Tooltip (hover-only). Popover opens on tap everywhere so iPhone Safari and desktop behave the same.
 
 **Symptom:** Tooltips on iPhone Safari don't open on tap. Desktop hover
 works fine.
@@ -332,7 +335,8 @@ toggles the tooltip on mobile.
 
 ### Fix D3 — Collapsible sections in game mechanics (Medium)
 
-**Status:** CODED (pending)
+**Status:** CODED 2026-04-19.
+Evidence: New `CollapsibleSection` helper in `client/src/pages/GameMechanics.tsx` wraps all 4 sections (Citizenship Tiers, Live Variables, Game Simulator, Gratitude System Variables). Uses Radix Collapsible with `useIsMobile()` hook so `defaultOpen` is `false` under 768px and `true` above, with a chevron that rotates on toggle.
 
 **Fix:** Wrap each major section in `<details>` or shadcn `<Collapsible>`:
 - Citizen Tiers

@@ -2,8 +2,13 @@
  * Game Mechanics Page - ReGen Civics
  * Route: /game-mechanics
  *
- * Section A: Live Variables Dashboard (admin-only, read-only view)
- * Section B: Client-side Game Simulator with sliders and projected outcomes
+ * Citizenship Tiers: reference panel for the 4 tiers (public).
+ * Live Variables: read-only for everyone, inline edit for super admin.
+ * Game Simulator: client-side sliders and projected outcomes.
+ * Gratitude System Variables: reference panel (public).
+ *
+ * All four sections are wrapped in <CollapsibleSection>, which defaults
+ * to collapsed on mobile and expanded on desktop (via useIsMobile).
  */
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -25,10 +30,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useIsMobile } from "@/hooks/useMobile";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 import {
   Search,
   SlidersHorizontal,
@@ -47,34 +60,41 @@ import {
   Copy,
   AlertTriangle,
   RotateCcw,
+  ChevronDown,
+  Pencil,
+  Save,
+  X,
 } from "lucide-react";
 
-/* ─── HelpTip: small info icon that reveals a plain-language explanation ─ */
+/* ─── HelpTip: small info icon that reveals a plain-language explanation ─
+ * Uses Popover (not Tooltip) because Radix Tooltip is hover-only and does
+ * not reliably open on touch tap in iOS Safari. Popover opens on click
+ * everywhere, so mobile works the same as desktop.
+ */
 
 function HelpTip({ text }: { text?: string | null }) {
-  const [open, setOpen] = useState(false);
   if (!text) return null;
   return (
-    <Tooltip open={open} onOpenChange={setOpen}>
-      <TooltipTrigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <button
           type="button"
           aria-label="Explain this variable"
           className="inline-flex items-center justify-center text-white/65 hover:text-white/90 focus:text-white/90 focus:outline-none transition-colors shrink-0"
-          onClick={() => setOpen((prev) => !prev)}
-          onFocus={() => setOpen(true)}
+          onClick={(e) => e.stopPropagation()}
         >
           <HelpCircle className="w-3.5 h-3.5" />
         </button>
-      </TooltipTrigger>
-      <TooltipContent
+      </PopoverTrigger>
+      <PopoverContent
         side="top"
-        className="max-w-[260px] whitespace-normal bg-[#1a472a] text-white border border-[#7dd87d]/30 text-xs leading-relaxed px-3 py-2 shadow-xl"
-        onPointerDownOutside={() => setOpen(false)}
+        align="center"
+        sideOffset={6}
+        className="w-[260px] max-w-[calc(100vw-2rem)] whitespace-normal bg-[#1a472a] text-white border border-[#7dd87d]/30 text-xs leading-relaxed px-3 py-2 shadow-xl"
       >
         {text}
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -318,14 +338,62 @@ const SIM_DEFAULTS: SimState = {
   claimThreshold: 333,
 };
 
-/* ─── Section A: Live Variables Dashboard ────────────────────────────── */
+/* ─── Section A: Live Variables Dashboard ──────────────────────────────
+ * Read-only view for all visitors. Super admins (rieki.cordon@gmail.com)
+ * see an inline edit button on each row that opens a mini form to update
+ * the value. Updates go through trpc.game.updateVariable (admin-gated on
+ * the server). Regular users see the same table without the edit button.
+ */
+
+const SUPER_ADMIN_EMAIL = "rieki.cordon@gmail.com";
 
 function LiveVariablesDashboard() {
   const [search, setSearch] = useState("");
-  const { data: variables = [], isLoading, isError } = trpc.game.listVariables.useQuery(
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [editReason, setEditReason] = useState("");
+
+  const { user } = useAuth();
+  const canEdit = user?.email === SUPER_ADMIN_EMAIL;
+
+  const { data: variables = [], isLoading, isError, refetch } = trpc.game.listVariables.useQuery(
     undefined,
     { retry: 1 }
   );
+
+  const updateMutation = trpc.game.updateVariable.useMutation({
+    onSuccess: () => {
+      toast.success("Variable updated");
+      setEditingId(null);
+      setEditReason("");
+      refetch();
+    },
+    onError: (err) => toast.error("Update failed", { description: err.message }),
+  });
+
+  const startEdit = useCallback((v: GameVariable) => {
+    setEditingId(v.id);
+    setEditValue(String(v.value));
+    setEditReason("");
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null);
+    setEditReason("");
+  }, []);
+
+  const saveEdit = useCallback((id: number) => {
+    const numeric = parseFloat(editValue);
+    if (Number.isNaN(numeric)) {
+      toast.error("Value must be a number");
+      return;
+    }
+    if (!editReason.trim()) {
+      toast.error("Please enter a reason for this change");
+      return;
+    }
+    updateMutation.mutate({ id, value: numeric, reason: editReason.trim() });
+  }, [editValue, editReason, updateMutation]);
 
   const filtered = useMemo(() => {
     if (!search) return variables as GameVariable[];
@@ -353,8 +421,7 @@ function LiveVariablesDashboard() {
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
         <CardContent className="py-12 text-center">
           <p className="text-white/50 text-sm">
-            Live variables are available to admins only. Use the simulator below to explore game
-            mechanics.
+            Couldn't load the live variables right now. Try refreshing the page.
           </p>
         </CardContent>
       </Card>
@@ -363,15 +430,23 @@ function LiveVariablesDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Search bar */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/60" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter variables..."
-          className="pl-9 bg-white/5 border-white/10 text-white text-sm placeholder:text-white/55"
-        />
+      {/* Search bar + admin indicator */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/60" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filter variables..."
+            className="pl-9 bg-white/5 border-white/10 text-white text-sm placeholder:text-white/55"
+          />
+        </div>
+        {canEdit && (
+          <Badge className="bg-[#ffd700]/15 text-[#ffd700] border border-[#ffd700]/30 text-[11px]">
+            <Pencil className="w-3 h-3 mr-1" />
+            Super admin edit mode
+          </Badge>
+        )}
       </div>
 
       {isLoading ? (
@@ -406,33 +481,104 @@ function LiveVariablesDashboard() {
                 <CardContent className="space-y-3">
                   {vars.map((v) => {
                     const helpText = VARIABLE_HELP[v.key] ?? v.description ?? "";
+                    const isEditing = editingId === v.id;
                     return (
                       <div
                         key={v.id}
-                        className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0"
+                        className="py-2 border-b border-white/5 last:border-0"
                       >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm text-white/90 font-medium truncate">
-                              {v.displayName}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm text-white/90 font-medium truncate">
+                                {v.displayName}
+                              </p>
+                              <HelpTip text={helpText} />
+                            </div>
+                            <p className="text-[10px] text-white/65 font-mono truncate mt-0.5">
+                              {v.key}
                             </p>
-                            <HelpTip text={helpText} />
                           </div>
-                          <p className="text-[10px] text-white/65 font-mono truncate mt-0.5">
-                            {v.key}
-                          </p>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {!isEditing && (
+                              <span className="text-sm font-mono text-[#7dd87d]">
+                                {formatValue(v.value, v.valueType)}
+                              </span>
+                            )}
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] ${valueTypeBadgeColor(v.valueType)}`}
+                            >
+                              {v.valueType}
+                            </Badge>
+                            {canEdit && !isEditing && (
+                              <button
+                                type="button"
+                                aria-label={`Edit ${v.displayName}`}
+                                onClick={() => startEdit(v)}
+                                className="text-white/50 hover:text-white/90 focus:text-white/90 focus:outline-none transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-sm font-mono text-[#7dd87d]">
-                            {formatValue(v.value, v.valueType)}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] ${valueTypeBadgeColor(v.valueType)}`}
-                          >
-                            {v.valueType}
-                          </Badge>
-                        </div>
+
+                        {isEditing && (
+                          <div className="mt-3 space-y-2 rounded-lg bg-white/5 border border-[#ffd700]/20 p-3">
+                            <div>
+                              <label className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
+                                New value
+                              </label>
+                              <Input
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="bg-white/5 border-white/10 text-white text-sm"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Escape") cancelEdit();
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] uppercase tracking-wider text-white/60 block mb-1">
+                                Reason (logged to history)
+                              </label>
+                              <Input
+                                value={editReason}
+                                onChange={(e) => setEditReason(e.target.value)}
+                                placeholder="Why is this changing?"
+                                className="bg-white/5 border-white/10 text-white text-sm"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveEdit(v.id);
+                                  if (e.key === "Escape") cancelEdit();
+                                }}
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-1">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={cancelEdit}
+                                className="h-8 px-3 text-white/70 hover:text-white"
+                              >
+                                <X className="w-3.5 h-3.5 mr-1" />
+                                Cancel
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => saveEdit(v.id)}
+                                disabled={updateMutation.isPending}
+                                className="h-8 px-3 bg-[#7dd87d] text-[#0d2818] hover:bg-[#a8e6a8] font-semibold"
+                              >
+                                <Save className="w-3.5 h-3.5 mr-1" />
+                                Save
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1084,6 +1230,51 @@ function GratVarRow({
   );
 }
 
+/* ─── CollapsibleSection: used for each main section on this page ──────
+ * Default state: collapsed on mobile (< 768px), expanded on desktop.
+ * Header stays visible and tappable. Chevron rotates to indicate state.
+ * Accessible via keyboard (Radix Collapsible handles that).
+ */
+
+interface CollapsibleSectionProps {
+  title: React.ReactNode;
+  intro?: React.ReactNode;
+  children: React.ReactNode;
+  titleClassName?: string;
+}
+
+function CollapsibleSection({ title, intro, children, titleClassName }: CollapsibleSectionProps) {
+  const isMobile = useIsMobile();
+  // React state mirrors defaultOpen; recomputed when the viewport changes
+  // so rotating a phone or resizing the window reopens/closes as expected.
+  const [open, setOpen] = useState(!isMobile);
+
+  useEffect(() => {
+    setOpen(!isMobile);
+  }, [isMobile]);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="group flex items-center justify-between gap-4 w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd87d]/50 rounded-md"
+        >
+          <div className={`flex-1 min-w-0 ${titleClassName ?? ""}`}>{title}</div>
+          <ChevronDown
+            className={`w-5 h-5 text-white/60 group-hover:text-white/90 transition-transform shrink-0 ${open ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </button>
+      </CollapsibleTrigger>
+      {intro ? <div className="mt-3">{intro}</div> : null}
+      <CollapsibleContent className="pt-6 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 /* ─── Main Page ──────────────────────────────────────────────────────── */
 
 export default function GameMechanics() {
@@ -1125,15 +1316,21 @@ export default function GameMechanics() {
         {/* Citizenship Tiers (top of page) */}
         <section className="container mx-auto px-4 pb-16">
           <AnimatedSection animation="slide-up">
-            <h2
-              className="text-2xl md:text-3xl font-bold text-white mb-3"
-              style={{ fontFamily: "var(--font-display)" }}
+            <CollapsibleSection
+              title={
+                <h2
+                  className="text-2xl md:text-3xl font-bold text-white mb-0"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Citizenship Tiers
+                </h2>
+              }
+              intro={
+                <p className="text-white/70 max-w-2xl leading-relaxed safe-prose">
+                  You grow into this society at your own pace. Everyone starts as an Explorer and earns deeper participation through real contribution. Each tier carries different powers, gratitude budgets, and governance weight.
+                </p>
+              }
             >
-              Citizenship Tiers
-            </h2>
-            <p className="text-white/70 mb-8 max-w-2xl leading-relaxed safe-prose">
-              You grow into this society at your own pace. Everyone starts as an Explorer and earns deeper participation through real contribution. Each tier carries different powers, gratitude budgets, and governance weight.
-            </p>
             <div className="grid md:grid-cols-2 gap-6">
               {[
                 {
@@ -1257,47 +1454,62 @@ export default function GameMechanics() {
             <p className="text-white/60 text-sm mt-6 max-w-2xl leading-relaxed safe-prose">
               Tier promotion happens automatically through a nightly batch job that recalculates your reputation, contribution score, and seasonal activity. There's a grace period before demotion. You don't lose tiers from a quiet week.
             </p>
+            </CollapsibleSection>
           </AnimatedSection>
         </section>
 
         {/* Section A: Live Variables */}
         <section className="container mx-auto px-4 pb-16">
           <AnimatedSection animation="slide-up">
-            <h2
-              className="text-2xl md:text-3xl font-bold text-white mb-8"
-              style={{ fontFamily: "var(--font-display)" }}
+            <CollapsibleSection
+              title={
+                <h2
+                  className="text-2xl md:text-3xl font-bold text-white mb-0"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Live Variables
+                </h2>
+              }
             >
-              Live Variables
-            </h2>
-            <LiveVariablesDashboard />
+              <LiveVariablesDashboard />
+            </CollapsibleSection>
           </AnimatedSection>
         </section>
 
         {/* Section B: Simulator */}
         <section className="container mx-auto px-4 pb-16">
           <AnimatedSection animation="slide-up">
-            <h2
-              className="text-2xl md:text-3xl font-bold text-white mb-8"
-              style={{ fontFamily: "var(--font-display)" }}
+            <CollapsibleSection
+              title={
+                <h2
+                  className="text-2xl md:text-3xl font-bold text-white mb-0"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Game Simulator
+                </h2>
+              }
             >
-              Game Simulator
-            </h2>
-            <div className="max-w-2xl mx-auto">
-              <GameSimulator />
-            </div>
+              <div className="max-w-2xl mx-auto">
+                <GameSimulator />
+              </div>
+            </CollapsibleSection>
           </AnimatedSection>
         </section>
 
         {/* Section C: Gratitude Variables Reference */}
         <section className="container mx-auto px-4 pb-24">
           <AnimatedSection animation="slide-up">
-            <h2
-              className="text-2xl md:text-3xl font-bold text-white mb-8 flex items-center gap-3"
-              style={{ fontFamily: "var(--font-display)" }}
+            <CollapsibleSection
+              title={
+                <h2
+                  className="text-2xl md:text-3xl font-bold text-white mb-0 flex items-center gap-3"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  <Heart className="w-6 h-6 text-[#d4a017]" />
+                  Gratitude System Variables
+                </h2>
+              }
             >
-              <Heart className="w-6 h-6 text-[#d4a017]" />
-              Gratitude System Variables
-            </h2>
             <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
               {/* Cycle & Budget */}
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
@@ -1437,6 +1649,7 @@ export default function GameMechanics() {
                 </CardContent>
               </Card>
             </div>
+            </CollapsibleSection>
           </AnimatedSection>
         </section>
       </div>

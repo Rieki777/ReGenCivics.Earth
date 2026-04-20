@@ -1243,21 +1243,44 @@ export default function CrowdPoolingProjects() {
 
   return (
     <div
-      className="min-h-screen relative"
+      className="crowd-pooling-hero-bg min-h-screen relative"
       style={{
         backgroundColor: "#0d2818",
-        backgroundImage: `url('/images/crowd-pooling-hero.webp')`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
       }}
     >
+      {/* Responsive hero background: desktop painting on md+, unique
+          mobile-portrait version on small screens. Set via scoped style
+          so the 9:16 mobile image doesn't get stretched/blurred on iPhone. */}
+      <style>{`
+        .crowd-pooling-hero-bg { background-image: url('/images/crowd-pooling-hero.webp'); }
+        @media (max-width: 640px) {
+          .crowd-pooling-hero-bg { background-image: url('/images/crowd-pooling-hero-mobile.webp'); }
+        }
+      `}</style>
+
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/55 via-[#0a1f10]/65 to-[#0d2818]/85 pointer-events-none" />
 
       <SEO {...pageSEO.crowdPoolingProjects} />
 
-      {/* Preload hero image */}
-      <link rel="preload" as="image" href="/images/crowd-pooling-hero.webp" fetchPriority="high" />
+      {/* Preload hero image: desktop and mobile variants with media queries
+          so the browser only fetches the one it actually needs. */}
+      <link
+        rel="preload"
+        as="image"
+        href="/images/crowd-pooling-hero.webp"
+        media="(min-width: 641px)"
+        fetchPriority="high"
+      />
+      <link
+        rel="preload"
+        as="image"
+        href="/images/crowd-pooling-hero-mobile.webp"
+        media="(max-width: 640px)"
+        fetchPriority="high"
+      />
 
       <div className="relative z-10">
         {/* Hero Section */}

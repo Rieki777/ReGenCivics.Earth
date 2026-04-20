@@ -36,9 +36,14 @@ export const gameRouter = router({
     };
   }),
 
-  // ─── Game Variables (Admin) ─────────────────────────────────────────────
+  // ─── Game Variables ─────────────────────────────────────────────────────
+  //
+  // listVariables is PUBLIC so every visitor to /game-mechanics can see the
+  // live game variables (citizenship thresholds, gratitude multipliers,
+  // contribution formulas). Inline editing remains admin-only via
+  // updateVariable below.
 
-  listVariables: adminProcedure
+  listVariables: publicProcedure
     .input(z.object({ category: z.string().optional() }).optional())
     .query(async ({ input }) => {
       const db = await getDb();
