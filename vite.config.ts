@@ -22,11 +22,18 @@ export default defineConfig(({ mode }): UserConfig => ({
         // CSP header, and every inline script would be blocked.
         globPatterns: ["**/*.{js,css,ico,webp,svg,woff2,png}"],
         globIgnores: ["og/**", "og-default.*", "**/*.html"],
-        // navigateFallback removed: with HTML out of the precache, the SW
-        // no longer has a precached shell to serve. Navigations always go
-        // to network. offline.html is still in client/public for the
-        // browser's built-in offline behavior.
-        navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /^\/assets\//],
+        // HTML is excluded from precache, so navigateFallback MUST be false.
+        // Without this, Workbox generates a NavigationRoute that tries to
+        // serve index.html from precache — which doesn't exist — causing
+        // stale asset cache poisoning when old SW precache entries linger.
+        navigateFallback: null,
+        // Clean up precache entries from older SW versions on activation
+        cleanupOutdatedCaches: true,
+        // skipWaiting + clientsClaim: new SW activates immediately on install,
+        // no waiting for old tabs to close. Combined with the controllerchange
+        // listener in main.tsx, this forces a page reload on every deploy.
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /\/api\//,
@@ -38,11 +45,12 @@ export default defineConfig(({ mode }): UserConfig => ({
           },
           {
             urlPattern: /\.(png|jpg|jpeg|webp|svg)$/,
-            handler: "CacheFirst",
+            handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "images",
+              cacheName: "images-v2",
               expiration: {
-                maxAgeSeconds: 30 * 24 * 60 * 60,
+                maxEntries: 200,
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
               },
             },
           },

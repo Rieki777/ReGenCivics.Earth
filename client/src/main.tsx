@@ -139,11 +139,26 @@ try {
       </QueryClientProvider>
     </trpc.Provider>
   );
-// Force SW update on deploy: reload when a new service worker activates
+// ── Service Worker lifecycle ────────────────────────────────────────────────
+// Force reload when a new SW activates so users always get fresh assets.
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     window.location.reload();
   });
+
+  // Proactive update checks: 30s after load, then every 10 minutes.
+  // Without this, the browser only checks on navigation or every ~24h,
+  // so deployed fixes can take a full day to reach open tabs.
+  navigator.serviceWorker.ready.then((registration) => {
+    setTimeout(() => registration.update().catch(() => {}), 30_000);
+    setInterval(() => registration.update().catch(() => {}), 10 * 60_000);
+  });
+
+  // Nuke stale runtime caches from the old SW config (renamed in v2).
+  // These one-shot deletes run once per user then become no-ops.
+  if ('caches' in window) {
+    caches.delete('images');   // replaced by images-v2 (StaleWhileRevalidate)
+  }
 }
 
 } catch (err) {
