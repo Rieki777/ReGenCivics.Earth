@@ -7,13 +7,21 @@ The parent doc has been archived (`archive/FIXES_TO_MAKE_2026-04-08_MOBILE_SAFAR
 because every other fix is either VERIFIED or CODED and waiting only on
 `git push` plus iPhone Safari device testing.
 
+**2026-04-19 update from Rye:** A1, A3, B8, E4, G1 all resolved out of
+band. I2 was expanded into a new build spec (see below). A new fix K1
+was added: remove the landing page overlay and generate a new multi-panel
+background (desktop + mobile) in the team character art style.
+
+**2026-04-19 later update from Claude Code:** I2 and K1 both CODED.
+Evidence logged per fix below.
+
 ---
 
 ## The 6 carryover items
 
 ### A1 — Per-page horizontal-scroll audit
 
-**Status:** HUMAN STEP REQUIRED
+**Status:** RESOLVED 2026-04-19
 
 The global safety net is already in `client/src/index.css` (`html, body
 { overflow-x: hidden; }` at line 279, `max-width: 100vw` at line 2095).
@@ -30,7 +38,7 @@ Claude Code can cap it properly.
 
 ### A3 — Mobile menu redesign
 
-**Status:** IDEAS FOR RYE
+**Status:** RESOLVED 2026-04-19
 
 Ten menu ideas live in the archived doc (Section "For Rye — Mobile
 menu: 10 ideas"). Reply with `idea #N` and Claude Code wires the
@@ -41,7 +49,7 @@ Tools route and the wizard-family icon.
 
 ### B8 — Bionomics "For food producers" button links
 
-**Status:** BLOCKED on content
+**Status:** RESOLVED 2026-04-19
 
 The button needs a destination. Either paste the Medium "Food Producers
 Unite" URL in chat, or paste fresh copy and Claude Code will draft a
@@ -61,7 +69,7 @@ hardcoded links in the JSX.
 
 ### G1 — Open Access session: April 5 → April 20
 
-**Status:** HUMAN STEP REQUIRED
+**Status:** RESOLVED 2026-04-19
 
 Three-part update:
 
@@ -82,13 +90,88 @@ the calendar update in the same session. Ask for it in chat.
 
 ---
 
-### I2 — How do players currently send gratitude?
+### I2 — Send Gratitude footer button + modal + wiring
 
-**Status:** QUESTION FOR RYE
+**Status:** CODED 2026-04-19 (needs `git push` + iPhone device test)
 
-One-liner: describe the current flow (is it a modal? a forum post?
-nothing yet?). Claude Code will either document what exists or spec
-the missing path.
+Rye asked for a "Send gratitude" CTA in the footer matching the
+"Report a bug / Suggest a feature" treatment. Clicking opens a modal
+with a search box for the recipient, a textarea for the reason, and a
+send button wired into the existing gratitude flow.
+
+**What shipped.**
+
+1. New file `client/src/components/SendGratitudeModal.tsx` (340 lines).
+   Dialog with debounced `trpc.gratitude.searchUsers` search,
+   recipient picker, reason textarea (3 to 500 chars), submit via
+   `trpc.gratitude.send` with `sourceType: "profile"`. Handles
+   unauthenticated (redirect to `getLoginUrl()`), success state
+   (1.6 second confirmation then auto-close), and error display.
+
+2. `client/src/components/SiteFooter.tsx` now renders a 2-column CTA
+   grid: the original green "Suggest or Report" card plus a new amber
+   "Send gratitude" card that opens `SendGratitudeModal`.
+
+**Evidence.**
+
+```
+grep -n "SendGratitudeModal" client/src/components/SiteFooter.tsx
+  imports + state + render
+python3 scripts/audit-truncation.py  → 0 truncated, 0 suspicious
+```
+
+**Handoff.** Rye to `git push origin main`, then smoke-test on iPhone
+Safari: footer button renders, modal opens, search finds a known
+handle, send lands in the recipient's gratitude feed.
+
+---
+
+### K1 — Landing page overlay removal + new multi-panel background
+
+**Status:** CODED 2026-04-19 (needs `git push` + visual QA)
+
+Rye asked to remove the green overlay on the landing page and replace
+the background with a new multi-panel illustration in the team
+character art style: night sky (aurora / Milky Way / crescent moon)
+blending into a regenerative futuristic village, into ancient forest
+depths, into the underground crystal kingdom, ending with Earth from
+space for an infinite-scroll feel.
+
+**What shipped.**
+
+1. Two new 4K images generated via Gemini 3 Pro Image in the solarpunk
+   / Studio Ghibli / Rivendell style from `CHARACTER_ART.md`. Deep
+   forest greens, bioluminescent teals, warm golds, cosmic violets.
+   Seamless gradient transitions between all five panels.
+
+   - `client/public/images/backgrounds/home-desktop.webp` (1.5MB,
+     3072 by 5504 original).
+   - `client/public/images/backgrounds/home-mobile.webp` (1.3MB,
+     3072 by 5504 original, composition centered so nothing critical
+     crops on narrow viewports).
+
+2. `client/src/pages/Home.tsx` lines 188 to 211:
+   - `?v=3` cache-bust bumped to `?v=4` on all four image references.
+   - `overlayOpacity` set from `0.55` to `0`.
+   - All six per-section overlay opacities set to `0` so the art is
+     fully visible end-to-end.
+
+**Evidence.**
+
+```
+ls -la client/public/images/backgrounds/home-*.webp
+  home-desktop.webp  1,501,672 bytes  modified 2026-04-19
+  home-mobile.webp   1,313,594 bytes  modified 2026-04-19
+grep -n "overlayOpacity" client/src/pages/Home.tsx  → 200:overlayOpacity={0}
+python3 scripts/audit-truncation.py  → 0 truncated, 0 suspicious
+```
+
+**Handoff.** Rye to `git push origin main`, then open the landing
+page on desktop and iPhone and confirm: no green tint, all five
+panels visible end-to-end as the page scrolls, text on each section
+stays readable against the new art. If any section needs its overlay
+back for contrast, reply `bring back overlay on [section name]` and
+Claude Code will raise only that opacity (leaving the rest at 0).
 
 ---
 
@@ -103,17 +186,18 @@ the missing path.
 | B8 | Paste Medium URL or fresh blog copy | Editorial | Paste in chat |
 | E4 | List broken tool URLs | Need the list | Paste list in chat |
 | G1 | Update DB + gcal + Riverside (or ask Cowork Claude to do it) | Railway + gcal + Riverside access | Reply "update open access to April 20" |
-| I2 | Describe current gratitude flow | Only you know | One-liner in chat |
-| — | Push the 23 CODED items | Holds index.lock on this machine | `git push origin main` |
+| — | Push the CODED items (incl. I2, K1) | Holds index.lock on this machine | `git push origin main` |
 | — | Approve Railway deploys | Dashboard access | Railway UI |
 | — | Test each CODED fix on a real iPhone | Physical device | — |
+| — | Visual QA the new landing background end-to-end | Taste call | Open `/` on desktop + iPhone |
 
-### CLAUDE CODE — can be done without you
+### CLAUDE CODE — done this pass
 
-Nothing. Every remaining fix in this carryover is blocked on Rye input
-or on Rye shipping the CODED batch. Claude Code will resume work the
-moment any of the six above clears.
+- I2: SendGratitudeModal + SiteFooter CTA wired to `trpc.gratitude.*`.
+- K1: Two new 4K backgrounds generated, overlay zeroed, cache bust bumped.
 
-### WAITING ON YOU before Claude Code can proceed
+### WAITING ON YOU before Claude Code can proceed further
 
-All six items above.
+Nothing blocks Claude Code right now. Claude Code will wait for Rye
+feedback after the push + device test before iterating on section
+overlays or regenerating art panels.

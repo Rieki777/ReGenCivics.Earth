@@ -185,8 +185,8 @@ export default function Home() {
   }, []);
   const userCardId = userProfile?.path ? PATH_TO_CARD_ID[userProfile.path] : null;
   
-  const bgImage = "/images/backgrounds/home-desktop.webp?v=3";
-  const mobileBgImage = "/images/backgrounds/home-mobile.webp?v=3";
+  const bgImage = "/images/backgrounds/home-desktop.webp?v=4";
+  const mobileBgImage = "/images/backgrounds/home-mobile.webp?v=4";
   const heroImages = useMemo(() => [bgImage, mobileBgImage], [bgImage, mobileBgImage]);
 
   return (
@@ -195,19 +195,19 @@ export default function Home() {
     <PageBackground
       backgroundImage={bgImage}
       mobileBackgroundImage={mobileBgImage}
-      blurPlaceholder="/images/backgrounds/home-desktop.webp?v=3"
-      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp?v=3"
-      overlayOpacity={0.55}
+      blurPlaceholder="/images/backgrounds/home-desktop.webp?v=4"
+      mobileBlurPlaceholder="/images/backgrounds/home-mobile.webp?v=4"
+      overlayOpacity={0}
       theme="forest"
       blendColor="18, 45, 28"
       scrollWithPage={true}
       sectionOverlays={[
-        { id: "hero", opacity: 0.25 },           // Stars should show through more
-        { id: "four-paths", opacity: 0.50 },      // Four Paths cards
-        { id: "scarcity", opacity: 0.45 },         // Scarcity to Regeneration - let art show
-        { id: "who-are-you", opacity: 0.55 },      // Who Are You - text readability
-        { id: "fund-game", opacity: 0.50 },        // Fund + Game overview
-        { id: "newsletter", opacity: 0.65 },       // Newsletter/Footer - stronger for contrast
+        { id: "hero", opacity: 0 },
+        { id: "four-paths", opacity: 0 },
+        { id: "scarcity", opacity: 0 },
+        { id: "who-are-you", opacity: 0 },
+        { id: "fund-game", opacity: 0 },
+        { id: "newsletter", opacity: 0 },
       ]}
     >
       <SEO {...pageSEO.home} breadcrumbs={[{ name: "Home", url: "/" }]} />

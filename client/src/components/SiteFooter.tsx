@@ -7,13 +7,16 @@
 import { Link } from "wouter";
 import { SocialLinks } from "@/components/SocialLinks";
 import { resetCookieConsent } from "@/components/CookieConsent";
-import { Cookie, Lightbulb, Mail } from "lucide-react";
+import { Cookie, Lightbulb, Mail, Heart } from "lucide-react";
+import { useState } from "react";
+import { SendGratitudeModal } from "@/components/SendGratitudeModal";
 import { FooterSearch } from "@/components/FooterSearch";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { HoverPreview } from "@/components/HoverPreview";
 
 export default function SiteFooter() {
+  const [gratitudeOpen, setGratitudeOpen] = useState(false);
   return (
     <footer className="relative py-8 md:py-10 border-t border-white/10" role="contentinfo" aria-label="Site footer">
       <div className="container">
@@ -65,19 +68,35 @@ export default function SiteFooter() {
           </Link>
         </nav>
 
-        {/* Suggest a Feature standout CTA */}
-        <div className="mb-8 px-4 py-5 rounded-2xl bg-gradient-to-br from-[#7dd87d]/15 to-[#4a7c59]/10 border border-[#7dd87d]/30 text-center">
-          <h3 className="text-[#7dd87d] text-lg font-semibold mb-1">Help shape this platform</h3>
-          <p className="text-white/70 text-sm mb-3">
-            Community governance means your ideas become the build queue. Propose features, report bugs, vote on what ships next.
-          </p>
-          <Link href="/features">
-            <span className="inline-flex items-center gap-2 bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-semibold px-6 py-3 rounded-xl shadow-md min-h-[44px] transition-colors cursor-pointer">
-              <Lightbulb className="w-4 h-4" />
-              Suggest or Report
-            </span>
-          </Link>
+        {/* Footer CTA grid: Suggest + Gratitude */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <div className="px-4 py-5 rounded-2xl bg-gradient-to-br from-[#7dd87d]/15 to-[#4a7c59]/10 border border-[#7dd87d]/30 text-center">
+            <h3 className="text-[#7dd87d] text-lg font-semibold mb-1">Help shape this platform</h3>
+            <p className="text-white/70 text-sm mb-3">
+              Propose features, report bugs, vote on what ships next.
+            </p>
+            <Link href="/features">
+              <span className="inline-flex items-center gap-2 bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-semibold px-6 py-3 rounded-xl shadow-md min-h-[44px] transition-colors cursor-pointer">
+                <Lightbulb className="w-4 h-4" />
+                Suggest or Report
+              </span>
+            </Link>
+          </div>
+          <div className="px-4 py-5 rounded-2xl bg-gradient-to-br from-[#d4a574]/15 to-[#4a7c59]/10 border border-[#d4a574]/30 text-center">
+            <h3 className="text-[#d4a574] text-lg font-semibold mb-1">Send gratitude</h3>
+            <p className="text-white/70 text-sm mb-3">
+              Acknowledge someone who made a difference in your journey.
+            </p>
+            <button
+              onClick={() => setGratitudeOpen(true)}
+              className="inline-flex items-center gap-2 bg-[#d4a574] text-[#0d2818] hover:bg-[#e8c088] font-semibold px-6 py-3 rounded-xl shadow-md min-h-[44px] transition-colors cursor-pointer"
+            >
+              <Heart className="w-4 h-4" />
+              Send gratitude
+            </button>
+          </div>
         </div>
+        <SendGratitudeModal open={gratitudeOpen} onOpenChange={setGratitudeOpen} />
 
         {/* Middle row: Navigation columns */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8 text-sm">

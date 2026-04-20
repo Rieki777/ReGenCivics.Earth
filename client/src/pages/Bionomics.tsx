@@ -1612,3 +1612,5 @@ export default function Bionomics() {
         </div>
       </div>
     </PageWrapper>
+  );
+}
