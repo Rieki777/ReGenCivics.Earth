@@ -7,7 +7,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ReGen Gov",
-  description: "Governance dashboard for the Regenerative Renaissance. Coordinate, deliberate, decide.",
+  description: "Governance dashboard for the ReGenerative Renaissance. Coordinate, deliberate, decide.",
   icons: [{ rel: "icon", url: "/regen-gov-icon.svg" }],
 };
 

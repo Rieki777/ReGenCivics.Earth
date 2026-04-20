@@ -1,7 +1,7 @@
 {
   "name": "ReGen Civics: Infinite Game of Regeneration",
   "short_name": "ReGen Civics",
-  "description": "An Infinite Game for the Regenerative Renaissance. Join investors, land projects, alliance partners, and players building a regenerative civilization.",
+  "description": "An Infinite Game for the ReGenerative Renaissance. Join investors, land projects, alliance partners, and players building a regenerative civilization.",
   "start_url": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],

@@ -210,7 +210,7 @@ export default function RiskDisclosure() {
 
             <section>
               <h3 className="text-base font-bold text-white mb-2">Ecosystem Dependency Risk</h3>
-              <p>The value of $RCivics depends on successful growth of the regenerative ecosystem. If land projects fail, alliance organizations struggle to generate revenue, or network effects fail to materialize, token value and distributions could be significantly impaired. The "index fund for regenerative renaissance" thesis requires critical mass that may not be achieved.</p>
+              <p>The value of $RCivics depends on successful growth of the regenerative ecosystem. If land projects fail, alliance organizations struggle to generate revenue, or network effects fail to materialize, token value and distributions could be significantly impaired. The "index fund for ReGenerative Renaissance" thesis requires critical mass that may not be achieved.</p>
             </section>
 
             <section>

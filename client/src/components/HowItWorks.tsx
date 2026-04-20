@@ -81,7 +81,7 @@ export default function HowItWorks() {
             className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Five interconnected steps powering the regenerative renaissance
+            Five interconnected steps growing our ReGenerative Renaissance
           </p>
         </AnimatedSection>
 

@@ -1310,7 +1310,7 @@ export default function Governance() {
             </p>
             
             <p className="text-white/90 text-lg leading-relaxed text-center safe-prose">
-              The Regenerative Renaissance requires governance that evolves with our understanding, includes those most affected by decisions, and aligns incentives toward collective wellbeing. ReGen Civics governance is designed to do exactly that.
+              The ReGenerative Renaissance requires governance that evolves with our understanding, includes those most affected by decisions, and aligns incentives toward collective wellbeing. ReGen Civics governance is designed to do exactly that.
             </p>
           </div>
         </div>

@@ -620,7 +620,7 @@ export const generateContributionPDF = (data: ContributionData): void => {
   
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(9);
-  doc.text('Join the regenerative renaissance!', pageWidth / 2, yPos + 30, { align: 'center' });
+  doc.text('Join the ReGenerative Renaissance!', pageWidth / 2, yPos + 30, { align: 'center' });
   
   yPos += 50;
   

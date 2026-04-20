@@ -1,6 +1,6 @@
 # ReGen Civics
 
-> A venture fund and infinite game for regenerative land projects. Capital, governance tools, and a global network powering the Regenerative Renaissance.
+> A venture fund and infinite game for regenerative land projects. Capital, governance tools, and a global network powering the ReGenerative Renaissance.
 
 ## About
 
@@ -12,13 +12,13 @@ Healthier lands lead to healthier people and increasing real-world value. We pro
 
 - **Investor**: Put capital to work in the regenerative transition through the fund or crowd pooling
 - **Land Project**: Apply for the incubator, build governance, access capital and alliance support
-- **Alliance Partner**: Join the network of organizations co-creating the Regenerative Renaissance
+- **Alliance Partner**: Join the network of organizations co-creating the ReGenerative Renaissance
 - **Player**: Complete quests, earn tokens, and participate in building a regenerative civilization
 
 ## Key Concepts
 
 - **The Infinite Game**: Systems designed for lasting positive impact across generations
-- **Regenerative Renaissance**: A cultural and economic shift where human systems work with natural systems
+- **ReGenerative Renaissance**: A cultural and economic shift where human systems work with natural systems
 - **HEIST Framework**: Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating projects
 - **Regenerative Ikigai**: Finding the intersection of passion, skill, need, and compensation
 - **Nine Forms of Capital**: Financial, Social, Intellectual, Material, Living, Cultural, Spiritual, Experiential, Influence

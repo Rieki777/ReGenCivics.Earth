@@ -50,7 +50,7 @@ export function WelcomeModal() {
         </h1>
 
         <div className="space-y-4 text-white/80 text-base leading-relaxed">
-          {p(2, "This is your command center for coordinating the Regenerative Renaissance.")}
+          {p(2, "This is your command center for coordinating the ReGenerative Renaissance.")}
           {p(3, "Built on wisdom from movements before us, blended with the best in decentralized governance, regenerative economics, and game design.")}
           {p(4, "Interoperable with Hypha for secure on-chain governance on Base blockchain, and with LocalScale for bioregional food-backed economic systems.")}
           {p(5, "This dashboard is governed by you. Propose what we track. Vote on how it evolves.")}

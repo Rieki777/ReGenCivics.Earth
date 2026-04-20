@@ -745,7 +745,7 @@ export default function Game() {
                 Join Our Team
               </h3>
               <p className="text-[#1a472a]/70 text-sm mb-4 text-center">
-                Apply for a role in ReGen Civics and help shape the Regenerative Renaissance.
+                Apply for a role in ReGen Civics and help shape the ReGenerative Renaissance.
               </p>
               <Link href="/team">
                 <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl">
@@ -769,14 +769,14 @@ export default function Game() {
         </div>
       </section>
 
-      {/* Contributions to the Regenerative Renaissance */}
+      {/* Contributions to the ReGenerative Renaissance */}
       <section id="seeds-legacy" className="py-12 bg-gradient-to-br from-amber-50 to-orange-50 border-y-4 border-amber-400">
         <div className="container px-4">
           <div className="max-w-4xl mx-auto">
             <AnimatedSection animation="slide-up" className="text-center mb-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 rounded-full mb-4">
                 <span className="text-2xl">🌱</span>
-                <span className="text-amber-700 font-semibold">Contributions to the Regenerative Renaissance</span>
+                <span className="text-amber-700 font-semibold">Contributions to the ReGenerative Renaissance</span>
               </div>
               <h2
                 className="text-2xl md:text-3xl font-bold text-[#1a472a] mb-4"
@@ -1037,7 +1037,7 @@ export default function Game() {
                 </h3>
               </div>
               <p className="text-white/60 text-sm max-w-xl mx-auto">
-                Explore quests, share your gifts, earn tokens, and grow your voice in the regenerative renaissance!
+                Explore quests, share your gifts, earn tokens, and grow your voice in the ReGenerative Renaissance!
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">

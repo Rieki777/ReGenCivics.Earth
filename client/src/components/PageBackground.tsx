@@ -423,16 +423,19 @@ function MagicParticles() {
 // shooting-star streaks (rare, bright moments).
 function CosmosParticles() {
   const [particles] = useState(() =>
-    Array.from({ length: 32 }, (_, i) => ({
+    Array.from({ length: 26 }, (_, i) => ({
       id: i,
-      // 20 twinkles (ambient), 12 shooting stars (moments)
+      // 20 twinkles (ambient), 6 shooting stars (moments). Comet count cut
+      // roughly in half so the sky mostly twinkles with occasional streaks.
       type: i < 20 ? "twinkle" : "shooting",
       left: Math.random() * 100,
       // Shooting stars start in the upper 55% of the cosmos container so
       // their downward streak has room to fade out before the container edge.
       // Twinkles can be anywhere.
       top: i < 20 ? Math.random() * 100 : Math.random() * 55,
-      delay: Math.random() * 18,
+      // Delay window widened so fewer comets are spread across more time,
+      // which doubles the average gap between visible streaks.
+      delay: Math.random() * 30,
       // Shooters: 6-11s total animation so the brief visible portion
       // (~20% of the keyframe) maps to ~1.2-2.2s of on-screen comet,
       // with long dead time between flashes so the sky mostly twinkles.

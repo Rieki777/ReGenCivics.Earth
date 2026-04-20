@@ -13,7 +13,7 @@ Writing rules apply: no em-dashes, no contrast-framing, no AI words, no rhetoric
 **Heading:** Who We Are
 
 **Body:**
-We're not your average organisation. We use the same tools we help Land Projects adopt to co-create a constantly evolving organism of passionate individuals united by a shared purpose: catalyzing the Regenerative Renaissance.
+We're not your average organisation. We use the same tools we help Land Projects adopt to co-create a constantly evolving organism of passionate individuals united by a shared purpose: catalyzing the ReGenerative Renaissance.
 
 **Subtext:**
 Over 150 people have helped build this infrastructure. No single face is more important than another, so we list none.
@@ -85,7 +85,7 @@ Our goal is a civilization designed around organisations filled with people play
 1. **Honesty (with Empathy)** -- We speak truth with care, balancing directness with compassion for each other's journeys.
 2. **Transparency** -- Our processes, decisions, and finances are open for all members to see and understand.
 3. **Responsibility** -- We own our commitments and hold ourselves accountable to the community.
-4. **Focus** -- We channel our energy toward what matters most for the Regenerative Renaissance.
+4. **Focus** -- We channel our energy toward what matters most for the ReGenerative Renaissance.
 5. **Compassion** -- We approach each other and our work with kindness, understanding, and care.
 6. **For Anyone, Not Everyone** -- We welcome explorers who are among the first to study and develop new ways of being. This path isn't for everyone, but it might be for you.
 
@@ -231,7 +231,7 @@ Once approved, you hold the role for the season. Your contributions are tracked,
 2. **Power-With, Not Power-Over** -- We practice collaborative leadership where influence comes from contribution and wisdom, not position.
 3. **Inspiration Over Delegation** -- We inspire action through shared vision rather than assigning tasks through hierarchy.
 4. **Learning Over Failing, Successfully** -- Every experiment teaches us something. We embrace iteration and continuous improvement.
-5. **Dynamically Self-Organizing** -- We adapt and reorganize around the Regenerative Renaissance's evolving needs.
+5. **Dynamically Self-Organizing** -- We adapt and reorganize around the ReGenerative Renaissance's evolving needs.
 
 ---
 

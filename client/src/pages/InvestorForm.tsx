@@ -376,7 +376,7 @@ export default function InvestorForm() {
             Investor Journey
           </h1>
           <p className="text-white/80 mb-3">
-            Join us in financing the regenerative renaissance
+            Join us in financing the ReGenerative Renaissance
           </p>
           <div className="inline-flex items-center gap-2 text-[#7dd87d] text-sm font-medium">
             <Sparkles className="w-4 h-4" />
@@ -974,7 +974,7 @@ export default function InvestorForm() {
                         Ready to Submit
                       </h4>
                       <p className="text-[#1a472a]/80 text-sm">
-                        By submitting this form, you're taking the first step toward joining the regenerative renaissance. 
+                        By submitting this form, you're taking the first step toward joining the ReGenerative Renaissance. 
                         Our team will review your inquiry and reach out to schedule a conversation.
                       </p>
                     </div>

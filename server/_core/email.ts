@@ -73,7 +73,7 @@ function getEmailHeader(): string {
   return `
     <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
       <h1 style="color: #7dd87d; margin: 0; font-family: 'Quicksand', sans-serif; font-size: 24px;">ReGen Civics</h1>
-      <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the Regenerative Renaissance</p>
+      <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the ReGenerative Renaissance</p>
     </div>
   `;
 }
@@ -504,7 +504,7 @@ export const emailTemplates = {
       
       <div style="background: linear-gradient(135deg, #f0f7f0 0%, #f0f7f0 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
         <p style="color: #1a472a; font-size: 18px; margin: 0 0 10px 0; font-weight: bold;">What to Expect</p>
-        <p style="color: #4a7c59; margin: 0;">Monthly updates, project spotlights, community stories, and invitations to participate in the regenerative renaissance.</p>
+        <p style="color: #4a7c59; margin: 0;">Monthly updates, project spotlights, community stories, and invitations to participate in the ReGenerative Renaissance.</p>
       </div>
       
       <p style="color: #333;">While you wait for our next newsletter, join our community to connect with fellow regenerators!</p>
@@ -696,7 +696,7 @@ export const emailTemplates = {
             <a href="https://regencivics.earth/loi" style="display: inline-block; background: #8a5a00; color: #ffd700; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 2px solid #ffd700;">Sign the LOI</a>
           </div>
           <p style="color: #333; line-height: 1.7; font-size: 15px;">If you have questions, concerns, or simply want to talk through the opportunity, reply to this email or <a href="https://calendly.com/rieki-cordon/30min" style="color: #4a7c59;">book a call here</a>.</p>
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">The regenerative renaissance is underway  -  and your capital can help it accelerate.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">The ReGenerative Renaissance is underway  -  and your capital can help it accelerate.</p>
         </div>
         <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
           <p style="color: #999; font-size: 12px; margin: 0;">You received this because you expressed interest in ReGen Civics. <a href="${toAbsoluteUrl('/settings')}" style="color: #4a7c59;">Update email preferences</a></p>
@@ -723,7 +723,7 @@ export const emailTemplates = {
       </div>
       ` : ''}
       
-      <p style="color: #333; line-height: 1.6;">You are now part of the regenerative renaissance. Consider sharing your experience with others and exploring more ways to contribute to the movement!</p>
+      <p style="color: #333; line-height: 1.6;">You are now part of the ReGenerative Renaissance. Consider sharing your experience with others and exploring more ways to contribute to the movement!</p>
       
       <div style="text-align: center; margin: 25px 0;">
         <a href="${toAbsoluteUrl('/crowd-pooling-projects')}" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Explore More Campaigns</a>

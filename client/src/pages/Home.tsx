@@ -283,7 +283,7 @@ export default function Home() {
                     },
                     {
                       text:
-                        " grow their economies, attract investment, and build ",
+                        " pool resources, grow their economies, attract investment, and co-create ",
                     },
                     {
                       text: "thriving communities",
@@ -303,131 +303,93 @@ export default function Home() {
             <AnimatedSection animation="fade-in">
               <AutoplayVideo
                 videoId="G-6ZpxvZ3qM"
-                title="Welcome to the Regenerative Renaissance"
+                title="Welcome to the ReGenerative Renaissance"
                 thumbnailUrl="/images/clip-01-poster.webp"
-                thumbnailAlt="Welcome to the Regenerative Renaissance"
+                thumbnailAlt="Welcome to the ReGenerative Renaissance"
               />
             </AnimatedSection>
           </div>
         </section>
 
-        {/* Mission Description - ancient treasure map scroll */}
+        {/* Mission Description - ancient treasure map scroll with ink-reveal text */}
         <section className="relative py-10 md:py-14">
           <div className="container max-w-4xl">
             <AnimatedSection animation="fade-in">
               <div className="text-center flex justify-center">
-                <div className="relative w-full max-w-3xl px-6 md:px-16 lg:px-20 py-10 md:py-14 lg:py-16">
-                  {/* Scroll body: aged parchment with village-map image
-                       baked in. Image lives behind a warm parchment tint
-                       for legibility. If the image 404s, the gradient base
-                       still reads as ancient parchment. */}
+                <div
+                  className="relative w-full max-w-3xl"
+                  style={{
+                    aspectRatio: "2816 / 1536",
+                    backgroundImage: "url('/images/village-map-scroll.webp?v=2')",
+                    backgroundSize: "100% 100%",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                    filter: "drop-shadow(0 18px 36px rgba(0,0,0,0.55))",
+                  }}
+                >
+                  {/* Parchment readability tint, lightens the center so the
+                       ink text reads over the muted map art behind it. The
+                       tint is clipped to the middle region only so the torn
+                       map edges stay visible. */}
                   <div
                     aria-hidden="true"
-                    className="absolute inset-y-0 left-6 right-6 md:left-10 md:right-10 overflow-hidden"
+                    className="absolute pointer-events-none"
                     style={{
-                      backgroundColor: "#d6b174",
-                      backgroundImage:
-                        "url('/images/village-map-scroll.webp?v=1'), " +
-                        "linear-gradient(180deg, #eacc8a 0%, #d9b27a 28%, #c89964 55%, #d6a870 78%, #b88a4e 100%)",
-                      backgroundSize: "cover, auto",
-                      backgroundPosition: "center, center",
-                      backgroundRepeat: "no-repeat, no-repeat",
-                      boxShadow:
-                        "0 18px 50px -12px rgba(0,0,0,0.65), " +
-                        "inset 0 0 90px rgba(90,50,10,0.45), " +
-                        "inset 0 2px 0 rgba(255,240,200,0.4)",
-                    }}
-                  />
-                  {/* Parchment legibility tint: lightens the center of the
-                       map so overlaid ink text stays readable, while the
-                       edges keep the richer aged tone. */}
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-y-0 left-6 right-6 md:left-10 md:right-10 overflow-hidden"
-                    style={{
+                      inset: "12% 14%",
                       background:
-                        "radial-gradient(ellipse at center, rgba(244, 222, 176, 0.75) 0%, rgba(230, 195, 130, 0.45) 55%, rgba(150, 105, 55, 0.25) 100%)",
+                        "radial-gradient(ellipse at center, rgba(250, 238, 208, 0.72) 0%, rgba(240, 220, 180, 0.55) 45%, rgba(220, 195, 145, 0.25) 75%, rgba(200, 170, 120, 0) 100%)",
                     }}
                   />
-                  {/* Burn/fray vignette around edges for the ancient look */}
+                  {/* Ink text — each line reveals left-to-right like ink
+                       bleeding across parchment (Marauder's Map style). */}
                   <div
-                    aria-hidden="true"
-                    className="absolute inset-y-0 left-6 right-6 md:left-10 md:right-10 pointer-events-none"
-                    style={{
-                      boxShadow:
-                        "inset 0 0 40px rgba(60,30,8,0.55), inset 0 0 90px rgba(80,40,10,0.25)",
-                    }}
-                  />
-                  {/* Left rolled edge */}
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-y-0 left-0 w-6 md:w-10"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, #6b4a20 0%, #8a6533 25%, #b08450 55%, #d4a875 85%, #e8c790 100%)",
-                      borderRadius: "6px 0 0 6px",
-                      boxShadow:
-                        "inset -3px 0 8px rgba(0,0,0,0.45), 0 12px 24px -8px rgba(0,0,0,0.55)",
-                    }}
-                  />
-                  {/* Right rolled edge */}
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-y-0 right-0 w-6 md:w-10"
-                    style={{
-                      background:
-                        "linear-gradient(270deg, #6b4a20 0%, #8a6533 25%, #b08450 55%, #d4a875 85%, #e8c790 100%)",
-                      borderRadius: "0 6px 6px 0",
-                      boxShadow:
-                        "inset 3px 0 8px rgba(0,0,0,0.45), 0 12px 24px -8px rgba(0,0,0,0.55)",
-                    }}
-                  />
-                  {/* All text lives on the scroll, styled as ancient ink. */}
-                  <div
-                    className="relative space-y-5 md:space-y-6 leading-relaxed text-base md:text-lg lg:text-xl text-center"
-                    style={{
-                      fontFamily:
-                        "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
-                      color: "#3a2410",
-                      textShadow: "0 1px 0 rgba(255,240,200,0.35)",
-                    }}
+                    className="absolute inset-0 flex items-center justify-center"
                   >
-                    <p>
-                      <span style={{ color: "#2f5e2f", fontWeight: 700 }}>
-                        regen-civics
-                      </span>{" "}
-                      is a fund and an in-real-life game for supporting
-                      regenerative land projects and the{" "}
-                      <span style={{ color: "#8a4b14", fontWeight: 600, fontStyle: "italic" }}>
-                        Regenerative Renaissance
-                      </span>{" "}
-                      <span style={{ color: "#6a5240" }}>
-                        (a movement to heal ourselves, our earth, our communities,
-                        and our bioregions).
-                      </span>
-                    </p>
-                    <p>
-                      We create quests and{" "}
-                      <span style={{ color: "#8a4b14", fontWeight: 600, fontStyle: "italic" }}>
-                        Infinite Games
-                      </span>{" "}
-                      that help people heal, and in doing so build new financial,
-                      economic, and governance systems that support and network
-                      land projects across our movement.
-                    </p>
-                    <p
-                      className="pt-3 md:pt-4 text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
+                    <div
+                      className="w-full px-[10%] md:px-[14%] space-y-3 md:space-y-4 leading-relaxed text-center text-[clamp(0.75rem,1.9vw,1.25rem)]"
                       style={{
                         fontFamily:
                           "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
-                        letterSpacing: "0.01em",
-                        color: "#2a1808",
-                        textShadow:
-                          "0 1px 0 rgba(255,240,200,0.55), 0 2px 6px rgba(100,60,20,0.3)",
+                        color: "#1f1208",
                       }}
                     >
-                      Welcome to the Infinite Game
-                    </p>
+                      <p className="ink-draw" style={{ animationDelay: "0.2s" }}>
+                        <span style={{ color: "#214b21", fontWeight: 700 }}>
+                          regen-civics
+                        </span>{" "}
+                        is a fund and an in-real-life game for supporting
+                        regenerative land projects and the{" "}
+                        <span style={{ color: "#6b3510", fontWeight: 700, fontStyle: "italic" }}>
+                          ReGenerative Renaissance
+                        </span>{" "}
+                        <span style={{ color: "#3f2a18" }}>
+                          (a movement to heal ourselves, our earth, our communities,
+                          and our bioregions).
+                        </span>
+                      </p>
+                      <p className="ink-draw" style={{ animationDelay: "1.6s" }}>
+                        We create quests and{" "}
+                        <span style={{ color: "#6b3510", fontWeight: 700, fontStyle: "italic" }}>
+                          Infinite Games
+                        </span>{" "}
+                        that help people heal, and in doing so build new financial,
+                        economic, and governance systems that support and network
+                        land projects across our movement.
+                      </p>
+                      <p
+                        className="ink-draw pt-1 md:pt-2 font-bold leading-tight"
+                        style={{
+                          animationDelay: "3.0s",
+                          fontFamily:
+                            "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                          letterSpacing: "0.01em",
+                          color: "#120804",
+                          fontSize: "clamp(1.1rem, 3.2vw, 2.25rem)",
+                        }}
+                      >
+                        Welcome to the Infinite Game
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -463,7 +425,7 @@ export default function Home() {
                 className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                Choose your role in the regenerative renaissance
+                Choose your path in the Infinite Game
               </p>
             </AnimatedSection>
 
@@ -811,7 +773,7 @@ export default function Home() {
               <div className="inline-flex items-center gap-3 px-6 py-3 glass-panel-light rounded-full">
                 <Sparkles className="w-5 h-5 text-[#7dd87d]" />
                 <p className="text-white/80 text-base md:text-lg">
-                  Both spaces work together to grow our regenerative renaissance
+                  Both spaces work together to grow our ReGenerative Renaissance
                 </p>
               </div>
             </AnimatedSection>

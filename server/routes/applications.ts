@@ -165,7 +165,7 @@ export const applicationsRouter = router({
               <p>Thank you for applying to the <strong>ReGen Civics Incubator</strong>! We have received your application for <strong>${application.projectName}</strong> and our team will review it carefully.</p>
               <h3>What happens next?</h3>
               <ol>
-                <li><strong>Review (1–2 weeks):</strong> Our team reviews your application for fit with the Regenerative Renaissance mission.</li>
+                <li><strong>Review (1–2 weeks):</strong> Our team reviews your application for fit with the ReGenerative Renaissance mission.</li>
                 <li><strong>Invitation to Connect:</strong> If your project is a strong fit, we will reach out to schedule a call.</li>
                 <li><strong>Season Decision:</strong> Final decisions are communicated before the season kickoff.</li>
               </ol>

@@ -62,7 +62,7 @@ const journeySteps: JourneyStep[] = [
   {
     id: "activate",
     title: "Activate Your Impact",
-    description: "Fund the regenerative renaissance and track your portfolio",
+    description: "Fund the ReGenerative Renaissance and track your portfolio",
     action: "Begin",
     href: "/loi",
     icon: Rocket,

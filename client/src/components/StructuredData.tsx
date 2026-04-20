@@ -15,7 +15,7 @@ const organizationSchema = {
   "alternateName": "ReGen Civics",
   "url": BASE_URL,
   "logo": "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp",
-  "description": "A venture fund and alliance helping regenerative land projects succeed through capital, governance tools, and a supportive network.",
+  "description": "A venture fund and alliance helping regenerative land projects pool resources, grow their economies, attract investment, and co-create thriving communities.",
   "foundingDate": "2023",
   "sameAs": [
     "https://www.youtube.com/@SEEDSRegenerativeEconomies",
@@ -50,7 +50,7 @@ const organizationSchema = {
     { "@type": "Thing", "name": "Ecovillages" }
   ],
   "mentions": [
-    { "@type": "Thing", "name": "Regenerative Renaissance" },
+    { "@type": "Thing", "name": "ReGenerative Renaissance" },
     { "@type": "Thing", "name": "Infinite Game" },
     { "@type": "Thing", "name": "Crowd Pooling" }
   ]
@@ -62,7 +62,7 @@ const websiteSchema = {
   "@type": "WebSite",
   "name": "ReGen Civics",
   "url": BASE_URL,
-  "description": "An Infinite Game for the Regenerative Renaissance. Join the movement to fund and support regenerative land projects worldwide.",
+  "description": "An Infinite Game for the ReGenerative Renaissance. Join the movement to fund and support regenerative land projects worldwide.",
   "potentialAction": {
     "@type": "SearchAction",
     "target": {
@@ -143,7 +143,7 @@ const faqSchema = {
       "name": "What is ReGen Civics?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "ReGen Civics is a venture fund and alliance helping regenerative land projects succeed through capital, governance tools, and a supportive network. We connect impact investors with ecovillages, regenerative farms, and sustainable communities worldwide."
+        "text": "ReGen Civics is a venture fund and alliance helping regenerative land projects pool resources, grow their economies, attract investment, and co-create thriving communities. We connect impact investors with ecovillages, regenerative farms, and sustainable communities worldwide."
       }
     },
     {

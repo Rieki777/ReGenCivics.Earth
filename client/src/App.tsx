@@ -139,7 +139,7 @@ function NewsletterConfirm() {
         {status === 'success' && (
           <>
             <h1 className="text-2xl font-bold text-[#1a472a] mb-3">You're confirmed!</h1>
-            <p className="text-[#4a5568]">Welcome to the ReGen Civics newsletter. You'll receive updates about the Regenerative Renaissance.</p>
+            <p className="text-[#4a5568]">Welcome to the ReGen Civics newsletter. You'll receive updates about the ReGenerative Renaissance.</p>
           </>
         )}
         {status === 'error' && (

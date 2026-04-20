@@ -100,7 +100,7 @@ We encourage you to:
 - Reapply in future seasons as your project evolves
 - Explore other ways to participate in the regenerative movement
 
-Thank you for being part of the regenerative renaissance. We wish you all the best in your journey!
+Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your journey!
 
 Warm regards,
 The ReGen Civics Team`,

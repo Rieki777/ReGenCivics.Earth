@@ -120,7 +120,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
     pages: [
       { href: "/land", title: "Land Projects", description: "See the regenerative land projects your organization can support." },
       { href: "/crowd-pooling", title: "Crowd Pooling", description: "Contribute resources and expertise to active campaigns." },
-      { href: "/team", title: "Our Team", description: "Meet the people building the regenerative renaissance." },
+      { href: "/team", title: "Our Team", description: "Meet the people building the ReGenerative Renaissance." },
     ],
     blog: { slug: "what-if-organizations-met-needs", title: "What If Organizations Met Human Needs?", excerpt: "Reimagining organizational design through the lens of regenerative systems." },
   },

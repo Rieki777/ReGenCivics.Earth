@@ -152,7 +152,7 @@ export const pageCopy = {
       subline: "Let's make it so!",
     },
     contributions: {
-      heading: "Contributions to the Regenerative Renaissance",
+      heading: "Contributions to the ReGenerative Renaissance",
       bodyHeading: "Your contributions to creating a more healthy and beautiful world can be tracked here.",
       bullets: [
         "If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural!",

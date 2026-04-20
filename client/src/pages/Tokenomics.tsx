@@ -779,7 +779,7 @@ export default function Tokenomics() {
       title: "Acknowledgement Token",
       subtitle: "Phase 1 - Active Now",
       description:
-        "The first function of $RCivics is to acknowledge and reciprocate contributions to the Regenerative Renaissance. New tokens are minted only when contributions are formally acknowledged through governance - so every token in circulation represents real value contributed to the movement. Contributions can be financial, knowledge, material, natural, or experiential capital.",
+        "The first function of $RCivics is to acknowledge and reciprocate contributions to the ReGenerative Renaissance. New tokens are minted only when contributions are formally acknowledged through governance - so every token in circulation represents real value contributed to the movement. Contributions can be financial, knowledge, material, natural, or experiential capital.",
       icon: Sprout,
       color: "#7dd87d",
     },
@@ -788,7 +788,7 @@ export default function Tokenomics() {
       title: "Index / Investment Token",
       subtitle: "Phase 2 - Building",
       description:
-        "As the portfolio grows, $RCivics matures into an index token for the Regenerative Renaissance. Financial contributions are directed towards land projects in exchange for their tokens - so $RCivics comes to represent a proportional stake in every project and organisation in the alliance. Backed by land and regeneration: as ecosystems thrive, the backing behind $RCivics grows.",
+        "As the portfolio grows, $RCivics matures into an index token for the ReGenerative Renaissance. Financial contributions are directed towards land projects in exchange for their tokens - so $RCivics comes to represent a proportional stake in every project and organisation in the alliance. Backed by land and regeneration: as ecosystems thrive, the backing behind $RCivics grows.",
       icon: BarChart3,
       color: "#d4a574",
     },
@@ -817,7 +817,7 @@ export default function Tokenomics() {
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818]">
       <SEO
         title="$RCivics Tokenomics | ReGen Civics"
-        description="Understand the $RCivics token economy - an index token for the Regenerative Renaissance backed by land, governed by community, and designed to keep value circulating within the ecosystem."
+        description="Understand the $RCivics token economy - an index token for the ReGenerative Renaissance backed by land, governed by community, and designed to keep value circulating within the ecosystem."
         image="/og/tokenomics.jpg"
         url="/tokenomics"
       />
@@ -840,7 +840,7 @@ export default function Tokenomics() {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-5 py-2 mb-6 rounded-full bg-[#7dd87d] text-[#1a472a] text-sm font-semibold">
               <Coins className="w-5 h-5" />
-              <span>Token Economics for the Regenerative Renaissance</span>
+              <span>Token Economics for the ReGenerative Renaissance</span>
             </div>
             <h1
               className="ink-reveal text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-6 leading-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)]"

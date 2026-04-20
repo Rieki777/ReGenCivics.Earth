@@ -40,7 +40,7 @@ export default function Newsletter() {
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO 
         title="Newsletter | ReGen Civics"
-        description="Subscribe to ReGen Civics updates and stay informed about the regenerative renaissance."
+        description="Subscribe to ReGen Civics updates and stay informed about the ReGenerative Renaissance."
       />
 
       <div className="container mx-auto px-4 py-20">
@@ -61,7 +61,7 @@ export default function Newsletter() {
               Stay Connected
             </h1>
             <p className="text-lg text-white/80 max-w-xl mx-auto">
-              Subscribe to receive updates about ReGen Civics, new land projects, alliance opportunities, and the regenerative renaissance.
+              Subscribe to receive updates about ReGen Civics, new land projects, alliance opportunities, and the ReGenerative Renaissance.
             </p>
           </div>
 

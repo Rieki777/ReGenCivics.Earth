@@ -122,9 +122,9 @@ export function SEO({
 // Page-specific SEO configurations
 export const pageSEO = {
   home: {
-    title: 'ReGen Civics: Infinite Game for the Regenerative Renaissance',
+    title: 'ReGen Civics: Infinite Game for the ReGenerative Renaissance',
     description: 'A fund and a game for regenerative land projects. Do quests, earn tokens, fund real-world regeneration.',
-    keywords: 'regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative renaissance, infinite game',
+    keywords: 'regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, ReGenerative Renaissance, infinite game',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/'
   },
@@ -158,7 +158,7 @@ export const pageSEO = {
   },
   team: {
     title: 'Team: Join Our Dynamic Organization',
-    description: 'A distributed team working to make the Regenerative Renaissance real. Meet the people behind ReGen Civics.',
+    description: 'A distributed team working to make the ReGenerative Renaissance real. Meet the people behind ReGen Civics.',
     keywords: 'regenerative team, join DAO, regenerative ikigai, impact careers, sustainable jobs, regenerative organization',
     image: '/og/team.jpg',
     url: '/team'
@@ -172,7 +172,7 @@ export const pageSEO = {
   },
   socials: {
     title: 'Connect: Social Media & Community',
-    description: 'Connect with ReGen Civics across social platforms. Join our Discord, follow us on Twitter, subscribe to our YouTube, and stay updated on the Regenerative Renaissance.',
+    description: 'Connect with ReGen Civics across social platforms. Join our Discord, follow us on Twitter, subscribe to our YouTube, and stay updated on the ReGenerative Renaissance.',
     keywords: 'regenerative community, discord server, twitter, youtube, social media, regenerative network',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/socials'
@@ -284,21 +284,21 @@ export const pageSEO = {
   },
   hymnBook: {
     title: 'Hymn Book | ReGen Civics',
-    description: 'Songs of the Regenerative Renaissance. A growing collection of hymns from the movement.',
+    description: 'Songs of the ReGenerative Renaissance. A growing collection of hymns from the movement.',
     keywords: 'regenerative hymns, hymn book, regenerative music, songs of the renaissance',
     image: '/og/hymn-book.jpg',
     url: '/hymn-book'
   },
   features: {
     title: 'Features & Bug Reports | ReGen Civics',
-    description: 'Propose features, report bugs, vote on what matters, and help shape the tools that build the Regenerative Renaissance.',
+    description: 'Propose features, report bugs, vote on what matters, and help shape the tools that build the ReGenerative Renaissance.',
     keywords: 'feature suggestions, bug reports, community voting, regenerative platform, product feedback',
     image: '/og/features.jpg',
     url: '/features'
   },
   ally: {
     title: 'Alliance Organizations | ReGen Civics',
-    description: 'The alliance organizations co-creating the Regenerative Renaissance alongside ReGen Civics. A network built on shared values, not just shared logos.',
+    description: 'The alliance organizations co-creating the ReGenerative Renaissance alongside ReGen Civics. A network built on shared values, not just shared logos.',
     keywords: 'regenerative alliance, partner organizations, regenerative network',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/ally'
@@ -313,7 +313,7 @@ export const pageSEO = {
   blog: {
     title: 'Blog | ReGen Civics',
     description: 'Writings from the ReGen Civics community. Strategy, stories from land projects, game design notes, and updates from the movement.',
-    keywords: 'regenerative blog, land project stories, regenerative renaissance writing',
+    keywords: 'regenerative blog, land project stories, ReGenerative Renaissance writing',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/blog'
   },
@@ -368,14 +368,14 @@ export const pageSEO = {
   },
   coCreatorsGuide: {
     title: 'Co-Creators Guide | ReGen Civics',
-    description: 'The guide for ReGen Civics co-creators. Roles, expectations, and how to contribute to the Regenerative Renaissance.',
+    description: 'The guide for ReGen Civics co-creators. Roles, expectations, and how to contribute to the ReGenerative Renaissance.',
     keywords: 'co-creators, guide, regenerative community, contributor roles',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/co-creators-guide'
   },
   newsletter: {
     title: 'Newsletter | ReGen Civics',
-    description: 'Stay connected with the Regenerative Renaissance. Monthly updates on land projects, quests, and community milestones.',
+    description: 'Stay connected with the ReGenerative Renaissance. Monthly updates on land projects, quests, and community milestones.',
     keywords: 'newsletter, regenerative updates, community news',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/newsletter'
@@ -390,7 +390,7 @@ export const pageSEO = {
   },
   tools: {
     title: 'Regen Civilization Tools Library | ReGen Civics',
-    description: 'Every tool the regenerative renaissance needs. Software, hardware, governance, currency, food systems. Describe your challenge, find your tools.',
+    description: 'Every tool the ReGenerative Renaissance needs. Software, hardware, governance, currency, food systems. Describe your challenge, find your tools.',
     keywords: 'regenerative tools, community tools, governance tools, DAO tools, food systems, permaculture tools, open source',
     image: '/og/tools.webp',
     url: '/tools'

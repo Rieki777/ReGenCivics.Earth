@@ -236,7 +236,7 @@ Base is a Layer 2 blockchain built by Coinbase, one of the most trusted names in
 
 **Security**: Base inherits Ethereum's security while adding Coinbase's institutional-grade infrastructure. Your governance tokens and treasury funds are protected by battle-tested technology.
 
-**Mainstream Bridge**: Coinbase's involvement means easier onboarding for newcomers. It provides a direct path from national currencies into the currencies of our Regenerative Renaissance.
+**Mainstream Bridge**: Coinbase's involvement means easier onboarding for newcomers. It provides a direct path from national currencies into the currencies of our ReGenerative Renaissance.
 
 ## How Hypha Makes It Work
 
@@ -343,7 +343,7 @@ What would your organization look like if it started with needs instead of profi
 
 These are not rhetorical questions. They are design prompts for a different kind of future.
 
-The regenerative renaissance begins when we remember that organizations exist to serve people, not the other way around.`,
+The ReGenerative Renaissance begins when we remember that organizations exist to serve people, not the other way around.`,
     author: 'Rieki Cordon',
     date: 'Jan 31, 2025',
     readTime: '5 min read',
@@ -772,7 +772,7 @@ Once your profile is set up:
 
 ## Welcome to the Game!
 
-Your profile is your passport to the Infinite Game. Keep it updated, [complete quests](/quest), earn tokens, and help build the regenerative renaissance.
+Your profile is your passport to the Infinite Game. Keep it updated, [complete quests](/quest), earn tokens, and help build the ReGenerative Renaissance.
 
 See you in the game!
 
@@ -926,7 +926,7 @@ Whether you are an investor looking to support regenerative land projects with r
 
 **For Land Projects**: [Apply for Season 2](/seasons) to begin the evaluation process and potentially access funding through our network.
 
-The regenerative renaissance needs capital to flow to the land. ReGen Civics is building the infrastructure to make that happen safely and effectively.
+The ReGenerative Renaissance needs capital to flow to the land. ReGen Civics is building the infrastructure to make that happen safely and effectively.
 
 [Access Investment Thesis](/investor)`,
     author: 'ReGen Civics Team',
@@ -1115,7 +1115,7 @@ If you can answer "yes" to all four, you may be a good candidate for our fund.
 2. [Schedule a call](/schedule) to discuss investment opportunities
 3. [Access our Investment Thesis](/investor) for detailed fund information
 
-The regenerative renaissance needs strong foundations. These four pillars ensure that the projects we support have what it takes to succeed for generations.
+The ReGenerative Renaissance needs strong foundations. These four pillars ensure that the projects we support have what it takes to succeed for generations.
 
 [Apply for Season 2](/seasons)`,
     author: 'ReGen Civics Team',
@@ -1185,7 +1185,7 @@ Post in the [Community Forum](https://regencivics.earth/community) or reply to t
     excerpt: 'If you spent years contributing to SEEDS, Hypha, or other regenerative projects and were never fully compensated, your contributions could live on in ReGen Civics.',
     content: `[CLAIM_SEEDS_BUTTON]
 
-If you've contributed to SEEDS, Hypha, local food systems, regenerative governance experiments, community currencies, and other critical infrastructure for our Regenerative Renaissance and you were never fully compensated for that work, your contributions could live on in ReGen Civics.
+If you've contributed to SEEDS, Hypha, local food systems, regenerative governance experiments, community currencies, and other critical infrastructure for our ReGenerative Renaissance and you were never fully compensated for that work, your contributions could live on in ReGen Civics.
 
 This post is specific to our roots in SEEDS. You can watch a quick mini-documentary on SEEDS here if you haven't seen it yet.
 

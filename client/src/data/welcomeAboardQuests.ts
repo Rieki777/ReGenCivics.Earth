@@ -80,7 +80,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     reward: "33 $ReGen + 0.1 RGVoice",
     forumUrl: "/community/post/602",
     about:
-      "The Regenerative Renaissance is not built by isolated individuals. It is built by people who find each other. This quest is simple: reach out to someone in the ReGen Civics community you have not connected with before. Welcome a newcomer. Answer a question someone left unanswered. Respond to an origin story that moved you. Introduce yourself to someone whose project interests you. You do not need a reason beyond genuine curiosity and care. A community that notices its members and reaches toward them is a community worth belonging to.",
+      "The ReGenerative Renaissance is not built by isolated individuals. It is built by people who find each other. This quest is simple: reach out to someone in the ReGen Civics community you have not connected with before. Welcome a newcomer. Answer a question someone left unanswered. Respond to an origin story that moved you. Introduce yourself to someone whose project interests you. You do not need a reason beyond genuine curiosity and care. A community that notices its members and reaches toward them is a community worth belonging to.",
     steps: [
       "Find someone in the ReGen Civics community you have not connected with yet. Reach out: leave a comment, send a message, respond to something they posted.",
       "Share the connection in the forum post below. Who did you reach out to and why? What came of it?",
@@ -91,13 +91,13 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     id: "welcome-aboard-6",
     number: 6,
     title: "Pledge Your Gift",
-    tagline: "What do you bring to the Regenerative Renaissance?",
+    tagline: "What do you bring to the ReGenerative Renaissance?",
     reward: "33 $ReGen + 0.1 RGVoice",
     forumUrl: "/community/post/603",
     about:
-      "The Regenerative Renaissance needs every gift, not just farmers and ecologists, but storytellers, coders, musicians, healers, teachers, lawyers, cooks, architects, parents, and elders. This quest invites you into a moment of genuine self-inquiry: What is the unique gift you carry? What would you contribute if you knew it was needed and valued? You do not need to have it fully figured out. A direction, an intention, a question you are following, all of these count. Writing it down and sharing it with a community who cares is itself a powerful act.",
+      "The ReGenerative Renaissance needs every gift, not just farmers and ecologists, but storytellers, coders, musicians, healers, teachers, lawyers, cooks, architects, parents, and elders. This quest invites you into a moment of genuine self-inquiry: What is the unique gift you carry? What would you contribute if you knew it was needed and valued? You do not need to have it fully figured out. A direction, an intention, a question you are following, all of these count. Writing it down and sharing it with a community who cares is itself a powerful act.",
     steps: [
-      "Write your Gift Pledge: a 1-5 sentence statement of what you bring or want to bring to the Regenerative Renaissance. It can be concrete or directional.",
+      "Write your Gift Pledge: a 1-5 sentence statement of what you bring or want to bring to the ReGenerative Renaissance. It can be concrete or directional.",
       "Share your pledge in the forum post below.",
       "Post your pledge on social media as a public commitment and link to it in your forum comment.",
     ],
@@ -158,7 +158,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     forumUrl: "/community/post/599",
     proposalUrl: "/community/quests",
     about:
-      "Every great game is shaped by the people who play it. This quest invites you into the creative heart of ReGen Civics: imagining new quests that add value to the Regenerative Renaissance. The best quests are ones that draw on your unique gifts and life purpose, bridge multiple forms of capital (social, ecological, financial, intellectual), are inherently scalable, and are genuinely fun to play. Before brainstorming, try this: take the question to sleep with you. Let your dreaming mind offer something unexpected.",
+      "Every great game is shaped by the people who play it. This quest invites you into the creative heart of ReGen Civics: imagining new quests that add value to the ReGenerative Renaissance. The best quests are ones that draw on your unique gifts and life purpose, bridge multiple forms of capital (social, ecological, financial, intellectual), are inherently scalable, and are genuinely fun to play. Before brainstorming, try this: take the question to sleep with you. Let your dreaming mind offer something unexpected.",
     steps: [
       "Sleep on a quest idea, let your subconscious work on it overnight.",
       "Write up your quest idea and share it in the forum post below. Include: a title, a brief description of what the player does, and what value it creates for the ecosystem.",

@@ -27,7 +27,7 @@ interface GlossaryEntry {
 const glossaryEntries: GlossaryEntry[] = [
   // Core Concepts
   {
-    term: "Regenerative Renaissance",
+    term: "ReGenerative Renaissance",
     definition: "A global movement to shift from extractive economic systems to ones that restore and regenerate ecological, social, and financial capital. ReGen Civics positions itself as a catalyst for this transition.",
     category: "Core Concepts",
     relatedLink: "/",

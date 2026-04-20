@@ -344,8 +344,7 @@ export default function ReGenCoCreatorsGuide() {
                 Your R-Ikigai
               </h2>
               <p className="text-gray-500 text-lg">
-                The intersection of what you love, what you're good at, what the Regenerative
-                Renaissance needs, and what earns you tokens.
+                The intersection of what you love, what you're good at, what the ReGenerative Renaissance needs, and what earns you tokens.
               </p>
             </div>
 
@@ -370,7 +369,7 @@ export default function ReGenCoCreatorsGuide() {
                 {[
                   { color: "border-emerald-500 bg-emerald-50", title: "What You LOVE", icon: Heart, iconColor: "text-emerald-600", text: "Your authentic desires and what brings you alive. What would you do even if no one paid you?" },
                   { color: "border-teal-500 bg-teal-50", title: "What You're GOOD AT", icon: Star, iconColor: "text-teal-600", text: "Your natural abilities and hard-won expertise. What do others come to you for?" },
-                  { color: "border-green-600 bg-green-50", title: "What We NEED", icon: Leaf, iconColor: "text-green-700", text: "The gaps in building the Regenerative Renaissance. Where can your gifts fill a real need right now?" },
+                  { color: "border-green-600 bg-green-50", title: "What We NEED", icon: Leaf, iconColor: "text-green-700", text: "The gaps in building the ReGenerative Renaissance. Where can your gifts fill a real need right now?" },
                   { color: "border-amber-500 bg-amber-50", title: "What Earns TOKENS", icon: DollarSign, iconColor: "text-amber-600", text: "Roles, quests, and contributions the community values and is willing to compensate." },
                 ].map((item) => {
                   const Icon = item.icon;
@@ -403,7 +402,7 @@ export default function ReGenCoCreatorsGuide() {
                 The Token Economy
               </h2>
               <p className="text-gray-500 text-lg max-w-2xl mx-auto safe-prose">
-                Tokens track the value you contribute to the Regenerative Renaissance. Every
+                Tokens track the value you contribute to the ReGenerative Renaissance. Every
                 meaningful act creates a record. As the ecosystem grows, that record converts
                 to real economic participation.
               </p>

@@ -81,7 +81,7 @@ export default function QuestSuggestions() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
-      <SEO title="Suggest the Next Quest | ReGen Civics" description="Submit quest ideas and vote for your favorites. Community-driven quest creation for the regenerative renaissance." />
+      <SEO title="Suggest the Next Quest | ReGen Civics" description="Submit quest ideas and vote for your favorites. Community-driven quest creation for the ReGenerative Renaissance." />
 
       {/* Hero Section */}
       <section className="relative pt-24 pb-12 px-4 overflow-hidden">

@@ -42,7 +42,7 @@ export const newsletterRouter = router({
           subject: 'Confirm your ReGen Civics newsletter subscription',
           html: `
             <h2>Welcome to the ReGen Civics newsletter!</h2>
-            <p>Click the button below to confirm your subscription and stay informed about the Regenerative Renaissance.</p>
+            <p>Click the button below to confirm your subscription and stay informed about the ReGenerative Renaissance.</p>
             <p style="margin: 24px 0;">
               <a href="${confirmUrl}" style="background:#1a472a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
                 Confirm Subscription
@@ -297,7 +297,7 @@ export const emailRouter = router({
                 <li>Explore other ways to participate in the regenerative movement</li>
               </ul>
             </div>
-            <p style="color: #333;">Thank you for being part of the regenerative renaissance. We wish you all the best in your journey!</p>
+            <p style="color: #333;">Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your journey!</p>
             <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
               <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
             </div>
@@ -596,7 +596,7 @@ export const emailRouter = router({
         case "notSelected":
           emailContent = {
             subject: "ReGen Civics Application Update",
-            html: `<h2 style="color: #1a472a; margin-top: 0;">Hello ${testName},</h2><p style="color: #333; line-height: 1.6;">Thank you so much for your interest in ReGen Civics and for taking the time to share your vision with us.</p><p style="color: #333; line-height: 1.6;">After careful consideration, we've decided not to move forward with your application at this time. This decision doesn't reflect on the value of your work. We simply have limited capacity and must make difficult choices.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;"><h3 style="color: #4a7c59; margin-top: 0;">What You Can Do</h3><ul style="color: #333; line-height: 1.8;"><li>Stay connected with our community through our newsletter and events</li><li>Reapply in future seasons as your project evolves</li><li>Explore other ways to participate in the regenerative movement</li></ul></div><p style="color: #333;">Thank you for being part of the regenerative renaissance. We wish you all the best in your journey!</p><div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p></div>`,
+            html: `<h2 style="color: #1a472a; margin-top: 0;">Hello ${testName},</h2><p style="color: #333; line-height: 1.6;">Thank you so much for your interest in ReGen Civics and for taking the time to share your vision with us.</p><p style="color: #333; line-height: 1.6;">After careful consideration, we've decided not to move forward with your application at this time. This decision doesn't reflect on the value of your work. We simply have limited capacity and must make difficult choices.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;"><h3 style="color: #4a7c59; margin-top: 0;">What You Can Do</h3><ul style="color: #333; line-height: 1.8;"><li>Stay connected with our community through our newsletter and events</li><li>Reapply in future seasons as your project evolves</li><li>Explore other ways to participate in the regenerative movement</li></ul></div><p style="color: #333;">Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your journey!</p><div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p></div>`,
           };
           break;
         case "scheduleCall":
@@ -631,7 +631,7 @@ export const emailRouter = router({
           <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
             <div style="background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
               <h1 style="color: #7dd87d; margin: 0; font-size: 24px;">ReGen Civics</h1>
-              <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the Regenerative Renaissance</p>
+              <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the ReGenerative Renaissance</p>
             </div>
             <div style="padding: 30px 25px;">
               ${emailContent.html}
@@ -775,7 +775,7 @@ export const emailRouter = router({
             case "custom":
               emailContent = {
                 subject: input.customSubject || "Message from ReGen Civics",
-                html: (input.customBody || `<p>Hello ${name},</p><p>Thank you for being part of the regenerative renaissance.</p>`).replace(/\{\{name\}\}/g, name).replace(/\{\{email\}\}/g, recipient.email),
+                html: (input.customBody || `<p>Hello ${name},</p><p>Thank you for being part of the ReGenerative Renaissance.</p>`).replace(/\{\{name\}\}/g, name).replace(/\{\{email\}\}/g, recipient.email),
               };
               break;
             default:

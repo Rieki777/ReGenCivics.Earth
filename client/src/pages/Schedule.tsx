@@ -155,7 +155,7 @@ const NEW_MOON_SESSIONS: OpenAccessSession[] = [
 ];
 
 const OPEN_ACCESS_TITLE = "ReGen Civics Open Access Session";
-const OPEN_ACCESS_DESC  = "Open community session for the Regenerative Renaissance. Drop in, meet the community, ask questions, no commitment required.";
+const OPEN_ACCESS_DESC  = "Open community session for the ReGenerative Renaissance. Drop in, meet the community, ask questions, no commitment required.";
 
 function parseCompactUtc(stamp: string): Date {
   return new Date(stamp.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, '$1-$2-$3T$4:$5:$6Z'));
@@ -531,7 +531,7 @@ export default function Schedule() {
       <SEO {...pageSEO.schedule} />
       <JsonLD data={schemas.event({
         name: "ReGen Civics Open Community Call",
-        description: "Monthly community sessions, open calls, and events where regenerators connect, coordinate, and co-create the Regenerative Renaissance. Join investors, land stewards, and players.",
+        description: "Monthly community sessions, open calls, and events where regenerators connect, coordinate, and co-create the ReGenerative Renaissance. Join investors, land stewards, and players.",
         startDate: "2026-04-01",
         url: "https://regencivics.earth/schedule",
       })} />
@@ -561,7 +561,7 @@ export default function Schedule() {
           </h1>
           
           <p className="text-xl text-white/80 max-w-2xl mx-auto safe-prose">
-            Join our gatherings and be part of the regenerative renaissance. Add events to your calendar and tune in!
+            Join our gatherings and be part of the ReGenerative Renaissance. Add events to your calendar and tune in!
           </p>
         </div>
       </section>
@@ -585,7 +585,7 @@ export default function Schedule() {
                 <p className="text-white/70 text-sm mb-1">
                   {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at 1:00 - 3:00 PM {nextOpenAccessSession.timezone}
                 </p>
-                <p className="text-white/55 text-xs mb-4">Every new moon. Open to anyone curious about the Regenerative Renaissance.</p>
+                <p className="text-white/55 text-xs mb-4">Every new moon. Open to anyone curious about the ReGenerative Renaissance.</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <a
                     href={openAccessGoogleUrl(nextOpenAccessSession)}

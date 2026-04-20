@@ -111,7 +111,7 @@ Start Your Own Quest
 </div>
 <div style="font-size:11px;color:#7dd87d;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Alliance Partner</div>
 <div style="font-size:18px;font-weight:700;margin-bottom:4px">${orgName}</div>
-<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px">Building the Regenerative Renaissance together</div>
+<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px">Building the ReGenerative Renaissance together</div>
 <a href="${BASE_URL}/ally" target="_blank" style="display:inline-block;padding:8px 20px;background:#7dd87d;color:#1a472a;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none">
 Learn About the Alliance
 </a>

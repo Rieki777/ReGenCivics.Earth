@@ -50,7 +50,7 @@ const coreValues = [
   { icon: Heart, title: "Honesty (with Empathy)", description: "We speak truth with care, balancing directness with compassion for each other's journeys." },
   { icon: Eye, title: "Transparency", description: "Our processes, decisions, and finances are open for all members to see and understand." },
   { icon: Users, title: "Responsibility", description: "We own our commitments and hold ourselves accountable to the community." },
-  { icon: Compass, title: "Focus", description: "We channel our energy toward what matters most for the Regenerative Renaissance." },
+  { icon: Compass, title: "Focus", description: "We channel our energy toward what matters most for the ReGenerative Renaissance." },
   { icon: Heart, title: "Compassion", description: "We approach each other and our work with kindness, understanding, and care." }
 ];
 
@@ -189,7 +189,7 @@ const openRoles = [
   },
   {
     title: "Communications & Storytelling Lead",
-    purpose: "Amplify the regenerative renaissance story and grow our movement",
+    purpose: "Amplify the ReGenerative Renaissance story and grow our movement",
     circle: "Communications Circle",
     accountability: "Content creation, social media, newsletter, brand consistency",
     domain: "External communications and brand voice",
@@ -409,7 +409,7 @@ export default function Team() {
           </h1>
           
           <p className="text-xl text-white/80 max-w-3xl mx-auto mb-4 safe-prose">
-            We're not your average organisation. We use the same tools we help Land Projects adopt to co-create a constantly evolving organism of passionate individuals united by a shared purpose: catalyzing the Regenerative Renaissance.
+            We're not your average organisation. We use the same tools we help Land Projects adopt to co-create a constantly evolving organism of passionate individuals united by a shared purpose: catalyzing the ReGenerative Renaissance.
           </p>
           
           <p className="text-base text-white/60 max-w-2xl mx-auto mb-8 leading-relaxed safe-prose">
@@ -815,7 +815,7 @@ export default function Team() {
               <MessageCircle className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-bold text-white mb-1">Dynamically Self-Organizing</h3>
-                <p className="text-white/60">We adapt and reorganize around the Regenerative Renaissance's evolving needs.</p>
+                <p className="text-white/60">We adapt and reorganize around the ReGenerative Renaissance's evolving needs.</p>
               </div>
             </div>
           </div>

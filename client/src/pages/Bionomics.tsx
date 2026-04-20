@@ -630,7 +630,7 @@ export default function Bionomics() {
     <PageWrapper>
       <SEO
         title="Bionomics | The Living Economy of ReGen Civics"
-        description="Bionomics is the Game side of ReGen Civics: $ReGen, bioregional financing, local food systems, gratitude, and the Index Fund for the Regenerative Renaissance. Built on the BioFi framework and the SEEDS lineage."
+        description="Bionomics is the Game side of ReGen Civics: $ReGen, bioregional financing, local food systems, gratitude, and the Index Fund for the ReGenerative Renaissance. Built on the BioFi framework and the SEEDS lineage."
         image="/og/bionomics.webp"
         url="/bionomics"
       />
@@ -862,7 +862,7 @@ export default function Bionomics() {
                     <li className="flex gap-2"><span className="text-[#7dd87d]">•</span> $ReGen</li>
                     <li className="flex gap-2"><span className="text-[#7dd87d]">•</span> Life flowing through bioregions</li>
                     <li className="flex gap-2"><span className="text-[#7dd87d]">•</span> Gratitude, food, land, culture</li>
-                    <li className="flex gap-2"><span className="text-[#7dd87d]">•</span> How value circulates inside the regenerative renaissance</li>
+                    <li className="flex gap-2"><span className="text-[#7dd87d]">•</span> How value circulates inside the ReGenerative Renaissance</li>
                   </ul>
                   <div
                     className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold"
@@ -904,7 +904,7 @@ export default function Bionomics() {
             <div className="container max-w-4xl">
               <SectionHeading
                 eyebrow="The Frame"
-                title="The Index Fund for the Regenerative Renaissance"
+                title="The Index Fund for the ReGenerative Renaissance"
                 accent={C.gold}
               />
               <div
@@ -914,7 +914,7 @@ export default function Bionomics() {
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
                   We are investing in local food, regenerative land, community, and the
                   organizations that support them. It is a full-suite investment into the
-                  <Concept>Regenerative Renaissance</Concept> and the cultures growing inside it.
+                  <Concept>ReGenerative Renaissance</Concept> and the cultures growing inside it.
                 </p>
                 <p className="text-white/85 text-base leading-relaxed">
                   Generally funds pick a single thesis and ride it. Our thesis is simply
@@ -1052,7 +1052,7 @@ export default function Bionomics() {
                 <ReturnCard
                   title="Economic-Financial Return"
                   icon={<Wallet className="w-5 h-5" />}
-                  body="Patient capital that earns honest returns inside a regenerative thesis. Held inside the Index Fund for the Regenerative Renaissance and circulated through $RCivics and $ReGen. Explore the Fund and Opportunity pages for more on this."
+                  body="Patient capital that earns honest returns inside a regenerative thesis. Held inside the Index Fund for the ReGenerative Renaissance and circulated through $RCivics and $ReGen. Explore the Fund and Opportunity pages for more on this."
                   accent={C.amber}
                 />
               </div>
@@ -1195,7 +1195,7 @@ export default function Bionomics() {
                   title="Bioregional Investment Company"
                   icon={<Wallet className="w-6 h-6" />}
                   oneLiner="Patient capital, blended portfolio."
-                  expression="ReGen Civics expression: the Fund itself, the Index Fund for the Regenerative Renaissance framing, $RCivics, and the investor cultivation work on the Tokenomics side of the bridge."
+                  expression="ReGen Civics expression: the Fund itself, the Index Fund for the ReGenerative Renaissance framing, $RCivics, and the investor cultivation work on the Tokenomics side of the bridge."
                   link="/tokenomics"
                   linkLabel="See Tokenomics"
                   accent={C.gold}

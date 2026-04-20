@@ -32,7 +32,7 @@ export default function SiteFooter() {
             />
           </div>
           <p className="text-white/70 text-xs max-w-sm leading-relaxed">
-            An Infinite Game for the Regenerative Renaissance.
+            An Infinite Game for the ReGenerative Renaissance.
             Healthier lands, healthier people, increasing real world value.
           </p>
         </div>

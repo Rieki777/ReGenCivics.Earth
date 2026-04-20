@@ -220,7 +220,7 @@ export function WelcomeAboardQuests({ profile, onUpdate }: WelcomeAboardQuestsPr
             {completedCount}/10
           </span>
         </div>
-        <p className="text-white/60 text-xs mb-3">Ten ways to root yourself in the Regenerative Renaissance.</p>
+        <p className="text-white/60 text-xs mb-3">Ten ways to root yourself in the ReGenerative Renaissance.</p>
 
         {/* Progress bar, golden gradient until complete, then green */}
         <div className="w-full bg-white/10 rounded-full h-1.5 mb-3 overflow-hidden">

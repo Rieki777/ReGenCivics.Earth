@@ -334,7 +334,7 @@ export const gameRoles: GameRole[] = [
     characterImage: "/images/roles/storyteller-card.webp",
     sceneImage: "/images/roles/storyteller-scene.webp",
     purpose:
-      "Write the story of the regenerative renaissance as it happens. Blog posts, social media, newsletters, and the narrative thread that ties everything together.",
+      "Write the story of the ReGenerative Renaissance as it happens. Blog posts, social media, newsletters, and the narrative thread that ties everything together.",
     circle: "Communications Circle",
     powers: [
       "Publish to the ReGen Civics blog and social channels",
