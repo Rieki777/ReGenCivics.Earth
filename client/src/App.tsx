@@ -195,6 +195,7 @@ function Router() {
     <Switch>
       <Route path={"/"}><EB><Home /></EB></Route>
       <Route path={"/form"}>{() => { window.location.replace('/connect'); return null; }}</Route>
+      <Route path={"/quest/:slug"}><EB><Quest /></EB></Route>
       <Route path={"/quest"}><EB><Quest /></EB></Route>
       <Route path={"/fund"}><EB><Fund /></EB></Route>
       <Route path={"/land"}><EB><Land /></EB></Route>

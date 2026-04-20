@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, FileDown } from "lucide-react";
+import { QuestTier3Media } from "@/components/QuestTier3Media";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
@@ -549,66 +550,19 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
 
         {/* Content */}
         <div className="p-6 max-h-[50vh] overflow-y-auto">
-          {/* Video Embed for Quest 0 */}
-          {quest.id === "quest-0" && (
+          {/* Video / media hero */}
+          {quest.videoUrl && (
             <div className="mb-6">
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg">
-                <iframe
-                  src="https://www.youtube-nocookie.com/embed/pbhGgg2GZUM"
-                  title="Quest 0: Fire - Introduction Video"
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <p className="text-sm text-center text-gray-500 mt-2">Watch the introduction video to understand this quest</p>
+              <QuestTier3Media
+                questId={parseInt(quest.id.replace('quest-', '').replace('food-foresting', '4')) || 0}
+                slug={quest.id.replace('quest-', '').replace(/^\d+-?/, '') || 'quest'}
+                videoUrl={quest.videoUrl}
+                title={quest.title}
+              />
             </div>
           )}
 
-          {/* Video Embed for Quest 1 - Potions */}
-          {quest.id === "quest-1" && (
-            <div className="mb-6">
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg">
-                <iframe
-                  src="https://www.youtube-nocookie.com/embed/pbhGgg2GZUM?si=A-H9B9lRjX8m_mrg"
-                  title="Quest 1: Potions - Tutorial Video"
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <a 
-                href="https://youtu.be/pbhGgg2GZUM?si=A-H9B9lRjX8m_mrg" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-center text-[#4a7c59] hover:text-[#1a472a] mt-2 block underline"
-              >
-                Watch on YouTube
-              </a>
-            </div>
-          )}
-          {/* Video Embed for Quest 10 - NVC */}
-          {quest.id === "quest-10" && (
-            <div className="mb-6">
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg">
-                <iframe
-                  src="https://www.youtube-nocookie.com/embed/nWb2B2uPfMo"
-                  title="Quest 10: NVC - Introduction Video"
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <a
-                href="https://www.youtube.com/watch?v=nWb2B2uPfMo"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-center text-[#4a7c59] hover:text-[#1a472a] mt-2 block underline"
-              >
-                Watch on YouTube
-              </a>
-            </div>
-          )}
+          {/* Old hardcoded embeds removed. QuestTier3Media above handles all quests with videoUrl. */}
 
           {/* Story card */}
           {quest.storyCard && (
