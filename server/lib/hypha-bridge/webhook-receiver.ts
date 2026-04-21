@@ -11,7 +11,7 @@ import type { Express, Request, Response } from "express";
 import crypto from "crypto";
 import { eq, and, gt } from "drizzle-orm";
 import {
-  getDb,
+  getDb,h
   addTokenLedgerEntry,
   createQuestCompletion,
   createUserNotification,
@@ -110,7 +110,7 @@ async function cascadeQuestPassed(
 
   // 1. Look up user email (required for the ledger entry).
   const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1).catch(() => []);
-  const email: string | undefined = userRows[0]?.email;
+  const email: string | undefined = userRows[0]?.email ?? undefined;
   if (!email) {
     console.warn("[hypha-alchemy] cascadeQuestPassed: user not found", userId);
     return;
