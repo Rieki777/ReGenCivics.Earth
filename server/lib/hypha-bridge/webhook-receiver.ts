@@ -9,10 +9,17 @@
  */
 import type { Express, Request, Response } from "express";
 import crypto from "crypto";
-import { eq, and, isNull, gt } from "drizzle-orm";
-import { getDb } from "../../db";
-import { hyphaBridges } from "../../../drizzle/schema";
+import { eq, and, gt } from "drizzle-orm";
+import {
+  getDb,
+  addTokenLedgerEntry,
+  createQuestCompletion,
+  createUserNotification,
+} from "../../db";
+import { hyphaBridges, users } from "../../../drizzle/schema";
 import { stripTitleMarker } from "./prefill";
+import { checkCitizenshipTiers } from "../../routes/batchJobs";
+import type { QuestBridgeMetadata } from "./types";
 
 const ALCHEMY_SIGNING_KEY = process.env.ALCHEMY_HYPHA_WEBHOOK_SIGNING_KEY ?? "";
 const BASESCAN_TX_BASE = "https://basescan.org/tx/";
@@ -73,6 +80,83 @@ interface AlchemyHyphaEvent {
   blockTimeMs?: number;
 }
 
+/**
+ * Best-effort cascade fired after a quest_completion bridge row moves to "passed".
+ * All failures are caught and logged — never let cascade errors break the webhook 200.
+ */
+async function cascadeQuestPassed(
+  bridgeRow: any,
+  txHash: string | undefined,
+): Promise<void> {
+  if (bridgeRow.source !== "quest_completion") return;
+
+  const db = await getDb();
+  if (!db) {
+    console.warn("[hypha-alchemy] cascadeQuestPassed: no db connection");
+    return;
+  }
+
+  const meta: QuestBridgeMetadata | null = bridgeRow.payload
+    ? (typeof bridgeRow.payload === "string" ? JSON.parse(bridgeRow.payload) : bridgeRow.payload)?.metadata ?? null
+    : null;
+
+  if (!meta?.questId) {
+    console.warn("[hypha-alchemy] cascadeQuestPassed: missing questId in metadata", bridgeRow.bridgeKey);
+    return;
+  }
+
+  const { questId, questTitle, regenReward, deliverableUrl } = meta as QuestBridgeMetadata;
+  const userId: number = bridgeRow.initiatorUserId;
+
+  // 1. Look up user email (required for the ledger entry).
+  const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1).catch(() => []);
+  const email: string | undefined = userRows[0]?.email;
+  if (!email) {
+    console.warn("[hypha-alchemy] cascadeQuestPassed: user not found", userId);
+    return;
+  }
+
+  const txLink = txHash ? `https://basescan.org/tx/${txHash}` : "";
+
+  // 2. Write token ledger entry.
+  await addTokenLedgerEntry({
+    email,
+    userId,
+    amount: regenReward,
+    reason: "quest_completion",
+    questId,
+    notes: `Quest "${questTitle}" approved on Hypha${txLink ? `. Tx: ${txLink}` : ""}`,
+  }).catch((err: any) => console.error("[hypha-alchemy] ledger entry failed", err));
+
+  // 3. Mark quest complete in questCompletions (ignore duplicate).
+  await createQuestCompletion({
+    userId,
+    questId,
+    artifactType: "link",
+    artifactUrl: deliverableUrl,
+    visibility: "public",
+  } as any).catch((err: any) => {
+    if (err?.code !== "ER_DUP_ENTRY") {
+      console.error("[hypha-alchemy] createQuestCompletion failed", err);
+    }
+  });
+
+  // 4. Re-evaluate citizenship tier for this player (full pass; no single-user variant yet).
+  await checkCitizenshipTiers(db).catch((err: any) =>
+    console.error("[hypha-alchemy] checkCitizenshipTiers failed", err),
+  );
+
+  // 5. Notify the player.
+  await createUserNotification({
+    userId,
+    type: "quest_complete",
+    title: "Your proposal was approved!",
+    message: `Your quest "${questTitle}" was approved on Hypha. You earned ${regenReward} $ReGen.${txLink ? ` View on Basescan: ${txLink}` : ""}`,
+  } as any).catch((err: any) => console.error("[hypha-alchemy] notification failed", err));
+
+  console.log(`[hypha-alchemy] cascade complete for bridge ${bridgeRow.bridgeKey} quest ${questId}`);
+}
+
 /** Handle one normalized Hypha event. Idempotent: re-processing the same event
  * should not double-update. */
 export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matched: boolean; bridgeKey?: string }> {
@@ -116,6 +200,22 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
   if (Object.keys(updates).length > 0) {
     await db.update(hyphaBridges).set(updates as any).where(eq(hyphaBridges.bridgeKey, bridgeKey));
   }
+
+  // Fire cascade for quest completions that just passed — best-effort, non-blocking.
+  if (event.type === "ProposalExecuted") {
+    const [bridgeRow] = await db
+      .select()
+      .from(hyphaBridges)
+      .where(eq(hyphaBridges.bridgeKey, bridgeKey))
+      .limit(1)
+      .catch(() => []);
+    if (bridgeRow) {
+      cascadeQuestPassed(bridgeRow, event.txHash).catch((err: any) =>
+        console.error("[hypha-alchemy] cascadeQuestPassed top-level error", err),
+      );
+    }
+  }
+
   return { matched: true, bridgeKey };
 }
 

@@ -311,46 +311,50 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Mission Description - ancient treasure map scroll with ink-reveal text */}
+        {/* Mission Description - ancient treasure map scroll with ink-reveal text.
+             The parchment PNG has true alpha around its torn silhouette, so it
+             sits directly on the page background with no visible rectangle.
+             Size is intentionally large so all text fits inside the map bounds. */}
         <section className="relative py-10 md:py-14">
-          <div className="container max-w-4xl">
+          <div className="container max-w-6xl">
             <AnimatedSection animation="fade-in">
               <div className="text-center flex justify-center">
                 <div
-                  className="relative w-full max-w-3xl"
+                  className="relative w-full max-w-5xl"
                   style={{
                     aspectRatio: "2816 / 1536",
-                    backgroundImage: "url('/images/village-map-scroll.webp?v=2')",
+                    backgroundImage: "url('/images/village-map-scroll.webp?v=3')",
                     backgroundSize: "100% 100%",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
                     filter: "drop-shadow(0 18px 36px rgba(0,0,0,0.55))",
                   }}
                 >
-                  {/* Parchment readability tint, lightens the center so the
-                       ink text reads over the muted map art behind it. The
-                       tint is clipped to the middle region only so the torn
-                       map edges stay visible. */}
+                  {/* Parchment readability tint, clipped to the inner region
+                       (not the full rectangle) so the torn outer edges stay
+                       visible and transparent against the page background. */}
                   <div
                     aria-hidden="true"
                     className="absolute pointer-events-none"
                     style={{
-                      inset: "12% 14%",
+                      inset: "14% 16%",
                       background:
-                        "radial-gradient(ellipse at center, rgba(250, 238, 208, 0.72) 0%, rgba(240, 220, 180, 0.55) 45%, rgba(220, 195, 145, 0.25) 75%, rgba(200, 170, 120, 0) 100%)",
+                        "radial-gradient(ellipse at center, rgba(250, 238, 208, 0.78) 0%, rgba(240, 220, 180, 0.55) 55%, rgba(220, 195, 145, 0.2) 80%, rgba(200, 170, 120, 0) 100%)",
                     }}
                   />
-                  {/* Ink text — each line reveals left-to-right like ink
-                       bleeding across parchment (Marauder's Map style). */}
-                  <div
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
+                  {/* Ink text, centered inside the map's interior. Each block
+                       reveals left-to-right like ink bleeding across parchment
+                       (Marauder's Map style). "Welcome to the Infinite Game"
+                       flows right after the second paragraph at a smaller size
+                       so everything stays on the map. */}
+                  <div className="absolute inset-0 flex items-center justify-center">
                     <div
-                      className="w-full px-[10%] md:px-[14%] space-y-3 md:space-y-4 leading-relaxed text-center text-[clamp(0.75rem,1.9vw,1.25rem)]"
+                      className="w-full px-[9%] md:px-[12%] space-y-2 md:space-y-3 leading-snug text-center"
                       style={{
                         fontFamily:
                           "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
                         color: "#1f1208",
+                        fontSize: "clamp(0.72rem,1.6vw,1.1rem)",
                       }}
                     >
                       <p className="ink-draw" style={{ animationDelay: "0.2s" }}>
@@ -374,20 +378,20 @@ export default function Home() {
                         </span>{" "}
                         that help people heal, and in doing so build new financial,
                         economic, and governance systems that support and network
-                        land projects across our movement.
-                      </p>
-                      <p
-                        className="ink-draw pt-1 md:pt-2 font-bold leading-tight"
-                        style={{
-                          animationDelay: "3.0s",
-                          fontFamily:
-                            "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
-                          letterSpacing: "0.01em",
-                          color: "#120804",
-                          fontSize: "clamp(1.1rem, 3.2vw, 2.25rem)",
-                        }}
-                      >
-                        Welcome to the Infinite Game
+                        land projects across our movement.{" "}
+                        <span
+                          className="ink-draw"
+                          style={{
+                            animationDelay: "2.8s",
+                            display: "inline-block",
+                            color: "#120804",
+                            fontWeight: 700,
+                            letterSpacing: "0.01em",
+                            fontSize: "clamp(0.95rem,2vw,1.4rem)",
+                          }}
+                        >
+                          Welcome to the Infinite Game.
+                        </span>
                       </p>
                     </div>
                   </div>

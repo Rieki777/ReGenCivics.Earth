@@ -82,3 +82,11 @@ export interface CreateBridgeResult {
   bridgeKey: string;
   bridgeUrl: string;
 }
+
+/** Metadata stored in HyphaBridgePayload.metadata for quest_completion bridges. */
+export interface QuestBridgeMetadata {
+  questId: string;
+  questTitle: string;
+  regenReward: number;
+  deliverableUrl: string;
+}

@@ -2836,7 +2836,7 @@ export type GovernanceAgreement = typeof governanceAgreements.$inferSelect;
 export const hyphaBridges = mysqlTable("hyphaBridges", {
   id: int("id").autoincrement().primaryKey(),
   bridgeKey: varchar("bridgeKey", { length: 16 }).notNull().unique(),
-  source: mysqlEnum("source", ["loomio_decision", "crowdpool", "contribution_claim", "fund_grant", "expense", "exit", "redeem_tokens", "other"]).notNull(),
+  source: mysqlEnum("source", ["loomio_decision", "crowdpool", "contribution_claim", "fund_grant", "expense", "exit", "redeem_tokens", "quest_completion", "other"]).notNull(),
   sourceId: varchar("sourceId", { length: 80 }).notNull(),
   targetDhoSlug: varchar("targetDhoSlug", { length: 80 }).notNull(),
   formKind: mysqlEnum("formKind", [

@@ -430,6 +430,462 @@ Restored from git HEAD (a5dfd31) before the icon swap.
   Pre-existing truncation in `mobile/NextQuestCard.tsx` restored
   from git HEAD before editing.
 
+---
+
+## Landing polish pass 2 — 2026-04-19 evening
+
+Ran a second polish pass on the landing page in response to Rye's
+screenshots. Seven items, all CODED.
+
+### K5 — ReGen Civics gradient back to green + gold
+
+**Status:** CODED 2026-04-19
+
+The hero title had collapsed to near-black in Safari because the
+Tailwind `via-40%` + `WebkitTextStroke` combination wasn't compiling
+the colored stops. Replaced with inline `backgroundImage: linear-gradient(...)`
+using brand hexes directly: `#b8f0b8`, `#7dd87d`, `#f7d27a`,
+`#9de89d`, `#4a7c59` on the "ReGen" span; `#ffffff`, `#fff7dc`,
+`#f7d27a` on the "Civics" span. Light green stroke kept at 0.5px /
+25% opacity so it glints against dark backgrounds without turning
+black.
+
+**Evidence.** `client/src/pages/Home.tsx:241-256` contains the new
+gradient stops inline.
+
+---
+
+### K6 — Typewriter reveal for hero subtitle
+
+**Status:** CODED 2026-04-19
+
+The long "venture fund and alliance..." line now types in over
+2.8s with a blinking caret. Keywords keep their color accents (amber
+for fund/alliance, brand green for the land-project phrases). Built
+a new `HeroTypewriter` component that accepts multi-segment arrays
+so per-word className can survive the typing animation. Honors
+`prefers-reduced-motion` by skipping the animation.
+
+**Evidence.**
+- `client/src/components/HeroTypewriter.tsx` (new file, 106 lines)
+- `client/src/index.css` — `@keyframes typewriter-caret-blink` +
+  `.typewriter-caret` class after the shooting-star block
+- `client/src/pages/Home.tsx:33` imports it,
+  `client/src/pages/Home.tsx:266-285` renders it with 9 segments.
+
+---
+
+### K7 — Stronger drop shadows on hero text
+
+**Status:** CODED 2026-04-19
+
+Hero H1 now carries a layered `drop-shadow(0 6px 24px rgba(0,0,0,0.85))`
+plus `drop-shadow(0 2px 6px rgba(0,0,0,0.7))`. Subtitle uses a triple
+`text-shadow` (`0 2px 8px / 0 1px 3px / 0 0 22px` all black at
+descending opacities) so it reads over the brightest parts of the
+cosmos panel.
+
+**Evidence.** `client/src/pages/Home.tsx:234-239` (H1 filter),
+`client/src/pages/Home.tsx:260-264` (subtitle textShadow).
+
+---
+
+### K8 — Ancient tan scroll behind "Welcome to the Infinite Game"
+
+**Status:** CODED 2026-04-19
+
+Replaced the flat text-on-cosmos treatment with a stacked-CSS parchment
+scroll: 3 layers (body + two rolled end-caps), warm gradients
+(`#f0d9a6 → #e8c983 → #decda5 → #e0b86e`), inner shadow for depth,
+outer drop shadow for lift, rolled edges in darker tan
+(`#9b7838 → #e0c58a`) with inset highlight. Text is inked brown
+(`#3a2410`) with a faint ivory highlight so it reads like
+hand-lettered parchment.
+
+**Evidence.** `client/src/pages/Home.tsx` block below the hero H1,
+3 absolute-positioned divs + a relative `<p>` inside a
+`max-w-[92vw]` wrapper.
+
+---
+
+### K9 — Localize comets to the stars panel, leaves to forest
+
+**Status:** CODED 2026-04-19
+
+Added a new `"cosmos-forest"` theme to `PageBackground`. The top 20%
+of the page (stars panel) gets shooting stars / comet streaks via
+`CosmosParticles`. Everything below gets the gentler `ForestParticles`
+(falling leaves). Both are wrapped in overflow-hidden layers so they
+never bleed out of their panel.
+
+**Evidence.** `client/src/components/PageBackground.tsx` —
+`PageTheme` union extended with `"cosmos-forest"`, new
+`CosmosForestParticles` component (2 absolute-positioned layers),
+wired into `ThemeParticles` switch + `ThemedLoadingShimmer`.
+`client/src/pages/Home.tsx:201` sets `theme="cosmos-forest"`.
+
+---
+
+### K10 — Glassy transparent overlay over the whole background
+
+**Status:** CODED 2026-04-19
+
+Added a `glassOverlay` prop to `PageBackground` (boolean or number
+0..1). When truthy, it renders a radial-gradient dark wash between
+the image layer and the per-section overlays so section overlays
+still win where configured. Default opacity `0.22` (center) /
+`0.30` (edges). Home.tsx passes `glassOverlay={0.22}`.
+
+**Evidence.** `client/src/components/PageBackground.tsx:816-832`
+(new glass layer), `client/src/pages/Home.tsx:205`
+(`glassOverlay={0.22}`).
+
+---
+
+### K11 — Ten-panel cohesive landing background (desktop + mobile)
+
+**Status:** CODED 2026-04-20
+
+First attempt was a vertical mirror-stack that doubled the existing
+art. Rye pushed back: that reflected the story rather than extending
+it, and the landing page was supposed to become one cohesive painting
+stretching the full page with more life, more fruit trees, more
+animals, more gardens.
+
+**What shipped.**
+
+1. Measured the live page on production with Playwright at three
+   viewports: desktop 1920 (9117 px), tablet 768 (9691 px), iPhone
+   390 (11545 px). Targets with buffer: desktop 10000 px tall,
+   mobile 11800 px tall.
+
+2. Wrote ten new panel prompts that extend the original six-panel
+   story with four new panels between them, all in the same
+   solarpunk / Studio Ghibli / Rivendell style. Top to bottom:
+
+   1. **Starry Village** — expanded with a gathering bonfire in the
+      village square, circle of people sharing food, musicians,
+      aurora curtains + Milky Way + shooting stars, more treehouses
+      with lit windows, hanging lanterns, people on bridges, cats
+      on rooftops, fireflies.
+   2. **Moonlit forest edge (new)** — night animals: owls, deer
+      drinking at a moonlit pond, a family of foxes, rabbits,
+      bioluminescent mushrooms, glowing night-flowers.
+   3. **Forest Canopy Dawn** — god rays through ancient trunks,
+      rope bridges, songbirds in flight, dawn butterflies.
+   4. **Deep forest with wildlife (new)** — bears with cubs, a red
+      fox, rabbits, songbirds, dragonflies, spirit-trees, berry
+      bushes heavy with fruit.
+   5. **Community Life** — shared meal at a long outdoor table,
+      gardens, potter and weaver at work, children in a stream,
+      fruit trees around the clearing.
+   6. **Orchard abundance (new)** — fruit trees heavy with oranges,
+      mangoes, papayas, pomegranates, peaches, apples, figs; grape
+      vines on trellises; beehives; chickens; goats; a friendly
+      dog; a cat; a wood-fired bread oven.
+   7. **Pollinator meadow (new)** — wooden boardwalks over clear
+      swimming ponds with koi and lily pads, people swimming,
+      wildflowers, hummingbirds, honeybees, butterflies, dragonflies,
+      fruit trees scattered through.
+   8. **Underground soil** — painterly fantasy cross-section, roots
+      descending, earthworms, glowing mushroom colonies, small
+      crystal deposits.
+   9. **Mycelium network** — vast bioluminescent root web, teal and
+      cyan glow, crystal formations, hidden caverns.
+   10. **Roots to Earth** — tendrils fade into the Milky Way, one
+       large painterly Earth at center bottom with soft atmospheric
+       glow, roots gently connecting to its surface.
+
+3. Generated all ten panels via Gemini 3 Pro Image
+   (`gemini-3-pro-image-preview`) at 2K, 3:2 landscape. Each one
+   about 32 seconds, total 330 s.
+
+4. Composited each panel into both a desktop canvas (1920 x 10000,
+   panels 1920 x 1225 with 250 px crossfade seams) and a mobile
+   canvas (768 x 11800, panels 768 x 1450 with 300 px crossfade
+   seams) using a top-to-bottom alpha gradient between every pair
+   so there are no hard seams.
+
+5. Saved both as WebP quality 84. Desktop file 2.3 MB, mobile file
+   1.1 MB.
+
+6. Cache bust bumped `?v=6` to `?v=7` on all four image references
+   in `Home.tsx`.
+
+`community-hero.webp` and `community-hero-mobile.webp` (return-visitor
+experience) were not touched, per Rye's standing instruction.
+
+**Evidence.**
+
+- Generation log (all ten OK):
+  `p01-starry-village (2914KB, 33.9s)`,
+  `p02-moonlit-forest-edge (2944KB, 32.4s)`,
+  `p03-forest-canopy-dawn (3059KB, 31.5s)`,
+  `p04-deep-forest-wildlife (3255KB, 32.7s)`,
+  `p05-community-life (3306KB, 32.2s)`,
+  `p06-orchard-abundance (3238KB, 31.2s)`,
+  `p07-pollinator-meadow (3544KB, 37.3s)`,
+  `p08-underground-soil (3220KB, 32.9s)`,
+  `p09-mycelium-network (2834KB, 33.4s)`,
+  `p10-roots-to-earth (3229KB, 39.7s)`.
+- Palette arc (mean luminance per panel) traces the intended night to
+  dawn to day to underground to cosmic progression: 80, 72, 94, 105,
+  100, 106, 101, 73, 74, 72. Luminance drops exactly where it should.
+- Final composite: `client/public/images/backgrounds/home-desktop.webp`
+  1920 x 10000 (2316 KB), `client/public/images/backgrounds/home-mobile.webp`
+  768 x 11800 (1132 KB).
+- Scripts kept for future regeneration:
+  `/sessions/youthful-brave-bohr/bg_panels/prompts.py` (the ten panel
+  prompts), `generate_panel.py` (thin Gemini 3 Pro Image wrapper
+  because the nano-banana-pro skill script is not present in this
+  sandbox), `generate_all.py` (orchestrator + compositor).
+- `client/src/pages/Home.tsx:188-199` cache bust to `?v=7`.
+
+**Tiny cleanup you do.** Two backup `.orig.webp` files are still in
+`client/public/images/backgrounds/` from the earlier mirror attempt
+because this sandbox cannot delete files. Run locally before
+pushing:
+
+```
+rm client/public/images/backgrounds/home-desktop.orig.webp
+rm client/public/images/backgrounds/home-mobile.orig.webp
+```
+
+They are not referenced anywhere so the build is unaffected, but
+they would otherwise ship as dead bytes.
+
+---
+
+### K11b — Seamless stitch via image-to-image chaining
+
+**Status:** CODED 2026-04-20
+
+After K11 landed, Rye flagged the screenshot: the 250 px alpha
+crossfade was still leaving visible hard seams because each panel
+had its own self-contained composition with its own horizon line,
+so the crossfade was smearing two unrelated paintings instead of
+blending one continuous scene.
+
+**New approach.** Chain each panel off the previous one. Panel 1
+stays as the anchor. For panels 2 through 10, pass the bottom 35 %
+of the previous panel as a reference image to Gemini 3 Pro Image,
+alongside a continuation prompt instructing the model to match the
+top edge pixel-for-pixel, carry forward trees, silhouettes,
+atmosphere, and colors into the top fifth of its output, and only
+then transition into the new scene. Because the top of every
+generated panel now actually echoes the bottom of the one above
+it, the blend zone can shrink from 250 px to 120 px on desktop
+and 300 px to 150 px on mobile, and the crossfade reads as a
+short painterly transition rather than a smear between unrelated
+artworks.
+
+**Scripts.** `/sessions/youthful-brave-bohr/bg_panels/chain_extend.py`
+(regenerates p02 through p10 into `panels_chained/`) and
+`composite_chained.py` (loads from `panels_chained/`, reduced blend
+zones). Both kept for future regen if the story changes.
+
+**Evidence.**
+
+- Chain log (all nine OK, ~5 minutes total): p02 32.7 s, p03 29.9 s,
+  p04 31.9 s, p05 47.9 s, p06 32.7 s, p07 30.7 s, p08 28.9 s,
+  p09 28.9 s, p10 30.6 s.
+- New composites: desktop 1920 x 10120 (1974 KB),
+  mobile 768 x 11850 (970 KB).
+- `client/src/pages/Home.tsx:188-199` cache bust bumped `?v=7` to
+  `?v=8` on all four image references.
+- Seam preview sheet at
+  `/sessions/youthful-brave-bohr/bg_panels/seam_preview.webp`
+  shows the 9 seam regions.
+- Ship gate: `python3 scripts/audit-truncation.py` → scanned 673
+  files, 0 truncated, 0 suspicious.
+
+---
+
+### K11c — Remove per-panel vignette + add cave with water
+
+**Status:** CODED 2026-04-20
+
+Rye flagged that the v8 preview still read as glitchy horizontal
+bands because Gemini was baking a mild dark vignette into the top
+and bottom rows of each chained panel, and the alpha fade was
+smearing vignette against vignette instead of blending scene
+content. Also flagged that the underground section had lost the
+cave + water feature that had been present in an earlier pass.
+
+**Fixes.**
+
+1. Chain prompt strengthened with explicit edge-to-edge painting
+   rules: no dark vignette, no framing bands, bleed content to
+   every edge, assume you are painting the MIDDLE of a larger
+   painting with no self-contained horizon line. Lives in
+   `chain_extend.py::build_chain_prompt`.
+2. Panel 8 prompt extended so the cross-section includes a hidden
+   cave opening on one side: clear underground pool, small
+   waterfall from a rock ledge, glowing mushrooms ringing the
+   banks, salamanders on damp stone, stalactites above, teal
+   reflections. Lives in `prompts.py`.
+3. Composite now trims ~3.5 % off the top and bottom of each
+   interior panel before blending to remove any residual vignette
+   rows (p01's top and p10's bottom are preserved since they are
+   the outer edges of the scroll). Blend zone widened from 120 to
+   200 px desktop, 150 to 250 px mobile. Lives in
+   `composite_chained.py::trim_edges` and the constants block.
+4. Re-chained p02 through p10 against the updated prompts (total
+   ~5 min).
+5. Final composites: desktop 1920 x 9400 (1909 KB), mobile
+   768 x 11550 (939 KB).
+6. Cache bust bumped `?v=8` → `?v=9` on all four refs in
+   `Home.tsx`.
+
+**Evidence.**
+
+- Re-chain log: p02 36.6 s, p03 32.3 s, p04 36.4 s, p05 31.9 s,
+  p06 30.4 s, p07 31.0 s, p08 30.7 s (cave + water in prompt),
+  p09 28.7 s, p10 30.0 s.
+- `ls -la client/public/images/backgrounds/home-*.webp` → desktop
+  1909 KB, mobile 939 KB, both dated 2026-04-20.
+- `python3 scripts/audit-truncation.py` → 673 files scanned, 0
+  truncated, 0 suspicious.
+- Full-composite preview at
+  `/sessions/youthful-brave-bohr/bg_panels/full_preview_desktop.webp`
+  reads as one continuous painting with no visible panel-break
+  bands.
+
+---
+
+### K11d — Clean p3-p4 seam + restrict particle animation ranges
+
+**Status:** CODED 2026-04-20
+
+Rye spotted one remaining visible seam between panel 3 (forest
+canopy dawn) and panel 4 (deep forest wildlife), and asked to
+restrict the animation layers so the comet effect plays only on
+the top panel length and the falling leaves play for 50 % of the
+page below that. Everything below 62 % should have no particles
+so the pollinator meadow, underground soil, mycelium, and roots-
+to-Earth panels stay still and painterly.
+
+**Fixes.**
+
+1. Bumped the chain reference strip from 35 % to 45 % of the
+   previous panel. Re-chained p04 through p10 so the new p04's
+   top carries p03's canopy dawn content forward with more
+   context, softening the transition.
+2. In `client/src/components/PageBackground.tsx` added a new
+   `LeavesOnlyParticles` component (falling leaves only, no
+   fireflies) and rewrote `CosmosForestParticles` so:
+   - `top-0 h-[12%]` wraps `CosmosParticles` (shooting stars +
+     twinkles) over the starry village panel.
+   - `top-[12%] h-[50%]` wraps `LeavesOnlyParticles` over the
+     forest canopy dawn, deep forest, community, and orchard
+     panels.
+   - Below 62 % renders nothing, so pollinator meadow, underground
+     soil, mycelium, and roots-to-Earth stay still.
+3. Cache bust bumped `?v=9` → `?v=10` on all four refs in
+   `Home.tsx`.
+4. Final composites with the re-chained panels: desktop 1920 x
+   9400 (2006 KB), mobile 768 x 11550 (995 KB).
+
+**Evidence.**
+
+- Re-chain log (p04 onward with strip 2528x763 at 45 % frac):
+  p04 35.9 s, p05 32.9 s, p06 32.6 s, p07 33.5 s, p08 30.1 s,
+  p09 32.1 s, p10 45.2 s.
+- `client/src/components/PageBackground.tsx` around line 130
+  (new `LeavesOnlyParticles`) and line 490
+  (`CosmosForestParticles` three-zone layout with h-[12%] +
+  h-[50%]).
+- `client/src/pages/Home.tsx:188-199` cache bust to `?v=10`.
+- Ship gate: `python3 scripts/audit-truncation.py` → scanned 673
+  files, 0 truncated, 0 suspicious.
+- Full-composite preview at
+  `/sessions/youthful-brave-bohr/bg_panels/full_preview_desktop.webp`
+  shows the smoother p3-p4 transition.
+
+---
+
+### K11e — Pivot to 3 tall chapters, only 2 seams
+
+**Status:** CODED 2026-04-20
+
+The 10-panel chain approach kept producing visible seams no matter
+how much the prompt was tightened. Each Gemini panel wanted to be
+its own self-contained landscape, and iterating on prompts only
+regenerated the panels into new compositions with new seam
+problems. Rye flagged that v10 had multiple obvious seams, worse
+than v9.
+
+**New approach.** Generate 3 tall "chapter" images instead of 10
+panels. Each chapter is a single 4K 9:16 portrait image
+(3072 x 5504 source) containing 3-4 scenes vertically. Gemini
+handles continuity INSIDE each chapter because it is painting one
+image. Only 2 seams total between the 3 chapters, both placed at
+natural color-shift points in the story, and both chained off the
+bottom strip of the previous chapter.
+
+- Chapter 1 (night -> dawn): starry village with bonfire
+  gathering, moonlit forest edge with night animals, ancient
+  forest canopy dawn with rope bridges.
+- Chapter 2 (day -> community): deep forest with wildlife and
+  spirit-trees, regenerative community clearing, orchard abundance
+  with beehives and bread oven.
+- Chapter 3 (meadow -> cosmos): pollinator meadow with swimming
+  ponds, underground soil cross-section with cave and pool,
+  mycelium network, Earth from space.
+
+**Files.** `chapter_prompts.py` (3 chapter prompts),
+`generate_chapters.py` (chained generator), `composite_chapters.py`
+(stitcher). The old 10-panel scripts (`prompts.py`,
+`chain_extend.py`, `composite_chained.py`) are kept in place but
+no longer used.
+
+**Evidence.**
+
+- Generation log: ch1 49.9 s, ch2 51.6 s (chained), ch3 56.5 s
+  (chained). 4K 9:16 at 3072 x 5504 each.
+- Final composites: desktop 1920 x 9400 (1738 KB), mobile
+  768 x 11549 (730 KB). Both smaller than v10 despite being
+  higher quality source because the stitched result is cleaner.
+- Seam close-ups at `/sessions/youthful-brave-bohr/bg_panels/seam_ch1_ch2.webp`
+  and `seam_ch2_ch3.webp` show no visible horizontal line.
+- `client/src/pages/Home.tsx:188-199` cache bust to `?v=11`.
+- Ship gate: `python3 scripts/audit-truncation.py` → 673 files
+  scanned, 0 truncated, 0 suspicious.
+
+---
+
+### K12 — package.json tail was truncated
+
+**Status:** CODED 2026-04-19
+
+While running the typecheck I found `package.json` was truncated to
+168 lines ending mid-array at `"core-js",` with no closing braces.
+The HEAD version has 5 more lines closing `onlyBuiltDependencies`,
+`pnpm`, and the root object. Restored the tail inline:
+
+```
+      "esbuild",
+      "sharp",
+      "utf-8-validate"
+    ]
+  }
+}
+```
+
+Verified with `python3 -m json.tool` — parses clean.
+
+**Evidence.** `cat package.json | python3 -m json.tool` exits 0,
+and `npm run check` is restored to the script map.
+
+### Handoff Breakdown
+
+| Item | Who  | What's needed | How you unblock |
+|------|------|---------------|-----------------|
+| K5-K10, K12 | Claude Code | — done, CODED | push + deploy |
+| K11 | Claude Code | — done, CODED | push + deploy |
+| K11 cleanup | Rye | rm 2 `.orig.webp` backups in `client/public/images/backgrounds/` | run the 2 `rm` lines above locally |
+| K5-K12 visual QA | Rye | load `/` on desktop + iPhone, confirm gradient, typewriter, scroll, leaves vs comets, glass wash, no-tile-seam | taste call after Railway deploys |
+
 ### WAITING ON YOU before Claude Code can proceed further
 
 Nothing blocks Claude Code right now. Claude Code will wait for Rye
