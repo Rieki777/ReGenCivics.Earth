@@ -11,7 +11,7 @@ import type { Express, Request, Response } from "express";
 import crypto from "crypto";
 import { eq, and, gt } from "drizzle-orm";
 import {
-  getDb,h
+  getDb,
   addTokenLedgerEntry,
   createQuestCompletion,
   createUserNotification,
