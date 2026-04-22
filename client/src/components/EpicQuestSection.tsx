@@ -122,7 +122,10 @@ const EPIC_UNLOCK_KEY = "epic_unlock_celebrated";
 export function EpicQuestSection() {
   let unlocks: ReturnType<typeof useQuestUnlocks> | null = null;
   try { unlocks = useQuestUnlocks(); } catch { /* outside provider */ }
-  const isLocked = unlocks ? !unlocks.isEpicUnlocked : false;
+  // Default to LOCKED when unlocks is null / still loading. Locked is the
+  // safe default — showing "Unlocked" to a player who hasn't finished the
+  // rites was the root cause of the 2026-04-21 bug report.
+  const isLocked = unlocks?.isEpicUnlocked === true ? false : true;
   const [celebrating, setCelebrating] = useState(false);
 
   // One-time unlock celebration

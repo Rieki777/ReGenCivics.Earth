@@ -3,7 +3,7 @@
  * and bug reports. The form branches on formType ("feature" | "bug").
  */
 import { useState, useMemo } from "react";
-import { ChevronUp, MessageCircle, Plus, X, Send, Lightbulb, CheckCircle2, Hammer, Rocket } from "lucide-react";
+import { ChevronUp, MessageCircle, Plus, X, Send, Lightbulb, CheckCircle2, Hammer, Rocket, Download } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
@@ -63,16 +63,26 @@ export default function FeatureSuggestions() {
             This site belongs to everyone building here. Propose features, report bugs, vote on what matters, and help shape what gets built next.
           </p>
 
-          {isAuthenticated ? (
-            <Button onClick={() => setShowForm(!showForm)} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full">
-              {showForm ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-              {showForm ? "Close" : "Suggest or Report"}
-            </Button>
-          ) : (
-            <a href={getLoginUrl()} className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold">
-              Sign In to Suggest
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {isAuthenticated ? (
+              <Button onClick={() => setShowForm(!showForm)} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full">
+                {showForm ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                {showForm ? "Close" : "Suggest or Report"}
+              </Button>
+            ) : (
+              <a href={getLoginUrl()} className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold">
+                Sign In to Suggest
+              </a>
+            )}
+            <a
+              href="/docs/regencivics-cowork-onboarding.md"
+              download="regencivics-cowork-onboarding.md"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/25 text-white/80 hover:text-white hover:border-white/60 font-medium text-sm transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download Cowork onboarding guide
             </a>
-          )}
+          </div>
         </div>
       </section>
 

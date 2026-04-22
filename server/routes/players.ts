@@ -5,7 +5,7 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql, count } from "drizzle-orm";
-import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores } from "../../drizzle/schema";
+import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions } from "../../drizzle/schema";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 import { invokeLLM } from "../_core/llm";
 
@@ -556,6 +556,152 @@ export const playerProfilesRouter = router({
 
       return normalised;
     }),
+
+  // ─── Vouches ────────────────────────────────────────────────────────────
+  /**
+   * Record a vouch from the caller for another player. Optional note (<=200
+   * chars per the existing column). Upserts so a second call by the same
+   * voucher updates the note rather than erroring on the unique index.
+   */
+  vouchPlayer: protectedProcedure
+    .input(z.object({
+      playerId: z.number().int().positive(),
+      note: z.string().max(200).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.playerId === ctx.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot vouch for yourself." });
+      }
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const existing = await db2
+        .select({ id: vouches.id })
+        .from(vouches)
+        .where(sql`${vouches.voucherId} = ${ctx.user.id} AND ${vouches.vouchedForId} = ${input.playerId}`)
+        .limit(1);
+      if (existing[0]) {
+        await db2.update(vouches)
+          .set({ note: input.note ?? null })
+          .where(eq(vouches.id, existing[0].id));
+        return { success: true, updated: true };
+      }
+      await db2.insert(vouches).values({
+        voucherId: ctx.user.id,
+        vouchedForId: input.playerId,
+        note: input.note ?? null,
+      });
+      return { success: true, updated: false };
+    }),
+
+  /** Public list of vouches for a player, enriched with voucher display name + avatar. */
+  listVouches: publicProcedure
+    .input(z.object({ playerId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      const db2 = await getDb();
+      if (!db2) return [];
+      const rows = await db2
+        .select({
+          id: vouches.id,
+          voucherId: vouches.voucherId,
+          note: vouches.note,
+          vouchedAt: vouches.vouchedAt,
+          voucherName: playerProfiles.displayName,
+          voucherAvatar: playerProfiles.avatarUrl,
+        })
+        .from(vouches)
+        .leftJoin(playerProfiles, eq(vouches.voucherId, playerProfiles.userId))
+        .where(eq(vouches.vouchedForId, input.playerId))
+        .orderBy(sql`${vouches.vouchedAt} DESC`);
+      return rows;
+    }),
+
+  /** Has the caller already vouched for this player? Used to hide the button on re-visit. */
+  hasVouched: protectedProcedure
+    .input(z.object({ playerId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const db2 = await getDb();
+      if (!db2) return false;
+      const rows = await db2
+        .select({ id: vouches.id })
+        .from(vouches)
+        .where(sql`${vouches.voucherId} = ${ctx.user.id} AND ${vouches.vouchedForId} = ${input.playerId}`)
+        .limit(1);
+      return !!rows[0];
+    }),
+
+  // ─── Focus Areas ───────────────────────────────────────────────────────
+  /** Persist the caller's focus-area picks as a JSON-stringified array on playerProfiles.questInterests. */
+  updateFocusAreas: protectedProcedure
+    .input(z.object({ focusAreas: z.array(z.string().max(64)).max(24) }))
+    .mutation(async ({ ctx, input }) => {
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const value = JSON.stringify(input.focusAreas);
+      await db2.execute(sql`
+        UPDATE player_profiles SET questInterests = ${value}
+        WHERE userId = ${ctx.user.id}
+      `);
+      return { success: true };
+    }),
+
+  /** Read the caller's focus areas. Returns an empty array if nothing is saved. */
+  getFocusAreas: protectedProcedure.query(async ({ ctx }) => {
+    const db2 = await getDb();
+    if (!db2) return [];
+    const rows = await db2.execute(sql`
+      SELECT questInterests FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1
+    `);
+    const raw = ((rows as any[])[0] as any[])?.[0]?.questInterests as string | null | undefined;
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
+    } catch {
+      return [];
+    }
+  }),
+
+  // ─── Seasonal Intentions ────────────────────────────────────────────────
+  /** Upsert the caller's intention for a given (season, year). */
+  setIntention: protectedProcedure
+    .input(z.object({
+      season: z.string().min(1).max(20),
+      year: z.number().int().min(2020).max(2100),
+      intention: z.string().min(1).max(300),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const existing = await db2
+        .select({ id: seasonalIntentions.id })
+        .from(seasonalIntentions)
+        .where(sql`${seasonalIntentions.playerId} = ${ctx.user.id} AND ${seasonalIntentions.season} = ${input.season} AND ${seasonalIntentions.year} = ${input.year}`)
+        .limit(1);
+      if (existing[0]) {
+        await db2.update(seasonalIntentions)
+          .set({ intention: input.intention })
+          .where(eq(seasonalIntentions.id, existing[0].id));
+        return { success: true, updated: true };
+      }
+      await db2.insert(seasonalIntentions).values({
+        playerId: ctx.user.id,
+        season: input.season,
+        year: input.year,
+        intention: input.intention,
+      });
+      return { success: true, updated: false };
+    }),
+
+  /** List all of the caller's intentions, newest first. */
+  getIntentions: protectedProcedure.query(async ({ ctx }) => {
+    const db2 = await getDb();
+    if (!db2) return [];
+    return db2
+      .select()
+      .from(seasonalIntentions)
+      .where(eq(seasonalIntentions.playerId, ctx.user.id))
+      .orderBy(sql`${seasonalIntentions.createdAt} DESC`);
+  }),
 });
 
 /** Lightweight quest -> category mapper used until we have a proper join. */

@@ -69,6 +69,7 @@ import { NotificationPreferences } from '@/components/NotificationPreferences';
 import { ProfileEditForm } from '@/components/ProfileEditForm';
 import { TierBadge } from '@/components/game/TierBadge';
 import { CapitalSnapshot } from '@/components/CapitalSnapshot';
+import { FocusAreaPicker } from '@/components/FocusAreaPicker';
 import { SEO } from '@/components/SEO';
 import { SeedOfLifeIcon } from '@/components/SeedOfLifeIcon';
 import { trpc } from '@/lib/trpc';
@@ -597,10 +598,14 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
                   window.location.href = "/quest";
                   return;
                 }
-                // Switch to settings tab then scroll to the edit panel
+                // Switch to settings tab then scroll to the relevant panel.
+                // "Focus areas selected" jumps to the Focus Area Picker anchor;
+                // everything else goes to the top of the settings panel.
                 onGoToSettings?.();
+                const anchorId =
+                  label === "Focus areas selected" ? "focus-areas" : "profile-settings-panel";
                 setTimeout(() => {
-                  const el = document.getElementById("profile-settings-panel");
+                  const el = document.getElementById(anchorId);
                   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                 }, 150);
               }}
@@ -2840,9 +2845,8 @@ export default function PlayerProfile() {
                       <p className="text-sm text-[#7dd87d]/80 italic mt-1">{profile.currentlyWorkingOn}</p>
                     )}
                     {/* TODO: Wire up vouches when API endpoint is available */}
-                    <VouchSection playerId={profile.id} vouches={[]} isOwnProfile={true} />
-                    {/* TODO: Wire up intention persistence when API endpoint is available */}
-                    <SeasonalIntention intention={null} season={getCurrentSeason()} year={new Date().getFullYear()} onSet={() => {}} />
+                    <VouchSection playerId={profile.userId ?? profile.id} isOwnProfile={profile.userId === user?.id} />
+                    <SeasonalIntention season={getCurrentSeason()} year={new Date().getFullYear()} />
                     {/* TODO: Wire up when activity endpoint is available */}
                     <ContributionTimeline data={[]} />
                     <div
@@ -3031,6 +3035,9 @@ export default function PlayerProfile() {
                             </h2>
                             <ProfileEditForm />
                           </div>
+                        </AnimatedSection>
+                        <AnimatedSection animation="slide-up">
+                          <FocusAreaPicker />
                         </AnimatedSection>
                       </>
                     )}

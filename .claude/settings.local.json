@@ -31,7 +31,9 @@
       "Bash(git rm:*)",
       "Bash(npx skills:*)",
       "Bash(ls:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(rm -f ../../../.git/index.lock ../../../.git/HEAD.lock)",
+      "Bash(git -C ../../../ status)"
     ]
   }
 }
