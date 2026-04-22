@@ -13,10 +13,10 @@ export interface Song {
 
 export const PLAYLIST: Song[] = [
   { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land", slug: "wasteland-into-wonderland", artist: "Hymns of the ReGeneration" },
-  { title: "We are the Land", src: "/audio/we-are-the-land.mp3", page: "/community", slug: "we-are-the-land", artist: "ReGen Transition Team" },
+  { title: "We are the Land", src: "/audio/we-are-the-land.mp3", page: "/community", slug: "we-are-the-land", artist: "Hymns of the ReGeneration" },
   { title: "Children of the Earth Tribe", src: "/audio/children-of-the-earth-tribe-hymns-of-the-regeneration.mp3", page: "/local-food", slug: "children-of-the-earth-tribe", artist: "Hymns of the ReGeneration" },
-  { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play", slug: "regen-transition-team", artist: "ReGen Transition Team" },
-  { title: "Better & Better & Better", src: "/audio/better-and-better-v2.mp3", page: "/team", slug: "better-and-better", artist: "Hymns of the ReGeneration" },
+  { title: "Better & Better & Better", src: "/audio/better-and-better-and-better-hymns-of-the-regeneration.mp3", page: "/team", slug: "better-and-better", artist: "Hymns of the ReGeneration" },
+  { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play", slug: "regen-transition-team", artist: "Hymns of the ReGeneration" },
   { title: "Addiction 2 Addition", src: "/audio/addiction-2-addition-hymns-of-the-regeneration.mp3", page: "/game", slug: "addiction-2-addition", artist: "Hymns of the ReGeneration" },
   { title: "Cult to Culture", src: "/audio/cult-to-culture-hymns-of-the-regeneration.mp3", page: "/governance", slug: "cult-to-culture", artist: "Hymns of the ReGeneration" },
 ]
@@ -49,8 +49,8 @@ const PAGE_START_INDEX: Record<string, number> = {
   "/quest": 0,
   "/community": 1,
   "/local-food": 2,
-  "/play": 3,
-  "/team": 4,
+  "/team": 3,
+  "/play": 4,
   "/game": 5,
   "/governance": 6,
   "/economy": 6,
