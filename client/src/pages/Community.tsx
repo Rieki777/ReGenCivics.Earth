@@ -241,7 +241,7 @@ export default function Community() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#f8f5f0]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
       <SEO {...pageSEO.community} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Community", url: "/community" }]} />
       <BannerDisplay bannerKey="community-banner" />
 
@@ -260,7 +260,7 @@ export default function Community() {
           />
         </picture>
         {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/65 via-[#1a472a]/60 to-[#f8f5f0]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/65 via-[#0d2818]/40 to-[#0a1f12]" />
 
         {/* Decorative elements */}
         <div className="absolute top-20 left-4 opacity-20">

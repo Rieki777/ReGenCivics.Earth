@@ -81,6 +81,25 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
     }
   }, [open]);
 
+  // Lock the underlying page scroll while the modal is open so the user
+  // doesn't see a second browser-level scrollbar next to the modal's own
+  // inner scrollbar (the "dual scrollbar" bug). Restore on close.
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+    // Preserve layout width by padding for the scrollbar we're hiding.
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const readiness = readinessQuery.data;
@@ -146,16 +165,22 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-6 md:pt-10 px-4 overflow-y-auto" onClick={handleClose}>
+    <div
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-6 md:pt-10 px-4 overflow-hidden"
+      onClick={handleClose}
+    >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-      {/* Split-screen layout: thread left, form right on desktop */}
+      {/* Split-screen layout: thread left, form right on desktop.
+          max-h is clamped to the viewport on all sizes so the modal
+          never relies on the outer page to provide scroll (which would
+          stack a second scrollbar alongside the panel's own). */}
       <div
-        className="relative bg-[#0d2818] border border-[#7dd87d]/40 rounded-2xl shadow-2xl w-full max-w-5xl mb-12 flex flex-col md:flex-row md:max-h-[85vh]"
+        className="relative bg-[#0d2818] border border-[#7dd87d]/40 rounded-2xl shadow-2xl w-full max-w-5xl mb-6 flex flex-col md:flex-row max-h-[calc(100dvh-3rem)] md:max-h-[85vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left panel: thread preview (desktop only, collapsible on mobile) */}
-        <div className="md:w-[45%] md:border-r border-white/10 md:overflow-y-auto">
+        <div className="md:w-[45%] md:border-r border-white/10 md:overflow-y-auto md:min-h-0 [scrollbar-gutter:stable]">
           {/* Mobile: collapsible header */}
           <button
             type="button"
@@ -206,8 +231,13 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
           </div>
         </div>
 
-        {/* Right panel: promotion form */}
-        <div className="flex-1 flex flex-col md:overflow-y-auto">
+        {/* Right panel: promotion form.
+            No overflow on this container. Scroll lives exactly ONCE on the
+            inner content area below (shrink-0 header, flex-1 overflow-y-auto
+            body, shrink-0 footer). Combined with the parent's overflow-hidden
+            + max-h clamp, this guarantees a single scrollbar inside the modal
+            and no outer page scrollbar alongside it. */}
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-2">
@@ -219,7 +249,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
             </button>
           </div>
 
-          <div className="p-6 space-y-5 flex-1 overflow-y-auto">
+          <div className="p-6 space-y-5 flex-1 overflow-y-auto [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full">
             {/* Readiness check */}
             {readinessQuery.isLoading ? (
               <div className="flex items-center gap-2 text-white/65 text-sm">

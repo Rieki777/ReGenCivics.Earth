@@ -112,51 +112,11 @@ export default function ToolsLibrary() {
             </Button>
           </AnimatedSection>
 
-          {/* Tools we use (external partners) */}
-          <AnimatedSection className="mt-10">
-            <h2 className="text-white text-lg font-bold mb-4 text-left max-w-3xl mx-auto" style={{ fontFamily: "var(--font-display)" }}>
-              Tools we use
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-              {EXTERNAL_TOOLS.map((tool) => (
-                <a
-                  key={tool.slug}
-                  href={tool.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group bg-white/5 hover:bg-white/8 border border-white/10 hover:border-[#7dd87d]/40 rounded-2xl p-5 text-left transition-colors flex gap-4"
-                >
-                  <img
-                    src={tool.logo}
-                    alt={`${tool.name} logo`}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-white/10"
-                    loading="lazy"
-                    onError={(e) => {
-                      const img = e.currentTarget as HTMLImageElement;
-                      const fallback = document.createElement('div');
-                      fallback.className = 'w-12 h-12 rounded-lg flex-shrink-0 bg-[#7dd87d]/20 text-[#7dd87d] font-bold text-lg flex items-center justify-center';
-                      fallback.textContent = (tool.name[0] || '?').toUpperCase();
-                      img.replaceWith(fallback);
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-white font-bold text-base group-hover:text-[#7dd87d] transition-colors">{tool.name}</h3>
-                      <ExternalLink className="w-3 h-3 text-white/65" />
-                    </div>
-                    <p className="text-[#7dd87d]/70 text-xs mb-2">{tool.tagline}</p>
-                    <p className="text-white/60 text-sm leading-relaxed">{tool.description}</p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </AnimatedSection>
-
-          {/* AI Matcher */}
+          {/* AI Matcher — appears right under the button that opens it so the
+              flow stays obvious and doesn't require scrolling past "Tools we
+              use" to find the input. */}
           {showMatcher && (
-            <AnimatedSection className="mt-4 max-w-xl mx-auto">
+            <AnimatedSection className="mt-2 mb-6 max-w-xl mx-auto">
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
                 <p className="text-white/60 text-sm text-left">
                   Describe what you are trying to do or the problem you are facing. We will suggest tools that might help.
@@ -202,6 +162,48 @@ export default function ToolsLibrary() {
               </div>
             </AnimatedSection>
           )}
+
+          {/* Tools we use (external partners) */}
+          <AnimatedSection className="mt-10">
+            <h2 className="text-white text-lg font-bold mb-4 text-left max-w-3xl mx-auto" style={{ fontFamily: "var(--font-display)" }}>
+              Tools we use
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+              {EXTERNAL_TOOLS.map((tool) => (
+                <a
+                  key={tool.slug}
+                  href={tool.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group bg-white/5 hover:bg-white/8 border border-white/10 hover:border-[#7dd87d]/40 rounded-2xl p-5 text-left transition-colors flex gap-4"
+                >
+                  <img
+                    src={tool.logo}
+                    alt={`${tool.name} logo`}
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-white/10"
+                    loading="lazy"
+                    onError={(e) => {
+                      const img = e.currentTarget as HTMLImageElement;
+                      const fallback = document.createElement('div');
+                      fallback.className = 'w-12 h-12 rounded-lg flex-shrink-0 bg-[#7dd87d]/20 text-[#7dd87d] font-bold text-lg flex items-center justify-center';
+                      fallback.textContent = (tool.name[0] || '?').toUpperCase();
+                      img.replaceWith(fallback);
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-white font-bold text-base group-hover:text-[#7dd87d] transition-colors">{tool.name}</h3>
+                      <ExternalLink className="w-3 h-3 text-white/65" />
+                    </div>
+                    <p className="text-[#7dd87d]/70 text-xs mb-2">{tool.tagline}</p>
+                    <p className="text-white/60 text-sm leading-relaxed">{tool.description}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 

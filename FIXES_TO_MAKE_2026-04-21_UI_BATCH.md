@@ -416,7 +416,6 @@ the last line all land the cursor in the editor.
 |---|------|-------------|-----------------|
 | 11 | Upload official ReGen Civics river/bridge/scales graphic | You have the file | Save to `client/public/images/bionomics-hero.webp` and let Claude Code know |
 | All | Pull changes after Claude Code pushes | Cowork agent can't push on your behalf | `git pull --rebase` on Windows |
-| 7, 9 | Run the new migrations after Claude Code writes them | Railway DB is not reachable from the VM | `npx tsx scripts/run-migration.ts drizzle/0120_vouches_table.sql` then `drizzle/0121_season_intentions.sql` |
 
 ### CLAUDE CODE — already done or can be done without you
 
@@ -428,9 +427,9 @@ the last line all land the cursor in the editor.
 | 4 | Comets spawn only from sky | FIXED |
 | 5 | Welcome map crop + narrow text box | FIXED |
 | 6 | Footer Game column condensed to 5 | FIXED |
-| 7 | Vouch for this player button + tRPC + migration | CODED (specced, Claude Code to implement) |
+| 7 | Vouch for this player button + tRPC + migration | CODED (specced, Claude Code to implement + run `scripts/run-migration.ts drizzle/0120_vouches_table.sql`) |
 | 8 | Focus Areas multi-select in Profile settings | CODED (specced) |
-| 9 | Season Intention save + history (server-backed) | CODED (specced) |
+| 9 | Season Intention save + history (server-backed) | CODED (specced, Claude Code to implement + run `scripts/run-migration.ts drizzle/0121_season_intentions.sql`) |
 | 10 | Epic Quests locked-by-default + verify unlock logic | CODED (specced) |
 | 12 | Mobile playlist parity with desktop via SoundPlayer | CODED (specced) |
 | 13 | Cowork onboarding download button + doc | CODED (specced) |
@@ -439,18 +438,4 @@ the last line all land the cursor in the editor.
 
 ### WAITING ON YOU before Claude Code can proceed
 
-- **Fix 11**: blocked on the official ReGen Civics river/bridge/scales image.
-  Drop it in `client/public/images/bionomics-hero.webp` (or paste in chat
-  and Claude Code can save it for you).
-
-### Instruction for Claude Code
-
-Complete Fix 7 through Fix 13 in whatever order makes sense (they're
-independent). At the end, **run the ship gate**:
-
-```bash
-python3 scripts/audit-truncation.py
-pnpm typecheck
-```
-
-…and if both pass, **`git push origin main`**. Rye will `git pull` after.
+- **Fix 11**: blocked on the official ReGen 

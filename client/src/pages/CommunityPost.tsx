@@ -356,9 +356,9 @@ export default function CommunityPost() {
   // Redirect non-authenticated users to the community gate page
   if (postLoading) {
     return (
-      <div className="min-h-screen bg-[#f8f5f0]">
+      <div className="min-h-screen bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 text-[#4a7c59] animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#7dd87d] animate-spin" />
         </div>
       </div>
     );
@@ -366,17 +366,17 @@ export default function CommunityPost() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[#f8f5f0]">
+      <div className="min-h-screen bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-          <MessageCircle className="w-12 h-12 text-[#4a7c59]/30 mb-3" />
-          <h2 className="text-xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <MessageCircle className="w-12 h-12 text-[#7dd87d]/40 mb-3" />
+          <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Thread Not Found
           </h2>
-          <p className="text-[#1a472a]/60 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+          <p className="text-white/65 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
             This discussion thread doesn't exist or has been removed.
           </p>
           <Link href="/community">
-            <Button variant="outline" className="border-[#4a7c59] text-[#4a7c59]">
+            <Button variant="outline" className="border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10">
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to Forum
             </Button>
           </Link>
@@ -390,7 +390,7 @@ export default function CommunityPost() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-[#f8f5f0]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
       <SEO
         title={`${post.title} | ReGen Civics Community`}
         description={post.content?.slice(0, 155) || `A forum post by ${post.authorName} in the ReGen Civics community.`}

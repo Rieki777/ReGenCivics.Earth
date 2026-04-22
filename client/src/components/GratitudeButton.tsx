@@ -5,7 +5,8 @@
  * If the recipient is the current user, the button is hidden.
  * If the user is signed out, the button prompts sign-in.
  */
-import { useState } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { Sparkles, Send, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -24,6 +25,52 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
+
+  // Measure the button on open + on scroll/resize so the portaled panel
+  // follows the button. Rendering the panel in a Portal lets it escape
+  // parent `overflow: hidden` and stacking contexts, which was clipping
+  // the gratitude dialog inside forum reply cards on desktop.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const panelWidth = 288; // w-72 = 18rem = 288px
+      const gap = 8;
+      // Prefer showing the panel above the button; if there's not enough
+      // room, fall back to below.
+      const spaceAbove = rect.top;
+      const showAbove = spaceAbove > 180;
+      const top = showAbove
+        ? rect.top - gap // we'll translate(-100%) on the Y axis in style below
+        : rect.bottom + gap;
+      // Left-align to the button, clamp to viewport with 8px padding.
+      const left = Math.min(
+        Math.max(8, rect.left),
+        window.innerWidth - panelWidth - 8
+      );
+      setPanelPos({ top, left });
+    };
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [open]);
+
+  // Close on Escape.
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [open]);
 
   const sendMutation = trpc.gratitude.send.useMutation({
     onSuccess: () => {
@@ -60,9 +107,82 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
     });
   };
 
+  // The panel: portaled to document.body with fixed positioning so it is
+  // never clipped by a parent's overflow:hidden or stacking context.
+  const panel = open && panelPos && typeof document !== "undefined"
+    ? createPortal(
+        <>
+          {/* Invisible backdrop that catches outside clicks to close the
+              panel. Transparent so the page underneath stays visible. */}
+          <div
+            className="fixed inset-0 z-[9998]"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-label="Send gratitude"
+            className="fixed z-[9999] w-72 bg-[#1a472a] border border-[#7dd87d]/30 rounded-xl shadow-2xl p-3"
+            style={{
+              top: panelPos.top,
+              left: panelPos.left,
+              // When showing above the button we translate up by 100% so
+              // the bottom edge lines up with the stored `top` value.
+              transform:
+                (buttonRef.current?.getBoundingClientRect().top ?? 0) > 180
+                  ? "translateY(-100%)"
+                  : undefined,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-[#7dd87d] font-medium">Send gratitude to @{recipientHandle}</span>
+              <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white" aria-label="Close">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {sent ? (
+              <div className="text-amber-300 text-sm py-3 text-center">
+                <Sparkles className="w-5 h-5 mx-auto mb-1" />
+                Sent!
+              </div>
+            ) : (
+              <>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="What are you grateful for?"
+                  rows={3}
+                  maxLength={500}
+                  autoFocus
+                  className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/55 outline-none focus:border-[#7dd87d]/50 resize-none"
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[10px] text-white/65">{message.length}/500</span>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={message.trim().length < 3 || sendMutation.isPending}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-500/80 hover:bg-amber-500 text-[#1a472a] text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-3 h-3" />
+                    {sendMutation.isPending ? "Sending..." : "Send"}
+                  </button>
+                </div>
+                {sendMutation.error && (
+                  <p className="text-red-400 text-[11px] mt-2">{sendMutation.error.message}</p>
+                )}
+              </>
+            )}
+          </div>
+        </>,
+        document.body
+      )
+    : null;
+
   return (
     <div className="relative inline-block">
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleClick}
         className="group inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-amber-500/90 to-amber-400/90 hover:from-amber-400 hover:to-amber-300 text-[#1a472a] shadow-lg shadow-amber-500/20 hover:shadow-amber-400/40 ring-1 ring-amber-300/40 hover:ring-amber-200 transition-all"
@@ -82,48 +202,7 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
           Sending gratitude is your way of distributing a shared budget to people you think should get it.
         </span>
       </button>
-
-      {open && (
-        <div className="absolute bottom-full left-0 mb-2 z-50 w-72 bg-[#1a472a] border border-[#7dd87d]/30 rounded-xl shadow-2xl p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-[#7dd87d] font-medium">Send gratitude to @{recipientHandle}</span>
-            <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white" aria-label="Close">
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          {sent ? (
-            <div className="text-amber-300 text-sm py-3 text-center">
-              <Sparkles className="w-5 h-5 mx-auto mb-1" />
-              Sent!
-            </div>
-          ) : (
-            <>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="What are you grateful for?"
-                rows={3}
-                maxLength={500}
-                className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/55 outline-none focus:border-[#7dd87d]/50 resize-none"
-              />
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-[10px] text-white/65">{message.length}/500</span>
-                <button
-                  onClick={handleSubmit}
-                  disabled={message.trim().length < 3 || sendMutation.isPending}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-500/80 hover:bg-amber-500 text-[#1a472a] text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-3 h-3" />
-                  {sendMutation.isPending ? "Sending..." : "Send"}
-                </button>
-              </div>
-              {sendMutation.error && (
-                <p className="text-red-400 text-[11px] mt-2">{sendMutation.error.message}</p>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      {panel}
     </div>
   );
 }
