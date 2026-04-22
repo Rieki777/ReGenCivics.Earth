@@ -429,10 +429,10 @@ function CosmosParticles() {
       // roughly in half so the sky mostly twinkles with occasional streaks.
       type: i < 20 ? "twinkle" : "shooting",
       left: Math.random() * 100,
-      // Shooting stars start in the upper 55% of the cosmos container so
-      // their downward streak has room to fade out before the container edge.
-      // Twinkles can be anywhere.
-      top: i < 20 ? Math.random() * 100 : Math.random() * 55,
+      // Shooting stars start in the upper ~27% of the cosmos container so
+      // they visibly originate from the sky, not from the rooftops of the
+      // village panel below. Twinkles can be anywhere.
+      top: i < 20 ? Math.random() * 100 : Math.random() * 27,
       // Delay window widened so fewer comets are spread across more time,
       // which doubles the average gap between visible streaks.
       delay: Math.random() * 30,

@@ -322,8 +322,8 @@ export default function Home() {
                 <div
                   className="relative w-full max-w-5xl"
                   style={{
-                    aspectRatio: "2816 / 1536",
-                    backgroundImage: "url('/images/village-map-scroll.webp?v=3')",
+                    aspectRatio: "2816 / 1352",
+                    backgroundImage: "url('/images/village-map-scroll.webp?v=4')",
                     backgroundSize: "100% 100%",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
@@ -349,7 +349,7 @@ export default function Home() {
                        so everything stays on the map. */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div
-                      className="w-full px-[9%] md:px-[12%] space-y-2 md:space-y-3 leading-snug text-center"
+                      className="w-full px-[17%] md:px-[20%] space-y-2 md:space-y-3 leading-snug text-center"
                       style={{
                         fontFamily:
                           "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",

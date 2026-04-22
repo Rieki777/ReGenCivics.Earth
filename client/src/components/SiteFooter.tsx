@@ -179,33 +179,13 @@ export default function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/game-mechanics" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Game Mechanics
-                </Link>
-              </li>
-              <li>
                 <Link href="/quest" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
                   Start Questing
                 </Link>
               </li>
               <li>
-                <Link href="/crowd-pooling-projects" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Crowd Pool Campaigns
-                </Link>
-              </li>
-              <li>
                 <Link href="/crowd-pooling" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Crowd Pool Calculator
-                </Link>
-              </li>
-              <li>
-                <Link href="/calculator" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Contribution Calculator
-                </Link>
-              </li>
-              <li>
-                <Link href="/governance" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Governance
+                  Crowd Pooling
                 </Link>
               </li>
               <li>
@@ -216,16 +196,6 @@ export default function SiteFooter() {
               <li>
                 <Link href="/bionomics" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
                   Bionomics
-                </Link>
-              </li>
-              <li>
-                <Link href="/tools" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Tools Library
-                </Link>
-              </li>
-              <li>
-                <Link href="/bionomics#local-food-economies" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Local Food Economy
                 </Link>
               </li>
             </ul>
@@ -307,18 +277,6 @@ export default function SiteFooter() {
               </li>
               <li>
                 <PWAInstallButton />
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    const isHigh = document.documentElement.dataset.contrast === "high";
-                    document.documentElement.dataset.contrast = isHigh ? "" : "high";
-                    localStorage.setItem("rc-contrast-mode", isHigh ? "" : "high");
-                  }}
-                  className="text-white/50 hover:text-[#7dd87d] text-xs"
-                >
-                  High contrast
-                </button>
               </li>
             </ul>
           </div>

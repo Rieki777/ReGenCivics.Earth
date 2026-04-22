@@ -73,7 +73,10 @@ export default function BridgeHypha() {
       await markSent.mutateAsync({ bridgeKey });
     } catch { /* non-blocking */ }
     if (redirectQuery.data?.url) {
-      window.location.href = redirectQuery.data.url;
+      // Open Hypha in a new tab so the player can come back to ReGen Civics
+      // without losing their place.
+      window.open(redirectQuery.data.url, "_blank", "noopener,noreferrer");
+      setRedirecting(false);
     }
   };
 
