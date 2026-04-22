@@ -13,9 +13,8 @@
 import { useState } from "react";
 import { useAudio } from "@/contexts/AudioContext";
 import {
-  SkipBack, SkipForward, Play, Pause, Volume2, Music, ListMusic, Plus,
+  SkipBack, SkipForward, Play, Pause, Volume2, Music, ListMusic, Plus, Download,
 } from "lucide-react";
-import { CopyLinkButton } from "@/components/audio/CopyLinkButton";
 
 interface SoundPlayerProps {
   variant?: "desktop" | "mobile";
@@ -59,7 +58,7 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
       </div>
 
       {/* Action buttons row */}
-      <div className={`grid ${isMobile ? "grid-cols-2" : "grid-cols-3"} gap-2 mt-3`}>
+      <div className="grid grid-cols-3 gap-2 mt-3">
         <button
           type="button"
           onClick={() => setShowTrackList((s) => !s)}
@@ -81,8 +80,18 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
           <Plus className="w-3.5 h-3.5" />
           Add song
         </a>
-        {!isMobile && currentSong && (
-          <CopyLinkButton song={currentSong} variant="desktop" />
+        {currentSong && (
+          <a
+            href={currentSong.src}
+            download={`${currentSong.title} - Hymns of the ReGeneration.mp3`}
+            className={`flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg py-2 text-white text-xs font-semibold transition-colors ${
+              isMobile ? "min-h-[44px]" : ""
+            }`}
+            aria-label={`Download ${currentSong.title}`}
+          >
+            <Download className="w-3.5 h-3.5 text-[#7dd87d]" />
+            Download
+          </a>
         )}
       </div>
 

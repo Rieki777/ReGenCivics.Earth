@@ -12,8 +12,9 @@ export interface Song {
 }
 
 export const PLAYLIST: Song[] = [
-  { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land", slug: "wasteland-into-wonderland", artist: "ReGen Transition Team" },
+  { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land", slug: "wasteland-into-wonderland", artist: "Hymns of the ReGeneration" },
   { title: "We are the Land", src: "/audio/we-are-the-land.mp3", page: "/community", slug: "we-are-the-land", artist: "ReGen Transition Team" },
+  { title: "Children of the Earth Tribe", src: "/audio/children-of-the-earth-tribe-hymns-of-the-regeneration.mp3", page: "/local-food", slug: "children-of-the-earth-tribe", artist: "Hymns of the ReGeneration" },
   { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play", slug: "regen-transition-team", artist: "ReGen Transition Team" },
   { title: "Better & Better & Better", src: "/audio/better-and-better-v2.mp3", page: "/team", slug: "better-and-better", artist: "Hymns of the ReGeneration" },
   { title: "Addiction 2 Addition", src: "/audio/addiction-2-addition-hymns-of-the-regeneration.mp3", page: "/game", slug: "addiction-2-addition", artist: "Hymns of the ReGeneration" },
@@ -47,12 +48,13 @@ const PAGE_START_INDEX: Record<string, number> = {
   "/land": 0,
   "/quest": 0,
   "/community": 1,
-  "/play": 2,
-  "/team": 3,
-  "/game": 4,
-  "/governance": 5,
-  "/economy": 5,
-  "/tokenomics": 5,
+  "/local-food": 2,
+  "/play": 3,
+  "/team": 4,
+  "/game": 5,
+  "/governance": 6,
+  "/economy": 6,
+  "/tokenomics": 6,
 }
 
 interface AudioContextValue {
