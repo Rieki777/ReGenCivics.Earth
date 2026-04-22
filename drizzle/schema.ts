@@ -559,8 +559,14 @@ export const playerProfiles = mysqlTable("player_profiles", {
   contributionScoreRaw: int("contributionScoreRaw").default(0),
   currentTier: varchar("currentTier", { length: 50 }).default("Seedling"),
   trustScore: double("trustScore").default(1.0),
+  trustScoreRaw: int("trustScoreRaw").default(0).notNull(),
+  trustLastCalculatedAt: timestamp("trustLastCalculatedAt"),
   scoreLastCalculatedAt: timestamp("scoreLastCalculatedAt"),
   seasonsCompleted: int("seasonsCompleted").default(0),
+
+  // Capital scores cache (9 percentile values 0-100, refreshed nightly)
+  capitalScoresJson: json("capitalScoresJson"),
+  capitalScoresUpdatedAt: timestamp("capitalScoresUpdatedAt"),
 
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -784,6 +790,7 @@ export const playerContributions = mysqlTable("player_contributions", {
     "experiential",
     "material",
     "spiritual",
+    "health",
   ]).notNull(),
 
   // What was contributed

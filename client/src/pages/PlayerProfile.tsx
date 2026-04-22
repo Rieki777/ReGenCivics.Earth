@@ -44,6 +44,7 @@ import {
   Zap,
   Hammer,
   Heart,
+  HeartPulse,
   FolderOpen,
   MapPin,
   Layers,
@@ -67,6 +68,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { NotificationPreferences } from '@/components/NotificationPreferences';
 import { ProfileEditForm } from '@/components/ProfileEditForm';
 import { TierBadge } from '@/components/game/TierBadge';
+import { CapitalSnapshot } from '@/components/CapitalSnapshot';
 import { SEO } from '@/components/SEO';
 import { SeedOfLifeIcon } from '@/components/SeedOfLifeIcon';
 import { trpc } from '@/lib/trpc';
@@ -1628,7 +1630,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
   );
 }
 
-// ─── 8 Forms of Capital ─────────────────────────────────────────────────────
+// ─── 9 Forms of Capital ─────────────────────────────────────────────────────
 const CAPITAL_TYPES = [
   { value: "financial",     label: "Financial",     icon: DollarSign, color: "#d4a574", desc: "Money, investments, grants, loans" },
   { value: "social",        label: "Social",        icon: UsersIcon,  color: "#7dd87d", desc: "Networks, relationships, trust" },
@@ -1638,6 +1640,7 @@ const CAPITAL_TYPES = [
   { value: "experiential",  label: "Experiential",  icon: Zap,        color: "#d4a574", desc: "Skills gained through doing" },
   { value: "material",      label: "Material",      icon: Hammer,     color: "#94a3b8", desc: "Tools, equipment, infrastructure" },
   { value: "spiritual",     label: "Spiritual",     icon: Heart,      color: "#f43f5e", desc: "Vision, meaning, purpose" },
+  { value: "health",        label: "Health",        icon: HeartPulse, color: "#f87171", desc: "Body vitality, wellness, rest" },
 ] as const;
 
 type CapitalType = typeof CAPITAL_TYPES[number]["value"];
@@ -2962,12 +2965,15 @@ export default function PlayerProfile() {
               {activeTab === "contributions" && (
                 <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
                 <AnimatedSection animation="slide-up">
+                  <div className="mb-6">
+                    <CapitalSnapshot userId={profile?.userId ?? undefined} seasonCount={profile?.seasonsCompleted ?? 0} />
+                  </div>
                   <div className="glass-panel p-6 rounded-xl">
                     <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
                       <Leaf className="w-5 h-5 text-[#7dd87d]" /> Contribution Log
                     </h2>
                     <p className="text-white/50 text-sm mb-5">
-                      Record contributions across the 8 forms of capital. Self-reported values can be verified by admins.
+                      Record contributions across the 9 forms of capital. Self-reported values can be verified by admins.
                     </p>
                     <ContributionsTab
                       walletAddress={profile?.walletAddress || profile?.baseAccountName}

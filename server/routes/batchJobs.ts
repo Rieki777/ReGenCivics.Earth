@@ -9,6 +9,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { sql } from "drizzle-orm";
 import { getGameVariable, getGameVariables, getTierFromPercentile, getCurrentSeason } from "../game";
+import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 
 // ─── Step 1: Advance Lunar Cycles ──────────────────────────────────────────
 
@@ -111,12 +112,137 @@ async function recalculateTrustScores(db: any): Promise<number> {
 
     // Clamp trust score between 0.0 and 2.0
     const clamped = Math.max(0, Math.min(2.0, score / 10));
-    await db.execute(sql`
-      UPDATE player_profiles SET trustScore = ${clamped} WHERE userId = ${p.userId}
-    `);
+    const rawInt = Math.round(score);
+    try {
+      await db.execute(sql`
+        UPDATE player_profiles
+        SET trustScore = ${clamped},
+            trustScoreRaw = ${rawInt},
+            trustLastCalculatedAt = NOW()
+        WHERE userId = ${p.userId}
+      `);
+    } catch {
+      // trustScoreRaw / trustLastCalculatedAt columns may be missing pre-migration.
+      // Fall back to the trust-score-only update so the batch still progresses.
+      await db.execute(sql`
+        UPDATE player_profiles SET trustScore = ${clamped} WHERE userId = ${p.userId}
+      `);
+    }
     processed++;
   }
   return processed;
+}
+
+// ─── Step 3b: Recalculate Capital Scores ────────────────────────────────────
+// Percentile ranked per capital across active players. Writes to the cache
+// columns on player_profiles so profile loads can skip the live calc.
+
+async function recalculateCapitalScores(db: any): Promise<number> {
+  // Step 1: Raw totals per user per capital from self-reported contributions.
+  const [contribRows] = await db.execute(sql`
+    SELECT userId, capitalType, COUNT(*) * 10 + FLOOR(COALESCE(SUM(estimatedValue), 0) / 1000) AS pts
+    FROM player_contributions
+    WHERE userId IS NOT NULL
+    GROUP BY userId, capitalType
+  `);
+
+  // Step 2: Raw points per user per capital from quest completions,
+  // mapped through QUEST_CATEGORY_TO_CAPITAL via inferQuestCategory.
+  const [questRows] = await db.execute(sql`
+    SELECT userId, questId, COUNT(*) AS completions
+    FROM quest_completions
+    WHERE userId IS NOT NULL
+    GROUP BY userId, questId
+  `);
+
+  // Assemble rawScores[userId][capital] = points.
+  const rawScores: Record<number, Record<CapitalType, number>> = {};
+  const ensure = (uid: number) => {
+    if (!rawScores[uid]) rawScores[uid] = zeroCapitalScores();
+    return rawScores[uid];
+  };
+  for (const row of (contribRows as any[])) {
+    const capital = row.capitalType as CapitalType;
+    if (!CAPITAL_TYPES.includes(capital)) continue;
+    ensure(row.userId)[capital] += Number(row.pts ?? 0);
+  }
+  for (const row of (questRows as any[])) {
+    const category = inferQuestCategoryForBatch(String(row.questId));
+    const capital = QUEST_CATEGORY_TO_CAPITAL[category];
+    if (!capital) continue;
+    ensure(row.userId)[capital] += Number(row.completions ?? 0) * 5;
+  }
+
+  // Step 3: For each capital, compute the sorted score distribution and percentile rank.
+  const userIds = Object.keys(rawScores).map(Number);
+  if (userIds.length === 0) return 0;
+
+  const seriesByCapital: Record<CapitalType, number[]> = zeroCapitalScores() as any;
+  for (const c of CAPITAL_TYPES) (seriesByCapital as any)[c] = [] as number[];
+  for (const uid of userIds) {
+    for (const c of CAPITAL_TYPES) {
+      (seriesByCapital as any)[c].push(rawScores[uid][c]);
+    }
+  }
+  for (const c of CAPITAL_TYPES) {
+    (seriesByCapital as any)[c].sort((a: number, b: number) => a - b);
+  }
+
+  // Step 4: Write the normalised 0-100 scores to each player's cache.
+  let processed = 0;
+  const now = new Date();
+  for (const uid of userIds) {
+    const normalised: Record<CapitalType, number> = zeroCapitalScores();
+    for (const c of CAPITAL_TYPES) {
+      const myScore = rawScores[uid][c];
+      const series = (seriesByCapital as any)[c] as number[];
+      if (myScore === 0 || series.length === 0) {
+        normalised[c] = 0;
+        continue;
+      }
+      const below = binaryCountLT(series, myScore);
+      normalised[c] = Math.min(100, Math.round((below / series.length) * 100));
+    }
+    try {
+      await db.execute(sql`
+        UPDATE player_profiles
+        SET capitalScoresJson = ${JSON.stringify(normalised)},
+            capitalScoresUpdatedAt = ${now}
+        WHERE userId = ${uid}
+      `);
+      processed++;
+    } catch {
+      // Cache columns missing pre-migration — skip and keep processing.
+    }
+  }
+  return processed;
+}
+
+/** Quest slug -> category mapper, mirrored from players.ts. */
+function inferQuestCategoryForBatch(questId: string): string {
+  const id = questId.toLowerCase();
+  if (id.includes("fire") || id.includes("quest-0")) return "ceremony";
+  if (id.includes("food") || id.includes("soil") || id.includes("land") || id.includes("seed")) return "land-stewardship";
+  if (id.includes("gov") || id.includes("proposal")) return "governance";
+  if (id.includes("event") || id.includes("gather")) return "events";
+  if (id.includes("heal") || id.includes("body") || id.includes("fast")) return "wellness";
+  if (id.includes("story") || id.includes("write") || id.includes("song")) return "storytelling";
+  if (id.includes("circle") || id.includes("community")) return "community-building";
+  if (id.includes("build") || id.includes("tool") || id.includes("infra")) return "infrastructure";
+  if (id.includes("fund") || id.includes("money") || id.includes("crowd")) return "fundraising";
+  return "community-building";
+}
+
+/** Count values in sorted series strictly less than `target`. */
+function binaryCountLT(sorted: number[], target: number): number {
+  let lo = 0;
+  let hi = sorted.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (sorted[mid] < target) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
 }
 
 // ─── Step 4: Citizenship Tier Checks + Grace Period ────────────────────────
@@ -388,6 +514,11 @@ export const batchJobsRouter = router({
       // Step 3: Trust scores
       await recalculateTrustScores(db);
     } catch (e: any) { errors.push(`Step 3 (trust): ${e.message}`); }
+
+    try {
+      // Step 3b: Capital scores cache
+      await recalculateCapitalScores(db);
+    } catch (e: any) { errors.push(`Step 3b (capital): ${e.message}`); }
 
     try {
       // Step 4: Citizenship tiers

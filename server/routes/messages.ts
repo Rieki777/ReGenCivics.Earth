@@ -259,9 +259,10 @@ export const messagesRouter = router({
           });
         }
 
+        // Keep deleted rows in the result so the UI can render a
+        // "[Message deleted]" tombstone with the correct timestamp.
         const conditions = [
           eq(directMessages.conversationId, conversationId),
-          isNull(directMessages.deletedAt),
         ];
 
         if (cursor !== undefined) {
@@ -352,6 +353,79 @@ export const messagesRouter = router({
           .where(eq(directMessages.id, messageId));
 
         return message;
+      }),
+
+    // Soft-delete a message (sender only). The row stays in the table so
+    // the thread still renders in order with a "[Message deleted]" tombstone.
+    delete: protectedProcedure
+      .input(z.object({ messageId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db2 = await getDb();
+        if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const existing = await db2
+          .select({ senderId: directMessages.senderId })
+          .from(directMessages)
+          .where(eq(directMessages.id, input.messageId))
+          .limit(1);
+        if (!existing[0]) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Message not found" });
+        }
+        if (existing[0].senderId !== ctx.user.id) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Only the sender can delete this message" });
+        }
+        await db2
+          .update(directMessages)
+          .set({ deletedAt: new Date() })
+          .where(eq(directMessages.id, input.messageId));
+        return { success: true };
+      }),
+
+    // Search message content across the caller's conversations.
+    search: protectedProcedure
+      .input(z.object({ query: z.string().min(2).max(200) }))
+      .query(async ({ ctx, input }) => {
+        const db2 = await getDb();
+        if (!db2) return [];
+        const myConvIds = await db2
+          .select({ conversationId: conversationParticipants.conversationId })
+          .from(conversationParticipants)
+          .where(eq(conversationParticipants.userId, ctx.user.id));
+        if (myConvIds.length === 0) return [];
+        const convIdList = myConvIds.map((r) => r.conversationId);
+        const likeQuery = `%${input.query}%`;
+        const rows = await db2
+          .select({
+            messageId: directMessages.id,
+            content: directMessages.content,
+            senderId: directMessages.senderId,
+            conversationId: directMessages.conversationId,
+            createdAt: directMessages.createdAt,
+          })
+          .from(directMessages)
+          .where(
+            and(
+              isNull(directMessages.deletedAt),
+              sql`${directMessages.conversationId} IN (${sql.join(convIdList.map((id) => sql`${id}`), sql`, `)})`,
+              sql`${directMessages.content} LIKE ${likeQuery}`,
+            ),
+          )
+          .orderBy(desc(directMessages.createdAt))
+          .limit(20);
+        const senderIds = Array.from(new Set(rows.map((r) => r.senderId)));
+        const senderUsers = senderIds.length
+          ? await db2
+              .select({ id: users.id, name: users.name })
+              .from(users)
+              .where(sql`${users.id} IN (${sql.join(senderIds.map((id) => sql`${id}`), sql`, `)})`)
+          : [];
+        const senderMap = new Map(senderUsers.map((u) => [u.id, u.name ?? ""]));
+        return rows.map((r) => ({
+          messageId: r.messageId,
+          snippet: r.content.length > 100 ? r.content.slice(0, 100) + "..." : r.content,
+          senderName: senderMap.get(r.senderId) ?? "",
+          conversationId: r.conversationId,
+          createdAt: r.createdAt,
+        }));
       }),
   }),
 

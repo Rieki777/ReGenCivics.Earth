@@ -9,6 +9,9 @@ import {
   User,
   X,
   ChevronLeft,
+  Trash2,
+  Search,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +19,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { SEO, pageSEO } from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { resolveAssetUrl } from "@/lib/utils";
-import {
+import React, {
   useState,
   useEffect,
   useRef,
@@ -311,6 +314,34 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
     refetchInterval: 10_000,
   });
 
+  // Search across all conversations the caller participates in.
+  const [rawQuery, setRawQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(rawQuery), 300);
+    return () => clearTimeout(t);
+  }, [rawQuery]);
+  const searchResultsQuery = trpc.messages.messages.search.useQuery(
+    { query: debouncedQuery },
+    { enabled: debouncedQuery.trim().length >= 2 }
+  );
+  const isSearching = debouncedQuery.trim().length >= 2;
+
+  function highlightMatch(text: string, needle: string): React.ReactElement {
+    if (!needle) return <>{text}</>;
+    const lower = text.toLowerCase();
+    const target = needle.toLowerCase();
+    const idx = lower.indexOf(target);
+    if (idx === -1) return <>{text}</>;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <strong className="text-[#1a472a]">{text.slice(idx, idx + needle.length)}</strong>
+        {text.slice(idx + needle.length)}
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -328,58 +359,119 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
         </button>
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto">
-        {isLoading && (
-          <div className="flex flex-col gap-3 p-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 animate-pulse">
-                <div className="w-10 h-10 rounded-full bg-[#1a472a]/10" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-[#1a472a]/10 rounded w-1/2" />
-                  <div className="h-3 bg-[#1a472a]/10 rounded w-3/4" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!isLoading && (!conversations || conversations.length === 0) && (
-          <div className="flex flex-col items-center justify-center h-full px-6 py-16 text-center">
-            <MessageCircle className="w-12 h-12 text-[#7dd87d]/60 mb-4" />
-            <p className="text-[#1a472a]/70 text-sm leading-relaxed">
-              No messages yet. Connect with a fellow regenerator to get started.
-            </p>
-            <Button
-              onClick={onCompose}
-              className="mt-5 bg-[#1a472a] hover:bg-[#1a472a]/90 text-white text-sm"
-            >
-              Start a conversation
-            </Button>
-          </div>
-        )}
-
-        {conversations?.map((conv) => (
-          <ConversationRow
-            key={conv.id}
-            id={conv.id}
-            otherUser={conv.otherUser}
-            lastMessage={
-              conv.lastMessage
-                ? {
-                    content: conv.lastMessage.content,
-                    senderId: conv.lastMessage.senderId,
-                    createdAt: conv.lastMessage.createdAt,
-                  }
-                : null
-            }
-            unreadCount={conv.unreadCount}
-            updatedAt={conv.updatedAt}
-            isSelected={selectedId === conv.id}
-            currentUserId={currentUserId}
-            onClick={() => onSelect(conv.id)}
+      {/* Search */}
+      <div className="px-3 py-2 border-b border-[#1a472a]/10 flex-shrink-0">
+        <div className="relative">
+          <Search className="w-4 h-4 text-[#1a472a]/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Input
+            value={rawQuery}
+            onChange={(e) => setRawQuery(e.target.value)}
+            placeholder="Search messages"
+            className="pl-9 pr-9 bg-[#f0ebe3] border-[#1a472a]/10 text-[#1a472a] placeholder:text-[#1a472a]/40"
           />
-        ))}
+          {rawQuery && (
+            <button
+              onClick={() => setRawQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#1a472a]/40 hover:text-[#1a472a]"
+              aria-label="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* List or Search Results */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Search results mode */}
+        {isSearching && (
+          <>
+            {searchResultsQuery.isLoading && (
+              <div className="p-4 text-center text-[#1a472a]/50 text-sm">Searching…</div>
+            )}
+            {!searchResultsQuery.isLoading && (searchResultsQuery.data?.length ?? 0) === 0 && (
+              <div className="p-6 text-center text-[#1a472a]/50 text-sm">
+                No messages match "{debouncedQuery}".
+              </div>
+            )}
+            {(searchResultsQuery.data ?? []).map((r) => (
+              <button
+                key={r.messageId}
+                onClick={() => {
+                  onSelect(r.conversationId);
+                  setRawQuery("");
+                }}
+                className="w-full text-left px-4 py-3 border-b border-[#1a472a]/5 hover:bg-[#1a472a]/5 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-sm font-medium text-[#1a472a] truncate">
+                    {r.senderName || "Unknown"}
+                  </span>
+                  <span className="text-xs text-[#1a472a]/50 flex-shrink-0">{timeAgo(r.createdAt)}</span>
+                </div>
+                <p className="text-xs text-[#1a472a]/70 line-clamp-2">
+                  {highlightMatch(r.snippet, debouncedQuery)}
+                </p>
+              </button>
+            ))}
+          </>
+        )}
+
+        {/* Normal conversation list */}
+        {!isSearching && (
+          <>
+            {isLoading && (
+              <div className="flex flex-col gap-3 p-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 animate-pulse">
+                    <div className="w-10 h-10 rounded-full bg-[#1a472a]/10" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 bg-[#1a472a]/10 rounded w-1/2" />
+                      <div className="h-3 bg-[#1a472a]/10 rounded w-3/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!isLoading && (!conversations || conversations.length === 0) && (
+              <div className="flex flex-col items-center justify-center h-full px-6 py-16 text-center">
+                <MessageCircle className="w-12 h-12 text-[#7dd87d]/60 mb-4" />
+                <p className="text-[#1a472a]/70 text-sm leading-relaxed">
+                  No messages yet. Connect with a fellow regenerator to get started.
+                </p>
+                <Button
+                  onClick={onCompose}
+                  className="mt-5 bg-[#1a472a] hover:bg-[#1a472a]/90 text-white text-sm"
+                >
+                  Start a conversation
+                </Button>
+              </div>
+            )}
+
+            {conversations?.map((conv) => (
+              <ConversationRow
+                key={conv.id}
+                id={conv.id}
+                otherUser={conv.otherUser}
+                lastMessage={
+                  conv.lastMessage
+                    ? {
+                        content: conv.lastMessage.content,
+                        senderId: conv.lastMessage.senderId,
+                        createdAt: conv.lastMessage.createdAt,
+                      }
+                    : null
+                }
+                unreadCount={conv.unreadCount}
+                updatedAt={conv.updatedAt}
+                isSelected={selectedId === conv.id}
+                currentUserId={currentUserId}
+                onClick={() => onSelect(conv.id)}
+              />
+            ))}
+          </>
+        )}
       </div>
     </div>
   );
@@ -402,6 +494,15 @@ interface MessageItem {
   senderName: string;
   content: string;
   createdAt: string | Date;
+  deletedAt?: string | Date | null;
+}
+
+// Client-side link extraction. No server unfurling.
+const URL_REGEX = /https?:\/\/[^\s<>"]+/g;
+function extractLinks(content: string, max = 3): string[] {
+  const matches = content.match(URL_REGEX);
+  if (!matches) return [];
+  return matches.slice(0, max);
 }
 
 function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobile }: ThreadPanelProps) {
@@ -427,6 +528,13 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
+    },
+  });
+
+  const deleteMessage = trpc.messages.messages.delete.useMutation({
+    onSuccess: () => {
+      utils.messages.messages.list.invalidate({ conversationId });
+      utils.messages.conversations.list.invalidate();
     },
   });
 
@@ -559,6 +667,8 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
 
             {group.msgs.map((msg) => {
               const isSelf = msg.senderId === currentUserId;
+              const isDeleted = !!msg.deletedAt;
+              const links = isDeleted ? [] : extractLinks(msg.content);
               return (
                 <div
                   key={msg.id}
@@ -576,15 +686,64 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                     {!isSelf && (
                       <span className="text-xs text-[#1a472a]/50 mb-1 ml-1">{msg.senderName}</span>
                     )}
-                    <div
-                      className={`px-4 py-2 rounded-2xl text-sm leading-relaxed break-words safe-prose ${
-                        isSelf
-                          ? "bg-[#1a472a] text-white rounded-br-sm"
-                          : "bg-white text-[#1a472a] border border-[#1a472a]/10 rounded-bl-sm"
-                      }`}
-                    >
-                      {msg.content}
+                    <div className="relative group">
+                      <div
+                        className={`px-4 py-2 rounded-2xl text-sm leading-relaxed break-words safe-prose ${
+                          isSelf
+                            ? "bg-[#1a472a] text-white rounded-br-sm"
+                            : "bg-white text-[#1a472a] border border-[#1a472a]/10 rounded-bl-sm"
+                        }`}
+                      >
+                        {isDeleted ? (
+                          <span className={`italic text-sm ${isSelf ? "text-white/40" : "text-[#1a472a]/40"}`}>
+                            [Message deleted]
+                          </span>
+                        ) : (
+                          msg.content
+                        )}
+                      </div>
+                      {isSelf && !isDeleted && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm("Delete this message?")) {
+                              deleteMessage.mutate({ messageId: msg.id });
+                            }
+                          }}
+                          disabled={deleteMessage.isPending}
+                          className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1.5 rounded-full bg-[#f0ebe3] border border-[#1a472a]/20 text-[#1a472a] hover:text-red-600 shadow-sm"
+                          aria-label="Delete message"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
+                    {links.length > 0 && (
+                      <div className={`flex flex-col gap-1.5 mt-2 w-full ${isSelf ? "items-end" : "items-start"}`}>
+                        {links.map((url, i) => {
+                          let hostname = url;
+                          try {
+                            hostname = new URL(url).hostname;
+                          } catch {
+                            /* malformed URL — fall back to raw string */
+                          }
+                          return (
+                            <a
+                              key={`${msg.id}-link-${i}`}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block px-3 py-2 rounded-lg bg-white/60 border border-[#1a472a]/10 hover:bg-white transition-colors max-w-full"
+                            >
+                              <span className="flex items-center gap-1.5 text-[10px] text-[#1a472a]/50 uppercase tracking-wider">
+                                <Link2 className="w-3 h-3" /> {hostname}
+                              </span>
+                              <span className="block text-xs text-[#4a7c59] truncate">{url}</span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
                     <span className="text-[10px] text-[#1a472a]/40 mt-1 mx-1">
                       {formatTime(msg.createdAt)}
                     </span>

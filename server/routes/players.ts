@@ -5,7 +5,8 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql, count } from "drizzle-orm";
-import { playerProfiles, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores } from "../../drizzle/schema";
+import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores } from "../../drizzle/schema";
+import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 import { invokeLLM } from "../_core/llm";
 
 // ─── Player Profiles ──────────────────────────────────────────────────────────
@@ -433,7 +434,144 @@ export const playerProfilesRouter = router({
       }
       return { success: true };
     }),
+
+  /**
+   * Capital scores for a player across the 9 forms of capital.
+   * Values are 0-100 percentiles ranked across the active player base.
+   * Reads from the nightly cache on playerProfiles when fresh (<24h);
+   * otherwise calculates live from playerContributions + questCompletions.
+   */
+  capitalScores: publicProcedure
+    .input(z.object({ userId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const targetUserId = input?.userId ?? ctx.user?.id;
+      if (!targetUserId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "userId required" });
+      }
+
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // 1. Try the cache (skip if columns are missing — graceful pre-migration).
+      try {
+        const cached = await db2
+          .select({
+            scores: playerProfiles.capitalScoresJson,
+            updatedAt: playerProfiles.capitalScoresUpdatedAt,
+          })
+          .from(playerProfiles)
+          .where(eq(playerProfiles.userId, targetUserId))
+          .limit(1);
+        const row = cached[0];
+        if (row?.scores && row.updatedAt) {
+          const ageMs = Date.now() - new Date(row.updatedAt).getTime();
+          if (ageMs < 24 * 60 * 60 * 1000) {
+            return row.scores as Record<CapitalType, number>;
+          }
+        }
+      } catch {
+        // Cache columns not present yet — fall through to live calc.
+      }
+
+      // 2. Live calculation — raw points per capital for this user.
+      const raw = zeroCapitalScores();
+
+      // (a) Self-reported contributions grouped by capitalType.
+      const contribRows = await db2
+        .select({
+          capitalType: playerContributions.capitalType,
+          total: sql<number>`COALESCE(SUM(${playerContributions.estimatedValue}), 0)`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(playerContributions)
+        .where(eq(playerContributions.userId, targetUserId))
+        .groupBy(playerContributions.capitalType);
+      for (const row of contribRows) {
+        const capital = row.capitalType as CapitalType;
+        if (capital in raw) {
+          // Weight: each contribution is worth 10 points + value/1000 as a soft bonus.
+          raw[capital] += Number(row.count) * 10 + Math.floor(Number(row.total) / 1000);
+        }
+      }
+
+      // (b) Quest completions — map the quest ID prefix to a category-based capital.
+      // quest_completions has a string questId; without a quests table join we apply
+      // a light mapping: treat each completion as 5 points in an inferred bucket.
+      const questRows = await db2
+        .select({ questId: questCompletions.questId, count: sql<number>`COUNT(*)` })
+        .from(questCompletions)
+        .where(eq(questCompletions.userId, targetUserId))
+        .groupBy(questCompletions.questId);
+      for (const row of questRows) {
+        const category = inferQuestCategory(row.questId);
+        const capital = QUEST_CATEGORY_TO_CAPITAL[category];
+        if (capital && capital in raw) {
+          raw[capital] += Number(row.count) * 5;
+        }
+      }
+
+      // 3. Normalise to percentile 0-100 across all active players' raw scores.
+      // Pull the raw distribution per capital.
+      const allPlayers = await db2
+        .select({ userId: playerContributions.userId, capitalType: playerContributions.capitalType, count: sql<number>`COUNT(*)` })
+        .from(playerContributions)
+        .groupBy(playerContributions.userId, playerContributions.capitalType);
+      const distribution: Record<CapitalType, number[]> = CAPITAL_TYPES.reduce((acc, c) => {
+        acc[c] = [];
+        return acc;
+      }, {} as Record<CapitalType, number[]>);
+      for (const r of allPlayers) {
+        const capital = r.capitalType as CapitalType;
+        if (capital in distribution) {
+          distribution[capital].push(Number(r.count) * 10);
+        }
+      }
+
+      const normalised: Record<CapitalType, number> = zeroCapitalScores();
+      for (const capital of CAPITAL_TYPES) {
+        const series = distribution[capital];
+        const myScore = raw[capital];
+        if (series.length === 0 || myScore === 0) {
+          normalised[capital] = 0;
+          continue;
+        }
+        const below = series.filter((s) => s < myScore).length;
+        normalised[capital] = Math.min(100, Math.round((below / series.length) * 100));
+      }
+
+      // 4. Side-effect cache for the calling user (self only, never poison another's row).
+      if (ctx.user?.id === targetUserId) {
+        try {
+          await db2
+            .update(playerProfiles)
+            .set({
+              capitalScoresJson: normalised,
+              capitalScoresUpdatedAt: new Date(),
+            })
+            .where(eq(playerProfiles.userId, targetUserId));
+        } catch {
+          // Cache columns not present yet — ignore.
+        }
+      }
+
+      return normalised;
+    }),
 });
+
+/** Lightweight quest -> category mapper used until we have a proper join. */
+function inferQuestCategory(questId: string): string {
+  const id = questId.toLowerCase();
+  if (id.includes("fire") || id.includes("quest-0")) return "ceremony";
+  if (id.includes("food") || id.includes("soil") || id.includes("land") || id.includes("seed")) return "land-stewardship";
+  if (id.includes("gov") || id.includes("proposal")) return "governance";
+  if (id.includes("event") || id.includes("gather")) return "events";
+  if (id.includes("heal") || id.includes("body") || id.includes("fast")) return "wellness";
+  if (id.includes("story") || id.includes("write") || id.includes("song")) return "storytelling";
+  if (id.includes("circle") || id.includes("community")) return "community-building";
+  if (id.includes("build") || id.includes("tool") || id.includes("infra")) return "infrastructure";
+  if (id.includes("fund") || id.includes("money") || id.includes("crowd")) return "fundraising";
+  return "community-building"; // sensible default
+}
 
 // ─── Player Contributions ─────────────────────────────────────────────────────
 export const playerContributionsRouter = router({
@@ -445,7 +583,7 @@ export const playerContributionsRouter = router({
 
   create: protectedProcedure
     .input(z.object({
-      capitalType: z.enum(["financial","social","cultural","living","intellectual","experiential","material","spiritual"]),
+      capitalType: z.enum(["financial","social","cultural","living","intellectual","experiential","material","spiritual","health"]),
       title: z.string().min(1).max(255),
       description: z.string().max(2000).optional(),
       estimatedValue: z.number().int().min(0).optional(),

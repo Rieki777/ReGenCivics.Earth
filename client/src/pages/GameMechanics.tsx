@@ -59,6 +59,7 @@ import {
   Pencil,
   Save,
   X,
+  TreePine,
 } from "lucide-react";
 
 /* ─── HelpTip: small info icon that reveals a plain-language explanation ─
@@ -1955,6 +1956,192 @@ export default function GameMechanics() {
                 }}
               />
             </div>
+            </CollapsibleSection>
+
+            <CollapsibleSection
+              title={
+                <h2
+                  className="text-2xl md:text-3xl font-bold text-white mb-0 flex items-center gap-3"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  <TreePine className="w-6 h-6 text-[#7dd87d]" />
+                  Living Tree
+                </h2>
+              }
+            >
+              <p className="text-white/60 text-sm max-w-3xl mb-6 leading-relaxed">
+                Every player has a Living Tree grown from their contributions. Its trunk, canopy, roots, and
+                seasonal flourishes all read from game data. The tables below show exactly which variable drives
+                which part of the tree, so a proposal to change the art is also a proposal to change the math.
+              </p>
+
+              <div className="grid gap-6 md:grid-cols-2 max-w-5xl">
+                {/* Sub-section 1: Tree Structure (per player) */}
+                <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-white text-base flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#7dd87d]" />
+                      Tree Structure (per player)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <GratVarRow
+                      label="Total contribution score"
+                      value="SUM(points)"
+                      detail="Drives trunk width"
+                      help="Sum of all points in player_contributions for this user. Wider trunk reads as a more prolific player."
+                    />
+                    <GratVarRow
+                      label="Seasons completed"
+                      value="count"
+                      detail="Drives trunk rings"
+                      help="A ring is added each season the player finishes. Old trees show more rings."
+                    />
+                    <GratVarRow
+                      label="Contribution balance ratio"
+                      value="std-dev(9 capitals)"
+                      detail="Broad canopy = balanced, tall = specialized"
+                      help="Low variance across the 9 capital scores draws a broad canopy. High variance draws a taller, narrower tree."
+                    />
+                    <GratVarRow
+                      label="Longevity flag"
+                      value="seasons >= threshold"
+                      detail="Moss, birds, undergrowth appear"
+                      help="When seasons_completed crosses the longevity_threshold variable, ambient decorations appear on the tree."
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Sub-section 2: 9 Root Arteries */}
+                <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-white text-base flex items-center gap-2">
+                      <Network className="w-4 h-4 text-[#7dd87d]" />
+                      9 Root Arteries (from capital scores)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <GratVarRow label="Root 1 — Intellectual" value="intellectual" detail="Knowledge, research, learning" />
+                    <GratVarRow label="Root 2 — Social" value="social" detail="Networks, relationships, trust" />
+                    <GratVarRow label="Root 3 — Material" value="material" detail="Tools, infrastructure, hardware" />
+                    <GratVarRow label="Root 4 — Financial" value="financial" detail="Money, investments, grants" />
+                    <GratVarRow label="Root 5 — Living" value="living" detail="Land, ecosystems, biodiversity" />
+                    <GratVarRow label="Root 6 — Cultural" value="cultural" detail="Art, stories, rituals, values" />
+                    <GratVarRow label="Root 7 — Spiritual" value="spiritual" detail="Vision, meaning, purpose" />
+                    <GratVarRow label="Root 8 — Experiential" value="experiential" detail="Lived experience, craft hours" />
+                    <GratVarRow label="Root 9 — Health" value="health" detail="Body vitality, wellness, rest" />
+                  </CardContent>
+                </Card>
+
+                {/* Sub-section 3: Seasonal Elements */}
+                <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-white text-base flex items-center gap-2">
+                      <Leaf className="w-4 h-4 text-[#7dd87d]" />
+                      Seasonal Elements
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <GratVarRow
+                      label="Flower count"
+                      value="current season actions"
+                      detail="Blooms this lunar cycle"
+                      help="One flower per quest completion, forum post, or contribution logged in the current lunar cycle."
+                    />
+                    <GratVarRow
+                      label="Flower size"
+                      value="flower_scale"
+                      detail="Tunable multiplier (default 1.0)"
+                      help="Multiplies the base flower radius. Scales the visual emphasis without changing the count."
+                    />
+                    <GratVarRow
+                      label="Fruit"
+                      value="points >= fruit_min_points"
+                      detail="Appears only when the threshold is crossed"
+                      help="Fruit represents claim-worthy accumulation. When a player's cycle points pass fruit_min_points, a fruit renders."
+                    />
+                    <GratVarRow
+                      label="Canopy palette"
+                      value="current season"
+                      detail="Rotates spring / summer / fall / winter"
+                      help="Hemisphere-aware. Palette swaps on each equinox / solstice."
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Sub-section 4: Network */}
+                <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-white text-base flex items-center gap-2">
+                      <Network className="w-4 h-4 text-[#7dd87d]" />
+                      Network
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <GratVarRow
+                      label="Mycelium threads"
+                      value="referrals"
+                      detail="Lines connecting your tree to the trees you invited"
+                      help="Each successful referral draws a faint thread between your tree and the referred player's tree on the community map."
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Sub-section 5: Tunable Variables */}
+              <div className="max-w-2xl mx-auto mt-8">
+                <MiniSectionSimulator
+                  sectionTitle="Living Tree"
+                  variables={[
+                    {
+                      key: "living_tree.trunk_max_width",
+                      label: "Trunk max width",
+                      unit: " px",
+                      min: 40,
+                      max: 240,
+                      step: 5,
+                      baseline: 120,
+                      help: "The widest the trunk ever draws, reached at the highest contribution score.",
+                    },
+                    {
+                      key: "living_tree.longevity_threshold",
+                      label: "Longevity threshold",
+                      unit: " seasons",
+                      min: 3,
+                      max: 20,
+                      step: 1,
+                      baseline: 10,
+                      help: "Seasons a player must finish before moss, birds, and undergrowth decorate the tree.",
+                    },
+                    {
+                      key: "living_tree.flower_scale",
+                      label: "Flower scale",
+                      min: 0.5,
+                      max: 2.0,
+                      step: 0.1,
+                      baseline: 1.0,
+                      help: "Multiplier on flower size. 1.0 is the current default.",
+                    },
+                    {
+                      key: "living_tree.fruit_min_points",
+                      label: "Fruit minimum points",
+                      unit: " pts",
+                      min: 10,
+                      max: 200,
+                      step: 5,
+                      baseline: 50,
+                      help: "Minimum cycle points a player needs before a fruit appears on their tree.",
+                    },
+                  ]}
+                  summary={(s) => {
+                    const width = s["living_tree.trunk_max_width"];
+                    const longevity = s["living_tree.longevity_threshold"];
+                    const flower = s["living_tree.flower_scale"];
+                    const fruit = s["living_tree.fruit_min_points"];
+                    return `At these values, a top-tier player caps trunk width at ${width}px, earns ambient decorations after ${longevity} seasons, renders flowers at ${flower.toFixed(1)}x scale, and needs ${fruit} cycle points before a fruit appears.`;
+                  }}
+                />
+              </div>
             </CollapsibleSection>
           </AnimatedSection>
         </section>
