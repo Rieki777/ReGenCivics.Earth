@@ -1871,6 +1871,9 @@ export const questCompletions = mysqlTable("quest_completions", {
   artifactUrl: varchar("artifactUrl", { length: 1000 }),
   artifactText: text("artifactText"),
   caption: varchar("caption", { length: 500 }),
+  // Video-specific metadata (only populated when artifactType = "video")
+  videoThumbnailUrl: varchar("videoThumbnailUrl", { length: 1000 }),
+  videoDurationSeconds: int("videoDurationSeconds"),
   // Visibility: public shows in community feed, private stays in journal
   visibility: mysqlEnum("visibility", ["public", "private"]).default("public").notNull(),
   completedAt: timestamp("completedAt").defaultNow().notNull(),
@@ -1891,10 +1894,34 @@ export const activeQuestSignals = mysqlTable("active_quest_signals", {
   startedAt: timestamp("startedAt").defaultNow().notNull(),
   expiresAt: timestamp("expiresAt").notNull(),               // default: startedAt + 90 days
   isActive: tinyint("isActive").default(1).notNull(),
+  lookingForParty: tinyint("lookingForParty").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ActiveQuestSignal = typeof activeQuestSignals.$inferSelect;
 export type InsertActiveQuestSignal = typeof activeQuestSignals.$inferInsert;
+
+// ─── Player Capital Scores ─────────────────────────────────────────────────────
+// Per-user scores across the nine forms of capital. Quest completions contribute
+// to one or more capitals via the `capitalContributions` field on each quest.
+// The Living Tree visualization reads this row to render the player's tree.
+export const playerCapitalScores = mysqlTable("player_capital_scores", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  intellectual: int("intellectual").default(0).notNull(),
+  social: int("social").default(0).notNull(),
+  material: int("material").default(0).notNull(),
+  financial: int("financial").default(0).notNull(),
+  living: int("living").default(0).notNull(),
+  cultural: int("cultural").default(0).notNull(),
+  spiritual: int("spiritual").default(0).notNull(),
+  experiential: int("experiential").default(0).notNull(),
+  healthVital: int("healthVital").default(0).notNull(),
+  totalScore: int("totalScore").default(0).notNull(),
+  seasonsCompleted: int("seasonsCompleted").default(0).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PlayerCapitalScore = typeof playerCapitalScores.$inferSelect;
+export type InsertPlayerCapitalScore = typeof playerCapitalScores.$inferInsert;
 
 // ─── Entity RSS Feeds ─────────────────────────────────────────────────────────
 // RSS / Atom feeds associated with a land project or organisation.

@@ -6,20 +6,23 @@ interface ParallaxSectionProps {
   children: React.ReactNode;
   className?: string;
   overlay?: string;
+  id?: string;
 }
 
 export function ParallaxSection({
   imageSrc,
   children,
   className = "",
-  overlay
+  overlay,
+  id,
 }: ParallaxSectionProps) {
   const skipAnim = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
 
   return (
-    <section 
+    <section
       ref={sectionRef}
+      id={id}
       className={`relative py-20 overflow-hidden ${className}`}
     >
       {/* Fixed Background with CSS-only parallax - no JavaScript needed */}

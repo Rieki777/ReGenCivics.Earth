@@ -190,7 +190,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
       tabIndex={0}
       aria-expanded={isExpanded}
       aria-label={isExpanded ? `Quest ${quest.id}: ${quest.title} expanded. Tap again to open full quest, press Escape to close.` : `Quest ${quest.id}: ${quest.title}. Tap to see details.`}
-      className={`quest-card relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-lg transition-all ${colorClass} ${shimmerClass} cursor-pointer`}
+      className={`quest-card group relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 ease-out ${colorClass} ${shimmerClass} cursor-pointer`}
       onClick={handleCardClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); }
@@ -200,38 +200,55 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
       {/* ── TIER 1: Netflix poster ── */}
       {!isExpanded && (
         <>
-          <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-[#1a472a]/10 to-[#4a7c59]/10 rounded-t-xl overflow-hidden">
+          <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-[#1a472a]/40 via-[#2d5a3d]/30 to-[#4a7c59]/20 rounded-t-xl overflow-hidden">
             {imgUrl && (
               <img
                 src={imgError ? questImageFallback(quest.id, slug!) : imgUrl}
                 alt={`Quest ${quest.id}: ${quest.title}`}
                 width={640} height={360}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 onError={() => setImgError(true)}
                 loading="lazy" decoding="async"
               />
             )}
+            {/* Play overlay when this quest has a video */}
+            {masterContent?.videoUrl && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-14 h-14 rounded-full bg-black/55 border border-white/40 flex items-center justify-center shadow-lg opacity-80 group-hover:opacity-100 transition-opacity">
+                  <Play className="w-6 h-6 text-white translate-x-0.5" />
+                </div>
+              </div>
+            )}
             {/* Dark gradient for title legibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-            {/* Title overlay */}
-            <h4 className="absolute bottom-3 left-4 right-4 text-white font-semibold text-lg leading-snug line-clamp-2" style={{ fontFamily: 'var(--font-display)' }}>
-              Quest {quest.id}: {quest.title}
-            </h4>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            {/* Title + subtitle + rewards overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1.5">
+              <h4 className="text-white font-semibold text-lg leading-snug line-clamp-2" style={{ fontFamily: 'var(--font-display)' }}>
+                {quest.title}
+              </h4>
+              {quest.subtitle && (
+                <p className="text-white/80 text-sm line-clamp-1">{quest.subtitle}</p>
+              )}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#7dd87d]/30 text-white font-semibold backdrop-blur">+{quest.reward.regen} $ReGen</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/30 text-white font-semibold backdrop-blur">+{quest.reward.rvoice} RGVoice</span>
+                {(activePlayers ?? 0) > 0 && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-semibold backdrop-blur flex items-center gap-1">
+                    <Users className="w-3 h-3" /> {activePlayers}
+                  </span>
+                )}
+              </div>
+            </div>
             {/* Floating chips */}
             <QuestCompletionBadge questId={questId} />
-            {masterContent?.videoUrl && (
-              <span className="absolute top-3 left-3 rounded-full bg-black/60 text-white backdrop-blur px-2 py-0.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1">
-                <Play className="w-3 h-3" />Trailer
-              </span>
-            )}
             {isGreatNow && (
-              <span className="absolute bottom-3 right-3 text-xs bg-[#7dd87d]/20 text-[#7dd87d] px-1.5 py-0.5 rounded-full backdrop-blur">
+              <span className="absolute top-3 right-3 text-[10px] bg-[#7dd87d]/90 text-[#1a472a] px-2 py-0.5 rounded-full font-semibold shadow">
                 Good for right now
               </span>
             )}
           </div>
           {/* Metadata row */}
-          <div className="flex items-center justify-between px-4 py-2 text-xs text-[#1a472a]/60">
+          <div className="flex items-center justify-between px-4 py-3 text-xs text-[#1a472a]/70">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-[#4a7c59]" />
               {masterContent?.timeEstimate || 'Ongoing'}
@@ -257,7 +274,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
             )}
             <div className="min-w-0">
               <h4 className="font-bold text-[#1a472a] text-base leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
-                Quest {quest.id}: {quest.title}
+                {quest.title}
               </h4>
               <p className="text-xs text-[#4a7c59] italic">{quest.subtitle}</p>
               {QUEST_METADATA[questId]?.experience && (
@@ -312,6 +329,20 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
               </Link>
             )}
           </div>
+
+          {/* Start / Toggle active button */}
+          {isAuthenticated && onToggleActive && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleActive(); }}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-colors mb-2 border-2 ${
+                isActive
+                  ? "bg-[#7dd87d]/20 text-[#1a472a] border-[#7dd87d] hover:bg-[#7dd87d]/30"
+                  : "bg-white text-[#1a472a] border-[#4a7c59] hover:bg-[#4a7c59]/10"
+              }`}
+            >
+              {isActive ? (<><Check className="w-4 h-4" /> On This Quest</>) : (<><Sprout className="w-4 h-4" /> Start This Quest</>)}
+            </button>
+          )}
 
           {/* Primary CTA */}
           <button
@@ -447,12 +478,21 @@ const RITES_BY_SEASON_DATA: Record<SeasonKey, typeof questData.spring> = {
   winter: questData.winter,
 };
 
-/** Pre-compute depth quests per season to avoid re-filtering on every render */
+/** Pre-compute depth quests per season to avoid re-filtering on every render.
+ *  "Anytime" quests are round-robin distributed across seasons so every season carousel
+ *  feels full without a dedicated anytime section.
+ */
 const DEPTH_QUESTS_BY_SEASON: Record<string, typeof seasonalQuestsData> = {};
 for (const season of SEASON_ORDER_ALL) {
   DEPTH_QUESTS_BY_SEASON[season] = seasonalQuestsData.filter(sq => sq.season === season);
 }
-DEPTH_QUESTS_BY_SEASON["any"] = seasonalQuestsData.filter(sq => sq.season === "any");
+{
+  const anyQuests = seasonalQuestsData.filter(sq => sq.season === "any");
+  anyQuests.forEach((sq, i) => {
+    const targetSeason = SEASON_ORDER_ALL[i % SEASON_ORDER_ALL.length];
+    DEPTH_QUESTS_BY_SEASON[targetSeason].push(sq);
+  });
+}
 
 // ── Continue Your Journey Banner ────────────────────────────────────────
 function ContinueYourJourneyBanner() {
@@ -523,7 +563,7 @@ type SeasonCarouselProps = {
   openQuestDetails: (id: string) => void;
   hemisphereLoading: boolean;
   currentSeason: string;
-  activeSeasonFilter: SeasonKey | null;
+  activeSeasonFilter: SeasonKey | "routine" | "epic" | null;
   /** Quest activity state */
   activity: {
     counts: Record<string, number>;
@@ -565,7 +605,14 @@ function SeasonCarousels({
     return () => document.removeEventListener('keydown', handler);
   }, [expandedQuestId]);
   const rotated = getRotatedSeasons(currentSeason as SeasonKey);
-  const seasonsToShow = activeSeasonFilter ? [activeSeasonFilter] : rotated;
+  // When Routine or Epic tabs are active, hide seasonal carousels entirely so the
+  // page scrolls to show the dedicated section for that category.
+  const seasonsToShow: SeasonKey[] =
+    activeSeasonFilter === "routine" || activeSeasonFilter === "epic"
+      ? []
+      : activeSeasonFilter
+      ? [activeSeasonFilter]
+      : rotated;
 
   return (
     <>
@@ -626,8 +673,15 @@ function SeasonCarousels({
               {/* Combined carousel: Rites (gold) + Depth quests (green) */}
               <div className="mt-6">
                 <QuestCarousel totalCount={rites.length + depthQuests.length}>
-                  {/* Rites of Passage cards first */}
-                  {rites.filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
+                  {/* Rites of Passage cards first — unlocked shown before locked */}
+                  {[...rites]
+                    .sort((a, b) => {
+                      const aLocked = unlocks ? !unlocks.isQuestUnlocked(`quest-${a.id}`) : false;
+                      const bLocked = unlocks ? !unlocks.isQuestUnlocked(`quest-${b.id}`) : false;
+                      if (aLocked === bLocked) return 0;
+                      return aLocked ? 1 : -1;
+                    })
+                    .filter(quest => shouldShowQuest(`quest-${quest.id}`)).map((quest) => (
                     <div key={quest.id} id={`quest-${quest.id}`} className="relative">
                       {/* Rite number badge */}
                       <div className="absolute top-3 left-3 z-10">
@@ -675,27 +729,6 @@ function SeasonCarousels({
         );
       })}
 
-      {/* Anytime Quests Section */}
-      <ParallaxSection imageSrc="/backgrounds/quest-anytime-baked.webp">
-        <div className="container">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-full bg-[#4a7c59] flex items-center justify-center shadow-lg">
-              <Sparkles className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
-                Anytime Quests
-              </h3>
-              <p className="text-[#7dd87d] font-medium">No season required. Do these whenever you are ready.</p>
-            </div>
-          </div>
-          <QuestCarousel totalCount={seasonalQuestsData.filter(q => q.season === "any").length}>
-            {seasonalQuestsData.filter(q => q.season === "any").map((sq) => (
-              <SeasonalDepthCard key={sq.id} quest={sq} isLocked={unlocks ? !unlocks.isSeasonalPracticeUnlocked : true} />
-            ))}
-          </QuestCarousel>
-        </div>
-      </ParallaxSection>
     </>
   );
 }
@@ -708,7 +741,7 @@ export default function Quest() {
   const [selectedQuest, setSelectedQuest] = useState<string | null>(null);
   const [whyQuestsExpanded, setWhyQuestsExpanded] = useState(false);
   const [showQuestArc, setShowQuestArc] = useState(false);
-  const [activeSeasonFilter, setActiveSeasonFilter] = useState<"spring" | "summer" | "fall" | "winter" | null>(null);
+  const [activeSeasonFilter, setActiveSeasonFilter] = useState<"spring" | "summer" | "fall" | "winter" | "routine" | "epic" | null>(null);
   const { currentSeason, hemisphere, loading: hemisphereLoading } = useHemisphere();
   const { isAuthenticated: user } = useAuth();
   const hasEntered = typeof localStorage !== 'undefined' && localStorage.getItem("regen_game_entered") === "true";
@@ -1249,7 +1282,7 @@ export default function Quest() {
             Each season combines Rites of Passage (gold cards) with seasonal depth quests. Quests can be done at any time and in any order. <strong>A key focus is growing and having fun!</strong>
           </p>
           {/* Season filter tabs */}
-          <div className="flex flex-wrap justify-center gap-2.5 mb-6">
+          <div className="flex flex-wrap justify-center items-center gap-2.5 mb-6">
             {SEASON_ORDER_ALL.map((s) => {
               const active = activeSeasonFilter === s;
               return (
@@ -1267,6 +1300,43 @@ export default function Quest() {
                 </button>
               );
             })}
+            {/* Divider */}
+            <span className="w-px h-8 bg-[#1a472a]/20 mx-1" aria-hidden="true" />
+            {/* Special category tabs */}
+            <button
+              onClick={() => {
+                const next = activeSeasonFilter === "routine" ? null : "routine";
+                setActiveSeasonFilter(next);
+                if (next === "routine") {
+                  setTimeout(() => document.getElementById("routine-quests")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                }
+              }}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all border min-h-[44px] ${
+                activeSeasonFilter === "routine"
+                  ? "bg-[#4a7c59] text-white border-[#4a7c59]"
+                  : "bg-white text-[#4a7c59] border-[#4a7c59]/30 hover:border-[#4a7c59]/60"
+              }`}
+              style={{ fontFamily: 'var(--font-accent)' }}
+            >
+              🔁 Routine
+            </button>
+            <button
+              onClick={() => {
+                const next = activeSeasonFilter === "epic" ? null : "epic";
+                setActiveSeasonFilter(next);
+                if (next === "epic") {
+                  setTimeout(() => document.getElementById("epic-quests")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                }
+              }}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all border min-h-[44px] ${
+                activeSeasonFilter === "epic"
+                  ? "bg-amber-500 text-white border-amber-500"
+                  : "bg-white text-amber-600 border-amber-500/30 hover:border-amber-500/60"
+              }`}
+              style={{ fontFamily: 'var(--font-accent)' }}
+            >
+              ⚔️ Epic
+            </button>
           </div>
           <div className="flex justify-center">
             <QuestFilter activeFilters={filters} onFilterChange={setFilters} />
@@ -1294,6 +1364,7 @@ export default function Quest() {
 
       {/* Routine Quest Section */}
       <ParallaxSection
+        id="routine-quests"
         imageSrc="/backgrounds/quest-anytime-baked.webp"
         className="py-20"
       >

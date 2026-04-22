@@ -111,7 +111,7 @@ export function QuestCarousel({ children, totalCount }: QuestCarouselProps) {
           <div
             key={index}
             data-carousel-item
-            className="snap-start flex-shrink-0 w-[85vw] sm:w-[300px] md:w-[320px] lg:w-[340px]"
+            className="snap-start flex-shrink-0 w-[85vw] sm:w-[340px] md:w-[360px] lg:w-[380px]"
           >
             {child}
           </div>
