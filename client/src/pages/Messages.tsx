@@ -23,6 +23,7 @@ import {
   useCallback,
   KeyboardEvent,
 } from "react";
+import { useSearch } from "wouter";
 
 // ─── Time helpers ────────────────────────────────────────────────────────────
 
@@ -659,6 +660,32 @@ export default function Messages() {
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);
+
+  // Deep-link support: /messages?userId=123 auto-opens or creates a thread
+  // with that user. Used by LookingForParty avatars and MemberDirectory links.
+  const searchString = useSearch();
+  const targetUserId = (() => {
+    const raw = new URLSearchParams(searchString).get("userId");
+    const n = raw ? parseInt(raw, 10) : NaN;
+    return Number.isFinite(n) ? n : null;
+  })();
+  const openFromParam = trpc.messages.conversations.getOrCreate.useMutation({
+    onSuccess: (data) => {
+      setSelectedConversationId(data.conversationId);
+    },
+  });
+  const openedForUserIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!user || targetUserId === null) return;
+    if (openedForUserIdRef.current === targetUserId) return;
+    if (targetUserId === user.id) return; // can't DM yourself
+    openedForUserIdRef.current = targetUserId;
+    openFromParam.mutate({ userId: targetUserId });
+    // clean the query param so refresh doesn't re-trigger
+    const url = new URL(window.location.href);
+    url.searchParams.delete("userId");
+    window.history.replaceState({}, "", url.toString());
+  }, [user, targetUserId, openFromParam]);
 
   // Get conversation list to resolve otherUser details for the thread header
   const { data: conversations } = trpc.messages.conversations.list.useQuery(undefined, {

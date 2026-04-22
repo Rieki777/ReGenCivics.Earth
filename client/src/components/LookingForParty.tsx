@@ -5,9 +5,10 @@
  * lookingForParty flag.
  */
 
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Users, Sparkles } from "lucide-react";
+import { Users, Sparkles, MessageCircle } from "lucide-react";
 
 interface LookingForPartyProps {
   questId: string;
@@ -64,25 +65,30 @@ export function LookingForParty({ questId, isActive }: LookingForPartyProps) {
         </button>
       )}
       {members.length > 0 && (
-        <div className="flex items-center gap-2 text-xs text-[#1a472a]/75">
-          <div className="flex -space-x-2">
-            {members.slice(0, 5).map((m) => (
-              <div
-                key={m.userId}
-                className="w-7 h-7 rounded-full border-2 border-white bg-[#4a7c59] text-white flex items-center justify-center text-[10px] font-bold overflow-hidden"
-                title={m.displayName ?? "Player"}
-              >
-                {m.avatarUrl ? (
-                  <img src={m.avatarUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  (m.displayName ?? "?").charAt(0).toUpperCase()
-                )}
-              </div>
-            ))}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs text-[#1a472a]/75">
+            <div className="flex -space-x-2">
+              {members.slice(0, 5).map((m) => (
+                <Link
+                  key={m.userId}
+                  href={`/messages?userId=${m.userId}`}
+                  className="w-7 h-7 rounded-full border-2 border-white bg-[#4a7c59] text-white flex items-center justify-center text-[10px] font-bold overflow-hidden hover:scale-110 hover:z-10 transition-transform relative"
+                  title={`Message ${m.displayName ?? "player"}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {m.avatarUrl ? (
+                    <img src={m.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (m.displayName ?? "?").charAt(0).toUpperCase()
+                  )}
+                </Link>
+              ))}
+            </div>
+            <span>{members.length} looking for party</span>
           </div>
-          <span>
-            {members.length} looking for party
-          </span>
+          <p className="text-[10px] text-[#4a7c59]/70 italic flex items-center gap-1">
+            <MessageCircle className="w-3 h-3" /> Tap an avatar to message them.
+          </p>
         </div>
       )}
       {members.length === 0 && amLooking && (
