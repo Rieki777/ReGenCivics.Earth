@@ -5,7 +5,7 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql, count } from "drizzle-orm";
-import { playerProfiles, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users } from "../../drizzle/schema";
+import { playerProfiles, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 
 // ─── Player Profiles ──────────────────────────────────────────────────────────
@@ -928,6 +928,180 @@ export const questRouter = router({
             endorsementType: input.endorsementType,
           }))
         );
+      }
+      return { success: true };
+    }),
+
+  // ─── Party Matching ───────────────────────────────────────────────────────
+  // Toggle the "looking for party" flag on the caller's active quest signal.
+  toggleLookingForParty: protectedProcedure
+    .input(z.object({ questId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const existing = await db
+        .select({ id: activeQuestSignals.id, lookingForParty: activeQuestSignals.lookingForParty })
+        .from(activeQuestSignals)
+        .where(sql`${activeQuestSignals.userId} = ${ctx.user.id} AND ${activeQuestSignals.questId} = ${input.questId} AND ${activeQuestSignals.isActive} = 1`)
+        .limit(1);
+      if (!existing[0]) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Start this quest before looking for a party." });
+      }
+      const next = existing[0].lookingForParty === 1 ? 0 : 1;
+      await db.update(activeQuestSignals)
+        .set({ lookingForParty: next })
+        .where(sql`${activeQuestSignals.id} = ${existing[0].id}`);
+      return { lookingForParty: next === 1 };
+    }),
+
+  // Who else on this quest is looking for a party?
+  getPartyMembers: publicProcedure
+    .input(z.object({ questId: z.string() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const rows = await db
+        .select({
+          userId: activeQuestSignals.userId,
+          startedAt: activeQuestSignals.startedAt,
+          displayName: playerProfiles.displayName,
+          avatarUrl: playerProfiles.avatarUrl,
+        })
+        .from(activeQuestSignals)
+        .leftJoin(playerProfiles, eq(activeQuestSignals.userId, playerProfiles.userId))
+        .where(sql`${activeQuestSignals.questId} = ${input.questId} AND ${activeQuestSignals.isActive} = 1 AND ${activeQuestSignals.lookingForParty} = 1`)
+        .limit(20);
+      return rows;
+    }),
+
+  // Count players currently on a single quest (handy for per-card badges).
+  getQuestPlayerCount: publicProcedure
+    .input(z.object({ questId: z.string() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const rows = await db
+        .select({ c: count() })
+        .from(activeQuestSignals)
+        .where(sql`${activeQuestSignals.questId} = ${input.questId} AND ${activeQuestSignals.isActive} = 1`);
+      return Number(rows[0]?.c ?? 0);
+    }),
+
+  // ─── Completion Feed ──────────────────────────────────────────────────────
+  // Public feed of public completions. Supports filtering by questId and
+  // artifactType so the Quest Stories section can show mixed or video-only.
+  getCompletionFeed: publicProcedure
+    .input(z.object({
+      questId: z.string().optional(),
+      artifactType: z.enum(["photo", "text", "link", "video"]).optional(),
+      limit: z.number().int().min(1).max(50).default(20),
+      offset: z.number().int().min(0).default(0),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const conditions: any[] = [sql`${questCompletions.visibility} = 'public'`];
+      if (input.questId) conditions.push(sql`${questCompletions.questId} = ${input.questId}`);
+      if (input.artifactType) conditions.push(sql`${questCompletions.artifactType} = ${input.artifactType}`);
+      const whereExpr = conditions.reduce((acc, c, i) => i === 0 ? c : sql`${acc} AND ${c}`);
+      const rows = await db
+        .select({
+          id: questCompletions.id,
+          questId: questCompletions.questId,
+          questTitle: questCompletions.questTitle,
+          artifactType: questCompletions.artifactType,
+          artifactUrl: questCompletions.artifactUrl,
+          artifactText: questCompletions.artifactText,
+          caption: questCompletions.caption,
+          videoThumbnailUrl: questCompletions.videoThumbnailUrl,
+          videoDurationSeconds: questCompletions.videoDurationSeconds,
+          completedAt: questCompletions.completedAt,
+          userId: questCompletions.userId,
+          displayName: playerProfiles.displayName,
+          avatarUrl: playerProfiles.avatarUrl,
+        })
+        .from(questCompletions)
+        .leftJoin(playerProfiles, eq(questCompletions.userId, playerProfiles.userId))
+        .where(whereExpr)
+        .orderBy(sql`${questCompletions.completedAt} DESC`)
+        .limit(input.limit)
+        .offset(input.offset);
+      return rows;
+    }),
+
+  // ─── Living Tree / Capital Scores ─────────────────────────────────────────
+  // Caller's capital score row. Returns zeros if none exists yet.
+  myCapitalScores: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const rows = await db
+        .select()
+        .from(playerCapitalScores)
+        .where(eq(playerCapitalScores.userId, ctx.user.id))
+        .limit(1);
+      if (rows[0]) return rows[0];
+      return {
+        id: 0,
+        userId: ctx.user.id,
+        intellectual: 0, social: 0, material: 0, financial: 0, living: 0,
+        cultural: 0, spiritual: 0, experiential: 0, healthVital: 0,
+        totalScore: 0, seasonsCompleted: 0, updatedAt: new Date(),
+      };
+    }),
+
+  // Apply a capital contribution (used by quest completion hooks).
+  addCapitalContribution: protectedProcedure
+    .input(z.object({
+      intellectual: z.number().int().default(0),
+      social: z.number().int().default(0),
+      material: z.number().int().default(0),
+      financial: z.number().int().default(0),
+      living: z.number().int().default(0),
+      cultural: z.number().int().default(0),
+      spiritual: z.number().int().default(0),
+      experiential: z.number().int().default(0),
+      healthVital: z.number().int().default(0),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const delta = Object.values(input).reduce((a, b) => a + b, 0);
+      const existing = await db
+        .select({ id: playerCapitalScores.id })
+        .from(playerCapitalScores)
+        .where(eq(playerCapitalScores.userId, ctx.user.id))
+        .limit(1);
+      if (existing[0]) {
+        await db.update(playerCapitalScores)
+          .set({
+            intellectual: sql`${playerCapitalScores.intellectual} + ${input.intellectual}`,
+            social: sql`${playerCapitalScores.social} + ${input.social}`,
+            material: sql`${playerCapitalScores.material} + ${input.material}`,
+            financial: sql`${playerCapitalScores.financial} + ${input.financial}`,
+            living: sql`${playerCapitalScores.living} + ${input.living}`,
+            cultural: sql`${playerCapitalScores.cultural} + ${input.cultural}`,
+            spiritual: sql`${playerCapitalScores.spiritual} + ${input.spiritual}`,
+            experiential: sql`${playerCapitalScores.experiential} + ${input.experiential}`,
+            healthVital: sql`${playerCapitalScores.healthVital} + ${input.healthVital}`,
+            totalScore: sql`${playerCapitalScores.totalScore} + ${delta}`,
+          })
+          .where(eq(playerCapitalScores.userId, ctx.user.id));
+      } else {
+        await db.insert(playerCapitalScores).values({
+          userId: ctx.user.id,
+          intellectual: input.intellectual,
+          social: input.social,
+          material: input.material,
+          financial: input.financial,
+          living: input.living,
+          cultural: input.cultural,
+          spiritual: input.spiritual,
+          experiential: input.experiential,
+          healthVital: input.healthVital,
+          totalScore: delta,
+          seasonsCompleted: 0,
+        });
       }
       return { success: true };
     }),

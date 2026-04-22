@@ -595,6 +595,18 @@
     }
   }
 
+  /* Particle trail border — animates a bright arc around the card edge.
+     Used on rite cards alongside .quest-card-gold. Uses @property angle so
+     the gradient rotation is GPU-interpolated. */
+  @property --quest-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+  @keyframes quest-rotate-border {
+    to { --quest-angle: 360deg; }
+  }
+
   .quest-card-gold {
     position: relative;
     overflow: hidden;

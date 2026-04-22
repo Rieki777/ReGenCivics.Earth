@@ -25,6 +25,10 @@ import { BackButton } from "@/components/BackButton";
 import { QuestCarousel } from "@/components/QuestCarousel";
 import { QuestGameIntro } from "@/components/QuestGameIntro";
 import { EpicQuestSection } from "@/components/EpicQuestSection";
+import { ContinueYourJourneyRow } from "@/components/ContinueYourJourneyRow";
+import { LookingForParty } from "@/components/LookingForParty";
+import { QuestCompletionFeed } from "@/components/QuestCompletionFeed";
+import { LivingTreeCard } from "@/components/LivingTreeCard";
 import { SeasonalDepthCard } from "@/components/SeasonalDepthCard";
 import { QuestArcMap } from "@/components/QuestArcMap";
 import { useHemisphere, setHemisphereOverride } from "@/hooks/useHemisphere";
@@ -317,7 +321,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
           )}
 
           {/* Social proof */}
-          <div className="flex flex-wrap items-center gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-wrap items-center gap-2 mb-3" onClick={(e) => e.stopPropagation()}>
             {(activePlayers ?? 0) > 0 && (
               <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
                 🌿 {activePlayers} in the field
@@ -329,6 +333,9 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
               </Link>
             )}
           </div>
+
+          {/* Party Up */}
+          <LookingForParty questId={questId} isActive={!!isActive} />
 
           {/* Start / Toggle active button */}
           {isAuthenticated && onToggleActive && (
@@ -1266,7 +1273,10 @@ export default function Quest() {
         </div>
       </section>
 
-      {/* Continue Your Journey Banner */}
+      {/* Continue Your Journey - active quests carousel (signed-in only) */}
+      <ContinueYourJourneyRow />
+
+      {/* Continue Your Journey Banner - progress + next-quest prompt */}
       <ContinueYourJourneyBanner />
 
       {/* All Quests by Season - Header */}
@@ -1361,6 +1371,17 @@ export default function Quest() {
           endorsementsMap,
         }}
       />
+
+      {/* Living Tree card - only shows when a filter is not selected */}
+      {!activeSeasonFilter && <LivingTreeCard />}
+
+      {/* Quest Stories - mixed completion feed */}
+      {!activeSeasonFilter && (
+        <QuestCompletionFeed
+          title="Quest Stories"
+          subtitle="What players have been up to — photos, reflections, and video dispatches from the field."
+        />
+      )}
 
       {/* Routine Quest Section */}
       <ParallaxSection
