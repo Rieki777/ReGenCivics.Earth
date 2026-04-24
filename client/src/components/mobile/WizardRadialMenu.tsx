@@ -48,9 +48,16 @@ type Action = {
 
 // Quarter arc from due-left (180deg) to straight-up (90deg) in math degrees,
 // with sin flipped for CSS (positive y goes down).
+//
+// Radius math: 5 buttons on a 90 deg arc means 22.5 deg between neighbours.
+// Chord length between adjacent buttons = 2 * r * sin(11.25 deg).
+// Buttons are 44px wide (w-11), so chord must be >= 44px to avoid overlap.
+// At r = 86 the chord was 33.6px and buttons overlapped by ~10px, which on
+// an iPhone read as a cluster instead of a clean arc. At r = 120 the chord
+// is 46.9px, giving a crisp ~3px gap between neighbours.
 const ARC_START_DEG = 180;
 const ARC_END_DEG = 90;
-const ARC_RADIUS = 86;
+const ARC_RADIUS = 120;
 
 export function WizardRadialMenu() {
   const [open, setOpen] = useState(false);
@@ -158,9 +165,13 @@ export function WizardRadialMenu() {
   ];
 
   return (
+    // MobileTabBar is h-16 (64px) plus env(safe-area-inset-bottom) padding.
+    // FAB bottom needs to clear that stack with real breathing room so the
+    // flower never kisses the tab bar on iPhone. safe-area + 7rem (112px)
+    // gives the FAB bottom ~48px above the tab bar top on any device.
     <div
       className="fixed right-4 z-[60] md:hidden"
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 7rem)" }}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Relative wrapper sized to the trigger. Buttons position absolutely
