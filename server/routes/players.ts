@@ -412,6 +412,174 @@ export const playerProfilesRouter = router({
       return db.getUserTokenLedger(ctx.user.id, input?.limit ?? 50);
     }),
 
+  /**
+   * In-flight claims for the logged-in user. Each row represents one
+   * token's portion of an active claim (Hypha claims pairs together,
+   * but we track each token's leg independently so the on-chain
+   * Transfer event matches one row 1:1). Used by the profile UI to
+   * show "N claiming on Hypha…" alongside the private balance.
+   */
+  myPendingClaims: protectedProcedure.query(async ({ ctx }) => {
+    const drizzleDb = await getDb();
+    if (!drizzleDb) return [];
+    const { hyphaBridges } = await import("../../drizzle/schema");
+    const rows = await drizzleDb
+      .select()
+      .from(hyphaBridges)
+      .where(and(
+        eq(hyphaBridges.initiatorUserId, ctx.user.id),
+        eq(hyphaBridges.source, "redeem_tokens"),
+      ));
+    // Filter to in-flight statuses on the client-friendly side.
+    const IN_FLIGHT = new Set(["created", "handoff_sent", "on_chain_detected"]);
+    return rows
+      .filter((r: any) => IN_FLIGHT.has(r.status))
+      .map((r: any) => {
+        let payload: any = null;
+        try {
+          payload = typeof r.payload === "string" ? JSON.parse(r.payload) : r.payload;
+        } catch { /* ignore */ }
+        return {
+          bridgeKey: r.bridgeKey,
+          status: r.status,
+          tokenType: payload?.metadata?.tokenType ?? null,
+          requestedAmount: payload?.metadata?.requestedAmount ?? 0,
+          pair: payload?.metadata?.pair ?? null,
+          createdAt: r.createdAt,
+        };
+      });
+  }),
+
+  /**
+   * Begin a claim. Pair is "game" (RGVoice + $ReGen) or "fund"
+   * (RCVoice + $RCivics). Hypha claims each pair together; we create
+   * one Hypha bridge row per token in the pair so Alchemy Transfer
+   * events match 1:1 to a bridge row and the cascade can debit the
+   * right private column.
+   *
+   * Returns { hyphaUrl } for the redirect. The bridges land in
+   * status='created'; the Continue button on the bridge page
+   * transitions them to handoff_sent.
+   *
+   * The private ledger is NOT debited here. It is debited only when
+   * the Alchemy webhook confirms an actual on-chain transfer landed
+   * in the user's wallet (cascadeClaimPassed). If the user closes
+   * Hypha mid-flow, the bridges sit in 'created' and a cleanup job
+   * can age them out.
+   */
+  requestClaim: protectedProcedure
+    .input(z.object({ pair: z.enum(["game", "fund"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const drizzleDb = await getDb();
+      if (!drizzleDb) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      }
+
+      // Wallet check.
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      const wallet = (profile?.walletAddress || profile?.baseAccountName || (ctx.user as any).baseWalletAddress) as string | undefined;
+      if (!wallet || !wallet.startsWith("0x")) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Link a Base wallet on your profile before claiming." });
+      }
+
+      // Pair → token list
+      const pairTokens: { tokenType: "rgvoice" | "regen" | "rcvoice" | "rcivics"; balance: number }[] =
+        input.pair === "game"
+          ? [
+              { tokenType: "rgvoice", balance: (profile as any)?.rgvoicePrivate ?? 0 },
+              { tokenType: "regen",   balance: (profile as any)?.regenPrivate   ?? 0 },
+            ]
+          : [
+              { tokenType: "rcvoice", balance: (profile as any)?.rcvoicePrivate ?? 0 },
+              { tokenType: "rcivics", balance: (profile as any)?.rcivicsPrivate ?? 0 },
+            ];
+
+      // Threshold check per token.
+      const thresholdKey = (t: string) => `governance.claim_threshold_${t}`;
+      const thresholds = await Promise.all(
+        pairTokens.map(async (t) => {
+          const rows = await drizzleDb.execute(sql`SELECT value FROM game_variables WHERE \`key\` = ${thresholdKey(t.tokenType)} LIMIT 1`).then((r: any) => r[0] ?? []);
+          return Number(rows[0]?.value ?? (t.tokenType === "regen" || t.tokenType === "rcivics" ? 1000 : 20));
+        }),
+      );
+      pairTokens.forEach((t, i) => {
+        if (t.balance < thresholds[i]) {
+          throw new TRPCError({
+            code: "FAILED_PRECONDITION",
+            message: `${t.tokenType} balance ${t.balance} is below claim threshold ${thresholds[i]}.`,
+          });
+        }
+      });
+
+      // Build a bridge per token. Both bridges share a parentClaimId
+      // tag in metadata so the UI can group them.
+      const { TOKEN_CONTRACTS } = await import("../blockchain");
+      const { createHyphaBridge } = await import("../lib/hypha-bridge");
+      const parentClaimId = `claim:${ctx.user.id}:${input.pair}:${Date.now()}`;
+      const dhoSlug = input.pair === "game" ? "regen-games" : "regen-civics";
+
+      const created: { tokenType: string; bridgeKey: string }[] = [];
+      let primaryBridgeKey: string | null = null;
+
+      for (const t of pairTokens) {
+        const tokenInfo = TOKEN_CONTRACTS[t.tokenType];
+        if (!tokenInfo) {
+          // Token contract not configured (e.g., RCVoice). Skip this leg
+          // gracefully so the rest of the pair can still claim.
+          console.warn(`[requestClaim] no contract for ${t.tokenType}, skipping`);
+          continue;
+        }
+        const bridgeResult = await createHyphaBridge({
+          source: "redeem_tokens",
+          sourceId: parentClaimId,
+          targetDhoSlug: dhoSlug,
+          formKind: "redeem_tokens",
+          title: `Redeem ${t.balance} ${tokenInfo.symbol}`,
+          description: `Redeem accumulated ${tokenInfo.symbol} from the ReGen Civics private ledger to the Base blockchain.`,
+          recipient: wallet as `0x${string}`,
+          payouts: [{ token: tokenInfo.contract as `0x${string}`, amount: String(t.balance) }],
+          initiatorUserId: ctx.user.id,
+          metadata: {
+            tokenType: t.tokenType,
+            requestedAmount: t.balance,
+            pair: input.pair,
+            parentClaimId,
+          },
+        });
+        // Pre-populate the recipient + token + amount so fuzzy matching
+        // by Alchemy webhook works against this bridge row before any
+        // event arrives.
+        const { hyphaBridges } = await import("../../drizzle/schema");
+        await drizzleDb
+          .update(hyphaBridges)
+          .set({
+            hyphaRecipientWallet: wallet,
+            hyphaTokenSymbol: tokenInfo.symbol,
+            hyphaTokenAmount: t.balance,
+          } as any)
+          .where(eq(hyphaBridges.bridgeKey, bridgeResult.bridgeKey));
+        created.push({ tokenType: t.tokenType, bridgeKey: bridgeResult.bridgeKey });
+        if (!primaryBridgeKey) primaryBridgeKey = bridgeResult.bridgeKey;
+      }
+
+      if (!primaryBridgeKey) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not create any claim bridges." });
+      }
+
+      // Build the Hypha redirect URL from the first bridge so the user
+      // lands on the redeem-tokens form pre-filled. The UI opens this
+      // in a new tab.
+      const { getBridge, buildHyphaTargetUrl } = await import("../lib/hypha-bridge");
+      const primary = await getBridge(primaryBridgeKey);
+      const hyphaUrl = primary ? buildHyphaTargetUrl(primary as any) : null;
+
+      return {
+        parentClaimId,
+        bridges: created,
+        hyphaUrl,
+      };
+    }),
+
   // Admin: Unverify a player profile
   unverify: adminProcedure
     .input(z.object({ profileId: z.number() }))

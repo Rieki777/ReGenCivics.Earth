@@ -13,7 +13,8 @@
  * not just this token's individual balance, and its label names both
  * tokens in the pair so players know what they're claiming.
  */
-import { ExternalLink, Sparkles, Lock } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, Sparkles, Lock, Loader2, Hourglass } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -75,15 +76,20 @@ export function TokenDetailDialog({
   publicBalance,
   privateBalance,
 }: Props) {
-  // Fetch ledger + claim eligibility together. Both are scoped to the
-  // signed-in user; claim eligibility tells us whether this token's
-  // pair partner is also above threshold (Hypha claims RGVoice+$ReGen
+  // Fetch ledger + claim eligibility + pending claims. All scoped to
+  // the signed-in user. Eligibility tells us whether this token's pair
+  // partner is also above threshold (Hypha claims RGVoice+$ReGen
   // together, RCVoice+$RCivics together).
-  const ledger = trpc.playerProfiles.myTokenLedger.useQuery(
-    { limit: 100 },
-    { enabled: open },
-  );
+  const utils = trpc.useUtils();
+  const ledger = trpc.playerProfiles.myTokenLedger.useQuery({ limit: 100 }, { enabled: open });
   const claim = trpc.governance.getClaimEligibility.useQuery(undefined, { enabled: open });
+  const pending = trpc.playerProfiles.myPendingClaims.useQuery(undefined, {
+    enabled: open,
+    refetchInterval: 15_000, // poll while open so the indicator clears once the chain confirms
+  });
+  const requestClaim = trpc.playerProfiles.requestClaim.useMutation();
+  const [claimError, setClaimError] = useState<string | null>(null);
+
   const rows = (ledger.data ?? []).filter((e: any) => e.tokenType === tokenKey);
   const total = publicBalance + privateBalance;
 
@@ -96,6 +102,28 @@ export function TokenDetailDialog({
   const myThreshold = claim.data?.byToken?.[tokenKey]?.threshold ?? 0;
   const myBalance = claim.data?.byToken?.[tokenKey]?.balance ?? privateBalance;
   const amountBelow = Math.max(0, myThreshold - myBalance);
+
+  // In-flight claims for THIS token. Each pending bridge represents
+  // one token leg that's been requested but not yet confirmed on-chain.
+  const inFlightForThisToken = (pending.data ?? []).filter((p: any) => p.tokenType === tokenKey);
+  const inFlightAmount = inFlightForThisToken.reduce((s: number, p: any) => s + (p.requestedAmount ?? 0), 0);
+  const hasInFlight = inFlightForThisToken.length > 0;
+
+  const onClaim = async () => {
+    setClaimError(null);
+    try {
+      const res = await requestClaim.mutateAsync({ pair });
+      if (res.hyphaUrl) {
+        // Open Hypha in a new tab; the bridges sit in 'created' until
+        // the user finishes on Hypha and the chain emits Transfers.
+        window.open(res.hyphaUrl, "_blank", "noopener,noreferrer");
+      }
+      // Refresh pending claims so the in-flight indicator shows up.
+      utils.playerProfiles.myPendingClaims.invalidate();
+    } catch (err: any) {
+      setClaimError(err?.message ?? "Could not start the claim. Try again.");
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -132,16 +160,28 @@ export function TokenDetailDialog({
             </span>
           </div>
 
+          {hasInFlight && (
+            <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-3 text-xs text-blue-100/95 leading-relaxed flex gap-2">
+              <Hourglass className="w-3.5 h-3.5 text-blue-300 flex-shrink-0 mt-0.5 animate-pulse" />
+              <span>
+                <strong>{formatExactNumber(inFlightAmount)} {label}</strong> claiming on Hypha. We'll debit your private balance once the transfer confirms on Base.
+              </span>
+            </div>
+          )}
+
           {pairEligible ? (
-            <a
-              href={HYPHA_BASE}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold text-sm transition-colors"
+            <button
+              type="button"
+              onClick={onClaim}
+              disabled={requestClaim.isPending}
+              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-60 disabled:cursor-wait text-[#1a472a] font-bold text-sm transition-colors"
             >
-              Claim {PAIR_LABEL[pair]} on Hypha
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+              {requestClaim.isPending ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Opening Hypha…</>
+              ) : (
+                <>Claim {PAIR_LABEL[pair]} on Hypha <ExternalLink className="w-3.5 h-3.5" /></>
+              )}
+            </button>
           ) : (
             <div
               className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/50 font-semibold text-sm cursor-not-allowed"
@@ -157,6 +197,9 @@ export function TokenDetailDialog({
                 ? `${formatExactNumber(amountBelow)} more ${label} to unlock`
                 : `Pair partner below threshold`}
             </div>
+          )}
+          {claimError && (
+            <p className="text-red-300/90 text-xs">{claimError}</p>
           )}
 
           <div>

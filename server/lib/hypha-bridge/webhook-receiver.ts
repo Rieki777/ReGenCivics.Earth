@@ -201,8 +201,8 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
     await db.update(hyphaBridges).set(updates as any).where(eq(hyphaBridges.bridgeKey, bridgeKey));
   }
 
-  // Fire cascade for quest completions that just passed — best-effort, non-blocking.
-  if (event.type === "ProposalExecuted") {
+  // Fire cascades for proposals that just passed — best-effort, non-blocking.
+  if (event.type === "ProposalExecuted" || event.type === "Transfer") {
     const [bridgeRow] = await db
       .select()
       .from(hyphaBridges)
@@ -210,13 +210,95 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
       .limit(1)
       .catch(() => []);
     if (bridgeRow) {
-      cascadeQuestPassed(bridgeRow, event.txHash).catch((err: any) =>
-        console.error("[hypha-alchemy] cascadeQuestPassed top-level error", err),
-      );
+      if ((bridgeRow as any).source === "quest_completion") {
+        cascadeQuestPassed(bridgeRow, event.txHash).catch((err: any) =>
+          console.error("[hypha-alchemy] cascadeQuestPassed top-level error", err),
+        );
+      }
+      if ((bridgeRow as any).source === "redeem_tokens") {
+        cascadeClaimPassed(bridgeRow, event).catch((err: any) =>
+          console.error("[hypha-alchemy] cascadeClaimPassed top-level error", err),
+        );
+      }
     }
   }
 
   return { matched: true, bridgeKey };
+}
+
+/**
+ * Best-effort cascade fired after a redeem_tokens bridge sees its
+ * matching on-chain Transfer event. Debits the user's private ledger
+ * by the actual on-chain amount (which can be different from the
+ * originally-requested amount if Hypha rounded or the user edited the
+ * proposal). Always debits by what landed on-chain, even if that
+ * drives the private balance negative.
+ */
+async function cascadeClaimPassed(bridgeRow: any, event: AlchemyHyphaEvent): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // Idempotency guard: if we've already debited this bridge, skip.
+  // We tag the debit ledger row with sourceRef='bridge:<bridgeKey>',
+  // so a quick existence check on user_token_ledger answers it.
+  const { userTokenLedger } = await import("../../../drizzle/schema");
+  const { eq: eqDrizzle } = await import("drizzle-orm");
+  const existing = await db
+    .select({ id: userTokenLedger.id })
+    .from(userTokenLedger)
+    .where(and(
+      eqDrizzle(userTokenLedger.sourceRef, `bridge:${bridgeRow.bridgeKey}`),
+      eqDrizzle(userTokenLedger.source, "claimed_to_base"),
+    ))
+    .limit(1)
+    .catch(() => []);
+  if (existing.length > 0) {
+    console.log(`[hypha-alchemy] cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} already debited, skipping`);
+    return;
+  }
+
+  // Pull the bridge's payload to figure out which token + how much was
+  // requested. Use the on-chain amount when available (it is the truth);
+  // fall back to the requested amount if the event didn't carry one.
+  let payload: any = null;
+  try {
+    payload = typeof bridgeRow.payload === "string" ? JSON.parse(bridgeRow.payload) : bridgeRow.payload;
+  } catch { /* ignore */ }
+  const tokenType = payload?.metadata?.tokenType as ("rgvoice" | "regen" | "rcvoice" | "rcivics" | undefined);
+  const requestedAmount = Number(payload?.metadata?.requestedAmount ?? bridgeRow.hyphaTokenAmount ?? 0);
+  const actualAmount = event.amount ? Math.round(Number(event.amount)) : requestedAmount;
+  if (!tokenType || !Number.isFinite(actualAmount) || actualAmount <= 0) {
+    console.warn(`[hypha-alchemy] cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} missing tokenType or amount, payload=`, payload, "event=", event);
+    return;
+  }
+
+  // Debit the private ledger by the actual on-chain amount. Negative
+  // amount tells creditPrivateTokens to debit. Allowed to drive
+  // private balance negative if the user spent in the in-between
+  // window; the ledger is the source of truth.
+  const { creditPrivateTokens } = await import("../../db");
+  await creditPrivateTokens({
+    userId: bridgeRow.initiatorUserId,
+    tokenType,
+    amount: -actualAmount,
+    source: "claimed_to_base",
+    sourceId: bridgeRow.id,
+    sourceRef: `bridge:${bridgeRow.bridgeKey}`,
+    description: `Claimed ${actualAmount} ${tokenType} on Hypha${event.txHash ? `. Tx: https://basescan.org/tx/${event.txHash}` : ""}`,
+  }).catch((err: any) =>
+    console.error("[hypha-alchemy] cascadeClaimPassed: creditPrivateTokens failed", err),
+  );
+
+  // Notify the user that their claim landed.
+  const { createUserNotification } = await import("../../db");
+  await createUserNotification({
+    userId: bridgeRow.initiatorUserId,
+    type: "claim_complete",
+    title: "Tokens claimed!",
+    message: `${actualAmount} ${tokenType} moved to your wallet on Base.${event.txHash ? ` View on Basescan: https://basescan.org/tx/${event.txHash}` : ""}`,
+  } as any).catch((err: any) => console.error("[hypha-alchemy] claim notification failed", err));
+
+  console.log(`[hypha-alchemy] cascadeClaimPassed: debited ${actualAmount} ${tokenType} for user ${bridgeRow.initiatorUserId} (bridge ${bridgeRow.bridgeKey})`);
 }
 
 export function registerHyphaWebhookRoutes(app: Express) {
