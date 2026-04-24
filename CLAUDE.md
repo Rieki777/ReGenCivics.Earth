@@ -16,24 +16,30 @@ Community of contributors. Distributed, non-hierarchical, movement-style. Rye le
 ## Tech Approach
 Mixed — some code, some not. This is part software project, part community organizing infrastructure, part game design. Solutions should be practical and accessible, not just technically elegant.
 
-## Tech Stack (code portions)
-- [CUSTOMIZE: Frontend — e.g., Next.js, React, plain HTML]
-- [CUSTOMIZE: Backend — e.g., Node.js, Python, Webflow, no-code]
-- [CUSTOMIZE: Database / CMS — e.g., Supabase, Airtable, Notion]
-- [CUSTOMIZE: Hosting — e.g., Railway, Vercel, Netlify]
-- Google Workspace (Docs, Sheets, Drive, Gmail) — primary collaboration layer
-- GitHub — code versioning and issues
+## Tech Stack
+- Frontend: React 18 + TypeScript + Vite + Wouter (router) + tRPC client + Tailwind + shadcn/ui (Radix primitives)
+- Backend: Node + Express + tRPC server + Drizzle ORM
+- Database: MySQL on Railway (DATABASE_URL in `.env`)
+- Storage: Cloudflare R2 (`assets.regencivics.earth`), proxied through `/api/img` for resize + caching
+- Hosting: Railway (production: regencivics.earth, gov.regencivics.earth)
+- Blockchain: Base (chain id 8453), JSON-RPC via Alchemy. Server-side reads only; writes happen via Hypha.
+- Email: Resend
+- Auth: Google OAuth + Apple OAuth + email magic link, JWT in HttpOnly cookie
+- Google Workspace, GitHub: collaboration + code
 
 ## Repository Structure
-[CUSTOMIZE: brief description of folders, e.g.:]
-- `src/` or `app/` — main application code
-- `docs/` — documentation, game specs, incubator materials
-- `public/` or `static/` — assets, images, website files
+- `client/src/` — React frontend (pages, components, hooks, lib)
+- `server/` — Express + tRPC server. `server/routes/` holds tRPC routers, `server/_core/` holds auth/cookies/sdk, `server/lib/hypha-bridge/` holds the bridge module, `server/webhooks/` holds inbound webhook handlers
+- `drizzle/` — Drizzle schema (`schema.ts`) + numbered SQL migrations
+- `shared/` — types and constants used by both client and server
+- `scripts/` — one-shot operational scripts (migration runner, audits, seeds)
+- `archive/` — fully-shipped or superseded planning docs. Don't reference for new work
 
 ## Conventions
-- [CUSTOMIZE: language/framework style guide if applicable]
-- [CUSTOMIZE: commit style, e.g., conventional commits]
-- Plain language in all docs — written for community members, not just developers
+- TypeScript strict-mode-ish (no implicit any, exact-optional-property-types relaxed)
+- Imports use `@/...` alias for `client/src/...`, `@shared/...` for `shared/...`
+- Commit messages: type(scope): subject + body explaining the why. No conventional-commits enforcement; pattern matches what's in the log
+- Plain language in all docs and copy. Written for community members, not just developers
 
 ## Core Concepts (read before writing any content)
 
@@ -43,7 +49,7 @@ Mixed — some code, some not. This is part software project, part community org
 
 **START HERE: `REMAINING_WORK_2026-04-08.md`** — consolidated list of everything outstanding, priority-tagged. Updated during the 2026-04-08 cleanup pass that archived 4 more completed docs (21 total now in archive/).
 
-### Active execution prompts (12)
+### Active execution prompts (11)
 
 - `COMMUNITY_AGREEMENTS_PLAN.md` — **primary active build prompt.** All 7 parts of the current sprint: Community Agreements feature, forum UI fixes, category image support, land/alliance routing fixes, calendar button standardization, and Zoom-to-Riverside migration.
 - `CLAUDE_CODE_PROMPT_2026-04-01_UNIFIED_BUILD.md` — **master build plan.** 7-track consolidated build covering database foundation, seeds, backend routers, citizenship tiers, frontend pages, visualizations, and social sharing. Resolves cross-spec conflicts.
@@ -56,7 +62,6 @@ Mixed — some code, some not. This is part software project, part community org
 - `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` — quest locking UI. Core components shipped; PASS/FAIL audit doc against `QUEST_PROGRESSION_SPEC.md` still pending.
 - `CLAUDE_CODE_PROMPT_2026-03-28_PART5.md` — recording flow: Zapier flat-key mapping verification, `notifyRecordings` opt-in toggle.
 - `CLAUDE_CODE_PROMPT_2026-03-31_GAME_SYSTEM.md` — **reference spec.** Full 5-phase game system build prompt. Overlaps with UNIFIED_BUILD; use as reference, build incrementally.
-- `FIXES_TO_MAKE_2026-03-29.md` — original 22-fix batch. Referenced by other active docs for individual fix specs. (Archived 2026-04-08)
 
 ### Standing specs (always-on references)
 
@@ -179,8 +184,19 @@ Every economic feature on ReGen Civics operates against the **private ledger** f
 - Use the `hypha-pr-workflow` skill (in `.claude/skills/hypha-pr-workflow/`) for all Hypha PR work
 - The skill contains the full technique for automating the CM6 web editor, committing files, and responding to CodeRabbit reviews
 
-## Installed Skills (ln- pipeline)
-This project uses a structured delivery pipeline via the ln- skills (in ~/.claude/skills/):
+## Installed Skills
+
+Project-specific skills (in `~/.claude/skills/`):
+
+- `regen-fixes-handoff` — produce `FIXES_TO_MAKE_*.md` docs with the canonical Handoff Breakdown table format and status vocabulary. Use whenever a fix is too complex for inline work
+- `regen-ship-gate` — the audit-truncation + className grep + typecheck protocol that must pass before any "VERIFIED" or "DONE" claim
+- `regen-seasonal-roles` — generate / evolve / manage seasonal game roles. Use at season transitions. Templates in the skill dir
+- `regen-database-sql` — patterns for MySQL on Railway, Drizzle ORM, seed scripts, migrations
+- `regen-fundraising-copy`, `regen-outreach-sequences`, `regen-content-repurposing`, `regen-community-onboarding` — voice-matched writing skills
+- `hypha-pr-workflow` — automation for hypha-web PRs (CM6 editor, file commits, CodeRabbit responses). Used from GitHub account `Rieki777`
+
+ln- delivery pipeline skills (in `~/.claude/skills/`), for structured large-feature builds:
+
 - `ln-1000-pipeline-orchestrator` — kick off full feature delivery
 - `ln-200-scope-decomposer` — break down large features or projects
 - `ln-210-epic-coordinator` / `ln-220-story-coordinator` — planning phases
