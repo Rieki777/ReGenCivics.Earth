@@ -476,6 +476,95 @@ async function checkLandProjectStatus(db: any): Promise<number> {
   return updated;
 }
 
+// ─── Step 7: Auto-cancel stale claim bridges ──────────────────────────────
+//
+// A claim bridge is "stale" if it has sat in `created` or `handoff_sent`
+// status for longer than the configured timeout (default 24h). The
+// initiator either closed the Hypha tab without finishing or the chain
+// never confirmed. Either way the user's private balance is debited
+// and the tokens need to come back.
+//
+// For each stale bridge: mark it `cancelled` and write a `claim_released`
+// credit ledger row equal to the original `claim_pending` debit. This
+// uses the same logic as the user-facing cancelClaim mutation so the
+// math stays consistent.
+//
+// Idempotent: a bridge that has already been cancelled, failed, or
+// passed is skipped. The release row is only written once (existence
+// guard via sourceRef='bridge:<key>' source='claim_released').
+
+async function cancelStaleClaimBridges(
+  db: any,
+  staleAfterHours = 24,
+): Promise<{ cancelled: number; refunded: number }> {
+  const cutoffMs = Date.now() - staleAfterHours * 60 * 60 * 1000;
+  const cutoffSql = new Date(cutoffMs).toISOString().slice(0, 19).replace("T", " ");
+
+  // Find candidate bridges. Pulling rows directly so we have the full
+  // payload + status for the refund logic. Limited to redeem_tokens
+  // bridges so other bridge sources (loomio_decision, fund_grant, etc)
+  // are not touched.
+  const [rows] = await db.execute(sql`
+    SELECT id, bridgeKey, initiatorUserId, payload, status, createdAt
+    FROM hyphaBridges
+    WHERE source = 'redeem_tokens'
+      AND status IN ('created', 'handoff_sent')
+      AND createdAt < ${cutoffSql}
+  `);
+  const candidates = (rows as any[]) ?? [];
+  if (candidates.length === 0) return { cancelled: 0, refunded: 0 };
+
+  const { creditPrivateTokens } = await import("../db");
+
+  let cancelled = 0;
+  let refunded = 0;
+
+  for (const bridge of candidates) {
+    let payload: any = null;
+    try {
+      payload = typeof bridge.payload === "string" ? JSON.parse(bridge.payload) : bridge.payload;
+    } catch { /* ignore */ }
+    const tokenType = payload?.metadata?.tokenType as ("rgvoice" | "regen" | "rcvoice" | "rcivics" | undefined);
+    const requestedAmount = Number(payload?.metadata?.requestedAmount ?? 0);
+
+    // Existence guard: skip if a release row already exists.
+    const [existing] = await db.execute(sql`
+      SELECT id FROM user_token_ledger
+      WHERE sourceRef = ${"bridge:" + bridge.bridgeKey}
+        AND source = 'claim_released'
+      LIMIT 1
+    `);
+    const alreadyReleased = ((existing as any[]) ?? []).length > 0;
+
+    if (!alreadyReleased && tokenType && requestedAmount > 0) {
+      try {
+        await creditPrivateTokens({
+          userId: bridge.initiatorUserId,
+          tokenType,
+          amount: requestedAmount,
+          source: "claim_released",
+          sourceId: bridge.id,
+          sourceRef: `bridge:${bridge.bridgeKey}`,
+          description: `Claim of ${requestedAmount} ${tokenType} timed out after ${staleAfterHours}h, refunded`,
+        });
+        refunded++;
+      } catch (err: any) {
+        console.error(`[stale-claim-cleanup] refund failed for bridge ${bridge.bridgeKey}:`, err);
+      }
+    }
+
+    await db.execute(sql`
+      UPDATE hyphaBridges
+      SET status = 'cancelled',
+          updatedAt = NOW()
+      WHERE id = ${bridge.id}
+    `);
+    cancelled++;
+  }
+
+  return { cancelled, refunded };
+}
+
 // ─── Main Router ───────────────────────────────────────────────────────────
 
 export const batchJobsRouter = router({
@@ -537,6 +626,17 @@ export const batchJobsRouter = router({
       await checkLandProjectStatus(db);
     } catch (e: any) { errors.push(`Step 6 (projects): ${e.message}`); }
 
+    let staleClaimsCancelled = 0;
+    let staleClaimsRefunded = 0;
+    try {
+      // Step 7: Auto-cancel stale claim bridges (>24h in created/handoff_sent).
+      // Refunds the user's private ledger so abandoned claims do not freeze
+      // tokens forever.
+      const result = await cancelStaleClaimBridges(db, 24);
+      staleClaimsCancelled = result.cancelled;
+      staleClaimsRefunded = result.refunded;
+    } catch (e: any) { errors.push(`Step 7 (stale claims): ${e.message}`); }
+
     // Log job completion
     const status = errors.length === 0 ? "success" : "partial_failure";
     if (jobId) {
@@ -550,8 +650,18 @@ export const batchJobsRouter = router({
       `);
     }
 
-    return { status, playersProcessed, promotions, demotions, errors };
+    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded };
   }),
+
+  // Manual trigger for the stale-claim cleanup (admin-only). Useful for
+  // running ad-hoc when a player flags a frozen claim.
+  cancelStaleClaims: adminProcedure
+    .input(z.object({ staleAfterHours: z.number().min(1).max(720).default(24) }).optional())
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+      return cancelStaleClaimBridges(db, input?.staleAfterHours ?? 24);
+    }),
 
   // Get job history
   getJobHistory: adminProcedure

@@ -63,6 +63,20 @@ const PAIR_OF: Record<TokenKey, "game" | "fund"> = {
   rcivics: "fund",
 };
 
+const PAIR_PARTNER: Record<TokenKey, TokenKey> = {
+  rgvoice: "regen",
+  regen: "rgvoice",
+  rcvoice: "rcivics",
+  rcivics: "rcvoice",
+};
+
+const TOKEN_LABEL: Record<TokenKey, string> = {
+  rgvoice: "RGVoice",
+  regen: "$ReGen",
+  rcvoice: "RCVoice",
+  rcivics: "$RCivics",
+};
+
 const PAIR_LABEL: Record<"game" | "fund", string> = {
   game: "RGVoice + $ReGen",
   fund: "RCVoice + $RCivics",
@@ -95,13 +109,15 @@ export function TokenDetailDialog({
   const total = publicBalance + privateBalance;
 
   const pair = PAIR_OF[tokenKey];
-  const pairEligible = claim.data
-    ? pair === "game"
-      ? claim.data.gamePairEligible
-      : claim.data.fundPairEligible
-    : false;
+  const partner = PAIR_PARTNER[tokenKey];
   const myThreshold = claim.data?.byToken?.[tokenKey]?.threshold ?? 0;
   const myBalance = claim.data?.byToken?.[tokenKey]?.balance ?? privateBalance;
+  const myEligible = claim.data?.byToken?.[tokenKey]?.eligible ?? (myBalance >= myThreshold);
+  const partnerBalance = claim.data?.byToken?.[partner]?.balance ?? 0;
+  // Pair-claim option only makes sense when the pair partner has
+  // tokens to claim too. If partner is at 0, skip the offer; the user
+  // would just be doing a single-token claim either way.
+  const partnerHasBalance = partnerBalance > 0;
   const amountBelow = Math.max(0, myThreshold - myBalance);
 
   // In-flight claims for THIS token. Each pending bridge represents
@@ -110,18 +126,16 @@ export function TokenDetailDialog({
   const inFlightAmount = inFlightForThisToken.reduce((s: number, p: any) => s + (p.requestedAmount ?? 0), 0);
   const hasInFlight = inFlightForThisToken.length > 0;
 
-  const onClaim = async () => {
+  const runClaim = async (tokens: TokenKey[]) => {
     setClaimError(null);
     try {
-      const res = await requestClaim.mutateAsync({ pair });
+      const res = await requestClaim.mutateAsync({ tokens });
       if (res.hyphaUrl) {
         // Open Hypha in a new tab. Private balance has already been
         // debited at request time; if the user closes Hypha without
         // finishing they can use the Cancel button below to refund.
         window.open(res.hyphaUrl, "_blank", "noopener,noreferrer");
       }
-      // Refresh pending claims + token balances so the dialog reflects
-      // the just-debited amount.
       utils.playerProfiles.myPendingClaims.invalidate();
       utils.playerProfiles.getMyTokens.invalidate();
       utils.playerProfiles.myTokenLedger.invalidate();
@@ -129,6 +143,12 @@ export function TokenDetailDialog({
       setClaimError(err?.message ?? "Could not start the claim. Try again.");
     }
   };
+
+  // Default claim: just this token. Drag-along claim: this token + its
+  // pair partner (saves gas vs two separate claims when both have
+  // positive balance).
+  const onClaimSingle = () => runClaim([tokenKey]);
+  const onClaimPair = () => runClaim([tokenKey, partner]);
 
   const onCancel = async (bridgeKey: string) => {
     setClaimError(null);
@@ -173,7 +193,7 @@ export function TokenDetailDialog({
           <div className="bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 text-xs text-amber-100/90 leading-relaxed flex gap-2">
             <Sparkles className="w-3.5 h-3.5 text-amber-300 flex-shrink-0 mt-0.5" />
             <span>
-              Tokens on our servers are earned through the game. You claim them on Hypha to move them to the public Base blockchain. On Hypha, {PAIR_LABEL[pair]} are claimed together.
+              Tokens on our servers are earned through the game. You claim them on Hypha to move them to the public Base blockchain. {PAIR_LABEL[pair]} live in the same Hypha space, so you can claim them separately or bundle them in one transaction.
             </span>
           </div>
 
@@ -205,33 +225,40 @@ export function TokenDetailDialog({
             </div>
           )}
 
-          {pairEligible ? (
-            <button
-              type="button"
-              onClick={onClaim}
-              disabled={requestClaim.isPending}
-              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-60 disabled:cursor-wait text-[#1a472a] font-bold text-sm transition-colors"
-            >
-              {requestClaim.isPending ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Opening Hypha…</>
-              ) : (
-                <>Claim {PAIR_LABEL[pair]} on Hypha <ExternalLink className="w-3.5 h-3.5" /></>
+          {myEligible ? (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={onClaimSingle}
+                disabled={requestClaim.isPending}
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-60 disabled:cursor-wait text-[#1a472a] font-bold text-sm transition-colors"
+              >
+                {requestClaim.isPending ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Opening Hypha…</>
+                ) : (
+                  <>Claim {label} on Hypha <ExternalLink className="w-3.5 h-3.5" /></>
+                )}
+              </button>
+              {partnerHasBalance && (
+                <button
+                  type="button"
+                  onClick={onClaimPair}
+                  disabled={requestClaim.isPending}
+                  className="inline-flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-medium disabled:opacity-50 transition-colors"
+                  title="Bundle this claim with your pair partner in one transaction. Saves gas vs two separate claims."
+                >
+                  Claim {label} + {TOKEN_LABEL[partner]} together (one tx, saves gas)
+                </button>
               )}
-            </button>
+            </div>
           ) : (
             <div
               className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/50 font-semibold text-sm cursor-not-allowed"
               aria-disabled="true"
-              title={
-                amountBelow > 0
-                  ? `Earn ${formatExactNumber(amountBelow)} more ${label} to reach the claim threshold.`
-                  : `Waiting for the other half of the ${PAIR_LABEL[pair]} pair to reach its threshold.`
-              }
+              title={`Earn ${formatExactNumber(amountBelow)} more ${label} to reach the ${formatExactNumber(myThreshold)} claim threshold.`}
             >
               <Lock className="w-3.5 h-3.5" />
-              {amountBelow > 0
-                ? `${formatExactNumber(amountBelow)} more ${label} to unlock`
-                : `Pair partner below threshold`}
+              {formatExactNumber(amountBelow)} more {label} to unlock
             </div>
           )}
           {claimError && (

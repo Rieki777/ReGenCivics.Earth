@@ -451,31 +451,42 @@ export const playerProfilesRouter = router({
   }),
 
   /**
-   * Begin a claim. Pair is "game" (RGVoice + $ReGen) or "fund"
-   * (RCVoice + $RCivics). Hypha claims each pair together in one tx;
-   * we create one Hypha bridge row per token leg with a non-zero
-   * private balance so Alchemy Transfer events match 1:1.
+   * Begin a claim for one or more tokens.
    *
-   * **Eligibility uses an OR-gate**: at least one token in the pair
-   * must be at or above its own threshold. The other side comes along
-   * with whatever balance it has (no minimum). Hypha redeem-tokens is
-   * one transaction either way, so gas is justified by the larger
-   * side.
+   * Hypha can redeem any subset of tokens within the same DHO in one
+   * proposal: just $ReGen, just RGVoice, both, etc. (Game DHO holds
+   * RGVoice + $ReGen; Fund DHO holds RCVoice + $RCivics. A single
+   * proposal cannot mix Game and Fund tokens.)
    *
-   * **Debit-at-request**: the moment we create a bridge for a token,
-   * we debit that token's private ledger by the requested amount with
-   * source='claim_pending', sourceRef='bridge:<key>'. This prevents
-   * the user from spending the same tokens twice while a claim is
-   * in flight. If the user abandons the Hypha flow or it fails, the
-   * cancellation path writes a reversing 'claim_released' credit.
-   * If the on-chain amount differs from requested, the cascade writes
-   * a reconciliation row to true-up the balance.
+   * Input shape:
+   *   - tokens: list of token types to claim. The user's full private
+   *     balance for each listed token is requested. Server validates
+   *     all listed tokens belong to the same DHO.
+   *   - pair: convenience shorthand. pair='game' expands to
+   *     ['rgvoice','regen']; pair='fund' expands to ['rcvoice','rcivics'].
+   *     Either pair OR tokens must be present.
    *
-   * Tokens with 0 balance are skipped (no point creating a bridge for
-   * a 0-amount Transfer that will never fire).
+   * **Threshold gate (OR within the request)**: at least ONE of the
+   * listed tokens must be at or above its own threshold. So a single-
+   * token claim of $ReGen needs $ReGen >= 1000; a bundled $ReGen +
+   * RGVoice claim is OK as long as $ReGen alone hits 1000 (the
+   * RGVoice rides along, even if its balance is 5).
+   *
+   * **Debit-at-request**: each token's full private balance is
+   * debited the moment the bridge is created. Refunded by
+   * cancelClaim, the failure cascade, or the nightly stale-cleanup
+   * job if the claim is abandoned.
+   *
+   * Tokens with 0 balance are silently dropped (no Transfer fires for
+   * them anyway).
    */
   requestClaim: protectedProcedure
-    .input(z.object({ pair: z.enum(["game", "fund"]) }))
+    .input(z.object({
+      pair: z.enum(["game", "fund"]).optional(),
+      tokens: z.array(z.enum(["rgvoice", "regen", "rcvoice", "rcivics"])).min(1).optional(),
+    }).refine(d => d.pair !== undefined || (d.tokens && d.tokens.length > 0), {
+      message: "Provide either pair or tokens.",
+    }))
     .mutation(async ({ ctx, input }) => {
       const drizzleDb = await getDb();
       if (!drizzleDb) {
@@ -489,51 +500,59 @@ export const playerProfilesRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Link a Base wallet on your profile before claiming." });
       }
 
-      // Pair → token list
-      const pairTokens: { tokenType: "rgvoice" | "regen" | "rcvoice" | "rcivics"; balance: number }[] =
+      // Resolve the requested token list. pair shorthand expands here.
+      const requestedTokenTypes: ("rgvoice" | "regen" | "rcvoice" | "rcivics")[] = input.tokens ?? (
         input.pair === "game"
-          ? [
-              { tokenType: "rgvoice", balance: (profile as any)?.rgvoicePrivate ?? 0 },
-              { tokenType: "regen",   balance: (profile as any)?.regenPrivate   ?? 0 },
-            ]
-          : [
-              { tokenType: "rcvoice", balance: (profile as any)?.rcvoicePrivate ?? 0 },
-              { tokenType: "rcivics", balance: (profile as any)?.rcivicsPrivate ?? 0 },
-            ];
+          ? ["rgvoice", "regen"]
+          : ["rcvoice", "rcivics"]
+      );
 
-      // Threshold check (OR-gate): at least one token in the pair
-      // must be at or above its own threshold for the pair to be
-      // claimable. The thresholds themselves still gate against
-      // uneconomic claims; OR-gate just means one side is enough.
+      // All requested tokens must belong to the same DHO. Mixing Game
+      // and Fund tokens in one Hypha proposal is not supported.
+      const { TOKEN_CONTRACTS } = await import("../blockchain");
+      const dhoSlugs = new Set(requestedTokenTypes.map(t => TOKEN_CONTRACTS[t]?.dhoSlug).filter(Boolean));
+      if (dhoSlugs.size > 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot claim Game and Fund tokens in the same proposal. Submit separate claims.",
+        });
+      }
+      const dhoSlug = Array.from(dhoSlugs)[0] ?? "regen-games";
+
+      // Build the per-token balance + threshold view for the requested set.
+      const balanceFor = (t: string): number => (profile as any)?.[`${t}Private`] ?? 0;
+      const requestedTokens = requestedTokenTypes.map(t => ({
+        tokenType: t,
+        balance: balanceFor(t),
+      }));
+
+      // Threshold check (OR within the requested set).
       const thresholdKey = (t: string) => `governance.claim_threshold_${t}`;
       const thresholds = await Promise.all(
-        pairTokens.map(async (t) => {
+        requestedTokens.map(async (t) => {
           const rows = await drizzleDb.execute(sql`SELECT value FROM game_variables WHERE \`key\` = ${thresholdKey(t.tokenType)} LIMIT 1`).then((r: any) => r[0] ?? []);
           return Number(rows[0]?.value ?? (t.tokenType === "regen" || t.tokenType === "rcivics" ? 1000 : 20));
         }),
       );
-      const anyAboveThreshold = pairTokens.some((t, i) => t.balance >= thresholds[i]);
+      const anyAboveThreshold = requestedTokens.some((t, i) => t.balance >= thresholds[i]);
       if (!anyAboveThreshold) {
-        const lines = pairTokens.map((t, i) => `${t.tokenType} ${t.balance}/${thresholds[i]}`).join("; ");
+        const lines = requestedTokens.map((t, i) => `${t.tokenType} ${t.balance}/${thresholds[i]}`).join("; ");
         throw new TRPCError({
           code: "FAILED_PRECONDITION",
-          message: `Pair below threshold (${lines}). Earn more in either token to unlock the pair.`,
+          message: `No requested token meets its threshold (${lines}). Earn more in any of these tokens to unlock the claim.`,
         });
       }
 
-      // Build a bridge per non-zero token. Both bridges share a
-      // parentClaimId tag in metadata so the UI can group them. Skip
-      // 0-balance tokens since Hypha will not emit a Transfer event
-      // for them anyway.
-      const { TOKEN_CONTRACTS } = await import("../blockchain");
+      // Build a bridge per non-zero token. Tokens with 0 balance are
+      // dropped here since Hypha would not emit a Transfer for them.
       const { createHyphaBridge, getBridge, buildHyphaTargetUrl } = await import("../lib/hypha-bridge");
-      const parentClaimId = `claim:${ctx.user.id}:${input.pair}:${Date.now()}`;
-      const dhoSlug = input.pair === "game" ? "regen-games" : "regen-civics";
+      const parentClaimId = `claim:${ctx.user.id}:${requestedTokenTypes.join("+")}:${Date.now()}`;
+      const pair: "game" | "fund" = input.pair ?? (dhoSlug === "regen-games" ? "game" : "fund");
 
       const created: { tokenType: string; bridgeKey: string }[] = [];
       let primaryBridgeKey: string | null = null;
 
-      for (const t of pairTokens) {
+      for (const t of requestedTokens) {
         if (t.balance <= 0) continue;
         const tokenInfo = TOKEN_CONTRACTS[t.tokenType];
         if (!tokenInfo) {
@@ -553,13 +572,11 @@ export const playerProfilesRouter = router({
           metadata: {
             tokenType: t.tokenType,
             requestedAmount: t.balance,
-            pair: input.pair,
+            pair,
             parentClaimId,
           },
         });
 
-        // Pre-populate the recipient + token + amount so fuzzy
-        // matching by the Alchemy webhook can find this bridge row.
         const { hyphaBridges } = await import("../../drizzle/schema");
         await drizzleDb
           .update(hyphaBridges)
@@ -570,8 +587,6 @@ export const playerProfilesRouter = router({
           } as any)
           .where(eq(hyphaBridges.bridgeKey, bridgeResult.bridgeKey));
 
-        // Look up the bridge id we just created so the ledger row can
-        // sourceId-link to it directly.
         const fresh = await drizzleDb
           .select()
           .from(hyphaBridges)
@@ -579,10 +594,6 @@ export const playerProfilesRouter = router({
           .limit(1);
         const bridgeId = fresh[0]?.id ?? null;
 
-        // Debit-at-request: write the negative ledger row now. If the
-        // user abandons or the claim fails, a 'claim_released' credit
-        // row will reverse this. If actual on-chain ≠ requested, a
-        // reconciliation row at confirmation time trues up the diff.
         await db.creditPrivateTokens({
           userId: ctx.user.id,
           tokenType: t.tokenType,
