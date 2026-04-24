@@ -146,6 +146,31 @@ Relevant DHO slugs: `regen-games`, `regen-civics`. Hypha app base URL: `https://
 
 **Rule for any future Claude Code instance**: if the task involves moving a player or their data from ReGen Civics to Hypha for any reason, use the Hypha Bridge. Do not hand-roll new redirect logic. Extend the bridge with the new intent type instead. The full flow spec lives in `FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md`.
 
+## Token model: private-first, claim bridge to public
+
+Every economic feature on ReGen Civics operates against the **private ledger** first. The on-chain (Base) public balance is a downstream projection that only updates when a user explicitly claims via the Hypha bridge. Before building any feature that earns, spends, scores, or burns tokens, internalize these four rules.
+
+**1. Reads (game logic) use TOTAL = private + public.** Contribution scores, voice weight, citizenship tiers, and any new economic system read the player's combined position. A player who has claimed everything to Base still counts that balance toward their score loop. Use `playerProfiles.getMyTokens` which returns `{ public, private, total }` per token.
+
+**2. Writes (credits AND debits) only touch the private ledger.** Every economic mutation goes through `db.creditPrivateTokens({ userId, tokenType, amount, source, sourceRef, description })`. Positive amounts credit, negative amounts debit. The helper writes one append-only row to `user_token_ledger` and updates the matching `player_profiles.{token}Private` cache column atomically. Public balance is never written from server code; it changes only when the chain emits a Transfer that the Alchemy webhook reconciles.
+
+**3. Spend limit checks use PRIVATE only, not total.** When a feature checks "does the user have enough to spend N", the answer is `private >= N`. Even if they have plenty on-chain, public balance can't be deducted by server code (one-way flow). Players who have cashed out everything to Base have no in-game spend capacity until they earn more privately.
+
+**4. One-way flow private → public.** Tokens move from private to public when the user clicks Claim on the profile dialog and completes a Hypha redeem-tokens proposal. Once on-chain, they live on Base: tradable, transferable, burnable on Base markets. The system is single-direction; on-chain holdings stay on chain and don't re-enter the private ledger.
+
+**Default for new economic features.** Use `creditPrivateTokens` with a new `source` tag (free string; pick one matching the existing pattern: `gratitude_received`, `harvest`, `quest_completion`, `seeds_claim`, `claim_pending`, `claimed_to_base`, `claim_released`, `manual`). On-chain reads happen only via the claim bridge (`playerProfiles.requestClaim`) or the periodic balance sync (`playerProfiles.syncTokens`). Look for an existing pattern (gratitude.ts, game.ts harvest, players.ts quest_completion) before writing anything new.
+
+**Key surfaces:**
+- `db.creditPrivateTokens(...)` — the only legitimate write to private balances
+- `playerProfiles.getMyTokens` — total/public/private reads for the four tokens
+- `playerProfiles.requestClaim({ tokens })` — start a claim, debits private at request time
+- `cancelClaim` / nightly `cancelStaleClaimBridges` — refund flows when a claim doesn't land
+- `webhook-receiver.cascadeClaimPassed` — on-chain confirm reconciliation
+- `user_token_ledger` table — append-only audit, source-tagged
+- `player_profiles.{regen,rgvoice,rcvoice,rcivics}Private` — private cache (updated by `creditPrivateTokens`)
+- `player_profiles.{rvoiceBalance, rgenBalance, rcvoicePublic, rcivicsPublic}` — public cache (updated by `syncTokens`)
+- Per-token thresholds in `game_variables`: `governance.claim_threshold_{regen,rgvoice,rcivics,rcvoice}`
+
 ## Hypha PR Contributions
 
 **GitHub account for all Hypha PRs: `Rieki777`** (not Rieki7)
