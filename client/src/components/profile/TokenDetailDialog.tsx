@@ -1,0 +1,136 @@
+/**
+ * TokenDetailDialog: opens from TokenBox when the user taps the box.
+ *
+ * Shows the exact total and the public/private breakdown, plus a short
+ * ledger history of private-ledger credits (SEEDS claims, gratitude
+ * received, etc) so players can see where their tokens came from. The
+ * "Claim on Hypha" button deep-links to Hypha so players can move
+ * their private balance on-chain.
+ */
+import { ExternalLink, Sparkles } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { trpc } from "@/lib/trpc";
+import { formatExactNumber } from "@/lib/utils";
+import type { TokenKey } from "./TokenBox";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  tokenKey: TokenKey;
+  label: string;
+  publicBalance: number;
+  privateBalance: number;
+};
+
+const HYPHA_BASE = "https://app.hypha.earth";
+
+const SOURCE_LABEL: Record<string, string> = {
+  seeds_claim: "SEEDS historical claim",
+  gratitude_received: "Gratitude received",
+  quest_completion: "Quest completion",
+  claimed_to_base: "Claimed on Hypha",
+  manual: "Manual adjustment",
+};
+
+export function TokenDetailDialog({
+  open,
+  onOpenChange,
+  tokenKey,
+  label,
+  publicBalance,
+  privateBalance,
+}: Props) {
+  // Fetch the full private ledger. Entries for all tokens are returned;
+  // we filter to this token on the client since there's at most ~100.
+  const ledger = trpc.playerProfiles.myTokenLedger.useQuery(
+    { limit: 100 },
+    { enabled: open },
+  );
+  const rows = (ledger.data ?? []).filter((e: any) => e.tokenType === tokenKey);
+  const total = publicBalance + privateBalance;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md bg-[#0d2818] border border-[#7dd87d]/30 rounded-2xl text-white p-0">
+        <DialogHeader className="px-6 pt-6 pb-3">
+          <DialogTitle className="text-white text-lg font-bold" style={{ fontFamily: "var(--font-display)" }}>
+            {label}
+          </DialogTitle>
+          <DialogDescription className="text-white/60 text-xs">
+            Exact balance and where it came from.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="px-6 pb-5 space-y-4">
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="text-[10px] uppercase tracking-widest text-white/50 mb-1">Total</p>
+              <p className="text-xl font-bold text-[#7dd87d]">{formatExactNumber(total)}</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="text-[10px] uppercase tracking-widest text-white/50 mb-1">On Base</p>
+              <p className="text-xl font-bold text-white">{formatExactNumber(publicBalance)}</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="text-[10px] uppercase tracking-widest text-white/50 mb-1">Our servers</p>
+              <p className="text-xl font-bold text-white">{formatExactNumber(privateBalance)}</p>
+            </div>
+          </div>
+
+          <div className="bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 text-xs text-amber-100/90 leading-relaxed flex gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 flex-shrink-0 mt-0.5" />
+            <span>
+              Tokens on our servers are earned through the game. You claim them on Hypha to move them to the public Base blockchain.
+            </span>
+          </div>
+
+          <a
+            href={HYPHA_BASE}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold text-sm transition-colors"
+          >
+            Claim on Hypha
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-white/50 mb-2">Private ledger history</p>
+            {ledger.isLoading ? (
+              <p className="text-white/50 text-xs">Loading ledger…</p>
+            ) : rows.length === 0 ? (
+              <p className="text-white/50 text-xs">No private-ledger entries yet for this token. Earn some by receiving gratitude or submitting a SEEDS claim.</p>
+            ) : (
+              <ul className="space-y-1.5 max-h-52 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
+                {rows.map((e: any) => (
+                  <li key={e.id} className="flex items-start justify-between gap-3 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-white/80 font-semibold">
+                        {SOURCE_LABEL[e.source] ?? e.source}
+                      </p>
+                      {e.description && (
+                        <p className="text-[11px] text-white/50 truncate">{e.description}</p>
+                      )}
+                      <p className="text-[10px] text-white/40 mt-0.5">
+                        {new Date(e.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <p className={`text-sm font-bold ${e.amount >= 0 ? "text-[#7dd87d]" : "text-amber-300"}`}>
+                      {e.amount >= 0 ? "+" : ""}{formatExactNumber(e.amount)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

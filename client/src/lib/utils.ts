@@ -35,3 +35,32 @@ export function resolveAssetUrl(url: string | null | undefined): string {
   }
   return url;
 }
+
+/**
+ * Compact a number for display in small boxes. 1,234 -> "1.2K",
+ * 1,500,000 -> "1.5M", 0..999 stays literal. Keeps one decimal when
+ * abbreviated, drops trailing zeroes so 1000 reads as "1K" not "1.0K".
+ * Negative numbers are preserved with the sign prefix.
+ */
+export function formatCompactNumber(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return "0";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs < 1_000) return `${sign}${Math.round(abs)}`;
+  const trim = (v: number) => {
+    const fixed = v.toFixed(1);
+    return fixed.endsWith(".0") ? fixed.slice(0, -2) : fixed;
+  };
+  if (abs < 1_000_000) return `${sign}${trim(abs / 1_000)}K`;
+  if (abs < 1_000_000_000) return `${sign}${trim(abs / 1_000_000)}M`;
+  return `${sign}${trim(abs / 1_000_000_000)}B`;
+}
+
+/**
+ * Exact human-readable form with thousands separators. 1234567 -> "1,234,567".
+ * Used inside the token detail dialog to show precise counts.
+ */
+export function formatExactNumber(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return "0";
+  return Math.round(n).toLocaleString("en-US");
+}

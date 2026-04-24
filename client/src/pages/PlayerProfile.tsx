@@ -77,6 +77,7 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { getLoginUrl } from '@/const';
 import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
+import { TokenBox } from "@/components/profile/TokenBox";
 import { DigestPreferences } from "@/components/DigestPreferences";
 import { UserNotificationPreferences } from "@/components/UserNotificationPreferences";
 import { StorytellerToggle } from "@/components/StorytellerToggle";
@@ -107,6 +108,37 @@ const badgeDefinitions: Record<string, { name: string; icon: string; description
   'connector': { name: 'Connector', icon: '🔗', description: 'Brought new members to the community', color: 'bg-pink-500' },
   'verified': { name: 'Verified Player', icon: '✓', description: 'Identity verified on-chain', color: 'bg-green-500' },
 };
+
+/**
+ * OwnerTokenGrid: the four-box token section shown only on the user's
+ * own profile. Each box shows public (Base) + private (our ledger) with
+ * an inline breakdown, a tooltip, and a click-to-open detail dialog.
+ * Data comes from playerProfiles.getMyTokens.
+ */
+function OwnerTokenGrid() {
+  const tokens = trpc.playerProfiles.getMyTokens.useQuery();
+  // While loading, keep the 2-box-ish skeleton so the panel doesn't jump
+  // the layout. Four pulsing cards gives the right footprint for the
+  // populated grid.
+  if (tokens.isLoading || !tokens.data) {
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="bg-[#f0ebe3] rounded-lg p-4 h-[90px] animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+  const t = tokens.data;
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <TokenBox tokenKey="rgvoice" label="RGVoice"  publicBalance={t.rgvoice.public}  privateBalance={t.rgvoice.private} />
+      <TokenBox tokenKey="regen"   label="$ReGen"   publicBalance={t.regen.public}    privateBalance={t.regen.private} />
+      <TokenBox tokenKey="rcvoice" label="RCVoice"  publicBalance={t.rcvoice.public}  privateBalance={t.rcvoice.private} />
+      <TokenBox tokenKey="rcivics" label="$RCivics" publicBalance={t.rcivics.public}  privateBalance={t.rcivics.private} />
+    </div>
+  );
+}
 
 // Small helper used in the Step 3 review to display the selected bioregion name
 function BioregionPreviewRow({ bioregionId }: { bioregionId: number }) {
@@ -549,16 +581,20 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
         })()}
         
         {/* Token Balances */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[#f0ebe3] rounded-lg p-4 text-center">
-            <p className="text-2xl font-bold text-[#7dd87d]">{profile.rvoiceBalance || 0}</p>
-            <p className="text-sm text-[#1a472a]/60">RGVoice Tokens</p>
+        {isOwner ? (
+          <OwnerTokenGrid />
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[#f0ebe3] rounded-lg p-4 text-center">
+              <p className="text-2xl font-bold text-[#7dd87d]">{profile.rvoiceBalance || 0}</p>
+              <p className="text-sm text-[#1a472a]/60">RGVoice Tokens</p>
+            </div>
+            <div className="bg-[#f0ebe3] rounded-lg p-4 text-center">
+              <p className="text-2xl font-bold text-[#7dd87d]">{profile.rgenBalance || 0}</p>
+              <p className="text-sm text-[#1a472a]/60">ReGen Tokens</p>
+            </div>
           </div>
-          <div className="bg-[#f0ebe3] rounded-lg p-4 text-center">
-            <p className="text-2xl font-bold text-[#7dd87d]">{profile.rgenBalance || 0}</p>
-            <p className="text-sm text-[#1a472a]/60">ReGen Tokens</p>
-          </div>
-        </div>
+        )}
         {isOwner && onSyncTokens && (
           effectiveWallet ? (
             <div className="flex items-center gap-2 mt-1">

@@ -121,6 +121,15 @@ export async function getUserById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+/** Find a user by email (case-insensitive). Returns undefined when not found. */
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const normalized = email.toLowerCase().trim();
+  const result = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
 export async function getUsersByIds(ids: number[]): Promise<Record<number, typeof users.$inferSelect>> {
   if (ids.length === 0) return {};
   const db = await getDb();
@@ -3393,4 +3402,89 @@ export async function getUserCommunityAgreementVotes(userId: number) {
   const votes = await db.select().from(communityAgreementVotes)
     .where(eq(communityAgreementVotes.userId, userId));
   return votes.map(v => v.agreementId);
+}
+
+// ─── Private token ledger (all 4 tokens) ──────────────────────────────────────
+
+import { userTokenLedger } from "../drizzle/schema";
+
+type TokenType = "rcvoice" | "rgvoice" | "rcivics" | "regen";
+type CreditSource = "seeds_claim" | "gratitude_received" | "quest_completion" | "claimed_to_base" | "manual";
+
+const TOKEN_TO_PROFILE_COLUMN: Record<TokenType, string> = {
+  rcvoice: "rcvoicePrivate",
+  rgvoice: "rgvoicePrivate",
+  rcivics: "rcivicsPrivate",
+  regen: "regenPrivate",
+};
+
+/**
+ * Credit (or debit if amount is negative) the user's private token ledger
+ * for one of the four tokens. Writes an audit row to user_token_ledger and
+ * bumps the matching private balance column on player_profiles inside a
+ * single SQL transaction so the two stay in sync.
+ *
+ * Returns the new private balance after the credit. If the user has no
+ * player_profiles row the helper returns null without throwing, so
+ * callers that fire-and-forget (gratitude, quest completion) don't
+ * cascade-fail when a profile hasn't been created yet.
+ */
+export async function creditPrivateTokens(params: {
+  userId: number;
+  tokenType: TokenType;
+  amount: number;
+  source: CreditSource;
+  sourceId?: number | null;
+  description?: string | null;
+}): Promise<number | null> {
+  const { userId, tokenType, amount, source, sourceId, description } = params;
+  if (amount === 0) return null;
+  const db = await getDb();
+  if (!db) return null;
+
+  const column = TOKEN_TO_PROFILE_COLUMN[tokenType];
+
+  // Ensure the user has a profile to credit. Without one we skip rather
+  // than create a half-initialised row.
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) {
+    console.warn(`[tokens] creditPrivateTokens: no profile for user ${userId}, skipping ${amount} ${tokenType} from ${source}`);
+    return null;
+  }
+
+  // Write the audit entry.
+  await db.insert(userTokenLedger).values({
+    userId,
+    tokenType,
+    amount,
+    source,
+    sourceId: sourceId ?? null,
+    description: description ?? null,
+  });
+
+  // Bump the matching private column. Using raw SQL so the column name
+  // can be driven by tokenType without a big switch.
+  await db.execute(sql`
+    UPDATE player_profiles
+    SET ${sql.identifier(column)} = ${sql.identifier(column)} + ${amount}
+    WHERE userId = ${userId}
+  `);
+
+  const [updated] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  return (updated as any)?.[column] ?? null;
+}
+
+/**
+ * Read the full private-ledger history for a user (newest first). Used by
+ * the profile dialog to show where the tokens came from.
+ */
+export async function getUserTokenLedger(userId: number, limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(userTokenLedger)
+    .where(eq(userTokenLedger.userId, userId))
+    .orderBy(desc(userTokenLedger.createdAt))
+    .limit(limit);
 }

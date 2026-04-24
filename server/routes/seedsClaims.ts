@@ -121,6 +121,18 @@ export const seedsClaimsRouter = router({
 
       const now = new Date();
 
+      // Auto-approve: when the user accepts the shown amount (claim
+      // equals original minus what they've already spent) AND isn't
+      // disputing, the claim is auto-approved and the matching $ReGen
+      // lands on their private ledger immediately. Disputed or partial
+      // claims stay pending for admin review.
+      const maxClaimable = input.originalUsdTotal - input.spentUsdAmount;
+      const acceptsShownAmount = !input.isDispute && input.claimedUsdAmount === maxClaimable;
+      const autoStatus: "approved" | "pending" = acceptsShownAmount ? "approved" : "pending";
+
+      let claimId: number;
+      let wasUpdate = false;
+
       if (existing.length > 0) {
         // UPDATE existing claim
         await db
@@ -136,17 +148,14 @@ export const seedsClaimsRouter = router({
             disputeReason: input.disputeReason || null,
             evidenceUrls: input.evidenceUrls || null,
             updatedAt: now,
-            status: "pending", // Reset to pending if resubmitted
-            reviewedAt: null,
-            reviewedBy: null,
+            status: autoStatus,
+            reviewedAt: acceptsShownAmount ? now : null,
+            reviewedBy: acceptsShownAmount ? null : null, // auto, not a reviewer
           })
           .where(eq(seedsClaims.seedsAccount, input.seedsAccount));
 
-        return {
-          claimId: existing[0].id,
-          regenAmount: input.regenAmount,
-          isUpdate: true,
-        };
+        claimId = existing[0].id;
+        wasUpdate = true;
       } else {
         // INSERT new claim
         const result = await db.insert(seedsClaims).values({
@@ -160,7 +169,8 @@ export const seedsClaimsRouter = router({
           isDispute: input.isDispute,
           disputeReason: input.disputeReason || null,
           evidenceUrls: input.evidenceUrls || null,
-          status: "pending",
+          status: autoStatus,
+          reviewedAt: acceptsShownAmount ? now : null,
           createdAt: now,
           updatedAt: now,
         });
@@ -172,13 +182,58 @@ export const seedsClaimsRouter = router({
             message: "Failed to create claim",
           });
         }
-
-        return {
-          claimId: insertId,
-          regenAmount: input.regenAmount,
-          isUpdate: false,
-        };
+        claimId = insertId;
       }
+
+      // If auto-approved and the email maps to a known user, credit
+      // their private $ReGen ledger with the claim amount. On a resubmit
+      // we only credit the *delta* versus what's already been credited
+      // for this claim, so users can't double-dip by resubmitting.
+      let autoCredited = false;
+      let privateBalanceAfter: number | null = null;
+      if (acceptsShownAmount) {
+        try {
+          const { creditPrivateTokens } = await import("../db");
+          const { getUserByEmail, getUserTokenLedger } = await import("../db");
+          const user = await getUserByEmail(input.email.toLowerCase().trim());
+          if (user?.id) {
+            // How much we already credited for this exact claim (sums to a
+            // non-negative integer). regenAmount in schema is a float of
+            // ReGen tokens; the private ledger stores integer tokens so we
+            // round to nearest int.
+            const existingEntries = await getUserTokenLedger(user.id, 200);
+            const alreadyCredited = existingEntries
+              .filter((e: any) => e.source === "seeds_claim" && e.sourceId === claimId)
+              .reduce((sum: number, e: any) => sum + (e.amount ?? 0), 0);
+            const wantedCredit = Math.round(input.regenAmount);
+            const delta = wantedCredit - alreadyCredited;
+            if (delta !== 0) {
+              privateBalanceAfter = await creditPrivateTokens({
+                userId: user.id,
+                tokenType: "regen",
+                amount: delta,
+                source: "seeds_claim",
+                sourceId: claimId,
+                description: `SEEDS claim auto-approved (${input.seedsAccount})`,
+              });
+              autoCredited = true;
+            }
+          }
+        } catch (err) {
+          console.error("[seedsClaims.submit] auto-credit failed for", input.email, err);
+          // Don't fail the whole submit if the credit failed; admin can
+          // retry. The claim row is still written.
+        }
+      }
+
+      return {
+        claimId,
+        regenAmount: input.regenAmount,
+        isUpdate: wasUpdate,
+        autoApproved: acceptsShownAmount,
+        autoCredited,
+        privateBalanceAfter,
+      };
     }),
 
   /**

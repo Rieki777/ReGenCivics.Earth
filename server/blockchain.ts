@@ -6,6 +6,11 @@ console.log('[blockchain] BASE_RPC:', process.env.BASE_RPC_URL ? 'custom (Alchem
 const BASE_RPC         = process.env.BASE_RPC_URL          ?? "https://mainnet.base.org";
 const RGVOICE_CONTRACT = process.env.RGVOICE_TOKEN_CONTRACT ?? "0x4d848b3f2d74d1d2f6c75c55d0751dab8fc7d707";
 const REGEN_CONTRACT   = process.env.REGEN_TOKEN_CONTRACT   ?? "0x4e617cd113364193d215d107add6fa50418aa2e4";
+// RCVoice + $RCivics are the fund-track counterparts. RCVoice contract
+// is optional: if RCVOICE_TOKEN_CONTRACT is not set we skip the read
+// and report 0 public. $RCivics address is the one from CLAUDE.md.
+const RCVOICE_CONTRACT = process.env.RCVOICE_TOKEN_CONTRACT ?? "";
+const RCIVICS_CONTRACT = process.env.RCIVICS_TOKEN_CONTRACT ?? "0x72e9b17a2f93a923d63666ec0a1c096b1443ef26";
 
 const ERC20_BALANCE_OF_SELECTOR   = "0x70a08231";
 const ERC1155_BALANCE_OF_SELECTOR = "0x00fdd58e";
@@ -70,4 +75,25 @@ export async function fetchTokenBalances(walletAddress: string): Promise<{ rvoic
     readErc20Balance(REGEN_CONTRACT, walletAddress),
   ]);
   return { rvoice, rgen };
+}
+
+/**
+ * Fetch all four token public balances from Base in one round-trip.
+ * Returns zero for any contract address not configured (so RCVoice is
+ * optional until its contract is deployed). Used by the profile
+ * getMyTokens flow to compute public + private = total.
+ */
+export async function fetchAllTokenBalances(walletAddress: string): Promise<{
+  rgvoice: number;
+  regen: number;
+  rcvoice: number;
+  rcivics: number;
+}> {
+  const [rgvoice, regen, rcvoice, rcivics] = await Promise.all([
+    readErc20Balance(RGVOICE_CONTRACT, walletAddress),
+    readErc20Balance(REGEN_CONTRACT, walletAddress),
+    RCVOICE_CONTRACT ? readErc20Balance(RCVOICE_CONTRACT, walletAddress) : Promise.resolve(0),
+    RCIVICS_CONTRACT ? readErc20Balance(RCIVICS_CONTRACT, walletAddress) : Promise.resolve(0),
+  ]);
+  return { rgvoice, regen, rcvoice, rcivics };
 }

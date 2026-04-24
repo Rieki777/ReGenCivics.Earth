@@ -514,9 +514,19 @@ export const playerProfiles = mysqlTable("player_profiles", {
   questsCompleted: text("questsCompleted"), // JSON array of quest IDs
   totalContributionValue: int("totalContributionValue").default(0).notNull(),
   
-  // Token tracking (cached from blockchain - will be verified on-chain)
-  rvoiceBalance: int("rvoiceBalance").default(0).notNull(), // RVOICE token balance
-  rgenBalance: int("rgenBalance").default(0).notNull(), // RGEN token balance
+  // Token tracking.
+  // Public columns are cached from Base blockchain reads. Private columns
+  // are our internal ledger (tokens earned via SEEDS claims, gratitude,
+  // quest completions, etc) that have not yet been claimed on Hypha and
+  // moved on-chain. Profile UI shows public + private as the total.
+  rvoiceBalance: int("rvoiceBalance").default(0).notNull(),        // RGVoice public (Base)
+  rgenBalance: int("rgenBalance").default(0).notNull(),            // $ReGen public (Base)
+  rcvoicePublic: int("rcvoicePublic").default(0).notNull(),        // RCVoice public (Base)
+  rcivicsPublic: int("rcivicsPublic").default(0).notNull(),        // $RCivics public (Base)
+  rgvoicePrivate: int("rgvoicePrivate").default(0).notNull(),      // RGVoice private ledger
+  regenPrivate: int("regenPrivate").default(0).notNull(),          // $ReGen private ledger
+  rcvoicePrivate: int("rcvoicePrivate").default(0).notNull(),      // RCVoice private ledger
+  rcivicsPrivate: int("rcivicsPrivate").default(0).notNull(),      // $RCivics private ledger
   lastTokenSync: timestamp("lastTokenSync"), // Last blockchain sync timestamp
   
   // Status
@@ -575,6 +585,37 @@ export const playerProfiles = mysqlTable("player_profiles", {
 
 export type PlayerProfile = typeof playerProfiles.$inferSelect;
 export type InsertPlayerProfile = typeof playerProfiles.$inferInsert;
+
+/**
+ * user_token_ledger — audit trail for every credit or debit against a
+ * player's private (off-chain) token balance. Each row represents a
+ * single movement sourced from a game event (seeds_claim,
+ * gratitude_received, quest_completion, etc) or a debit from claiming
+ * the tokens on-chain via Hypha (claimed_to_base).
+ */
+export const userTokenLedger = mysqlTable("user_token_ledger", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tokenType: mysqlEnum("tokenType", ["rcvoice", "rgvoice", "rcivics", "regen"]).notNull(),
+  // Signed amount. Positive = credit to private ledger, negative = debit
+  // (e.g., when tokens are claimed on Hypha and move on-chain).
+  amount: int("amount").notNull(),
+  // Source tag. Known values: 'seeds_claim', 'gratitude_received',
+  // 'quest_completion', 'claimed_to_base', 'manual'. Left as varchar
+  // so new sources can be added without an ALTER.
+  source: varchar("source", { length: 64 }).notNull(),
+  // Optional foreign key into the source row (seedsClaims.id, etc).
+  sourceId: int("sourceId"),
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("user_token_ledger_userId_idx").on(table.userId),
+  index("user_token_ledger_tokenType_idx").on(table.tokenType),
+  index("user_token_ledger_source_idx").on(table.source),
+]));
+
+export type UserTokenLedgerEntry = typeof userTokenLedger.$inferSelect;
+export type InsertUserTokenLedgerEntry = typeof userTokenLedger.$inferInsert;
 
 /**
  * Crowd Pooling Projects table

@@ -305,16 +305,18 @@ export const playerProfilesRouter = router({
         }
       }
 
-      const { fetchTokenBalances } = await import("../blockchain");
-      const balances = await fetchTokenBalances(wallet);
+      const { fetchAllTokenBalances } = await import("../blockchain");
+      const balances = await fetchAllTokenBalances(wallet);
 
       await db.updatePlayerProfile(profile.id, {
-        rvoiceBalance: balances.rvoice,
-        rgenBalance: balances.rgen,
+        rvoiceBalance: balances.rgvoice,
+        rgenBalance: balances.regen,
+        rcvoicePublic: balances.rcvoice,
+        rcivicsPublic: balances.rcivics,
         lastTokenSync: new Date(),
       });
 
-      return { rvoice: balances.rvoice, rgen: balances.rgen, cached: false };
+      return { rvoice: balances.rgvoice, rgen: balances.regen, cached: false };
     }),
 
   // Admin: force-sync any profile by ID
@@ -326,14 +328,16 @@ export const playerProfilesRouter = router({
       if (!profile || !wallet) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Profile not found or no wallet address" });
       }
-      const { fetchTokenBalances } = await import("../blockchain");
-      const balances = await fetchTokenBalances(wallet);
+      const { fetchAllTokenBalances } = await import("../blockchain");
+      const balances = await fetchAllTokenBalances(wallet);
       await db.updatePlayerProfile(profile.id, {
-        rvoiceBalance: balances.rvoice,
-        rgenBalance: balances.rgen,
+        rvoiceBalance: balances.rgvoice,
+        rgenBalance: balances.regen,
+        rcvoicePublic: balances.rcvoice,
+        rcivicsPublic: balances.rcivics,
         lastTokenSync: new Date(),
       });
-      return { rvoice: balances.rvoice, rgen: balances.rgen };
+      return { rvoice: balances.rgvoice, rgen: balances.regen };
     }),
 
   // Self-service: force-sync own token balances (no rate limit)
@@ -347,14 +351,65 @@ export const playerProfilesRouter = router({
       if (!wallet) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "No wallet address on profile" });
       }
-      const { fetchTokenBalances } = await import("../blockchain");
-      const balances = await fetchTokenBalances(wallet);
+      const { fetchAllTokenBalances } = await import("../blockchain");
+      const balances = await fetchAllTokenBalances(wallet);
       await db.updatePlayerProfile(profile.id, {
-        rvoiceBalance: balances.rvoice,
-        rgenBalance: balances.rgen,
+        rvoiceBalance: balances.rgvoice,
+        rgenBalance: balances.regen,
+        rcvoicePublic: balances.rcvoice,
+        rcivicsPublic: balances.rcivics,
         lastTokenSync: new Date(),
       });
-      return { rvoice: balances.rvoice, rgen: balances.rgen, cached: false };
+      return { rvoice: balances.rgvoice, rgen: balances.regen, cached: false };
+    }),
+
+  /**
+   * Return the logged-in user's four-token picture: for each of RCVoice,
+   * RGVoice, $RCivics, $ReGen report public (Base blockchain cache),
+   * private (our off-chain ledger), and total. Also returns the wallet
+   * address if one is linked and the last sync timestamp. Used by the
+   * profile token boxes and their detail dialog.
+   *
+   * If the user has no player_profile yet, returns all zeros rather
+   * than erroring.
+   */
+  getMyTokens: protectedProcedure.query(async ({ ctx }) => {
+    const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+    if (!profile) {
+      const zero = { public: 0, private: 0, total: 0 };
+      return {
+        walletAddress: null,
+        lastTokenSync: null,
+        rgvoice: zero,
+        regen: zero,
+        rcvoice: zero,
+        rcivics: zero,
+      };
+    }
+    const pair = (publicBal: number, privateBal: number) => ({
+      public: publicBal,
+      private: privateBal,
+      total: publicBal + privateBal,
+    });
+    return {
+      walletAddress: profile.walletAddress ?? profile.baseAccountName ?? null,
+      lastTokenSync: profile.lastTokenSync,
+      rgvoice: pair(profile.rvoiceBalance ?? 0, (profile as any).rgvoicePrivate ?? 0),
+      regen: pair(profile.rgenBalance ?? 0, (profile as any).regenPrivate ?? 0),
+      rcvoice: pair((profile as any).rcvoicePublic ?? 0, (profile as any).rcvoicePrivate ?? 0),
+      rcivics: pair((profile as any).rcivicsPublic ?? 0, (profile as any).rcivicsPrivate ?? 0),
+    };
+  }),
+
+  /**
+   * Return the ledger history for the logged-in user (newest first). Shown
+   * inside the token detail dialog so players can see where their private
+   * balance came from.
+   */
+  myTokenLedger: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(200).default(50) }).optional())
+    .query(async ({ ctx, input }) => {
+      return db.getUserTokenLedger(ctx.user.id, input?.limit ?? 50);
     }),
 
   // Admin: Unverify a player profile
