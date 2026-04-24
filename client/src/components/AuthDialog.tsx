@@ -119,9 +119,18 @@ export function AuthDialog({
             </div>
           ) : (
             <>
-              {/* Google */}
+              {/* Google. Pass the current pathname+search as returnTo so the
+                  OAuth callback bounces the user back to wherever they
+                  clicked Sign In (not the homepage). The server-side state
+                  param carries this across the OAuth hop and survives iOS
+                  Safari Intelligent Tracking Prevention, which can wipe
+                  sessionStorage during the redirect. */}
               <a
-                href={getGoogleLoginUrl()}
+                href={getGoogleLoginUrl(
+                  typeof window !== "undefined"
+                    ? window.location.pathname + window.location.search
+                    : undefined
+                )}
                 className="flex items-center justify-center gap-3 w-full h-11 rounded-xl bg-white text-[#1a1a19] font-medium text-sm hover:bg-white/90 transition-colors"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">

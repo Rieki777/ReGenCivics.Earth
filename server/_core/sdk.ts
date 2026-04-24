@@ -85,16 +85,22 @@ class SDKServer {
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
 
-      if (
-        !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
-      ) {
-        console.warn("[Auth] Session payload missing required fields");
+      // Only openId and appId are required. The `name` field is purely
+      // cosmetic. Email magic-link sign-in has no name at token-creation
+      // time, and Apple OAuth only gives us a name on the very first
+      // sign-in. Requiring a non-empty name here was rejecting every
+      // email session and any returning Apple session, which left users
+      // stuck in an apparent sign-in loop.
+      if (!isNonEmptyString(openId) || !isNonEmptyString(appId)) {
+        console.warn("[Auth] Session payload missing openId or appId");
         return null;
       }
 
-      return { openId, appId, name };
+      return {
+        openId,
+        appId,
+        name: typeof name === "string" ? name : "",
+      };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
       return null;
