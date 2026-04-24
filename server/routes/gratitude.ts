@@ -114,16 +114,17 @@ export const gratitudeRouter = router({
         console.warn("[gratitude.send] governance token credit failed (non-fatal):", err);
       }
 
-      // Private ledger credit: bump the recipient's RGVoice private balance
-      // by 5 so the profile's big-number total reflects gratitude earned
-      // in real time. RGVoice was picked because gratitude is a
-      // Game-track signal; when the player claims their voice on Hypha
-      // the private balance will be debited and matched on-chain.
+      // Private ledger credit: bump the recipient's $ReGen private
+      // balance by 5 so the profile's $ReGen total reflects gratitude
+      // earned in real time. Gratitude is an earnings signal (not a
+      // governance-weight signal), so it credits the economic token.
+      // When the player later claims on Hypha, the private balance is
+      // debited and matched on-chain.
       try {
         const { creditPrivateTokens } = await import("../db");
         await creditPrivateTokens({
           userId: recipient.id,
-          tokenType: "rgvoice",
+          tokenType: "regen",
           amount: 5,
           source: "gratitude_received",
           sourceId: (result as any).insertId ?? null,
