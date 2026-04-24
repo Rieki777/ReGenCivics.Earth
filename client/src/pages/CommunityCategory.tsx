@@ -134,8 +134,9 @@ export default function CommunityCategory() {
                 // flow instead of the /connect interest form. /connect is for
                 // telling us what you're interested in, not for making an
                 // account. After OAuth they land back at this same forum page.
-                sessionStorage.setItem("returnTo", window.location.pathname);
-                window.location.href = getLoginUrl();
+                const returnTo = window.location.pathname;
+                sessionStorage.setItem("returnTo", returnTo);
+                window.location.href = getLoginUrl(returnTo);
               }}
               className="px-6 py-3 rounded-lg bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#7dd87d]/90 transition-colors"
             >

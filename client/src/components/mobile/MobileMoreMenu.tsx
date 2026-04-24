@@ -17,7 +17,6 @@ import { X, ChevronDown, Search, SkipBack, SkipForward, Play, Pause, Music, List
 import { MOBILE_MENU_SECTIONS, MOBILE_MENU_FOOTER } from "@/config/mobileMenu";
 import { MenuCard } from "./MenuCard";
 import { NextQuestCard } from "./NextQuestCard";
-import { MobilePlaylistPanel } from "./MobilePlaylistPanel";
 import { CopyLinkButton } from "@/components/audio/CopyLinkButton";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
 import { Link } from "wouter";
@@ -34,10 +33,15 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
   const audio = useAudio();
   const [internalOpen, setInternalOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [playlistOpen, setPlaylistOpen] = useState(false);
 
   const open = openProp ?? internalOpen;
   const onClose = onCloseProp ?? (() => setInternalOpen(false));
+
+  // Deep link target for the compact music strip. Opens the current song's
+  // HymnPlayer when one is loaded, or the /hymn-book index otherwise.
+  const musicHref = audio.currentSong?.slug
+    ? `/hymn-book/${audio.currentSong.slug}`
+    : "/hymn-book";
 
   useEffect(() => {
     const handler = () => setInternalOpen(true);
@@ -71,7 +75,13 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-[#0d2818] overflow-y-auto" role="dialog" aria-modal="true" aria-label="More menu">
+    <div
+      className="fixed inset-0 z-[60] bg-[#0d2818] overflow-y-auto overflow-x-hidden"
+      style={{ touchAction: "pan-y", overscrollBehavior: "contain" }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="More menu"
+    >
       {/* Header band with wizards hero + close */}
       <div className={`relative bg-gradient-to-br ${tint.bgGradient} px-4 pt-5 pb-6`}>
         <button
@@ -112,14 +122,23 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           <span className="text-sm">Jump to anything</span>
         </button>
 
-        {/* Music player row + actions + playlist */}
+        {/* Compact music strip (tap to open the full player).
+            Playlist / Add song / Share keep users inside the More drawer for
+            quick actions; the full playlist + progress + volume live on the
+            dedicated /hymn-book route. */}
         <div className="space-y-2">
-          {/* Music player row */}
-          <div className="flex items-center gap-3 bg-white/10 backdrop-blur border border-white/15 rounded-2xl px-4 py-3">
-            <Music className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
-            <span className="flex-1 min-w-0 text-white/70 text-sm truncate">
-              {audio.currentSong?.title ?? "Hymns for the ReGeneration"}
-            </span>
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/15 rounded-2xl px-2 py-2">
+            <Link
+              href={musicHref}
+              onClick={onClose}
+              className="flex-1 min-w-0 flex items-center gap-3 px-2 py-1 rounded-xl hover:bg-white/5 transition-colors"
+              aria-label="Open full music player"
+            >
+              <Music className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
+              <span className="flex-1 min-w-0 text-white/80 text-sm truncate">
+                {audio.currentSong?.title ?? "Hymns for the ReGeneration"}
+              </span>
+            </Link>
             <div className="flex items-center gap-1">
               <button onClick={audio.prevSong} className="p-1.5 text-white/60 hover:text-white" aria-label="Previous track">
                 <SkipBack className="w-4 h-4" />
@@ -133,18 +152,16 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
             </div>
           </div>
 
-          {/* Three action buttons */}
+          {/* Three action buttons — Playlist opens the full music page, not an inline dupe */}
           <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => setPlaylistOpen((s) => !s)}
+            <Link
+              href="/hymn-book"
+              onClick={onClose}
               className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/15 rounded-2xl py-2.5 text-white text-xs font-semibold transition-colors"
-              aria-expanded={playlistOpen}
-              aria-controls="mobile-playlist-panel"
             >
               <ListMusic className="w-4 h-4 text-[#7dd87d]" />
-              {playlistOpen ? "Hide" : "Playlist"}
-            </button>
+              Playlist
+            </Link>
             <Link
               href="/hymn-book#add-your-voice"
               onClick={onClose}
@@ -155,13 +172,6 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
             </Link>
             <CopyLinkButton song={audio.currentSong} variant="mobile" />
           </div>
-
-          {/* Inline playlist panel */}
-          {playlistOpen && (
-            <div id="mobile-playlist-panel">
-              <MobilePlaylistPanel onSelect={onClose} />
-            </div>
-          )}
         </div>
 
         {/* Next quest card */}

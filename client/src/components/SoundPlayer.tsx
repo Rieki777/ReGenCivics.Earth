@@ -10,11 +10,24 @@
  *     happens in the command panel).
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAudio } from "@/contexts/AudioContext";
 import {
   SkipBack, SkipForward, Play, Pause, Volume2, Music, ListMusic, Plus, Download,
 } from "lucide-react";
+
+/**
+ * iOS (including iPadOS) ignores programmatic `audio.volume` changes on HTML5
+ * audio — Apple ties it to system volume and silently drops the call. Detect
+ * iOS so we can show a hint instead of a non-functional slider.
+ */
+function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/.test(ua)) return true;
+  // iPadOS 13+ reports as Mac; detect via touch capability.
+  return ua.includes("Mac") && typeof document !== "undefined" && "ontouchend" in document;
+}
 
 interface SoundPlayerProps {
   variant?: "desktop" | "mobile";
@@ -39,6 +52,7 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
 
   const [showTrackList, setShowTrackList] = useState(variant === "mobile");
   const isMobile = variant === "mobile";
+  const iOS = useMemo(isIOS, []);
 
   const playBtnSize = isMobile ? "w-12 h-12" : "w-10 h-10";
   const playIcon = isMobile ? "w-6 h-6" : "w-5 h-5";
@@ -184,20 +198,30 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
         </button>
       </div>
 
-      {/* Volume */}
-      <div className="flex items-center gap-2">
-        <Volume2 className="w-4 h-4 text-white/60" />
-        <input
-          type="range"
-          aria-label="Volume"
-          min={0}
-          max={1}
-          step={0.05}
-          value={volume}
-          onChange={(e) => setVolume(Number(e.target.value))}
-          className="flex-1 accent-[#7dd87d] h-1"
-        />
-      </div>
+      {/* Volume — iOS controls playback volume at the system level and ignores
+          programmatic changes, so show a hint instead of a broken slider. */}
+      {iOS ? (
+        <div className="flex items-center justify-center gap-2 text-xs text-white/55">
+          <Volume2 className="w-4 h-4" />
+          <span>Use your device volume buttons</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Volume2 className="w-4 h-4 text-white/60" />
+          <input
+            type="range"
+            aria-label="Volume"
+            min={0}
+            max={1}
+            step={0.05}
+            value={volume}
+            onChange={(e) => setVolume(Number(e.target.value))}
+            onInput={(e) => setVolume(Number((e.target as HTMLInputElement).value))}
+            className="flex-1 accent-[#7dd87d] h-1"
+            style={{ touchAction: "manipulation" }}
+          />
+        </div>
+      )}
 
       {!isMobile && (
         <div className="flex items-center justify-center text-xs">

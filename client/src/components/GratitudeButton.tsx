@@ -26,32 +26,47 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number; showAbove: boolean } | null>(null);
 
   // Measure the button on open + on scroll/resize so the portaled panel
   // follows the button. Rendering the panel in a Portal lets it escape
   // parent `overflow: hidden` and stacking contexts, which was clipping
   // the gratitude dialog inside forum reply cards on desktop.
+  //
+  // On narrow mobile viewports (iPhone) the panel width shrinks to fit and
+  // the vertical position is clamped to the visual viewport so it never
+  // renders below the fold or behind the iOS URL bar chrome.
   useLayoutEffect(() => {
     if (!open) return;
     const place = () => {
       const rect = buttonRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const panelWidth = 288; // w-72 = 18rem = 288px
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const horizPad = 8;
+      const panelMaxW = 288; // w-72 = 18rem = 288px
+      const width = Math.min(panelMaxW, vw - horizPad * 2);
       const gap = 8;
-      // Prefer showing the panel above the button; if there's not enough
-      // room, fall back to below.
+      const estimatedPanelHeight = 180;
       const spaceAbove = rect.top;
-      const showAbove = spaceAbove > 180;
-      const top = showAbove
-        ? rect.top - gap // we'll translate(-100%) on the Y axis in style below
-        : rect.bottom + gap;
-      // Left-align to the button, clamp to viewport with 8px padding.
-      const left = Math.min(
-        Math.max(8, rect.left),
-        window.innerWidth - panelWidth - 8
-      );
-      setPanelPos({ top, left });
+      const spaceBelow = vh - rect.bottom;
+      const showAbove = spaceAbove > estimatedPanelHeight || spaceAbove > spaceBelow;
+      let top = showAbove ? rect.top - gap : rect.bottom + gap;
+      // Clamp vertically: when showing below, don't let the top push past the
+      // bottom of the visible viewport.
+      if (!showAbove) {
+        top = Math.min(top, vh - estimatedPanelHeight - horizPad);
+      } else {
+        // When showing above (with translateY(-100%)), ensure the translated
+        // bottom edge stays inside the viewport.
+        top = Math.max(top, estimatedPanelHeight + horizPad);
+      }
+      // Center-align on narrow screens, left-align otherwise, always clamped.
+      const rawLeft = vw < panelMaxW + horizPad * 4
+        ? (vw - width) / 2
+        : rect.left;
+      const left = Math.min(Math.max(horizPad, rawLeft), vw - width - horizPad);
+      setPanelPos({ top, left, width, showAbove });
     };
     place();
     window.addEventListener("scroll", place, true);
@@ -122,16 +137,15 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
           <div
             role="dialog"
             aria-label="Send gratitude"
-            className="fixed z-[9999] w-72 bg-[#1a472a] border border-[#7dd87d]/30 rounded-xl shadow-2xl p-3"
+            className="fixed z-[9999] bg-[#1a472a] border border-[#7dd87d]/30 rounded-xl shadow-2xl p-3"
             style={{
               top: panelPos.top,
               left: panelPos.left,
+              width: panelPos.width,
+              maxWidth: "calc(100vw - 16px)",
               // When showing above the button we translate up by 100% so
               // the bottom edge lines up with the stored `top` value.
-              transform:
-                (buttonRef.current?.getBoundingClientRect().top ?? 0) > 180
-                  ? "translateY(-100%)"
-                  : undefined,
+              transform: panelPos.showAbove ? "translateY(-100%)" : undefined,
             }}
             onClick={(e) => e.stopPropagation()}
           >

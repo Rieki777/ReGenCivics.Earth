@@ -261,8 +261,9 @@ export default function Apply() {
           </p>
           <Button
             onClick={() => {
-              sessionStorage.setItem("returnTo", window.location.pathname + window.location.search);
-              window.location.href = getLoginUrl();
+              const returnTo = window.location.pathname + window.location.search;
+              sessionStorage.setItem("returnTo", returnTo);
+              window.location.href = getLoginUrl(returnTo);
             }}
             className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold w-full py-6 text-base"
           >

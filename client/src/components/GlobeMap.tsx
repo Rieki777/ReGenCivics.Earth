@@ -512,11 +512,23 @@ function EntityCard({
 
   const applyUrl = getApplyUrl();
 
+  // Rendered as a div (not button) so the nested <a> tags inside the action
+  // row can actually navigate on iPhone Safari — button-in-button /
+  // anchor-in-button is invalid HTML and Safari refuses the inner click.
   return (
-    <button
-      ref={cardRef}
+    <div
+      ref={cardRef as unknown as React.RefObject<HTMLDivElement>}
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(entity)}
-      className={`w-full text-left rounded-xl border transition-all duration-300 overflow-hidden ${
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(entity);
+        }
+      }}
+      aria-pressed={isSelected}
+      className={`w-full text-left rounded-xl border transition-all duration-300 overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd87d]/60 ${
         isSelected
           ? `${style.bg} ${style.border} border-2 shadow-lg shadow-[#7dd87d]/10`
           : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
@@ -643,6 +655,8 @@ function EntityCard({
             {entity.forumThreadUrl && (
               <a
                 href={entity.forumThreadUrl}
+                target={entity.forumThreadUrl.startsWith("http") ? "_blank" : undefined}
+                rel={entity.forumThreadUrl.startsWith("http") ? "noopener noreferrer" : undefined}
                 onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1 text-xs text-[#7dd87d] hover:text-[#9de89d] underline"
               >
@@ -665,19 +679,18 @@ function EntityCard({
               </a>
             )}
             {entity.type === "land_project" && !entity.inactive && !entity.forumThreadUrl && (
-              <a
-                href="/community"
-                onClick={(e) => e.stopPropagation()}
+              <span
                 title="Forum space coming soon for this project"
-                className="inline-flex items-center gap-1 text-xs border border-white/20 text-white/60 px-3 py-1.5 rounded-full font-medium cursor-default pointer-events-none"
+                className="inline-flex items-center gap-1 text-xs border border-white/20 text-white/50 px-3 py-1.5 rounded-full font-medium cursor-not-allowed select-none"
+                aria-disabled="true"
               >
                 <MessageCircle className="w-3 h-3" /> Forum (coming soon)
-              </a>
+              </span>
             )}
           </div>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 

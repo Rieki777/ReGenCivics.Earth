@@ -661,7 +661,8 @@ export default function Navigation() {
           <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[60] md:hidden" />
           <Drawer.Content
             id="mobile-nav-drawer"
-            className="fixed inset-y-0 right-0 z-[70] w-[min(85vw,320px)] bg-[#0d2818] border-l border-[#7dd87d]/20 flex flex-col overflow-hidden md:hidden focus:outline-none"
+            className="fixed inset-y-0 right-0 z-[70] w-[min(85vw,320px)] bg-[#0d2818] border-l border-[#7dd87d]/20 flex flex-col overflow-x-hidden overflow-y-hidden md:hidden focus:outline-none"
+            style={{ touchAction: "pan-y", overscrollBehavior: "contain" }}
             aria-label="Mobile navigation"
           >
             {/* Drawer header */}
@@ -679,7 +680,10 @@ export default function Navigation() {
             </div>
 
             {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto">
+            <div
+              className="flex-1 overflow-y-auto overflow-x-hidden"
+              style={{ touchAction: "pan-y", overscrollBehavior: "contain" }}
+            >
             <div className="flex flex-col gap-1 p-3">
 
 

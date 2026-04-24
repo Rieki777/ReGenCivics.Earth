@@ -15,7 +15,10 @@
  * Context slot: pulls the first usePageTools() action for the current route,
  * falling back to Search (opens the command palette).
  *
- * Hidden on desktop. Sits above the MobileTabBar (bottom-24).
+ * Hidden on desktop. Sits above the MobileTabBar via env(safe-area-inset-bottom)
+ * + 5.5rem so the FAB clears the iPhone home-indicator area, and uses z-[60]
+ * so it renders over the z-50 MobileTabBar (without this z bump the FAB was
+ * hidden behind the bar on Safari).
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
@@ -155,7 +158,11 @@ export function WizardRadialMenu() {
   ];
 
   return (
-    <div className="fixed bottom-24 right-4 z-40 md:hidden" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed right-4 z-[60] md:hidden"
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Relative wrapper sized to the trigger. Buttons position absolutely
           around the trigger's center. */}
       <div className="relative w-12 h-12">

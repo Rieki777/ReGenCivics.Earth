@@ -79,13 +79,18 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  // Save current path so we can return after login
+  // Save current path so we can return after login. We pass it to the server
+  // as a `returnTo` query param (primary) and also stash it in sessionStorage
+  // (fallback). iPhone Safari's ITP can clear sessionStorage across the OAuth
+  // hop, so the server-side state param is the reliable path home.
   const currentPath = window.location.pathname + window.location.search;
-  if (currentPath && currentPath !== "/" && !currentPath.startsWith("/login")) {
+  const hasReturn =
+    currentPath && currentPath !== "/" && !currentPath.startsWith("/login");
+  if (hasReturn) {
     sessionStorage.setItem("returnTo", currentPath);
   }
 
-  window.location.href = getLoginUrl();
+  window.location.href = getLoginUrl(hasReturn ? currentPath : undefined);
 };
 
 queryClient.getQueryCache().subscribe(event => {

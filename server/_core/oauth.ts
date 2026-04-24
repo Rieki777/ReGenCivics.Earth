@@ -62,6 +62,37 @@ function getQueryParam(req: Request, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+/**
+ * Only accept same-origin relative paths as return targets. Everything else
+ * (absolute URLs, protocol-relative URLs, schemes) is dropped silently so a
+ * malicious state param can't redirect the player off-site after login.
+ */
+function normalizeReturnTo(raw: string | undefined | null): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("/")) return null;
+  if (trimmed.startsWith("//")) return null; // protocol-relative
+  if (trimmed.startsWith("/\\")) return null; // some browsers normalize to protocol-relative
+  if (/[\r\n\t]/.test(trimmed)) return null;
+  return trimmed;
+}
+
+function encodeReturnTo(path: string): string {
+  // URL-safe base64 so Google's state param doesn't mangle it.
+  return Buffer.from(path, "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function decodeReturnTo(state: string): string | null {
+  try {
+    const padded = state.replace(/-/g, "+").replace(/_/g, "/");
+    return Buffer.from(padded, "base64").toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
 // ─── Google OAuth ────────────────────────────────────────────────────────────
 
 async function getGoogleTokens(code: string, redirectUri: string) {
@@ -114,8 +145,14 @@ async function getAppleUserInfo(idToken: string) {
 export function registerOAuthRoutes(app: Express) {
 
   // ── Google: Initiate login ──────────────────────────────────────────────────
-  app.get("/api/oauth/google", (_req: Request, res: Response) => {
+  // Accepts an optional `?returnTo=<relative-path>` query param. The path is
+  // passed through Google's `state` parameter so the callback can redirect
+  // the player back to where they started. Server-side state is more robust
+  // than sessionStorage on iPhone Safari, where Intelligent Tracking
+  // Prevention can drop client storage across the OAuth hop.
+  app.get("/api/oauth/google", (req: Request, res: Response) => {
     const redirectUri = `${ENV.appUrl}/api/oauth/google/callback`;
+    const returnTo = normalizeReturnTo(getQueryParam(req, "returnTo"));
     const params = new URLSearchParams({
       client_id: ENV.googleClientId,
       redirect_uri: redirectUri,
@@ -124,12 +161,15 @@ export function registerOAuthRoutes(app: Express) {
       access_type: "offline",
       prompt: "select_account",
     });
+    if (returnTo) params.set("state", encodeReturnTo(returnTo));
     res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
   });
 
   // ── Google: Callback ────────────────────────────────────────────────────────
   app.get("/api/oauth/google/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
+    const rawState = getQueryParam(req, "state");
+    const returnTo = rawState ? normalizeReturnTo(decodeReturnTo(rawState)) : null;
     if (!code) {
       res.status(400).json({ error: "Missing code" });
       return;
@@ -157,7 +197,7 @@ export function registerOAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      res.redirect(302, "/");
+      res.redirect(302, returnTo ?? "/");
     } catch (error) {
       console.error("[OAuth] Google callback failed", error);
       res.redirect("/?error=auth_failed");
@@ -165,8 +205,9 @@ export function registerOAuthRoutes(app: Express) {
   });
 
   // ── Apple: Initiate login ───────────────────────────────────────────────────
-  app.get("/api/oauth/apple", (_req: Request, res: Response) => {
+  app.get("/api/oauth/apple", (req: Request, res: Response) => {
     const redirectUri = `${ENV.appUrl}/api/oauth/apple/callback`;
+    const returnTo = normalizeReturnTo(getQueryParam(req, "returnTo"));
     const params = new URLSearchParams({
       client_id: ENV.appleClientId,
       redirect_uri: redirectUri,
@@ -174,6 +215,7 @@ export function registerOAuthRoutes(app: Express) {
       response_mode: "form_post",
       scope: "name email",
     });
+    if (returnTo) params.set("state", encodeReturnTo(returnTo));
     res.redirect(`https://appleid.apple.com/auth/authorize?${params}`);
   });
 
@@ -181,6 +223,8 @@ export function registerOAuthRoutes(app: Express) {
   app.post("/api/oauth/apple/callback", async (req: Request, res: Response) => {
     const idToken = req.body?.id_token;
     const userJson = req.body?.user; // only sent on first login
+    const rawState = typeof req.body?.state === "string" ? req.body.state : undefined;
+    const returnTo = rawState ? normalizeReturnTo(decodeReturnTo(rawState)) : null;
 
     if (!idToken) {
       res.status(400).json({ error: "Missing id_token" });
@@ -217,7 +261,7 @@ export function registerOAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      res.redirect(302, "/");
+      res.redirect(302, returnTo ?? "/");
     } catch (error) {
       console.error("[OAuth] Apple callback failed", error);
       res.redirect("/?error=auth_failed");

@@ -36,11 +36,15 @@ export function getSessionCookieOptions(
   // skip the domain attribute so cookies still work on localhost.
   const domain = isLocal ? undefined : ".regencivics.earth";
 
+  // SameSite=lax is the correct setting for the OAuth top-level redirect flow
+  // and works on every browser including iPhone Safari (which silently drops
+  // SameSite=none cookies when Secure is not accurately true — common on
+  // Railway behind its proxy if x-forwarded-proto is not set).
   return {
     domain,
     httpOnly: true,
     path: "/",
-    sameSite: "none",
+    sameSite: "lax",
     secure: isSecureRequest(req),
   };
 }
