@@ -129,9 +129,18 @@ The Hypha Bridge module lives at `apps/web/src/lib/hypha-bridge/` and is respons
 
 Three pre-fill strategies are used in order of preference: (A) upstream PR to hypha-dao adding searchParams support to the creation forms, (B) our own `useResubmitProposalData` style hook wrapped around Hypha's form, (C) our own formalization page that renders the same fields and posts through the bridge.
 
-Token contracts on Base:
+Token contracts on Base (chain id 8453):
 - `$REGEN`: `0x4E617cd113364193d215d107AdD6fa50418AA2E4`
 - `$RCivics`: `0x72e9B17a2F93A923D63666eC0a1c096B1443ef26`
+- `RGVoice`: `0x4d848B3f2D74D1D2f6c75c55d0751DAB8FC7D707`
+- `RCVoice`: (not yet deployed)
+
+Railway env var names (server reads these at startup, falls back to the
+hard-coded defaults in `server/blockchain.ts` if unset):
+- `REGEN_TOKEN_CONTRACT`
+- `RCIVICS_TOKEN_CONTRACT`
+- `RGVOICE_TOKEN_CONTRACT`
+- `RCVOICE_TOKEN_CONTRACT` (optional; RCVoice reads are skipped if unset)
 
 Relevant DHO slugs: `regen-games`, `regen-civics`. Hypha app base URL: `https://app.hypha.earth`.
 
