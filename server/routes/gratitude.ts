@@ -96,30 +96,16 @@ export const gratitudeRouter = router({
         sourceId: input.sourceId ?? null,
       });
 
-      // Governance token ledger: credit 5 tokens to the recipient for
-      // receiving gratitude.
-      try {
-        const { governanceTokenLedger, governanceTenants } = await import("../../drizzle/schema");
-        const tenants = await db.select({ id: governanceTenants.id }).from(governanceTenants).where(eq(governanceTenants.slug, "platform")).limit(1);
-        const tenantId = tenants[0]?.id ?? 1;
-        await db.insert(governanceTokenLedger).values({
-          userId: recipient.id,
-          tenantId,
-          amount: 5,
-          type: "gratitude",
-          sourceRef: `gratitude:${(result as any).insertId ?? 0}`,
-          description: `Gratitude received from @${ctx.user.handle ?? ctx.user.id}`,
-        } as any);
-      } catch (err) {
-        console.warn("[gratitude.send] governance token credit failed (non-fatal):", err);
-      }
-
       // Private ledger credit: bump the recipient's $ReGen private
       // balance by 5 so the profile's $ReGen total reflects gratitude
       // earned in real time. Gratitude is an earnings signal (not a
       // governance-weight signal), so it credits the economic token.
       // When the player later claims on Hypha, the private balance is
       // debited and matched on-chain.
+      //
+      // (The superseded governanceTokenLedger insert was removed in the
+      // 2026-04-24 supersede pass; user_token_ledger is the single
+      // source of truth now.)
       try {
         const { creditPrivateTokens } = await import("../db");
         await creditPrivateTokens({
@@ -128,6 +114,7 @@ export const gratitudeRouter = router({
           amount: 5,
           source: "gratitude_received",
           sourceId: (result as any).insertId ?? null,
+          sourceRef: `gratitude:${(result as any).insertId ?? 0}`,
           description: `Gratitude received from @${ctx.user.handle ?? ctx.user.id}`,
         });
       } catch (err) {

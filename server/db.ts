@@ -3409,7 +3409,10 @@ export async function getUserCommunityAgreementVotes(userId: number) {
 import { userTokenLedger } from "../drizzle/schema";
 
 type TokenType = "rcvoice" | "rgvoice" | "rcivics" | "regen";
-type CreditSource = "seeds_claim" | "gratitude_received" | "quest_completion" | "claimed_to_base" | "manual";
+
+// Source tag. Kept as string so callers can add new sources (harvest,
+// grant, expense, migrated_from_*, etc) without editing this union.
+type CreditSource = string;
 
 const TOKEN_TO_PROFILE_COLUMN: Record<TokenType, string> = {
   rcvoice: "rcvoicePrivate",
@@ -3425,9 +3428,10 @@ const TOKEN_TO_PROFILE_COLUMN: Record<TokenType, string> = {
  * single SQL transaction so the two stay in sync.
  *
  * Returns the new private balance after the credit. If the user has no
- * player_profiles row the helper returns null without throwing, so
- * callers that fire-and-forget (gratitude, quest completion) don't
- * cascade-fail when a profile hasn't been created yet.
+ * player_profiles row the helper still writes the ledger entry (so the
+ * audit trail is complete) but skips the column bump, and returns null.
+ * Once the user creates a profile the column cache can be rebuilt from
+ * the ledger on demand.
  */
 export async function creditPrivateTokens(params: {
   userId: number;
@@ -3435,35 +3439,40 @@ export async function creditPrivateTokens(params: {
   amount: number;
   source: CreditSource;
   sourceId?: number | null;
+  sourceRef?: string | null;
+  tenantId?: number | null;
   description?: string | null;
 }): Promise<number | null> {
-  const { userId, tokenType, amount, source, sourceId, description } = params;
+  const { userId, tokenType, amount, source, sourceId, sourceRef, tenantId, description } = params;
   if (amount === 0) return null;
   const db = await getDb();
   if (!db) return null;
 
   const column = TOKEN_TO_PROFILE_COLUMN[tokenType];
 
-  // Ensure the user has a profile to credit. Without one we skip rather
-  // than create a half-initialised row.
-  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
-  if (!profile) {
-    console.warn(`[tokens] creditPrivateTokens: no profile for user ${userId}, skipping ${amount} ${tokenType} from ${source}`);
-    return null;
-  }
-
-  // Write the audit entry.
+  // Always write the audit entry first. This way the ledger history
+  // is preserved even for users who have no player_profiles row yet
+  // (e.g., they signed up but never completed profile creation).
   await db.insert(userTokenLedger).values({
     userId,
     tokenType,
     amount,
     source,
     sourceId: sourceId ?? null,
+    sourceRef: sourceRef ?? null,
+    tenantId: tenantId ?? null,
     description: description ?? null,
   });
 
-  // Bump the matching private column. Using raw SQL so the column name
-  // can be driven by tokenType without a big switch.
+  // Bump the matching private column on player_profiles if one exists.
+  // Using raw SQL so the column name is driven by tokenType without a
+  // big switch statement.
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) {
+    console.warn(`[tokens] creditPrivateTokens: no profile for user ${userId}, ledger row written but column cache not updated`);
+    return null;
+  }
+
   await db.execute(sql`
     UPDATE player_profiles
     SET ${sql.identifier(column)} = ${sql.identifier(column)} + ${amount}

@@ -295,34 +295,97 @@ export const governanceRouter = router({
     return rows as any[];
   }),
 
-  /** Sum of unclaimed internal token balance for the current user, across all
-   * tenants. Used by the bridge button on the profile page to show "X tokens
-   * ready to claim". */
+  /** Sum of unclaimed private-ledger balance for the current user, broken
+   * down by token and by tenant. Replaces the old governanceTokenLedger
+   * read (2026-04-24 supersede); now reads from user_token_ledger where
+   * claimedAt IS NULL. Used by the bridge button on the profile. */
   myUnclaimedBalance: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
-    if (!db) return { total: 0, byTenant: [] };
-    const rows = await db.execute(sql`
-      SELECT tenantId, SUM(amount) AS total
-      FROM governanceTokenLedger
-      WHERE userId = ${ctx.user.id} AND claimedAt IS NULL
-      GROUP BY tenantId
-    `).then((r: any) => r[0] ?? []);
-    const byTenant = (rows as any[]).map((r) => ({ tenantId: r.tenantId, total: Number(r.total) }));
+    if (!db) return { total: 0, byTenant: [], byToken: {} };
+    const [byTenantRows, byTokenRows] = await Promise.all([
+      db.execute(sql`
+        SELECT tenantId, SUM(amount) AS total
+        FROM user_token_ledger
+        WHERE userId = ${ctx.user.id} AND claimedAt IS NULL
+        GROUP BY tenantId
+      `).then((r: any) => r[0] ?? []),
+      db.execute(sql`
+        SELECT tokenType, SUM(amount) AS total
+        FROM user_token_ledger
+        WHERE userId = ${ctx.user.id} AND claimedAt IS NULL
+        GROUP BY tokenType
+      `).then((r: any) => r[0] ?? []),
+    ]);
+    const byTenant = (byTenantRows as any[]).map((r) => ({ tenantId: r.tenantId, total: Number(r.total) }));
     const total = byTenant.reduce((acc, b) => acc + b.total, 0);
-    return { total, byTenant };
+    const byToken: Record<string, number> = {};
+    for (const r of byTokenRows as any[]) {
+      byToken[r.tokenType] = Number(r.total);
+    }
+    return { total, byTenant, byToken };
   }),
 
-  /** Claim eligibility: has the player crossed the internal token threshold? */
+  /** Claim eligibility: per-token. A token becomes claimable once its
+   * private balance meets its own threshold (seeded in game_variables by
+   * migration 0132: regen=1000, rgvoice=20, rcivics=1000, rcvoice=20).
+   * Returns per-token { balance, threshold, eligible } and a combined
+   * "eligible" rolled up to the Game pair (rgvoice+regen) and Fund pair
+   * (rcvoice+rcivics) since Hypha claims each pair together. */
   getClaimEligibility: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
-    if (!db) return { balance: 0, threshold: 1000, eligible: false };
-    const threshold = await readGovernanceVariable("governance.claim_threshold_tokens", 1000);
-    const rows = await db
-      .select({ total: sql`SUM(amount)` })
-      .from(governanceTokenLedger)
-      .where(and(eq(governanceTokenLedger.userId, ctx.user.id), sql`${governanceTokenLedger.claimedAt} IS NULL`));
-    const balance = Number((rows as any)[0]?.total ?? 0);
-    return { balance, threshold, eligible: balance >= threshold };
+    if (!db) {
+      return {
+        balance: 0,
+        threshold: 1000,
+        eligible: false,
+        byToken: {
+          regen:   { balance: 0, threshold: 1000, eligible: false },
+          rgvoice: { balance: 0, threshold: 20,   eligible: false },
+          rcivics: { balance: 0, threshold: 1000, eligible: false },
+          rcvoice: { balance: 0, threshold: 20,   eligible: false },
+        },
+        gamePairEligible: false,
+        fundPairEligible: false,
+      };
+    }
+    const [thresholds, balances] = await Promise.all([
+      Promise.all([
+        readGovernanceVariable("governance.claim_threshold_regen",   1000),
+        readGovernanceVariable("governance.claim_threshold_rgvoice", 20),
+        readGovernanceVariable("governance.claim_threshold_rcivics", 1000),
+        readGovernanceVariable("governance.claim_threshold_rcvoice", 20),
+      ]),
+      db.execute(sql`
+        SELECT tokenType, SUM(amount) AS total
+        FROM user_token_ledger
+        WHERE userId = ${ctx.user.id} AND claimedAt IS NULL
+        GROUP BY tokenType
+      `).then((r: any) => r[0] ?? []),
+    ]);
+    const [tRegen, tRgvoice, tRcivics, tRcvoice] = thresholds;
+    const totals: Record<string, number> = { regen: 0, rgvoice: 0, rcivics: 0, rcvoice: 0 };
+    for (const r of balances as any[]) totals[r.tokenType] = Number(r.total);
+    const byToken = {
+      regen:   { balance: totals.regen,   threshold: tRegen,   eligible: totals.regen   >= tRegen },
+      rgvoice: { balance: totals.rgvoice, threshold: tRgvoice, eligible: totals.rgvoice >= tRgvoice },
+      rcivics: { balance: totals.rcivics, threshold: tRcivics, eligible: totals.rcivics >= tRcivics },
+      rcvoice: { balance: totals.rcvoice, threshold: tRcvoice, eligible: totals.rcvoice >= tRcvoice },
+    };
+    // Hypha pair semantics: the Game DHO claims RGVoice + $ReGen
+    // together; the Fund DHO claims RCVoice + $RCivics together. A
+    // pair is eligible when BOTH of its tokens are above threshold.
+    const gamePairEligible = byToken.rgvoice.eligible && byToken.regen.eligible;
+    const fundPairEligible = byToken.rcvoice.eligible && byToken.rcivics.eligible;
+    // Back-compat: old UI reads { balance, threshold, eligible }. Keep
+    // those populated with the $ReGen numbers (the primary Game token).
+    return {
+      balance: byToken.regen.balance,
+      threshold: byToken.regen.threshold,
+      eligible: byToken.regen.eligible,
+      byToken,
+      gamePairEligible,
+      fundPairEligible,
+    };
   }),
 
   // ─── Phase 3: Tenant management (multi-tenant governance) ────────────────

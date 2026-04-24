@@ -601,17 +601,34 @@ export const userTokenLedger = mysqlTable("user_token_ledger", {
   // (e.g., when tokens are claimed on Hypha and move on-chain).
   amount: int("amount").notNull(),
   // Source tag. Known values: 'seeds_claim', 'gratitude_received',
-  // 'quest_completion', 'claimed_to_base', 'manual'. Left as varchar
-  // so new sources can be added without an ALTER.
+  // 'quest_completion', 'harvest', 'grant', 'expense', 'adjustment',
+  // 'claimed_to_base', 'manual', 'migrated_from_*'. Left as varchar so
+  // new sources can be added without an ALTER.
   source: varchar("source", { length: 64 }).notNull(),
   // Optional foreign key into the source row (seedsClaims.id, etc).
   sourceId: int("sourceId"),
+  // Tenant scope this credit belongs to. Null means platform-wide.
+  // Carried over from the superseded governanceTokenLedger so tenant-
+  // scoped governance (bioregion / land project) keeps working.
+  tenantId: int("tenantId"),
+  // Set when this ledger entry has been claimed on Hypha and moved
+  // on-chain. Null = still private, claimable when the per-token
+  // threshold is met.
+  claimedAt: timestamp("claimedAt"),
+  // Set after a Hypha bridge run that carried this entry on-chain.
+  hyphaBridgeId: int("hyphaBridgeId"),
+  // Free-form sourceRef string (e.g., "gratitude:123", "quest:abc") that
+  // the old ledger used to cross-reference external systems. Kept so
+  // the Hypha bridge prefill and admin tools can keep using it.
+  sourceRef: varchar("sourceRef", { length: 120 }),
   description: text("description"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   index("user_token_ledger_userId_idx").on(table.userId),
   index("user_token_ledger_tokenType_idx").on(table.tokenType),
   index("user_token_ledger_source_idx").on(table.source),
+  index("user_token_ledger_tenantId_idx").on(table.tenantId),
+  index("user_token_ledger_claimedAt_idx").on(table.claimedAt),
 ]));
 
 export type UserTokenLedgerEntry = typeof userTokenLedger.$inferSelect;

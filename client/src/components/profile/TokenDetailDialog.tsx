@@ -6,8 +6,14 @@
  * received, etc) so players can see where their tokens came from. The
  * "Claim on Hypha" button deep-links to Hypha so players can move
  * their private balance on-chain.
+ *
+ * Pair semantics: on Hypha, RGVoice + $ReGen are claimed together (Game
+ * pair) and RCVoice + $RCivics are claimed together (Fund pair). The
+ * claim button in this dialog is therefore enabled on PAIR eligibility,
+ * not just this token's individual balance, and its label names both
+ * tokens in the pair so players know what they're claiming.
  */
-import { ExternalLink, Sparkles } from "lucide-react";
+import { ExternalLink, Sparkles, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,8 +40,31 @@ const SOURCE_LABEL: Record<string, string> = {
   seeds_claim: "SEEDS historical claim",
   gratitude_received: "Gratitude received",
   quest_completion: "Quest completion",
+  harvest: "Gratitude harvest",
+  grant: "Governance grant",
+  expense: "Expense",
+  adjustment: "Adjustment",
   claimed_to_base: "Claimed on Hypha",
+  migrated_from_gratitude: "Migrated (gratitude)",
+  migrated_from_harvest: "Migrated (harvest)",
+  migrated_from_grant: "Migrated (grant)",
+  migrated_from_expense: "Migrated (expense)",
+  migrated_from_adjustment: "Migrated (adjustment)",
+  migrated_from_claim: "Migrated (claim)",
   manual: "Manual adjustment",
+};
+
+// Which pair does each token belong to?
+const PAIR_OF: Record<TokenKey, "game" | "fund"> = {
+  rgvoice: "game",
+  regen: "game",
+  rcvoice: "fund",
+  rcivics: "fund",
+};
+
+const PAIR_LABEL: Record<"game" | "fund", string> = {
+  game: "RGVoice + $ReGen",
+  fund: "RCVoice + $RCivics",
 };
 
 export function TokenDetailDialog({
@@ -46,14 +75,27 @@ export function TokenDetailDialog({
   publicBalance,
   privateBalance,
 }: Props) {
-  // Fetch the full private ledger. Entries for all tokens are returned;
-  // we filter to this token on the client since there's at most ~100.
+  // Fetch ledger + claim eligibility together. Both are scoped to the
+  // signed-in user; claim eligibility tells us whether this token's
+  // pair partner is also above threshold (Hypha claims RGVoice+$ReGen
+  // together, RCVoice+$RCivics together).
   const ledger = trpc.playerProfiles.myTokenLedger.useQuery(
     { limit: 100 },
     { enabled: open },
   );
+  const claim = trpc.governance.getClaimEligibility.useQuery(undefined, { enabled: open });
   const rows = (ledger.data ?? []).filter((e: any) => e.tokenType === tokenKey);
   const total = publicBalance + privateBalance;
+
+  const pair = PAIR_OF[tokenKey];
+  const pairEligible = claim.data
+    ? pair === "game"
+      ? claim.data.gamePairEligible
+      : claim.data.fundPairEligible
+    : false;
+  const myThreshold = claim.data?.byToken?.[tokenKey]?.threshold ?? 0;
+  const myBalance = claim.data?.byToken?.[tokenKey]?.balance ?? privateBalance;
+  const amountBelow = Math.max(0, myThreshold - myBalance);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,19 +128,36 @@ export function TokenDetailDialog({
           <div className="bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 text-xs text-amber-100/90 leading-relaxed flex gap-2">
             <Sparkles className="w-3.5 h-3.5 text-amber-300 flex-shrink-0 mt-0.5" />
             <span>
-              Tokens on our servers are earned through the game. You claim them on Hypha to move them to the public Base blockchain.
+              Tokens on our servers are earned through the game. You claim them on Hypha to move them to the public Base blockchain. On Hypha, {PAIR_LABEL[pair]} are claimed together.
             </span>
           </div>
 
-          <a
-            href={HYPHA_BASE}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold text-sm transition-colors"
-          >
-            Claim on Hypha
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          {pairEligible ? (
+            <a
+              href={HYPHA_BASE}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold text-sm transition-colors"
+            >
+              Claim {PAIR_LABEL[pair]} on Hypha
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          ) : (
+            <div
+              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/50 font-semibold text-sm cursor-not-allowed"
+              aria-disabled="true"
+              title={
+                amountBelow > 0
+                  ? `Earn ${formatExactNumber(amountBelow)} more ${label} to reach the claim threshold.`
+                  : `Waiting for the other half of the ${PAIR_LABEL[pair]} pair to reach its threshold.`
+              }
+            >
+              <Lock className="w-3.5 h-3.5" />
+              {amountBelow > 0
+                ? `${formatExactNumber(amountBelow)} more ${label} to unlock`
+                : `Pair partner below threshold`}
+            </div>
+          )}
 
           <div>
             <p className="text-[10px] uppercase tracking-widest text-white/50 mb-2">Private ledger history</p>

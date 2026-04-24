@@ -227,20 +227,25 @@ export const gameRouter = router({
         await recordScoreEvent(ctx.user.id, "gratitude_sent", "scoring.weights.gratitude_sent", "gratitude", input.receiverId);
       } catch { /* non-fatal */ }
 
-      // Governance token ledger: credit 5 tokens to recipient for receiving gratitude.
+      // Private ledger credit: $ReGen +5 to the recipient. Replaces the
+      // old governanceTokenLedger write now that user_token_ledger is
+      // the single source of truth (2026-04-24 supersede).
       try {
-        const { governanceTokenLedger, governanceTenants } = await import("../../drizzle/schema");
+        const { governanceTenants } = await import("../../drizzle/schema");
         const { eq: eqDrizzle } = await import("drizzle-orm");
         const tenants = await db.select({ id: governanceTenants.id }).from(governanceTenants).where(eqDrizzle(governanceTenants.slug, "platform")).limit(1);
         const tenantId = tenants[0]?.id ?? 1;
-        await db.insert(governanceTokenLedger).values({
+        const { creditPrivateTokens } = await import("../db");
+        await creditPrivateTokens({
           userId: input.receiverId,
-          tenantId,
+          tokenType: "regen",
           amount: 5,
-          type: "harvest",
+          source: "harvest",
+          sourceId: gratitudeId ?? null,
           sourceRef: gratitudeId ? `gratitude:${gratitudeId}` : "gratitude",
+          tenantId,
           description: "Gratitude received",
-        } as any);
+        });
       } catch { /* non-fatal */ }
 
       return { ok: true };

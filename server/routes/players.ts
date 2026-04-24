@@ -970,22 +970,26 @@ export const questsRouter = router({
         visibility: "public",
       });
 
-      // Governance token ledger: credit 10 tokens for quest completion.
-      // Uses the platform-level tenant (tenantId 1 if it exists).
+      // Private ledger credit: $ReGen +10 to the player for completing
+      // the quest. Replaces the old governanceTokenLedger write now
+      // that user_token_ledger is the single source of truth
+      // (2026-04-24 supersede). Uses the platform-level tenant.
       try {
-        const { governanceTokenLedger, governanceTenants } = await import("../../drizzle/schema");
+        const { governanceTenants } = await import("../../drizzle/schema");
         const tenants = await db2.select({ id: governanceTenants.id }).from(governanceTenants).where(eq(governanceTenants.slug, "platform")).limit(1);
         const tenantId = tenants[0]?.id ?? 1;
-        await db2.insert(governanceTokenLedger).values({
+        await db.creditPrivateTokens({
           userId: ctx.user.id,
-          tenantId,
+          tokenType: "regen",
           amount: 10,
-          type: "harvest",
+          source: "quest_completion",
+          sourceId: null,
           sourceRef: `quest:${input.questId}`,
+          tenantId,
           description: `Quest completed: ${input.questTitle}`,
-        } as any);
+        });
       } catch (err) {
-        console.warn("[quest.complete] governance token credit failed (non-fatal):", err);
+        console.warn("[quest.complete] private ledger credit failed (non-fatal):", err);
       }
 
       // Also update the questsCompleted JSON on playerProfiles

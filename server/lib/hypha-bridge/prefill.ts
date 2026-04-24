@@ -6,8 +6,8 @@
  * this file needs to change. The rest of the bridge stays stable.
  */
 import { getDb } from "../../db";
-import { users, governanceTokenLedger, playerProfiles } from "../../../drizzle/schema";
-import { eq, and, isNull, sum } from "drizzle-orm";
+import { users, userTokenLedger, playerProfiles } from "../../../drizzle/schema";
+import { eq, and, isNull, sum, sql } from "drizzle-orm";
 import type { HyphaBridgePayload } from "./types";
 
 export interface PlayerContext {
@@ -17,7 +17,12 @@ export interface PlayerContext {
   rcVoiceWeight: number;
   rgVoiceWeight: number;
   bioregions: string[];
+  /** Total unclaimed private-ledger balance across all four tokens. */
   internalTokenBalance: number;
+  /** Per-token breakdown of unclaimed balances. Hypha claims Game pair
+   * (rgvoice + regen) and Fund pair (rcvoice + rcivics) together, so
+   * the bridge needs each token's number separately. */
+  privateByToken: { rgvoice: number; regen: number; rcvoice: number; rcivics: number };
   citizenshipTier: string | null;
 }
 
@@ -31,12 +36,19 @@ export async function buildPlayerContext(userId: number): Promise<PlayerContext 
   const profileRows = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
   const profile = profileRows[0] ?? null;
 
-  // Sum of all unclaimed internal tokens across tenants
+  // Private ledger: sum of unclaimed entries per tokenType. Replaces the
+  // old governanceTokenLedger read (2026-04-24 supersede).
   const balanceRows = await db
-    .select({ total: sum(governanceTokenLedger.amount) })
-    .from(governanceTokenLedger)
-    .where(and(eq(governanceTokenLedger.userId, userId), isNull(governanceTokenLedger.claimedAt)));
-  const internalTokenBalance = Number(balanceRows[0]?.total ?? 0);
+    .select({ tokenType: userTokenLedger.tokenType, total: sum(userTokenLedger.amount) })
+    .from(userTokenLedger)
+    .where(and(eq(userTokenLedger.userId, userId), isNull(userTokenLedger.claimedAt)))
+    .groupBy(userTokenLedger.tokenType);
+  const privateByToken = { rgvoice: 0, regen: 0, rcvoice: 0, rcivics: 0 };
+  for (const r of balanceRows as any[]) {
+    if (r.tokenType in privateByToken) privateByToken[r.tokenType as keyof typeof privateByToken] = Number(r.total);
+  }
+  const internalTokenBalance =
+    privateByToken.rgvoice + privateByToken.regen + privateByToken.rcvoice + privateByToken.rcivics;
 
   let bioregions: string[] = [];
   try {
@@ -54,6 +66,7 @@ export async function buildPlayerContext(userId: number): Promise<PlayerContext 
     rgVoiceWeight: (userRow as any).rgVoiceWeight ?? 1,
     bioregions,
     internalTokenBalance,
+    privateByToken,
     citizenshipTier: (profile as any)?.citizenshipTier ?? null,
   };
 }
