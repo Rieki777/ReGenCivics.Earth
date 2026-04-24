@@ -452,20 +452,27 @@ export const playerProfilesRouter = router({
 
   /**
    * Begin a claim. Pair is "game" (RGVoice + $ReGen) or "fund"
-   * (RCVoice + $RCivics). Hypha claims each pair together; we create
-   * one Hypha bridge row per token in the pair so Alchemy Transfer
-   * events match 1:1 to a bridge row and the cascade can debit the
-   * right private column.
+   * (RCVoice + $RCivics). Hypha claims each pair together in one tx;
+   * we create one Hypha bridge row per token leg with a non-zero
+   * private balance so Alchemy Transfer events match 1:1.
    *
-   * Returns { hyphaUrl } for the redirect. The bridges land in
-   * status='created'; the Continue button on the bridge page
-   * transitions them to handoff_sent.
+   * **Eligibility uses an OR-gate**: at least one token in the pair
+   * must be at or above its own threshold. The other side comes along
+   * with whatever balance it has (no minimum). Hypha redeem-tokens is
+   * one transaction either way, so gas is justified by the larger
+   * side.
    *
-   * The private ledger is NOT debited here. It is debited only when
-   * the Alchemy webhook confirms an actual on-chain transfer landed
-   * in the user's wallet (cascadeClaimPassed). If the user closes
-   * Hypha mid-flow, the bridges sit in 'created' and a cleanup job
-   * can age them out.
+   * **Debit-at-request**: the moment we create a bridge for a token,
+   * we debit that token's private ledger by the requested amount with
+   * source='claim_pending', sourceRef='bridge:<key>'. This prevents
+   * the user from spending the same tokens twice while a claim is
+   * in flight. If the user abandons the Hypha flow or it fails, the
+   * cancellation path writes a reversing 'claim_released' credit.
+   * If the on-chain amount differs from requested, the cascade writes
+   * a reconciliation row to true-up the balance.
+   *
+   * Tokens with 0 balance are skipped (no point creating a bridge for
+   * a 0-amount Transfer that will never fire).
    */
   requestClaim: protectedProcedure
     .input(z.object({ pair: z.enum(["game", "fund"]) }))
@@ -494,7 +501,10 @@ export const playerProfilesRouter = router({
               { tokenType: "rcivics", balance: (profile as any)?.rcivicsPrivate ?? 0 },
             ];
 
-      // Threshold check per token.
+      // Threshold check (OR-gate): at least one token in the pair
+      // must be at or above its own threshold for the pair to be
+      // claimable. The thresholds themselves still gate against
+      // uneconomic claims; OR-gate just means one side is enough.
       const thresholdKey = (t: string) => `governance.claim_threshold_${t}`;
       const thresholds = await Promise.all(
         pairTokens.map(async (t) => {
@@ -502,19 +512,21 @@ export const playerProfilesRouter = router({
           return Number(rows[0]?.value ?? (t.tokenType === "regen" || t.tokenType === "rcivics" ? 1000 : 20));
         }),
       );
-      pairTokens.forEach((t, i) => {
-        if (t.balance < thresholds[i]) {
-          throw new TRPCError({
-            code: "FAILED_PRECONDITION",
-            message: `${t.tokenType} balance ${t.balance} is below claim threshold ${thresholds[i]}.`,
-          });
-        }
-      });
+      const anyAboveThreshold = pairTokens.some((t, i) => t.balance >= thresholds[i]);
+      if (!anyAboveThreshold) {
+        const lines = pairTokens.map((t, i) => `${t.tokenType} ${t.balance}/${thresholds[i]}`).join("; ");
+        throw new TRPCError({
+          code: "FAILED_PRECONDITION",
+          message: `Pair below threshold (${lines}). Earn more in either token to unlock the pair.`,
+        });
+      }
 
-      // Build a bridge per token. Both bridges share a parentClaimId
-      // tag in metadata so the UI can group them.
+      // Build a bridge per non-zero token. Both bridges share a
+      // parentClaimId tag in metadata so the UI can group them. Skip
+      // 0-balance tokens since Hypha will not emit a Transfer event
+      // for them anyway.
       const { TOKEN_CONTRACTS } = await import("../blockchain");
-      const { createHyphaBridge } = await import("../lib/hypha-bridge");
+      const { createHyphaBridge, getBridge, buildHyphaTargetUrl } = await import("../lib/hypha-bridge");
       const parentClaimId = `claim:${ctx.user.id}:${input.pair}:${Date.now()}`;
       const dhoSlug = input.pair === "game" ? "regen-games" : "regen-civics";
 
@@ -522,10 +534,9 @@ export const playerProfilesRouter = router({
       let primaryBridgeKey: string | null = null;
 
       for (const t of pairTokens) {
+        if (t.balance <= 0) continue;
         const tokenInfo = TOKEN_CONTRACTS[t.tokenType];
         if (!tokenInfo) {
-          // Token contract not configured (e.g., RCVoice). Skip this leg
-          // gracefully so the rest of the pair can still claim.
           console.warn(`[requestClaim] no contract for ${t.tokenType}, skipping`);
           continue;
         }
@@ -546,9 +557,9 @@ export const playerProfilesRouter = router({
             parentClaimId,
           },
         });
-        // Pre-populate the recipient + token + amount so fuzzy matching
-        // by Alchemy webhook works against this bridge row before any
-        // event arrives.
+
+        // Pre-populate the recipient + token + amount so fuzzy
+        // matching by the Alchemy webhook can find this bridge row.
         const { hyphaBridges } = await import("../../drizzle/schema");
         await drizzleDb
           .update(hyphaBridges)
@@ -558,18 +569,38 @@ export const playerProfilesRouter = router({
             hyphaTokenAmount: t.balance,
           } as any)
           .where(eq(hyphaBridges.bridgeKey, bridgeResult.bridgeKey));
+
+        // Look up the bridge id we just created so the ledger row can
+        // sourceId-link to it directly.
+        const fresh = await drizzleDb
+          .select()
+          .from(hyphaBridges)
+          .where(eq(hyphaBridges.bridgeKey, bridgeResult.bridgeKey))
+          .limit(1);
+        const bridgeId = fresh[0]?.id ?? null;
+
+        // Debit-at-request: write the negative ledger row now. If the
+        // user abandons or the claim fails, a 'claim_released' credit
+        // row will reverse this. If actual on-chain ≠ requested, a
+        // reconciliation row at confirmation time trues up the diff.
+        await db.creditPrivateTokens({
+          userId: ctx.user.id,
+          tokenType: t.tokenType,
+          amount: -t.balance,
+          source: "claim_pending",
+          sourceId: bridgeId,
+          sourceRef: `bridge:${bridgeResult.bridgeKey}`,
+          description: `Claim of ${t.balance} ${tokenInfo.symbol} pending on Hypha`,
+        });
+
         created.push({ tokenType: t.tokenType, bridgeKey: bridgeResult.bridgeKey });
         if (!primaryBridgeKey) primaryBridgeKey = bridgeResult.bridgeKey;
       }
 
       if (!primaryBridgeKey) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not create any claim bridges." });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "No tokens with positive balance to claim." });
       }
 
-      // Build the Hypha redirect URL from the first bridge so the user
-      // lands on the redeem-tokens form pre-filled. The UI opens this
-      // in a new tab.
-      const { getBridge, buildHyphaTargetUrl } = await import("../lib/hypha-bridge");
       const primary = await getBridge(primaryBridgeKey);
       const hyphaUrl = primary ? buildHyphaTargetUrl(primary as any) : null;
 
@@ -578,6 +609,83 @@ export const playerProfilesRouter = router({
         bridges: created,
         hyphaUrl,
       };
+    }),
+
+  /**
+   * User-initiated cancel of an in-flight claim. The user closes the
+   * Hypha tab without finishing or changes their mind. Marks the
+   * bridge cancelled and writes a reversing 'claim_released' ledger
+   * row to refund the private balance.
+   *
+   * Idempotent: a second cancel of the same bridge is a no-op. Only
+   * the bridge initiator can cancel their own bridge.
+   */
+  cancelClaim: protectedProcedure
+    .input(z.object({ bridgeKey: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const drizzleDb = await getDb();
+      if (!drizzleDb) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      }
+
+      const { hyphaBridges, userTokenLedger } = await import("../../drizzle/schema");
+      const [bridge] = await drizzleDb
+        .select()
+        .from(hyphaBridges)
+        .where(eq(hyphaBridges.bridgeKey, input.bridgeKey))
+        .limit(1);
+      if (!bridge) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Claim not found." });
+      }
+      if ((bridge as any).initiatorUserId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not your claim to cancel." });
+      }
+      const status = (bridge as any).status as string;
+      if (status === "passed") {
+        throw new TRPCError({ code: "FAILED_PRECONDITION", message: "Already confirmed on chain. Cannot cancel." });
+      }
+      if (status === "cancelled" || status === "failed") {
+        return { ok: true, alreadyCancelled: true };
+      }
+
+      // Refund: write a 'claim_released' credit row sized to the
+      // original 'claim_pending' debit. Idempotency: if a release row
+      // already exists for this bridge, skip the credit.
+      const existingRelease = await drizzleDb
+        .select({ id: userTokenLedger.id })
+        .from(userTokenLedger)
+        .where(and(
+          eq(userTokenLedger.sourceRef, `bridge:${input.bridgeKey}`),
+          eq(userTokenLedger.source, "claim_released"),
+        ))
+        .limit(1);
+
+      if (existingRelease.length === 0) {
+        let payload: any = null;
+        try {
+          payload = typeof (bridge as any).payload === "string" ? JSON.parse((bridge as any).payload) : (bridge as any).payload;
+        } catch { /* ignore */ }
+        const tokenType = payload?.metadata?.tokenType as ("rgvoice" | "regen" | "rcvoice" | "rcivics" | undefined);
+        const requestedAmount = Number(payload?.metadata?.requestedAmount ?? 0);
+        if (tokenType && requestedAmount > 0) {
+          await db.creditPrivateTokens({
+            userId: ctx.user.id,
+            tokenType,
+            amount: requestedAmount,
+            source: "claim_released",
+            sourceId: (bridge as any).id,
+            sourceRef: `bridge:${input.bridgeKey}`,
+            description: `Cancelled claim of ${requestedAmount} ${tokenType}, balance refunded`,
+          });
+        }
+      }
+
+      await drizzleDb
+        .update(hyphaBridges)
+        .set({ status: "cancelled" } as any)
+        .where(eq(hyphaBridges.bridgeKey, input.bridgeKey));
+
+      return { ok: true, alreadyCancelled: false };
     }),
 
   // Admin: Unverify a player profile

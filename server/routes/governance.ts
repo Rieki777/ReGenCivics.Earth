@@ -371,11 +371,13 @@ export const governanceRouter = router({
       rcivics: { balance: totals.rcivics, threshold: tRcivics, eligible: totals.rcivics >= tRcivics },
       rcvoice: { balance: totals.rcvoice, threshold: tRcvoice, eligible: totals.rcvoice >= tRcvoice },
     };
-    // Hypha pair semantics: the Game DHO claims RGVoice + $ReGen
-    // together; the Fund DHO claims RCVoice + $RCivics together. A
-    // pair is eligible when BOTH of its tokens are above threshold.
-    const gamePairEligible = byToken.rgvoice.eligible && byToken.regen.eligible;
-    const fundPairEligible = byToken.rcvoice.eligible && byToken.rcivics.eligible;
+    // Hypha pair semantics: Game DHO claims RGVoice + $ReGen together;
+    // Fund DHO claims RCVoice + $RCivics together. A pair is eligible
+    // when EITHER of its tokens passes threshold. The under-threshold
+    // side comes along for free in the same transaction (Hypha mints
+    // both tokens in one tx, so gas is justified by the larger side).
+    const gamePairEligible = byToken.rgvoice.eligible || byToken.regen.eligible;
+    const fundPairEligible = byToken.rcvoice.eligible || byToken.rcivics.eligible;
     // Back-compat: old UI reads { balance, threshold, eligible }. Keep
     // those populated with the $ReGen numbers (the primary Game token).
     return {

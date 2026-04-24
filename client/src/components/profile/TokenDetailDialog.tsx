@@ -14,7 +14,7 @@
  * tokens in the pair so players know what they're claiming.
  */
 import { useState } from "react";
-import { ExternalLink, Sparkles, Lock, Loader2, Hourglass } from "lucide-react";
+import { ExternalLink, Sparkles, Lock, Loader2, Hourglass, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -88,6 +88,7 @@ export function TokenDetailDialog({
     refetchInterval: 15_000, // poll while open so the indicator clears once the chain confirms
   });
   const requestClaim = trpc.playerProfiles.requestClaim.useMutation();
+  const cancelClaim = trpc.playerProfiles.cancelClaim.useMutation();
   const [claimError, setClaimError] = useState<string | null>(null);
 
   const rows = (ledger.data ?? []).filter((e: any) => e.tokenType === tokenKey);
@@ -114,14 +115,30 @@ export function TokenDetailDialog({
     try {
       const res = await requestClaim.mutateAsync({ pair });
       if (res.hyphaUrl) {
-        // Open Hypha in a new tab; the bridges sit in 'created' until
-        // the user finishes on Hypha and the chain emits Transfers.
+        // Open Hypha in a new tab. Private balance has already been
+        // debited at request time; if the user closes Hypha without
+        // finishing they can use the Cancel button below to refund.
         window.open(res.hyphaUrl, "_blank", "noopener,noreferrer");
       }
-      // Refresh pending claims so the in-flight indicator shows up.
+      // Refresh pending claims + token balances so the dialog reflects
+      // the just-debited amount.
       utils.playerProfiles.myPendingClaims.invalidate();
+      utils.playerProfiles.getMyTokens.invalidate();
+      utils.playerProfiles.myTokenLedger.invalidate();
     } catch (err: any) {
       setClaimError(err?.message ?? "Could not start the claim. Try again.");
+    }
+  };
+
+  const onCancel = async (bridgeKey: string) => {
+    setClaimError(null);
+    try {
+      await cancelClaim.mutateAsync({ bridgeKey });
+      utils.playerProfiles.myPendingClaims.invalidate();
+      utils.playerProfiles.getMyTokens.invalidate();
+      utils.playerProfiles.myTokenLedger.invalidate();
+    } catch (err: any) {
+      setClaimError(err?.message ?? "Could not cancel the claim.");
     }
   };
 
@@ -161,11 +178,30 @@ export function TokenDetailDialog({
           </div>
 
           {hasInFlight && (
-            <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-3 text-xs text-blue-100/95 leading-relaxed flex gap-2">
-              <Hourglass className="w-3.5 h-3.5 text-blue-300 flex-shrink-0 mt-0.5 animate-pulse" />
-              <span>
-                <strong>{formatExactNumber(inFlightAmount)} {label}</strong> claiming on Hypha. We'll debit your private balance once the transfer confirms on Base.
-              </span>
+            <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-3 text-xs text-blue-100/95 leading-relaxed">
+              <div className="flex gap-2">
+                <Hourglass className="w-3.5 h-3.5 text-blue-300 flex-shrink-0 mt-0.5 animate-pulse" />
+                <div className="flex-1">
+                  <p>
+                    <strong>{formatExactNumber(inFlightAmount)} {label}</strong> claiming on Hypha. Already debited from your private balance; will be confirmed once the transfer lands on Base.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {inFlightForThisToken.map((p: any) => (
+                      <button
+                        key={p.bridgeKey}
+                        type="button"
+                        onClick={() => onCancel(p.bridgeKey)}
+                        disabled={cancelClaim.isPending}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-blue-100/80 hover:text-white text-[11px] disabled:opacity-50"
+                        title="Cancel this claim and refund your private balance."
+                      >
+                        <X className="w-3 h-3" />
+                        Cancel claim of {formatExactNumber(p.requestedAmount)} (refund)
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
