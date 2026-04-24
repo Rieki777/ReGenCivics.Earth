@@ -82,12 +82,16 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           <X className="w-5 h-5" />
         </button>
         <div className="flex flex-col items-center text-center">
+          {/* Phoenix + circle-of-life crest used across the Connect page.
+              Rye asked for this specific crest here too so the More tab
+              feels like part of the same brand world as the rest of the
+              mobile experience. */}
           <img
-            src="/images/logos/regencivics-logo-light-transparent-rounded.webp"
+            src="https://assets.regencivics.earth/qtPtaaJfgElzmVAI.png"
             alt="ReGen Civics"
-            width={80}
-            height={80}
-            className="rounded-2xl shadow-lg object-contain"
+            width={96}
+            height={96}
+            className="w-24 h-24 object-contain drop-shadow-lg"
             loading="eager"
             decoding="async"
           />

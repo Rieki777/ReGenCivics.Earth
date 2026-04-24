@@ -772,7 +772,7 @@ export default function Governance() {
             </h1>
             
             <p className="text-xl text-white/90 leading-relaxed safe-prose">
-              ReGen Civics coordinates through three tools: Contribution Scores, Gratitude, and Proposals. Internal signaling happens here. Formal governance and binding votes happen on <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a>, where vote weight comes from RGVoice held.
+              ReGen Civics coordinates through Gratitude and Proposals. Internal signaling happens here. Formal governance and binding votes happen on <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a>, where vote weight comes from RGVoice held.
             </p>
           </div>
         </div>
@@ -792,15 +792,11 @@ export default function Governance() {
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-[#7dd87d] mb-8 text-center" style={{ fontFamily: 'var(--font-display)' }}>
-              Three Tools for Coordination
+              Two Tools for Coordination
             </h2>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-                <div className="text-2xl mb-2">📊</div>
-                <h3 className="text-white font-bold mb-1">Contribution Scores</h3>
-                <p className="text-white/60 text-sm">Your participation is tracked and scored. Percentile rankings determine your tier and your weight in the community.</p>
-                <Link href="/economy" className="text-[#7dd87d] text-xs mt-2 block hover:underline">How scoring works</Link>
-              </div>
+            {/* Contribution Scores card was removed 2026-04-23 until the scoring
+                system is actually built out. Grid collapsed from 3 → 2 columns. */}
+            <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
               <div className="bg-white/5 border border-white/10 rounded-xl p-5">
                 <div className="text-2xl mb-2">🙏</div>
                 <h3 className="text-white font-bold mb-1">Gratitude</h3>

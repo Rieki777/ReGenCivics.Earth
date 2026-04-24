@@ -1257,21 +1257,23 @@ export default function Community() {
 
         <VineDivider className="my-8" />
 
-        {/* Newsletter CTA */}
+        {/* Newsletter CTA — readable against forest page bg. Uses a darker
+            card surface (not translucent) with white + bright-green text
+            so it stops disappearing into the background. */}
         <ScrollRevealMotion>
-          <div className="mt-6 p-6 rounded-2xl border border-[#7dd87d]/30 bg-[#7dd87d]/10">
-            <h3 className="text-[#1a472a] font-bold text-lg flex items-center gap-2 mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className="mt-6 p-6 rounded-2xl border border-[#7dd87d]/40 bg-[#0d2818]/80 shadow-lg shadow-black/20">
+            <h3 className="text-white font-bold text-lg flex items-center gap-2 mb-1" style={{ fontFamily: 'var(--font-display)' }}>
               🌿 Get the Weekly Digest
             </h3>
-            <p className="text-[#4a7c59] text-sm mt-1 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+            <p className="text-white/80 text-sm mt-1 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
               Stay updated with the best conversations from the week.
             </p>
             {alreadySubscribed ? (
-              <p className="text-[#4a7c59] text-xs flex items-center gap-1.5">
+              <p className="text-[#7dd87d] text-xs flex items-center gap-1.5 flex-wrap">
                 ✓ You're subscribed.{" "}
-                <a href="/profile?tab=settings" className="underline underline-offset-2 hover:text-[#1a472a] transition-colors">Manage preferences</a>
+                <a href="/profile?tab=settings" className="underline underline-offset-2 hover:text-white transition-colors">Manage preferences</a>
                 {" · "}
-                <a href="/connect" className="underline underline-offset-2 hover:text-[#1a472a] transition-colors">Connect with us on something specific</a>
+                <a href="/connect" className="underline underline-offset-2 hover:text-white transition-colors">Connect with us on something specific</a>
               </p>
             ) : (
               <NewsletterSignupInline />

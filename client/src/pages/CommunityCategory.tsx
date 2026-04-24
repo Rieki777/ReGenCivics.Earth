@@ -130,8 +130,12 @@ export default function CommunityCategory() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <button
               onClick={() => {
+                // Send the user straight into the actual OAuth account-creation
+                // flow instead of the /connect interest form. /connect is for
+                // telling us what you're interested in, not for making an
+                // account. After OAuth they land back at this same forum page.
                 sessionStorage.setItem("returnTo", window.location.pathname);
-                window.location.href = '/connect';
+                window.location.href = getLoginUrl();
               }}
               className="px-6 py-3 rounded-lg bg-[#7dd87d] text-[#1a472a] font-bold hover:bg-[#7dd87d]/90 transition-colors"
             >

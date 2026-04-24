@@ -1,7 +1,17 @@
 export type Season = "spring" | "summer" | "fall" | "winter";
 
+/**
+ * ReGen Civics tracks a game season rather than the calendar season.
+ * Season 1 ("The First Build") runs until the next season begins at the
+ * September 2026 equinox. Until then we stay in "winter" regardless of
+ * calendar month, because Season 1 is a winter-coded season in our cycle.
+ * After the equinox the calendar-aligned rotation takes over.
+ */
 export function getCurrentSeason(): Season {
-  const month = new Date().getMonth(); // 0-11
+  const now = new Date();
+  const season2Start = new Date("2026-09-22T00:00:00Z");
+  if (now < season2Start) return "winter";
+  const month = now.getMonth(); // 0-11
   if (month >= 2 && month <= 4) return "spring";
   if (month >= 5 && month <= 7) return "summer";
   if (month >= 8 && month <= 10) return "fall";

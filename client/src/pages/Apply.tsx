@@ -245,20 +245,36 @@ export default function Apply() {
   }
 
   if (!user) {
+    // Login gate for the Apply flow. Styled to match the forest theme
+    // the rest of the site uses so it doesn't feel like a different
+    // app pasted in. "Sign in or create account" routes straight into
+    // the OAuth flow, which handles both new and returning users.
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
-        <Card className="max-w-md p-8 text-center">
-          <h2 className="text-2xl font-bold text-[#1a472a] mb-4">Login Required</h2>
-          <p className="text-[#1a472a] mb-6">
-            You need to be logged in to submit an application.
+      <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
+        <div className="max-w-md w-full p-8 text-center bg-[#0d2818]/80 border border-[#7dd87d]/30 rounded-2xl shadow-2xl">
+          <h2 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: "var(--font-display)" }}>
+            Sign in to apply
+          </h2>
+          <p className="text-white/70 mb-6 text-sm leading-relaxed">
+            Applying for a season uses a ReGen Civics account so we can follow
+            up with you. Takes about 10 seconds.
           </p>
           <Button
-            onClick={() => window.location.href = getLoginUrl()}
-            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
+            onClick={() => {
+              sessionStorage.setItem("returnTo", window.location.pathname + window.location.search);
+              window.location.href = getLoginUrl();
+            }}
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold w-full py-6 text-base"
           >
-            Login to Continue
+            Sign in or create account
           </Button>
-        </Card>
+          <button
+            onClick={() => { window.location.href = '/'; }}
+            className="mt-3 text-white/55 text-xs hover:text-white transition-colors"
+          >
+            Back to home
+          </button>
+        </div>
       </div>
     );
   }

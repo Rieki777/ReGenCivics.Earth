@@ -1096,13 +1096,17 @@ export default function Schedule() {
             ))}
           </div>
           
-          {/* Note about TBD dates */}
-          <div className="mt-6 text-center">
-            <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm px-6 py-3 rounded-xl border border-white/10">
-              <Clock className="w-5 h-5 text-[#7dd87d]" />
-              <span className="text-white/60">Episode day/time may be adjusted during the 1st Episode based on the 13 selected projects' availability</span>
+          {/* Note about TBD dates — only relevant for upcoming episodes.
+              Hidden under the Historical tab because past episodes
+              already have their final times. */}
+          {activeTab === "upcoming" && (
+            <div className="mt-6 text-center">
+              <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm px-6 py-3 rounded-xl border border-white/10">
+                <Clock className="w-5 h-5 text-[#7dd87d]" />
+                <span className="text-white/60">Episode day/time may be adjusted during the 1st Episode based on the 13 selected projects' availability</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
