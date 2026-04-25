@@ -127,7 +127,7 @@ export default function HymnBook() {
               <p>
                 <strong className="text-[#7dd87d]">Hymns of the ReGeneration is a community songbook.</strong>{" "}
                 When your song is selected for the book, the movement buys it from you.
-                Songs in the book are titled by the author but credited to "Hymns of the ReGeneration" — the
+                Songs in the book are titled by the author but credited to "Hymns of the ReGeneration", the
                 people's book, free and open. All streaming revenue goes to the community treasury.
               </p>
               <p>

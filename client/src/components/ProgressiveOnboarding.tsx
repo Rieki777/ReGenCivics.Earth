@@ -269,6 +269,7 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
                 {/* Tap target: image + headline + tagline navigate to the path. */}
                 <Link
                   href={card.href}
+                  aria-label={`${card.title}: ${card.tagline}. ${card.shortDesc}`}
                   className="block group hover:scale-[1.02] transition-transform duration-300"
                 >
                   <div className="mb-4">

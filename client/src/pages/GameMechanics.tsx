@@ -1251,7 +1251,7 @@ function MiniSectionSimulator({
 
   const copyProposedChanges = useCallback(() => {
     const lines: string[] = [
-      `ReGen Civics — Proposed variable changes`,
+      `ReGen Civics: Proposed variable changes`,
       `Section: ${sectionTitle}`,
     ];
     if (changedKeys.length === 0) {
@@ -2036,15 +2036,15 @@ export default function GameMechanics() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <GratVarRow label="Root 1 — Intellectual" value="intellectual" detail="Knowledge, research, learning" />
-                    <GratVarRow label="Root 2 — Social" value="social" detail="Networks, relationships, trust" />
-                    <GratVarRow label="Root 3 — Material" value="material" detail="Tools, infrastructure, hardware" />
-                    <GratVarRow label="Root 4 — Financial" value="financial" detail="Money, investments, grants" />
-                    <GratVarRow label="Root 5 — Living" value="living" detail="Land, ecosystems, biodiversity" />
-                    <GratVarRow label="Root 6 — Cultural" value="cultural" detail="Art, stories, rituals, values" />
-                    <GratVarRow label="Root 7 — Spiritual" value="spiritual" detail="Vision, meaning, purpose" />
-                    <GratVarRow label="Root 8 — Experiential" value="experiential" detail="Lived experience, craft hours" />
-                    <GratVarRow label="Root 9 — Health" value="health" detail="Body vitality, wellness, rest" />
+                    <GratVarRow label="Root 1: Intellectual" value="intellectual" detail="Knowledge, research, learning" />
+                    <GratVarRow label="Root 2: Social" value="social" detail="Networks, relationships, trust" />
+                    <GratVarRow label="Root 3: Material" value="material" detail="Tools, infrastructure, hardware" />
+                    <GratVarRow label="Root 4: Financial" value="financial" detail="Money, investments, grants" />
+                    <GratVarRow label="Root 5: Living" value="living" detail="Land, ecosystems, biodiversity" />
+                    <GratVarRow label="Root 6: Cultural" value="cultural" detail="Art, stories, rituals, values" />
+                    <GratVarRow label="Root 7: Spiritual" value="spiritual" detail="Vision, meaning, purpose" />
+                    <GratVarRow label="Root 8: Experiential" value="experiential" detail="Lived experience, craft hours" />
+                    <GratVarRow label="Root 9: Health" value="health" detail="Body vitality, wellness, rest" />
                   </CardContent>
                 </Card>
 

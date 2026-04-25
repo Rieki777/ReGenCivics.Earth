@@ -1174,9 +1174,13 @@
   image-rendering: auto;
 }
 
-/* Global focus-visible ring for keyboard navigation */
+/* Global focus-visible ring for keyboard navigation. The !important keeps
+   the ring visible even when a Tailwind `focus:outline-none` clears the
+   default outline; `:focus-visible` only matches keyboard-driven focus,
+   so mouse/touch users still get the cleaner default. WCAG 2.2 SC 2.4.7
+   requires a visible focus indicator on every focusable element. */
 :focus-visible {
-  outline: 2px solid #7dd87d;
+  outline: 2px solid #7dd87d !important;
   outline-offset: 2px;
   border-radius: 4px;
 }

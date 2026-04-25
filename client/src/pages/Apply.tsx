@@ -409,7 +409,7 @@ export default function Apply() {
                       id="place-search-input"
                       type="text"
                       placeholder="Search for a place name (e.g. 'Bali, Indonesia')..."
-                      className="w-full px-4 py-2.5 border border-[#4a7c59]/30 rounded-t-lg text-sm bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
+                      className="w-full px-4 py-2.5 border border-[#4a7c59]/30 rounded-t-lg text-sm bg-white text-[#1a472a] placeholder:text-[#1a472a]/65 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
                     />
                     <MapIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
                   </div>

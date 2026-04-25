@@ -222,37 +222,36 @@ const courseSchema = {
 
 export function StructuredData() {
   useEffect(() => {
-    // Remove any existing structured data scripts
-    const existingScripts = document.querySelectorAll('script[type="application/ld+json"]');
-    existingScripts.forEach(script => script.remove());
-
-    // Add all structured data schemas
+    // Organization + WebSite schemas already live in client/index.html so
+    // crawlers without JS can read them. Don't touch those — instead, only
+    // inject the schemas that aren't statically present.
+    // Site navigation, investment fund, FAQ, event, course schemas are still
+    // JS-only because they're either large or change per release.
     const schemas = [
-      organizationSchema,
-      websiteSchema,
       siteNavigationSchema,
       investmentFundSchema,
       faqSchema,
       eventSchema,
-      courseSchema
+      courseSchema,
     ];
 
     const nonce = (window as any).__NONCE__;
+    const injected: HTMLScriptElement[] = [];
     schemas.forEach((schema, index) => {
+      const id = `structured-data-${index}`;
+      // Skip if we've already injected this id (HMR / strict-mode double mount)
+      if (document.getElementById(id)) return;
       const script = document.createElement('script');
       script.type = 'application/ld+json';
-      script.id = `structured-data-${index}`;
+      script.id = id;
       if (nonce) script.setAttribute('nonce', nonce);
       script.textContent = JSON.stringify(schema);
       document.head.appendChild(script);
+      injected.push(script);
     });
 
     return () => {
-      // Cleanup on unmount
-      schemas.forEach((_, index) => {
-        const script = document.getElementById(`structured-data-${index}`);
-        if (script) script.remove();
-      });
+      injected.forEach(script => script.remove());
     };
   }, []);
 

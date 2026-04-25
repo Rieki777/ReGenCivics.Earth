@@ -179,7 +179,7 @@ function CollapsibleSection({
 function SnapshotStat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="text-center p-3 md:p-4">
-      <p className="text-xs text-white/50 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-xs text-white/70 uppercase tracking-wider mb-1">{label}</p>
       <p className="text-lg md:text-xl font-bold text-[#7dd87d]" style={{ fontFamily: 'var(--font-display)' }}>{value}</p>
       {note && <p className="text-[11px] text-white/60 mt-0.5">{note}</p>}
     </div>
@@ -402,7 +402,7 @@ function CountUpStat({ label, value, note, numericValue, suffix = '' }: {
 
   return (
     <div ref={ref} className="text-center p-3 md:p-4">
-      <p className="text-xs text-white/50 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-xs text-white/70 uppercase tracking-wider mb-1">{label}</p>
       <p className="text-lg md:text-xl font-bold text-[#7dd87d]" style={{ fontFamily: 'var(--font-display)' }}>{displayValue}</p>
       {note && <p className="text-[11px] text-white/60 mt-0.5">{note}</p>}
     </div>
@@ -472,7 +472,7 @@ function CaseStudyCard() {
         <p className="text-white/70 text-xs text-center px-4">Full case study available after LOI submission</p>
       </div>
       <div className="opacity-30 select-none">
-        <p className="text-xs text-white/50 uppercase tracking-wider mb-1">Case Study</p>
+        <p className="text-xs text-white/70 uppercase tracking-wider mb-1">Case Study</p>
         <h4 className="font-bold text-white text-base mb-1">Regenerative Land Project (In Review)</h4>
         <p className="text-white/60 text-xs"><MapPin className="w-3 h-3 inline mr-1" />Costa Rica</p>
         <p className="text-white/60 text-xs mt-2">Preview only</p>
@@ -691,10 +691,10 @@ export default function Opportunity() {
             <div className="overflow-hidden whitespace-nowrap border-y border-white/10 py-2 bg-white/5 mb-6 -mx-4">
               <div className="animate-marquee inline-block">
                 {['Hypha', 'SEEDS', 'Kinship Earth', 'Closer.earth', 'Impact Hub', 'OASA.earth', 'New Earth Summit', 'Planetary Party', 'Holomovement'].map(name => (
-                  <span key={name} className="mx-8 text-sm text-white/50">{name}</span>
+                  <span key={name} className="mx-8 text-sm text-white/70">{name}</span>
                 ))}
                 {['Hypha', 'SEEDS', 'Kinship Earth', 'Closer.earth', 'Impact Hub', 'OASA.earth', 'New Earth Summit', 'Planetary Party', 'Holomovement'].map(name => (
-                  <span key={name + '2'} className="mx-8 text-sm text-white/50">{name}</span>
+                  <span key={name + '2'} className="mx-8 text-sm text-white/70">{name}</span>
                 ))}
               </div>
             </div>
@@ -712,7 +712,7 @@ export default function Opportunity() {
                 <p className="text-base md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed relative z-10 safe-prose">
                   A pioneering hybrid REIT + VC fund combining land-backed stability with venture growth across the full regenerative ecosystem: startup villages, regenerative communities, and the organizations rethinking housing, infrastructure, energy, governance, and other core services needed for thriving regenerative civilizations. Targeting 12-18% net IRR while financing systemic change.
                 </p>
-                <p className="text-sm text-white/50 max-w-2xl mx-auto mt-3 relative z-10">
+                <p className="text-sm text-white/70 max-w-2xl mx-auto mt-3 relative z-10">
                   Intention: an <strong className="text-white/70">index fund for the regenerative transition</strong>; with regenerative land and communities as a foundation, growing into a full ecosystem of services for regenerative civilizations.
                 </p>
               </div>
@@ -777,8 +777,8 @@ export default function Opportunity() {
                     <p className="text-white/60 text-sm">Governance technology coordinating billions towards regeneration</p>
                   </div>
                 </div>
-                <p className="text-white/50 text-sm mt-4 text-center italic">
-                  When we say "Alliance," we mean this entire ecosystem, not just the fund.
+                <p className="text-white/70 text-sm mt-4 text-center italic">
+                  When we say "Alliance," we mean this entire ecosystem: the fund, the land projects, and the partner organizations together.
                 </p>
               </div>
             </AnimatedSection>
@@ -833,7 +833,7 @@ export default function Opportunity() {
                   </div>
                 ))}
               </div>
-              <p className="text-white/50 text-sm mt-4 italic text-center">
+              <p className="text-white/70 text-sm mt-4 italic text-center">
                 Modern technology solving century-old coordination problems in global investing.
               </p>
             </CollapsibleSection>
@@ -880,7 +880,7 @@ export default function Opportunity() {
                   <div className="flex items-start gap-2"><span className="text-[#7dd87d] font-bold">Second:</span> <span>8% preferred return to Limited Partners (cumulative catch-up)</span></div>
                   <div className="flex items-start gap-2"><span className="text-[#7dd87d] font-bold">Third:</span> <span>Remaining proceeds split 80% to Limited Partners, 20% to governance treasury</span></div>
                 </div>
-                <p className="text-xs text-white/50 mt-3 italic">
+                <p className="text-xs text-white/70 mt-3 italic">
                   Example: Portfolio generates $500K in quarterly distribution. After returning capital and meeting 8% preferred return, $100K remains. You receive $80K, governance treasury receives $20K (which you help govern via RCVoice).
                 </p>
               </div>
@@ -896,7 +896,7 @@ export default function Opportunity() {
                   <div className="flex items-start gap-2"><span className="text-[#7dd87d] font-bold">Second:</span> <span>8% preferred return (cumulative catch-up)</span></div>
                   <div className="flex items-start gap-2"><span className="text-[#7dd87d] font-bold">Third:</span> <span>Remaining proceeds split 80% to Limited Partners, 20% to governance treasury</span></div>
                 </div>
-                <p className="text-xs text-white/50 mt-3 italic">
+                <p className="text-xs text-white/70 mt-3 italic">
                   Example: Alliance organization invested at $2M exits for $6M in Year 5. After returning $2M capital and calculating preferred return, the $4M gain splits 80/20. You receive $3.2M, governance treasury receives $800K.
                 </p>
               </div>
@@ -1006,7 +1006,7 @@ export default function Opportunity() {
                       <div><strong className="text-white/60">Distributions:</strong> <span className="text-white/80">{phase.distributions}</span></div>
                       <div><strong className="text-white/60">Focus:</strong> <span className="text-white/80">{phase.focus}</span></div>
                     </div>
-                    <p className="text-xs text-white/50 italic">What investors receive: {phase.receive}</p>
+                    <p className="text-xs text-white/70 italic">What investors receive: {phase.receive}</p>
                   </div>
                 ))}
               </div>
@@ -1117,7 +1117,7 @@ export default function Opportunity() {
                   ))}
                 </div>
               </div>
-              <p className="text-xs text-white/50 italic mb-4">
+              <p className="text-xs text-white/70 italic mb-4">
                 Example: A land project in Costa Rica has a Costa Rican SPV. A project in Portugal has a Portuguese SPV. Both are governed by the same on-chain ReGen Civics Alliance governance framework, creating unified oversight with local legal compliance.
               </p>
 
@@ -1146,9 +1146,9 @@ export default function Opportunity() {
                     ].map((row, i) => (
                       <tr key={i} className="border-b border-white/5">
                         <td className="py-2 px-3 font-semibold text-white/80">{row[0]}</td>
-                        <td className="py-2 px-3 text-white/50">{row[1]}</td>
-                        <td className="py-2 px-3 text-white/50">{row[2]}</td>
-                        <td className="py-2 px-3 text-white/50">{row[3]}</td>
+                        <td className="py-2 px-3 text-white/70">{row[1]}</td>
+                        <td className="py-2 px-3 text-white/70">{row[2]}</td>
+                        <td className="py-2 px-3 text-white/70">{row[3]}</td>
                         <td className="py-2 px-3 text-[#7dd87d] font-semibold">{row[4]}</td>
                       </tr>
                     ))}
@@ -1309,7 +1309,7 @@ export default function Opportunity() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-white/50 mt-3 italic text-center">
+                  <p className="text-xs text-white/70 mt-3 italic text-center">
                     Early investors gain returns AND control of coordination infrastructure before it becomes obvious.
                   </p>
                 </div>
@@ -1391,7 +1391,7 @@ export default function Opportunity() {
                   <p className="text-[10px] text-white/60 mt-2 italic">This is an illustrative example. Actual projects vary. Blended portfolio targets 12-18% net IRR across all land investments.</p>
                 </div>
 
-                <p className="text-xs text-white/50 mt-3">
+                <p className="text-xs text-white/70 mt-3">
                   <strong className="text-white/70">Fund III+ Evolution:</strong> Once we've partnered with the highest-quality existing projects, later funds may shift toward acquiring 100% ownership of greenfield developments, purchasing land and building new regenerative communities from inception.
                 </p>
               </div>
@@ -1411,7 +1411,7 @@ export default function Opportunity() {
                 <div className="bg-[#7dd87d]/10 rounded-lg p-3 border border-[#7dd87d]/20 text-xs mb-2">
                   <p className="text-white/80"><strong className="text-[#7dd87d]">Network Circulation Effect:</strong> Land projects preferentially hire alliance organizations for services. Capital flows within the ecosystem. As land projects grow, alliance organizations grow. Both hold $RCivics, creating aligned incentives across the entire network.</p>
                 </div>
-                <p className="text-xs text-white/50"><strong className="text-white/70">Target Returns:</strong> 15-25% from revenue growth + equity appreciation</p>
+                <p className="text-xs text-white/70"><strong className="text-white/70">Target Returns:</strong> 15-25% from revenue growth + equity appreciation</p>
               </div>
 
               {/* Tier 3: Innovation Fund */}
@@ -1426,7 +1426,7 @@ export default function Opportunity() {
                     <div key={i} className="bg-white/5 rounded-lg p-2 text-center text-white/60">{item}</div>
                   ))}
                 </div>
-                <p className="text-xs text-white/50"><strong className="text-white/70">Stage Focus:</strong> Series A-B (proven revenue, scaling phase). <strong className="text-white/70">Target Returns:</strong> 20-30% from successful exits.</p>
+                <p className="text-xs text-white/70"><strong className="text-white/70">Stage Focus:</strong> Series A-B (proven revenue, scaling phase). <strong className="text-white/70">Target Returns:</strong> 20-30% from successful exits.</p>
               </div>
             </CollapsibleSection>
 
@@ -1568,7 +1568,7 @@ export default function Opportunity() {
               <p className="text-sm mb-2">
                 Investors can direct up to 90% of capital toward specific land projects (10% remains in diversified fund). If earmarked project passes diligence and council vote, those funds deploy to that project.
               </p>
-              <p className="text-xs text-white/50 mb-4">
+              <p className="text-xs text-white/70 mb-4">
                 <strong className="text-white/70">Due Diligence Fee:</strong> If earmarked project doesn't pass, we return the majority of funds. We retain 3% or $20,000 (whichever is less) to cover evaluation costs.
               </p>
             </CollapsibleSection>
@@ -1597,7 +1597,7 @@ export default function Opportunity() {
                     ].map((row, i) => (
                       <tr key={i} className="border-b border-white/5">
                         <td className="py-2 px-3 font-semibold text-white/80">{row[0]}</td>
-                        <td className="py-2 px-3 text-white/50">{row[1]}</td>
+                        <td className="py-2 px-3 text-white/70">{row[1]}</td>
                         <td className="py-2 px-3 text-white/60">{row[2]}</td>
                       </tr>
                     ))}
@@ -1642,7 +1642,7 @@ export default function Opportunity() {
                   Co-founder of SEEDS and Hypha, with a decade of experience building regenerative economic systems, decentralized governance frameworks, and impact-focused financial infrastructure. Led the design of novel financial tools serving 10,000+ people across regenerative communities worldwide spanning 40+ countries over a 7-year exploration in decentralized governance.
                 </p>
                 <p className="text-sm mb-2">Background in systems design, regenerative economics, and community governance. Track record of building and scaling decentralized organizations.</p>
-                <p className="text-xs text-white/50 italic">
+                <p className="text-xs text-white/70 italic">
                   Role: Setting up the initial conditions of the coordination infrastructure. Explore the <Link href="/governance" className="text-[#7dd87d] hover:underline">governance page</Link> to learn how the Fund is actually governed.
                 </p>
               </div>
@@ -1676,7 +1676,7 @@ export default function Opportunity() {
               </div>
 
               <h3 className="text-base font-bold text-[#7dd87d] mb-3">Governance: Your Dual Role as LP and GP Participant</h3>
-              <p className="text-sm mb-3 font-semibold text-white">You're not just a passive investor.</p>
+              <p className="text-sm mb-3 font-semibold text-white">You're an active participant in the alliance.</p>
               <p className="text-sm mb-4">ReGen Civics uses two distinct but complementary governance systems that give you both financial returns AND operational voice:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -1785,8 +1785,8 @@ export default function Opportunity() {
                     ].map((row, i) => (
                       <tr key={i} className="border-b border-white/5">
                         <td className="py-2 px-3 text-white/80 font-medium">{row[0]}</td>
-                        <td className="py-2 px-3 text-white/50">{row[1]}</td>
-                        <td className="py-2 px-3 text-white/50">{row[2]}</td>
+                        <td className="py-2 px-3 text-white/70">{row[1]}</td>
+                        <td className="py-2 px-3 text-white/70">{row[2]}</td>
                         <td className="py-2 px-3 text-[#7dd87d] font-semibold">{row[3]}</td>
                       </tr>
                     ))}
@@ -1816,8 +1816,8 @@ export default function Opportunity() {
                     ].map((row, i) => (
                       <tr key={i} className="border-b border-white/5">
                         <td className="py-2 px-3 text-white/80 font-medium">{row[0]}</td>
-                        <td className="py-2 px-3 text-white/50">{row[1]}</td>
-                        <td className="py-2 px-3 text-white/50">{row[2]}</td>
+                        <td className="py-2 px-3 text-white/70">{row[1]}</td>
+                        <td className="py-2 px-3 text-white/70">{row[2]}</td>
                         <td className="py-2 px-3 text-[#7dd87d] font-semibold">{row[3]}</td>
                       </tr>
                     ))}
@@ -1901,7 +1901,7 @@ export default function Opportunity() {
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-white/50 mb-5">Portfolio spans multiple countries across multiple continents, providing natural diversification against regional economic, political, and climate risks.</p>
+              <p className="text-xs text-white/70 mb-5">Portfolio spans multiple countries across multiple continents, providing natural diversification against regional economic, political, and climate risks.</p>
 
               <h4 className="font-bold text-white mb-2">Pipeline: 50+ Interested Projects</h4>
               <p className="text-xs text-white/60 mb-5 leading-relaxed">
@@ -2089,7 +2089,7 @@ export default function Opportunity() {
                   <p><strong className="text-white">Years 1-3:</strong> Extremely limited. Capital is deployed to land projects and alliance organizations. No distributions. Limited annual redemptions (5% cap) for hardship cases only.</p>
                   <p><strong className="text-white">Years 3-7:</strong> Moderate liquidity. Quarterly distributions from portfolio cash flows. Limited annual redemptions (5% cap, NAV less 5% discount, pro-rata if oversubscribed).</p>
                   <p><strong className="text-white">Year 7-10:</strong> Liquidity via crypto exchange listings (target range), targeting Coinbase and other top-tier centralized exchanges plus decentralized exchanges on Base network. This is contingent on ecosystem maturity, not a guarantee.</p>
-                  <p className="text-xs text-white/50 italic">Unlike traditional funds that force exits at year 10, our perpetual structure means you're never forced to sell appreciating assets. However, you should invest with a long-term mindset. Year 7-10 listing is a target range, not a guarantee.</p>
+                  <p className="text-xs text-white/70 italic">Unlike traditional funds that force exits at year 10, our perpetual structure means you're never forced to sell appreciating assets. However, you should invest with a long-term mindset. Year 7-10 listing is a target range, not a guarantee.</p>
                 </FAQItem>
 
                 <FAQItem question="What is your deal flow advantage?">
@@ -2285,21 +2285,21 @@ export default function Opportunity() {
                     <FileText className="w-8 h-8 text-[#7dd87d] group-hover:scale-110 transition-transform" />
                     <div>
                       <p className="font-bold text-white text-sm">Pitch Deck</p>
-                      <p className="text-white/50 text-xs">Download PDF</p>
+                      <p className="text-white/70 text-xs">Download PDF</p>
                     </div>
                   </a>
                   <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex flex-col items-center gap-3 text-center opacity-60 cursor-not-allowed">
                     <BookOpen className="w-8 h-8 text-[#7dd87d]" />
                     <div>
                       <p className="font-bold text-white text-sm">Executive Summary</p>
-                      <p className="text-white/50 text-xs">Coming soon</p>
+                      <p className="text-white/70 text-xs">Coming soon</p>
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-5 border border-white/10 flex flex-col items-center gap-3 text-center">
                     <Lock className="w-8 h-8 text-white/55" />
                     <div>
                       <p className="font-bold text-white text-sm">Term Sheet</p>
-                      <p className="text-white/50 text-xs">Available after LOI submission</p>
+                      <p className="text-white/70 text-xs">Available after LOI submission</p>
                     </div>
                   </div>
                 </div>

@@ -18,7 +18,7 @@ const FEATURE_CARDS = [
   {
     icon: Users,
     title: "Foundations for Building with Others",
-    desc: "Shared values, rituals, and culture infrastructure so your community has a living foundation, not just a website.",
+    desc: "Shared values, rituals, and culture infrastructure so your community has a living foundation that lives in practice and on the page.",
     detail: "We help you articulate and encode the values, rituals, and culture practices that will hold your community together through the hard parts. This becomes the living foundation that new members enter into from day one.",
   },
   {
