@@ -735,7 +735,7 @@ export default function Opportunity() {
               <div className="mb-10">
                 <div className="relative rounded-2xl overflow-hidden mb-6">
                   <img
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-alliance-ecosystem-LaVJzzkbc3FU9b3WSBHhgG.webp"
+                    src="/images/opportunity/opp-alliance-ecosystem.webp"
                     alt="The ReGen Civics Alliance ecosystem - interconnected regenerative villages, organizations, and governance infrastructure"
                     className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
                     width="1200"
@@ -1175,7 +1175,7 @@ export default function Opportunity() {
               {/* Network Effect */}
               <div className="my-6">
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-network-effect_bd42f6b7.jpg"
+                  src="/images/opportunity/opp-network-effect.webp"
                   alt="Network effect: capital circulating within the regenerative ecosystem"
                   className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
                   width="1200"
@@ -1321,7 +1321,7 @@ export default function Opportunity() {
               {/* Three-Tier Strategy Image */}
               <div className="mb-6">
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-three-tier-strategy_c9173437.jpg"
+                  src="/images/opportunity/opp-three-tier-strategy.webp"
                   alt="Three-tier portfolio strategy: Land Projects 60%, Alliance Organizations 30%, Innovation Fund 10%"
                   className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
                   width="1200"
@@ -1972,7 +1972,7 @@ export default function Opportunity() {
             <CollapsibleSection title="Investment Process" icon={Workflow} id="investment-process">
               <div className="mb-6">
                 <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-investment-journey_e2ffa537.jpg"
+                  src="/images/opportunity/opp-investment-journey.webp"
                   alt="Your journey as an alliance investor"
                   className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
                   width="1200"
@@ -2181,7 +2181,7 @@ export default function Opportunity() {
               <div className="mb-10">
                 <div className="relative rounded-2xl overflow-hidden mb-6">
                   <img
-                    src="https://d2xsxph8kpxj0f.cloudfront.net/310519663294072435/kP95yWoqdEQdQYEQLAKGck/opp-vision-2040_5214eaf3.jpg"
+                    src="/images/opportunity/opp-vision-2040.webp"
                     alt="Vision 2040: A thriving regenerative civilization with interconnected communities"
                     className="w-full rounded-2xl border border-[#7dd87d]/20 object-contain"
                     width="1920"

@@ -47,10 +47,21 @@ export default defineConfig(({ mode }): UserConfig => ({
             urlPattern: /\.(png|jpg|jpeg|webp|svg)$/,
             handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "images-v2",
+              // Bumped from images-v2 to invalidate any poisoned-by-503
+              // entries from the prior cache. Old caches expire on the
+              // next SW activation thanks to cleanupOutdatedCaches above.
+              cacheName: "images-v3",
               expiration: {
                 maxEntries: 200,
                 maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+              },
+              // Only cache successful (or opaque cross-origin) responses.
+              // Without this, a CloudFront 503 (or any 5xx) gets cached
+              // and the SW serves the broken response indefinitely.
+              // Status 0 covers opaque cross-origin responses, which we
+              // want to cache even though their bodies aren't readable.
+              cacheableResponse: {
+                statuses: [0, 200],
               },
             },
           },
