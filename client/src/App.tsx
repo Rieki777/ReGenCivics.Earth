@@ -1,8 +1,29 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch, Redirect, useLocation } from "wouter";
-import { lazy, Suspense, ReactNode } from "react";
+import { lazy, Suspense, ReactNode, type ComponentType } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
+
+/**
+ * lazyWithRetry — retry a dynamic import once after a short backoff before
+ * surfacing the failure. Mitigates the "404 on first load, works on reload"
+ * pattern Rye reported for /investor on 2026-04-24, which is almost always
+ * a transient chunk-fetch race (CDN cache fill, slow Cloudflare edge,
+ * service-worker priming) rather than a permanent failure. After two
+ * attempts we still throw so ErrorBoundary kicks in normally.
+ */
+function lazyWithRetry<T extends ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+): ReturnType<typeof lazy<T>> {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (err) {
+      await new Promise((r) => setTimeout(r, 350));
+      return factory();
+    }
+  });
+}
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navigation from "./components/Navigation";
 import { MycelialBackground } from "./components/MycelialBackground";
@@ -45,7 +66,7 @@ function isAdminRoute(path: string) {
 // Lazy load pages for better initial load performance
 const Home = lazy(() => import("./pages/Home"));
 const Quest = lazy(() => import("./pages/Quest"));
-const Opportunity = lazy(() => import("./pages/Opportunity"));
+const Opportunity = lazyWithRetry(() => import("./pages/Opportunity"));
 // Form and InvestmentForm removed, both routes redirect to /connect and /investor respectively
 const Socials = lazy(() => import("./pages/Socials"));
 const Seasons = lazy(() => import("./pages/Seasons"));
@@ -78,7 +99,7 @@ const ApplyStatus = lazy(() => import("./pages/ApplyStatus"));
 const MyApplications = lazy(() => import("./pages/MyApplications"));
 const AdminApplications = lazy(() => import("./pages/AdminApplications"));
 const AdminApplicationDetail = lazy(() => import("./pages/AdminApplicationDetail"));
-const InvestorJourneyForm = lazy(() => import("./pages/InvestorForm"));
+const InvestorJourneyForm = lazyWithRetry(() => import("./pages/InvestorForm"));
 const ClaimSeeds = lazy(() => import("./pages/ClaimSeeds"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Admin = lazy(() => import("./pages/Admin"));

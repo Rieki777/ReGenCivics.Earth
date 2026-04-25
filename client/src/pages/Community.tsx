@@ -516,7 +516,7 @@ export default function Community() {
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'air' ? 'ring-2 ring-slate-400 shadow-lg shadow-slate-400/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#374151] to-[#4b5563]" />
-            <img src="/blog-hero-bridging-worlds.webp" alt="Bridging worlds between communities" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+            <img src="/images/community/air-governance-circle.webp" alt="A community gathered in a sacred circle for shared governance, soft sunlight through a temple of wood and living vines" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 transition-opacity" width={2752} height={1536} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <div className="text-2xl mb-1">🍃</div>

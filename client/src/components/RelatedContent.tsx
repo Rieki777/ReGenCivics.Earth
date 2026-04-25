@@ -26,8 +26,8 @@ interface RelatedContentProps {
 
 export function RelatedContent({ pages, blog, className = "" }: RelatedContentProps) {
   return (
-    <section className={`py-12 md:py-16 px-4 bg-[#0d2614] ${className}`}>
-      <div className="max-w-4xl mx-auto">
+    <section className={`py-12 md:py-16 px-4 ${className}`}>
+      <div className="max-w-4xl mx-auto bg-[#0d2614] rounded-3xl border border-white/5 p-6 md:p-10 shadow-lg shadow-black/30">
         <h3
           className="text-[#7dd87d] text-sm font-bold uppercase tracking-wider mb-6 text-center"
           style={{ fontFamily: "var(--font-accent)" }}

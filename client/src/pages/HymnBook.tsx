@@ -4,14 +4,17 @@
  * highest-voted song is added to the Hymn Book.
  */
 import { useState } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Music, ListMusic, Vote, Loader2, Plus, CheckCircle2 } from "lucide-react";
+import { useAudio, PLAYLIST } from "@/contexts/AudioContext";
+import { Music, ListMusic, Loader2, Plus, CheckCircle2, Play, Pause, Vote } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PageTransition } from "@/components/PageTransition";
 
 export default function HymnBook() {
   const { isAuthenticated } = useAuth();
+  const audio = useAudio();
   const utils = trpc.useUtils();
   const list = trpc.songs.list.useQuery(undefined, { staleTime: 60_000 });
   const myVote = trpc.songs.myVote.useQuery(undefined, {
@@ -62,6 +65,51 @@ export default function HymnBook() {
             </p>
           </div>
 
+          {/* Now-playing playlist — the actual track list players land on
+              when they tap "Playlist" in the mobile More tab. Lives above
+              the submit form so the Playlist button doesn't drop people
+              into a submission form. */}
+          <section className="bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 mb-12">
+            <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+              <ListMusic className="w-5 h-5 text-[#7dd87d]" /> Hymns of the ReGeneration
+            </h2>
+            <ul className="divide-y divide-white/5">
+              {PLAYLIST.map((song, i) => {
+                const isCurrent = audio.currentIndex === i;
+                const showPause = isCurrent && audio.isPlaying;
+                return (
+                  <li key={song.src} className="flex items-center gap-3 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isCurrent) {
+                          audio.togglePlay();
+                        } else {
+                          audio.playSong(i);
+                        }
+                      }}
+                      aria-label={showPause ? `Pause ${song.title}` : `Play ${song.title}`}
+                      className="w-9 h-9 rounded-full bg-[#1a472a] hover:bg-[#7dd87d]/30 text-[#7dd87d] flex items-center justify-center flex-shrink-0"
+                    >
+                      {showPause ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 translate-x-0.5" />}
+                    </button>
+                    <Link
+                      href={`/hymn-book/${song.slug}`}
+                      className="flex-1 min-w-0 hover:underline"
+                    >
+                      <span className={`block text-sm font-semibold truncate ${isCurrent ? "text-[#7dd87d]" : "text-white"}`}>
+                        {song.title}
+                      </span>
+                      {song.artist && (
+                        <span className="block text-white/55 text-xs truncate">{song.artist}</span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
           {/* Submission form */}
           <section id="add-your-voice" className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 mb-12">
             <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
@@ -71,6 +119,22 @@ export default function HymnBook() {
               One submission per player per season. Host your audio anywhere public
               (SoundCloud, Bandcamp, your own site) and paste the link.
             </p>
+
+            {/* Anonymity + treasury callout (Fixes 15 + 26): every player who
+                submits sees the same explanation up front, so there's no
+                surprise about how attribution and revenue work. */}
+            <div className="bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-xl p-4 mb-5 text-sm text-white/85 leading-relaxed space-y-2">
+              <p>
+                <strong className="text-[#7dd87d]">Hymns of the ReGeneration is a community songbook.</strong>{" "}
+                When your song is selected for the book, the movement buys it from you.
+                Songs in the book are titled by the author but credited to "Hymns of the ReGeneration" — the
+                people's book, free and open. All streaming revenue goes to the community treasury.
+              </p>
+              <p>
+                Submissions are anonymous. Your name appears nowhere on the song page; the artist field stays
+                "Hymns of the ReGeneration."
+              </p>
+            </div>
 
             {!isAuthenticated ? (
               <p className="text-white/70 text-sm">

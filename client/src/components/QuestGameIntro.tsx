@@ -86,10 +86,13 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
         }
       `}</style>
 
-      {/* Skip, top right */}
+      {/* Skip — bottom right (was top-6 right-6, which on narrow viewports
+          collided horizontally with the centered "01 / 04" page indicator,
+          rendering as "Sk01 04" on iPhone). Bottom-right also reads as a
+          "small escape hatch" rather than a primary action. */}
       <button
         onClick={handleEnter}
-        className="absolute top-6 right-6 text-white/60 hover:text-white/60 text-sm transition-colors underline-offset-4 hover:underline"
+        className="absolute bottom-4 right-4 text-white/55 hover:text-white text-sm transition-colors underline-offset-4 hover:underline z-10"
       >
         Skip
       </button>

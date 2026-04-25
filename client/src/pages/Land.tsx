@@ -36,6 +36,7 @@ import {
   Star,
 } from "lucide-react";
 import PageBackground from "@/components/PageBackground";
+import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { HeroPageLoader } from "@/components/HeroPageLoader";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
@@ -688,17 +689,11 @@ export default function Land() {
           </AnimatedSection>
           <AnimatedSection animation="fade-in">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/30 border border-[#7dd87d]/20">
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
+              <ViewportTriggeredVideo
+                src={cdnImg("https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4")}
+                ariaLabel="Regenerative landscape transformation"
                 className="w-full aspect-video object-cover"
-              >
-                <source src={cdnImg("https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4")} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#1a472a]/80 to-transparent p-4 md:p-6">
                 <p className="text-white/90 text-sm md:text-base font-medium" style={{ fontFamily: 'var(--font-display)' }}>
                   Regenerative transformation in progress
@@ -1084,18 +1079,18 @@ export default function Land() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white/5 border border-[#d4a574]/20 rounded-2xl p-6">
+              <div className="bg-[#0d2818]/75 backdrop-blur-sm border border-[#d4a574]/30 rounded-2xl p-6 shadow-lg shadow-black/20">
                 <h3 className="text-[#d4a574] font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>You Bring</h3>
-                <ul className="space-y-2 text-white/70 text-sm">
+                <ul className="space-y-2 text-white/85 text-sm">
                   <li className="flex items-start gap-2"><span className="text-[#d4a574]">+</span> Land and growing capacity</li>
                   <li className="flex items-start gap-2"><span className="text-[#d4a574]">+</span> Willingness to host community days</li>
                   <li className="flex items-start gap-2"><span className="text-[#d4a574]">+</span> Space for land residents (if capacity allows)</li>
                   <li className="flex items-start gap-2"><span className="text-[#d4a574]">+</span> Alignment with regenerative values</li>
                 </ul>
               </div>
-              <div className="bg-white/5 border border-[#7dd87d]/20 rounded-2xl p-6">
+              <div className="bg-[#0d2818]/75 backdrop-blur-sm border border-[#7dd87d]/30 rounded-2xl p-6 shadow-lg shadow-black/20">
                 <h3 className="text-[#7dd87d] font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>We Bring</h3>
-                <ul className="space-y-2 text-white/70 text-sm">
+                <ul className="space-y-2 text-white/85 text-sm">
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Active community and spiritual container</li>
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Stewardship labor from gardening day participants</li>
                   <li className="flex items-start gap-2"><span className="text-[#7dd87d]">+</span> Free Game Building for your local food system</li>

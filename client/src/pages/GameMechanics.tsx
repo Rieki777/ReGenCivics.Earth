@@ -1683,6 +1683,11 @@ export default function GameMechanics() {
                 </h2>
               }
             >
+              <p className="text-white/60 text-sm max-w-3xl mb-6 leading-relaxed">
+                Every number that drives the game lives here, current value and proposed-change history side by side.
+                Players can read everything; super admins can edit a value inline. Use this when you want to know what
+                a quest is worth right now or how a coefficient has changed over time.
+              </p>
               <LiveVariablesDashboard />
               <div className="max-w-2xl mx-auto">
                 <MiniSectionSimulator
@@ -1743,6 +1748,11 @@ export default function GameMechanics() {
                 </h2>
               }
             >
+              <p className="text-white/60 text-sm max-w-3xl mb-6 leading-relaxed">
+                Drag the sliders to model how a proposed change ripples through the game. Outputs are computed
+                client-side from the same formulas the live system uses, so the projection matches what would happen
+                if the change shipped. Nothing here writes to the database.
+              </p>
               <div className="max-w-2xl mx-auto">
                 <GameSimulator />
               </div>
@@ -1764,6 +1774,11 @@ export default function GameMechanics() {
                 </h2>
               }
             >
+            <p className="text-white/60 text-sm max-w-3xl mb-6 leading-relaxed">
+              Gratitude is the lunar-cycle pulse of the game: every player gets a budget, sends thank-yous, and the
+              receiving side carries forward as trust weight. The variables below shape the budget size, the
+              redistribution pool, and how strongly received gratitude lifts your trust score.
+            </p>
             <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
               {/* Cycle & Budget */}
               <Card className="bg-white/5 border-white/10 backdrop-blur-sm">

@@ -85,20 +85,21 @@ class SDKServer {
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
 
-      // Only openId and appId are required. The `name` field is purely
-      // cosmetic. Email magic-link sign-in has no name at token-creation
-      // time, and Apple OAuth only gives us a name on the very first
-      // sign-in. Requiring a non-empty name here was rejecting every
-      // email session and any returning Apple session, which left users
-      // stuck in an apparent sign-in loop.
-      if (!isNonEmptyString(openId) || !isNonEmptyString(appId)) {
-        console.warn("[Auth] Session payload missing openId or appId");
+      // Only `openId` is the actual authentication identifier. `appId` and
+      // `name` are JWT payload metadata that nothing downstream consumes —
+      // gating sign-in on either of them silently rejected every session
+      // when VITE_APP_ID wasn't set on Railway. This was the bug Rye flagged
+      // as "Sign in still broken!" on 2026-04-24: returning users had a
+      // valid cookie but verifySession was throwing it away because
+      // appId was the empty string.
+      if (!isNonEmptyString(openId)) {
+        console.warn("[Auth] Session payload missing openId");
         return null;
       }
 
       return {
         openId,
-        appId,
+        appId: typeof appId === "string" ? appId : "",
         name: typeof name === "string" ? name : "",
       };
     } catch (error) {

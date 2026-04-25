@@ -44,6 +44,7 @@ import { Link } from "wouter";
 import { ParallaxSection } from "@/components/ParallaxSection";
 import { SocialLinks } from "@/components/SocialLinks";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { SEO, pageSEO } from "@/components/SEO";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import AutoplayVideo from "@/components/AutoplayVideo";
@@ -554,16 +555,10 @@ export default function Game() {
                   Heal the Watershed
                 </div>
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-[#7dd87d]/30">
-                  <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
+                  <ViewportTriggeredVideo
+                    src={cdnImg("https://assets.regencivics.earth/ckVBEXxJKsydomeb.mp4")}
                     className="w-full h-auto"
-                  >
-                    <source src={cdnImg("https://assets.regencivics.earth/ckVBEXxJKsydomeb.mp4")} type="video/mp4" />
-                  </video>
+                  />
                 </div>
               </div>
 
@@ -574,16 +569,10 @@ export default function Game() {
                   Epic Quest: Cornfield to Hemp to Ecovillage
                 </div>
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-amber-400/30">
-                  <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
+                  <ViewportTriggeredVideo
+                    src={cdnImg("https://assets.regencivics.earth/zpwWWhxtucLzomsE.mp4")}
                     className="w-full h-auto"
-                  >
-                    <source src={cdnImg("https://assets.regencivics.earth/zpwWWhxtucLzomsE.mp4")} type="video/mp4" />
-                  </video>
+                  />
                 </div>
               </div>
             </div>

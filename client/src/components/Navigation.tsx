@@ -642,6 +642,35 @@ export default function Navigation() {
             <Search className="w-4 h-4" />
           </button>
 
+          {/* Mobile-only quick actions: Messages + Notifications.
+              Both gated on auth so signed-out users don't see chrome that
+              implies an account exists. The Messages icon links to
+              /messages and shows an unread badge from the existing
+              messagesUnreadCount query. NotificationBell is the same
+              component used desktop-side. */}
+          {isAuthenticated && (
+            <>
+              <Link
+                href="/messages"
+                className="md:hidden relative p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-white/80 hover:text-white"
+                aria-label={messagesUnreadCount > 0 ? `Messages, ${messagesUnreadCount} unread` : "Messages"}
+              >
+                <MessageCircle className="w-5 h-5" />
+                {messagesUnreadCount > 0 && (
+                  <span
+                    className="absolute top-1.5 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#7dd87d] text-[#0d2818] text-[10px] font-bold flex items-center justify-center"
+                    aria-hidden="true"
+                  >
+                    {messagesUnreadCount > 9 ? "9+" : messagesUnreadCount}
+                  </span>
+                )}
+              </Link>
+              <div className="md:hidden">
+                <NotificationBell />
+              </div>
+            </>
+          )}
+
           {/* Mobile Menu Button */}
           <button
             className="md:hidden text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"

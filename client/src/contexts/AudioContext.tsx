@@ -91,6 +91,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [location] = useLocation()
   const hasInteracted = useRef(false)
   const restoredTimeRef = useRef<number>(persisted?.time ?? 0)
+  const isPlayingRef = useRef(false)
+  useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
+
+  // Track consecutive load failures so a corrupted file in the playlist
+  // doesn't cause an infinite skip loop. After a full cycle of failures we
+  // give up and stop playback.
+  const errorChainRef = useRef(0)
 
   useEffect(() => {
     const audio = new Audio()
@@ -99,15 +106,37 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     audioRef.current = audio
 
     audio.addEventListener('ended', () => {
+      errorChainRef.current = 0
       setCurrentIndex(i => (i + 1) % PLAYLIST.length)
     })
     audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime))
     audio.addEventListener('durationchange', () => setDuration(audio.duration))
     // Restore the saved play position once metadata is loaded
     audio.addEventListener('loadedmetadata', () => {
+      errorChainRef.current = 0
       if (restoredTimeRef.current > 0 && audio.currentTime === 0) {
         try { audio.currentTime = restoredTimeRef.current } catch { /* ignore */ }
         restoredTimeRef.current = 0
+      }
+    })
+
+    // When a track fails to load (corrupted file, 404, codec mismatch),
+    // skip to the next song instead of leaving playback frozen. This is
+    // the "ReGen Transition Team song stops playback" symptom Rye flagged
+    // on 2026-04-24: the bad file would 'error' but nothing advanced past
+    // it, so the next user click was needed to recover.
+    audio.addEventListener('error', () => {
+      errorChainRef.current += 1
+      if (errorChainRef.current >= PLAYLIST.length) {
+        // All tracks failed — give up so we don't loop forever.
+        errorChainRef.current = 0
+        setIsPlaying(false)
+        return
+      }
+      // Auto-advance. Only advance when we were trying to play; if the
+      // user paused, leave the failed track loaded as-is.
+      if (isPlayingRef.current) {
+        setCurrentIndex(i => (i + 1) % PLAYLIST.length)
       }
     })
 
