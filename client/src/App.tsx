@@ -73,7 +73,7 @@ const Seasons = lazy(() => import("./pages/Seasons"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
-const Economy = lazy(() => import("./pages/Economy"));
+// Economy page deleted (audit item 22). The /economy route redirects to /bionomics.
 const Bionomics = lazy(() => import("./pages/Bionomics"));
 const BionomicsEdit = lazy(() => import("./pages/BionomicsEdit"));
 const HealTheLand = lazy(() => import("./pages/HealTheLand"));
@@ -81,7 +81,7 @@ const HymnBook = lazy(() => import("./pages/HymnBook"));
 const HymnPlayer = lazy(() => import("./pages/HymnPlayer"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
-const LocalFoodEconomy = lazy(() => import("./pages/LocalFoodEconomy"));
+// LocalFoodEconomy page deleted (audit item 22). /local-food-economy redirects to /bionomics#local-food-economies.
 const ToolsLibrary = lazy(() => import("./pages/ToolsLibrary"));
 const ToolDetail = lazy(() => import("./pages/ToolDetail"));
 const ToolSubmit = lazy(() => import("./pages/ToolSubmit"));
@@ -152,6 +152,11 @@ function NewsletterConfirm() {
     onSuccess: () => setStatus('success'),
     onError: () => setStatus('error'),
   });
+  // Run-once on mount: the route is single-purpose (confirm one subscription)
+  // and the token is read from window.location.search at render time, so the
+  // intent is "fire one mutation, display the result." Adding `confirmMutation`
+  // to deps would re-fire the mutation on every render once it resolves.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (token) confirmMutation.mutate({ token }); else setStatus('error'); }, []);
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">

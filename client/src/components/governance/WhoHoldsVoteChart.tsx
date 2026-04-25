@@ -20,7 +20,7 @@ export function WhoHoldsVoteChart() {
   return (
     <figure className="bg-[#1a472a]/40 border border-[#7dd87d]/20 rounded-2xl p-4 md:p-6">
       <img
-        src="/images/governance/who-holds-vote.png"
+        src="/images/governance/who-holds-vote.webp"
         alt="Who Holds the Vote: Fund governance weight across Stewardship Council, Investors, Land Projects, and Alliance Partners."
         className="w-full max-w-md mx-auto h-auto rounded-xl"
         loading="lazy"

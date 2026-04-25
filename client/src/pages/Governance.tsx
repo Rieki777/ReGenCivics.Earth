@@ -1008,7 +1008,7 @@ export default function Governance() {
             {/* Fund Governance Structure Diagram (image first, SVG fallback below) */}
             <div className="mb-12 flex justify-center">
               <img
-                src="/images/governance/voice-holders-diagram.png"
+                src="/images/governance/voice-holders-diagram.webp"
                 alt="Four voice-holder groups connected to the ReGen Civics Fund: Council of Domain Experts, Land Project Stewards, Alliance Partners, Investor Voice"
                 className="w-full max-w-2xl rounded-xl"
                 loading="lazy"

@@ -14,8 +14,9 @@ window.addEventListener("vite:preloadError", (e: Event) => {
 window.addEventListener("load", () => sessionStorage.removeItem("vite-chunk-reload"), { once: true });
 
 // Sentry is deferred until after page load, it's non-essential for rendering.
-// Includes a 10s fallback in case the load event never fires (some PWA installs
-// or aggressive battery savers can suppress it on mobile).
+// Initialises on whichever happens first: page `load`, first user interaction
+// (pointerdown / keydown), or a 10s safety-net timer for PWA installs and
+// aggressive battery savers that can suppress the load event on mobile.
 if (import.meta.env.VITE_SENTRY_DSN) {
   let sentryLoaded = false;
   const initSentry = () => {
@@ -30,6 +31,8 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     });
   };
   window.addEventListener("load", initSentry, { once: true });
+  window.addEventListener("pointerdown", initSentry, { once: true, passive: true });
+  window.addEventListener("keydown", initSentry, { once: true });
   setTimeout(initSentry, 10_000);
 }
 import { toast } from "sonner";
