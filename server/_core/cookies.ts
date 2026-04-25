@@ -1,4 +1,5 @@
-import type { CookieOptions, Request } from "express";
+import type { CookieOptions, Request, Response } from "express";
+import { COOKIE_NAME } from "@shared/const";
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
@@ -38,7 +39,7 @@ export function getSessionCookieOptions(
 
   // SameSite=lax is the correct setting for the OAuth top-level redirect flow
   // and works on every browser including iPhone Safari (which silently drops
-  // SameSite=none cookies when Secure is not accurately true — common on
+  // SameSite=none cookies when Secure is not accurately true. Common on
   // Railway behind its proxy if x-forwarded-proto is not set).
   return {
     domain,
@@ -47,4 +48,36 @@ export function getSessionCookieOptions(
     sameSite: "lax",
     secure: isSecureRequest(req),
   };
+}
+
+/**
+ * Clear ALL variants of the session cookie. Browsers identify cookies by
+ * (name, path, domain). Over the lifetime of this app, sessions have been
+ * set with at least three different domain attributes:
+ *
+ *   1. host-only       (no Domain attribute, before fa79801)
+ *   2. ".regencivics.earth"  (current default, since fa79801)
+ *   3. "regencivics.earth"   (no leading dot, theoretically equivalent but
+ *                              treated as a separate cookie by browsers)
+ *
+ * iPhone Safari accumulates these across deploys and sends them all on the
+ * next request. Server reads only the first matching value; logout clears
+ * only the variant that getSessionCookieOptions currently returns; the
+ * stale duplicates persist and re-authenticate the next request as the same
+ * user. This was the root cause of "I clicked Sign Out but I'm still logged
+ * in" reported on 2026-04-25.
+ *
+ * Calling this on logout AND before every fresh sign-in flushes all the
+ * variants so we always start clean.
+ */
+export function clearAllSessionCookies(req: Request, res: Response) {
+  const opts = getSessionCookieOptions(req);
+  // 1. Clear with current domain attribute (most likely active variant)
+  res.clearCookie(COOKIE_NAME, opts);
+  // 2. Clear without domain (host-only cookies set by older deploys)
+  res.clearCookie(COOKIE_NAME, { ...opts, domain: undefined });
+  // 3. Clear with no-leading-dot variant if we're behind the apex domain
+  if (opts.domain && opts.domain.startsWith(".")) {
+    res.clearCookie(COOKIE_NAME, { ...opts, domain: opts.domain.slice(1) });
+  }
 }

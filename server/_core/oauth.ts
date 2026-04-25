@@ -1,7 +1,7 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
-import { getSessionCookieOptions } from "./cookies";
+import { getSessionCookieOptions, clearAllSessionCookies } from "./cookies";
 import { sdk } from "./sdk";
 import { ENV } from "./env";
 import { nanoid } from "nanoid";
@@ -195,6 +195,12 @@ export function registerOAuthRoutes(app: Express) {
         expiresInMs: ONE_YEAR_MS,
       });
 
+      // Clear any stale session-cookie variants (host-only, no-leading-dot,
+      // sameSite=none from prior deploys) before setting the fresh one. Without
+      // this, browsers that accumulated multiple `app_session_id` cookies
+      // across deploys send all of them on the next request and the server
+      // reads whichever one the browser ordered first, which may not be ours.
+      clearAllSessionCookies(req, res);
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       res.redirect(302, returnTo ?? "/");
@@ -259,6 +265,8 @@ export function registerOAuthRoutes(app: Express) {
         expiresInMs: ONE_YEAR_MS,
       });
 
+      // See Google callback above for rationale on the multi-variant clear.
+      clearAllSessionCookies(req, res);
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       res.redirect(302, returnTo ?? "/");
@@ -333,6 +341,8 @@ export function registerOAuthRoutes(app: Express) {
         expiresInMs: ONE_YEAR_MS,
       });
 
+      // See Google callback above for rationale on the multi-variant clear.
+      clearAllSessionCookies(req, res);
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       res.redirect(302, "/");

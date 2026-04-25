@@ -5,8 +5,7 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql, desc } from "drizzle-orm";
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "../_core/cookies";
+import { clearAllSessionCookies } from "../_core/cookies";
 import { newsletterSubscribers, userProfiles } from "../../drizzle/schema";
 
 // Debounce lastActiveAt writes, only update once per 5 minutes per user
@@ -43,11 +42,14 @@ export const authRouter = router({
     if (opts.ctx.user) pingLastActive(opts.ctx.user.id);
     return opts.ctx.user;
   }),
-  // `logout` requires auth: signing out a session requires having a session.
-  // Idempotent in practice — repeated calls with no cookie just return early.
-  logout: protectedProcedure.mutation(({ ctx }) => {
-    const cookieOptions = getSessionCookieOptions(ctx.req);
-    ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+  // `logout` is publicProcedure intentionally: it must succeed even if the
+  // session cookie is stale, malformed, or duplicated (multi-cookie scenario
+  // where Safari sent two `app_session_id` values from different deploy
+  // eras). Otherwise a user stuck with a corrupt cookie can't sign out to
+  // recover. The handler clears ALL session-cookie variants regardless of
+  // whether ctx.user resolved.
+  logout: publicProcedure.mutation(({ ctx }) => {
+    clearAllSessionCookies(ctx.req, ctx.res);
     return {
       success: true,
     } as const;
