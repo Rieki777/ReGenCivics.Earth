@@ -488,7 +488,15 @@ async function startServer() {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
     const auth = req.headers.authorization;
-    if (!auth || auth !== `Bearer ${secret}`) return res.status(401).json({ error: "Unauthorized" });
+    const expected = `Bearer ${secret}`;
+    // Timing-safe comparison so attackers can't probe the secret byte-by-byte
+    // via response-time analysis. Length mismatch returns 401 fast (length is
+    // not the secret).
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { runAllGovernanceJobs } = await import("../jobs/governanceJobs");
       const reports = await runAllGovernanceJobs();

@@ -300,7 +300,9 @@ export function AdminOverviewTab({
                     projects.forEach((p: string) => {
                       projectCounts[p] = (projectCounts[p] || 0) + 1;
                     });
-                  } catch (e) {}
+                  } catch (e) {
+                    console.error("[AdminOverviewTab] failed to parse inquiry formData", e);
+                  }
                 });
                 const sorted = Object.entries(projectCounts)
                   .sort(([, a], [, b]) => b - a)

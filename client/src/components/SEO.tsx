@@ -61,10 +61,16 @@ export function SEO({
     if (keywords) setMetaTag('keywords', keywords);
     if (author) setMetaTag('author', author);
 
+    // OG/Twitter image alt: derive from title so screen readers and
+    // accessibility-aware crawlers (Mastodon, LinkedIn share previews) get
+    // descriptive text instead of an unannounced image.
+    const imageAlt = `${fullTitle} preview image`;
+
     // Open Graph tags
     setMetaTag('og:title', fullTitle, true);
     setMetaTag('og:description', description, true);
     setMetaTag('og:image', fullImage, true);
+    setMetaTag('og:image:alt', imageAlt, true);
     setMetaTag('og:url', fullUrl, true);
     setMetaTag('og:type', type, true);
     setMetaTag('og:site_name', SITE_NAME, true);
@@ -75,6 +81,7 @@ export function SEO({
     setMetaTag('twitter:title', fullTitle);
     setMetaTag('twitter:description', description);
     setMetaTag('twitter:image', fullImage);
+    setMetaTag('twitter:image:alt', imageAlt);
     setMetaTag('twitter:site', '@ReGenCivics');
 
     // Additional SEO tags

@@ -13,9 +13,14 @@ window.addEventListener("vite:preloadError", (e: Event) => {
 // Clear the flag on successful page loads so future deploys also auto-reload
 window.addEventListener("load", () => sessionStorage.removeItem("vite-chunk-reload"), { once: true });
 
-// Sentry is deferred until after page load, it's non-essential for rendering
+// Sentry is deferred until after page load, it's non-essential for rendering.
+// Includes a 10s fallback in case the load event never fires (some PWA installs
+// or aggressive battery savers can suppress it on mobile).
 if (import.meta.env.VITE_SENTRY_DSN) {
-  window.addEventListener("load", () => {
+  let sentryLoaded = false;
+  const initSentry = () => {
+    if (sentryLoaded) return;
+    sentryLoaded = true;
     import("@sentry/react").then((Sentry) => {
       Sentry.init({
         dsn: import.meta.env.VITE_SENTRY_DSN,
@@ -23,7 +28,9 @@ if (import.meta.env.VITE_SENTRY_DSN) {
         integrations: [Sentry.browserTracingIntegration()],
       });
     });
-  }, { once: true });
+  };
+  window.addEventListener("load", initSentry, { once: true });
+  setTimeout(initSentry, 10_000);
 }
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -159,10 +166,13 @@ if ('serviceWorker' in navigator) {
     setInterval(() => registration.update().catch(() => {}), 10 * 60_000);
   });
 
-  // Nuke stale runtime caches from the old SW config (renamed in v2).
+  // Nuke stale runtime caches from old SW configs (renamed across versions).
   // These one-shot deletes run once per user then become no-ops.
+  // images-v2 was poisoned by CloudFront 503s before we added cacheableResponse;
+  // explicitly nuking it on next load ensures users see fresh fetches.
   if ('caches' in window) {
-    caches.delete('images');   // replaced by images-v2 (StaleWhileRevalidate)
+    caches.delete('images');     // pre-v2 name
+    caches.delete('images-v2');  // poisoned by 5xx, replaced by images-v3
   }
 }
 
@@ -181,11 +191,4 @@ if ('serviceWorker' in navigator) {
   // Unregister service workers AND clear all caches to break out of stale SW loop
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.getRegistrations().then((regs) =>
-      Promise.all(regs.map((r) => r.unregister()))
-    );
-  }
-  if ("caches" in window) {
-    caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n))));
-  }
-  setTimeout(() => window.location.reload(), 2000);
-}
+      Promise.all(regs.map((r) => r.unregister())

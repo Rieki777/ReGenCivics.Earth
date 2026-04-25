@@ -51,9 +51,19 @@ function verifyWebhookSignature(
   signature: string | undefined,
   timestamp: string | undefined
 ): boolean {
-  if (!WEBHOOK_SECRET || !signature || !timestamp) {
-    console.warn("[Resend Webhook] Missing secret or signature, skipping verification");
-    return true; // Allow in development without secret
+  if (!WEBHOOK_SECRET) {
+    // Fail closed in production: an unconfigured secret in prod is a deploy
+    // bug, not a reason to accept unsigned webhooks. Only allow skip in dev.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Resend Webhook] WEBHOOK_SECRET not set in production, rejecting");
+      return false;
+    }
+    console.warn("[Resend Webhook] WEBHOOK_SECRET not set (dev only), allowing");
+    return true;
+  }
+  if (!signature || !timestamp) {
+    console.warn("[Resend Webhook] Missing signature or timestamp header, rejecting");
+    return false;
   }
   
   const signedPayload = `${timestamp}.${payload}`;

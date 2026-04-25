@@ -1379,7 +1379,7 @@ export default function Quest() {
       {!activeSeasonFilter && (
         <QuestCompletionFeed
           title="Quest Stories"
-          subtitle="What players have been up to — photos, reflections, and video dispatches from the field."
+          subtitle="What players have been up to: photos, reflections, and video dispatches from the field."
         />
       )}
 
