@@ -26,6 +26,7 @@ import {
 import PageBackground from "@/components/PageBackground";
 import { HeroPageLoader } from "@/components/HeroPageLoader";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import TreasuryDashboard from "@/components/TreasuryDashboard";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -231,10 +232,12 @@ export default function Fund() {
             </p>
           </AnimatedSection>
 
-          {/* CTAs */}
+          {/* CTAs — links to /opportunity (the actual investment thesis page);
+              the previous `/investor` target was the interest-form page,
+              which read as a 404 to anyone expecting the thesis content. */}
           <AnimatedSection animation="slide-up" delay={600}>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/investor">
+              <Link href="/opportunity">
                 <Button
                   className="bg-amber-400 text-[#1a472a] hover:bg-amber-300 font-bold px-10 py-5 text-lg w-full sm:w-auto h-auto shadow-[0_0_20px_rgba(251,191,36,0.5),0_0_40px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.7),0_0_60px_rgba(251,191,36,0.35)] transition-shadow"
                   style={{ fontFamily: "var(--font-accent)" }}
@@ -622,17 +625,10 @@ export default function Fund() {
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="fade-in">
             <div className="rounded-2xl overflow-hidden shadow-2xl border border-amber-400/20">
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
+              <ViewportTriggeredVideo
+                src={cdnImg("https://assets.regencivics.earth/VeYvNDrIyHjuiPlZ.mp4")}
                 className="w-full h-auto"
-                poster={cdnImg("https://assets.regencivics.earth/oFPkKpXaMzxeZTqG.png")}
-              >
-                <source src={cdnImg("https://assets.regencivics.earth/VeYvNDrIyHjuiPlZ.mp4")} type="video/mp4" />
-              </video>
+              />
             </div>
           </AnimatedSection>
         </div>
@@ -675,7 +671,7 @@ export default function Fund() {
                 Or, if you are already in, signal your support by signing a Letter of Intent.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/investor">
+                <Link href="/opportunity">
                   <Button
                     className="bg-amber-400 text-[#1a472a] hover:bg-amber-300 font-bold px-10 py-5 text-lg h-auto shadow-[0_0_20px_rgba(251,191,36,0.5),0_0_40px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.7),0_0_60px_rgba(251,191,36,0.35)] transition-shadow"
                     style={{ fontFamily: "var(--font-accent)" }}

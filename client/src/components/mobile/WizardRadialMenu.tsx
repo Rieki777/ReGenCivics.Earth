@@ -15,10 +15,12 @@
  * Context slot: pulls the first usePageTools() action for the current route,
  * falling back to Search (opens the command palette).
  *
- * Hidden on desktop. Sits above the MobileTabBar via env(safe-area-inset-bottom)
- * + 5.5rem so the FAB clears the iPhone home-indicator area, and uses z-[60]
- * so it renders over the z-50 MobileTabBar (without this z bump the FAB was
- * hidden behind the bar on Safari).
+ * Hidden on desktop. Sits above the MobileTabBar via a `max()` of
+ * env(safe-area-inset-bottom) + 8rem and a hard 9rem floor. The floor exists
+ * because some iPhone Safari edge cases (PWA mode, embedded web views,
+ * landscape orientation) report env(safe-area-inset-bottom) as 0, which
+ * collapsed the FAB into the tab bar. Uses z-[60] so it renders above the
+ * z-50 MobileTabBar.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
@@ -166,12 +168,24 @@ export function WizardRadialMenu() {
 
   return (
     // MobileTabBar is h-16 (64px) plus env(safe-area-inset-bottom) padding.
-    // FAB bottom needs to clear that stack with real breathing room so the
-    // flower never kisses the tab bar on iPhone. safe-area + 7rem (112px)
-    // gives the FAB bottom ~48px above the tab bar top on any device.
+    // FAB needs to clear that stack with real breathing room so the flower
+    // and the radial-menu buttons never kiss the tab bar on iPhone.
+    //
+    // The previous 7rem + safe-area calc still produced overlap on Rye's
+    // device. Two suspected causes: (1) env(safe-area-inset-bottom) is 0
+    // in some iOS Safari modes (PWA, embedded WebView, landscape), and
+    // (2) the radial-menu's left-most button sits at FAB-center vertically
+    // and was landing close to the tab bar even when the trigger cleared.
+    //
+    // Fix: max() of safe-area + 8rem and a hard 9rem floor. The floor
+    // guarantees the FAB bottom is always >= 9rem (144px) regardless of
+    // env() value, which puts the flower roughly 80px above the tab bar
+    // top on any device. Tabs render z-50; we render z-[60].
     <div
       className="fixed right-4 z-[60] md:hidden"
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 7rem)" }}
+      style={{
+        bottom: "max(calc(env(safe-area-inset-bottom, 0px) + 8rem), 9rem)",
+      }}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Relative wrapper sized to the trigger. Buttons position absolutely

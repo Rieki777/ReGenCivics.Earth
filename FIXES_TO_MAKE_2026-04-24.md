@@ -356,9 +356,26 @@ In MobileMoreMenu, clicking the currently-playing song row should expand a playl
 | 4 | Connect tab icon: Sparkles | FIXED | `client/src/hooks/useSmartNav.ts` (4 occurrences updated) |
 | 5 | Send Gratitude modal: returnTo on sign-in | FIXED | `client/src/components/SendGratitudeModal.tsx` |
 | 6 | Navigation drawer: Governance link in Explore + Connect | FIXED | `client/src/components/Navigation.tsx` |
-| 7 | Sign-in actually broken: investigate + hotfix | SPECCED | requires deploy verification + browser debugging |
-| 8 | FAB still overlapping: investigate + hotfix | SPECCED | requires deploy verification + viewport measurement |
-| 9-27 | Other items | SPECCED | each section above has its own Files involved and Implementation outline |
+| 7 | Sign-in OAuth | FIXED | `server/_core/sdk.ts` verifySession no longer requires non-empty `appId` (was rejecting every session because `VITE_APP_ID` is unset on Railway and defaults to ""). |
+| 8 | FAB still overlapping | FIXED | `client/src/components/mobile/WizardRadialMenu.tsx` bottom now uses `max(env(safe-area)+8rem, 9rem)` so the floor is 144px regardless of `env()` returning 0 in PWA / landscape edge cases. |
+| 9 | returnTo audit | FIXED | `client/src/const.ts` `getLoginUrl()` now defaults to current pathname+search when no arg is passed; all 37 prior call sites get returnTo automatically. |
+| 12 | GameMechanics section summaries | FIXED | `client/src/pages/GameMechanics.tsx` Live Variables, Game Simulator, and Gratitude System Variables each got a 2-3 sentence summary paragraph above their content. Living Tree already had one. |
+| 14 | Playlist link | FIXED | `client/src/pages/HymnBook.tsx` now renders a "Hymns of the ReGeneration" play list at the top, above Add Your Voice. Tapping a song plays it inline; song title links to the dedicated `/hymn-book/:slug` player. |
+| 15 + 26 | Submit-song callouts | FIXED | `client/src/pages/HymnBook.tsx` (anonymity + treasury callout block above the form). |
+| 16 | TLDR contrast | FIXED | `client/src/components/TLDR.tsx` swapped translucent green tint for solid `#0d2818/95` + green border so the card reads on any backdrop. |
+| 17 | View Investment Thesis 404 | FIXED | `client/src/pages/Fund.tsx` two CTAs now link to `/opportunity` (the actual thesis content) instead of `/investor` (the form). |
+| 18 | Video viewport-trigger | FIXED | New `client/src/components/ViewportTriggeredVideo.tsx` (IntersectionObserver-based). Replaced the four `<video autoPlay>` instances on Land.tsx (Pasture transformation), Game.tsx (two Epic-quest videos), and Fund.tsx (Fund Dispersal Animation). |
+| 19 | Investor form 404 first load | FIXED | `client/src/App.tsx` new `lazyWithRetry` helper retries dynamic imports once on transient chunk-load failures. Applied to InvestorJourneyForm + Opportunity. |
+| 20 | Quest intro Skip / 01-04 overlap | FIXED | `client/src/components/QuestGameIntro.tsx` Skip moved from `top-6 right-6` to `bottom-4 right-4` so it never collides with the centered "01 / 04" indicator. |
+| 23 | Floating sections rounded edges | FIXED | `client/src/components/RelatedContent.tsx` "Continue Exploring" inner card now has `rounded-3xl` + border + shadow instead of a flat full-bleed band. |
+| 24 | You Bring / We Bring contrast | FIXED | `client/src/pages/HealTheLand.tsx` and `client/src/pages/Land.tsx` cards switched to `bg-[#0d2818]/72-75` solid forest backing with `text-white/85` so the lists are readable over the forest-with-light-rays photo. |
+| 25 | ReGen Transition Team playback stop | FIXED | `client/src/contexts/AudioContext.tsx` audio element now listens for `error` and auto-skips to the next track. Counter prevents infinite skip loop if every track is bad. |
+| 27 | Music expand on song tap | DEFERRED | Spec recommends keeping navigation as primary path; the new top-of-`/hymn-book` playlist (Fix 14) addresses the underlying need. |
+| 10 | Welcome map rough top edge | DEFERRED | Image edit task; needs the source image + PIL run on Rye's Windows. |
+| 11 | Logged-out landing 4-paths restructure | DEFERRED | Multi-component design work; not blocking. |
+| 13 | Invite/referral UI | DEFERRED | Profile UI + counter + trust-graph batch; specced for a future batch. |
+| 21 | Mobile top-right buttons | DEFERRED | New design surface; punted for a future batch. |
+| 22 | Air section background image | DEFERRED | Image generation via `nano-banana-pro`; queue for the next image batch. |
 
 ### Note on protocols
 

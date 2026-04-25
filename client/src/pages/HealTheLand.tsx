@@ -192,8 +192,8 @@ export default function HealTheLand() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-12">
               <AnimatedSection animation="slide-up" delay={0}>
                 <div
-                  className="rounded-2xl border border-white/10 p-6 md:p-8"
-                  style={{ background: "rgba(255,255,255,0.05)" }}
+                  className="rounded-2xl border border-white/15 p-6 md:p-8 backdrop-blur-sm shadow-lg shadow-black/20"
+                  style={{ background: "rgba(13,40,24,0.72)" }}
                 >
                   <h3
                     className="text-xl font-bold mb-5"
@@ -224,8 +224,8 @@ export default function HealTheLand() {
               </AnimatedSection>
               <AnimatedSection animation="slide-up" delay={100}>
                 <div
-                  className="rounded-2xl border border-white/10 p-6 md:p-8"
-                  style={{ background: "rgba(255,255,255,0.05)" }}
+                  className="rounded-2xl border border-white/15 p-6 md:p-8 backdrop-blur-sm shadow-lg shadow-black/20"
+                  style={{ background: "rgba(13,40,24,0.72)" }}
                 >
                   <h3
                     className="text-xl font-bold mb-5"
