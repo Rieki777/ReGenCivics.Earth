@@ -126,7 +126,8 @@ export const seedsClaimsRouter = router({
       // disputing, the claim is auto-approved and the matching $ReGen
       // lands on their private ledger immediately. Disputed or partial
       // claims stay pending for admin review.
-      const maxClaimable = input.originalUsdTotal - input.spentUsdAmount;
+      // (`maxClaimable` was already computed above for the validation
+      // step at line 107; reuse it instead of redeclaring.)
       const acceptsShownAmount = !input.isDispute && input.claimedUsdAmount === maxClaimable;
       const autoStatus: "approved" | "pending" = acceptsShownAmount ? "approved" : "pending";
 
