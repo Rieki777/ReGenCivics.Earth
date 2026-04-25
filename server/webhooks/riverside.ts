@@ -20,6 +20,7 @@ import { recordings, newsletterSubscribers } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { notifyRecordingReady } from "../_core/notify";
+import { timingSafeEqualStr } from "../_core/security";
 import * as db from "../db";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -197,7 +198,8 @@ export function registerRiversideWebhookRoutes(app: Express) {
         console.error("[riverside-webhook] ADMIN_WEBHOOK_SECRET not set");
         return res.status(500).json({ error: "Server misconfigured" });
       }
-      if (req.headers["x-admin-secret"] !== adminSecret) {
+      const headerSecret = typeof req.headers["x-admin-secret"] === "string" ? req.headers["x-admin-secret"] : "";
+      if (!timingSafeEqualStr(headerSecret, adminSecret)) {
         return res.status(403).json({ error: "Forbidden" });
       }
       const database = await getDb();

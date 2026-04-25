@@ -33,7 +33,10 @@
       "Bash(ls:*)",
       "Bash(npx tsx:*)",
       "Bash(rm -f ../../../.git/index.lock ../../../.git/HEAD.lock)",
-      "Bash(git -C ../../../ status)"
+      "Bash(git -C ../../../ status)",
+      "Bash(rm -f ../../../.git/refs/heads/main.lock ../../../.git/*.lock)",
+      "Bash(git -C ../../../ log main -5 --oneline)",
+      "Bash(git -C ../../../ log origin/main -3 --oneline)"
     ]
   }
 }

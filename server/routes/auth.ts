@@ -32,11 +32,20 @@ setInterval(() => {
 }, 30 * 60 * 1000);
 
 export const authRouter = router({
+  // `me` is intentionally publicProcedure: every page (signed-out or
+  // otherwise) calls this on mount to determine auth state. Flipping it
+  // to protectedProcedure would throw UNAUTHORIZED for unauthed visitors,
+  // which the global queryClient onError handler in client/src/main.tsx
+  // converts into a hard redirect to OAuth. That would auto-bounce every
+  // signed-out home-page visit — breaking the entire public site.
+  // Returning ctx.user (which is null when unauthed) is the correct shape.
   me: publicProcedure.query(opts => {
     if (opts.ctx.user) pingLastActive(opts.ctx.user.id);
     return opts.ctx.user;
   }),
-  logout: publicProcedure.mutation(({ ctx }) => {
+  // `logout` requires auth: signing out a session requires having a session.
+  // Idempotent in practice — repeated calls with no cookie just return early.
+  logout: protectedProcedure.mutation(({ ctx }) => {
     const cookieOptions = getSessionCookieOptions(ctx.req);
     ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
     return {

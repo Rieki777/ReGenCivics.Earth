@@ -18,6 +18,7 @@ import { updateEmailStatus } from "../emailTracking";
 import { getDb } from "../db";
 import { emailLogs } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { isWebhookFailureBlocked, recordWebhookFailure } from "../_core/security";
 
 // Resend webhook signing secret (set in Resend dashboard)
 const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
@@ -154,13 +155,22 @@ async function processWebhookEvent(event: ResendWebhookEvent): Promise<void> {
 export function registerResendWebhookRoutes(app: Express): void {
   app.post("/api/webhooks/resend", async (req: Request, res: Response) => {
     try {
+      const sourceIp = req.ip || req.socket.remoteAddress || "unknown";
+      // Block IPs that have already burned through their signature-failure
+      // budget for this minute. Stops attackers from spamming forged
+      // signatures to probe the secret or fill our log volume.
+      if (isWebhookFailureBlocked(sourceIp, "resend")) {
+        return res.status(429).json({ error: "Too many invalid signatures" });
+      }
+
       const signature = req.headers["svix-signature"] as string | undefined;
       const timestamp = req.headers["svix-timestamp"] as string | undefined;
       const payload = JSON.stringify(req.body);
-      
+
       // Verify signature
       if (!verifyWebhookSignature(payload, signature, timestamp)) {
-        console.error("[Resend Webhook] Invalid signature");
+        recordWebhookFailure(sourceIp, "resend");
+        console.error("[Resend Webhook] Invalid signature", { ip: sourceIp });
         return res.status(401).json({ error: "Invalid signature" });
       }
       

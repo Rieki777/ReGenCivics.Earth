@@ -52,7 +52,7 @@ import * as db from "../db";
 import { createRequire } from "module";
 const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
-import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
+import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken, timingSafeEqualStr } from "./security";
 import { isCacheAvailable } from "../cache";
 import path from "path";
 
@@ -516,8 +516,8 @@ async function startServer() {
     if (!secret) {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
-    const auth = req.headers.authorization;
-    if (!auth || auth !== `Bearer ${secret}`) {
+    const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
+    if (!timingSafeEqualStr(auth, `Bearer ${secret}`)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     try {
@@ -625,8 +625,8 @@ async function startServer() {
     if (!secret) {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
-    const auth = req.headers.authorization;
-    if (!auth || auth !== `Bearer ${secret}`) {
+    const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
+    if (!timingSafeEqualStr(auth, `Bearer ${secret}`)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     try {

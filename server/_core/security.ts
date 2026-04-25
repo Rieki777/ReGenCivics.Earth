@@ -70,7 +70,12 @@ export function cspMiddleware(_req: Request, res: Response, next: NextFunction) 
     "img-src 'self' data: blob: https://assets.regencivics.earth https://regencivics.earth https://*.googleapis.com https://*.gstatic.com https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://*.googleusercontent.com https://storage.googleapis.com https://lh3.googleusercontent.com https://www.google.com https://www.gstatic.com https://maps.gstatic.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "media-src 'self' https: blob:",
-    "connect-src 'self' https: wss:",
+    // Whitelisted outbound origins for fetch/XHR/EventSource. Was `https:`
+    // (any HTTPS host); narrowed to the actual destinations the client hits.
+    // Order: self + same-domain CDN, geolocation lookup, Sentry telemetry,
+    // Google Translate runtime, YouTube metadata, Plausible. Add new
+    // origins here when we add a third-party SDK with client-side fetch.
+    "connect-src 'self' https://*.regencivics.earth https://ipapi.co https://*.ingest.sentry.io https://*.sentry.io https://translate.googleapis.com https://translate-pa.googleapis.com https://www.googleapis.com https://www.google-analytics.com https://*.youtube.com https://*.ytimg.com wss:",
     "frame-src 'self' https://verify.walletconnect.com https://accounts.google.com https://calendly.com https://www.youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://www.vimeo.com https://fast.wistia.net https://www.loom.com https://www.dailymotion.com",
     "object-src 'none'",
     "base-uri 'self'",
@@ -175,6 +180,59 @@ setInterval(() => {
     if (val.createdAt < cutoff) csrfTokens.delete(key);
   }
 }, 30 * 60 * 1000);
+
+/**
+ * Per-IP rate limiter for webhook signature failures. An attacker can spam
+ * unsigned/forged-signature requests to probe a webhook endpoint; this caps
+ * each source IP to N failures per minute before returning 429. Use it
+ * alongside (not instead of) the actual signature check — call
+ * `recordWebhookFailure(ip, scope)` only AFTER a real signature mismatch.
+ */
+const webhookFailureBuckets = new Map<string, { count: number; resetAt: number }>();
+const WEBHOOK_FAIL_LIMIT = 5;
+const WEBHOOK_FAIL_WINDOW_MS = 60 * 1000;
+
+export function isWebhookFailureBlocked(ip: string, scope: string): boolean {
+  const key = `${scope}:${ip}`;
+  const now = Date.now();
+  const entry = webhookFailureBuckets.get(key);
+  if (!entry || entry.resetAt < now) return false;
+  return entry.count >= WEBHOOK_FAIL_LIMIT;
+}
+
+export function recordWebhookFailure(ip: string, scope: string): void {
+  const key = `${scope}:${ip}`;
+  const now = Date.now();
+  const entry = webhookFailureBuckets.get(key);
+  if (!entry || entry.resetAt < now) {
+    webhookFailureBuckets.set(key, { count: 1, resetAt: now + WEBHOOK_FAIL_WINDOW_MS });
+    return;
+  }
+  entry.count += 1;
+}
+
+// Periodic cleanup so the map doesn't grow unbounded under attack.
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of webhookFailureBuckets) {
+    if (entry.resetAt < now) webhookFailureBuckets.delete(key);
+  }
+}, WEBHOOK_FAIL_WINDOW_MS);
+
+/**
+ * Constant-time string comparison for shared secrets carried in headers.
+ * Returns false fast on length mismatch (length is not the secret) and uses
+ * crypto.timingSafeEqual for the byte compare otherwise. Use this instead
+ * of `===` when checking Bearer tokens, x-admin-secret headers, webhook
+ * signature digests, or anything else an attacker could probe with timing.
+ */
+export function timingSafeEqualStr(a: string | undefined | null, b: string): boolean {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return crypto.timingSafeEqual(aBuf, bBuf);
+}
 
 export function generateCSRFToken(sessionId: string): string {
   const token = crypto.randomBytes(32).toString('hex');

@@ -20,6 +20,7 @@ import { hyphaBridges, users } from "../../../drizzle/schema";
 import { stripTitleMarker } from "./prefill";
 import { checkCitizenshipTiers } from "../../routes/batchJobs";
 import type { QuestBridgeMetadata } from "./types";
+import { isWebhookFailureBlocked, recordWebhookFailure } from "../../_core/security";
 
 const ALCHEMY_SIGNING_KEY = process.env.ALCHEMY_HYPHA_WEBHOOK_SIGNING_KEY ?? "";
 const BASESCAN_TX_BASE = "https://basescan.org/tx/";
@@ -369,10 +370,15 @@ async function cascadeClaimFailed(bridgeRow: any): Promise<void> {
 
 export function registerHyphaWebhookRoutes(app: Express) {
   app.post("/api/webhooks/hypha-alchemy", async (req: Request, res: Response) => {
+    const sourceIp = req.ip || req.socket.remoteAddress || "unknown";
+    if (isWebhookFailureBlocked(sourceIp, "hypha-alchemy")) {
+      return res.status(429).json({ error: "Too many invalid signatures" });
+    }
     const sig = req.header("x-alchemy-signature") ?? req.header("X-Alchemy-Signature");
     const rawBody = JSON.stringify(req.body ?? {});
     if (!verifyAlchemySignature(rawBody, sig)) {
-      console.warn("[hypha-alchemy] signature verification failed");
+      recordWebhookFailure(sourceIp, "hypha-alchemy");
+      console.warn("[hypha-alchemy] signature verification failed", { ip: sourceIp });
       return res.status(401).json({ error: "invalid signature" });
     }
 

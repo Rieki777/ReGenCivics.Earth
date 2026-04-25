@@ -191,4 +191,11 @@ if ('serviceWorker' in navigator) {
   // Unregister service workers AND clear all caches to break out of stale SW loop
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.getRegistrations().then((regs) =>
-      Promise.all(regs.map((r) => r.unregister())
+      Promise.all(regs.map((r) => r.unregister()))
+    );
+  }
+  if ("caches" in window) {
+    caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n))));
+  }
+  setTimeout(() => window.location.reload(), 2000);
+}
