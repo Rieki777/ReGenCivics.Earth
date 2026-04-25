@@ -47,18 +47,11 @@ Mixed — some code, some not. This is part software project, part community org
 
 ## Planning Documents (read before implementing)
 
-The repo root holds the currently-active execution prompts and fixes docs. Anything dated more than a week ago has been moved to `archive/`. Don't reference archived docs for new work.
+`SHIPPED_LOG.md` in the repo root is the rolling reference index of past sprints, fixes batches, and execution prompts. Each entry summarizes what shipped and points at the archived source doc. Read it first when picking up new work to see what just landed.
 
-### Active execution prompts and fixes docs
+When a new sprint or fixes batch starts, its `CLAUDE_CODE_PROMPT_*.md` or `FIXES_TO_MAKE_*.md` file lives in the repo root. When the work is done, the file moves to `archive/` and a one-paragraph entry goes at the top of `SHIPPED_LOG.md`.
 
-To see what's currently active, list `CLAUDE_CODE_PROMPT_*.md` and `FIXES_TO_MAKE_*.md` in the repo root. Read the file itself for details rather than relying on a description here (descriptions go stale; the file is the source of truth).
-
-When picking up work mid-sprint:
-
-1. Most recent fixes doc is the most likely "what's open." `ls -t FIXES_TO_MAKE_*.md` shows newest first.
-2. `COMMUNITY_AGREEMENTS_PLAN.md` is the standing primary active build prompt at the time of writing (2026-04 sprint).
-3. Any `CLAUDE_CODE_PROMPT_*.md` in repo root is queued; the date in its name says how stale it is.
-4. Cleanup convention: anything older than one week migrates to `archive/` automatically. Run that pass during the next session if it hasn't happened.
+The auto-archive convention from `~/.claude/memories/rye-working-style.md`: any dated CLAUDE_CODE_PROMPT or FIXES_TO_MAKE doc older than one week migrates to `archive/` automatically. Spec / reference docs (style guides, design tokens, component specs) stay in root regardless of age.
 
 ### Standing specs (always-on references)
 
