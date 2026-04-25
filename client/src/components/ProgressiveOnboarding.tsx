@@ -23,6 +23,8 @@ const pathCards = [
     title: "Investors",
     tagline: "Fund the Renaissance",
     shortDesc: "Land-backed investments in systemic regeneration",
+    details:
+      "ReGen Civics is a venture fund that backs regenerative land projects and the alliance organizations that support them. Capital flows in seasonal cohorts aligned with equinoxes and solstices. Returns come from land value appreciation, revenue sharing, and token economics. Open to accredited investors with a $250,000 minimum.",
     href: "/fund",
     icon: Coins,
     borderColor: "border-amber-400/40",
@@ -37,6 +39,8 @@ const pathCards = [
     title: "Land Projects",
     tagline: "Evolve Your Project",
     shortDesc: "Access expertise, resources, and a global network",
+    details:
+      "If you steward land or run a regenerative project, ReGen Civics is your accelerator. Each season we take in a small cohort of land projects and provide capital, mentorship, on-the-ground community labor, and a global network of alliance partners. Apply to join the next season.",
     href: "/land",
     icon: Sprout,
     borderColor: "border-[#7dd87d]/40",
@@ -51,6 +55,8 @@ const pathCards = [
     title: "Alliance Partners",
     tagline: "Join the Alliance",
     shortDesc: "Support regenerative projects with your org.",
+    details:
+      "Service organizations, technology partners, and consultancies bring expertise to land projects in the cohort. Alliance Partners contribute equity, services, or technology in exchange for $RCivics tokens through our Value Exchange Model. If your work supports the regenerative movement, this is your seat at the table.",
     href: "/ally",
     icon: Handshake,
     borderColor: "border-blue-400/40",
@@ -65,6 +71,8 @@ const pathCards = [
     title: "ReGen Players",
     tagline: "Play the Game",
     shortDesc: "Earn tokens, complete quests, join the movement",
+    details:
+      "Anyone can play. The Infinite Game is a quest system that rewards real-world acts of regeneration: healing yourself, growing food, building community. Earn $ReGen tokens for completing quests, gain RGVoice to vote on how the game evolves, and connect with land projects and alliance partners doing the work in your bioregion.",
     href: "/play",
     icon: Globe,
     borderColor: "border-purple-400/40",
@@ -208,6 +216,11 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
   const { data: myApplications } = trpc.applications.myApplications.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
   const { data: myCompletions } = trpc.quest.myCompletions.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
 
+  // Track which card has its "more" panel expanded. Only one expanded at a
+  // time; tapping a second card collapses the first. Expanding also flips
+  // the card's image to its activated variant via PathCardImage.forceActivated.
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
   const userPaths = {
     fund: profile?.path === 'investor' || !!investorInquiry,
     land: profile?.path === 'land_project'
@@ -240,19 +253,24 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 max-w-4xl w-full mb-8">
         {pathCards.map((card, index) => {
           const Icon = card.icon;
+          const isExpanded = expandedCard === card.id;
           return (
             <AnimatedSection key={card.id} animation="slide-up" delay={index * 80}>
-              <Link href={card.href}>
-                <div
-                  className={`relative glass-panel p-4 md:p-5 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} cursor-pointer ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'}`}
+              <div
+                className={`relative glass-panel p-4 md:p-5 h-full transition-all duration-300 ${card.borderColor} ${card.glowColor} ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'}`}
+              >
+                {/* YOUR PATH badge */}
+                {userPaths[card.id as keyof typeof userPaths] && (
+                  <span className="absolute top-2 right-2 bg-[#7dd87d] text-[#0d2818] text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide z-10">
+                    Your Path
+                  </span>
+                )}
+
+                {/* Tap target: image + headline + tagline navigate to the path. */}
+                <Link
+                  href={card.href}
+                  className="block group hover:scale-[1.02] transition-transform duration-300"
                 >
-                  {/* YOUR PATH badge */}
-                  {userPaths[card.id as keyof typeof userPaths] && (
-                    <span className="absolute top-2 right-2 bg-[#7dd87d] text-[#0d2818] text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide z-10">
-                      Your Path
-                    </span>
-                  )}
-                  {/* Card image */}
                   <div className="mb-4">
                     <PathCardImage
                       cardId={card.id as "fund" | "land" | "ally" | "play"}
@@ -260,9 +278,10 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
                       activatedImage={card.activatedImage}
                       title={card.title}
                       accentColor={card.accentColor}
+                      forceActivated={isExpanded}
                     />
                   </div>
-                  
+
                   <h3
                     className="text-base md:text-lg font-bold text-white mb-1"
                     style={{ fontFamily: 'var(--font-display)', textShadow: '0 2px 8px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,0.9)' }}
@@ -279,8 +298,36 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
                     <span style={{ color: card.accentColor }}>Go</span>
                     <ArrowRight className="w-3 h-3 md:w-4 md:h-4 ml-1" style={{ color: card.accentColor }} />
                   </div>
-                </div>
-              </Link>
+                </Link>
+
+                {/* "More" expander reveals long-form description without
+                    leaving the page. Toggling also flips the image to its
+                    activated state via forceActivated above. */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedCard(isExpanded ? null : card.id);
+                  }}
+                  aria-expanded={isExpanded}
+                  className="mt-3 inline-flex items-center gap-1 text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/65 hover:text-white transition-colors"
+                  style={{ textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}
+                >
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                    style={{ color: card.accentColor }}
+                  />
+                  {isExpanded ? "Less" : "More"}
+                </button>
+
+                {isExpanded && (
+                  <div className="mt-3 pt-3 border-t border-white/15">
+                    <p className="text-white/85 text-xs md:text-sm leading-relaxed" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+                      {card.details}
+                    </p>
+                  </div>
+                )}
+              </div>
             </AnimatedSection>
           );
         })}

@@ -371,11 +371,11 @@ In MobileMoreMenu, clicking the currently-playing song row should expand a playl
 | 24 | You Bring / We Bring contrast | FIXED | `client/src/pages/HealTheLand.tsx` and `client/src/pages/Land.tsx` cards switched to `bg-[#0d2818]/72-75` solid forest backing with `text-white/85` so the lists are readable over the forest-with-light-rays photo. |
 | 25 | ReGen Transition Team playback stop | FIXED | `client/src/contexts/AudioContext.tsx` audio element now listens for `error` and auto-skips to the next track. Counter prevents infinite skip loop if every track is bad. |
 | 27 | Music expand on song tap | DEFERRED | Spec recommends keeping navigation as primary path; the new top-of-`/hymn-book` playlist (Fix 14) addresses the underlying need. |
-| 10 | Welcome map rough top edge | DEFERRED | Image edit task; needs the source image + PIL run on Rye's Windows. |
-| 11 | Logged-out landing 4-paths restructure | DEFERRED | Multi-component design work; not blocking. |
-| 13 | Invite/referral UI | DEFERRED | Profile UI + counter + trust-graph batch; specced for a future batch. |
-| 21 | Mobile top-right buttons | DEFERRED | New design surface; punted for a future batch. |
-| 22 | Air section background image | DEFERRED | Image generation via `nano-banana-pro`; queue for the next image batch. |
+| 10 | Welcome map rough top edge | FIXED | `client/public/images/village-map-scroll.webp` re-saved with a torn-paper top edge (PIL: deckled curve + small fibrous bites + Gaussian blur). `Home.tsx` cache-buster bumped `?v=4` to `?v=5`. |
+| 11 | Logged-out landing 4-paths restructure | FIXED | `client/pages/Home.tsx` shows `ProgressiveOnboarding` for every signed-out visitor (was return-only). Each path card in `ProgressiveOnboarding.tsx` got a long-form `details` block, a `More`/`Less` expander, and a `forceActivated` prop on `PathCardImage` that flips to the activated illustration while the description is open. |
+| 13 | Invite/referral UI | FIXED | `PlayerProfile.tsx` referral card now renders the user's personal `?ref=` link with copy + Web Share buttons; stats always render (zeros included). `useReferralCapture` already wires up the landing-side recordReferral. |
+| 21 | Mobile top-right buttons | FIXED | `Navigation.tsx` mobile header gains a `MessageCircle` link to `/messages` with an unread-count badge plus the existing `NotificationBell`. Both auth-gated. |
+| 22 | Air section background image | FIXED | Generated `air-governance-circle.webp` (596 KB, 2752×1536) via `nano-banana-pro`. Wired into `Community.tsx:519` replacing `/blog-hero-bridging-worlds.webp`. |
 
 ### Note on protocols
 

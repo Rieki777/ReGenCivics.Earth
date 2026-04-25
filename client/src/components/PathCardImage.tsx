@@ -13,6 +13,9 @@ import { cdnImg } from "@/lib/utils";
 type CardType = "fund" | "land" | "ally" | "play";
 
 interface PathCardImageProps {
+  /** When true, forces the activated image visible regardless of tap state.
+   *  Used by ProgressiveOnboarding to flip the image when "More" expands. */
+  forceActivated?: boolean;
   cardId: CardType;
   image: string;
   activatedImage: string;
@@ -36,7 +39,7 @@ function buildSrcSet(proxyUrl: string, widths: number[], quality = 75): string {
   return widths.map(w => `${cdnImg(originalUrl, w, quality)} ${w}w`).join(', ');
 }
 
-export function PathCardImage({ cardId, image, activatedImage, title, accentColor }: PathCardImageProps) {
+export function PathCardImage({ cardId, image, activatedImage, title, accentColor, forceActivated = false }: PathCardImageProps) {
   const [tapped, setTapped] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [activatedError, setActivatedError] = useState(false);
@@ -78,7 +81,7 @@ export function PathCardImage({ cardId, image, activatedImage, title, accentColo
 
   return (
     <div
-      className={`path-card-image path-card-${cardId} ${tapped ? "is-tapped" : ""}`}
+      className={`path-card-image path-card-${cardId} ${(tapped || forceActivated) ? "is-tapped" : ""}`}
       onTouchEnd={handleTouchEnd}
     >
       {/* Default illustration (visible by default, fades out on hover) */}

@@ -28,6 +28,7 @@ import {
   HelpCircle,
   Info,
   Share2,
+  ClipboardCopy,
   X,
   LayoutGrid,
   BookOpen,
@@ -1706,23 +1707,110 @@ function EventAttendanceBalance() {
   );
 }
 
+/**
+ * Encode a numeric userId as the short base64-without-padding string the
+ * /recordReferral endpoint expects. Mirrors the `parseInt(atob(input.ref +
+ * "=="), 10)` decode in server/routes/sharing.ts.
+ */
+function encodeReferralRef(userId: number): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.btoa(String(userId)).replace(/=+$/, "");
+  } catch {
+    return "";
+  }
+}
+
 function ReferralStatsCard() {
+  const { user } = useAuth();
   const { data: stats } = trpc.sharing.myStats.useQuery(undefined, { staleTime: 5 * 60_000 });
-  if (!stats || (stats.totalReferrals === 0 && stats.totalShares === 0)) return null;
+  const trackShare = trpc.sharing.trackShare.useMutation();
+  const [copied, setCopied] = useState(false);
+
+  const ref = user?.id ? encodeReferralRef(user.id) : "";
+  const shareUrl = ref ? `https://regencivics.earth/?ref=${ref}` : "";
+
+  const handleCopy = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+      trackShare.mutate({ contentType: "referral_link", platform: "clipboard" });
+    } catch {
+      // Clipboard not available; fall back to a manual copy hint.
+      window.prompt("Copy this link:", shareUrl);
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (!shareUrl || typeof navigator === "undefined" || !navigator.share) {
+      handleCopy();
+      return;
+    }
+    try {
+      await navigator.share({
+        title: "ReGen Civics",
+        text: "Join me building the regenerative game.",
+        url: shareUrl,
+      });
+      trackShare.mutate({ contentType: "referral_link", platform: "native_share" });
+    } catch {
+      // User cancelled or share unavailable — silent.
+    }
+  };
+
   return (
-    <div className="bg-purple-500/5 border border-purple-500/15 rounded-xl p-4">
-      <p className="text-white/50 text-xs mb-2 font-semibold uppercase tracking-wider">Your Mycelium</p>
+    <div className="bg-purple-500/5 border border-purple-500/20 rounded-xl p-4 space-y-4">
+      <div>
+        <p className="text-white/50 text-xs mb-2 font-semibold uppercase tracking-wider">Your Mycelium</p>
+        <p className="text-white/65 text-xs leading-relaxed mb-3">
+          Invite people into the game. Each accepted invite weaves a thread of trust between you, and you earn
+          $ReGen when those you invited reach milestones.
+        </p>
+      </div>
+
+      {/* Share link + copy/share buttons */}
+      {shareUrl ? (
+        <div className="bg-black/30 border border-white/10 rounded-lg p-2 flex items-center gap-2">
+          <span className="flex-1 min-w-0 text-white/80 text-xs font-mono truncate" title={shareUrl}>
+            {shareUrl}
+          </span>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] text-xs font-bold transition-colors"
+            aria-label="Copy referral link"
+          >
+            {copied ? <CheckCircle2 className="w-3 h-3" /> : <ClipboardCopy className="w-3 h-3" />}
+            {copied ? "Copied" : "Copy"}
+          </button>
+          <button
+            type="button"
+            onClick={handleNativeShare}
+            className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors"
+            aria-label="Share referral link"
+          >
+            <Share2 className="w-3 h-3" />
+            Share
+          </button>
+        </div>
+      ) : (
+        <p className="text-white/55 text-xs italic">Sign in to get a personal invite link.</p>
+      )}
+
+      {/* Stats — always shown, even at 0, so the player knows what's tracked */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div>
-          <p className="text-lg font-bold text-purple-300">{stats.totalReferrals}</p>
+          <p className="text-lg font-bold text-purple-300">{stats?.totalReferrals ?? 0}</p>
           <p className="text-white/60 text-[10px]">People invited</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-[#7dd87d]">{stats.regenEarned}</p>
+          <p className="text-lg font-bold text-[#7dd87d]">{stats?.regenEarned ?? 0}</p>
           <p className="text-white/60 text-[10px]">$ReGen earned</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-white/60">{stats.totalShares}</p>
+          <p className="text-lg font-bold text-white/60">{stats?.totalShares ?? 0}</p>
           <p className="text-white/60 text-[10px]">Links shared</p>
         </div>
       </div>

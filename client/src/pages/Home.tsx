@@ -215,8 +215,12 @@ export default function Home() {
       {/* Editable Banner */}
       <BannerDisplay bannerKey="main-banner" />
       
-      {/* Progressive Onboarding: Return visitors see quick path selector */}
-      {isReturnVisitor && !showFullPage ? (
+      {/* Progressive Onboarding: 4-paths card selector. Shows to every
+          logged-out visitor (so first-time + returning both see the same
+          card-driven entry point) and to returning logged-in visitors who
+          haven't dismissed the onboarding. The full landing page is one
+          tap away via "View Full Landing Page" inside ProgressiveOnboarding. */}
+      {(isReturnVisitor || !user) && !showFullPage ? (
         <ImagePreloader>
           <div className="relative">
             <ProgressiveOnboarding onShowFullPage={() => setShowFullPage(true)} />
@@ -323,7 +327,7 @@ export default function Home() {
                   className="relative w-full max-w-5xl"
                   style={{
                     aspectRatio: "2816 / 1352",
-                    backgroundImage: "url('/images/village-map-scroll.webp?v=4')",
+                    backgroundImage: "url('/images/village-map-scroll.webp?v=5')",
                     backgroundSize: "100% 100%",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
