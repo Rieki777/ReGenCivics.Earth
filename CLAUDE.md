@@ -47,21 +47,18 @@ Mixed — some code, some not. This is part software project, part community org
 
 ## Planning Documents (read before implementing)
 
-**START HERE: `REMAINING_WORK_2026-04-08.md`** — consolidated list of everything outstanding, priority-tagged. Updated during the 2026-04-08 cleanup pass that archived 4 more completed docs (21 total now in archive/).
+The repo root holds the currently-active execution prompts and fixes docs. Anything dated more than a week ago has been moved to `archive/`. Don't reference archived docs for new work.
 
-### Active execution prompts (11)
+### Active execution prompts and fixes docs
 
-- `COMMUNITY_AGREEMENTS_PLAN.md` — **primary active build prompt.** All 7 parts of the current sprint: Community Agreements feature, forum UI fixes, category image support, land/alliance routing fixes, calendar button standardization, and Zoom-to-Riverside migration.
-- `CLAUDE_CODE_PROMPT_2026-04-01_UNIFIED_BUILD.md` — **master build plan.** 7-track consolidated build covering database foundation, seeds, backend routers, citizenship tiers, frontend pages, visualizations, and social sharing. Resolves cross-spec conflicts.
-- `CLAUDE_CODE_PROMPT_2026-04-07_POST_CTO.md` — CTO hardening (mostly done) + Round 2 Safari walkthrough. Remaining: recording flow Zapier mapping, notifyRecordings toggle, R2-21 heal-the-land seeds (Rye).
-- `CLAUDE_CODE_PROMPT_2026-04-07_POST_AUDIT_CLEANUP.md` — CSP nonce migration (C1, HIGH but RISKY) and out-of-scope hardening items. Read `CSP_NONCE_MIGRATION_PLAN_2026-04-07.md` alongside this.
-- `CLAUDE_CODE_PROMPT_2026-04-07_INK_REVEAL.md` — H3: wire `.ink-reveal` and `.blur-up` classes to actual DOM elements. Deferred so a human can review each placement in `npm run dev`.
-- `CLAUDE_CODE_PROMPT_2026-04-07_CITIZENSHIP_BATCH.md` — verify `checkCitizenshipTiers` nightly batch: does it run, does it demote, does grace-period notification fire?
-- `CLAUDE_CODE_PROMPT_2026-04-07_OG_IMAGES.md` — Track 7 social sharing: confirm the 11 static OG images exist and sharePrompt UI fires on the right pages.
-- `CLAUDE_CODE_PROMPT_2026-04-01_FIXES_AND_TIERS.md` — citizenship tier foundation. Admin UI and profile badge shipped. Remaining: nightly batch verification (see CITIZENSHIP_BATCH doc).
-- `CLAUDE_CODE_PROMPT_2026-03-28_QUEST_LOCK.md` — quest locking UI. Core components shipped; PASS/FAIL audit doc against `QUEST_PROGRESSION_SPEC.md` still pending.
-- `CLAUDE_CODE_PROMPT_2026-03-28_PART5.md` — recording flow: Zapier flat-key mapping verification, `notifyRecordings` opt-in toggle.
-- `CLAUDE_CODE_PROMPT_2026-03-31_GAME_SYSTEM.md` — **reference spec.** Full 5-phase game system build prompt. Overlaps with UNIFIED_BUILD; use as reference, build incrementally.
+To see what's currently active, list `CLAUDE_CODE_PROMPT_*.md` and `FIXES_TO_MAKE_*.md` in the repo root. Read the file itself for details rather than relying on a description here (descriptions go stale; the file is the source of truth).
+
+When picking up work mid-sprint:
+
+1. Most recent fixes doc is the most likely "what's open." `ls -t FIXES_TO_MAKE_*.md` shows newest first.
+2. `COMMUNITY_AGREEMENTS_PLAN.md` is the standing primary active build prompt at the time of writing (2026-04 sprint).
+3. Any `CLAUDE_CODE_PROMPT_*.md` in repo root is queued; the date in its name says how stale it is.
+4. Cleanup convention: anything older than one week migrates to `archive/` automatically. Run that pass during the next session if it hasn't happened.
 
 ### Standing specs (always-on references)
 
@@ -79,9 +76,6 @@ Mixed — some code, some not. This is part software project, part community org
 - `SEEDS_WHITE_DECK_SYNTHESIS.md` — SEEDS White Deck synthesis.
 - `QUALITY_SPRINT_9_10.md` — quality sprint backlog.
 - `PLAYER_EXPERIENCE_SPEC.md` — superseded by REGEN_GAMES_SPEC_V1, kept for reference.
-
-17 fully-shipped or superseded planning docs were moved to `archive/` on 2026-04-07. On 2026-04-08: MAP_PERF, CTO_AUDIT_FIXES archived; CHARACTER_ART was archived then restored (contains visual style guide + image gen prompts for all 13 role illustrations). Additional fixes/audit docs archived 2026-04-08: FIXES_TO_MAKE_2026-03-29, AUDIT_QUEST_LOCKING_2026-03-29, FIX_17_QUEST_LOCKING_AUDIT, CTO_PRELAUNCH_REPORT, CTO_VISUAL_AUDIT, SITE_AUDIT, OUT_OF_SCOPE_FINDINGS. Do not reference archived docs for new work.
-
 - `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` — **visual style guide.** Full prompts and style direction for all 13 role character illustrations. Solarpunk/solarpunk-elven-jedi aesthetic, card vs scene format, image gen specs. Reference any time character art or role illustrations are touched.
 
 ## Living Records
