@@ -4,7 +4,7 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql, count } from "drizzle-orm";
+import { eq, sql, count, and } from "drizzle-orm";
 import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions } from "../../drizzle/schema";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 import { invokeLLM } from "../_core/llm";
@@ -538,7 +538,7 @@ export const playerProfilesRouter = router({
       if (!anyAboveThreshold) {
         const lines = requestedTokens.map((t, i) => `${t.tokenType} ${t.balance}/${thresholds[i]}`).join("; ");
         throw new TRPCError({
-          code: "FAILED_PRECONDITION",
+          code: "PRECONDITION_FAILED",
           message: `No requested token meets its threshold (${lines}). Earn more in any of these tokens to unlock the claim.`,
         });
       }
@@ -653,7 +653,7 @@ export const playerProfilesRouter = router({
       }
       const status = (bridge as any).status as string;
       if (status === "passed") {
-        throw new TRPCError({ code: "FAILED_PRECONDITION", message: "Already confirmed on chain. Cannot cancel." });
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Already confirmed on chain. Cannot cancel." });
       }
       if (status === "cancelled" || status === "failed") {
         return { ok: true, alreadyCancelled: true };
