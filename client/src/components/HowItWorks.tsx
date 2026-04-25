@@ -11,9 +11,12 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
+// Each path is one of the interconnected ways people show up to ReGen
+// Civics. They are not sequential steps. The numbers and "5 steps"
+// framing were removed 2026-04-24 because each path builds on and
+// supports the others; there is no "first then second."
 const steps = [
   {
-    number: "01",
     title: "Land Projects Apply",
     summary: "Regenerative land projects join through our seasonal accelerator program.",
     detail: "Projects go through a curated selection process during each Season. We evaluate ecological potential, team strength, community impact, and financial viability. Selected projects receive mentorship, governance tools, and access to the alliance network.",
@@ -23,7 +26,6 @@ const steps = [
     borderColor: "border-emerald-400/30",
   },
   {
-    number: "02",
     title: "Alliance Partners Support",
     summary: "Organizations contribute expertise, technology, and services to strengthen projects.",
     detail: "Alliance partners provide the infrastructure regenerative projects need: legal frameworks, regenerative agriculture consulting, renewable energy systems, construction expertise, and governance tools. Partners exchange services for equity and $RCivics tokens.",
@@ -33,7 +35,6 @@ const steps = [
     borderColor: "border-violet-400/30",
   },
   {
-    number: "03",
     title: "Investors Fund the Portfolio",
     summary: "Accredited investors gain diversified exposure to the regenerative land economy.",
     detail: "The ReGen Civics Fund pools capital across a curated portfolio of land projects and alliance organizations. This diversified approach reduces risk while maximizing systemic impact. Minimum investment is $250,000.",
@@ -43,7 +44,6 @@ const steps = [
     borderColor: "border-amber-400/30",
   },
   {
-    number: "04",
     title: "Players Grow the Game",
     summary: "Anyone can play the Infinite Game, completing quests that heal land and community.",
     detail: "The Infinite Game is open to everyone. Complete quests focused on personal health, community building, and ecological restoration. Earn tokens, build your regenerative portfolio, and contribute to a movement that grows stronger with every player.",
@@ -53,7 +53,6 @@ const steps = [
     borderColor: "border-rose-400/30",
   },
   {
-    number: "05",
     title: "Regenerative Economic Systems",
     summary: "The land projects, organizations, and food producers create the foundations for entirely new economic systems. Welcome to the Infinite Game.",
     detail: "Healthy land appreciates. Thriving communities generate economic activity. Food systems become local. Governance becomes participatory. Alliance services create recurring value. Together these pieces form the foundation of regenerative economies that grow stronger the more people participate.",
@@ -81,7 +80,7 @@ export default function HowItWorks() {
             className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Five interconnected steps growing our ReGenerative Renaissance
+            Each path builds on and supports the others
           </p>
         </AnimatedSection>
 
@@ -107,7 +106,7 @@ export default function HowItWorks() {
                       }`}
                     >
                       <div className="flex items-start gap-4">
-                        {/* Step number + icon */}
+                        {/* Path icon (numbers removed; these are not sequential steps) */}
                         <div className="flex flex-col items-center gap-1 flex-shrink-0">
                           <div
                             className={`w-12 h-12 md:w-14 md:h-14 rounded-full ${step.bgColor} flex items-center justify-center transition-transform ${
@@ -116,9 +115,6 @@ export default function HowItWorks() {
                           >
                             <Icon className={`w-6 h-6 md:w-7 md:h-7 ${step.color}`} />
                           </div>
-                          <span className={`text-xs font-bold ${step.color} opacity-60`}>
-                            {step.number}
-                          </span>
                         </div>
 
                         {/* Content */}

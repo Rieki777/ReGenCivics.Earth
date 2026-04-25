@@ -13,7 +13,7 @@
  * Body scroll is locked while open.
  */
 import { useEffect, useState } from "react";
-import { X, ChevronDown, Search, SkipBack, SkipForward, Play, Pause, Music, ListMusic, Plus } from "lucide-react";
+import { X, ChevronDown, Search, SkipBack, SkipForward, Play, Pause, Music, ListMusic, Plus, Sparkles } from "lucide-react";
 import { MOBILE_MENU_SECTIONS, MOBILE_MENU_FOOTER } from "@/config/mobileMenu";
 import { MenuCard } from "./MenuCard";
 import { NextQuestCard } from "./NextQuestCard";
@@ -21,6 +21,7 @@ import { CopyLinkButton } from "@/components/audio/CopyLinkButton";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
 import { Link } from "wouter";
 import { useAudio } from "@/contexts/AudioContext";
+import { useReGenGuide } from "@/contexts/ReGenGuideContext";
 
 type Props = { open?: boolean; onClose?: () => void };
 
@@ -31,6 +32,7 @@ type Props = { open?: boolean; onClose?: () => void };
 export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props = {}) {
   const tint = useSeasonTint();
   const audio = useAudio();
+  const guide = useReGenGuide();
   const [internalOpen, setInternalOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
@@ -201,6 +203,22 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
             </section>
           );
         })}
+
+        {/* ReGen Guide trigger. Lives outside the section list because it
+            opens a global drawer via context rather than navigating to a
+            route. Adding a route would require mounting / unmounting the
+            guide drawer per page; the context approach keeps it global. */}
+        <button
+          type="button"
+          onClick={() => { guide.open(); onClose(); }}
+          className="w-full flex items-center gap-3 p-3 rounded-2xl border border-[#7dd87d]/30 bg-[#7dd87d]/5 hover:bg-[#7dd87d]/10 text-left transition-colors"
+        >
+          <Sparkles className="w-6 h-6 text-[#7dd87d] flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-sm text-white">ReGen Guide</div>
+            <div className="text-[11px] text-white/55">Ask the assistant anything</div>
+          </div>
+        </button>
 
         {/* Footer strip */}
         <div className="pt-4 border-t border-white/10 flex flex-wrap items-center gap-x-4 gap-y-2">

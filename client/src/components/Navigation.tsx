@@ -1042,6 +1042,19 @@ export default function Navigation() {
                       Community Forum
                     </Link>
                     <Link
+                      href="/governance"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/governance'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Vote className="w-4 h-4 text-[#7dd87d]" />
+                      Governance
+                    </Link>
+                    <Link
                       href="/game-mechanics"
                       className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
                         location === '/game-mechanics'

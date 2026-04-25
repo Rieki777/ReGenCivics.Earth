@@ -30,7 +30,10 @@ const PAGE_META: Record<string, { icon: string; label: string }> = {
   "/loi": { icon: "PenLine", label: "Submit LOI" },
   "/apply": { icon: "Clipboard", label: "Apply" },
   "/ally": { icon: "Handshake", label: "Alliance" },
-  "/connect": { icon: "MessageCircle", label: "Connect" },
+  // Connect uses Sparkles to differentiate from Forum/Community which
+  // also lives in the bar and uses MessageCircle / Users. Was MessageCircle
+  // and read as a duplicate of the Forum tab on mobile.
+  "/connect": { icon: "Sparkles", label: "Connect" },
   "/community": { icon: "Users", label: "Community" },
   "/": { icon: "Compass", label: "Explore" },
   "/profile/edit": { icon: "UserCircle", label: "Profile" },
@@ -80,13 +83,13 @@ const PATH_DEFAULTS: Record<string, NavSlot[]> = {
   ally: [
     { path: "/quest", icon: "Scroll", label: "Quests" },
     { path: "/ally", icon: "Handshake", label: "Alliance" },
-    { path: "/connect", icon: "MessageCircle", label: "Connect" },
+    { path: "/connect", icon: "Sparkles", label: "Connect" },
     { path: "/apply", icon: "Clipboard", label: "Apply" },
   ],
   player: [
     { path: "/quest", icon: "Scroll", label: "Quests" },
     { path: "/play", icon: "Sprout", label: "Play" },
-    { path: "/connect", icon: "MessageCircle", label: "Connect" },
+    { path: "/connect", icon: "Sparkles", label: "Connect" },
     { path: "/community", icon: "Users", label: "Community" },
   ],
   default: [

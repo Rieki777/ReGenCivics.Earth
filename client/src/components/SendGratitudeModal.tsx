@@ -156,7 +156,11 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
             <Button
               type="button"
               onClick={() => {
-                window.location.href = getLoginUrl();
+                // Preserve where the user was so OAuth lands them back
+                // on the same page after sign-in instead of "/".
+                const returnTo = window.location.pathname + window.location.search;
+                sessionStorage.setItem("returnTo", returnTo);
+                window.location.href = getLoginUrl(returnTo);
               }}
               className="bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-semibold"
             >
