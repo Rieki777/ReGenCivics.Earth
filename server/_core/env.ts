@@ -54,5 +54,4 @@ export const ENV = {
   farcasterHandle: process.env.FARCASTER_HANDLE ?? "",
   // Riverside.fm webhook signing secret
   riversideWebhookSecret: process.env.RIVERSIDE_WEBHOOK_SECRET ?? "",
-  authProvider: process.env.VITE_AUTH_PROVIDER ?? "legacy",
 };

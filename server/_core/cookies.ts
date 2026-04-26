@@ -14,13 +14,26 @@ function isSecureRequest(req: Request) {
   if (req.protocol === "https") return true;
 
   const forwardedProto = req.headers["x-forwarded-proto"];
-  if (!forwardedProto) return false;
+  if (forwardedProto) {
+    const protoList = Array.isArray(forwardedProto)
+      ? forwardedProto
+      : forwardedProto.split(",");
+    if (protoList.some(proto => proto.trim().toLowerCase() === "https")) {
+      return true;
+    }
+  }
 
-  const protoList = Array.isArray(forwardedProto)
-    ? forwardedProto
-    : forwardedProto.split(",");
+  // Production-HTTPS fallback. On Railway behind Cloudflare, every external
+  // request reaches us over HTTPS, but x-forwarded-proto can occasionally
+  // arrive missing or stripped (Apple OAuth form_post POSTs, certain
+  // health-check probes, redirect chains via 3rd-party SSO). If we see this
+  // process running in production, default to secure=true rather than
+  // emitting a Set-Cookie without the Secure flag, which iPhone Safari
+  // silently drops on an HTTPS page. This was the lingering sign-in bug
+  // after the multi-cookie fix landed.
+  if (process.env.NODE_ENV === "production") return true;
 
-  return protoList.some(proto => proto.trim().toLowerCase() === "https");
+  return false;
 }
 
 export function getSessionCookieOptions(
