@@ -20,12 +20,37 @@ function withReturnTo(base: string, returnTo?: string | null): string {
 
 function resolveReturnTo(returnTo?: string | null): string | null {
   if (returnTo === null) return null;
-  if (typeof returnTo === "string") return returnTo;
+  if (typeof returnTo === "string") return stripErrorParams(returnTo);
   if (typeof window === "undefined") return null;
-  const path = window.location.pathname + window.location.search;
-  // Don't bounce back to "/" or auth-related paths.
+  const url = new URL(window.location.href);
+  // Strip transient error params before encoding into the OAuth state.
+  // Without this, a previous failed-auth redirect to /?error=auth_failed
+  // poisons the OAuth state for every subsequent sign-in click, so the
+  // post-success redirect bounces the user back to the error page even
+  // though OAuth actually succeeded. Self-perpetuating loop.
+  url.searchParams.delete("error");
+  url.searchParams.delete("auth_failed");
+  const path = url.pathname + url.search;
   if (!path || path === "/" || path.startsWith("/login")) return null;
   return path;
+}
+
+/**
+ * Strip transient error params from a caller-provided returnTo string.
+ * Caller-provided returnTo paths come from sessionStorage and other places
+ * where the same poisoning can happen.
+ */
+function stripErrorParams(returnTo: string): string {
+  if (!returnTo.includes("?")) return returnTo;
+  try {
+    const url = new URL(returnTo, "https://regencivics.earth");
+    url.searchParams.delete("error");
+    url.searchParams.delete("auth_failed");
+    const out = url.pathname + url.search;
+    return out;
+  } catch {
+    return returnTo;
+  }
 }
 
 export const getGoogleLoginUrl = (returnTo?: string | null) =>

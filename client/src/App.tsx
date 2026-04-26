@@ -73,7 +73,7 @@ const Seasons = lazy(() => import("./pages/Seasons"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
-// Economy page deleted (audit item 22). The /economy route redirects to /bionomics.
+const Economy = lazy(() => import("./pages/Economy"));
 const Bionomics = lazy(() => import("./pages/Bionomics"));
 const BionomicsEdit = lazy(() => import("./pages/BionomicsEdit"));
 const HealTheLand = lazy(() => import("./pages/HealTheLand"));
@@ -81,7 +81,7 @@ const HymnBook = lazy(() => import("./pages/HymnBook"));
 const HymnPlayer = lazy(() => import("./pages/HymnPlayer"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
-// LocalFoodEconomy page deleted (audit item 22). /local-food-economy redirects to /bionomics#local-food-economies.
+const LocalFoodEconomy = lazy(() => import("./pages/LocalFoodEconomy"));
 const ToolsLibrary = lazy(() => import("./pages/ToolsLibrary"));
 const ToolDetail = lazy(() => import("./pages/ToolDetail"));
 const ToolSubmit = lazy(() => import("./pages/ToolSubmit"));
@@ -152,11 +152,6 @@ function NewsletterConfirm() {
     onSuccess: () => setStatus('success'),
     onError: () => setStatus('error'),
   });
-  // Run-once on mount: the route is single-purpose (confirm one subscription)
-  // and the token is read from window.location.search at render time, so the
-  // intent is "fire one mutation, display the result." Adding `confirmMutation`
-  // to deps would re-fire the mutation on every render once it resolves.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (token) confirmMutation.mutate({ token }); else setStatus('error'); }, []);
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f0ebe3]">
@@ -359,6 +354,32 @@ function AppInner() {
   return null;
 }
 
+/**
+ * Strip transient OAuth error params from the URL on first paint. Without
+ * this, a page loaded at /?error=auth_failed has those params captured into
+ * the OAuth state on the next Sign In click, which means a SUCCESSFUL sign-in
+ * still bounces the user back to /?error=auth_failed (perpetuating the
+ * loop). Resolves both error= and auth_failed= because the server's catch
+ * blocks emit the former and some legacy paths emit the latter.
+ *
+ * Intentionally runs before any UI consumer of those params; today no UI
+ * reads them (verified via grep on 2026-04-25), so dropping silently is fine.
+ */
+function StripStaleAuthErrorParams() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const search = window.location.search;
+    if (!search.includes("error=") && !search.includes("auth_failed=")) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("error");
+    url.searchParams.delete("auth_failed");
+    const newSearch = url.search; // includes leading "?" if non-empty
+    const cleanUrl = url.pathname + (newSearch || "") + url.hash;
+    window.history.replaceState({}, "", cleanUrl);
+  }, []);
+  return null;
+}
+
 function App() {
   const [location] = useLocation();
   const adminMode = isAdminRoute(location);
@@ -426,6 +447,7 @@ function App() {
           {!adminMode && <ScrollToTop />}
           {!adminMode && <Suspense fallback={null}><ReGenGuide /></Suspense>}
           {!adminMode && <AppInner />}
+          <StripStaleAuthErrorParams />
           {!adminMode && <Suspense fallback={null}><ExitIntentCapture /></Suspense>}
           {!adminMode && <Suspense fallback={null}><CommandPalette /></Suspense>}
           {!adminMode && <Suspense fallback={null}><ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} /></Suspense>}

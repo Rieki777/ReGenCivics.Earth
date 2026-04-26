@@ -74,6 +74,14 @@ function normalizeReturnTo(raw: string | undefined | null): string | null {
   if (trimmed.startsWith("//")) return null; // protocol-relative
   if (trimmed.startsWith("/\\")) return null; // some browsers normalize to protocol-relative
   if (/[\r\n\t]/.test(trimmed)) return null;
+  // Defense against the OAuth state error-recycle loop: a returnTo that
+  // contains `error=auth_failed` (or similar) usually means the user clicked
+  // Sign In while sitting on an error page from a previous failed attempt.
+  // Honoring it would bounce them BACK to the error page after OAuth
+  // succeeds, making the new login look broken. Drop these and fall through
+  // to the post-OAuth default ("/"). Client also strips this in
+  // resolveReturnTo, but we belt-and-suspender it here for safety.
+  if (/[?&](error|auth_failed)=/i.test(trimmed)) return null;
   return trimmed;
 }
 
