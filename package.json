@@ -2,7 +2,15 @@
   "name": "regen-civics-landing",
   "version": "1.0.0",
   "type": "module",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rieki777/ReGenCivics.Earth.git"
+  },
+  "homepage": "https://regencivics.earth",
+  "bugs": {
+    "url": "https://github.com/Rieki777/ReGenCivics.Earth/issues"
+  },
   "engines": {
     "node": ">=22.19.0"
   },

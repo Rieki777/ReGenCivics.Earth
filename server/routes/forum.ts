@@ -607,10 +607,17 @@ export const forumRouter = router({
     .use(rateLimited({ windowMs: 60_000, max: 10 }))
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
+      const reply = await db.getForumReply(input.id);
+      if (!reply) throw new TRPCError({ code: 'NOT_FOUND' });
       const isMod = await db.isForumModerator(ctx.user.id);
       const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
-      if (!isAdminOrSuper && !isMod) {
-        // Author check: allow deletion (author check handled client-side; server allows mods/admins)
+      const isAuthor = reply.authorId === ctx.user.id;
+      // Authorization: author OR moderator OR admin/superadmin. Without this
+      // explicit check the procedure was a wide-open "delete any reply" hole
+      // (any signed-in user could DELETE any other user's reply). Found in
+      // 2026-04-25 deep security audit.
+      if (!isAuthor && !isMod && !isAdminOrSuper) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to delete this reply' });
       }
       await db.deleteForumReply(input.id);
       return { success: true };

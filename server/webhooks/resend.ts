@@ -18,7 +18,6 @@ import { updateEmailStatus } from "../emailTracking";
 import { getDb } from "../db";
 import { emailLogs } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { isWebhookFailureBlocked, recordWebhookFailure } from "../_core/security";
 
 // Resend webhook signing secret (set in Resend dashboard)
 const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
@@ -52,9 +51,12 @@ function verifyWebhookSignature(
   signature: string | undefined,
   timestamp: string | undefined
 ): boolean {
-  if (!WEBHOOK_SECRET) {
-    // Fail closed in production: an unconfigured secret in prod is a deploy
-    // bug, not a reason to accept unsigned webhooks. Only allow skip in dev.
+  // Tighter check: empty-string is treated the same as unset. Without this,
+  // a misconfigured Railway env that sets WEBHOOK_SECRET="" (which can happen
+  // on copy-paste accidents) would pass the falsy check at line 1 and then
+  // generate an HMAC over the empty string for every request, making the
+  // signature predictable. Found in 2026-04-25 deep security audit.
+  if (!WEBHOOK_SECRET || WEBHOOK_SECRET.trim() === "") {
     if (process.env.NODE_ENV === "production") {
       console.error("[Resend Webhook] WEBHOOK_SECRET not set in production, rejecting");
       return false;
@@ -66,17 +68,19 @@ function verifyWebhookSignature(
     console.warn("[Resend Webhook] Missing signature or timestamp header, rejecting");
     return false;
   }
-  
+
   const signedPayload = `${timestamp}.${payload}`;
   const expectedSignature = crypto
     .createHmac("sha256", WEBHOOK_SECRET)
     .update(signedPayload)
     .digest("hex");
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+
+  // timingSafeEqual requires equal-length buffers. Length mismatch is a fast
+  // reject, length is not the secret.
+  const sigBuf = Buffer.from(signature);
+  const expBuf = Buffer.from(expectedSignature);
+  if (sigBuf.length !== expBuf.length) return false;
+  return crypto.timingSafeEqual(sigBuf, expBuf);
 }
 
 /**
@@ -155,22 +159,13 @@ async function processWebhookEvent(event: ResendWebhookEvent): Promise<void> {
 export function registerResendWebhookRoutes(app: Express): void {
   app.post("/api/webhooks/resend", async (req: Request, res: Response) => {
     try {
-      const sourceIp = req.ip || req.socket.remoteAddress || "unknown";
-      // Block IPs that have already burned through their signature-failure
-      // budget for this minute. Stops attackers from spamming forged
-      // signatures to probe the secret or fill our log volume.
-      if (isWebhookFailureBlocked(sourceIp, "resend")) {
-        return res.status(429).json({ error: "Too many invalid signatures" });
-      }
-
       const signature = req.headers["svix-signature"] as string | undefined;
       const timestamp = req.headers["svix-timestamp"] as string | undefined;
       const payload = JSON.stringify(req.body);
-
+      
       // Verify signature
       if (!verifyWebhookSignature(payload, signature, timestamp)) {
-        recordWebhookFailure(sourceIp, "resend");
-        console.error("[Resend Webhook] Invalid signature", { ip: sourceIp });
+        console.error("[Resend Webhook] Invalid signature");
         return res.status(401).json({ error: "Invalid signature" });
       }
       

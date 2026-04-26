@@ -12,6 +12,38 @@ When you start a fresh session, load these in order before touching code:
 
 Memory files in `~/.claude/memories/` (working style, infra quirks) take precedence over `.ai/` for working preferences. Use `.ai/` for project facts; use memory for how-to-work-with-Rye preferences.
 
+## When to use each `.ai/` doc
+
+Quick reference for when each `.ai/docs/` file is the right tool. Use the trigger column on the left to find the file in the right column.
+
+| When you're about to... | Open this file | And do this |
+|---|---|---|
+| Define or use any load-bearing term ($ReGen vs RGVoice, citizenship tier name, season role, Hypha intent) | `.ai/docs/DOMAIN-LANGUAGE.md` | Read the canonical entry. If you're using a new term, add an entry. |
+| Reverse, sidestep, or revisit an architectural choice | `.ai/docs/DECISIONS.md` | Read the prior ADR. If you're committing to the new direction, append a new ADR that supersedes the old one. |
+| Add a new tRPC procedure, webhook, env var, cookie, or LLM-driven feature | `.ai/docs/security/BUILD-PLAYBOOK.md` | Run the relevant checklist section before merging. |
+| Touch auth, OAuth, the cookie module, JWT verification | `.ai/docs/security/OWASP-TOP10.md` (A07) + `OPS-PLAYBOOK.md` (Procedure 10) | Confirm the posture. Verify on production via Claude in Chrome. |
+| Send user content to an LLM (forum, video summary, profile) | `.ai/docs/security/AI-AUTOMATION-RISKS.md` | Read end to end. Sanitize input. Rate-limit output. Add bot provenance. |
+| Investigate a security incident, rotate a secret, recover from a leaked credential | `.ai/docs/security/OPS-PLAYBOOK.md` | Pick the matching procedure. Append an incident log entry at the bottom. |
+| Run the quarterly self-audit | `.ai/docs/security/CHECKLIST.md` | Date the lines you confirm. Add new `open` items as found. |
+| Hard-block a request because it conflicts with a hard rule | `.ai/docs/STEERING.md` | Surface the conflict, quote the section, ask Rye before proceeding. |
+| Onboard a new agent or contributor | `.ai/README.md` then this file | Manifest gives the load order. |
+
+## When to update each `.ai/` doc
+
+Self-maintenance triggers. The docs are living; if you don't see a trigger that fits what you're doing, leave them alone.
+
+| If you... | Update this |
+|---|---|
+| Make a load-bearing architectural choice (new framework, new auth path, new token, new third-party dependency for a core flow) | Append an ADR to `.ai/docs/DECISIONS.md`. Format: title, date, status, context, decision, why, trade-offs, code refs. |
+| Introduce a new term someone could plausibly redefine inline (e.g. a new role, a new quest type, a new Hypha intent) | Add an entry to `.ai/docs/DOMAIN-LANGUAGE.md`. |
+| Add or change a security-relevant control (new sanitizer, new rate limit, new cookie attribute, new CSP directive) | Update `.ai/docs/security/OWASP-TOP10.md` in the matching A0n section + flip the `CHECKLIST.md` line if it changes status. |
+| Discover a new attack pattern or exploit class we should defend against | Add an entry to `.ai/docs/security/PRINCIPLES.md` (if new posture) OR `AI-AUTOMATION-RISKS.md` (if LLM-specific). |
+| Resolve a production security incident | Append an "Incident YYYY-MM-DD" entry to `.ai/docs/security/OPS-PLAYBOOK.md` with reported / symptom / diagnosis / fix / time-to-mitigate / prevention. |
+| Add a new hard constraint that any future agent must respect | Add a numbered section to `.ai/docs/STEERING.md`. Don't bury it in CLAUDE.md sub-sections; STEERING is the load-first file. |
+| Remove or rename a prior decision | Don't edit the old ADR. Add a new ADR marked `Superseded by ADR-N`. Keep history. |
+
+The skills under `.claude/skills/` already cover process (how to do work). The `.ai/docs/` files cover facts (what's true, what's decided, what's banned). Don't duplicate process into `.ai/docs/`; cross-link instead.
+
 ## What This Project Is
 regen-civics is a **fund and an in-real-life game** for supporting regenerative land projects and the Regenerative Renaissance — a movement to heal ourselves, our earth, our communities, and our bioregions. We create quests and games that help people heal, and in doing so build new financial, economic, and governance systems that support and network land projects across the movement.
 

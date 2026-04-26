@@ -52,7 +52,7 @@ import * as db from "../db";
 import { createRequire } from "module";
 const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
-import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken, timingSafeEqualStr } from "./security";
+import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
 import { isCacheAvailable } from "../cache";
 import path from "path";
 
@@ -215,9 +215,15 @@ async function startServer() {
   app.use('/api/trpc/campaigns.contribute', rateLimitMiddleware(60 * 1000, 20));
   app.use('/api/trpc/campaigns.create', rateLimitMiddleware(60 * 60 * 1000, 10));
   app.use('/api/trpc/campaigns.update', rateLimitMiddleware(60 * 1000, 20));
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Body parser. Default limit is intentionally TIGHT to bound DoS surface.
+  // Was 50mb which would allow a single attacker request to balloon Express
+  // memory by 50mb. Real uploads (images, video, PDFs) go through the
+  // dedicated R2 upload path with multipart streaming, not JSON. If an
+  // endpoint legitimately needs more than 2mb of JSON, it should mount a
+  // route-specific express.json({ limit: "Nmb" }) inline rather than
+  // raising the global default.
+  app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ limit: "2mb", extended: true }));
 
   // CSRF token endpoint, issues a CSRF token tied to the session cookie.
   // The tRPC CSRF middleware validates this token on mutations.
@@ -516,8 +522,8 @@ async function startServer() {
     if (!secret) {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
-    const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
-    if (!timingSafeEqualStr(auth, `Bearer ${secret}`)) {
+    const auth = req.headers.authorization;
+    if (!auth || auth !== `Bearer ${secret}`) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     try {
@@ -625,8 +631,8 @@ async function startServer() {
     if (!secret) {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
-    const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
-    if (!timingSafeEqualStr(auth, `Bearer ${secret}`)) {
+    const auth = req.headers.authorization;
+    if (!auth || auth !== `Bearer ${secret}`) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     try {

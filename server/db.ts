@@ -2336,6 +2336,13 @@ export async function deleteForumPost(id: number) {
   await db.delete(forumPosts).where(eq(forumPosts.id, id));
 }
 
+export async function getForumReply(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [reply] = await db.select().from(forumReplies).where(eq(forumReplies.id, id)).limit(1);
+  return reply ?? null;
+}
+
 export async function deleteForumReply(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2746,18 +2753,35 @@ export async function findAndConsumeEmailToken(token: string): Promise<EmailToke
   if (!db) throw new Error("Database not available");
 
   const now = new Date();
+
+  // Atomic consume: UPDATE ... WHERE usedAt IS NULL AND token = ? AND expiresAt > ?.
+  // Two concurrent verify requests for the same token used to both pass the
+  // "is unused?" check then both write usedAt, allowing a magic link to log
+  // in twice. The atomic UPDATE returns affectedRows=1 only for the request
+  // that won the race; the loser sees affectedRows=0 and gets null. Found in
+  // 2026-04-25 deep security audit.
+  const updateResult: any = await db
+    .update(emailTokens)
+    .set({ usedAt: now })
+    .where(and(
+      eq(emailTokens.token, token),
+      isNull(emailTokens.usedAt),
+      gt(emailTokens.expiresAt, now),
+    ));
+
+  // mysql2 returns { affectedRows } in the result header. Drizzle's mysql
+  // driver wraps that as result[0].affectedRows.
+  const affectedRows = updateResult?.[0]?.affectedRows ?? updateResult?.affectedRows ?? 0;
+  if (affectedRows === 0) return null;
+
+  // Now safe to fetch the row for the caller (it's marked used and locked
+  // out from any concurrent consumer).
   const rows = await db
     .select()
     .from(emailTokens)
-    .where(and(eq(emailTokens.token, token), isNull(emailTokens.usedAt), gt(emailTokens.expiresAt, now)))
+    .where(eq(emailTokens.token, token))
     .limit(1);
-
-  const row = rows[0];
-  if (!row) return null;
-
-  // Mark as used
-  await db.update(emailTokens).set({ usedAt: now }).where(eq(emailTokens.id, row.id));
-  return row;
+  return rows[0] ?? null;
 }
 
 // ─── Project Join Requests ───────────────────────────────────────────────────
