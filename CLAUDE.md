@@ -1,5 +1,17 @@
 # regen-civics — Project Context for Claude
 
+## Read first
+
+When you start a fresh session, load these in order before touching code:
+
+1. **This file** (project entry point + token model + skills index).
+2. **`.ai/docs/STEERING.md`** — hard constraints (writing rules, ship gate, token model rules, max autonomy). Non-negotiable.
+3. **`.ai/docs/DOMAIN-LANGUAGE.md`** — canonical names. Reach for this when a term feels ambiguous.
+4. **`.ai/docs/DECISIONS.md`** — ADR log. Read before reversing a prior architectural choice.
+5. **`.ai/docs/security/`** — OWASP-grounded baseline + AI-automation risks. Skim README, deep-read the relevant sub-doc when touching auth, webhooks, public input, or LLM-driven features.
+
+Memory files in `~/.claude/memories/` (working style, infra quirks) take precedence over `.ai/` for working preferences. Use `.ai/` for project facts; use memory for how-to-work-with-Rye preferences.
+
 ## What This Project Is
 regen-civics is a **fund and an in-real-life game** for supporting regenerative land projects and the Regenerative Renaissance — a movement to heal ourselves, our earth, our communities, and our bioregions. We create quests and games that help people heal, and in doing so build new financial, economic, and governance systems that support and network land projects across the movement.
 

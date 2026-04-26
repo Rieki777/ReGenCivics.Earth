@@ -124,3 +124,10 @@ temp/
 # Gemini API key file
 Nano Photos/.gemini_api_key
 loomio Governance Tools/
+
+# Human-only private space. Personal notes, drafts, raw transcripts, anything
+# not ready to be in the codebase or seen by AI agents. See .human/README.md.
+# Pattern: exclude all contents but keep the README so the directory + its
+# purpose are visible in version control.
+.human/*
+!.human/README.md

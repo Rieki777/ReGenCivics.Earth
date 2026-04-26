@@ -1,0 +1,158 @@
+# STEERING: Hard Constraints
+
+Load this file first on every agent session. Everything here is non-negotiable. If a request appears to conflict with a constraint here, surface the conflict to Rye before proceeding.
+
+Last reviewed: 2026-04-25.
+
+---
+
+## 1. Writing rules (apply to ALL user-facing copy)
+
+These are reproduced from `/CLAUDE.md` Writing Rules section. They apply to forum posts, page copy, emails, marketing, social, every string a player will read. They DO NOT apply to JSDoc comments or internal logs (those are technical, not user-facing).
+
+### 1.1 No em-dashes
+Em-dashes (`-`) are banned in all user-facing content. Zero. Replace with comma, period, or rewrite. This is also Rye's user-global rule (`~/.claude/CLAUDE.md`).
+
+### 1.2 No contrast framing
+Banned: "not X, but Y", "not just X, it's Y", "less X, more Y", "this isn't about X, it's about Y", parallel contrast implying lesser/greater. Lead with the affirmative.
+
+### 1.3 No AI word patterns
+Banned vocabulary: delve, tapestry, foster, leverage, "it's worth noting", "in conclusion", embark, vibrant, crucial, groundbreaking, "transformative journey", "testament to", "beacon of", nurture (as metaphor), unlock, unleash, seamless, robust, comprehensive, "cutting-edge", empower, utilize, navigate (as metaphor), genuinely (hedge), honestly (hedge), straightforward.
+
+### 1.4 No rhetorical question openers
+Don't open with "What if we could…?" or "Have you ever wondered…?". Start with the thing itself.
+
+### 1.5 No passive inspiration
+Banned: "join us on this journey", "be part of something bigger", "together we can". Say something specific instead.
+
+### 1.6 Voice
+Direct, grounded, specific. Rye's voice. First person + contractions are fine. Short sentences are fine.
+
+---
+
+## 2. Maximum autonomy default
+
+Project-level rule from `/CLAUDE.md`: "Do as much as possible without asking. Only surface tasks to Rye when there is literally no way to proceed without human input."
+
+Concrete:
+- Don't ask about token-mapping decisions when context makes the answer obvious. ($ReGen for gratitude credits, not RGVoice. RGVoice is the votes token.)
+- Don't ask about architectural choices with one clearly-correct option (use existing `hyphaBridges` table; don't invent a new one).
+- Don't ask about tool recovery (FUSE git lock blocks commit → use plumbing path).
+
+Times TO ask (use `AskUserQuestion`, max 4 questions, mark recommended option `(Recommended)`):
+- 3+ defensible architectural options exist
+- A choice would meaningfully shape the data model
+- Voice direction has a stylistic fork that needs Rye's call
+
+---
+
+## 3. Ship gate: MANDATORY before any "VERIFIED" or "DONE" claim
+
+Three gates from `/CLAUDE.md`:
+
+```bash
+python3 scripts/audit-truncation.py    # gate 1: zero truncated source files
+rg -g '*.css' '<className-you-added>' client/src/   # gate 2: any new className must have CSS
+pnpm typecheck                                       # gate 3: exit 0
+```
+
+Plus, for any FIXES_TO_MAKE row marked DONE / VERIFIED, the Evidence column must contain file:line, grep result, screenshot path, or script output line. No evidence = stays `CODED`.
+
+This exists because on 2026-04-18 an audit of commit `b06b7aa` found 5 of 13 fixes marked "resolved" were false (className added, CSS missing) and 15 source files on disk were truncated mid-statement. Don't ship that pattern again.
+
+---
+
+## 4. Verify on production after every load-bearing deploy
+
+Working-style memory has the canonical version. Summary:
+
+- "Code looks right" / "tests pass" is not enough. Multiple times fixes have landed in code but not taken effect for Rye on iPhone Safari (FAB position, sign-in OAuth). Always navigate to the live URL via Claude in Chrome and reproduce the user flow.
+- For load-bearing changes (auth, tokens, payments, webhooks): mandatory.
+- For visual tweaks: recommended.
+- Pattern: `mcp__Claude_in_Chrome__navigate` to regencivics.earth → perform user action → screenshot → confirm fix is live. If broken in production despite correct code: diagnose (deploy rebuilt? CDN cache? file truncated? deeper bug?) before more code lands on top.
+
+---
+
+## 5. Token model: private-first, claim bridge to public
+
+From `/CLAUDE.md`. Four absolute rules for every economic feature:
+
+1. **Reads (game logic) use TOTAL = private + public.** Contribution scores, voice weight, citizenship tiers. Use `playerProfiles.getMyTokens` (`{ public, private, total }`).
+2. **Writes (credits AND debits) only touch the private ledger.** Through `db.creditPrivateTokens({ userId, tokenType, amount, source, sourceRef, description })`. Public balance is never written from server code; it changes only when chain emits a Transfer that the Alchemy webhook reconciles.
+3. **Spend limit checks use PRIVATE only.** Even if user has plenty on-chain, public can't be deducted by server (one-way flow).
+4. **One-way flow private → public.** Tokens move private→public when user claims via Hypha redeem-tokens. Once on chain, they live there. No re-entry to private.
+
+Token contracts on Base (chain id 8453):
+- `$REGEN`: `0x4E617cd113364193d215d107AdD6fa50418AA2E4`
+- `$RCivics`: `0x72e9B17a2F93A923D63666eC0a1c096B1443ef26`
+- `RGVoice`: `0x4d848B3f2D74D1D2f6c75c55d0751DAB8FC7D707`
+- `RCVoice`: not yet deployed
+
+---
+
+## 6. Hypha bridge: only one path off-platform
+
+Anytime a player moves from ReGen Civics to Hypha to act on-chain, the handoff MUST go through the Hypha Bridge module (`apps/web/src/lib/hypha-bridge/`). Don't hand-roll redirect logic. Extend the bridge with the new intent type instead.
+
+Spec: `FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md`.
+
+---
+
+## 7. Cowork VM quirks
+
+From `~/.claude/memories/cowork-vm-quirks.md`. Top issues:
+
+- **FUSE silent truncation**: after Edit/Write on long files, content can be cut. Always run `python3 scripts/audit-truncation.py` after meaningful edits. Restore via `git show HEAD:path > /tmp/restore && cp /tmp/restore path` (NOT `git checkout`: FUSE blocks unlink).
+- **Stuck `.git/index.lock`**: bypass with `GIT_INDEX_FILE=/tmp/index-X` workaround. Commit via `git commit-tree` plumbing.
+- **`tsx` broken on the VM**: pnpm-installed esbuild is Windows-only binary. Use `npm install mysql2` in `/tmp/migrate-tool/` and a `.cjs` runner (pattern in `scripts/run-riverside-migration.cjs`).
+- **Push from VM fails**: no GitHub credentials. Always commit locally; Rye pulls + pushes from Windows.
+- **Mixed line endings**: ~600 files show as modified due to CRLF/LF mismatch. Real changes are spotted via `git diff <file>` showing actual content diff vs whole-file rewrite.
+
+---
+
+## 8. Auto-archive convention for dated docs
+
+From working-style memory:
+
+- Anything in repo root with a date in the filename (`CLAUDE_CODE_PROMPT_YYYY-MM-DD_*.md`, `FIXES_TO_MAKE_YYYY-MM-DD*.md`, `REMAINING_WORK_YYYY-MM-DD.md`) older than 1 week → moves to `archive/`.
+- **Spec / reference docs stay in root** even when older. A doc is a "spec" if it captures style direction, design rules, or canonical reference material. Heuristic: opens with "Generate / produce / build with these rules" → spec, keep. Opens with "READ THIS FIRST / Pick up from Push 1 / Skip nothing" → implementation prompt, archive.
+
+---
+
+## 9. Commit + push protocol
+
+- Commit per logical batch with descriptive messages. Don't pile every fix into one commit.
+- Cowork VM cannot push. Always end with the unpushed commit list (sha + subject) and the Windows push command for Rye.
+- After commit, run `git fetch origin && git log origin/main..main --oneline` to verify what's actually unpushed (Rye pushes between turns; local view goes stale).
+- Per `~/.claude/memories/rye-working-style.md`: unpushed list goes in chronological order, oldest first, in the Claude Code handoff prompt.
+
+---
+
+## 10. Skills are first-class
+
+When making a deliverable that has a matching skill, USE the skill. Skills are in:
+- `.claude/skills/` (project-specific, committed)
+- `~/.claude/skills/` (cross-project user skills)
+
+Most-used:
+- `regen-fixes-handoff`: produce FIXES_TO_MAKE docs
+- `regen-ship-gate`: the audit-truncation + className grep + typecheck protocol
+- `regen-do-everything`: autonomous end-to-end fix execution
+- `regen-database-sql`: MySQL on Railway, Drizzle patterns
+- `regen-fundraising-copy`, `regen-outreach-sequences`, `regen-content-repurposing`, `regen-community-onboarding`: voice-matched writing
+- `regen-seo-audit`, `regen-release-notes`, `regen-comparison-pages`, `regen-landing-copy`, `regen-event-blast`, `regen-investor-deck`, `regen-incubator-review`, `regen-character-art`: added 2026-04-25
+- `regen-form-design`, `regen-background-design`: visual / UX work
+- `hypha-pr-workflow`: for hypha-web PR contributions
+
+Full list: see CLAUDE.md "Installed Skills" section.
+
+---
+
+## What is NOT a hard constraint
+
+The following are preferences, not steering rules. They live in `.ai/docs/DECISIONS.md` (architectural choices) or in skills (process):
+
+- Choice of UI library (shadcn/ui via Radix). Documented in DECISIONS, not steering.
+- Forum schema specifics. Documented in CLAUDE.md.
+- Deploy target (Railway). Documented in DECISIONS.
+- Color palette / brand colors. Documented in skills + design specs, not steering.
