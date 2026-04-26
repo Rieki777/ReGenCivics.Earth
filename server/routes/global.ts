@@ -15,6 +15,7 @@ import { invokeLLM } from "../_core/llm";
 import { generateImage, buildImagePrompt, type ContentType } from "../_core/imageGeneration";
 import type { Express } from "express";
 import sharp from "sharp";
+import { ALLOWED_IMG_HOSTS, checkAllowlistedHost } from "../_core/ssrf";
 
 export const globalSearchRouter = router({
   query: publicProcedure
@@ -149,11 +150,8 @@ const imageCache = new LRUCache<string, Buffer>({
   ttl: 1000 * 60 * 60 * 24, // 24 hours
 });
 
-const ALLOWED_IMG_DOMAINS = [
-  'assets.regencivics.earth',
-  'regencivics.earth',
-  'regencivics.com',
-];
+// Allowlist now lives in server/_core/ssrf.ts (ALLOWED_IMG_HOSTS) so it's
+// shared with any future proxy that needs the same gate.
 
 export function registerImageOptimization(app: Express) {
   app.get('/api/img', async (req, res) => {
@@ -163,14 +161,9 @@ export function registerImageOptimization(app: Express) {
         return res.status(400).json({ error: 'url required' });
       }
 
-      let parsedUrl: URL;
-      try {
-        parsedUrl = new URL(url);
-      } catch {
-        return res.status(400).json({ error: 'invalid url' });
-      }
-      if (!ALLOWED_IMG_DOMAINS.some(d => parsedUrl.hostname === d || parsedUrl.hostname.endsWith(`.${d}`))) {
-        return res.status(403).json({ error: 'domain not allowed' });
+      const parsedUrl = checkAllowlistedHost(url, ALLOWED_IMG_HOSTS);
+      if (!parsedUrl) {
+        return res.status(400).json({ error: 'url is not on the allowlist' });
       }
 
       const width = w ? Math.min(parseInt(w, 10), 2048) : undefined;
@@ -209,7 +202,18 @@ export function registerImageOptimization(app: Express) {
           return res.status(404).json({ error: 'not found in storage' });
         }
       } else {
-        const upstream = await fetch(url);
+        // Allowlisted upstream (e.g. regencivics.earth). Disable redirect-
+        // following so an open-redirect on the upstream can't be used to
+        // pivot the proxy onto an arbitrary host. 8s timeout caps the
+        // worst-case response.
+        const ac = new AbortController();
+        const timer = setTimeout(() => ac.abort(), 8_000);
+        let upstream: Response;
+        try {
+          upstream = await fetch(url, { redirect: 'manual', signal: ac.signal });
+        } finally {
+          clearTimeout(timer);
+        }
         if (!upstream.ok) {
           return res.redirect(302, url);
         }

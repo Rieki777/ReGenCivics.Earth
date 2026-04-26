@@ -7,6 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, sql, count } from "drizzle-orm";
 import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, ForumCategory } from "../../drizzle/schema";
 import { sanitizeInput } from "../_core/security";
+import { assertSafeExternalUrl } from "../_core/ssrf";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
 import ogs from "open-graph-scraper";
@@ -58,6 +59,9 @@ export const forumRouter = router({
       }
 
       try {
+        // SSRF guard: refuse to fetch loopback / private / metadata addresses
+        // before handing the URL to open-graph-scraper.
+        await assertSafeExternalUrl(input.url);
         const { result } = await ogs({ url: input.url, timeout: 5 });
         const data = {
           title: result.ogTitle || null,
@@ -508,18 +512,21 @@ export const forumRouter = router({
       const urlMatch = input.content.match(/https?:\/\/[^\s<>"')\]]+/);
       if (urlMatch) {
         const targetUrl = urlMatch[0];
-        ogs({ url: targetUrl, timeout: 5 }).then(({ result }) => {
-          const preview = {
-            title: result.ogTitle || null,
-            description: result.ogDescription || null,
-            image: result.ogImage?.[0]?.url || null,
-            siteName: result.ogSiteName || null,
-            url: result.ogUrl || targetUrl,
-          };
-          return getDb().then(d =>
-            d?.update(forumPosts).set({ linkPreviews: JSON.stringify(preview) }).where(eq(forumPosts.id, postId))
-          );
-        }).catch(err => console.error(`Link preview fetch failed for forum post ${postId}:`, err));
+        // SSRF guard runs first; only public URLs reach open-graph-scraper.
+        assertSafeExternalUrl(targetUrl)
+          .then(() => ogs({ url: targetUrl, timeout: 5 }))
+          .then(({ result }) => {
+            const preview = {
+              title: result.ogTitle || null,
+              description: result.ogDescription || null,
+              image: result.ogImage?.[0]?.url || null,
+              siteName: result.ogSiteName || null,
+              url: result.ogUrl || targetUrl,
+            };
+            return getDb().then(d =>
+              d?.update(forumPosts).set({ linkPreviews: JSON.stringify(preview) }).where(eq(forumPosts.id, postId))
+            );
+          }).catch(err => console.error(`Link preview fetch failed for forum post ${postId}:`, err));
       }
 
       // Fire-and-forget video summary. If the post contains a YouTube URL with

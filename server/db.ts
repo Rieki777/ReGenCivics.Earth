@@ -3474,37 +3474,57 @@ export async function creditPrivateTokens(params: {
 
   const column = TOKEN_TO_PROFILE_COLUMN[tokenType];
 
-  // Always write the audit entry first. This way the ledger history
-  // is preserved even for users who have no player_profiles row yet
-  // (e.g., they signed up but never completed profile creation).
-  await db.insert(userTokenLedger).values({
-    userId,
-    tokenType,
-    amount,
-    source,
-    sourceId: sourceId ?? null,
-    sourceRef: sourceRef ?? null,
-    tenantId: tenantId ?? null,
-    description: description ?? null,
+  // Wrap the ledger insert + cache update in a single transaction so two
+  // concurrent calls cannot race the column read/write, and a failure
+  // partway through cannot leave the ledger and cache out of sync. The
+  // cache is recomputed deterministically from the ledger sum (rather
+  // than additive arithmetic), which also self-heals any prior drift.
+  return db.transaction(async (tx) => {
+    // Always write the audit entry first. This way the ledger history
+    // is preserved even for users who have no player_profiles row yet
+    // (e.g., they signed up but never completed profile creation).
+    await tx.insert(userTokenLedger).values({
+      userId,
+      tokenType,
+      amount,
+      source,
+      sourceId: sourceId ?? null,
+      sourceRef: sourceRef ?? null,
+      tenantId: tenantId ?? null,
+      description: description ?? null,
+    });
+
+    const [profile] = await tx
+      .select()
+      .from(playerProfiles)
+      .where(eq(playerProfiles.userId, userId))
+      .limit(1);
+    if (!profile) {
+      console.warn(
+        `[tokens] creditPrivateTokens: no profile for user ${userId}, ledger row written but column cache not updated`,
+      );
+      return null;
+    }
+
+    // Recompute the cache from the ledger sum (deterministic). If a prior
+    // call landed a ledger row but failed before updating the cache, this
+    // call corrects the divergence.
+    await tx.execute(sql`
+      UPDATE player_profiles
+      SET ${sql.identifier(column)} = (
+        SELECT COALESCE(SUM(amount), 0) FROM user_token_ledger
+        WHERE userId = ${userId} AND tokenType = ${tokenType}
+      )
+      WHERE userId = ${userId}
+    `);
+
+    const [updated] = await tx
+      .select()
+      .from(playerProfiles)
+      .where(eq(playerProfiles.userId, userId))
+      .limit(1);
+    return (updated as any)?.[column] ?? null;
   });
-
-  // Bump the matching private column on player_profiles if one exists.
-  // Using raw SQL so the column name is driven by tokenType without a
-  // big switch statement.
-  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
-  if (!profile) {
-    console.warn(`[tokens] creditPrivateTokens: no profile for user ${userId}, ledger row written but column cache not updated`);
-    return null;
-  }
-
-  await db.execute(sql`
-    UPDATE player_profiles
-    SET ${sql.identifier(column)} = ${sql.identifier(column)} + ${amount}
-    WHERE userId = ${userId}
-  `);
-
-  const [updated] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
-  return (updated as any)?.[column] ?? null;
 }
 
 /**
