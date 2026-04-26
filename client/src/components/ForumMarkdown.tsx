@@ -1,11 +1,24 @@
 /**
  * ForumMarkdown - Full markdown rendering for forum posts and replies
  * Supports: headers, bold, italic, links, lists, code blocks, blockquotes, tables
+ *
+ * Video URLs (YouTube, Vimeo, Loom, Wistia, Dailymotion, direct MP4) are
+ * detected via VideoEmbed's parser and rendered as inline embeds with a
+ * thumbnail and click-to-play. The original link text is preserved as a
+ * caption above the embed when the user chose a non-URL label.
  */
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
 import { sanitizeForClient } from '@/utils/sanitize';
+import VideoEmbed, { parseVideoUrl } from '@/components/VideoEmbed';
+
+function flattenChildText(children: any): string {
+  if (typeof children === 'string') return children;
+  if (typeof children === 'number') return String(children);
+  if (Array.isArray(children)) return children.map(flattenChildText).join('');
+  return '';
+}
 
 const markdownComponents: Components = {
   h1: ({ children }) => (
@@ -44,6 +57,27 @@ const markdownComponents: Components = {
         safeHref = '#';
       }
     }
+
+    // Video embed: if the URL is a recognised video source, render the
+    // VideoEmbed component inline instead of a plain link. If the link text
+    // is something other than the URL itself (the user wrote
+    // [watch this](youtube.com/...)), preserve their label as a caption.
+    if (safeHref && safeHref.startsWith('http')) {
+      const parsed = parseVideoUrl(safeHref);
+      if (parsed.type !== 'unknown' && parsed.embedUrl) {
+        const linkText = flattenChildText(children).trim();
+        const showCaption = linkText && linkText !== safeHref;
+        return (
+          <span className="block my-3">
+            {showCaption && (
+              <span className="block text-sm text-[#1a472a]/70 mb-1.5">{linkText}</span>
+            )}
+            <VideoEmbed url={safeHref} title={showCaption ? linkText : undefined} />
+          </span>
+        );
+      }
+    }
+
     const isExternal = safeHref?.startsWith('http');
     return (
       <a

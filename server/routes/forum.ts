@@ -10,6 +10,7 @@ import { sanitizeInput } from "../_core/security";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
 import ogs from "open-graph-scraper";
+import { maybePostVideoSummary } from "../lib/videoSummary";
 
 // In-memory cache for link preview OG data (TTL 24 hours)
 const linkPreviewCache = new Map<string, { data: any; timestamp: number }>();
@@ -520,6 +521,14 @@ export const forumRouter = router({
           );
         }).catch(err => console.error(`Link preview fetch failed for forum post ${postId}:`, err));
       }
+
+      // Fire-and-forget video summary. If the post contains a YouTube URL with
+      // available auto-captions, the ReGen Guide bot will reply with a Claude-
+      // drafted summary a few seconds later. Rate-limited and silent on failure.
+      // See server/lib/videoSummary.ts for the full flow + rate caps.
+      maybePostVideoSummary(postId, input.content, ctx.user.id).catch((err) =>
+        console.error(`[forum.createPost] video summary failed for postId=${postId}`, err)
+      );
 
       return { id: postId };
     }),
