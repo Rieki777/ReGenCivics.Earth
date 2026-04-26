@@ -169,6 +169,53 @@ This is the most common operational ask. Run through this checklist:
 
 ---
 
+## Procedure 11: OAuth callback returns 401 from Google
+
+When: Railway logs show `[OAuth] Google callback failed Error: Google token exchange failed: status=401 ...`. Users see `/?error=auth_failed&reason=google_401`. Sign-in succeeds at Google's account chooser but fails on the round-trip back to us.
+
+This means Google's token endpoint rejected our `client_id` + `client_secret` pair. Code is correct; environment is wrong.
+
+Steps (5 minutes):
+
+1. **Check the captured Google response body.** Railway logs after commit (TBD) include the full Google error. Look for:
+   - `"error": "invalid_client"` → secret is wrong or expired.
+   - `"error": "unauthorized_client"` → grant type not allowed; consent screen issue.
+   - `"error": "redirect_uri_mismatch"` → APP_URL on Railway doesn't match a registered URI.
+   - `"error": "invalid_grant"` → code reused or expired (>10min). Usually transient; try again.
+
+2. **Check Google Cloud Console** (https://console.cloud.google.com/apis/credentials):
+   - Open the OAuth 2.0 Client ID for ReGen Civics.
+   - Confirm `Authorized redirect URIs` includes:
+     - `https://regencivics.earth/api/oauth/google/callback`
+     - `http://localhost:3000/api/oauth/google/callback` (for dev)
+   - If you see a recent "Client secret rotated" notification, you must update the Railway env var (step 3).
+
+3. **Verify Railway env vars match Google Cloud:**
+   - Open Railway dashboard → ReGenCivics.Earth service → Variables.
+   - `GOOGLE_CLIENT_ID` must equal exactly the Client ID shown in Google Cloud Console.
+   - `GOOGLE_CLIENT_SECRET` must equal the latest secret. If Google Cloud shows multiple secrets, the most recent one is active. Older secrets stop working after their grace period.
+   - `APP_URL` must be `https://regencivics.earth` (no trailing slash, no `www.` prefix unless that's also a registered URI).
+   - **Watch for whitespace.** Paste-from-clipboard sometimes includes a leading/trailing newline. Edit the env var and re-paste cleanly.
+
+4. **If the secret really did rotate:**
+   - Click "Add Secret" in Google Cloud Console (don't delete the old one yet, that breaks active sessions, though sessions are JWT-cookie-based so the only at-risk users are the ones mid-OAuth-flow).
+   - Copy the new secret immediately (Google shows it once).
+   - Paste into Railway `GOOGLE_CLIENT_SECRET`. Save.
+   - Railway will auto-redeploy. Wait ~2 min.
+   - Test sign-in via Claude in Chrome OR your own browser. Logs should now show 200 from token exchange.
+   - Once verified, delete the old secret in Google Cloud.
+
+5. **Verify on production after env var update:**
+   - Hard refresh the live site, click Sign In, complete Google flow.
+   - Railway logs should show `[inf] ... GET /api/oauth/google/callback 302` (success), not `[OAuth] Google callback failed`.
+   - User lands on `/` with their avatar visible top-right.
+
+6. **Document in OPS-PLAYBOOK incident log** (template below).
+
+History: this exact failure happened 2026-04-26 with 100% failure rate observed in Railway logs. Initially suspected as cookie / state / Privy code bugs (which were also fixed in earlier commits b767d54, 657f230, cf1fb25), but the actual root cause was an env-var mismatch surfaced only by improved logging.
+
+---
+
 ## Incident log template
 
 When something breaks, append a section like this at the bottom of OPS-PLAYBOOK:

@@ -103,28 +103,72 @@ function decodeReturnTo(state: string): string | null {
 
 // ─── Google OAuth ────────────────────────────────────────────────────────────
 
+/**
+ * Fetch Google's OAuth token endpoint with a 10s timeout and full error
+ * surfacing. On non-2xx we capture Google's response body (typically
+ * JSON like `{"error": "invalid_client", "error_description": "..."}`)
+ * so Railway logs show exactly what's wrong instead of a bare status code.
+ *
+ * The most common failure modes seen in production:
+ *   - 401 invalid_client : GOOGLE_CLIENT_SECRET on Railway is stale
+ *     (rotated in Google Cloud Console without updating Railway), or
+ *     has whitespace/newline corruption.
+ *   - 401 unauthorized_client : OAuth consent screen not approved for
+ *     this client, or grant type not enabled.
+ *   - 400 invalid_grant : code already used or expired (>10min stale),
+ *     or redirect_uri at /token doesn't match what was used at /auth.
+ *   - 400 redirect_uri_mismatch : APP_URL on Railway doesn't match a
+ *     registered redirect URI in the Google Cloud Console.
+ *
+ * See `.ai/docs/security/OPS-PLAYBOOK.md` Procedure 11 for the env-var
+ * check + rotation procedure.
+ */
 async function getGoogleTokens(code: string, redirectUri: string) {
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      code,
-      client_id: ENV.googleClientId,
-      client_secret: ENV.googleClientSecret,
-      redirect_uri: redirectUri,
-      grant_type: "authorization_code",
-    }),
-  });
-  if (!res.ok) throw new Error(`Google token exchange failed: ${res.status}`);
-  return res.json() as Promise<{ access_token: string; id_token: string }>;
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort("timeout"), 10_000);
+  try {
+    const res = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: ENV.googleClientId,
+        client_secret: ENV.googleClientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      // Capture the full response body so we know exactly what Google said.
+      // Google returns JSON like {"error":"invalid_client","error_description":"..."}.
+      const body = await res.text().catch(() => "(unreadable body)");
+      throw new Error(
+        `Google token exchange failed: status=${res.status} redirectUri=${redirectUri} body=${body.slice(0, 500)}`
+      );
+    }
+    return res.json() as Promise<{ access_token: string; id_token: string }>;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function getGoogleUserInfo(accessToken: string) {
-  const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!res.ok) throw new Error(`Google userinfo failed: ${res.status}`);
-  return res.json() as Promise<{ id: string; email: string; name: string }>;
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort("timeout"), 10_000);
+  try {
+    const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "(unreadable body)");
+      throw new Error(`Google userinfo failed: status=${res.status} body=${body.slice(0, 300)}`);
+    }
+    return res.json() as Promise<{ id: string; email: string; name: string }>;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // ─── Apple OAuth ─────────────────────────────────────────────────────────────
@@ -213,8 +257,22 @@ export function registerOAuthRoutes(app: Express) {
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       res.redirect(302, returnTo ?? "/");
     } catch (error) {
-      console.error("[OAuth] Google callback failed", error);
-      res.redirect("/?error=auth_failed");
+      // Log the full error chain so Railway logs surface what Google said.
+      // Common cases (see getGoogleTokens jsdoc): stale GOOGLE_CLIENT_SECRET,
+      // redirect_uri mismatch, code already used.
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[OAuth] Google callback failed:", message);
+      // Pass a coarse reason hint to the client so we can show something
+      // more useful than a generic error. Client UI doesn't render this
+      // today; the URL param is for grep + future UX work.
+      const reason = /token exchange failed: status=401/i.test(message)
+        ? "google_401"
+        : /token exchange failed: status=400/i.test(message)
+        ? "google_400"
+        : /timeout/i.test(message)
+        ? "timeout"
+        : "callback_error";
+      res.redirect(`/?error=auth_failed&reason=${reason}`);
     }
   });
 
