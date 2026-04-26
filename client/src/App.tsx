@@ -73,7 +73,7 @@ const Seasons = lazy(() => import("./pages/Seasons"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
-const Economy = lazy(() => import("./pages/Economy"));
+
 const Bionomics = lazy(() => import("./pages/Bionomics"));
 const BionomicsEdit = lazy(() => import("./pages/BionomicsEdit"));
 const HealTheLand = lazy(() => import("./pages/HealTheLand"));
@@ -81,7 +81,7 @@ const HymnBook = lazy(() => import("./pages/HymnBook"));
 const HymnPlayer = lazy(() => import("./pages/HymnPlayer"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
-const LocalFoodEconomy = lazy(() => import("./pages/LocalFoodEconomy"));
+
 const ToolsLibrary = lazy(() => import("./pages/ToolsLibrary"));
 const ToolDetail = lazy(() => import("./pages/ToolDetail"));
 const ToolSubmit = lazy(() => import("./pages/ToolSubmit"));
