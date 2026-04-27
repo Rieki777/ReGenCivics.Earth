@@ -43,6 +43,7 @@ import { registerPresenceRoutes } from "../routes/presence";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
 import { registerImageOptimization } from "../routes/global";
+import { registerSseRoutes } from "../routes/sse";
 import { registerOgRoutes } from "../routes/og";
 import { registerEmbedRoutes } from "../routes/embed";
 import { registerHyphaWebhookRoutes } from "../lib/hypha-bridge/webhook-receiver";
@@ -689,6 +690,10 @@ async function startServer() {
   registerImageOptimization(app);
   registerOgRoutes(app);
   registerEmbedRoutes(app);
+  // Server-Sent Events: per-user push channel for invalidation events.
+  // Replaces the high-frequency polling loop in NotificationBell, the
+  // navigation unread badge, and LiveActivityFeed.
+  registerSseRoutes(app);
   // Cache-control for slow-changing tRPC GET endpoints (public, read-only data)
   const CACHED_TRPC_PREFIXES: Array<{ prefix: string; maxAge: number }> = [
     { prefix: "/api/trpc/forum.listCategories", maxAge: 300 },      // 5 min, forum categories change rarely

@@ -1814,8 +1814,21 @@ export async function createUserNotification(data: InsertUserNotification): Prom
   }
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const result = await db.insert(userNotifications).values(data);
+
+  // Push an SSE invalidate event so the recipient's UI updates without
+  // waiting for the polling fallback. Lazy import to avoid pulling the
+  // SSE broadcaster into test contexts.
+  if (data.userId) {
+    import('./_core/sse')
+      .then(({ pushToUser }) => pushToUser(data.userId as number, {
+        type: 'invalidate',
+        keys: ['notifications', 'unreadCount'],
+      }))
+      .catch(() => {/* best-effort; broadcaster failure shouldn't block */});
+  }
+
   return result[0].insertId;
 }
 

@@ -52,6 +52,7 @@ import { usePageVisitTracker } from "./hooks/usePageVisitTracker";
 import { captureReferral } from "./components/SharePrompt";
 import { useFocusOnNavigation } from "./hooks/useFocusOnNavigation";
 import { useAuth } from "./_core/hooks/useAuth";
+import { useUserStream } from "./hooks/useUserStream";
 import { useEffect, useState } from "react";
 import { useLocation as useWouterLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -73,7 +74,7 @@ const Seasons = lazy(() => import("./pages/Seasons"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
-
+const Economy = lazy(() => import("./pages/Economy"));
 const Bionomics = lazy(() => import("./pages/Bionomics"));
 const BionomicsEdit = lazy(() => import("./pages/BionomicsEdit"));
 const HealTheLand = lazy(() => import("./pages/HealTheLand"));
@@ -81,7 +82,7 @@ const HymnBook = lazy(() => import("./pages/HymnBook"));
 const HymnPlayer = lazy(() => import("./pages/HymnPlayer"));
 const Proposals = lazy(() => import("./pages/Proposals"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
-
+const LocalFoodEconomy = lazy(() => import("./pages/LocalFoodEconomy"));
 const ToolsLibrary = lazy(() => import("./pages/ToolsLibrary"));
 const ToolDetail = lazy(() => import("./pages/ToolDetail"));
 const ToolSubmit = lazy(() => import("./pages/ToolSubmit"));
@@ -351,6 +352,11 @@ function ReturnToHandler() {
 function AppInner() {
   useGlobalScrollReveal();
   useFocusOnNavigation();
+  // Open the SSE stream once the user is authed. Replaces the
+  // high-frequency polling loop in NotificationBell + activity feeds;
+  // see server/_core/sse.ts for the broadcaster.
+  const { isAuthenticated } = useAuth();
+  useUserStream(isAuthenticated);
   return null;
 }
 
