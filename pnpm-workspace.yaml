@@ -1,0 +1,5 @@
+packages:
+  # apps/gov stays out of the pnpm workspace because it uses npm
+  # (apps/gov/package-lock.json + its own Railway nixpacks `npm install`).
+  # Only include subdirs that should resolve via the root pnpm install.
+  - "packages/*"
