@@ -6,6 +6,23 @@ import * as schemaRelations from "../drizzle/relations";
 import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
+/**
+ * mysql2 INSERT/UPDATE/DELETE result shape. drizzle wraps it but the
+ * runtime object is the same. Centralizing the type lets us drop most
+ * `(result as any).insertId` / `.affectedRows` casts.
+ */
+type MysqlMutationResult = {
+  insertId: number;
+  affectedRows: number;
+  warningStatus?: number;
+};
+function asMutationResult(r: unknown): MysqlMutationResult {
+  // drizzle returns [ResultSetHeader, FieldPacket[]] for some shapes and
+  // a single ResultSetHeader for others. Normalise.
+  if (Array.isArray(r)) return r[0] as MysqlMutationResult;
+  return r as MysqlMutationResult;
+}
+
 let _db: ReturnType<typeof drizzle> | null = null;
 
 // Lazily create the drizzle instance with a connection pool.
@@ -300,7 +317,7 @@ export async function deleteStaleApplicationDrafts(olderThanDays = 30): Promise<
   const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
   const result = await db.delete(applications)
     .where(and(eq(applications.status, "draft"), lt(applications.updatedAt, cutoff)));
-  return (result[0] as any).affectedRows ?? 0;
+  return asMutationResult(result).affectedRows ?? 0;
 }
 
 export async function getApplicationsByStatus(status: string) {
@@ -1454,7 +1471,7 @@ export async function deleteCampaignImage(imageId: number, userId: number): Prom
       eq(campaignImages.id, imageId),
       eq(campaignImages.uploadedByUserId, userId)
     ));
-  return (result[0] as any).affectedRows > 0;
+  return asMutationResult(result).affectedRows > 0;
 }
 
 export async function setCampaignCoverImage(campaignId: number, imageId: number): Promise<void> {
@@ -2162,7 +2179,7 @@ export async function createForumCategory(data: { name: string; slug: string; de
     imageUrl: data.imageUrl ?? null,
     sortOrder: data.sortOrder ?? 0,
   });
-  return (result as any).insertId as number;
+  return asMutationResult(result).insertId;
 }
 
 export async function updateForumCategory(id: number, data: { name?: string; description?: string; icon?: string; color?: string; imageUrl?: string; sortOrder?: number }) {
@@ -2947,7 +2964,7 @@ export async function ensureEntityForumThread(
     lastReplyAt: new Date(),
     lastReplyBy: authorId,
   });
-  return (result as any).insertId ?? null;
+  return asMutationResult(result).insertId ?? null;
 }
 
 export async function getInvestorInquiryByUserId(userId: number) {
@@ -3117,7 +3134,7 @@ export async function addKnowledgeMapEntry(data: InsertKnowledgeMapEntry) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   const [result] = await db.insert(knowledgeMapEntries).values(data);
-  return (result as any).insertId as number;
+  return asMutationResult(result).insertId;
 }
 
 export async function approveKnowledgeMapEntry(id: number) {
@@ -3168,7 +3185,7 @@ export async function createQuestCompletion(data: InsertQuestCompletion): Promis
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const [result] = await db.insert(questCompletions).values(data);
-  return (result as any).insertId as number;
+  return asMutationResult(result).insertId;
 }
 
 export async function updateQuestCompletionNote(id: number, userId: number, note: string): Promise<void> {
@@ -3262,7 +3279,7 @@ export async function markEventAttendance(data: {
     markedByAdminId: data.markedByAdminId ?? null,
     tokensAwarded: 33,
   });
-  const insertId = (result as any).insertId;
+  const insertId = asMutationResult(result).insertId;
 
   // Award 33 $ReGen tokens, insert into ledger first
   const [ledgerResult] = await db.insert(regenTokenLedger).values({
@@ -3272,7 +3289,7 @@ export async function markEventAttendance(data: {
     eventId: data.eventId,
     notes: `Attended event #${data.eventId}`,
   });
-  const ledgerId = (ledgerResult as any).insertId;
+  const ledgerId = asMutationResult(ledgerResult).insertId;
 
   // Link ledger entry back to attendance record
   await db
@@ -3384,7 +3401,7 @@ export async function addTokenLedgerEntry(data: {
     questId: data.questId ?? null,
     notes: data.notes ?? null,
   });
-  return (result as any).insertId;
+  return asMutationResult(result).insertId;
 }
 
 /** Get a leaderboard of top $ReGen earners (sorted by total tokens descending). */
@@ -3440,7 +3457,7 @@ export async function createCommunityAgreement(data: {
     description: data.description,
     category: data.category || null,
   });
-  return (result as any).insertId as number;
+  return asMutationResult(result).insertId;
 }
 
 export async function toggleCommunityAgreementVote(userId: number, agreementId: number) {
