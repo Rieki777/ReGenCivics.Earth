@@ -834,7 +834,7 @@ async function processScheduledEmails() {
           to: item.recipientEmail,
           subject: item.subject,
           html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">${htmlBody}</div>`,
-          replyTo: process.env.EMAIL_REPLY_TO,
+          // No replyTo: replies route through /connect, not into an inbox.
         });
         await db.updateScheduledEmailStatus(item.id, 'sent', new Date());
         console.log(`[ScheduledEmail] Sent id=${item.id} to ${item.recipientEmail}`);

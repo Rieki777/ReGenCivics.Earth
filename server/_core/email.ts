@@ -56,6 +56,13 @@ export interface SendEmailParams {
   subject: string;
   html: string;
   from?: string;
+  /**
+   * @deprecated Reply-To is intentionally never set. We don't accept email
+   * replies; recipients are routed through the Connect form on the site.
+   * Kept on the type only so older call sites compile during cleanup; new
+   * code should not pass this. Will be removed once all call sites stop
+   * setting it.
+   */
   replyTo?: string;
   // Tracking metadata
   template?: string;
@@ -100,9 +107,25 @@ function getEmailFooter(): string {
       </div>
       
       <div style="background: #f0f7f0; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-        <p style="color: #1a472a; font-size: 13px; margin: 0; text-align: center;">
-          <strong>Questions or want to engage?</strong><br>
-          <span style="color: #4a7c59;">We don't respond to emails directly. Please join our community on WhatsApp or Discord for questions, discussions, and engagement!</span>
+        <p style="color: #1a472a; font-size: 13px; margin: 0 0 10px 0; text-align: center;">
+          <strong>Questions or want to engage?</strong>
+        </p>
+        <p style="color: #4a7c59; font-size: 13px; margin: 0 0 10px 0; text-align: center;">
+          We don't respond to emails directly. To reach us, fill out the
+          short form on our Connect page and we'll route it to the right
+          person.
+        </p>
+        <p style="text-align: center; margin: 0;">
+          <a href="https://regencivics.earth/connect?path=something_else" style="display: inline-block; background: #1a472a; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: bold;">
+            Open the Connect form
+          </a>
+        </p>
+        <p style="color: #4a7c59; font-size: 12px; margin: 12px 0 0 0; text-align: center;">
+          Or join us on
+          <a href="https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34" style="color: #25D366;">WhatsApp</a>
+          or
+          <a href="https://discord.gg/8aTzTxH3Qe" style="color: #5865F2;">Discord</a>
+          for ongoing conversation.
         </p>
       </div>
       
@@ -266,13 +289,15 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
       subject,
       html,
       from = SENDER_NOREPLY,
-      replyTo,
       template,
       inquiryType,
       inquiryId,
       recipientName,
       emailLogId
     } = params;
+    // params.replyTo is intentionally ignored. All replies route through
+    // the Connect form on the site instead of into a personal inbox.
+    void params.replyTo;
     
     // Wrap content with branded template
     let processedHtml = wrapWithBrandedTemplate(html);
@@ -288,7 +313,9 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
       to: Array.isArray(to) ? to : [to],
       subject,
       html: processedHtml,
-      // Don't set replyTo since we don't respond to emails
+      // Reply-To is deliberately omitted. Replies route through the
+      // Connect form (https://regencivics.earth/connect) so they land
+      // in admin as form submissions, not as inbox emails.
     });
     
     if (response.error) {
@@ -695,7 +722,7 @@ export const emailTemplates = {
             <p style="color: #5c3a00; font-size: 14px; margin: 0 0 16px 0;">Non-binding. Takes 2 minutes. Ensures you're first in line when the fund opens.</p>
             <a href="https://regencivics.earth/loi" style="display: inline-block; background: #8a5a00; color: #ffd700; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 2px solid #ffd700;">Sign the LOI</a>
           </div>
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">If you have questions, concerns, or simply want to talk through the opportunity, reply to this email or <a href="https://calendly.com/rieki-cordon/30min" style="color: #4a7c59;">book a call here</a>.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">If you have questions, concerns, or simply want to talk through the opportunity, <a href="https://regencivics.earth/connect?path=finance" style="color: #4a7c59;">drop us a note via the Connect form</a> or <a href="https://calendly.com/rieki-cordon/30min" style="color: #4a7c59;">book a call here</a>.</p>
           <p style="color: #333; line-height: 1.7; font-size: 15px;">The ReGenerative Renaissance is underway  -  and your capital can help it accelerate.</p>
         </div>
         <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">

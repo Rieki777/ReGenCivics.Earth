@@ -347,8 +347,8 @@ export const emailRouter = router({
         to: input.to,
         subject: emailContent.subject,
         html: emailContent.html,
-        replyTo: "rieki@pm.me",
         emailLogId: logId,
+        // No replyTo: replies route through /connect, not to an inbox.
       });
 
       if (!emailResult.id) {
@@ -403,7 +403,7 @@ export const emailRouter = router({
         },
         request_info: {
           subject: `Additional Information Needed - ReGen Civics`,
-          body: `Hi ${input.recipientName},\n\nThank you for your inquiry with ReGen Civics!\n\nTo help us better understand your situation and how we might work together, could you please provide some additional information?\n\n[Please specify what information you need]\n\nFeel free to reply to this email or schedule a call to discuss: ${calendlyLink}\n\nLooking forward to learning more!\n\nWarm regards,\nThe ReGen Civics Team`,
+          body: `Hi ${input.recipientName},\n\nThank you for your inquiry with ReGen Civics!\n\nTo help us better understand your situation and how we might work together, could you please provide some additional information?\n\n[Please specify what information you need]\n\nThe quickest way to get back to us is the form on our Connect page: https://regencivics.earth/connect?path=something_else\n\nOr book a call to discuss: ${calendlyLink}\n\nLooking forward to learning more!\n\nWarm regards,\nThe ReGen Civics Team`,
         },
         schedule_call: {
           subject: `Let's Connect - ReGen Civics`,
