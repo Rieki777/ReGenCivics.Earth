@@ -85,7 +85,10 @@ export default tseslint.config(
       ],
     },
   },
-  // Server (Node) TS.
+  // Server (Node) TS. Loads the type-aware program so we can run rules
+  // that need type info (e.g. no-floating-promises). Type-aware lint is
+  // slower than syntactic lint, so it stays scoped to server/ where
+  // unhandled-promise bugs are the most security-relevant.
   {
     files: ["server/**/*.{ts,tsx}"],
     languageOptions: {
@@ -93,6 +96,9 @@ export default tseslint.config(
       globals: {
         ...globals.node,
         ...globals.es2021,
+      },
+      parserOptions: {
+        projectService: true,
       },
     },
     rules: {
@@ -103,6 +109,13 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/ban-ts-comment": "warn",
       "no-debugger": "error",
+      // Floating promises silently swallow async errors. Warn first so we
+      // can land the rule without a blocking sweep, tighten to "error"
+      // once the backlog clears.
+      "@typescript-eslint/no-floating-promises": [
+        "warn",
+        { ignoreVoid: true, ignoreIIFE: true },
+      ],
     },
   },
   // Tests: relax everything that tends to trip in vitest/jsdom.

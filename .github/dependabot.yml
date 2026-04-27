@@ -1,0 +1,67 @@
+# Dependabot config -- weekly automated dependency updates.
+#
+# Strategy:
+#   - npm root + apps/gov + workspace dirs all get a weekly check.
+#   - Security updates land as their own PR group with a `security` label.
+#   - Minor + patch updates batch into a single PR per ecosystem to cut
+#     review noise. Major bumps come as individual PRs (review case-by-case).
+#   - Auto-merge is NOT configured here; reviewer judgement still applies.
+#
+# Adjust the day of week if PR volume becomes heavy on Monday mornings.
+
+version: 2
+updates:
+  # Root pnpm workspace (the main app)
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "Pacific/Honolulu"
+    open-pull-requests-limit: 5
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+    labels: ["dependencies"]
+    commit-message:
+      prefix: chore
+      include: scope
+
+  # apps/gov (Next.js + Loomio bridge)
+  - package-ecosystem: npm
+    directory: "/apps/gov"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "Pacific/Honolulu"
+    open-pull-requests-limit: 3
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+    labels: ["dependencies", "apps/gov"]
+    commit-message:
+      prefix: chore(gov)
+      include: scope
+
+  # GitHub Actions versions
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "Pacific/Honolulu"
+    open-pull-requests-limit: 3
+    labels: ["dependencies", "github-actions"]
+    commit-message:
+      prefix: chore(ci)

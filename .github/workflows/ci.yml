@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -27,6 +27,12 @@ jobs:
 
       - name: TypeScript check
         run: pnpm exec tsc --noEmit
+
+      # Non-blocking CVE check. Reports findings but does not fail the
+      # build, since transitive deps occasionally land moderate CVEs we
+      # don't control. Treat as a watchdog signal, follow up out-of-band.
+      - name: Dependency audit (advisory)
+        run: pnpm audit --audit-level moderate || true
 
       - name: Unit tests
         run: pnpm test
