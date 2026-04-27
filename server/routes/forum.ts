@@ -248,16 +248,13 @@ export const forumRouter = router({
     .input(z.object({ postId: z.number() }))
     .query(async ({ input }) => {
       const replies = await db.listForumReplies(input.postId);
-      // Batch-fetch all authors in one query (eliminates N+1)
+      // Batch-fetch authors + their player profiles each as a single query
+      // (was N+1 across getPlayerProfileByUserId before).
       const authorIds = replies.map(r => r.authorId);
-      const [authorsMap, playerProfiles] = await Promise.all([
+      const [authorsMap, profilesMap] = await Promise.all([
         db.getUsersByIds(authorIds),
-        Promise.all(Array.from(new Set(authorIds)).map(id => db.getPlayerProfileByUserId(id).catch(() => null))),
+        db.getPlayerProfilesByUserIds(authorIds),
       ]);
-      const uniqueAuthorIds = Array.from(new Set(authorIds));
-      const profilesMap = Object.fromEntries(
-        uniqueAuthorIds.map((id, i) => [id, playerProfiles[i]])
-      );
       const enriched = replies.map((reply) => {
         const author = authorsMap[reply.authorId];
         const authorProfile = profilesMap[reply.authorId];

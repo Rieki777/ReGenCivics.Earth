@@ -581,7 +581,10 @@ export const playerProfiles = mysqlTable("player_profiles", {
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  // Used by leaderboard ordering and voice-weight lookups.
+  contributionScoreIdx: index("player_profiles_contributionScore_idx").on(t.contributionScore),
+}));
 
 export type PlayerProfile = typeof playerProfiles.$inferSelect;
 export type InsertPlayerProfile = typeof playerProfiles.$inferInsert;
@@ -1379,8 +1382,12 @@ export const forumPosts = mysqlTable("forumPosts", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
-  categoryIdIdx: index("forumPosts_categoryId_idx").on(t.categoryId),
+  // Compound index used by the listing query (replaces the single-column
+  // categoryId index). Order matches the WHERE / ORDER BY: filter by
+  // category, then sort pinned-first by lastReply.
+  listingIdx: index("forumPosts_listing_idx").on(t.categoryId, t.isPinned, t.lastReplyAt),
   authorIdIdx: index("forumPosts_authorId_idx").on(t.authorId),
+  bioregionIdIdx: index("forumPosts_bioregionId_idx").on(t.bioregionId),
 }));
 export type ForumPost = typeof forumPosts.$inferSelect;
 

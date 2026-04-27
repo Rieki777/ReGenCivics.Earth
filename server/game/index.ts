@@ -61,13 +61,28 @@ export async function invalidateGameVariable(key: string) {
 
 // ─── Current Season ─────────────────────────────────────────────────────────
 
+const SEASON_CACHE_KEY = 'game:current-season';
+const SEASON_CACHE_TTL = 3600; // 1 hour, manually invalidate on season transition
+
 export async function getCurrentSeason(): Promise<{ id: number; name: string; slug: string } | null> {
+  const cached = await cacheGet<{ id: number; name: string; slug: string } | null>(SEASON_CACHE_KEY);
+  if (cached !== null && cached !== undefined) return cached;
+
   const db = await getDb();
   if (!db) return null;
   const rows = await db.execute(sql`SELECT id, name, slug FROM game_seasons WHERE status = 'active' LIMIT 1`);
   const row = (rows as any)?.[0]?.[0];
-  if (!row) return null;
-  return { id: row.id, name: row.name, slug: row.slug };
+  const result = row ? { id: row.id, name: row.name, slug: row.slug } : null;
+  await cacheSet(SEASON_CACHE_KEY, result, SEASON_CACHE_TTL);
+  return result;
+}
+
+/**
+ * Invalidate the active-season cache. Call this from any admin path that
+ * promotes a new season to status='active'.
+ */
+export async function invalidateCurrentSeason() {
+  await cacheDel(SEASON_CACHE_KEY);
 }
 
 // ─── Score Events ───────────────────────────────────────────────────────────

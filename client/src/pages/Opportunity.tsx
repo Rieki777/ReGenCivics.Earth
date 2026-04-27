@@ -18,7 +18,17 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useThrottledScroll } from "@/hooks/useThrottledScroll";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useCountUp } from "@/hooks/useCountUp";
-import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+// Charts are lazy-loaded so recharts (~150KB) only ships when a section
+// expands. See client/src/pages/OpportunityCharts.tsx.
+const AllocationDonut = lazy(() =>
+  import("./OpportunityCharts").then((m) => ({ default: m.AllocationDonut })),
+);
+const GPGovernancePie = lazy(() =>
+  import("./OpportunityCharts").then((m) => ({ default: m.GPGovernancePie })),
+);
+const TargetIRRBars = lazy(() =>
+  import("./OpportunityCharts").then((m) => ({ default: m.TargetIRRBars })),
+);
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, 
@@ -1331,24 +1341,10 @@ export default function Opportunity() {
                 <p className="text-xs text-white/60 mt-2 text-center">Three-tier portfolio strategy balancing stability, growth, and innovation</p>
               </div>
 
-              {/* Animated allocation donut chart */}
-              <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 bg-white/5 rounded-xl p-5 border border-white/10">
-                <PieChart width={200} height={200}>
-                  <Pie data={allocationData} cx={100} cy={100} innerRadius={60} outerRadius={90} dataKey="value" isAnimationActive>
-                    {allocationData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip formatter={(value) => `${value}%`} />
-                </PieChart>
-                <div className="space-y-2 flex-1">
-                  {allocationData.map((d, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: d.color }} />
-                      <span className="text-white/70">{d.name}</span>
-                      <span className="ml-auto font-bold" style={{ color: d.color }}>{d.value}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Animated allocation donut chart (lazy-loaded recharts) */}
+              <Suspense fallback={<div className="h-[200px]" />}>
+                <AllocationDonut data={allocationData} />
+              </Suspense>
 
               <h3 className="text-base font-bold text-[#7dd87d] mb-3">Three-Tier Portfolio Strategy</h3>
 
@@ -1701,25 +1697,9 @@ export default function Opportunity() {
                 <h4 className="font-bold text-white text-sm mb-3">Who is the "GP"?</h4>
                 <p className="text-sm mb-3">The General Partner is not a single controlling entity. It's the collective governance system where:</p>
                 <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <PieChart width={160} height={160}>
-                    <Pie
-                      data={[
-                        { name: 'Council of Domain Experts', value: 40, color: '#7dd87d' },
-                        { name: 'Land Projects', value: 20, color: '#9de89d' },
-                        { name: 'Alliance Organizations', value: 20, color: '#bbf7d0' },
-                        { name: 'Investors (YOU)', value: 20, color: '#ffd700' },
-                      ]}
-                      cx={80} cy={80} innerRadius={45} outerRadius={75} dataKey="value" isAnimationActive
-                    >
-                      {[
-                        { name: 'Council of Domain Experts', value: 40, color: '#7dd87d' },
-                        { name: 'Land Projects', value: 20, color: '#9de89d' },
-                        { name: 'Alliance Organizations', value: 20, color: '#bbf7d0' },
-                        { name: 'Investors (YOU)', value: 20, color: '#ffd700' },
-                      ].map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip formatter={(value) => `${value}%`} />
-                  </PieChart>
+                  <Suspense fallback={<div className="w-[160px] h-[160px]" />}>
+                    <GPGovernancePie />
+                  </Suspense>
                   <div className="space-y-1.5 flex-1 text-xs">
                     {[
                       { pct: '40%', label: 'Council of Domain Experts', color: '#7dd87d' },
@@ -1824,33 +1804,12 @@ export default function Opportunity() {
                   </tbody>
                 </table>
               </div>
-              {/* Comparable Funds Bar Chart */}
+              {/* Comparable Funds Bar Chart (lazy-loaded recharts) */}
               <div className="mt-5">
                 <h3 className="text-base font-bold text-[#7dd87d] mb-3">Target IRR vs Comparable Funds</h3>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart
-                    data={[
-                      { name: 'PE Sustainable\nReal Assets', irr: 14, color: '#9de89d' },
-                      { name: 'Venture Capital', irr: 18, color: '#9de89d' },
-                      { name: 'ReGen Civics\n(Target)', irr: 15, color: '#ffd700' },
-                    ]}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} unit="%" />
-                    <Tooltip formatter={(value) => `${value}% IRR`} />
-                    <Bar dataKey="irr" radius={[4, 4, 0, 0]}>
-                      {[
-                        { color: '#9de89d' },
-                        { color: '#9de89d' },
-                        { color: '#ffd700' },
-                      ].map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <Suspense fallback={<div className="h-[220px]" />}>
+                  <TargetIRRBars />
+                </Suspense>
                 <p className="text-[10px] text-white/55 text-center mt-1">Sources: Industry benchmarks. ReGen Civics target IRR is projected, not guaranteed.</p>
               </div>
             </CollapsibleSection>

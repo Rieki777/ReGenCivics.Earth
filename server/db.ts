@@ -1,6 +1,8 @@
 import { and, desc, eq, gt, inArray, isNotNull, isNull, like, lt, ne, not, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
+import * as schemaTables from "../drizzle/schema";
+import * as schemaRelations from "../drizzle/relations";
 import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -16,7 +18,10 @@ export async function getDb() {
         waitForConnections: true,
         queueLimit: 0,
       });
-      _db = drizzle(pool as any);
+      // Pass tables + relations so the relational query API
+      // (`db.query.<table>.findMany({ with: ... })`) is available.
+      const fullSchema = { ...schemaTables, ...schemaRelations };
+      _db = drizzle(pool as any, { schema: fullSchema, mode: 'default' });
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -659,9 +664,25 @@ export async function getPlayerProfileById(id: number) {
 export async function getPlayerProfileByUserId(userId: number) {
   const db = await getDb();
   if (!db) return undefined;
-  
+
   const result = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Batch lookup of player profiles by userId. Returns a Record keyed by
+ * userId so callers can do `map[userId]` without a second pass. Used by
+ * forum listing to avoid the per-author N+1 select.
+ */
+export async function getPlayerProfilesByUserIds(
+  userIds: number[],
+): Promise<Record<number, typeof playerProfiles.$inferSelect>> {
+  if (userIds.length === 0) return {};
+  const db = await getDb();
+  if (!db) return {};
+  const unique = Array.from(new Set(userIds));
+  const rows = await db.select().from(playerProfiles).where(inArray(playerProfiles.userId, unique));
+  return Object.fromEntries(rows.map((p) => [p.userId, p]));
 }
 
 export async function getPlayerProfileByBaseAccount(baseAccountName: string) {
@@ -1919,28 +1940,43 @@ export async function getLetterOfIntentStats() {
 // Public Stats
 // ============================================================================
 
-export async function getPublicStats(): Promise<{
+type PublicStats = {
   applications: number;
   members: number;
   landProjects: number;
   investorsCommitted: number;
-}> {
+};
+
+const PUBLIC_STATS_CACHE_KEY = 'stats:public';
+const PUBLIC_STATS_TTL = 3600; // 1 hour, churn is low and these counts are
+                                // never load-bearing on a transactional path.
+
+export async function getPublicStats(): Promise<PublicStats> {
+  // Lazy import to avoid a circular dep with server/cache.ts.
+  const { cacheGet, cacheSet } = await import('./cache');
+  const cached = await cacheGet<PublicStats>(PUBLIC_STATS_CACHE_KEY);
+  if (cached) return cached;
+
   const db = await getDb();
   if (!db) return { applications: 0, members: 0, landProjects: 0, investorsCommitted: 0 };
 
-  const [appsRows, usersRows, loisRows, projectsRows] = await Promise.all([
-    db.select().from(applications),
-    db.select().from(users),
-    db.select().from(letterOfIntent).where(eq(letterOfIntent.status, 'confirmed')),
-    db.select().from(crowdPoolingProjects).where(eq(crowdPoolingProjects.status, 'active')),
+  // COUNT(*) on each table beats SELECT *; the previous implementation
+  // streamed every row across the wire and counted in JS.
+  const [appsCount, usersCount, loisCount, projectsCount] = await Promise.all([
+    db.select({ c: sql<number>`COUNT(*)` }).from(applications),
+    db.select({ c: sql<number>`COUNT(*)` }).from(users),
+    db.select({ c: sql<number>`COUNT(*)` }).from(letterOfIntent).where(eq(letterOfIntent.status, 'confirmed')),
+    db.select({ c: sql<number>`COUNT(*)` }).from(crowdPoolingProjects).where(eq(crowdPoolingProjects.status, 'active')),
   ]);
 
-  return {
-    applications: appsRows.length,
-    members: usersRows.length,
-    landProjects: projectsRows.length,
-    investorsCommitted: loisRows.length,
+  const result: PublicStats = {
+    applications: Number(appsCount[0]?.c ?? 0),
+    members: Number(usersCount[0]?.c ?? 0),
+    landProjects: Number(projectsCount[0]?.c ?? 0),
+    investorsCommitted: Number(loisCount[0]?.c ?? 0),
   };
+  await cacheSet(PUBLIC_STATS_CACHE_KEY, result, PUBLIC_STATS_TTL);
+  return result;
 }
 
 // ============================================================================
