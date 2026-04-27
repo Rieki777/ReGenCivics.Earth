@@ -25,6 +25,9 @@ import {
   users,
 } from "../../drizzle/schema";
 import { bridgeToHypha } from "../lib/hypha-bridge";
+import { logger } from "../_core/logger";
+
+const log = logger("loomio-webhook");
 
 const LOOMIO_HMAC_SECRET = process.env.LOOMIO_WEBHOOK_HMAC_SECRET ?? "";
 
@@ -191,9 +194,9 @@ async function handleLoomioEvent(event: LoomioEvent): Promise<{ ok: boolean; not
               .set({ hyphaBridgeId: bridgeRows[0].id } as any)
               .where(eq(forumPostDecisions.id, d.id));
           }
-          console.log("[loomio] auto-created bridge for ratified decision", { decisionId: d.id, bridgeKey: bridgeResult.bridgeKey });
+          log.info("auto-created bridge for ratified decision", { decisionId: d.id, bridgeKey: bridgeResult.bridgeKey });
         } catch (err) {
-          console.error("[loomio] failed to auto-create bridge for ratified decision", err);
+          log.error("failed to auto-create bridge for ratified decision", err);
         }
       }
 
@@ -235,7 +238,7 @@ async function handleLoomioEvent(event: LoomioEvent): Promise<{ ok: boolean; not
         .where(eq(forumPostDecisions.loomioDiscussionId, event.discussionKey))
         .limit(1);
       if (decisionRows.length === 0) {
-        console.log("[loomio] new_comment: no matching thread for discussion", event.discussionKey);
+        log.info("new_comment: no matching thread for discussion", { discussionKey: event.discussionKey });
         return { ok: true, note: "no matching thread" };
       }
       const threadId = decisionRows[0].forumPostId;
@@ -260,7 +263,7 @@ async function handleLoomioEvent(event: LoomioEvent): Promise<{ ok: boolean; not
         } as any);
         return { ok: true };
       } catch (err) {
-        console.error("[loomio] new_comment mirror insert failed", err);
+        log.error("new_comment mirror insert failed", err);
         return { ok: false, note: "insert failed" };
       }
     }
@@ -323,7 +326,7 @@ export async function sendPromotionToLoomio(promotionRequestId: number): Promise
   const apiUrl = process.env.LOOMIO_API_URL;
   const apiKey = process.env.LOOMIO_API_KEY;
   if (!apiUrl || !apiKey) {
-    console.warn("[loomio] LOOMIO_API_URL or LOOMIO_API_KEY missing, skipping send");
+    log.warn("LOOMIO_API_URL or LOOMIO_API_KEY missing, skipping send");
     return { ok: false };
   }
 
@@ -357,7 +360,7 @@ export async function sendPromotionToLoomio(promotionRequestId: number): Promise
     });
 
     if (!discussionResp.ok) {
-      console.error("[loomio] discussion create failed", discussionResp.status, await discussionResp.text());
+      log.error("discussion create failed", undefined, { status: discussionResp.status, body: await discussionResp.text() });
       return { ok: false };
     }
     const discussion = await discussionResp.json() as any;
@@ -382,15 +385,15 @@ export async function sendPromotionToLoomio(promotionRequestId: number): Promise
     });
 
     if (!pollResp.ok) {
-      console.error("[loomio] poll create failed", pollResp.status, await pollResp.text());
+      log.error("poll create failed", undefined, { status: pollResp.status, body: await pollResp.text() });
       return { ok: false };
     }
     const poll = await pollResp.json() as any;
     const pollKey = poll?.polls?.[0]?.key ?? poll?.key;
-    console.log("[loomio] promotion sent", { id: promotionRequestId, discussionKey, pollKey });
+    log.info("promotion sent", { id: promotionRequestId, discussionKey, pollKey });
     return { ok: true, loomioPollKey: pollKey };
   } catch (err: any) {
-    console.error("[loomio] sendPromotionToLoomio failed", err);
+    log.error("sendPromotionToLoomio failed", err);
     return { ok: false };
   }
 }
@@ -490,7 +493,7 @@ export function registerLoomioWebhookRoutes(app: import("express").Express) {
     const sig = req.header("x-loomio-signature") ?? req.header("X-Loomio-Signature");
     const rawBody = JSON.stringify(req.body ?? {});
     if (!verifyLoomioSignature(rawBody, sig)) {
-      console.warn("[loomio] signature verification failed");
+      log.warn("signature verification failed");
       return res.status(401).json({ error: "invalid signature" });
     }
     try {
@@ -498,7 +501,7 @@ export function registerLoomioWebhookRoutes(app: import("express").Express) {
       const result = await handleLoomioEvent(event);
       return res.json(result);
     } catch (err: any) {
-      console.error("[loomio] handler error", err);
+      log.error("handler error", err);
       return res.status(500).json({ error: err.message });
     }
   });

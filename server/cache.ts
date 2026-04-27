@@ -5,6 +5,9 @@
  */
 
 import { createClient, RedisClientType } from 'redis';
+import { logger } from './_core/logger';
+
+const log = logger('cache');
 
 let redisClient: RedisClientType | null = null;
 let isConnected = false;
@@ -14,14 +17,14 @@ let isConnected = false;
  */
 export async function initializeCache(): Promise<void> {
   if (isConnected) {
-    console.log('[Cache] Redis already connected');
+    log.debug('Redis already connected');
     return;
   }
 
   // Check if Redis is available (optional feature)
   const redisUrl = process.env.REDIS_URL;
   if (!redisUrl) {
-    console.log('[Cache] Redis not configured, caching disabled');
+    log.info('Redis not configured, caching disabled');
     return;
   }
 
@@ -31,7 +34,7 @@ export async function initializeCache(): Promise<void> {
       socket: {
         reconnectStrategy: (retries: number) => {
           if (retries > 10) {
-            console.error('[Cache] Redis reconnection failed after 10 attempts');
+            log.error('Redis reconnection failed after 10 attempts');
             return new Error('Redis max retries exceeded');
           }
           return retries * 100;
@@ -40,17 +43,17 @@ export async function initializeCache(): Promise<void> {
     });
 
     redisClient.on('error', (error: Error) => {
-      console.error('[Cache] Redis error:', error);
+      log.error('Redis error', error);
     });
 
     redisClient.on('connect', () => {
-      console.log('[Cache] Redis connected');
+      log.info('Redis connected');
       isConnected = true;
     });
 
     await redisClient.connect();
   } catch (error) {
-    console.warn('[Cache] Failed to initialize Redis:', error);
+    log.warn('Failed to initialize Redis', { error: String(error) });
     redisClient = null;
     isConnected = false;
   }
@@ -67,13 +70,13 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
   try {
     const value = await redisClient.get(key);
     if (value) {
-      console.log('[Cache] Hit:', key);
+      log.debug('hit', { key });
       return JSON.parse(value) as T;
     }
-    console.log('[Cache] Miss:', key);
+    log.debug('miss', { key });
     return null;
   } catch (error) {
-    console.error('[Cache] Get error:', error);
+    log.error('get error', error, { key });
     return null;
   }
 }
@@ -92,9 +95,9 @@ export async function cacheSet<T>(
 
   try {
     await redisClient.setEx(key, ttlSeconds, JSON.stringify(value));
-    console.log('[Cache] Set:', key, `(TTL: ${ttlSeconds}s)`);
+    log.debug('set', { key, ttlSeconds });
   } catch (error) {
-    console.error('[Cache] Set error:', error);
+    log.error('set error', error, { key });
   }
 }
 
@@ -108,9 +111,9 @@ export async function cacheDel(key: string): Promise<void> {
 
   try {
     await redisClient.del(key);
-    console.log('[Cache] Deleted:', key);
+    log.debug('deleted', { key });
   } catch (error) {
-    console.error('[Cache] Delete error:', error);
+    log.error('delete error', error, { key });
   }
 }
 
@@ -124,9 +127,9 @@ export async function cacheDelMany(keys: string[]): Promise<void> {
 
   try {
     await redisClient.del(keys);
-    console.log('[Cache] Deleted multiple keys:', keys.length);
+    log.debug('deleted multiple keys', { count: keys.length });
   } catch (error) {
-    console.error('[Cache] Delete many error:', error);
+    log.error('delete many error', error, { count: keys.length });
   }
 }
 
@@ -140,9 +143,9 @@ export async function cacheClear(): Promise<void> {
 
   try {
     await redisClient.flushDb();
-    console.log('[Cache] Cleared all cache');
+    log.warn('cleared all cache');
   } catch (error) {
-    console.error('[Cache] Clear error:', error);
+    log.error('clear error', error);
   }
 }
 
@@ -161,7 +164,7 @@ export async function cacheGetOrSet<T>(
   }
 
   // If not in cache, fetch from source
-  console.log('[Cache] Fetching:', key);
+  log.debug('fetching', { key });
   const value = await fetcher();
 
   // Store in cache
@@ -259,10 +262,10 @@ export async function shutdownCache(): Promise<void> {
   if (redisClient && isConnected) {
     try {
       await redisClient.quit();
-      console.log('[Cache] Redis connection closed');
+      log.info('Redis connection closed');
       isConnected = false;
     } catch (error) {
-      console.error('[Cache] Shutdown error:', error);
+      log.error('shutdown error', error);
     }
   }
 }

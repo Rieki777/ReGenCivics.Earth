@@ -21,6 +21,9 @@ import { stripTitleMarker } from "./prefill";
 import { checkCitizenshipTiers } from "../../routes/batchJobs";
 import type { QuestBridgeMetadata } from "./types";
 import { isWebhookFailureBlocked, recordWebhookFailure } from "../../_core/security";
+import { logger } from "../../_core/logger";
+
+const log = logger("hypha-alchemy");
 
 const ALCHEMY_SIGNING_KEY = process.env.ALCHEMY_HYPHA_WEBHOOK_SIGNING_KEY ?? "";
 const BASESCAN_TX_BASE = "https://basescan.org/tx/";
@@ -93,7 +96,7 @@ async function cascadeQuestPassed(
 
   const db = await getDb();
   if (!db) {
-    console.warn("[hypha-alchemy] cascadeQuestPassed: no db connection");
+    log.warn("cascadeQuestPassed: no db connection");
     return;
   }
 
@@ -102,7 +105,7 @@ async function cascadeQuestPassed(
     : null;
 
   if (!meta?.questId) {
-    console.warn("[hypha-alchemy] cascadeQuestPassed: missing questId in metadata", bridgeRow.bridgeKey);
+    log.warn("cascadeQuestPassed: missing questId in metadata", { bridgeKey: bridgeRow.bridgeKey });
     return;
   }
 
@@ -113,7 +116,7 @@ async function cascadeQuestPassed(
   const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1).catch(() => []);
   const email: string | undefined = userRows[0]?.email ?? undefined;
   if (!email) {
-    console.warn("[hypha-alchemy] cascadeQuestPassed: user not found", userId);
+    log.warn("cascadeQuestPassed: user not found", { userId });
     return;
   }
 
@@ -127,7 +130,7 @@ async function cascadeQuestPassed(
     reason: "quest_completion",
     questId,
     notes: `Quest "${questTitle}" approved on Hypha${txLink ? `. Tx: ${txLink}` : ""}`,
-  }).catch((err: any) => console.error("[hypha-alchemy] ledger entry failed", err));
+  }).catch((err: any) => log.error("ledger entry failed", err));
 
   // 3. Mark quest complete in questCompletions (ignore duplicate).
   await createQuestCompletion({
@@ -138,13 +141,13 @@ async function cascadeQuestPassed(
     visibility: "public",
   } as any).catch((err: any) => {
     if (err?.code !== "ER_DUP_ENTRY") {
-      console.error("[hypha-alchemy] createQuestCompletion failed", err);
+      log.error("createQuestCompletion failed", err);
     }
   });
 
   // 4. Re-evaluate citizenship tier for this player (full pass; no single-user variant yet).
   await checkCitizenshipTiers(db).catch((err: any) =>
-    console.error("[hypha-alchemy] checkCitizenshipTiers failed", err),
+    log.error("checkCitizenshipTiers failed", err),
   );
 
   // 5. Notify the player.
@@ -153,9 +156,9 @@ async function cascadeQuestPassed(
     type: "quest_complete",
     title: "Your proposal was approved!",
     message: `Your quest "${questTitle}" was approved on Hypha. You earned ${regenReward} $ReGen.${txLink ? ` View on Basescan: ${txLink}` : ""}`,
-  } as any).catch((err: any) => console.error("[hypha-alchemy] notification failed", err));
+  } as any).catch((err: any) => log.error("notification failed", err));
 
-  console.log(`[hypha-alchemy] cascade complete for bridge ${bridgeRow.bridgeKey} quest ${questId}`);
+  log.info(`cascade complete for bridge ${bridgeRow.bridgeKey} quest ${questId}`);
 }
 
 /** Handle one normalized Hypha event. Idempotent: re-processing the same event
@@ -215,18 +218,18 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
     if (event.type === "ProposalExecuted" || event.type === "Transfer") {
       if (bridgeSource === "quest_completion") {
         cascadeQuestPassed(bridgeRow, event.txHash).catch((err: any) =>
-          console.error("[hypha-alchemy] cascadeQuestPassed top-level error", err),
+          log.error("cascadeQuestPassed top-level error", err),
         );
       }
       if (bridgeSource === "redeem_tokens") {
         cascadeClaimPassed(bridgeRow, event).catch((err: any) =>
-          console.error("[hypha-alchemy] cascadeClaimPassed top-level error", err),
+          log.error("cascadeClaimPassed top-level error", err),
         );
       }
     }
     if (event.type === "ProposalRejected" && bridgeSource === "redeem_tokens") {
       cascadeClaimFailed(bridgeRow).catch((err: any) =>
-        console.error("[hypha-alchemy] cascadeClaimFailed top-level error", err),
+        log.error("cascadeClaimFailed top-level error", err),
       );
     }
   }
@@ -270,7 +273,7 @@ async function cascadeClaimPassed(bridgeRow: any, event: AlchemyHyphaEvent): Pro
     .limit(1)
     .catch(() => []);
   if (alreadyConfirmed.length > 0) {
-    console.log(`[hypha-alchemy] cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} already confirmed, skipping`);
+    log.info(`cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} already confirmed, skipping`);
     return;
   }
 
@@ -283,7 +286,7 @@ async function cascadeClaimPassed(bridgeRow: any, event: AlchemyHyphaEvent): Pro
   const requestedAmount = Number(payload?.metadata?.requestedAmount ?? bridgeRow.hyphaTokenAmount ?? 0);
   const actualAmount = event.amount ? Math.round(Number(event.amount)) : requestedAmount;
   if (!tokenType || !Number.isFinite(actualAmount) || actualAmount <= 0) {
-    console.warn(`[hypha-alchemy] cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} missing tokenType or amount, payload=`, payload, "event=", event);
+    log.warn(`cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} missing tokenType or amount`, { payload, event });
     return;
   }
 
@@ -306,7 +309,7 @@ async function cascadeClaimPassed(bridgeRow: any, event: AlchemyHyphaEvent): Pro
       ? `Claim of ${actualAmount} ${tokenType} confirmed on Base${event.txHash ? `. Tx: https://basescan.org/tx/${event.txHash}` : ""}`
       : `Claim reconciled: requested ${requestedAmount}, actual ${actualAmount} ${tokenType}${event.txHash ? `. Tx: https://basescan.org/tx/${event.txHash}` : ""}`,
   }).catch((err: any) =>
-    console.error("[hypha-alchemy] cascadeClaimPassed: creditPrivateTokens failed", err),
+    log.error("cascadeClaimPassed: creditPrivateTokens failed", err),
   );
 
   await createUserNotification({
@@ -314,9 +317,9 @@ async function cascadeClaimPassed(bridgeRow: any, event: AlchemyHyphaEvent): Pro
     type: "claim_complete",
     title: "Tokens claimed!",
     message: `${actualAmount} ${tokenType} moved to your wallet on Base.${event.txHash ? ` View on Basescan: https://basescan.org/tx/${event.txHash}` : ""}`,
-  } as any).catch((err: any) => console.error("[hypha-alchemy] claim notification failed", err));
+  } as any).catch((err: any) => log.error("claim notification failed", err));
 
-  console.log(`[hypha-alchemy] cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} confirmed for user ${bridgeRow.initiatorUserId} (requested ${requestedAmount}, actual ${actualAmount} ${tokenType}, delta ${delta})`);
+  log.info(`cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} confirmed for user ${bridgeRow.initiatorUserId} (requested ${requestedAmount}, actual ${actualAmount} ${tokenType}, delta ${delta})`);
 }
 
 /**
@@ -358,14 +361,14 @@ async function cascadeClaimFailed(bridgeRow: any): Promise<void> {
     sourceId: bridgeRow.id,
     sourceRef: `bridge:${bridgeRow.bridgeKey}`,
     description: `Hypha rejected the claim, ${requestedAmount} ${tokenType} refunded to your private balance`,
-  }).catch((err: any) => console.error("[hypha-alchemy] cascadeClaimFailed: refund failed", err));
+  }).catch((err: any) => log.error("cascadeClaimFailed: refund failed", err));
 
   await createUserNotification({
     userId: bridgeRow.initiatorUserId,
     type: "claim_failed",
     title: "Claim was not approved",
     message: `Your claim of ${requestedAmount} ${tokenType} was rejected on Hypha. Your private balance has been refunded.`,
-  } as any).catch((err: any) => console.error("[hypha-alchemy] claim_failed notification failed", err));
+  } as any).catch((err: any) => log.error("claim_failed notification failed", err));
 }
 
 export function registerHyphaWebhookRoutes(app: Express) {
@@ -378,7 +381,7 @@ export function registerHyphaWebhookRoutes(app: Express) {
     const rawBody = JSON.stringify(req.body ?? {});
     if (!verifyAlchemySignature(rawBody, sig)) {
       recordWebhookFailure(sourceIp, "hypha-alchemy");
-      console.warn("[hypha-alchemy] signature verification failed", { ip: sourceIp });
+      log.warn("signature verification failed", { ip: sourceIp });
       return res.status(401).json({ error: "invalid signature" });
     }
 
@@ -407,7 +410,7 @@ export function registerHyphaWebhookRoutes(app: Express) {
       }
       return res.json({ ok: true, processed: results.length, matched: results.filter((r) => r.matched).length });
     } catch (err: any) {
-      console.error("[hypha-alchemy] handler error", err);
+      log.error("handler error", err);
       return res.status(500).json({ error: err.message });
     }
   });

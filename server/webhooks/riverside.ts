@@ -21,7 +21,10 @@ import { eq } from "drizzle-orm";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { notifyRecordingReady } from "../_core/notify";
 import { timingSafeEqualStr } from "../_core/security";
+import { logger } from "../_core/logger";
 import * as db from "../db";
+
+const log = logger("riverside-webhook");
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -162,11 +165,11 @@ export function registerRiversideWebhookRoutes(app: Express) {
       // Verify signature if secret is configured
       if (secret) {
         if (!verifySignature(rawBody, signature, secret)) {
-          console.warn("[riverside-webhook] Invalid signature, rejected");
+          log.warn("Invalid signature, rejected");
           return res.status(401).json({ error: "Invalid signature" });
         }
       } else {
-        console.warn("[riverside-webhook] RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check");
+        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check");
       }
 
       let payload: RiversideWebhookPayload;
@@ -176,14 +179,14 @@ export function registerRiversideWebhookRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid JSON" });
       }
 
-      console.log(`[riverside-webhook] Event: ${payload.event}`);
+      log.info(`Event: ${payload.event}`);
 
       // Acknowledge immediately. Riverside expects a fast 200
       res.status(200).json({ received: true });
 
       // Process asynchronously so we don't block the response
       processRiversideEvent(payload).catch((err) => {
-        console.error("[riverside-webhook] Processing error:", err);
+        log.error("Processing error:", err);
       });
     }
   );
@@ -195,7 +198,7 @@ export function registerRiversideWebhookRoutes(app: Express) {
       // Only allow from admin sessions, check x-admin-secret header
       const adminSecret = process.env.ADMIN_WEBHOOK_SECRET;
       if (!adminSecret) {
-        console.error("[riverside-webhook] ADMIN_WEBHOOK_SECRET not set");
+        log.error("ADMIN_WEBHOOK_SECRET not set");
         return res.status(500).json({ error: "Server misconfigured" });
       }
       const headerSecret = typeof req.headers["x-admin-secret"] === "string" ? req.headers["x-admin-secret"] : "";
@@ -221,7 +224,7 @@ export function registerRiversideWebhookRoutes(app: Express) {
 async function processRiversideEvent(payload: RiversideWebhookPayload) {
   const database = await getDb();
   if (!database) {
-    console.error("[riverside-webhook] Database unavailable");
+    log.error("Database unavailable");
     return;
   }
 
@@ -267,9 +270,11 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
     sessionDate.getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30;
 
   if (looksLikeZapierTest || sessionTooStale) {
-    console.log(
-      `[riverside-webhook] Ignoring test/stale payload: title="${title}", sessionDate=${sessionDate.toISOString?.() ?? sessionDate}, youtubeUrl=${youtubeUrl}`
-    );
+    log.info("Ignoring test/stale payload", {
+      title,
+      sessionDate: sessionDate.toISOString?.() ?? sessionDate,
+      youtubeUrl,
+    });
     return;
   }
 
@@ -295,7 +300,7 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
       rawWebhook: payload as any,
     }).where(eq(recordings.riversideId, riversideId));
     recordingId = existing.id;
-    console.log(`[riverside-webhook] Updated recording ${recordingId}`);
+    log.info(`Updated recording ${recordingId}`);
   } else {
     const [result] = await database.insert(recordings).values({
       riversideId,
@@ -312,7 +317,7 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
       rawWebhook: payload as any,
     });
     recordingId = (result as any).insertId;
-    console.log(`[riverside-webhook] Inserted recording ${recordingId}`);
+    log.info(`Inserted recording ${recordingId}`);
   }
 
   // Re-fetch updated row
@@ -365,7 +370,7 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
 
         // Link this recording to the event's thread for the email forum button
         forumPostId = matchedEvent.forumThreadId;
-        if (replyId) console.log(`[riverside-webhook] Replied to forum thread ${matchedEvent.forumThreadId} for recording ${recordingId}`);
+        if (replyId) log.info(`Replied to forum thread ${matchedEvent.forumThreadId} for recording ${recordingId}`);
 
         // Link recording to event for schedule page replay button.
         // Also mirror youtubeUrl onto the event so the Historical tab card can
@@ -377,7 +382,7 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
             ...(recording.youtubeUrl ? { youtubeUrl: recording.youtubeUrl } : {}),
           })
           .where(eq(eventsTable.id, matchedEvent.id));
-        console.log(`[riverside-webhook] Linked recording ${recordingId} to event ${matchedEvent.id}`);
+        log.info(`Linked recording ${recordingId} to event ${matchedEvent.id}`);
       } else {
         // No matching event thread, create a fresh forum post
         forumPostId = await createRecordingForumPost(recording);
@@ -388,10 +393,10 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
           .set({ forumPostId })
           .where(eq(recordings.id, recordingId));
         recording.forumPostId = forumPostId;
-        console.log(`[riverside-webhook] Forum post/reply set to ${forumPostId} for recording ${recordingId}`);
+        log.info(`Forum post/reply set to ${forumPostId} for recording ${recordingId}`);
       }
     } catch (err) {
-      console.error("[riverside-webhook] Forum post creation failed:", err);
+      log.error("Forum post creation failed:", err);
     }
   }
 
@@ -402,9 +407,9 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
       await database.update(recordings)
         .set({ emailSent: 1 })
         .where(eq(recordings.id, recordingId));
-      console.log(`[riverside-webhook] Email sent for recording ${recordingId}`);
+      log.info(`Email sent for recording ${recordingId}`);
     } catch (err) {
-      console.error("[riverside-webhook] Email send failed:", err);
+      log.error("Email send failed:", err);
     }
   }
 
@@ -414,7 +419,7 @@ async function processRiversideEvent(payload: RiversideWebhookPayload) {
     youtubeUrl: recording.youtubeUrl,
     riversideUrl: recording.riversideUrl,
     forumPostId: recording.forumPostId,
-  }).catch(err => console.error("[riverside-webhook] notify error:", err));
+  }).catch(err => log.error("notify error:", err));
 }
 
 // ── Forum post creation ───────────────────────────────────────────────────────
@@ -490,7 +495,7 @@ async function sendRecordingEmail(recording: {
 }) {
   const subscribers = await db.getRecordingSubscribers();
   if (!subscribers.length) {
-    console.log("[riverside-webhook] No recording subscribers, skipping email");
+    log.info("No recording subscribers, skipping email");
     return;
   }
 
@@ -522,7 +527,7 @@ async function sendRecordingEmail(recording: {
       html,
       template: "recording_summary",
     });
-    console.log(`[riverside-webhook] Sent email batch ${Math.floor(i / BATCH) + 1} (${batch.length} recipients)`);
+    log.info(`Sent email batch ${Math.floor(i / BATCH) + 1} (${batch.length} recipients)`);
   }
 }
 

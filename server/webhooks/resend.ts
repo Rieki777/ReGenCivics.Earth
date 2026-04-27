@@ -18,6 +18,9 @@ import { updateEmailStatus } from "../emailTracking";
 import { getDb } from "../db";
 import { emailLogs } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { logger } from "../_core/logger";
+
+const log = logger("resend-webhook");
 
 // Resend webhook signing secret (set in Resend dashboard)
 const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
@@ -58,14 +61,14 @@ function verifyWebhookSignature(
   // signature predictable. Found in 2026-04-25 deep security audit.
   if (!WEBHOOK_SECRET || WEBHOOK_SECRET.trim() === "") {
     if (process.env.NODE_ENV === "production") {
-      console.error("[Resend Webhook] WEBHOOK_SECRET not set in production, rejecting");
+      log.error("WEBHOOK_SECRET not set in production, rejecting");
       return false;
     }
-    console.warn("[Resend Webhook] WEBHOOK_SECRET not set (dev only), allowing");
+    log.warn("WEBHOOK_SECRET not set (dev only), allowing");
     return true;
   }
   if (!signature || !timestamp) {
-    console.warn("[Resend Webhook] Missing signature or timestamp header, rejecting");
+    log.warn("Missing signature or timestamp header, rejecting");
     return false;
   }
 
@@ -115,41 +118,41 @@ async function processWebhookEvent(event: ResendWebhookEvent): Promise<void> {
   const { type, data } = event;
   const recipientEmail = data.to?.[0];
   
-  console.log(`[Resend Webhook] Processing ${type} event for ${recipientEmail}`);
-  
+  log.info(`Processing ${type} event for ${recipientEmail}`);
+
   // Find the email log entry
   const emailLogId = await findEmailLogByResendId(data.email_id, recipientEmail);
-  
+
   if (!emailLogId) {
-    console.warn(`[Resend Webhook] No email log found for ${data.email_id}`);
+    log.warn(`No email log found for ${data.email_id}`);
     return;
   }
-  
+
   switch (type) {
     case "email.delivered":
       await updateEmailStatus(emailLogId, "delivered");
-      console.log(`[Resend Webhook] Marked email ${emailLogId} as delivered`);
+      log.info(`Marked email ${emailLogId} as delivered`);
       break;
-      
+
     case "email.bounced":
       const bounceReason = data.bounce?.message || "Unknown bounce reason";
       await updateEmailStatus(emailLogId, "bounced", bounceReason);
-      console.log(`[Resend Webhook] Marked email ${emailLogId} as bounced: ${bounceReason}`);
+      log.info(`Marked email ${emailLogId} as bounced: ${bounceReason}`);
       break;
-      
+
     case "email.complained":
       const complaintType = data.complaint?.feedback_type || "spam";
       await updateEmailStatus(emailLogId, "failed", `Complaint: ${complaintType}`);
-      console.log(`[Resend Webhook] Marked email ${emailLogId} as complained`);
+      log.info(`Marked email ${emailLogId} as complained`);
       break;
-      
+
     case "email.delivery_delayed":
-      console.log(`[Resend Webhook] Email ${emailLogId} delivery delayed`);
+      log.info(`Email ${emailLogId} delivery delayed`);
       // Optionally update status to "delayed" if you add that status
       break;
-      
+
     default:
-      console.log(`[Resend Webhook] Unhandled event type: ${type}`);
+      log.info(`Unhandled event type: ${type}`);
   }
 }
 
@@ -165,21 +168,21 @@ export function registerResendWebhookRoutes(app: Express): void {
       
       // Verify signature
       if (!verifyWebhookSignature(payload, signature, timestamp)) {
-        console.error("[Resend Webhook] Invalid signature");
+        log.error("Invalid signature");
         return res.status(401).json({ error: "Invalid signature" });
       }
-      
+
       const event = req.body as ResendWebhookEvent;
-      
+
       // Process the event asynchronously
       processWebhookEvent(event).catch((error) => {
-        console.error("[Resend Webhook] Error processing event:", error);
+        log.error("Error processing event", error);
       });
-      
+
       // Always respond quickly to acknowledge receipt
       res.status(200).json({ received: true });
     } catch (error) {
-      console.error("[Resend Webhook] Error handling webhook:", error);
+      log.error("Error handling webhook", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
