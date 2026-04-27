@@ -51,20 +51,35 @@ Full TypeScript throughout. ESM modules (`"type": "module"`). Node 20+.
 
 ### Prerequisites
 
-- Node 20+
-- MySQL 8 (or use Railway's public proxy URL for the dev database)
-- Redis (optional — caching degrades gracefully without it)
+- Node 22+ (matches the Railway runtime; pinned in `.node-version`)
+- pnpm 10+ (the repo uses `packageManager` to pin a version via Corepack)
+- Docker + Docker Compose (recommended) OR a local MySQL 8 install
 
-### Setup
+### First-time setup (Docker, recommended)
 
 ```bash
-git clone https://github.com/YOUR_ORG/regen-civics.git
-cd regen-civics
-npm install
+git clone https://github.com/Rieki777/ReGenCivics.Earth.git
+cd ReGenCivics.Earth
+
+# Boot MySQL 8 + Redis 7 in the background.
+docker compose up -d
+
+# Use the example as a starting point. The values it ships with already
+# point at the docker MySQL on port 3307 and Redis on port 6380.
 cp .env.example .env
-# Fill in .env (see Environment Variables section)
-npm run dev
+# At minimum, set DATABASE_URL=mysql://regen:regenpw@127.0.0.1:3307/regen_civics
+#                 REDIS_URL=redis://127.0.0.1:6380
+#                 JWT_SECRET=<any long random string>
+
+pnpm install
+pnpm db:push       # generate + apply the Drizzle schema to docker MySQL
+pnpm dev           # start the dev server on http://localhost:5000
 ```
+
+### First-time setup (without Docker)
+
+If you'd rather run MySQL natively, point `DATABASE_URL` at your local
+instance and skip `docker compose`. The `pnpm db:push` step is the same.
 
 The server starts on `http://localhost:5000`. Vite HMR runs on the same port
 via the Express dev middleware.

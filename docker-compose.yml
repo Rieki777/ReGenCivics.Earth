@@ -1,0 +1,56 @@
+# Local development sandbox for ReGen Civics.
+#
+# Boots a MySQL 8 + Redis 7 alongside the app so contributors can run the
+# stack without Railway access or hand-installed databases.
+#
+# Usage:
+#   docker compose up -d           # start MySQL + Redis in the background
+#   cp .env.example .env.development
+#   # edit .env.development -> set DATABASE_URL + REDIS_URL to the URIs below
+#   pnpm install
+#   pnpm db:push                   # apply Drizzle schema
+#   pnpm dev                       # start the dev server
+#
+# The MySQL data and Redis dump persist in named volumes so a `docker compose
+# down` plus subsequent `up` keeps your local seed data. Use
+# `docker compose down -v` to wipe and start fresh.
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: regen-civics-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_DATABASE: regen_civics
+      MYSQL_USER: regen
+      MYSQL_PASSWORD: regenpw
+    ports:
+      # mysql://regen:regenpw@127.0.0.1:3307/regen_civics
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "regen", "-pregenpw"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: regen-civics-redis
+    restart: unless-stopped
+    ports:
+      # redis://127.0.0.1:6380
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mysql_data:
+  redis_data:
