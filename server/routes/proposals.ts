@@ -95,7 +95,7 @@ export const proposalsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       await requireCoCreatorPlus(db, ctx.user.id);
 
       const [result] = await db.execute(sql`
@@ -112,7 +112,7 @@ export const proposalsRouter = router({
     .input(z.object({ proposalId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       await requireCoCreatorPlus(db, ctx.user.id);
 
       // INSERT IGNORE: silently skip if the user already voted
@@ -154,7 +154,7 @@ export const proposalsRouter = router({
     .input(z.object({ proposalId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       await db.execute(sql`
         DELETE FROM proposal_votes
@@ -178,7 +178,7 @@ export const proposalsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       // Verify the current user is the proposal author or an admin
       const [proposal] = await db.execute(sql`

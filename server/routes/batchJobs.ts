@@ -5,6 +5,7 @@
  * citizenship tier checks, gratitude multipliers, job logging.
  */
 import { adminProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { sql } from "drizzle-orm";
@@ -571,7 +572,7 @@ export const batchJobsRouter = router({
   // Run the full nightly batch job
   runNightly: adminProcedure.mutation(async () => {
     const db = await getDb();
-    if (!db) throw new Error("Database unavailable");
+    if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
     const startedAt = new Date().toISOString().slice(0, 19).replace("T", " ");
     let jobId: number | undefined;
@@ -659,7 +660,7 @@ export const batchJobsRouter = router({
     .input(z.object({ staleAfterHours: z.number().min(1).max(720).default(24) }).optional())
     .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new Error("Database unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       return cancelStaleClaimBridges(db, input?.staleAfterHours ?? 24);
     }),
 
@@ -696,13 +697,13 @@ export const batchJobsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("Database unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       const [current] = await db.execute(sql`
         SELECT citizenshipTier FROM player_profiles WHERE userId = ${input.userId} LIMIT 1
       `).then((r: any) => r[0] ?? []);
 
-      if (!current) throw new Error("Player not found");
+      if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Player not found" });
 
       await db.execute(sql`
         UPDATE player_profiles

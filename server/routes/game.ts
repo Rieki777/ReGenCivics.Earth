@@ -4,6 +4,7 @@
  * Player: Score, tier, gratitude, endorsements
  */
 import { protectedProcedure, publicProcedure, adminProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { sql, desc, eq } from "drizzle-orm";
@@ -63,10 +64,10 @@ export const gameRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       // Get current value for history
       const [current] = await db.execute(sql`SELECT value, \`key\` FROM game_variables WHERE id = ${input.id}`).then((r: any) => r[0] ?? []);
-      if (!current) throw new Error("Variable not found");
+      if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Game variable not found" });
 
       // Write history
       await db.execute(sql`INSERT INTO game_variable_history (variableId, previousValue, newValue, changedBy, reason) VALUES (${input.id}, ${current.value}, ${input.value}, ${ctx.user.id}, ${input.reason})`);
@@ -113,7 +114,7 @@ export const gameRouter = router({
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       await db.execute(sql`INSERT INTO game_seasons (name, slug, startDate, endDate, status) VALUES (${input.name}, ${input.slug}, ${input.startDate}, ${input.endDate}, ${input.status})`);
       return { ok: true };
     }),
@@ -160,10 +161,10 @@ export const gameRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       if (input.endorsedType === "player" && input.endorsedId === ctx.user.id) {
-        throw new Error("Self-endorsement is not allowed");
+        throw new TRPCError({ code: "FORBIDDEN", message: "Self-endorsement is not allowed" });
       }
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       // Capture endorser's citizenship tier at time of endorsement
       let endorserTier: string | null = null;
       try {
@@ -195,17 +196,17 @@ export const gameRouter = router({
       message: z.string().min(1).max(280),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (input.receiverId === ctx.user.id) throw new Error("Cannot send gratitude to yourself");
+      if (input.receiverId === ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "Cannot send gratitude to yourself" });
       const season = await getCurrentSeason();
-      if (!season) throw new Error("No active season");
+      if (!season) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No active season" });
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       // Check budget
       const budgetRows = await db.execute(sql`SELECT spent, totalBudget FROM gratitude_budgets WHERE userId = ${ctx.user.id} AND seasonId = ${season.id}`).then((r: any) => r[0] ?? []);
       const budget = budgetRows[0];
-      if (!budget) throw new Error("No gratitude budget for this season");
-      if (budget.spent + input.amount > budget.totalBudget) throw new Error("Insufficient gratitude budget");
+      if (!budget) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No gratitude budget for this season" });
+      if (budget.spent + input.amount > budget.totalBudget) throw new TRPCError({ code: "BAD_REQUEST", message: "Insufficient gratitude budget" });
 
       // Check daily limit
       const todayCount = await db.execute(sql`
@@ -213,7 +214,7 @@ export const gameRouter = router({
         WHERE senderId = ${ctx.user.id} AND receiverId = ${input.receiverId}
         AND createdAt > DATE_SUB(NOW(), INTERVAL 1 DAY)
       `).then((r: any) => (r[0]?.[0]?.cnt ?? 0));
-      if (Number(todayCount) > 0) throw new Error("You can send gratitude to this person once per day");
+      if (Number(todayCount) > 0) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "You can send gratitude to this person once per day" });
 
       // Record transaction
       const insertResult: any = await db.execute(sql`INSERT INTO gratitude_transactions (senderId, receiverId, amount, message, seasonId) VALUES (${ctx.user.id}, ${input.receiverId}, ${input.amount}, ${input.message}, ${season.id})`);
@@ -273,7 +274,7 @@ export const gameRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       await db.execute(sql`
         INSERT IGNORE INTO game_flags (flaggerType, flaggerId, flaggedType, flaggedId, reason, description)
         VALUES ('player', ${ctx.user.id}, ${input.flaggedType}, ${input.flaggedId}, ${input.reason}, ${input.description ?? null})

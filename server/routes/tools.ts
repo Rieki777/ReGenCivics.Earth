@@ -171,7 +171,7 @@ export const toolsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
       await db.execute(sql`
@@ -198,7 +198,7 @@ export const toolsRouter = router({
     .input(z.object({ toolId: z.number(), comment: z.string().max(500).optional() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       await db.execute(sql`
         INSERT IGNORE INTO regen_tool_endorsements (toolId, userId, comment)
         VALUES (${input.toolId}, ${ctx.user.id}, ${input.comment ?? null})
@@ -263,7 +263,7 @@ export const toolsRouter = router({
     .input(z.object({ toolId: z.number(), action: z.enum(["approve", "reject"]) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       await db.execute(sql`
         UPDATE regen_tools SET status = ${input.action === "approve" ? "approved" : "rejected"}, approvedBy = ${ctx.user.id}
         WHERE id = ${input.toolId}

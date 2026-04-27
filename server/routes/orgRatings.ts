@@ -41,7 +41,7 @@ export const orgRatingsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       await requireCoCreatorPlus(db, ctx.user.id);
 

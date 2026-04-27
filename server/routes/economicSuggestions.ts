@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { sql, desc, eq } from "drizzle-orm";
@@ -40,7 +41,7 @@ export const economicSuggestionsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       const [result] = await db.execute(sql`
         INSERT INTO economic_suggestions
@@ -59,7 +60,7 @@ export const economicSuggestionsRouter = router({
     .input(z.object({ suggestionId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       // Check for existing vote
       const existing = await db.execute(sql`

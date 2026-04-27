@@ -390,7 +390,7 @@ export const imageStudioRouter = router({
       // Call the worker to promote: copy selected to permanent key, delete all temps
       const workerUrl = (await import("../_core/env")).ENV.imageGenWorkerUrl;
       const secret = (await import("../_core/env")).ENV.imageGenSecret;
-      if (!workerUrl || !secret) throw new Error("Image gen not configured");
+      if (!workerUrl || !secret) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Image gen not configured" });
 
       const promoteRes = await fetch(`${workerUrl}/promote`, {
         method: "POST",
@@ -399,7 +399,7 @@ export const imageStudioRouter = router({
       });
       if (!promoteRes.ok) {
         const detail = await promoteRes.text();
-        throw new Error(`Worker promote failed: ${promoteRes.status} ${detail}`);
+        throw new TRPCError({ code: "BAD_GATEWAY", message: `Worker promote failed: ${promoteRes.status} ${detail}` });
       }
 
       const publicUrl = `${publicBase}${newKey}`;

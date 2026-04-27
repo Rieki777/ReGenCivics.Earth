@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
@@ -51,7 +52,7 @@ export const featuresRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const database = await getDb();
-      if (!database) throw new Error("DB unavailable");
+      if (!database) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       const [result] = await database.insert(featureSuggestions).values({
         authorId: ctx.user.id,
         title: sanitizeInput(input.title),
@@ -89,7 +90,7 @@ export const featuresRouter = router({
     .input(z.object({ suggestionId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const database = await getDb();
-      if (!database) throw new Error("DB unavailable");
+      if (!database) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
       const [existing] = await database.select().from(featureSuggestionVotes)
         .where(and(
           eq(featureSuggestionVotes.userId, ctx.user.id),

@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, adminProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { sql, desc, eq } from "drizzle-orm";
@@ -45,7 +46,7 @@ export const localFoodRouter = router({
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       const productsJson = input.productsOffered
         ? JSON.stringify(input.productsOffered)
@@ -89,7 +90,7 @@ export const localFoodRouter = router({
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new Error("DB unavailable");
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
 
       await db.execute(sql`
         UPDATE local_food_applications
