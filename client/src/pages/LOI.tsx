@@ -4,22 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { BackButton } from "@/components/BackButton";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { analytics } from "@/lib/analytics";
-import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function LOI() {
-  const { isAuthenticated } = useAuth();
-  const [, navigate] = useLocation();
-
-  // Redirect to investor form if user hasn't submitted it yet
-  const { data: investorStatus } = trpc.investorInquiries.hasSubmitted.useQuery(undefined, { enabled: isAuthenticated });
-  if (isAuthenticated && investorStatus && !investorStatus.submitted) {
-    navigate("/investor?returnTo=/loi");
-    return null;
-  }
+  // Note: previously this page redirected to /investor?returnTo=/loi when the
+  // user hadn't completed an investor inquiry. That created a broken loop
+  // (and crashed on /investor for some users) so we now let the LOI form load
+  // directly. Accreditation is asserted via the consent + pledge gate within
+  // this form and on the upstream /opportunity page.
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",

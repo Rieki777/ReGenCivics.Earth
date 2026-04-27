@@ -484,7 +484,7 @@ export const emailTemplates = {
           </ol>
           
           <div style="background: #1a472a; color: rgba(255,255,255,0.7); padding: 16px 20px; border-radius: 8px; margin-top: 28px; font-size: 12px; line-height: 1.6;">
-            <p style="margin: 0;">This is an automated confirmation. For questions, please reach out directly to <strong style="color: #7dd87d;">Rieki@pm.me</strong> or connect via our community channels. Direct replies to this email are not monitored.</p>
+            <p style="margin: 0;">This is an automated confirmation. For questions, please <a href="https://regencivics.earth/connect" style="color: #7dd87d; font-weight: bold;">reach our team through the contact form</a> or connect via our community channels. Direct replies to this email are not monitored.</p>
           </div>
           
           <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center;">

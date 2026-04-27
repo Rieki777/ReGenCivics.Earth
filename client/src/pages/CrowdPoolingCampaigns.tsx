@@ -113,7 +113,7 @@ export default function CrowdPoolingCampaigns() {
               Crowd Pooling Campaigns
             </h1>
             <p className="text-white/95 text-lg mb-8 drop-shadow-sm">
-              Discover regenerative land projects and contribute what they actually need: time, expertise, materials, and capital.
+              Discover regenerative land projects and contribute what they actually need, not just money
             </p>
             
             {/* Search Bar */}

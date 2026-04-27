@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface ParallaxSectionProps {
@@ -19,25 +19,48 @@ export function ParallaxSection({
   const skipAnim = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
 
+  // iOS Safari renders `background-attachment: fixed` as either blank or
+  // wildly mis-scaled, which is why Rye's Tree Talk / Rite 9 page (and any
+  // other ParallaxSection) was missing the seasons background entirely on
+  // mobile. Detect a narrow viewport and switch to scroll attachment so the
+  // image actually paints. The "parallax" effect is preserved on desktop.
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsNarrow(mq.matches);
+    update();
+    if (mq.addEventListener) {
+      mq.addEventListener("change", update);
+      return () => mq.removeEventListener("change", update);
+    }
+    // Older Safari
+    mq.addListener(update);
+    return () => mq.removeListener(update);
+  }, []);
+
+  const useFixedAttachment = !skipAnim && !isNarrow;
+
   return (
     <section
       ref={sectionRef}
       id={id}
       className={`relative py-20 overflow-hidden ${className}`}
     >
-      {/* Fixed Background with CSS-only parallax - no JavaScript needed */}
-      <div 
+      {/* CSS-only parallax on desktop, scroll attachment on mobile so iOS
+          Safari renders the background image at all. */}
+      <div
         className="absolute inset-0 z-0"
         style={{
           backgroundImage: `url(${imageSrc})`,
-          backgroundAttachment: skipAnim ? "scroll" : "fixed",
+          backgroundAttachment: useFixedAttachment ? "fixed" : "scroll",
           backgroundPosition: "center",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat"
         }}
       />
       {/* Gradient Overlay */}
-      <div 
+      <div
         className="absolute inset-0 z-[1]"
         style={overlay ? { backgroundColor: overlay } : undefined}
       >

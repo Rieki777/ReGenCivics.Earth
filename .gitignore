@@ -131,3 +131,6 @@ loomio Governance Tools/
 # purpose are visible in version control.
 .human/*
 !.human/README.md
+
+# Claude Code worktrees (per-session sandboxes; never commit)
+.claude/worktrees/

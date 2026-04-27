@@ -51,15 +51,20 @@ type Action = {
 // Quarter arc from due-left (180deg) to straight-up (90deg) in math degrees,
 // with sin flipped for CSS (positive y goes down).
 //
-// Radius math: 5 buttons on a 90 deg arc means 22.5 deg between neighbours.
-// Chord length between adjacent buttons = 2 * r * sin(11.25 deg).
-// Buttons are 44px wide (w-11), so chord must be >= 44px to avoid overlap.
-// At r = 86 the chord was 33.6px and buttons overlapped by ~10px, which on
-// an iPhone read as a cluster instead of a clean arc. At r = 120 the chord
-// is 46.9px, giving a crisp ~3px gap between neighbours.
+// As of 2026-04-27 the menu uses TWO concentric arcs instead of one:
+//   - Outer arc (3 buttons): the anchor actions (Music, Community, Quests).
+//   - Inner arc (2 buttons): the secondary actions (Profile, Context),
+//     tucked between the outer pair so the cluster reads as a single fan.
+//
+// The pattern was Rye's call after the single-arc 5-button layout felt
+// too horizontally stretched on iPhone. Outer radius stays at 120
+// (chord ≈ 46.9px so 44px buttons sit with a small visible gap). Inner
+// radius lands at 78, giving the secondary buttons enough breathing room
+// from the outer arc and the trigger.
 const ARC_START_DEG = 180;
 const ARC_END_DEG = 90;
-const ARC_RADIUS = 120;
+const ARC_OUTER_RADIUS = 120;
+const ARC_INNER_RADIUS = 78;
 
 export function WizardRadialMenu() {
   const [open, setOpen] = useState(false);
@@ -158,12 +163,17 @@ export function WizardRadialMenu() {
       };
 
   // Arc order: outer-left to straight-up. Quests is closest to the thumb.
-  const ACTIONS: Action[] = [
-    musicAction,      // 180 deg - left (farthest from thumb)
-    profileAction,    // 157.5 deg
-    communityAction,  // 135 deg
-    contextAction,    // 112.5 deg
-    questsAction,     // 90 deg - straight up (closest to thumb)
+  // Each entry includes which arc it lives on:
+  //   - "outer" buttons sit on the wider 120px ring (3 anchors)
+  //   - "inner" buttons sit on the narrower 78px ring (2 secondaries)
+  // Angles still walk evenly from 180 deg to 90 deg so the buttons feel like
+  // they bloom in a single fan even though their radii differ.
+  const ACTIONS: Array<Action & { ring: "outer" | "inner" }> = [
+    { ...musicAction, ring: "outer" },     // 180 deg, outer
+    { ...profileAction, ring: "inner" },   // 157.5 deg, inner
+    { ...communityAction, ring: "outer" }, // 135 deg, outer
+    { ...contextAction, ring: "inner" },   // 112.5 deg, inner
+    { ...questsAction, ring: "outer" },    // 90 deg, outer
   ];
 
   return (
@@ -197,9 +207,10 @@ export function WizardRadialMenu() {
           const fraction = i / (ACTIONS.length - 1);
           const angleDeg = ARC_START_DEG + (ARC_END_DEG - ARC_START_DEG) * fraction;
           const angleRad = (angleDeg * Math.PI) / 180;
-          const dx = Math.cos(angleRad) * ARC_RADIUS;
+          const radius = a.ring === "outer" ? ARC_OUTER_RADIUS : ARC_INNER_RADIUS;
+          const dx = Math.cos(angleRad) * radius;
           // Math y is positive-up, CSS is positive-down, so flip.
-          const dy = -Math.sin(angleRad) * ARC_RADIUS;
+          const dy = -Math.sin(angleRad) * radius;
 
           // Trigger center sits at (24, 24) within the 48px wrapper.
           const left = 24 + dx - 22;

@@ -11,13 +11,16 @@ export interface Song {
   artist?: string
 }
 
+// Order is intentional: opening with the most upbeat/affirming track
+// (Better & Better) and ending on Cult to Culture as the closing arc.
+// Updated 2026-04-27 per Rye's intended sequence.
 export const PLAYLIST: Song[] = [
-  { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land", slug: "wasteland-into-wonderland", artist: "Hymns of the ReGeneration" },
+  { title: "Better & Better & Better", src: "/audio/better-and-better-and-better-hymns-of-the-regeneration.mp3", page: "/team", slug: "better-and-better", artist: "Hymns of the ReGeneration" },
   { title: "We are the Land", src: "/audio/we-are-the-land.mp3", page: "/community", slug: "we-are-the-land", artist: "Hymns of the ReGeneration" },
   { title: "Children of the Earth Tribe", src: "/audio/children-of-the-earth-tribe-hymns-of-the-regeneration.mp3", page: "/local-food", slug: "children-of-the-earth-tribe", artist: "Hymns of the ReGeneration" },
-  { title: "Better & Better & Better", src: "/audio/better-and-better-and-better-hymns-of-the-regeneration.mp3", page: "/team", slug: "better-and-better", artist: "Hymns of the ReGeneration" },
-  { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play", slug: "regen-transition-team", artist: "Hymns of the ReGeneration" },
+  { title: "Wasteland into Wonderland", src: "/audio/wasteland-into-wonderland.mp3", page: "/land", slug: "wasteland-into-wonderland", artist: "Hymns of the ReGeneration" },
   { title: "Addiction 2 Addition", src: "/audio/addiction-2-addition-hymns-of-the-regeneration.mp3", page: "/game", slug: "addiction-2-addition", artist: "Hymns of the ReGeneration" },
+  { title: "ReGen Transition Team", src: "/audio/regen-transition-team.mp3", page: "/play", slug: "regen-transition-team", artist: "Hymns of the ReGeneration" },
   { title: "Cult to Culture", src: "/audio/cult-to-culture-hymns-of-the-regeneration.mp3", page: "/governance", slug: "cult-to-culture", artist: "Hymns of the ReGeneration" },
 ]
 
@@ -44,15 +47,16 @@ function loadPersisted(): PersistedState | null {
   return null
 }
 
+// Updated 2026-04-27 to match the new playlist order.
 const PAGE_START_INDEX: Record<string, number> = {
-  "/land": 0,
-  "/quest": 0,
-  "/community": 1,
-  "/local-food": 2,
-  "/team": 3,
-  "/play": 4,
-  "/game": 5,
-  "/governance": 6,
+  "/team": 0,        // Better & Better & Better
+  "/quest": 0,       // open with the upbeat first track
+  "/community": 1,   // We are the Land
+  "/local-food": 2,  // Children of the Earth Tribe
+  "/land": 3,        // Wasteland into Wonderland
+  "/game": 4,        // Addiction 2 Addition
+  "/play": 5,        // ReGen Transition Team
+  "/governance": 6,  // Cult to Culture
   "/economy": 6,
   "/tokenomics": 6,
 }

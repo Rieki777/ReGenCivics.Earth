@@ -1294,6 +1294,17 @@ export const questsRouter = router({
         }
       }
 
+      // Auto-declare ReGen Player path on first quest completion (idempotent)
+      // and check tier progression. Both are non-fatal: a quest completion
+      // must succeed even if the path-progression layer hiccups.
+      try {
+        const { declarePath, detectTierProgression } = await import("../lib/tierDetector");
+        await declarePath(ctx.user.id, "player");
+        await detectTierProgression(ctx.user.id);
+      } catch (err) {
+        console.warn("[quest.complete] tier detection failed (non-fatal):", err);
+      }
+
       return { ok: true };
     }),
 });

@@ -919,8 +919,13 @@ export default function PageBackground({
         containerRef={containerRef}
       />
 
-      {/* Theme-specific particles, disabled on mobile to prevent scroll jank */}
-      {!isMobile && <ThemeParticles theme={theme} />}
+      {/* Theme-specific particles. Previously disabled on mobile to avoid
+          scroll jank, but every effect (comets, leaves, fireflies, sparkles)
+          is CSS-driven so there's no per-frame JS work. Enabling them on
+          mobile per Rye's 2026-04-27 ask. The prefers-reduced-motion check
+          inside AmbientParticles still suppresses motion for users who
+          explicitly opted out. */}
+      <ThemeParticles theme={theme} />
 
       {/* Content layer */}
       <div className="relative z-20 page-bg-content">

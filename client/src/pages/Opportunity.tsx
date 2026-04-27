@@ -554,8 +554,14 @@ export default function Opportunity() {
 
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
-  // Server-authoritative gate: check if logged-in user has submitted
-  const { data: submittedData, isLoading: submittedLoading } = trpc.investorInquiries.hasSubmitted.useQuery(
+  // Server-authoritative check: if a logged-in user has previously completed
+  // the investor inquiry, sync their localStorage so we know not to nag.
+  // Note: we no longer auto-redirect non-verified visitors to /investor.
+  // That flow was crashing on mobile for some users (rendering the Tao
+  // error page) and made the entire /opportunity URL unreachable. The
+  // accreditation gate lives on the LOI form itself instead, which is the
+  // only place we collect a binding pledge.
+  const { data: submittedData } = trpc.investorInquiries.hasSubmitted.useQuery(
     undefined,
     { enabled: !!user }
   );
@@ -565,61 +571,15 @@ export default function Opportunity() {
     if (name) setInvestorName(name);
   }, []);
 
-  // Gate logic
   useEffect(() => {
-    // Wait for auth to resolve
-    if (authLoading) return;
-
-    if (user) {
-      // Logged in + loading server check: do not redirect yet
-      if (submittedLoading) return;
-
-      if (submittedData?.submitted) {
-        // Server says yes: resync localStorage
-        localStorage.setItem('investor_verified', 'true');
-        sessionStorage.setItem('investor_verified', 'true');
-        return;
-      }
-
-      // Server says not submitted: check localStorage fallback
-      const localVerified =
-        sessionStorage.getItem('investor_verified') === 'true' ||
-        localStorage.getItem('investor_verified') === 'true';
-      if (!localVerified) {
-        setLocation('/investor');
-      }
-    } else {
-      // Not logged in: localStorage-only logic
-      const isVerified =
-        sessionStorage.getItem('investor_verified') === 'true' ||
-        localStorage.getItem('investor_verified') === 'true';
-      if (!isVerified) {
-        setLocation('/investor');
-      }
+    if (submittedData?.submitted) {
+      localStorage.setItem('investor_verified', 'true');
+      sessionStorage.setItem('investor_verified', 'true');
     }
-  }, [user, authLoading, submittedData, submittedLoading, setLocation]);
-
-  // Show spinner while verifying
-  const isVerifying =
-    authLoading ||
-    (!!user && submittedLoading);
-
-  // Also check local storage to avoid flash
-  const localVerified =
-    typeof sessionStorage !== 'undefined' &&
-    (sessionStorage.getItem('investor_verified') === 'true' ||
-      localStorage.getItem('investor_verified') === 'true');
-
-  if (isVerifying && !localVerified) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#7dd87d] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white/70">Verifying access...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [submittedData]);
+  // Suppress the unused-var lints for the deliberately retained handles.
+  void setLocation;
+  void authLoading;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
@@ -1433,6 +1393,7 @@ export default function Opportunity() {
               </p>
               {[
                 { q: "If land projects fail to generate revenue:", a: "We invest in already-operating, revenue-generating projects for Fund I. These aren't speculative startups; they're proven models seeking expansion capital. Historical data shows diversified land portfolios have <5% total loss rates compared to ~80% failure rates for individual projects launching from scratch. Our alliance support structure and quality control standards further reduce risk. Even if 20% of projects underperform, the portfolio structure absorbs this." },
+                { q: "If a portfolio project doesn't reach maturity:", a: "The land itself is the floor. Every project we invest in spends day to day growing fruit-producing trees, food-foresting, building infrastructure, and developing community, which makes the land more valuable over time. If a project doesn't reach maturity we sell the land. Our intent is that any premature exit still nets profit, and the people from that project are absorbed into other projects across the alliance, where they keep contributing." },
                 { q: "If alliance organizations don't adopt $RCivics:", a: "We're starting with committed partners (40+ already in the ecosystem). Network effects create strong incentives: once critical mass is reached, being outside the alliance means missing access to land project customers, coordination infrastructure, and shared resources. Even without full adoption, land asset backing provides downside protection. The token is a coordination tool, not the entire investment thesis." },
                 { q: "If crypto markets experience severe downturn:", a: "Our returns derive from tangible land and operating communities generating actual revenue, not token speculation. Token price may fluctuate, but underlying asset value and cash distributions continue independently. We're using crypto rails for coordination efficiency, not betting on crypto market sentiment. If blockchain technology disappeared tomorrow, our land projects would still exist, still generate revenue, and still distribute returns." },
                 { q: "If regulations restrict on-chain governance:", a: "We maintain traditional legal structures (LPs, SPVs) with on-chain governance as a coordination layer. If forced to abandon blockchain tools, we can operate through conventional fund administration (just less efficiently and transparently). Legal compliance is primary, technology is secondary." },
@@ -2214,9 +2175,12 @@ export default function Opportunity() {
                   </Button>
                 </div>
                 <div className="flex items-center justify-center gap-4 text-sm">
-                  <a href="mailto:Rieki@pm.me" className="text-white/60 hover:text-[#7dd87d] transition-colors flex items-center gap-1">
+                  <a
+                    href="/connect"
+                    className="text-white/60 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
+                  >
                     <Mail className="w-4 h-4" />
-                    Rieki@pm.me
+                    Contact our investor team
                   </a>
                 </div>
                 <p className="text-xs text-white/60 mt-6">

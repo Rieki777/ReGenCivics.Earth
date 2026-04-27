@@ -20,6 +20,56 @@ interface QuestCompletionFeedProps {
   subtitle?: string;
 }
 
+/**
+ * Map a completion's questId / questTitle to the matching hero image in
+ * /public/images/quests/. Used when a player submitted a quest but didn't
+ * attach a photo or video, so the card has visual weight instead of an
+ * empty gradient. Falls back to the generic quest-hero.webp.
+ */
+function questFallbackImage(questId?: string, questTitle?: string): string {
+  const base = "/images/quests/";
+  const tag = `${questId || ""} ${questTitle || ""}`.toLowerCase();
+  if (tag.includes("food forest") || tag.includes("food-forest")) return base + "quest-food-foresting-hero.webp";
+  if (tag.includes("fire")) return base + "quest-00-fire.webp";
+  if (tag.includes("potion")) return base + "quest-01-potion-brewing.webp";
+  if (tag.includes("seed") && tag.includes("sav")) return base + "quest-02-saving-seeds.webp";
+  if (tag.includes("healing whole")) return base + "quest-03-healing-wholes.webp";
+  if (tag.includes("dreaming space")) return base + "quest-04-dreaming-spaces-of-love.webp";
+  if (tag.includes("rites of love")) return base + "quest-05-rites-of-love.webp";
+  if (tag.includes("healing circle")) return base + "quest-06-healing-circles.webp";
+  if (tag.includes("foraging")) return base + "quest-07-wild-foraging.webp";
+  if (tag.includes("medicine")) return base + "quest-08-medicine-journey.webp";
+  if (tag.includes("tree talk")) return base + "quest-09-tree-talk.webp";
+  if (tag.includes("communication") || tag.includes("nvc")) return base + "quest-10-communication-patterns.webp";
+  if (tag.includes("coordination")) return base + "quest-11-coordination-patterns.webp";
+  if (tag.includes("breathplay") || tag.includes("future dreaming")) return base + "quest-12-breathplay-future-dreaming.webp";
+  if (tag.includes("love to heal") || tag.includes("body")) return base + "quest-14-love-to-heal-your-body.webp";
+  return base + "quest-hero.webp";
+}
+
+/**
+ * Avatar circle that gracefully degrades from image -> initial when an
+ * avatarUrl is set but fails to load (deleted from R2, expired CDN, etc.).
+ */
+function Avatar({ avatarUrl, initial }: { avatarUrl?: string | null; initial: string }) {
+  const [errored, setErrored] = useState(false);
+  const showImage = avatarUrl && !errored;
+  return (
+    <div className="w-7 h-7 rounded-full bg-[#4a7c59] text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0 overflow-hidden">
+      {showImage ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          className="w-full h-full object-cover"
+          onError={() => setErrored(true)}
+        />
+      ) : (
+        initial
+      )}
+    </div>
+  );
+}
+
 function FeedCard({ entry }: { entry: any }) {
   const [playing, setPlaying] = useState(false);
   const isVideo = entry.artifactType === "video" && !!entry.artifactUrl;
@@ -27,6 +77,13 @@ function FeedCard({ entry }: { entry: any }) {
   const isLink = entry.artifactType === "link" && !!entry.artifactUrl;
   const isText = entry.artifactType === "text";
   const textPreview = (entry.caption || entry.artifactText || "").toString().slice(0, 200);
+  const hasTextContent = isText && textPreview.length > 0;
+  // Show the quest's hero image as a soft visual anchor whenever the card
+  // doesn't have its own image/video/text artifact to display.
+  const showFallbackImage =
+    (isText && !hasTextContent) ||
+    (entry.artifactType !== "photo" && entry.artifactType !== "video" && entry.artifactType !== "text" && !entry.artifactUrl);
+  const fallbackImage = questFallbackImage(entry.questId, entry.questTitle);
   const name = entry.displayName ?? "A player";
   const initial = name.charAt(0).toUpperCase();
 
@@ -80,13 +137,25 @@ function FeedCard({ entry }: { entry: any }) {
             decoding="async"
           />
         )}
-        {isText && (
+        {isText && hasTextContent && (
           <div className="absolute inset-0 p-5 flex items-center justify-center text-center bg-gradient-to-br from-[#1a472a]/80 to-[#4a7c59]/60">
             <div className="text-white">
               <FileText className="w-8 h-8 mx-auto mb-2 opacity-80" />
               <p className="text-sm italic line-clamp-4">"{textPreview}"</p>
             </div>
           </div>
+        )}
+        {showFallbackImage && (
+          <>
+            <img
+              src={fallbackImage}
+              alt={entry.questTitle || ""}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1a472a]/55 via-transparent to-transparent pointer-events-none" />
+          </>
         )}
         {isLink && !isVideo && (
           <a
@@ -104,13 +173,8 @@ function FeedCard({ entry }: { entry: any }) {
       </div>
       <div className="p-4 space-y-2">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-[#4a7c59] text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0 overflow-hidden">
-            {entry.avatarUrl ? (
-              <img src={entry.avatarUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              initial
-            )}
-          </div>
+          <Avatar avatarUrl={entry.avatarUrl} initial={initial} />
+
           <div className="min-w-0 flex-1">
             <p className="text-[#1a472a] font-semibold text-sm truncate">{name}</p>
             <p className="text-[#1a472a]/60 text-xs truncate">{entry.questTitle}</p>

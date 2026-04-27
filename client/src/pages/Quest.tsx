@@ -854,8 +854,13 @@ export default function Quest() {
         </div>
       </div>
 
-      {/* Quest Hero Image */}
-      <div className="w-full overflow-hidden max-h-[240px] sm:max-h-[360px] md:max-h-[480px]">
+      {/* Quest Hero Image. Pre-reserve the full container height (matching
+          the max-height ceiling) so the layout below doesn't jump when the
+          1920x1047 webp finishes loading on slow mobile connections. */}
+      <div
+        className="w-full overflow-hidden bg-[#0d2818]/60"
+        style={{ height: "min(56vw, 480px)", minHeight: "200px" }}
+      >
         <img
           src="/images/quests/quest-hero.webp"
           alt="A forest path at golden hour"
@@ -863,7 +868,7 @@ export default function Quest() {
           width={1920}
           height={1047}
           sizes="100vw"
-          className="w-full object-cover"
+          className="w-full h-full object-cover"
           style={{ objectPosition: 'center 40%' }}
         />
       </div>
@@ -900,37 +905,44 @@ export default function Quest() {
             {pageCopy.quest.hero.line3}
           </p>
 
-          {/* Seasonal tagline + hemisphere toggle */}
-          {!hemisphereLoading && (
-            <div className="flex flex-col items-center gap-2 mb-8">
-              <p className="text-white/60 text-sm italic">
-                {pageCopy.quest.hero.seasonalTagline}
-              </p>
-              <div className="flex items-center gap-2.5">
-                <button
-                  onClick={() => { setHemisphereOverride("northern"); window.location.reload(); }}
-                  className={`text-xs px-4 py-2.5 min-h-[44px] rounded-full border transition-colors ${
-                    hemisphere === "northern"
-                      ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
-                      : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
-                  }`}
-                >
-                  {pageCopy.quest.hero.hemisphere.northern}
-                </button>
-                <button
-                  onClick={() => { setHemisphereOverride("southern"); window.location.reload(); }}
-                  className={`text-xs px-4 py-2.5 min-h-[44px] rounded-full border transition-colors ${
-                    hemisphere === "southern"
-                      ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
-                      : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
-                  }`}
-                >
-                  {pageCopy.quest.hero.hemisphere.southern}
-                </button>
+          {/* Seasonal tagline + hemisphere toggle.
+              Wrapper has a fixed min-height so the section above doesn't
+              jump when hemisphere data finishes loading. The italic tagline
+              + 8px gap + 44px buttons total ~84px; we reserve 92px to
+              include the bottom margin. Prevents the mobile CLS where the
+              "Welcome to the Quest" badge dropped down once the hemisphere
+              query resolved. */}
+          <div className="mb-8 min-h-[92px] flex items-center justify-center">
+            {!hemisphereLoading && (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-white/60 text-sm italic">
+                  {pageCopy.quest.hero.seasonalTagline}
+                </p>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => { setHemisphereOverride("northern"); window.location.reload(); }}
+                    className={`text-xs px-4 py-2.5 min-h-[44px] rounded-full border transition-colors ${
+                      hemisphere === "northern"
+                        ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
+                        : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
+                    }`}
+                  >
+                    {pageCopy.quest.hero.hemisphere.northern}
+                  </button>
+                  <button
+                    onClick={() => { setHemisphereOverride("southern"); window.location.reload(); }}
+                    className={`text-xs px-4 py-2.5 min-h-[44px] rounded-full border transition-colors ${
+                      hemisphere === "southern"
+                        ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]"
+                        : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20"
+                    }`}
+                  >
+                    {pageCopy.quest.hero.hemisphere.southern}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-          {hemisphereLoading && <div className="mb-8" />}
+            )}
+          </div>
 
           {/* Quest Spotlight - improvement 18 */}
           {spotlightQuery.data && (
@@ -1235,7 +1247,7 @@ export default function Quest() {
                     "Get Delicious Local Fruits",
                     "Bring Yummy Fruits on a Forest/Nature Walk",
                     "Eat Yummy Fruits, Save Seeds, Enjoy the Walk",
-                    "Plant Seeds in Good New Homes for Seeds",
+                    "Plant Seeds in Good New Homes",
                     "Harvest Wild Fruits Grown by You and Other Players",
                   ].map((step, i) => (
                     <div key={i} className="flex items-start gap-2">

@@ -514,6 +514,34 @@ async function startServer() {
     }
   });
 
+  // ── Tier progression detector cron endpoint ─────────────────────────────────
+  // Called every 15 minutes by Railway cron: POST /api/cron/tier-detector
+  // Walks every user with at least one declared path and runs the
+  // detector. Idempotent: existing tier_events rows short-circuit
+  // criteria that already fired, so re-running has no extra cost beyond
+  // the read pass. See server/lib/tierDetector.ts and
+  // QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 7.
+  // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
+  app.post("/api/cron/tier-detector", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { detectTierProgressionForAllUsers } = await import("../lib/tierDetector");
+      const report = await detectTierProgressionForAllUsers();
+      return res.json({ ok: true, ...report });
+    } catch (err: any) {
+      console.error("[cron] tier-detector failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Event reminder cron endpoint ────────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/event-reminders
   // Finds events starting in 20–28 hours, sends reminder to all event_signups.

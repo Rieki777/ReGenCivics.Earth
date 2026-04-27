@@ -142,9 +142,16 @@ async function getGoogleTokens(code: string, redirectUri: string) {
     if (!res.ok) {
       // Capture the full response body so we know exactly what Google said.
       // Google returns JSON like {"error":"invalid_client","error_description":"..."}.
+      // Railway's stdout log parser strips JSON-like substrings, so we replace
+      // braces with [[ / ]] and quotes with ` to keep the diagnostic visible.
       const body = await res.text().catch(() => "(unreadable body)");
+      const safeBody = body
+        .slice(0, 500)
+        .replace(/\{/g, "[[")
+        .replace(/\}/g, "]]")
+        .replace(/"/g, "`");
       throw new Error(
-        `Google token exchange failed: status=${res.status} redirectUri=${redirectUri} body=${body.slice(0, 500)}`
+        `Google token exchange failed: status=${res.status} redirectUri=${redirectUri} body=${safeBody}`
       );
     }
     return res.json() as Promise<{ access_token: string; id_token: string }>;

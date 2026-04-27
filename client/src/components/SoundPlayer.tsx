@@ -13,7 +13,7 @@
 import { useState, useMemo } from "react";
 import { useAudio } from "@/contexts/AudioContext";
 import {
-  SkipBack, SkipForward, Play, Pause, Volume2, Music, ListMusic, Plus, Download,
+  SkipBack, SkipForward, Play, Pause, Volume2, Music, ListMusic, Plus, Download, Share2,
 } from "lucide-react";
 
 /**
@@ -59,6 +59,36 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
   const skipSize = isMobile ? "w-6 h-6" : "w-5 h-5";
   const touchHit = isMobile ? "min-h-[48px] min-w-[48px]" : "p-2";
 
+  /**
+   * Share the current track. Uses the native share sheet when available
+   * (mobile and most modern browsers) and falls back to copying a deep link
+   * to the song's hymn book section so the player can paste it anywhere.
+   * 2026-04-27: Rye wants Share to be the primary affordance over Download,
+   * so this lives in the same action row with prominent styling.
+   */
+  const [shareCopied, setShareCopied] = useState(false);
+  const shareCurrent = async () => {
+    if (!currentSong) return;
+    const slug = currentSong.slug || currentSong.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const url = typeof window !== "undefined"
+      ? `${window.location.origin}/hymn-book?song=${encodeURIComponent(slug)}`
+      : `https://regencivics.earth/hymn-book?song=${encodeURIComponent(slug)}`;
+    const text = `${currentSong.title} — Hymns of the ReGeneration`;
+    try {
+      if (typeof navigator !== "undefined" && (navigator as any).share) {
+        await (navigator as any).share({ title: text, text, url });
+        return;
+      }
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 1800);
+      }
+    } catch {
+      // User dismissed the native share sheet, or clipboard failed silently.
+    }
+  };
+
   return (
     <div className="space-y-3">
       {/* Title + artist */}
@@ -71,8 +101,10 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
         )}
       </div>
 
-      {/* Action buttons row */}
-      <div className="grid grid-cols-3 gap-2 mt-3">
+      {/* Action buttons row.
+          Primary actions (Playlist, Add song, Share song) take the wide cells;
+          Download is icon-only since sharing is the preferred affordance. */}
+      <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mt-3 items-stretch">
         <button
           type="button"
           onClick={() => setShowTrackList((s) => !s)}
@@ -87,24 +119,37 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
         <a
           href="/hymn-book#add-your-voice"
           onClick={onNavigate}
-          className={`flex items-center justify-center gap-1.5 bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] rounded-lg py-2 text-xs font-bold transition-colors ${
+          className={`flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg py-2 text-white text-xs font-semibold transition-colors ${
             isMobile ? "min-h-[44px]" : ""
           }`}
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5 text-[#7dd87d]" />
           Add song
         </a>
+        {currentSong && (
+          <button
+            type="button"
+            onClick={shareCurrent}
+            className={`flex items-center justify-center gap-1.5 bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] rounded-lg py-2 text-xs font-bold transition-colors ${
+              isMobile ? "min-h-[44px]" : ""
+            }`}
+            aria-label={`Share ${currentSong.title}`}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            {shareCopied ? "Copied!" : "Share song"}
+          </button>
+        )}
         {currentSong && (
           <a
             href={currentSong.src}
             download={`${currentSong.title} - Hymns of the ReGeneration.mp3`}
-            className={`flex items-center justify-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg py-2 text-white text-xs font-semibold transition-colors ${
-              isMobile ? "min-h-[44px]" : ""
+            className={`flex items-center justify-center bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg text-white transition-colors ${
+              isMobile ? "min-w-[44px] min-h-[44px]" : "w-9"
             }`}
             aria-label={`Download ${currentSong.title}`}
+            title="Download"
           >
-            <Download className="w-3.5 h-3.5 text-[#7dd87d]" />
-            Download
+            <Download className="w-4 h-4 text-[#7dd87d]" />
           </a>
         )}
       </div>

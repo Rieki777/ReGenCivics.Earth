@@ -348,46 +348,50 @@ export default function Play() {
       {/* Hero */}
       <section className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center">
+          {/* Title scrim — keeps the heading + description readable against
+              the busy "Anyone / ReGen Players" hero illustration on mobile.
+              Text shadows alone weren't cutting it once the video card sat
+              right under the headline. */}
+          <div className="relative inline-block w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 rounded-2xl bg-black/45 backdrop-blur-md border border-white/10 mb-6">
+            <AnimatedSection animation="fade-in">
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 mb-4 rounded-full glass-panel-light text-amber-400 text-base"
+                style={{ fontFamily: "var(--font-accent)" }}
+              >
+                <Sparkles className="w-5 h-5" />
+                <span>Player Path</span>
+              </div>
+            </AnimatedSection>
 
-          <AnimatedSection animation="fade-in">
-            <div
-              className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full glass-panel-light text-amber-400 text-base"
-              style={{ fontFamily: "var(--font-accent)" }}
-            >
-              <Sparkles className="w-5 h-5" />
-              <span>Player Path</span>
-            </div>
-          </AnimatedSection>
+            <AnimatedSection animation="slide-up" delay={200}>
+              <h1
+                className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white leading-tight"
+                style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
+              >
+                Anyone / <span className="text-amber-400">ReGen Players</span>
+              </h1>
+            </AnimatedSection>
 
-
-          <AnimatedSection animation="slide-up" delay={200}>
-            <h1
-              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white leading-tight"
-              style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
-            >
-              Anyone / <span className="text-amber-400">ReGen Players</span>
-            </h1>
-          </AnimatedSection>
-
-          <AnimatedSection animation="slide-up" delay={400}>
-            <p
-              className="text-lg md:text-xl lg:text-2xl text-white/90 mb-4 leading-relaxed max-w-3xl mx-auto safe-prose"
-              style={{ fontFamily: "var(--font-body)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
-            >
-              Everyone can play. Whether you have five minutes or five years, there is a way to
-              participate in regenerating civilization. Choose your level and jump in.
-            </p>
-            <p
-              className="text-xl md:text-2xl text-amber-400 font-semibold mb-8"
-              style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
-            >
-              At what level do we want to play the Infinite Game?
-            </p>
-          </AnimatedSection>
+            <AnimatedSection animation="slide-up" delay={400}>
+              <p
+                className="text-lg md:text-xl lg:text-2xl text-white/95 mb-4 leading-relaxed max-w-3xl mx-auto safe-prose"
+                style={{ fontFamily: "var(--font-body)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
+              >
+                Everyone can play. Whether you have five minutes or five years, there is a way to
+                participate in regenerating civilization. Choose your level and jump in.
+              </p>
+              <p
+                className="text-xl md:text-2xl text-amber-400 font-semibold"
+                style={{ fontFamily: "var(--font-display)", textShadow: "0 2px 16px rgba(0,0,0,0.85), 0 1px 4px rgba(0,0,0,0.9)" }}
+              >
+                At what level do we want to play the Infinite Game?
+              </p>
+            </AnimatedSection>
+          </div>
 
           {/* Hero Video - Autoplay on scroll */}
           <AnimatedSection animation="scale-in" delay={600}>
-            <div className="max-w-2xl mx-auto mb-8">
+            <div className="max-w-2xl mx-auto mb-8 mt-6">
               <AutoplayVideo
                 videoId="C9U0JTsqKv8"
                 title="How to Play the Infinite Game"

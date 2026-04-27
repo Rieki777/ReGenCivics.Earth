@@ -436,7 +436,7 @@ export const loiRouter = router({
 <h3 style="color:#1a472a">Keep the momentum going</h3>
 <p>📄 <a href="${toAbsoluteUrl('/opportunity')}" style="color:#4a7c59">Read the full investment opportunity</a></p>
 <p>📅 <a href="https://calendly.com/rieki-cordon/30min" style="color:#4a7c59">Schedule a discovery call with Rieki</a></p>
-<p style="color:#666;font-size:12px;margin-top:32px">Questions? Reply to this email or reach us at <a href="mailto:Rieki@pm.me">Rieki@pm.me</a></p>
+<p style="color:#666;font-size:12px;margin-top:32px">Questions? Reply to this email or <a href="${toAbsoluteUrl('/connect')}" style="color:#4a7c59">reach us through our investor contact form</a>.</p>
 <p style="color:#666;font-size:12px">ReGen Civics  -  Building the coordination layer for the regenerative transition.</p>
 </div>`,
         });

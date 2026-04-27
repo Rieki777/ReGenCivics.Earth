@@ -128,41 +128,62 @@ export function LivingTreeCard() {
 
       {showDetail && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setShowDetail(false)}
           role="dialog"
           aria-modal="true"
           aria-label="Living Tree detail"
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+            className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto relative shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Top X close — kept for users who instinctively reach top-right */}
             <button
               onClick={() => setShowDetail(false)}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#1a472a]/10 hover:bg-[#1a472a]/20 flex items-center justify-center transition-colors"
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors z-10 shadow"
               aria-label="Close"
             >
               <X className="w-5 h-5 text-[#1a472a]" />
             </button>
             <div className="p-6 md:p-8">
               <h3
-                className="text-2xl font-bold text-[#1a472a] mb-1"
+                className="text-2xl md:text-3xl font-bold text-[#1a472a] mb-1"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 The Nine Forms of Capital
               </h3>
-              <p className="text-sm text-[#1a472a]/70 mb-6">
+              <p className="text-sm md:text-base text-[#1a472a]/70 mb-6">
                 Every capital is a root that feeds your tree.
               </p>
               <div className="grid md:grid-cols-[1fr_1.2fr] gap-6">
-                <div className="bg-[#f0f7f0] rounded-xl p-4 flex items-center justify-center">
+                {/* Tree pane — gradient sky-to-earth backdrop with a soft sun
+                    glow behind the canopy so the tree feels alive instead of
+                    floating on a flat green panel. Root labels are hidden
+                    here because the right-column legend already names them. */}
+                <div
+                  className="rounded-xl p-4 flex items-center justify-center relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(180deg, #c7e7ff 0%, #e9f6df 45%, #f5e6c8 78%, #b89870 100%)",
+                  }}
+                >
+                  <div
+                    aria-hidden="true"
+                    className="absolute pointer-events-none"
+                    style={{
+                      top: "8%",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "70%",
+                      height: "55%",
+                      background: "radial-gradient(ellipse at center, rgba(255, 220, 130, 0.55) 0%, rgba(255, 220, 130, 0) 70%)",
+                    }}
+                  />
                   <LivingTree
                     capitalScores={scores}
                     seasonsCompleted={seasonsCompleted}
                     totalContributionScore={total}
                     currentSeasonActions={Math.min(total, 16)}
-                    showRootLabels
                     width={320}
                     height={440}
                   />
@@ -200,6 +221,17 @@ export function LivingTreeCard() {
                     <span className="text-xl font-bold text-[#1a472a]">{total}</span>
                   </div>
                 </div>
+              </div>
+              {/* Bottom Close button — easier to find on mobile than the
+                  small X up top, and parallel to the rest of the modal
+                  patterns on the site. */}
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => setShowDetail(false)}
+                  className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>

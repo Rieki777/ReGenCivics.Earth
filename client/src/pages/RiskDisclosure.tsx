@@ -121,7 +121,7 @@ export default function RiskDisclosure() {
 
             <section>
               <h3 className="text-base font-bold text-white mb-2">15. Leverage Risk</h3>
-              <p>If projects use debt financing, that debt amplifies both gains and losses.</p>
+              <p>If projects use debt financing, leverage magnifies both gains and losses.</p>
             </section>
 
             <section>

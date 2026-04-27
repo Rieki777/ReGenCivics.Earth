@@ -165,13 +165,25 @@ export default function InvestorForm() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
 
-  // Already verified - skip the form and go straight to /opportunity
+  // Pull `returnTo` off the URL so flows like /loi -> /investor?returnTo=/loi
+  // can deliver the user back to where they started after submission. Falls
+  // back to /opportunity for the default investor onboarding flow.
+  const returnTo = (() => {
+    if (typeof window === "undefined") return "/opportunity";
+    const param = new URLSearchParams(window.location.search).get("returnTo");
+    if (!param) return "/opportunity";
+    // Only allow same-origin path returns (no protocol-relative or external).
+    if (!param.startsWith("/") || param.startsWith("//")) return "/opportunity";
+    return param;
+  })();
+
+  // Already verified - skip the form and go to wherever the user was headed
   useEffect(() => {
     const alreadyVerified =
       localStorage.getItem('investor_verified') === 'true' ||
       sessionStorage.getItem('investor_verified') === 'true';
-    if (alreadyVerified) setLocation('/opportunity');
-  }, [setLocation]);
+    if (alreadyVerified) setLocation(returnTo);
+  }, [setLocation, returnTo]);
 
   const [step, setStep] = useState(1);
   const savedEmail = localStorage.getItem('investor_email') ?? '';
@@ -201,7 +213,7 @@ export default function InvestorForm() {
     return () => { if (lsTimerRef.current) clearTimeout(lsTimerRef.current); };
   }, [formData]);
 
-  // Auto-redirect to /opportunity after submission
+  // Auto-redirect after submission to the original destination (or /opportunity)
   useEffect(() => {
     if (isSubmitted && redirectCountdown > 0) {
       const timer = setTimeout(() => {
@@ -209,9 +221,9 @@ export default function InvestorForm() {
       }, 1000);
       return () => clearTimeout(timer);
     } else if (isSubmitted && redirectCountdown === 0) {
-      setLocation('/opportunity');
+      setLocation(returnTo);
     }
-  }, [isSubmitted, redirectCountdown, setLocation]);
+  }, [isSubmitted, redirectCountdown, setLocation, returnTo]);
 
   const newsletterMutation = trpc.newsletter.subscribe.useMutation({
     onSuccess: () => markNewsletterSubscribed(),

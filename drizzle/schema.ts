@@ -638,6 +638,78 @@ export type UserTokenLedgerEntry = typeof userTokenLedger.$inferSelect;
 export type InsertUserTokenLedgerEntry = typeof userTokenLedger.$inferInsert;
 
 /**
+ * Player Paths — per-user-per-path tier progression state.
+ *
+ * One row per (user, path). Created when the player declares a path
+ * (auto on relevant action, or via explicit Add a Path button in
+ * Profile). Tracks earned + claimed timestamps for Co-Creator and
+ * Steward tiers. Sage is cross-path and lives in tier_events only.
+ *
+ * See QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md sections 3, 6.
+ */
+export const playerPaths = mysqlTable("player_paths", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  path: mysqlEnum("path", ["investor", "land_project", "ally", "player"]).notNull(),
+  declaredAt: timestamp("declaredAt").defaultNow().notNull(),
+  /** Set by tier detector when Co-Creator criteria for this path are first met. */
+  coCreatorEarnedAt: timestamp("coCreatorEarnedAt"),
+  /** Set by tier detector when Steward criteria for this path are first met. */
+  stewardEarnedAt: timestamp("stewardEarnedAt"),
+  /** Set when the 77 RGVoice bonus has been claimed on Hypha (on-chain redemption confirmed). */
+  coCreatorBonusClaimedAt: timestamp("coCreatorBonusClaimedAt"),
+  /** Set when the 144 RGVoice bonus has been claimed on Hypha. */
+  stewardBonusClaimedAt: timestamp("stewardBonusClaimedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().onUpdateNow(),
+}, (table) => ([
+  unique("player_paths_user_path_uniq").on(table.userId, table.path),
+  index("player_paths_userId_idx").on(table.userId),
+  index("player_paths_path_idx").on(table.path),
+]));
+
+export type PlayerPath = typeof playerPaths.$inferSelect;
+export type InsertPlayerPath = typeof playerPaths.$inferInsert;
+
+/**
+ * Tier Events — audit log of tier-progression events.
+ *
+ * Used for:
+ *   - Detector idempotency: detector checks for existing rows of the
+ *     matching (userId, eventType, path) before crediting bonuses.
+ *   - Profile timeline: render tier-earned history.
+ *   - Reconciliation: bonus_claimed events reference the original
+ *     earned event via details.originalEventId.
+ *
+ * Sage events have null path (cross-path). Bonus-claimed events
+ * reference the path of the original earned event in their details.
+ */
+export const tierEvents = mysqlTable("tier_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  eventType: mysqlEnum("eventType", [
+    "co_creator_earned",
+    "steward_earned",
+    "sage_earned",
+    "bonus_claimed",
+  ]).notNull(),
+  path: mysqlEnum("path", ["investor", "land_project", "ally", "player"]),
+  /** RGVoice bonus credited to private ledger: 77, 144, or 233. */
+  amountCredited: int("amountCredited"),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  /** Free-form context: { originalEventId, ledgerEntryId, criterionDetail, ... } */
+  details: json("details"),
+}, (table) => ([
+  index("tier_events_userId_idx").on(table.userId),
+  index("tier_events_eventType_idx").on(table.eventType),
+  index("tier_events_path_idx").on(table.path),
+  index("tier_events_occurredAt_idx").on(table.occurredAt),
+]));
+
+export type TierEvent = typeof tierEvents.$inferSelect;
+export type InsertTierEvent = typeof tierEvents.$inferInsert;
+
+/**
  * Crowd Pooling Projects table
  * Stores land projects that are actively crowd pooling resources
  */

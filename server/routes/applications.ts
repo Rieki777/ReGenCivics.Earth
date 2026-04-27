@@ -49,6 +49,18 @@ export const applicationsRouter = router({
       if (!application) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to retrieve created application" });
       }
+
+      // Auto-declare the Land Project path. Idempotent (insert-or-noop).
+      // Tier criterion fires later when status moves to 'approved' / 'active';
+      // the cron picks that up. We don't run the detector inline here because
+      // a fresh draft application doesn't satisfy any criterion yet.
+      try {
+        const { declarePath } = await import("../lib/tierDetector");
+        await declarePath(ctx.user.id, "land_project");
+      } catch (err) {
+        console.warn("[applications.create] declarePath failed (non-fatal):", err);
+      }
+
       return application;
     }),
 
@@ -248,6 +260,22 @@ export const applicationsRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
       }
       await db.updateApplication(input.id, { status: input.status });
+
+      // Inline tier detection on approval. Land Project Co-Creator
+      // criterion fires the moment status moves to 'approved' or
+      // 'active'. We look up the application to get its userId and
+      // run the detector for that user. Non-fatal if it errors.
+      if (input.status === "approved" || input.status === "active") {
+        try {
+          const app = await db.getApplicationById(input.id);
+          if (app?.userId) {
+            const { detectTierProgression } = await import("../lib/tierDetector");
+            await detectTierProgression(app.userId);
+          }
+        } catch (err) {
+          console.warn("[applications.updateStatus] tier detection failed (non-fatal):", err);
+        }
+      }
 
       // Log to application events table
       try {
