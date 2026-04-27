@@ -23,8 +23,8 @@
  *     proposal vote handlers (real-time per user)
  */
 
-import { and, eq, sql } from "drizzle-orm";
-import { getDb } from "@/server/db";
+import { eq, sql } from "drizzle-orm";
+import { getDb } from "../db";
 import {
   playerPaths,
   tierEvents,
@@ -32,8 +32,10 @@ import {
   letterOfIntent,
   applications,
   proposalVotes,
-} from "@/drizzle/schema";
-import { creditPrivateTokens } from "@/server/db/tokens";
+  type TierEvent,
+  type PlayerPath,
+} from "../../drizzle/schema";
+import { creditPrivateTokens } from "../db/tokens";
 import {
   RITES_OF_PASSAGE_COUNT,
   PLAYER_STEWARD_QUEST_COUNT,
@@ -44,6 +46,11 @@ import {
 
 export type TierPath = "investor" | "land_project" | "ally" | "player";
 type TierEventType = "co_creator_earned" | "steward_earned" | "sage_earned";
+
+const PATH_VALUES = ["investor", "land_project", "ally", "player"] as const;
+function isTierPath(v: unknown): v is TierPath {
+  return typeof v === "string" && (PATH_VALUES as readonly string[]).includes(v);
+}
 
 interface CriterionResult {
   met: boolean;
@@ -86,46 +93,50 @@ export async function detectTierProgression(userId: number): Promise<{
 
   // 1. Load existing tier_events for this user so we can short-circuit
   // criteria that have already fired. Idempotency lives here.
-  const existing = await db
+  const existing: TierEvent[] = await db
     .select()
     .from(tierEvents)
     .where(eq(tierEvents.userId, userId));
   const alreadyFired = new Set(
     existing
-      .filter((e) => e.eventType !== "bonus_claimed")
-      .map((e) => `${e.eventType}:${e.path ?? "_"}`),
+      .filter((e: TierEvent) => e.eventType !== "bonus_claimed")
+      .map((e: TierEvent) => `${e.eventType}:${e.path ?? "_"}`),
   );
 
   // 2. Load declared paths so we only check criteria for paths the user
   // has entered. Avoids spurious "earned Steward on a path you never
   // declared" events.
-  const paths = await db
+  const paths: PlayerPath[] = await db
     .select()
     .from(playerPaths)
     .where(eq(playerPaths.userId, userId));
-  const declared = new Set(paths.map((p) => p.path));
+  const declared: TierPath[] = paths
+    .map((p: PlayerPath) => p.path)
+    .filter(isTierPath);
 
   // 3. Co-Creator checks per declared path.
   for (const path of declared) {
     const key = `co_creator_earned:${path}`;
     if (alreadyFired.has(key)) continue;
 
-    const result = await checkCoCreator(userId, path as TierPath);
+    const result = await checkCoCreator(userId, path);
     if (result.met) {
-      await fireTierEvent(userId, "co_creator_earned", path as TierPath, TIER_BONUS.co_creator, result);
-      earnedTiers.push({ path: path as TierPath, eventType: "co_creator_earned", amount: TIER_BONUS.co_creator });
+      await fireTierEvent(userId, "co_creator_earned", path, TIER_BONUS.co_creator, result);
+      earnedTiers.push({ path, eventType: "co_creator_earned", amount: TIER_BONUS.co_creator });
     }
   }
 
   // 4. Steward checks. Only check paths where Co-Creator has already
   // been earned (you can't reach Steward without Co-Creator).
-  const coCreatorPaths = new Set(
-    existing
+  const coCreatorPathList: TierPath[] = [
+    ...existing
+      .filter((e: TierEvent) => e.eventType === "co_creator_earned")
+      .map((e: TierEvent) => e.path),
+    ...earnedTiers
       .filter((e) => e.eventType === "co_creator_earned")
-      .map((e) => e.path)
-      .concat(earnedTiers.filter((e) => e.eventType === "co_creator_earned").map((e) => e.path))
-      .filter((p): p is TierPath => p !== null),
-  );
+      .map((e) => e.path),
+  ].filter(isTierPath);
+  const coCreatorPaths = new Set<TierPath>(coCreatorPathList);
 
   for (const path of coCreatorPaths) {
     const key = `steward_earned:${path}`;
@@ -140,7 +151,7 @@ export async function detectTierProgression(userId: number): Promise<{
 
   // 5. Sage check. Cross-path; requires at least one Steward earned.
   const hasSteward =
-    existing.some((e) => e.eventType === "steward_earned") ||
+    existing.some((e: TierEvent) => e.eventType === "steward_earned") ||
     earnedTiers.some((e) => e.eventType === "steward_earned");
   const sageKey = "sage_earned:_";
   if (hasSteward && !alreadyFired.has(sageKey)) {
@@ -258,10 +269,10 @@ async function checkPlayerCoCreator(userId: number): Promise<CriterionResult> {
     .from(questCompletions)
     .where(eq(questCompletions.userId, userId));
 
-  const completedRiteIds = new Set(
+  const completedRiteIds = new Set<string>(
     rows
-      .map((r) => r.questId)
-      .filter((id): id is string => typeof id === "string" && isRiteOfPassage(id)),
+      .map((r: { questId: string | null }) => r.questId)
+      .filter((id: string | null): id is string => typeof id === "string" && isRiteOfPassage(id)),
   );
 
   return {
@@ -280,7 +291,11 @@ async function checkPlayerSteward(userId: number): Promise<CriterionResult> {
     .select({ questId: questCompletions.questId })
     .from(questCompletions)
     .where(eq(questCompletions.userId, userId));
-  const distinctQuests = new Set(questRows.map((r) => r.questId).filter((q) => q !== null)).size;
+  const distinctQuests = new Set<string>(
+    questRows
+      .map((r: { questId: string | null }) => r.questId)
+      .filter((q: string | null): q is string => q !== null),
+  ).size;
 
   // Count proposal votes.
   const voteRows = await db
@@ -313,12 +328,13 @@ async function checkInvestorCoCreator(userId: number): Promise<CriterionResult> 
     .from(letterOfIntent)
     .where(eq(letterOfIntent.userId, userId));
 
-  const signed = rows.some((r) => r.status === "confirmed" || r.status === "converted");
+  type LoiRow = { id: number; status: string };
+  const signed = rows.some((r: LoiRow) => r.status === "confirmed" || r.status === "converted");
 
   return {
     met: signed,
     note: signed ? "LOI signed" : "LOI not yet signed",
-    evidence: { loiCount: rows.length, statuses: rows.map((r) => r.status) },
+    evidence: { loiCount: rows.length, statuses: rows.map((r: LoiRow) => r.status) },
   };
 }
 
@@ -332,7 +348,7 @@ async function checkInvestorSteward(userId: number): Promise<CriterionResult> {
     .select({ status: letterOfIntent.status })
     .from(letterOfIntent)
     .where(eq(letterOfIntent.userId, userId));
-  const investmentSent = rows.some((r) => r.status === "converted");
+  const investmentSent = rows.some((r: { status: string }) => r.status === "converted");
 
   // Fund vote: TODO. We need to know which proposals are Fund-scoped
   // (vs. game proposals) once that classification exists. For now,
@@ -367,12 +383,13 @@ async function checkLandProjectCoCreator(userId: number): Promise<CriterionResul
     .from(applications)
     .where(eq(applications.userId, userId));
 
-  const approved = rows.some((r) => r.status === "approved" || r.status === "active");
+  type AppRow = { id: number; status: string };
+  const approved = rows.some((r: AppRow) => r.status === "approved" || r.status === "active");
 
   return {
     met: approved,
     note: approved ? "Application approved" : "Application not yet approved",
-    evidence: { applicationCount: rows.length, statuses: rows.map((r) => r.status) },
+    evidence: { applicationCount: rows.length, statuses: rows.map((r: AppRow) => r.status) },
   };
 }
 
@@ -460,7 +477,8 @@ export async function detectTierProgressionForAllUsers(): Promise<{
     .from(playerPaths);
 
   let earned = 0;
-  for (const { userId } of userRows) {
+  for (const row of userRows as Array<{ userId: number | null }>) {
+    const userId = row.userId;
     if (userId == null) continue;
     try {
       const result = await detectTierProgression(userId);
