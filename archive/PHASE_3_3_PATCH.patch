@@ -1,0 +1,106 @@
+From 5fb5b729bdc5628d455022e48fb980ce4718b717 Mon Sep 17 00:00:00 2001
+From: Rieki777 <rieki@pm.me>
+Date: Mon, 27 Apr 2026 16:55:13 -1000
+Subject: [PATCH] fix(content): community-call card copy + Telegram social +
+ Rites typo
+
+Four small content fixes from a live audit pass:
+
+1. ProgressiveOnboarding 'Book a Discovery Call' card now reads
+   'Join a community call' / 'Talk with the team, ask questions'.
+   The investor-only gate is removed because the new framing is
+   community-wide and /schedule is the universal community sessions
+   page. Voiced 2026-04-27.
+
+2. Telegram channel link added to /socials (between WhatsApp and
+   Discord) and to the Unsubscribe page footer alongside WhatsApp.
+   Points at https://t.me/SEEDS_Community.
+
+3. pageCopy.ts: 'View Rits of Passage Quest Arc' typo fixed to
+   'Rites'.
+
+No schema or behaviour change. Pure copy / static data.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+---
+ client/src/components/ProgressiveOnboarding.tsx | 9 +++++----
+ client/src/data/pageCopy.ts                     | 2 +-
+ client/src/pages/Socials.tsx                    | 8 ++++++++
+ client/src/pages/Unsubscribe.tsx                | 9 +++++++++
+ 4 files changed, 23 insertions(+), 5 deletions(-)
+
+diff --git a/client/src/components/ProgressiveOnboarding.tsx b/client/src/components/ProgressiveOnboarding.tsx
+index 62db83a..490abd0 100644
+--- a/client/src/components/ProgressiveOnboarding.tsx
++++ b/client/src/components/ProgressiveOnboarding.tsx
+@@ -158,10 +158,11 @@ function PersonalizedCards() {
+   if (profile.path === 'land_project') {
+     cards.push({ id: 'accelerator', title: 'Seasonal Accelerator', subtitle: 'Grow your project', href: '/apply', image: '/images/return-cards/accelerator.webp', accentColor: '#34d399', icon: Zap });
+   }
+-  // Discovery Call: investors only (Rye is only taking calls from investors)
+-  if (isInvestor) {
+-    cards.push({ id: 'schedule', title: 'Book a Discovery Call', subtitle: 'Talk with the team', href: '/schedule', image: '/images/return-cards/schedule.webp', accentColor: '#f472b6', icon: CalendarDays });
+-  }
++  // Community call card: open to everyone now (was investor-only when
++  // it was a "Discovery Call" framing). The /schedule page lists the
++  // weekly community sessions plus quarterly Fund AMAs, so the broader
++  // copy fits any returning visitor. Voiced 2026-04-27.
++  cards.push({ id: 'schedule', title: 'Join a community call', subtitle: 'Talk with the team, ask questions', href: '/schedule', image: '/images/return-cards/schedule.webp', accentColor: '#f472b6', icon: CalendarDays });
+ 
+   if (cards.length === 0) return null;
+ 
+diff --git a/client/src/data/pageCopy.ts b/client/src/data/pageCopy.ts
+index 8c355c1..9d6621f 100644
+--- a/client/src/data/pageCopy.ts
++++ b/client/src/data/pageCopy.ts
+@@ -187,7 +187,7 @@ export const pageCopy = {
+     },
+     announcement: "UNDER CONSTRUCTION: Quests are in pre-launch mode! You can start questing now and help work out any kinks and co-create the flow while we get ready for a full launch.",
+     questArcButton: {
+-      expand: "View Rits of Passage Quest Arc",
++      expand: "View Rites of Passage Quest Arc",
+       collapse: "Hide Quest Arc",
+     },
+   },
+diff --git a/client/src/pages/Socials.tsx b/client/src/pages/Socials.tsx
+index 256644f..3d1c860 100644
+--- a/client/src/pages/Socials.tsx
++++ b/client/src/pages/Socials.tsx
+@@ -87,6 +87,14 @@ const socialLinks = [
+     color: "#25d366",
+     recommended: false,
+   },
++  {
++    name: "Telegram Channel",
++    description: "Cross-posted updates and SEEDS Community chatter on Telegram",
++    icon: MessageCircle,
++    url: "https://t.me/SEEDS_Community",
++    color: "#0088cc",
++    recommended: false,
++  },
+   {
+     name: "Discord Server",
+     description: "Connect with regenerators, ask questions, and find collaboration opportunities",
+diff --git a/client/src/pages/Unsubscribe.tsx b/client/src/pages/Unsubscribe.tsx
+index 6fa9c98..84c659f 100644
+--- a/client/src/pages/Unsubscribe.tsx
++++ b/client/src/pages/Unsubscribe.tsx
+@@ -201,6 +201,15 @@ export default function Unsubscribe() {
+                 >
+                   WhatsApp
+                 </a>{" "}
++                or{" "}
++                <a
++                  href="https://t.me/SEEDS_Community"
++                  target="_blank"
++                  rel="noopener noreferrer"
++                  className="text-[#7dd87d]/60 underline hover:text-[#7dd87d]"
++                >
++                  Telegram
++                </a>{" "}
+                 community channels. Direct email responses are not provided.
+               </p>
+             </div>
+-- 
+2.34.1
+
