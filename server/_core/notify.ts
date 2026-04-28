@@ -15,6 +15,10 @@
  * If env vars are missing, the function logs a warning and skips that channel silently.
  */
 
+import { logger } from "./logger";
+
+const log = logger("notify");
+
 const APP_BASE_URL = process.env.APP_BASE_URL ?? "https://regencivics.earth";
 
 // ── Telegram ──────────────────────────────────────────────────────────────────
@@ -23,7 +27,7 @@ async function sendTelegram(message: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) {
-    console.log("[notify/telegram] Skipped. TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set");
+    log.info("telegram: skipped (TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set)");
     return;
   }
   try {
@@ -39,12 +43,12 @@ async function sendTelegram(message: string): Promise<void> {
     });
     if (!res.ok) {
       const body = await res.text();
-      console.warn("[notify/telegram] Send failed:", res.status, body);
+      log.warn("telegram: send failed", { status: res.status, body });
     } else {
-      console.log("[notify/telegram] Sent OK");
+      log.info("telegram: sent");
     }
   } catch (err) {
-    console.error("[notify/telegram] Error:", err);
+    log.error("telegram: error", err);
   }
 }
 
@@ -55,7 +59,7 @@ async function sendWhatsApp(message: string): Promise<void> {
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
   const toNumber = process.env.WHATSAPP_TO_NUMBER;
   if (!phoneNumberId || !accessToken || !toNumber) {
-    console.log("[notify/whatsapp] Skipped. WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, or WHATSAPP_TO_NUMBER not set");
+    log.info("whatsapp: skipped (WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, or WHATSAPP_TO_NUMBER not set)");
     return;
   }
   try {
@@ -77,12 +81,12 @@ async function sendWhatsApp(message: string): Promise<void> {
     );
     if (!res.ok) {
       const body = await res.text();
-      console.warn("[notify/whatsapp] Send failed:", res.status, body);
+      log.warn("whatsapp: send failed", { status: res.status, body });
     } else {
-      console.log("[notify/whatsapp] Sent OK");
+      log.info("whatsapp: sent");
     }
   } catch (err) {
-    console.error("[notify/whatsapp] Error:", err);
+    log.error("whatsapp: error", err);
   }
 }
 
@@ -95,7 +99,7 @@ export async function sendSMS(toPhone: string, message: string): Promise<void> {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
   if (!accountSid || !authToken || !fromNumber) {
-    console.log("[notify/sms] Skipped. TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_FROM_NUMBER not set");
+    log.info("sms: skipped (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_FROM_NUMBER not set)");
     return;
   }
   try {
@@ -112,12 +116,12 @@ export async function sendSMS(toPhone: string, message: string): Promise<void> {
       }
     );
     if (!res.ok) {
-      console.warn("[notify/sms] Send failed:", res.status, await res.text());
+      log.warn("sms: send failed", { status: res.status, body: await res.text() });
     } else {
-      console.log(`[notify/sms] Sent to ${toPhone}`);
+      log.info("sms: sent", { toPhone });
     }
   } catch (err) {
-    console.error("[notify/sms] Error:", err);
+    log.error("sms: error", err);
   }
 }
 

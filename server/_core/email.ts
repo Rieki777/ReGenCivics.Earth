@@ -5,6 +5,9 @@
  */
 
 import { Resend } from 'resend';
+import { logger } from './logger';
+
+const log = logger('email');
 
 // Lazy Resend client initialization, avoids crashing at module load when key is missing
 let _resend: Resend | null = null;
@@ -264,7 +267,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
   // to re-enable. Emails that hit this gate are logged but never sent.
   if (process.env.EMAIL_HOLD === "true") {
     const recipients = Array.isArray(params.to) ? params.to.join(", ") : params.to;
-    console.log(`[Email] HELD (EMAIL_HOLD=true), would have sent "${params.subject}" to: ${recipients}`);
+    log.info(`HELD (EMAIL_HOLD=true), would have sent "${params.subject}" to: ${recipients}`);
     return { id: null };
   }
   // ─────────────────────────────────────────────────────────────────────────
@@ -274,7 +277,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
   const recipientCount = toList.length;
   const { blocked, reason } = checkRateLimits(recipientCount, params.subject);
   if (blocked) {
-    console.error(`[Email] BLOCKED by rate limiter, ${reason}`);
+    log.error(`BLOCKED by rate limiter, ${reason}`);
     // In production, this would ideally fire a Sentry alert or admin notification.
     try { const Sentry = await import("@sentry/node"); Sentry.captureMessage(`Email rate limit hit: ${reason}`, "error"); } catch {}
     return { id: null };
@@ -319,11 +322,11 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
     });
     
     if (response.error) {
-      console.error('[Email] Failed to send:', response.error);
+      log.error('Failed to send', undefined, { responseError: response.error });
       return { id: null };
     }
     
-    console.log('[Email] Sent successfully:', response.data?.id);
+    log.info('Sent successfully', { messageId: response.data?.id });
     
     // Return tracking data for logging
     return {
@@ -339,7 +342,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
       },
     };
   } catch (error) {
-    console.error('[Email] Error sending email:', error);
+    log.error('Error sending email', error);
     return { id: null };
   }
 }
@@ -350,7 +353,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
  */
 export async function testEmailConnection(): Promise<boolean> {
   try {
-    console.log('[Email] Testing connection with API key:', process.env.RESEND_API_KEY?.substring(0, 10) + '...');
+    log.info('Testing connection with API key', { apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10) + '...' });
     
     // Send a test email to verify the API key works
     const response = await getResend().emails.send({
@@ -360,16 +363,16 @@ export async function testEmailConnection(): Promise<boolean> {
       html: wrapWithBrandedTemplate('<p>This is a test email to verify Resend integration.</p>'),
     });
     
-    console.log('[Email] Response:', JSON.stringify(response, null, 2));
+    log.debug('Response', { response });
     
     if (response.error) {
-      console.error('[Email] Response error:', response.error);
+      log.error('Response error', undefined, { responseError: response.error });
       return false;
     }
     
     return true;
   } catch (error) {
-    console.error('[Email] Connection test failed:', error);
+    log.error('Connection test failed', error);
     return false;
   }
 }
