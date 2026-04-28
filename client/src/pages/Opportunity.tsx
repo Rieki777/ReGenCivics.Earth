@@ -2176,7 +2176,7 @@ export default function Opportunity() {
                 </div>
                 <div className="flex items-center justify-center gap-4 text-sm">
                   <a
-                    href="/connect"
+                    href="/investor/contact"
                     className="text-white/60 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
                   >
                     <Mail className="w-4 h-4" />

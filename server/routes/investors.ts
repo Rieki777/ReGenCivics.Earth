@@ -153,6 +153,105 @@ export const investorInquiriesRouter = router({
       return { id: inquiryId, success: true };
     }),
 
+  /**
+   * Investor follow-up: a verified investor (one who has already submitted
+   * the InvestorForm and got access to /opportunity) sends a question via
+   * the "Contact our investor team" CTA. Creates a new investor_inquiries
+   * row tagged with referralSource = "opportunity_followup" so admin sees
+   * it threaded with the original investor record by email.
+   *
+   * Auto-populates from the prior submission (most recent inquiry by
+   * email) when one exists, so we keep the investor profile context
+   * (organization, investmentRange, etc.) consistent across messages.
+   * Falls back to the values the client passes (from localStorage) when
+   * there's no prior row to copy from.
+   */
+  submitFollowUp: publicProcedure
+    .input(
+      z.object({
+        fullName: z.string().min(1).max(255),
+        email: z.string().email(),
+        message: z.string().min(1).max(4000),
+        // Optional context the client can pass through (from localStorage
+        // INVESTOR_LS_KEY) when we can't find a prior row.
+        organization: z.string().max(255).optional(),
+        role: z.string().max(255).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await checkRateLimit(ctx, "investor_followup");
+
+      const drizzle = await getDb();
+      if (!drizzle) {
+        throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
+      }
+
+      // Find the most recent prior inquiry from this email so we can
+      // copy investor profile context (investorType, range, timeline,
+      // primaryInterest, etc) onto the follow-up row. Admin sees the
+      // same profile fields populated as the original.
+      const prior = await drizzle
+        .select()
+        .from(investorInquiriesTbl)
+        .where(eq(investorInquiriesTbl.email, input.email))
+        .orderBy(sql`createdAt DESC`)
+        .limit(1);
+
+      const ctx0 = prior[0];
+
+      const followUpId = await db.createInvestorInquiry({
+        userId: ctx.user?.id ?? null,
+        fullName: input.fullName,
+        email: input.email,
+        phone: ctx0?.phone ?? null,
+        organization: input.organization ?? ctx0?.organization ?? null,
+        role: input.role ?? ctx0?.role ?? null,
+        location: ctx0?.location ?? null,
+        investorType: ctx0?.investorType ?? null,
+        investmentRange: ctx0?.investmentRange ?? null,
+        investmentTimeline: ctx0?.investmentTimeline ?? null,
+        primaryInterest: ctx0?.primaryInterest ?? null,
+        geographicPreference: ctx0?.geographicPreference ?? null,
+        sectorInterests: ctx0?.sectorInterests ?? null,
+        investmentExperience: ctx0?.investmentExperience ?? null,
+        motivations: ctx0?.motivations ?? null,
+        impactGoals: ctx0?.impactGoals ?? null,
+        // The actual message lives here. questionsForTeam is exactly what
+        // the field is for; admin's investor view already surfaces it.
+        questionsForTeam: input.message,
+        referralSource: "opportunity_followup",
+        documentsUrl: null,
+        additionalNotes: ctx0
+          ? `Follow-up from verified investor (originally submitted #${ctx0.id} on ${ctx0.createdAt?.toISOString?.() ?? "earlier"})`
+          : "Follow-up from verified investor (no prior inquiry found by email)",
+        preferredContact: ctx0?.preferredContact ?? "email",
+        newsletterOptIn: ctx0?.newsletterOptIn ?? 0,
+      });
+
+      // Notify admin so the message lands as a tracked admin notification
+      // alongside the standard investor inquiry stream.
+      try {
+        await notifyIfEnabled("investorInquiries", {
+          title: `Investor follow-up: ${input.fullName}`,
+          content: [
+            `${input.fullName} (${input.email}) sent a follow-up via /opportunity:`,
+            "",
+            input.message,
+            "",
+            ctx0
+              ? `Linked to original inquiry #${ctx0.id}.`
+              : "No prior investor inquiry found by email.",
+            "",
+            "Review in admin > Investors.",
+          ].join("\n"),
+        });
+      } catch (e) {
+        console.warn("Failed to send investor follow-up notification:", e);
+      }
+
+      return { id: followUpId, success: true };
+    }),
+
   // Admin: Get all investor inquiries
   list: protectedProcedure.query(async ({ ctx }) => {
     if (ctx.user.role !== "admin") {

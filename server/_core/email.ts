@@ -722,7 +722,7 @@ export const emailTemplates = {
             <p style="color: #5c3a00; font-size: 14px; margin: 0 0 16px 0;">Non-binding. Takes 2 minutes. Ensures you're first in line when the fund opens.</p>
             <a href="https://regencivics.earth/loi" style="display: inline-block; background: #8a5a00; color: #ffd700; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 14px; border: 2px solid #ffd700;">Sign the LOI</a>
           </div>
-          <p style="color: #333; line-height: 1.7; font-size: 15px;">If you have questions, concerns, or simply want to talk through the opportunity, <a href="https://regencivics.earth/connect?path=finance" style="color: #4a7c59;">drop us a note via the Connect form</a> or <a href="https://calendly.com/rieki-cordon/30min" style="color: #4a7c59;">book a call here</a>.</p>
+          <p style="color: #333; line-height: 1.7; font-size: 15px;">If you have questions, concerns, or simply want to talk through the opportunity, <a href="https://regencivics.earth/investor/contact" style="color: #4a7c59;">send us a message from your investor profile</a> or <a href="https://calendly.com/rieki-cordon/30min" style="color: #4a7c59;">book a call here</a>.</p>
           <p style="color: #333; line-height: 1.7; font-size: 15px;">The ReGenerative Renaissance is underway  -  and your capital can help it accelerate.</p>
         </div>
         <div style="padding: 16px 30px 24px; border-top: 1px solid #e0e0e0; text-align: center;">
