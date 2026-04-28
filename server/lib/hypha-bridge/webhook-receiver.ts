@@ -9,7 +9,7 @@
  */
 import type { Express, Request, Response } from "express";
 import crypto from "crypto";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 import {
   getDb,
   addTokenLedgerEntry,
@@ -318,6 +318,51 @@ async function cascadeClaimPassed(bridgeRow: any, event: AlchemyHyphaEvent): Pro
     title: "Tokens claimed!",
     message: `${actualAmount} ${tokenType} moved to your wallet on Base.${event.txHash ? ` View on Basescan: https://basescan.org/tx/${event.txHash}` : ""}`,
   } as any).catch((err: any) => log.error("claim notification failed", err));
+
+  // Phase 2.1: flip the State B → State C UI flag on player_paths for any
+  // unclaimed Co-Creator / Steward bonuses on this user. The four-token
+  // bonus pays out in RGVoice, so only that tokenType triggers the
+  // cascade. Two narrow UPDATEs (one per tier) target rows that have an
+  // earned tier_event but a NULL claimedAt timestamp -- so already-
+  // claimed bonuses keep their original timestamp and gratitude /
+  // harvest RGVoice claims that don't have a matching tier_event are
+  // untouched. Idempotent, safe to re-run if the cascade fires twice.
+  if (tokenType === "rgvoice" && bridgeRow.initiatorUserId) {
+    try {
+      await db.execute(sql`
+        UPDATE player_paths AS pp
+        SET coCreatorBonusClaimedAt = NOW()
+        WHERE pp.userId = ${bridgeRow.initiatorUserId}
+          AND pp.coCreatorBonusClaimedAt IS NULL
+          AND EXISTS (
+            SELECT 1 FROM tier_events te
+            WHERE te.userId = pp.userId
+              AND te.path = pp.path
+              AND te.eventType = 'co_creator_earned'
+          )
+      `);
+      await db.execute(sql`
+        UPDATE player_paths AS pp
+        SET stewardBonusClaimedAt = NOW()
+        WHERE pp.userId = ${bridgeRow.initiatorUserId}
+          AND pp.stewardBonusClaimedAt IS NULL
+          AND EXISTS (
+            SELECT 1 FROM tier_events te
+            WHERE te.userId = pp.userId
+              AND te.path = pp.path
+              AND te.eventType = 'steward_earned'
+          )
+      `);
+      log.info(
+        `cascadeClaimPassed: marked unclaimed tier bonuses claimed for user ${bridgeRow.initiatorUserId}`,
+      );
+    } catch (err) {
+      // Don't fail the whole cascade if the bonus-flag update breaks --
+      // the on-chain credit + notification already succeeded. Surface
+      // the failure so admin can run a manual SQL fix-up.
+      log.error("cascadeClaimPassed: tier bonus flag cascade failed", err);
+    }
+  }
 
   log.info(`cascadeClaimPassed: bridge ${bridgeRow.bridgeKey} confirmed for user ${bridgeRow.initiatorUserId} (requested ${requestedAmount}, actual ${actualAmount} ${tokenType}, delta ${delta})`);
 }
