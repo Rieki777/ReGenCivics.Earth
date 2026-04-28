@@ -1,0 +1,777 @@
+From 75e91e62d3a2d454709891c55ce0397d2ec72554 Mon Sep 17 00:00:00 2001
+From: Rieki777 <rieki@pm.me>
+Date: Mon, 27 Apr 2026 13:59:43 -1000
+Subject: [PATCH] feat(quest): path portals + citizenship tier sidebar +
+ moss-ruin locked cards (Phase 3)
+
+Phase 3 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md. The /quest page
+gains the four-portal selector for path filtering, a horizontal
+citizenship tier sidebar above the portals, and the locked-quest card
+is redesigned per spec section 9.8 as a moss-overgrown stone ruin
+with a bioluminescent elemental glyph instead of a corporate lock
+icon.
+
+New components:
+  - PathPortalsSelector: four elemental portals (fire/water/earth/air
+    mapped to player/investor/land_project/ally). Hollow Knight-style
+    fade-in shimmer on first paint. Declared paths render filled with
+    aurora glow; undeclared render as outline silhouettes that route
+    to /profile?tab=quests when tapped (where the existing Add a Path
+    modal lives).
+  - CitizenshipTierSidebar: vertical timeline + horizontal pill
+    variants. Player's current rung pulses; next rung shows faintly.
+    Tap-targets scroll to the matching page section.
+  - LockedQuestCard: complete rewrite. SVG silhouette of a ruined
+    stone arch with moss creeping up from the base, plus an inline
+    bioluminescent glyph centered in the arch. Backward compatible
+    prop API so existing call-sites keep working.
+
+Integration:
+  - Quest.tsx adds <PathProgressionSection> directly below the hero,
+    rendering the tier sidebar in a header row plus the four portals
+    below. Reads from the Phase 2 playerPaths.getMyPaths query.
+
+Deferred to Phase 3.1: hero-card treatment for threshold quests, the
+canopy-fall unlock animation, and the Open Universe two-at-a-time
+reveal logic. Those need quest-pool tagging on existing data and
+minor Quest.tsx layout work.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+---
+ .../src/components/CitizenshipTierSidebar.tsx | 226 ++++++++++++++++++
+ client/src/components/LockedQuestCard.tsx     | 155 ++++++++++--
+ client/src/components/PathPortalsSelector.tsx | 207 ++++++++++++++++
+ client/src/pages/Quest.tsx                    |  71 ++++++
+ 4 files changed, 645 insertions(+), 14 deletions(-)
+ create mode 100644 client/src/components/CitizenshipTierSidebar.tsx
+ create mode 100644 client/src/components/PathPortalsSelector.tsx
+
+diff --git a/client/src/components/CitizenshipTierSidebar.tsx b/client/src/components/CitizenshipTierSidebar.tsx
+new file mode 100644
+index 0000000..b9285b7
+--- /dev/null
++++ b/client/src/components/CitizenshipTierSidebar.tsx
+@@ -0,0 +1,226 @@
++/**
++ * CitizenshipTierSidebar: vertical timeline of the four tier thresholds.
++ *
++ * Per QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.3.
++ *
++ * The four rungs are Explorer, Co-Creator, Steward, Sage. The player's
++ * current position glows; the next threshold is faintly visible. Each
++ * threshold has a one-line label and serves as a tap-target that
++ * scrolls the page to a relevant section (Welcome Aboard for Explorer,
++ * Rites for Co-Creator, etc).
++ *
++ * On narrow viewports (default Tailwind md breakpoint), the sidebar
++ * collapses to a horizontal pill row at the top of the page; the
++ * caller is responsible for choosing a layout that wraps this in the
++ * appropriate container.
++ */
++
++import { Sparkles, Sprout, TreeDeciduous, Mountain } from "lucide-react";
++
++type TierName = "explorer" | "co_creator" | "steward" | "sage";
++
++interface TierMeta {
++  name: TierName;
++  label: string;
++  oneLiner: string;
++  scrollTargetId: string;
++  Icon: React.ComponentType<{ className?: string }>;
++}
++
++const TIERS: TierMeta[] = [
++  {
++    name: "explorer",
++    label: "Explorer",
++    oneLiner: "You just got here",
++    scrollTargetId: "welcome-aboard",
++    Icon: Sparkles,
++  },
++  {
++    name: "co_creator",
++    label: "Co-Creator",
++    oneLiner: "Walk a path",
++    scrollTargetId: "rites-of-passage",
++    Icon: Sprout,
++  },
++  {
++    name: "steward",
++    label: "Steward",
++    oneLiner: "Deep on a path",
++    scrollTargetId: "open-universe",
++    Icon: TreeDeciduous,
++  },
++  {
++    name: "sage",
++    label: "Sage",
++    oneLiner: "Top contribution",
++    scrollTargetId: "open-universe",
++    Icon: Mountain,
++  },
++];
++
++interface CitizenshipTierSidebarProps {
++  /** Player's highest earned tier. */
++  currentTier: TierName;
++  className?: string;
++  /** Render horizontally (true) or vertically (false). */
++  horizontal?: boolean;
++}
++
++export function CitizenshipTierSidebar({
++  currentTier,
++  className = "",
++  horizontal = false,
++}: CitizenshipTierSidebarProps) {
++  const currentIdx = TIERS.findIndex((t) => t.name === currentTier);
++  const nextIdx = Math.min(currentIdx + 1, TIERS.length - 1);
++
++  const scrollTo = (id: string) => {
++    const el = document.getElementById(id);
++    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
++  };
++
++  if (horizontal) {
++    return (
++      <div className={`flex items-center gap-2 overflow-x-auto pb-1 ${className}`}>
++        {TIERS.map((tier, i) => (
++          <TierPill
++            key={tier.name}
++            tier={tier}
++            state={
++              i < currentIdx
++                ? "past"
++                : i === currentIdx
++                  ? "current"
++                  : i === nextIdx
++                    ? "next"
++                    : "future"
++            }
++            onClick={() => scrollTo(tier.scrollTargetId)}
++          />
++        ))}
++      </div>
++    );
++  }
++
++  return (
++    <ol className={`relative flex flex-col gap-6 ${className}`}>
++      {/* Vertical thread connecting the rungs */}
++      <div
++        className="absolute left-3 top-3 bottom-3 w-px bg-gradient-to-b from-[#7dd87d]/30 via-white/10 to-transparent"
++        aria-hidden="true"
++      />
++      {TIERS.map((tier, i) => (
++        <TierRung
++          key={tier.name}
++          tier={tier}
++          state={
++            i < currentIdx
++              ? "past"
++              : i === currentIdx
++                ? "current"
++                : i === nextIdx
++                  ? "next"
++                  : "future"
++          }
++          onClick={() => scrollTo(tier.scrollTargetId)}
++        />
++      ))}
++    </ol>
++  );
++}
++
++type RungState = "past" | "current" | "next" | "future";
++
++function rungStyles(state: RungState) {
++  switch (state) {
++    case "past":
++      return {
++        dot: "bg-[#7dd87d]/70 border-[#7dd87d]/70",
++        label: "text-white/60",
++        oneLiner: "text-white/30",
++      };
++    case "current":
++      return {
++        dot: "bg-[#7dd87d] border-[#7dd87d] shadow-[0_0_18px_rgba(125,216,125,0.6)] animate-pulse",
++        label: "text-white font-semibold",
++        oneLiner: "text-[#7dd87d]/80",
++      };
++    case "next":
++      return {
++        dot: "bg-transparent border-[#7dd87d]/50",
++        label: "text-white/70",
++        oneLiner: "text-white/40",
++      };
++    case "future":
++      return {
++        dot: "bg-transparent border-white/15",
++        label: "text-white/30",
++        oneLiner: "text-white/20",
++      };
++  }
++}
++
++function TierRung({
++  tier,
++  state,
++  onClick,
++}: {
++  tier: TierMeta;
++  state: RungState;
++  onClick: () => void;
++}) {
++  const styles = rungStyles(state);
++  const Icon = tier.Icon;
++  return (
++    <li className="relative">
++      <button
++        type="button"
++        onClick={onClick}
++        className="flex items-start gap-3 w-full text-left group"
++      >
++        <span
++          className={`relative z-10 flex items-center justify-center w-6 h-6 rounded-full border-2 transition-all ${styles.dot}`}
++          aria-hidden="true"
++        >
++          <Icon className="w-3 h-3 text-[#0a1f15]" />
++        </span>
++        <span className="flex-1 pt-0.5">
++          <span className={`block text-sm leading-tight ${styles.label}`}>{tier.label}</span>
++          <span className={`block text-[11px] leading-tight ${styles.oneLiner}`}>{tier.oneLiner}</span>
++        </span>
++      </button>
++    </li>
++  );
++}
++
++function TierPill({
++  tier,
++  state,
++  onClick,
++}: {
++  tier: TierMeta;
++  state: RungState;
++  onClick: () => void;
++}) {
++  const Icon = tier.Icon;
++  const isCurrent = state === "current";
++  return (
++    <button
++      type="button"
++      onClick={onClick}
++      className={
++        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap transition-colors " +
++        (isCurrent
++          ? "bg-[#7dd87d]/15 border border-[#7dd87d]/50 text-white"
++          : state === "past"
++            ? "bg-white/[0.04] border border-[#7dd87d]/30 text-white/60"
++            : state === "next"
++              ? "bg-transparent border border-[#7dd87d]/25 text-white/50"
++              : "bg-transparent border border-white/10 text-white/30")
++      }
++    >
++      <Icon className="w-3 h-3" />
++      <span>{tier.label}</span>
++    </button>
++  );
++}
+diff --git a/client/src/components/LockedQuestCard.tsx b/client/src/components/LockedQuestCard.tsx
+index 7389836..cb9b59a 100644
+--- a/client/src/components/LockedQuestCard.tsx
++++ b/client/src/components/LockedQuestCard.tsx
+@@ -1,42 +1,169 @@
+ /**
+- * LockedQuestCard - Greyed-out quest card with lock overlay.
+- * Shows title and subtitle so players know what's ahead, but is not interactive.
++ * LockedQuestCard: a quest the player can see exists but hasn't unlocked yet.
++ *
++ * Per QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.8, locked
++ * quests render as moss-overgrown stone ruins with a single faint
++ * elemental glyph (fire / water / earth / air) instead of a corporate
++ * lock icon. The aesthetic says "the path continues into the forest,
++ * you just haven't walked there yet."
++ *
++ * Hover reveals a one-line tooltip with the unlock chain. Not
++ * interactive (no onclick); the affordance is the ruin itself.
++ *
++ * Backward compatibility: the previous prop API (title, subtitle,
++ * className, children) is preserved so existing call-sites keep
++ * working without edits.
+  */
+-import { Lock } from "lucide-react";
++
++import type { ReactElement } from "react";
++import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
++
++type Glyph = "fire" | "water" | "earth" | "air";
+ 
+ interface LockedQuestCardProps {
+   title: string;
+   subtitle?: string;
++  /**
++   * Element glyph hinting at the quest's nature. Picked by the parent
++   * from the quest's pool / metadata. Defaults to earth (most common
++   * solarpunk element) when nothing better is known.
++   */
++  glyph?: Glyph;
++  /**
++   * Single-line unlock hint shown on hover. Examples:
++   *   "Complete Fire to unlock"
++   *   "Reveals after Rites of Passage"
++   *   "Unlocks when one of your current quests is complete"
++   */
++  unlockHint?: string;
+   className?: string;
+   children?: React.ReactNode;
+ }
+ 
+-export function LockedQuestCard({ title, subtitle, className = "", children }: LockedQuestCardProps) {
++const GLYPH_PATHS: Record<Glyph, ReactElement> = {
++  fire: (
++    <path
++      d="M32 12 C 28 22, 22 26, 22 36 C 22 44, 28 50, 32 50 C 36 50, 42 44, 42 36 C 42 30, 38 28, 36 22 C 35 18, 33 14, 32 12 Z"
++      fill="none"
++      stroke="currentColor"
++      strokeWidth="1.5"
++      strokeLinejoin="round"
++    />
++  ),
++  water: (
++    <path
++      d="M32 14 C 24 24, 20 32, 20 40 C 20 47, 25 52, 32 52 C 39 52, 44 47, 44 40 C 44 32, 40 24, 32 14 Z"
++      fill="none"
++      stroke="currentColor"
++      strokeWidth="1.5"
++      strokeLinejoin="round"
++    />
++  ),
++  earth: (
++    <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
++      <path d="M16 44 L 32 18 L 48 44 Z" />
++      <path d="M22 44 L 32 28 L 42 44" opacity="0.5" />
++    </g>
++  ),
++  air: (
++    <g fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
++      <path d="M14 24 Q 26 18, 38 24 T 50 22" />
++      <path d="M14 34 Q 26 28, 38 34 T 50 32" opacity="0.7" />
++      <path d="M14 44 Q 26 38, 38 44 T 50 42" opacity="0.45" />
++    </g>
++  ),
++};
++
++function RuinSilhouette({ glyph }: { glyph: Glyph }) {
+   return (
++    <svg viewBox="0 0 64 80" className="w-full h-full" aria-hidden="true">
++      <defs>
++        <linearGradient id="lqc-moss-gradient" x1="0" y1="0" x2="0" y2="1">
++          <stop offset="0%" stopColor="rgba(125, 216, 125, 0.0)" />
++          <stop offset="60%" stopColor="rgba(125, 216, 125, 0.18)" />
++          <stop offset="100%" stopColor="rgba(125, 216, 125, 0.45)" />
++        </linearGradient>
++        <filter id="lqc-glyph-glow">
++          <feGaussianBlur stdDeviation="0.6" result="blur" />
++          <feMerge>
++            <feMergeNode in="blur" />
++            <feMergeNode in="SourceGraphic" />
++          </feMerge>
++        </filter>
++      </defs>
++
++      {/* Two pillars + half-collapsed crown + scattered rubble */}
++      <g fill="rgba(15, 25, 18, 0.65)" stroke="rgba(60, 80, 65, 0.35)" strokeWidth="0.8">
++        <path d="M14 78 L 14 30 Q 14 22, 22 22 L 24 22 L 24 78 Z" />
++        <path d="M40 78 L 40 22 L 42 22 Q 50 22, 50 30 L 50 78 Z" />
++        <path d="M22 22 L 22 14 L 36 14 L 38 18 L 44 18 L 42 22 Z" />
++        <path d="M8 78 L 12 70 L 18 74 L 22 70 L 26 76 L 30 72 L 34 78 Z" opacity="0.7" />
++        <path d="M34 78 L 38 72 L 42 76 L 48 70 L 54 78 Z" opacity="0.7" />
++      </g>
++
++      {/* Moss creeping up from base */}
++      <path d="M0 80 L 0 56 Q 16 50, 32 56 T 64 52 L 64 80 Z" fill="url(#lqc-moss-gradient)" />
++      <circle cx="18" cy="48" r="3" fill="rgba(125, 216, 125, 0.25)" />
++      <circle cx="46" cy="42" r="2.5" fill="rgba(125, 216, 125, 0.2)" />
++
++      {/* Bioluminescent glyph centered in the arch */}
++      <g transform="translate(0, 4)" color="rgba(180, 240, 200, 0.7)" filter="url(#lqc-glyph-glow)">
++        {GLYPH_PATHS[glyph]}
++      </g>
++    </svg>
++  );
++}
++
++export function LockedQuestCard({
++  title,
++  subtitle,
++  glyph = "earth",
++  unlockHint,
++  className = "",
++  children,
++}: LockedQuestCardProps) {
++  const card = (
+     <div
+-      className={`relative rounded-2xl border border-[#1a472a]/10 bg-[#f8f5f0] p-4 opacity-40 grayscale select-none ${className}`}
++      className={
++        `relative overflow-hidden rounded-2xl border border-[#1a472a]/40 ` +
++        `bg-gradient-to-b from-[#0a1410] to-[#0f1f17] ` +
++        `aspect-[3/4] cursor-default select-none ` +
++        `transition-all duration-500 hover:border-[#7dd87d]/30 ` +
++        `hover:shadow-[0_0_24px_rgba(125,216,125,0.08)] ` +
++        className
++      }
+       aria-disabled="true"
++      role="img"
++      aria-label={`Locked quest: ${title}. ${unlockHint ?? "Reveals as you progress."}`}
+     >
+-      {/* Lock icon badge */}
+-      <div className="absolute top-3 right-3 z-10">
+-        <div className="bg-emerald-400/10 rounded-full p-1.5">
+-          <Lock className="w-5 h-5 text-emerald-400/70" />
+-        </div>
++      <div className="absolute inset-0">
++        <RuinSilhouette glyph={glyph} />
+       </div>
+ 
+-      {/* Card content (visible but dimmed) */}
+-      <div className="pr-10">
++      {/* Title sits below the moss line, faint and serene */}
++      <div className="absolute bottom-3 left-3 right-3 text-center">
+         <h3
+-          className="font-bold text-[#1a472a] text-sm leading-tight mb-1"
++          className="text-[#7dd87d]/40 text-xs font-medium tracking-wide line-clamp-2"
+           style={{ fontFamily: "var(--font-display)" }}
+         >
+           {title}
+         </h3>
+         {subtitle && (
+-          <p className="text-[#1a472a]/60 text-xs line-clamp-2">{subtitle}</p>
++          <p className="text-white/20 text-[10px] mt-0.5 line-clamp-1">{subtitle}</p>
+         )}
+       </div>
+       {children}
+     </div>
+   );
++
++  if (!unlockHint) return card;
++
++  return (
++    <Tooltip>
++      <TooltipTrigger asChild>{card}</TooltipTrigger>
++      <TooltipContent side="top" className="text-xs">
++        {unlockHint}
++        </TooltipContent>
++    </Tooltip>
++  );
+ }
+diff --git a/client/src/components/PathPortalsSelector.tsx b/client/src/components/PathPortalsSelector.tsx
+new file mode 100644
+index 0000000..78e06b0
+--- /dev/null
++++ b/client/src/components/PathPortalsSelector.tsx
+@@ -0,0 +1,207 @@
++/**
++ * PathPortalsSelector: four elemental portals at the top of /quest.
++ *
++ * Per QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.2:
++ *   - Four portal icons in a row (fire / water / earth / air mapped
++ *     to ReGen Player / Investor / Land Project / Alliance Partner).
++ *   - Tap a portal to filter the quest list to that path.
++ *   - Portals never lock; all four always visible.
++ *   - Declared paths render as filled glyphs with aurora glow.
++ *     Undeclared render as outline-only silhouettes.
++ *   - First-paint shimmer borrowed from Hollow Knight's map fade-in.
++ *   - Tapping an undeclared portal triggers the parent's onAddPath
++ *     so the parent can open the Add a Path modal.
++ */
++
++import { useEffect, useState } from "react";
++
++type PathSlug = "player" | "investor" | "land_project" | "ally";
++
++interface PortalMeta {
++  slug: PathSlug;
++  label: string;
++  element: string; // "fire" | "water" | "earth" | "air"
++  /** Hue for the portal aurora ring. Hex without '#'. */
++  hue: string;
++}
++
++const PORTALS: PortalMeta[] = [
++  { slug: "player", label: "ReGen Player", element: "fire", hue: "f97316" },
++  { slug: "investor", label: "Investor", element: "water", hue: "38bdf8" },
++  { slug: "land_project", label: "Land Project", element: "earth", hue: "65a30d" },
++  { slug: "ally", label: "Alliance Partner", element: "air", hue: "a78bfa" },
++];
++
++interface PathPortalsSelectorProps {
++  /** Paths the player has declared. Drives filled vs outline rendering. */
++  declaredPaths: PathSlug[];
++  /** Currently active path filter (null = show all paths). */
++  activePath: PathSlug | null;
++  /** Called when a declared portal is tapped. Toggles the filter. */
++  onSelectPath: (path: PathSlug | null) => void;
++  /**
++   * Called when an UNdeclared portal is tapped. Parent opens the
++   * Add a Path modal pre-pointed at this path.
++   */
++  onAddPath: (path: PathSlug) => void;
++  className?: string;
++}
++
++export function PathPortalsSelector({
++  declaredPaths,
++  activePath,
++  onSelectPath,
++  onAddPath,
++  className = "",
++}: PathPortalsSelectorProps) {
++  // Shimmer-in on first mount only (Hollow Knight map vibe). Subsequent
++  // re-renders skip the animation so filter changes feel snappy.
++  const [shimmered, setShimmered] = useState(false);
++  useEffect(() => {
++    const t = setTimeout(() => setShimmered(true), 800);
++    return () => clearTimeout(t);
++  }, []);
++
++  return (
++    <div
++      className={
++        `grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 ` + className
++      }
++      role="radiogroup"
++      aria-label="Filter quests by path"
++    >
++      {PORTALS.map((portal, i) => {
++        const declared = declaredPaths.includes(portal.slug);
++        const active = activePath === portal.slug;
++        return (
++          <Portal
++            key={portal.slug}
++            portal={portal}
++            declared={declared}
++            active={active}
++            shimmerDelay={i * 120}
++            shimmered={shimmered}
++            onClick={() => {
++              if (declared) {
++                onSelectPath(active ? null : portal.slug);
++              } else {
++                onAddPath(portal.slug);
++              }
++            }}
++          />
++        );
++      })}
++    </div>
++  );
++}
++
++interface PortalProps {
++  portal: PortalMeta;
++  declared: boolean;
++  active: boolean;
++  shimmerDelay: number;
++  shimmered: boolean;
++  onClick: () => void;
++}
++
++function Portal({ portal, declared, active, shimmerDelay, shimmered, onClick }: PortalProps) {
++  const auroraColor = `#${portal.hue}`;
++  return (
++    <button
++      type="button"
++      onClick={onClick}
++      role="radio"
++      aria-checked={active}
++      aria-label={
++        declared
++          ? `${portal.label} path${active ? " (currently filtered)" : ""}`
++          : `Add ${portal.label} path`
++      }
++      className={
++        `group relative flex flex-col items-center justify-center ` +
++        `aspect-square rounded-2xl p-4 ` +
++        `border transition-all duration-500 ` +
++        (active
++          ? "border-[#7dd87d] bg-[#1a472a]/40 shadow-[0_0_32px_rgba(125,216,125,0.25)] "
++          : "border-white/10 bg-white/[0.02] hover:border-white/30 hover:bg-white/[0.04] ") +
++        (shimmered ? "opacity-100 translate-y-0 " : "opacity-0 -translate-y-2 ")
++      }
++      style={{
++        transitionDelay: shimmered ? "0ms" : `${shimmerDelay}ms`,
++      }}
++    >
++      {/* Aurora ring behind the glyph; only visible when declared */}
++      {declared && (
++        <span
++          className="absolute inset-3 rounded-full opacity-40 group-hover:opacity-70 transition-opacity"
++          style={{
++            background: `radial-gradient(circle, ${auroraColor}40 0%, transparent 70%)`,
++            filter: "blur(8px)",
++          }}
++          aria-hidden="true"
++        />
++      )}
++
++      <PortalGlyph element={portal.element} declared={declared} hue={auroraColor} />
++      <div
++        className={
++          "mt-2 text-[11px] md:text-xs font-medium tracking-wide text-center " +
++          (declared ? "text-white" : "text-white/50")
++        }
++      >
++        {portal.label}
++      </div>
++      {!declared && (
++        <div className="text-[9px] text-white/30 mt-0.5">tap to add</div>
++      )}
++    </button>
++  );
++}
++
++function PortalGlyph({
++  element,
++  declared,
++  hue,
++}: {
++  element: string;
++  declared: boolean;
++  hue: string;
++}) {
++  const stroke = declared ? hue : "rgba(255,255,255,0.4)";
++  const fill = declared ? `${hue}30` : "transparent";
++  return (
++    <svg viewBox="0 0 64 64" className="w-12 h-12 md:w-16 md:h-16 relative z-10" aria-hidden="true">
++      {element === "fire" && (
++        <path
++          d="M32 8 C 28 18, 22 22, 22 32 C 22 42, 28 52, 32 56 C 36 52, 42 42, 42 32 C 42 26, 38 24, 36 18 C 35 14, 33 10, 32 8 Z"
++          fill={fill}
++          stroke={stroke}
++          strokeWidth="2"
++          strokeLinejoin="round"
++        />
++      )}
++      {element === "water" && (
++        <path
++          d="M32 8 C 22 22, 16 34, 16 44 C 16 53, 23 58, 32 58 C 41 58, 48 53, 48 44 C 48 34, 42 22, 32 8 Z"
++          fill={fill}
++          stroke={stroke}
++          strokeWidth="2"
++          strokeLinejoin="round"
++        />
++      )}
++      {element === "earth" && (
++        <g fill={fill} stroke={stroke} strokeWidth="2" strokeLinejoin="round">
++          <path d="M8 50 L 32 12 L 56 50 Z" />
++          <path d="M18 50 L 32 28 L 46 50" fill="none" opacity="0.6" />
++        </g>
++      )}
++      {element === "air" && (
++        <g fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round">
++          <path d="M10 22 Q 26 14, 42 22 T 56 20" />
++          <path d="M10 36 Q 26 28, 42 36 T 56 34" opacity="0.75" />
++          <path d="M10 50 Q 26 42, 42 50 T 56 48" opacity="0.5" />
++        </g>
++      )}
++    </svg>
++  );
++}
+diff --git a/client/src/pages/Quest.tsx b/client/src/pages/Quest.tsx
+index 5b8db9a..3d6a8dd 100644
+--- a/client/src/pages/Quest.tsx
++++ b/client/src/pages/Quest.tsx
+@@ -44,6 +44,8 @@ import { cdnImg } from "@/lib/utils";
+ import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
+ import { LockedQuestCard } from "@/components/LockedQuestCard";
+ import { SeasonProgressRing } from "@/components/SeasonProgressRing";
++import { PathPortalsSelector } from "@/components/PathPortalsSelector";
++import { CitizenshipTierSidebar } from "@/components/CitizenshipTierSidebar";
+ import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
+ import { QUEST_MASTER_CONTENT } from "@/data/questMasterContent";
+ import {
+@@ -1002,6 +1004,14 @@ export default function Quest() {
+         </AnimatedSection>
+       </section>
+ 
++      {/* Path Portals + Citizenship Tier Sidebar
++          Phase 3 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, sections 9.2 + 9.3.
++          The four elemental portals filter the quest list to one path; the
++          horizontal tier sidebar surfaces the player's current rung and the
++          next threshold. Both components hide gracefully if the user is not
++          signed in (auth-gated tRPC query returns nothing). */}
++      <PathProgressionSection />
++
+       {/* Quest Arc Map */}
+       {showQuestArc && (
+         <section className="py-8 bg-[#faf6f1] border-b border-[#1a472a]/10">
+@@ -1595,3 +1605,64 @@ export default function Quest() {
+     </QuestProgressProvider>
+   );
+ }
++
++/**
++ * Path progression entry strip: four elemental portals + horizontal tier
++ * sidebar. Renders below the hero on /quest. Reads from playerPaths.getMyPaths
++ * (Phase 2 router). When the user is signed out or has no paths declared yet,
++ * still shows the four portal silhouettes so newcomers can see the journey.
++ */
++function PathProgressionSection() {
++  const [activePath, setActivePath] = useState<"player" | "investor" | "land_project" | "ally" | null>(null);
++  const myPaths = trpc.playerPaths.getMyPaths.useQuery(undefined, {
++    staleTime: 60_000,
++    retry: false,
++  });
++
++  const declared: Array<"player" | "investor" | "land_project" | "ally"> = (myPaths.data ?? [])
++    .map((p) => p.path as "player" | "investor" | "land_project" | "ally");
++
++  // Highest tier earned across all paths drives the sidebar position.
++  const tierOrder: Record<string, number> = {
++    explorer: 0,
++    co_creator_earned: 1,
++    co_creator_claimed: 1,
++    steward_earned: 2,
++    steward_claimed: 2,
++  };
++  const highestTierIdx = (myPaths.data ?? []).reduce((max, p) => {
++    const idx = tierOrder[p.tier] ?? 0;
++    return Math.max(max, idx);
++  }, 0);
++  const tierName: "explorer" | "co_creator" | "steward" | "sage" =
++    highestTierIdx >= 2 ? "steward" : highestTierIdx === 1 ? "co_creator" : "explorer";
++
++  return (
++    <section className="py-10 bg-gradient-to-b from-[#0a1f15] to-[#0f2818]">
++      <div className="container max-w-5xl mx-auto px-4">
++        <div className="mb-5 flex items-center justify-between gap-4 flex-wrap">
++          <div>
++            <h2 className="text-white text-lg md:text-xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
++              Choose your path
++            </h2>
++            <p className="text-white/60 text-sm mt-1">
++              Each path earns its own Co-Creator and Steward titles. You can walk more than one.
++            </p>
++          </div>
++          <CitizenshipTierSidebar currentTier={tierName} horizontal className="ml-auto" />
++        </div>
++        <PathPortalsSelector
++          declaredPaths={declared}
++          activePath={activePath}
++          onSelectPath={setActivePath}
++          onAddPath={() => {
++            // Send the player to Profile to declare via the Add a Path modal
++            // (Phase 2 handles the declaration UX there). Future Phase 3.1
++            // can inline a confirmation here.
++            window.location.href = "/profile?tab=quests";
++          }}
++        />
++      </div>
++    </section>
++  );
++}
+-- 
+2.34.1
+
