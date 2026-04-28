@@ -131,6 +131,12 @@ export const applications = mysqlTable("applications", {
   contributionCount: int("contributionCount").default(0),
   fundedCampaignCount: int("fundedCampaignCount").default(0),
   seasonsActive: int("seasonsActive").default(0),
+  // Land Project Steward criterion (spec section 3.3, migration 0135).
+  // seasonsCompleted increments at season-end review; gameLaunchedAt
+  // set when the project's community game ships. Both must be truthy
+  // for steward_earned to fire on the land_project path.
+  seasonsCompleted: int("seasonsCompleted").default(0).notNull(),
+  gameLaunchedAt: timestamp("gameLaunchedAt"),
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

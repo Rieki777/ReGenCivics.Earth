@@ -46,6 +46,7 @@ import { LockedQuestCard } from "@/components/LockedQuestCard";
 import { SeasonProgressRing } from "@/components/SeasonProgressRing";
 import { PathPortalsSelector } from "@/components/PathPortalsSelector";
 import { CitizenshipTierSidebar } from "@/components/CitizenshipTierSidebar";
+import { useActivePathHash } from "@/hooks/useActivePathHash";
 import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
 import { QUEST_MASTER_CONTENT } from "@/data/questMasterContent";
 import {
@@ -1621,7 +1622,10 @@ export default function Quest() {
  * still shows the four portal silhouettes so newcomers can see the journey.
  */
 function PathProgressionSection() {
-  const [activePath, setActivePath] = useState<"player" | "investor" | "land_project" | "ally" | null>(null);
+  // Path filter state lives in the URL hash (#path=investor) so other
+  // sections of /quest can subscribe via useActivePathHash without
+  // prop-drilling. Phase 3.2 spec.
+  const [activePath, setActivePath] = useActivePathHash();
   const myPaths = trpc.playerPaths.getMyPaths.useQuery(undefined, {
     staleTime: 60_000,
     retry: false,

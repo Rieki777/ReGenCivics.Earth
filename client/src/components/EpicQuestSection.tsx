@@ -16,6 +16,7 @@ import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { computeReveal } from "@shared/openUniverseReveal";
+import { useActivePathHash, pathToElement } from "@/hooks/useActivePathHash";
 
 const TIER_CONFIG = {
   easy: {
@@ -147,13 +148,22 @@ export function EpicQuestSection() {
     return () => { if (timer) clearTimeout(timer); };
   }, [isLocked, unlocks?.isEpicUnlocked]);
 
+  // Path filter from the portal selector (synced via URL hash). When
+  // an active path is set, narrow the EPIC_QUESTS pool to those whose
+  // element matches the path's elemental theme. Phase 3.2 spec.
+  const [activePath] = useActivePathHash();
+  const filterElement = pathToElement(activePath);
+
   // Sort all epics by tier order: easy -> hard -> expert
   const sortedQuests = useMemo(() => {
     const tierOrder = ["easy", "hard", "expert"] as const;
-    return [...EPIC_QUESTS].sort(
+    const filtered = filterElement
+      ? EPIC_QUESTS.filter((q) => q.element === filterElement)
+      : EPIC_QUESTS;
+    return [...filtered].sort(
       (a, b) => tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier)
     );
-  }, []);
+  }, [filterElement]);
 
   // Open Universe progressive reveal (spec section 4.3). After Rites
   // are complete, only 2 + completedEpicCount quests are visible at

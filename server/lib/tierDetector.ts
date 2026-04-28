@@ -23,7 +23,7 @@
  *     proposal vote handlers (real-time per user)
  */
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql, inArray, isNotNull, countDistinct } from "drizzle-orm";
 import { getDb } from "../db";
 import {
   playerPaths,
@@ -32,6 +32,8 @@ import {
   letterOfIntent,
   applications,
   proposalVotes,
+  regenTools,
+  regenToolClicks,
   type TierEvent,
   type PlayerPath,
 } from "../../drizzle/schema";
@@ -393,18 +395,39 @@ async function checkLandProjectCoCreator(userId: number): Promise<CriterionResul
   };
 }
 
-async function checkLandProjectSteward(_userId: number): Promise<CriterionResult> {
-  // TODO: requires "completed a season of the Game Co-Creation Journey"
-  // tracking + "successfully launched a Game for their community"
-  // tracking. Neither has a dedicated table yet. Likely needs:
-  //   - applications.seasonsCompleted: int field, or
-  //   - a new land_project_seasons table with status enum
-  //   - a new land_project_games table tracking launched community games
-  // Stubbed until that schema lands. Always returns met=false so the
-  // detector is a no-op for this criterion, not a false positive.
+async function checkLandProjectSteward(userId: number): Promise<CriterionResult> {
+  const db = await getDb();
+  if (!db) return { met: false };
+
+  // Migration 0135 added applications.seasonsCompleted (int, default 0)
+  // and applications.gameLaunchedAt (timestamp, nullable). The land
+  // project earns Steward when both signals are present on at least
+  // one of their applications: seasonsCompleted >= 1 AND gameLaunchedAt
+  // is not null.
+  const rows = await db
+    .select({
+      id: applications.id,
+      seasonsCompleted: applications.seasonsCompleted,
+      gameLaunchedAt: applications.gameLaunchedAt,
+    })
+    .from(applications)
+    .where(eq(applications.userId, userId));
+
+  type AppStewardRow = { id: number; seasonsCompleted: number; gameLaunchedAt: Date | null };
+  const qualifying = rows.find(
+    (r: AppStewardRow) => (r.seasonsCompleted ?? 0) >= 1 && r.gameLaunchedAt !== null,
+  );
+
   return {
-    met: false,
-    note: "Land Project Steward criterion not yet implementable (schema gaps)",
+    met: !!qualifying,
+    note: qualifying
+      ? `Application ${qualifying.id} has seasonsCompleted=${qualifying.seasonsCompleted} and game launched`
+      : "Need at least one season completed and a launched community game",
+    evidence: {
+      applicationCount: rows.length,
+      seasonsCompletedMax: rows.reduce((m: number, r: AppStewardRow) => Math.max(m, r.seasonsCompleted ?? 0), 0),
+      anyGameLaunched: rows.some((r: AppStewardRow) => r.gameLaunchedAt !== null),
+    },
   };
 }
 
@@ -412,17 +435,70 @@ async function checkLandProjectSteward(_userId: number): Promise<CriterionResult
 // Alliance Partner path: partial implementation.
 // ---------------------------------------------------------------------------
 
-async function checkAllyCoCreator(_userId: number): Promise<CriterionResult> {
-  // TODO: requires "submitted a tool that >11 people use" via
-  // regenTools + regenToolClicks (or a per-user usage table) AND/OR
-  // "joined the alliance via approved proposal" via proposals with
-  // intent='ally_join' or similar tag. Both criteria need a clean
-  // attribution path back to the submitting user, which the current
-  // schema partially supports but not without further design.
-  // Stubbed until the alliance proposal type lands.
+async function checkAllyCoCreator(userId: number): Promise<CriterionResult> {
+  const db = await getDb();
+  if (!db) return { met: false };
+
+  // Spec section 3.2 Alliance Partner Co-Creator: submitted a tool
+  // that 11+ distinct people clicked through.
+  //
+  // Strategy: find tools where regenTools.submittedBy = userId AND
+  // status = 'approved', then count distinct userId in regenToolClicks
+  // for each. Pass if any tool has >= 11 distinct users.
+  //
+  // The OR-branch (joined the alliance via approved proposal) is still
+  // schema-gap; that needs proposals.intent='ally_join' or similar
+  // classification once the alliance proposal type lands. Until then
+  // this branch is the only path.
+  const myTools = await db
+    .select({ id: regenTools.id, name: regenTools.name, status: regenTools.status })
+    .from(regenTools)
+    .where(eq(regenTools.submittedBy, userId));
+
+  type ToolRow = { id: number; name: string; status: string | null };
+  const approved = (myTools as ToolRow[]).filter((t) => t.status === "approved");
+  if (approved.length === 0) {
+    return {
+      met: false,
+      note: "No approved tool submissions found",
+      evidence: { toolCount: myTools.length },
+    };
+  }
+
+  // Per-tool distinct-user counts via Drizzle's typed builder so the
+  // mysql2 placeholder list is generated correctly. Single grouped
+  // query, no N+1.
+  const toolIds = approved.map((t) => t.id);
+  const rows = (await db
+    .select({
+      toolId: regenToolClicks.toolId,
+      distinctUsers: countDistinct(regenToolClicks.userId),
+    })
+    .from(regenToolClicks)
+    .where(and(
+      inArray(regenToolClicks.toolId, toolIds),
+      isNotNull(regenToolClicks.userId),
+    ))
+    .groupBy(regenToolClicks.toolId)) as Array<{
+      toolId: number;
+      distinctUsers: number;
+    }>;
+
+  type Counted = { toolId: number; distinctUsers: number };
+  const qualifying = rows.find((r: Counted) => Number(r.distinctUsers) >= 11);
+
   return {
-    met: false,
-    note: "Alliance Co-Creator criterion not yet implementable (schema gaps)",
+    met: !!qualifying,
+    note: qualifying
+      ? `Tool ${qualifying.toolId} has ${qualifying.distinctUsers} distinct users`
+      : `Top tool has ${rows.reduce((m: number, r: Counted) => Math.max(m, Number(r.distinctUsers)), 0)} distinct users; need 11`,
+    evidence: {
+      approvedToolCount: approved.length,
+      perToolDistinctUsers: rows.map((r: Counted) => ({
+        toolId: r.toolId,
+        distinctUsers: Number(r.distinctUsers),
+      })),
+    },
   };
 }
 
