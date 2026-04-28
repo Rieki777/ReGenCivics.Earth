@@ -44,6 +44,8 @@ import { cdnImg } from "@/lib/utils";
 import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
 import { LockedQuestCard } from "@/components/LockedQuestCard";
 import { SeasonProgressRing } from "@/components/SeasonProgressRing";
+import { PathPortalsSelector } from "@/components/PathPortalsSelector";
+import { CitizenshipTierSidebar } from "@/components/CitizenshipTierSidebar";
 import { SubmitToDAOModal } from "@/components/SubmitToDAOModal";
 import { QUEST_MASTER_CONTENT } from "@/data/questMasterContent";
 import {
@@ -1002,6 +1004,14 @@ export default function Quest() {
         </AnimatedSection>
       </section>
 
+      {/* Path Portals + Citizenship Tier Sidebar
+          Phase 3 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, sections 9.2 + 9.3.
+          The four elemental portals filter the quest list to one path; the
+          horizontal tier sidebar surfaces the player's current rung and the
+          next threshold. Both components hide gracefully if the user is not
+          signed in (auth-gated tRPC query returns nothing). */}
+      <PathProgressionSection />
+
       {/* Quest Arc Map */}
       {showQuestArc && (
         <section className="py-8 bg-[#faf6f1] border-b border-[#1a472a]/10">
@@ -1593,5 +1603,66 @@ export default function Quest() {
       />
     </div>
     </QuestProgressProvider>
+  );
+}
+
+/**
+ * Path progression entry strip: four elemental portals + horizontal tier
+ * sidebar. Renders below the hero on /quest. Reads from playerPaths.getMyPaths
+ * (Phase 2 router). When the user is signed out or has no paths declared yet,
+ * still shows the four portal silhouettes so newcomers can see the journey.
+ */
+function PathProgressionSection() {
+  const [activePath, setActivePath] = useState<"player" | "investor" | "land_project" | "ally" | null>(null);
+  const myPaths = trpc.playerPaths.getMyPaths.useQuery(undefined, {
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  const declared: Array<"player" | "investor" | "land_project" | "ally"> = (myPaths.data ?? [])
+    .map((p) => p.path as "player" | "investor" | "land_project" | "ally");
+
+  // Highest tier earned across all paths drives the sidebar position.
+  const tierOrder: Record<string, number> = {
+    explorer: 0,
+    co_creator_earned: 1,
+    co_creator_claimed: 1,
+    steward_earned: 2,
+    steward_claimed: 2,
+  };
+  const highestTierIdx = (myPaths.data ?? []).reduce((max, p) => {
+    const idx = tierOrder[p.tier] ?? 0;
+    return Math.max(max, idx);
+  }, 0);
+  const tierName: "explorer" | "co_creator" | "steward" | "sage" =
+    highestTierIdx >= 2 ? "steward" : highestTierIdx === 1 ? "co_creator" : "explorer";
+
+  return (
+    <section className="py-10 bg-gradient-to-b from-[#0a1f15] to-[#0f2818]">
+      <div className="container max-w-5xl mx-auto px-4">
+        <div className="mb-5 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-white text-lg md:text-xl font-bold" style={{ fontFamily: "var(--font-display)" }}>
+              Choose your path
+            </h2>
+            <p className="text-white/60 text-sm mt-1">
+              Each path earns its own Co-Creator and Steward titles. You can walk more than one.
+            </p>
+          </div>
+          <CitizenshipTierSidebar currentTier={tierName} horizontal className="ml-auto" />
+        </div>
+        <PathPortalsSelector
+          declaredPaths={declared}
+          activePath={activePath}
+          onSelectPath={setActivePath}
+          onAddPath={() => {
+            // Send the player to Profile to declare via the Add a Path modal
+            // (Phase 2 handles the declaration UX there). Future Phase 3.1
+            // can inline a confirmation here.
+            window.location.href = "/profile?tab=quests";
+          }}
+        />
+      </div>
+    </section>
   );
 }

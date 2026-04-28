@@ -38,6 +38,7 @@ import { seedsClaimsRouter } from "./routes/seedsClaims";
 import { toolsRouter } from "./routes/tools";
 import { songsRouter } from "./routes/songs";
 import { claimsRouter } from "./routes/claims";
+import { playerPathsRouter } from "./routes/playerPaths";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -88,6 +89,7 @@ export const appRouter = router({
   // Players / Quests
   playerProfiles: playerProfilesRouter,
   playerContributions: playerContributionsRouter,
+  playerPaths: playerPathsRouter,
   quests: questsRouter,
   quest: questRouter,
   siteTour: siteTourRouter,

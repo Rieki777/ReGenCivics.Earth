@@ -93,6 +93,7 @@ import { LocationPicker, LocationDisplay, type LocationData } from "@/components
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ProfileCompletionMeter } from "@/components/ProfileCompletionMeter";
+import { YourPaths } from "@/components/YourPaths";
 import VouchSection from "@/components/VouchSection";
 import SeasonalIntention from "@/components/SeasonalIntention";
 import ContributionTimeline from "@/components/ContributionTimeline";
@@ -3039,6 +3040,9 @@ export default function PlayerProfile() {
                     const hasCompleted = completedQuestsList.length > 0;
                     return (
                       <div className="space-y-6">
+                        {/* Your Paths: actionable hub for tier progression. */}
+                        <YourPaths />
+
                         {/* Quest filter buttons */}
                         <div className="flex gap-2">
                           {(["completed", "in-progress", "proposed"] as const).map((f) => (
