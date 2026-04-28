@@ -1,5 +1,8 @@
 import "dotenv/config";
 import crypto from "node:crypto";
+import { logger } from "./logger";
+
+const log = logger("server");
 /** Inline cookie parser, replaces the `cookie` npm package to avoid CJS/ESM
  *  interop issues in the esbuild ESM bundle (Sentry: "Dynamic require of cookie"). */
 function parseCookieHeader(str: string): Record<string, string> {
@@ -108,9 +111,9 @@ async function startServer() {
         }
       });
       app.use(prerenderNode);
-      console.log("[Prerender] Middleware active (token configured)");
+      log.info("Prerender middleware active (token configured)");
     } catch (e) {
-      console.warn("[Prerender] prerender-node not installed yet. Run npm install.", e);
+      log.warn("Prerender: prerender-node not installed yet. Run npm install.", { error: String(e) });
     }
   }
 
@@ -128,6 +131,8 @@ async function startServer() {
       const level = res.statusCode >= 500 ? "err" : res.statusCode >= 400 ? "wrn" : "inf";
       // Skip noisy health checks and static assets from logs
       if (req.path !== "/health" && !req.path.startsWith("/assets/")) {
+        // Request log line. Skip the structured logger here so the
+        // request log keeps its single-line, easy-to-grep shape.
         console.log(`[${level}] ${(req as any).id ?? '-'} ${req.method} ${req.path} ${res.statusCode} ${ms}ms`);
       }
     });
@@ -292,7 +297,7 @@ async function startServer() {
       if (err?.name === "NoSuchKey" || err?.$metadata?.httpStatusCode === 404) {
         return res.status(404).send("Not found");
       }
-      console.error("[storage proxy]", err);
+      log.error("storage proxy", err);
       res.status(500).send("Storage error");
     }
   });
@@ -465,7 +470,7 @@ async function startServer() {
 
       res.write('data: [DONE]\n\n');
     } catch (err) {
-      console.error('[chat/stream] error:', err);
+      log.error("chat/stream error", err);
       res.write(`data: ${JSON.stringify({ error: 'Stream failed' })}\n\n`);
     } finally {
       res.end();
@@ -509,7 +514,7 @@ async function startServer() {
       const reports = await runAllGovernanceJobs();
       return res.json({ ok: true, reports });
     } catch (err: any) {
-      console.error("[cron] governance-jobs failed", err);
+      log.error("cron governance-jobs failed", err);
       return res.status(500).json({ error: err.message });
     }
   });
@@ -537,7 +542,7 @@ async function startServer() {
       const report = await detectTierProgressionForAllUsers();
       return res.json({ ok: true, ...report });
     } catch (err: any) {
-      console.error("[cron] tier-detector failed", err);
+      log.error("cron tier-detector failed", err);
       return res.status(500).json({ error: err.message });
     }
   });
@@ -644,7 +649,7 @@ async function startServer() {
 
       res.json({ ok: true, eventsProcessed: upcomingEvents.length, remindersSent: totalSent });
     } catch (err: any) {
-      console.error("[cron/event-reminders]", err);
+      log.error("cron/event-reminders", err);
       res.status(500).json({ error: err.message });
     }
   });
@@ -706,7 +711,7 @@ async function startServer() {
       }
       res.json({ ok: true, status, promotions, demotions, errors });
     } catch (err: any) {
-      console.error("[cron/nightly-batch]", err);
+      log.error("cron/nightly-batch", err);
       res.status(500).json({ error: err.message });
     }
   });
@@ -807,12 +812,12 @@ async function startServer() {
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+    log.warn("port busy, falling back", { preferredPort, port });
   }
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-    console.log(`Security: CSP, Rate Limiting, Input Sanitization enabled`);
+    log.info(`Server running on http://localhost:${port}/`);
+    log.info("Security: CSP, Rate Limiting, Input Sanitization enabled");
   });
 }
 
@@ -837,14 +842,14 @@ async function processScheduledEmails() {
           // No replyTo: replies route through /connect, not into an inbox.
         });
         await db.updateScheduledEmailStatus(item.id, 'sent', new Date());
-        console.log(`[ScheduledEmail] Sent id=${item.id} to ${item.recipientEmail}`);
+        log.info("ScheduledEmail sent", { id: item.id, recipient: item.recipientEmail });
       } catch (err) {
         await db.updateScheduledEmailStatus(item.id, 'failed');
-        console.error(`[ScheduledEmail] Failed id=${item.id}:`, err);
+        log.error(`ScheduledEmail failed id=${item.id}`, err);
       }
     }
   } catch (err) {
-    console.error('[ScheduledEmail] Processor error:', err);
+    log.error("ScheduledEmail processor error", err);
   }
 }
 
@@ -853,9 +858,9 @@ setInterval(processScheduledEmails, 60_000);
 
 // ─── Weekly digest job ───────────────────────────────────────────────────────
 setTimeout(async () => {
-  try { await runDigestJob(); } catch (e) { console.error("[DigestJob] Error:", e); }
+  try { await runDigestJob(); } catch (e) { log.error("DigestJob error", e); }
   setInterval(async () => {
-    try { await runDigestJob(); } catch (e) { console.error("[DigestJob] Error:", e); }
+    try { await runDigestJob(); } catch (e) { log.error("DigestJob error", e); }
   }, 7 * 24 * 60 * 60 * 1000);
 }, 60 * 1000); // first run after 1 minute
 
