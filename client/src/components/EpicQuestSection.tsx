@@ -283,31 +283,53 @@ export function EpicQuestSection() {
             100% { opacity: 1; transform: translateY(0) scale(1); }
           }
           .canopy-fall { animation: canopyFall 0.9s ease-out both; }
+          @media (prefers-reduced-motion: reduce) {
+            .canopy-fall { animation: none; opacity: 1; transform: none; filter: none; }
+          }
         `}</style>
 
         {/* Epic carousel - visible quests interactive, locked render as
-            moss ruins via LockedQuestCard. Spec sections 4.3 + 9.8. */}
+            moss ruins via LockedQuestCard. Spec sections 4.3 + 9.8.
+            Empty-state branch handles the filtered case where the
+            active path has no Epic quests in its element pool yet. */}
         <div className={isLocked ? "opacity-40 grayscale pointer-events-none" : ""}>
-          <QuestCarousel totalCount={reveal.visible.length + reveal.locked.length}>
-            {reveal.visible.map((quest, i) => (
-              <div
-                key={quest.id}
-                className={animatedIds.has(quest.id) ? "canopy-fall" : ""}
-                style={{ animationDelay: animatedIds.has(quest.id) ? `${i * 80}ms` : undefined }}
+          {filterElement && sortedQuests.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center">
+              <p className="text-white/70 text-base mb-2">
+                No {filterElement}-themed Epic Quests yet.
+              </p>
+              <p className="text-white/40 text-sm mb-5">
+                The forest grows season by season. More quests in this element come with the next round of authoring.
+              </p>
+              <a
+                href={typeof window !== "undefined" ? window.location.pathname + window.location.search : "/quest"}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/5 border border-white/15 text-white/80 text-sm hover:bg-white/10 transition-colors"
               >
-                <EpicCard quest={quest} staggerDelay={celebrating ? i * 100 : undefined} />
-              </div>
-            ))}
-            {reveal.locked.map((quest) => (
-              <LockedQuestCard
-                key={quest.id}
-                title={quest.title}
-                subtitle={quest.tagline}
-                glyph={quest.element as "fire" | "water" | "earth" | "air"}
-                unlockHint="Reveals as you complete your current Open Universe quests"
-              />
-            ))}
-          </QuestCarousel>
+                See all Epic Quests
+              </a>
+            </div>
+          ) : (
+            <QuestCarousel totalCount={reveal.visible.length + reveal.locked.length}>
+              {reveal.visible.map((quest, i) => (
+                <div
+                  key={quest.id}
+                  className={animatedIds.has(quest.id) ? "canopy-fall" : ""}
+                  style={{ animationDelay: animatedIds.has(quest.id) ? `${i * 80}ms` : undefined }}
+                >
+                  <EpicCard quest={quest} staggerDelay={celebrating ? i * 100 : undefined} />
+                </div>
+              ))}
+              {reveal.locked.map((quest) => (
+                <LockedQuestCard
+                  key={quest.id}
+                  title={quest.title}
+                  subtitle={quest.tagline}
+                  glyph={quest.element as "fire" | "water" | "earth" | "air"}
+                  unlockHint="Reveals as you complete your current Open Universe quests"
+                />
+              ))}
+            </QuestCarousel>
+          )}
         </div>
 
         {/* CTA */}

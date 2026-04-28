@@ -32,7 +32,10 @@ const TIERS: TierMeta[] = [
     name: "explorer",
     label: "Explorer",
     oneLiner: "You just got here",
-    scrollTargetId: "welcome-aboard",
+    // Explorer has nothing to scroll to on /quest (Welcome Aboard
+    // lives in the Profile Quests tab); empty string means scroll
+    // to the top of the page instead.
+    scrollTargetId: "",
     Icon: Sparkles,
   },
   {
@@ -46,14 +49,14 @@ const TIERS: TierMeta[] = [
     name: "steward",
     label: "Steward",
     oneLiner: "Deep on a path",
-    scrollTargetId: "open-universe",
+    scrollTargetId: "epic-quests",
     Icon: TreeDeciduous,
   },
   {
     name: "sage",
     label: "Sage",
     oneLiner: "Top contribution",
-    scrollTargetId: "open-universe",
+    scrollTargetId: "epic-quests",
     Icon: Mountain,
   },
 ];
@@ -75,6 +78,12 @@ export function CitizenshipTierSidebar({
   const nextIdx = Math.min(currentIdx + 1, TIERS.length - 1);
 
   const scrollTo = (id: string) => {
+    if (!id) {
+      // Empty target id means scroll to the page top (used by Explorer
+      // since Welcome Aboard isn't on /quest).
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };

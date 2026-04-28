@@ -17,7 +17,7 @@
  * the path block is in the "earned, unclaimed" state.
  */
 
-import { protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
 import { eq, and, sql } from "drizzle-orm";
@@ -229,22 +229,26 @@ export const playerPathsRouter = router({
     }),
 
   /**
-   * Mark a tier bonus as claimed once the Hypha redemption returns.
-   * Wraps the player_paths timestamp update. Called by the Hypha
-   * webhook receiver after on-chain confirmation, not by the UI.
+   * Admin-only manual override to flip the bonus-claimed flag for a
+   * given user / path / tier. The normal flow is automatic: the Hypha
+   * Alchemy webhook (server/lib/hypha-bridge/webhook-receiver.ts,
+   * cascadeClaimPassed) flips the flags on RGVoice claim confirmation.
+   * This procedure exists as a fallback for the rare case where the
+   * webhook missed an event and an admin needs to reconcile.
    *
-   * The UI itself uses the existing playerProfiles.requestClaim flow
-   * to start the Hypha bridge, then this procedure flips the
-   * bonus-claimed flag once the chain confirms.
+   * Restricted to adminProcedure because letting a regular user
+   * self-flip this would lose audit accuracy: the timestamp would no
+   * longer reflect the on-chain confirmation time.
    */
-  markBonusClaimed: protectedProcedure
+  markBonusClaimed: adminProcedure
     .input(
       z.object({
+        userId: z.number(),
         path: PathSchema,
         tier: z.enum(["co_creator", "steward"]),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) return { ok: false };
       const column =
@@ -252,7 +256,7 @@ export const playerPathsRouter = router({
       await db.execute(sql`
         UPDATE player_paths
         SET ${sql.identifier(column)} = NOW()
-        WHERE userId = ${ctx.user.id} AND path = ${input.path}
+        WHERE userId = ${input.userId} AND path = ${input.path}
       `);
       return { ok: true };
     }),

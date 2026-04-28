@@ -691,7 +691,7 @@ function SeasonCarousels({
               {/* Combined carousel: Rites (gold) + Depth quests (green) */}
               <div className="mt-6">
                 <QuestCarousel totalCount={rites.length + depthQuests.length}>
-                  {/* Rites of Passage cards first — unlocked shown before locked */}
+                  {/* Rites of Passage cards first: unlocked shown before locked */}
                   {[...rites]
                     .sort((a, b) => {
                       const aLocked = unlocks ? !unlocks.isQuestUnlocked(`quest-${a.id}`) : false;
@@ -1311,7 +1311,7 @@ export default function Quest() {
       <ContinueYourJourneyBanner />
 
       {/* All Quests by Season - Header */}
-      <section className="py-12 bg-[#f0ebe3]">
+      <section id="rites-of-passage" className="py-12 bg-[#f0ebe3]">
         <div className="container">
           <h2
             className="text-3xl md:text-4xl font-bold mb-4 text-[#1a472a] text-center"
