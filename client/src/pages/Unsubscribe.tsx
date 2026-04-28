@@ -201,6 +201,15 @@ export default function Unsubscribe() {
                 >
                   WhatsApp
                 </a>{" "}
+                or{" "}
+                <a
+                  href="https://t.me/SEEDS_Community"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#7dd87d]/60 underline hover:text-[#7dd87d]"
+                >
+                  Telegram
+                </a>{" "}
                 community channels. Direct email responses are not provided.
               </p>
             </div>

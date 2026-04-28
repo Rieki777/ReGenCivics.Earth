@@ -158,10 +158,11 @@ function PersonalizedCards() {
   if (profile.path === 'land_project') {
     cards.push({ id: 'accelerator', title: 'Seasonal Accelerator', subtitle: 'Grow your project', href: '/apply', image: '/images/return-cards/accelerator.webp', accentColor: '#34d399', icon: Zap });
   }
-  // Discovery Call: investors only (Rye is only taking calls from investors)
-  if (isInvestor) {
-    cards.push({ id: 'schedule', title: 'Book a Discovery Call', subtitle: 'Talk with the team', href: '/schedule', image: '/images/return-cards/schedule.webp', accentColor: '#f472b6', icon: CalendarDays });
-  }
+  // Community call card: open to everyone now (was investor-only when
+  // it was a "Discovery Call" framing). The /schedule page lists the
+  // weekly community sessions plus quarterly Fund AMAs, so the broader
+  // copy fits any returning visitor. Voiced 2026-04-27.
+  cards.push({ id: 'schedule', title: 'Join a community call', subtitle: 'Talk with the team, ask questions', href: '/schedule', image: '/images/return-cards/schedule.webp', accentColor: '#f472b6', icon: CalendarDays });
 
   if (cards.length === 0) return null;
 

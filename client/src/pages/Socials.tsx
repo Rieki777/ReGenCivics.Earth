@@ -88,6 +88,14 @@ const socialLinks = [
     recommended: false,
   },
   {
+    name: "Telegram Channel",
+    description: "Cross-posted updates and SEEDS Community chatter on Telegram",
+    icon: MessageCircle,
+    url: "https://t.me/SEEDS_Community",
+    color: "#0088cc",
+    recommended: false,
+  },
+  {
     name: "Discord Server",
     description: "Connect with regenerators, ask questions, and find collaboration opportunities",
     icon: Users,

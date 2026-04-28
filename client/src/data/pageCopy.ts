@@ -187,7 +187,7 @@ export const pageCopy = {
     },
     announcement: "UNDER CONSTRUCTION: Quests are in pre-launch mode! You can start questing now and help work out any kinks and co-create the flow while we get ready for a full launch.",
     questArcButton: {
-      expand: "View Rits of Passage Quest Arc",
+      expand: "View Rites of Passage Quest Arc",
       collapse: "Hide Quest Arc",
     },
   },
