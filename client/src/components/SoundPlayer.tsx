@@ -73,7 +73,7 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
     const url = typeof window !== "undefined"
       ? `${window.location.origin}/hymn-book?song=${encodeURIComponent(slug)}`
       : `https://regencivics.earth/hymn-book?song=${encodeURIComponent(slug)}`;
-    const text = `${currentSong.title} — Hymns of the ReGeneration`;
+    const text = `${currentSong.title} | Hymns of the ReGeneration`;
     try {
       if (typeof navigator !== "undefined" && (navigator as any).share) {
         await (navigator as any).share({ title: text, text, url });
@@ -190,7 +190,7 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
                     <span className="flex-1 min-w-0">
                       <span className="block text-xs font-medium truncate">{track.title}</span>
                       {track.artist && (
-                        <span className="block text-[10px] text-white/50 truncate">{track.artist}</span>
+                        <span className="block text-[10px] text-white/70 truncate">{track.artist}</span>
                       )}
                     </span>
                   </button>
@@ -246,7 +246,7 @@ export function SoundPlayer({ variant = "desktop", onNavigate }: SoundPlayerProp
       {/* Volume — iOS controls playback volume at the system level and ignores
           programmatic changes, so show a hint instead of a broken slider. */}
       {iOS ? (
-        <div className="flex items-center justify-center gap-2 text-xs text-white/55">
+        <div className="flex items-center justify-center gap-2 text-xs text-white/70">
           <Volume2 className="w-4 h-4" />
           <span>Use your device volume buttons</span>
         </div>

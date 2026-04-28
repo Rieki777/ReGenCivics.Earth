@@ -86,7 +86,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
     >
       <div className="max-w-lg mx-auto px-4 py-3 flex flex-col" style={{ maxHeight: '70vh' }}>
         {/* Close handle */}
-        <button onClick={onClose} className="w-full flex justify-center py-0.5 -mt-1 mb-1 text-white/55 hover:text-white transition-colors" aria-label="Close panel">
+        <button onClick={onClose} className="w-full flex justify-center py-0.5 -mt-1 mb-1 text-white/70 hover:text-white transition-colors" aria-label="Close panel">
           <ChevronDown className="w-5 h-5" />
         </button>
 
@@ -126,7 +126,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
                 tab === id
                   ? 'bg-[#7dd87d]/20 text-[#7dd87d]'
-                  : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+                  : 'text-white/70 hover:text-white/70 hover:bg-white/5'
               }`}
             >
               <Icon className="w-3 h-3" />

@@ -146,7 +146,7 @@ function Portal({ portal, declared, active, shimmerDelay, shimmered, onClick }: 
       <div
         className={
           "mt-2 text-[11px] md:text-xs font-medium tracking-wide text-center " +
-          (declared ? "text-white" : "text-white/50")
+          (declared ? "text-white" : "text-white/70")
         }
       >
         {portal.label}

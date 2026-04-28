@@ -81,7 +81,7 @@ export function UserNotificationPreferences({ currentPrefs }: Props) {
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white">{label}</p>
-              <p className="text-white/50 text-xs mt-0.5">{description}</p>
+              <p className="text-white/70 text-xs mt-0.5">{description}</p>
             </div>
             <div
               className={`w-10 h-5 rounded-full flex-shrink-0 relative transition-colors ${
@@ -129,7 +129,7 @@ function RecordingEmailToggle() {
     >
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white">Session Recording Updates</p>
-        <p className="text-white/50 text-xs mt-0.5">Get an email when a new session recording is ready to watch</p>
+        <p className="text-white/70 text-xs mt-0.5">Get an email when a new session recording is ready to watch</p>
       </div>
       <div
         className={`w-10 h-5 rounded-full flex-shrink-0 relative transition-colors ${

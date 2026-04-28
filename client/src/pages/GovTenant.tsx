@@ -75,7 +75,7 @@ export default function GovTenant() {
             <h1 className="text-3xl md:text-4xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
               {tenant.displayName}
             </h1>
-            <div className="flex items-center gap-3 text-white/55 text-sm mt-1 flex-wrap">
+            <div className="flex items-center gap-3 text-white/70 text-sm mt-1 flex-wrap">
               <span className="capitalize">{tenant.tenantType.replace("_", " ")}</span>
               <span>·</span>
               <span className="font-mono">/gov/{tenant.slug}</span>
@@ -114,7 +114,7 @@ export default function GovTenant() {
             <p className="text-white/85 text-sm">
               Token decisions in this space land at <code className="font-mono text-amber-300">{tenant.hyphaDhoSlug}</code> on Hypha.
             </p>
-            <p className="text-white/55 text-xs mt-2">
+            <p className="text-white/70 text-xs mt-2">
               Members claim accumulated internal tokens to this DHO when they cross the claim threshold.
             </p>
           </div>
@@ -128,7 +128,7 @@ export default function GovTenant() {
             <div className="flex items-center gap-2 mb-2">
               <Layers className="w-4 h-4 text-[#7dd87d]" />
               <span className="text-white font-bold text-sm">Open decisions</span>
-              <ArrowRight className="w-3 h-3 text-white/55 ml-auto" />
+              <ArrowRight className="w-3 h-3 text-white/70 ml-auto" />
             </div>
             <p className="text-white/65 text-xs leading-relaxed">All open decisions across this space.</p>
           </Link>
@@ -136,7 +136,7 @@ export default function GovTenant() {
             <div className="flex items-center gap-2 mb-2">
               <Layers className="w-4 h-4 text-amber-400" />
               <span className="text-white font-bold text-sm">Storyteller narratives</span>
-              <ArrowRight className="w-3 h-3 text-white/55 ml-auto" />
+              <ArrowRight className="w-3 h-3 text-white/70 ml-auto" />
             </div>
             <p className="text-white/65 text-xs leading-relaxed">How past decisions actually went down.</p>
           </Link>

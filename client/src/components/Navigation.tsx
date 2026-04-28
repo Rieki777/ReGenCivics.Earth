@@ -450,7 +450,7 @@ export default function Navigation() {
                     <circle cx="12" cy="6.5" r="1.4" fill="#0d2818" />
                     <circle cx="12" cy="17.5" r="1.4" fill="#7dd87d" />
                   </svg>
-                  <span className="text-[10px] uppercase tracking-wider text-white/55" style={{ fontFamily: 'var(--font-accent)' }}>
+                  <span className="text-[10px] uppercase tracking-wider text-white/70" style={{ fontFamily: 'var(--font-accent)' }}>
                     The Two Sides of the Bridge
                   </span>
                 </div>
@@ -1103,7 +1103,7 @@ export default function Navigation() {
                         <circle cx="12" cy="6.5" r="1.4" fill="#0d2818" />
                         <circle cx="12" cy="17.5" r="1.4" fill="#7dd87d" />
                       </svg>
-                      <span className="text-[10px] uppercase tracking-wider text-white/55" style={{ fontFamily: 'var(--font-accent)' }}>
+                      <span className="text-[10px] uppercase tracking-wider text-white/70" style={{ fontFamily: 'var(--font-accent)' }}>
                         The Two Sides of the Bridge
                       </span>
                     </div>

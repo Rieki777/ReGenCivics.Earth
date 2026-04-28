@@ -47,7 +47,7 @@ export function SeasonScorecardSection() {
                   }`}>
                     {role.assignment}
                   </span>
-                  <span className="text-white/55 text-xs">Band {role.band}</span>
+                  <span className="text-white/70 text-xs">Band {role.band}</span>
                 </div>
                 {isActive && (
                   <div className="space-y-2 mt-3">
@@ -56,19 +56,19 @@ export function SeasonScorecardSection() {
                       <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                         <div className="h-full bg-[#7dd87d]/40 rounded-full" style={{ width: "0%" }} />
                       </div>
-                      <span className="text-white/55 text-[10px]">Seed</span>
+                      <span className="text-white/70 text-[10px]">Seed</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs">🌾</span>
                       <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                         <div className="h-full bg-[#d4a574]/40 rounded-full" style={{ width: "0%" }} />
                       </div>
-                      <span className="text-white/55 text-[10px]">Harvest</span>
+                      <span className="text-white/70 text-[10px]">Harvest</span>
                     </div>
                   </div>
                 )}
                 {!isActive && (
-                  <p className="text-white/55 text-xs mt-2">Resting this season</p>
+                  <p className="text-white/70 text-xs mt-2">Resting this season</p>
                 )}
               </div>
             );
@@ -79,19 +79,19 @@ export function SeasonScorecardSection() {
         <div className="mt-8 grid md:grid-cols-4 gap-4">
           <div className="bg-white/5 rounded-xl p-4 border border-white/10 text-center">
             <div className="text-2xl font-bold text-[#7dd87d]">13</div>
-            <div className="text-white/50 text-xs uppercase tracking-wide mt-1">Total Roles</div>
+            <div className="text-white/70 text-xs uppercase tracking-wide mt-1">Total Roles</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4 border border-white/10 text-center">
             <div className="text-2xl font-bold text-[#d4a574]">9</div>
-            <div className="text-white/50 text-xs uppercase tracking-wide mt-1">Open Roles</div>
+            <div className="text-white/70 text-xs uppercase tracking-wide mt-1">Open Roles</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4 border border-white/10 text-center">
             <div className="text-2xl font-bold text-white">7.4M</div>
-            <div className="text-white/50 text-xs uppercase tracking-wide mt-1">$ReGen Base Budget</div>
+            <div className="text-white/70 text-xs uppercase tracking-wide mt-1">$ReGen Base Budget</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4 border border-white/10 text-center">
             <div className="text-2xl font-bold text-[#d4a574]">9.6M</div>
-            <div className="text-white/50 text-xs uppercase tracking-wide mt-1">$ReGen Max Budget</div>
+            <div className="text-white/70 text-xs uppercase tracking-wide mt-1">$ReGen Max Budget</div>
           </div>
         </div>
 

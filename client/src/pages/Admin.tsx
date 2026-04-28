@@ -904,7 +904,24 @@ function StatsCard({ title, value, icon: Icon, color, description, onClick, link
   }
 
   if (onClick) {
-    return <div onClick={onClick}>{content}</div>;
+    // Keyboard-reachable wrapper. Bare onClick on a div doesn't fire on
+    // Enter/Space and isn't focusable, which fails WCAG 2.2 keyboard nav.
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className="cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd87d]/60 rounded-lg"
+      >
+        {content}
+      </div>
+    );
   }
 
   return content;
@@ -2525,7 +2542,7 @@ function AdminAMAPanel() {
         <CardDescription>Manage live Ask Me Anything sessions shown in the site banner.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white/50" />}
+        {isLoading && <Loader2 className="w-4 h-4 animate-spin text-white/70" />}
         {!isLoading && amas && amas.length === 0 && (
           <p className="text-white/70 text-sm">No AMAs scheduled.</p>
         )}
@@ -4053,7 +4070,7 @@ function AdminEventsTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">Events</h2>
-          <p className="text-sm text-white/50">Manage schedule events. Events appear on the Schedule page automatically.</p>
+          <p className="text-sm text-white/70">Manage schedule events. Events appear on the Schedule page automatically.</p>
         </div>
         <Button onClick={() => { setShowCreate(true); setEditingId(null); setFormData(defaultForm); }}
           className="bg-green-600 hover:bg-green-700 text-white">
@@ -4118,7 +4135,7 @@ function AdminEventsTab() {
                   placeholder="1" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/55 font-normal">(leave blank for unlimited)</span></Label>
+                <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/70 font-normal">(leave blank for unlimited)</span></Label>
                 <Input type="number" value={formData.maxAttendees} onChange={e => setFormData(f => ({ ...f, maxAttendees: e.target.value }))}
                   placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
@@ -4128,7 +4145,7 @@ function AdminEventsTab() {
                   placeholder="https://riverside.fm/studio/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
               <div>
-                <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/55 font-normal">(fallback, only shown if no Riverside)</span></Label>
+                <Label className="text-white/70 text-xs">Zoom URL <span className="text-white/70 font-normal">(fallback, only shown if no Riverside)</span></Label>
                 <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
                   placeholder="https://us06web.zoom.us/..." className="bg-white/5 border-white/20 text-white mt-1" />
               </div>
@@ -4139,7 +4156,7 @@ function AdminEventsTab() {
               </div>
               {/* #25 - Guest Speaker Fields */}
               <div className="md:col-span-2 border-t border-white/10 pt-3 mt-1">
-                <p className="text-white/50 text-xs font-medium uppercase tracking-wide mb-2">Guest Speaker (optional)</p>
+                <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-2">Guest Speaker (optional)</p>
               </div>
               <div>
                 <Label className="text-white/70 text-xs">Speaker Name</Label>
@@ -4190,7 +4207,7 @@ function AdminEventsTab() {
                       {ev.season && <span className="text-xs text-white/65">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
                     </div>
                     <p className="font-medium text-white text-sm truncate">{ev.title}</p>
-                    <p className="text-xs text-white/50 mt-0.5">{dateStr} {timeStr} {ev.timezone ?? ''}</p>
+                    <p className="text-xs text-white/70 mt-0.5">{dateStr} {timeStr} {ev.timezone ?? ''}</p>
                     <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/65">
                       <span><Bell size={11} className="inline mr-1" />{signupCount} reminder signup{signupCount !== 1 ? 's' : ''}</span>
                       {ev.riversideRoomUrl && <a href={ev.riversideRoomUrl} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Riverside room ↗</a>}
@@ -4311,7 +4328,7 @@ function AdminEventsTab() {
                 {/* Inline email editor - opens when "Send Reminders" is clicked */}
                 {reminderEditorOpen === ev.id && (
                   <div className="border-t border-white/10 px-4 pb-4 pt-3 space-y-3">
-                    <p className="text-xs text-white/50 font-medium uppercase tracking-wide">Preview &amp; Edit Reminder Email</p>
+                    <p className="text-xs text-white/70 font-medium uppercase tracking-wide">Preview &amp; Edit Reminder Email</p>
                     <div>
                       <Label className="text-white/60 text-xs">Subject line</Label>
                       <Input
@@ -4419,7 +4436,7 @@ function AdminEventsTab() {
                           <DialogContent className="bg-[#0a1f14] border-white/20 text-white max-w-md">
                             <DialogHeader>
                               <DialogTitle className="text-white text-base">Preflight Check: Send Reminders</DialogTitle>
-                              <DialogDescription className="text-white/50 text-sm">{ev.title}</DialogDescription>
+                              <DialogDescription className="text-white/70 text-sm">{ev.title}</DialogDescription>
                             </DialogHeader>
 
                             <div className="space-y-3 py-2">
@@ -4479,7 +4496,7 @@ function AdminEventsTab() {
                               <Button
                                 variant="ghost"
                                 onClick={() => setPreflightEventId(null)}
-                                className="text-white/50 hover:text-white text-xs"
+                                className="text-white/70 hover:text-white text-xs"
                               >
                                 Cancel
                               </Button>
@@ -4523,7 +4540,7 @@ function AdminEventsTab() {
         </CardHeader>
         <CardContent className="text-xs text-white/60 space-y-1">
           <p>Reminders send automatically if you set up the Railway cron job:</p>
-          <ol className="list-decimal list-inside space-y-1 text-white/50">
+          <ol className="list-decimal list-inside space-y-1 text-white/70">
             <li>In Railway: New Service → Cron Job</li>
             <li>Schedule: <code className="bg-white/10 px-1 rounded">0 * * * *</code> (hourly)</li>
             <li>Command: <code className="bg-white/10 px-1 rounded break-all">curl -X POST https://regencivics.earth/api/cron/event-reminders -H "Authorization: Bearer $CRON_SECRET"</code></li>
@@ -4580,7 +4597,7 @@ function AdminEventsTab() {
               return (
                 <div key={s.id} className={`flex items-start gap-3 p-3 rounded-lg border ${s.status === 'pending' ? 'bg-white/5 border-white/10' : s.status === 'approved' ? 'bg-green-900/20 border-green-800/30 opacity-60' : 'bg-red-900/10 border-red-800/20 opacity-50'}`}>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white/50 text-xs mb-1">{eventTitle} · {s.authorName || s.authorEmail}</p>
+                    <p className="text-white/70 text-xs mb-1">{eventTitle} · {s.authorName || s.authorEmail}</p>
                     <p className="text-white text-sm">{s.suggestion}</p>
                   </div>
                   {s.status === 'pending' && (
@@ -4609,7 +4626,7 @@ function AdminEventsTab() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-white/50 text-xs">
+          <p className="text-white/70 text-xs">
             Mark who actually attended a completed event. Each person earns 33 $ReGen tokens, recorded in the contribution ledger.
           </p>
 
@@ -4646,7 +4663,7 @@ function AdminEventsTab() {
                             removeAttendanceMutation.mutate({ eventId: attendanceEventId, email: a.email });
                           }
                         }}
-                        className="text-white/55 hover:text-red-400 text-xs px-2 py-1 rounded"
+                        className="text-white/70 hover:text-red-400 text-xs px-2 py-1 rounded"
                       >✕</button>
                     </div>
                   ))}
@@ -4661,7 +4678,7 @@ function AdminEventsTab() {
                   onChange={e => setAttendanceInput(e.target.value)}
                   placeholder="jane@example.com&#10;alex@example.com"
                   rows={4}
-                  className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/20 placeholder:text-white/55 font-mono"
+                  className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/20 placeholder:text-white/70 font-mono"
                 />
                 <button
                   onClick={() => {
@@ -4699,7 +4716,7 @@ function AdminEventsTab() {
               <div className="space-y-1">
                 {tokenLeaderboard.map((entry: any, i: number) => (
                   <div key={entry.email} className="flex items-center justify-between text-xs">
-                    <span className="text-white/50">#{i + 1} {entry.email}</span>
+                    <span className="text-white/70">#{i + 1} {entry.email}</span>
                     <span className="text-amber-400 font-medium">{entry.total} $ReGen</span>
                   </div>
                 ))}

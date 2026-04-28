@@ -175,7 +175,7 @@ export default function Socials() {
             <p className="text-white/70 text-lg max-w-xl mx-auto">
               You're now part of our growing community. Here's the easiest way to get involved today and follow along with our journey.
             </p>
-            <p className="text-white/50 text-sm max-w-xl mx-auto mt-4">
+            <p className="text-white/70 text-sm max-w-xl mx-auto mt-4">
               Most social media is overwhelmed with bots, scams, and fraud now. For this reason we encourage all conversations to happen on our own forums where we enforce strict standards for quality and fraud/bot control.
             </p>
           </div>
@@ -233,7 +233,7 @@ export default function Socials() {
 
           {/* Additional Actions */}
           <div className="text-center space-y-4">
-            <p className="text-white/50 text-sm">
+            <p className="text-white/70 text-sm">
               Want to dive deeper into the ReGenerative Renaissance?
             </p>
             <div className="flex flex-wrap justify-center gap-4">

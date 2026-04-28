@@ -77,7 +77,7 @@ export default function ProgressMap({ onClose }: Props) {
                   <span className="text-white font-semibold text-sm" style={{ fontFamily: "var(--font-display)" }}>
                     {path.name}
                   </span>
-                  <span className="text-white/55 text-xs ml-auto">{pp.completed}/{pp.total}</span>
+                  <span className="text-white/70 text-xs ml-auto">{pp.completed}/{pp.total}</span>
                 </div>
 
                 {/* Dot progress */}
@@ -106,7 +106,7 @@ export default function ProgressMap({ onClose }: Props) {
           {/* Overall */}
           <div className="mt-auto pt-4 border-t border-white/10">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-white/50 text-xs">Overall</span>
+              <span className="text-white/70 text-xs">Overall</span>
               <span className="text-[#7dd87d] text-xs font-bold">{progress.overallPercent}%</span>
             </div>
             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -134,7 +134,7 @@ export default function ProgressMap({ onClose }: Props) {
                   <p className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>
                     {selectedNode.landmark}
                   </p>
-                  <p className="text-white/50 text-xs">{selectedNode.label}</p>
+                  <p className="text-white/70 text-xs">{selectedNode.label}</p>
                 </div>
                 <button
                   onClick={() => setSelectedNode(null)}
@@ -177,12 +177,12 @@ export default function ProgressMap({ onClose }: Props) {
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
                   isActive
                     ? "bg-white/10 text-white border border-white/20"
-                    : "text-white/50 hover:text-white/70"
+                    : "text-white/70 hover:text-white/70"
                 }`}
               >
                 <span>{path.emoji}</span>
                 {path.name}
-                <span className="text-white/55">{pp?.completed}/{pp?.total}</span>
+                <span className="text-white/70">{pp?.completed}/{pp?.total}</span>
               </button>
             );
           })}
@@ -197,7 +197,7 @@ export default function ProgressMap({ onClose }: Props) {
                 <p className="text-white text-xs font-medium">Next: {activeProgress.nextNode.label}</p>
                 <p className="text-white/60 text-[10px]">{activeProgress.nextNode.landmark}</p>
               </div>
-              <ExternalLink className="w-4 h-4 text-white/55" />
+              <ExternalLink className="w-4 h-4 text-white/70" />
             </Link>
           </div>
         )}

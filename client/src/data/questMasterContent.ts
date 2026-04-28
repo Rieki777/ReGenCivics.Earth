@@ -102,7 +102,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       comesBefore: [0],
       referencedBy: [
-        'Unlocks: Quest 4 (Food Foresting) at full potency — your saliva now carries a richer ecosystem',
+        'Unlocks: Quest 4 (Food Foresting) at full potency. Your saliva now carries a richer ecosystem',
       ],
     },
   },
@@ -141,7 +141,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       comesBefore: [1],
       referencedBy: [
-        'Feeds into: Quest 4 (Food Foresting) — the seeds you save get planted',
+        'Feeds into: Quest 4 (Food Foresting). The seeds you save get planted',
       ],
     },
   },
@@ -184,7 +184,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       comesBefore: [2],
       referencedBy: [
-        'Pairs with: Quest 4 (Food Foresting) — same practice, different scale (your domain vs. public land)',
+        'Pairs with: Quest 4 (Food Foresting). Same practice, different scale (your domain vs. public land)',
       ],
     },
   },
@@ -269,8 +269,8 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     ],
     connections: {
       referencedBy: [
-        'Comes after: Quests 0-4 (personal vitality) — you need energy and presence to tend a space',
-        'Leads toward: Quest 7 (Healing Circles) — the space you create becomes the container for the circle',
+        'Comes after: Quests 0-4 (personal vitality). You need energy and presence to tend a space',
+        'Leads toward: Quest 7 (Healing Circles). The space you create becomes the container for the circle',
       ],
     },
   },
@@ -281,7 +281,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     storyCard: [
       'Love needs tending. Not just feeling, but practice.',
       'Most of us were never taught the practices that sustain love across years and decades. We were given the feeling, or the idea of it, but not the rites. So when love cools or gets complicated, we do not have a structure to return to. We just improvise, or we stop trying.',
-      'Rites are different from routines. A routine is something you do on autopilot. A rite is something you do with attention, marking it as significant. When you light a candle for a shared meal, when you speak what you are grateful for before sleeping, when you build a fire together at the change of a season, when you sit with someone after a rupture and say: I am still here, I want to repair this, when you find your way back to each other — these are rites. They create a rhythm that love can anchor to.',
+      'Rites are different from routines. A routine is something you do on autopilot. A rite is something you do with attention, marking it as significant. When you light a candle for a shared meal, when you speak what you are grateful for before sleeping, when you build a fire together at the change of a season, when you sit with someone after a rupture and say: I am still here, I want to repair this, when you find your way back to each other. These are rites. They create a rhythm that love can anchor to.',
       'Every healthy culture has had rites of love. Courtship rituals. Seasonal celebrations that brought communities together. Ways of marking birth, partnership, and death with the people closest to us. Most of those structures have dissolved in modern life, and we have not replaced them with anything. This quest is an invitation to build some.',
       'You do not need to inherit a tradition. You can design rites that are true to your actual life and relationships.',
     ],
@@ -310,7 +310,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       comesBefore: [5],
       referencedBy: [
-        'Feeds into: Quest 7 (Healing Circles) — healing circles are themselves a rite of love within community',
+        'Feeds into: Quest 7 (Healing Circles). Healing circles are themselves a rite of love within community',
       ],
     },
   },
@@ -352,7 +352,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       comesBefore: [6],
       referencedBy: [
-        'Feeds into: Quest 10 (NVC) — the communication practices of NVC deepen what becomes possible in circles',
+        'Feeds into: Quest 10 (NVC). The communication practices of NVC deepen what becomes possible in circles',
         'Qualifier for: Community stewardship in many land projects',
       ],
     },
@@ -393,8 +393,8 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       comesBefore: [2],
       referencedBy: [
-        'Pairs with: Quest 3 (Healing Whole) — the wild plants and fungi you find can inoculate your healing holes',
-        'Feeds into: Quest 9b (Tree Talk) — foraging teaches you to read the land; tree talk deepens the relationship',
+        'Pairs with: Quest 3 (Healing Whole). The wild plants and fungi you find can inoculate your healing holes',
+        'Feeds into: Quest 9b (Tree Talk). Foraging teaches you to read the land; tree talk deepens the relationship',
       ],
     },
   },
@@ -436,8 +436,8 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       comesBefore: [0],
       referencedBy: [
-        'Comes after: Quests 1-4 — a healthy body creates a cleaner container for inner journey',
-        'Feeds into: Quest 10 (NVC) — what you find in the depths often includes things about how you relate',
+        'Comes after: Quests 1-4. A healthy body creates a cleaner container for inner journey',
+        'Feeds into: Quest 10 (NVC). What you find in the depths often includes things about how you relate',
       ],
     },
   },
@@ -478,8 +478,8 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     ],
     connections: {
       referencedBy: [
-        'Pairs with: Quest 8 (Wild Foraging) — you are developing a relationship to the same land through different practices',
-        'Pairs with: Quest 3 (Healing Whole) — trees are the primary partner in a food forest; understanding them deepens the work',
+        'Pairs with: Quest 8 (Wild Foraging). You are developing a relationship to the same land through different practices',
+        'Pairs with: Quest 3 (Healing Whole). Trees are the primary partner in a food forest; understanding them deepens the work',
       ],
     },
   },
@@ -491,12 +491,12 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
       'Marshall Rosenberg spent decades studying what happens when people speak to each other honestly. What he found was that most of what we call communication is not really communication at all. It is a series of demands, evaluations, comparisons, and punishments dressed up as conversation.',
       'The dominant languages we have inherited were shaped by cultures of domination. They are built around evaluation (right/wrong, good/bad), moralism (you should, you must), comparison (better than, less than), and denial of responsibility (I had to, I had no choice). These structures make genuine connection nearly impossible while making conflict almost inevitable.',
       'NVC offers a different grammar. Observations instead of evaluations. Feelings instead of interpretations. Needs instead of demands. Requests instead of commands.',
-      '"It\'s not what other people do, but the images we create in our heads that produce our anger." — Marshall Rosenberg',
+      '"It\'s not what other people do, but the images we create in our heads that produce our anger." Marshall Rosenberg',
       'Violence, Rosenberg argued, is always a result of people convincing themselves that their pain comes from other people, and that those people deserve to be punished. NVC breaks that chain. It routes the pain back to the unmet need underneath it, where it can actually be addressed.',
       'This matters enormously for the ReGen Civics game. We are trying to build new organizations, new governance structures, new communities. All of them will have conflict. All of them will have moments where people feel unseen, unheard, or wronged. The only way through is a practice of communication that can hold that complexity without collapsing into punishment and blame.',
-      '"Why would anyone want to be truthful with someone who judges and punishes them?" — Marshall Rosenberg',
+      '"Why would anyone want to be truthful with someone who judges and punishes them?" Marshall Rosenberg',
       'NVC is not soft. It takes more courage than argument. It requires you to name what you actually feel and what you actually need, which most of us have been trained not to do.',
-      '"Never walk when you can dance." — Marshall Rosenberg\'s grandmother',
+      '"Never walk when you can dance." Marshall Rosenberg\'s grandmother',
     ],
     storyTeaser: [
       'Marshall Rosenberg spent decades studying what happens when people speak to each other honestly. What he found was that most of what we call communication is not really communication at all. It is a series of demands, evaluations, comparisons, and punishments dressed up as conversation.',
@@ -609,8 +609,8 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     ],
     connections: {
       referencedBy: [
-        'Pairs with: Quest 9 (Medicine Journey) — both practices access non-ordinary states for insight and healing',
-        'Feeds into: EPIC Quests — the futures you vision here are the ones you build in the EPIC tier',
+        'Pairs with: Quest 9 (Medicine Journey). Both practices access non-ordinary states for insight and healing',
+        'Feeds into: EPIC Quests. The futures you vision here are the ones you build in the EPIC tier',
       ],
     },
   },
@@ -652,9 +652,9 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     ],
     connections: {
       referencedBy: [
-        'Pairs with: Quest 1 (Potions) — fasting clears space that the living foods then fill',
-        'Pairs with: Quest 9 (Medicine Journey) — extended fasts produce altered states and deep inner access',
-        'Reinforces: All quests — the discipline and clarity of fasting supports every other practice in the game',
+        'Pairs with: Quest 1 (Potions). Fasting clears space that the living foods then fill',
+        'Pairs with: Quest 9 (Medicine Journey). Extended fasts produce altered states and deep inner access',
+        'Reinforces: All quests. The discipline and clarity of fasting supports every other practice in the game',
       ],
     },
   },

@@ -691,7 +691,7 @@ function EarthDayCountdown() {
           {[{ label: "Days", value: timeLeft.days }, { label: "Hours", value: timeLeft.hours }, { label: "Minutes", value: timeLeft.minutes }, { label: "Seconds", value: timeLeft.seconds }].map(({ label, value }) => (
             <div key={label} className="bg-[#1a472a]/60 rounded-xl p-2 sm:p-4 text-center border border-[#7dd87d]/20 min-w-0">
               <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#7dd87d] tabular-nums">{String(value).padStart(2, "0")}</p>
-              <p className="text-white/50 text-xs mt-1">{label}</p>
+              <p className="text-white/70 text-xs mt-1">{label}</p>
             </div>
           ))}
         </div>
@@ -830,7 +830,7 @@ export default function Governance() {
               <table className="w-full text-sm">
                 <thead>
                   <tr>
-                    <th className="text-left py-4 px-4 text-white/50 font-medium w-1/3">Dimension</th>
+                    <th className="text-left py-4 px-4 text-white/70 font-medium w-1/3">Dimension</th>
                     <th className="py-4 px-4 w-1/3">
                       <div className="flex flex-col items-center gap-2">
                         <img
@@ -842,7 +842,7 @@ export default function Governance() {
                           loading="lazy"
                         />
                         <span className="text-[#d4a574] font-bold text-base">ReGen Civics Fund</span>
-                        <span className="text-white/50 text-xs">Capital &amp; Governance</span>
+                        <span className="text-white/70 text-xs">Capital &amp; Governance</span>
                       </div>
                     </th>
                     <th className="py-4 px-4 w-1/3">
@@ -856,7 +856,7 @@ export default function Governance() {
                           loading="lazy"
                         />
                         <span className="text-purple-400 font-bold text-base">ReGen Game</span>
-                        <span className="text-white/50 text-xs">Play &amp; Community</span>
+                        <span className="text-white/70 text-xs">Play &amp; Community</span>
                       </div>
                     </th>
                   </tr>

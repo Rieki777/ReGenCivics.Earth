@@ -22,13 +22,13 @@ export function ProfileForumPosts({ userId }: ProfileForumPostsProps) {
 
   if (isLoading) {
     return (
-      <div className="py-8 text-center text-white/50 text-sm">Loading forum activity...</div>
+      <div className="py-8 text-center text-white/70 text-sm">Loading forum activity...</div>
     );
   }
 
   if (!posts || posts.length === 0) {
     return (
-      <div className="py-8 text-center text-white/50 text-sm">
+      <div className="py-8 text-center text-white/70 text-sm">
         No forum posts yet. Start a conversation in the community!
       </div>
     );
@@ -47,7 +47,7 @@ export function ProfileForumPosts({ userId }: ProfileForumPostsProps) {
                     {post.title || post.content?.slice(0, 80)}
                   </p>
                 </Link>
-                <p className="text-white/50 text-xs mt-1">
+                <p className="text-white/70 text-xs mt-1">
                   {new Date(post.createdAt).toLocaleDateString()}
                 </p>
               </div>

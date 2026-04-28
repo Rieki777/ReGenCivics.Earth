@@ -103,7 +103,7 @@ export function DiscoverTab() {
         <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[#7dd87d]" /> Discover People
         </h2>
-        <p className="text-white/50 text-sm">Members you might want to connect with, based on your profile.</p>
+        <p className="text-white/70 text-sm">Members you might want to connect with, based on your profile.</p>
       </div>
 
       {bothEmpty && (

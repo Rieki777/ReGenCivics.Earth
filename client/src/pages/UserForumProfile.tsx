@@ -88,14 +88,14 @@ export default function UserForumProfile() {
                   {level}
                 </span>
               </div>
-              <p className="text-white/50 text-sm">
+              <p className="text-white/70 text-sm">
                 Joined {new Date(data.user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </p>
               {data.profile?.bio && !isEditing && (
                 <p className="text-white/70 text-sm mt-2">{data.profile.bio}</p>
               )}
               {data.profile?.location && !isEditing && (
-                <p className="text-white/50 text-xs mt-1 flex items-center gap-1">
+                <p className="text-white/70 text-xs mt-1 flex items-center gap-1">
                   <MapPin className="w-3 h-3" /> {data.profile.location}
                 </p>
               )}
@@ -178,7 +178,7 @@ export default function UserForumProfile() {
             <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
               <div className="text-[#7dd87d] mb-1 flex justify-center">{stat.icon}</div>
               <div className="text-xl font-bold text-white">{stat.value}</div>
-              <div className="text-white/50 text-xs">{stat.label}</div>
+              <div className="text-white/70 text-xs">{stat.label}</div>
             </div>
           ))}
         </div>

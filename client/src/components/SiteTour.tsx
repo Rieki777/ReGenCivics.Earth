@@ -148,7 +148,7 @@ export function SiteTour() {
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="text-white/50 hover:text-white/90 transition-colors p-1 rounded"
+            className="text-white/70 hover:text-white/90 transition-colors p-1 rounded"
             aria-label="Close guide"
           >
             <X className="w-4 h-4" />

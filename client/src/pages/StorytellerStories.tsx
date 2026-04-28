@@ -36,7 +36,7 @@ export default function StorytellerStories() {
 
       <section className="px-4 max-w-3xl mx-auto pb-16">
         {isLoading ? (
-          <p className="text-white/55 text-sm">Loading...</p>
+          <p className="text-white/70 text-sm">Loading...</p>
         ) : (narratives?.length ?? 0) === 0 ? (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
             <Sparkles className="w-10 h-10 text-amber-300/60 mx-auto mb-3" />
@@ -61,7 +61,7 @@ export default function StorytellerStories() {
                         {(n.narrativeBody ?? "").slice(0, 280)}
                         {(n.narrativeBody?.length ?? 0) > 280 && "..."}
                       </p>
-                      <div className="flex items-center gap-3 text-[11px] text-white/55 mt-3">
+                      <div className="flex items-center gap-3 text-[11px] text-white/70 mt-3">
                         <span>{n.wordCount} words</span>
                         {n.publishedAt && <span>· published {new Date(n.publishedAt).toLocaleDateString()}</span>}
                         <span className="text-amber-300/80 ml-auto inline-flex items-center gap-1">

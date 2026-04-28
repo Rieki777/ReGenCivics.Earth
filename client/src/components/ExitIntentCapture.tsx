@@ -266,7 +266,7 @@ export function ExitIntentCapture() {
                 >
                   {config.headline}
                 </h3>
-                <p className="text-white/50 text-xs">{config.subline}</p>
+                <p className="text-white/70 text-xs">{config.subline}</p>
               </div>
             </div>
 
@@ -291,13 +291,13 @@ export function ExitIntentCapture() {
               <>
                 <form onSubmit={handleSubmit} className="space-y-3">
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/55" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70" />
                     <Input
                       type="email"
                       placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                       required
                     />
                   </div>
@@ -310,7 +310,7 @@ export function ExitIntentCapture() {
                   </Button>
                 </form>
 
-                <div className="flex items-center gap-1.5 mt-3 text-white/55 text-[10px]">
+                <div className="flex items-center gap-1.5 mt-3 text-white/70 text-[10px]">
                   <Shield className="w-3 h-3" />
                   <span>Your email is encrypted and never shared.</span>
                 </div>

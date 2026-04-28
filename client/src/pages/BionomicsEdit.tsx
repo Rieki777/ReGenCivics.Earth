@@ -232,7 +232,7 @@ export default function BionomicsEdit() {
                         </Badge>
                       )}
                     </CardTitle>
-                    <p className="text-xs text-white/55 mt-1">{section.description}</p>
+                    <p className="text-xs text-white/70 mt-1">{section.description}</p>
                   </CardHeader>
                   <CardContent>
                     <textarea
@@ -249,7 +249,7 @@ export default function BionomicsEdit() {
                         <button
                           type="button"
                           onClick={() => resetSection(section.id)}
-                          className="text-[11px] text-white/55 hover:text-white/85 inline-flex items-center gap-1"
+                          className="text-[11px] text-white/70 hover:text-white/85 inline-flex items-center gap-1"
                         >
                           <RotateCcw className="w-3 h-3" /> Revert to default
                         </button>

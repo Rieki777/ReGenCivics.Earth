@@ -499,7 +499,7 @@ function MilestoneTracker({ phases, currentPhaseIndex }: { phases: string[]; cur
               >
                 {done ? "✓" : i + 1}
               </div>
-              <span className={`text-[8px] mt-0.5 text-center leading-tight max-w-[50px] ${active ? "text-[#7dd87d] font-medium" : "text-white/50"}`}>
+              <span className={`text-[8px] mt-0.5 text-center leading-tight max-w-[50px] ${active ? "text-[#7dd87d] font-medium" : "text-white/70"}`}>
                 {phase}
               </span>
             </div>
@@ -579,7 +579,7 @@ function ProjectShareSheet({ project }: { project: typeof sampleProjects[0] }) {
     <>
       <button
         onClick={(e) => { e.stopPropagation(); handleNativeShare(); }}
-        className="flex items-center gap-1 text-white/50 hover:text-[#7dd87d] transition-colors text-xs"
+        className="flex items-center gap-1 text-white/70 hover:text-[#7dd87d] transition-colors text-xs"
       >
         <Share2 className="w-3 h-3" />
         Share
@@ -665,7 +665,7 @@ function RoleCard({
       <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
         {[["Weeks", role.weeks], ["Hrs/Week", role.hoursPerWeek], [`${symbol}/Hour`, role.hourlyRate]].map(([label, val]) => (
           <div key={label as string} className="bg-white/5 rounded-lg p-2 text-center">
-            <p className="text-white/50">{label}</p>
+            <p className="text-white/70">{label}</p>
             <p className="font-bold text-white">{val}</p>
           </div>
         ))}
@@ -675,7 +675,7 @@ function RoleCard({
         <span className="font-bold text-[#7dd87d]">{symbol}{role.totalValue.toLocaleString()}</span>
       </div>
       <div className="mb-3">
-        <p className="text-xs text-white/50 mb-1">Required Skills:</p>
+        <p className="text-xs text-white/70 mb-1">Required Skills:</p>
         <div className="flex flex-wrap gap-1">
           {role.skills.map((s, i) => (
             <Badge key={i} className="text-xs bg-[#7dd87d]/10 text-[#7dd87d] border border-[#7dd87d]/20">{s}</Badge>
@@ -743,7 +743,7 @@ function ProjectDetailModal({
           <button
             onClick={onClose}
             aria-label="Close project details"
-            className="absolute top-4 right-4 text-white/50 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-all"
+            className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -819,7 +819,7 @@ function ProjectDetailModal({
 
             {/* Milestone tracker */}
             <div>
-              <p className="text-xs text-white/50 mb-1 uppercase tracking-wider">Project Phases</p>
+              <p className="text-xs text-white/70 mb-1 uppercase tracking-wider">Project Phases</p>
               <MilestoneTracker phases={project.phases} currentPhaseIndex={project.currentPhaseIndex} />
             </div>
 
@@ -910,7 +910,7 @@ function ProjectDetailModal({
                 <AvatarStack contributors={project.contributors} projectName={project.name} />
                 <div>
                   <p className="text-white font-bold">{project.contributors}</p>
-                  <p className="text-white/50 text-xs">accepted{project.pendingContributors > 0 && ` (+${project.pendingContributors} pending)`}</p>
+                  <p className="text-white/70 text-xs">accepted{project.pendingContributors > 0 && ` (+${project.pendingContributors} pending)`}</p>
                 </div>
               </div>
               {project.recentContributions > 0 && (
@@ -1094,7 +1094,7 @@ function GetNotifiedForm() {
             placeholder="Your name"
             value={name}
             onChange={e => setName(e.target.value)}
-            className="bg-white/5 border-white/20 text-white placeholder:text-white/55"
+            className="bg-white/5 border-white/20 text-white placeholder:text-white/70"
           />
           <Input
             type="email"
@@ -1102,7 +1102,7 @@ function GetNotifiedForm() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className="bg-white/5 border-white/20 text-white placeholder:text-white/55"
+            className="bg-white/5 border-white/20 text-white placeholder:text-white/70"
           />
           <Button type="submit" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-semibold whitespace-nowrap">
             Notify Me
@@ -1137,7 +1137,7 @@ function ImpactStrip({ projects }: { projects: typeof sampleProjects }) {
         ].map(({ value, label }) => (
           <div key={label} className="text-center">
             <p className="text-3xl sm:text-4xl font-bold text-[#7dd87d]">{value.toLocaleString()}</p>
-            <p className="text-white/50 text-sm">{label}</p>
+            <p className="text-white/70 text-sm">{label}</p>
           </div>
         ))}
       </div>
@@ -1316,7 +1316,7 @@ export default function CrowdPoolingProjects() {
                 </Link>
                 <Button
                   variant="outline"
-                  className="border-white/20 text-white/50 cursor-not-allowed w-full sm:w-auto"
+                  className="border-white/20 text-white/70 cursor-not-allowed w-full sm:w-auto"
                   disabled
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
@@ -1471,7 +1471,7 @@ export default function CrowdPoolingProjects() {
               {[1, 2].map(i => (
                 <div key={i} className="relative bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
                   <div className="absolute inset-0 bg-[#0d2818]/80 z-10 flex flex-col items-center justify-center p-6 text-center">
-                    <Lock className="w-8 h-8 text-white/55 mb-3" />
+                    <Lock className="w-8 h-8 text-white/70 mb-3" />
                     <p className="text-white/70 font-medium mb-1">Coming this season</p>
                     <p className="text-white/60 text-sm mb-4">
                       Our first round of Season 2 projects is live. More join as the season progresses.
@@ -1551,7 +1551,7 @@ export default function CrowdPoolingProjects() {
                           />
                         ) : (
                           <div className="absolute inset-0 bg-gradient-to-br from-[#1a472a] to-[#2d5a3d] flex items-center justify-center">
-                            <SeedOfLifeIcon className="w-16 h-16 text-white/50" size={64} />
+                            <SeedOfLifeIcon className="w-16 h-16 text-white/70" size={64} />
                           </div>
                         )}
                         {/* Gradient overlay */}
@@ -1614,7 +1614,7 @@ export default function CrowdPoolingProjects() {
                         <h3 className="text-lg font-bold text-white mb-1" style={{ fontFamily: 'var(--font-display)' }}>
                           {project.name}
                         </h3>
-                        <div className="flex items-center gap-1 text-sm text-white/50 mb-3">
+                        <div className="flex items-center gap-1 text-sm text-white/70 mb-3">
                           <MapPin className="w-3 h-3" />
                           {project.location}
                         </div>
@@ -1642,7 +1642,7 @@ export default function CrowdPoolingProjects() {
                         )}
 
                         {/* Stats row */}
-                        <div className="flex items-center justify-between text-xs text-white/50 mt-3 mb-3">
+                        <div className="flex items-center justify-between text-xs text-white/70 mt-3 mb-3">
                           <div className="flex items-center gap-2">
                             <AvatarStack contributors={project.contributors} projectName={project.name} />
                             <span>{project.contributors} accepted{project.pendingContributors > 0 && ` +${project.pendingContributors} pending`}</span>

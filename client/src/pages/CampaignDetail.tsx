@@ -973,7 +973,7 @@ function CampaignPhotoGallery({ images }: { images: any[] }) {
               {images[selectedIndex].caption && (
                 <p className="text-white/90 text-sm mb-1">{images[selectedIndex].caption}</p>
               )}
-              <p className="text-white/50 text-xs">
+              <p className="text-white/70 text-xs">
                 {IMAGE_CATEGORIES[images[selectedIndex].category] || 'Other'} - {selectedIndex + 1} of {images.length}
               </p>
             </div>

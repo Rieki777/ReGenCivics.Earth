@@ -14,8 +14,8 @@ import { SmartImagePicker } from "@/components/SmartImagePicker";
 type Path = "investor" | "land_project" | "ally" | "player";
 
 // Shared classNames for Input / Textarea fields inside the dark glass-panel background
-const glassInput = "text-white placeholder:text-white/55 bg-white/8 border-white/15 focus-visible:border-[#7dd87d]/50";
-const glassTextarea = "text-white placeholder:text-white/55 bg-white/8 border-white/15 focus-visible:border-[#7dd87d]/50 resize-none";
+const glassInput = "text-white placeholder:text-white/70 bg-white/8 border-white/15 focus-visible:border-[#7dd87d]/50";
+const glassTextarea = "text-white placeholder:text-white/70 bg-white/8 border-white/15 focus-visible:border-[#7dd87d]/50 resize-none";
 
 const PATH_LABELS: Record<Path, string> = {
   investor: "Investor",
@@ -111,7 +111,7 @@ export function ProfileEditForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {path && (
-        <div className="text-sm text-white/50 mb-1">
+        <div className="text-sm text-white/70 mb-1">
           Your path: <span className="text-white/80 font-medium">{PATH_LABELS[path]}</span>
         </div>
       )}

@@ -54,11 +54,11 @@ export function RelatedContent({ pages, blog, className = "" }: RelatedContentPr
                       <h4 className="text-white font-semibold text-sm mb-1 group-hover:text-[#7dd87d] transition-colors" style={{ fontFamily: "var(--font-display)" }}>
                         {page.title}
                       </h4>
-                      <p className="text-white/50 text-xs leading-relaxed line-clamp-2">
+                      <p className="text-white/70 text-xs leading-relaxed line-clamp-2">
                         {page.description}
                       </p>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-white/55 group-hover:text-[#7dd87d] transition-colors flex-shrink-0 mt-0.5" />
+                    <ArrowRight className="w-4 h-4 text-white/70 group-hover:text-[#7dd87d] transition-colors flex-shrink-0 mt-0.5" />
                   </div>
                 </div>
               </Link>
@@ -83,7 +83,7 @@ export function RelatedContent({ pages, blog, className = "" }: RelatedContentPr
                       <h4 className="text-white font-semibold text-sm mb-1 group-hover:text-[#7dd87d] transition-colors line-clamp-2" style={{ fontFamily: "var(--font-display)" }}>
                         {blog.title}
                       </h4>
-                      <p className="text-white/50 text-xs leading-relaxed line-clamp-2">
+                      <p className="text-white/70 text-xs leading-relaxed line-clamp-2">
                         {blog.excerpt}
                       </p>
                     </div>

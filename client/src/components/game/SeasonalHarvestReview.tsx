@@ -155,7 +155,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 text-white/50 hover:text-white transition-colors"
+            className="absolute top-4 right-4 z-10 text-white/70 hover:text-white transition-colors"
             aria-label="Close season review"
           >
             <X className="w-5 h-5" />
@@ -185,7 +185,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
             >
               {seasonData.seasonName}
             </h2>
-            <p className="text-white/50 text-sm mb-6">Your season in review</p>
+            <p className="text-white/70 text-sm mb-6">Your season in review</p>
 
             <div className="flex flex-col items-center gap-3 mb-6">
               <span
@@ -236,7 +236,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
             )}
 
             <div className="mt-4 pt-4 border-t border-white/10 w-full text-center">
-              <p className="text-white/50 text-xs">
+              <p className="text-white/70 text-xs">
                 {seasonData.tokensEarned.toLocaleString()} XP earned from quests
               </p>
             </div>
@@ -254,7 +254,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
             >
               {seasonData.tokensEarned.toLocaleString()}
             </span>
-            <p className="text-white/50 text-sm mb-6">tokens this season</p>
+            <p className="text-white/70 text-sm mb-6">tokens this season</p>
 
             <div className="w-full space-y-3">
               <div className="flex justify-between text-sm">
@@ -298,25 +298,25 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
                 <span className="text-3xl font-black text-white block" style={{ fontFamily: "var(--font-display)" }}>
                   {seasonData.referralSignups}
                 </span>
-                <p className="text-white/50 text-xs mt-1">Referral signups</p>
+                <p className="text-white/70 text-xs mt-1">Referral signups</p>
               </div>
               <div className="text-center">
                 <span className="text-3xl font-black text-white block" style={{ fontFamily: "var(--font-display)" }}>
                   {seasonData.gratitudeSent}
                 </span>
-                <p className="text-white/50 text-xs mt-1">Gratitude sent</p>
+                <p className="text-white/70 text-xs mt-1">Gratitude sent</p>
               </div>
               <div className="text-center">
                 <span className="text-3xl font-black text-white block" style={{ fontFamily: "var(--font-display)" }}>
                   {seasonData.gratitudeReceived}
                 </span>
-                <p className="text-white/50 text-xs mt-1">Gratitude received</p>
+                <p className="text-white/70 text-xs mt-1">Gratitude received</p>
               </div>
               <div className="text-center">
                 <span className="text-3xl font-black text-white block" style={{ fontFamily: "var(--font-display)" }}>
                   {seasonData.questsCompleted}
                 </span>
-                <p className="text-white/50 text-xs mt-1">Endorsements</p>
+                <p className="text-white/70 text-xs mt-1">Endorsements</p>
               </div>
             </div>
           </Card>
@@ -377,7 +377,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
               >
                 {seasonData.scoreAtEnd.toLocaleString()}
               </span>
-              <p className="text-white/50 text-xs">Contribution Score</p>
+              <p className="text-white/70 text-xs">Contribution Score</p>
 
               <div className="flex gap-4 mt-2">
                 <div className="text-center">
@@ -411,7 +411,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
                 {percentileLabel}
               </Badge>
 
-              <p className="text-white/50 text-[9px] mt-2">regen.civics</p>
+              <p className="text-white/70 text-[9px] mt-2">regen.civics</p>
             </div>
 
             <Button
@@ -481,7 +481,7 @@ export function SeasonalHarvestReview({ seasonData, onClose }: Props) {
               <ArrowLeft className="w-5 h-5" />
             </button>
 
-            <p className="text-white/55 text-xs">
+            <p className="text-white/70 text-xs">
               {activeCard + 1} of {CARD_COUNT}
             </p>
 

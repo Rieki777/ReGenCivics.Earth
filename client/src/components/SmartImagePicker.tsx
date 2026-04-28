@@ -57,21 +57,21 @@ function t(theme: Theme) {
     label: dark ? "text-white/60" : "text-[#1a472a]/60",
     tabBg: dark ? "bg-white/5 border-white/10" : "bg-[#f0f7f0] border-[#e8e4de]",
     tabActive: "bg-[#7dd87d]/20 text-[#7dd87d]",
-    tabInactive: dark ? "text-white/50 hover:text-white/70" : "text-[#1a472a]/50 hover:text-[#1a472a]/70",
+    tabInactive: dark ? "text-white/70 hover:text-white/70" : "text-[#1a472a]/50 hover:text-[#1a472a]/70",
     dropzone: dark ? "border-white/20 hover:border-white/40 bg-white/5" : "border-[#e8e4de] hover:border-[#7dd87d]/50 bg-[#f8f5f0]",
     dropzoneActive: "border-[#7dd87d] bg-[#7dd87d]/10",
-    dropIcon: dark ? "text-white/55" : "text-[#1a472a]/25",
+    dropIcon: dark ? "text-white/70" : "text-[#1a472a]/25",
     dropText: dark ? "text-white/60" : "text-[#1a472a]/50",
     input: dark
-      ? "bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:ring-[#7dd87d]/50"
+      ? "bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:ring-[#7dd87d]/50"
       : "bg-white border-[#e8e4de] text-[#1a472a] placeholder:text-[#1a472a]/30 focus:ring-[#7dd87d]/50 focus:border-[#7dd87d]",
     secondaryBtn: dark
       ? "bg-white/10 text-white hover:bg-white/20 border-white/20"
       : "bg-[#f0f7f0] text-[#1a472a] hover:bg-[#e8e4de] border-[#e8e4de]",
-    hint: dark ? "text-white/55" : "text-[#1a472a]/40",
+    hint: dark ? "text-white/70" : "text-[#1a472a]/40",
     error: "text-red-500 text-xs",
     previewBorder: dark ? "border-white/20" : "border-[#e8e4de]",
-    genCounter: dark ? "text-white/55" : "text-[#1a472a]/40",
+    genCounter: dark ? "text-white/70" : "text-[#1a472a]/40",
   };
 }
 

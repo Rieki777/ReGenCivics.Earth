@@ -75,7 +75,7 @@ function EpicCard({ quest, staggerDelay }: { quest: EpicQuest; staggerDelay?: nu
             >
               {quest.title}
             </h4>
-            <p className="text-white/55 text-sm mt-0.5">{quest.tagline}</p>
+            <p className="text-white/70 text-sm mt-0.5">{quest.tagline}</p>
           </div>
 
           {/* EPIC badge */}
@@ -99,12 +99,12 @@ function EpicCard({ quest, staggerDelay }: { quest: EpicQuest; staggerDelay?: nu
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-auto pt-2 border-t border-white/8 text-xs text-white/45">
           {/* Duration badge */}
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-            <span className="text-white/55">Duration:</span> {quest.duration}
+            <span className="text-white/70">Duration:</span> {quest.duration}
           </span>
           {/* Commitment dot */}
           <span className="inline-flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-            <span className="text-white/55">{cfg.label}</span>
+            <span className="text-white/70">{cfg.label}</span>
           </span>
           {/* Element + reward */}
           <span className="ml-auto flex items-center gap-1.5">
@@ -249,18 +249,18 @@ export function EpicQuestSection() {
           </div>
           <h2
             className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-4 transition-colors ${
-              isLocked ? "text-white/50" : "text-white"
+              isLocked ? "text-white/70" : "text-white"
             }`}
             style={{ fontFamily: "var(--font-display, serif)" }}
           >
             Epic Quests {isLocked && <Lock className="inline w-7 h-7 text-white/30 ml-2" />}
           </h2>
-          <p className="text-white/55 text-lg max-w-xl mx-auto">
+          <p className="text-white/70 text-lg max-w-xl mx-auto">
             Land Transformation Journeys. Long-form challenges for committed regenerators. These are seasons of real work.
           </p>
           <div className="mt-4 flex items-center justify-center gap-3">
             <SeasonProgressRing completedSeasons={unlocks?.completedSeasons ?? []} compact />
-            <span className="text-white/50 text-sm">
+            <span className="text-white/70 text-sm">
               {unlocks?.completedRitesCount ?? 0}/13 Rites Complete
             </span>
           </div>

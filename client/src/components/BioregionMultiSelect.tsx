@@ -157,7 +157,7 @@ export function BioregionMultiSelect({
       </div>
       {geoSuggestions.length > 0 && (
         <div className="space-y-1">
-          <p className={`text-xs ${variant === "dark" ? "text-white/50" : "text-[#1a472a]/50"}`}>Suggested:</p>
+          <p className={`text-xs ${variant === "dark" ? "text-white/70" : "text-[#1a472a]/50"}`}>Suggested:</p>
           <div className="flex flex-wrap gap-1.5">
             {geoSuggestions.map((b) => (
               <button

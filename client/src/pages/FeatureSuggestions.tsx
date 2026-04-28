@@ -91,12 +91,12 @@ export default function FeatureSuggestions() {
           <div className="bg-white/10 border border-white/20 rounded-2xl p-6 space-y-4">
             {/* Bug / Feature toggle */}
             <div className="flex gap-2 bg-white/5 rounded-lg p-0.5 border border-white/10 w-fit">
-              <button onClick={() => setFormType("feature")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "feature" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/50"}`}>Feature Request</button>
-              <button onClick={() => setFormType("bug")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "bug" ? "bg-red-500/20 text-red-400" : "text-white/50"}`}>Report a Bug</button>
+              <button onClick={() => setFormType("feature")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "feature" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/70"}`}>Feature Request</button>
+              <button onClick={() => setFormType("bug")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "bug" ? "bg-red-500/20 text-red-400" : "text-white/70"}`}>Report a Bug</button>
             </div>
 
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
-            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
+            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
             <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none">
               <option value="" className="bg-[#1a472a]">Category (optional)</option>
               {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a472a]">{c}</option>)}
@@ -112,8 +112,8 @@ export default function FeatureSuggestions() {
         <div className="flex items-center justify-between mb-4">
           <span className="text-white/60 text-sm">{suggestions.length} {suggestions.length === 1 ? "item" : "items"}</span>
           <div className="flex gap-1 bg-white/5 rounded-lg p-0.5 border border-white/10">
-            <button onClick={() => setSortBy("votes")} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === "votes" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/50"}`}>Top</button>
-            <button onClick={() => setSortBy("newest")} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === "newest" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/50"}`}>New</button>
+            <button onClick={() => setSortBy("votes")} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === "votes" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/70"}`}>Top</button>
+            <button onClick={() => setSortBy("newest")} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === "newest" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/70"}`}>New</button>
           </div>
         </div>
 
@@ -136,7 +136,7 @@ export default function FeatureSuggestions() {
                         {s.category && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60 border border-white/10">{s.category}</span>}
                       </div>
                       <p className="text-white/60 text-sm mb-2 safe-prose">{s.description}</p>
-                      <div className="flex items-center gap-3 text-white/55 text-xs">
+                      <div className="flex items-center gap-3 text-white/70 text-xs">
                         <span>{s.authorName}</span>
                         {s.forumThreadId && (
                           <Link href={`/community/post/${s.forumThreadId}`} className="inline-flex items-center gap-1 text-[#7dd87d]/60 hover:text-[#7dd87d]">

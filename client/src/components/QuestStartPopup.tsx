@@ -75,7 +75,7 @@ export function QuestStartPopup({ onNavigateToQuests }: QuestStartPopupProps) {
           </button>
           <button
             onClick={dismiss}
-            className="px-4 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/80 transition-colors"
+            className="px-4 py-2.5 rounded-xl text-sm text-white/70 hover:text-white/80 transition-colors"
           >
             Later
           </button>

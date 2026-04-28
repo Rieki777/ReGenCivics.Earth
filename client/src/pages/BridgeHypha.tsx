@@ -139,7 +139,7 @@ export default function BridgeHypha() {
                         <ul className="text-white/80 text-sm space-y-0.5">
                           {payload.payouts.map((p, i) => (
                             <li key={i}>
-                              <span className="font-mono">{p.amount}</span> <code className="text-xs text-white/55">{p.token}</code>
+                              <span className="font-mono">{p.amount}</span> <code className="text-xs text-white/70">{p.token}</code>
                             </li>
                           ))}
                         </ul>
@@ -151,7 +151,7 @@ export default function BridgeHypha() {
 
               {/* Target DHO */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
-                <p className="text-[10px] uppercase tracking-wider text-white/55 font-bold">Target Hypha space</p>
+                <p className="text-[10px] uppercase tracking-wider text-white/70 font-bold">Target Hypha space</p>
                 <p className="text-white/85 text-sm font-mono">/dho/{payload.targetDhoSlug}</p>
               </div>
             </>
@@ -174,7 +174,7 @@ export default function BridgeHypha() {
                     You have reached the claim threshold. Continuing will let you bring these tokens on-chain via Hypha.
                   </p>
                 ) : (
-                  <p className="text-white/50 text-xs mt-0.5">
+                  <p className="text-white/70 text-xs mt-0.5">
                     You need {(claimData.threshold - claimData.balance).toLocaleString()} more tokens to reach the claim threshold.
                   </p>
                 )}
@@ -204,7 +204,7 @@ export default function BridgeHypha() {
             <ExternalLink className="w-3 h-3 opacity-70" />
           </button>
 
-          <p className="text-white/50 text-[11px] text-center mt-3">
+          <p className="text-white/70 text-[11px] text-center mt-3">
             Bridge key <code className="font-mono">{bridgeKey}</code> · Source <code className="font-mono">{(bridge as any).source}</code>
           </p>
         </div>

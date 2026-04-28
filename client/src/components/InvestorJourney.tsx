@@ -178,13 +178,13 @@ export default function InvestorJourney() {
                     <div className="flex-1">
                       <h3
                         className={`text-base font-bold ${
-                          isCompleted ? "text-white/50 line-through" : "text-white"
+                          isCompleted ? "text-white/70 line-through" : "text-white"
                         }`}
                         style={{ fontFamily: "var(--font-display)" }}
                       >
                         {step.title}
                       </h3>
-                      <p className="text-white/50 text-xs mt-0.5">{step.description}</p>
+                      <p className="text-white/70 text-xs mt-0.5">{step.description}</p>
                     </div>
 
                     {/* Action button */}

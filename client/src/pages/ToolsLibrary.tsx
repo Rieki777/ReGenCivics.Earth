@@ -125,7 +125,7 @@ export default function ToolsLibrary() {
                   value={matcherInput}
                   onChange={(e) => setMatcherInput(e.target.value)}
                   placeholder="e.g., I need to coordinate water management across three neighboring properties..."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/55 min-h-[80px]"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[80px]"
                 />
                 <Button
                   onClick={handleMatch}
@@ -153,7 +153,7 @@ export default function ToolsLibrary() {
                       <div key={i}>
                         <div className="bg-white/5 border border-[#7dd87d]/20 rounded-xl p-3 text-left hover:border-[#7dd87d]/40 transition-colors cursor-pointer">
                           <p className="text-white font-medium text-sm">{match.name}</p>
-                          <p className="text-white/50 text-xs mt-1">{match.reason}</p>
+                          <p className="text-white/70 text-xs mt-1">{match.reason}</p>
                         </div>
                       </div>
                     ))}
@@ -299,8 +299,8 @@ export default function ToolsLibrary() {
           </div>
         ) : tools.length === 0 ? (
           <div className="text-center py-20 border border-white/8 rounded-2xl bg-white/[0.02]">
-            <Wrench className="w-10 h-10 text-white/50 mx-auto mb-3" />
-            <p className="text-white/50 text-lg mb-2">No tools found</p>
+            <Wrench className="w-10 h-10 text-white/70 mx-auto mb-3" />
+            <p className="text-white/70 text-lg mb-2">No tools found</p>
             <p className="text-white/60 text-sm">
               Try adjusting your filters or submit a tool the community should know about.
             </p>
@@ -353,7 +353,7 @@ export default function ToolsLibrary() {
                   </div>
 
                   {/* Summary */}
-                  <p className="text-white/50 text-xs leading-relaxed mb-3 flex-1 line-clamp-3">
+                  <p className="text-white/70 text-xs leading-relaxed mb-3 flex-1 line-clamp-3">
                     {summary}
                   </p>
 
@@ -371,7 +371,7 @@ export default function ToolsLibrary() {
 
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                    <span className="text-white/55 text-xs flex items-center gap-1">
+                    <span className="text-white/70 text-xs flex items-center gap-1">
                       <Users className="w-3 h-3" /> {clickCount} views
                     </span>
                     <span className="text-[#7dd87d] text-xs font-medium flex items-center gap-1">

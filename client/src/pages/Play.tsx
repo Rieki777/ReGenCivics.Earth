@@ -247,7 +247,7 @@ function TokenSystemCollapsible() {
                 >
                   {item.label}
                 </p>
-                <p className="text-white/50 text-sm">{item.desc}</p>
+                <p className="text-white/70 text-sm">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -296,7 +296,7 @@ function QuestAnimationVideo() {
           <div className="rounded-2xl overflow-hidden shadow-2xl border border-[#7dd87d]/20">
             {videoError ? (
               <div className="w-full aspect-video bg-[#1a472a]/40 flex items-center justify-center">
-                <p className="text-white/50 text-sm">Video unavailable</p>
+                <p className="text-white/70 text-sm">Video unavailable</p>
               </div>
             ) : (
               <video
@@ -614,7 +614,7 @@ export default function Play() {
           {/* Join Open Session */}
           <AnimatedSection animation="slide-up" delay={400}>
             <div className="text-center mt-8">
-              <p className="text-white/50 text-base mb-3">Not sure where to start?</p>
+              <p className="text-white/70 text-base mb-3">Not sure where to start?</p>
               <Link href="/schedule">
                 <Button
                   variant="outline"

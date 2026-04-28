@@ -50,7 +50,7 @@ export default function EventSeries() {
         </AnimatedSection>
 
         {isLoading && (
-          <div className="text-center py-16 text-white/50">Loading events...</div>
+          <div className="text-center py-16 text-white/70">Loading events...</div>
         )}
 
         {/* Upcoming Events */}
@@ -66,7 +66,7 @@ export default function EventSeries() {
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="flex-1">
                         <h3 className="text-white font-semibold text-lg mb-1">{ev.title}</h3>
-                        <p className="text-white/50 text-sm flex items-center gap-1.5 mb-2">
+                        <p className="text-white/70 text-sm flex items-center gap-1.5 mb-2">
                           <Clock size={13} />
                           {new Date(ev.startTime).toLocaleDateString("en-US", {
                             weekday: "long", month: "long", day: "numeric", year: "numeric",
@@ -126,7 +126,7 @@ export default function EventSeries() {
                         )}
                         {ev.forumThreadId && (
                           <Link href={`/community/post/${ev.forumThreadId}`}>
-                            <Button size="sm" variant="ghost" className="text-white/50 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
+                            <Button size="sm" variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
                               <MessageSquare size={12} className="mr-1" /> Discussion
                             </Button>
                           </Link>
@@ -142,7 +142,7 @@ export default function EventSeries() {
 
         {!isLoading && events.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-white/50 text-lg mb-4">No events found for "{season}"</p>
+            <p className="text-white/70 text-lg mb-4">No events found for "{season}"</p>
             <Link href="/schedule">
               <Button variant="outline" className="border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10">
                 View Full Schedule
@@ -153,7 +153,7 @@ export default function EventSeries() {
 
         <div className="text-center mt-12">
           <Link href="/schedule">
-            <Button variant="ghost" className="text-white/50 hover:text-white">
+            <Button variant="ghost" className="text-white/70 hover:text-white">
               <ExternalLink size={14} className="mr-1.5" /> View Full Schedule
             </Button>
           </Link>

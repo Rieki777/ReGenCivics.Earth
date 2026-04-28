@@ -80,7 +80,7 @@ export function YourPaths() {
   if (isLoading) {
     return (
       <div className="glass-panel p-6 rounded-xl">
-        <div className="text-white/50 text-sm">Loading paths...</div>
+        <div className="text-white/70 text-sm">Loading paths...</div>
       </div>
     );
   }
@@ -95,7 +95,7 @@ export function YourPaths() {
           <h2 className="text-base font-bold text-white flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#7dd87d]" /> Your Paths
           </h2>
-          <p className="text-white/50 text-xs mt-1">
+          <p className="text-white/70 text-xs mt-1">
             Each path you walk earns its own Co-Creator and Steward titles, plus an RGVoice bonus on Hypha.
           </p>
         </div>
@@ -129,7 +129,7 @@ export function YourPaths() {
                   <Icon className="w-5 h-5 text-[#7dd87d] flex-shrink-0" />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-white">{meta.label}</div>
-                    <div className="text-xs text-white/50">{meta.tagline}</div>
+                    <div className="text-xs text-white/70">{meta.tagline}</div>
                   </div>
                 </button>
               );
@@ -259,7 +259,7 @@ function PathBlock({ data, onClaim, claiming }: PathBlockProps) {
         <Icon className="w-6 h-6 text-[#7dd87d] flex-shrink-0" />
         <div>
           <div className="text-base font-bold text-white">{meta?.label ?? data.path}</div>
-          <div className="text-xs text-white/50">Working toward Co-Creator (+77 RGVoice)</div>
+          <div className="text-xs text-white/70">Working toward Co-Creator (+77 RGVoice)</div>
         </div>
       </div>
       <div className="space-y-2">

@@ -122,7 +122,7 @@ export function ShortcutHelpOverlay() {
         <div className="space-y-5">
           {SHORTCUT_GROUPS.map(group => (
             <div key={group.label}>
-              <p className="text-xs font-semibold text-white/55 uppercase tracking-wider mb-2">
+              <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">
                 {group.label}
               </p>
               <div className="space-y-1.5">

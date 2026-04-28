@@ -22,7 +22,7 @@ const STATUS_META: Record<string, { label: string; color: string; icon: React.Co
   closed: { label: "Closed", color: "bg-white/8 border-white/15 text-white/75", icon: Clock },
   ratified: { label: "Ratified", color: "bg-emerald-500/15 border-emerald-500/45 text-emerald-300", icon: CheckCircle2 },
   declined: { label: "Declined", color: "bg-red-500/15 border-red-500/45 text-red-300", icon: XCircle },
-  cancelled: { label: "Cancelled", color: "bg-white/8 border-white/15 text-white/55", icon: XCircle },
+  cancelled: { label: "Cancelled", color: "bg-white/8 border-white/15 text-white/70", icon: XCircle },
 };
 
 export function ForumThreadDecisionBanner({ threadId }: Props) {

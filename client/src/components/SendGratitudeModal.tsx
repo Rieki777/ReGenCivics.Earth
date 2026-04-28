@@ -180,25 +180,25 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
             <label className="block">
               <span className="sr-only">Search for a person by name or handle</span>
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/70" />
                 <Input
                   ref={searchInputRef}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search by name or handle..."
                   maxLength={MAX_QUERY}
-                  className="pl-9 bg-white/5 border-white/15 text-white placeholder:text-white/50 focus-visible:ring-[#7dd87d]/40"
+                  className="pl-9 bg-white/5 border-white/15 text-white placeholder:text-white/70 focus-visible:ring-[#7dd87d]/40"
                 />
               </div>
             </label>
 
             <div className="min-h-[9rem] max-h-64 overflow-y-auto rounded-lg border border-white/10 bg-white/[0.03]">
               {debouncedQuery.length < MIN_QUERY ? (
-                <p className="text-xs text-white/55 p-4 text-center">
+                <p className="text-xs text-white/70 p-4 text-center">
                   Type at least {MIN_QUERY} characters to start searching.
                 </p>
               ) : searchResults.isLoading ? (
-                <p className="text-xs text-white/55 p-4 text-center inline-flex items-center justify-center gap-2">
+                <p className="text-xs text-white/70 p-4 text-center inline-flex items-center justify-center gap-2">
                   <Loader2 className="w-3 h-3 animate-spin" /> Searching...
                 </p>
               ) : searchErrored ? (
@@ -206,7 +206,7 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
                   Could not search right now. Try again in a moment.
                 </p>
               ) : results.length === 0 ? (
-                <p className="text-xs text-white/55 p-4 text-center">
+                <p className="text-xs text-white/70 p-4 text-center">
                   No one matches "{debouncedQuery}". Try a different spelling or
                   their @handle.
                 </p>
@@ -235,7 +235,7 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
                               {label}
                             </span>
                             {r.handle ? (
-                              <span className="block text-[11px] text-white/55 truncate">
+                              <span className="block text-[11px] text-white/70 truncate">
                                 @{r.handle}
                               </span>
                             ) : null}
@@ -265,7 +265,7 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
                   {recipient.displayName || recipient.name || recipient.handle}
                 </span>
                 {recipient.handle ? (
-                  <span className="block text-[11px] text-white/55 truncate">
+                  <span className="block text-[11px] text-white/70 truncate">
                     @{recipient.handle}
                   </span>
                 ) : null}
@@ -291,13 +291,13 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
                 placeholder="What are you grateful for?"
                 rows={4}
                 maxLength={MAX_MESSAGE}
-                className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/50 outline-none focus:border-[#7dd87d]/50 resize-none"
+                className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none focus:border-[#7dd87d]/50 resize-none"
               />
               <div className="flex items-center justify-between mt-1">
-                <span className="text-[10px] text-white/55">
+                <span className="text-[10px] text-white/70">
                   {message.length}/{MAX_MESSAGE}
                 </span>
-                <span className="text-[10px] text-white/55">
+                <span className="text-[10px] text-white/70">
                   {message.trim().length < MIN_MESSAGE
                     ? `At least ${MIN_MESSAGE} characters`
                     : "Looks good"}

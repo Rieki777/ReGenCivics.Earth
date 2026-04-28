@@ -51,7 +51,7 @@ export function AssistTab({ onClose }: Props = {}) {
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-white">Your ReGen Guide</p>
-          <p className="text-[11px] text-white/50">Ask about quests, the Fund, or how to participate.</p>
+          <p className="text-[11px] text-white/70">Ask about quests, the Fund, or how to participate.</p>
         </div>
       </div>
 

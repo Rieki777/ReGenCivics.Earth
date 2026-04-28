@@ -416,7 +416,7 @@ function LiveVariablesDashboard() {
     return (
       <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
         <CardContent className="py-12 text-center">
-          <p className="text-white/50 text-sm">
+          <p className="text-white/70 text-sm">
             Couldn't load the live variables right now. Try refreshing the page.
           </p>
         </CardContent>
@@ -434,7 +434,7 @@ function LiveVariablesDashboard() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filter variables..."
-            className="pl-9 bg-white/5 border-white/10 text-white text-sm placeholder:text-white/55"
+            className="pl-9 bg-white/5 border-white/10 text-white text-sm placeholder:text-white/70"
           />
         </div>
         {canEdit && (
@@ -468,7 +468,7 @@ function LiveVariablesDashboard() {
                     {category}
                     <Badge
                       variant="outline"
-                      className="ml-auto text-xs bg-white/5 text-white/50 border-white/10"
+                      className="ml-auto text-xs bg-white/5 text-white/70 border-white/10"
                     >
                       {vars.length}
                     </Badge>
@@ -512,7 +512,7 @@ function LiveVariablesDashboard() {
                                 type="button"
                                 aria-label={`Edit ${v.displayName}`}
                                 onClick={() => startEdit(v)}
-                                className="text-white/50 hover:text-white/90 focus:text-white/90 focus:outline-none transition-colors"
+                                className="text-white/70 hover:text-white/90 focus:text-white/90 focus:outline-none transition-colors"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
@@ -908,7 +908,7 @@ function GameSimulator() {
       {/* History panel: click any row to revert back to that moment */}
       {showHistory && history.length > 0 && (
         <div className="rounded-xl border border-white/10 bg-white/5 p-4 max-h-60 overflow-y-auto">
-          <p className="text-[10px] uppercase tracking-widest text-white/50 mb-2 font-bold">
+          <p className="text-[10px] uppercase tracking-widest text-white/70 mb-2 font-bold">
             Your changes (click to revert)
           </p>
           <ol className="space-y-1">
@@ -1192,7 +1192,7 @@ function GratVarRow({
           <p className="text-sm text-white/90 font-medium">{label}</p>
           <HelpTip text={help} />
         </div>
-        <p className="text-xs text-white/50 mt-0.5">{detail}</p>
+        <p className="text-xs text-white/70 mt-0.5">{detail}</p>
       </div>
       <span className="text-sm font-mono text-[#7dd87d] shrink-0">{value}</span>
     </div>
@@ -1251,7 +1251,7 @@ function MiniSectionSimulator({
 
   const copyProposedChanges = useCallback(() => {
     const lines: string[] = [
-      `ReGen Civics — Proposed variable changes`,
+      `ReGen Civics: Proposed variable changes`,
       `Section: ${sectionTitle}`,
     ];
     if (changedKeys.length === 0) {
@@ -1337,7 +1337,7 @@ function MiniSectionSimulator({
                 onValueChange={([val]) => setState((s) => ({ ...s, [v.key]: val }))}
               />
               {v.describe && (
-                <p className="text-[11px] text-white/55 mt-1">{v.describe(current)}</p>
+                <p className="text-[11px] text-white/70 mt-1">{v.describe(current)}</p>
               )}
             </div>
           );
@@ -1354,7 +1354,7 @@ function MiniSectionSimulator({
       )}
 
       <div className="mt-4">
-        <label className="block text-[10px] uppercase tracking-wider text-white/55 mb-1.5 font-bold">
+        <label className="block text-[10px] uppercase tracking-wider text-white/70 mb-1.5 font-bold">
           Rationale (plain language, optional but recommended)
         </label>
         <textarea
@@ -2036,15 +2036,15 @@ export default function GameMechanics() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <GratVarRow label="Root 1 — Intellectual" value="intellectual" detail="Knowledge, research, learning" />
-                    <GratVarRow label="Root 2 — Social" value="social" detail="Networks, relationships, trust" />
-                    <GratVarRow label="Root 3 — Material" value="material" detail="Tools, infrastructure, hardware" />
-                    <GratVarRow label="Root 4 — Financial" value="financial" detail="Money, investments, grants" />
-                    <GratVarRow label="Root 5 — Living" value="living" detail="Land, ecosystems, biodiversity" />
-                    <GratVarRow label="Root 6 — Cultural" value="cultural" detail="Art, stories, rituals, values" />
-                    <GratVarRow label="Root 7 — Spiritual" value="spiritual" detail="Vision, meaning, purpose" />
-                    <GratVarRow label="Root 8 — Experiential" value="experiential" detail="Lived experience, craft hours" />
-                    <GratVarRow label="Root 9 — Health" value="health" detail="Body vitality, wellness, rest" />
+                    <GratVarRow label="Root 1: Intellectual" value="intellectual" detail="Knowledge, research, learning" />
+                    <GratVarRow label="Root 2: Social" value="social" detail="Networks, relationships, trust" />
+                    <GratVarRow label="Root 3: Material" value="material" detail="Tools, infrastructure, hardware" />
+                    <GratVarRow label="Root 4: Financial" value="financial" detail="Money, investments, grants" />
+                    <GratVarRow label="Root 5: Living" value="living" detail="Land, ecosystems, biodiversity" />
+                    <GratVarRow label="Root 6: Cultural" value="cultural" detail="Art, stories, rituals, values" />
+                    <GratVarRow label="Root 7: Spiritual" value="spiritual" detail="Vision, meaning, purpose" />
+                    <GratVarRow label="Root 8: Experiential" value="experiential" detail="Lived experience, craft hours" />
+                    <GratVarRow label="Root 9: Health" value="health" detail="Body vitality, wellness, rest" />
                   </CardContent>
                 </Card>
 

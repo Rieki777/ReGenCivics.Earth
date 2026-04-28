@@ -93,7 +93,7 @@ function CollapsibleSection({
                 {stats.map((s, i) => (
                   <span key={i} className="text-amber-400 text-sm font-bold">
                     {s.value}{" "}
-                    <span className="text-white/50 font-normal text-xs">{s.label}</span>
+                    <span className="text-white/70 font-normal text-xs">{s.label}</span>
                   </span>
                 ))}
               </div>
@@ -114,7 +114,7 @@ function CollapsibleSection({
                 {stats.map((s, i) => (
                   <div key={i} className="glass-panel-light px-4 py-2 rounded-lg">
                     <span className="text-amber-400 font-bold text-lg">{s.value}</span>
-                    <span className="text-white/50 text-sm ml-2">{s.label}</span>
+                    <span className="text-white/70 text-sm ml-2">{s.label}</span>
                   </div>
                 ))}
               </div>

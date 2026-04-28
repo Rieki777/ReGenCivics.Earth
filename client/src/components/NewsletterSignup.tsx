@@ -31,7 +31,7 @@ export default function NewsletterSignup() {
       </Link>
 
       {/* Privacy note */}
-      <p className="text-white/50 text-sm mt-6">
+      <p className="text-white/70 text-sm mt-6">
         We respect your inbox. Unsubscribe anytime. No spam, just regeneration.
       </p>
     </div>

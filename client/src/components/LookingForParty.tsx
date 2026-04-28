@@ -34,7 +34,7 @@ export function LookingForParty({ questId, isActive }: LookingForPartyProps) {
   });
 
   const members = partyMembers.data ?? [];
-  const amLooking = false; // Server returns public list — unknown local flag, rely on button state.
+  const amLooking = false; // Server returns public list. Unknown local flag, rely on button state.
 
   if (!isActive) {
     // Before starting, just show how many are partying up.
@@ -77,7 +77,13 @@ export function LookingForParty({ questId, isActive }: LookingForPartyProps) {
                   onClick={(e) => e.stopPropagation()}
                 >
                   {m.avatarUrl ? (
-                    <img src={m.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={m.avatarUrl}
+                      alt={m.displayName ?? "Player avatar"}
+                      width={28}
+                      height={28}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     (m.displayName ?? "?").charAt(0).toUpperCase()
                   )}

@@ -50,7 +50,7 @@ export function RegenIntroGate() {
         <button
           onClick={dismiss}
           aria-label="Close intro"
-          className="absolute top-3 right-3 z-10 text-white/55 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+          className="absolute top-3 right-3 z-10 text-white/70 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -89,7 +89,7 @@ export function RegenIntroGate() {
             <p className="text-white/75 text-sm md:text-base max-w-md mx-auto mb-2">
               We're a fund and a game for healing land and community.
             </p>
-            <p className="text-white/55 text-sm max-w-md mx-auto mb-8">
+            <p className="text-white/70 text-sm max-w-md mx-auto mb-8">
               Here's a short video that was shared with us. We think they did a beautiful job sharing what the word "regeneration" means. Or jump right on in if you already know the word.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">

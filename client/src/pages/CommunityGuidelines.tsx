@@ -137,14 +137,14 @@ export default function CommunityGuidelines() {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Agreement title (e.g. 'Give credit when sharing others' work')"
-                className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
+                className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
                 maxLength={300}
               />
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Describe what this agreement means in practice. Why does it matter? How should it be applied?"
-                className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/55 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
+                className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
                 maxLength={5000}
               />
               <select
@@ -239,7 +239,7 @@ export default function CommunityGuidelines() {
               <button
                 onClick={() => setSortBy('votes')}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                  sortBy === 'votes' ? 'bg-[#7dd87d]/20 text-[#7dd87d]' : 'text-white/50 hover:text-white/70'
+                  sortBy === 'votes' ? 'bg-[#7dd87d]/20 text-[#7dd87d]' : 'text-white/70 hover:text-white/70'
                 }`}
               >
                 Top
@@ -247,7 +247,7 @@ export default function CommunityGuidelines() {
               <button
                 onClick={() => setSortBy('newest')}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                  sortBy === 'newest' ? 'bg-[#7dd87d]/20 text-[#7dd87d]' : 'text-white/50 hover:text-white/70'
+                  sortBy === 'newest' ? 'bg-[#7dd87d]/20 text-[#7dd87d]' : 'text-white/70 hover:text-white/70'
                 }`}
               >
                 New
@@ -266,9 +266,9 @@ export default function CommunityGuidelines() {
             </div>
           ) : proposals.length === 0 ? (
             <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-              <Shield className="w-10 h-10 text-white/50 mx-auto mb-3" />
-              <p className="text-white/50 text-sm mb-1">No open proposals yet.</p>
-              <p className="text-white/55 text-xs">Be the first to suggest an agreement for the community.</p>
+              <Shield className="w-10 h-10 text-white/70 mx-auto mb-3" />
+              <p className="text-white/70 text-sm mb-1">No open proposals yet.</p>
+              <p className="text-white/70 text-xs">Be the first to suggest an agreement for the community.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -313,7 +313,7 @@ export default function CommunityGuidelines() {
                             )}
                           </div>
                           <p className="text-white/60 text-sm leading-relaxed mb-2">{proposal.description}</p>
-                          <div className="flex items-center gap-3 text-white/55 text-xs">
+                          <div className="flex items-center gap-3 text-white/70 text-xs">
                             <span>{proposal.authorName}</span>
                             {proposal.forumThreadId && (
                               <Link
@@ -337,7 +337,7 @@ export default function CommunityGuidelines() {
 
         {/* Footer */}
         <div className="border-t border-white/10 pt-6">
-          <p className="text-white/55 text-xs text-center">
+          <p className="text-white/70 text-xs text-center">
             These agreements evolve as the community does. Propose changes, vote on what matters, and discuss in the forum.
           </p>
         </div>

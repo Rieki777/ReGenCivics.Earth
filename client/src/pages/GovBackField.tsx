@@ -107,7 +107,7 @@ export default function GovBackField() {
       {/* List */}
       <section className="px-4 max-w-3xl mx-auto pb-16">
         {listQuery.isLoading ? (
-          <p className="text-white/55 text-sm">Loading...</p>
+          <p className="text-white/70 text-sm">Loading...</p>
         ) : (listQuery.data?.length ?? 0) === 0 ? (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
             <p className="text-white/65 text-sm">The Back Field is empty. Park the first idea above.</p>
@@ -124,7 +124,7 @@ export default function GovBackField() {
                 </div>
                 <p className="text-white/75 text-sm leading-relaxed whitespace-pre-wrap">{item.summary}</p>
                 {item.reason && (
-                  <p className="text-white/55 text-xs mt-2 italic">Why parked: {item.reason}</p>
+                  <p className="text-white/70 text-xs mt-2 italic">Why parked: {item.reason}</p>
                 )}
                 <div className="flex items-center gap-3 text-[10px] text-white/45 mt-3">
                   <Clock className="w-3 h-3" />

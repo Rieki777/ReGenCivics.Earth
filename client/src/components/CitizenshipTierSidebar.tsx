@@ -224,7 +224,7 @@ function TierPill({
           : state === "past"
             ? "bg-white/[0.04] border border-[#7dd87d]/30 text-white/60"
             : state === "next"
-              ? "bg-transparent border border-[#7dd87d]/25 text-white/50"
+              ? "bg-transparent border border-[#7dd87d]/25 text-white/70"
               : "bg-transparent border border-white/10 text-white/30")
       }
     >

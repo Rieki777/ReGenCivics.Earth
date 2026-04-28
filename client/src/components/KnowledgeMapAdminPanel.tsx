@@ -54,7 +54,7 @@ export default function KnowledgeMapAdminPanel() {
       <div className="flex items-center gap-2">
         <BookOpen className="w-5 h-5 text-[#7dd87d]" />
         <h3 className="text-lg font-semibold text-white">Knowledge Map</h3>
-        <span className="text-xs text-white/50 ml-1">Curated entry points per forum category</span>
+        <span className="text-xs text-white/70 ml-1">Curated entry points per forum category</span>
       </div>
 
       {/* AI Suggest */}
@@ -99,8 +99,8 @@ export default function KnowledgeMapAdminPanel() {
             <div key={entry.id} className="flex items-start gap-3 bg-amber-900/20 border border-amber-500/20 rounded-lg p-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-white font-medium">{entry.title}</p>
-                {entry.summary && <p className="text-xs text-white/50 mt-0.5">{entry.summary}</p>}
-                <p className="text-xs text-white/55 mt-1">
+                {entry.summary && <p className="text-xs text-white/70 mt-0.5">{entry.summary}</p>}
+                <p className="text-xs text-white/70 mt-1">
                   {entry.postId ? `Post #${entry.postId}` : entry.url ?? "No link"}
                   {" · "}Cat #{entry.categoryId}
                 </p>
@@ -182,19 +182,19 @@ export default function KnowledgeMapAdminPanel() {
 
       {/* All approved entries */}
       <div className="space-y-2">
-        <p className="text-xs text-white/50 font-semibold uppercase tracking-wider">
+        <p className="text-xs text-white/70 font-semibold uppercase tracking-wider">
           Approved entries ({approved.length})
         </p>
         {isLoading && <p className="text-sm text-white/60">Loading…</p>}
         {!isLoading && approved.length === 0 && (
-          <p className="text-sm text-white/55">No entries yet. Use AI or add manually.</p>
+          <p className="text-sm text-white/70">No entries yet. Use AI or add manually.</p>
         )}
         {approved.map(entry => (
           <div key={entry.id} className="flex items-start gap-3 bg-[#0d2818]/40 border border-[#7dd87d]/15 rounded-lg p-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white">{entry.title}</p>
               {entry.summary && <p className="text-xs text-white/60 mt-0.5">{entry.summary}</p>}
-              <p className="text-xs text-white/55 mt-1">
+              <p className="text-xs text-white/70 mt-1">
                 {entry.postId ? `Post #${entry.postId}` : entry.url ?? "-"}
                 {" · "}Cat #{entry.categoryId}
                 {" · "}Order {entry.sortOrder}
@@ -202,7 +202,7 @@ export default function KnowledgeMapAdminPanel() {
             </div>
             <button
               onClick={() => deleteMut.mutate({ id: entry.id })}
-              className="p-1.5 rounded-md hover:bg-red-800/40 text-white/55 hover:text-red-400 transition-colors flex-shrink-0"
+              className="p-1.5 rounded-md hover:bg-red-800/40 text-white/70 hover:text-red-400 transition-colors flex-shrink-0"
               title="Remove"
             >
               <Trash2 className="w-3.5 h-3.5" />

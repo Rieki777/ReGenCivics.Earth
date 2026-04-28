@@ -822,7 +822,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
           maxLength={200}
           className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/55 focus:outline-none focus:border-[#7dd87d]/40"
         />
-        <p className="text-white/55 text-[10px]">Shows on your profile card. 200 chars max.</p>
+        <p className="text-white/70 text-[10px]">Shows on your profile card. 200 chars max.</p>
       </div>
 
       <div className="space-y-1.5">
@@ -912,7 +912,7 @@ function GiftsNeedsPanel() {
           View marketplace
         </Link>
       </div>
-      <p className="text-white/50 text-xs -mt-2">
+      <p className="text-white/70 text-xs -mt-2">
         Share what you offer and what you are looking for. Shown in the community marketplace.
       </p>
 
@@ -933,7 +933,7 @@ function GiftsNeedsPanel() {
           <div key={g.id} className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2.5">
             <span className="text-[10px] bg-[#7dd87d]/15 text-[#7dd87d] border border-[#7dd87d]/25 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">{g.type}</span>
             <span className="text-white/75 text-sm flex-1">{g.description}</span>
-            <button onClick={() => removeGift.mutate({ id: g.id })} className="text-white/55 hover:text-white flex-shrink-0 mt-0.5">
+            <button onClick={() => removeGift.mutate({ id: g.id })} className="text-white/70 hover:text-white flex-shrink-0 mt-0.5">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -988,7 +988,7 @@ function GiftsNeedsPanel() {
           <div key={n.id} className="flex items-start gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2.5">
             <span className="text-[10px] bg-[#d4a574]/15 text-[#b8843d] border border-[#d4a574]/25 px-1.5 py-0.5 rounded-md flex-shrink-0 mt-0.5">{n.type}</span>
             <span className="text-white/75 text-sm flex-1">{n.description}</span>
-            <button onClick={() => removeNeed.mutate({ id: n.id })} className="text-white/55 hover:text-white flex-shrink-0 mt-0.5">
+            <button onClick={() => removeNeed.mutate({ id: n.id })} className="text-white/70 hover:text-white flex-shrink-0 mt-0.5">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -1170,7 +1170,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
           {/* Land project detail fields */}
           {claimType === "land_project" && claimOrgId && (
             <div className="space-y-2 pt-1">
-              <p className="text-white/50 text-xs">Tell us about your role and the project:</p>
+              <p className="text-white/70 text-xs">Tell us about your role and the project:</p>
               <input
                 value={landForm.yourRole}
                 onChange={e => setLandForm(f => ({ ...f, yourRole: e.target.value }))}
@@ -1220,7 +1220,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
           {/* Alliance org detail fields */}
           {claimType === "alliance_org" && claimOrgId && (
             <div className="space-y-2 pt-1">
-              <p className="text-white/50 text-xs">Tell us about your role and this organisation:</p>
+              <p className="text-white/70 text-xs">Tell us about your role and this organisation:</p>
               <input
                 value={orgForm.yourRole}
                 onChange={e => setOrgForm(f => ({ ...f, yourRole: e.target.value }))}
@@ -1279,7 +1279,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
             <div key={c.id} className="flex items-center justify-between bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-3 py-2">
               <div>
                 <p className="text-white text-sm font-medium">{c.orgName}</p>
-                <p className="text-white/50 text-xs">{c.orgType === "land_project" ? "Land Project" : "Alliance Org"}</p>
+                <p className="text-white/70 text-xs">{c.orgType === "land_project" ? "Land Project" : "Alliance Org"}</p>
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300">Pending</span>
             </div>
@@ -1327,7 +1327,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-white text-sm font-medium">{req.submitterName}</p>
-                            <p className="text-white/50 text-xs">{req.submitterEmail}</p>
+                            <p className="text-white/70 text-xs">{req.submitterEmail}</p>
                           </div>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
                             req.status === 'pending' ? 'bg-blue-500/20 text-blue-300' :
@@ -1488,21 +1488,21 @@ function RssFeedManager() {
           ))}
         </div>
       ) : feedsQuery.data?.length === 0 ? (
-        <p className="text-white/55 text-xs">No RSS feeds connected yet.</p>
+        <p className="text-white/70 text-xs">No RSS feeds connected yet.</p>
       ) : (
         <div className="space-y-2">
           {feedsQuery.data?.map((feed: any) => (
             <div key={feed.id} className="flex items-center justify-between bg-[#1a472a]/20 border border-white/5 rounded-lg px-3 py-2">
               <div className="min-w-0">
                 <p className="text-white/80 text-xs font-medium truncate">{feed.label}</p>
-                <p className="text-white/55 text-xs truncate">{feed.feedUrl}</p>
+                <p className="text-white/70 text-xs truncate">{feed.feedUrl}</p>
                 {feed.lastFetchedAt && (
-                  <p className="text-white/50 text-xs">Last fetched: {new Date(feed.lastFetchedAt).toLocaleDateString()}</p>
+                  <p className="text-white/70 text-xs">Last fetched: {new Date(feed.lastFetchedAt).toLocaleDateString()}</p>
                 )}
               </div>
               <button
                 onClick={() => removeFeed.mutate({ feedId: feed.id })}
-                className="text-white/55 hover:text-red-400 text-xs ml-3 flex-shrink-0 transition-colors"
+                className="text-white/70 hover:text-red-400 text-xs ml-3 flex-shrink-0 transition-colors"
                 title="Remove feed"
               >
                 Remove
@@ -1592,7 +1592,7 @@ function QuestEndorsementManager() {
         ))}
       </div>
       {setEndorsements.isPending && (
-        <p className="text-white/55 text-xs mt-2">Saving...</p>
+        <p className="text-white/70 text-xs mt-2">Saving...</p>
       )}
     </div>
   );
@@ -1625,7 +1625,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
       <p className="text-white/60 text-xs font-medium uppercase tracking-wide">Edit Public Listing</p>
       <div className="grid grid-cols-1 gap-2">
         <div>
-          <label className="text-white/50 text-xs mb-0.5 block">Website URL</label>
+          <label className="text-white/70 text-xs mb-0.5 block">Website URL</label>
           <input
             value={websiteUrl}
             onChange={e => setWebsiteUrl(e.target.value)}
@@ -1634,7 +1634,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
           />
         </div>
         <div>
-          <label className="text-white/50 text-xs mb-0.5 block">Video URL (optional)</label>
+          <label className="text-white/70 text-xs mb-0.5 block">Video URL (optional)</label>
           <input
             value={videoUrl}
             onChange={e => setVideoUrl(e.target.value)}
@@ -1643,7 +1643,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
           />
         </div>
         <div>
-          <label className="text-white/50 text-xs mb-0.5 block">Public notes / update (max 2000 chars)</label>
+          <label className="text-white/70 text-xs mb-0.5 block">Public notes / update (max 2000 chars)</label>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
@@ -1696,7 +1696,7 @@ function EventAttendanceBalance() {
     <div className="bg-[#7dd87d]/5 border border-[#7dd87d]/15 rounded-xl p-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-white/50 text-xs mb-1">Event Attendance</p>
+          <p className="text-white/70 text-xs mb-1">Event Attendance</p>
           <p className="text-lg font-bold text-[#7dd87d]">{tokenData.balance} $ReGen</p>
           <p className="text-white/60 text-xs mt-0.5">earned across {tokenData.entries.length} event{tokenData.entries.length !== 1 ? 's' : ''}</p>
         </div>
@@ -1764,7 +1764,7 @@ function ReferralStatsCard() {
   return (
     <div className="bg-purple-500/5 border border-purple-500/20 rounded-xl p-4 space-y-4">
       <div>
-        <p className="text-white/50 text-xs mb-2 font-semibold uppercase tracking-wider">Your Mycelium</p>
+        <p className="text-white/70 text-xs mb-2 font-semibold uppercase tracking-wider">Your Mycelium</p>
         <p className="text-white/65 text-xs leading-relaxed mb-3">
           Invite people into the game. Each accepted invite weaves a thread of trust between you, and you earn
           $ReGen when those you invited reach milestones.
@@ -1797,7 +1797,7 @@ function ReferralStatsCard() {
           </button>
         </div>
       ) : (
-        <p className="text-white/55 text-xs italic">Sign in to get a personal invite link.</p>
+        <p className="text-white/70 text-xs italic">Sign in to get a personal invite link.</p>
       )}
 
       {/* Stats — always shown, even at 0, so the player knows what's tracked */}
@@ -1899,7 +1899,7 @@ function ContributionsTab({
             <div className="w-2 h-2 rounded-full bg-[#7dd87d] mt-1.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-white/80 text-xs font-medium flex items-center gap-1">Hypha DAO <ExternalLink className="w-3 h-3 text-white/60" /></p>
-              <p className="text-white/50 text-xs">Governance votes, proposals, role assignments, and payouts are recorded here.</p>
+              <p className="text-white/70 text-xs">Governance votes, proposals, role assignments, and payouts are recorded here.</p>
             </div>
           </a>
           <a
@@ -1911,7 +1911,7 @@ function ContributionsTab({
             <div className="w-2 h-2 rounded-full bg-[#4a7c59] mt-1.5 flex-shrink-0" />
             <div className="flex-1">
               <p className="text-white/80 text-xs font-medium flex items-center gap-1">Base Blockchain <ExternalLink className="w-3 h-3 text-white/60" /></p>
-              <p className="text-white/50 text-xs">{walletAddress ? "$ReGen and $RCivics transactions, token mints, and verifiable contributions live here." : "Link your wallet to view on-chain activity."}</p>
+              <p className="text-white/70 text-xs">{walletAddress ? "$ReGen and $RCivics transactions, token mints, and verifiable contributions live here." : "Link your wallet to view on-chain activity."}</p>
             </div>
           </a>
         </div>
@@ -1931,14 +1931,14 @@ function ContributionsTab({
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-[#7dd87d]/8 border border-[#7dd87d]/20 rounded-xl p-4">
-            <p className="text-white/50 text-xs mb-1">💚 $ReGen Balance</p>
+            <p className="text-white/70 text-xs mb-1">💚 $ReGen Balance</p>
             <p className="text-2xl font-bold text-[#7dd87d]">{rgenBalance != null && rgenBalance !== 0 ? rgenBalance.toLocaleString() : "--"}</p>
-            <p className="text-white/50 text-xs mt-1">Currency</p>
+            <p className="text-white/70 text-xs mt-1">Currency</p>
           </div>
           <div className="bg-[#d4a574]/8 border border-[#d4a574]/20 rounded-xl p-4">
-            <p className="text-white/50 text-xs mb-1">🗳 RGVoice / Voice Weight</p>
+            <p className="text-white/70 text-xs mb-1">🗳 RGVoice / Voice Weight</p>
             <p className="text-2xl font-bold text-[#d4a574]">{rvoiceBalance != null && rvoiceBalance !== 0 ? rvoiceBalance.toLocaleString() : "--"}</p>
-            <p className="text-white/50 text-xs mt-1">Voice Weight</p>
+            <p className="text-white/70 text-xs mt-1">Voice Weight</p>
           </div>
         </div>
         {walletAddress && onSyncTokens && (
@@ -1952,7 +1952,7 @@ function ContributionsTab({
               {syncIsPending ? "Syncing…" : "Refresh balances"}
             </button>
             {lastTokenSync && (
-              <span className="text-white/55 text-xs">
+              <span className="text-white/70 text-xs">
                 Updated {new Date(lastTokenSync).toLocaleTimeString()}
               </span>
             )}
@@ -1991,7 +1991,7 @@ function ContributionsTab({
         </div>
         {savedCalcs.length > 0 && (
           <div>
-            <p className="text-white/50 text-xs font-medium mb-2 uppercase tracking-wide">Saved Calculations</p>
+            <p className="text-white/70 text-xs font-medium mb-2 uppercase tracking-wide">Saved Calculations</p>
             <div className="space-y-2">
               {savedCalcs.slice(0, 3).map((calc: any) => (
                 <div key={calc.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 flex items-center justify-between gap-3">
@@ -2029,7 +2029,7 @@ function ContributionsTab({
           <ChevronDown className={`w-4 h-4 transition-transform ${showManualLog ? "rotate-180" : ""}`} />
         </button>
         {!showManualLog && (
-          <p className="text-white/50 text-xs">Contributions logged here can be verified by admins. For more quantified contributions, use the calculator above.</p>
+          <p className="text-white/70 text-xs">Contributions logged here can be verified by admins. For more quantified contributions, use the calculator above.</p>
         )}
       </div>
 
@@ -2040,23 +2040,23 @@ function ContributionsTab({
       {contributions && contributions.length > 0 && (
         <div className="glass-panel rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-white/50 text-xs mb-0.5">Total Logged Value</p>
+            <p className="text-white/70 text-xs mb-0.5">Total Logged Value</p>
             <p className="text-2xl font-bold text-[#7dd87d]">${totalValue.toLocaleString()}</p>
           </div>
           <div className="flex gap-4">
             <div className="text-center">
               <p className="text-white font-bold text-lg">{contributions.length}</p>
-              <p className="text-white/50 text-xs">Entries</p>
+              <p className="text-white/70 text-xs">Entries</p>
             </div>
             <div className="text-center">
               <p className="text-white font-bold text-lg">{byType.length}</p>
-              <p className="text-white/50 text-xs">Capital types</p>
+              <p className="text-white/70 text-xs">Capital types</p>
             </div>
             <div className="text-center">
               <p className="text-[#7dd87d] font-bold text-lg">
                 {contributions.filter(c => c.status === "verified").length}
               </p>
-              <p className="text-white/50 text-xs">Verified</p>
+              <p className="text-white/70 text-xs">Verified</p>
             </div>
           </div>
         </div>
@@ -2094,7 +2094,7 @@ function ContributionsTab({
                     className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-all text-xs font-medium ${
                       selected
                         ? "border-[#7dd87d] bg-[#7dd87d]/10 text-white"
-                        : "border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70"
+                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white/70"
                     }`}
                   >
                     <Icon className="w-4 h-4" style={{ color: selected ? ct.color : undefined }} />
@@ -2201,9 +2201,9 @@ function ContributionsTab({
         </div>
       ) : byType.length === 0 ? (
         <div className="text-center py-12">
-          <Leaf className="w-10 h-10 text-white/50 mx-auto mb-3" />
+          <Leaf className="w-10 h-10 text-white/70 mx-auto mb-3" />
           <p className="text-white/60 text-sm">No contributions logged yet.</p>
-          <p className="text-white/50 text-xs mt-1">Use the button above to record your first contribution.</p>
+          <p className="text-white/70 text-xs mt-1">Use the button above to record your first contribution.</p>
         </div>
       ) : (
         <div className="space-y-5">
@@ -2214,7 +2214,7 @@ function ContributionsTab({
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="w-4 h-4" style={{ color: group.color }} />
                   <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">{group.label} Capital</span>
-                  <span className="text-white/50 text-xs ml-auto">
+                  <span className="text-white/70 text-xs ml-auto">
                     {group.items.filter(i => i.estimatedValue).reduce((s, i) => s + (i.estimatedValue ?? 0), 0) > 0
                       ? `$${group.items.reduce((s, i) => s + (i.estimatedValue ?? 0), 0).toLocaleString()}`
                       : ""}
@@ -2236,7 +2236,7 @@ function ContributionsTab({
                           )}
                         </div>
                         {item.description && (
-                          <p className="text-white/50 text-xs mt-0.5 line-clamp-2">{item.description}</p>
+                          <p className="text-white/70 text-xs mt-0.5 line-clamp-2">{item.description}</p>
                         )}
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {item.projectName && (
@@ -2255,7 +2255,7 @@ function ContributionsTab({
                               <ExternalLink className="w-3 h-3" /> evidence
                             </a>
                           )}
-                          <span className="text-white/50 text-xs ml-auto">
+                          <span className="text-white/70 text-xs ml-auto">
                             {new Date(item.createdAt).toLocaleDateString()}
                           </span>
                         </div>
@@ -2263,7 +2263,7 @@ function ContributionsTab({
                       <button
                         onClick={() => deleteMutation.mutate({ id: item.id })}
                         disabled={deleteMutation.isPending}
-                        className="opacity-0 group-hover/row:opacity-100 text-white/50 hover:text-red-400 transition-all p-1 shrink-0"
+                        className="opacity-0 group-hover/row:opacity-100 text-white/70 hover:text-red-400 transition-all p-1 shrink-0"
                         aria-label="Delete contribution"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -2308,7 +2308,7 @@ function QuestsTab({ profile }: { profile: any }) {
   if (completed.length === 0) {
     return (
       <div className="text-center py-12">
-        <BookOpen className="w-10 h-10 text-white/50 mx-auto mb-3" />
+        <BookOpen className="w-10 h-10 text-white/70 mx-auto mb-3" />
         <p className="text-white/60 text-sm">No quests completed yet.</p>
         <a href="/quest" className="inline-flex items-center gap-1 mt-3 text-[#7dd87d] text-sm hover:underline">
           Browse quests <ArrowRight className="w-3.5 h-3.5" />
@@ -2320,7 +2320,7 @@ function QuestsTab({ profile }: { profile: any }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-white/50 text-xs">{completed.length} quest(s) completed</p>
+        <p className="text-white/70 text-xs">{completed.length} quest(s) completed</p>
         <a href="/quest" className="text-[#7dd87d] text-xs hover:underline flex items-center gap-1">
           Find more <ArrowRight className="w-3 h-3" />
         </a>
@@ -2390,7 +2390,7 @@ function SubmissionCard({
     amber: "bg-amber-500/20 text-amber-300",
     red: "bg-red-500/20 text-red-300",
     blue: "bg-blue-500/20 text-blue-300",
-    gray: "bg-white/10 text-white/50",
+    gray: "bg-white/10 text-white/70",
   };
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
@@ -2402,11 +2402,11 @@ function SubmissionCard({
           </span>
         </div>
         {subtitle && <p className="text-white/60 text-xs mt-0.5 truncate">{subtitle}</p>}
-        <p className="text-white/50 text-xs mt-0.5">Updated {new Date(updatedAt).toLocaleDateString()}</p>
+        <p className="text-white/70 text-xs mt-0.5">Updated {new Date(updatedAt).toLocaleDateString()}</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         {secondaryAction && (
-          <a href={secondaryAction.href} className="text-white/50 hover:text-white text-xs px-2 py-1 rounded border border-white/10 hover:border-white/30 transition-colors">
+          <a href={secondaryAction.href} className="text-white/70 hover:text-white text-xs px-2 py-1 rounded border border-white/10 hover:border-white/30 transition-colors">
             {secondaryAction.label}
           </a>
         )}
@@ -2544,7 +2544,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
             placeholder="Search by project or organisation name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/60"
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/60"
           />
           {searchResults && searchResults.length > 0 && !selectedOrg && (
             <div className="bg-[#0d2b1a] border border-white/10 rounded-lg divide-y divide-white/10 max-h-48 overflow-y-auto">
@@ -2567,13 +2567,13 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
             <div className="flex items-center justify-between bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-lg px-4 py-3">
               <div>
                 <p className="text-white text-sm font-medium">{selectedOrg.name}</p>
-                <p className="text-white/50 text-xs">{selectedOrg.type === "land_project" ? "Land Project" : "Alliance Org"}</p>
+                <p className="text-white/70 text-xs">{selectedOrg.type === "land_project" ? "Land Project" : "Alliance Org"}</p>
               </div>
               <button onClick={() => setSelectedOrg(null)} className="text-white/60 hover:text-white/70 text-xs">x Change</button>
             </div>
           )}
           <div className="flex gap-2 justify-end pt-1">
-            <button onClick={() => { setShowClaimForm(false); setSelectedOrg(null); setSearchQuery(""); }} className="text-white/50 text-sm px-3 py-1.5 rounded hover:text-white transition-colors">
+            <button onClick={() => { setShowClaimForm(false); setSelectedOrg(null); setSearchQuery(""); }} className="text-white/70 text-sm px-3 py-1.5 rounded hover:text-white transition-colors">
               Cancel
             </button>
             <button
@@ -2587,7 +2587,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
         </div>
       )}
       {orgClaims.length === 0 && !showClaimForm && (
-        <p className="text-white/50 text-xs text-center py-2">No claims yet. If you steward a listed project or organisation, you can claim it above.</p>
+        <p className="text-white/70 text-xs text-center py-2">No claims yet. If you steward a listed project or organisation, you can claim it above.</p>
       )}
     </div>
   );
@@ -2702,7 +2702,7 @@ function NoteField({ completionId, initialNote }: { completionId: number; initia
       onBlur={handleBlur}
       rows={2}
       placeholder="Add a private note about this experience..."
-      className="w-full mt-2 text-sm text-white/80 bg-white/5 border border-white/10 rounded p-2 resize-none placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50"
+      className="w-full mt-2 text-sm text-white/80 bg-white/5 border border-white/10 rounded p-2 resize-none placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
     />
   );
 }
@@ -2735,7 +2735,7 @@ function QuestJournal({ userId }: { userId: number }) {
           ))}
         </div>
       ) : completionsQuery.data?.length === 0 ? (
-        <p className="text-white/50 text-sm">No quest completions yet. <a href="/quest" className="text-[#7dd87d] hover:underline">Explore quests →</a></p>
+        <p className="text-white/70 text-sm">No quest completions yet. <a href="/quest" className="text-[#7dd87d] hover:underline">Explore quests →</a></p>
       ) : (
         <div className="space-y-3">
           {completionsQuery.data?.map((completion: any) => (
@@ -2743,7 +2743,7 @@ function QuestJournal({ userId }: { userId: number }) {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-white font-medium text-sm">{completion.questTitle}</p>
-                  <p className="text-white/50 text-xs mt-0.5">{formatDate(completion.completedAt)}</p>
+                  <p className="text-white/70 text-xs mt-0.5">{formatDate(completion.completedAt)}</p>
                 </div>
                 {completion.artifactUrl && (
                   <a href={completion.artifactUrl} target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] text-xs hover:underline shrink-0">View artifact →</a>
@@ -2941,7 +2941,7 @@ export default function PlayerProfile() {
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-1 justify-center ${
                           active
                             ? "bg-[#1a472a] text-white shadow-sm border border-[#7dd87d]/20"
-                            : "text-white/50 hover:text-white/80"
+                            : "text-white/70 hover:text-white/80"
                         }`}
                       >
                         <Icon className={`w-4 h-4 ${active ? "text-[#7dd87d]" : ""}`} />
@@ -3052,7 +3052,7 @@ export default function PlayerProfile() {
                               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 questFilter === f
                                   ? "bg-[#1a472a] text-white border border-[#7dd87d]/30"
-                                  : "bg-white/5 text-white/50 border border-white/10 hover:text-white/80"
+                                  : "bg-white/5 text-white/70 border border-white/10 hover:text-white/80"
                               }`}
                             >
                               {f === "completed" ? "Completed" : f === "in-progress" ? "In Progress" : "Proposed"}
@@ -3104,7 +3104,7 @@ export default function PlayerProfile() {
                     <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
                       <Leaf className="w-5 h-5 text-[#7dd87d]" /> Contribution Log
                     </h2>
-                    <p className="text-white/50 text-sm mb-5">
+                    <p className="text-white/70 text-sm mb-5">
                       Record contributions across the 9 forms of capital. Self-reported values can be verified by admins.
                     </p>
                     <ContributionsTab
@@ -3141,7 +3141,7 @@ export default function PlayerProfile() {
                           className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                             settingsSection === key
                               ? "bg-[#7dd87d]/15 text-[#7dd87d] border border-[#7dd87d]/30"
-                              : "text-white/50 hover:text-white/80 hover:bg-white/5 border border-transparent"
+                              : "text-white/70 hover:text-white/80 hover:bg-white/5 border border-transparent"
                           }`}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
@@ -3178,7 +3178,7 @@ export default function PlayerProfile() {
                             <h2 className="text-base font-bold text-white mb-1 flex items-center gap-2">
                               <Wallet className="w-4 h-4 text-[#7dd87d]" /> Your Base Wallet Address
                             </h2>
-                            <p className="text-white/50 text-sm mb-4">
+                            <p className="text-white/70 text-sm mb-4">
                               Link your Base wallet to sync token balances and verify your on-chain identity. Your address starts with 0x.
                             </p>
                             {(profile?.walletAddress || profile?.baseAccountName) ? (

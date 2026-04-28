@@ -141,7 +141,7 @@ function StepRole({ selected, onSelect }: { selected: Role | null; onSelect: (r:
       >
         What is your primary role?
       </h2>
-      <p className="text-white/50 text-xs text-center mb-5">You can always change this later in your profile.</p>
+      <p className="text-white/70 text-xs text-center mb-5">You can always change this later in your profile.</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {ROLES.map((role) => {
@@ -167,7 +167,7 @@ function StepRole({ selected, onSelect }: { selected: Role | null; onSelect: (r:
                 <p className={`font-semibold text-sm ${isSelected ? "text-[#7dd87d]" : "text-white"}`}>
                   {role.label}
                 </p>
-                <p className="text-white/50 text-xs mt-0.5 leading-snug">{role.description}</p>
+                <p className="text-white/70 text-xs mt-0.5 leading-snug">{role.description}</p>
               </div>
             </button>
           );
@@ -192,7 +192,7 @@ function StepFocus({
       >
         What are your focus areas?
       </h2>
-      <p className="text-white/50 text-xs text-center mb-5">Select all that resonate with you.</p>
+      <p className="text-white/70 text-xs text-center mb-5">Select all that resonate with you.</p>
 
       <div className="flex flex-wrap gap-2 justify-center">
         {FOCUS_AREAS.map((area) => {
@@ -232,7 +232,7 @@ function StepGetStarted({ onClose }: { onClose: () => void }) {
       >
         Here is your personalised path
       </h2>
-      <p className="text-white/50 text-xs text-center mb-5">Start anywhere. The game is infinite.</p>
+      <p className="text-white/70 text-xs text-center mb-5">Start anywhere. The game is infinite.</p>
 
       <div className="flex flex-col gap-3">
         {ACTION_CARDS.map((card) => (
@@ -246,7 +246,7 @@ function StepGetStarted({ onClose }: { onClose: () => void }) {
               <p className="font-semibold text-sm text-white group-hover:text-[#7dd87d] transition-colors">
                 {card.title}
               </p>
-              <p className="text-white/50 text-xs mt-0.5 leading-snug">{card.description}</p>
+              <p className="text-white/70 text-xs mt-0.5 leading-snug">{card.description}</p>
             </div>
             <div className="flex items-center gap-1 text-[#7dd87d] text-xs font-semibold flex-shrink-0">
               {card.cta}

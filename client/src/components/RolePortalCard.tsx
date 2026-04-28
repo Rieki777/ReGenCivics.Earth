@@ -233,7 +233,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
               </DialogTitle>
               <DialogDescription asChild>
                 <div>
-                  <p className="text-white/50 text-sm italic mt-1">{role.tagline}</p>
+                  <p className="text-white/70 text-sm italic mt-1">{role.tagline}</p>
                   <p className="text-[#7dd87d] text-xs font-bold uppercase tracking-wider mt-2">
                     {role.circle}
                   </p>
@@ -351,7 +351,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-[#7dd87d] font-bold text-lg">{role.tokenAward.split(" ")[0]}</span>
-                    <span className="text-white/50 text-sm">{role.kind === "fund" ? "$RCivics" : "$ReGen"} / season</span>
+                    <span className="text-white/70 text-sm">{role.kind === "fund" ? "$RCivics" : "$ReGen"} / season</span>
                   </div>
                   <span className="bg-[#7dd87d]/20 text-[#7dd87d] text-xs font-semibold px-2 py-1 rounded-full">
                     Band {role.band}
@@ -366,7 +366,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
 
             {/* Deliverables */}
             <div>
-              <h4 className="text-xs uppercase tracking-wider text-white/50 font-semibold mb-2">
+              <h4 className="text-xs uppercase tracking-wider text-white/70 font-semibold mb-2">
                 Deliverables
               </h4>
               <ul className="space-y-1.5">

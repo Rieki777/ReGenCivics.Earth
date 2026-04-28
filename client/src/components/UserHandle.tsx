@@ -16,7 +16,7 @@ type Props = {
 export function UserHandle({ handle, className = "", link = true }: Props) {
   if (!handle) return null;
   const display = `@${handle}`;
-  const cls = `text-xs text-white/50 hover:text-[#7dd87d] transition-colors ${className}`;
+  const cls = `text-xs text-white/70 hover:text-[#7dd87d] transition-colors ${className}`;
   if (link) {
     return (
       <Link href={`/profile/${handle}`} className={cls}>

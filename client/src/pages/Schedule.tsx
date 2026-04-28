@@ -98,7 +98,7 @@ function RecordingsSection() {
                     <h4 className="text-white font-semibold text-sm group-hover:text-[#7dd87d] transition-colors line-clamp-2">
                       {r.title || "Untitled session"}
                     </h4>
-                    {date && <p className="text-white/50 text-xs mt-1">{date}</p>}
+                    {date && <p className="text-white/70 text-xs mt-1">{date}</p>}
                     {r.forumPostId && (
                       <p className="text-[#7dd87d]/70 text-[11px] mt-1">Discuss in forum</p>
                     )}
@@ -585,7 +585,7 @@ export default function Schedule() {
                 <p className="text-white/70 text-sm mb-1">
                   {nextOpenAccessSession.dayName}, {formatSessionLong(nextOpenAccessSession.date)} at 1:00 - 3:00 PM {nextOpenAccessSession.timezone}
                 </p>
-                <p className="text-white/55 text-xs mb-4">Every new moon. Open to anyone curious about the ReGenerative Renaissance.</p>
+                <p className="text-white/70 text-xs mb-4">Every new moon. Open to anyone curious about the ReGenerative Renaissance.</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <a
                     href={openAccessGoogleUrl(nextOpenAccessSession)}
@@ -667,7 +667,7 @@ export default function Schedule() {
                   Download .ics
                 </a>
               </div>
-              <p className="text-white/55 text-xs mt-3">Live subscription updates automatically as new events are added</p>
+              <p className="text-white/70 text-xs mt-3">Live subscription updates automatically as new events are added</p>
             </div>
 
             {/* Season 2 Episodes (last card) */}
@@ -827,7 +827,7 @@ export default function Schedule() {
 
           <div className="space-y-4">
             {filteredEvents.length === 0 && (
-              <p className="text-center text-white/50 py-8">
+              <p className="text-center text-white/70 py-8">
                 {activeTab === "upcoming" ? "No upcoming events scheduled yet." : "No past events to show."}
               </p>
             )}
@@ -894,7 +894,7 @@ export default function Schedule() {
                       {effectiveExpanded === event.id ? (
                         <ChevronUp className="w-5 h-5 text-[#7dd87d]" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-white/50" />
+                        <ChevronDown className="w-5 h-5 text-white/70" />
                       )}
                     </div>
                   </div>
@@ -914,7 +914,7 @@ export default function Schedule() {
                             With {(event as any).guestSpeakerName}{(event as any).guestSpeakerTopic ? ` on ${(event as any).guestSpeakerTopic}` : ''}
                           </p>
                           {(event as any).guestSpeakerBio && (
-                            <p className="text-white/50 text-xs mt-1">{(event as any).guestSpeakerBio}</p>
+                            <p className="text-white/70 text-xs mt-1">{(event as any).guestSpeakerBio}</p>
                           )}
                         </div>
                       </div>
@@ -1083,7 +1083,7 @@ export default function Schedule() {
                       ) : (event as any).status !== 'completed' ? (
                         <button
                           onClick={() => setAgendaOpenFor(event.id)}
-                          className="inline-flex items-center gap-2 bg-white/5 hover:bg-purple-600/20 text-white/50 hover:text-purple-300 px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/10 hover:border-purple-500/30"
+                          className="inline-flex items-center gap-2 bg-white/5 hover:bg-purple-600/20 text-white/70 hover:text-purple-300 px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/10 hover:border-purple-500/30"
                         >
                           <Plus className="w-4 h-4" />
                           Suggest agenda item

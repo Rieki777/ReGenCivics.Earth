@@ -485,7 +485,7 @@ export default function Connect() {
                   value={otherOrganization}
                   onChange={(e) => setOtherOrganization(e.target.value)}
                   placeholder="Enter organization name"
-                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                 />
               </div>
             )}
@@ -556,7 +556,7 @@ export default function Connect() {
                 value={valueContribution}
                 onChange={(e) => setValueContribution(e.target.value)}
                 placeholder="E.g., I have experience in project management and can help coordinate initiatives..."
-                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
 
@@ -571,7 +571,7 @@ export default function Connect() {
                 value={whyIdealFit}
                 onChange={(e) => setWhyIdealFit(e.target.value)}
                 placeholder="Share what draws you to this work and how you see yourself contributing..."
-                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -588,7 +588,7 @@ export default function Connect() {
                 value={organizationUrl}
                 onChange={(e) => setOrganizationUrl(e.target.value)}
                 placeholder="https://your-organization.com"
-                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
 
@@ -680,7 +680,7 @@ export default function Connect() {
                       value={orgLatitude ?? ""}
                       onChange={(e) => setOrgLatitude(e.target.value ? parseFloat(e.target.value) : null)}
                       placeholder="e.g. 48.8566"
-                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                     />
                   </div>
                   <div>
@@ -692,7 +692,7 @@ export default function Connect() {
                       value={orgLongitude ?? ""}
                       onChange={(e) => setOrgLongitude(e.target.value ? parseFloat(e.target.value) : null)}
                       placeholder="e.g. 2.3522"
-                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                      className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                     />
                   </div>
                 </div>
@@ -703,7 +703,7 @@ export default function Connect() {
                     value={orgCountry}
                     onChange={(e) => setOrgCountry(e.target.value)}
                     placeholder="e.g. France"
-                    className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                    className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                   />
                 </div>
                 <button
@@ -739,7 +739,7 @@ export default function Connect() {
                   value={otherAllianceSupport}
                   onChange={(e) => setOtherAllianceSupport(e.target.value)}
                   placeholder="Enter your support category"
-                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                 />
               </div>
             )}
@@ -755,7 +755,7 @@ export default function Connect() {
                 value={allianceSupportDescription}
                 onChange={(e) => setAllianceSupportDescription(e.target.value)}
                 placeholder="E.g., We provide governance consulting and help land projects establish democratic decision-making structures..."
-                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
             
@@ -768,7 +768,7 @@ export default function Connect() {
                 value={partnershipDescription}
                 onChange={(e) => setPartnershipDescription(e.target.value)}
                 placeholder="Share your vision for partnership..."
-                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -836,7 +836,7 @@ export default function Connect() {
                   value={otherProject}
                   onChange={(e) => setOtherProject(e.target.value)}
                   placeholder="Enter project name"
-                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                 />
               </div>
             )}
@@ -910,7 +910,7 @@ export default function Connect() {
                 value={valueContribution}
                 onChange={(e) => setValueContribution(e.target.value)}
                 placeholder="E.g., I have 5 years of permaculture experience and can help design food forests..."
-                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
 
@@ -925,7 +925,7 @@ export default function Connect() {
                 value={whyIdealFit}
                 onChange={(e) => setWhyIdealFit(e.target.value)}
                 placeholder="Share what draws you to community living and how you see yourself contributing..."
-                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -985,7 +985,7 @@ export default function Connect() {
                 value={roleInterest}
                 onChange={(e) => setRoleInterest(e.target.value)}
                 placeholder="Describe the role(s) you are interested in..."
-                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
             
@@ -999,7 +999,7 @@ export default function Connect() {
                 value={whyIdeal}
                 onChange={(e) => setWhyIdeal(e.target.value)}
                 placeholder="Tell us about your background, relevant experience, and why you're passionate about this role..."
-                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
             
@@ -1013,7 +1013,7 @@ export default function Connect() {
                 value={seasonDeliverables}
                 onChange={(e) => setSeasonDeliverables(e.target.value)}
                 placeholder="E.g., Complete 3 community workshops, develop a permaculture curriculum, coordinate 2 volunteer events..."
-                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[120px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
             
@@ -1028,7 +1028,7 @@ export default function Connect() {
                 value={videoPitchUrl}
                 onChange={(e) => setVideoPitchUrl(e.target.value)}
                 placeholder="https://youtube.com/watch?v=... or https://loom.com/share/..."
-                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
 
@@ -1043,7 +1043,7 @@ export default function Connect() {
                 value={cvWebsite}
                 onChange={(e) => setCvWebsite(e.target.value)}
                 placeholder="https://linkedin.com/in/yourprofile or your website URL"
-                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -1061,7 +1061,7 @@ export default function Connect() {
                 value={uniqueContribution}
                 onChange={(e) => setUniqueContribution(e.target.value)}
                 placeholder="Share your unique ideas and how you would like to contribute..."
-                className="mt-2 min-h-[150px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                className="mt-2 min-h-[150px] bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
               />
             </div>
           </div>
@@ -1164,7 +1164,7 @@ export default function Connect() {
           
           {/* Footer Note */}
           <div className="text-center mt-12">
-            <p className="text-white/50 text-sm">
+            <p className="text-white/70 text-sm">
               Already have an account?{" "}
               <Link href="/apply" className="text-[#7dd87d] font-medium hover:underline">
                 Continue your application
@@ -1275,7 +1275,7 @@ export default function Connect() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your name"
-                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                   />
                 </div>
 
@@ -1287,7 +1287,7 @@ export default function Connect() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                     required
                   />
                 </div>
@@ -1299,7 +1299,7 @@ export default function Connect() {
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
                     placeholder="Anything else you would like to share..."
-                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-[#7dd87d]"
+                    className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                   />
                 </div>
 

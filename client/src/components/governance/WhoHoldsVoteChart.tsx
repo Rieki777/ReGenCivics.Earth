@@ -38,7 +38,7 @@ export function WhoHoldsVoteChart() {
           </li>
         ))}
       </ul>
-      <figcaption className="mt-3 text-xs text-white/50">
+      <figcaption className="mt-3 text-xs text-white/70">
         These four actor classes together hold voice over Fund decisions: capital deployment, partner acceptance, and stewardship policy. Game governance (RGVoice) follows a separate structure on the ReGen Games side of the bridge. Percentages evolve with each season.
       </figcaption>
     </figure>

@@ -68,7 +68,7 @@ export function DigestPreferences({ currentFrequency }: Props) {
             <p className={`text-sm font-medium ${selected === opt.value ? "text-[#7dd87d]" : "text-white"}`}>
               {opt.label}
             </p>
-            <p className="text-white/50 text-xs mt-0.5 pr-4">{opt.description}</p>
+            <p className="text-white/70 text-xs mt-0.5 pr-4">{opt.description}</p>
           </button>
         ))}
       </div>

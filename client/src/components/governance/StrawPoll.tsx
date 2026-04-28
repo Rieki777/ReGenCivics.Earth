@@ -56,7 +56,7 @@ export function StrawPoll({ strawPollId, onPromote }: Props) {
         <span className="text-[10px] uppercase tracking-wider text-white/45 px-2 py-0.5 rounded-full bg-white/10">
           non-binding
         </span>
-        {closed && <span className="text-[10px] text-white/55 ml-auto">closed</span>}
+        {closed && <span className="text-[10px] text-white/70 ml-auto">closed</span>}
       </div>
       <p className="text-white/85 text-sm mb-3">{poll.question}</p>
 

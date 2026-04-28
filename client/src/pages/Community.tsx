@@ -13,6 +13,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { SmartImagePicker } from "@/components/SmartImagePicker";
 import { SEO, pageSEO } from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -125,6 +135,10 @@ export default function Community() {
   const [newCatSlug, setNewCatSlug] = useState("");
   const [newCatDesc, setNewCatDesc] = useState("");
   const [newCatImageUrl, setNewCatImageUrl] = useState("");
+  // Delete-confirmation state. Replaces the old window.confirm() prompt with
+  // a styled AlertDialog so the destructive action has labeled buttons,
+  // focus trap, and matches the rest of the system.
+  const [categoryToDelete, setCategoryToDelete] = useState<{ id: number; name: string } | null>(null);
   const utils = trpc.useUtils();
   const createCategoryMutation = trpc.forum.createCategory.useMutation({
     onSuccess: () => { utils.forum.categories.invalidate(); setShowCreateCategory(null); setNewCatName(""); setNewCatSlug(""); setNewCatDesc(""); setNewCatImageUrl(""); },
@@ -589,7 +603,7 @@ export default function Community() {
                           className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-[#7dd87d]"
                           value={editCategoryDesc}
                           onChange={e => setEditCategoryDesc(e.target.value)}
-                          placeholder="Description (optional)"
+                          placeholder="Description (optional)" aria-label="Category description (optional)"
                         />
                         <div className="flex gap-2">
                           <button
@@ -646,9 +660,10 @@ export default function Community() {
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                  onClick={() => { if (confirm(`Delete "${category.name}"? This cannot be undone.`)) deleteCategoryMutation.mutate({ id: category.id }); }}
+                                  onClick={() => setCategoryToDelete({ id: category.id, name: category.name })}
                                   className="p-1 rounded hover:bg-red-50 text-red-400/60 hover:text-red-500 transition-colors"
                                   title="Delete category"
+                                  aria-label={`Delete category ${category.name}`}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -670,9 +685,9 @@ export default function Community() {
                 {showCreateCategory === 'general' ? (
                   <div className="bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
                     <p className="text-[#1a472a] text-sm font-semibold mb-3">New Category</p>
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
                     <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug (auto-generated)" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
@@ -822,9 +837,9 @@ export default function Community() {
                 </button>
                 {showCreateCategory === 'earth' && (
                   <div className="mt-3 bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
@@ -945,9 +960,9 @@ export default function Community() {
                 </button>
                 {showCreateCategory === 'water' && (
                   <div className="mt-3 bg-[#f0f7f0] rounded-xl p-4 border border-[#7dd87d]/30">
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
-                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
+                    <input className="w-full border border-[#e8e4de] rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-[#7dd87d]" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="mb-3"><SmartImagePicker value={newCatImageUrl} onChange={setNewCatImageUrl} context="default" label="Category image" theme="light" /></div>
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7dd87d] text-[#1a472a] text-xs font-semibold rounded-lg hover:bg-[#9de89d] transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
@@ -1069,9 +1084,9 @@ export default function Community() {
                 </button>
                 {showCreateCategory === 'fire' && (
                   <div className="mt-3 bg-amber-50 rounded-xl p-4 border border-amber-200/60">
-                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
-                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
-                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-amber-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-amber-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
+                    <input className="w-full border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-amber-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
@@ -1183,9 +1198,9 @@ export default function Community() {
                 </button>
                 {showCreateCategory === 'air' && (
                   <div className="mt-3 bg-slate-50 rounded-xl p-4 border border-slate-200/60">
-                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" />
-                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" />
-                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-slate-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" />
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatName} onChange={e => { setNewCatName(e.target.value); setNewCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')); }} placeholder="Name" aria-label="Category name" />
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-2 focus:outline-none focus:border-slate-400 bg-white" value={newCatSlug} onChange={e => setNewCatSlug(e.target.value)} placeholder="slug" aria-label="Category slug" />
+                    <input className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-[#1a472a] mb-3 focus:outline-none focus:border-slate-400 bg-white" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} placeholder="Description (optional)" aria-label="Category description (optional)" />
                     <div className="flex gap-2">
                       <button onClick={() => createCategoryMutation.mutate({ name: newCatName, slug: newCatSlug, description: newCatDesc || undefined, imageUrl: newCatImageUrl || undefined })} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-600 text-white text-xs font-semibold rounded-lg hover:bg-slate-700 transition-colors"><Check className="w-3.5 h-3.5" /> Create</button>
                       <button onClick={() => setShowCreateCategory(null)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"><X className="w-3.5 h-3.5" /> Cancel</button>
@@ -1282,6 +1297,41 @@ export default function Community() {
         </ScrollRevealMotion>
 
       </section>
+
+      {/* Delete-category confirmation. Replaces the old window.confirm()
+          prompt so the destructive action has labeled buttons, focus trap,
+          and matches the system. */}
+      <AlertDialog
+        open={categoryToDelete !== null}
+        onOpenChange={(open) => { if (!open) setCategoryToDelete(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete category?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {categoryToDelete && (
+                <>
+                  This will remove the category <strong>{categoryToDelete.name}</strong>. Posts already inside it stay, but the category vanishes from navigation. You cannot undo this.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (categoryToDelete) {
+                  deleteCategoryMutation.mutate({ id: categoryToDelete.id });
+                  setCategoryToDelete(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
     </PageTransition>

@@ -79,7 +79,7 @@ function QuestCard({
                 <h3 className="font-semibold text-white text-sm leading-snug" style={{ fontFamily: "var(--font-display)" }}>
                   {quest.title}
                 </h3>
-                <p className="text-white/50 text-xs mt-0.5">{quest.tagline}</p>
+                <p className="text-white/70 text-xs mt-0.5">{quest.tagline}</p>
               </div>
 
               {/* Mark complete toggle */}
@@ -92,7 +92,7 @@ function QuestCard({
                 {completed ? (
                   <CheckCircle className="w-5 h-5 text-[#7dd87d]" />
                 ) : (
-                  <Circle className="w-5 h-5 text-white/55 hover:text-white transition-colors" />
+                  <Circle className="w-5 h-5 text-white/70 hover:text-white transition-colors" />
                 )}
               </button>
             </div>
@@ -154,7 +154,7 @@ function QuestCard({
 
           <div className="space-y-1.5">
             {quest.steps.map((step, i) => (
-              <div key={i} className="flex gap-2 text-xs text-white/55">
+              <div key={i} className="flex gap-2 text-xs text-white/70">
                 <span className="flex-shrink-0 w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white/60 mt-0.5">
                   {i + 1}
                 </span>
@@ -236,7 +236,7 @@ export function WelcomeAboardQuests({ profile, onUpdate }: WelcomeAboardQuestsPr
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-white/50 text-xs">33 $ReGen + 0.1 RGVoice per quest</span>
+          <span className="text-white/70 text-xs">33 $ReGen + 0.1 RGVoice per quest</span>
           <span className="text-[#d4a574] text-xs font-medium">Complete all 10: 330 $ReGen + 1 RGVoice total</span>
         </div>
 

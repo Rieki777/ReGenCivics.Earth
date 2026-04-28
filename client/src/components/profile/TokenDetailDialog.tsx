@@ -177,15 +177,15 @@ export function TokenDetailDialog({
         <div className="px-6 pb-5 space-y-4">
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-[10px] uppercase tracking-widest text-white/50 mb-1">Total</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">Total</p>
               <p className="text-xl font-bold text-[#7dd87d]">{formatExactNumber(total)}</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-[10px] uppercase tracking-widest text-white/50 mb-1">On Base</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">On Base</p>
               <p className="text-xl font-bold text-white">{formatExactNumber(publicBalance)}</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-[10px] uppercase tracking-widest text-white/50 mb-1">Our servers</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">Our servers</p>
               <p className="text-xl font-bold text-white">{formatExactNumber(privateBalance)}</p>
             </div>
           </div>
@@ -253,7 +253,7 @@ export function TokenDetailDialog({
             </div>
           ) : (
             <div
-              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/50 font-semibold text-sm cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/70 font-semibold text-sm cursor-not-allowed"
               aria-disabled="true"
               title={`Earn ${formatExactNumber(amountBelow)} more ${label} to reach the ${formatExactNumber(myThreshold)} claim threshold.`}
             >
@@ -266,11 +266,11 @@ export function TokenDetailDialog({
           )}
 
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/50 mb-2">Private ledger history</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/70 mb-2">Private ledger history</p>
             {ledger.isLoading ? (
-              <p className="text-white/50 text-xs">Loading ledger…</p>
+              <p className="text-white/70 text-xs">Loading ledger…</p>
             ) : rows.length === 0 ? (
-              <p className="text-white/50 text-xs">No private-ledger entries yet for this token. Earn some by receiving gratitude or submitting a SEEDS claim.</p>
+              <p className="text-white/70 text-xs">No private-ledger entries yet for this token. Earn some by receiving gratitude or submitting a SEEDS claim.</p>
             ) : (
               <ul className="space-y-1.5 max-h-52 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
                 {rows.map((e: any) => (
@@ -280,7 +280,7 @@ export function TokenDetailDialog({
                         {SOURCE_LABEL[e.source] ?? e.source}
                       </p>
                       {e.description && (
-                        <p className="text-[11px] text-white/50 truncate">{e.description}</p>
+                        <p className="text-[11px] text-white/70 truncate">{e.description}</p>
                       )}
                       <p className="text-[10px] text-white/40 mt-0.5">
                         {new Date(e.createdAt).toLocaleDateString()}

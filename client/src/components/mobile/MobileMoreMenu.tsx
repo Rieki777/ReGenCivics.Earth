@@ -216,7 +216,7 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           <Sparkles className="w-6 h-6 text-[#7dd87d] flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="font-bold text-sm text-white">ReGen Guide</div>
-            <div className="text-[11px] text-white/55">Ask the assistant anything</div>
+            <div className="text-[11px] text-white/70">Ask the assistant anything</div>
           </div>
         </button>
 
@@ -227,7 +227,7 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className="text-white/50 hover:text-[#7dd87d] text-xs"
+              className="text-white/70 hover:text-[#7dd87d] text-xs"
             >
               {item.label}
             </Link>

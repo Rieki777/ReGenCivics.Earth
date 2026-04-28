@@ -79,7 +79,7 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
         {!collapsed && <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">Admin</span>}
         <button
           onClick={() => setCollapsed(c => !c)}
-          className="p-1.5 rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors ml-auto"
+          className="p-1.5 rounded hover:bg-white/10 text-white/70 hover:text-white transition-colors ml-auto"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           title="Toggle sidebar [ "
         >
@@ -90,7 +90,7 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
         {NAV_GROUPS.map(group => (
           <div key={group.label} className="mb-2">
             {!collapsed && (
-              <div className="px-3 py-1 text-xs font-semibold text-white/50 uppercase tracking-wider">{group.label}</div>
+              <div className="px-3 py-1 text-xs font-semibold text-white/70 uppercase tracking-wider">{group.label}</div>
             )}
             {group.items.map(item => {
               const Icon = item.icon

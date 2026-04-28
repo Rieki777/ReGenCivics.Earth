@@ -96,10 +96,10 @@ export default function DecisionsDashboard() {
             <div className="flex items-center gap-2 mb-3">
               <Vote className="w-4 h-4 text-[#7dd87d]" />
               <h2 className="font-bold text-white text-base">Your queue</h2>
-              <span className="text-xs text-white/55 ml-auto">{queueQuery.data?.length ?? 0} open</span>
+              <span className="text-xs text-white/70 ml-auto">{queueQuery.data?.length ?? 0} open</span>
             </div>
             {queueQuery.isLoading ? (
-              <p className="text-white/55 text-sm">Loading...</p>
+              <p className="text-white/70 text-sm">Loading...</p>
             ) : (queueQuery.data?.length ?? 0) === 0 ? (
               <p className="text-white/65 text-sm">No decisions waiting on you right now.</p>
             ) : (
@@ -112,7 +112,7 @@ export default function DecisionsDashboard() {
                     >
                       <div className="flex-1 min-w-0 safe-prose">
                         <p className="text-white text-sm font-semibold truncate">Decision #{d.id}</p>
-                        <p className="text-white/55 text-xs">
+                        <p className="text-white/70 text-xs">
                           {TRACK_LABEL[d.track] ?? d.track} track
                           {d.closesAt && ` · closes ${new Date(d.closesAt).toLocaleDateString()}`}
                         </p>
@@ -153,7 +153,7 @@ export default function DecisionsDashboard() {
             <h2 className="font-bold text-white text-base">Recently ratified</h2>
           </div>
           {recentlyRatifiedQuery.isLoading ? (
-            <p className="text-white/55 text-sm">Loading...</p>
+            <p className="text-white/70 text-sm">Loading...</p>
           ) : (recentlyRatifiedQuery.data?.length ?? 0) === 0 ? (
             <p className="text-white/65 text-sm">No ratified decisions yet. Promote a forum thread to start the pipeline.</p>
           ) : (
@@ -168,7 +168,7 @@ export default function DecisionsDashboard() {
                     {d.outcomeSummary && (
                       <p className="text-white/65 text-xs mt-1 leading-relaxed">{d.outcomeSummary.slice(0, 200)}</p>
                     )}
-                    <div className="flex items-center gap-3 mt-2 text-[10px] text-white/55">
+                    <div className="flex items-center gap-3 mt-2 text-[10px] text-white/70">
                       <span className="capitalize">{TRACK_LABEL[d.track] ?? d.track}</span>
                       {d.closedAt && <span>· {new Date(d.closedAt).toLocaleDateString()}</span>}
                       {d.hyphaBridgeId && (
@@ -183,7 +183,7 @@ export default function DecisionsDashboard() {
                       href={d.loomioDecisionUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-white/55 hover:text-[#7dd87d]"
+                      className="text-white/70 hover:text-[#7dd87d]"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
@@ -207,7 +207,7 @@ export default function DecisionsDashboard() {
               {(tenantsQuery.data ?? []).map((t: any) => (
                 <li key={t.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
                   <p className="text-white text-sm font-semibold">{t.displayName}</p>
-                  <p className="text-white/55 text-[11px] capitalize">{t.tenantType.replace("_", " ")} · role: {t.role}</p>
+                  <p className="text-white/70 text-[11px] capitalize">{t.tenantType.replace("_", " ")} · role: {t.role}</p>
                 </li>
               ))}
             </ul>
@@ -216,7 +216,7 @@ export default function DecisionsDashboard() {
       )}
 
       <p className="text-white/35 text-[11px] text-center pb-8 px-4">
-        Governance powered by Loomio. <a href="https://loomio.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/55">Support their work at loomio.com</a>.
+        Governance powered by Loomio. <a href="https://loomio.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/70">Support their work at loomio.com</a>.
       </p>
     </div>
   );

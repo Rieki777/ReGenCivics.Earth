@@ -386,7 +386,7 @@ export default function Blog() {
                             <h3 className="text-white font-semibold group-hover:text-[#7dd87d] transition-colors line-clamp-2">
                               {post.title}
                             </h3>
-                            <p className="text-white/50 text-sm mt-1">{post.readTime}</p>
+                            <p className="text-white/70 text-sm mt-1">{post.readTime}</p>
                           </div>
                         </div>
                       </Link>
@@ -394,7 +394,7 @@ export default function Blog() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <Video className="w-12 h-12 text-white/55 mx-auto mb-3" />
+                    <Video className="w-12 h-12 text-white/70 mx-auto mb-3" />
                     <p className="text-white/60">How-To videos coming soon!</p>
                     <p className="text-white/60 text-sm mt-1">Vote below for the videos you want to see first</p>
                   </div>
@@ -536,7 +536,7 @@ export default function Blog() {
                     </h3>
                     <p className="text-white/70 mb-6 line-clamp-2 safe-prose">{featuredPost.excerpt}</p>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-white/50 text-sm">
+                      <div className="flex items-center gap-4 text-white/70 text-sm">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           {featuredPost.date}
@@ -599,7 +599,7 @@ export default function Blog() {
                       </h3>
                       <p className="text-white/60 text-sm mb-4 line-clamp-2">{post.excerpt}</p>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 text-white/50 text-xs">
+                        <div className="flex items-center gap-3 text-white/70 text-xs">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {post.date}

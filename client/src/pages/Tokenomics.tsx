@@ -157,7 +157,7 @@ function AnimatedTokenFlow() {
         {/* Flow arrow */}
         <div className="flex items-center justify-center gap-3 sm:gap-6 mb-6">
           <div className="bg-white/10 rounded-xl px-4 py-3 text-center flex-1">
-            <p className="text-white/50 text-xs mb-1">FROM</p>
+            <p className="text-white/70 text-xs mb-1">FROM</p>
             <p className="font-bold text-white text-sm sm:text-base">{currentStep.from}</p>
           </div>
           <div className="flex flex-col items-center gap-1">
@@ -173,7 +173,7 @@ function AnimatedTokenFlow() {
             </div>
           </div>
           <div className="bg-white/10 rounded-xl px-4 py-3 text-center flex-1">
-            <p className="text-white/50 text-xs mb-1">TO</p>
+            <p className="text-white/70 text-xs mb-1">TO</p>
             <p className="font-bold text-white text-sm sm:text-base">{currentStep.to}</p>
           </div>
         </div>
@@ -635,7 +635,7 @@ function LiquidityPoolVisual() {
       </div>
       {step >= 1 && (
         <div className="mb-4">
-          <div className="flex justify-between text-xs text-white/50 mb-1">
+          <div className="flex justify-between text-xs text-white/70 mb-1">
             <span>Pool Size</span>
             <span className="text-[#4a9f9f] font-bold">CHF {steps[step].pool.toLocaleString()}</span>
           </div>
@@ -699,7 +699,7 @@ function ReturnsFlowDiagram() {
         <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] rounded-2xl border-2 border-[#7dd87d]/40 px-6 py-4 text-center">
           <p className="text-[#7dd87d] text-xs font-semibold uppercase tracking-wider mb-1">Portfolio</p>
           <p className="text-white font-bold">Land Projects + Alliance Orgs</p>
-          <p className="text-white/50 text-xs mt-1">Generate returns together</p>
+          <p className="text-white/70 text-xs mt-1">Generate returns together</p>
         </div>
       </div>
 
@@ -731,12 +731,12 @@ function ReturnsFlowDiagram() {
         <div className="bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-xl p-4 text-center">
           <p className="text-[#7dd87d] font-bold text-lg">Portfolio Distributions</p>
           <p className="text-white/60 text-xs mt-1">To $RCivics holders</p>
-          <p className="text-white/50 text-xs">Proportional to token holdings</p>
+          <p className="text-white/70 text-xs">Proportional to token holdings</p>
         </div>
         <div className="bg-[#d4a574]/10 border border-[#d4a574]/30 rounded-xl p-4 text-center">
           <p className="text-[#d4a574] font-bold text-lg">Management Fees</p>
           <p className="text-white/60 text-xs mt-1">50% Council + 50% RCVoice</p>
-          <p className="text-white/50 text-xs">Council funds worker proposals</p>
+          <p className="text-white/70 text-xs">Council funds worker proposals</p>
         </div>
       </div>
 
@@ -756,7 +756,7 @@ function ReturnsFlowDiagram() {
             <span className="text-base">{g.icon}</span>
             <div>
               <p className="text-white text-xs font-semibold">{g.label}</p>
-              <p className="text-white/50 text-xs">{g.pct}</p>
+              <p className="text-white/70 text-xs">{g.pct}</p>
             </div>
           </div>
         ))}
@@ -899,7 +899,7 @@ export default function Tokenomics() {
                 >
                   {stat.value}
                 </p>
-                <p className="text-white/50 text-xs">{stat.label}</p>
+                <p className="text-white/70 text-xs">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -1202,7 +1202,7 @@ export default function Tokenomics() {
                 <div className="flex-1 h-0.5 bg-gradient-to-r from-transparent via-[#7dd87d]/40 to-[#7dd87d]/40" />
                 <div className="bg-[#1a472a] border border-[#7dd87d]/40 rounded-full px-6 py-3 text-center">
                   <p className="text-[#7dd87d] font-bold text-sm">Resources stay in the network</p>
-                  <p className="text-white/50 text-xs">Land Projects pay Alliance Orgs, not conventional providers</p>
+                  <p className="text-white/70 text-xs">Land Projects pay Alliance Orgs, not conventional providers</p>
                 </div>
                 <div className="flex-1 h-0.5 bg-gradient-to-l from-transparent via-[#7dd87d]/40 to-[#7dd87d]/40" />
               </div>

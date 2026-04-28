@@ -168,7 +168,7 @@ function PersonalizedCards() {
 
   return (
     <div className="w-full max-w-4xl mb-6">
-      <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-3 text-center">
+      <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-3 text-center">
         Pick up where you left off
       </p>
       <div className="flex flex-wrap justify-center gap-3">

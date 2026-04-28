@@ -27,7 +27,7 @@ export function DataProtectionBadge({ className = "", compact = false }: DataPro
   return (
     <div className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 ${className}`}>
       <Shield className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
-      <p className="text-white/50 text-xs leading-snug">
+      <p className="text-white/70 text-xs leading-snug">
         Your data is encrypted and never shared with third parties.{" "}
         <Link href="/privacy-policy" className="text-[#7dd87d]/70 underline hover:text-[#7dd87d]">
           Privacy Policy

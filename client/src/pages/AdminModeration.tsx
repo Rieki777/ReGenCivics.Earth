@@ -164,7 +164,7 @@ export default function AdminModeration() {
             <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
               Forum Moderation
             </h1>
-            <p className="text-white/50 text-sm">Manage reports, moderators, and user bans</p>
+            <p className="text-white/70 text-sm">Manage reports, moderators, and user bans</p>
           </div>
         </div>
 
@@ -209,7 +209,7 @@ export default function AdminModeration() {
                         : sev === "soft"
                         ? "bg-amber-500 text-white"
                         : "bg-white/20 text-white"
-                      : "bg-white/5 text-white/50 hover:bg-white/10"
+                      : "bg-white/5 text-white/70 hover:bg-white/10"
                   }`}
                 >
                   {sev === "all" ? "All" : sev === "soft" ? "🖐 Tend to" : "🚩 Hard Stop"}
@@ -244,7 +244,7 @@ export default function AdminModeration() {
               ) : displayedReports.length === 0 ? (
                 <div className="text-center py-12">
                   <Check className="w-12 h-12 text-[#7dd87d]/40 mx-auto mb-3" />
-                  <p className="text-white/50">No {reportFilter || ''} reports</p>
+                  <p className="text-white/70">No {reportFilter || ''} reports</p>
                 </div>
               ) : (
                 displayedReports.map((report) => (
@@ -279,9 +279,9 @@ export default function AdminModeration() {
                           {report.replyId && <span> on reply #{report.replyId}</span>}
                         </p>
                         {report.details && (
-                          <p className="text-white/50 text-xs mt-1">{report.details}</p>
+                          <p className="text-white/70 text-xs mt-1">{report.details}</p>
                         )}
-                        <p className="text-white/55 text-xs mt-1">
+                        <p className="text-white/70 text-xs mt-1">
                           {new Date(report.createdAt).toLocaleString()}
                         </p>
                       </div>
@@ -427,7 +427,7 @@ export default function AdminModeration() {
                       <p className="text-white/65 text-xs">
                         Banned by {ban.bannedByName} | {ban.reason || 'No reason given'}
                       </p>
-                      <p className="text-white/55 text-xs">
+                      <p className="text-white/70 text-xs">
                         {ban.expiresAt ? `Expires: ${new Date(ban.expiresAt).toLocaleDateString()}` : 'Permanent'}
                       </p>
                     </div>

@@ -49,7 +49,7 @@ export function StorytellerToggle() {
           <PenLine className="w-4 h-4 text-[#7dd87d] mt-0.5 shrink-0" />
           <div>
             <p className="text-white text-sm font-semibold">Available as storyteller</p>
-            <p className="text-white/50 text-xs mt-0.5">
+            <p className="text-white/70 text-xs mt-0.5">
               When a governance decision is ratified with high stakes, you may be picked to write the
               narrative that goes into the weekly roundup.
             </p>

@@ -80,7 +80,7 @@ export default function LegalPageLayout({
               {title}
             </h1>
           </div>
-          <p className="text-white/50 text-sm">
+          <p className="text-white/70 text-sm">
             Last Updated:{" "}
             <span className="text-[#7dd87d] font-medium">{lastUpdated}</span>
           </p>

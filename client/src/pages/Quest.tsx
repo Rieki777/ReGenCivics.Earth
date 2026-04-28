@@ -683,7 +683,7 @@ function SeasonCarousels({
               {/* Lock notice */}
               {isSeasonLocked && unlocks && unlocks.getSeasonLockReason(season) && (
                 <div className="mb-6 mt-4 flex items-center gap-3 bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3">
-                  <span className="text-white/50 text-lg">{"\uD83D\uDD12"}</span>
+                  <span className="text-white/70 text-lg">{"\uD83D\uDD12"}</span>
                   <span className="text-white/70 text-sm font-medium">{unlocks.getSeasonLockReason(season)}</span>
                 </div>
               )}
@@ -967,7 +967,7 @@ export default function Quest() {
                   <span className="text-[#7dd87d] text-xs bg-[#4a7c59]/30 px-2 py-0.5 rounded-full">
                     {spotlightQuery.data.questTitle}
                   </span>
-                  <span className="text-white/55 text-xs">From the Field</span>
+                  <span className="text-white/70 text-xs">From the Field</span>
                 </div>
                 {(spotlightQuery.data.caption || spotlightQuery.data.artifactText) && (
                   <p className="text-white/60 text-xs italic line-clamp-2">

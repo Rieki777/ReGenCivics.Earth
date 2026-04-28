@@ -57,7 +57,7 @@ export default function Unsubscribe() {
         {/* Back link */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-white/50 hover:text-white/80 text-sm mb-8 transition-colors"
+          className="inline-flex items-center gap-1.5 text-white/70 hover:text-white/80 text-sm mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
@@ -154,7 +154,7 @@ export default function Unsubscribe() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50 focus:ring-[#7dd87d]/20 rounded-xl h-12"
+                  className="bg-white/5 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50 focus:ring-[#7dd87d]/20 rounded-xl h-12"
                   disabled={state === "loading"}
                   autoComplete="email"
                 />
@@ -216,12 +216,12 @@ export default function Unsubscribe() {
           </div>
 
           {/* Additional links */}
-          <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs text-white/55">
-            <Link href="/privacy-policy" className="hover:text-white/50 transition-colors">
+          <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs text-white/70">
+            <Link href="/privacy-policy" className="hover:text-white/70 transition-colors">
               Privacy Policy
             </Link>
             <span>|</span>
-            <Link href="/terms-of-use" className="hover:text-white/50 transition-colors">
+            <Link href="/terms-of-use" className="hover:text-white/70 transition-colors">
               Terms of Use
             </Link>
           </div>

@@ -444,7 +444,7 @@ function P2PFoodEconomyImage() {
           loading="lazy"
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
         />
-        <figcaption className="mt-2 text-xs text-center text-white/50 italic">
+        <figcaption className="mt-2 text-xs text-center text-white/70 italic">
           The original 2017 sketch that started the whole idea.
         </figcaption>
       </figure>
@@ -569,7 +569,7 @@ function TimelineRiver() {
                 {i === 0 && (
                   <div className="mt-4">
                     <P2PFoodEconomyImage />
-                    <p className="text-xs italic text-white/55 text-center mt-2">
+                    <p className="text-xs italic text-white/70 text-center mt-2">
                       {getBionomicsCopy('p2p_food_caption')}
                     </p>
                   </div>
@@ -1295,7 +1295,7 @@ export default function Bionomics() {
                 style={{ background: "rgba(13,40,24,0.55)" }}
               >
                 <P2PFoodEconomyImage />
-                <p className="text-xs italic text-white/55 text-center mt-2 mb-1">
+                <p className="text-xs italic text-white/70 text-center mt-2 mb-1">
                   The 2017 sketch, redrawn. Local food systems as the energy backing a
                   regenerative currency.
                 </p>

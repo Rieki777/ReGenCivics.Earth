@@ -21,7 +21,7 @@ export function QuestEmbed({ questId, title }: QuestEmbedProps) {
         <Sprout className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
         <span className="text-sm font-medium text-[#7dd87d]">{title || `Quest ${questId}`}</span>
       </div>
-      <p className="text-xs text-white/50 mt-1">Click to view quest details</p>
+      <p className="text-xs text-white/70 mt-1">Click to view quest details</p>
     </a>
   );
 }

@@ -300,7 +300,7 @@ export default function SiteFooter() {
               href="https://creativecommons.org/licenses/by-sa/4.0/"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline hover:text-white/50"
+              className="underline hover:text-white/70"
             >
               Creative Commons Attribution Sharealike 4.0
             </a>{" "}
@@ -308,7 +308,7 @@ export default function SiteFooter() {
           </p>
           <p className="text-white/60 text-[10px] mt-1">
             This site does not constitute financial advice. Please review our{" "}
-            <Link href="/risk-disclosure" className="underline hover:text-white/50">
+            <Link href="/risk-disclosure" className="underline hover:text-white/70">
               risk disclosures
             </Link>{" "}
             before making any investment decisions.

@@ -110,7 +110,7 @@ function ProducerCard({
           </p>
         )}
         {producer.bioregion_id && (
-          <div className="flex items-center gap-1.5 text-white/50 text-xs mb-3">
+          <div className="flex items-center gap-1.5 text-white/70 text-xs mb-3">
             <MapPin className="w-3 h-3" />
             <span>Bioregion #{producer.bioregion_id}</span>
           </div>
@@ -377,9 +377,9 @@ export default function LocalFoodEconomy() {
               </div>
             ) : producerList.length === 0 ? (
               <div className="text-center py-12">
-                <Sprout className="w-12 h-12 text-white/50 mx-auto mb-4" />
+                <Sprout className="w-12 h-12 text-white/70 mx-auto mb-4" />
                 <p
-                  className="text-white/50 text-lg"
+                  className="text-white/70 text-lg"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   No producers listed yet. Be the first to apply below.
@@ -453,7 +453,7 @@ export default function LocalFoodEconomy() {
                       onChange={(e) => setProducerName(e.target.value)}
                       placeholder="e.g. Sunnyside Regenerative Farm"
                       required
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                     />
                   </div>
                   <div>
@@ -468,7 +468,7 @@ export default function LocalFoodEconomy() {
                       onChange={(e) => setContactName(e.target.value)}
                       placeholder="Your name"
                       required
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                     />
                   </div>
                 </div>
@@ -486,7 +486,7 @@ export default function LocalFoodEconomy() {
                     onChange={(e) => setContactEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                   />
                 </div>
 
@@ -502,7 +502,7 @@ export default function LocalFoodEconomy() {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tell us about your farm or food operation. What do you grow? How long have you been at it?"
                     rows={3}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                   />
                 </div>
 
@@ -518,7 +518,7 @@ export default function LocalFoodEconomy() {
                     onChange={(e) => setProductsOffered(e.target.value)}
                     placeholder="e.g. Vegetables, fruit, eggs, honey, ferments, herbs"
                     rows={2}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                   />
                 </div>
 
@@ -534,7 +534,7 @@ export default function LocalFoodEconomy() {
                     onChange={(e) => setRegenerativePractices(e.target.value)}
                     placeholder="What regenerative methods do you use? Composting, cover crops, rotational grazing, agroforestry, etc."
                     rows={3}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                   />
                 </div>
 
@@ -551,7 +551,7 @@ export default function LocalFoodEconomy() {
                       value={websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
                       placeholder="https://yourfarm.com"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                     />
                   </div>
                   <div>
@@ -566,7 +566,7 @@ export default function LocalFoodEconomy() {
                       value={localScaleProfileUrl}
                       onChange={(e) => setLocalScaleProfileUrl(e.target.value)}
                       placeholder="https://localscale.org/your-profile"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/55 focus:border-[#7dd87d]/50"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                     />
                   </div>
                 </div>
@@ -647,7 +647,7 @@ export default function LocalFoodEconomy() {
 
             <AnimatedSection>
               <p
-                className="text-white/50 text-sm text-center mt-8"
+                className="text-white/70 text-sm text-center mt-8"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 Co-Creator+ tier is required to submit ratings. This keeps the rating

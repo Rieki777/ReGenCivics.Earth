@@ -584,7 +584,7 @@ function EntityCard({
         </h3>
 
         {/* Location */}
-        <p className="text-white/50 text-xs flex items-center gap-1 mt-0.5">
+        <p className="text-white/70 text-xs flex items-center gap-1 mt-0.5">
           <MapPin className="w-3 h-3 flex-shrink-0" />
           <span className="truncate">{entity.location}</span>
         </p>
@@ -664,7 +664,7 @@ function EntityCard({
               </a>
             )}
             {entity.url && entity.inactive && (
-              <span className="inline-flex items-center gap-1 text-xs text-white/55 line-through cursor-not-allowed">
+              <span className="inline-flex items-center gap-1 text-xs text-white/70 line-through cursor-not-allowed">
                 <ExternalLink className="w-3 h-3" /> Website (offline)
               </span>
             )}
@@ -681,7 +681,7 @@ function EntityCard({
             {entity.type === "land_project" && !entity.inactive && !entity.forumThreadUrl && (
               <span
                 title="Forum space coming soon for this project"
-                className="inline-flex items-center gap-1 text-xs border border-white/20 text-white/50 px-3 py-1.5 rounded-full font-medium cursor-not-allowed select-none"
+                className="inline-flex items-center gap-1 text-xs border border-white/20 text-white/70 px-3 py-1.5 rounded-full font-medium cursor-not-allowed select-none"
                 aria-disabled="true"
               >
                 <MessageCircle className="w-3 h-3" /> Forum (coming soon)
@@ -1268,7 +1268,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               placeholder="Search name, country, role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50"
+              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
             />
           </div>
           <div className="flex items-center gap-2 flex-wrap mb-4">
@@ -1314,8 +1314,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                           <ExternalLink className="w-3 h-3" /> Visit
                         </a>
                       ) : entity.inactive ? (
-                        <span className="text-white/55 text-xs line-through">Offline</span>
-                      ) : <span className="text-white/55 text-xs">-</span>}
+                        <span className="text-white/70 text-xs line-through">Offline</span>
+                      ) : <span className="text-white/70 text-xs">-</span>}
                     </td>
                   </tr>
                 ))}
@@ -1410,7 +1410,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
             <div className="h-full bg-[#1a472a]/90 backdrop-blur-md border-l border-[#4a7c59]/30 rounded-r-2xl overflow-hidden flex flex-col">
               <div className="p-3 border-b border-[#4a7c59]/20">
                 <h3 className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>Global Network</h3>
-                <p className="text-white/50 text-xs mt-0.5">{filteredEntities.length} {filter === "all" ? "projects & organizations" : filter === "land_project" ? "land projects" : filter === "organization" ? "organizations" : "applicants"}</p>
+                <p className="text-white/70 text-xs mt-0.5">{filteredEntities.length} {filter === "all" ? "projects & organizations" : filter === "land_project" ? "land projects" : filter === "organization" ? "organizations" : "applicants"}</p>
                 {/* Search */}
                 <div className="relative mt-2">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/60" />
@@ -1419,7 +1419,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                     placeholder="Search name, country, role..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/10 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
+                    className="w-full bg-white/10 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
                   />
                 </div>
                 {/* Filters toggle */}
@@ -1440,11 +1440,11 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 {showFilters && (
                   <div className="mt-2 p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
                     <div>
-                      <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Country</p>
+                      <p className="text-white/70 text-[10px] uppercase tracking-widest mb-1">Country</p>
                       <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
                     </div>
                     <div>
-                      <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Community Engagement</p>
+                      <p className="text-white/70 text-[10px] uppercase tracking-widest mb-1">Community Engagement</p>
                       <select
                         value={meetingFreqFilter}
                         onChange={(e) => setMeetingFreqFilter(e.target.value)}
@@ -1461,7 +1461,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                       </select>
                     </div>
                     <div>
-                      <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Diet</p>
+                      <p className="text-white/70 text-[10px] uppercase tracking-widest mb-1">Diet</p>
                       <select
                         value={dietaryFilter}
                         onChange={(e) => setDietaryFilter(e.target.value)}
@@ -1551,15 +1551,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                   <div className="flex items-end gap-3 pl-1">
                     <div className="flex flex-col items-center">
                       <svg width="8" height="14" viewBox="0 0 8 14"><polygon points="4,1 7,6 1,6" fill="#7dd87d" opacity="0.8" /><polygon points="4,3 8,10 0,10" fill="#7dd87d" opacity="0.7" /><rect x="3" y="9" width="2" height="4" fill="#1a472a" /></svg>
-                      <span className="text-white/55 text-[8px]">1-10</span>
+                      <span className="text-white/70 text-[8px]">1-10</span>
                     </div>
                     <div className="flex flex-col items-center">
                       <svg width="12" height="20" viewBox="0 0 12 20"><polygon points="6,1 10,7 2,7" fill="#7dd87d" opacity="0.8" /><polygon points="6,4 11,13 1,13" fill="#7dd87d" opacity="0.7" /><rect x="4.5" y="12" width="3" height="6" fill="#1a472a" /></svg>
-                      <span className="text-white/55 text-[8px]">100+</span>
+                      <span className="text-white/70 text-[8px]">100+</span>
                     </div>
                     <div className="flex flex-col items-center">
                       <svg width="16" height="26" viewBox="0 0 16 26"><polygon points="8,1 13,8 3,8" fill="#7dd87d" opacity="0.9" /><polygon points="8,4 14,14 2,14" fill="#7dd87d" opacity="0.85" /><polygon points="8,8 16,20 0,20" fill="#7dd87d" opacity="0.8" /><rect x="6" y="19" width="4" height="7" fill="#1a472a" /></svg>
-                      <span className="text-white/55 text-[8px]">1000+</span>
+                      <span className="text-white/70 text-[8px]">1000+</span>
                     </div>
                   </div>
                 </div>
@@ -1614,7 +1614,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               placeholder="Search name, country, role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/55 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
+              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
             />
           </div>
           {/* Filters toggle, mobile */}
@@ -1633,11 +1633,11 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
           {showFilters && (
             <div className="p-3 bg-black/40 border border-white/10 rounded-xl space-y-3">
               <div>
-                <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Country</p>
+                <p className="text-white/70 text-[10px] uppercase tracking-widest mb-1">Country</p>
                 <CountryFilter countries={countries} selected={countryFilter} onSelect={setCountryFilter} />
               </div>
               <div>
-                <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Community Engagement</p>
+                <p className="text-white/70 text-[10px] uppercase tracking-widest mb-1">Community Engagement</p>
                 <select
                   value={meetingFreqFilter}
                   onChange={(e) => setMeetingFreqFilter(e.target.value)}
@@ -1654,7 +1654,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 </select>
               </div>
               <div>
-                <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Diet</p>
+                <p className="text-white/70 text-[10px] uppercase tracking-widest mb-1">Diet</p>
                 <select
                   value={dietaryFilter}
                   onChange={(e) => setDietaryFilter(e.target.value)}
@@ -1682,7 +1682,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
 
         {/* Entity cards - mobile (scrollable list) */}
         <div className="bg-[#0a1f14] px-4 pb-4 space-y-2">
-          <p className="text-white/50 text-xs pb-1">
+          <p className="text-white/70 text-xs pb-1">
             {filteredEntities.length} {filter === "all" ? "projects & organizations" : filter === "land_project" ? "land projects" : filter === "organization" ? "organizations" : "applicants"}
           </p>
           {sortedFilteredEntities.map((entity) => (

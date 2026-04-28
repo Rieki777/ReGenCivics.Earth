@@ -404,7 +404,7 @@ export default function CommunityPost() {
       <section className="pt-24 pb-4 md:pt-28 md:pb-6 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
         <div className="container px-4 max-w-4xl mx-auto">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-white/50 text-sm mb-3 flex-wrap" style={{ fontFamily: 'var(--font-body)' }}>
+          <div className="flex items-center gap-2 text-white/70 text-sm mb-3 flex-wrap" style={{ fontFamily: 'var(--font-body)' }}>
             <Link href="/community" className="hover:text-white/80 transition-colors">Forum</Link>
             <ChevronRight className="w-3 h-3" />
             <Link href={`/community/c/${post.categorySlug}`} className="hover:text-white/80 transition-colors">
@@ -506,7 +506,7 @@ export default function CommunityPost() {
                             className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
                           >
                             <p className="text-amber-300 text-sm font-medium">🖐 Tend to</p>
-                            <p className="text-white/50 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
+                            <p className="text-white/70 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
                           </button>
                           <button
                             onClick={() => {
@@ -516,7 +516,7 @@ export default function CommunityPost() {
                             className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
                           >
                             <p className="text-red-400 text-sm font-medium">🚩 Hard Stop</p>
-                            <p className="text-white/50 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
+                            <p className="text-white/70 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
                           </button>
                         </div>
                       </>
@@ -887,7 +887,7 @@ export default function CommunityPost() {
                                       className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
                                     >
                                       <p className="text-amber-300 text-sm font-medium">🖐 Tend to</p>
-                                      <p className="text-white/50 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
+                                      <p className="text-white/70 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
                                     </button>
                                     <button
                                       onClick={() => {
@@ -897,7 +897,7 @@ export default function CommunityPost() {
                                       className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
                                     >
                                       <p className="text-red-400 text-sm font-medium">🚩 Hard Stop</p>
-                                      <p className="text-white/50 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
+                                      <p className="text-white/70 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
                                     </button>
                                   </div>
                                 </>

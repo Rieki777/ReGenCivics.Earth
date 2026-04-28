@@ -101,7 +101,7 @@ export default function HymnBook() {
                         {song.title}
                       </span>
                       {song.artist && (
-                        <span className="block text-white/55 text-xs truncate">{song.artist}</span>
+                        <span className="block text-white/70 text-xs truncate">{song.artist}</span>
                       )}
                     </Link>
                   </li>
@@ -127,7 +127,7 @@ export default function HymnBook() {
               <p>
                 <strong className="text-[#7dd87d]">Hymns of the ReGeneration is a community songbook.</strong>{" "}
                 When your song is selected for the book, the movement buys it from you.
-                Songs in the book are titled by the author but credited to "Hymns of the ReGeneration" — the
+                Songs in the book are titled by the author but credited to "Hymns of the ReGeneration", the
                 people's book, free and open. All streaming revenue goes to the community treasury.
               </p>
               <p>
@@ -229,7 +229,7 @@ export default function HymnBook() {
                       <div className="flex items-start justify-between gap-4 mb-2 min-w-0">
                         <div className="min-w-0">
                           <p className="font-bold text-white truncate">{row.title}</p>
-                          {row.artist && <p className="text-white/55 text-sm truncate">{row.artist}</p>}
+                          {row.artist && <p className="text-white/70 text-sm truncate">{row.artist}</p>}
                           {row.submittedByName && (
                             <p className="text-white/65 text-xs">submitted by {row.submittedByName}</p>
                           )}

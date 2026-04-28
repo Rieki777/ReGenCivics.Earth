@@ -100,9 +100,9 @@ export default function ToolSubmit() {
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center px-4">
         <SEO title="Submit a Tool | ReGen Civics" description="Submit a regenerative tool to the community library." url="/tools/submit" />
         <div className="text-center">
-          <Wrench className="w-12 h-12 text-white/50 mx-auto mb-4" />
+          <Wrench className="w-12 h-12 text-white/70 mx-auto mb-4" />
           <h2 className="text-white text-xl font-semibold mb-2">Sign in to submit a tool</h2>
-          <p className="text-white/50 text-sm mb-6">You need an account to add tools to the library.</p>
+          <p className="text-white/70 text-sm mb-6">You need an account to add tools to the library.</p>
           <a href={getLoginUrl()}>
             <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
               Sign In
@@ -125,7 +125,7 @@ export default function ToolSubmit() {
       <div className="pt-20 px-4">
         <div className="max-w-2xl mx-auto">
           <Link href="/tools">
-            <button className="flex items-center gap-2 text-white/50 hover:text-white/70 text-sm transition-colors mb-6">
+            <button className="flex items-center gap-2 text-white/70 hover:text-white/70 text-sm transition-colors mb-6">
               <ArrowLeft className="w-4 h-4" /> Back to Tools Library
             </button>
           </Link>
@@ -153,12 +153,12 @@ export default function ToolSubmit() {
                 <label className="block text-white/70 text-sm font-medium mb-1">Tool website URL</label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/55" />
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70" />
                     <Input
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       placeholder="https://example.com"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/55 pl-10"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/70 pl-10"
                       onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
                     />
                   </div>
@@ -170,7 +170,7 @@ export default function ToolSubmit() {
                     Analyze
                   </Button>
                 </div>
-                <p className="text-white/55 text-xs">
+                <p className="text-white/70 text-xs">
                   We will read the page and pre-fill the submission form. You can edit everything before submitting.
                 </p>
               </div>
@@ -201,7 +201,7 @@ export default function ToolSubmit() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g., Regen Network"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/55"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -212,7 +212,7 @@ export default function ToolSubmit() {
                     value={summary}
                     onChange={(e) => setSummary(e.target.value)}
                     placeholder="One-line description of what this tool does"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/55"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -223,7 +223,7 @@ export default function ToolSubmit() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="What does this tool do? Who is it for? How does it support regenerative work?"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/55 min-h-[100px]"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[100px]"
                   />
                 </div>
 
@@ -238,7 +238,7 @@ export default function ToolSubmit() {
                         className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                           categories.includes(cat)
                             ? "bg-[#7dd87d] text-[#1a472a]"
-                            : "bg-white/5 text-white/50 border border-white/10 hover:border-white/20"
+                            : "bg-white/5 text-white/70 border border-white/10 hover:border-white/20"
                         }`}
                       >
                         {categories.includes(cat) ? (
@@ -263,7 +263,7 @@ export default function ToolSubmit() {
                         className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
                           pricing === opt.value
                             ? "bg-[#7dd87d] text-[#1a472a]"
-                            : "bg-white/5 text-white/50 border border-white/10 hover:border-white/20"
+                            : "bg-white/5 text-white/70 border border-white/10 hover:border-white/20"
                         }`}
                       >
                         {opt.label}
@@ -279,7 +279,7 @@ export default function ToolSubmit() {
                     value={regions}
                     onChange={(e) => setRegions(e.target.value)}
                     placeholder="e.g., North America, Europe, Global"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/55"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -292,9 +292,9 @@ export default function ToolSubmit() {
                     value={problemStatements}
                     onChange={(e) => setProblemStatements(e.target.value)}
                     placeholder={"I need to track soil health over time\nI want to coordinate land stewardship across properties"}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/55 min-h-[80px]"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[80px]"
                   />
-                  <p className="text-white/55 text-xs mt-1">
+                  <p className="text-white/70 text-xs mt-1">
                     These help other people find this tool when they describe their problems.
                   </p>
                 </div>

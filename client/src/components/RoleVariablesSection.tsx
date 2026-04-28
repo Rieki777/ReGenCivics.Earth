@@ -75,7 +75,7 @@ export function RoleVariablesSection() {
           {/* Compensation bands */}
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
             <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>Compensation Bands</h3>
-            <p className="text-white/50 text-sm mb-4">7 bands. 3:1 ratio from top to bottom. $ReGen is currently valued at $0.01 each. All role holders know exactly where they stand.</p>
+            <p className="text-white/70 text-sm mb-4">7 bands. 3:1 ratio from top to bottom. $ReGen is currently valued at $0.01 each. All role holders know exactly where they stand.</p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -94,7 +94,7 @@ export function RoleVariablesSection() {
                       <td className="py-3 px-2 font-mono text-[#7dd87d]">{row.base}</td>
                       <td className="py-3 px-2">{row.usd}</td>
                       <td className="py-3 px-2 text-[#d4a574]">{row.max}</td>
-                      <td className="py-3 px-2 text-white/50 hidden md:table-cell">{row.roles}</td>
+                      <td className="py-3 px-2 text-white/70 hidden md:table-cell">{row.roles}</td>
                     </tr>
                   ))}
                 </tbody>

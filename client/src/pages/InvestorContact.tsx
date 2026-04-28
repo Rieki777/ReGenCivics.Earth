@@ -106,7 +106,7 @@ export default function InvestorContact() {
   if (submitted) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] flex items-center justify-center p-4">
-        <SEO title="Message sent — ReGen Civics" description="Your investor follow-up has been received." />
+        <SEO title="Message sent | ReGen Civics" description="Your investor follow-up has been received." />
         <Card className="w-full max-w-lg bg-white/5 border-[#7dd87d]/30">
           <CardHeader className="text-center">
             <CheckCircle2 className="w-14 h-14 text-[#7dd87d] mx-auto mb-3" />
@@ -144,7 +144,7 @@ export default function InvestorContact() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] py-12 px-4">
       <SEO
-        title="Contact our investor team — ReGen Civics"
+        title="Contact our investor team | ReGen Civics"
         description="Send a follow-up question to the ReGen Civics investor team."
       />
       <div className="max-w-2xl mx-auto">
@@ -252,7 +252,7 @@ export default function InvestorContact() {
               )}
             </Button>
 
-            <p className="text-white/50 text-xs leading-relaxed">
+            <p className="text-white/70 text-xs leading-relaxed">
               We don't respond from a personal inbox. Your message lands
               directly in our admin alongside your investor profile, and a
               team member follows up within a few business days.

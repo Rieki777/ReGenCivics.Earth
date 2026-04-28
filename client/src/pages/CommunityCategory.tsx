@@ -188,7 +188,7 @@ export default function CommunityCategory() {
       <section className="pt-24 pb-6 md:pt-28 md:pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
         <div className="container px-4 max-w-4xl mx-auto">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-white/50 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+          <div className="flex items-center gap-2 text-white/70 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
             <Link href="/community" className="hover:text-white/80 transition-colors">Forum</Link>
             <ChevronRight className="w-3 h-3" />
             <span className="text-white/80">{category.name}</span>
@@ -368,7 +368,7 @@ export default function CommunityCategory() {
             Stay updated: get the ReGen Civics digest in your inbox
           </p>
           {alreadySubscribed ? (
-            <p className="text-white/50 text-xs flex items-center gap-1.5">
+            <p className="text-white/70 text-xs flex items-center gap-1.5">
               ✓ You're subscribed.{" "}
               <a href="/profile?tab=settings" className="underline underline-offset-2 hover:text-white/80 transition-colors">Manage preferences</a>
               {" · "}

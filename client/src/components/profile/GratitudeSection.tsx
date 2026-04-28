@@ -234,7 +234,7 @@ export function GratitudeSection({
           <Heart className="w-5 h-5 text-[#d4a017]" />
           Gratitude
         </h3>
-        <div className="flex items-center gap-2 text-xs text-white/50">
+        <div className="flex items-center gap-2 text-xs text-white/70">
           <MoonPhaseIcon phase={moonPhase} size={16} />
           <span>
             {daysRemainingInCycle <= 3
@@ -258,7 +258,7 @@ export function GratitudeSection({
             <p className="text-2xl font-bold text-white">
               {peopleSentThisCycle}
             </p>
-            <p className="text-xs text-white/50 mt-1">
+            <p className="text-xs text-white/70 mt-1">
               people this cycle ({perPerson} each)
             </p>
             {streakCycles > 0 && (
@@ -296,7 +296,7 @@ export function GratitudeSection({
             <p className="text-2xl font-bold text-white">
               {peopleReceivedLastCycle}
             </p>
-            <p className="text-xs text-white/50 mt-1">
+            <p className="text-xs text-white/70 mt-1">
               people last cycle
             </p>
             <p className="text-xs text-white/65 mt-2">
@@ -321,7 +321,7 @@ export function GratitudeSection({
               size={72}
               strokeWidth={5}
             />
-            <p className="text-xs text-white/50 mt-2 text-center">
+            <p className="text-xs text-white/70 mt-2 text-center">
               {regenEarnedFromGratitude >= claimThreshold ? (
                 <a
                   href="https://app.hypha.earth"
@@ -338,7 +338,7 @@ export function GratitudeSection({
                 </>
               )}
             </p>
-            <p className="text-[10px] text-white/55 mt-1 text-center leading-tight">
+            <p className="text-[10px] text-white/70 mt-1 text-center leading-tight">
               Reach {claimThreshold} to make a formal claim. This reduces
               governance burden until we automate.
             </p>

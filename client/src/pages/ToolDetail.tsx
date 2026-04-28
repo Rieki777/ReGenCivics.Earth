@@ -48,9 +48,9 @@ export default function ToolDetail() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center">
         <div className="text-center">
-          <Wrench className="w-12 h-12 text-white/50 mx-auto mb-4" />
+          <Wrench className="w-12 h-12 text-white/70 mx-auto mb-4" />
           <h2 className="text-white text-xl font-semibold mb-2">Tool not found</h2>
-          <p className="text-white/50 mb-6">This tool may have been removed or the link is incorrect.</p>
+          <p className="text-white/70 mb-6">This tool may have been removed or the link is incorrect.</p>
           <Link href="/tools">
             <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to Tools Library
@@ -73,7 +73,7 @@ export default function ToolDetail() {
       <div className="pt-20 px-4">
         <div className="max-w-3xl mx-auto">
           <Link href="/tools">
-            <button className="flex items-center gap-2 text-white/50 hover:text-white/70 text-sm transition-colors mb-6">
+            <button className="flex items-center gap-2 text-white/70 hover:text-white/70 text-sm transition-colors mb-6">
               <ArrowLeft className="w-4 h-4" /> Back to Tools Library
             </button>
           </Link>
@@ -117,7 +117,7 @@ export default function ToolDetail() {
                       {tool.pricing === "open_source" ? "Open Source" : tool.pricing.charAt(0).toUpperCase() + tool.pricing.slice(1)}
                     </Badge>
                     {tool.type && (
-                      <Badge className="bg-white/5 text-white/50 border-white/10 text-xs">
+                      <Badge className="bg-white/5 text-white/70 border-white/10 text-xs">
                         {tool.type === "digital" ? "Digital" : "Physical"}
                       </Badge>
                     )}
@@ -135,7 +135,7 @@ export default function ToolDetail() {
                   {tool.categories.map((cat: string) => (
                     <span
                       key={cat}
-                      className="text-xs px-3 py-1 rounded-full bg-white/5 text-white/50 border border-white/10 flex items-center gap-1"
+                      className="text-xs px-3 py-1 rounded-full bg-white/5 text-white/70 border border-white/10 flex items-center gap-1"
                     >
                       <Tag className="w-3 h-3" /> {cat}
                     </span>
@@ -166,11 +166,11 @@ export default function ToolDetail() {
                     </Button>
                   </a>
                 )}
-                <span className="text-white/55 text-xs flex items-center gap-1">
+                <span className="text-white/70 text-xs flex items-center gap-1">
                   <Users className="w-3 h-3" /> {tool.clickCount ?? 0} views
                 </span>
                 {tool.endorsementCount > 0 && (
-                  <span className="text-white/55 text-xs flex items-center gap-1">
+                  <span className="text-white/70 text-xs flex items-center gap-1">
                     <ThumbsUp className="w-3 h-3" /> {tool.endorsementCount} endorsements
                   </span>
                 )}
@@ -195,7 +195,7 @@ export default function ToolDetail() {
                   value={endorseText}
                   onChange={(e) => setEndorseText(e.target.value)}
                   placeholder="Share why you recommend this tool and how you have used it..."
-                  className="w-full bg-transparent text-white placeholder:text-white/55 text-sm resize-none min-h-[60px] focus:outline-none mb-3"
+                  className="w-full bg-transparent text-white placeholder:text-white/70 text-sm resize-none min-h-[60px] focus:outline-none mb-3"
                 />
                 <div className="flex justify-end">
                   <Button
@@ -215,7 +215,7 @@ export default function ToolDetail() {
               </div>
             ) : (
               <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-center">
-                <p className="text-white/50 text-sm mb-3">Sign in to share your endorsement.</p>
+                <p className="text-white/70 text-sm mb-3">Sign in to share your endorsement.</p>
                 <a href={getLoginUrl()}>
                   <Button
                     size="sm"
@@ -240,16 +240,16 @@ export default function ToolDetail() {
                         {e.userName.charAt(0).toUpperCase()}
                       </div>
                       <span className="text-white/70 text-sm font-medium">{e.userName}</span>
-                      <span className="text-white/55 text-xs">
+                      <span className="text-white/70 text-xs">
                         {new Date(e.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-white/50 text-sm leading-relaxed">{e.text}</p>
+                    <p className="text-white/70 text-sm leading-relaxed">{e.text}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-white/55 text-sm">No endorsements yet. Be the first to share your experience.</p>
+              <p className="text-white/70 text-sm">No endorsements yet. Be the first to share your experience.</p>
             )}
           </AnimatedSection>
         </div>

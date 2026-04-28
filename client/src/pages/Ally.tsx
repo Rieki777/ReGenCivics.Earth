@@ -337,7 +337,7 @@ export default function Ally() {
                         {cat.title}
                       </h3>
                     </div>
-                    <p className="text-white/50 text-sm leading-relaxed">{cat.desc}</p>
+                    <p className="text-white/70 text-sm leading-relaxed">{cat.desc}</p>
                   </div>
                 ))}
               </div>

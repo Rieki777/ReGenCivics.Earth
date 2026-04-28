@@ -126,7 +126,7 @@ export default function Marketplace() {
         {/* Empty state */}
         {items.length === 0 && (
           <div className="text-center py-20 border border-white/8 rounded-2xl bg-white/2">
-            <p className="text-white/50 text-lg mb-2">No entries yet</p>
+            <p className="text-white/70 text-lg mb-2">No entries yet</p>
             <p className="text-white/60 text-sm mb-6">
               Be the first to share what you can offer and what you could use help with.
             </p>
@@ -178,7 +178,7 @@ export default function Marketplace() {
                     <p className="text-white/45 text-xs mt-0.5">{item.location}</p>
                   )}
                   {item.dreamingOf && (
-                    <p className="text-white/55 text-sm mt-1 italic">"{item.dreamingOf}"</p>
+                    <p className="text-white/70 text-sm mt-1 italic">"{item.dreamingOf}"</p>
                   )}
                 </div>
               </div>
@@ -231,7 +231,7 @@ export default function Marketplace() {
         </div>
 
         {items.length > 0 && (
-          <p className="text-center text-white/55 text-xs mt-8">
+          <p className="text-center text-white/70 text-xs mt-8">
             {items.length} member{items.length !== 1 ? "s" : ""} in the connection hub
           </p>
         )}

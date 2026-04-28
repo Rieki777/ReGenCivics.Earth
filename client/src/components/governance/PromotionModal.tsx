@@ -149,7 +149,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
           <p className="text-white/65 text-sm mb-2">
             The dual-key window is now open. Another citizen has 24 hours to co-sign this promotion request.
           </p>
-          <p className="text-white/50 text-xs mb-6">
+          <p className="text-white/70 text-xs mb-6">
             Once co-signed, the thread will be promoted to a formal decision on ReGen Gov, where all citizens can participate in the vote.
           </p>
           <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-6 text-left">
@@ -201,7 +201,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
           {/* Thread content */}
           <div className={`${threadExpanded ? "block" : "hidden"} md:block p-4 space-y-3`}>
             {threadQuery.isLoading ? (
-              <p className="text-white/50 text-xs">Loading thread...</p>
+              <p className="text-white/70 text-xs">Loading thread...</p>
             ) : thread ? (
               <>
                 <div className="bg-white/5 rounded-xl p-3">
@@ -213,12 +213,12 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
                 </div>
                 {replies.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">
+                    <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest">
                       Replies ({replies.length}{replies.length >= 8 ? "+" : ""})
                     </p>
                     {replies.map((r: any, i: number) => (
                       <div key={r.id ?? i} className="bg-white/[0.03] rounded-lg p-2.5">
-                        <p className="text-white/50 text-[10px] font-bold mb-0.5">{r.authorName ?? "Citizen"}</p>
+                        <p className="text-white/70 text-[10px] font-bold mb-0.5">{r.authorName ?? "Citizen"}</p>
                         <p className="text-white/65 text-xs line-clamp-3 whitespace-pre-wrap">{r.content?.slice(0, 250) ?? ""}</p>
                       </div>
                     ))}
@@ -244,7 +244,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
               <Vote className="w-5 h-5 text-[#7dd87d]" />
               <h2 className="text-white font-bold text-lg">Promote to a decision</h2>
             </div>
-            <button onClick={handleClose} className="text-white/55 hover:text-white" aria-label="Close">
+            <button onClick={handleClose} className="text-white/70 hover:text-white" aria-label="Close">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -298,9 +298,9 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
                 placeholder="What specifically is being decided? Phrase as a single yes/no, consent, or pick-one."
                 rows={3}
                 maxLength={500}
-                className="bg-white/10 border-white/15 text-white placeholder:text-white/50 resize-none"
+                className="bg-white/10 border-white/15 text-white placeholder:text-white/70 resize-none"
               />
-              <p className="text-white/55 text-[11px] mt-1">{decisionQuestion.length}/500 · minimum 10 characters</p>
+              <p className="text-white/70 text-[11px] mt-1">{decisionQuestion.length}/500 · minimum 10 characters</p>
             </div>
 
             {/* Track */}
@@ -361,7 +361,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
                 placeholder="0 = no sunset"
                 className="bg-white/10 border-white/15 text-white"
               />
-              <p className="text-white/55 text-[11px] mt-1">
+              <p className="text-white/70 text-[11px] mt-1">
                 <Clock className="w-3 h-3 inline mr-1" />
                 {sunsetDays > 0
                   ? `Will create a renewal thread 7 days before sunset (in ${sunsetDays - 7} days)`
@@ -424,7 +424,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
 
           {/* Footer */}
           <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 shrink-0">
-            <p className="text-white/55 text-xs max-w-[55%]">
+            <p className="text-white/70 text-xs max-w-[55%]">
               {readinessGatesFailed
                 ? "Minimum requirements must be met before submitting."
                 : "Submitting opens the dual-key window. Another citizen has 24h to co-sign."}

@@ -155,7 +155,7 @@ export default function AllocationCalculator() {
                   style={scenarioIdx === idx ? { backgroundColor: s.color } : undefined}
                 >
                   <div className="text-sm">{s.label}</div>
-                  <div className={`text-xs font-normal ${scenarioIdx === idx ? "text-[#1a472a]/70" : "text-white/50"}`}>
+                  <div className={`text-xs font-normal ${scenarioIdx === idx ? "text-[#1a472a]/70" : "text-white/70"}`}>
                     ~{(s.netIRR * 100).toFixed(0)}% net IRR
                   </div>
                 </button>
@@ -191,7 +191,7 @@ export default function AllocationCalculator() {
                     key={p.year}
                     className="text-center bg-white/5 rounded-xl p-3 border border-white/10"
                   >
-                    <p className="text-white/50 text-xs mb-1.5">Year {p.year}</p>
+                    <p className="text-white/70 text-xs mb-1.5">Year {p.year}</p>
                     <p
                       className="text-white font-bold text-base md:text-lg"
                       style={{ fontFamily: "var(--font-display)" }}
@@ -229,16 +229,16 @@ export default function AllocationCalculator() {
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                   {projections.map((p) => (
                     <div key={p.year} className="text-center">
-                      <p className="text-white/50 text-xs mb-1.5">Year {p.year}</p>
+                      <p className="text-white/70 text-xs mb-1.5">Year {p.year}</p>
                       {p.distributionYears === 0 ? (
-                        <p className="text-white/55 text-sm font-medium"> - </p>
+                        <p className="text-white/70 text-sm font-medium"> - </p>
                       ) : (
                         <>
                           <p className="text-[#7dd87d] font-bold text-sm md:text-base">
                             {fmt(p.netDistributions)}
                           </p>
                           {p.carryPaid > 0 && (
-                            <p className="text-white/55 text-[10px] mt-0.5">
+                            <p className="text-white/70 text-[10px] mt-0.5">
                               +{fmt(p.carryPaid)} carry
                             </p>
                           )}
@@ -265,7 +265,7 @@ export default function AllocationCalculator() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white font-medium text-sm">Earmark to a specific land project?</p>
-                  <p className="text-white/50 text-xs mt-0.5">
+                  <p className="text-white/70 text-xs mt-0.5">
                     Direct up to 90% of your capital to a project you choose (10% stays in diversified fund)
                   </p>
                 </div>
@@ -289,11 +289,11 @@ export default function AllocationCalculator() {
                     If your chosen project doesn't pass our council review, your capital is returned less a{" "}
                     <strong className="text-white">3% fee (max $20,000)</strong> to cover evaluation costs.
                   </p>
-                  <p className="text-white/50 text-xs">
+                  <p className="text-white/70 text-xs">
                     For a {fmtFull(investment)} investment: maximum at-risk DD fee ={" "}
                     <strong className="text-white/70">{fmtFull(earmarkDDFee)}</strong>
                   </p>
-                  <p className="text-white/50 text-xs">
+                  <p className="text-white/70 text-xs">
                     If the project passes, those funds deploy directly to that project  -  same return structure applies.
                   </p>
                 </div>
@@ -322,30 +322,30 @@ export default function AllocationCalculator() {
                 <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
                   <div className="space-y-4">
                     <div>
-                      <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Management Fee</p>
+                      <p className="text-white/70 text-xs uppercase tracking-wider mb-1">Management Fee</p>
                       <p className="text-white font-semibold">1.5% annually</p>
-                      <p className="text-white/50 text-xs mt-0.5">Applied to NAV each year  -  already reflected in net IRR projections above</p>
+                      <p className="text-white/70 text-xs mt-0.5">Applied to NAV each year  -  already reflected in net IRR projections above</p>
                     </div>
                     <div>
-                      <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Preferred Return</p>
+                      <p className="text-white/70 text-xs uppercase tracking-wider mb-1">Preferred Return</p>
                       <p className="text-white font-semibold">8% annualized</p>
-                      <p className="text-white/50 text-xs mt-0.5">You receive 100% of distributions until cumulative 8% hurdle is met</p>
+                      <p className="text-white/70 text-xs mt-0.5">You receive 100% of distributions until cumulative 8% hurdle is met</p>
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Carried Interest</p>
+                      <p className="text-white/70 text-xs uppercase tracking-wider mb-1">Carried Interest</p>
                       <p className="text-white font-semibold">20% above preferred return</p>
-                      <p className="text-white/50 text-xs mt-0.5">
+                      <p className="text-white/70 text-xs mt-0.5">
                         Applies to cash distributions and asset sales only  - {" "}
                         <strong className="text-white/70">not token trading gains</strong> (you keep 100% of
                         secondary market appreciation)
                       </p>
                     </div>
                     <div>
-                      <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Distributions Begin</p>
+                      <p className="text-white/70 text-xs uppercase tracking-wider mb-1">Distributions Begin</p>
                       <p className="text-white font-semibold">Year 3 (quarterly)</p>
-                      <p className="text-white/50 text-xs mt-0.5">
+                      <p className="text-white/70 text-xs mt-0.5">
                         Annual redemption windows also open Year 3, at NAV less 5% early-exit discount
                       </p>
                     </div>

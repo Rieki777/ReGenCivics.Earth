@@ -226,7 +226,7 @@ export default function ReGenCoCreatorsGuide() {
                 How this game works. How the economy works. How decisions get made, how to use
                 Hypha, and what the path from Explorer to Guide looks like.
               </p>
-              <p className="text-sm text-white/50 mt-4">
+              <p className="text-sm text-white/70 mt-4">
                 Also called: The Co-Creators Guide
               </p>
             </motion.div>

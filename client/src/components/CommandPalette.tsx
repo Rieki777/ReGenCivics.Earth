@@ -136,9 +136,12 @@ export function CommandPalette() {
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
 
-      {/* Palette */}
+      {/* Palette. max-w-[calc(100vw-1rem)] keeps the modal inside the
+           viewport on 320px-wide phones; max-h-[80vh] + overflow-y-auto
+           prevents content from disappearing under the keyboard or below
+           the fold. */}
       <div
-        className="relative w-full max-w-lg rounded-2xl border border-[#7dd87d]/30 bg-[#0d2818] shadow-2xl overflow-hidden"
+        className="relative w-full max-w-lg max-w-[calc(100vw-1rem)] max-h-[80vh] overflow-y-auto rounded-2xl border border-[#7dd87d]/30 bg-[#0d2818] shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-label="Site search"
@@ -158,7 +161,7 @@ export function CommandPalette() {
             <button
               onClick={() => setOpen(false)}
               aria-label="Close command palette"
-              className="text-white/55 hover:text-white transition-colors"
+              className="text-white/70 hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -274,7 +277,7 @@ export function CommandPalette() {
           </Command.List>
 
           {/* Footer hint */}
-          <div className="border-t border-[#7dd87d]/20 px-4 py-2 flex items-center gap-3 text-[10px] text-white/55">
+          <div className="border-t border-[#7dd87d]/20 px-4 py-2 flex items-center gap-3 text-[10px] text-white/70">
             <span><kbd className="font-mono">↑↓</kbd> navigate</span>
             <span><kbd className="font-mono">↵</kbd> select</span>
             <span><kbd className="font-mono">Esc</kbd> close</span>

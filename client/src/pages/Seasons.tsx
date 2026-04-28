@@ -132,7 +132,7 @@ export default function Seasons() {
                   {whoWeAreLookingForOpen ? (
                     <ChevronUp className="w-6 h-6 text-[#7dd87d]" />
                   ) : (
-                    <ChevronDown className="w-6 h-6 text-white/50" />
+                    <ChevronDown className="w-6 h-6 text-white/70" />
                   )}
                 </div>
               </div>
@@ -356,7 +356,7 @@ export default function Seasons() {
                         {expandedWeek === topic.week ? (
                           <ChevronUp className="w-5 h-5 text-[#7dd87d]" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-white/50" />
+                          <ChevronDown className="w-5 h-5 text-white/70" />
                         )}
                       </button>
                       
@@ -364,7 +364,7 @@ export default function Seasons() {
                         <div className="px-4 pb-4 pt-0">
                           <div className="pl-14">
                             <p className="text-white/70 mb-3">{topic.description}</p>
-                            <div className="flex items-center gap-2 text-sm text-white/50">
+                            <div className="flex items-center gap-2 text-sm text-white/70">
                               <Clock className="w-4 h-4" />
                               <span>2 hours</span>
                               <span className="mx-2">•</span>
@@ -714,7 +714,7 @@ export default function Seasons() {
             </div>
           </div>
 
-          <p className="text-center text-sm text-white/50 italic mt-6">
+          <p className="text-center text-sm text-white/70 italic mt-6">
             These phases describe a project's growth, not the community's seasonal rhythm above. Projects who have completed their own "Assessment" phase are invited to apply for the Spring Season Incubator.
           </p>
         </div>

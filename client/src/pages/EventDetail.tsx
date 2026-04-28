@@ -209,7 +209,7 @@ export default function EventDetail() {
             {isCompleted && (
               <div className="px-8 pb-6 space-y-4">
                 <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                  <p className="text-white/50 text-sm mb-3">This event has ended.</p>
+                  <p className="text-white/70 text-sm mb-3">This event has ended.</p>
 
                   {/* Recording replay */}
                   {event.recording?.youtubeUrl && (

@@ -149,9 +149,9 @@ export default function CustomGames() {
             </p>
             <div className="inline-block bg-[#d4a574]/15 border border-[#d4a574]/30 rounded-xl px-5 py-3">
               <p className="text-[#d4a574] text-lg font-bold">$20,000</p>
-              <p className="text-white/50 text-xs">Investment in coordination infrastructure</p>
+              <p className="text-white/70 text-xs">Investment in coordination infrastructure</p>
             </div>
-            <p className="text-white/50 text-xs">
+            <p className="text-white/70 text-xs">
               We take on a small number of projects per season so each one gets genuine attention from our team.
             </p>
             <Button
@@ -162,7 +162,7 @@ export default function CustomGames() {
               <Sprout className="w-4 h-4 mr-2" />
               Join Waitlist
             </Button>
-            <p className="text-white/50 text-xs">
+            <p className="text-white/70 text-xs">
               We take on 3-5 projects per season. Outreach-to-kickoff typically takes 5 business days.
             </p>
           </div>
@@ -189,7 +189,7 @@ export default function CustomGames() {
             >
               Join the Waitlist
             </h2>
-            <p className="text-white/50 text-sm mb-6">
+            <p className="text-white/70 text-sm mb-6">
               Tell us about your land project and we'll be in touch.
             </p>
             <CustomGameWaitlistForm onClose={() => setShowForm(false)} />

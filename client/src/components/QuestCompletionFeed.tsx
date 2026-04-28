@@ -51,7 +51,7 @@ function questFallbackImage(questId?: string, questTitle?: string): string {
  * Avatar circle that gracefully degrades from image -> initial when an
  * avatarUrl is set but fails to load (deleted from R2, expired CDN, etc.).
  */
-function Avatar({ avatarUrl, initial }: { avatarUrl?: string | null; initial: string }) {
+function Avatar({ avatarUrl, initial, displayName }: { avatarUrl?: string | null; initial: string; displayName?: string }) {
   const [errored, setErrored] = useState(false);
   const showImage = avatarUrl && !errored;
   return (
@@ -59,7 +59,9 @@ function Avatar({ avatarUrl, initial }: { avatarUrl?: string | null; initial: st
       {showImage ? (
         <img
           src={avatarUrl}
-          alt=""
+          alt={displayName ? `${displayName} avatar` : "Player avatar"}
+          width={28}
+          height={28}
           className="w-full h-full object-cover"
           onError={() => setErrored(true)}
         />
@@ -173,7 +175,7 @@ function FeedCard({ entry }: { entry: any }) {
       </div>
       <div className="p-4 space-y-2">
         <div className="flex items-center gap-2">
-          <Avatar avatarUrl={entry.avatarUrl} initial={initial} />
+          <Avatar avatarUrl={entry.avatarUrl} initial={initial} displayName={entry.displayName ?? undefined} />
 
           <div className="min-w-0 flex-1">
             <p className="text-[#1a472a] font-semibold text-sm truncate">{name}</p>

@@ -135,8 +135,8 @@ export default function CrowdPoolingCampaigns() {
       {/* Filters */}
       <div className="container py-8">
         <div className="flex items-center gap-2 mb-2">
-          <Filter className="w-4 h-4 text-white/50" />
-          <span className="text-sm font-medium text-white/50">Filter by category:</span>
+          <Filter className="w-4 h-4 text-white/70" />
+          <span className="text-sm font-medium text-white/70">Filter by category:</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {categories.map(category => {
@@ -272,7 +272,7 @@ export default function CrowdPoolingCampaigns() {
                   {campaign.financialTarget > 0 && (
                     <div className="flex items-center gap-1 mb-3 text-xs">
                       <DollarSign className="w-3 h-3 text-[#4a7c59]" />
-                      <span className="text-white/50">
+                      <span className="text-white/70">
                         Cash target: <span className="font-semibold text-[#1a472a]">${campaign.financialTarget.toLocaleString()}</span>
                         <span className="text-[#1a472a]/40 ml-1">
                           ({Math.round((campaign.financialTarget / Math.max(campaign.totalValue, 1)) * 100)}% of total)
@@ -312,7 +312,7 @@ export default function CrowdPoolingCampaigns() {
           <div className="text-center py-12">
             <Sparkles className="w-12 h-12 text-[#1a472a]/20 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">No campaigns found</h2>
-            <p className="text-white/50 mb-6">
+            <p className="text-white/70 mb-6">
               {searchQuery || filterCategory !== 'all' 
                 ? 'Try adjusting your search or filters' 
                 : 'Be the first to create a campaign!'}

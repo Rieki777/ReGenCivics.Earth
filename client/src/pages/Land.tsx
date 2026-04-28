@@ -667,7 +667,7 @@ export default function Land() {
             </AnimatedSection>
           </div>
 
-          <p className="text-center text-white/50 mt-8 max-w-2xl mx-auto text-base">
+          <p className="text-center text-white/70 mt-8 max-w-2xl mx-auto text-base">
             Not sure which path? Apply anyway. We'll help you find the best fit.
           </p>
         </div>
@@ -744,7 +744,7 @@ export default function Land() {
                         Liminal Village
                       </a>
                     </h4>
-                    <p className="text-sm text-white/50">Portugal - Regenerative Ecovillage</p>
+                    <p className="text-sm text-white/70">Portugal - Regenerative Ecovillage</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-3">
@@ -791,7 +791,7 @@ export default function Land() {
                         Heartland Retreat
                       </a>
                     </h4>
-                    <p className="text-sm text-white/50">California - Eco-Healing Sanctuary</p>
+                    <p className="text-sm text-white/70">California - Eco-Healing Sanctuary</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -830,7 +830,7 @@ export default function Land() {
                         Traditional Dream Factory
                       </a>
                     </h4>
-                    <p className="text-sm text-white/50">Portugal - Web3 Regenerative Village</p>
+                    <p className="text-sm text-white/70">Portugal - Web3 Regenerative Village</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -861,7 +861,7 @@ export default function Land() {
                   >
                     Your Project?
                   </p>
-                  <p className="text-sm text-white/50">Apply to join the next season</p>
+                  <p className="text-sm text-white/70">Apply to join the next season</p>
                 </div>
                 <ArrowRight className="w-5 h-5 text-[#7dd87d]" />
               </div>

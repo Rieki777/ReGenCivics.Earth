@@ -92,7 +92,7 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
           "small escape hatch" rather than a primary action. */}
       <button
         onClick={handleEnter}
-        className="absolute bottom-4 right-4 text-white/55 hover:text-white text-sm transition-colors underline-offset-4 hover:underline z-10"
+        className="absolute bottom-4 right-4 text-white/70 hover:text-white text-sm transition-colors underline-offset-4 hover:underline z-10"
       >
         Skip
       </button>

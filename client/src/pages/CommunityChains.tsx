@@ -48,7 +48,7 @@ export default function CommunityChains() {
 
         <section className="pt-24 pb-8 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]">
           <div className="container px-4 max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 text-white/50 text-sm mb-3">
+            <div className="flex items-center gap-2 text-white/70 text-sm mb-3">
               <Link href="/community" className="hover:text-white/80 transition-colors">Forum</Link>
               <ChevronRight className="w-3 h-3" />
               <span className="text-white/80">Thread Chains</span>

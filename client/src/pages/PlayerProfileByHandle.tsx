@@ -78,11 +78,11 @@ export default function PlayerProfileByHandle() {
           <div className="grid grid-cols-2 gap-3 mt-6">
             <div className="bg-white/5 rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-[#7dd87d]">{completed.length}</div>
-              <div className="text-xs text-white/50 uppercase tracking-wide">Quests done</div>
+              <div className="text-xs text-white/70 uppercase tracking-wide">Quests done</div>
             </div>
             <div className="bg-white/5 rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-[#d4a574]">{badges.length}</div>
-              <div className="text-xs text-white/50 uppercase tracking-wide">Badges</div>
+              <div className="text-xs text-white/70 uppercase tracking-wide">Badges</div>
             </div>
           </div>
 

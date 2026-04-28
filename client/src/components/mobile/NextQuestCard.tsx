@@ -93,7 +93,7 @@ export function NextQuestCard({ onSelect }: Props) {
           <Scroll className="w-7 h-7 text-[#7dd87d]" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-white/50 text-xs uppercase tracking-wider font-semibold mb-0.5">
+          <div className="text-white/70 text-xs uppercase tracking-wider font-semibold mb-0.5">
             Continue Your Journey
           </div>
           <div className="text-white font-bold text-sm leading-tight truncate" style={{ fontFamily: "var(--font-display)" }}>

@@ -102,7 +102,7 @@ export function FocusAreaPicker() {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-xs text-white/50">
+            <span className="text-xs text-white/70">
               {selected.length} selected
             </span>
             <button

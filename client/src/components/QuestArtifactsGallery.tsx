@@ -56,9 +56,9 @@ export function QuestArtifactsGallery() {
                 <h2 className="text-white font-bold text-lg" style={{ fontFamily: "var(--font-display)" }}>
                   From the Field
                 </h2>
-                <p className="text-white/50 text-xs mt-0.5">What players are doing right now</p>
+                <p className="text-white/70 text-xs mt-0.5">What players are doing right now</p>
               </div>
-              <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
+              <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -86,13 +86,13 @@ export function QuestArtifactsGallery() {
 
               {/* Recent completions */}
               <section>
-                <p className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-3">Recent completions</p>
+                <p className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-3">Recent completions</p>
                 {completions.isLoading ? (
-                  <p className="text-white/55 text-sm text-center py-6">Loading...</p>
+                  <p className="text-white/70 text-sm text-center py-6">Loading...</p>
                 ) : completions.data?.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-white/60 text-sm">No completions yet.</p>
-                    <p className="text-white/55 text-xs mt-1">Be the first to complete a quest and share your artifact.</p>
+                    <p className="text-white/70 text-xs mt-1">Be the first to complete a quest and share your artifact.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -108,7 +108,7 @@ export function QuestArtifactsGallery() {
                             <p className="text-white/60 text-xs mt-1 line-clamp-2">{c.caption ?? c.artifactText}</p>
                           )}
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="text-white/55 text-xs">{timeAgo(c.completedAt)}</span>
+                            <span className="text-white/70 text-xs">{timeAgo(c.completedAt)}</span>
                             {c.artifactUrl && (
                               <a
                                 href={c.artifactUrl}

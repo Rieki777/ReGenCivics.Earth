@@ -55,7 +55,11 @@ export function AuthDialog({
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes("@")) {
+    // RFC-light email regex. Catches "a@b" / missing TLD / whitespace, which
+    // `email.includes("@")` accepted. Same shape used by the rest of the
+    // signup flow.
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!EMAIL_RE.test(email.trim())) {
       setEmailError("Please enter a valid email address.");
       return;
     }
@@ -104,7 +108,7 @@ export function AuthDialog({
               {title}
             </DialogTitle>
           )}
-          <DialogDescription className="text-sm text-white/50">
+          <DialogDescription className="text-sm text-white/70">
             Sign in to continue
           </DialogDescription>
         </div>
@@ -145,7 +149,7 @@ export function AuthDialog({
               {/* Divider */}
               <div className="flex items-center gap-3 my-1">
                 <div className="flex-1 h-px bg-white/10" />
-                <span className="text-white/55 text-xs">or</span>
+                <span className="text-white/70 text-xs">or</span>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
 

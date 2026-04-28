@@ -212,7 +212,7 @@ export default function TreasuryDashboard() {
           <div className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
             ${totalDistributed.toLocaleString()}
           </div>
-          <div className="text-xs text-white/50 mt-1">
+          <div className="text-xs text-white/70 mt-1">
             Across 8 projects
           </div>
         </div>
@@ -225,7 +225,7 @@ export default function TreasuryDashboard() {
           <div className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
             68%
           </div>
-          <div className="text-xs text-white/50 mt-1">
+          <div className="text-xs text-white/70 mt-1">
             Of distributions
           </div>
         </div>
@@ -238,7 +238,7 @@ export default function TreasuryDashboard() {
           <div className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
             32%
           </div>
-          <div className="text-xs text-white/50 mt-1">
+          <div className="text-xs text-white/70 mt-1">
             Of distributions
           </div>
         </div>
@@ -254,35 +254,35 @@ export default function TreasuryDashboard() {
           <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/20 rounded-xl p-4 text-center">
             <Trees className="w-6 h-6 text-[#7dd87d] mx-auto mb-2" />
             <div className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>2,847</div>
-            <div className="text-xs text-white/50 mt-1">Hectares Under<br/>Regeneration</div>
+            <div className="text-xs text-white/70 mt-1">Hectares Under<br/>Regeneration</div>
           </div>
           <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/20 rounded-xl p-4 text-center">
             <Home className="w-6 h-6 text-[#d4a574] mx-auto mb-2" />
             <div className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>156</div>
-            <div className="text-xs text-white/50 mt-1">Families<br/>Housed</div>
+            <div className="text-xs text-white/70 mt-1">Families<br/>Housed</div>
           </div>
           <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/20 rounded-xl p-4 text-center">
             <Users className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
             <div className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>1,240</div>
-            <div className="text-xs text-white/50 mt-1">People<br/>Fed</div>
+            <div className="text-xs text-white/70 mt-1">People<br/>Fed</div>
           </div>
           <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/20 rounded-xl p-4 text-center">
             <Sprout className="w-6 h-6 text-green-400 mx-auto mb-2" />
             <div className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>48,200</div>
-            <div className="text-xs text-white/50 mt-1">Trees<br/>Planted</div>
+            <div className="text-xs text-white/70 mt-1">Trees<br/>Planted</div>
           </div>
           <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/20 rounded-xl p-4 text-center">
             <Droplets className="w-6 h-6 text-blue-400 mx-auto mb-2" />
             <div className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>12.4M</div>
-            <div className="text-xs text-white/50 mt-1">Liters Water<br/>Restored</div>
+            <div className="text-xs text-white/70 mt-1">Liters Water<br/>Restored</div>
           </div>
           <div className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] border border-[#7dd87d]/20 rounded-xl p-4 text-center">
             <Heart className="w-6 h-6 text-pink-400 mx-auto mb-2" />
             <div className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>342</div>
-            <div className="text-xs text-white/50 mt-1">Jobs<br/>Created</div>
+            <div className="text-xs text-white/70 mt-1">Jobs<br/>Created</div>
           </div>
         </div>
-        <p className="text-white/55 text-xs mt-2 text-center italic">Model projections based on portfolio targets. Actual metrics tracked via HEIST framework.</p>
+        <p className="text-white/70 text-xs mt-2 text-center italic">Model projections based on portfolio targets. Actual metrics tracked via HEIST framework.</p>
       </div>
 
       {/* Two Column Layout */}
@@ -343,7 +343,7 @@ export default function TreasuryDashboard() {
                         <ArrowUpRight className="w-3 h-3 text-[#7dd87d]" />
                       )}
                     </div>
-                    <p className="text-white/50 text-xs mt-1">{tx.description}</p>
+                    <p className="text-white/70 text-xs mt-1">{tx.description}</p>
                   </div>
                   <div className="text-right">
                     <div className={`font-semibold text-sm ${tx.type === "investment" ? "text-blue-400" : "text-[#7dd87d]"}`}>

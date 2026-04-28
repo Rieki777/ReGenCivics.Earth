@@ -719,7 +719,7 @@ export default function ClaimSeeds() {
                       >
                         Sign in / Create account
                       </button>
-                      <span className="text-xs text-white/55 self-center">
+                      <span className="text-xs text-white/70 self-center">
                         Or continue as a guest. Your draft is auto-saved.
                       </span>
                     </div>

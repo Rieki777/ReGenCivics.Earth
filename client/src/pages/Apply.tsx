@@ -271,7 +271,7 @@ export default function Apply() {
           </Button>
           <button
             onClick={() => { window.location.href = '/'; }}
-            className="mt-3 text-white/55 text-xs hover:text-white transition-colors"
+            className="mt-3 text-white/70 text-xs hover:text-white transition-colors"
           >
             Back to home
           </button>

@@ -257,12 +257,14 @@ export function QuestBadges() {
                     disabled={isLoading}
                     className="p-1 hover:bg-white/20 rounded-full transition-colors disabled:opacity-50"
                     title="Refresh badges"
+                    aria-label="Refresh badges"
                   >
                     <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
                     className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                    aria-label="Close badges"
                   >
                     <X className="w-6 h-6" />
                   </button>
