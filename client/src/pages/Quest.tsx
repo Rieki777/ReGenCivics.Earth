@@ -196,7 +196,15 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
       tabIndex={0}
       aria-expanded={isExpanded}
       aria-label={isExpanded ? `Quest ${quest.id}: ${quest.title} expanded. Tap again to open full quest, press Escape to close.` : `Quest ${quest.id}: ${quest.title}. Tap to see details.`}
-      className={`quest-card group relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 ease-out ${colorClass} ${shimmerClass} cursor-pointer`}
+      className={`quest-card group relative bg-white rounded-xl border-2 border-[#1a472a]/10 shadow-md hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 ease-out ${colorClass} ${shimmerClass} cursor-pointer ${
+        // Hero-card treatment for threshold quests (spec 9.6).
+        // Fire (id 0), Fasting (id 13), Food Foresting (id 14) get
+        // a thicker border + subtle aurora ring so the eye lands
+        // there first.
+        (quest.id === 0 || quest.id === 13 || quest.id === 14)
+          ? "ring-2 ring-amber-300/30 shadow-[0_0_28px_rgba(252,211,77,0.18)]"
+          : ""
+      }`}
       onClick={handleCardClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); }

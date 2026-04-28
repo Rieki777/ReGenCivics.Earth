@@ -11,7 +11,11 @@ import { Link } from "wouter";
 import { Lock } from "lucide-react";
 import { SeasonProgressRing } from "@/components/SeasonProgressRing";
 import { QuestCarousel } from "@/components/QuestCarousel";
+import { LockedQuestCard } from "@/components/LockedQuestCard";
 import { useQuestUnlocks } from "@/hooks/useQuestUnlocks";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import { computeReveal } from "@shared/openUniverseReveal";
 
 const TIER_CONFIG = {
   easy: {
@@ -123,7 +127,7 @@ export function EpicQuestSection() {
   let unlocks: ReturnType<typeof useQuestUnlocks> | null = null;
   try { unlocks = useQuestUnlocks(); } catch { /* outside provider */ }
   // Default to LOCKED when unlocks is null / still loading. Locked is the
-  // safe default — showing "Unlocked" to a player who hasn't finished the
+  // safe default. Showing "Unlocked" to a player who hasn't finished the
   // rites was the root cause of the 2026-04-21 bug report.
   const isLocked = unlocks?.isEpicUnlocked === true ? false : true;
   const [celebrating, setCelebrating] = useState(false);
@@ -150,6 +154,59 @@ export function EpicQuestSection() {
       (a, b) => tierOrder.indexOf(a.tier) - tierOrder.indexOf(b.tier)
     );
   }, []);
+
+  // Open Universe progressive reveal (spec section 4.3). After Rites
+  // are complete, only 2 + completedEpicCount quests are visible at
+  // any time. The rest render as moss-overgrown ruins. Order is
+  // deterministic per player via a seeded shuffle.
+  const auth = (() => {
+    try {
+      return useAuth();
+    } catch {
+      return { user: null } as ReturnType<typeof useAuth>;
+    }
+  })();
+  const userId: number | null =
+    typeof (auth as { user?: { id?: number | string } }).user?.id === "number"
+      ? ((auth as { user?: { id?: number } }).user!.id as number)
+      : null;
+  const profileQuery = trpc.playerProfiles.me.useQuery(undefined, {
+    staleTime: 60_000,
+    retry: false,
+  });
+  const completedEpicIds: string[] = useMemo(() => {
+    try {
+      const all = JSON.parse((profileQuery.data?.questsCompleted as string) || "[]") as string[];
+      const epicIdSet = new Set(EPIC_QUESTS.map((q) => q.id));
+      return all.filter((id) => epicIdSet.has(id));
+    } catch {
+      return [];
+    }
+  }, [profileQuery.data?.questsCompleted]);
+
+  const reveal = useMemo(() => {
+    if (isLocked) {
+      // Pre-Rites players see all as locked silhouettes (the section
+      // is grayed out anyway by the parent wrapper, but we still pick
+      // the right shape so the moss-ruin variant flashes in cleanly
+      // when Rites finish).
+      return { visible: [] as EpicQuest[], locked: sortedQuests };
+    }
+    const seed = userId ?? 0;
+    return computeReveal(sortedQuests, seed, completedEpicIds.length);
+  }, [isLocked, sortedQuests, userId, completedEpicIds.length]);
+
+  // Track which IDs were just revealed so we can run the canopy-fall
+  // animation only on those cards (a single emotional beat, not a
+  // page-wide sparkle).
+  const [animatedIds, setAnimatedIds] = useState<Set<string>>(() => new Set());
+  const visibleIdsKey = reveal.visible.map((q) => q.id).join("|");
+  useEffect(() => {
+    const newIds = new Set(reveal.visible.map((q) => q.id));
+    setAnimatedIds(newIds);
+    const t = setTimeout(() => setAnimatedIds(new Set()), 1200);
+    return () => clearTimeout(t);
+  }, [visibleIdsKey]);
 
   return (
     <section id="epic-quests" className="py-20 px-4" style={{ backgroundColor: "#0a1f0f" }}>
@@ -207,14 +264,37 @@ export function EpicQuestSection() {
           )}
         </div>
 
-        {/* Epic carousel - all quests in one carousel, ordered by tier */}
+        {/* Canopy-fall animation for newly revealed Open Universe quests
+            (spec section 9.7). Single beat, not a barrage of pings. */}
+        <style>{`
+          @keyframes canopyFall {
+            0% { opacity: 0; transform: translateY(-24px) scale(0.96); filter: blur(2px); }
+            55% { opacity: 1; transform: translateY(2px) scale(1.01); filter: blur(0); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          .canopy-fall { animation: canopyFall 0.9s ease-out both; }
+        `}</style>
+
+        {/* Epic carousel - visible quests interactive, locked render as
+            moss ruins via LockedQuestCard. Spec sections 4.3 + 9.8. */}
         <div className={isLocked ? "opacity-40 grayscale pointer-events-none" : ""}>
-          <QuestCarousel totalCount={sortedQuests.length}>
-            {sortedQuests.map((quest, i) => (
-              <EpicCard
+          <QuestCarousel totalCount={reveal.visible.length + reveal.locked.length}>
+            {reveal.visible.map((quest, i) => (
+              <div
                 key={quest.id}
-                quest={quest}
-                staggerDelay={celebrating ? i * 100 : undefined}
+                className={animatedIds.has(quest.id) ? "canopy-fall" : ""}
+                style={{ animationDelay: animatedIds.has(quest.id) ? `${i * 80}ms` : undefined }}
+              >
+                <EpicCard quest={quest} staggerDelay={celebrating ? i * 100 : undefined} />
+              </div>
+            ))}
+            {reveal.locked.map((quest) => (
+              <LockedQuestCard
+                key={quest.id}
+                title={quest.title}
+                subtitle={quest.tagline}
+                glyph={quest.element as "fire" | "water" | "earth" | "air"}
+                unlockHint="Reveals as you complete your current Open Universe quests"
               />
             ))}
           </QuestCarousel>
