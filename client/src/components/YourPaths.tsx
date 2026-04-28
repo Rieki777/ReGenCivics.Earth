@@ -298,12 +298,3 @@ function CriterionRow({
     </div>
   );
 }
-#2a5a3a] transition-colors flex-shrink-0"
-        >
-          {step.actionLabel}
-          <ArrowRight className="w-3 h-3" />
-        </Link>
-      )}
-    </div>
-  );
-}
