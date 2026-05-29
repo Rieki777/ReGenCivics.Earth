@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { QuestCarousel } from "@/components/QuestCarousel";
+import { QuestStoryDetailModal } from "@/components/QuestStoryDetailModal";
 import { Play, ExternalLink, FileText, ImageIcon, Video as VideoIcon } from "lucide-react";
 
 interface QuestCompletionFeedProps {
@@ -72,8 +73,7 @@ function Avatar({ avatarUrl, initial, displayName }: { avatarUrl?: string | null
   );
 }
 
-function FeedCard({ entry }: { entry: any }) {
-  const [playing, setPlaying] = useState(false);
+function FeedCard({ entry, onOpen }: { entry: any; onOpen: (entry: any) => void }) {
   const isVideo = entry.artifactType === "video" && !!entry.artifactUrl;
   const isPhoto = entry.artifactType === "photo" && !!entry.artifactUrl;
   const isLink = entry.artifactType === "link" && !!entry.artifactUrl;
@@ -90,44 +90,34 @@ function FeedCard({ entry }: { entry: any }) {
   const initial = name.charAt(0).toUpperCase();
 
   return (
-    <div className="group relative bg-white rounded-xl border-2 border-[#4a7c59]/20 shadow-md overflow-hidden">
+    <button
+      type="button"
+      onClick={() => onOpen(entry)}
+      className="group relative bg-white rounded-xl border-2 border-[#4a7c59]/20 shadow-md overflow-hidden text-left w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd87d]/60 hover:shadow-lg hover:border-[#4a7c59]/40 transition-all"
+      aria-label={`Open ${name}'s story for ${entry.questTitle ?? "this quest"}`}
+    >
       <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-[#1a472a]/40 via-[#2d5a3d]/30 to-[#4a7c59]/20 overflow-hidden">
         {isVideo && (
           <>
-            {playing ? (
-              <video
-                src={entry.artifactUrl}
-                controls
-                muted
-                preload="metadata"
+            {entry.videoThumbnailUrl ? (
+              <img
+                src={entry.videoThumbnailUrl}
+                alt=""
                 className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
-              <>
-                {entry.videoThumbnailUrl ? (
-                  <img
-                    src={entry.videoThumbnailUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-white/40">
-                    <VideoIcon className="w-12 h-12" />
-                  </div>
-                )}
-                <button
-                  onClick={() => setPlaying(true)}
-                  className="absolute inset-0 flex items-center justify-center"
-                  aria-label="Play video"
-                >
-                  <div className="w-14 h-14 rounded-full bg-black/55 border border-white/40 flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
-                    <Play className="w-6 h-6 text-white translate-x-0.5" />
-                  </div>
-                </button>
-              </>
+              <div className="absolute inset-0 flex items-center justify-center text-white/40">
+                <VideoIcon className="w-12 h-12" />
+              </div>
             )}
+            {/* Play overlay - the actual playback happens in the detail modal. */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-14 h-14 rounded-full bg-black/55 border border-white/40 flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
+                <Play className="w-6 h-6 text-white translate-x-0.5" />
+              </div>
+            </div>
           </>
         )}
         {isPhoto && (
@@ -160,17 +150,12 @@ function FeedCard({ entry }: { entry: any }) {
           </>
         )}
         {isLink && !isVideo && (
-          <a
-            href={entry.artifactUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a472a]/80 to-[#4a7c59]/60 text-white"
-          >
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a472a]/80 to-[#4a7c59]/60 text-white pointer-events-none">
             <div className="text-center px-4">
               <ExternalLink className="w-8 h-8 mx-auto mb-2 opacity-80" />
-              <p className="text-sm font-semibold">Open Artifact</p>
+              <p className="text-sm font-semibold">Open artifact</p>
             </div>
-          </a>
+          </div>
         )}
       </div>
       <div className="p-4 space-y-2">
@@ -190,7 +175,7 @@ function FeedCard({ entry }: { entry: any }) {
           </p>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -198,8 +183,9 @@ export function QuestCompletionFeed({
   questId,
   videoOnly = false,
   title = "Quest Stories",
-  subtitle = "Watch, read, and see what other players have been up to.",
+  subtitle = "What players have been up to: photos, reflections, and video dispatches from the field.",
 }: QuestCompletionFeedProps) {
+  const [activeStory, setActiveStory] = useState<any | null>(null);
   const feedQuery = trpc.quest.getCompletionFeed.useQuery(
     {
       questId,
@@ -227,10 +213,11 @@ export function QuestCompletionFeed({
         </div>
         <QuestCarousel totalCount={entries.length}>
           {entries.map((entry) => (
-            <FeedCard key={entry.id} entry={entry} />
+            <FeedCard key={entry.id} entry={entry} onOpen={setActiveStory} />
           ))}
         </QuestCarousel>
       </div>
+      <QuestStoryDetailModal story={activeStory} onClose={() => setActiveStory(null)} />
     </section>
   );
 }

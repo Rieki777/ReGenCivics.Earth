@@ -200,7 +200,7 @@ export default function ToolSubmit() {
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., Regen Network"
+                    placeholder="descriptive names are best"
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
                   />
                 </div>

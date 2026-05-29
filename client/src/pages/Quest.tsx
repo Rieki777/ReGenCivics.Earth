@@ -28,6 +28,7 @@ import { EpicQuestSection } from "@/components/EpicQuestSection";
 import { ContinueYourJourneyRow } from "@/components/ContinueYourJourneyRow";
 import { LookingForParty } from "@/components/LookingForParty";
 import { QuestCompletionFeed } from "@/components/QuestCompletionFeed";
+import { QuestHowToVideoModal } from "@/components/QuestHowToVideoModal";
 import { LivingTreeCard } from "@/components/LivingTreeCard";
 import { SeasonalDepthCard } from "@/components/SeasonalDepthCard";
 import { QuestArcMap } from "@/components/QuestArcMap";
@@ -392,10 +393,21 @@ function Quest0FlipCard() {
           transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
         }}
       >
-        {/* Front of card */}
-        <div 
-          className="relative bg-gradient-to-br from-orange-500/20 to-amber-500/20 p-8 rounded-2xl border-3 border-orange-500/50 overflow-hidden"
-          style={{ backfaceVisibility: 'hidden' }}
+        {/* Front of card.
+            iOS Safari bleeds the back-face content through unless we
+            (a) force GPU compositing with translateZ(0), (b) set both
+            the standard and WebKit-prefixed backface properties, and
+            (c) give each face a solid opaque background so the gradient
+            on top doesn't leave gaps. Without these the reverse-side
+            "Click to flip back" text reads mirror-image through the
+            front while the card is in the flipped state. */}
+        <div
+          className="relative bg-orange-50 bg-gradient-to-br from-orange-500/20 to-amber-500/20 p-8 rounded-2xl border-3 border-orange-500/50 overflow-hidden"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'translateZ(0)',
+          }}
         >
           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url(/images/quests/quest-fire-hero.webp)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
           <div className="relative z-10">
@@ -437,12 +449,16 @@ function Quest0FlipCard() {
           </div>{/* close z-10 wrapper */}
         </div>
         
-        {/* Back of card - Video */}
-        <div 
-          className="absolute inset-0 bg-gradient-to-br from-orange-600 to-amber-600 p-8 rounded-2xl border-3 border-orange-500"
-          style={{ 
+        {/* Back of card - Video. Same triple-fix as the front face:
+            solid bg-orange-600 underneath the gradient, both backface
+            properties set, and translateZ baked into the rotateY so the
+            face is composited on its own GPU layer. */}
+        <div
+          className="absolute inset-0 bg-orange-600 bg-gradient-to-br from-orange-600 to-amber-600 p-8 rounded-2xl border-3 border-orange-500"
+          style={{
             backfaceVisibility: 'hidden',
-            transform: 'rotateY(180deg)'
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg) translateZ(0)',
           }}
         >
           <div className="absolute top-4 right-4 flex items-center gap-2 text-xs text-white/80 bg-white/20 px-3 py-1 rounded-full">
@@ -1605,11 +1621,14 @@ export default function Quest() {
       <QuestArtifactsGallery />
 
       {/* Quest Detail Modal */}
-      <QuestDetailModal 
+      <QuestDetailModal
         quest={selectedQuest ? questDetailsData[selectedQuest] : null}
         isOpen={!!selectedQuest}
         onClose={closeQuestDetails}
       />
+      {/* How-to video modal. Listens for the open-quest-how-to event
+          fired by the FAB Play button when the user is already on /quest. */}
+      <QuestHowToVideoModal />
     </div>
     </QuestProgressProvider>
   );

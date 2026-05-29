@@ -56,15 +56,16 @@ type Action = {
 //   - Inner arc (2 buttons): the secondary actions (Profile, Context),
 //     tucked between the outer pair so the cluster reads as a single fan.
 //
-// The pattern was Rye's call after the single-arc 5-button layout felt
-// too horizontally stretched on iPhone. Outer radius stays at 120
-// (chord ≈ 46.9px so 44px buttons sit with a small visible gap). Inner
-// radius lands at 78, giving the secondary buttons enough breathing room
-// from the outer arc and the trigger.
+// Outer radius: 125 (chord ≈ 49px so 44px buttons sit with a clean 5px gap).
+// Inner radius: 100 (puts the secondary buttons ~6px from each adjacent
+// outer button so the fan reads as five evenly spaced buttons on one arc,
+// not as a clumped triangle in the middle). Earlier the inner ring was
+// 78 which pulled the secondary buttons toward the trigger and made the
+// cluster look bunched on iPhone; widening to 100 evens out the fan.
 const ARC_START_DEG = 180;
 const ARC_END_DEG = 90;
-const ARC_OUTER_RADIUS = 120;
-const ARC_INNER_RADIUS = 78;
+const ARC_OUTER_RADIUS = 125;
+const ARC_INNER_RADIUS = 100;
 
 export function WizardRadialMenu() {
   const [open, setOpen] = useState(false);
@@ -128,9 +129,14 @@ export function WizardRadialMenu() {
       : { key: "forum-search", label: "Search forum", event: "open-command-palette", Icon: Search }
     : { key: "community", label: "Community", href: "/community", Icon: MessageCircle };
 
-  // Anchor slot: Quests. When on /quest, swap to "Resume" (still routes to /quest but labelled differently).
+  // Anchor slot: Quests. When on /quest, swap to "Watch how-to" so the
+  // Play icon does something useful instead of routing to the page the
+  // user is already on. Quest.tsx listens for the open-quest-how-to
+  // event and opens a video modal; the modal gracefully falls back to
+  // a "video coming soon" message until /videos/quest-how-to.mp4 is
+  // uploaded.
   const questsAction: Action = onQuest
-    ? { key: "resume", label: "Resume", href: "/quest", Icon: Play }
+    ? { key: "how-to", label: "Watch how-to", event: "open-quest-how-to", Icon: Play }
     : { key: "quests", label: "Quests", href: "/quest", Icon: Scroll };
 
   // Anchor slot: Profile. When on /profile, swap to "Edit".
