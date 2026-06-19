@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import type { GameRole } from "@/data/gameRoles";
 import { seasons } from "@/data/gameRoles";
+import { SmartImage } from "@/components/SmartImage";
 
 export type { GameRole };
 
@@ -130,12 +131,11 @@ export function RolePortalCard({ role }: { role: GameRole }) {
           }}
         >
           {role.characterImage ? (
-            <img
+            <SmartImage
               src={role.characterImage}
               alt={role.characterName}
               className="w-full h-full object-cover"
               style={{ objectPosition: role.cardImagePosition || "center top" }}
-              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -198,11 +198,10 @@ export function RolePortalCard({ role }: { role: GameRole }) {
             }}
           >
             {(role.sceneImage || role.characterImage) ? (
-              <img
-                src={role.sceneImage || role.characterImage}
+              <SmartImage
+                src={role.sceneImage || role.characterImage!}
                 alt={role.characterName}
                 className="w-full h-full object-cover"
-                loading="lazy"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
