@@ -50,9 +50,9 @@ export function RegenIntroGate() {
         <button
           onClick={dismiss}
           aria-label="Close intro"
-          className="absolute top-3 right-3 z-10 text-white/70 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+          className="absolute top-3 left-3 z-10 w-9 h-9 rounded-full bg-white/10 border border-white/15 text-white/80 hover:text-white hover:bg-white/20 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd87d]"
         >
-          <X className="w-5 h-5" />
+          <X className="w-[18px] h-[18px]" />
         </button>
 
         {showVideo ? (
@@ -81,11 +81,14 @@ export function RegenIntroGate() {
           <div className="p-6 md:p-10 text-center">
             <Sprout className="w-12 h-12 text-[#7dd87d] mx-auto mb-4" />
             <h2
-              className="text-2xl md:text-3xl font-bold text-white mb-3"
+              className="text-2xl md:text-3xl font-bold text-white mb-2"
               style={{ fontFamily: "var(--font-display, system-ui)" }}
             >
               Welcome to ReGen Civics
             </h2>
+            <p className="text-[#7dd87d] text-[11px] md:text-xs font-bold uppercase tracking-[0.2em] mb-3">
+              ReGen is short for Regeneration
+            </p>
             <p className="text-white/75 text-sm md:text-base max-w-md mx-auto mb-2">
               We're a fund and a game for healing land and community.
             </p>
