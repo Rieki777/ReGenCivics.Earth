@@ -27,6 +27,7 @@ import { SEO } from '@/components/SEO';
 import { BackButton } from "@/components/BackButton";
 import { CampaignImageGallery } from '@/components/CampaignImageGallery';
 import { CampaignProgressTracker } from '@/components/CampaignProgressTracker';
+import { SmartImage } from "@/components/SmartImage";
 import { cdnImg } from "@/lib/utils";
 
 type FilterCategory = 'all' | 'land' | 'equipment' | 'roles' | 'resources';
@@ -180,7 +181,13 @@ export default function CrowdPoolingCampaigns() {
                         mode="card"
                       />
                     ) : (campaign as any).generatedImageUrl ? (
-                      <img src={(campaign as any).generatedImageUrl} alt={campaign.title} className="w-full h-full object-cover" width={800} height={500} loading="lazy" />
+                      <SmartImage
+                        src={(campaign as any).generatedImageUrl}
+                        alt={campaign.title}
+                        className="w-full h-full object-cover"
+                        width={800}
+                        height={500}
+                      />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Leaf className="w-16 h-16 text-white/60" />
