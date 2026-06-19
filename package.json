@@ -22,7 +22,7 @@
     "check": "tsc --noEmit",
     "check:palette": "tsx scripts/check-palette.ts",
     "check:palette:warn": "tsx scripts/check-palette.ts --warn-only",
-    "lint": "eslint . --max-warnings=9999",
+    "lint": "eslint . --max-warnings=1000",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "test": "vitest run --exclude \"**/node_modules/**\" --exclude \"**/dist/**\" --exclude \"server/applications.test.ts\" --exclude \"server/forum.test.ts\" --exclude \"server/citizenship-tiers.test.ts\" --exclude \"server/notification-prefs.test.ts\" --exclude \"server/loi.test.ts\" --exclude \"server/forms.test.ts\" --exclude \"server/contributions.test.ts\"",

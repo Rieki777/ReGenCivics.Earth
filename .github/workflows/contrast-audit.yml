@@ -1,9 +1,11 @@
 name: Contrast Audit
 
-# WCAG 2.x color-contrast audit. Runs on every PR against main. Warns
-# in a PR comment with the diff against main's baseline but does NOT
-# block merge (per 2026-05-29 decision: warn-only rollout). Once the
-# noise level is low enough we can flip this to block on new failures.
+# WCAG 2.x color-contrast audit. Runs on every PR against main. Posts
+# the diff against main's baseline as a PR comment AND, since 2026-06-18,
+# the audit job fails when totalFailures exceeds the CONTRAST_BASELINE
+# threshold (5 by default, from the 2026-05-29 post-fix estimate).
+# Adjust CONTRAST_BASELINE in this workflow env if you intentionally
+# move the bar; do not silently ignore regressions.
 
 on:
   pull_request:
@@ -111,7 +113,7 @@ jobs:
             lines.push('');
             lines.push('See `audits/contrast-report-pr.json` artifact for full per-element details.');
             lines.push('');
-            lines.push('_This check warns but does not block. See `.github/workflows/contrast-audit.yml`._');
+            lines.push('_Job fails when PR failures exceed `CONTRAST_BASELINE` (default 5). See `.github/workflows/contrast-audit.yml`._');
             const body = lines.join('\n');
             await github.rest.issues.createComment({
               issue_number: context.issue.number,

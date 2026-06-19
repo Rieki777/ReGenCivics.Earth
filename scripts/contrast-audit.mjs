@@ -12,8 +12,12 @@
  *      with a warning footer.
  *
  * The CI workflow at .github/workflows/contrast-audit.yml posts the diff
- * against main's findings as a PR comment but does NOT block merge (per
- * 2026-05-29 audit decision: warn-only rollout).
+ * against main's findings as a PR comment. As of 2026-06-18 the script
+ * also returns a non-zero exit code when totalFailures exceeds the
+ * baseline established in CONTRAST_AUDIT_2026-05-29_findings.json
+ * (estimated_post_fix_remaining = 5). The CI workflow can still be
+ * configured to skip the failing job, but the script no longer
+ * unconditionally exits 0.
  *
  * The checker is the same one used in the manual 2026-05-29 audit via
  * Claude in Chrome; see CONTRAST_AUDIT_2026-05-29.md for the baseline.
@@ -198,6 +202,22 @@ async function main() {
   fs.writeFileSync(OUT_FILE, JSON.stringify(report, null, 2));
   console.log(`\nReport written to ${OUT_FILE}`);
   console.log(`Total failures: ${totalFailures}`);
+
+  // Regression gate. The 2026-05-29 manual audit estimated 5 residual
+  // failures after the targeted patterns shipped. Anything above that is
+  // a regression we want CI to surface; lower the threshold over time as
+  // the residual count drops.
+  const BASELINE_THRESHOLD = Number(process.env.CONTRAST_BASELINE ?? 5);
+  if (totalFailures > BASELINE_THRESHOLD) {
+    console.error(
+      `\nFAIL: ${totalFailures} contrast failures exceeds baseline of ${BASELINE_THRESHOLD}.`,
+    );
+    console.error(
+      'Review the report and either fix the regressions or bump CONTRAST_BASELINE intentionally.',
+    );
+    process.exit(1);
+  }
+  console.log(`PASS: ${totalFailures}/${BASELINE_THRESHOLD} (baseline tolerance).`);
   process.exit(0);
 }
 
