@@ -318,7 +318,7 @@ export function AdminBroadcastPanel() {
                     ? "text-red-600 font-bold"
                     : charsLeft <= 40
                     ? "text-amber-600"
-                    : "text-[#1a472a]/50"
+                    : "text-[#1a472a]/80"
                 }`}
               >
                 {charsLeft}
@@ -360,7 +360,7 @@ export function AdminBroadcastPanel() {
                 >
                   Select all
                 </button>
-                <span className="text-[#1a472a]/30">|</span>
+                <span className="text-[#1a472a]/75">|</span>
                 <button
                   type="button"
                   onClick={clearAll}
@@ -372,7 +372,7 @@ export function AdminBroadcastPanel() {
             </div>
 
             {loadingProfiles ? (
-              <div className="flex items-center gap-2 text-sm text-[#1a472a]/60">
+              <div className="flex items-center gap-2 text-sm text-[#1a472a]/80">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Loading connected channels...
               </div>
@@ -404,7 +404,7 @@ export function AdminBroadcastPanel() {
                           {channel.label}
                         </p>
                         {channel.isBuffer && bufferProfile && (
-                          <p className="text-xs text-[#1a472a]/60 truncate">
+                          <p className="text-xs text-[#1a472a]/80 truncate">
                             {bufferProfile.formatted_username ?? bufferProfile.service_username}
                           </p>
                         )}
@@ -412,7 +412,7 @@ export function AdminBroadcastPanel() {
                           <p className="text-xs text-amber-600">Not connected</p>
                         )}
                         {!channel.isBuffer && (
-                          <p className="text-xs text-[#1a472a]/60">Opens Warpcast</p>
+                          <p className="text-xs text-[#1a472a]/80">Opens Warpcast</p>
                         )}
                       </div>
                     </label>
@@ -527,7 +527,7 @@ export function AdminBroadcastPanel() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="p-4 rounded-xl bg-[#f5f9f5] border border-[#1a472a]/15 whitespace-pre-wrap text-sm text-[#1a472a] leading-relaxed">
-              {text || <span className="text-[#1a472a]/40 italic">Nothing to preview yet</span>}
+              {text || <span className="text-[#1a472a]/80 italic">Nothing to preview yet</span>}
             </div>
             {link && (
               <div>
@@ -558,7 +558,7 @@ export function AdminBroadcastPanel() {
                   : "None selected"}
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs text-[#1a472a]/50">
+            <div className="flex items-center gap-2 text-xs text-[#1a472a]/80">
               <span>{text.length} / {MAX_CHARS} characters</span>
               {overLimit && <span className="text-red-600 font-semibold">(over limit)</span>}
             </div>

@@ -303,7 +303,7 @@ export function CSVImportDialog({ type, onImport }: CSVImportDialogProps) {
                   </table>
                 </div>
                 {csvData.length > 5 && (
-                  <div className="px-3 py-2 bg-[#f0f7f0] text-xs text-[#1a472a]/60 text-center">
+                  <div className="px-3 py-2 bg-[#f0f7f0] text-xs text-[#1a472a]/80 text-center">
                     ... and {csvData.length - 5} more items
                   </div>
                 )}

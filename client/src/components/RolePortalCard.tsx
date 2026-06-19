@@ -36,7 +36,7 @@ function getAssignmentStyle(assignment: string) {
     };
   }
   return {
-    className: "bg-[#7dd87d]/10 text-[#7dd87d]/60 border-[#7dd87d]/20",
+    className: "bg-[#7dd87d]/10 text-[#7dd87d]/80 border-[#7dd87d]/20",
     label: assignment,
   };
 }

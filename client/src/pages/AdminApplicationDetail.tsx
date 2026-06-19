@@ -172,7 +172,7 @@ export default function AdminApplicationDetail() {
             </div>
 
             <div className="text-right">
-              <div className="text-sm text-[#1a472a]/60 mb-1">Status</div>
+              <div className="text-sm text-[#1a472a]/80 mb-1">Status</div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border-2 border-[#1a472a]/20 font-medium text-[#1a472a]">
                 {application.status.replace("_", " ").toUpperCase()}
               </div>
@@ -212,7 +212,7 @@ export default function AdminApplicationDetail() {
                           </span>
                         ));
                       } catch {
-                        return <span className="text-[#1a472a]/60">Not specified</span>;
+                        return <span className="text-[#1a472a]/80">Not specified</span>;
                       }
                     })()}
                   </div>
@@ -296,7 +296,7 @@ export default function AdminApplicationDetail() {
                                       <path d="M8 12h8v2H8zm0 4h8v2H8z"/>
                                     </svg>
                                   ) : (
-                                    <svg className="w-12 h-12 text-[#1a472a]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-12 h-12 text-[#1a472a]/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                   )}
@@ -309,7 +309,7 @@ export default function AdminApplicationDetail() {
                           );
                         });
                       } catch {
-                        return <p className="text-[#1a472a]/60 col-span-full">No documents uploaded</p>;
+                        return <p className="text-[#1a472a]/80 col-span-full">No documents uploaded</p>;
                       }
                     })()}
                   </div>
@@ -328,7 +328,7 @@ export default function AdminApplicationDetail() {
                         <span className="font-bold text-[#1a472a]">
                           {review.decision.replace("_", " ").toUpperCase()}
                         </span>
-                        <span className="text-sm text-[#1a472a]/60">
+                        <span className="text-sm text-[#1a472a]/80">
                           {new Date(review.createdAt).toLocaleDateString()}
                         </span>
                       </div>

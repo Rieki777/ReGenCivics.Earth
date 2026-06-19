@@ -467,7 +467,7 @@ export function ContributionCalculator() {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <div className="flex items-center gap-1">
-              <span className="text-[#1a472a]/60">{question.label}</span>
+              <span className="text-[#1a472a]/80">{question.label}</span>
               {question.example && (
                 <TooltipProvider>
                   <Tooltip>
@@ -493,7 +493,7 @@ export function ContributionCalculator() {
             className="w-full"
           />
           {question.example && (
-            <p className="text-xs text-[#1a472a]/40 italic">{question.example}</p>
+            <p className="text-xs text-[#1a472a]/80 italic">{question.example}</p>
           )}
         </div>
       );
@@ -502,7 +502,7 @@ export function ContributionCalculator() {
     return (
       <div className="space-y-1">
         <div className="flex items-center gap-1">
-          <label className="text-sm text-[#1a472a]/60">{question.label}</label>
+          <label className="text-sm text-[#1a472a]/80">{question.label}</label>
           {question.example && (
             <TooltipProvider>
               <Tooltip>
@@ -520,7 +520,7 @@ export function ContributionCalculator() {
         </div>
         <div className="relative">
           {question.type === 'currency' && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/40">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/80">$</span>
           )}
           <input
             type="number"
@@ -532,7 +532,7 @@ export function ContributionCalculator() {
           />
         </div>
         {question.example && (
-          <p className="text-xs text-[#1a472a]/40 italic">{question.example}</p>
+          <p className="text-xs text-[#1a472a]/80 italic">{question.example}</p>
         )}
       </div>
     );
@@ -550,17 +550,17 @@ export function ContributionCalculator() {
             Your Contribution Value
           </h3>
           {contributionName && (
-            <p className="text-[#1a472a]/60">"{contributionName}"</p>
+            <p className="text-[#1a472a]/80">"{contributionName}"</p>
           )}
         </div>
 
         {/* Total Value */}
         <div className="bg-white rounded-xl p-6 mb-6 text-center border border-[#7dd87d]/30 shadow-lg">
-          <p className="text-sm text-[#1a472a]/60 mb-2">Estimated Total Value</p>
+          <p className="text-sm text-[#1a472a]/80 mb-2">Estimated Total Value</p>
           <p className="text-4xl md:text-5xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
             {formatCurrency(totalValue)}
           </p>
-          <p className="text-sm text-[#1a472a]/60 mt-2">across 8 forms of capital</p>
+          <p className="text-sm text-[#1a472a]/80 mt-2">across 8 forms of capital</p>
         </div>
 
         {/* Capital Breakdown */}
@@ -592,7 +592,7 @@ export function ContributionCalculator() {
             );
           })}
           {capitalBreakdown.filter(c => c.value > 0).length === 0 && (
-            <p className="text-center text-[#1a472a]/60 py-4">No contributions recorded yet</p>
+            <p className="text-center text-[#1a472a]/80 py-4">No contributions recorded yet</p>
           )}
         </div>
 
@@ -671,7 +671,7 @@ export function ContributionCalculator() {
           <h3 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
             Contribution Calculator
           </h3>
-          <p className="text-sm text-[#1a472a]/60">Estimate your value across 8 forms of capital</p>
+          <p className="text-sm text-[#1a472a]/80">Estimate your value across 8 forms of capital</p>
         </div>
       </div>
 
@@ -706,7 +706,7 @@ export function ContributionCalculator() {
             <FileText className="w-5 h-5 text-[#4a7c59]" />
             <span className="font-medium text-[#1a472a]">Start from a Template</span>
           </div>
-          <ChevronRight className={`w-5 h-5 text-[#1a472a]/60 transition-transform ${showTemplates ? 'rotate-90' : ''}`} />
+          <ChevronRight className={`w-5 h-5 text-[#1a472a]/80 transition-transform ${showTemplates ? 'rotate-90' : ''}`} />
         </button>
         
         {showTemplates && (
@@ -719,9 +719,9 @@ export function ContributionCalculator() {
               >
                 <div>
                   <p className="font-medium text-[#1a472a]">{template.name}</p>
-                  <p className="text-xs text-[#1a472a]/60">{template.description}</p>
+                  <p className="text-xs text-[#1a472a]/80">{template.description}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#1a472a]/40" />
+                <ChevronRight className="w-4 h-4 text-[#1a472a]/80" />
               </button>
             ))}
           </div>
@@ -730,7 +730,7 @@ export function ContributionCalculator() {
 
       {/* Progress Bar */}
       <div className="mb-6">
-        <div className="flex justify-between text-xs text-[#1a472a]/60 mb-2">
+        <div className="flex justify-between text-xs text-[#1a472a]/80 mb-2">
           <span>Progress</span>
           <span>{currentStep + 1} of {capitalForms.length}</span>
         </div>
@@ -780,12 +780,12 @@ export function ContributionCalculator() {
           </div>
           <div className="flex-1">
             <h4 className="font-bold text-[#1a472a]">{currentCapital.name}</h4>
-            <p className="text-xs text-[#1a472a]/60">{currentCapital.description}</p>
+            <p className="text-xs text-[#1a472a]/80">{currentCapital.description}</p>
           </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="w-5 h-5 text-[#1a472a]/40 hover:text-[#1a472a]/60" />
+                <Info className="w-5 h-5 text-[#1a472a]/80 hover:text-[#1a472a]/80" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
                 <p className="font-bold mb-2">Examples:</p>
@@ -809,7 +809,7 @@ export function ContributionCalculator() {
 
         {/* Current Capital Value */}
         <div className="mt-4 pt-4 border-t border-[#7dd87d]/20 flex justify-between items-center">
-          <span className="text-sm text-[#1a472a]/60">Subtotal for {currentCapital.name}:</span>
+          <span className="text-sm text-[#1a472a]/80">Subtotal for {currentCapital.name}:</span>
           <span className="font-bold text-[#1a472a]">{formatCurrency(calculateCapitalValue(currentCapital.id))}</span>
         </div>
       </div>
@@ -855,7 +855,7 @@ export function ContributionCalculator() {
 
       {/* Quick Jump */}
       <div className="mt-6 pt-4 border-t border-[#7dd87d]/20">
-        <p className="text-xs text-[#1a472a]/60 mb-2">Quick jump to capital type:</p>
+        <p className="text-xs text-[#1a472a]/80 mb-2">Quick jump to capital type:</p>
         <div className="flex flex-wrap gap-2">
           {capitalForms.map((capital, index) => {
             const CapitalIcon = capital.icon;
@@ -869,7 +869,7 @@ export function ContributionCalculator() {
                     ? 'bg-[#4a7c59] text-white'
                     : hasValue
                       ? 'bg-[#7dd87d]/30 text-[#1a472a]'
-                      : 'bg-gray-100 text-[#1a472a]/60 hover:bg-gray-200'
+                      : 'bg-gray-100 text-[#1a472a]/80 hover:bg-gray-200'
                 }`}
               >
                 <CapitalIcon className="w-3 h-3" />

@@ -159,17 +159,17 @@ function AdminAuditLogTab() {
       <CardContent className="p-0">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[#1a472a]/40" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#1a472a]/80" />
           </div>
         )}
         {!isLoading && filtered.length === 0 && (
-          <p className="text-center text-[#1a472a]/50 text-sm py-12">No admin actions recorded yet.</p>
+          <p className="text-center text-[#1a472a]/80 text-sm py-12">No admin actions recorded yet.</p>
         )}
         {!isLoading && filtered.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#1a472a]/10 text-xs uppercase tracking-wide text-[#1a472a]/50">
+                <tr className="border-b border-[#1a472a]/10 text-xs uppercase tracking-wide text-[#1a472a]/80">
                   <th className="text-left px-4 py-2.5 font-medium">Date</th>
                   <th className="text-left px-4 py-2.5 font-medium">Admin</th>
                   <th className="text-left px-4 py-2.5 font-medium">Action</th>
@@ -214,7 +214,7 @@ function AdminAuditLogTab() {
                         <td className="px-4 py-3">
                           {entry.metadata && (
                             <ChevronDown
-                              className={`w-4 h-4 text-[#1a472a]/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                              className={`w-4 h-4 text-[#1a472a]/80 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                             />
                           )}
                         </td>
@@ -3085,9 +3085,9 @@ function AdminPlayersTab() {
       </CardHeader>
       <CardContent className="p-0">
         {isLoading ? (
-          <div className="p-8 text-center text-[#1a472a]/50">Loading players...</div>
+          <div className="p-8 text-center text-[#1a472a]/80">Loading players...</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-[#1a472a]/50">No players found</div>
+          <div className="p-8 text-center text-[#1a472a]/80">No players found</div>
         ) : (
           <div className="divide-y divide-[#1a472a]/10">
             {filtered.map((player: any) => (
@@ -3101,12 +3101,12 @@ function AdminPlayersTab() {
                       <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-[10px]">Unverified</Badge>
                     )}
                     {player.walletAddress ? (
-                      <span className="text-[10px] text-[#1a472a]/40 font-mono">{truncateAddr(player.walletAddress)}</span>
+                      <span className="text-[10px] text-[#1a472a]/80 font-mono">{truncateAddr(player.walletAddress)}</span>
                     ) : (
                       <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]">No wallet</Badge>
                     )}
                   </div>
-                  <p className="text-xs text-[#1a472a]/50 mt-0.5">
+                  <p className="text-xs text-[#1a472a]/80 mt-0.5">
                     RV: {player.rvoiceBalance || 0} | RG: {player.rgenBalance || 0}
                     {player.lastTokenSync ? ` | Synced ${new Date(player.lastTokenSync).toLocaleDateString()}` : ''}
                   </p>
@@ -3491,7 +3491,7 @@ function AdminDashboard() {
                             onClick={() => setGlobalSearch('')}>
                             <Globe className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{c.title}</span>
-                            <ExternalLink className="w-3 h-3 text-[#1a472a]/40 ml-auto flex-shrink-0" />
+                            <ExternalLink className="w-3 h-3 text-[#1a472a]/80 ml-auto flex-shrink-0" />
                           </a>
                         ))}
                       </div>
@@ -3505,7 +3505,7 @@ function AdminDashboard() {
                             onClick={() => setGlobalSearch('')}>
                             <BookOpen className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
                             <span className="text-sm text-[#1a472a] font-medium">{p.title}</span>
-                            <ExternalLink className="w-3 h-3 text-[#1a472a]/40 ml-auto flex-shrink-0" />
+                            <ExternalLink className="w-3 h-3 text-[#1a472a]/80 ml-auto flex-shrink-0" />
                           </a>
                         ))}
                       </div>

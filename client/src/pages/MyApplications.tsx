@@ -102,7 +102,7 @@ export default function MyApplications() {
         {/* Applications List */}
         {!applications || applications.length === 0 ? (
           <Card className="p-12 text-center bg-white">
-            <FileText className="w-16 h-16 text-[#1a472a]/30 mx-auto mb-4" />
+            <FileText className="w-16 h-16 text-[#1a472a]/75 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-[#1a472a] mb-2">
               No Applications Yet
             </h2>

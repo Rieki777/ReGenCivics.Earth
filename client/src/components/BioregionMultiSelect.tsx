@@ -142,7 +142,7 @@ export function BioregionMultiSelect({
           className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors disabled:opacity-50 ${
             variant === "dark"
               ? "border-[#7dd87d]/30 text-[#7dd87d]/70 hover:text-[#7dd87d] hover:border-[#7dd87d]/60"
-              : "border-[#1a472a]/20 text-[#1a472a]/60 hover:text-[#1a472a] hover:border-[#1a472a]/40"
+              : "border-[#1a472a]/20 text-[#1a472a]/80 hover:text-[#1a472a] hover:border-[#1a472a]/40"
           }`}
           aria-label="Detect my bioregion from location"
         >
@@ -157,7 +157,7 @@ export function BioregionMultiSelect({
       </div>
       {geoSuggestions.length > 0 && (
         <div className="space-y-1">
-          <p className={`text-xs ${variant === "dark" ? "text-white/70" : "text-[#1a472a]/50"}`}>Suggested:</p>
+          <p className={`text-xs ${variant === "dark" ? "text-white/70" : "text-[#1a472a]/80"}`}>Suggested:</p>
           <div className="flex flex-wrap gap-1.5">
             {geoSuggestions.map((b) => (
               <button
@@ -186,7 +186,7 @@ export function BioregionMultiSelect({
           <button type="button" className={triggerBase} aria-expanded={open}>
             <span className="flex items-center gap-1.5">
               <MapPin className="shrink-0 w-3.5 h-3.5 opacity-60" />
-              <span className={variant === "dark" ? "text-white/60" : "text-[#1a472a]/40"}>
+              <span className={variant === "dark" ? "text-white/60" : "text-[#1a472a]/80"}>
                 {isLoading ? "Loading…" : placeholder}
               </span>
             </span>

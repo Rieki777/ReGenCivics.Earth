@@ -138,7 +138,7 @@ function TokenInfoCard({
           <h3 className="font-bold text-[#1a472a] text-xl" style={{ fontFamily: 'var(--font-display)' }}>
             {title}
           </h3>
-          <p className="text-[#1a472a]/60 text-sm">{subtitle}</p>
+          <p className="text-[#1a472a]/80 text-sm">{subtitle}</p>
         </div>
       </div>
       <p className="text-[#1a472a]/80 mb-4 leading-relaxed">
@@ -614,25 +614,25 @@ export default function Game() {
                 <div className="w-14 h-14 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#7dd87d]/40 transition-colors group-hover:scale-110 transform duration-300">
                   <Heart className="w-7 h-7 text-rose-500" />
                 </div>
-                <span className="text-xs text-[#1a472a]/60 font-medium">Love</span>
+                <span className="text-xs text-[#1a472a]/80 font-medium">Love</span>
               </div>
               <div className="flex flex-col items-center gap-2 group">
                 <div className="w-14 h-14 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#7dd87d]/40 transition-colors group-hover:scale-110 transform duration-300">
                   <Users className="w-7 h-7 text-[#4a7c59]" />
                 </div>
-                <span className="text-xs text-[#1a472a]/60 font-medium">Community</span>
+                <span className="text-xs text-[#1a472a]/80 font-medium">Community</span>
               </div>
               <div className="flex flex-col items-center gap-2 group">
                 <div className="w-14 h-14 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#7dd87d]/40 transition-colors group-hover:scale-110 transform duration-300">
                   <Globe className="w-7 h-7 text-blue-500" />
                 </div>
-                <span className="text-xs text-[#1a472a]/60 font-medium">Planet</span>
+                <span className="text-xs text-[#1a472a]/80 font-medium">Planet</span>
               </div>
               <div className="flex flex-col items-center gap-2 group">
                 <div className="w-14 h-14 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#7dd87d]/40 transition-colors group-hover:scale-110 transform duration-300">
                   <SeedOfLifeIcon className="w-7 h-7 text-amber-500" size={28} />
                 </div>
-                <span className="text-xs text-[#1a472a]/60 font-medium">Play</span>
+                <span className="text-xs text-[#1a472a]/80 font-medium">Play</span>
               </div>
             </div>
             
@@ -650,7 +650,7 @@ export default function Game() {
                     </div>
                     <div className="text-left">
                       <h4 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Quest 0: Fire</h4>
-                      <p className="text-sm text-[#1a472a]/60">Transforming the Stories That No Longer Serve Us</p>
+                      <p className="text-sm text-[#1a472a]/80">Transforming the Stories That No Longer Serve Us</p>
                     </div>
                   </div>
                   <p className="text-sm text-[#1a472a]/70 mb-4 text-left">
@@ -746,7 +746,7 @@ export default function Game() {
           
           {/* Additional CTA */}
           <div className="text-center mt-10">
-            <p className="text-[#1a472a]/60 text-sm mb-4">
+            <p className="text-[#1a472a]/80 text-sm mb-4">
               {pageCopy.game.joinMovement.text}
             </p>
             <Link href="/connect">
@@ -1654,7 +1654,7 @@ export default function Game() {
                         <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
                           RVoice: Governance Token
                         </h3>
-                        <p className="text-sm text-[#1a472a]/60">Earned through participation, used to vote</p>
+                        <p className="text-sm text-[#1a472a]/80">Earned through participation, used to vote</p>
                       </div>
                     </div>
                     <ChevronDown className="w-5 h-5 text-purple-500 group-data-[state=open]:rotate-180 transition-transform flex-shrink-0" />
@@ -1699,7 +1699,7 @@ export default function Game() {
                         <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
                           ReGen Token: Economic Token
                         </h3>
-                        <p className="text-sm text-[#1a472a]/60">Earned through verified impact contributions</p>
+                        <p className="text-sm text-[#1a472a]/80">Earned through verified impact contributions</p>
                       </div>
                     </div>
                     <ChevronDown className="w-5 h-5 text-[#4a7c59] group-data-[state=open]:rotate-180 transition-transform flex-shrink-0" />
@@ -1740,7 +1740,7 @@ export default function Game() {
                         <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
                           How you earn both
                         </h3>
-                        <p className="text-sm text-[#1a472a]/60">Multiple paths to participate and contribute</p>
+                        <p className="text-sm text-[#1a472a]/80">Multiple paths to participate and contribute</p>
                       </div>
                     </div>
                     <ChevronDown className="w-5 h-5 text-amber-500 group-data-[state=open]:rotate-180 transition-transform flex-shrink-0" />
@@ -1774,7 +1774,7 @@ export default function Game() {
                         <span><strong className="text-[#1a472a]">Participate in community sessions</strong>: earn RVoice</span>
                       </li>
                     </ul>
-                    <p className="text-xs text-[#1a472a]/50 mt-4 italic">
+                    <p className="text-xs text-[#1a472a]/80 mt-4 italic">
                       Token amounts vary per quest and contribution type. No financial returns are guaranteed.
                     </p>
                   </div>

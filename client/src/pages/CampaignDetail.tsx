@@ -232,7 +232,7 @@ export default function CampaignDetail() {
                 {getStatusBadge()}
               </div>
               {campaign.location && (
-                <div className="flex items-center gap-2 text-[#1a472a]/60">
+                <div className="flex items-center gap-2 text-[#1a472a]/80">
                   <MapPin className="w-4 h-4" />
                   <span>{campaign.location}</span>
                 </div>
@@ -337,7 +337,7 @@ export default function CampaignDetail() {
                     <div className="font-medium text-[#1a472a] truncate">
                       {contribution.contributorName}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-[#1a472a]/60">
+                    <div className="flex items-center gap-2 text-sm text-[#1a472a]/80">
                       {getContributionIcon(contribution.contributionType)}
                       <span className="capitalize truncate">{contribution.title}</span>
                     </div>
@@ -349,7 +349,7 @@ export default function CampaignDetail() {
               ))}
             </div>
             {contributions.length > 6 && (
-              <p className="text-center text-sm text-[#1a472a]/60 mt-4">
+              <p className="text-center text-sm text-[#1a472a]/80 mt-4">
                 +{contributions.length - 6} more contributors
               </p>
             )}
@@ -419,37 +419,37 @@ export default function CampaignDetail() {
                 <div className="space-y-3">
                   {campaign.governanceModel && (
                     <div className="border-l-3 border-[#7dd87d] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Governance</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Governance</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.governanceModel}</p>
                     </div>
                   )}
                   {campaign.membershipModel && (
                     <div className="border-l-3 border-[#7dd87d] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Membership</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Membership</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.membershipModel}</p>
                     </div>
                   )}
                   {campaign.housingPlans && (
                     <div className="border-l-3 border-[#7dd87d] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Housing</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Housing</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.housingPlans}</p>
                     </div>
                   )}
                   {campaign.foodSystems && (
                     <div className="border-l-3 border-[#7dd87d] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Food Systems</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Food Systems</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.foodSystems}</p>
                     </div>
                   )}
                   {campaign.waterSystems && (
                     <div className="border-l-3 border-[#7dd87d] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Water Systems</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Water Systems</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.waterSystems}</p>
                     </div>
                   )}
                   {campaign.energySystems && (
                     <div className="border-l-3 border-[#7dd87d] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Energy Systems</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Energy Systems</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.energySystems}</p>
                     </div>
                   )}
@@ -464,25 +464,25 @@ export default function CampaignDetail() {
                 <div className="space-y-3">
                   {campaign.educationPrograms && (
                     <div className="border-l-3 border-[#d4a574] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Education Programs</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Education Programs</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.educationPrograms}</p>
                     </div>
                   )}
                   {campaign.communityEngagement && (
                     <div className="border-l-3 border-[#d4a574] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Community Engagement</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Community Engagement</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.communityEngagement}</p>
                     </div>
                   )}
                   {campaign.impactMetrics && (
                     <div className="border-l-3 border-[#d4a574] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Impact Metrics</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Impact Metrics</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.impactMetrics}</p>
                     </div>
                   )}
                   {campaign.regenerativePractices && (
                     <div className="border-l-3 border-[#d4a574] pl-4">
-                      <div className="text-xs font-bold text-[#1a472a]/60 mb-1">Regenerative Practices</div>
+                      <div className="text-xs font-bold text-[#1a472a]/80 mb-1">Regenerative Practices</div>
                       <p className="text-[#1a472a]/80 text-sm">{campaign.regenerativePractices}</p>
                     </div>
                   )}
@@ -576,7 +576,7 @@ export default function CampaignDetail() {
                         {formatCurrency(item.estimatedValue)}
                       </div>
                       {item.pledgedValue > 0 && (
-                        <div className="text-xs text-[#1a472a]/60 mt-1">
+                        <div className="text-xs text-[#1a472a]/80 mt-1">
                           {formatCurrency(item.pledgedValue)} pledged
                         </div>
                       )}
@@ -783,7 +783,7 @@ export default function CampaignDetail() {
                     {c.title}
                   </h3>
                   {c.location && (
-                    <p className="text-xs text-[#1a472a]/50 flex items-center gap-1 mb-2">
+                    <p className="text-xs text-[#1a472a]/80 flex items-center gap-1 mb-2">
                       <MapPin className="w-3 h-3" />
                       {c.location}
                     </p>
@@ -793,7 +793,7 @@ export default function CampaignDetail() {
                   </p>
                   {cTotal > 0 && (
                     <div className="mb-3">
-                      <div className="flex justify-between text-xs text-[#1a472a]/60 mb-1">
+                      <div className="flex justify-between text-xs text-[#1a472a]/80 mb-1">
                         <span>{cPct.toFixed(0)}% funded</span>
                       </div>
                       <div className="w-full bg-[#1a472a]/10 rounded-full h-1.5">

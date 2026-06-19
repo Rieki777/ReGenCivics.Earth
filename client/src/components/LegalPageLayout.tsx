@@ -94,7 +94,7 @@ export default function LegalPageLayout({
           {toc.length > 0 && (
             <aside className="hidden lg:block w-56 shrink-0">
               <div className="sticky top-24">
-                <p className="text-xs uppercase tracking-widest text-[#7dd87d]/60 font-semibold mb-3">
+                <p className="text-xs uppercase tracking-widest text-[#7dd87d]/80 font-semibold mb-3">
                   Contents
                 </p>
                 <nav className="flex flex-col gap-1">

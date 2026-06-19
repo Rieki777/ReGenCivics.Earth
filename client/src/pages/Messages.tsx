@@ -163,7 +163,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
           <h2 className="text-lg font-semibold text-[#1a472a]">New conversation</h2>
           <button
             onClick={onClose}
-            className="text-[#1a472a]/60 hover:text-[#1a472a] transition-colors"
+            className="text-[#1a472a]/80 hover:text-[#1a472a] transition-colors"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -283,10 +283,10 @@ function ConversationRow({
           <span className={`font-medium text-sm truncate ${unreadCount > 0 ? "text-[#1a472a]" : "text-[#1a472a]/80"}`}>
             {otherUser.name}
           </span>
-          <span className="text-xs text-[#1a472a]/50 flex-shrink-0">{timeAgo(updatedAt)}</span>
+          <span className="text-xs text-[#1a472a]/80 flex-shrink-0">{timeAgo(updatedAt)}</span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <p className={`text-xs truncate ${unreadCount > 0 ? "text-[#1a472a]/80 font-medium" : "text-[#1a472a]/50"}`}>
+          <p className={`text-xs truncate ${unreadCount > 0 ? "text-[#1a472a]/80 font-medium" : "text-[#1a472a]/80"}`}>
             {preview}
           </p>
           {unreadCount > 0 && (
@@ -362,17 +362,17 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
       {/* Search */}
       <div className="px-3 py-2 border-b border-[#1a472a]/10 flex-shrink-0">
         <div className="relative">
-          <Search className="w-4 h-4 text-[#1a472a]/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-[#1a472a]/80 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <Input
             value={rawQuery}
             onChange={(e) => setRawQuery(e.target.value)}
             placeholder="Search messages"
-            className="pl-9 pr-9 bg-[#f0ebe3] border-[#1a472a]/10 text-[#1a472a] placeholder:text-[#1a472a]/40"
+            className="pl-9 pr-9 bg-[#f0ebe3] border-[#1a472a]/10 text-[#1a472a] placeholder:text-[#1a472a]/80"
           />
           {rawQuery && (
             <button
               onClick={() => setRawQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#1a472a]/40 hover:text-[#1a472a]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#1a472a]/80 hover:text-[#1a472a]"
               aria-label="Clear search"
             >
               <X className="w-3.5 h-3.5" />
@@ -387,10 +387,10 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
         {isSearching && (
           <>
             {searchResultsQuery.isLoading && (
-              <div className="p-4 text-center text-[#1a472a]/50 text-sm">Searching…</div>
+              <div className="p-4 text-center text-[#1a472a]/80 text-sm">Searching…</div>
             )}
             {!searchResultsQuery.isLoading && (searchResultsQuery.data?.length ?? 0) === 0 && (
-              <div className="p-6 text-center text-[#1a472a]/50 text-sm">
+              <div className="p-6 text-center text-[#1a472a]/80 text-sm">
                 No messages match "{debouncedQuery}".
               </div>
             )}
@@ -407,7 +407,7 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
                   <span className="text-sm font-medium text-[#1a472a] truncate">
                     {r.senderName || "Unknown"}
                   </span>
-                  <span className="text-xs text-[#1a472a]/50 flex-shrink-0">{timeAgo(r.createdAt)}</span>
+                  <span className="text-xs text-[#1a472a]/80 flex-shrink-0">{timeAgo(r.createdAt)}</span>
                 </div>
                 <p className="text-xs text-[#1a472a]/70 line-clamp-2">
                   {highlightMatch(r.snippet, debouncedQuery)}
@@ -436,7 +436,7 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
 
             {!isLoading && (!conversations || conversations.length === 0) && (
               <div className="flex flex-col items-center justify-center h-full px-6 py-16 text-center">
-                <MessageCircle className="w-12 h-12 text-[#7dd87d]/60 mb-4" />
+                <MessageCircle className="w-12 h-12 text-[#7dd87d]/80 mb-4" />
                 <p className="text-[#1a472a]/70 text-sm leading-relaxed">
                   No messages yet. Connect with a fellow regenerator to get started.
                 </p>
@@ -631,7 +631,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
           <div className="flex justify-center pb-2">
             <button
               onClick={() => fetchNextPage()}
-              className="text-xs text-[#1a472a]/60 hover:text-[#1a472a] underline"
+              className="text-xs text-[#1a472a]/80 hover:text-[#1a472a] underline"
             >
               Load earlier messages
             </button>
@@ -650,7 +650,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
 
         {!isLoading && messages.length === 0 && (
           <div className="flex items-center justify-center h-full py-12">
-            <p className="text-sm text-[#1a472a]/50 text-center px-6">
+            <p className="text-sm text-[#1a472a]/80 text-center px-6">
               This is the beginning of your conversation with {displayName}.
             </p>
           </div>
@@ -661,7 +661,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
             {/* Day separator */}
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-[#1a472a]/10" />
-              <span className="text-xs text-[#1a472a]/40 font-medium px-2">{group.dayLabel}</span>
+              <span className="text-xs text-[#1a472a]/80 font-medium px-2">{group.dayLabel}</span>
               <div className="flex-1 h-px bg-[#1a472a]/10" />
             </div>
 
@@ -684,7 +684,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
 
                   <div className={`flex flex-col max-w-[70%] min-w-0 ${isSelf ? "items-end" : "items-start"}`}>
                     {!isSelf && (
-                      <span className="text-xs text-[#1a472a]/50 mb-1 ml-1">{msg.senderName}</span>
+                      <span className="text-xs text-[#1a472a]/80 mb-1 ml-1">{msg.senderName}</span>
                     )}
                     <div className="relative group">
                       <div
@@ -695,7 +695,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                         }`}
                       >
                         {isDeleted ? (
-                          <span className={`italic text-sm ${isSelf ? "text-white/40" : "text-[#1a472a]/40"}`}>
+                          <span className={`italic text-sm ${isSelf ? "text-white/40" : "text-[#1a472a]/80"}`}>
                             [Message deleted]
                           </span>
                         ) : (
@@ -735,7 +735,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                               rel="noopener noreferrer"
                               className="block px-3 py-2 rounded-lg bg-white/60 border border-[#1a472a]/10 hover:bg-white transition-colors max-w-full"
                             >
-                              <span className="flex items-center gap-1.5 text-[10px] text-[#1a472a]/50 uppercase tracking-wider">
+                              <span className="flex items-center gap-1.5 text-[10px] text-[#1a472a]/80 uppercase tracking-wider">
                                 <Link2 className="w-3 h-3" /> {hostname}
                               </span>
                               <span className="block text-xs text-[#4a7c59] truncate">{url}</span>
@@ -744,7 +744,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                         })}
                       </div>
                     )}
-                    <span className="text-[10px] text-[#1a472a]/40 mt-1 mx-1">
+                    <span className="text-[10px] text-[#1a472a]/80 mt-1 mx-1">
                       {formatTime(msg.createdAt)}
                     </span>
                   </div>
@@ -760,7 +760,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
       {/* Input area */}
       <div className="flex-shrink-0 border-t border-[#1a472a]/10 bg-[#f0ebe3] px-4 py-3">
         {showCharCount && (
-          <div className={`text-xs mb-1 text-right ${charOver ? "text-red-500 font-semibold" : "text-[#1a472a]/50"}`}>
+          <div className={`text-xs mb-1 text-right ${charOver ? "text-red-500 font-semibold" : "text-[#1a472a]/80"}`}>
             {charCount} / 5000
           </div>
         )}
@@ -797,8 +797,8 @@ function EmptyThread() {
       <div className="w-16 h-16 rounded-full bg-[#1a472a]/8 flex items-center justify-center mb-4">
         <MessageCircle className="w-8 h-8 text-[#7dd87d]/70" />
       </div>
-      <h2 className="text-base font-medium text-[#1a472a]/60">Select a conversation</h2>
-      <p className="text-sm text-[#1a472a]/40 mt-1">
+      <h2 className="text-base font-medium text-[#1a472a]/80">Select a conversation</h2>
+      <p className="text-sm text-[#1a472a]/80 mt-1">
         Choose a conversation from the list or start a new one.
       </p>
     </div>
@@ -877,9 +877,9 @@ export default function Messages() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#f0ebe3] flex flex-col items-center justify-center px-6 text-center">
-        <MessageCircle className="w-12 h-12 text-[#7dd87d]/60 mb-4" />
+        <MessageCircle className="w-12 h-12 text-[#7dd87d]/80 mb-4" />
         <h1 className="text-2xl font-semibold text-[#1a472a] mb-2">Messages</h1>
-        <p className="text-[#1a472a]/60">Sign in to send and receive messages.</p>
+        <p className="text-[#1a472a]/80">Sign in to send and receive messages.</p>
       </div>
     );
   }

@@ -300,7 +300,7 @@ export default function Apply() {
         {/* Step progress bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-[#1a472a]/60">Step {currentStep} of {totalSteps}</span>
+            <span className="text-sm text-[#1a472a]/80">Step {currentStep} of {totalSteps}</span>
             <span className="text-sm font-medium text-[#1a472a]">{stepTitles[currentStep - 1]}</span>
           </div>
           <div className="w-full bg-[#e8e4de] rounded-full h-1.5">
@@ -409,7 +409,7 @@ export default function Apply() {
                       id="place-search-input"
                       type="text"
                       placeholder="Search for a place name (e.g. 'Bali, Indonesia')..."
-                      className="w-full px-4 py-2.5 border border-[#4a7c59]/30 rounded-t-lg text-sm bg-white text-[#1a472a] placeholder:text-[#1a472a]/40 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
+                      className="w-full px-4 py-2.5 border border-[#4a7c59]/30 rounded-t-lg text-sm bg-white text-[#1a472a] placeholder:text-[#1a472a]/80 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
                     />
                     <MapIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
                   </div>
@@ -879,7 +879,7 @@ export default function Apply() {
                 <div className="flex items-start gap-2">
                   <Label className="text-base font-semibold text-[#1a472a]">Dietary Patterns</Label>
                   <div className="group relative cursor-help">
-                    <HelpCircle className="w-4 h-4 text-[#1a472a]/40 mt-0.5" />
+                    <HelpCircle className="w-4 h-4 text-[#1a472a]/80 mt-0.5" />
                     <div className="absolute left-0 bottom-full mb-2 w-64 bg-[#1a472a] text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
                       Dietary alignment matters for community cohesion. Shared meals are central to regenerative living  -  knowing the community's dietary culture helps prospective members assess fit before applying.
                     </div>

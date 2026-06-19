@@ -306,7 +306,7 @@ export function CrowdPoolingProjectsManager() {
             <Loader2 className="w-8 h-8 animate-spin text-[#1a472a]" />
           </div>
         ) : !projects || projects.length === 0 ? (
-          <div className="text-center py-12 text-[#1a472a]/60">
+          <div className="text-center py-12 text-[#1a472a]/80">
             <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p>No projects yet. Add your first crowd pooling project.</p>
           </div>
@@ -322,7 +322,7 @@ export function CrowdPoolingProjectsManager() {
                         <CardTitle className="text-base text-[#1a472a] mb-1">
                           {project.projectName}
                         </CardTitle>
-                        <div className="flex items-center gap-1 text-xs text-[#1a472a]/60">
+                        <div className="flex items-center gap-1 text-xs text-[#1a472a]/80">
                           <MapPin className="w-3 h-3" />
                           {project.location}
                         </div>
@@ -340,7 +340,7 @@ export function CrowdPoolingProjectsManager() {
                     )}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-[#1a472a]/60">Progress</span>
+                        <span className="text-[#1a472a]/80">Progress</span>
                         <span className="font-semibold text-[#1a472a]">
                           {getCurrencySymbol(project.targetCurrency)}{project.currentAmount.toLocaleString()} / {getCurrencySymbol(project.targetCurrency)}{project.targetAmount.toLocaleString()}
                         </span>
@@ -351,7 +351,7 @@ export function CrowdPoolingProjectsManager() {
                           style={{ width: `${Math.min(progress, 100)}%` }}
                         />
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-[#1a472a]/60">
+                      <div className="flex items-center gap-4 text-xs text-[#1a472a]/80">
                         <div className="flex items-center gap-1">
                           <TrendingUp className="w-3 h-3" />
                           {progress.toFixed(1)}%

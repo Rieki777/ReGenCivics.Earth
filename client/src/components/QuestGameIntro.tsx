@@ -124,7 +124,7 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
           /* Final CTA panel */
           <div className="flex flex-col items-center gap-6">
             <div
-              className="text-[#7dd87d]/60 text-xs font-bold uppercase tracking-widest"
+              className="text-[#7dd87d]/80 text-xs font-bold uppercase tracking-widest"
               style={{ fontFamily: "var(--font-accent, sans-serif)" }}
             >
               04 / 04
@@ -156,7 +156,7 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
         ) : (
           <>
             <div
-              className="text-[#7dd87d]/60 text-xs font-bold uppercase tracking-widest mb-6"
+              className="text-[#7dd87d]/80 text-xs font-bold uppercase tracking-widest mb-6"
               style={{ fontFamily: "var(--font-accent, sans-serif)" }}
             >
               {String(current + 1).padStart(2, "0")} / 04

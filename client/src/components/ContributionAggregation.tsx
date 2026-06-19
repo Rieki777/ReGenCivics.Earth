@@ -171,10 +171,10 @@ export default function ContributionAggregation({
           <h3 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
             Contribution Dashboard
           </h3>
-          <p className="text-sm text-[#1a472a]/60">{projectName}</p>
+          <p className="text-sm text-[#1a472a]/80">{projectName}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-[#1a472a]/60">{proposals.length} proposals</span>
+          <span className="text-sm text-[#1a472a]/80">{proposals.length} proposals</span>
         </div>
       </div>
       
@@ -183,7 +183,7 @@ export default function ContributionAggregation({
         <div className="bg-[#f0f7f0] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-5 h-5 text-[#4a7c59]" />
-            <span className="text-xs text-[#1a472a]/60">Contributors</span>
+            <span className="text-xs text-[#1a472a]/80">Contributors</span>
           </div>
           <p className="text-2xl font-bold text-[#1a472a]">{acceptedTotals.contributors}</p>
           <p className="text-xs text-[#4a7c59]">+{pendingTotals.contributors} pending</p>
@@ -192,7 +192,7 @@ export default function ContributionAggregation({
         <div className="bg-[#f0f7f0] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-5 h-5 text-[#4a7c59]" />
-            <span className="text-xs text-[#1a472a]/60">Total Accepted</span>
+            <span className="text-xs text-[#1a472a]/80">Total Accepted</span>
           </div>
           <p className="text-2xl font-bold text-[#1a472a]">{formatCurrency(acceptedTotals.total, currencySymbol)}</p>
           <p className="text-xs text-[#4a7c59]">{acceptedProgress.toFixed(1)}% of target</p>
@@ -201,7 +201,7 @@ export default function ContributionAggregation({
         <div className="bg-[#f0f7f0] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Coins className="w-5 h-5 text-[#4a7c59]" />
-            <span className="text-xs text-[#1a472a]/60">Financial</span>
+            <span className="text-xs text-[#1a472a]/80">Financial</span>
           </div>
           <p className="text-2xl font-bold text-[#1a472a]">{formatCurrency(acceptedTotals.financial, currencySymbol)}</p>
           <p className="text-xs text-[#4a7c59]">{financialProgress.toFixed(1)}% of target</p>
@@ -210,7 +210,7 @@ export default function ContributionAggregation({
         <div className="bg-[#fff8e1] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-5 h-5 text-[#d4a017]" />
-            <span className="text-xs text-[#1a472a]/60">Pending</span>
+            <span className="text-xs text-[#1a472a]/80">Pending</span>
           </div>
           <p className="text-2xl font-bold text-[#1a472a]">{formatCurrency(pendingTotals.total, currencySymbol)}</p>
           <p className="text-xs text-[#d4a017]">{pendingTotals.contributors} awaiting review</p>
@@ -223,7 +223,7 @@ export default function ContributionAggregation({
         <div className="bg-[#f0f7f0] rounded-xl p-4">
           <div className="flex justify-between text-sm mb-2">
             <span className="text-[#1a472a] font-medium">Total Contributions</span>
-            <span className="text-[#1a472a]/60">
+            <span className="text-[#1a472a]/80">
               {formatCurrency(acceptedTotals.total + pendingTotals.total, currencySymbol)} / {formatCurrency(targetAmount, currencySymbol)}
             </span>
           </div>
@@ -253,7 +253,7 @@ export default function ContributionAggregation({
         <div className="bg-[#f0f7f0] rounded-xl p-4">
           <div className="flex justify-between text-sm mb-2">
             <span className="text-[#1a472a] font-medium">Financial Contributions</span>
-            <span className="text-[#1a472a]/60">
+            <span className="text-[#1a472a]/80">
               {formatCurrency(acceptedTotals.financial + pendingTotals.financial, currencySymbol)} / {formatCurrency(targetAmount * 0.2, currencySymbol)} (20% target)
             </span>
           </div>
@@ -303,7 +303,7 @@ export default function ContributionAggregation({
       {/* Proposals List */}
       <div className="space-y-3">
         {filteredProposals.length === 0 ? (
-          <div className="text-center py-8 text-[#1a472a]/60">
+          <div className="text-center py-8 text-[#1a472a]/80">
             No {filterStatus === 'all' ? '' : filterStatus} proposals yet.
           </div>
         ) : (
@@ -344,13 +344,13 @@ export default function ContributionAggregation({
                       </div>
                       <div>
                         <p className="font-medium text-[#1a472a]">{proposal.contributorName || 'Anonymous'}</p>
-                        <p className="text-xs text-[#1a472a]/60">{proposal.contributorEmail || 'No email provided'}</p>
+                        <p className="text-xs text-[#1a472a]/80">{proposal.contributorEmail || 'No email provided'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="font-bold text-[#1a472a]">{formatCurrency(totalValue, currencySymbol)}</p>
-                        <p className="text-xs text-[#1a472a]/60">
+                        <p className="text-xs text-[#1a472a]/80">
                           {formatCurrency(immediateValue, currencySymbol)} immediate + {formatCurrency(futureValue, currencySymbol)} future
                         </p>
                       </div>
@@ -364,9 +364,9 @@ export default function ContributionAggregation({
                         {proposal.status}
                       </div>
                       {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-[#1a472a]/40" />
+                        <ChevronUp className="w-5 h-5 text-[#1a472a]/80" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-[#1a472a]/40" />
+                        <ChevronDown className="w-5 h-5 text-[#1a472a]/80" />
                       )}
                     </div>
                   </div>
@@ -383,7 +383,7 @@ export default function ContributionAggregation({
                           Immediate Contributions
                         </h4>
                         {immediate.length === 0 ? (
-                          <p className="text-xs text-[#1a472a]/60">None</p>
+                          <p className="text-xs text-[#1a472a]/80">None</p>
                         ) : (
                           <div className="space-y-1">
                             {immediate.map((c: any, i: number) => (
@@ -403,7 +403,7 @@ export default function ContributionAggregation({
                           Future Value Commitments
                         </h4>
                         {future.length === 0 ? (
-                          <p className="text-xs text-[#1a472a]/60">None</p>
+                          <p className="text-xs text-[#1a472a]/80">None</p>
                         ) : (
                           <div className="space-y-1">
                             {future.map((c: any, i: number) => (

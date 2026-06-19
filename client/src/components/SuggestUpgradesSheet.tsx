@@ -439,17 +439,17 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="font-medium text-[#1a472a]">{role.name}</h4>
-                        <p className="text-xs text-[#1a472a]/60 mt-1">{role.description}</p>
+                        <p className="text-xs text-[#1a472a]/80 mt-1">{role.description}</p>
                       </div>
                       <div className="text-right flex-shrink-0 ml-3">
                         <p className="text-sm font-bold text-[#4a7c59]">${role.suggestedRate}/hr</p>
-                        <p className="text-xs text-[#1a472a]/50">
+                        <p className="text-xs text-[#1a472a]/80">
                           ~{role.typicalHours}hrs/wk × {role.typicalWeeks}wks
                         </p>
                       </div>
                     </div>
                     <div className="mt-2 pt-2 border-t border-[#1a472a]/10 flex items-center justify-between text-xs">
-                      <span className="text-[#1a472a]/50">Typical total value:</span>
+                      <span className="text-[#1a472a]/80">Typical total value:</span>
                       <span className="font-medium text-[#1a472a]">
                         ${(role.suggestedRate * role.typicalHours * role.typicalWeeks).toLocaleString()}
                       </span>
@@ -488,7 +488,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                     </h4>
                     <button
                       onClick={() => setShowAddIdea(false)}
-                      className="p-1 text-[#1a472a]/40 hover:text-[#1a472a] rounded"
+                      className="p-1 text-[#1a472a]/80 hover:text-[#1a472a] rounded"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -561,7 +561,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                           className={`flex flex-col items-center justify-center min-w-[50px] py-2 rounded-lg transition-all ${
                             hasVoted 
                               ? 'bg-[#7dd87d]/20 text-[#7dd87d] cursor-default' 
-                              : 'bg-[#f0f7f0] text-[#1a472a]/60 hover:bg-[#7dd87d]/10 hover:text-[#7dd87d] cursor-pointer'
+                              : 'bg-[#f0f7f0] text-[#1a472a]/80 hover:bg-[#7dd87d]/10 hover:text-[#7dd87d] cursor-pointer'
                           }`}
                         >
                           <ChevronUp className={`w-5 h-5 ${hasVoted ? 'text-[#7dd87d]' : ''}`} />
@@ -576,7 +576,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                             <h4 className="font-medium text-[#1a472a]">{idea.title}</h4>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {idea.isSample && (
-                                <span className="text-xs bg-[#1a472a]/10 text-[#1a472a]/60 px-2 py-0.5 rounded-full">
+                                <span className="text-xs bg-[#1a472a]/10 text-[#1a472a]/80 px-2 py-0.5 rounded-full">
                                   Sample
                                 </span>
                               )}
@@ -602,7 +602,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                                   return next;
                                 });
                               }}
-                              className="text-xs text-[#1a472a]/50 hover:text-[#7dd87d] flex items-center gap-1"
+                              className="text-xs text-[#1a472a]/80 hover:text-[#7dd87d] flex items-center gap-1"
                             >
                               <MessageSquare className="w-3 h-3" />
                               {idea.comments?.length || 0} comments
@@ -613,7 +613,7 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                                 {idea.comments?.map(comment => (
                                   <div key={comment.id} className="bg-[#f0f7f0] rounded p-2 text-xs">
                                     <p className="text-[#1a472a]/80">{comment.text}</p>
-                                    <p className="text-[#1a472a]/40 mt-1">{comment.author} - {comment.createdAt}</p>
+                                    <p className="text-[#1a472a]/80 mt-1">{comment.author} - {comment.createdAt}</p>
                                   </div>
                                 ))}
                                 <div className="flex gap-2">
@@ -687,14 +687,14 @@ export default function SuggestUpgradesSheet({ onSelectRole }: SuggestUpgradesSh
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <h4 className="font-medium text-[#1a472a]">{entry.date}</h4>
-                        <span className="text-xs text-[#1a472a]/60">Version {entry.version}</span>
+                        <span className="text-xs text-[#1a472a]/80">Version {entry.version}</span>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         entry.status === 'current' 
                           ? 'bg-[#7dd87d] text-[#1a472a]' 
                           : entry.status === 'planned'
                           ? 'bg-amber-200 text-amber-800'
-                          : 'bg-[#1a472a]/10 text-[#1a472a]/60'
+                          : 'bg-[#1a472a]/10 text-[#1a472a]/80'
                       }`}>
                         {entry.status === 'current' ? 'Current' : entry.status === 'planned' ? 'Planned' : 'Previous'}
                       </span>

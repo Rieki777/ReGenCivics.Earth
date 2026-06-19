@@ -201,7 +201,7 @@ export function SiteTour() {
                 onClick={() => sendMessage(prompt)}
                 className="w-full text-left text-xs text-white/70 hover:text-[#7dd87d] bg-[#1a472a]/60 hover:bg-[#1a472a] border border-[#7dd87d]/10 hover:border-[#7dd87d]/30 rounded-lg px-3 py-2 transition-colors flex items-center gap-2"
               >
-                <ChevronRight className="w-3 h-3 shrink-0 text-[#7dd87d]/60" />
+                <ChevronRight className="w-3 h-3 shrink-0 text-[#7dd87d]/80" />
                 {prompt}
               </button>
             ))}

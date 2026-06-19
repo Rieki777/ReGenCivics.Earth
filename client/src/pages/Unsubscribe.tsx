@@ -180,7 +180,7 @@ export default function Unsubscribe() {
           {/* Privacy note */}
           <div className="mt-6 pt-4 border-t border-white/10">
             <div className="flex items-start gap-2">
-              <Shield className="w-4 h-4 text-[#7dd87d]/60 flex-shrink-0 mt-0.5" />
+              <Shield className="w-4 h-4 text-[#7dd87d]/80 flex-shrink-0 mt-0.5" />
               <p className="text-white/60 text-xs leading-relaxed">
                 Your privacy matters. We process unsubscribe requests immediately and do not share your email with third parties.
                 For questions, reach out through our{" "}
@@ -188,7 +188,7 @@ export default function Unsubscribe() {
                   href="https://discord.gg/8aTzTxH3Qe"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#7dd87d]/60 underline hover:text-[#7dd87d]"
+                  className="text-[#7dd87d]/80 underline hover:text-[#7dd87d]"
                 >
                   Discord
                 </a>{" "}
@@ -197,7 +197,7 @@ export default function Unsubscribe() {
                   href="https://chat.whatsapp.com/KArQzEs0UQuLsGaLTvbp34"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#7dd87d]/60 underline hover:text-[#7dd87d]"
+                  className="text-[#7dd87d]/80 underline hover:text-[#7dd87d]"
                 >
                   WhatsApp
                 </a>{" "}
@@ -206,7 +206,7 @@ export default function Unsubscribe() {
                   href="https://t.me/SEEDS_Community"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#7dd87d]/60 underline hover:text-[#7dd87d]"
+                  className="text-[#7dd87d]/80 underline hover:text-[#7dd87d]"
                 >
                   Telegram
                 </a>{" "}

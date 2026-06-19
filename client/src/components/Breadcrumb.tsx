@@ -12,10 +12,10 @@ interface BreadcrumbItem {
 
 export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[#1a472a]/50 mb-4">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[#1a472a]/80 mb-4">
       {items.map((item, i) => (
         <span key={i} className="flex items-center gap-1">
-          {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#1a472a]/30" />}
+          {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#1a472a]/75" />}
           {item.href ? (
             <Link href={item.href} className="hover:text-[#1a472a] transition-colors">{item.label}</Link>
           ) : (

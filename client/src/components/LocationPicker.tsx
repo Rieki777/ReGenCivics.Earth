@@ -44,7 +44,7 @@ export function LocationPicker({ value, onChange, variant = "dark" }: LocationPi
     ? "text-xs px-2.5 py-1 rounded-full border transition-all"
     : "text-xs px-2.5 py-1 rounded-full border transition-all";
   const chipActive = isDark ? "bg-[#7dd87d] text-[#1a472a] border-[#7dd87d]" : "bg-[#1a472a] text-white border-[#1a472a]";
-  const chipInactive = isDark ? "bg-white/5 text-white/70 border-white/15 hover:bg-white/10" : "bg-white text-[#1a472a]/60 border-[#1a472a]/20 hover:bg-[#f0f7f0]";
+  const chipInactive = isDark ? "bg-white/5 text-white/70 border-white/15 hover:bg-white/10" : "bg-white text-[#1a472a]/80 border-[#1a472a]/20 hover:bg-[#f0f7f0]";
 
   const handleLatBlur = () => {
     const parsed = parseFloat(latStr);

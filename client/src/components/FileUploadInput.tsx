@@ -151,7 +151,7 @@ export function FileUploadInput({
           {isUploading ? (
             <>
               <Loader2 className="w-6 h-6 text-[#7dd87d] animate-spin" />
-              <span className="text-sm text-[#1a472a]/60">Uploading...</span>
+              <span className="text-sm text-[#1a472a]/80">Uploading...</span>
             </>
           ) : (
             <>
@@ -160,7 +160,7 @@ export function FileUploadInput({
                 <p className="text-sm font-medium text-[#1a472a]">
                   Click to upload or drag files
                 </p>
-                <p className="text-xs text-[#1a472a]/50 mt-1">
+                <p className="text-xs text-[#1a472a]/80 mt-1">
                   Images, PDFs, and documents up to {formatFileSize(maxSize)}
                 </p>
               </div>
@@ -197,7 +197,7 @@ export function FileUploadInput({
                   <p className="text-sm font-medium text-[#1a472a] truncate">
                     {file.name}
                   </p>
-                  <p className="text-xs text-[#1a472a]/50">
+                  <p className="text-xs text-[#1a472a]/80">
                     {formatFileSize(file.size)}
                   </p>
                 </div>

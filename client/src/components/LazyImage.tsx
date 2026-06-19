@@ -41,7 +41,7 @@ export function LazyImage({ src, alt, className = "", aspect, placeholder, fallb
   // When image fails: try fallback, or show a styled placeholder
   const errorFallback = (
     <div
-      className="flex items-center justify-center bg-gradient-to-br from-[#1a472a]/20 to-[#4a7c59]/20 rounded text-[#1a472a]/40"
+      className="flex items-center justify-center bg-gradient-to-br from-[#1a472a]/20 to-[#4a7c59]/20 rounded text-[#1a472a]/80"
       style={{ aspectRatio: aspect || "16/9", width: "100%" }}
     >
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

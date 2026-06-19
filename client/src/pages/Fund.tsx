@@ -184,7 +184,7 @@ export default function Fund() {
               <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Fund In Formation, Currently Accepting LOIs</span>
             </div>
-            <span className="hidden sm:inline text-[#1a472a]/60">|</span>
+            <span className="hidden sm:inline text-[#1a472a]">|</span>
             <Link href="/loi">
               <Button
                 size="sm"

@@ -236,7 +236,10 @@ export default function AutoplayVideo({
             {/* Play button or Coming Soon badge */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               {comingSoon ? (
-                <div className="px-5 py-2.5 rounded-full bg-amber-500/90 text-[#1a472a] font-bold text-sm md:text-base shadow-lg"
+                // Solid amber bg (not /90) so the dark-green text reads
+                // at full WCAG contrast regardless of what's behind the
+                // video poster. Audit 2026-05-29 P3.
+                <div className="px-5 py-2.5 rounded-full bg-amber-400 text-[#1a472a] font-bold text-sm md:text-base shadow-lg"
                   style={{ fontFamily: "var(--font-accent)" }}>
                   Video Coming Soon
                 </div>

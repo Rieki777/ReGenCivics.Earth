@@ -335,7 +335,7 @@ export function EmailTemplateSelector({
           </p>
           <button
             onClick={() => setIsComposing(false)}
-            className="text-[#1a472a]/40 hover:text-[#1a472a] transition-colors"
+            className="text-[#1a472a]/80 hover:text-[#1a472a] transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -343,7 +343,7 @@ export function EmailTemplateSelector({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="space-y-1">
-            <Label className="text-[10px] text-[#1a472a]/60 uppercase tracking-wide">Template</Label>
+            <Label className="text-[10px] text-[#1a472a]/80 uppercase tracking-wide">Template</Label>
             <Select
               value={selectedTemplateId}
               onValueChange={(v) => loadTemplate(v as TemplateType)}
@@ -367,7 +367,7 @@ export function EmailTemplateSelector({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-[10px] text-[#1a472a]/60 uppercase tracking-wide">Subject</Label>
+            <Label className="text-[10px] text-[#1a472a]/80 uppercase tracking-wide">Subject</Label>
             <Input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
@@ -379,10 +379,10 @@ export function EmailTemplateSelector({
 
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <Label className="text-[10px] text-[#1a472a]/60 uppercase tracking-wide">
+            <Label className="text-[10px] text-[#1a472a]/80 uppercase tracking-wide">
               Body (editable)
             </Label>
-            <span className="text-[10px] text-[#1a472a]/40 flex items-center gap-1">
+            <span className="text-[10px] text-[#1a472a]/80 flex items-center gap-1">
               <Zap className="w-2.5 h-2.5" /> Quick inserts:
             </span>
           </div>

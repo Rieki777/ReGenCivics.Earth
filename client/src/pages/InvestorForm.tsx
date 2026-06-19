@@ -555,7 +555,7 @@ export default function InvestorForm() {
                           Investor Verification
                         </h3>
                       </div>
-                      <p className="text-sm text-[#1a472a]/60 mb-4">
+                      <p className="text-sm text-[#1a472a]/80 mb-4">
                         The following confirmations are required before accessing investment materials.
                       </p>
                       

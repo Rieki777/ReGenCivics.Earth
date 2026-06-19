@@ -57,7 +57,7 @@ function KanbanCard({
       className="bg-white border border-[#1a472a]/10 rounded-lg p-2.5 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow select-none"
     >
       <p className="text-xs font-semibold text-[#1a472a] truncate">{name}</p>
-      {subtitle && <p className="text-[10px] text-[#1a472a]/50 truncate mt-0.5">{subtitle}</p>}
+      {subtitle && <p className="text-[10px] text-[#1a472a]/80 truncate mt-0.5">{subtitle}</p>}
     </div>
   );
 }
@@ -103,7 +103,7 @@ function KanbanColumn({
         ))}
         {items.length === 0 && (
           <div className="h-16 rounded-lg border-2 border-dashed border-[#1a472a]/10 flex items-center justify-center">
-            <span className="text-[10px] text-[#1a472a]/30">Drop here</span>
+            <span className="text-[10px] text-[#1a472a]/75">Drop here</span>
           </div>
         )}
       </div>
@@ -237,7 +237,7 @@ function Section({
       >
         <Icon className="w-4 h-4" />
         {title}
-        <span className="text-xs font-normal text-[#1a472a]/50">({count})</span>
+        <span className="text-xs font-normal text-[#1a472a]/80">({count})</span>
         <ChevronDown className={`w-3.5 h-3.5 ml-auto transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
       {open && children}

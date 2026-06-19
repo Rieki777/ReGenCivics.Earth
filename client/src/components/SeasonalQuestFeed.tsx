@@ -139,7 +139,7 @@ export function SeasonalQuestFeed({ forceSeason }: SeasonalQuestFeedProps = {}) 
               </p>
             </div>
             {/* Hemisphere toggle */}
-            <p className="text-xs text-[#1a472a]/50 shrink-0">
+            <p className="text-xs text-[#1a472a]/80 shrink-0">
               Detected: {capitalize(hemisphere)} hemisphere.{" "}
               {!loading && (
                 <button

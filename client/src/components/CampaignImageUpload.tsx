@@ -178,7 +178,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           Campaign Photos ({imageCount}/{maxImages})
         </label>
         {imageCount > 0 && (
-          <span className="text-xs text-[#1a472a]/60">
+          <span className="text-xs text-[#1a472a]/80">
             Tap the star to set a cover image
           </span>
         )}
@@ -205,7 +205,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           placeholder="Caption (optional)"
           value={uploadCaption}
           onChange={(e) => setUploadCaption(e.target.value)}
-          className="flex-1 bg-white border-[#1a472a]/20 text-[#1a472a] placeholder:text-[#1a472a]/40"
+          className="flex-1 bg-white border-[#1a472a]/20 text-[#1a472a] placeholder:text-[#1a472a]/80"
           maxLength={500}
         />
       </div>
@@ -238,8 +238,8 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
             </div>
           ) : imageCount >= maxImages ? (
             <div className="flex flex-col items-center gap-2">
-              <Camera className="w-8 h-8 text-[#1a472a]/30" />
-              <p className="text-sm text-[#1a472a]/50">Maximum images reached</p>
+              <Camera className="w-8 h-8 text-[#1a472a]/75" />
+              <p className="text-sm text-[#1a472a]/80">Maximum images reached</p>
             </div>
           ) : (
             <>
@@ -247,7 +247,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
               <p className="text-sm text-[#1a472a]/70">
                 Drop images here or tap to browse
               </p>
-              <p className="text-xs text-[#1a472a]/50 mt-1">
+              <p className="text-xs text-[#1a472a]/80 mt-1">
                 JPEG, PNG, WebP, or GIF. Max 5MB each.
               </p>
             </>
@@ -338,7 +338,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
 
       {/* Tip */}
       {imageCount === 0 && (
-        <p className="text-xs text-[#1a472a]/50 text-center">
+        <p className="text-xs text-[#1a472a]/80 text-center">
           Add photos of your land, team, and progress to make your campaign more compelling.
           The first image you upload will automatically become your cover photo.
         </p>

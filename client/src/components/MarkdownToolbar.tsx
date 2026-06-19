@@ -247,7 +247,7 @@ export function MarkdownToolbar({ textareaRef, value, onChange, compact = false 
                   <button
                     type="button"
                     onClick={() => handleAction(action)}
-                    className="p-1.5 rounded-md text-[#1a472a]/50 hover:text-[#1a472a] hover:bg-[#7dd87d]/20 transition-colors focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
+                    className="p-1.5 rounded-md text-[#1a472a]/80 hover:text-[#1a472a] hover:bg-[#7dd87d]/20 transition-colors focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
                     aria-label={action.label}
                   >
                     <Icon className={compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} />

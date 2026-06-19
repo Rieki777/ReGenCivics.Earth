@@ -157,7 +157,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
     return (
       <LockedQuestCard title={quest.title} subtitle={quest.subtitle}>
         {quest.deliverable && (
-          <p className="text-xs text-[#1a472a]/30 mt-2 italic">{quest.deliverable}</p>
+          <p className="text-xs text-[#1a472a]/75 mt-2 italic">{quest.deliverable}</p>
         )}
       </LockedQuestCard>
     );
@@ -303,7 +303,7 @@ const QuestCard = React.memo(function QuestCard({ quest, colorClass, onOpenDetai
           <div className="flex items-center gap-2 text-xs mb-3 flex-wrap">
             <span className="px-2 py-0.5 bg-[#7dd87d]/30 text-[#1a472a] rounded-full font-semibold">+{quest.reward.regen} $ReGen</span>
             <span className="px-2 py-0.5 bg-[#7dd87d] text-[#1a472a] rounded-full font-semibold">+{quest.reward.rvoice} RGVoice</span>
-            <span className="px-2 py-0.5 bg-[#1a472a]/5 text-[#1a472a]/60 rounded-full flex items-center gap-1">
+            <span className="px-2 py-0.5 bg-[#1a472a]/5 text-[#1a472a]/80 rounded-full flex items-center gap-1">
               <Clock className="w-3 h-3" /> {masterContent?.timeEstimate || 'Ongoing'}
             </span>
           </div>
@@ -563,7 +563,7 @@ function ContinueYourJourneyBanner() {
         )}
         {/* Progress bar */}
         <div className="max-w-md mx-auto">
-          <div className="flex items-center justify-between text-xs text-[#1a472a]/60 mb-1">
+          <div className="flex items-center justify-between text-xs text-[#1a472a]/80 mb-1">
             <span>{completedRites} of {totalRites} Rites completed</span>
             <span>{progressPct}%</span>
           </div>
@@ -1093,7 +1093,7 @@ export default function Quest() {
                   className="text-3xl md:text-4xl font-bold text-[#1a472a] text-left"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  Why <span className="text-[#7dd87d]">Quests?</span>
+                  Why <span className="text-[#2d5a3d]">Quests?</span>
                 </h2>
                 <ChevronDown className={`w-8 h-8 text-[#7dd87d] transition-transform duration-300 ${whyQuestsExpanded ? 'rotate-180' : ''}`} />
               </div>
@@ -1232,7 +1232,7 @@ export default function Quest() {
               className="text-3xl md:text-4xl font-bold mb-8 text-[#1a472a] text-center"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Start Your <span className="text-[#7dd87d]">Journey</span>
+              Start Your <span className="text-[#2d5a3d]">Journey</span>
             </h2>
             
             {/* Quest 0 - Flip Card */}
@@ -1333,7 +1333,7 @@ export default function Quest() {
             className="text-3xl md:text-4xl font-bold mb-4 text-[#1a472a] text-center"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Rites &amp; Quests by <span className="text-[#7dd87d]">Season</span> <ForYouLabel label="Track Progress" />
+            Rites &amp; Quests by <span className="text-[#2d5a3d]">Season</span> <ForYouLabel label="Track Progress" />
           </h2>
           <p className="text-center text-[#1a472a]/70 max-w-2xl mx-auto mb-6">
             Each season combines Rites of Passage (gold cards) with seasonal depth quests. Quests can be done at any time and in any order. <strong>A key focus is growing and having fun!</strong>
@@ -1557,7 +1557,7 @@ export default function Quest() {
       <EpicQuestSection />
 
       {/* Quest Journal Prompt */}
-      <div className="text-center py-8 text-[#1a472a]/60 text-sm">
+      <div className="text-center py-8 text-[#1a472a]/80 text-sm">
         <Link href="/profile?tab=quests" className="hover:text-[#1a472a] underline">
           Your quest completions live in your profile →
         </Link>

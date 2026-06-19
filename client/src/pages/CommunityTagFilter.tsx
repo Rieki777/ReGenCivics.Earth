@@ -94,7 +94,7 @@ export default function CommunityTagFilter() {
   if (!validTag) {
     return (
       <div className="min-h-screen bg-[#f8f5f0] flex items-center justify-center">
-        <p className="text-[#1a472a]/60">Unknown tag.</p>
+        <p className="text-[#1a472a]/80">Unknown tag.</p>
       </div>
     );
   }
@@ -146,7 +146,7 @@ export default function CommunityTagFilter() {
               <h2 className="text-lg font-bold text-[#1a472a] mb-2" style={{ fontFamily: "var(--font-display)" }}>
                 No posts yet
               </h2>
-              <p className="text-[#1a472a]/60 text-sm mb-4" style={{ fontFamily: "var(--font-body)" }}>
+              <p className="text-[#1a472a]/80 text-sm mb-4" style={{ fontFamily: "var(--font-body)" }}>
                 Be the first to tag a post with {meta.label}.
               </p>
               <Link href="/community/new">
@@ -188,10 +188,10 @@ export default function CommunityTagFilter() {
                                 {parsedTags.map(t => <PostTagBadge key={t} tag={t} />)}
                               </div>
                             )}
-                            <p className="text-[#1a472a]/50 text-xs line-clamp-1 mb-1.5" style={{ fontFamily: "var(--font-body)" }}>
+                            <p className="text-[#1a472a]/80 text-xs line-clamp-1 mb-1.5" style={{ fontFamily: "var(--font-body)" }}>
                               {post.content.replace(/[#*_~`]/g, "").slice(0, 120)}
                             </p>
-                            <div className="flex items-center gap-3 text-[#1a472a]/40 text-xs" style={{ fontFamily: "var(--font-body)" }}>
+                            <div className="flex items-center gap-3 text-[#1a472a]/80 text-xs" style={{ fontFamily: "var(--font-body)" }}>
                               <span className="font-medium text-[#4a7c59]/70">{post.authorName}</span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />

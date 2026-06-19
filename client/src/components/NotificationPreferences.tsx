@@ -232,12 +232,12 @@ export function NotificationPreferences() {
                           {type.label}
                         </Label>
                         {isExpanded ? (
-                          <ChevronUp className="w-3.5 h-3.5 text-[#1a472a]/40" />
+                          <ChevronUp className="w-3.5 h-3.5 text-[#1a472a]/80" />
                         ) : (
-                          <ChevronDown className="w-3.5 h-3.5 text-[#1a472a]/40" />
+                          <ChevronDown className="w-3.5 h-3.5 text-[#1a472a]/80" />
                         )}
                       </div>
-                      <p className="text-xs text-[#1a472a]/50 mt-0.5 line-clamp-1">
+                      <p className="text-xs text-[#1a472a]/80 mt-0.5 line-clamp-1">
                         {type.description}
                       </p>
                     </div>
@@ -255,12 +255,12 @@ export function NotificationPreferences() {
                   <div className="px-4 pb-4 pt-0">
                     <div className="ml-12 border-t border-[#1a472a]/10 pt-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <Mail className="w-3.5 h-3.5 text-[#1a472a]/50" />
+                        <Mail className="w-3.5 h-3.5 text-[#1a472a]/80" />
                         <span className="text-xs font-medium text-[#1a472a]/70">
                           Email Routing
                         </span>
                       </div>
-                      <p className="text-xs text-[#1a472a]/50 mb-2">
+                      <p className="text-xs text-[#1a472a]/80 mb-2">
                         Comma-separated email addresses. Leave empty to use default
                         owner notifications.
                       </p>

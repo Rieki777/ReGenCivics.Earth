@@ -264,14 +264,14 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What would you like to offer the ecosystem?</label>
             <p className="text-xs text-[#1a472a]/70 mb-2">Skills, resources, wisdom, connections…</p>
             <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className="border-[#1a472a]/20 min-h-[70px]" />
-            <p className="text-xs text-[#1a472a]/50 mt-1.5">Your gifts and needs will be added to the <a href="/marketplace" className="underline hover:text-[#1a472a]/80">Gifts + Needs Marketplace</a>, where others in the network can find and connect with you.</p>
+            <p className="text-xs text-[#1a472a]/80 mt-1.5">Your gifts and needs will be added to the <a href="/marketplace" className="underline hover:text-[#1a472a]/80">Gifts + Needs Marketplace</a>, where others in the network can find and connect with you.</p>
           </div>
           <div>
-            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you dreaming of building or becoming? <span className="text-[#1a472a]/50 font-normal">(optional)</span></label>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you dreaming of building or becoming? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
             <Textarea value={dreamingOf} onChange={e => { setDreamingOf(e.target.value); persist('dreamingOf', e.target.value); }} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals rather than harms..." className="border-[#1a472a]/20 min-h-[60px]" />
           </div>
           <div>
-            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion(s) do you call home? <span className="text-[#1a472a]/50 font-normal">(optional)</span></label>
+            <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion(s) do you call home? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
             <BioregionSelect
               value={bioregionId}
               onChange={(id) => {
@@ -449,7 +449,7 @@ function LinkBaseAccountDialog({ onSuccess }: { onSuccess: () => void }) {
               value={baseAccountName}
               onChange={(e) => setBaseAccountName(e.target.value)}
               placeholder="e.g., 0xaAaF...354e"
-              className="font-mono text-[#1a472a] placeholder:text-[#1a472a]/40"
+              className="font-mono text-[#1a472a] placeholder:text-[#1a472a]/80"
               required
             />
           </div>
@@ -576,7 +576,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           }
           return (
             <div>
-              <h3 className="text-sm font-medium text-[#1a472a]/60 mb-2">About</h3>
+              <h3 className="text-sm font-medium text-[#1a472a]/80 mb-2">About</h3>
               <p className="text-[#1a472a]">{profile.bio}</p>
             </div>
           );
@@ -589,11 +589,11 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#f0ebe3] rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-[#7dd87d]">{profile.rvoiceBalance || 0}</p>
-              <p className="text-sm text-[#1a472a]/60">RGVoice Tokens</p>
+              <p className="text-sm text-[#1a472a]/80">RGVoice Tokens</p>
             </div>
             <div className="bg-[#f0ebe3] rounded-lg p-4 text-center">
               <p className="text-2xl font-bold text-[#7dd87d]">{profile.rgenBalance || 0}</p>
-              <p className="text-sm text-[#1a472a]/60">ReGen Tokens</p>
+              <p className="text-sm text-[#1a472a]/80">ReGen Tokens</p>
             </div>
           </div>
         )}
@@ -609,7 +609,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
                 {syncIsPending ? "Syncing..." : "Refresh balances"}
               </button>
               {profile.lastTokenSync && (
-                <span className="text-[#1a472a]/30 text-xs">
+                <span className="text-[#1a472a]/75 text-xs">
                   Updated {new Date(profile.lastTokenSync).toLocaleTimeString()}
                 </span>
               )}
@@ -654,7 +654,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
         {/* Badges */}
         {badges.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-[#1a472a]/60 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-medium text-[#1a472a]/80 mb-3 flex items-center gap-2">
               <Trophy className="w-4 h-4" />
               Badges Earned
             </h3>
@@ -679,7 +679,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
         
         {/* Blockchain Connection */}
         <div className="border-t border-[#1a472a]/10 pt-4">
-          <h3 className="text-sm font-medium text-[#1a472a]/60 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-medium text-[#1a472a]/80 mb-3 flex items-center gap-2">
             <Wallet className="w-4 h-4" />
             Blockchain Connection
           </h3>
@@ -687,7 +687,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           {profile.baseAccountName ? (
             <div className="flex items-center justify-between bg-[#f0ebe3] rounded-lg p-3">
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-[#1a472a]/60">Base Blockchain Account</p>
+                <p className="text-xs text-[#1a472a]/80">Base Blockchain Account</p>
                 <p className="font-mono text-[#1a472a] truncate">{profile.baseAccountName}</p>
               </div>
               <div className="flex items-center gap-1 ml-2 shrink-0">
@@ -696,7 +696,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
                   variant="ghost"
                   size="sm"
                   onClick={copyWalletAddress}
-                  className="text-[#1a472a]/60 h-8 w-8 p-0"
+                  className="text-[#1a472a]/80 h-8 w-8 p-0"
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </Button>
@@ -705,7 +705,7 @@ function ProfileCard({ profile, isOwner, onUpdate, onSyncTokens, syncIsPending, 
           ) : (
             <div className="text-center py-4">
               <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-              <p className="text-[#1a472a]/60 text-sm mb-3">No blockchain account linked</p>
+              <p className="text-[#1a472a]/80 text-sm mb-3">No blockchain account linked</p>
               {isOwner && <LinkBaseAccountDialog onSuccess={onUpdate} />}
             </div>
           )}
@@ -1613,7 +1613,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="text-xs text-[#7dd87d]/60 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
+        className="text-xs text-[#7dd87d]/80 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
       >
         <Edit className="w-3 h-3" /> Edit listing details
       </button>

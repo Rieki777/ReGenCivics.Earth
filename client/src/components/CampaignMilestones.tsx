@@ -213,7 +213,7 @@ export function CampaignMilestones({ campaign, contributions, currency }: Campai
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   milestone.past
                     ? "bg-[#4a7c59] text-white"
-                    : "bg-white border-2 border-[#1a472a]/20 text-[#1a472a]/30"
+                    : "bg-white border-2 border-[#1a472a]/20 text-[#1a472a]/75"
                 }`}>
                   {milestone.past ? (
                     <CheckCircle2 className="w-4 h-4" />
@@ -227,14 +227,14 @@ export function CampaignMilestones({ campaign, contributions, currency }: Campai
               </div>
               {/* Right column: content */}
               <div className={`pb-6 min-w-0 ${isLast ? "" : ""}`}>
-                <p className={`text-xs font-medium mb-0.5 ${milestone.past ? "text-[#4a7c59]" : "text-[#1a472a]/40"}`}>
+                <p className={`text-xs font-medium mb-0.5 ${milestone.past ? "text-[#4a7c59]" : "text-[#1a472a]/80"}`}>
                   {milestone.past ? formatMilestoneDate(milestone.date) : "Upcoming"}
                 </p>
-                <p className={`font-semibold text-sm ${milestone.past ? "text-[#1a472a]" : "text-[#1a472a]/50"}`}>
+                <p className={`font-semibold text-sm ${milestone.past ? "text-[#1a472a]" : "text-[#1a472a]/80"}`}>
                   {milestone.label}
                 </p>
                 {milestone.subtext && (
-                  <p className={`text-xs mt-0.5 ${milestone.past ? "text-[#1a472a]/60" : "text-[#1a472a]/35"}`}>
+                  <p className={`text-xs mt-0.5 ${milestone.past ? "text-[#1a472a]/80" : "text-[#1a472a]/35"}`}>
                     {milestone.subtext}
                   </p>
                 )}

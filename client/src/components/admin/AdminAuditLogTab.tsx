@@ -74,17 +74,17 @@ export function AdminAuditLogTab() {
       <CardContent className="p-0">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[#1a472a]/40" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#1a472a]/80" />
           </div>
         )}
         {!isLoading && filtered.length === 0 && (
-          <p className="text-center text-[#1a472a]/50 text-sm py-12">No admin actions recorded yet.</p>
+          <p className="text-center text-[#1a472a]/80 text-sm py-12">No admin actions recorded yet.</p>
         )}
         {!isLoading && filtered.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#1a472a]/10 text-xs uppercase tracking-wide text-[#1a472a]/50">
+                <tr className="border-b border-[#1a472a]/10 text-xs uppercase tracking-wide text-[#1a472a]/80">
                   <th className="text-left px-4 py-2.5 font-medium">Date</th>
                   <th className="text-left px-4 py-2.5 font-medium">Admin</th>
                   <th className="text-left px-4 py-2.5 font-medium">Action</th>
@@ -129,7 +129,7 @@ export function AdminAuditLogTab() {
                         <td className="px-4 py-3">
                           {entry.metadata && (
                             <ChevronDown
-                              className={`w-4 h-4 text-[#1a472a]/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                              className={`w-4 h-4 text-[#1a472a]/80 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                             />
                           )}
                         </td>

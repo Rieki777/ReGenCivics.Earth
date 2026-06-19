@@ -1113,7 +1113,7 @@ export default function Connect() {
                 so all our communications are relevant to you.
               </p>
               
-              <p className="text-sm text-[#7dd87d]/60 mt-4" style={{ fontFamily: 'var(--font-accent)' }}>
+              <p className="text-sm text-[#7dd87d]/80 mt-4" style={{ fontFamily: 'var(--font-accent)' }}>
                 If more than one applies, feel free to fill out this form multiple times.
               </p>
             </div>

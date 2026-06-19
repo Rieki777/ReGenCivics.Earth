@@ -34,12 +34,12 @@ export function ApplicationTimeline({ applicationId }: Props) {
   const { data: events, isLoading } = trpc.admin.getApplicationEvents.useQuery({ applicationId });
 
   if (isLoading) {
-    return <div className="text-xs text-[#1a472a]/50 py-2">Loading timeline...</div>;
+    return <div className="text-xs text-[#1a472a]/80 py-2">Loading timeline...</div>;
   }
 
   if (!events || events.length === 0) {
     return (
-      <div className="text-xs text-[#1a472a]/40 py-2 italic">
+      <div className="text-xs text-[#1a472a]/80 py-2 italic">
         No events recorded yet.
       </div>
     );
@@ -47,7 +47,7 @@ export function ApplicationTimeline({ applicationId }: Props) {
 
   return (
     <div className="space-y-2 mt-3">
-      <h4 className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wider">
+      <h4 className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wider">
         Activity Timeline
       </h4>
       <div className="relative pl-4 border-l-2 border-[#1a472a]/10 space-y-3">
@@ -61,7 +61,7 @@ export function ApplicationTimeline({ applicationId }: Props) {
               </div>
               <div className="ml-2">
                 <p className="text-xs text-[#1a472a]">{event.description}</p>
-                <p className="text-[10px] text-[#1a472a]/40 mt-0.5">
+                <p className="text-[10px] text-[#1a472a]/80 mt-0.5">
                   {event.createdAt ? formatAge(event.createdAt) : ""}
                 </p>
               </div>

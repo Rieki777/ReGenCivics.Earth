@@ -76,7 +76,7 @@ export default function CommunitySeekingTeam() {
           ) : !posts || posts.length === 0 ? (
             <div className="text-center py-12">
               <Users className="w-12 h-12 text-[#4a7c59]/30 mx-auto mb-3" />
-              <p className="text-[#1a472a]/60 mb-4" style={{ fontFamily: "var(--font-body)" }}>
+              <p className="text-[#1a472a]/80 mb-4" style={{ fontFamily: "var(--font-body)" }}>
                 No team posts yet. Are you building something and looking for collaborators?
               </p>
               {isAuthenticated ? (
@@ -110,7 +110,7 @@ export default function CommunitySeekingTeam() {
                           <h3 className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors" style={{ fontFamily: "var(--font-display)" }}>
                             {post.title}
                           </h3>
-                          <div className="flex items-center gap-3 mt-1.5 text-[#1a472a]/40 text-xs">
+                          <div className="flex items-center gap-3 mt-1.5 text-[#1a472a]/80 text-xs">
                             <span>{post.authorName}</span>
                             <span className="flex items-center gap-0.5">
                               <Clock className="w-3 h-3" />

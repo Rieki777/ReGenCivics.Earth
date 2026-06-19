@@ -139,7 +139,7 @@ export function LOIManager() {
                 style={{ width: `${Math.min(((stats?.totalAmount || 0) / 20000000) * 100, 100)}%` }}
               />
             </div>
-            <p className="text-xs text-[#1a472a]/60 mt-1">
+            <p className="text-xs text-[#1a472a]/80 mt-1">
               {((stats?.totalAmount || 0) / 20000000 * 100).toFixed(1)}% of target reached
             </p>
           </div>
@@ -164,7 +164,7 @@ export function LOIManager() {
         </CardHeader>
         <CardContent>
           {!lois || lois.length === 0 ? (
-            <div className="text-center py-12 text-[#1a472a]/60">
+            <div className="text-center py-12 text-[#1a472a]/80">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No LOIs submitted yet</p>
             </div>
@@ -256,28 +256,28 @@ export function LOIManager() {
                   <h3 className="font-bold text-[#1a472a]">Contact Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-[#1a472a]/60">Name:</span>
+                      <span className="text-[#1a472a]/80">Name:</span>
                       <p className="font-medium text-[#1a472a]">{selectedLOI.fullName}</p>
                     </div>
                     <div>
-                      <span className="text-[#1a472a]/60">Email:</span>
+                      <span className="text-[#1a472a]/80">Email:</span>
                       <p className="font-medium text-[#1a472a]">{selectedLOI.email}</p>
                     </div>
                     {selectedLOI.phone && (
                       <div>
-                        <span className="text-[#1a472a]/60">Phone:</span>
+                        <span className="text-[#1a472a]/80">Phone:</span>
                         <p className="font-medium text-[#1a472a]">{selectedLOI.phone}</p>
                       </div>
                     )}
                     {selectedLOI.organization && (
                       <div>
-                        <span className="text-[#1a472a]/60">Organization:</span>
+                        <span className="text-[#1a472a]/80">Organization:</span>
                         <p className="font-medium text-[#1a472a]">{selectedLOI.organization}</p>
                       </div>
                     )}
                     {selectedLOI.role && (
                       <div>
-                        <span className="text-[#1a472a]/60">Role:</span>
+                        <span className="text-[#1a472a]/80">Role:</span>
                         <p className="font-medium text-[#1a472a]">{selectedLOI.role}</p>
                       </div>
                     )}
@@ -289,19 +289,19 @@ export function LOIManager() {
                   <h3 className="font-bold text-[#1a472a]">Investment Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-[#1a472a]/60">Pledge Amount:</span>
+                      <span className="text-[#1a472a]/80">Pledge Amount:</span>
                       <p className="font-bold text-[#7dd87d] text-lg">
                         ${selectedLOI.pledgeAmount.toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <span className="text-[#1a472a]/60">Investor Type:</span>
+                      <span className="text-[#1a472a]/80">Investor Type:</span>
                       <p className="font-medium text-[#1a472a]">
                         {investorTypeLabels[selectedLOI.investorType]}
                       </p>
                     </div>
                     <div className="md:col-span-2">
-                      <span className="text-[#1a472a]/60">Investment Timeline:</span>
+                      <span className="text-[#1a472a]/80">Investment Timeline:</span>
                       <p className="font-medium text-[#1a472a]">
                         {timelineLabels[selectedLOI.investmentTimeline]}
                       </p>
@@ -315,13 +315,13 @@ export function LOIManager() {
                     <h3 className="font-bold text-[#1a472a]">Preferences</h3>
                     {selectedLOI.geographicPreference && (
                       <div>
-                        <span className="text-[#1a472a]/60 text-sm">Geographic Preference:</span>
+                        <span className="text-[#1a472a]/80 text-sm">Geographic Preference:</span>
                         <p className="text-[#1a472a]">{selectedLOI.geographicPreference}</p>
                       </div>
                     )}
                     {selectedLOI.sectorInterests && (
                       <div>
-                        <span className="text-[#1a472a]/60 text-sm">Sector Interests:</span>
+                        <span className="text-[#1a472a]/80 text-sm">Sector Interests:</span>
                         <p className="text-[#1a472a]">{selectedLOI.sectorInterests}</p>
                       </div>
                     )}
@@ -334,25 +334,25 @@ export function LOIManager() {
                     <h3 className="font-bold text-[#1a472a]">Additional Information</h3>
                     {selectedLOI.motivations && (
                       <div>
-                        <span className="text-[#1a472a]/60 text-sm">Motivations:</span>
+                        <span className="text-[#1a472a]/80 text-sm">Motivations:</span>
                         <p className="text-[#1a472a]">{selectedLOI.motivations}</p>
                       </div>
                     )}
                     {selectedLOI.questionsForTeam && (
                       <div>
-                        <span className="text-[#1a472a]/60 text-sm">Questions:</span>
+                        <span className="text-[#1a472a]/80 text-sm">Questions:</span>
                         <p className="text-[#1a472a]">{selectedLOI.questionsForTeam}</p>
                       </div>
                     )}
                     {selectedLOI.additionalNotes && (
                       <div>
-                        <span className="text-[#1a472a]/60 text-sm">Additional Notes:</span>
+                        <span className="text-[#1a472a]/80 text-sm">Additional Notes:</span>
                         <p className="text-[#1a472a]">{selectedLOI.additionalNotes}</p>
                       </div>
                     )}
                     {selectedLOI.referralSource && (
                       <div>
-                        <span className="text-[#1a472a]/60 text-sm">Referral Source:</span>
+                        <span className="text-[#1a472a]/80 text-sm">Referral Source:</span>
                         <p className="text-[#1a472a]">{selectedLOI.referralSource}</p>
                       </div>
                     )}

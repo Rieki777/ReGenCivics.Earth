@@ -43,7 +43,7 @@ export function SeasonProgressRing({ completedSeasons, className = "", compact =
                 }`}
               />
               {!compact && (
-                <span className={`text-[9px] font-medium ${done ? "text-[#7dd87d]" : "text-[#1a472a]/40"}`}>
+                <span className={`text-[9px] font-medium ${done ? "text-[#7dd87d]" : "text-[#1a472a]/80"}`}>
                   {season.label}
                 </span>
               )}
@@ -51,7 +51,7 @@ export function SeasonProgressRing({ completedSeasons, className = "", compact =
           );
         })}
       </div>
-      <span className={`text-xs ${allDone ? "text-[#7dd87d] font-semibold" : "text-[#1a472a]/50"}`}>
+      <span className={`text-xs ${allDone ? "text-[#7dd87d] font-semibold" : "text-[#1a472a]/80"}`}>
         {allDone ? "All seasons complete" : `${completed} of 4 seasons`}
       </span>
     </div>

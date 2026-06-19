@@ -3,7 +3,7 @@
  *
  * Shows the total (public + private) as the big number, compacted to K/M
  * when large. Under the total, an inline breakdown shows "X on Base ·
- * Y on our servers" so players see where their tokens live at a glance.
+ * Y On the Cloud" so players see where their tokens live at a glance.
  * An info (i) icon opens a tooltip explaining the claim-to-move flow.
  * Clicking anywhere on the box opens TokenDetailDialog with the exact
  * numbers and the ledger history.
@@ -47,7 +47,7 @@ export function TokenBox({ tokenKey, label, publicBalance, privateBalance }: Tok
             dialog. */}
         <span
           onClick={(e) => e.stopPropagation()}
-          className="absolute top-2 right-2 text-[#1a472a]/40 hover:text-[#1a472a]/80"
+          className="absolute top-2 right-2 text-[#1a472a]/80 hover:text-[#1a472a]/80"
         >
           <TooltipProvider delayDuration={150}>
             <Tooltip>
@@ -67,11 +67,11 @@ export function TokenBox({ tokenKey, label, publicBalance, privateBalance }: Tok
         >
           {compact}
         </p>
-        <p className="text-sm text-[#1a472a]/60 mt-1">{label}</p>
+        <p className="text-sm text-[#1a472a]/80 mt-1">{label}</p>
         <p className="text-[11px] text-[#1a472a]/55 mt-1.5 leading-tight">
           <span className="whitespace-nowrap">{formatCompactNumber(publicBalance)} on Base</span>
           <span className="mx-1">·</span>
-          <span className="whitespace-nowrap">{formatCompactNumber(privateBalance)} on our servers</span>
+          <span className="whitespace-nowrap">{formatCompactNumber(privateBalance)} On the Cloud</span>
         </p>
       </button>
 

@@ -185,7 +185,7 @@ export function TokenDetailDialog({
               <p className="text-xl font-bold text-white">{formatExactNumber(publicBalance)}</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">Our servers</p>
+              <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">On the Cloud</p>
               <p className="text-xl font-bold text-white">{formatExactNumber(privateBalance)}</p>
             </div>
           </div>
@@ -193,7 +193,7 @@ export function TokenDetailDialog({
           <div className="bg-amber-500/10 border border-amber-500/25 rounded-lg p-3 text-xs text-amber-100/90 leading-relaxed flex gap-2">
             <Sparkles className="w-3.5 h-3.5 text-amber-300 flex-shrink-0 mt-0.5" />
             <span>
-              Tokens on our servers are earned through the game. You claim them on Hypha to move them to the public Base blockchain. {PAIR_LABEL[pair]} live in the same Hypha space, so you can claim them separately or bundle them in one transaction.
+              Tokens held in the cloud are earned through the game. You claim them on Hypha to move them to the public Base blockchain. {PAIR_LABEL[pair]} live in the same Hypha space, so you can claim them separately or bundle them in one transaction.
             </span>
           </div>
 

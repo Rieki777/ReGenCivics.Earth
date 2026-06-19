@@ -110,7 +110,7 @@ export function SubmitToDAOModal({
           {/* Quest summary */}
           <div className="mb-5 p-3 bg-[#f0ebe3] rounded-xl text-sm">
             <p className="font-semibold text-[#1a472a]">{questTitle}</p>
-            <p className="text-[#1a472a]/60 mt-0.5 text-xs">
+            <p className="text-[#1a472a]/80 mt-0.5 text-xs">
               +{regenReward} $ReGen + 1 RGVoice on approval
             </p>
           </div>

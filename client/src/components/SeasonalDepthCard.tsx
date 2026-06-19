@@ -25,10 +25,10 @@ export function SeasonalDepthCard({ quest, isLocked }: SeasonalDepthCardProps) {
           <Lock className="w-8 h-8 text-white/40" />
         </div>
         <div className="p-5">
-          <h4 className="font-bold text-[#1a472a]/50 text-sm leading-tight" style={{ fontFamily: "var(--font-display)" }}>
+          <h4 className="font-bold text-[#1a472a]/80 text-sm leading-tight" style={{ fontFamily: "var(--font-display)" }}>
             {quest.title}
           </h4>
-          <p className="text-xs text-[#1a472a]/30 mt-1">{quest.tagline}</p>
+          <p className="text-xs text-[#1a472a]/75 mt-1">{quest.tagline}</p>
         </div>
       </div>
     );
@@ -55,7 +55,7 @@ export function SeasonalDepthCard({ quest, isLocked }: SeasonalDepthCardProps) {
             <p className="text-xs text-[#1a472a]/70 mt-0.5">{quest.tagline}</p>
           </div>
           {/* Time pill */}
-          <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#1a472a]/5 text-[#1a472a]/60">
+          <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#1a472a]/5 text-[#1a472a]/80">
             {quest.estimatedTime}
           </span>
         </div>
@@ -74,7 +74,7 @@ export function SeasonalDepthCard({ quest, isLocked }: SeasonalDepthCardProps) {
           </div>
         )}
 
-        <p className="text-xs text-[#1a472a]/60 italic mb-3">
+        <p className="text-xs text-[#1a472a]/80 italic mb-3">
           <strong>Deliverable:</strong> {quest.deliverable}
         </p>
 

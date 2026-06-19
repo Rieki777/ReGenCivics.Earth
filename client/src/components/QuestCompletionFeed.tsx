@@ -164,7 +164,7 @@ function FeedCard({ entry, onOpen }: { entry: any; onOpen: (entry: any) => void 
 
           <div className="min-w-0 flex-1">
             <p className="text-[#1a472a] font-semibold text-sm truncate">{name}</p>
-            <p className="text-[#1a472a]/60 text-xs truncate">{entry.questTitle}</p>
+            <p className="text-[#1a472a]/80 text-xs truncate">{entry.questTitle}</p>
           </div>
           {isPhoto && <ImageIcon className="w-4 h-4 text-[#4a7c59]/60 flex-shrink-0" />}
           {isVideo && <VideoIcon className="w-4 h-4 text-[#4a7c59]/60 flex-shrink-0" />}

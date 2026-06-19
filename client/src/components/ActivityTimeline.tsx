@@ -62,7 +62,7 @@ export function ActivityTimeline({ email, contactType, contactId }: ActivityTime
     <div className="border-t border-[#1a472a]/10 pt-4">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 text-xs text-[#1a472a]/60 hover:text-[#1a472a] transition-colors w-full"
+        className="flex items-center gap-2 text-xs text-[#1a472a]/80 hover:text-[#1a472a] transition-colors w-full"
       >
         <Clock className="w-3.5 h-3.5" />
         <span className="font-medium">Activity Timeline</span>
@@ -72,9 +72,9 @@ export function ActivityTimeline({ email, contactType, contactId }: ActivityTime
 
       {open && (
         <div className="mt-3 space-y-2 pl-2 border-l-2 border-[#1a472a]/10">
-          {isLoading && <p className="text-xs text-[#1a472a]/40 py-2">Loading…</p>}
+          {isLoading && <p className="text-xs text-[#1a472a]/80 py-2">Loading…</p>}
           {!isLoading && items.length === 0 && (
-            <p className="text-xs text-[#1a472a]/40 py-2">No activity yet.</p>
+            <p className="text-xs text-[#1a472a]/80 py-2">No activity yet.</p>
           )}
           {items.map((item) => (
             <div key={`${item.kind}-${item.id}`} className="relative pl-4">

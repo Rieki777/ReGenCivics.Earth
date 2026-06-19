@@ -35,7 +35,7 @@ export function CRMNotes({ contactType, contactId, initialNote, onSaved }: Props
 
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wider flex items-center gap-1.5">
+      <h4 className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wider flex items-center gap-1.5">
         <StickyNote className="w-3.5 h-3.5" />
         Internal Notes
       </h4>
@@ -44,7 +44,7 @@ export function CRMNotes({ contactType, contactId, initialNote, onSaved }: Props
         onChange={(e) => setNote(e.target.value)}
         rows={3}
         placeholder="Add a private note for the team..."
-        className="w-full text-sm border border-[#1a472a]/20 rounded-lg p-2.5 resize-none focus:outline-none focus:border-[#7dd87d]/50 bg-white text-[#1a472a] placeholder:text-[#1a472a]/30"
+        className="w-full text-sm border border-[#1a472a]/20 rounded-lg p-2.5 resize-none focus:outline-none focus:border-[#7dd87d]/50 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75"
       />
       <div className="flex justify-end">
         <Button

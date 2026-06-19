@@ -73,7 +73,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
   }
 
   if (!campaign) {
-    return <div className="text-center py-8 text-[#1a472a]/60">Campaign not found</div>;
+    return <div className="text-center py-8 text-[#1a472a]/80">Campaign not found</div>;
   }
 
   const currencySymbol = campaign.currency === 'USD' ? '$' : campaign.currency === 'EUR' ? '€' : campaign.currency === 'GBP' ? '£' : campaign.currency;
@@ -86,9 +86,9 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
           <h2 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
             {campaign.title}
           </h2>
-          <p className="text-sm text-[#1a472a]/60">{campaign.projectName}</p>
+          <p className="text-sm text-[#1a472a]/80">{campaign.projectName}</p>
           {campaign.location && (
-            <div className="flex items-center gap-1 text-sm text-[#1a472a]/60 mt-1">
+            <div className="flex items-center gap-1 text-sm text-[#1a472a]/80 mt-1">
               <MapPin className="w-3 h-3" />
               {campaign.location}
             </div>
@@ -113,19 +113,19 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
       {/* Financial Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-[#f0f7f0] rounded-lg p-3">
-          <p className="text-xs text-[#1a472a]/60">Total Value</p>
+          <p className="text-xs text-[#1a472a]/80">Total Value</p>
           <p className="text-lg font-bold text-[#1a472a]">{currencySymbol}{campaign.totalValue.toLocaleString()}</p>
         </div>
         <div className="bg-[#f0f7f0] rounded-lg p-3">
-          <p className="text-xs text-[#1a472a]/60">Financial Target</p>
+          <p className="text-xs text-[#1a472a]/80">Financial Target</p>
           <p className="text-lg font-bold text-[#1a472a]">{currencySymbol}{campaign.financialTarget.toLocaleString()}</p>
         </div>
         <div className="bg-[#f0f7f0] rounded-lg p-3">
-          <p className="text-xs text-[#1a472a]/60">Land Value</p>
+          <p className="text-xs text-[#1a472a]/80">Land Value</p>
           <p className="text-lg font-bold text-[#1a472a]">{currencySymbol}{campaign.landValue.toLocaleString()}</p>
         </div>
         <div className="bg-[#f0f7f0] rounded-lg p-3">
-          <p className="text-xs text-[#1a472a]/60">Duration</p>
+          <p className="text-xs text-[#1a472a]/80">Duration</p>
           <p className="text-lg font-bold text-[#1a472a]">{(campaign as any).durationDays || 90} days</p>
         </div>
       </div>
@@ -168,18 +168,18 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
                 <div key={item.id} className="flex items-center justify-between bg-[#f8f5f0] rounded-lg p-3">
                   <div>
                     <p className="text-sm font-medium text-[#1a472a]">{item.title}</p>
-                    <p className="text-xs text-[#1a472a]/60">{item.category} | {item.type}</p>
-                    {item.description && <p className="text-xs text-[#1a472a]/50 mt-1">{item.description}</p>}
+                    <p className="text-xs text-[#1a472a]/80">{item.category} | {item.type}</p>
+                    {item.description && <p className="text-xs text-[#1a472a]/80 mt-1">{item.description}</p>}
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-[#1a472a]">{currencySymbol}{item.estimatedValue.toLocaleString()}</p>
-                    <p className="text-xs text-[#1a472a]/60">Qty: {item.quantity}</p>
+                    <p className="text-xs text-[#1a472a]/80">Qty: {item.quantity}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-[#1a472a]/60 text-center py-4">No items added yet</p>
+            <p className="text-sm text-[#1a472a]/80 text-center py-4">No items added yet</p>
           )}
         </TabsContent>
 
@@ -201,7 +201,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-[#1a472a]/60 text-center py-4">No photos uploaded yet</p>
+            <p className="text-sm text-[#1a472a]/80 text-center py-4">No photos uploaded yet</p>
           )}
         </TabsContent>
 
@@ -228,7 +228,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
 
             ].filter(f => f.value).map((field) => (
               <div key={field.label} className="bg-[#f8f5f0] rounded-lg p-3">
-                <p className="text-xs font-medium text-[#1a472a]/60">{field.label}</p>
+                <p className="text-xs font-medium text-[#1a472a]/80">{field.label}</p>
                 <p className="text-sm text-[#1a472a]">{field.value}</p>
               </div>
             ))}
@@ -379,12 +379,12 @@ export function AdminCampaignApproval() {
           {isLoading ? (
             <div className="text-center py-8">
               <Loader2 className="w-8 h-8 animate-spin text-[#4a7c59] mx-auto" />
-              <p className="mt-2 text-sm text-[#1a472a]/60">Loading campaigns...</p>
+              <p className="mt-2 text-sm text-[#1a472a]/80">Loading campaigns...</p>
             </div>
           ) : campaigns.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="w-12 h-12 text-[#1a472a]/20 mx-auto mb-3" />
-              <p className="text-[#1a472a]/60">No campaigns found</p>
+              <p className="text-[#1a472a]/80">No campaigns found</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -399,8 +399,8 @@ export function AdminCampaignApproval() {
                       <h4 className="font-bold text-[#1a472a] text-sm truncate">{campaign.title}</h4>
                       <StatusBadge status={campaign.status} />
                     </div>
-                    <p className="text-xs text-[#1a472a]/60 mb-1">{campaign.projectName}</p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#1a472a]/50">
+                    <p className="text-xs text-[#1a472a]/80 mb-1">{campaign.projectName}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#1a472a]/80">
                       {campaign.location && (
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />

@@ -1,0 +1,129 @@
+name: Contrast Audit
+
+# WCAG 2.x color-contrast audit. Runs on every PR against main. Warns
+# in a PR comment with the diff against main's baseline but does NOT
+# block merge (per 2026-05-29 decision: warn-only rollout). Once the
+# noise level is low enough we can flip this to block on new failures.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  contrast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Install puppeteer
+        run: pnpm add -D puppeteer
+
+      - name: Build site
+        run: pnpm build
+
+      - name: Start preview server
+        run: |
+          pnpm preview --host 0.0.0.0 --port 4173 &
+          # Wait for the server to be reachable
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4173 > /dev/null; then echo "up"; exit 0; fi
+            sleep 1
+          done
+          echo "preview did not come up"
+          exit 1
+
+      - name: Run contrast audit (PR)
+        run: node scripts/contrast-audit.mjs --baseUrl=http://localhost:4173 --out=audits/contrast-report-pr.json
+
+      - name: Checkout main for baseline
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-checkout
+
+      - name: Build and serve main
+        run: |
+          cd main-checkout
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm preview --host 0.0.0.0 --port 4174 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4174 > /dev/null; then echo "up"; exit 0; fi
+            sleep 1
+          done
+          echo "main preview did not come up"
+          exit 1
+
+      - name: Run contrast audit (main baseline)
+        run: node scripts/contrast-audit.mjs --baseUrl=http://localhost:4174 --out=audits/contrast-report-main.json
+
+      - name: Compute diff and comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const pr = JSON.parse(fs.readFileSync('audits/contrast-report-pr.json', 'utf8'));
+            const main = JSON.parse(fs.readFileSync('audits/contrast-report-main.json', 'utf8'));
+            const lines = [];
+            lines.push('## Contrast Audit');
+            lines.push('');
+            lines.push(`PR: **${pr.totalFailures}** failures across ${pr.routes.length} routes.`);
+            lines.push(`Main: **${main.totalFailures}** failures across ${main.routes.length} routes.`);
+            lines.push('');
+            const delta = pr.totalFailures - main.totalFailures;
+            if (delta > 0) {
+              lines.push(`⚠️ This PR introduces **${delta}** new contrast failures.`);
+            } else if (delta < 0) {
+              lines.push(`✅ This PR resolves **${-delta}** contrast failures.`);
+            } else {
+              lines.push(`No change in total failures.`);
+            }
+            lines.push('');
+            lines.push('Per-route delta:');
+            lines.push('');
+            lines.push('| Route | Main | PR | Δ |');
+            lines.push('|---|---|---|---|');
+            for (const route of pr.routes) {
+              const m = (main.findings[route]?.length) ?? 0;
+              const p = (pr.findings[route]?.length) ?? 0;
+              const d = p - m;
+              const dStr = d === 0 ? '0' : (d > 0 ? `+${d}` : String(d));
+              lines.push(`| ${route} | ${m} | ${p} | ${dStr} |`);
+            }
+            lines.push('');
+            lines.push('See `audits/contrast-report-pr.json` artifact for full per-element details.');
+            lines.push('');
+            lines.push('_This check warns but does not block. See `.github/workflows/contrast-audit.yml`._');
+            const body = lines.join('\n');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+      - name: Upload reports as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contrast-audit-reports
+          path: audits/contrast-report-*.json
+          retention-days: 30

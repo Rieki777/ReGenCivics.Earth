@@ -519,7 +519,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="inline-flex items-center gap-0.5 cursor-help">
-                    $ReGen <Info className="w-3.5 h-3.5 text-[#7dd87d]/60" />
+                    $ReGen <Info className="w-3.5 h-3.5 text-[#7dd87d]/80" />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[200px] text-xs">
@@ -533,7 +533,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="inline-flex items-center gap-0.5 cursor-help">
-                    RGVoice <Info className="w-3.5 h-3.5 text-[#7dd87d]/60" />
+                    RGVoice <Info className="w-3.5 h-3.5 text-[#7dd87d]/80" />
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[200px] text-xs">

@@ -106,7 +106,7 @@ export function GeographicAnalytics({ applications, investors, inquiries }: Geog
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <MapPin className="w-12 h-12 text-[#4a7c59]/30 mb-4" />
-            <p className="text-[#1a472a]/60 text-sm">
+            <p className="text-[#1a472a]/80 text-sm">
               No location data available yet. Location information will appear here as applications and inquiries are submitted.
             </p>
           </div>
@@ -239,7 +239,7 @@ export function GeographicAnalytics({ applications, investors, inquiries }: Geog
               <TrendingUp className="w-8 h-8 text-[#4a7c59]" />
               <div>
                 <div className="text-2xl font-bold text-[#1a472a]">{countryData[0]?.country || "N/A"}</div>
-                <div className="text-sm text-[#1a472a]/60">{countryData[0]?.count || 0} submissions</div>
+                <div className="text-sm text-[#1a472a]/80">{countryData[0]?.count || 0} submissions</div>
               </div>
             </div>
           </CardContent>

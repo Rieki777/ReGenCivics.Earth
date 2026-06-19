@@ -118,7 +118,7 @@ export default function CrowdPoolingCampaigns() {
             
             {/* Search Bar */}
             <div className="relative max-w-xl mx-auto">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1a472a]/40" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1a472a]/80" />
               <Input
                 type="text"
                 placeholder="Search campaigns by name, location, or description..."
@@ -274,7 +274,7 @@ export default function CrowdPoolingCampaigns() {
                       <DollarSign className="w-3 h-3 text-[#4a7c59]" />
                       <span className="text-white/70">
                         Cash target: <span className="font-semibold text-[#1a472a]">${campaign.financialTarget.toLocaleString()}</span>
-                        <span className="text-[#1a472a]/40 ml-1">
+                        <span className="text-[#1a472a]/80 ml-1">
                           ({Math.round((campaign.financialTarget / Math.max(campaign.totalValue, 1)) * 100)}% of total)
                         </span>
                       </span>

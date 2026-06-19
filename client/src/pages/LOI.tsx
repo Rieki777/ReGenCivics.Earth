@@ -170,7 +170,7 @@ export default function LOI() {
                     required
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   />
                 </div>
 
@@ -183,7 +183,7 @@ export default function LOI() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   />
                 </div>
 
@@ -195,7 +195,7 @@ export default function LOI() {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   />
                 </div>
 
@@ -207,7 +207,7 @@ export default function LOI() {
                     type="text"
                     value={formData.organization}
                     onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   />
                 </div>
 
@@ -219,7 +219,7 @@ export default function LOI() {
                     type="text"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   />
                 </div>
               </div>
@@ -235,10 +235,10 @@ export default function LOI() {
                 <div>
                   <label className="block text-sm font-medium text-[#1a472a] mb-2">
                     Pledge Amount (USD) <span className="text-red-500">*</span>
-                    <span className="text-xs text-[#1a472a]/50 ml-1">($250,000 minimum)</span>
+                    <span className="text-xs text-[#1a472a]/80 ml-1">($250,000 minimum)</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a472a]/60">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a472a]/80">$</span>
                     <input
                       type="number"
                       required
@@ -246,7 +246,7 @@ export default function LOI() {
                       step="1000"
                       value={formData.pledgeAmount}
                       onChange={(e) => setFormData({ ...formData, pledgeAmount: e.target.value })}
-                      className="w-full pl-8 pr-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                      className="w-full pl-8 pr-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                       placeholder="250000"
                     />
                   </div>
@@ -260,7 +260,7 @@ export default function LOI() {
                     required
                     value={formData.investorType}
                     onChange={(e) => setFormData({ ...formData, investorType: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   >
                     <option value="individual">Individual</option>
                     <option value="family_office">Family Office</option>
@@ -278,7 +278,7 @@ export default function LOI() {
                   <select
                     value={formData.investmentTimeline}
                     onChange={(e) => setFormData({ ...formData, investmentTimeline: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   >
                     <option value="immediate">Immediate (Ready to invest once fund activates)</option>
                     <option value="3_months">Within 3 months</option>
@@ -304,7 +304,7 @@ export default function LOI() {
                   type="text"
                   value={formData.geographicPreference}
                   onChange={(e) => setFormData({ ...formData, geographicPreference: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   placeholder="e.g., North America, Europe, Global"
                 />
               </div>
@@ -317,7 +317,7 @@ export default function LOI() {
                   type="text"
                   value={formData.sectorInterests}
                   onChange={(e) => setFormData({ ...formData, sectorInterests: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   placeholder="e.g., Regenerative agriculture, Ecovillages, Renewable energy"
                 />
               </div>
@@ -330,7 +330,7 @@ export default function LOI() {
                   value={formData.motivations}
                   onChange={(e) => setFormData({ ...formData, motivations: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   placeholder="What motivates you to invest in regenerative land projects?"
                 />
               </div>
@@ -343,7 +343,7 @@ export default function LOI() {
                   value={formData.questionsForTeam}
                   onChange={(e) => setFormData({ ...formData, questionsForTeam: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   placeholder="Any questions or concerns you'd like to discuss?"
                 />
               </div>
@@ -356,7 +356,7 @@ export default function LOI() {
                   value={formData.additionalNotes}
                   onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   placeholder="Any other information you'd like to share"
                 />
               </div>
@@ -369,7 +369,7 @@ export default function LOI() {
                   type="text"
                   value={formData.referralSource}
                   onChange={(e) => setFormData({ ...formData, referralSource: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/40"
+                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
                   placeholder="e.g., Referral, Conference, Website"
                 />
               </div>

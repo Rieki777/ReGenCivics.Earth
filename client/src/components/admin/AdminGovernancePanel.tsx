@@ -91,7 +91,7 @@ export function AdminGovernancePanel() {
                     <div>
                       <p className="text-sm font-medium text-[#1a472a]">{holder.displayName || "Unnamed"}</p>
                       {holder.walletAddress && (
-                        <p className="text-xs text-[#1a472a]/60 font-mono">{truncateAddress(holder.walletAddress)}</p>
+                        <p className="text-xs text-[#1a472a]/80 font-mono">{truncateAddress(holder.walletAddress)}</p>
                       )}
                     </div>
                     {holder.isVerified ? (

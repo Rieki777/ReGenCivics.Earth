@@ -372,7 +372,7 @@ export default function Community() {
                 Searching...
               </div>
             ) : !searchResults || searchResults.length === 0 ? (
-              <div className="px-4 py-4 text-sm text-[#1a472a]/50 text-center">
+              <div className="px-4 py-4 text-sm text-[#1a472a]/80 text-center">
                 No results found for &ldquo;{debouncedSearchQuery}&rdquo;
               </div>
             ) : (
@@ -401,14 +401,16 @@ export default function Community() {
         )}
       </section>
 
-      {/* Community Pulse Strip */}
-      <div className="flex items-center gap-6 px-4 py-2 bg-[#7dd87d]/25 border-y border-[#7dd87d]/30 text-sm text-[#1a472a]">
+      {/* Community Pulse Strip. White text used because the bg-[#7dd87d]/25
+          tint over the dark gradient renders as mid-green, so dark green
+          text fell to 1.21:1 contrast (P7 in CONTRAST_AUDIT_2026-05-29). */}
+      <div className="flex items-center gap-6 px-4 py-2 bg-[#7dd87d]/25 border-y border-[#7dd87d]/30 text-sm text-white">
         <span className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
           {pulseData?.posts7d ?? 0} posts this week
         </span>
         <span>{pulseData?.replies7d ?? 0} replies</span>
-        <span className="ml-auto text-xs text-[#4a7c59]/70">Live community activity</span>
+        <span className="ml-auto text-xs text-[#7dd87d]">Live community activity</span>
       </div>
 
       <VineDivider className="my-8" />
@@ -450,7 +452,7 @@ export default function Community() {
               {trendingPosts.map(post => (
                 <Link key={post.id} href={`/community/post/${post.id}`} className="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-[#1a472a]/10 hover:border-[#7dd87d]/40 hover:bg-[#f0f7f0] transition-all group">
                   <span className="text-sm font-medium text-[#1a472a] truncate group-hover:text-[#4a7c59]">{post.title}</span>
-                  <span className="text-xs text-[#1a472a]/50 ml-2 shrink-0">{post.replyCount ?? 0} replies</span>
+                  <span className="text-xs text-[#1a472a]/80 ml-2 shrink-0">{post.replyCount ?? 0} replies</span>
                 </Link>
               ))}
             </div>
@@ -552,7 +554,7 @@ export default function Community() {
               <span className="text-xl">🌿</span>
               <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>General: Open Topics</h2>
             </div>
-            <p className="text-[#1a472a]/60 text-sm mb-4">Introductions, resources, governance, and open conversations.</p>
+            <p className="text-[#1a472a]/80 text-sm mb-4">Introductions, resources, governance, and open conversations.</p>
 
             {isLoading ? (
               <div className="space-y-3">
@@ -570,9 +572,9 @@ export default function Community() {
               </div>
             ) : filteredCategories.length === 0 ? (
               <div className="text-center py-16">
-                <Trees className="w-16 h-16 text-[#7dd87d]/40 mx-auto mb-4" />
+                <Trees className="w-16 h-16 text-[#7dd87d]/75 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[#1a472a] mb-2">The forest is quiet here</h3>
-                <p className="text-[#1a472a]/60 mb-4">
+                <p className="text-[#1a472a]/80 mb-4">
                   {searchQuery ? 'No discussions match your search yet. Be the first to start one.' : 'No categories yet. Check back soon!'}
                 </p>
                 {searchQuery && (
@@ -641,7 +643,7 @@ export default function Community() {
                               >
                                 {category.name}
                               </h3>
-                              <p className="text-[#1a472a]/60 text-sm line-clamp-2" style={{ fontFamily: 'var(--font-body)' }}>
+                              <p className="text-[#1a472a]/80 text-sm line-clamp-2" style={{ fontFamily: 'var(--font-body)' }}>
                                 {category.description}
                               </p>
                             </div>
@@ -711,7 +713,7 @@ export default function Community() {
               <span className="text-xl">🌍</span>
               <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Earth: Land Projects</h2>
             </div>
-            <p className="text-[#1a472a]/60 text-sm mb-4">Land project spaces. Where the work is rooted.</p>
+            <p className="text-[#1a472a]/80 text-sm mb-4">Land project spaces. Where the work is rooted.</p>
 
             {/* Earth quest-style cards */}
             <div className="grid grid-cols-2 gap-3 mb-4">
@@ -749,7 +751,7 @@ export default function Community() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors">Bioregions</p>
-                    <p className="text-[#1a472a]/50 text-xs line-clamp-1">Where bioregions organising for regeneration meet, share, and find each other</p>
+                    <p className="text-[#1a472a]/80 text-xs line-clamp-1">Where bioregions organising for regeneration meet, share, and find each other</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
                 </div>
@@ -765,7 +767,7 @@ export default function Community() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors">Land General</p>
-                    <p className="text-[#1a472a]/50 text-xs line-clamp-1">General discussion about land projects, regenerative land practices, and stewardship</p>
+                    <p className="text-[#1a472a]/80 text-xs line-clamp-1">General discussion about land projects, regenerative land practices, and stewardship</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
                 </div>
@@ -774,7 +776,7 @@ export default function Community() {
 
             {/* Individual land project spaces */}
             {!landProjectThreads || landProjectThreads.filter((t: { id: number; title: string }) => !REMOVED_PROJECTS.has(t.title.replace(/ - Land Project Forum$/, ""))).length === 0 ? (
-              <p className="text-[#1a472a]/50 text-sm bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
+              <p className="text-[#1a472a]/80 text-sm bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
                 Land project spaces will appear here as projects join the alliance.
               </p>
             ) : (
@@ -819,7 +821,7 @@ export default function Community() {
                               <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#4a7c59] transition-colors truncate">
                                 {projectName}
                               </p>
-                              <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
+                              <p className="text-[#1a472a]/80 text-xs">Visit Space</p>
                             </div>
                             <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#d4a574] group-hover:translate-x-1 transition-all flex-shrink-0" />
                           </div>
@@ -859,7 +861,7 @@ export default function Community() {
               <span className="text-xl">🌊</span>
               <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Water: Alliance Partners</h2>
             </div>
-            <p className="text-[#1a472a]/60 text-sm mb-4">Alliance organisations. Networks and partners moving together.</p>
+            <p className="text-[#1a472a]/80 text-sm mb-4">Alliance organisations. Networks and partners moving together.</p>
 
             {/* Water quest-style cards */}
             <div className="grid grid-cols-2 gap-3 mb-4">
@@ -914,7 +916,7 @@ export default function Community() {
 
             {!organisationThreads || organisationThreads.length === 0 ? (
               <div className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
-                <p className="text-[#1a472a]/50 text-sm mb-3">
+                <p className="text-[#1a472a]/80 text-sm mb-3">
                   Alliance partner spaces will appear here as organisations join.
                 </p>
                 <Link href="/community/c/alliance-partners">
@@ -937,7 +939,7 @@ export default function Community() {
                             <p className="font-semibold text-[#1a472a] text-sm group-hover:text-[#0369a1] transition-colors truncate">
                               {thread.title}
                             </p>
-                            <p className="text-[#1a472a]/50 text-xs">Visit Space</p>
+                            <p className="text-[#1a472a]/80 text-xs">Visit Space</p>
                           </div>
                           <ArrowRight className="w-4 h-4 text-[#4a7c59]/30 group-hover:text-[#7dd87d] group-hover:translate-x-1 transition-all flex-shrink-0" />
                         </div>
@@ -982,7 +984,7 @@ export default function Community() {
               <span className="text-xl">🔥</span>
               <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Fire: Quests and Challenges</h2>
             </div>
-            <p className="text-[#1a472a]/60 text-sm mb-4">Quests and challenges. Where regeneration gets real.</p>
+            <p className="text-[#1a472a]/80 text-sm mb-4">Quests and challenges. Where regeneration gets real.</p>
 
             <div className="grid grid-cols-2 gap-3">
 
@@ -1058,7 +1060,7 @@ export default function Community() {
                   <span className="text-2xl">💡</span>
                   <div>
                     <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-green-700 transition-colors">Got an idea for a quest?</h3>
-                    <p className="text-sm text-[#1a472a]/60">Propose it here. The community votes and the best ones get built.</p>
+                    <p className="text-sm text-[#1a472a]/80">Propose it here. The community votes and the best ones get built.</p>
                   </div>
                 </div>
               </Link>
@@ -1067,14 +1069,14 @@ export default function Community() {
                   <span className="text-2xl">🔧</span>
                   <div>
                     <h3 className="font-semibold text-[#1a472a] mb-1 group-hover:text-amber-700 transition-colors">Got an idea for a feature?</h3>
-                    <p className="text-sm text-[#1a472a]/60">Suggest improvements to the site. Vote on what gets built next.</p>
+                    <p className="text-sm text-[#1a472a]/80">Suggest improvements to the site. Vote on what gets built next.</p>
                   </div>
                 </div>
               </Link>
             </div>
 
-            <p className="text-[#1a472a]/40 text-xs mt-3">
-              This site is built by the community. All code is open source on <a href="https://github.com/Rieki777/ReGenCivics.Earth" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#1a472a]/60">GitHub</a>.
+            <p className="text-[#1a472a]/80 text-xs mt-3">
+              This site is built by the community. All code is open source on <a href="https://github.com/Rieki777/ReGenCivics.Earth" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#1a472a]/80">GitHub</a>.
             </p>
 
             {isAdmin && (
@@ -1105,7 +1107,7 @@ export default function Community() {
               <span className="text-xl">🍃</span>
               <h2 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Air: Clarity & Agreements</h2>
             </div>
-            <p className="text-[#1a472a]/60 text-sm mb-4">
+            <p className="text-[#1a472a]/80 text-sm mb-4">
               Where we get clear on how we show up. Agreements, healthy conversations, and the things worth saying out loud.
             </p>
 
@@ -1159,7 +1161,7 @@ export default function Community() {
               </div>
             ) : !airThreads || airThreads.length === 0 ? (
               <div className="flex items-center justify-between gap-3 bg-[#f8f5f0] rounded-xl p-4 border border-slate-200/60">
-                <p className="text-[#1a472a]/50 text-sm min-w-0" style={{ fontFamily: 'var(--font-body)' }}>
+                <p className="text-[#1a472a]/80 text-sm min-w-0" style={{ fontFamily: 'var(--font-body)' }}>
                   No threads yet. Be the first to clear the air.
                 </p>
                 <Link href="/community/c/air-conversations">
@@ -1181,7 +1183,7 @@ export default function Community() {
                           <p className="font-semibold text-[#1a472a] text-sm truncate group-hover:text-slate-700 transition-colors">
                             {thread.title}
                           </p>
-                          <p className="text-[#1a472a]/50 text-xs">Join the conversation</p>
+                          <p className="text-[#1a472a]/80 text-xs">Join the conversation</p>
                         </div>
                         <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>

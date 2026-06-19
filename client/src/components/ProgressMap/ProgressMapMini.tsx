@@ -42,7 +42,7 @@ export function ProgressMapMini({ onExpand }: Props) {
         className="w-full flex items-center justify-between text-[10px] text-white/60 hover:text-[#7dd87d] transition-colors py-1"
       >
         <span>{overallPercent}% explored</span>
-        <span className="text-[#7dd87d]/60">View Map</span>
+        <span className="text-[#7dd87d]/80">View Map</span>
       </button>
     </div>
   );

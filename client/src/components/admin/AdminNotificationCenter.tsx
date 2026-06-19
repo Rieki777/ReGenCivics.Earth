@@ -61,14 +61,14 @@ export function AdminNotificationCenter({ open, onClose }: Props) {
       <div className="bg-white border border-[#1a472a]/10 rounded-lg p-3 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm text-[#1a472a] font-medium flex-1">{notif.message}</p>
-          <span className="text-[10px] text-[#1a472a]/40 whitespace-nowrap">
+          <span className="text-[10px] text-[#1a472a]/80 whitespace-nowrap">
             {notif.createdAt ? formatAge(notif.createdAt) : ""}
           </span>
         </div>
         <div className="flex gap-1.5 flex-wrap">
           <button
             onClick={() => handleMutation.mutate({ id: notif.id })}
-            className="flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-[#1a472a]/20 text-[#1a472a]/60 hover:bg-[#1a472a]/5 transition-colors"
+            className="flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-[#1a472a]/20 text-[#1a472a]/80 hover:bg-[#1a472a]/5 transition-colors"
           >
             <Archive className="w-2.5 h-2.5" />
             Archive
@@ -107,11 +107,11 @@ export function AdminNotificationCenter({ open, onClose }: Props) {
         <div className="flex items-center justify-between p-4 border-b border-[#1a472a]/10 bg-white">
           <div>
             <h2 className="font-semibold text-[#1a472a]">Notification Center</h2>
-            <p className="text-xs text-[#1a472a]/50">{notifications.length} unhandled</p>
+            <p className="text-xs text-[#1a472a]/80">{notifications.length} unhandled</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-[#1a472a]/5 text-[#1a472a]/60 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-[#1a472a]/5 text-[#1a472a]/80 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -122,13 +122,13 @@ export function AdminNotificationCenter({ open, onClose }: Props) {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <CheckCircle className="w-8 h-8 text-green-400 mb-3" />
               <p className="text-sm font-medium text-[#1a472a]/70">All caught up</p>
-              <p className="text-xs text-[#1a472a]/40 mt-1">No pending notifications</p>
+              <p className="text-xs text-[#1a472a]/80 mt-1">No pending notifications</p>
             </div>
           ) : (
             <>
               <Section title="Needs Action Now" color="text-red-600" items={urgent} />
               <Section title="Coming Up" color="text-amber-600" items={upcoming} />
-              <Section title="Recent" color="text-[#1a472a]/60" items={recent} />
+              <Section title="Recent" color="text-[#1a472a]/80" items={recent} />
             </>
           )}
         </div>

@@ -154,7 +154,7 @@ export function TaoSpinner({
             "{quote.text}"
           </p>
           <p
-            className={`text-[#7dd87d]/50 text-xs mt-2 transition-opacity duration-300 ${opacity}`}
+            className={`text-[#7dd87d]/75 text-xs mt-2 transition-opacity duration-300 ${opacity}`}
             style={{ fontFamily: "var(--font-accent)" }}
           >
             {quote.attribution}

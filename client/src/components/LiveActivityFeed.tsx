@@ -49,7 +49,7 @@ export function LiveActivityFeed() {
               href={`/community/post/${post.id}`}
               className="flex items-start gap-3 group"
             >
-              <MessageCircle className="w-4 h-4 text-[#7dd87d]/60 mt-0.5 flex-shrink-0 group-hover:text-[#7dd87d] transition-colors" />
+              <MessageCircle className="w-4 h-4 text-[#7dd87d]/80 mt-0.5 flex-shrink-0 group-hover:text-[#7dd87d] transition-colors" />
               <div className="min-w-0">
                 <p className="text-white/85 text-sm leading-snug line-clamp-1 group-hover:text-white transition-colors">
                   {post.title}

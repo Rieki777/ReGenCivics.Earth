@@ -166,9 +166,9 @@ export function FileUpload({
             </div>
           ) : (
             <>
-              <Upload className="w-8 h-8 mx-auto text-[#1a472a]/40 mb-2" />
+              <Upload className="w-8 h-8 mx-auto text-[#1a472a]/80 mb-2" />
               <p className="text-sm text-[#1a472a]/70">{helperText}</p>
-              <p className="text-xs text-[#1a472a]/50 mt-1">
+              <p className="text-xs text-[#1a472a]/80 mt-1">
                 Max {maxFiles} files, {maxSizeMB}MB each
               </p>
             </>
@@ -197,7 +197,7 @@ export function FileUpload({
                 <p className="text-sm font-medium text-[#1a472a] truncate">
                   {file.name}
                 </p>
-                <p className="text-xs text-[#1a472a]/60">
+                <p className="text-xs text-[#1a472a]/80">
                   {formatFileSize(file.size)}
                 </p>
               </div>

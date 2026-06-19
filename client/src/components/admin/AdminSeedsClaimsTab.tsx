@@ -426,9 +426,9 @@ export function AdminSeedsClaimsTab({}: Props) {
                         </div>
                       </div>
                       {expandedClaimId === claim.id ? (
-                        <ChevronUp className="w-5 h-5 text-[#1a472a]/60" />
+                        <ChevronUp className="w-5 h-5 text-[#1a472a]/80" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-[#1a472a]/60" />
+                        <ChevronDown className="w-5 h-5 text-[#1a472a]/80" />
                       )}
                     </div>
                   </div>

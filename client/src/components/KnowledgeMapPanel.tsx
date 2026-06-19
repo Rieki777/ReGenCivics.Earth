@@ -39,7 +39,7 @@ export default function KnowledgeMapPanel({ categoryId, categoryName }: Props) {
 
           return (
             <li key={entry.id} className="group flex items-start gap-2">
-              <ArrowRight className="w-3.5 h-3.5 mt-0.5 text-[#7dd87d]/60 flex-shrink-0 group-hover:text-[#7dd87d] transition-colors" />
+              <ArrowRight className="w-3.5 h-3.5 mt-0.5 text-[#7dd87d]/80 flex-shrink-0 group-hover:text-[#7dd87d] transition-colors" />
               <div className="min-w-0">
                 {isExternal ? (
                   <a

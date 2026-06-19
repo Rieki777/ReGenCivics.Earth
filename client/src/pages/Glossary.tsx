@@ -296,7 +296,7 @@ export default function Glossary() {
                 {showPropose ? "Close" : "Propose a Term"}
               </Button>
             ) : (
-              <a href={getLoginUrl()} className="inline-flex items-center gap-1 text-[#7dd87d]/60 hover:text-[#7dd87d] text-sm transition-colors">
+              <a href={getLoginUrl()} className="inline-flex items-center gap-1 text-[#7dd87d]/80 hover:text-[#7dd87d] text-sm transition-colors">
                 Sign in to propose a term
               </a>
             )}

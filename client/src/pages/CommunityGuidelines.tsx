@@ -318,7 +318,7 @@ export default function CommunityGuidelines() {
                             {proposal.forumThreadId && (
                               <Link
                                 href={`/community/post/${proposal.forumThreadId}`}
-                                className="inline-flex items-center gap-1 text-[#7dd87d]/60 hover:text-[#7dd87d] transition-colors"
+                                className="inline-flex items-center gap-1 text-[#7dd87d]/80 hover:text-[#7dd87d] transition-colors"
                               >
                                 <MessageCircle className="w-3 h-3" />
                                 Discuss

@@ -208,7 +208,7 @@ export default function Land() {
               <Sprout className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Season 2 Applications Open - September 2026</span>
             </div>
-            <span className="hidden sm:inline text-[#1a472a]/60">|</span>
+            <span className="hidden sm:inline text-[#1a472a]/80">|</span>
             <Link href="/apply">
               <Button
                 size="sm"
@@ -1026,7 +1026,7 @@ export default function Land() {
         <div className="max-w-3xl mx-auto text-center">
           <AnimatedSection animation="scale-in">
             <div className="glass-panel p-8 md:p-12 border-[#7dd87d]/20">
-              <SeedOfLifeIcon className="w-12 h-12 text-[#7dd87d]/40 mx-auto mb-6" />
+              <SeedOfLifeIcon className="w-12 h-12 text-[#7dd87d]/75 mx-auto mb-6" />
               <h2
                 className="text-2xl md:text-4xl font-bold text-white mb-4"
                 style={{ fontFamily: "var(--font-display)" }}

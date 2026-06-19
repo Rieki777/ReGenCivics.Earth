@@ -798,7 +798,7 @@ export function CalculatorWeightsSheet() {
                                 {capitalChanges.length} edit{capitalChanges.length > 1 ? 's' : ''}
                               </span>
                             )}
-                            <span className="block text-xs text-[#1a472a]/60">
+                            <span className="block text-xs text-[#1a472a]/80">
                               {capital.weights.length} metrics
                             </span>
                           </div>
@@ -816,9 +816,9 @@ export function CalculatorWeightsSheet() {
                           <p className="text-xs text-[#1a472a]/70 italic mb-2">"{capital.example.scenario}"</p>
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="bg-white px-2 py-1 rounded border border-[#1a472a]/10">{capital.example.input}</span>
-                            <ArrowRight className="w-3 h-3 text-[#1a472a]/40" />
+                            <ArrowRight className="w-3 h-3 text-[#1a472a]/80" />
                             <span className="bg-white px-2 py-1 rounded border border-[#1a472a]/10">{capital.example.calculation}</span>
-                            <ArrowRight className="w-3 h-3 text-[#1a472a]/40" />
+                            <ArrowRight className="w-3 h-3 text-[#1a472a]/80" />
                             <span className="bg-[#7dd87d]/20 px-2 py-1 rounded border border-[#7dd87d]/30 font-medium text-[#1a472a]">{capital.example.result}</span>
                           </div>
                         </div>
@@ -839,21 +839,21 @@ export function CalculatorWeightsSheet() {
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="flex-1">
                                     <h4 className="font-medium text-[#1a472a] text-sm">{weight.input}</h4>
-                                    <p className="text-xs text-[#1a472a]/60">{weight.unit}</p>
-                                    <p className="text-xs text-[#1a472a]/50 mt-1 italic">{weight.rationale}</p>
+                                    <p className="text-xs text-[#1a472a]/80">{weight.unit}</p>
+                                    <p className="text-xs text-[#1a472a]/80 mt-1 italic">{weight.rationale}</p>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     {isChanged && (
                                       <button
                                         onClick={() => resetIndividualWeight(weight.key)}
-                                        className="p-1 text-[#1a472a]/40 hover:text-amber-600 hover:bg-amber-100 rounded transition-colors"
+                                        className="p-1 text-[#1a472a]/80 hover:text-amber-600 hover:bg-amber-100 rounded transition-colors"
                                         title="Reset to original"
                                       >
                                         <RotateCcw className="w-3 h-3" />
                                       </button>
                                     )}
                                     {isChanged && (
-                                      <span className="text-xs text-[#1a472a]/40 line-through">
+                                      <span className="text-xs text-[#1a472a]/80 line-through">
                                         {weight.multiplier}
                                       </span>
                                     )}
@@ -935,13 +935,13 @@ export function CalculatorWeightsSheet() {
                 </h4>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <div className="text-xs text-[#1a472a]/60 mb-1">Current Weights</div>
+                    <div className="text-xs text-[#1a472a]/80 mb-1">Current Weights</div>
                     <div className="text-lg font-bold text-[#1a472a]">
                       ${impactPreview.originalTotal.toLocaleString()}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#1a472a]/60 mb-1">With Your Changes</div>
+                    <div className="text-xs text-[#1a472a]/80 mb-1">With Your Changes</div>
                     <div className={`text-lg font-bold ${
                       impactPreview.difference > 0 ? 'text-green-600' : 
                       impactPreview.difference < 0 ? 'text-red-600' : 'text-[#1a472a]'
@@ -950,7 +950,7 @@ export function CalculatorWeightsSheet() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#1a472a]/60 mb-1">Difference</div>
+                    <div className="text-xs text-[#1a472a]/80 mb-1">Difference</div>
                     <div className={`text-lg font-bold ${
                       impactPreview.difference > 0 ? 'text-green-600' : 
                       impactPreview.difference < 0 ? 'text-red-600' : 'text-[#1a472a]'
@@ -968,7 +968,7 @@ export function CalculatorWeightsSheet() {
               <div className="space-y-4">
                 <h4 className="font-medium text-[#1a472a] flex items-center gap-2">
                   Sample Contributions
-                  <span className="text-xs text-[#1a472a]/60 font-normal">($100 base value per metric)</span>
+                  <span className="text-xs text-[#1a472a]/80 font-normal">($100 base value per metric)</span>
                 </h4>
                 
                 <Accordion type="single" collapsible className="space-y-2">
@@ -1002,10 +1002,10 @@ export function CalculatorWeightsSheet() {
                               <span className="font-medium text-[#1a472a]">{capital.name}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm">
-                              <span className="text-[#1a472a]/60">${capitalOriginalTotal.toLocaleString()}</span>
+                              <span className="text-[#1a472a]/80">${capitalOriginalTotal.toLocaleString()}</span>
                               {hasCapitalChanges && (
                                 <>
-                                  <ArrowRight className="w-3 h-3 text-[#1a472a]/40" />
+                                  <ArrowRight className="w-3 h-3 text-[#1a472a]/80" />
                                   <span className={capitalDiff > 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
                                     ${capitalNewTotal.toLocaleString()}
                                   </span>
@@ -1043,12 +1043,12 @@ export function CalculatorWeightsSheet() {
                                           onChange={(e) => updateSampleContribution(weight.key, parseFloat(e.target.value) || 0)}
                                           className="w-20 h-7 text-sm"
                                         />
-                                        <span className="text-xs text-[#1a472a]/60">{weight.unit}</span>
-                                        <span className="text-xs text-[#1a472a]/40">x {editedWeights[weight.key]}</span>
+                                        <span className="text-xs text-[#1a472a]/80">{weight.unit}</span>
+                                        <span className="text-xs text-[#1a472a]/80">x {editedWeights[weight.key]}</span>
                                       </div>
                                     </div>
                                     <div className="text-right">
-                                      <div className={`text-sm font-medium ${isChanged ? 'line-through text-[#1a472a]/40' : 'text-[#1a472a]'}`}>
+                                      <div className={`text-sm font-medium ${isChanged ? 'line-through text-[#1a472a]/80' : 'text-[#1a472a]'}`}>
                                         ${originalValue.toLocaleString()}
                                       </div>
                                       {isChanged && (
@@ -1114,7 +1114,7 @@ export function CalculatorWeightsSheet() {
                     </h4>
                     <button
                       onClick={() => setShowAddIdea(false)}
-                      className="p-1 text-[#1a472a]/40 hover:text-[#1a472a] rounded"
+                      className="p-1 text-[#1a472a]/80 hover:text-[#1a472a] rounded"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1181,7 +1181,7 @@ export function CalculatorWeightsSheet() {
                           className={`flex flex-col items-center justify-center min-w-[50px] py-2 rounded-lg transition-all ${
                             hasVoted 
                               ? 'bg-[#7dd87d]/20 text-[#7dd87d] cursor-default' 
-                              : 'bg-[#f0f7f0] text-[#1a472a]/60 hover:bg-[#7dd87d]/10 hover:text-[#7dd87d] cursor-pointer'
+                              : 'bg-[#f0f7f0] text-[#1a472a]/80 hover:bg-[#7dd87d]/10 hover:text-[#7dd87d] cursor-pointer'
                           }`}
                         >
                           <ChevronUp className={`w-5 h-5 ${hasVoted ? 'text-[#7dd87d]' : ''}`} />
@@ -1196,7 +1196,7 @@ export function CalculatorWeightsSheet() {
                             <h4 className="font-medium text-[#1a472a]">{idea.title}</h4>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {idea.isSample && (
-                                <span className="text-xs bg-[#1a472a]/10 text-[#1a472a]/60 px-2 py-0.5 rounded-full">
+                                <span className="text-xs bg-[#1a472a]/10 text-[#1a472a]/80 px-2 py-0.5 rounded-full">
                                   Sample
                                 </span>
                               )}
@@ -1214,7 +1214,7 @@ export function CalculatorWeightsSheet() {
                                 Proposed: {idea.proposedWeight}
                               </span>
                               {idea.capitalType && (
-                                <span className="text-xs text-[#1a472a]/50">
+                                <span className="text-xs text-[#1a472a]/80">
                                   {idea.capitalType}
                                 </span>
                               )}
@@ -1278,7 +1278,7 @@ export function CalculatorWeightsSheet() {
                         {entry.status === 'current' ? (
                           <CheckCircle2 className="w-4 h-4 text-[#7dd87d]" />
                         ) : (
-                          <Clock className="w-4 h-4 text-[#1a472a]/40" />
+                          <Clock className="w-4 h-4 text-[#1a472a]/80" />
                         )}
                         <span className="font-semibold text-[#1a472a]">
                           Version {entry.version}
@@ -1294,7 +1294,7 @@ export function CalculatorWeightsSheet() {
                           </span>
                         )}
                       </div>
-                      <span className="text-sm text-[#1a472a]/60">{entry.date}</span>
+                      <span className="text-sm text-[#1a472a]/80">{entry.date}</span>
                     </div>
                     <ul className="space-y-2">
                       {entry.changes.map((change, changeIdx) => (
@@ -1354,7 +1354,7 @@ export function CalculatorWeightsSheet() {
           </Tabs>
 
           {/* Version info */}
-          <div className="text-center text-xs text-[#1a472a]/40 pt-4 mt-4 border-t border-[#1a472a]/10">
+          <div className="text-center text-xs text-[#1a472a]/80 pt-4 mt-4 border-t border-[#1a472a]/10">
             Calculator Version 1.0 | Last Updated: January 2026
           </div>
         </div>

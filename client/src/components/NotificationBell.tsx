@@ -116,7 +116,7 @@ export function NotificationBell() {
 
             <div className="overflow-y-auto max-h-80">
               {notifications.length === 0 ? (
-                <div className="p-6 text-center text-[#1a472a]/60">
+                <div className="p-6 text-center text-[#1a472a]/80">
                   <FlowerOfLifeIcon size={32} className="mx-auto mb-2 opacity-30 text-[#1a472a]" />
                   <p className="text-sm">No notifications yet</p>
                 </div>
@@ -148,7 +148,7 @@ export function NotificationBell() {
                           </button>
                         </div>
                         <p className="text-xs text-[#1a472a]/70 mt-1 line-clamp-2">{notification.message}</p>
-                        <p className="text-xs text-[#1a472a]/40 mt-1">
+                        <p className="text-xs text-[#1a472a]/80 mt-1">
                           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                         </p>
                       </div>
@@ -179,7 +179,7 @@ export function NotificationBell() {
           {selected && (
             <div className="space-y-4">
               <p className="text-sm text-[#1a472a]/80 leading-relaxed">{selected.message}</p>
-              <p className="text-xs text-[#1a472a]/40">
+              <p className="text-xs text-[#1a472a]/80">
                 {formatDistanceToNow(new Date(selected.createdAt), { addSuffix: true })}
               </p>
               {getNotificationLink(selected.type, selected.metadata) && (

@@ -80,7 +80,7 @@ export function EmojiReactions({ postId, replyId }: EmojiReactionsProps) {
             className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm border transition-colors ${
               reacted
                 ? 'bg-green-500/20 border-green-500/50 text-green-700'
-                : 'bg-white/5 border-[#e8e4de] hover:bg-[#f0f7f0] text-[#1a472a]/50 hover:text-[#1a472a]/80'
+                : 'bg-white/5 border-[#e8e4de] hover:bg-[#f0f7f0] text-[#1a472a]/80 hover:text-[#1a472a]/80'
             }`}
             aria-label={`${EMOJI_LABELS[emoji]}${count > 0 ? `, ${count} reactions` : ''}`}
           >

@@ -68,12 +68,12 @@ export function AdminWidgetsTab() {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-bold text-[#1a472a] mb-1">Embeddable Widgets</h3>
-        <p className="text-sm text-[#1a472a]/60">Share these embed codes with land projects, alliance partners, and community members. Each widget links back to regencivics.earth.</p>
+        <p className="text-sm text-[#1a472a]/80">Share these embed codes with land projects, alliance partners, and community members. Each widget links back to regencivics.earth.</p>
       </div>
       {widgets.map(w => (
         <div key={w.name} className="bg-[#f8f5f0] rounded-xl p-4 border border-[#e8e4de]">
           <h4 className="font-bold text-[#1a472a] mb-1">{w.name}</h4>
-          <p className="text-xs text-[#1a472a]/60 mb-2">{w.desc}</p>
+          <p className="text-xs text-[#1a472a]/80 mb-2">{w.desc}</p>
           <div className="flex gap-2 items-start">
             <code className="flex-1 text-xs bg-white border border-[#e8e4de] rounded-lg p-3 font-mono text-[#1a472a]/80 break-all select-all">{w.code}</code>
             <button
@@ -84,7 +84,7 @@ export function AdminWidgetsTab() {
             </button>
           </div>
           <div className="mt-3">
-            <p className="text-[10px] text-[#1a472a]/40 mb-1">Preview:</p>
+            <p className="text-[10px] text-[#1a472a]/80 mb-1">Preview:</p>
             <iframe src={w.code.match(/src="([^"]+)"/)?.[1] || ""} width="320" height="200" className="rounded-lg border border-[#e8e4de]" />
           </div>
         </div>

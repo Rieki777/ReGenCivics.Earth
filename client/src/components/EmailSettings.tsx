@@ -414,7 +414,7 @@ function EmailTemplatePreview() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-[#1a472a]/60">{t.description}</p>
+                        <p className="text-xs text-[#1a472a]/80">{t.description}</p>
                       </div>
                     );
                   })}
@@ -501,7 +501,7 @@ function EmailTemplatePreview() {
             {/* Subject line preview */}
             {previewQuery.data?.subject && (
               <div className="bg-gray-50 p-3 rounded-lg border">
-                <Label className="text-xs text-[#1a472a]/60 mb-1 block">Subject Line</Label>
+                <Label className="text-xs text-[#1a472a]/80 mb-1 block">Subject Line</Label>
                 <p className="text-sm font-medium text-[#1a472a]">
                   {customVersion?.customSubject || previewQuery.data.subject}
                 </p>
@@ -529,7 +529,7 @@ function EmailTemplatePreview() {
               )}
             </div>
             
-            <p className="text-xs text-[#1a472a]/50 text-center">
+            <p className="text-xs text-[#1a472a]/80 text-center">
               Preview uses sample data (Jane Smith, Green Valley Regenerative Farm). Actual emails will use real recipient data.
             </p>
           </TabsContent>
@@ -1008,7 +1008,7 @@ function BulkEmailSender() {
                 <tbody>
                   {recipients.map((r, i) => (
                     <tr key={r.email} className="border-t hover:bg-gray-50">
-                      <td className="px-3 py-1.5 text-[#1a472a]/50 text-xs">{i + 1}</td>
+                      <td className="px-3 py-1.5 text-[#1a472a]/80 text-xs">{i + 1}</td>
                       <td className="px-3 py-1.5 text-[#1a472a]">{r.email}</td>
                       <td className="px-3 py-1.5 text-[#1a472a]/70">{r.name}</td>
                       <td className="px-3 py-1.5">

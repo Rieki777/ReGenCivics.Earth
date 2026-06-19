@@ -38,7 +38,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
           <h3 className="text-[#2d2a26] font-bold" style={{ fontFamily: "var(--font-display)" }}>
             Send Gratitude
           </h3>
-          <button onClick={onClose} className="text-[#1a472a]/40 hover:text-[#1a472a]">
+          <button onClick={onClose} className="text-[#1a472a]/80 hover:text-[#1a472a]">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -64,7 +64,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
             </button>
           ))}
         </div>
-        <p className="text-center text-xs text-[#1a472a]/40">{remaining} of {budget?.total ?? 0} remaining this season</p>
+        <p className="text-center text-xs text-[#1a472a]/80">{remaining} of {budget?.total ?? 0} remaining this season</p>
 
         {/* Message */}
         <div className="relative">
@@ -74,9 +74,9 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
             placeholder="What are you grateful for?"
             maxLength={280}
             rows={3}
-            className="w-full bg-white border border-[#1a472a]/10 rounded-xl px-3 py-2.5 text-sm text-[#2d2a26] placeholder:text-[#1a472a]/30 outline-none focus:ring-1 focus:ring-[#4a7c59]/50 resize-none"
+            className="w-full bg-white border border-[#1a472a]/10 rounded-xl px-3 py-2.5 text-sm text-[#2d2a26] placeholder:text-[#1a472a]/75 outline-none focus:ring-1 focus:ring-[#4a7c59]/50 resize-none"
           />
-          <span className="absolute bottom-2 right-3 text-[10px] text-[#1a472a]/30">{message.length}/280</span>
+          <span className="absolute bottom-2 right-3 text-[10px] text-[#1a472a]/75">{message.length}/280</span>
         </div>
 
         <button

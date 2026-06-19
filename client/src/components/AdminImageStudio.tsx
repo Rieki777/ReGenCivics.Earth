@@ -193,14 +193,14 @@ export function AdminImageStudio() {
       {/* Variations grid */}
       {(isGenerating || variations.length > 0) && (
         <div>
-          <p className="text-xs font-semibold text-[#1a472a]/60 uppercase tracking-wide mb-3">
+          <p className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wide mb-3">
             Click a variation to select it
           </p>
           <div className="grid grid-cols-2 gap-3">
             {isGenerating
               ? Array.from({ length: 4 }, (_, i) => (
                   <div key={i} className="aspect-video rounded-xl bg-[#e8e4de] animate-pulse flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-[#1a472a]/30 animate-spin" />
+                    <Loader2 className="w-6 h-6 text-[#1a472a]/75 animate-spin" />
                   </div>
                 ))
               : variations.map((url, i) => (
@@ -239,7 +239,7 @@ export function AdminImageStudio() {
                   <><CheckCircle className="w-4 h-4" /> Apply Variation {selected + 1}</>
                 )}
               </button>
-              <p className="text-xs text-[#1a472a]/50 mt-1">
+              <p className="text-xs text-[#1a472a]/80 mt-1">
                 Promotes to permanent R2 filename, deletes other variations{mode === "edit" ? ", and auto-replaces DB references" : ""}
               </p>
             </div>
@@ -266,7 +266,7 @@ export function AdminImageStudio() {
             </div>
           </div>
           {result.replaced > 0 && (
-            <div className="text-xs text-[#1a472a]/60">
+            <div className="text-xs text-[#1a472a]/80">
               Updated {result.replaced} database record{result.replaced !== 1 ? "s" : ""}
             </div>
           )}

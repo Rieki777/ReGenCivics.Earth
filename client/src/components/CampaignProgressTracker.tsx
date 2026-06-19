@@ -93,7 +93,7 @@ export function CampaignProgressTracker({
           <span className="font-bold text-[#1a472a]">
             {fundingPercent.toFixed(0)}% funded
           </span>
-          <div className="flex items-center gap-3 text-[#1a472a]/60">
+          <div className="flex items-center gap-3 text-[#1a472a]/80">
             <span className="flex items-center gap-1">
               <Users className="w-3 h-3" />
               {contributorsCount}
@@ -172,11 +172,11 @@ export function CampaignProgressTracker({
       <div className="grid grid-cols-3 divide-x divide-[#7dd87d]/20">
         <div className="p-4 text-center">
           <div className="text-2xl font-bold text-[#4a7c59]">{fundingPercent.toFixed(0)}%</div>
-          <div className="text-xs text-[#1a472a]/60 mt-1">Funded</div>
+          <div className="text-xs text-[#1a472a]/80 mt-1">Funded</div>
         </div>
         <div className="p-4 text-center">
           <div className="text-2xl font-bold text-[#4a7c59]">{contributorsCount}</div>
-          <div className="text-xs text-[#1a472a]/60 mt-1">Contributors</div>
+          <div className="text-xs text-[#1a472a]/80 mt-1">Contributors</div>
         </div>
         <div className="p-4 text-center">
           <div className={`text-2xl font-bold ${
@@ -193,7 +193,7 @@ export function CampaignProgressTracker({
               '--'
             )}
           </div>
-          <div className="text-xs text-[#1a472a]/60 mt-1">
+          <div className="text-xs text-[#1a472a]/80 mt-1">
             {status === 'active' ? 'Days Left' : status === 'pending_review' ? 'Pending Review' : 'Status'}
           </div>
         </div>
@@ -202,7 +202,7 @@ export function CampaignProgressTracker({
       {/* Time progress bar */}
       {status === 'active' && startedAt && (
         <div className="px-5 pb-4">
-          <div className="flex items-center justify-between text-xs text-[#1a472a]/50 mb-1">
+          <div className="flex items-center justify-between text-xs text-[#1a472a]/80 mb-1">
             <span>Day {daysElapsed} of {durationDays}</span>
             <span>{percentTimeUsed.toFixed(0)}% time elapsed</span>
           </div>

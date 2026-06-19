@@ -1,0 +1,25 @@
+{
+  "auditedAt": "2026-05-29",
+  "audited_pages": ["/", "/community", "/quest", "/fund", "/investor", "/admin"],
+  "method": "Custom WCAG 2.x checker injected into the live regencivics.earth via Claude in Chrome.",
+  "rule": "WCAG 2.2 AA: 4.5:1 for normal text, 3:1 for large text (18pt+ or 14pt+ bold).",
+  "totals": {"pages_audited": 6, "total_failures_observed": 64, "patterns_to_fix": 7, "estimated_post_fix_remaining": 5},
+  "measurements_pre_fix": {
+    "/": 2,
+    "/community": 6,
+    "/quest": 44,
+    "/fund": 7,
+    "/opportunity": 1,
+    "/admin": 4
+  },
+  "measurements_post_fix_estimated": {
+    "/": 0,
+    "/community": 0,
+    "/quest": 3,
+    "/fund": 1,
+    "/opportunity": 0,
+    "/admin": 1
+  },
+  "patterns_fixed_in_this_batch": ["P1", "P2", "P3", "P4", "P5", "P6", "P7"],
+  "patterns_open": []
+}

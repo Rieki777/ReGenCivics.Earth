@@ -292,7 +292,7 @@ export function EpicQuestSection() {
             moss ruins via LockedQuestCard. Spec sections 4.3 + 9.8.
             Empty-state branch handles the filtered case where the
             active path has no Epic quests in its element pool yet. */}
-        <div className={isLocked ? "opacity-40 grayscale pointer-events-none" : ""}>
+        <div className={isLocked ? "opacity-80 pointer-events-none" : ""}>
           {filterElement && sortedQuests.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center">
               <p className="text-white/70 text-base mb-2">

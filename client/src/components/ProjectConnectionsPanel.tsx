@@ -47,7 +47,7 @@ export function ProjectConnectionsPanel({ postId }: Props) {
                   Thread #{otherPostId(c)}
                 </Link>
                 {c.note && (
-                  <p className="text-[#1a472a]/50 text-xs mt-0.5" style={{ fontFamily: "var(--font-body)" }}>
+                  <p className="text-[#1a472a]/80 text-xs mt-0.5" style={{ fontFamily: "var(--font-body)" }}>
                     {c.note}
                   </p>
                 )}
@@ -73,7 +73,7 @@ export function ProjectConnectionsPanel({ postId }: Props) {
                   Thread #{otherPostId(c)}
                 </Link>
                 {c.note && (
-                  <p className="text-[#1a472a]/50 text-xs mt-0.5" style={{ fontFamily: "var(--font-body)" }}>
+                  <p className="text-[#1a472a]/80 text-xs mt-0.5" style={{ fontFamily: "var(--font-body)" }}>
                     {c.note}
                   </p>
                 )}

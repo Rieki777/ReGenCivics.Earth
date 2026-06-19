@@ -125,8 +125,8 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
               onClick={() => setTab(id)}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
                 tab === id
-                  ? 'bg-[#7dd87d]/20 text-[#7dd87d]'
-                  : 'text-white/70 hover:text-white/70 hover:bg-white/5'
+                  ? 'bg-[#7dd87d]/20 text-[#9de89d]'
+                  : 'text-white/75 hover:text-white hover:bg-white/5'
               }`}
             >
               <Icon className="w-3 h-3" />

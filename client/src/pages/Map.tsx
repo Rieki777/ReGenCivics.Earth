@@ -16,7 +16,7 @@ function GlobePlaceholder() {
       role="status"
       aria-label="Loading the globe"
     >
-      <p className="text-[#7dd87d]/50 text-sm tracking-wide animate-pulse">
+      <p className="text-[#7dd87d]/75 text-sm tracking-wide animate-pulse">
         Loading the globe...
       </p>
     </div>

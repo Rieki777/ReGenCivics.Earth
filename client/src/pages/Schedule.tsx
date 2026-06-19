@@ -91,7 +91,7 @@ function RecordingsSection() {
                     />
                   ) : (
                     <div className="w-30 h-17 rounded-lg bg-[#1a472a] flex-shrink-0 flex items-center justify-center">
-                      <Video className="w-6 h-6 text-[#7dd87d]/60" />
+                      <Video className="w-6 h-6 text-[#7dd87d]/80" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

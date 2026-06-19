@@ -212,7 +212,7 @@ export default function AdminApplications() {
                   </div>
                   <div>
                     <div className="text-xl md:text-2xl font-bold text-[#1a472a]">{count}</div>
-                    <div className="text-[10px] md:text-xs text-[#1a472a]/60 leading-tight">{config.label}</div>
+                    <div className="text-[10px] md:text-xs text-[#1a472a]/80 leading-tight">{config.label}</div>
                   </div>
                 </div>
               </Card>
@@ -244,7 +244,7 @@ export default function AdminApplications() {
             <TabsContent key={status} value={status} className="space-y-4">
               {filterByStatus(status).length === 0 ? (
                 <Card className="p-12 text-center bg-white">
-                  <FileText className="w-16 h-16 text-[#1a472a]/30 mx-auto mb-4" />
+                  <FileText className="w-16 h-16 text-[#1a472a]/75 mx-auto mb-4" />
                   <p className="text-[#1a472a]/70">
                     No applications with this status
                   </p>

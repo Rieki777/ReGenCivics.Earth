@@ -336,7 +336,7 @@ export default function CampaignManage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate(`/campaigns/${id}`)}
-                className="mb-2 -ml-2 text-[#1a472a]/60 hover:text-[#1a472a]"
+                className="mb-2 -ml-2 text-[#1a472a]/80 hover:text-[#1a472a]"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Campaign
@@ -344,7 +344,7 @@ export default function CampaignManage() {
               <h1 className="text-2xl md:text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                 Manage: {campaign.title}
               </h1>
-              <p className="text-[#1a472a]/60 mt-1">{campaign.projectName}</p>
+              <p className="text-[#1a472a]/80 mt-1">{campaign.projectName}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -372,7 +372,7 @@ export default function CampaignManage() {
           {/* Progress */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-[#1a472a]/60">Campaign Progress</span>
+              <span className="text-[#1a472a]/80">Campaign Progress</span>
               <span className="font-bold text-[#4a7c59]">{progressPercentage.toFixed(1)}%</span>
             </div>
             <Progress value={progressPercentage} className="h-3" />

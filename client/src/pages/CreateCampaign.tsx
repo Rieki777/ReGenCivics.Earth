@@ -416,7 +416,7 @@ export default function CreateCampaign() {
           <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
             Sign In Required
           </h2>
-          <p className="text-sm text-[#1a472a]/60 mb-4">You need to be signed in to create campaigns.</p>
+          <p className="text-sm text-[#1a472a]/80 mb-4">You need to be signed in to create campaigns.</p>
           <a
             href={getLoginUrl()}
             className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#4a7c59] hover:bg-[#1a472a] text-white text-sm font-semibold rounded-lg transition-colors"
@@ -437,7 +437,7 @@ export default function CreateCampaign() {
           <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
             Campaign Creator Access
           </h2>
-          <p className="text-sm text-[#1a472a]/60 mb-4">Enter the password to create campaigns</p>
+          <p className="text-sm text-[#1a472a]/80 mb-4">Enter the password to create campaigns</p>
           <form onSubmit={async (e) => {
             e.preventDefault();
             try {
@@ -734,7 +734,7 @@ export default function CreateCampaign() {
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="font-bold text-[#1a472a] group-hover:text-[#1a472a]">{app.projectName}</div>
-                              <div className="text-xs text-[#1a472a]/60 mt-1">
+                              <div className="text-xs text-[#1a472a]/80 mt-1">
                                 {app.location} {app.projectType === 'early_stage' ? '(Early Stage)' : '(Mature)'}
                               </div>
                             </div>
@@ -750,7 +750,7 @@ export default function CreateCampaign() {
               {user && userApplications && userApplications.length > 0 && applicants && applicants.length > 0 && (
                 <div className="flex items-center gap-3 my-4">
                   <div className="flex-1 h-px bg-[#7dd87d]/30" />
-                  <span className="text-xs text-[#1a472a]/40">or select from all applicants</span>
+                  <span className="text-xs text-[#1a472a]/80">or select from all applicants</span>
                   <div className="flex-1 h-px bg-[#7dd87d]/30" />
                 </div>
               )}
@@ -760,7 +760,7 @@ export default function CreateCampaign() {
                 {applicantsLoading ? (
                   <div className="text-center py-8">
                     <div className="w-8 h-8 border-2 border-[#7dd87d]/30 border-t-[#4a7c59] rounded-full animate-spin mx-auto mb-2" />
-                    <p className="text-sm text-[#1a472a]/60">Loading applicants...</p>
+                    <p className="text-sm text-[#1a472a]/80">Loading applicants...</p>
                   </div>
                 ) : applicants && applicants.length > 0 ? (
                   applicants
@@ -778,12 +778,12 @@ export default function CreateCampaign() {
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="font-bold text-[#1a472a] group-hover:text-[#1a472a] truncate">{app.projectName}</div>
-                            <div className="text-xs text-[#1a472a]/60 mt-1 truncate">
+                            <div className="text-xs text-[#1a472a]/80 mt-1 truncate">
                               {app.contactName && <span>{app.contactName} - </span>}
                               {app.location}
                             </div>
                             {app.vision && (
-                              <p className="text-xs text-[#1a472a]/50 mt-1 line-clamp-2">{app.vision}</p>
+                              <p className="text-xs text-[#1a472a]/80 mt-1 line-clamp-2">{app.vision}</p>
                             )}
                           </div>
                           <ChevronRight className="w-5 h-5 text-[#4a7c59] flex-shrink-0 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -792,10 +792,10 @@ export default function CreateCampaign() {
                     ))
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-sm text-[#1a472a]/60">
+                    <p className="text-sm text-[#1a472a]/80">
                       {applicantSearch ? 'No projects match your search.' : 'No applicants available yet.'}
                     </p>
-                    <p className="text-xs text-[#1a472a]/40 mt-2">
+                    <p className="text-xs text-[#1a472a]/80 mt-2">
                       Projects must first apply for the current season at <a href="/apply" className="text-[#4a7c59] underline">/apply</a> before creating a campaign.
                     </p>
                   </div>
@@ -804,7 +804,7 @@ export default function CreateCampaign() {
 
               {!user && (
                 <div className="mt-6 text-center">
-                  <p className="text-sm text-[#1a472a]/60 mb-3">
+                  <p className="text-sm text-[#1a472a]/80 mb-3">
                     Please sign in to access the campaign creator.
                   </p>
                   <Button
@@ -858,7 +858,7 @@ export default function CreateCampaign() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-[#4a7c59]" />
-                <span className="text-sm text-[#1a472a]/60">Total Value:</span>
+                <span className="text-sm text-[#1a472a]/80">Total Value:</span>
                 <span className="text-xl font-bold text-[#1a472a]">{formatCurrency(grandTotal, currencySymbol)}</span>
               </div>
             </div>
@@ -958,7 +958,7 @@ export default function CreateCampaign() {
                           </div>
                           <div>
                             <h3 className="font-bold text-[#1a472a] mb-1">{template.name}</h3>
-                            <p className="text-xs text-[#1a472a]/60 leading-relaxed">{template.description}</p>
+                            <p className="text-xs text-[#1a472a]/80 leading-relaxed">{template.description}</p>
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs">
                             <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
@@ -1015,7 +1015,7 @@ export default function CreateCampaign() {
                         className="w-full p-3 text-left bg-[#f0f7f0] hover:bg-[#f0f7f0] rounded-lg border border-[#7dd87d]/30 transition-colors"
                       >
                         <div className="font-medium text-[#1a472a]">{app.projectName}</div>
-                        <div className="text-xs text-[#1a472a]/60">
+                        <div className="text-xs text-[#1a472a]/80">
                           {app.location} - {app.status}
                         </div>
                       </button>
@@ -1099,7 +1099,7 @@ export default function CreateCampaign() {
                 placeholder="https://app.hypha.earth/en/dho/your-project/agreements/create/propose-contribution"
                 className="bg-white border-[#7dd87d]/30"
               />
-              <p className="text-xs text-[#1a472a]/60 mt-1">
+              <p className="text-xs text-[#1a472a]/80 mt-1">
                 This is where contributors will submit their proposals. Required for listing your project.
               </p>
             </div>
@@ -1306,7 +1306,7 @@ export default function CreateCampaign() {
                   The first image will be used as your campaign cover photo.
                 </p>
                 <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/30">
-                  <p className="text-sm text-[#1a472a]/60 mb-4">
+                  <p className="text-sm text-[#1a472a]/80 mb-4">
                     You can upload photos now or add them later from your campaign management page after submission.
                     Photos help build trust and show contributors the real impact of your project.
                   </p>
@@ -1390,7 +1390,7 @@ export default function CreateCampaign() {
           )}
         </div>
         {currentStep === steps.length - 1 && (
-          <p className="text-xs text-[#1a472a]/60 mt-3 text-center">
+          <p className="text-xs text-[#1a472a]/80 mt-3 text-center">
             Your campaign will be reviewed before going live
           </p>
         )}
@@ -1470,12 +1470,12 @@ function LandSection({
             <MapPin className="w-6 h-6 text-[#4a7c59]" />
             Land Requirements
           </h2>
-          <p className="text-sm text-[#1a472a]/60 mt-1">
+          <p className="text-sm text-[#1a472a]/80 mt-1">
             Define the land you need for your project
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-[#1a472a]/60">Section Total</p>
+          <p className="text-sm text-[#1a472a]/80">Section Total</p>
           <p className="text-xl font-bold text-[#4a7c59]">{formatCurrency(total, currencySymbol)}</p>
         </div>
       </div>
@@ -1488,7 +1488,7 @@ function LandSection({
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-[#1a472a]">{req.hectares} hectares</p>
-                  <p className="text-sm text-[#1a472a]/60">{req.regions.join(', ') || 'Flexible location'}</p>
+                  <p className="text-sm text-[#1a472a]/80">{req.regions.join(', ') || 'Flexible location'}</p>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {req.features.map(f => (
                       <span key={f} className="text-xs bg-white px-2 py-0.5 rounded-full text-[#4a7c59]">
@@ -1535,7 +1535,7 @@ function LandSection({
                   placeholder="e.g., 50"
                   className="bg-white border-[#7dd87d]/30 w-32"
                 />
-                <span className="text-sm text-[#1a472a]/60">
+                <span className="text-sm text-[#1a472a]/80">
                   = {((formData.hectares || 0) * 2.471).toFixed(1)} acres
                 </span>
               </div>
@@ -1609,7 +1609,7 @@ function LandSection({
                 Video URL (optional)
               </label>
               <div className="flex items-center gap-2">
-                <Video className="w-4 h-4 text-[#1a472a]/40" />
+                <Video className="w-4 h-4 text-[#1a472a]/80" />
                 <Input
                   value={formData.videoUrl || ''}
                   onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
@@ -1631,7 +1631,7 @@ function LandSection({
                   {formatCurrency(estimatedValue, currencySymbol)}
                 </span>
               </div>
-              <p className="text-xs text-[#1a472a]/60 mb-3">
+              <p className="text-xs text-[#1a472a]/80 mb-3">
                 Based on average land prices in selected regions. You can edit this value if you have better figures.
               </p>
               <div>
@@ -1752,7 +1752,7 @@ function EquipmentSection({
             <Tractor className="w-6 h-6 text-[#4a7c59]" />
             Equipment & Materials
           </h2>
-          <p className="text-sm text-[#1a472a]/60 mt-1">
+          <p className="text-sm text-[#1a472a]/80 mt-1">
             Select from templates or add custom equipment
           </p>
         </div>
@@ -1765,7 +1765,7 @@ function EquipmentSection({
             }}
           />
           <div className="text-right">
-            <p className="text-sm text-[#1a472a]/60">Section Total</p>
+            <p className="text-sm text-[#1a472a]/80">Section Total</p>
             <p className="text-xl font-bold text-[#4a7c59]">{formatCurrency(total, currencySymbol)}</p>
           </div>
         </div>
@@ -1807,9 +1807,9 @@ function EquipmentSection({
                   >
                     +
                   </button>
-                  <span className="text-xs text-[#1a472a]/60 mx-1">x</span>
+                  <span className="text-xs text-[#1a472a]/80 mx-1">x</span>
                   <div className="flex items-center">
-                    <span className="text-sm text-[#1a472a]/60 mr-1">{currencySymbol}</span>
+                    <span className="text-sm text-[#1a472a]/80 mr-1">{currencySymbol}</span>
                     <Input
                       type="number"
                       value={item.customValue ?? item.estimatedValue}
@@ -1842,9 +1842,9 @@ function EquipmentSection({
             >
               <span className="font-medium text-[#1a472a]">{cat.category}</span>
               {selectedCategory === cat.category ? (
-                <ChevronUp className="w-4 h-4 text-[#1a472a]/40" />
+                <ChevronUp className="w-4 h-4 text-[#1a472a]/80" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-[#1a472a]/40" />
+                <ChevronDown className="w-4 h-4 text-[#1a472a]/80" />
               )}
             </button>
             {selectedCategory === cat.category && (
@@ -1899,7 +1899,7 @@ function EquipmentSection({
                 placeholder="Enter value"
                 className="bg-white border-[#7dd87d]/30"
               />
-              <p className="text-xs text-[#1a472a]/60 mt-1">You can edit this value if you have better figures</p>
+              <p className="text-xs text-[#1a472a]/80 mt-1">You can edit this value if you have better figures</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-[#1a472a] mb-1">Quantity</label>
@@ -2023,7 +2023,7 @@ function RolesSection({
             <Users className="w-6 h-6 text-[#4a7c59]" />
             Roles & Team
           </h2>
-          <p className="text-sm text-[#1a472a]/60 mt-1">
+          <p className="text-sm text-[#1a472a]/80 mt-1">
             Define the roles needed for your project to succeed
           </p>
         </div>
@@ -2036,7 +2036,7 @@ function RolesSection({
             }}
           />
           <div className="text-right">
-            <p className="text-sm text-[#1a472a]/60">Section Total</p>
+            <p className="text-sm text-[#1a472a]/80">Section Total</p>
             <p className="text-xl font-bold text-[#4a7c59]">{formatCurrency(total, currencySymbol)}</p>
           </div>
         </div>
@@ -2072,9 +2072,9 @@ function RolesSection({
                       onChange={(e) => updateRole(role.id, 'hoursPerWeek', parseFloat(e.target.value) || 0)}
                       className="w-16 h-7 text-sm bg-white border-[#7dd87d]/30 text-center"
                     />
-                    <span className="text-[#1a472a]/60">h/wk</span>
+                    <span className="text-[#1a472a]/80">h/wk</span>
                   </div>
-                  <span className="text-[#1a472a]/40">x</span>
+                  <span className="text-[#1a472a]/80">x</span>
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
@@ -2082,20 +2082,20 @@ function RolesSection({
                       onChange={(e) => updateRole(role.id, 'weeksNeeded', parseFloat(e.target.value) || 0)}
                       className="w-16 h-7 text-sm bg-white border-[#7dd87d]/30 text-center"
                     />
-                    <span className="text-[#1a472a]/60">wks</span>
+                    <span className="text-[#1a472a]/80">wks</span>
                   </div>
-                  <span className="text-[#1a472a]/40">@</span>
+                  <span className="text-[#1a472a]/80">@</span>
                   <div className="flex items-center gap-1">
-                    <span className="text-[#1a472a]/60">{currencySymbol}</span>
+                    <span className="text-[#1a472a]/80">{currencySymbol}</span>
                     <Input
                       type="number"
                       value={role.hourlyRate}
                       onChange={(e) => updateRole(role.id, 'hourlyRate', parseFloat(e.target.value) || 0)}
                       className="w-16 h-7 text-sm bg-white border-[#7dd87d]/30 text-center"
                     />
-                    <span className="text-[#1a472a]/60">/h</span>
+                    <span className="text-[#1a472a]/80">/h</span>
                   </div>
-                  <span className="text-[#1a472a]/40">=</span>
+                  <span className="text-[#1a472a]/80">=</span>
                   <span className="font-bold text-[#1a472a]">
                     {formatCurrency(role.customValue ?? role.estimatedValue, currencySymbol)}
                   </span>
@@ -2121,9 +2121,9 @@ function RolesSection({
             >
               <span className="font-medium text-[#1a472a]">{cat.category}</span>
               {selectedCategory === cat.category ? (
-                <ChevronUp className="w-4 h-4 text-[#1a472a]/40" />
+                <ChevronUp className="w-4 h-4 text-[#1a472a]/80" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-[#1a472a]/40" />
+                <ChevronDown className="w-4 h-4 text-[#1a472a]/80" />
               )}
             </button>
             {selectedCategory === cat.category && (
@@ -2136,7 +2136,7 @@ function RolesSection({
                   >
                     <div>
                       <span className="text-sm font-medium text-[#1a472a]">{role.title}</span>
-                      <p className="text-xs text-[#1a472a]/60">{role.hoursPerWeek}h/week @ {formatCurrency(role.hourlyRate, currencySymbol)}/h</p>
+                      <p className="text-xs text-[#1a472a]/80">{role.hoursPerWeek}h/week @ {formatCurrency(role.hourlyRate, currencySymbol)}/h</p>
                     </div>
                     <span className="text-sm font-medium text-[#4a7c59]">
                       {formatCurrency(role.hoursPerWeek * 52 * role.hourlyRate, currencySymbol)}/yr
@@ -2201,7 +2201,7 @@ function RolesSection({
             </div>
             <div>
               <div className="bg-white rounded-lg p-3 border border-[#7dd87d]/30 mb-2">
-                <p className="text-xs text-[#1a472a]/60">Calculated Value:</p>
+                <p className="text-xs text-[#1a472a]/80">Calculated Value:</p>
                 <p className="text-lg font-bold text-[#4a7c59]">{formatCurrency(calculatedValue, currencySymbol)}</p>
               </div>
               <div>
@@ -2213,7 +2213,7 @@ function RolesSection({
                   placeholder={`Leave empty to use ${formatCurrency(calculatedValue, currencySymbol)}`}
                   className="bg-white border-[#7dd87d]/30"
                 />
-                <p className="text-xs text-[#1a472a]/60 mt-1">You can edit this value if you have better figures</p>
+                <p className="text-xs text-[#1a472a]/80 mt-1">You can edit this value if you have better figures</p>
               </div>
             </div>
           </div>
@@ -2317,12 +2317,12 @@ function OtherNeedsSection({
             <Package className="w-6 h-6 text-[#4a7c59]" />
             Other Needs
           </h2>
-          <p className="text-sm text-[#1a472a]/60 mt-1">
+          <p className="text-sm text-[#1a472a]/80 mt-1">
             Permits, insurance, training, and anything else your project needs
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-[#1a472a]/60">Section Total</p>
+          <p className="text-sm text-[#1a472a]/80">Section Total</p>
           <p className="text-xl font-bold text-[#4a7c59]">{formatCurrency(total, currencySymbol)}</p>
         </div>
       </div>
@@ -2339,7 +2339,7 @@ function OtherNeedsSection({
                   <Icon className="w-5 h-5 text-[#4a7c59]" />
                   <div>
                     <span className="font-medium text-[#1a472a]">{need.title}</span>
-                    <p className="text-xs text-[#1a472a]/60">{catInfo?.label || need.category}</p>
+                    <p className="text-xs text-[#1a472a]/80">{catInfo?.label || need.category}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -2381,7 +2381,7 @@ function OtherNeedsSection({
                 </div>
                 <div>
                   <span className="font-medium text-[#1a472a] block">{cat.label}</span>
-                  <span className="text-xs text-[#1a472a]/60">{cat.description}</span>
+                  <span className="text-xs text-[#1a472a]/80">{cat.description}</span>
                 </div>
               </button>
             );
@@ -2503,7 +2503,7 @@ function FinancialTargetSection({
             <Target className="w-6 h-6 text-[#4a7c59]" />
             Financial Target
           </h2>
-          <p className="text-sm text-[#1a472a]/60 mt-1">
+          <p className="text-sm text-[#1a472a]/80 mt-1">
             How much actual money do you need to raise?
           </p>
         </div>
@@ -2559,7 +2559,7 @@ function FinancialTargetSection({
           
           {/* Full-width input with currency symbol */}
           <div className="relative mb-4">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-[#1a472a]/60">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-[#1a472a]/80">
               {currencySymbol}
             </span>
             <Input
@@ -2573,7 +2573,7 @@ function FinancialTargetSection({
           
           {/* Percentage info */}
           <div className="flex items-center justify-between mb-4 text-sm">
-            <span className="text-[#1a472a]/60">
+            <span className="text-[#1a472a]/80">
               {financialPercentage.toFixed(1)}% of total needs
             </span>
             <span className="text-[#4a7c59] font-medium">
@@ -2583,7 +2583,7 @@ function FinancialTargetSection({
           
           {/* Percentage slider */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-[#1a472a]/60">
+            <div className="flex items-center justify-between text-xs text-[#1a472a]/80">
               <span>5%</span>
               <span>Adjust % of total needs</span>
               <span>50%</span>
@@ -2602,9 +2602,9 @@ function FinancialTargetSection({
               }}
             />
             <div className="flex justify-between text-xs">
-              <span className="text-[#1a472a]/40">Conservative</span>
+              <span className="text-[#1a472a]/80">Conservative</span>
               <span className="text-[#4a7c59] font-medium">{financialPercentage.toFixed(0)}%</span>
-              <span className="text-[#1a472a]/40">Flexible</span>
+              <span className="text-[#1a472a]/80">Flexible</span>
             </div>
           </div>
         </div>
@@ -2616,7 +2616,7 @@ function FinancialTargetSection({
           <Calendar className="w-5 h-5 text-[#4a7c59]" />
           Campaign Duration
         </h3>
-        <p className="text-sm text-[#1a472a]/60 mb-4">
+        <p className="text-sm text-[#1a472a]/80 mb-4">
           How long should your campaign run? Choose between 1 and 365 days.
         </p>
         
@@ -2662,7 +2662,7 @@ function FinancialTargetSection({
             onChange={(e) => setDurationDays(parseInt(e.target.value))}
             className="w-full h-2 bg-gradient-to-r from-[#f0f7f0] to-[#4a7c59] rounded-full appearance-none cursor-pointer"
           />
-          <div className="flex justify-between text-xs text-[#1a472a]/40 mt-1">
+          <div className="flex justify-between text-xs text-[#1a472a]/80 mt-1">
             <span>1 day</span>
             <span className="text-[#4a7c59] font-medium">
               {durationDays} day{durationDays !== 1 ? 's' : ''}

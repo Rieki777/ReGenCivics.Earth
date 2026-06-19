@@ -249,7 +249,7 @@ export default function QuestSuggestions() {
             </div>
           ) : suggestionsQuery.data?.length === 0 ? (
             <div className="text-center py-16">
-              <Sparkles className="w-12 h-12 text-[#7dd87d]/40 mx-auto mb-4" />
+              <Sparkles className="w-12 h-12 text-[#7dd87d]/75 mx-auto mb-4" />
               <h3 className="text-white/60 text-lg mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                 No quest suggestions yet
               </h3>

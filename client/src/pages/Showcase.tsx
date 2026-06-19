@@ -328,7 +328,7 @@ export default function Showcase() {
         <div className="container">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1a472a]/40" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1a472a]/80" />
               <Input
                 placeholder="Search projects and organizations..."
                 value={searchTerm}
@@ -404,7 +404,7 @@ export default function Showcase() {
                           >
                             {project.name}
                           </CardTitle>
-                          <CardDescription className="flex items-center gap-1 text-[#1a472a]/60">
+                          <CardDescription className="flex items-center gap-1 text-[#1a472a]/80">
                             <MapPin className="w-4 h-4" />
                             {project.location}
                           </CardDescription>
@@ -423,11 +423,11 @@ export default function Showcase() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-[#f0ebe3] rounded-lg p-3 text-center">
                           <p className="text-lg font-bold text-[#1a472a]">{project.size}</p>
-                          <p className="text-xs text-[#1a472a]/60">Project Size</p>
+                          <p className="text-xs text-[#1a472a]/80">Project Size</p>
                         </div>
                         <div className="bg-[#f0ebe3] rounded-lg p-3 text-center">
                           <p className="text-lg font-bold text-[#1a472a]">{project.community}</p>
-                          <p className="text-xs text-[#1a472a]/60">Community</p>
+                          <p className="text-xs text-[#1a472a]/80">Community</p>
                         </div>
                       </div>
 
@@ -478,7 +478,7 @@ export default function Showcase() {
                 <div className="text-center py-12">
                   <TreePine className="w-16 h-16 mx-auto text-[#1a472a]/20 mb-4" />
                   <h3 className="text-xl font-semibold text-[#1a472a] mb-2">No projects found</h3>
-                  <p className="text-[#1a472a]/60">Try adjusting your search or filters</p>
+                  <p className="text-[#1a472a]/80">Try adjusting your search or filters</p>
                 </div>
               )}
             </TabsContent>
@@ -500,7 +500,7 @@ export default function Showcase() {
                           >
                             {org.name}
                           </CardTitle>
-                          <CardDescription className="text-[#1a472a]/60">
+                          <CardDescription className="text-[#1a472a]/80">
                             {org.type}
                           </CardDescription>
                         </div>
@@ -557,7 +557,7 @@ export default function Showcase() {
                 <div className="text-center py-12">
                   <Network className="w-16 h-16 mx-auto text-[#1a472a]/20 mb-4" />
                   <h3 className="text-xl font-semibold text-[#1a472a] mb-2">No organizations found</h3>
-                  <p className="text-[#1a472a]/60">Try adjusting your search</p>
+                  <p className="text-[#1a472a]/80">Try adjusting your search</p>
                 </div>
               )}
             </TabsContent>

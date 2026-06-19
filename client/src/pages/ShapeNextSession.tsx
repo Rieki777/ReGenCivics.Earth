@@ -143,7 +143,7 @@ export default function ShapeNextSession() {
 
         {/* Header */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-[#7dd87d]/60 text-sm">
+          <div className="flex items-center gap-2 text-[#7dd87d]/80 text-sm">
             <Leaf className="w-4 h-4" />
             <span>ReGen Civics</span>
           </div>
@@ -163,7 +163,7 @@ export default function ShapeNextSession() {
           </div>
         ) : nextEvent ? (
           <div className="rounded-xl border border-[#7dd87d]/25 bg-[#1a472a]/50 p-5 space-y-1">
-            <div className="flex items-center gap-2 text-[#7dd87d]/60 text-xs uppercase tracking-wider mb-2">
+            <div className="flex items-center gap-2 text-[#7dd87d]/80 text-xs uppercase tracking-wider mb-2">
               <Calendar className="w-3.5 h-3.5" />
               <span>Next session</span>
             </div>
@@ -185,7 +185,7 @@ export default function ShapeNextSession() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-[#a8e6a8] text-sm font-medium">
-                Name <span className="text-[#7dd87d]/40 font-normal">(optional)</span>
+                Name <span className="text-[#7dd87d]/75 font-normal">(optional)</span>
               </Label>
               <Input
                 id="name"
@@ -198,7 +198,7 @@ export default function ShapeNextSession() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email" className="text-[#a8e6a8] text-sm font-medium">
-                Email <span className="text-[#7dd87d]/40 font-normal">(optional)</span>
+                Email <span className="text-[#7dd87d]/75 font-normal">(optional)</span>
               </Label>
               <Input
                 id="email"
@@ -288,7 +288,7 @@ export default function ShapeNextSession() {
 
           <p className="text-[#4a7c59] text-xs text-center leading-relaxed">
             Your input goes to Rye and the facilitation team. We only use your email to follow up if you want a reply.{" "}
-            <Link href="/schedule" className="text-[#7dd87d]/60 hover:text-[#7dd87d] underline">
+            <Link href="/schedule" className="text-[#7dd87d]/80 hover:text-[#7dd87d] underline">
               View the full schedule.
             </Link>
           </p>

@@ -58,9 +58,9 @@ export default function ApplyStatus() {
 
         {!application ? (
           <div className="bg-white rounded-2xl p-8 text-center border border-[#1a472a]/10">
-            <Circle className="w-12 h-12 text-[#7dd87d]/40 mx-auto mb-4" />
+            <Circle className="w-12 h-12 text-[#7dd87d]/75 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-[#1a472a] mb-2">No application yet</h2>
-            <p className="text-[#1a472a]/60 mb-6">Start your application to join the ReGen Civics alliance.</p>
+            <p className="text-[#1a472a]/80 mb-6">Start your application to join the ReGen Civics alliance.</p>
             <Link href="/apply">
               <button className="bg-[#7dd87d] text-[#1a472a] px-6 py-2 rounded-full font-semibold hover:bg-[#9de89d] transition-colors">
                 Begin Application
@@ -71,9 +71,9 @@ export default function ApplyStatus() {
           <div className="space-y-6">
             <div className="bg-white rounded-2xl p-6 border border-[#1a472a]/10">
               <h2 className="font-bold text-[#1a472a] text-xl mb-1">{application.projectName}</h2>
-              <p className="text-sm text-[#1a472a]/60">{application.location}</p>
+              <p className="text-sm text-[#1a472a]/80">{application.location}</p>
               {application.submittedAt && (
-                <p className="text-xs text-[#1a472a]/40 mt-1">Submitted {new Date(application.submittedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                <p className="text-xs text-[#1a472a]/80 mt-1">Submitted {new Date(application.submittedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
               )}
             </div>
 
@@ -88,12 +88,12 @@ export default function ApplyStatus() {
                   const isPending = i > currentIdx;
                   return (
                     <div key={step.key} className="flex items-start gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isComplete ? 'bg-[#7dd87d] text-[#1a472a]' : isCurrent ? 'bg-[#1a472a] text-white ring-4 ring-[#7dd87d]/30' : 'bg-[#1a472a]/10 text-[#1a472a]/30'}`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isComplete ? 'bg-[#7dd87d] text-[#1a472a]' : isCurrent ? 'bg-[#1a472a] text-white ring-4 ring-[#7dd87d]/30' : 'bg-[#1a472a]/10 text-[#1a472a]/75'}`}>
                         {isComplete ? <CheckCircle2 className="w-5 h-5" /> : isCurrent ? <Clock className="w-4 h-4" /> : <span className="text-xs font-bold">{i + 1}</span>}
                       </div>
                       <div className="flex-1">
-                        <p className={`font-semibold text-sm ${isCurrent ? 'text-[#1a472a]' : isPending ? 'text-[#1a472a]/30' : 'text-[#1a472a]/70'}`}>{step.label}</p>
-                        <p className={`text-xs mt-0.5 ${isPending ? 'text-[#1a472a]/30' : 'text-[#1a472a]/60'}`}>{step.description}</p>
+                        <p className={`font-semibold text-sm ${isCurrent ? 'text-[#1a472a]' : isPending ? 'text-[#1a472a]/75' : 'text-[#1a472a]/70'}`}>{step.label}</p>
+                        <p className={`text-xs mt-0.5 ${isPending ? 'text-[#1a472a]/75' : 'text-[#1a472a]/80'}`}>{step.description}</p>
                       </div>
                     </div>
                   );

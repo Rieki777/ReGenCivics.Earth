@@ -115,7 +115,7 @@ function FundStatusBanner() {
             <PulsingDot color="#1a472a" />
             <span>Fund In Formation. Currently Accepting Letters of Intent</span>
           </div>
-          <span className="hidden sm:inline text-[#1a472a]/60">|</span>
+          <span className="hidden sm:inline text-[#1a472a]">|</span>
           <Link
             href="/loi"
             className="inline-flex items-center bg-[#1a472a] hover:bg-[#0d2818] text-white text-xs sm:text-sm px-3 py-1 rounded-md font-medium transition-colors"
@@ -1460,7 +1460,7 @@ export default function Opportunity() {
                   {["Capital Deployed", "Regenerative Practices Scaled", "Environmental Outcomes + Financial Returns", "More Capital Available", "Ecosystem Grows", "Network Effects Amplify", "Regenerative Economy Strengthens"].map((step, i) => (
                     <span key={i} className="flex items-center gap-2">
                       <span className="bg-[#7dd87d]/20 text-[#7dd87d] px-2 py-1 rounded-full text-[10px] font-semibold">{step}</span>
-                      {i < 6 && <ArrowRight className="w-3 h-3 text-[#7dd87d]/40" />}
+                      {i < 6 && <ArrowRight className="w-3 h-3 text-[#7dd87d]/75" />}
                     </span>
                   ))}
                 </div>
@@ -2249,7 +2249,7 @@ export default function Opportunity() {
             <AnimatedSection animation="slide-up">
               <Suspense fallback={
                 <div className="bg-[#1a472a]/30 rounded-2xl p-8 text-center">
-                  <div className="animate-pulse text-[#7dd87d]/60 text-sm">Loading calculator...</div>
+                  <div className="animate-pulse text-[#7dd87d]/80 text-sm">Loading calculator...</div>
                 </div>
               }>
                 <AllocationCalculator />

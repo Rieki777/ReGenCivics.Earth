@@ -230,7 +230,7 @@ export default function CrowdPooling() {
             <Link href="/calculator">
               <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/30 hover:border-[#7dd87d] transition-colors cursor-pointer">
                 <h3 className="font-bold text-[#1a472a] mb-2">{pageCopy.crowdPooling.related[0].heading}</h3>
-                <p className="text-sm text-[#1a472a]/60">
+                <p className="text-sm text-[#1a472a]/80">
                   {pageCopy.crowdPooling.related[0].body}
                 </p>
               </div>
@@ -238,7 +238,7 @@ export default function CrowdPooling() {
             <Link href="/blog/introducing-games-and-quests">
               <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/30 hover:border-[#7dd87d] transition-colors cursor-pointer">
                 <h3 className="font-bold text-[#1a472a] mb-2">{pageCopy.crowdPooling.related[1].heading}</h3>
-                <p className="text-sm text-[#1a472a]/60">
+                <p className="text-sm text-[#1a472a]/80">
                   {pageCopy.crowdPooling.related[1].body}
                 </p>
               </div>

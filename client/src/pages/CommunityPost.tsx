@@ -368,7 +368,7 @@ export default function CommunityPost() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-          <MessageCircle className="w-12 h-12 text-[#7dd87d]/40 mb-3" />
+          <MessageCircle className="w-12 h-12 text-[#7dd87d]/75 mb-3" />
           <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Thread Not Found
           </h2>
@@ -474,8 +474,8 @@ export default function CommunityPost() {
                   </Badge>
                 </div>
                 {/* B.4: Bioregion display (requires server to include bioregion on post author data) */}
-                {(post as any).authorBioregion && <span className="block text-[10px] text-[#1a472a]/40">{(post as any).authorBioregion}</span>}
-                <div className="flex items-center gap-3 text-[#1a472a]/40 text-xs mt-0.5" style={{ fontFamily: 'var(--font-body)' }}>
+                {(post as any).authorBioregion && <span className="block text-[10px] text-[#1a472a]/80">{(post as any).authorBioregion}</span>}
+                <div className="flex items-center gap-3 text-[#1a472a]/80 text-xs mt-0.5" style={{ fontFamily: 'var(--font-body)' }}>
                   <span>{formatDate(post.createdAt)}</span>
                   <span className="flex items-center gap-1">
                     <Eye className="w-3 h-3" />
@@ -488,7 +488,7 @@ export default function CommunityPost() {
                   <div className="relative">
                     <button
                       onClick={() => setShowFlagMenu(!showFlagMenu)}
-                      className="flex items-center gap-1 text-[#1a472a]/30 hover:text-amber-500 p-1 transition-colors"
+                      className="flex items-center gap-1 text-[#1a472a]/75 hover:text-amber-500 p-1 transition-colors"
                       title="Flag this content"
                     >
                       <Flag className="w-3.5 h-3.5" />
@@ -564,7 +564,7 @@ export default function CommunityPost() {
                 <div className="flex gap-2 justify-end">
                   <button
                     onClick={() => setEditingPost(false)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#1a472a]/60 hover:text-[#1a472a] border border-[#1a472a]/20 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#1a472a]/80 hover:text-[#1a472a] border border-[#1a472a]/20 rounded-lg transition-colors"
                   >
                     <X className="w-3.5 h-3.5" /> Cancel
                   </button>
@@ -637,19 +637,19 @@ export default function CommunityPost() {
                 className={`flex items-center gap-1.5 text-sm transition-colors ${
                   likes?.likedPost
                     ? 'text-red-500'
-                    : 'text-[#1a472a]/40 hover:text-red-400'
+                    : 'text-[#1a472a]/80 hover:text-red-400'
                 }`}
               >
                 <Heart className={`w-4 h-4 ${likes?.likedPost ? 'fill-current' : ''}`} />
                 <span>{likes?.postLikes || 0}</span>
               </button>
-              <span className="flex items-center gap-1.5 text-[#1a472a]/40 text-sm">
+              <span className="flex items-center gap-1.5 text-[#1a472a]/80 text-sm">
                 <MessageCircle className="w-4 h-4" />
                 {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
               </span>
               <button
                 onClick={handleCopyLink}
-                className="flex items-center gap-1.5 text-xs text-[#1a472a]/50 hover:text-[#1a472a]/80 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-[#1a472a]/80 hover:text-[#1a472a]/80 transition-colors"
                 title="Copy link to post"
               >
                 <Link2 className="w-4 h-4" />
@@ -658,7 +658,7 @@ export default function CommunityPost() {
               {/* B.7: Propose as Quest */}
               <a
                 href={`/community/quests?propose=true&title=${encodeURIComponent(post.title)}&threadId=${post.id}`}
-                className="flex items-center gap-1 text-xs text-[#1a472a]/40 hover:text-[#4a7c59] transition-colors"
+                className="flex items-center gap-1 text-xs text-[#1a472a]/80 hover:text-[#4a7c59] transition-colors"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 Propose as Quest
@@ -751,7 +751,7 @@ export default function CommunityPost() {
           </div>
         ) : replies && replies.length > 0 ? (
           <div className="space-y-3 mb-6">
-            <h3 className="text-sm font-bold text-[#1a472a]/60 uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
+            <h3 className="text-sm font-bold text-[#1a472a]/80 uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
               Replies ({replies.length})
             </h3>
             {replies.map((reply, index) => {
@@ -784,7 +784,7 @@ export default function CommunityPost() {
                               OP
                             </Badge>
                           )}
-                          <span className="text-[#1a472a]/30 text-[10px]">{timeAgo(reply.createdAt)}</span>
+                          <span className="text-[#1a472a]/75 text-[10px]">{timeAgo(reply.createdAt)}</span>
                         </div>
                         <div className="text-[#1a472a]/70 text-sm leading-relaxed safe-prose" style={{ fontFamily: 'var(--font-body)' }}>
                           {translatedReplies[reply.id] ? (
@@ -794,7 +794,7 @@ export default function CommunityPost() {
                                 Translated
                                 <button 
                                   onClick={() => setTranslatedReplies(prev => { const n = {...prev}; delete n[reply.id]; return n; })}
-                                  className="ml-1 underline text-[#1a472a]/40 hover:text-[#1a472a]"
+                                  className="ml-1 underline text-[#1a472a]/80 hover:text-[#1a472a]"
                                 >
                                   Original
                                 </button>
@@ -822,7 +822,7 @@ export default function CommunityPost() {
                             className={`flex items-center gap-1 text-xs transition-colors ${
                               likes?.likedReplies?.includes(reply.id)
                                 ? 'text-red-500'
-                                : 'text-[#1a472a]/30 hover:text-red-400'
+                                : 'text-[#1a472a]/75 hover:text-red-400'
                             }`}
                           >
                             <Heart className={`w-3 h-3 ${likes?.likedReplies?.includes(reply.id) ? 'fill-current' : ''}`} />
@@ -851,7 +851,7 @@ export default function CommunityPost() {
                               onClick={() => {
                                 setReplyingTo(reply.id);
                               }}
-                              className="text-[#1a472a]/30 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors"
+                              className="text-[#1a472a]/75 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors"
                             >
                               <CornerDownRight className="w-3 h-3" />
                               Reply
@@ -929,7 +929,7 @@ export default function CommunityPost() {
         ) : (
           <div className="text-center py-8 mb-6">
             <MessageCircle className="w-10 h-10 text-[#4a7c59]/20 mx-auto mb-2" />
-            <p className="text-[#1a472a]/40 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+            <p className="text-[#1a472a]/80 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
               No replies yet. Be the first to respond!
             </p>
           </div>
@@ -937,7 +937,7 @@ export default function CommunityPost() {
 
         {/* Reply Form */}
         {post.isLocked === 1 ? (
-          <div className="bg-[#f0f0e8] rounded-xl p-4 flex items-center gap-3 text-[#1a472a]/50">
+          <div className="bg-[#f0f0e8] rounded-xl p-4 flex items-center gap-3 text-[#1a472a]/80">
             <Lock className="w-5 h-5 flex-shrink-0" />
             <p className="text-sm" style={{ fontFamily: 'var(--font-body)' }}>
               This thread is locked. No new replies can be added.
@@ -951,7 +951,7 @@ export default function CommunityPost() {
                 <span>Replying to a comment</span>
                 <button 
                   onClick={() => setReplyingTo(null)}
-                  className="ml-auto text-[#1a472a]/40 hover:text-[#1a472a]"
+                  className="ml-auto text-[#1a472a]/80 hover:text-[#1a472a]"
                 >
                   Cancel
                 </button>
@@ -994,7 +994,7 @@ export default function CommunityPost() {
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-[#e8e4de] p-5 text-center">
-            <p className="text-[#1a472a]/60 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+            <p className="text-[#1a472a]/80 text-sm mb-3" style={{ fontFamily: 'var(--font-body)' }}>
               Sign in to join the conversation
             </p>
             <Button 
@@ -1015,7 +1015,7 @@ export default function CommunityPost() {
             <DialogTitle className="text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
               Delete {deleteTarget?.type === 'post' ? 'Thread' : 'Reply'}?
             </DialogTitle>
-            <DialogDescription className="text-[#1a472a]/60" style={{ fontFamily: 'var(--font-body)' }}>
+            <DialogDescription className="text-[#1a472a]/80" style={{ fontFamily: 'var(--font-body)' }}>
               {deleteTarget?.type === 'post' 
                 ? 'This will permanently delete the thread and all its replies. This cannot be undone.'
                 : 'This will permanently delete this reply. This cannot be undone.'}

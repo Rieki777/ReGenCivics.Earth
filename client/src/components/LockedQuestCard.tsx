@@ -125,11 +125,13 @@ export function LockedQuestCard({
   const card = (
     <div
       className={
-        `relative overflow-hidden rounded-2xl border border-[#1a472a]/40 ` +
-        `bg-gradient-to-b from-[#0a1410] to-[#0f1f17] ` +
+        `relative overflow-hidden rounded-2xl border border-[#7dd87d]/25 ` +
+        `bg-gradient-to-b from-[#1b3324] to-[#0f2117] ` +
+        `ring-1 ring-inset ring-white/5 ` +
         `aspect-[3/4] cursor-default select-none ` +
-        `transition-all duration-500 hover:border-[#7dd87d]/30 ` +
-        `hover:shadow-[0_0_24px_rgba(125,216,125,0.08)] ` +
+        `shadow-[0_0_20px_rgba(0,0,0,0.35)] ` +
+        `transition-all duration-500 hover:border-[#7dd87d]/45 ` +
+        `hover:shadow-[0_0_24px_rgba(125,216,125,0.12)] ` +
         className
       }
       aria-disabled="true"
@@ -143,7 +145,7 @@ export function LockedQuestCard({
       {/* Title sits below the moss line, faint and serene */}
       <div className="absolute bottom-3 left-3 right-3 text-center">
         <h3
-          className="text-[#7dd87d]/40 text-xs font-medium tracking-wide line-clamp-2"
+          className="text-[#7dd87d]/75 text-xs font-medium tracking-wide line-clamp-2"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {title}

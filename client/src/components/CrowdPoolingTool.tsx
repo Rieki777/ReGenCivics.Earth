@@ -528,7 +528,7 @@ export default function CrowdPoolingTool() {
             <h3 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
               Crowd Pooling Tool
             </h3>
-            <p className="text-sm text-[#1a472a]/60">Pool capital from multiple contributors</p>
+            <p className="text-sm text-[#1a472a]/80">Pool capital from multiple contributors</p>
           </div>
         </div>
         
@@ -618,7 +618,7 @@ export default function CrowdPoolingTool() {
                 </SelectContent>
               </Select>
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/40">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/80">
                   {currencySymbol}
                 </span>
                 <Input
@@ -776,9 +776,9 @@ export default function CrowdPoolingTool() {
                 Load Saved Contribution Form
               </h3>
               {savedContributionsQuery.isLoading ? (
-                <p className="text-[#1a472a]/60 text-center py-8">Loading...</p>
+                <p className="text-[#1a472a]/80 text-center py-8">Loading...</p>
               ) : savedContributionsQuery.data?.length === 0 ? (
-                <p className="text-[#1a472a]/60 text-center py-8">No saved forms yet. Create one by clicking "Save to Profile".</p>
+                <p className="text-[#1a472a]/80 text-center py-8">No saved forms yet. Create one by clicking "Save to Profile".</p>
               ) : (
                 <div className="space-y-2">
                   {savedContributionsQuery.data?.map((saved) => (
@@ -797,7 +797,7 @@ export default function CrowdPoolingTool() {
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-[#1a472a]/60 mt-1">
+                          <p className="text-xs text-[#1a472a]/80 mt-1">
                             {saved.projectName || 'Generic Form'} - {formatCurrency((saved.totalImmediateValue || 0) + (saved.totalFutureValue || 0), currencySymbol)} total
                           </p>
                         </div>
@@ -863,14 +863,14 @@ export default function CrowdPoolingTool() {
           <h3 className="text-2xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Contribution Summary
           </h3>
-          <p className="text-[#1a472a]/60">{projectName}</p>
-          {contributorName && <p className="text-sm text-[#1a472a]/40">Contributor: {contributorName}</p>}
+          <p className="text-[#1a472a]/80">{projectName}</p>
+          {contributorName && <p className="text-sm text-[#1a472a]/80">Contributor: {contributorName}</p>}
         </div>
         
         {/* Progress bar */}
         <div className="bg-white rounded-xl p-4 mb-6 border border-[#7dd87d]/30">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-[#1a472a]/60">Progress to Target</span>
+            <span className="text-[#1a472a]/80">Progress to Target</span>
             <span className="font-bold text-[#1a472a]">{progressPercentage.toFixed(1)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
@@ -881,7 +881,7 @@ export default function CrowdPoolingTool() {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-[#1a472a] font-bold">{formatCurrency(grandTotal, currencySymbol)}</span>
-            <span className="text-[#1a472a]/60">of {formatCurrency(targetAmount, currencySymbol)}</span>
+            <span className="text-[#1a472a]/80">of {formatCurrency(targetAmount, currencySymbol)}</span>
           </div>
         </div>
         
@@ -904,7 +904,7 @@ export default function CrowdPoolingTool() {
                   return (
                     <div key={c.id} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-[#1a472a]/40" />
+                        <Icon className="w-4 h-4 text-[#1a472a]/80" />
                         <span className="text-[#1a472a]/80">{c.description || category?.name}</span>
                       </div>
                       <span className="text-[#1a472a]">{formatCurrency(c.value, currencySymbol)}</span>
@@ -913,7 +913,7 @@ export default function CrowdPoolingTool() {
                 })}
               </div>
             ) : (
-              <p className="text-sm text-[#1a472a]/40 text-center py-2">No immediate contributions added</p>
+              <p className="text-sm text-[#1a472a]/80 text-center py-2">No immediate contributions added</p>
             )}
           </div>
           
@@ -933,9 +933,9 @@ export default function CrowdPoolingTool() {
                   return (
                     <div key={c.id} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-[#1a472a]/40" />
+                        <Users className="w-4 h-4 text-[#1a472a]/80" />
                         <span className="text-[#1a472a]/80">{c.roleName || 'Role'}</span>
-                        <span className="text-xs text-[#1a472a]/40">
+                        <span className="text-xs text-[#1a472a]/80">
                           ({c.weeks}wks x {c.hoursPerWeek}hrs x {currencySymbol}{c.hourlyRate})
                         </span>
                       </div>
@@ -945,7 +945,7 @@ export default function CrowdPoolingTool() {
                 })}
               </div>
             ) : (
-              <p className="text-sm text-[#1a472a]/40 text-center py-2">No future commitments added</p>
+              <p className="text-sm text-[#1a472a]/80 text-center py-2">No future commitments added</p>
             )}
           </div>
         </div>
@@ -1044,7 +1044,7 @@ export default function CrowdPoolingTool() {
             <h3 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
               {projectName}
             </h3>
-            <p className="text-xs text-[#1a472a]/60">Crowd Pooling Tool</p>
+            <p className="text-xs text-[#1a472a]/80">Crowd Pooling Tool</p>
           </div>
         </div>
         <Button
@@ -1060,7 +1060,7 @@ export default function CrowdPoolingTool() {
       {/* Progress tracker */}
       <div className="bg-white rounded-xl p-4 mb-6 border border-[#7dd87d]/30">
         <div className="flex justify-between text-sm mb-2">
-          <span className="text-[#1a472a]/60">Your Contribution</span>
+          <span className="text-[#1a472a]/80">Your Contribution</span>
           <span className="font-bold text-[#1a472a]">
             {formatCurrency(grandTotal, currencySymbol)} / {formatCurrency(targetAmount, currencySymbol)}
           </span>
@@ -1071,7 +1071,7 @@ export default function CrowdPoolingTool() {
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
-        <p className="text-xs text-[#1a472a]/40 mt-2 text-center">
+        <p className="text-xs text-[#1a472a]/80 mt-2 text-center">
           {progressPercentage.toFixed(1)}% of target
         </p>
       </div>
@@ -1114,7 +1114,7 @@ export default function CrowdPoolingTool() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="font-bold text-[#1a472a]">Immediate Contributions</h4>
-              <p className="text-xs text-[#1a472a]/60">Land, money, equipment, materials, etc.</p>
+              <p className="text-xs text-[#1a472a]/80">Land, money, equipment, materials, etc.</p>
             </div>
             <Button
               onClick={addImmediateContribution}
@@ -1128,8 +1128,8 @@ export default function CrowdPoolingTool() {
           
           {immediateContributions.length === 0 ? (
             <div className="bg-white/50 rounded-xl p-8 text-center border border-dashed border-[#7dd87d]/30">
-              <Package className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/30" />
-              <p className="text-[#1a472a]/60 mb-3">No immediate contributions yet</p>
+              <Package className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/75" />
+              <p className="text-[#1a472a]/80 mb-3">No immediate contributions yet</p>
               <Button
                 onClick={addImmediateContribution}
                 variant="outline"
@@ -1168,7 +1168,7 @@ export default function CrowdPoolingTool() {
                             </SelectContent>
                           </Select>
                           <div className="relative w-full">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/40 text-sm">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/80 text-sm">
                               {currencySymbol}
                             </span>
                             <Input
@@ -1212,7 +1212,7 @@ export default function CrowdPoolingTool() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="font-bold text-[#1a472a]">Future Value Commitments</h4>
-              <p className="text-xs text-[#1a472a]/60">Roles and work you commit to contributing</p>
+              <p className="text-xs text-[#1a472a]/80">Roles and work you commit to contributing</p>
             </div>
             <Button
               onClick={addFutureContribution}
@@ -1309,7 +1309,7 @@ export default function CrowdPoolingTool() {
                         className="text-left p-3 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-50 transition-colors"
                       >
                         <p className="text-sm font-medium text-[#1a472a]">{suggestion.label}</p>
-                        <p className="text-xs text-[#1a472a]/60 mt-1">
+                        <p className="text-xs text-[#1a472a]/80 mt-1">
                           {suggestion.weeks} weeks × {suggestion.hoursPerWeek} hrs × {currencySymbol}{suggestion.hourlyRate}/hr
                         </p>
                         <p className="text-xs font-medium text-[#1a472a] mt-1">
@@ -1326,8 +1326,8 @@ export default function CrowdPoolingTool() {
           
           {futureContributions.length === 0 ? (
             <div className="bg-white/50 rounded-xl p-8 text-center border border-dashed border-[#7dd87d]/30">
-              <Clock className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/30" />
-              <p className="text-[#1a472a]/60 mb-3">No future commitments yet</p>
+              <Clock className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/75" />
+              <p className="text-[#1a472a]/80 mb-3">No future commitments yet</p>
               <Button
                 onClick={addFutureContribution}
                 variant="outline"
@@ -1367,7 +1367,7 @@ export default function CrowdPoolingTool() {
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="min-w-0">
-                            <label className="text-xs text-[#1a472a]/60 mb-1 block truncate">Weeks</label>
+                            <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">Weeks</label>
                             <Input
                               type="number"
                               inputMode="numeric"
@@ -1378,7 +1378,7 @@ export default function CrowdPoolingTool() {
                             />
                           </div>
                           <div className="min-w-0">
-                            <label className="text-xs text-[#1a472a]/60 mb-1 block truncate">Hrs/Wk</label>
+                            <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">Hrs/Wk</label>
                             <Input
                               type="number"
                               inputMode="numeric"
@@ -1389,7 +1389,7 @@ export default function CrowdPoolingTool() {
                             />
                           </div>
                           <div className="min-w-0">
-                            <label className="text-xs text-[#1a472a]/60 mb-1 block truncate">{currencySymbol}/Hr</label>
+                            <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">{currencySymbol}/Hr</label>
                             <Input
                               type="number"
                               inputMode="decimal"
@@ -1401,7 +1401,7 @@ export default function CrowdPoolingTool() {
                           </div>
                         </div>
                         <div className="text-right text-sm">
-                          <span className="text-[#1a472a]/60">Total: </span>
+                          <span className="text-[#1a472a]/80">Total: </span>
                           <span className="font-bold text-[#1a472a]">{formatCurrency(totalValue, currencySymbol)}</span>
                         </div>
                       </div>

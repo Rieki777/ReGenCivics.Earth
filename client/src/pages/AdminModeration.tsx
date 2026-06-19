@@ -243,7 +243,7 @@ export default function AdminModeration() {
                 <div className="text-white/65 text-center py-8">Loading reports...</div>
               ) : displayedReports.length === 0 ? (
                 <div className="text-center py-12">
-                  <Check className="w-12 h-12 text-[#7dd87d]/40 mx-auto mb-3" />
+                  <Check className="w-12 h-12 text-[#7dd87d]/75 mx-auto mb-3" />
                   <p className="text-white/70">No {reportFilter || ''} reports</p>
                 </div>
               ) : (
@@ -416,7 +416,7 @@ export default function AdminModeration() {
             <div className="space-y-2">
               {bannedUsersQuery.data?.length === 0 ? (
                 <div className="text-center py-8">
-                  <Check className="w-10 h-10 text-[#7dd87d]/40 mx-auto mb-3" />
+                  <Check className="w-10 h-10 text-[#7dd87d]/75 mx-auto mb-3" />
                   <p className="text-white/65 text-sm">No banned users</p>
                 </div>
               ) : (

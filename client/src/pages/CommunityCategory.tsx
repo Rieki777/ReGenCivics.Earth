@@ -166,7 +166,7 @@ export default function CommunityCategory() {
           <h2 className="text-xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Category Not Found
           </h2>
-          <p className="text-[#1a472a]/60 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+          <p className="text-[#1a472a]/80 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
             This discussion topic doesn't exist.
           </p>
           <Link href="/community">
@@ -258,7 +258,7 @@ export default function CommunityCategory() {
             <h3 className="text-lg font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
               No threads yet
             </h3>
-            <p className="text-[#1a472a]/60 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
+            <p className="text-[#1a472a]/80 text-sm mb-4" style={{ fontFamily: 'var(--font-body)' }}>
               Be the first to start a conversation in {category.name}!
             </p>
             {isAuthenticated && (
@@ -296,7 +296,7 @@ export default function CommunityCategory() {
                             <Pin className="w-3 h-3 text-[#d4a574] flex-shrink-0" />
                           )}
                           {post.isLocked === 1 && (
-                            <Lock className="w-3 h-3 text-[#1a472a]/40 flex-shrink-0" />
+                            <Lock className="w-3 h-3 text-[#1a472a]/80 flex-shrink-0" />
                           )}
                           <h3
                             className="font-semibold text-[#1a472a] text-sm md:text-base group-hover:text-[#4a7c59] transition-colors truncate"
@@ -331,12 +331,12 @@ export default function CommunityCategory() {
                         })()}
 
                         {/* Preview of content */}
-                        <p className="text-[#1a472a]/50 text-xs line-clamp-1 mb-1.5" style={{ fontFamily: 'var(--font-body)' }}>
+                        <p className="text-[#1a472a]/80 text-xs line-clamp-1 mb-1.5" style={{ fontFamily: 'var(--font-body)' }}>
                           {post.content.replace(/[#*_~`]/g, '').slice(0, 120)}
                         </p>
 
                         {/* Meta info */}
-                        <div className="flex items-center gap-3 text-[#1a472a]/40 text-xs" style={{ fontFamily: 'var(--font-body)' }}>
+                        <div className="flex items-center gap-3 text-[#1a472a]/80 text-xs" style={{ fontFamily: 'var(--font-body)' }}>
                           <span className="font-medium text-[#4a7c59]/70">{post.authorName}</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />

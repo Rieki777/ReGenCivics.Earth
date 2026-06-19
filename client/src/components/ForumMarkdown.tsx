@@ -186,7 +186,7 @@ export function ForumMarkdown({ content, className = '' }: ForumMarkdownProps) {
 // Markdown formatting hints for the input area
 export function MarkdownHints() {
   return (
-    <span className="text-[10px] text-[#1a472a]/30 leading-tight" style={{ fontFamily: 'var(--font-body)' }}>
+    <span className="text-[10px] text-[#1a472a]/75 leading-tight" style={{ fontFamily: 'var(--font-body)' }}>
       Markdown supported: # Header, **bold**, *italic*, [link](url), - list, {'>'} quote, `code`
     </span>
   );

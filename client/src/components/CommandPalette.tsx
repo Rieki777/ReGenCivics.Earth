@@ -147,10 +147,10 @@ export function CommandPalette() {
         aria-label="Site search"
         onClick={(e) => e.stopPropagation()}
       >
-        <Command label="Search pages" className="[&_[cmdk-group-heading]]:text-[#7dd87d]/50 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2">
+        <Command label="Search pages" className="[&_[cmdk-group-heading]]:text-[#7dd87d]/75 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2">
           {/* Search input */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-[#7dd87d]/20">
-            <Search className="w-4 h-4 text-[#7dd87d]/60 shrink-0" />
+            <Search className="w-4 h-4 text-[#7dd87d]/80 shrink-0" />
             <Command.Input
               placeholder="Search pages, blog, forum..."
               autoFocus

@@ -139,7 +139,7 @@ export default function FeatureSuggestions() {
                       <div className="flex items-center gap-3 text-white/70 text-xs">
                         <span>{s.authorName}</span>
                         {s.forumThreadId && (
-                          <Link href={`/community/post/${s.forumThreadId}`} className="inline-flex items-center gap-1 text-[#7dd87d]/60 hover:text-[#7dd87d]">
+                          <Link href={`/community/post/${s.forumThreadId}`} className="inline-flex items-center gap-1 text-[#7dd87d]/80 hover:text-[#7dd87d]">
                             <MessageCircle className="w-3 h-3" /> Discuss
                           </Link>
                         )}

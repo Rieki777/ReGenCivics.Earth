@@ -482,7 +482,7 @@ export function AdminOverviewTab({
                   return (
                     <div key={season.label} className="text-center p-3 rounded-lg bg-[#f0ebe3]">
                       <p className="text-2xl font-bold text-[#1a472a]">{count}</p>
-                      <p className="text-xs text-[#1a472a]/60 mt-0.5">{season.label}</p>
+                      <p className="text-xs text-[#1a472a]/80 mt-0.5">{season.label}</p>
                     </div>
                   );
                 })}
@@ -515,7 +515,7 @@ export function AdminOverviewTab({
               <div className="space-y-2">
                 {entries.map(([key, count]) => (
                   <div key={key} className="flex items-center gap-3">
-                    <span className="text-xs text-[#1a472a]/60 w-32 truncate capitalize">{key.replace(/_/g, " ")}</span>
+                    <span className="text-xs text-[#1a472a]/80 w-32 truncate capitalize">{key.replace(/_/g, " ")}</span>
                     <div className="flex-1 h-2 bg-[#f0ebe3] rounded-full overflow-hidden">
                       <div
                         className="h-2 bg-[#4a7c59] rounded-full"
