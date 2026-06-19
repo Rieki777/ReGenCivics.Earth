@@ -13,6 +13,29 @@ window.addEventListener("vite:preloadError", (e: Event) => {
 // Clear the flag on successful page loads so future deploys also auto-reload
 window.addEventListener("load", () => sessionStorage.removeItem("vite-chunk-reload"), { once: true });
 
+// ── Global broken-image guard ───────────────────────────────────────────────
+// Some legacy R2 (assets.regencivics.earth) URLs 404. Rather than render a
+// broken-image box, catch image load errors at the window capture phase (the
+// `error` event does not bubble, so capture is required) and replace the
+// broken element with a quiet on-brand block. Runs once, covers every <img>
+// on every page without touching call sites. data-no-img-fallback opts out.
+window.addEventListener(
+  "error",
+  (e: Event) => {
+    const t = e.target as HTMLElement | null;
+    if (!(t instanceof HTMLImageElement)) return;
+    if (t.dataset.imgFallbackApplied || t.hasAttribute("data-no-img-fallback")) return;
+    t.dataset.imgFallbackApplied = "1";
+    // Stop the broken-image glyph and show a soft forest gradient at the
+    // element's existing layout size. Keeps alt text for assistive tech.
+    t.removeAttribute("src");
+    t.srcset = "";
+    t.style.background = "linear-gradient(135deg, #16291d, #1a472a)";
+    t.style.objectFit = "cover";
+  },
+  true,
+);
+
 // Sentry is deferred until after page load, it's non-essential for rendering.
 // Initialises on whichever happens first: page `load`, first user interaction
 // (pointerdown / keydown), or a 10s safety-net timer for PWA installs and
