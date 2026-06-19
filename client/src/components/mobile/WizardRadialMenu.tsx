@@ -1,16 +1,19 @@
 /**
- * WizardRadialMenu: floating FAB bottom-right that blooms a 5-button radial
- * menu into the upper-left quadrant around the trigger.
+ * WizardRadialMenu: floating FAB bottom-right that opens a collapsible
+ * vertical menu of labeled shortcuts. Each row is a single large tap target:
+ * a text label on the left and a round icon button on the right, aligned to
+ * the Flower-of-Life trigger. The column springs upward from the trigger,
+ * nearest-row-first, behind a soft focus scrim.
  *
- * Actions (from farthest-left to straight-up, matching thumb ergonomics for a
- * right-handed user): Music - Profile - Community - Context - Quests.
+ * Actions (top -> bottom, so the last sits closest to the thumb):
+ * Playlist - Profile - Community - Context - Quests.
  *
  * The FAB owns three anchor routes (Quests, Community, Profile) so the
  * MobileTabBar is free to surface deeper, context-aware suggestions.
  *
  * Anchor self-awareness: when the user is already on an anchor route, that
  * button swaps to a useful in-place action (Community -> New post,
- * Quest -> Resume, Profile -> Edit) instead of routing to itself.
+ * Quest -> Watch how-to, Profile -> Edit) instead of routing to itself.
  *
  * Context slot: pulls the first usePageTools() action for the current route,
  * falling back to Search (opens the command palette).
@@ -20,12 +23,12 @@
  * because some iPhone Safari edge cases (PWA mode, embedded web views,
  * landscape orientation) report env(safe-area-inset-bottom) as 0, which
  * collapsed the FAB into the tab bar. Uses z-[60] so it renders above the
- * z-50 MobileTabBar.
+ * z-50 MobileTabBar; the focus scrim sits at z-[55] between them.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Sparkles, Scroll,
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll,
 } from "lucide-react";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
@@ -48,24 +51,10 @@ type Action = {
   active?: boolean;
 };
 
-// Quarter arc from due-left (180deg) to straight-up (90deg) in math degrees,
-// with sin flipped for CSS (positive y goes down).
-//
-// As of 2026-04-27 the menu uses TWO concentric arcs instead of one:
-//   - Outer arc (3 buttons): the anchor actions (Music, Community, Quests).
-//   - Inner arc (2 buttons): the secondary actions (Profile, Context),
-//     tucked between the outer pair so the cluster reads as a single fan.
-//
-// Outer radius: 125 (chord ≈ 49px so 44px buttons sit with a clean 5px gap).
-// Inner radius: 100 (puts the secondary buttons ~6px from each adjacent
-// outer button so the fan reads as five evenly spaced buttons on one arc,
-// not as a clumped triangle in the middle). Earlier the inner ring was
-// 78 which pulled the secondary buttons toward the trigger and made the
-// cluster look bunched on iPhone; widening to 100 evens out the fan.
-const ARC_START_DEG = 180;
-const ARC_END_DEG = 90;
-const ARC_OUTER_RADIUS = 125;
-const ARC_INNER_RADIUS = 100;
+/** Tiny haptic tap on supported devices; silently ignored elsewhere. */
+function haptic(ms = 8) {
+  try { (navigator as Navigator & { vibrate?: (p: number) => boolean }).vibrate?.(ms); } catch { /* unsupported */ }
+}
 
 export function WizardRadialMenu() {
   const [open, setOpen] = useState(false);
@@ -85,6 +74,7 @@ export function WizardRadialMenu() {
   const onProfile = currentPath === "/profile" || currentPath.startsWith("/profile/");
 
   const handleTriggerClick = useCallback(() => {
+    haptic(10);
     tapCountRef.current += 1;
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
 
@@ -144,11 +134,14 @@ export function WizardRadialMenu() {
     ? { key: "profile-edit", label: "Edit profile", href: "/profile/edit", Icon: Edit3 }
     : { key: "profile", label: "Profile", href: "/profile", Icon: User };
 
-  // Music slot
+  // Music slot: open the Hymns playlist page and start playback. Tapping the
+  // note should always land the user on the full player with every track
+  // visible (not silently toggle audio in the background).
   const musicAction: Action = {
     key: "music",
-    label: isPlaying ? "Pause" : "Play music",
-    onClick: togglePlay,
+    label: isPlaying ? "Playing…" : "Playlist",
+    href: "/hymn-book",
+    onClick: () => { if (!isPlaying) togglePlay(); },
     Icon: isPlaying ? Pause : Music,
     active: isPlaying,
   };
@@ -168,128 +161,167 @@ export function WizardRadialMenu() {
         Icon: Search,
       };
 
-  // Arc order: outer-left to straight-up. Quests is closest to the thumb.
-  // Each entry includes which arc it lives on:
-  //   - "outer" buttons sit on the wider 120px ring (3 anchors)
-  //   - "inner" buttons sit on the narrower 78px ring (2 secondaries)
-  // Angles still walk evenly from 180 deg to 90 deg so the buttons feel like
-  // they bloom in a single fan even though their radii differ.
-  const ACTIONS: Array<Action & { ring: "outer" | "inner" }> = [
-    { ...musicAction, ring: "outer" },     // 180 deg, outer
-    { ...profileAction, ring: "inner" },   // 157.5 deg, inner
-    { ...communityAction, ring: "outer" }, // 135 deg, outer
-    { ...contextAction, ring: "inner" },   // 112.5 deg, inner
-    { ...questsAction, ring: "outer" },    // 90 deg, outer
+  // Vertical stack order, top -> bottom. The list is rendered as a column
+  // that grows upward from the trigger, so the LAST item sits closest to the
+  // thumb. Quests is the primary anchor, so it lands nearest the trigger.
+  const ACTIONS: Action[] = [
+    musicAction,
+    profileAction,
+    communityAction,
+    contextAction,
+    questsAction,
   ];
 
+  // Springy easing so the rows feel like they pop up from the Flower.
+  const SPRING = "cubic-bezier(0.34, 1.4, 0.64, 1)";
+
   return (
-    // MobileTabBar is h-16 (64px) plus env(safe-area-inset-bottom) padding.
-    // FAB needs to clear that stack with real breathing room so the flower
-    // and the radial-menu buttons never kiss the tab bar on iPhone.
-    //
-    // The previous 7rem + safe-area calc still produced overlap on Rye's
-    // device. Two suspected causes: (1) env(safe-area-inset-bottom) is 0
-    // in some iOS Safari modes (PWA, embedded WebView, landscape), and
-    // (2) the radial-menu's left-most button sits at FAB-center vertically
-    // and was landing close to the tab bar even when the trigger cleared.
-    //
-    // Fix: max() of safe-area + 8rem and a hard 9rem floor. The floor
-    // guarantees the FAB bottom is always >= 9rem (144px) regardless of
-    // env() value, which puts the flower roughly 80px above the tab bar
-    // top on any device. Tabs render z-50; we render z-[60].
-    <div
-      className="fixed right-4 z-[60] md:hidden"
-      style={{
-        bottom: "max(calc(env(safe-area-inset-bottom, 0px) + 8rem), 9rem)",
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Relative wrapper sized to the trigger. Buttons position absolutely
-          around the trigger's center. */}
-      <div className="relative w-12 h-12">
-        {/* Radial action buttons. Animate scale + opacity so they feel like
-            they bloom from the trigger. */}
-        {ACTIONS.map((a, i) => {
-          const fraction = i / (ACTIONS.length - 1);
-          const angleDeg = ARC_START_DEG + (ARC_END_DEG - ARC_START_DEG) * fraction;
-          const angleRad = (angleDeg * Math.PI) / 180;
-          const radius = a.ring === "outer" ? ARC_OUTER_RADIUS : ARC_INNER_RADIUS;
-          const dx = Math.cos(angleRad) * radius;
-          // Math y is positive-up, CSS is positive-down, so flip.
-          const dy = -Math.sin(angleRad) * radius;
+    <>
+      {/* Focus scrim. Sits below the FAB (z-[60]) but above the tab bar
+          (z-50) so the menu reads clearly over any page. Tapping it closes
+          via the document click handler. */}
+      <div
+        aria-hidden="true"
+        className={`fixed inset-0 z-[55] md:hidden bg-[#06140c]/45 transition-opacity duration-300 ${
+          open ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        style={{ backdropFilter: open ? "blur(2px)" : undefined }}
+      />
 
-          // Trigger center sits at (24, 24) within the 48px wrapper.
-          const left = 24 + dx - 22;
-          const top = 24 + dy - 22;
+      {/* MobileTabBar is h-16 (64px) plus env(safe-area-inset-bottom) padding.
+          FAB needs to clear that stack with real breathing room so the flower
+          and the menu rows never kiss the tab bar on iPhone.
 
-          const accent = a.active
-            ? "bg-[#7dd87d] border-[#7dd87d] text-[#1a472a]"
-            : "bg-[#1a472a] border-[#7dd87d]/55 text-[#7dd87d]";
-          const sharedClass = `absolute w-11 h-11 rounded-full border flex items-center justify-center shadow-lg transition-all duration-200 ${accent} ${
-            open ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-50 pointer-events-none"
-          }`;
-          // Stagger bloom: each button waits a touch longer than the last.
-          const style: React.CSSProperties = {
-            left,
-            top,
-            transitionDelay: open ? `${i * 30}ms` : "0ms",
-          };
+          Fix: max() of safe-area + 8rem and a hard 9rem floor. The floor
+          guarantees the FAB bottom is always >= 9rem (144px) regardless of
+          env() value. Tabs render z-50; we render z-[60]. */}
+      <div
+        className="fixed right-4 z-[60] md:hidden flex flex-col items-end"
+        style={{
+          bottom: "max(calc(env(safe-area-inset-bottom, 0px) + 8rem), 9rem)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Vertical labeled menu. Each row is one large tap target: a text
+            label and a round icon button, aligned to the trigger. The column
+            grows upward; when closed it collapses, fades, and ignores taps. */}
+        <div
+          role="menu"
+          aria-label="Shortcuts"
+          aria-hidden={!open}
+          className={`flex flex-col items-end gap-2.5 mb-3 transition-all duration-200 ${
+            open ? "pointer-events-auto" : "pointer-events-none"
+          }`}
+        >
+          {ACTIONS.map((a, i) => {
+            const iconCircle = a.active
+              ? "bg-[#7dd87d] border-[#7dd87d] text-[#0d2818]"
+              : "bg-[#1a472a] border-[#7dd87d]/55 text-[#7dd87d] group-hover/row:border-[#7dd87d] group-hover/row:bg-[#235c39]";
 
-          const closeThenRun = () => {
-            setOpen(false);
-            if (a.onClick) {
-              a.onClick();
-              return;
+            // Nearest the trigger reveals first when opening, so the stack
+            // springs up from the Flower; reverse when closing.
+            const delay = open ? `${(ACTIONS.length - 1 - i) * 38}ms` : `${i * 18}ms`;
+            const controlClass =
+              `group/row flex items-center gap-2.5 outline-none transition-all duration-300 ` +
+              `focus-visible:opacity-100 ${
+                open
+                  ? "opacity-100 translate-x-0 scale-100"
+                  : "opacity-0 translate-x-5 scale-90"
+              }`;
+            const controlStyle: React.CSSProperties = {
+              transitionDelay: delay,
+              transitionTimingFunction: SPRING,
+            };
+
+            const inner = (
+              <>
+                <span
+                  className={`select-none whitespace-nowrap rounded-xl border border-white/10 bg-[#0d2818]/90 px-3 py-1.5 text-[13px] font-semibold text-[#eafbe7] shadow-lg backdrop-blur-sm transition-colors group-hover/row:bg-[#15331f] group-hover/row:text-white ${
+                    a.active ? "text-[#7dd87d]" : ""
+                  }`}
+                >
+                  {a.label}
+                </span>
+                <span
+                  className={`w-12 h-12 flex-shrink-0 rounded-full border flex items-center justify-center shadow-lg transition-transform duration-200 group-hover/row:scale-105 group-active/row:scale-95 ${iconCircle}`}
+                >
+                  <a.Icon className="w-[18px] h-[18px]" />
+                </span>
+              </>
+            );
+
+            const closeThenRun = () => {
+              haptic(6);
+              setOpen(false);
+              if (a.onClick) {
+                a.onClick();
+                return;
+              }
+              if (a.event) {
+                window.dispatchEvent(new CustomEvent(a.event));
+              }
+            };
+
+            if (a.href) {
+              return (
+                <Link
+                  key={a.key}
+                  href={a.href}
+                  onClick={closeThenRun}
+                  className={controlClass}
+                  style={controlStyle}
+                  role="menuitem"
+                  aria-label={a.label}
+                  tabIndex={open ? 0 : -1}
+                >
+                  {inner}
+                </Link>
+              );
             }
-            if (a.event) {
-              window.dispatchEvent(new CustomEvent(a.event));
-            }
-          };
-
-          if (a.href) {
             return (
-              <Link
+              <button
                 key={a.key}
-                href={a.href}
+                type="button"
                 onClick={closeThenRun}
-                className={sharedClass}
-                style={style}
+                className={controlClass}
+                style={controlStyle}
+                role="menuitem"
                 aria-label={a.label}
-                title={a.label}
                 tabIndex={open ? 0 : -1}
               >
-                <a.Icon className="w-4 h-4" />
-              </Link>
+                {inner}
+              </button>
             );
-          }
-          return (
-            <button
-              key={a.key}
-              type="button"
-              onClick={closeThenRun}
-              className={sharedClass}
-              style={style}
-              aria-label={a.label}
-              title={a.label}
-              tabIndex={open ? 0 : -1}
-            >
-              <a.Icon className="w-4 h-4" />
-            </button>
-          );
-        })}
+          })}
+        </div>
 
-        {/* Floating trigger (Flower of Life) */}
+        {/* Floating trigger (Flower of Life). Spins and lifts onto a glowing
+            ring when the menu is open so the state is unmistakable. */}
         <button
           ref={triggerRef}
           onClick={handleTriggerClick}
-          className="absolute inset-0 w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105"
-          style={{ backgroundColor: tint.primary, color: "#1a472a" }}
+          className={`relative w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 ${
+            open ? "scale-105" : ""
+          }`}
+          style={{
+            backgroundColor: tint.primary,
+            color: "#0d2818",
+            boxShadow: open
+              ? `0 0 0 4px ${tint.primary}40, 0 12px 32px rgba(0,0,0,0.4)`
+              : "0 10px 24px rgba(0,0,0,0.3)",
+          }}
           aria-label={open ? "Close shortcuts" : "Open shortcuts"}
           aria-expanded={open}
+          aria-haspopup="menu"
         >
-          <FlowerOfLifeIcon size={26} className="text-[#1a472a]" />
+          <span
+            className="transition-transform duration-300"
+            style={{ transform: open ? "rotate(135deg)" : "rotate(0deg)" }}
+          >
+            <FlowerOfLifeIcon size={28} className="text-[#0d2818]" />
+          </span>
         </button>
       </div>
-    </div>
+    </>
   );
 }

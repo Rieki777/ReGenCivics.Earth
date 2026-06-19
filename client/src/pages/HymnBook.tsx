@@ -4,11 +4,10 @@
  * highest-voted song is added to the Hymn Book.
  */
 import { useState } from "react";
-import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useAudio, PLAYLIST } from "@/contexts/AudioContext";
-import { Music, ListMusic, Loader2, Plus, CheckCircle2, Play, Pause, Vote } from "lucide-react";
+import { Music, ListMusic, Loader2, Plus, CheckCircle2, Play, Pause, Vote, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PageTransition } from "@/components/PageTransition";
 
@@ -65,49 +64,66 @@ export default function HymnBook() {
             </p>
           </div>
 
-          {/* Now-playing playlist — the actual track list players land on
-              when they tap "Playlist" in the mobile More tab. Lives above
-              the submit form so the Playlist button doesn't drop people
-              into a submission form. */}
-          <section className="bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 mb-12">
-            <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-              <ListMusic className="w-5 h-5 text-[#7dd87d]" /> Hymns of the ReGeneration
-            </h2>
-            <ul className="divide-y divide-white/5">
-              {PLAYLIST.map((song, i) => {
-                const isCurrent = audio.currentIndex === i;
-                const showPause = isCurrent && audio.isPlaying;
-                return (
-                  <li key={song.src} className="flex items-center gap-3 py-2.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isCurrent) {
-                          audio.togglePlay();
-                        } else {
-                          audio.playSong(i);
-                        }
-                      }}
-                      aria-label={showPause ? `Pause ${song.title}` : `Play ${song.title}`}
-                      className="w-9 h-9 rounded-full bg-[#1a472a] hover:bg-[#7dd87d]/30 text-[#7dd87d] flex items-center justify-center flex-shrink-0"
+          {/* Now-playing player + full track list. Spotify-style: a
+              persistent now-playing panel with album art, a seek bar, and
+              transport controls, followed by a tappable track list. Players
+              land here when they tap the note in the command menu or the
+              "Playlist" item in the mobile More tab. */}
+          <section className="bg-gradient-to-b from-white/[0.07] to-white/[0.02] border border-white/10 rounded-3xl p-4 md:p-6 mb-12 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.6)]">
+            <NowPlayingPanel />
+
+            <div className="mt-6">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-white/50 mb-2 flex items-center gap-2">
+                <ListMusic className="w-4 h-4 text-[#7dd87d]" /> Up Next
+              </h2>
+              <ul>
+                {PLAYLIST.map((song, i) => {
+                  const isCurrent = audio.currentIndex === i;
+                  const showPause = isCurrent && audio.isPlaying;
+                  return (
+                    <li
+                      key={song.src}
+                      className={`group flex items-center gap-3 py-2.5 px-2 rounded-xl transition-colors ${
+                        isCurrent ? "bg-[#7dd87d]/10" : "hover:bg-white/5"
+                      }`}
                     >
-                      {showPause ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 translate-x-0.5" />}
-                    </button>
-                    <Link
-                      href={`/hymn-book/${song.slug}`}
-                      className="flex-1 min-w-0 hover:underline"
-                    >
-                      <span className={`block text-sm font-semibold truncate ${isCurrent ? "text-[#7dd87d]" : "text-white"}`}>
-                        {song.title}
-                      </span>
-                      {song.artist && (
-                        <span className="block text-white/70 text-xs truncate">{song.artist}</span>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isCurrent) {
+                            audio.togglePlay();
+                          } else {
+                            audio.playSong(i);
+                          }
+                        }}
+                        aria-label={showPause ? `Pause ${song.title}` : `Play ${song.title}`}
+                        className={`relative w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                          isCurrent
+                            ? "bg-[#7dd87d] text-[#0d2818]"
+                            : "bg-[#1a472a] text-[#7dd87d] group-hover:bg-[#7dd87d]/30"
+                        }`}
+                      >
+                        {showPause ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 translate-x-0.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { if (!isCurrent) audio.playSong(i); else audio.togglePlay(); }}
+                        className="flex-1 min-w-0 text-left"
+                      >
+                        <span className={`flex items-center gap-2 text-sm font-semibold truncate ${isCurrent ? "text-[#7dd87d]" : "text-white"}`}>
+                          {song.title}
+                          {showPause && <EqualizerBars />}
+                        </span>
+                        {song.artist && (
+                          <span className="block text-white/55 text-xs truncate">{song.artist}</span>
+                        )}
+                      </button>
+                      <span className="text-white/30 text-xs tabular-nums pr-1">{String(i + 1).padStart(2, "0")}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </section>
 
           {/* Submission form */}
@@ -279,5 +295,149 @@ export default function HymnBook() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+/** Format seconds as m:ss. */
+function fmtTime(s: number): string {
+  if (!isFinite(s) || s < 0) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+/** Three little animated bars to mark the track that is currently playing. */
+function EqualizerBars() {
+  return (
+    <span className="inline-flex items-end gap-[2px] h-3" aria-hidden="true">
+      <span className="hymn-eq-bar" style={{ animationDelay: "0ms" }} />
+      <span className="hymn-eq-bar" style={{ animationDelay: "150ms" }} />
+      <span className="hymn-eq-bar" style={{ animationDelay: "300ms" }} />
+    </span>
+  );
+}
+
+/**
+ * NowPlayingPanel: the Spotify-style transport at the top of the Hymn Book.
+ * Album art, current track + artist, a draggable seek bar with elapsed /
+ * total time, prev / play-pause / next controls, and a volume slider. All
+ * state comes from the shared AudioContext so playback continues seamlessly
+ * across pages.
+ */
+function NowPlayingPanel() {
+  const audio = useAudio();
+  const song = audio.currentSong;
+  const dur = isFinite(audio.duration) ? audio.duration : 0;
+  const pct = dur > 0 ? Math.min(100, (audio.currentTime / dur) * 100) : 0;
+  const volPct = Math.round(audio.volume * 100);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <style>{`
+        @keyframes hymnEq {
+          0%, 100% { height: 30%; }
+          50% { height: 100%; }
+        }
+        .hymn-eq-bar {
+          width: 3px; height: 100%;
+          background: currentColor; border-radius: 2px;
+          animation: hymnEq 0.9s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hymn-eq-bar { animation: none; height: 60%; }
+        }
+        .hymn-range {
+          -webkit-appearance: none; appearance: none;
+          height: 6px; border-radius: 9999px; cursor: pointer; outline: none;
+        }
+        .hymn-range::-webkit-slider-thumb {
+          -webkit-appearance: none; appearance: none;
+          width: 14px; height: 14px; border-radius: 50%;
+          background: #fff; border: 2px solid #7dd87d;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        .hymn-range::-moz-range-thumb {
+          width: 14px; height: 14px; border-radius: 50%;
+          background: #fff; border: 2px solid #7dd87d; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+      `}</style>
+
+      {/* Art + title */}
+      <div className="flex items-center gap-4">
+        <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-[#1a472a] via-[#13311f] to-[#7dd87d]/40 flex items-center justify-center flex-shrink-0 overflow-hidden ring-1 ring-[#7dd87d]/30 shadow-lg">
+          <Music className={`w-9 h-9 text-[#7dd87d] ${audio.isPlaying ? "animate-pulse" : ""}`} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] uppercase tracking-widest mb-1 flex items-center gap-2 text-[#7dd87d]">
+            {audio.isPlaying ? <>Now Playing <EqualizerBars /></> : "Paused"}
+          </p>
+          <p className="text-lg md:text-2xl font-bold text-white truncate" style={{ fontFamily: "var(--font-display)" }}>
+            {song?.title ?? "—"}
+          </p>
+          <p className="text-white/60 text-sm truncate">{song?.artist ?? "Hymns of the ReGeneration"}</p>
+        </div>
+      </div>
+
+      {/* Seek bar */}
+      <div className="flex items-center gap-3">
+        <span className="text-[11px] tabular-nums text-white/60 w-10 text-right">{fmtTime(audio.currentTime)}</span>
+        <input
+          type="range"
+          min={0}
+          max={dur || 0}
+          step={0.1}
+          value={Math.min(audio.currentTime, dur || 0)}
+          onChange={(e) => audio.seek(parseFloat(e.target.value))}
+          className="hymn-range flex-1"
+          style={{ background: `linear-gradient(to right, #7dd87d ${pct}%, rgba(255,255,255,0.15) ${pct}%)` }}
+          aria-label="Seek"
+        />
+        <span className="text-[11px] tabular-nums text-white/60 w-10">{fmtTime(dur)}</span>
+      </div>
+
+      {/* Transport controls */}
+      <div className="flex items-center justify-center gap-7">
+        <button
+          type="button"
+          onClick={audio.prevSong}
+          aria-label="Previous track"
+          className="text-white/80 hover:text-[#7dd87d] transition-colors"
+        >
+          <SkipBack className="w-6 h-6" fill="currentColor" />
+        </button>
+        <button
+          type="button"
+          onClick={audio.togglePlay}
+          aria-label={audio.isPlaying ? "Pause" : "Play"}
+          className="w-14 h-14 rounded-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#0d2818] flex items-center justify-center shadow-lg transition-colors"
+        >
+          {audio.isPlaying ? <Pause className="w-6 h-6" fill="currentColor" /> : <Play className="w-6 h-6 translate-x-0.5" fill="currentColor" />}
+        </button>
+        <button
+          type="button"
+          onClick={audio.nextSong}
+          aria-label="Next track"
+          className="text-white/80 hover:text-[#7dd87d] transition-colors"
+        >
+          <SkipForward className="w-6 h-6" fill="currentColor" />
+        </button>
+      </div>
+
+      {/* Volume */}
+      <div className="flex items-center gap-3 justify-center">
+        <Volume2 className="w-4 h-4 text-white/50 flex-shrink-0" />
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={audio.volume}
+          onChange={(e) => audio.setVolume(parseFloat(e.target.value))}
+          className="hymn-range w-32"
+          style={{ background: `linear-gradient(to right, #7dd87d ${volPct}%, rgba(255,255,255,0.15) ${volPct}%)` }}
+          aria-label="Volume"
+        />
+      </div>
+    </div>
   );
 }

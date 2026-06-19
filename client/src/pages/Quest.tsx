@@ -1020,7 +1020,19 @@ export default function Quest() {
               variant="outline"
               className="rounded-xl border-2 border-white/40 text-white hover:bg-white/10"
               style={{ fontFamily: 'var(--font-accent)' }}
-              onClick={() => setShowQuestArc(!showQuestArc)}
+              onClick={() => {
+                const next = !showQuestArc;
+                setShowQuestArc(next);
+                if (next) {
+                  // Bring the freshly-revealed map into view so the user
+                  // sees the result of the toggle (esp. on mobile).
+                  requestAnimationFrame(() => {
+                    document
+                      .getElementById("quest-arc-map")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  });
+                }
+              }}
             >
               <Map className="mr-2 w-4 h-4" />
               {showQuestArc ? pageCopy.quest.questArcButton.collapse : pageCopy.quest.questArcButton.expand}
@@ -1029,17 +1041,11 @@ export default function Quest() {
         </AnimatedSection>
       </section>
 
-      {/* Path Portals + Citizenship Tier Sidebar
-          Phase 3 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, sections 9.2 + 9.3.
-          The four elemental portals filter the quest list to one path; the
-          horizontal tier sidebar surfaces the player's current rung and the
-          next threshold. Both components hide gracefully if the user is not
-          signed in (auth-gated tRPC query returns nothing). */}
-      <PathProgressionSection />
-
-      {/* Quest Arc Map */}
+      {/* Quest Arc Map - sits directly below the Show/Hide Quest Arc toggle
+          so on mobile the map appears right where the user tapped, instead of
+          far down the page under the path portals. */}
       {showQuestArc && (
-        <section className="py-8 bg-[#faf6f1] border-b border-[#1a472a]/10">
+        <section className="py-8 bg-[#faf6f1] border-b border-[#1a472a]/10 scroll-mt-20" id="quest-arc-map">
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <h2
@@ -1053,6 +1059,14 @@ export default function Quest() {
           </div>
         </section>
       )}
+
+      {/* Path Portals + Citizenship Tier Sidebar
+          Phase 3 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, sections 9.2 + 9.3.
+          The four elemental portals filter the quest list to one path; the
+          horizontal tier sidebar surfaces the player's current rung and the
+          next threshold. Both components hide gracefully if the user is not
+          signed in (auth-gated tRPC query returns nothing). */}
+      <PathProgressionSection />
 
       {/* Callout Banner */}
       <section className="py-10 md:py-14 bg-gradient-to-r from-[#1a472a] via-[#2d5a3d] to-[#1a472a] relative overflow-hidden">
@@ -1564,52 +1578,87 @@ export default function Quest() {
       </div>
 
       {/* Token Info Section */}
-      <section className="py-16 bg-[#f0ebe3]">
-        <div className="container">
-          <h2 
-            className="text-2xl md:text-3xl font-bold mb-10 text-center text-[#1a472a]"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Want to learn more about the tokens you're earning in quests?
-          </h2>
+      <section className="relative overflow-hidden py-20 bg-gradient-to-b from-[#f4efe7] via-[#f0ebe3] to-[#e9e2d6]">
+        {/* Soft ambient glows */}
+        <div className="pointer-events-none absolute -top-24 -left-24 w-80 h-80 rounded-full bg-[#7dd87d]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-[#1a472a]/10 blur-3xl" />
+
+        <div className="container relative">
+          <div className="text-center mb-12 max-w-2xl mx-auto">
+            <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#1a472a]/70 bg-white/60 border border-[#7dd87d]/30 rounded-full px-4 py-1.5 mb-5">
+              <Coins className="w-3.5 h-3.5" /> The Two Tokens
+            </span>
+            <h2
+              className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1a472a]"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              Want to learn more about the tokens you're earning in quests?
+            </h2>
+            <p className="text-[#1a472a]/60 text-base mt-4 leading-relaxed">
+              Every quest grows two things at once: your stake in the Game, and your voice in how it evolves.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* $ReGen Tokenomics Card */}
-            <div className="bg-white rounded-2xl p-8 shadow-md border border-[#7dd87d]/20">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                  <Coins className="w-5 h-5 text-[#1a472a]" />
+            <div className="group relative flex flex-col rounded-3xl p-8 bg-white/90 backdrop-blur-sm shadow-[0_10px_40px_-12px_rgba(26,71,42,0.25)] border border-[#7dd87d]/30 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_rgba(26,71,42,0.35)]">
+              {/* Top accent stripe */}
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#7dd87d] to-[#4fb85f]" />
+              {/* Decorative corner glow */}
+              <div className="pointer-events-none absolute -top-16 -right-16 w-40 h-40 rounded-full bg-[#7dd87d]/15 blur-2xl transition-opacity duration-300 group-hover:opacity-100 opacity-60" />
+
+              <div className="flex items-center gap-4 mb-5">
+                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7dd87d]/30 to-[#7dd87d]/10 flex items-center justify-center ring-1 ring-[#7dd87d]/40 shadow-inner">
+                  <Coins className="w-7 h-7 text-[#1a472a]" />
                 </div>
-                <h3 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>$ReGen Tokenomics</h3>
+                <div>
+                  <h3 className="text-xl font-bold text-[#1a472a] leading-tight" style={{ fontFamily: 'var(--font-display)' }}>$ReGen Tokenomics</h3>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#4fb85f]">In-game currency</span>
+                </div>
               </div>
-              <p className="text-[#1a472a]/70 text-sm font-semibold mb-2">🌳 Quests build your stake in the Game</p>
-              <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-5">
+
+              <span className="inline-flex items-center gap-1.5 self-start text-xs font-semibold text-[#1a472a] bg-[#7dd87d]/15 border border-[#7dd87d]/30 rounded-full px-3 py-1 mb-4">
+                🌳 Quests build your stake in the Game
+              </span>
+              <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-6 flex-1">
                 Every quest you complete earns $ReGen tokens, which is our in-game currency. Part of our Infinite Game involves making this a real and meaningful currency for our everyday lives in how we meet our needs and thrive together. The more you contribute, the more currency you earn.
               </p>
-              <Link href="/bionomics" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
-                $ReGen on the Bionomics page <ArrowRight className="w-4 h-4" />
+              <Link href="/bionomics" className="group/btn inline-flex items-center justify-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm">
+                $ReGen on the Bionomics page <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
               </Link>
             </div>
 
             {/* RGVoice Governance Card */}
-            <div className="bg-white rounded-2xl p-8 shadow-md border border-[#7dd87d]/20">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                  <Vote className="w-5 h-5 text-[#1a472a]" />
+            <div className="group relative flex flex-col rounded-3xl p-8 bg-white/90 backdrop-blur-sm shadow-[0_10px_40px_-12px_rgba(26,71,42,0.25)] border border-[#2d7d8a]/25 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-12px_rgba(26,71,42,0.35)]">
+              {/* Top accent stripe */}
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#5bb8c4] to-[#2d7d8a]" />
+              {/* Decorative corner glow */}
+              <div className="pointer-events-none absolute -top-16 -right-16 w-40 h-40 rounded-full bg-[#5bb8c4]/15 blur-2xl transition-opacity duration-300 group-hover:opacity-100 opacity-60" />
+
+              <div className="flex items-center gap-4 mb-5">
+                <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5bb8c4]/30 to-[#5bb8c4]/10 flex items-center justify-center ring-1 ring-[#5bb8c4]/40 shadow-inner">
+                  <Vote className="w-7 h-7 text-[#1a472a]" />
                 </div>
-                <h3 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>RGVoice Governance</h3>
+                <div>
+                  <h3 className="text-xl font-bold text-[#1a472a] leading-tight" style={{ fontFamily: 'var(--font-display)' }}>RGVoice Governance</h3>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2d7d8a]">Governance voice</span>
+                </div>
               </div>
-              <p className="text-[#1a472a]/70 text-sm font-semibold mb-2">🌳 Quests build your governance voice</p>
-              <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-5">
+
+              <span className="inline-flex items-center gap-1.5 self-start text-xs font-semibold text-[#1a472a] bg-[#5bb8c4]/15 border border-[#5bb8c4]/30 rounded-full px-3 py-1 mb-4">
+                🗳️ Quests build your governance voice
+              </span>
+              <p className="text-[#1a472a]/70 text-sm leading-relaxed mb-6 flex-1">
                 Every quest you complete earns RGVoice tokens, giving you more say in how the game evolves. The more you contribute, the more the game is governed by players like you.
               </p>
-              <Link href="/governance" className="inline-flex items-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
-                RGVoice Governance <ArrowRight className="w-4 h-4" />
+              <Link href="/governance" className="group/btn inline-flex items-center justify-center gap-2 bg-[#1a472a] hover:bg-[#0d2818] text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm">
+                RGVoice Governance <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
               </Link>
             </div>
           </div>
 
           {/* Sign In CTA */}
-          <div className="mt-10">
+          <div className="mt-12">
             <SignInCTA />
           </div>
         </div>
