@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { analytics } from "@/lib/analytics";
 import {
   ArrowRight,
   Play,
@@ -1109,6 +1110,18 @@ export default function Land() {
               </Link>
               <p className="text-white/65 text-xs mt-3">
                 <Link href="/heal-the-land" className="text-[#7dd87d] hover:underline">Learn more about the program</Link>
+              </p>
+              {/* Early-stage path: surface the orphaned /loi for projects
+                  that are not ready to apply but want to keep talking. */}
+              <p className="text-white/80 text-sm mt-6">
+                Earlier stage and just exploring?{" "}
+                <Link
+                  href="/loi"
+                  onClick={() => analytics.ctaClick('land_loi_nudge', '/land')}
+                  className="text-[#7dd87d] hover:text-[#9de89d] underline font-semibold"
+                >
+                  Send a Letter of Intent
+                </Link>
               </p>
             </div>
           </AnimatedSection>

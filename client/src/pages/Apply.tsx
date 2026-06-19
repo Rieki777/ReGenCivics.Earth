@@ -11,7 +11,7 @@ import { FileUpload } from "@/components/FileUpload";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Loader2, Save, MapPin, Map as MapIcon, HelpCircle } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { getLoginUrl } from "@/const";
 import { MapView } from "@/components/Map";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
@@ -295,6 +295,27 @@ export default function Apply() {
           <p className="text-[#1a472a]">
             Join the ReGen Civics Alliance
           </p>
+        </div>
+
+        {/* Early-stage path: surface the LOI as a softer alternative
+            for projects that aren't ready for the full application. */}
+        <div className="mb-8 rounded-xl border border-[#1a472a]/15 bg-white/60 backdrop-blur-sm px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div>
+            <p className="text-[#1a472a] text-sm font-semibold">
+              Early stage and just exploring?
+            </p>
+            <p className="text-[#1a472a]/80 text-xs mt-0.5">
+              Send a brief Letter of Intent. We will follow up to see if the program is a fit.
+            </p>
+          </div>
+          <Link href="/loi" onClick={() => analytics.ctaClick('apply_loi_nudge', '/apply')}>
+            <Button
+              variant="outline"
+              className="border-[#1a472a]/30 text-[#1a472a] hover:bg-[#1a472a]/5 min-h-[44px]"
+            >
+              Send a Letter of Intent
+            </Button>
+          </Link>
         </div>
 
         {/* Step progress bar */}
