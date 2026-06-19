@@ -135,14 +135,14 @@ export default function Fund() {
     setOpenSteps(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
-  const heroImages = [cdnImg("https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp"), cdnImg("https://assets.regencivics.earth/AxJkbpktjcGvTnJs.webp")];
+  const heroImages = [cdnImg("https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp", 1920), cdnImg("https://assets.regencivics.earth/AxJkbpktjcGvTnJs.webp", 900)];
 
   return (
     <HeroPageLoader images={heroImages}>
     <PageWrapper>
     <PageBackground
-      backgroundImage={cdnImg("https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp")}
-      mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/AxJkbpktjcGvTnJs.webp")}
+      backgroundImage={cdnImg("https://assets.regencivics.earth/OfqiIKxSsWfMhFwN.webp", 1920)}
+      mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/AxJkbpktjcGvTnJs.webp", 900)}
       blurPlaceholder={cdnImg("https://assets.regencivics.earth/mCYNtInTzAALMYmI.webp")}
       mobileBlurPlaceholder={cdnImg("https://assets.regencivics.earth/CPfORGmZXXuBnUvg.webp")}
       overlayOpacity={0.65}

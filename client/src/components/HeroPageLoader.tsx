@@ -48,7 +48,10 @@ export function HeroPageLoader({
       img.src = src;
     });
 
-    const safety = setTimeout(() => { if (mounted) setImagesReady(true); }, 6000);
+    // Don't hold the quote loader hostage to slow hero images on cellular.
+    // After 2.5s, consider images "ready" and let the page reveal; the hero
+    // background fades in progressively underneath via PageBackground.
+    const safety = setTimeout(() => { if (mounted) setImagesReady(true); }, 2500);
     return () => { mounted = false; clearTimeout(safety); };
   }, [images]);
 
@@ -66,6 +69,14 @@ export function HeroPageLoader({
       return () => clearTimeout(timer);
     }
   }, [imagesReady, minTimeElapsed, dataLoading]);
+
+  // Absolute cap: the quote loader never holds longer than 3s, even if a
+  // tRPC query or a hero image is still pending. Keeps the loved quote moment
+  // while guaranteeing fast time-to-content on slow connections.
+  useEffect(() => {
+    const cap = setTimeout(() => setRevealed(true), 3000);
+    return () => clearTimeout(cap);
+  }, []);
 
   // Once revealed and fade-out complete, remove the loader from the DOM entirely
   // to free up the compositing layer on mobile Safari

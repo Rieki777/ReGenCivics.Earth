@@ -77,7 +77,7 @@ export function RelatedContent({ pages, blog, className = "" }: RelatedContentPr
                       <BookOpen className="w-4 h-4 text-[#7dd87d]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#7dd87d]/80 text-[10px] uppercase tracking-wider font-bold mb-1">
+                      <p className="text-[#7dd87d]/80 text-[11px] uppercase tracking-wider font-bold mb-1">
                         Related Read
                       </p>
                       <h4 className="text-white font-semibold text-sm mb-1 group-hover:text-[#7dd87d] transition-colors line-clamp-2" style={{ fontFamily: "var(--font-display)" }}>

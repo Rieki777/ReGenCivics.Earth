@@ -306,7 +306,7 @@ export default function SiteFooter() {
             </a>{" "}
             ReGen Civics Alliance. Growing the ReGenerative Renaissance.
           </p>
-          <p className="text-white/60 text-[10px] mt-1">
+          <p className="text-white/60 text-[11px] mt-1">
             This site does not constitute financial advice. Please review our{" "}
             <Link href="/risk-disclosure" className="underline hover:text-white/70">
               risk disclosures

@@ -142,13 +142,13 @@ const allianceCategories = [
 ];
 
 export default function Ally() {
-  const heroImages = [cdnImg("https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp"), cdnImg("https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp")];
+  const heroImages = [cdnImg("https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp", 1920), cdnImg("https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp", 900)];
 
   return (
     <HeroPageLoader images={heroImages}>
     <PageBackground
-      backgroundImage={cdnImg("https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp")}
-      mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp")}
+      backgroundImage={cdnImg("https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp", 1920)}
+      mobileBackgroundImage={cdnImg("https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp", 900)}
       blurPlaceholder={cdnImg("https://assets.regencivics.earth/rUMeusROmsGTXuQF.webp")}
       mobileBlurPlaceholder={cdnImg("https://assets.regencivics.earth/oFcGbAHWTvIUIFjk.webp")}
       overlayOpacity={0.65}
