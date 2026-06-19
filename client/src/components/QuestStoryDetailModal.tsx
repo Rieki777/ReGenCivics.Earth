@@ -13,6 +13,7 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
 import { X, ExternalLink, MessageCircle, User as UserIcon } from "lucide-react";
+import { ShareButton } from "@/components/ShareButton";
 
 interface StoryEntry {
   id?: string | number;
@@ -196,6 +197,15 @@ export function QuestStoryDetailModal({ story, onClose }: QuestStoryDetailModalP
                 See the {story.questTitle} quest
               </Link>
             )}
+            <ShareButton
+              where="quest_story_modal"
+              title={story.questTitle ? `${name} — ${story.questTitle} on ReGen Civics` : `${name} on ReGen Civics`}
+              text={story.caption ?? "Share your quest with the community."}
+              url={story.questId ? `/quest#${story.questId}` : "/quest"}
+              variant="soft"
+              label="Share"
+              className="bg-white border-[#1a472a]/15 text-[#1a472a] hover:bg-[#f8f6f1]"
+            />
           </div>
         </div>
       </div>

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
+import { ShareButton } from "@/components/ShareButton";
 import { useState } from "react";
 import {
   MapPin,
@@ -460,14 +461,23 @@ export default function Showcase() {
                       {/* Action Buttons */}
                       <div className="flex gap-2 pt-2">
                         <Link href={`/connect?path=live&project=${project.id}`} className="flex-1">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="w-full border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a] hover:text-white"
                           >
                             <Heart className="w-4 h-4 mr-2" />
                             Express Interest
                           </Button>
                         </Link>
+                        <ShareButton
+                          where="showcase_project_card"
+                          title={`${project.name} — a ReGen Civics land project`}
+                          text={`Check out ${project.name}. ${project.description ?? ""}`.trim()}
+                          url={`/showcase`}
+                          variant="soft"
+                          label=""
+                          className="px-3 border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a] hover:text-white"
+                        />
                       </div>
                     </CardContent>
                   </Card>
