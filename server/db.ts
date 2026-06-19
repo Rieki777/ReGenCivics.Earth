@@ -1975,9 +1975,15 @@ type PublicStats = {
   members: number;
   landProjects: number;
   investorsCommitted: number;
+  /** Distinct quest completions across all users. Public traction signal. */
+  questsCompleted: number;
+  /** Distinct bioregions touched by at least one user / project. */
+  bioregionsTouched: number;
 };
 
-const PUBLIC_STATS_CACHE_KEY = 'stats:public';
+// Cache key bumped to v2 to invalidate the older 4-field shape so cached
+// payloads do not surface as undefined on the new fields.
+const PUBLIC_STATS_CACHE_KEY = 'stats:public:v2';
 const PUBLIC_STATS_TTL = 3600; // 1 hour, churn is low and these counts are
                                 // never load-bearing on a transactional path.
 
@@ -1988,22 +1994,38 @@ export async function getPublicStats(): Promise<PublicStats> {
   if (cached) return cached;
 
   const db = await getDb();
-  if (!db) return { applications: 0, members: 0, landProjects: 0, investorsCommitted: 0 };
+  if (!db) return { applications: 0, members: 0, landProjects: 0, investorsCommitted: 0, questsCompleted: 0, bioregionsTouched: 0 };
 
   // COUNT(*) on each table beats SELECT *; the previous implementation
-  // streamed every row across the wire and counted in JS.
-  const [appsCount, usersCount, loisCount, projectsCount] = await Promise.all([
+  // streamed every row across the wire and counted in JS. Quest count and
+  // bioregions count added 2026-06-18 for the TractionStrip on / and
+  // /fund. Bioregions is COUNT(DISTINCT) over user_bioregions so an empty
+  // bioregions table without user mappings stays at zero.
+  const { bioregions: bioregionsTbl, userBioregions } = await import('../drizzle/schema');
+  const [appsCount, usersCount, loisCount, projectsCount, questsCount, bioregionsCount] = await Promise.all([
     db.select({ c: sql<number>`COUNT(*)` }).from(applications),
     db.select({ c: sql<number>`COUNT(*)` }).from(users),
     db.select({ c: sql<number>`COUNT(*)` }).from(letterOfIntent).where(eq(letterOfIntent.status, 'confirmed')),
     db.select({ c: sql<number>`COUNT(*)` }).from(crowdPoolingProjects).where(eq(crowdPoolingProjects.status, 'active')),
+    db.select({ c: sql<number>`COUNT(*)` }).from(questCompletions),
+    db.select({ c: sql<number>`COUNT(DISTINCT ${userBioregions.bioregionId})` }).from(userBioregions),
   ]);
+
+  // If user_bioregions is empty, fall back to total bioregions configured
+  // so the strip never says "0 bioregions" while the table has rows.
+  let bioregionsTouched = Number(bioregionsCount[0]?.c ?? 0);
+  if (bioregionsTouched === 0) {
+    const [fallback] = await db.select({ c: sql<number>`COUNT(*)` }).from(bioregionsTbl);
+    bioregionsTouched = Number(fallback?.c ?? 0);
+  }
 
   const result: PublicStats = {
     applications: Number(appsCount[0]?.c ?? 0),
     members: Number(usersCount[0]?.c ?? 0),
     landProjects: Number(projectsCount[0]?.c ?? 0),
     investorsCommitted: Number(loisCount[0]?.c ?? 0),
+    questsCompleted: Number(questsCount[0]?.c ?? 0),
+    bioregionsTouched,
   };
   await cacheSet(PUBLIC_STATS_CACHE_KEY, result, PUBLIC_STATS_TTL);
   return result;

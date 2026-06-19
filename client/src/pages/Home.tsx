@@ -45,6 +45,7 @@ import { ProgressiveOnboarding, useIsReturnVisitor } from "@/components/Progress
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { ImagePreloader } from "@/components/ImagePreloader";
 import { trpc } from "@/lib/trpc";
+import { TractionStrip, type TractionStat } from "@/components/TractionStrip";
 import { analytics } from "@/lib/analytics";
 import { PageWrapper } from "@/components/PageWrapper";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
@@ -156,6 +157,36 @@ const PATH_TO_CARD_ID: Record<string, string> = {
   ally: "ally",
   player: "play",
 };
+
+/**
+ * Live traction strip rendered on Home. Pulls real counts from
+ * system.getPublicStats and only renders stats with non-zero values, so we
+ * never imply momentum we do not have.
+ */
+function HomeTractionStrip() {
+  const { data } = trpc.stats.getPublicStats.useQuery(undefined, {
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  if (!data) return null;
+
+  const candidates: TractionStat[] = [
+    { value: data.landProjects ?? 0, label: "Land projects" },
+    { value: data.questsCompleted ?? 0, label: "Quests completed" },
+    { value: data.members ?? 0, label: "Community members" },
+    { value: data.bioregionsTouched ?? 0, label: "Bioregions" },
+  ];
+  const stats = candidates.filter((s) => s.value > 0);
+  if (stats.length === 0) return null;
+
+  return (
+    <TractionStrip
+      eyebrow="Living movement"
+      stats={stats}
+      tone="forest"
+    />
+  );
+}
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -329,6 +360,10 @@ export default function Home() {
             </p>
           </div>
         </section>
+
+        {/* Live traction — honest counts pulled from system.getPublicStats.
+            Omits any stat that is zero so we never lie about momentum. */}
+        <HomeTractionStrip />
 
         {/* Welcome Short Intro Video */}
         <section className="relative py-8 md:py-12">
