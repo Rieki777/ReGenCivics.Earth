@@ -48,7 +48,9 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     import("@sentry/react").then((Sentry) => {
       Sentry.init({
         dsn: import.meta.env.VITE_SENTRY_DSN,
+        sampleRate: 1.0,
         tracesSampleRate: 0.1,
+        environment: import.meta.env.MODE,
         integrations: [Sentry.browserTracingIntegration()],
       });
     });

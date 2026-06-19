@@ -3,6 +3,7 @@
  * Initializes Redis connection on server startup
  */
 
+import * as Sentry from '@sentry/node';
 import { initializeCache, shutdownCache } from './cache';
 
 /**
@@ -41,16 +42,22 @@ export function setupCacheShutdownHandlers(): void {
     process.exit(0);
   });
 
-  // Handle uncaught exceptions
+  // Handle uncaught exceptions. Report to Sentry and flush BEFORE exit:
+  // process.exit(1) would otherwise kill the process before Sentry sends the
+  // event over the network, so these crashes never reached the dashboard.
   process.on('uncaughtException', async (error) => {
     console.error('[Server] Uncaught exception:', error);
+    Sentry.captureException(error);
+    await Sentry.flush(2000).catch(() => {});
     await shutdownCacheOnShutdown();
     process.exit(1);
   });
 
-  // Handle unhandled rejections
+  // Handle unhandled rejections (same flush-before-exit reasoning).
   process.on('unhandledRejection', async (reason) => {
     console.error('[Server] Unhandled rejection:', reason);
+    Sentry.captureException(reason);
+    await Sentry.flush(2000).catch(() => {});
     await shutdownCacheOnShutdown();
     process.exit(1);
   });

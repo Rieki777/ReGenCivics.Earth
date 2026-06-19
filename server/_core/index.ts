@@ -23,7 +23,14 @@ import { runDigestJob } from "../jobs/digestJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
 if (process.env.SENTRY_DSN) {
-  Sentry.init({ dsn: process.env.SENTRY_DSN, tracesSampleRate: 0.1 });
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    // sampleRate controls error-event capture (separate from tracing). The
+    // SDK default is already 1.0; set explicitly so it's intentional.
+    sampleRate: 1.0,
+    tracesSampleRate: 0.1,
+    environment: process.env.NODE_ENV || "production",
+  });
 }
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -755,6 +762,23 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      // tRPC catches procedure errors and formats them into JSON responses, so
+      // they never propagate to the Express error handler where Sentry's
+      // setupExpressErrorHandler listens. That is why traces were flowing but
+      // zero errors were captured. Forward genuine server faults
+      // (INTERNAL_SERVER_ERROR, i.e. uncaught throws inside procedures) to
+      // Sentry here. Expected client errors (UNAUTHORIZED, BAD_REQUEST,
+      // TOO_MANY_REQUESTS, NOT_FOUND, ...) are intentionally skipped so the
+      // issues dashboard stays high-signal.
+      onError({ error, path, type }) {
+        if (error.code === "INTERNAL_SERVER_ERROR") {
+          Sentry.captureException(error.cause ?? error, (scope) => {
+            scope.setTag("trpc.path", path ?? "unknown");
+            scope.setTag("trpc.type", type);
+            return scope;
+          });
+        }
+      },
     })
   );
   // Sentry error handler (must come after all routes)
