@@ -54,31 +54,7 @@ import { cdnImg } from "@/lib/utils";
 import { Pullquote } from "@/components/Pullquote";
 import { ReadingTime } from "@/components/ReadingTime";
 import { TLDR } from "@/components/TLDR";
-import { TractionStrip, type TractionStat } from "@/components/TractionStrip";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
-import { trpc } from "@/lib/trpc";
-
-/**
- * Live movement counts for the Fund page. Pulled from
- * system.getPublicStats; renders nothing until data is loaded and skips
- * any stat that is zero so we never claim AUM-style metrics we do not
- * have. Fund is in formation, so no money figures.
- */
-function FundTractionStrip() {
-  const { data } = trpc.stats.getPublicStats.useQuery(undefined, {
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-  if (!data) return null;
-  const stats: TractionStat[] = [
-    { value: data.landProjects ?? 0, label: "Land projects" },
-    { value: data.questsCompleted ?? 0, label: "Quests completed" },
-    { value: data.members ?? 0, label: "Community members" },
-    { value: data.bioregionsTouched ?? 0, label: "Bioregions" },
-  ].filter((s) => s.value > 0);
-  if (stats.length === 0) return null;
-  return <TractionStrip eyebrow="Movement in motion" stats={stats} tone="cream" />;
-}
 
 // Collapsible section component
 function CollapsibleSection({
@@ -284,9 +260,6 @@ export default function Fund() {
           "Returns come from land value appreciation, revenue sharing, and token economics",
         ]} />
       </div>
-
-      {/* Live movement traction — real counts, never invented. */}
-      <FundTractionStrip />
 
       {/* Investor Dashboard */}
       <section id="fund-dashboard" className="py-12 md:py-16 px-4">

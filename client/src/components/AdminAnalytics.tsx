@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, Mail, MousePointerClick, Globe, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { GeographicAnalytics } from "@/components/GeographicAnalytics";
+import { TractionStrip, type TractionStat } from "@/components/TractionStrip";
 
 const COLORS = ['#7dd87d', '#4a7c59', '#d4a574', '#1a472a', '#a8d5a8'];
 
@@ -137,6 +138,12 @@ export function AdminAnalytics() {
 
   return (
     <div className="space-y-6">
+      {/* Movement-health strip (admin-only). Real counts from
+          stats.getPublicStats. Was previously on / and /fund; pulled
+          inward at Rye's request so we don't show numbers publicly while
+          things are still in formation. */}
+      <AdminMovementStrip />
+
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -466,4 +473,25 @@ function FunnelCell({ label, value, sub }: { label: string; value: number; sub?:
       {sub && <p className="text-xs text-[#1a472a]/70 mt-0.5">{sub}</p>}
     </div>
   );
+}
+
+/**
+ * Admin-only "movement health" strip. Same counts the public-facing
+ * strip used to show on / and /fund (projects, quests, members,
+ * bioregions); kept inside admin while the project is in formation.
+ * Renders every stat, even zeroes, so the gaps are visible at a glance.
+ */
+function AdminMovementStrip() {
+  const { data } = trpc.stats.getPublicStats.useQuery(undefined, {
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  if (!data) return null;
+  const stats: TractionStat[] = [
+    { value: data.landProjects ?? 0, label: "Land projects" },
+    { value: data.questsCompleted ?? 0, label: "Quests completed" },
+    { value: data.members ?? 0, label: "Community members" },
+    { value: data.bioregionsTouched ?? 0, label: "Bioregions" },
+  ];
+  return <TractionStrip eyebrow="Movement health (admin)" stats={stats} tone="cream" className="rounded-xl" />;
 }
