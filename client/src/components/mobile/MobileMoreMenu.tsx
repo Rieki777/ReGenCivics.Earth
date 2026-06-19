@@ -84,16 +84,27 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
       aria-modal="true"
       aria-label="More menu"
     >
-      {/* Header band with wizards hero + close */}
-      <div className={`relative bg-gradient-to-br ${tint.bgGradient} px-4 pt-5 pb-6`}>
+      {/* Header band: a regenerative village painted in the current season.
+          The season gradient is the base layer and the automatic fallback if
+          the image is missing; a scrim keeps the crest and text legible. */}
+      <div className={`relative overflow-hidden bg-gradient-to-br ${tint.bgGradient} px-4 pt-5 pb-7`}>
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${tint.bgImage})` }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-b from-[#0d2818]/35 via-[#0d2818]/20 to-[#0d2818]/85"
+        />
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/30 backdrop-blur flex items-center justify-center text-white hover:bg-black/50 transition-colors"
+          className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/30 backdrop-blur flex items-center justify-center text-white hover:bg-black/50 transition-colors"
           aria-label="Close menu"
         >
           <X className="w-5 h-5" />
         </button>
-        <div className="flex flex-col items-center text-center">
+        <div className="relative z-10 flex flex-col items-center text-center">
           {/* Phoenix + circle-of-life crest used across the Connect page.
               Rye asked for this specific crest here too so the More tab
               feels like part of the same brand world as the rest of the
@@ -110,7 +121,7 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           <h2 className="text-white text-xl font-bold mt-2" style={{ fontFamily: "var(--font-display)" }}>
             ReGen Civics
           </h2>
-          <p className="text-white/70 text-xs">{tint.season} season</p>
+          <p className="text-white/85 text-xs capitalize drop-shadow">{tint.season} season</p>
         </div>
       </div>
 
@@ -154,7 +165,7 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
             </div>
           </div>
 
-          {/* Three action buttons — Playlist opens the full music page, not an inline dupe */}
+          {/* Three action buttons. Playlist opens the full music page, not an inline dupe. */}
           <div className="grid grid-cols-3 gap-2">
             <Link
               href="/hymn-book"

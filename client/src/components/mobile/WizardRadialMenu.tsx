@@ -28,7 +28,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll,
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench,
 } from "lucide-react";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
@@ -72,6 +72,10 @@ export function WizardRadialMenu() {
   const onCommunity = currentPath === "/community" || currentPath.startsWith("/community/");
   const onQuest = currentPath === "/quest" || currentPath.startsWith("/quest/");
   const onProfile = currentPath === "/profile" || currentPath.startsWith("/profile/");
+  // Land-steward and investor routes get a Tools shortcut in the command
+  // center, since the tools library is most useful to those two journeys.
+  const onLandOrInvestor = ["/land", "/fund", "/investor", "/apply", "/loi", "/tools", "/crowd-pooling", "/crowd-pooling-projects", "/bionomics", "/tokenomics"]
+    .some((p) => currentPath === p || currentPath.startsWith(p + "/"));
 
   const handleTriggerClick = useCallback(() => {
     haptic(10);
@@ -161,6 +165,9 @@ export function WizardRadialMenu() {
         Icon: Search,
       };
 
+  // Tools shortcut, surfaced for land-steward and investor journeys.
+  const toolsAction: Action = { key: "tools", label: "Tools", href: "/tools", Icon: Wrench };
+
   // Vertical stack order, top -> bottom. The list is rendered as a column
   // that grows upward from the trigger, so the LAST item sits closest to the
   // thumb. Quests is the primary anchor, so it lands nearest the trigger.
@@ -169,6 +176,7 @@ export function WizardRadialMenu() {
     profileAction,
     communityAction,
     contextAction,
+    ...(onLandOrInvestor ? [toolsAction] : []),
     questsAction,
   ];
 
@@ -188,17 +196,16 @@ export function WizardRadialMenu() {
         style={{ backdropFilter: open ? "blur(2px)" : undefined }}
       />
 
-      {/* MobileTabBar is h-16 (64px) plus env(safe-area-inset-bottom) padding.
-          FAB needs to clear that stack with real breathing room so the flower
-          and the menu rows never kiss the tab bar on iPhone.
-
-          Fix: max() of safe-area + 8rem and a hard 9rem floor. The floor
-          guarantees the FAB bottom is always >= 9rem (144px) regardless of
-          env() value. Tabs render z-50; we render z-[60]. */}
+      {/* The trigger sits at the bottom-right, deliberately overlapping the
+          top-right corner of the tab bar by roughly 10%, so it reads as the
+          command center docked into the menu. The tab bar is h-16 (4rem) plus
+          env(safe-area-inset-bottom); placing the FAB bottom at safe-area +
+          3.5rem dips its lower edge a few px into the bar. Tabs render z-50;
+          we render z-[60] so the trigger stays on top. */}
       <div
         className="fixed right-4 z-[60] md:hidden flex flex-col items-end"
         style={{
-          bottom: "max(calc(env(safe-area-inset-bottom, 0px) + 8rem), 9rem)",
+          bottom: "calc(env(safe-area-inset-bottom, 0px) + 3.5rem)",
         }}
         onClick={(e) => e.stopPropagation()}
       >

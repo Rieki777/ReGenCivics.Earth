@@ -864,6 +864,19 @@ export default function Navigation() {
                       <UsersRound className="w-4 h-4" />
                       Crowd Pool Campaigns
                     </Link>
+                    <Link
+                      href="/tools"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/tools' || location.startsWith('/tools/')
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Wrench className="w-4 h-4" />
+                      Tools Library
+                    </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
                     <Link 
                       href="/crowd-pooling"

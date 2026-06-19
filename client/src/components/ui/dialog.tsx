@@ -129,13 +129,18 @@ function DialogContent({
           // safe-area padding so the iOS home-indicator does not clip CTAs.
           // From md up: original centered modal.
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed z-50 grid gap-4 border shadow-lg duration-200",
-          "bottom-0 left-0 right-0 w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-t-2xl p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]",
-          "md:top-[50%] md:left-[50%] md:bottom-auto md:right-auto md:max-w-[calc(100%-2rem)] md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-lg md:max-h-[90vh] md:pb-6 md:data-[state=closed]:zoom-out-95 md:data-[state=open]:zoom-in-95 sm:max-w-lg",
+          "bottom-0 left-0 right-0 w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-t-2xl p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] data-[state=open]:slide-in-from-bottom-3 data-[state=closed]:slide-out-to-bottom-3",
+          "md:top-[50%] md:left-[50%] md:bottom-auto md:right-auto md:max-w-[calc(100%-2rem)] md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-lg md:max-h-[90vh] md:pb-6 md:data-[state=closed]:zoom-out-95 md:data-[state=open]:zoom-in-95 md:data-[state=open]:slide-in-from-bottom-0 md:data-[state=closed]:slide-out-to-bottom-0 sm:max-w-lg",
           className
         )}
         onEscapeKeyDown={handleEscapeKeyDown}
         {...props}
       >
+        {/* Grab handle: signals a draggable sheet on mobile, hidden on desktop. */}
+        <div
+          aria-hidden="true"
+          className="md:hidden mx-auto -mt-2 mb-1 h-1.5 w-10 shrink-0 rounded-full bg-foreground/15"
+        />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
