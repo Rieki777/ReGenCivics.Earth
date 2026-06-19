@@ -46,6 +46,7 @@ import { SEO } from "@/components/SEO";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { LazyImage } from "@/components/LazyImage";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
+import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { cdnImg } from "@/lib/utils";
 
 function CollapsibleSection({
@@ -1132,6 +1133,12 @@ export default function Land() {
       <RelatedContent pages={relatedContentMap.land.pages} blog={relatedContentMap.land.blog} />
         </div>
       </section>
+      <StickyThumbCta
+        href="/apply"
+        label="Apply as a Land Partner"
+        where="land_sticky_cta"
+        page="/land"
+      />
     </PageBackground>
     </HeroPageLoader>
   );

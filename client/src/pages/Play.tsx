@@ -34,6 +34,7 @@ import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
 import { SEO } from "@/components/SEO";
 import AutoplayVideo from "@/components/AutoplayVideo";
+import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { cdnImg } from "@/lib/utils";
 
 // Action card component with token info and linked button(s)
@@ -629,6 +630,12 @@ export default function Play() {
           </AnimatedSection>
         </div>
       </section>
+      <StickyThumbCta
+        href="/quest"
+        label="Start a Quest"
+        where="play_sticky_cta"
+        page="/play"
+      />
     </PageBackground>
     </HeroPageLoader>
   );

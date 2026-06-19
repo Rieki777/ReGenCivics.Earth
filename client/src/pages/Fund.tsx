@@ -55,6 +55,7 @@ import { Pullquote } from "@/components/Pullquote";
 import { ReadingTime } from "@/components/ReadingTime";
 import { TLDR } from "@/components/TLDR";
 import { TractionStrip, type TractionStat } from "@/components/TractionStrip";
+import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { trpc } from "@/lib/trpc";
 
 /**
@@ -716,6 +717,13 @@ export default function Fund() {
 
       {/* Related Content */}
       <RelatedContent pages={relatedContentMap.fund.pages} blog={relatedContentMap.fund.blog} />
+      <StickyThumbCta
+        href="/opportunity"
+        label="View Investment Thesis"
+        where="fund_sticky_cta"
+        page="/fund"
+        tone="amber"
+      />
     </PageBackground>
     </PageWrapper>
     </HeroPageLoader>
