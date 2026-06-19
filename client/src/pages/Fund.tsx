@@ -194,6 +194,13 @@ export default function Fund() {
                 Submit LOI
               </Button>
             </Link>
+            <span className="hidden sm:inline text-[#1a472a]/50">|</span>
+            <Link
+              href="/risk-disclosure"
+              className="text-[#1a472a]/80 hover:text-[#1a472a] text-xs sm:text-sm font-semibold underline underline-offset-2"
+            >
+              Read the risk disclosure
+            </Link>
           </div>
         </div>
       </div>
@@ -233,7 +240,7 @@ export default function Fund() {
             </p>
           </AnimatedSection>
 
-          {/* CTAs — links to /opportunity (the actual investment thesis page);
+          {/* CTAs: links to /opportunity (the actual investment thesis page);
               the previous `/investor` target was the interest-form page,
               which read as a 404 to anyone expecting the thesis content. */}
           <AnimatedSection animation="slide-up" delay={600}>
