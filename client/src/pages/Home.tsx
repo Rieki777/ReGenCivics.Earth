@@ -45,6 +45,7 @@ import { ProgressiveOnboarding, useIsReturnVisitor } from "@/components/Progress
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { ImagePreloader } from "@/components/ImagePreloader";
 import { trpc } from "@/lib/trpc";
+import { analytics } from "@/lib/analytics";
 import { PageWrapper } from "@/components/PageWrapper";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { cdnImg } from "@/lib/utils";
@@ -298,6 +299,34 @@ export default function Home() {
                 />
               </div>
             </AnimatedSection>
+          </div>
+        </section>
+
+        {/* Primary call to action: one obvious door for a first-time visitor,
+            sitting directly under the hero. Routes into /connect where the
+            four intents (invest, bring land, ally, play) are chosen. */}
+        <section className="relative pb-8 md:pb-12">
+          <div className="container max-w-3xl text-center motion-safe:animate-[fadeInUp_0.6s_ease-out]">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/connect"
+                onClick={() => analytics.ctaClick("home_hero_primary", "home")}
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#7dd87d] px-8 py-4 text-base md:text-lg font-bold text-[#0d2818] shadow-[0_10px_30px_rgba(125,216,125,0.35)] transition-all duration-200 hover:bg-[#9de89d] hover:-translate-y-0.5 min-h-[52px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#7dd87d]"
+              >
+                Start your journey
+                <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
+              </Link>
+              <Link
+                href="/play"
+                onClick={() => analytics.ctaClick("home_hero_secondary", "home")}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-4 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10 min-h-[52px]"
+              >
+                Play the game
+              </Link>
+            </div>
+            <p className="mt-4 text-white/75 text-sm" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+              Investor, land project, ally, or player. One tap to your path.
+            </p>
           </div>
         </section>
 

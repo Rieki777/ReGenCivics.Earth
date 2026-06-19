@@ -52,7 +52,7 @@ function EmptyMedia({
     <div
       data-slot="empty-icon"
       data-variant={variant}
-      className={cn(emptyMediaVariants({ variant, className }))}
+      className={cn(emptyMediaVariants({ variant }), "motion-safe:animate-[fadeInUp_0.5s_ease-out_both]", className)}
       {...props}
     />
   );
@@ -62,7 +62,7 @@ function EmptyTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="empty-title"
-      className={cn("text-lg font-medium tracking-tight", className)}
+      className={cn("text-lg font-medium tracking-tight motion-safe:animate-[fadeInUp_0.5s_ease-out_0.08s_both]", className)}
       {...props}
     />
   );
@@ -73,7 +73,7 @@ function EmptyDescription({ className, ...props }: React.ComponentProps<"p">) {
     <div
       data-slot="empty-description"
       className={cn(
-        "text-muted-foreground [&>a:hover]:text-primary text-sm/relaxed [&>a]:underline [&>a]:underline-offset-4",
+        "text-muted-foreground [&>a:hover]:text-primary text-sm/relaxed [&>a]:underline [&>a]:underline-offset-4 motion-safe:animate-[fadeInUp_0.5s_ease-out_0.16s_both]",
         className
       )}
       {...props}

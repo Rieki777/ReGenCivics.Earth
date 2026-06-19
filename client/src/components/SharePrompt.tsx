@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { Link2, X, Check } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { analytics } from "@/lib/analytics";
 
 interface SharePromptProps {
   url: string;
@@ -29,8 +30,10 @@ function buildShareUrl(base: string, userId?: number, platform?: string, context
 }
 
 function trackShare(moment: string, platform: string) {
+  // First-party analytics so shares land in the admin section.
+  analytics.shareClicked(moment, platform);
   try {
-    // Store share event in localStorage for analytics
+    // Also keep a local rolling buffer (used by some lightweight UI hints).
     const key = "regen-share-events";
     const events = JSON.parse(localStorage.getItem(key) || "[]");
     events.push({ moment, platform, ts: Date.now() });
