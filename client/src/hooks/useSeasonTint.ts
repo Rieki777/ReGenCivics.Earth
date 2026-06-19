@@ -9,6 +9,8 @@ export type SeasonTint = {
   season: Season;
   primary: string;
   bgGradient: string;
+  /** Seasonal village header image (regenerative village in this season). */
+  bgImage: string;
 };
 
 export function useSeasonTint(): SeasonTint {
@@ -18,5 +20,6 @@ export function useSeasonTint(): SeasonTint {
     season,
     primary: theme.accent,
     bgGradient: theme.gradient,
+    bgImage: theme.image,
   };
 }
