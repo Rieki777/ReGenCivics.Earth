@@ -95,15 +95,39 @@ export default function AutoplayVideo({
 }: AutoplayVideoProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState<string>(durationCache[videoId] || "");
-  const [durationLoading, setDurationLoading] = useState(!durationCache[videoId] && !comingSoon);
+  // Duration fetch (and the heavy YouTube IFrame API it pulls in) is deferred
+  // until the video is near the viewport, so the homepage does not load
+  // third-party YouTube JS on first paint. Skeleton only shows once in view.
+  const [durationLoading, setDurationLoading] = useState(false);
+  const [inView, setInView] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const hiddenPlayerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
+
+  // Mark the component in-view (with a 250px head start) so the duration
+  // fetch and YT API load only happen when the user is about to reach it.
+  useEffect(() => {
+    if (comingSoon || !videoId) return;
+    if (durationCache[videoId]) { setInView(true); return; }
+    const el = containerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) { setInView(true); io.disconnect(); }
+      },
+      { rootMargin: "250px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [videoId, comingSoon]);
 
   useEffect(() => {
     if (comingSoon || !videoId) {
       setDurationLoading(false);
       return;
     }
+    if (!inView) return;
+    if (!durationCache[videoId]) setDurationLoading(true);
 
     if (durationCache[videoId]) {
       setDuration(durationCache[videoId]);
@@ -195,7 +219,7 @@ export default function AutoplayVideo({
         }
       }
     };
-  }, [videoId, comingSoon]);
+  }, [videoId, comingSoon, inView]);
 
   const startPlaying = () => {
     if (!comingSoon && !isPlaying) {
@@ -206,7 +230,7 @@ export default function AutoplayVideo({
   const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&iv_load_policy=3&autoplay=1`;
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       {/* Hidden container for duration-fetching player */}
       <div ref={hiddenPlayerRef} className="absolute w-0 h-0 overflow-hidden" aria-hidden="true" />
       <div

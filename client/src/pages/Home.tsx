@@ -36,6 +36,7 @@ import NewsletterSignup from "@/components/NewsletterSignup";
 import { SocialLinks } from "@/components/SocialLinks";
 
 import { SEO, pageSEO } from "@/components/SEO";
+import { JsonLD, schemas } from "@/components/JsonLD";
 import { PathCardImage } from "@/components/PathCardImage";
 import "@/components/PathCardImage.css";
 import AutoplayVideo from "@/components/AutoplayVideo";
@@ -212,6 +213,9 @@ export default function Home() {
       ]}
     >
       <SEO {...pageSEO.home} breadcrumbs={[{ name: "Home", url: "/" }]} />
+      {/* Brand entity structured data for search (Organization + WebSite). */}
+      <JsonLD data={schemas.organization()} />
+      <JsonLD data={schemas.website()} />
 
       {/* Editable Banner */}
       <BannerDisplay bannerKey="main-banner" />

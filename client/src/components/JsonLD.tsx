@@ -34,6 +34,27 @@ export function JsonLD({ data }: JsonLDProps) {
 // ─── Common schema builders ───────────────────────────────────────────────────
 
 export const schemas = {
+  /** Organization, for the homepage. Establishes the brand entity for search. */
+  organization: () => ({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "ReGen Civics Alliance",
+    alternateName: "ReGen Civics",
+    url: "https://regencivics.earth",
+    logo: "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp",
+    description:
+      "A fund and an in-real-life game for regenerative land projects and the Regenerative Renaissance.",
+    sameAs: ["https://twitter.com/ReGenCivics"],
+  }),
+
+  /** WebSite, for the homepage. No SearchAction since search is in-app only. */
+  website: () => ({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "ReGen Civics",
+    url: "https://regencivics.earth",
+  }),
+
   investmentFund: () => ({
     "@context": "https://schema.org",
     "@type": "FinancialProduct",
