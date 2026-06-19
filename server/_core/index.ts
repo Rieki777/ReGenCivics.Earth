@@ -43,6 +43,7 @@ import { registerTrackingRoutes } from "../trackingRoutes";
 import { registerResendWebhookRoutes } from "../webhooks/resend";
 import { registerRiversideWebhookRoutes } from "../webhooks/riverside";
 import { registerPresenceRoutes } from "../routes/presence";
+import { registerAnalyticsRoutes } from "../routes/analytics";
 import bufferRouter from "../routes/buffer";
 import farcasterRouter from "../routes/farcaster";
 import { registerImageOptimization } from "../routes/global";
@@ -490,6 +491,8 @@ async function startServer() {
   registerOidcRoutes(app);
   // Presence heartbeat and count
   registerPresenceRoutes(app);
+  // First-party analytics ingest (POST /api/analytics/collect)
+  registerAnalyticsRoutes(app);
 
   // ── Governance jobs cron endpoint ──────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/governance-jobs

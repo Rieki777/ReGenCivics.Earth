@@ -3293,6 +3293,33 @@ export const toolsLibraryEntries = mysqlTable("toolsLibraryEntries", {
 });
 export type ToolsLibraryEntry = typeof toolsLibraryEntries.$inferSelect;
 
+/**
+ * Analytics events sink (first-party).
+ *
+ * Stores events posted by `client/src/lib/analytics.ts` through the public
+ * `POST /api/analytics/collect` route. IP is hashed before insert so we can
+ * rate-limit and run abuse forensics without storing raw IPs. Mirrors
+ * migration 0136_analytics_events.sql.
+ */
+export const analyticsEvents = mysqlTable("analytics_events", {
+  id: bigint("id", { mode: "number" }).autoincrement().primaryKey(),
+  event: varchar("event", { length: 64 }).notNull(),
+  props: json("props"),
+  path: varchar("path", { length: 255 }),
+  ref: varchar("ref", { length: 512 }),
+  sid: varchar("sid", { length: 64 }),
+  userId: int("userId"),
+  ipHash: varchar("ipHash", { length: 64 }),
+  ua: varchar("ua", { length: 512 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  byCreatedAt: index("idx_analytics_created").on(t.createdAt),
+  byEventCreatedAt: index("idx_analytics_event_created").on(t.event, t.createdAt),
+  byPathCreatedAt: index("idx_analytics_path_created").on(t.path, t.createdAt),
+  bySidCreatedAt: index("idx_analytics_sid_created").on(t.sid, t.createdAt),
+}));
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+
 export const proposalParties = mysqlTable("proposalParties", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),

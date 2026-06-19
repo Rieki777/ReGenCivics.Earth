@@ -347,6 +347,11 @@ export function AdminAnalytics() {
         </CardContent>
       </Card>
 
+      {/* First-party event tracking, posted by client/src/lib/analytics.ts */}
+      <div className="mt-6">
+        <FirstPartyEventsPanel />
+      </div>
+
       {/* Geographic Distribution */}
       <div className="mt-6">
         <GeographicAnalytics
@@ -355,6 +360,110 @@ export function AdminAnalytics() {
           inquiries={inquiries.data || []}
         />
       </div>
+    </div>
+  );
+}
+
+/**
+ * First-party events: event volume over time, top events, and the
+ * page_view -> cta_click -> apply_form_submitted / loi_submitted funnel.
+ * Backed by server/routes/analytics.ts and analytics_events table.
+ */
+function FirstPartyEventsPanel() {
+  const days = 30;
+  const volume = trpc.analytics.volume.useQuery({ days });
+  const top = trpc.analytics.top.useQuery({ days, limit: 12 });
+  const funnel = trpc.analytics.funnel.useQuery({ days });
+
+  // Pivot volume rows (day, event, count) into one stacked-bar row per day.
+  const pivoted = (() => {
+    const rows = volume.data ?? [];
+    const byDay = new Map<string, Record<string, string | number>>();
+    for (const r of rows) {
+      const entry = byDay.get(r.day) ?? { day: r.day };
+      const prev = (entry[r.event] as number | undefined) ?? 0;
+      entry[r.event] = prev + r.count;
+      byDay.set(r.day, entry);
+    }
+    return Array.from(byDay.values()).sort((a, b) =>
+      String(a.day) < String(b.day) ? -1 : 1
+    );
+  })();
+
+  const f = funnel.data;
+  const ctaRate = f && f.pageViews > 0 ? Math.round((f.ctaClicks / f.pageViews) * 1000) / 10 : 0;
+  const applyRate = f && f.ctaClicks > 0 ? Math.round((f.applySubmitted / f.ctaClicks) * 1000) / 10 : 0;
+  const loiRate = f && f.ctaClicks > 0 ? Math.round((f.loiSubmitted / f.ctaClicks) * 1000) / 10 : 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <MousePointerClick className="w-4 h-4" /> First-party events (last {days} days)
+        </CardTitle>
+        <CardDescription>
+          Live from /api/analytics/collect. No third-party tracker, no cookies.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <p className="text-sm font-semibold mb-2 text-[#1a472a]">Event volume by day</p>
+            {pivoted.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">No events yet. Browse the site and they will land here.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={pivoted as any}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="page_view" stackId="a" fill="#7dd87d" />
+                  <Bar dataKey="cta_click" stackId="a" fill="#4a7c59" />
+                  <Bar dataKey="apply_form_submitted" stackId="a" fill="#d4a574" />
+                  <Bar dataKey="loi_submitted" stackId="a" fill="#a8d5a8" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold mb-2 text-[#1a472a]">Top events</p>
+            {(top.data ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">No events yet.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <tbody>
+                  {(top.data ?? []).map((row) => (
+                    <tr key={row.event} className="border-b last:border-b-0">
+                      <td className="py-1.5 font-mono text-xs text-[#1a472a]/80">{row.event}</td>
+                      <td className="py-1.5 text-right font-semibold text-[#1a472a]">{row.count.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <FunnelCell label="page_view" value={f?.pageViews ?? 0} />
+          <FunnelCell label="cta_click" value={f?.ctaClicks ?? 0} sub={`${ctaRate}% of views`} />
+          <FunnelCell label="apply_form_submitted" value={f?.applySubmitted ?? 0} sub={`${applyRate}% of CTAs`} />
+          <FunnelCell label="loi_submitted" value={f?.loiSubmitted ?? 0} sub={`${loiRate}% of CTAs`} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FunnelCell({ label, value, sub }: { label: string; value: number; sub?: string }) {
+  return (
+    <div className="rounded-lg border border-[#1a472a]/10 bg-[#f8f6f1] p-3">
+      <p className="text-[10px] uppercase tracking-wider text-[#1a472a]/60 font-bold">{label}</p>
+      <p className="text-2xl font-bold text-[#1a472a] mt-1">{value.toLocaleString()}</p>
+      {sub && <p className="text-xs text-[#1a472a]/70 mt-0.5">{sub}</p>}
     </div>
   );
 }
