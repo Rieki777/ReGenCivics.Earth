@@ -50,6 +50,8 @@ import { getCurrentSeason } from "@/lib/seasons";
 import { useGlobalScrollReveal } from "./hooks/useGlobalScrollReveal";
 import { usePageVisitTracker } from "./hooks/usePageVisitTracker";
 import { captureReferral } from "./components/SharePrompt";
+import { useReferralCapture } from "./hooks/useReferralCapture";
+import { useReferralAttribute } from "./hooks/useReferralAttribute";
 import { useFocusOnNavigation } from "./hooks/useFocusOnNavigation";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useUserStream } from "./hooks/useUserStream";
@@ -391,8 +393,13 @@ function App() {
   const adminMode = isAdminRoute(location);
   // Track page visits for progress map milestones
   usePageVisitTracker();
-  // Capture referral params on first load
+  // Capture referral params on first load (sessionStorage stash + server
+  // recordReferral so the landing row exists before signup).
   captureReferral();
+  useReferralCapture();
+  // Tie a stored referral to the signed-in user as soon as auth completes,
+  // so "people you've brought in" lights up on the referrer's profile.
+  useReferralAttribute();
 
   // Maintenance mode, toggle VITE_MAINTENANCE_MODE=true in Railway env vars before risky deploys
   if (import.meta.env.VITE_MAINTENANCE_MODE === "true") {

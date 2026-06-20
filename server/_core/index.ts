@@ -217,6 +217,11 @@ async function startServer() {
   app.use('/api/trpc/players.setStoryteller', rateLimitMiddleware(60 * 60 * 1000, 10));
   app.use('/api/trpc/hyphaBridge.create', rateLimitMiddleware(60 * 60 * 1000, 5));
   app.use('/api/trpc/proposals.signalVote', rateLimitMiddleware(60 * 1000, 20));
+  // Referrals: throttle the public landing endpoint and the
+  // signup-time attribution endpoint so a single IP can't backfill
+  // bogus referrer credit by hammering either route.
+  app.use('/api/trpc/sharing.recordReferral', rateLimitMiddleware(60 * 1000, 30));
+  app.use('/api/trpc/sharing.attributeSignup', rateLimitMiddleware(60 * 60 * 1000, 10));
   // H4 additions: forum likes, profile updates, campaign contributions, profile/avatar updates
   app.use('/api/trpc/forum.toggleLike', rateLimitMiddleware(60 * 1000, 30));
   app.use('/api/trpc/forum.editPost', rateLimitMiddleware(60 * 1000, 10));
