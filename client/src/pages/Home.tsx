@@ -355,6 +355,32 @@ export default function Home() {
         <section className="relative py-10 md:py-14">
           <div className="container max-w-6xl">
             <AnimatedSection animation="fade-in">
+              {/* Lead paragraph in its own readable card ABOVE the map. Was
+                  previously laid over the parchment image and washed out
+                  on mobile. Only the second paragraph + Welcome line now
+                  lives inside the map. */}
+              <div className="max-w-3xl mx-auto mb-8 md:mb-10">
+                <div
+                  className="rounded-2xl bg-[#f8f5f0]/95 backdrop-blur-sm border border-[#1a472a]/15 p-5 md:p-7 text-center shadow-xl"
+                  style={{
+                    fontFamily:
+                      "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                  }}
+                >
+                  <p className="text-[#1f1208] text-base md:text-lg leading-relaxed">
+                    <span className="text-[#214b21] font-bold">regen-civics</span>{" "}
+                    is a fund and an in-real-life game for supporting
+                    regenerative land projects and the{" "}
+                    <span className="text-[#6b3510] font-bold italic">
+                      ReGenerative Renaissance
+                    </span>{" "}
+                    <span className="text-[#3f2a18]">
+                      (a movement to heal ourselves, our earth, our communities,
+                      and our bioregions).
+                    </span>
+                  </p>
+                </div>
+              </div>
               <div className="text-center flex justify-center">
                 <div
                   className="relative w-full max-w-5xl"
@@ -379,11 +405,8 @@ export default function Home() {
                         "radial-gradient(ellipse at center, rgba(250, 238, 208, 0.78) 0%, rgba(240, 220, 180, 0.55) 55%, rgba(220, 195, 145, 0.2) 80%, rgba(200, 170, 120, 0) 100%)",
                     }}
                   />
-                  {/* Ink text, centered inside the map's interior. Each block
-                       reveals left-to-right like ink bleeding across parchment
-                       (Marauder's Map style). "Welcome to the Infinite Game"
-                       flows right after the second paragraph at a smaller size
-                       so everything stays on the map. */}
+                  {/* Ink text on the map: only the second paragraph + the
+                       "Welcome to the Infinite Game" line live here now. */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div
                       className="w-full px-[17%] md:px-[20%] space-y-2 md:space-y-3 leading-snug text-center"
@@ -391,24 +414,10 @@ export default function Home() {
                         fontFamily:
                           "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
                         color: "#1f1208",
-                        fontSize: "clamp(0.72rem,1.6vw,1.1rem)",
+                        fontSize: "clamp(0.8rem,1.8vw,1.2rem)",
                       }}
                     >
                       <p className="ink-draw" style={{ animationDelay: "0.2s" }}>
-                        <span style={{ color: "#214b21", fontWeight: 700 }}>
-                          regen-civics
-                        </span>{" "}
-                        is a fund and an in-real-life game for supporting
-                        regenerative land projects and the{" "}
-                        <span style={{ color: "#6b3510", fontWeight: 700, fontStyle: "italic" }}>
-                          ReGenerative Renaissance
-                        </span>{" "}
-                        <span style={{ color: "#3f2a18" }}>
-                          (a movement to heal ourselves, our earth, our communities,
-                          and our bioregions).
-                        </span>
-                      </p>
-                      <p className="ink-draw" style={{ animationDelay: "1.6s" }}>
                         We create quests and{" "}
                         <span style={{ color: "#6b3510", fontWeight: 700, fontStyle: "italic" }}>
                           Infinite Games
@@ -419,12 +428,12 @@ export default function Home() {
                         <span
                           className="ink-draw"
                           style={{
-                            animationDelay: "2.8s",
+                            animationDelay: "1.4s",
                             display: "inline-block",
                             color: "#120804",
                             fontWeight: 700,
                             letterSpacing: "0.01em",
-                            fontSize: "clamp(0.95rem,2vw,1.4rem)",
+                            fontSize: "clamp(1rem,2.2vw,1.5rem)",
                           }}
                         >
                           Welcome to the Infinite Game.

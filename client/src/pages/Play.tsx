@@ -534,20 +534,25 @@ export default function Play() {
       <section className="py-12 md:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up">
-            <h2
-              className="text-3xl md:text-5xl font-bold text-white mb-3 text-center text-shadow-strong"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              <span className="text-amber-400">ReGen Game Tokens</span> + <span className="text-[#7dd87d]">RGVoice</span>
-            </h2>
-            <p
-              className="text-white/60 text-center mb-8 max-w-2xl mx-auto text-lg text-shadow-subtle"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              Two tokens working together: ReGen Game tokens as our in-game currency, and RGVoice tokens for governance.
-            </p>
-            <div className="max-w-lg mx-auto mb-4 px-4 py-3 rounded-xl bg-amber-400/15 border border-amber-400/30 text-center">
-              <p className="text-amber-400 font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>
+            {/* Backdrop panel so the heading + tagline stay legible over the
+                page background image. Replaces the prior text-over-image
+                pattern that washed the copy out on mobile. */}
+            <div className="rounded-2xl bg-black/55 backdrop-blur-md border border-white/10 p-6 md:p-8 mb-6">
+              <h2
+                className="text-3xl md:text-5xl font-bold text-white mb-3 text-center"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                <span className="text-amber-400">ReGen Game Tokens</span> + <span className="text-[#7dd87d]">RGVoice</span>
+              </h2>
+              <p
+                className="text-white/85 text-center max-w-2xl mx-auto text-lg"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                Two tokens working together: ReGen Game tokens as our in-game currency, and RGVoice tokens for governance.
+              </p>
+            </div>
+            <div className="max-w-lg mx-auto mb-4 px-4 py-3 rounded-xl bg-amber-400/20 border border-amber-400/50 text-center backdrop-blur-sm">
+              <p className="text-amber-300 font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>
                 NOTE: These tokens are unique from the Fund tokens!
               </p>
             </div>

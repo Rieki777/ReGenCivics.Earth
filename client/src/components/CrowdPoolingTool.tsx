@@ -274,15 +274,22 @@ export default function CrowdPoolingTool() {
       toast.error('Please enter a name for this saved form');
       return;
     }
-    
+
+    // Normalize email: server schema rejects malformed strings with a zod
+    // validation error that surfaces as an onError toast. Treat anything
+    // that doesn't pass a basic shape check as empty so the save isn't
+    // blocked by a half-typed email the user didn't mean to submit.
+    const trimmedEmail = (contributorEmail ?? "").trim();
+    const safeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail) ? trimmedEmail : "";
+
     createSavedContribution.mutate({
-      name: saveName,
+      name: saveName.trim(),
       isDefault: saveAsDefault,
       projectName: projectName || undefined,
       targetAmount: hasNoTarget ? undefined : targetAmount,
       currency,
       contributorName: contributorName || undefined,
-      contributorEmail: contributorEmail || undefined,
+      contributorEmail: safeEmail || undefined,
       immediateContributions: JSON.stringify(immediateContributions),
       futureContributions: JSON.stringify(futureContributions),
       totalImmediateValue: immediateTotal,
@@ -750,6 +757,7 @@ export default function CrowdPoolingTool() {
               </div>
               <div className="flex gap-2 mt-6">
                 <Button
+                  type="button"
                   onClick={() => setShowSaveDialog(false)}
                   variant="outline"
                   className="flex-1 rounded-xl"
@@ -757,6 +765,7 @@ export default function CrowdPoolingTool() {
                   Cancel
                 </Button>
                 <Button
+                  type="button"
                   onClick={confirmSaveToProfile}
                   disabled={createSavedContribution.isPending}
                   className="flex-1 rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
