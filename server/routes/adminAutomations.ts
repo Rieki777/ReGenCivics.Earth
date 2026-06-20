@@ -19,6 +19,7 @@ import { eq, desc } from "drizzle-orm";
 import { getDb } from "../db";
 import { adminAutomations } from "../../drizzle/schema";
 import { computeEcosystemSnapshot } from "./admin";
+import { runRegistryAction } from "./adminActions";
 
 type AutomationRow = typeof adminAutomations.$inferSelect;
 
@@ -53,7 +54,19 @@ async function runAutomation(auto: AutomationRow): Promise<string> {
   const db = await getDb();
   let summary: string;
   if (auto.type === "registry_action") {
-    summary = "Scheduled registry actions are not enabled yet.";
+    // The standing automation row is the implicit approval; the registry
+    // helper still rejects blocked-tier actions and zod-validates input.
+    if (!auto.actionId) {
+      summary = "Automation has no actionId; cannot run a registry action.";
+    } else {
+      try {
+        const input = (auto.actionInput as Record<string, unknown> | null) ?? {};
+        const result = await runRegistryAction(auto.actionId, input, { adminUserId: auto.createdBy });
+        summary = result.summary;
+      } catch (e) {
+        summary = `Registry action failed: ${(e as Error)?.message ?? "error"}`;
+      }
+    }
   } else {
     summary = await runDigest(auto.type);
   }

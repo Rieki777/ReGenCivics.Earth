@@ -162,6 +162,10 @@ export default function Home() {
   const { user, loading } = useAuth();
   const [fundOpen, setFundOpen] = useState(false);
   const [gameOpen, setGameOpen] = useState(false);
+  // Track which 2x2 path card has its "More" panel open (only one at a time)
+  // so the full-grid first-time-visitor view matches the compact returning-
+  // visitor pattern from ProgressiveOnboarding.
+  const [expandedPathCard, setExpandedPathCard] = useState<string | null>(null);
   const isReturnVisitor = useIsReturnVisitor();
   const [showFullPage, setShowFullPage] = useState(false);
 
@@ -479,57 +483,89 @@ export default function Home() {
               </p>
             </AnimatedSection>
 
+            {/* Compact 2x2 path-card grid. Matches the returning-visitor
+                pattern from ProgressiveOnboarding: full-bleed character
+                art at top, title + uppercase tagline, "Go ->" tap target,
+                and a "More" expander that reveals the long description
+                without leaving the page. Long-form copy is hidden by
+                default so the page reads at a glance on mobile. */}
             <div className="mycelium-grid grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-              {pathCards.map((card, index) => (
-                <AnimatedSection
-                  key={card.id}
-                  animation="slide-up"
-                  delay={index * 100}
-                >
-                  <Link href={card.href}>
+              {pathCards.map((card, index) => {
+                const isExpanded = expandedPathCard === card.id;
+                const isYourPath = userCardId === card.id;
+                return (
+                  <AnimatedSection
+                    key={card.id}
+                    animation="slide-up"
+                    delay={index * 100}
+                  >
                     <div
-                      className={`mycelium-card card-tilt glass-panel p-6 h-full group hover:scale-105 transition-all duration-300 ${card.borderColor} ${card.glowColor} relative ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'} ${userCardId === card.id ? 'ring-2 ring-offset-1 ring-offset-transparent' : ''}`}
-                      style={userCardId === card.id ? { '--tw-ring-color': card.accentColor } as React.CSSProperties : undefined}
+                      className={`mycelium-card card-tilt glass-panel p-4 md:p-5 h-full transition-all duration-300 ${card.borderColor} ${card.glowColor} relative ${card.id === 'ally' ? 'overflow-visible' : 'overflow-hidden'} ${isYourPath ? 'ring-2 ring-offset-1 ring-offset-transparent' : ''}`}
+                      style={isYourPath ? { '--tw-ring-color': card.accentColor } as React.CSSProperties : undefined}
                     >
-                      {/* "Your Path" badge for logged-in users */}
-                      {userCardId === card.id && (
-                        <div
-                          className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                      {isYourPath && (
+                        <span
+                          className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full z-10"
                           style={{ backgroundColor: card.accentColor, color: "#1a1a1a" }}
                         >
                           Your Path
+                        </span>
+                      )}
+
+                      <Link
+                        href={card.href}
+                        className="block group hover:scale-[1.02] transition-transform duration-300"
+                      >
+                        <div className="mb-4">
+                          <PathCardImage
+                            cardId={card.id as "fund" | "land" | "ally" | "play"}
+                            image={card.image}
+                            activatedImage={card.activatedImage}
+                            title={card.title}
+                            accentColor={card.accentColor}
+                            forceActivated={isExpanded}
+                          />
+                        </div>
+
+                        <h3
+                          className="text-base md:text-lg font-bold text-white mb-1"
+                          style={{ fontFamily: "var(--font-display)" }}
+                        >
+                          {card.title}
+                        </h3>
+                        <p className="text-white/80 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-2">
+                          {card.tagline}
+                        </p>
+                        <div className="flex items-center text-xs md:text-sm font-semibold mt-2 group-hover:gap-1 transition-all">
+                          <span style={{ color: card.accentColor }}>Go</span>
+                          <ArrowRight className="w-3 h-3 md:w-4 md:h-4 ml-1" style={{ color: card.accentColor }} />
+                        </div>
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => setExpandedPathCard(isExpanded ? null : card.id)}
+                        aria-expanded={isExpanded}
+                        className="mt-3 inline-flex items-center gap-1 text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/65 hover:text-white transition-colors"
+                      >
+                        <ChevronDown
+                          className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          style={{ color: card.accentColor }}
+                        />
+                        {isExpanded ? "Less" : "More"}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-white/15">
+                          <p className="text-white/85 text-xs md:text-sm leading-relaxed">
+                            {card.description}
+                          </p>
                         </div>
                       )}
-                      {/* Card illustration: full-bleed at card top */}
-                      <div className="-mx-6 -mt-6 mb-5">
-                        <PathCardImage
-                          cardId={card.id as "fund" | "land" | "ally" | "play"}
-                          image={card.image}
-                          activatedImage={card.activatedImage}
-                          title={card.title}
-                          accentColor={card.accentColor}
-                        />
-                      </div>
-                      <h3
-                        className="text-xl font-bold text-white mb-2"
-                        style={{ fontFamily: "var(--font-display)" }}
-                      >
-                        {card.title}
-                      </h3>
-                      <p className="text-white/80 text-xs font-bold uppercase tracking-wider mb-3">
-                        {card.tagline}
-                      </p>
-                      <p className="text-white/70 text-sm mb-4 leading-relaxed">
-                        {card.description}
-                      </p>
-                      <div className="flex items-center text-sm font-semibold group-hover:gap-2 transition-all">
-                        <span style={{ color: card.accentColor }}>{card.cta}</span>
-                        <ArrowRight className="w-4 h-4 ml-1" style={{ color: card.accentColor }} />
-                      </div>
                     </div>
-                  </Link>
-                </AnimatedSection>
-              ))}
+                  </AnimatedSection>
+                );
+              })}
             </div>
           </div>
         </section>

@@ -23,7 +23,10 @@
 import { adminProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { and, lt, ne, asc } from "drizzle-orm";
 import * as db from "../db";
+import { getDb } from "../db";
+import { generalInquiries } from "../../drizzle/schema";
 import { toggleBannerActive } from "../bannerHelpers";
 
 type Tier = "safe" | "confirm" | "blocked";
@@ -116,6 +119,74 @@ const ACTIONS: ActionDef[] = [
       };
     },
   },
+  // The first criteria-based registry action: archive general inquiries that
+  // have not been touched in N days. Tier=confirm so the human must approve
+  // once per execute call. When wired into an admin_automations row, the
+  // automation itself acts as the standing approval (the row was confirmed
+  // when it was enabled). Reversible: the undo descriptor carries the list
+  // of (id, prevStatus) tuples that were flipped, replayed via
+  // inquiry_status_restore_batch.
+  {
+    id: "inquiry_archive_stale",
+    label: "Archive stale inquiries",
+    tier: "confirm",
+    description: "Archive general inquiries whose status is not already archived and whose updatedAt is older than N days. Reversible.",
+    input: z.object({
+      daysSinceUpdate: z.number().int().min(7).max(365).default(90),
+      maxBatch: z.number().int().min(1).max(500).default(100),
+    }),
+    run: async ({ daysSinceUpdate, maxBatch }) => {
+      const database = await getDb();
+      if (!database) return { summary: "Database unavailable, no inquiries archived." };
+      const cutoff = new Date(Date.now() - daysSinceUpdate * 24 * 60 * 60 * 1000);
+      const stale = await database
+        .select({ id: generalInquiries.id, status: generalInquiries.status })
+        .from(generalInquiries)
+        .where(and(
+          ne(generalInquiries.status, "archived"),
+          lt(generalInquiries.updatedAt, cutoff),
+        ))
+        .orderBy(asc(generalInquiries.updatedAt))
+        .limit(maxBatch);
+      if (stale.length === 0) {
+        return { summary: `No inquiries untouched ${daysSinceUpdate}+ days; nothing to archive.` };
+      }
+      const ids = stale.map((r) => r.id);
+      await Promise.all(
+        ids.map((id) =>
+          db.updateGeneralInquiry(id, { status: "archived" as never }),
+        ),
+      );
+      const items = stale.map((r) => ({ id: r.id, status: r.status }));
+      return {
+        summary: `Archived ${ids.length} inquiries untouched ${daysSinceUpdate}+ days.`,
+        undo: { actionId: "inquiry_status_restore_batch", input: { items } },
+      };
+    },
+  },
+  // Bulk inverse of inquiry_archive_stale. Restores each row to the status
+  // captured at archive time. Safe tier so the undo mutation can replay it
+  // without a confirm dance.
+  {
+    id: "inquiry_status_restore_batch",
+    label: "Restore inquiry statuses (batch)",
+    tier: "safe",
+    description: "Restore a batch of inquiries to the statuses captured in the undo descriptor.",
+    input: z.object({
+      items: z.array(z.object({
+        id: z.number().int().positive(),
+        status: z.string().max(40),
+      })).min(1).max(500),
+    }),
+    run: async ({ items }) => {
+      await Promise.all(
+        items.map((it: { id: number; status: string }) =>
+          db.updateGeneralInquiry(it.id, { status: it.status as never }),
+        ),
+      );
+      return { summary: `Restored ${items.length} inquiries to their prior status.` };
+    },
+  },
 ];
 
 const ACTION_MAP = new Map(ACTIONS.map((a) => [a.id, a]));
@@ -124,6 +195,42 @@ function adminId(ctx: { user?: { id?: number } }): number {
   const id = ctx.user?.id;
   if (!id) throw new TRPCError({ code: "FORBIDDEN", message: "Admin identity required." });
   return id;
+}
+
+/**
+ * Public helper for the admin-automations cron runner. Looks up the
+ * registry action, validates the input against its zod schema, and
+ * executes it under the supplied admin identity. Bypasses the confirm
+ * tier on purpose: the standing automation row was confirmed at enable
+ * time, so a registry action wired to a recurring schedule is implicitly
+ * approved. Blocked-tier actions are still rejected so the runner can
+ * never escalate. Writes a `ea_automation:<id>` audit log line and
+ * returns the result summary + undo descriptor.
+ */
+export async function runRegistryAction(
+  actionId: string,
+  input: Record<string, unknown>,
+  ctx: { adminUserId: number },
+): Promise<ActionResult> {
+  const def = ACTION_MAP.get(actionId);
+  if (!def) {
+    throw new TRPCError({ code: "NOT_FOUND", message: `Unknown registry action: ${actionId}` });
+  }
+  if (def.tier === "blocked") {
+    throw new TRPCError({ code: "FORBIDDEN", message: `${def.label} is high-stakes and must be done by a human.` });
+  }
+  const parsed = def.input.safeParse(input);
+  if (!parsed.success) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid registry action input." });
+  }
+  const result = await def.run(parsed.data, { adminUserId: ctx.adminUserId });
+  await db.logAdminAction({
+    adminUserId: ctx.adminUserId,
+    action: `ea_automation:${def.id}`,
+    description: result.summary,
+    metadata: { input: parsed.data, tier: def.tier },
+  });
+  return result;
 }
 
 export const adminActionsRouter = router({

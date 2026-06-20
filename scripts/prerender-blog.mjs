@@ -51,8 +51,14 @@ function extractPosts() {
   );
   const arrayStart = file.indexOf("export const blogPosts");
   if (arrayStart === -1) return [];
-  // Walk balanced braces to find the array of objects.
-  const open = file.indexOf("[", arrayStart);
+  // Skip past the type annotation `BlogPost[]` between the name and the
+  // `=` sign; the array literal lives after the assignment, not in the
+  // type signature.
+  const eqIdx = file.indexOf("=", arrayStart);
+  if (eqIdx === -1) return [];
+  const open = file.indexOf("[", eqIdx);
+  if (open === -1) return [];
+  // Walk balanced brackets to find the array literal's closing `]`.
   let depth = 0;
   let end = open;
   for (let i = open; i < file.length; i++) {
@@ -88,8 +94,12 @@ function extractPosts() {
   return posts
     .map((obj) => {
       const field = (name) => {
-        // Match: name: 'value' OR name: "value" OR name: `value`
-        const re = new RegExp(`\\b${name}\\s*:\\s*(['\\\`"\\s])`, "m");
+        // Match: name: 'value' OR name: "value" OR name: `value`.
+        // The char class is intentionally only the three quote chars;
+        // an earlier version also accepted \\s, which let the regex
+        // capture whitespace between the colon and the opening quote
+        // as the "quote" character and then search for matching ws.
+        const re = new RegExp(`\\b${name}\\s*:\\s*(['"\\\`])`, "m");
         const m = obj.match(re);
         if (!m) return null;
         const quote = m[1];
