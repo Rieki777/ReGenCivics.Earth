@@ -84,6 +84,7 @@ function cadenceDue(cadence: string, lastRunAt: Date | null): boolean {
   const ms = Date.now() - new Date(lastRunAt).getTime();
   if (cadence === "hourly") return ms >= 60 * 60 * 1000;
   if (cadence === "weekly") return ms >= 7 * 24 * 60 * 60 * 1000;
+  if (cadence === "every_other_day") return ms >= 48 * 60 * 60 * 1000;
   return ms >= 24 * 60 * 60 * 1000; // daily
 }
 
@@ -122,7 +123,7 @@ export const adminAutomationsRouter = router({
     .input(z.object({
       name: z.string().min(2).max(160),
       type: z.enum(["briefing_digest", "attention_digest"]),
-      cadence: z.enum(["hourly", "daily", "weekly"]).default("daily"),
+      cadence: z.enum(["hourly", "daily", "every_other_day", "weekly"]).default("daily"),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();

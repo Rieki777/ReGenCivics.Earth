@@ -44,6 +44,14 @@ export function AdminAutomationsPanel() {
           </button>
           <button
             type="button"
+            onClick={() => create.mutate({ name: "Every-other-day briefing", type: "briefing_digest", cadence: "every_other_day" })}
+            disabled={create.isPending}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#1a472a]/20 bg-[#1a472a]/5 hover:bg-[#1a472a]/10 text-[#1a472a] text-xs font-semibold px-3 py-2 min-h-[36px]"
+          >
+            <Plus className="w-3.5 h-3.5" /> Every-other-day briefing
+          </button>
+          <button
+            type="button"
             onClick={() => create.mutate({ name: "Weekly attention digest", type: "attention_digest", cadence: "weekly" })}
             disabled={create.isPending}
             className="inline-flex items-center gap-1.5 rounded-full border border-[#1a472a]/20 bg-[#1a472a]/5 hover:bg-[#1a472a]/10 text-[#1a472a] text-xs font-semibold px-3 py-2 min-h-[36px]"

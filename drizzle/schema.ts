@@ -3407,7 +3407,7 @@ export const adminAutomations = mysqlTable("admin_automations", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 160 }).notNull(),
   type: mysqlEnum("type", ["briefing_digest", "attention_digest", "registry_action"]).notNull(),
-  cadence: mysqlEnum("cadence", ["hourly", "daily", "weekly"]).default("daily").notNull(),
+  cadence: mysqlEnum("cadence", ["hourly", "daily", "every_other_day", "weekly"]).default("daily").notNull(),
   enabled: tinyint("enabled").default(1).notNull(),
   /** Optional registry action id + input for type=registry_action (future). */
   actionId: varchar("actionId", { length: 80 }),
