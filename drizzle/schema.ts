@@ -3312,14 +3312,93 @@ export const analyticsEvents = mysqlTable("analytics_events", {
   ipHash: varchar("ipHash", { length: 64 }),
   ua: varchar("ua", { length: 512 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, (t) => ({
-  byCreatedAt: index("idx_analytics_created").on(t.createdAt),
-  byEventCreatedAt: index("idx_analytics_event_created").on(t.event, t.createdAt),
-  byPathCreatedAt: index("idx_analytics_path_created").on(t.path, t.createdAt),
-  bySidCreatedAt: index("idx_analytics_sid_created").on(t.sid, t.createdAt),
-}));
+});
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 
+// ── Plays (community culture franchise packages) ──────────────────────
+
+export const plays = mysqlTable("plays", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 300 }).notNull(),
+  slug: varchar("slug", { length: 300 }).notNull().unique(),
+  creatorProjectName: varchar("creatorProjectName", { length: 300 }),
+  creatorUserId: int("creatorUserId"),
+  summary: text("summary"),
+  coverImageUrl: varchar("coverImageUrl", { length: 500 }),
+  websiteUrl: varchar("websiteUrl", { length: 500 }),
+  pricingModel: mysqlEnum("pricingModel", ["free", "open_source", "paid"]).default("open_source"),
+  priceRegenTokens: int("priceRegenTokens"),
+  externalPaymentUrl: varchar("externalPaymentUrl", { length: 500 }),
+  externalPriceLabel: varchar("externalPriceLabel", { length: 100 }),
+  scale: mysqlEnum("scale", ["small", "medium", "large"]).default("medium"),
+  communityType: varchar("communityType", { length: 100 }),
+  sectionIdentity: text("sectionIdentity"),
+  sectionGovernance: text("sectionGovernance"),
+  sectionEconomics: text("sectionEconomics"),
+  sectionLegal: text("sectionLegal"),
+  sectionRoles: text("sectionRoles"),
+  sectionSeasons: text("sectionSeasons"),
+  sectionLandEcology: text("sectionLandEcology"),
+  sectionAgreements: text("sectionAgreements"),
+  sectionConflict: text("sectionConflict"),
+  sectionHealth: text("sectionHealth"),
+  sectionEducation: text("sectionEducation"),
+  sectionCulture: text("sectionCulture"),
+  sectionExternalRelations: text("sectionExternalRelations"),
+  sectionScaling: text("sectionScaling"),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending"),
+  submittedBy: int("submittedBy"),
+  approvedBy: int("approvedBy"),
+  totalViews: int("totalViews").default(0),
+  totalAdoptions: int("totalAdoptions").default(0),
+  forumThreadId: int("forumThreadId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Play = typeof plays.$inferSelect;
+
+export const playCategories = mysqlTable("play_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  color: varchar("color", { length: 20 }),
+  icon: varchar("icon", { length: 50 }),
+});
+export type PlayCategory = typeof playCategories.$inferSelect;
+
+export const playCategoryMap = mysqlTable("play_category_map", {
+  playId: int("playId").notNull(),
+  categoryId: int("categoryId").notNull(),
+});
+
+export const playEndorsements = mysqlTable("play_endorsements", {
+  id: int("id").autoincrement().primaryKey(),
+  playId: int("playId").notNull(),
+  userId: int("userId").notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export const playAdoptions = mysqlTable("play_adoptions", {
+  id: int("id").autoincrement().primaryKey(),
+  playId: int("playId").notNull(),
+  userId: int("userId").notNull(),
+  projectName: varchar("projectName", { length: 300 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export const playViews = mysqlTable("play_views", {
+  id: int("id").autoincrement().primaryKey(),
+  playId: int("playId").notNull(),
+  userId: int("userId"),
+  referrer: varchar("referrer", { length: 500 }),
+  viewedAt: timestamp("viewedAt").defaultNow(),
+});
+
+// proposalParties: live community proposal-review sessions consumed by
+// server/routes/claims.ts. Restored after the Plays batch accidentally
+// dropped it during the schema rewrite.
 export const proposalParties = mysqlTable("proposalParties", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),

@@ -4,13 +4,115 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql, count, like } from "drizzle-orm";
-import { applicationEvents, adminNotifications, forumPosts, campaigns as campaignsTable, gifts, playerProfiles } from "../../drizzle/schema";
+import { eq, sql, count, like, gte, and, inArray } from "drizzle-orm";
+import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers } from "../../drizzle/schema";
 import { applications as applicationsTable } from "../../drizzle/schema";
 import { getBannerByKey, getActiveBanners, upsertBanner, deleteBanner, toggleBannerActive } from "../bannerHelpers";
 import { ENV } from "../_core/env";
 import { generateImage, buildImagePrompt } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
+
+/**
+ * computeEcosystemSnapshot: a single read-only aggregate of the ecosystem's
+ * health across the core domains. Powers both the admin.ecosystemSnapshot KPI
+ * query and the on-demand admin.briefing (the C-suite update). Phase 1 covers
+ * applications, investors, inquiries, community (forum + players), and
+ * campaigns; later phases extend it to governance, events, recordings, etc.
+ */
+async function computeEcosystemSnapshot() {
+  const drizzleDb = await getDb();
+  if (!drizzleDb) return null;
+
+  const [appStats] = await drizzleDb
+    .select({
+      total: count(),
+      pending: sql<number>`SUM(CASE WHEN ${applicationsTable.status} IN ('submitted','under_review') THEN 1 ELSE 0 END)`,
+      approved: sql<number>`SUM(CASE WHEN ${applicationsTable.status} = 'approved' THEN 1 ELSE 0 END)`,
+      active: sql<number>`SUM(CASE WHEN ${applicationsTable.status} = 'active' THEN 1 ELSE 0 END)`,
+      hectares: sql<number>`SUM(${applicationsTable.projectSizeHectares})`,
+    })
+    .from(applicationsTable);
+
+  const investors = await db.getAllInvestorInquiries();
+  const inquiries = await db.getAllGeneralInquiries();
+
+  // "Since last visit" is approximated as the trailing 7 days. No per-admin
+  // state to store, and it still answers the CEO's "what changed?".
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const [
+    forumRows, replyRows, playerRows, campaignRows,
+    openProposalRows, upcomingEventRows, recordingRows, newsletterRows, pendingReportRows,
+    appNew7dRows, forumNew7dRows, replyNew7dRows, playerNew7dRows,
+  ] = await Promise.all([
+    drizzleDb.select({ c: count() }).from(forumPosts),
+    drizzleDb.select({ c: count() }).from(forumReplies),
+    drizzleDb.select({ c: count() }).from(playerProfiles),
+    drizzleDb.select({ c: count() }).from(campaignsTable),
+    drizzleDb.select({ c: count() }).from(govProposals).where(inArray(govProposals.status, ["discussion", "polling", "staged"])),
+    drizzleDb.select({ c: count() }).from(eventsTable).where(eq(eventsTable.status, "upcoming")),
+    drizzleDb.select({ c: count() }).from(recordings),
+    drizzleDb.select({ c: count() }).from(newsletterSubscribers).where(eq(newsletterSubscribers.isActive, 1)),
+    drizzleDb.select({ c: count() }).from(forumReports).where(eq(forumReports.status, "pending")),
+    drizzleDb.select({ c: count() }).from(applicationsTable).where(gte(applicationsTable.createdAt, weekAgo)),
+    drizzleDb.select({ c: count() }).from(forumPosts).where(gte(forumPosts.createdAt, weekAgo)),
+    drizzleDb.select({ c: count() }).from(forumReplies).where(gte(forumReplies.createdAt, weekAgo)),
+    drizzleDb.select({ c: count() }).from(playerProfiles).where(gte(playerProfiles.createdAt, weekAgo)),
+  ]);
+
+  const invBy = (s: string) => investors.filter((i) => ((i.status as string) || "new") === s).length;
+  const inqBy = (s: string) => inquiries.filter((i) => ((i.status as string) || "new") === s).length;
+  const n = (rows: { c: number }[]) => Number(rows[0]?.c ?? 0);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    applications: {
+      total: Number(appStats?.total ?? 0),
+      pending: Number(appStats?.pending ?? 0),
+      approved: Number(appStats?.approved ?? 0),
+      active: Number(appStats?.active ?? 0),
+      hectares: Number(appStats?.hectares ?? 0),
+    },
+    investors: {
+      total: investors.length,
+      new: invBy("new"),
+      contacted: invBy("contacted"),
+      inDiscussion: invBy("in_discussion"),
+      committed: invBy("committed"),
+    },
+    inquiries: {
+      total: inquiries.length,
+      needsReview: inqBy("new") + inqBy("pending"),
+    },
+    community: {
+      forumPosts: n(forumRows),
+      forumReplies: n(replyRows),
+      players: n(playerRows),
+      newsletterActive: n(newsletterRows),
+    },
+    moderation: {
+      pendingReports: n(pendingReportRows),
+    },
+    governance: {
+      openProposals: n(openProposalRows),
+    },
+    events: {
+      upcoming: n(upcomingEventRows),
+      recordings: n(recordingRows),
+    },
+    campaigns: {
+      total: n(campaignRows),
+    },
+    weekly: {
+      newApplications: n(appNew7dRows),
+      newForumPosts: n(forumNew7dRows),
+      newForumReplies: n(replyNew7dRows),
+      newPlayers: n(playerNew7dRows),
+    },
+  };
+}
+
+export type EcosystemSnapshot = NonNullable<Awaited<ReturnType<typeof computeEcosystemSnapshot>>>;
 
 // Admin router
 export const adminRouter = router({
@@ -43,6 +145,89 @@ export const adminRouter = router({
       totalPeople: Number(appStats?.totalPeople ?? 0),
     };
   }),
+
+  // Ecosystem snapshot: aggregate KPIs across domains for the Overview dashboard.
+  ecosystemSnapshot: adminProcedure.query(async () => {
+    return computeEcosystemSnapshot();
+  }),
+
+  // C-suite briefing: on-demand AI update. Recomputes the snapshot, then has
+  // the "leadership team" report to the CEO grounded only in that data. Returns
+  // the snapshot alongside so the client can render KPIs + narrative together.
+  briefing: adminProcedure
+    .input(z.object({ focus: z.string().max(280).optional() }).optional())
+    .mutation(async ({ input }) => {
+      const snapshot = await computeEcosystemSnapshot();
+      if (!snapshot) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Snapshot unavailable" });
+      }
+
+      const system = [
+        "You are the senior leadership team of ReGen Civics, a fund and in-real-life game for regenerative land projects, reporting to the CEO in a C-suite standup.",
+        "Five chiefs report: Operations (applications, incubator pipeline, upcoming events, recordings), Growth & Community (forum posts and replies, players, inquiries, newsletter, content moderation), Capital & Fund (investors by stage, campaigns), People & Citizenship (members, tiers, who needs welcoming), and Governance (open proposals, decisions, coordination, moderation reports).",
+        "The data includes a 'weekly' block: those are the changes in the last 7 days, i.e. what moved since the CEO last checked in. Lead each chief with what changed, then what it means.",
+        "Use ONLY the data provided. Never invent numbers. If a domain is zero or empty, say so in one line or omit that chief.",
+        "Each chief: 2 to 4 tight bullet updates, then up to 2 decisions that genuinely need the CEO, then up to 2 recommended actions the team could take.",
+        "Voice: direct, specific, grounded, the voice of a sharp executive. No fluff, no hype, no em-dashes.",
+      ].join(" ");
+
+      const userMsg = [
+        "Ecosystem data (JSON):",
+        JSON.stringify(snapshot),
+        input?.focus ? `\nThe CEO asked this briefing to focus on: ${input.focus}` : "",
+      ].join("\n");
+
+      const result = await invokeLLM({
+        maxTokens: 2000,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: userMsg },
+        ],
+        outputSchema: {
+          name: "csuite_briefing",
+          schema: {
+            type: "object",
+            properties: {
+              headline: { type: "string", description: "One-sentence state of the ecosystem for the CEO." },
+              chiefs: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    role: { type: "string", description: "e.g. Operations, Growth & Community, Capital & Fund, People & Citizenship, Governance" },
+                    bullets: { type: "array", items: { type: "string" } },
+                    decisions: { type: "array", items: { type: "string" } },
+                    actions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          label: { type: "string" },
+                          detail: { type: "string" },
+                        },
+                        required: ["label"],
+                      },
+                    },
+                  },
+                  required: ["role", "bullets"],
+                },
+              },
+            },
+            required: ["headline", "chiefs"],
+          },
+        },
+      });
+
+      const content = result.choices?.[0]?.message?.content ?? "{}";
+      let briefing: { headline?: string; chiefs?: unknown[] };
+      try {
+        briefing = JSON.parse(content);
+      } catch {
+        briefing = { headline: "Briefing could not be generated. Try again.", chiefs: [] };
+      }
+
+      return { snapshot, briefing };
+    }),
 
   // Get notification preferences (admin only)
   getNotificationPreferences: protectedProcedure.query(async ({ ctx }) => {
@@ -322,6 +507,18 @@ Examples:
 <action>{"type":"compose","to":"email@example.com","subject":"Following up on your inquiry","label":"Draft email to contact"}</action>
 <action>{"type":"search","query":"search term","label":"Search for this contact"}</action>
 <action>{"type":"focus","contactEmail":"email@example.com","label":"Open contact card"}</action>
+
+## Executable actions (you can actually do these)
+For reversible operational work, use the "execute" action. The UI runs it through a safety-checked registry: it auto-runs safe actions, asks the admin to confirm medium ones, and refuses high-stakes ones. Available actions:
+- inquiry_mark_reviewed {id} - mark a general inquiry reviewed (safe)
+- inquiry_archive {id} - archive a general inquiry (safe)
+- investor_set_status {id, status} - move an investor to a stage like contacted, in_discussion, committed (confirm)
+- banner_toggle {key} - turn a site banner on or off (safe)
+
+Example:
+<action>{"type":"execute","actionId":"inquiry_archive","input":{"id":42},"label":"Archive inquiry #42"}</action>
+
+Only propose an execute action when you have the specific id or key from the conversation or context. Never invent ids. For anything destructive or high-stakes (deleting records, bans, rejections, sending money, mass email, public posts), do NOT use execute; tell the admin to do it themselves.
 
 ## Current Context
 ${contextBlock || "No specific context provided."}

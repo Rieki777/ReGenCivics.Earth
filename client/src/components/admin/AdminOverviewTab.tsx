@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { ActivitySparkline } from "./ActivitySparkline";
 import { AdminGovernancePanel } from "./AdminGovernancePanel";
+import { AdminCSuiteBriefing } from "./AdminCSuiteBriefing";
 
 // Path type config subset needed for the overview
 const pathTypeConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -69,6 +70,9 @@ export function AdminOverviewTab({
 }: Props) {
   return (
     <div className="space-y-6">
+      {/* C-suite briefing + ecosystem KPIs: the AI-assisted front door. */}
+      <AdminCSuiteBriefing />
+
       {/* Pending Items Alert */}
       {stats.pendingReview > 0 && (
         <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
