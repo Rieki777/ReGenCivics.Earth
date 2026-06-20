@@ -19,7 +19,7 @@ import { invokeLLM } from "../_core/llm";
  * applications, investors, inquiries, community (forum + players), and
  * campaigns; later phases extend it to governance, events, recordings, etc.
  */
-async function computeEcosystemSnapshot() {
+export async function computeEcosystemSnapshot() {
   const drizzleDb = await getDb();
   if (!drizzleDb) return null;
 

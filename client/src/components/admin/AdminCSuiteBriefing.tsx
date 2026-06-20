@@ -16,6 +16,7 @@ import {
   Sparkles, Loader2, RefreshCw, Building2, TrendingUp, Inbox, Users, Megaphone,
   AlertCircle, ChevronRight, Vote, Shield, Mail,
 } from "lucide-react";
+import { AdminAutomationsPanel } from "./AdminAutomationsPanel";
 
 type Snapshot = {
   generatedAt: string;
@@ -149,6 +150,9 @@ export function AdminCSuiteBriefing() {
           </div>
         </div>
       )}
+
+      {/* Standing routines (scheduled digests the EA prepares for you) */}
+      <AdminAutomationsPanel />
 
       {/* Briefing */}
       {brief.isPending && (

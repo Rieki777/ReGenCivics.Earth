@@ -3396,6 +3396,30 @@ export const playViews = mysqlTable("play_views", {
   viewedAt: timestamp("viewedAt").defaultNow(),
 });
 
+/**
+ * Standing admin automations: scheduled routines the executive-assistant layer
+ * runs for the CEO. v1 routines are read-only digests (briefing_digest,
+ * attention_digest) so nothing mutates on a timer. The actionId/actionInput
+ * columns exist so a future "run a registry action on a schedule" routine can
+ * reuse the same table once a reversible, criteria-based action is designed.
+ */
+export const adminAutomations = mysqlTable("admin_automations", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  type: mysqlEnum("type", ["briefing_digest", "attention_digest", "registry_action"]).notNull(),
+  cadence: mysqlEnum("cadence", ["hourly", "daily", "weekly"]).default("daily").notNull(),
+  enabled: tinyint("enabled").default(1).notNull(),
+  /** Optional registry action id + input for type=registry_action (future). */
+  actionId: varchar("actionId", { length: 80 }),
+  actionInput: json("actionInput"),
+  createdBy: int("createdBy").notNull(),
+  lastRunAt: timestamp("lastRunAt"),
+  lastResult: text("lastResult"),
+  runCount: int("runCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 // proposalParties: live community proposal-review sessions consumed by
 // server/routes/claims.ts. Restored after the Plays batch accidentally
 // dropped it during the schema rewrite.

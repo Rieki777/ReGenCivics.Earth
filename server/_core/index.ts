@@ -534,6 +534,30 @@ async function startServer() {
     }
   });
 
+  // ── Admin automations cron endpoint ─────────────────────────────────────────
+  // Called by Railway cron: POST /api/cron/admin-automations (Bearer CRON_SECRET).
+  // Runs every enabled admin automation whose cadence is due. Schedule it
+  // hourly so daily/weekly digests fire on time without extra work.
+  app.post("/api/cron/admin-automations", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runDueAutomations } = await import("../routes/adminAutomations");
+      const report = await runDueAutomations();
+      return res.json({ ok: true, ...report });
+    } catch (err: any) {
+      log.error("cron admin-automations failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Tier progression detector cron endpoint ─────────────────────────────────
   // Called every 15 minutes by Railway cron: POST /api/cron/tier-detector
   // Walks every user with at least one declared path and runs the

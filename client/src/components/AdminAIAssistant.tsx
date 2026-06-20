@@ -30,13 +30,16 @@ export interface AdminAIContext {
 }
 
 export interface AdminAIAction {
-  type: "navigate" | "compose" | "search" | "focus";
+  type: "navigate" | "compose" | "search" | "focus" | "execute" | "execute-confirm" | "undo";
   label: string;
   tab?: string;
   to?: string;
   subject?: string;
   query?: string;
   contactEmail?: string;
+  /** For execute/undo: the registry action id + its input. */
+  actionId?: string;
+  input?: Record<string, unknown>;
 }
 
 interface AdminAIAssistantProps {
@@ -88,6 +91,8 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const chatMutation = trpc.adminAI.chat.useMutation();
+  const executeMutation = trpc.adminActions.execute.useMutation();
+  const undoMutation = trpc.adminActions.undo.useMutation();
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,6 +104,31 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open, messages, scrollToBottom]);
+
+  // Open and run a task when a briefing action chip (or anything) dispatches
+  // an "admin-ea-prompt" event. This is the seam between the C-suite Overview's
+  // recommended actions and the executive assistant that carries them out.
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { prompt?: string } | undefined;
+      if (!detail?.prompt) return;
+      setOpen(true);
+      setMinimized(false);
+      setPendingPrompt(detail.prompt);
+    };
+    window.addEventListener("admin-ea-prompt", handler);
+    return () => window.removeEventListener("admin-ea-prompt", handler);
+  }, []);
+  useEffect(() => {
+    if (pendingPrompt && open) {
+      const p = pendingPrompt;
+      setPendingPrompt(null);
+      // sendMessage is a hoisted function declaration, safe to call here.
+      sendMessage(p);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingPrompt, open]);
 
   async function sendMessage(text?: string) {
     const userText = (text ?? input).trim();
@@ -134,13 +164,52 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
     }
   }
 
-  function handleAction(action: AdminAIAction) {
+  async function runExecute(actionId: string, input: Record<string, unknown>, confirmed: boolean) {
+    setMessages(prev => [...prev, { role: "user", content: `[${confirmed ? "Confirmed" : "Run"}: ${actionId}]` }]);
+    try {
+      const res = await executeMutation.mutateAsync({ actionId, input, confirmed });
+      if ("needsConfirm" in res && res.needsConfirm) {
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: `This one needs your sign-off: ${res.label}. ${res.description ?? ""}`,
+          actions: [{ type: "execute-confirm", actionId, input, label: `Confirm: ${res.label}` }],
+        }]);
+        return;
+      }
+      const undo = (res as { undo?: { actionId: string; input: Record<string, unknown> } | null }).undo;
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: `Done. ${(res as { summary?: string }).summary ?? ""}`,
+        actions: undo ? [{ type: "undo", actionId: undo.actionId, input: undo.input, label: "Undo that" }] : undefined,
+      }]);
+    } catch (e) {
+      setMessages(prev => [...prev, { role: "assistant", content: `That action could not run. ${(e as Error)?.message ?? ""}` }]);
+    }
+  }
+
+  async function handleAction(action: AdminAIAction) {
+    // Registry-backed actions execute directly with the server safety floor.
+    if (action.type === "execute") {
+      await runExecute(action.actionId ?? "", action.input ?? {}, false);
+      return;
+    }
+    if (action.type === "execute-confirm") {
+      await runExecute(action.actionId ?? "", action.input ?? {}, true);
+      return;
+    }
+    if (action.type === "undo") {
+      setMessages(prev => [...prev, { role: "user", content: "[Undo]" }]);
+      try {
+        const res = await undoMutation.mutateAsync({ actionId: action.actionId ?? "", input: action.input ?? {} });
+        setMessages(prev => [...prev, { role: "assistant", content: `Reverted. ${res.summary}` }]);
+      } catch (e) {
+        setMessages(prev => [...prev, { role: "assistant", content: `Could not undo. ${(e as Error)?.message ?? ""}` }]);
+      }
+      return;
+    }
+    // UI actions (navigate / compose / search / focus) are handled by the page.
     onAction?.(action);
-    // Confirm action taken in chat
-    setMessages(prev => [...prev, {
-      role: "user",
-      content: `[Executed: ${action.label}]`,
-    }]);
+    setMessages(prev => [...prev, { role: "user", content: `[${action.label}]` }]);
   }
 
   // Floating button when closed
