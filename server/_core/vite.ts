@@ -219,6 +219,35 @@ export function serveStatic(app: Express) {
   };
 
   let indexHtmlCache: string | null = null;
+  const blogHtmlCache = new Map<string, string>();
+
+  // Blog prerender handler. The post-build script
+  // (scripts/prerender-blog.mjs) emits dist/public/blog/<slug>/index.html
+  // for every entry in client/src/data/blogPosts.ts. Serve those files
+  // first so crawlers and LLMs see article body, BlogPosting JSON-LD,
+  // canonical URL, and OG tags in the initial response. The SPA bundle
+  // hydrates on top of the prerendered shell so React routing still works.
+  app.get(/^\/blog\/([a-z0-9-]+)\/?$/i, (req, res, next) => {
+    const slug = req.params[0];
+    const filePath = path.resolve(distPath, "blog", slug, "index.html");
+    if (!fs.existsSync(filePath)) return next();
+
+    let html = blogHtmlCache.get(slug) ?? null;
+    if (!html || process.env.NODE_ENV === "development") {
+      try {
+        html = fs.readFileSync(filePath, "utf-8");
+        blogHtmlCache.set(slug, html);
+      } catch {
+        return next();
+      }
+    }
+    if (!html) return next();
+
+    const nonce = (res.locals.nonce as string) || "";
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store, must-revalidate");
+    res.send(applyNonce(html, nonce));
+  });
 
   app.use("*", (_req, res) => {
     if (_req.originalUrl.startsWith("/api/")) {

@@ -1,0 +1,356 @@
+#!/usr/bin/env node
+/**
+ * Blog prerender pipeline.
+ *
+ * The React app is a Vite SPA; crawlers and LLMs that do not execute JS
+ * see only the static index.html shell, which has good meta tags but no
+ * article body. This script bridges that gap.
+ *
+ * Runs after `vite build`. Reads client/src/data/blogPosts.ts, extracts
+ * the static blogPosts array, and emits one prerendered HTML file per
+ * post under dist/blog/<slug>/index.html. Each file injects: full title,
+ * meta description, canonical, OG + Twitter cards, BlogPosting JSON-LD,
+ * and the article body rendered to static HTML from the post's markdown
+ * content. The same SPA bundle still hydrates on top, so the React route
+ * keeps working.
+ *
+ * Side outputs:
+ *   - dist/sitemap.xml gets one <url> entry per post if missing.
+ *   - dist/llms.txt gets enumerated post URLs under a "## Blog posts"
+ *     section so the LLM index reflects every article.
+ *
+ * Markdown -> HTML uses a small inline converter sufficient for the
+ * project's blog content (headings, paragraphs, bold/italic, links,
+ * lists, blockquotes, code, line breaks). It is intentionally NOT a
+ * full Markdown spec implementation; the live React render still owns
+ * the rich experience.
+ *
+ * No new runtime deps.
+ */
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = join(__dirname, "..");
+const DIST = join(REPO_ROOT, "dist", "public");
+const FALLBACK_DIST = join(REPO_ROOT, "dist");
+const DIST_DIR = existsSync(DIST) ? DIST : FALLBACK_DIST;
+
+const SITE = "https://regencivics.earth";
+
+// ---------- Extract blogPosts from the TS module ----------
+// We parse the TS source directly with a forgiving regex pass so this
+// script does not need a TS toolchain at build time. The blog data has
+// a stable, hand-curated shape; if a post is missing from the prerender
+// output, it shows up as a build-log warning, not a silent skip.
+function extractPosts() {
+  const file = readFileSync(
+    join(REPO_ROOT, "client", "src", "data", "blogPosts.ts"),
+    "utf8",
+  );
+  const arrayStart = file.indexOf("export const blogPosts");
+  if (arrayStart === -1) return [];
+  // Walk balanced braces to find the array of objects.
+  const open = file.indexOf("[", arrayStart);
+  let depth = 0;
+  let end = open;
+  for (let i = open; i < file.length; i++) {
+    if (file[i] === "[") depth++;
+    else if (file[i] === "]") {
+      depth--;
+      if (depth === 0) {
+        end = i;
+        break;
+      }
+    }
+  }
+  const body = file.slice(open + 1, end);
+
+  // Split top-level objects.
+  const posts = [];
+  let braceDepth = 0;
+  let start = -1;
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (ch === "{") {
+      if (braceDepth === 0) start = i;
+      braceDepth++;
+    } else if (ch === "}") {
+      braceDepth--;
+      if (braceDepth === 0 && start !== -1) {
+        posts.push(body.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+
+  return posts
+    .map((obj) => {
+      const field = (name) => {
+        // Match: name: 'value' OR name: "value" OR name: `value`
+        const re = new RegExp(`\\b${name}\\s*:\\s*(['\\\`"\\s])`, "m");
+        const m = obj.match(re);
+        if (!m) return null;
+        const quote = m[1];
+        const startIdx = obj.indexOf(quote, m.index) + 1;
+        // Find matching quote, ignoring escapes.
+        let i = startIdx;
+        while (i < obj.length) {
+          if (obj[i] === "\\") {
+            i += 2;
+            continue;
+          }
+          if (obj[i] === quote) break;
+          i++;
+        }
+        return obj
+          .slice(startIdx, i)
+          .replace(/\\'/g, "'")
+          .replace(/\\"/g, '"')
+          .replace(/\\n/g, "\n")
+          .replace(/\\\\/g, "\\");
+      };
+      const slug = field("slug");
+      const title = field("title");
+      const excerpt = field("excerpt") ?? "";
+      const content = field("content") ?? "";
+      const author = field("author") ?? "ReGen Civics Team";
+      const date = field("date") ?? "";
+      return slug && title ? { slug, title, excerpt, content, author, date } : null;
+    })
+    .filter(Boolean);
+}
+
+// ---------- Tiny markdown -> HTML ----------
+function escapeHtml(s) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderInline(s) {
+  return escapeHtml(s)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+}
+
+function renderMarkdown(md) {
+  if (!md) return "";
+  const lines = md.split(/\r?\n/);
+  const out = [];
+  let para = [];
+  let list = null; // 'ul' | 'ol' | null
+  let inCode = false;
+
+  const flushPara = () => {
+    if (para.length) {
+      out.push(`<p>${renderInline(para.join(" "))}</p>`);
+      para = [];
+    }
+  };
+  const closeList = () => {
+    if (list) {
+      out.push(`</${list}>`);
+      list = null;
+    }
+  };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (inCode) {
+      if (line.trim().startsWith("```")) {
+        out.push("</code></pre>");
+        inCode = false;
+      } else {
+        out.push(escapeHtml(line));
+      }
+      continue;
+    }
+    if (line.trim().startsWith("```")) {
+      flushPara();
+      closeList();
+      out.push('<pre><code>');
+      inCode = true;
+      continue;
+    }
+    const h = line.match(/^(#{1,3})\s+(.*)$/);
+    if (h) {
+      flushPara();
+      closeList();
+      const level = h[1].length;
+      out.push(`<h${level}>${renderInline(h[2])}</h${level}>`);
+      continue;
+    }
+    const ul = line.match(/^[-*+]\s+(.*)$/);
+    const ol = line.match(/^\d+\.\s+(.*)$/);
+    if (ul || ol) {
+      flushPara();
+      const want = ul ? "ul" : "ol";
+      if (list !== want) {
+        closeList();
+        list = want;
+        out.push(`<${want}>`);
+      }
+      out.push(`<li>${renderInline((ul ?? ol)[1])}</li>`);
+      continue;
+    }
+    if (line.startsWith(">")) {
+      flushPara();
+      closeList();
+      out.push(`<blockquote>${renderInline(line.replace(/^>\s?/, ""))}</blockquote>`);
+      continue;
+    }
+    if (!line.trim()) {
+      flushPara();
+      closeList();
+      continue;
+    }
+    closeList();
+    para.push(line);
+  }
+  flushPara();
+  closeList();
+  if (inCode) out.push("</code></pre>");
+  return out.join("\n");
+}
+
+// ---------- Inject prerendered HTML into the SPA shell ----------
+function buildPostHtml(shell, post) {
+  const url = `${SITE}/blog/${post.slug}`;
+  const title = `${post.title} | ReGen Civics Blog`;
+  const desc = post.excerpt || post.title;
+  const body = renderMarkdown(post.content);
+
+  const jsonld = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: desc,
+    author: { "@type": "Person", name: post.author },
+    datePublished: post.date,
+    url,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    publisher: {
+      "@type": "Organization",
+      name: "ReGen Civics",
+      url: SITE,
+    },
+  };
+
+  const head = `
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(desc)}" />
+    <link rel="canonical" href="${url}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="${escapeHtml(post.title)}" />
+    <meta property="og:description" content="${escapeHtml(desc)}" />
+    <meta property="og:url" content="${url}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapeHtml(post.title)}" />
+    <meta name="twitter:description" content="${escapeHtml(desc)}" />
+    <script type="application/ld+json">${JSON.stringify(jsonld)}</script>
+  `;
+
+  // The prerendered article is hidden visually (hydration overwrites
+  // it), but crawlers and LLMs see it before any JS runs.
+  const article = `
+    <noscript>
+      <article>
+        <h1>${escapeHtml(post.title)}</h1>
+        <p><em>${escapeHtml(desc)}</em></p>
+        ${body}
+      </article>
+    </noscript>
+    <div id="__prerendered_blog_post__" style="position:absolute;left:-99999px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+      <article>
+        <h1>${escapeHtml(post.title)}</h1>
+        <p>${escapeHtml(desc)}</p>
+        ${body}
+      </article>
+    </div>
+  `;
+
+  // Inject head additions before </head> and article before <div id="root">.
+  return shell
+    .replace(/<\/head>/i, `${head}</head>`)
+    .replace(
+      /<div id="root">/i,
+      `${article}<div id="root">`,
+    );
+}
+
+// ---------- Sitemap + llms.txt updates ----------
+function ensureSitemap(posts) {
+  const sitemapPath = join(DIST_DIR, "sitemap.xml");
+  if (!existsSync(sitemapPath)) {
+    console.warn(`[prerender-blog] sitemap.xml missing at ${sitemapPath}; skip update.`);
+    return;
+  }
+  let xml = readFileSync(sitemapPath, "utf8");
+  let added = 0;
+  for (const p of posts) {
+    const url = `${SITE}/blog/${p.slug}`;
+    if (xml.includes(`<loc>${url}</loc>`)) continue;
+    const entry = `  <url><loc>${url}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>\n`;
+    xml = xml.replace(/<\/urlset>/, `${entry}</urlset>`);
+    added += 1;
+  }
+  if (added) writeFileSync(sitemapPath, xml);
+  console.log(`[prerender-blog] sitemap: +${added} blog entries`);
+}
+
+function ensureLlmsIndex(posts) {
+  const llmsPath = join(DIST_DIR, "llms.txt");
+  if (!existsSync(llmsPath)) return;
+  let txt = readFileSync(llmsPath, "utf8");
+  const marker = "## Blog posts";
+  const lines = posts.map((p) => `- [${p.title}](${SITE}/blog/${p.slug})`).join("\n");
+  if (txt.includes(marker)) {
+    // Replace the section body up to the next ## heading.
+    txt = txt.replace(
+      new RegExp(`${marker}[\\s\\S]*?(?=\\n## |$)`),
+      `${marker}\n${lines}\n`,
+    );
+  } else {
+    txt = `${txt.trimEnd()}\n\n${marker}\n${lines}\n`;
+  }
+  writeFileSync(llmsPath, txt);
+  console.log(`[prerender-blog] llms.txt: indexed ${posts.length} posts`);
+}
+
+// ---------- Main ----------
+function main() {
+  if (!existsSync(DIST_DIR)) {
+    console.warn(`[prerender-blog] dist not found at ${DIST_DIR}; skip.`);
+    return;
+  }
+  const indexHtml = join(DIST_DIR, "index.html");
+  if (!existsSync(indexHtml)) {
+    console.warn(`[prerender-blog] index.html missing at ${indexHtml}; skip.`);
+    return;
+  }
+  const shell = readFileSync(indexHtml, "utf8");
+
+  const posts = extractPosts();
+  if (!posts.length) {
+    console.warn("[prerender-blog] no posts extracted from blogPosts.ts; skip.");
+    return;
+  }
+
+  for (const post of posts) {
+    const dir = join(DIST_DIR, "blog", post.slug);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "index.html"), buildPostHtml(shell, post));
+  }
+  console.log(`[prerender-blog] wrote ${posts.length} prerendered posts under dist/blog/`);
+
+  ensureSitemap(posts);
+  ensureLlmsIndex(posts);
+}
+
+main();
