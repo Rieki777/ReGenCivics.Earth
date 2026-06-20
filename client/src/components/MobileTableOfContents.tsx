@@ -76,24 +76,44 @@ export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbac
 
   return (
     <>
-      {/* Sticky Current Section Pill - Mobile Only */}
+      {/* Sticky Current Section Pill - Mobile Only.
+          Actions stack below the Sections pill on their own row so a
+          page-level floating CTA (e.g. Submit LOI on /opportunity)
+          can't collide with the pill or get cut off at the right edge. */}
       <div
         className="fixed left-0 right-0 z-40 md:hidden bg-[#0d2818]/95 backdrop-blur-sm border-b border-[#7dd87d]/20"
         style={{ top: "calc(env(safe-area-inset-top, 0px) + var(--top-nav-height, 56px))" }}
       >
-        <div className="px-4 py-2 overflow-x-auto">
+        <div className="px-4 py-2 space-y-2">
           <button
             onClick={() => setIsOpen(true)}
-            className="w-full bg-[#7dd87d]/90 hover:bg-[#7dd87d] backdrop-blur-sm text-[#1a472a] px-4 py-2 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-[#7dd87d]/90 hover:bg-[#7dd87d] backdrop-blur-sm text-[#1a472a] px-4 py-2 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2 min-h-[44px]"
           >
             <Compass className="w-4 h-4" />
             <span className="truncate">{currentSectionTitle}</span>
             <ChevronUp className="w-4 h-4" />
           </button>
+          {actions && actions.length > 0 && (
+            <div className="grid grid-cols-1 gap-2">
+              {actions.map((action) => {
+                const ActionIcon = action.icon;
+                return (
+                  <a
+                    key={action.href}
+                    href={action.href}
+                    target={action.external ? "_blank" : undefined}
+                    rel={action.external ? "noopener noreferrer" : undefined}
+                    className="bg-amber-400 hover:bg-amber-300 text-[#1a472a] px-4 py-2 rounded-full text-sm font-bold transition-colors flex items-center justify-center gap-2 min-h-[44px]"
+                  >
+                    <ActionIcon className="w-4 h-4" />
+                    <span className="truncate">{action.label}</span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Action buttons removed - use top sticky pill and drawer instead */}
 
       {/* Navigation Drawer - Mobile Only */}
       {isOpen && (

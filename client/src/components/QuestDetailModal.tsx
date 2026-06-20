@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, FileDown } from "lucide-react";
 import { QuestTier3Media } from "@/components/QuestTier3Media";
 import { Button } from "@/components/ui/button";
@@ -479,6 +479,17 @@ export const questDetailsData: Record<string, QuestDetails> = {
 export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalProps) {
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
+  // Lock body scroll while the modal is open so touch scrolling stays
+  // inside the modal instead of leaking to the page behind it.
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
   if (!isOpen || !quest) return null;
 
   return (
@@ -549,7 +560,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[50vh] overflow-y-auto">
+        <div className="p-6 max-h-[50vh] overflow-y-auto overscroll-contain">
           {/* Video / media hero */}
           {quest.videoUrl && (
             <div className="mb-6">

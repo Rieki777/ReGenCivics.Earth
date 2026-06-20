@@ -2642,4 +2642,32 @@ html[data-contrast="high"] *:focus-visible {
   will-change: transform;
   transition: transform 0.1s linear;
 }
+
+/* ════════════════════════════════════════════════════════════
+   Apply form contrast override
+   ════════════════════════════════════════════════════════════
+   The shared shadcn Label/Input/Select tokens are tuned for dark
+   surfaces (--foreground / --muted-foreground sit light). On the
+   parchment Apply page that renders as near-invisible gray on
+   cream. Scope a dark-on-light override to .apply-form-dark so
+   labels, headings, field text, and placeholders are legible. */
+.apply-form-dark label,
+.apply-form-dark h2,
+.apply-form-dark h3 {
+  color: #1a472a;
+}
+.apply-form-dark input,
+.apply-form-dark textarea,
+.apply-form-dark select,
+.apply-form-dark [data-slot="select-trigger"],
+.apply-form-dark [data-slot="select-value"] {
+  color: #14331f;
+}
+.apply-form-dark input::placeholder,
+.apply-form-dark textarea::placeholder {
+  color: rgba(26, 71, 42, 0.55);
+}
+.apply-form-dark [data-slot="select-value"][data-placeholder] {
+  color: rgba(26, 71, 42, 0.55);
+}
                                                                                        

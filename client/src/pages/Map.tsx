@@ -25,7 +25,10 @@ function GlobePlaceholder() {
 
 export default function MapPage() {
   return (
-    <>
+    // Hard cap horizontal scroll at the page wrapper. The globe canvas and
+    // filter-pills row inside GlobeMap can otherwise push past the viewport
+    // edge on small phones and produce a sideways scroll that hides the FAB.
+    <div className="w-full max-w-full overflow-x-hidden">
       <BackButton />
       <BannerDisplay bannerKey="map-banner" />
       <SEO
@@ -37,6 +40,6 @@ export default function MapPage() {
       <Suspense fallback={<GlobePlaceholder />}>
         <GlobeMap fullPage />
       </Suspense>
-    </>
+    </div>
   );
 }

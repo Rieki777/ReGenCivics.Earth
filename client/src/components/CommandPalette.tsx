@@ -12,7 +12,7 @@ import { blogPosts } from "@/data/blogPosts";
 import {
   Coins, Sprout, Handshake, Heart, Users, Calendar,
   BookOpen, Globe, FileText, Shield, AlertTriangle, Map, MessageCircle,
-  Layers, Search, X, Sparkles, Scroll,
+  Layers, Search, X, Sparkles, Scroll, Wrench,
 } from "lucide-react";
 
 type PageEntry = {
@@ -44,6 +44,7 @@ const PAGES: PageEntry[] = [
   { label: "Blog", description: "Learn about regeneration", href: "/blog", icon: <BookOpen className="w-4 h-4 text-amber-400" />, group: "Community" },
   { label: "Team", description: "Meet the ReGen Civics team", href: "/team", icon: <Users className="w-4 h-4 text-white" />, group: "Community" },
   { label: "Map", description: "Explore projects on the map", href: "/map", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Community" },
+  { label: "Tools", description: "Tools regenerative projects actually use", href: "/tools", icon: <Wrench className="w-4 h-4 text-[#7dd87d]" />, group: "Community" },
   // Seasons
   { label: "Seasons", description: "Seasonal accelerator model", href: "/seasons", icon: <Layers className="w-4 h-4 text-[#7dd87d]" />, group: "Seasons" },
   // Apply

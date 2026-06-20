@@ -93,8 +93,10 @@ function FundStatusBanner() {
   useThrottledScroll(handleScroll);
   
   if (minimized) {
+    // Hide on mobile: the MobileTableOfContents below renders Submit LOI as
+    // its own stacked row so the two no longer collide at the right edge.
     return (
-      <div className="fixed top-[73px] right-4 z-40">
+      <div className="hidden md:block fixed top-[73px] right-4 z-40">
         <Link
           href="/loi"
           className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] px-4 py-2 rounded-full font-bold text-sm shadow-[0_0_15px_rgba(255,215,0,0.4)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6)] transition-all flex items-center gap-2"
@@ -589,7 +591,13 @@ export default function Opportunity() {
         </div>
       )}
       <SEO {...pageSEO.opportunity} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Investment Opportunity", url: "/opportunity" }]} />
-      {isDesktop ? <TableOfContents /> : <MobileTableOfContents />}
+      {isDesktop ? (
+        <TableOfContents />
+      ) : (
+        <MobileTableOfContents
+          actions={[{ label: "Submit LOI", href: "/loi", icon: FileText }]}
+        />
+      )}
       
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#1a472a]/95 backdrop-blur-md border-b border-[#ffd700]/30">

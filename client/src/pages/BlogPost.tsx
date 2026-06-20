@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BlurImage } from "@/components/BlurImage";
+import { ShareButton } from "@/components/ShareButton";
 
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
@@ -136,12 +137,30 @@ export default function BlogPost() {
       
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-[#1a472a]/50">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-[#7dd87d] to-[#4a7c59] transition-all duration-150"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
-      
+
+      {/* Floating Share button. Mirrors the Submit-LOI floating-pill pattern
+          used on the fund/thesis pages: fixed, below the top nav, z-40,
+          safe-area aware. Uses native Web Share with a copy-link fallback. */}
+      <div
+        className="fixed right-4 z-40"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 73px)" }}
+      >
+        <ShareButton
+          where="blog_post"
+          title={post.title}
+          text={post.excerpt}
+          url={pageUrl}
+          variant="solid"
+          label="Share"
+          className="shadow-lg"
+        />
+      </div>
+
       {/* Table of Contents - Collapsible */}
       {tableOfContents.length > 0 && (
         <div className="fixed right-4 top-24 z-40 max-w-xs hidden lg:block">

@@ -6,7 +6,7 @@
  */
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { ArrowRight, Coins, Sprout, Handshake, Globe, ChevronDown, Scroll, MessageSquare, TrendingUp, Zap, CalendarDays } from 'lucide-react';
+import { ArrowRight, Coins, Sprout, Handshake, Globe, ChevronDown, Scroll, MessageSquare, TrendingUp, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { PathCardImage } from '@/components/PathCardImage';
@@ -158,11 +158,9 @@ function PersonalizedCards() {
   if (profile.path === 'land_project') {
     cards.push({ id: 'accelerator', title: 'Seasonal Accelerator', subtitle: 'Grow your project', href: '/apply', image: '/images/return-cards/accelerator.webp', accentColor: '#34d399', icon: Zap });
   }
-  // Community call card: open to everyone now (was investor-only when
-  // it was a "Discovery Call" framing). The /schedule page lists the
-  // weekly community sessions plus quarterly Fund AMAs, so the broader
-  // copy fits any returning visitor. Voiced 2026-04-27.
-  cards.push({ id: 'schedule', title: 'Join a community call', subtitle: 'Talk with the team, ask questions', href: '/schedule', image: '/images/return-cards/schedule.webp', accentColor: '#f472b6', icon: CalendarDays });
+  // (Removed the "Join a community call" card: it was reported as a dead
+  // tap target on the returning-visitor home. Surface community sessions
+  // through the menu / Seasons instead.)
 
   if (cards.length === 0) return null;
 

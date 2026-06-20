@@ -297,27 +297,6 @@ export default function Apply() {
           </p>
         </div>
 
-        {/* Early-stage path: surface the LOI as a softer alternative
-            for projects that aren't ready for the full application. */}
-        <div className="mb-8 rounded-xl border border-[#1a472a]/15 bg-white/60 backdrop-blur-sm px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <div>
-            <p className="text-[#1a472a] text-sm font-semibold">
-              Early stage and just exploring?
-            </p>
-            <p className="text-[#1a472a]/80 text-xs mt-0.5">
-              Send a brief Letter of Intent. We will follow up to see if the program is a fit.
-            </p>
-          </div>
-          <Link href="/loi" onClick={() => analytics.ctaClick('apply_loi_nudge', '/apply')}>
-            <Button
-              variant="outline"
-              className="border-[#1a472a]/30 text-[#1a472a] hover:bg-[#1a472a]/5 min-h-[44px]"
-            >
-              Send a Letter of Intent
-            </Button>
-          </Link>
-        </div>
-
         {/* Step progress bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -332,8 +311,11 @@ export default function Apply() {
           </div>
         </div>
 
-        {/* Form Steps */}
-        <Card className="p-8 bg-white">
+        {/* Form Steps. apply-form-dark scopes the shared Label/Input/Select
+            tokens (tuned for dark surfaces) back to the forest palette so
+            labels, headings, field text, and placeholders render dark enough
+            to read on the parchment Card background. */}
+        <Card className="p-8 bg-white apply-form-dark">
           {/* Draft restored banner */}
           {draftRestored && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[#4a7c59]/30 bg-[#f0f7f0] px-4 py-3 text-sm text-[#1a472a]">

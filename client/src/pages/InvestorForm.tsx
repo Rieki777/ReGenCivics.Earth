@@ -692,7 +692,7 @@ export default function InvestorForm() {
                         Investment Timeline (Optional)
                       </Label>
                       <RadioGroup
-                        value={formData.investmentTimeline}
+                        value={formData.investmentTimeline || undefined}
                         onValueChange={(v) => updateField("investmentTimeline", v)}
                         className="space-y-2"
                       >
@@ -737,7 +737,7 @@ export default function InvestorForm() {
                         Primary Interest (Optional)
                       </Label>
                       <RadioGroup
-                        value={formData.primaryInterest}
+                        value={formData.primaryInterest || undefined}
                         onValueChange={(v) => updateField("primaryInterest", v)}
                         className="space-y-2"
                       >
@@ -998,6 +998,7 @@ export default function InvestorForm() {
           {/* Navigation */}
           <div className="flex justify-between items-center p-6 bg-[#f0ebe3] border-t border-[#1a472a]/10">
             <Button
+              type="button"
               variant="outline"
               onClick={() => setStep(s => s - 1)}
               disabled={step === 1}
@@ -1006,9 +1007,10 @@ export default function InvestorForm() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            
+
             {step < 5 ? (
               <Button
+                type="button"
                 onClick={() => setStep(s => s + 1)}
                 disabled={!canProceed()}
                 className="rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffd700] hover:to-[#9de89d] text-[#1a472a]"

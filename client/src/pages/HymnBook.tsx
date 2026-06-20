@@ -46,8 +46,12 @@ export default function HymnBook() {
         image="/og/hymn-book.webp"
         url="/hymn-book"
       />
-      <div className="min-h-screen bg-[#0d2818] text-white py-16 px-4">
-        <div className="container max-w-3xl mx-auto">
+      {/* overflow-x-hidden + max-w-full guard the page against the
+          NowPlayingPanel range inputs, long song titles, and any other
+          inner child that could otherwise push past the viewport edge
+          and produce a sideways scroll that hides the bottom-right FAB. */}
+      <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#0d2818] text-white py-16 px-4">
+        <div className="container max-w-3xl mx-auto min-w-0">
           {/* Hero */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7dd87d]/15 border border-[#7dd87d]/30 mb-4">
