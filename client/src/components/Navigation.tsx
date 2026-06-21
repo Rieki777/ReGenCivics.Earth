@@ -236,12 +236,20 @@ export default function Navigation() {
                   <FlowerOfLifeIcon className="w-5 h-5 mr-3 text-[#7dd87d]" size={20} />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Game Overview</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/play'}
                 >
                   <Heart className="w-5 h-5 mr-3 text-purple-400" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Play</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/plays'}
+                >
+                  <Layers className="w-5 h-5 mr-3 text-amber-400" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Plays</span>
+                  <span className="ml-auto text-[9px] bg-[#7dd87d]/30 text-[#7dd87d] px-1.5 py-0.5 rounded-full">New</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-[#7dd87d] bg-[#7dd87d]/10 border border-[#7dd87d]/30 rounded-lg hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer my-1 mx-1 font-semibold"
@@ -837,6 +845,20 @@ export default function Navigation() {
                     >
                       <Heart className="w-4 h-4" />
                       Play
+                    </Link>
+                    <Link
+                      href="/plays"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/plays' || location.startsWith('/plays/')
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Layers className="w-4 h-4" />
+                      Plays
+                      <span className="ml-auto text-[9px] bg-[#7dd87d]/30 text-[#7dd87d] px-1.5 py-0.5 rounded-full">New</span>
                     </Link>
                     <Link
                       href="/quest"
