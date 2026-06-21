@@ -296,3 +296,27 @@ Per ship gate: for any new className or keyframe added (readability scrim, role-
 
 - Fix 15 final scope (H2) — Claude Code can implement the global swap by default and you can narrow it later.
 - Nothing else is blocked. Everything ships on your push (H1).
+
+---
+
+## Verification results — live browser walkthrough (2026-06-19, after deploy)
+
+Five surfaces checked on regencivics.earth (desktop viewport; true mobile-width render not available, so width-sensitive items were also confirmed via computed CSS).
+
+| Surface | Result | Evidence |
+|---|---|---|
+| Fix 17 — Home two-map mirror + scrim | VERIFIED | Two `village-map-scroll.webp` halves, second `transform: matrix(-1,0,0,1,0,0)`; intro text in dark-green ReadableScrim with strong contrast; central waterfall masks the seam |
+| Fix 16 — HealTheLand You/We Bring | VERIFIED | Both headings and both lists compute `text-align: center`; renders as two balanced cards |
+| Fix 3 — Role card heads in frame | VERIFIED | Weaver / Tinkerer / Architect images compute `object-position: 50% 0%`; heads fully visible on /team |
+| Fixes 5/6/7 — Play card CTAs | VERIFIED | Start Questing → `/quest` (live anchor), Claim Contributions → `/calculator` (loads Contribution Calculator), Find Your Community → `/map` (loads Global Network Map) |
+| Fix 12 — Community repeat-visit auto-scroll | FIXED (was failing live) | Repeat visit landed at scrollY 121 instead of the picker (~1389 abs). Manual `scrollIntoView` worked (scrollY 1276), so the on-mount scroll fired before async layout settled |
+
+### Fix 12 follow-up (applied this session, needs ship)
+
+**Status:** FIXED (CODED) — needs the next git push
+
+**Root cause:** the on-mount effect used a single `setTimeout(..., 200)` with `behavior: "smooth"`. It fired before the hero image, thread counts, and live-activity strip loaded, so the layout grew after the scroll started and stranded the page near the top.
+
+**Fix applied:** in `client/src/pages/Community.tsx`, the effect now re-asserts an instant `scrollIntoView` at 120 / 400 / 800 / 1300ms so it lands on `#community-section-picker` once layout settles.
+
+**Verify after deploy:** clear `regen_community_visited`, visit /community (intro at top), visit again (should land on the Earth/Water/Fire/Air grid).

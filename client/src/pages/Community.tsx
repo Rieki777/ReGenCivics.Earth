@@ -132,10 +132,15 @@ export default function Community() {
     let flagged = false;
     try { flagged = localStorage.getItem(KEY) === "1"; } catch { /* storage blocked */ }
     if (flagged) {
-      const t = setTimeout(() => {
-        document.getElementById("community-section-picker")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 200);
-      return () => clearTimeout(t);
+      // Re-assert the scroll a few times while async content (hero image,
+      // thread counts, live-activity strip) loads and shifts the layout.
+      // A single 200ms smooth scroll fired too early and got stranded near
+      // the top, so we jump to the picker repeatedly until layout settles.
+      const scrollToPicker = () => {
+        document.getElementById("community-section-picker")?.scrollIntoView({ behavior: "auto", block: "start" });
+      };
+      const timers = [120, 400, 800, 1300].map((d) => window.setTimeout(scrollToPicker, d));
+      return () => timers.forEach(clearTimeout);
     }
     try { localStorage.setItem(KEY, "1"); } catch { /* storage blocked */ }
   }, []);
