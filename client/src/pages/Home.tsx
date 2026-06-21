@@ -325,19 +325,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Mission Description - ancient treasure map scroll with ink-reveal text.
-             The parchment PNG has true alpha around its torn silhouette, so it
-             sits directly on the page background with no visible rectangle.
-             Size is intentionally large so all text fits inside the map bounds. */}
+        {/* Mission Description: one seamless mirrored parchment band
+             carrying ALL the intro copy in a single centered scrim. The
+             prior layout split text across two stacked map images; now
+             both maps mirror to form a single wide map and every word
+             sits inside it, centered on every device. */}
         <section className="relative py-10 md:py-14">
           <div className="container max-w-6xl">
             <AnimatedSection animation="fade-in">
-              {/* Lead paragraph sits on a seamless parchment band: the
-                  village-map-scroll image and a horizontally mirrored copy
-                  side by side, so the whole band reads as one continuous
-                  wide map. No white card. Text inside the ReadableScrim
-                  so it stays legible over the parchment art. */}
-              <div className="max-w-6xl mx-auto mb-8 md:mb-10">
+              <div className="max-w-6xl mx-auto">
                 <div className="relative w-full overflow-hidden rounded-2xl shadow-xl">
                   <div
                     aria-hidden="true"
@@ -359,10 +355,13 @@ export default function Home() {
                       style={{ objectFit: "cover", transform: "scaleX(-1)" }}
                     />
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center px-4 md:px-8">
-                    <ReadableScrim block className="max-w-2xl text-center">
+                  {/* All copy centered in the band. ReadableScrim keeps
+                      every line legible against the parchment + page
+                      background at every viewport. */}
+                  <div className="absolute inset-0 flex items-center justify-center px-3 sm:px-6 md:px-10">
+                    <ReadableScrim block className="max-w-2xl text-center space-y-3 md:space-y-4 py-4 md:py-5">
                       <p
-                        className="text-white text-base md:text-lg leading-relaxed"
+                        className="text-white text-sm sm:text-base md:text-lg leading-relaxed"
                         style={{
                           fontFamily:
                             "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
@@ -374,74 +373,36 @@ export default function Home() {
                         <span className="text-[#f5b942] font-bold italic">
                           ReGenerative Renaissance
                         </span>{" "}
-                        <span className="text-white/85">
+                        <span className="text-white/90">
                           (a movement to heal ourselves, our earth, our communities,
                           and our bioregions).
                         </span>
                       </p>
-                    </ReadableScrim>
-                  </div>
-                </div>
-              </div>
-              <div className="text-center flex justify-center">
-                <div
-                  className="relative w-full max-w-5xl"
-                  style={{
-                    aspectRatio: "2816 / 1352",
-                    backgroundImage: "url('/images/village-map-scroll.webp?v=5')",
-                    backgroundSize: "100% 100%",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                    filter: "drop-shadow(0 18px 36px rgba(0,0,0,0.55))",
-                  }}
-                >
-                  {/* Parchment readability tint, clipped to the inner region
-                       (not the full rectangle) so the torn outer edges stay
-                       visible and transparent against the page background. */}
-                  <div
-                    aria-hidden="true"
-                    className="absolute pointer-events-none"
-                    style={{
-                      inset: "14% 16%",
-                      background:
-                        "radial-gradient(ellipse at center, rgba(250, 238, 208, 0.78) 0%, rgba(240, 220, 180, 0.55) 55%, rgba(220, 195, 145, 0.2) 80%, rgba(200, 170, 120, 0) 100%)",
-                    }}
-                  />
-                  {/* Ink text on the map: only the second paragraph + the
-                       "Welcome to the Infinite Game" line live here now. */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div
-                      className="w-full px-[17%] md:px-[20%] space-y-2 md:space-y-3 leading-snug text-center"
-                      style={{
-                        fontFamily:
-                          "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
-                        color: "#1f1208",
-                        fontSize: "clamp(0.8rem,1.8vw,1.2rem)",
-                      }}
-                    >
-                      <p className="ink-draw" style={{ animationDelay: "0.2s" }}>
+                      <p
+                        className="text-white text-sm sm:text-base md:text-lg leading-relaxed"
+                        style={{
+                          fontFamily:
+                            "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                        }}
+                      >
                         We create quests and{" "}
-                        <span style={{ color: "#6b3510", fontWeight: 700, fontStyle: "italic" }}>
+                        <span className="text-[#f5b942] font-bold italic">
                           Infinite Games
                         </span>{" "}
                         that help people heal, and in doing so build new financial,
                         economic, and governance systems that support and network
-                        land projects across our movement.{" "}
-                        <span
-                          className="ink-draw"
-                          style={{
-                            animationDelay: "1.4s",
-                            display: "inline-block",
-                            color: "#120804",
-                            fontWeight: 700,
-                            letterSpacing: "0.01em",
-                            fontSize: "clamp(1rem,2.2vw,1.5rem)",
-                          }}
-                        >
-                          Welcome to the Infinite Game.
-                        </span>
+                        land projects across our movement.
                       </p>
-                    </div>
+                      <p
+                        className="text-[#f5b942] font-bold text-base sm:text-lg md:text-xl tracking-[0.01em]"
+                        style={{
+                          fontFamily:
+                            "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                        }}
+                      >
+                        Welcome to the Infinite Game.
+                      </p>
+                    </ReadableScrim>
                   </div>
                 </div>
               </div>
@@ -629,24 +590,29 @@ export default function Home() {
               })}
             </div>
 
-            {/* WEF Quote */}
+            {/* WEF Quote: wrapped in ReadableScrim so the attribution
+                line stops washing out against the earth-from-space hero
+                image. Quote text already had some scrim before; the
+                attribution did not. Now both share the same backing. */}
             <AnimatedSection animation="fade-in" delay={500}>
-              <div className="max-w-4xl mx-auto text-center">
-                <blockquote className="text-white/90 text-base md:text-lg lg:text-xl italic leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-                  "Over half [sic ALL] of global GDP depends on nature. Investing in regeneration is not charity, it is the most strategic allocation of capital in our lifetime."
-                </blockquote>
-                <p className="text-white/70 text-xs md:text-sm mt-3">
-                  - Adapted from{" "}
-                  <a
-                    href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#7dd87d]/70 underline hover:text-[#7dd87d]"
-                  >
-                    World Economic Forum
-                  </a>{" "}
-                  research ($44T+ in nature-dependent GDP)
-                </p>
+              <div className="max-w-3xl mx-auto text-center">
+                <ReadableScrim block className="mx-auto">
+                  <blockquote className="text-white text-base md:text-lg lg:text-xl italic leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                    "Over half [sic ALL] of global GDP depends on nature. Investing in regeneration is not charity, it is the most strategic allocation of capital in our lifetime."
+                  </blockquote>
+                  <p className="text-white/90 text-xs md:text-sm mt-3">
+                    - Adapted from{" "}
+                    <a
+                      href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#9de89d] underline hover:text-white"
+                    >
+                      World Economic Forum
+                    </a>{" "}
+                    research ($44T+ in nature-dependent GDP)
+                  </p>
+                </ReadableScrim>
               </div>
             </AnimatedSection>
           </div>

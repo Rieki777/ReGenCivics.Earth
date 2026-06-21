@@ -271,12 +271,21 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Hard-clamp the layout to the viewport width on html + body. Stops
+     iOS Safari from auto-zooming-out when a deep child momentarily
+     overflows (e.g. a fixed-width slider thumb on a slow first paint).
+     overflow-x:clip is stronger than hidden because it also disables
+     programmatic scroll on the X axis. */
+  html, body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
     font-size: 16px;
     line-height: 1.6;
-    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
