@@ -8,6 +8,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { ReadableScrim } from "@/components/ReadableScrim";
 import { SEO } from "@/components/SEO";
 import { ArrowRight, Leaf, Heart, Home } from "lucide-react";
 import { ReadingTime } from "@/components/ReadingTime";
@@ -191,17 +192,14 @@ export default function HealTheLand() {
             </AnimatedSection>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-12">
               <AnimatedSection animation="slide-up" delay={0}>
-                <div
-                  className="rounded-2xl border border-white/15 p-6 md:p-8 backdrop-blur-sm shadow-lg shadow-black/20"
-                  style={{ background: "rgba(13,40,24,0.72)" }}
-                >
+                <ReadableScrim block className="border border-white/15 shadow-lg shadow-black/20 p-6 md:p-8 h-full">
                   <h3
-                    className="text-xl font-bold mb-5"
+                    className="text-xl font-bold mb-5 text-center"
                     style={{ color: "#7dd87d", fontFamily: "var(--font-display)" }}
                   >
-                    You Bring:
+                    You Bring
                   </h3>
-                  <ul className="space-y-3">
+                  <ul className="mx-auto max-w-xs space-y-3 text-center">
                     {[
                       "Land and growing capacity",
                       "Willingness to host community days",
@@ -210,30 +208,25 @@ export default function HealTheLand() {
                     ].map((item, i) => (
                       <li
                         key={i}
-                        className="text-white/80 flex items-start gap-3"
+                        className="text-white/85 flex items-center justify-center gap-2"
                         style={{ fontFamily: "var(--font-body)" }}
                       >
-                        <span style={{ color: "#7dd87d" }} className="mt-0.5 flex-shrink-0">
-                          +
-                        </span>
-                        {item}
+                        <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#7dd87d" }} />
+                        <span className="leading-snug">{item}</span>
                       </li>
                     ))}
                   </ul>
-                </div>
+                </ReadableScrim>
               </AnimatedSection>
               <AnimatedSection animation="slide-up" delay={100}>
-                <div
-                  className="rounded-2xl border border-white/15 p-6 md:p-8 backdrop-blur-sm shadow-lg shadow-black/20"
-                  style={{ background: "rgba(13,40,24,0.72)" }}
-                >
+                <ReadableScrim block className="border border-white/15 shadow-lg shadow-black/20 p-6 md:p-8 h-full">
                   <h3
-                    className="text-xl font-bold mb-5"
+                    className="text-xl font-bold mb-5 text-center"
                     style={{ color: "#d4a574", fontFamily: "var(--font-display)" }}
                   >
-                    We Bring:
+                    We Bring
                   </h3>
-                  <ul className="space-y-3">
+                  <ul className="mx-auto max-w-xs space-y-3 text-center">
                     {[
                       "Active community and spiritual container",
                       "Stewardship labor",
@@ -244,17 +237,15 @@ export default function HealTheLand() {
                     ].map((item, i) => (
                       <li
                         key={i}
-                        className="text-white/80 flex items-start gap-3"
+                        className="text-white/85 flex items-center justify-center gap-2"
                         style={{ fontFamily: "var(--font-body)" }}
                       >
-                        <span style={{ color: "#d4a574" }} className="mt-0.5 flex-shrink-0">
-                          +
-                        </span>
-                        {item}
+                        <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: "#d4a574" }} />
+                        <span className="leading-snug">{item}</span>
                       </li>
                     ))}
                   </ul>
-                </div>
+                </ReadableScrim>
               </AnimatedSection>
             </div>
             <AnimatedSection animation="slide-up">

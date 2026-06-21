@@ -51,6 +51,7 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { cdnImg } from "@/lib/utils";
 import { AmbientParticles } from "@/components/AmbientParticles";
+import { ReadableScrim } from "@/components/ReadableScrim";
 
 // Path card data
 const pathCards = [
@@ -310,34 +311,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Primary call to action: one obvious door for a first-time visitor,
-            sitting directly under the hero. Routes into /connect where the
-            four intents (invest, bring land, ally, play) are chosen. */}
-        <section className="relative pb-8 md:pb-12">
-          <div className="container max-w-3xl text-center motion-safe:animate-[fadeInUp_0.6s_ease-out]">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                href="/connect"
-                onClick={() => analytics.ctaClick("home_hero_primary", "home")}
-                className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#7dd87d] px-8 py-4 text-base md:text-lg font-bold text-[#0d2818] shadow-[0_10px_30px_rgba(125,216,125,0.35)] transition-all duration-200 hover:bg-[#9de89d] hover:-translate-y-0.5 min-h-[52px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#7dd87d]"
-              >
-                Start your journey
-                <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
-              </Link>
-              <Link
-                href="/play"
-                onClick={() => analytics.ctaClick("home_hero_secondary", "home")}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-4 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10 min-h-[52px]"
-              >
-                Play the game
-              </Link>
-            </div>
-            <p className="mt-4 text-white/75 text-sm" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-              Investor, land project, ally, or player. One tap to your path.
-            </p>
-          </div>
-        </section>
-
         {/* Welcome Short Intro Video */}
         <section className="relative py-8 md:py-12">
           <div className="container max-w-4xl">
@@ -359,30 +332,55 @@ export default function Home() {
         <section className="relative py-10 md:py-14">
           <div className="container max-w-6xl">
             <AnimatedSection animation="fade-in">
-              {/* Lead paragraph in its own readable card ABOVE the map. Was
-                  previously laid over the parchment image and washed out
-                  on mobile. Only the second paragraph + Welcome line now
-                  lives inside the map. */}
-              <div className="max-w-3xl mx-auto mb-8 md:mb-10">
-                <div
-                  className="rounded-2xl bg-[#f8f5f0]/95 backdrop-blur-sm border border-[#1a472a]/15 p-5 md:p-7 text-center shadow-xl"
-                  style={{
-                    fontFamily:
-                      "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
-                  }}
-                >
-                  <p className="text-[#1f1208] text-base md:text-lg leading-relaxed">
-                    <span className="text-[#214b21] font-bold">regen-civics</span>{" "}
-                    is a fund and an in-real-life game for supporting
-                    regenerative land projects and the{" "}
-                    <span className="text-[#6b3510] font-bold italic">
-                      ReGenerative Renaissance
-                    </span>{" "}
-                    <span className="text-[#3f2a18]">
-                      (a movement to heal ourselves, our earth, our communities,
-                      and our bioregions).
-                    </span>
-                  </p>
+              {/* Lead paragraph sits on a seamless parchment band: the
+                  village-map-scroll image and a horizontally mirrored copy
+                  side by side, so the whole band reads as one continuous
+                  wide map. No white card. Text inside the ReadableScrim
+                  so it stays legible over the parchment art. */}
+              <div className="max-w-6xl mx-auto mb-8 md:mb-10">
+                <div className="relative w-full overflow-hidden rounded-2xl shadow-xl">
+                  <div
+                    aria-hidden="true"
+                    className="flex w-full"
+                    style={{
+                      filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.35))",
+                    }}
+                  >
+                    <img
+                      src="/images/village-map-scroll.webp?v=5"
+                      alt=""
+                      className="w-1/2 h-auto block"
+                      style={{ objectFit: "cover" }}
+                    />
+                    <img
+                      src="/images/village-map-scroll.webp?v=5"
+                      alt=""
+                      className="w-1/2 h-auto block"
+                      style={{ objectFit: "cover", transform: "scaleX(-1)" }}
+                    />
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center px-4 md:px-8">
+                    <ReadableScrim block className="max-w-2xl text-center">
+                      <p
+                        className="text-white text-base md:text-lg leading-relaxed"
+                        style={{
+                          fontFamily:
+                            "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                        }}
+                      >
+                        <span className="text-[#9de89d] font-bold">regen-civics</span>{" "}
+                        is a fund and an in-real-life game for supporting
+                        regenerative land projects and the{" "}
+                        <span className="text-[#f5b942] font-bold italic">
+                          ReGenerative Renaissance
+                        </span>{" "}
+                        <span className="text-white/85">
+                          (a movement to heal ourselves, our earth, our communities,
+                          and our bioregions).
+                        </span>
+                      </p>
+                    </ReadableScrim>
+                  </div>
                 </div>
               </div>
               <div className="text-center flex justify-center">
