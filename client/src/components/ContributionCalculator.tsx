@@ -527,7 +527,7 @@ export function ContributionCalculator() {
             min="0"
             value={value || ''}
             onChange={(e) => updateValue(capitalId, question.key, parseFloat(e.target.value) || 0)}
-            className={`w-full px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white/50 text-[#1a472a] focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50 ${question.type === 'currency' ? 'pl-7' : ''}`}
+            className={`w-full px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/55 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50 ${question.type === 'currency' ? 'pl-7' : ''}`}
             placeholder="0"
           />
         </div>
@@ -764,7 +764,7 @@ export function ContributionCalculator() {
             type="text"
             value={contributionName}
             onChange={(e) => setContributionName(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-[#7dd87d]/30 bg-white/50 text-[#1a472a] focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
+            className="w-full px-4 py-3 rounded-xl border border-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/55 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
             placeholder="e.g., Website development, Community workshop, Tree planting..."
           />
         </div>

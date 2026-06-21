@@ -123,9 +123,12 @@ export function RolePortalCard({ role }: { role: GameRole }) {
         tabIndex={0}
         className="role-card-shimmer relative rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:-translate-y-1 border border-white/10 hover:border-white/25 bg-[#0d2818]/80"
       >
-        {/* Top area with character image */}
+        {/* Top area with character image. Height bumped from 140 to 180px
+            and default objectPosition shifted down from "center top" to
+            "50% 18%" so portraits keep the crown of the head in frame on
+            every card. Roles can still override via cardImagePosition. */}
         <div
-          className="relative h-[140px] overflow-hidden"
+          className="relative h-[180px] overflow-hidden"
           style={{
             background: `linear-gradient(135deg, ${role.color}30 0%, ${role.color}10 50%, transparent 100%)`,
           }}
@@ -135,7 +138,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
               src={role.characterImage}
               alt={role.characterName}
               className="w-full h-full object-cover"
-              style={{ objectPosition: role.cardImagePosition || "center top" }}
+              style={{ objectPosition: role.cardImagePosition || "50% 18%" }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

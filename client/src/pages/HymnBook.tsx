@@ -10,6 +10,8 @@ import { useAudio, PLAYLIST } from "@/contexts/AudioContext";
 import { Music, ListMusic, Loader2, Plus, CheckCircle2, Play, Pause, Vote, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PageTransition } from "@/components/PageTransition";
+import { ShareButton } from "@/components/ShareButton";
+import { toSlug } from "@/utils/songSlug";
 
 export default function HymnBook() {
   const { isAuthenticated } = useAuth();
@@ -122,6 +124,15 @@ export default function HymnBook() {
                           <span className="block text-white/55 text-xs truncate">{song.artist}</span>
                         )}
                       </button>
+                      <ShareButton
+                        where="hymn_book_row"
+                        title={`${song.title}: Hymns of the ReGeneration`}
+                        text={`Listen to ${song.title}${song.artist ? ` by ${song.artist}` : ""} on ReGen Civics.`}
+                        url={`/hymn-player/${toSlug(song.title)}`}
+                        variant="soft"
+                        label=""
+                        className="!min-h-0 !px-2 !py-1 text-xs text-white/60 hover:text-white bg-transparent border-0"
+                      />
                       <span className="text-white/30 text-xs tabular-nums pr-1">{String(i + 1).padStart(2, "0")}</span>
                     </li>
                   );

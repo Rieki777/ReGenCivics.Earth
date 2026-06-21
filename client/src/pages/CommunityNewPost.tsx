@@ -143,6 +143,60 @@ export default function CommunityNewPost() {
   };
 
   const isValid = title.trim().length >= 3 && content.trim().length >= 10 && categoryId;
+
+  // Per-topic placeholder + helper line. Matches against the selected
+  // category name (case-insensitive substring) so this works for the
+  // existing forum categories without needing a per-id mapping.
+  const selectedCategoryName = categories?.find((c) => String(c.id) === categoryId)?.name ?? "";
+  const topicGuidance = (() => {
+    const n = selectedCategoryName.toLowerCase();
+    if (n.includes("alliance")) {
+      return {
+        titlePlaceholder: "Name of your alliance organization",
+        contentPlaceholder:
+          "What your org offers the movement (tools, resources, services, products, assets) and what the movement can offer back (roles to fill, resources needed). Be specific about offers and asks.",
+      };
+    }
+    if (n.includes("land project") || n.includes("earth")) {
+      return {
+        titlePlaceholder: "Name of your land project",
+        contentPlaceholder:
+          "Where it is, what stage it's at, the practices you're rooted in, and what you'd like from the movement (allies, capital, residents, advice). Be specific about offers and asks.",
+      };
+    }
+    if (n.includes("water")) {
+      return {
+        titlePlaceholder: "A clear, descriptive title for your topic",
+        contentPlaceholder:
+          "Share the conversation you want to start about flow, finance, currencies, or capital. Be specific about what you're inviting people to respond to.",
+      };
+    }
+    if (n.includes("fire")) {
+      return {
+        titlePlaceholder: "A clear, descriptive title for your topic",
+        contentPlaceholder:
+          "Share the practice, ritual, or transformation you want to talk about. Be specific about offers (skills you bring) and asks (what you'd like back).",
+      };
+    }
+    if (n.includes("air")) {
+      return {
+        titlePlaceholder: "A clear, descriptive title for your topic",
+        contentPlaceholder:
+          "Share the agreement, governance pattern, or coordination question on your mind. Be specific about decisions you're inviting input on.",
+      };
+    }
+    if (n.includes("seeking") || n.includes("team")) {
+      return {
+        titlePlaceholder: "Project name + the role(s) you're seeking",
+        contentPlaceholder:
+          "Project name, where it is, what stage, and the role(s) you need filled. Include the time commitment, what someone gets back, and how to reach you.",
+      };
+    }
+    return {
+      titlePlaceholder: "Give your thread a clear, descriptive title",
+      contentPlaceholder: "Write your post here...",
+    };
+  })();
   
   // Format attachments display in content
   const contentWithAttachments = uploadedFiles.length > 0 
@@ -327,7 +381,7 @@ export default function CommunityNewPost() {
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Give your thread a clear, descriptive title"
+              placeholder={topicGuidance.titlePlaceholder}
               maxLength={300}
               className="border-[#e8e4de] focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
               style={{ fontFamily: 'var(--font-body)' }}
@@ -375,7 +429,7 @@ export default function CommunityNewPost() {
               <RichEditor
                 value={content}
                 onChange={setContent}
-                placeholder="Write your post here..."
+                placeholder={topicGuidance.contentPlaceholder}
                 className="min-h-[200px] text-[#1a472a]"
               />
             )}

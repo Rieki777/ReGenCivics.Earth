@@ -97,7 +97,7 @@ export function QuestCarousel({ children, totalCount }: QuestCarouselProps) {
       {/* Scrollable container */}
       <div
         ref={scrollRef}
-        className="flex gap-4 md:gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 -mx-4 px-4 md:-mx-0 md:px-0"
+        className="flex flex-nowrap gap-4 md:gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 -mx-4 px-4 md:-mx-0 md:px-0"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',

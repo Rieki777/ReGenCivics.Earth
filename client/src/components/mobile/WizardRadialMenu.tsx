@@ -31,6 +31,10 @@ import {
   MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench,
 } from "lucide-react";
 import { FlowerOfLifeIcon } from "@/components/FlowerOfLifeIcon";
+import { MapPinned } from "lucide-react";
+// Silence the unused-import warning since we no longer render the
+// FlowerOfLifeIcon as the trigger glyph (swapped to MapPinned per Rye).
+void FlowerOfLifeIcon;
 import { useSeasonTint } from "@/hooks/useSeasonTint";
 import { useAudio } from "@/contexts/AudioContext";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -325,7 +329,7 @@ export function WizardRadialMenu() {
             className="transition-transform duration-300"
             style={{ transform: open ? "rotate(135deg)" : "rotate(0deg)" }}
           >
-            <FlowerOfLifeIcon size={28} className="text-[#0d2818]" />
+            <MapPinned className="w-7 h-7 text-[#0d2818]" />
           </span>
         </button>
       </div>
