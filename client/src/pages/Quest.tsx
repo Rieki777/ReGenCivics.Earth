@@ -857,7 +857,7 @@ export default function Quest() {
         setShowIntro(false);
       }} />
     )}
-    <div className="min-h-screen bg-[#faf6f1] pb-24 md:pb-0">
+    <div className="min-h-screen w-full max-w-full overflow-x-clip bg-[#faf6f1] pb-24 md:pb-0">
       <SEO {...pageSEO.quest} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Quests", url: "/quest" }]} />
       <JsonLD data={{
         "@context": "https://schema.org",
@@ -1406,7 +1406,7 @@ export default function Quest() {
               }`}
               style={{ fontFamily: 'var(--font-accent)' }}
             >
-              ⚔️ Epic
+              🏔️ Epic
             </button>
           </div>
           <div className="flex justify-center">

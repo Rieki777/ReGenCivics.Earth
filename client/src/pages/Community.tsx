@@ -124,6 +124,22 @@ export default function Community() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Repeat visitors land at the section-picker grid instead of the intro
+  // up top. First visit sets the flag and keeps the full scroll position;
+  // subsequent visits scroll to #community-section-picker once mounted.
+  useEffect(() => {
+    const KEY = "regen_community_visited";
+    let flagged = false;
+    try { flagged = localStorage.getItem(KEY) === "1"; } catch { /* storage blocked */ }
+    if (flagged) {
+      const t = setTimeout(() => {
+        document.getElementById("community-section-picker")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
+      return () => clearTimeout(t);
+    }
+    try { localStorage.setItem(KEY, "1"); } catch { /* storage blocked */ }
+  }, []);
+
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   // Admin category management state
@@ -460,7 +476,7 @@ export default function Community() {
         ) : null}
 
         {/* ── Section Cards ───────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 mt-6">
+        <div id="community-section-picker" className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 mt-6">
 
           {/* General */}
           <button
@@ -877,18 +893,6 @@ export default function Community() {
                 </div>
               </Link>
 
-              {/* Governance */}
-              <Link href="/community/c/governance">
-                <div className="relative rounded-xl overflow-hidden border border-blue-200/60 hover:border-blue-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
-                  <img src="/images/quests/quest-11-coordination-patterns.webp" alt="Governance and coordination" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Governance</p>
-                    <p className="text-white/60 text-xs">How we coordinate</p>
-                  </div>
-                </div>
-              </Link>
-
               {/* Crowd Pooling */}
               <Link href="/crowd-pooling">
                 <div className="relative rounded-xl overflow-hidden border border-blue-200/60 hover:border-blue-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
@@ -1145,6 +1149,18 @@ export default function Community() {
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Roles Dialogue</p>
                     <p className="text-white/60 text-xs">What roles are missing?</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Governance */}
+              <Link href="/community/c/governance">
+                <div className="relative rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-400/60 hover:shadow-md transition-all cursor-pointer group h-36">
+                  <img src="/images/quests/quest-11-coordination-patterns.webp" alt="Governance and coordination" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>Governance</p>
+                    <p className="text-white/60 text-xs">How we coordinate</p>
                   </div>
                 </div>
               </Link>

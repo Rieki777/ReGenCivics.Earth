@@ -35,6 +35,7 @@ import { SEO, pageSEO } from '@/components/SEO';
 import { BackButton } from "@/components/BackButton";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { cdnImg } from "@/lib/utils";
+import { ReadableScrim } from "@/components/ReadableScrim";
 
 
 const weeklyTopics = [
@@ -82,13 +83,15 @@ export default function Seasons() {
             <span className="text-white font-medium">Season 2 Starting September 2026</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-            <span className="text-[#7dd87d]">"Spring"</span> Season
-          </h1>
-          
-          <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-8 safe-prose">
-            13 weeks of transformation, learning, and growth to take your regenerative land project from a few core team members to a thriving village and minimum viable economy.
-          </p>
+          <ReadableScrim block className="max-w-3xl mx-auto mb-8">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
+              <span className="text-[#7dd87d]">"Spring"</span> Season
+            </h1>
+
+            <p className="text-xl md:text-2xl text-white/90 safe-prose">
+              13 weeks of transformation, learning, and growth to take your regenerative land project from a few core team members to a thriving village and minimum viable economy.
+            </p>
+          </ReadableScrim>
           
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/schedule">

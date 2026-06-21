@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
+import { ReadableScrim } from "@/components/ReadableScrim";
 import {
   ArrowRight,
   Play,
@@ -301,18 +302,20 @@ export default function Land() {
       <section className="py-12 md:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up">
-            <h2
-              className="text-3xl md:text-5xl font-bold text-white mb-3 text-center text-shadow-strong"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              What You <span className="text-[#7dd87d]">Receive</span>
-            </h2>
-            <p
-              className="text-white/60 text-center mb-8 max-w-xl mx-auto text-lg text-shadow-subtle"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              A complete support system from conception to thriving community.
-            </p>
+            <ReadableScrim block className="max-w-2xl mx-auto text-center mb-8">
+              <h2
+                className="text-3xl md:text-5xl font-bold text-white mb-3"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                What You <span className="text-[#7dd87d]">Receive</span>
+              </h2>
+              <p
+                className="text-white/85 text-lg"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                A complete support system from conception to thriving community.
+              </p>
+            </ReadableScrim>
           </AnimatedSection>
 
           <div className="space-y-3">
@@ -405,10 +408,21 @@ export default function Land() {
             </p>
           </AnimatedSection>
 
-          {/* What We're Looking For - Collapsible Criteria */}
-          <div className="mb-10">
+          {/* What We're Looking For - Collapsible Criteria.
+              On expand, scroll the section header to the top of the
+              viewport so the newly-revealed content isn't below the fold. */}
+          <div className="mb-10" id="land-criteria-collapsible">
             <button
-              onClick={() => setCriteriaOpen(!criteriaOpen)}
+              onClick={(e) => {
+                const willOpen = !criteriaOpen;
+                setCriteriaOpen(willOpen);
+                if (willOpen) {
+                  // Defer so the new content has measured before we scroll.
+                  setTimeout(() => {
+                    (e.currentTarget as HTMLElement | null)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 50);
+                }
+              }}
               className="w-full glass-panel p-6 text-left hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <div className="flex items-start justify-between">
@@ -679,15 +693,17 @@ export default function Land() {
       <section className="py-12 md:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up" className="text-center mb-8">
-            <h2
-              className="text-2xl md:text-4xl font-bold mb-3 text-white text-shadow-strong"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              From Pasture to <span className="text-[#7dd87d]">Paradise</span>
-            </h2>
-            <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto text-shadow-subtle">
-              Watch the transformation. This is what regenerative land development looks like in action.
-            </p>
+            <ReadableScrim block className="max-w-2xl mx-auto">
+              <h2
+                className="text-2xl md:text-4xl font-bold mb-3 text-white"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                From Pasture to <span className="text-[#7dd87d]">Paradise</span>
+              </h2>
+              <p className="text-base md:text-lg text-white/85">
+                Watch the transformation. This is what regenerative land development looks like in action.
+              </p>
+            </ReadableScrim>
           </AnimatedSection>
           <AnimatedSection animation="fade-in">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/30 border border-[#7dd87d]/20">
@@ -713,15 +729,17 @@ export default function Land() {
       <section className="py-16 md:py-24 px-4">
         <div className="max-w-5xl mx-auto">
           <AnimatedSection animation="slide-up" className="text-center mb-12">
-            <h2
-              className="text-3xl md:text-5xl font-bold mb-4 text-white text-shadow-strong"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Featured <span className="text-[#7dd87d]">Land Projects</span>
-            </h2>
-            <p className="text-xl text-white/70 max-w-2xl mx-auto text-shadow-subtle">
-              Explore thriving regenerative communities in our network
-            </p>
+            <ReadableScrim block className="max-w-2xl mx-auto">
+              <h2
+                className="text-3xl md:text-5xl font-bold mb-4 text-white"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                Featured <span className="text-[#7dd87d]">Land Projects</span>
+              </h2>
+              <p className="text-xl text-white/85">
+                Explore thriving regenerative communities in our network
+              </p>
+            </ReadableScrim>
           </AnimatedSection>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -1111,18 +1129,6 @@ export default function Land() {
               </Link>
               <p className="text-white/65 text-xs mt-3">
                 <Link href="/heal-the-land" className="text-[#7dd87d] hover:underline">Learn more about the program</Link>
-              </p>
-              {/* Early-stage path: surface the orphaned /loi for projects
-                  that are not ready to apply but want to keep talking. */}
-              <p className="text-white/80 text-sm mt-6">
-                Earlier stage and just exploring?{" "}
-                <Link
-                  href="/loi"
-                  onClick={() => analytics.ctaClick('land_loi_nudge', '/land')}
-                  className="text-[#7dd87d] hover:text-[#9de89d] underline font-semibold"
-                >
-                  Send a Letter of Intent
-                </Link>
               </p>
             </div>
           </AnimatedSection>

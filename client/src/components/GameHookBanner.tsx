@@ -9,7 +9,7 @@ import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 
 const HOOK_VARIANTS: Record<string, { hook: string; subtext: string }> = {
   home: {
-    hook: "If enough of us play the Game, it's real.",
+    hook: "The more we Play the Game the more fun and real this new world becomes.",
     subtext: "A regenerative economy built by the people who use it.",
   },
   play: {

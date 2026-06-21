@@ -530,7 +530,7 @@ export default function Economy() {
                   color: "#faf8f3",
                 }}
               >
-                If enough of us play the Game, it's real.
+                The more we Play the Game the more fun and real this new world becomes.
               </p>
               <p
                 className="text-lg mb-8 leading-relaxed"

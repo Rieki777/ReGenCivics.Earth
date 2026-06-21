@@ -5,7 +5,7 @@
  * Finishes with massive CTA to /game and /quest
  */
 
-import { Link } from "wouter";
+import { Link, useLocation as useWouterLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +35,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { SEO } from "@/components/SEO";
 import AutoplayVideo from "@/components/AutoplayVideo";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
+import { ReadableScrim } from "@/components/ReadableScrim";
 import { cdnImg } from "@/lib/utils";
 
 // Action card component with token info and linked button(s)
@@ -64,6 +65,7 @@ function ActionCard({
   borderAccent?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [, setLocation] = useWouterLocation();
 
   // Build the links array: if `links` prop provided, use it; otherwise build from single linkTo/linkLabel
   const allLinks = links || [{ label: linkLabel, href: linkTo, isExternal, variant: "primary" as const }];
@@ -127,20 +129,24 @@ function ActionCard({
                   </a>
                 );
               }
+              // Programmatic nav guarantees the click works on mobile even
+              // if the Button intercepts the event before the parent Link
+              // anchor sees it.
               return (
-                <Link key={i} href={link.href}>
-                  <Button
-                    className={isPrimary
-                      ? `w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold py-3 text-base h-auto`
-                      : `w-full font-bold py-3 text-base h-auto border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10`
-                    }
-                    variant={isPrimary ? "default" : "outline"}
-                    style={{ fontFamily: "var(--font-accent)" }}
-                  >
-                    {link.label}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
+                <Button
+                  key={i}
+                  type="button"
+                  onClick={() => setLocation(link.href)}
+                  className={isPrimary
+                    ? `w-full bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold py-3 text-base h-auto`
+                    : `w-full font-bold py-3 text-base h-auto border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10`
+                  }
+                  variant={isPrimary ? "default" : "outline"}
+                  style={{ fontFamily: "var(--font-accent)" }}
+                >
+                  {link.label}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
               );
             })}
           </div>
@@ -461,7 +467,7 @@ export default function Play() {
                 title="CLAIM! Your Contributions"
                 description="Already doing regenerative work? Claim your historical and current contributions to the ReGenerative Renaissance. Whether you have planted trees, built community, taught permaculture, or supported land projects, your contributions deserve recognition."
                 tokenInfo="Earn ReGen Game tokens + 1 RGVoice token for each verified claim"
-                linkTo="/game"
+                linkTo="/calculator"
                 linkLabel="Claim Contributions"
               />
             </AnimatedSection>
@@ -498,7 +504,7 @@ export default function Play() {
                 title="JOIN! An Existing Organization or Village"
                 description="Join an existing organization in the alliance or a land project that is already underway. Bring your skills, energy, and vision to a community that is already building. Whether you are a designer, farmer, developer, teacher, healer, or builder, there is a place for you."
                 tokenInfo="Earn unique tokens with the projects directly for your contributions!"
-                linkTo="/connect"
+                linkTo="/map"
                 linkLabel="Find Your Community"
                 accentColor="text-amber-400"
                 bgAccent="bg-amber-400/15"
@@ -534,28 +540,27 @@ export default function Play() {
       <section className="py-12 md:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <AnimatedSection animation="slide-up">
-            {/* Backdrop panel so the heading + tagline stay legible over the
-                page background image. Replaces the prior text-over-image
-                pattern that washed the copy out on mobile. */}
-            <div className="rounded-2xl bg-black/55 backdrop-blur-md border border-white/10 p-6 md:p-8 mb-6">
+            {/* Use the shared ReadableScrim so this header reads the same as
+                every other text-over-image block site-wide. */}
+            <ReadableScrim block className="mb-6 text-center max-w-3xl mx-auto">
               <h2
-                className="text-3xl md:text-5xl font-bold text-white mb-3 text-center"
+                className="text-3xl md:text-5xl font-bold text-white mb-3"
                 style={{ fontFamily: "var(--font-display)" }}
               >
                 <span className="text-amber-400">ReGen Game Tokens</span> + <span className="text-[#7dd87d]">RGVoice</span>
               </h2>
               <p
-                className="text-white/85 text-center max-w-2xl mx-auto text-lg"
+                className="text-white/85 text-lg"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 Two tokens working together: ReGen Game tokens as our in-game currency, and RGVoice tokens for governance.
               </p>
-            </div>
-            <div className="max-w-lg mx-auto mb-4 px-4 py-3 rounded-xl bg-amber-400/20 border border-amber-400/50 text-center backdrop-blur-sm">
+            </ReadableScrim>
+            <ReadableScrim block className="max-w-lg mx-auto mb-4 text-center border border-amber-400/40">
               <p className="text-amber-300 font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>
                 NOTE: These tokens are unique from the Fund tokens!
               </p>
-            </div>
+            </ReadableScrim>
           </AnimatedSection>
 
           <TokenSystemCollapsible />
