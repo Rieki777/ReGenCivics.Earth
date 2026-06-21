@@ -1,57 +1,103 @@
-# Fixes to Make: 2026-06-20
+# Fixes to Make: 2026-06-20 (Updated with audit findings)
 
-This batch covers UI readability issues, a scroll bug, homepage layout changes, and a broken save button. All from mobile screenshots.
+This batch covers UI readability issues, a scroll bug, homepage layout changes, a broken save button, and a CRITICAL truncated files issue discovered during audit. All from mobile screenshots + Cowork code audit.
+
+---
+
+## CRITICAL: Truncated Source Files (BLOCKING)
+
+**Status:** MUST FIX FIRST
+
+**Symptom:** 6 source files are truncated mid-expression and will not compile. 2 additional files have NUL-byte padding. This is the same pattern flagged on 2026-04-18 that the ship gate was built to prevent.
+
+**Truncated files (cut off mid-JSX):**
+- `client/src/pages/Apply.tsx` (1065 lines, cuts at `{currentStep < t`)
+- `client/src/components/QuestDetailModal.tsx` (758 lines, cuts at `onClick={() =>`)
+- `client/src/components/CrowdPoolingTool.tsx` (1412 lines, cuts at `<div `)
+- `client/src/pages/Home.tsx` (807 lines, cuts at `<button className="w-full`)
+- `client/src/pages/Play.tsx` (612 lines, cuts at `<Compass cl`)
+- `client/src/pages/Game.tsx` (1796 lines, cuts at `Ready to Play?`)
+
+**NUL-byte padded files (structurally complete but dirty):**
+- `client/src/components/AdminEventAnalytics.tsx` (3 NUL bytes after final newline)
+- `client/src/components/ProgressiveOnboarding.tsx` (~100 bytes NUL padding)
+
+**Fix:** Restore all truncated files from the last clean commit on main:
+```bash
+# Run the audit first to confirm which files are affected
+python3 scripts/audit-truncation.py
+
+# Restore truncated files from git
+git checkout main -- \
+  client/src/pages/Apply.tsx \
+  client/src/components/QuestDetailModal.tsx \
+  client/src/components/CrowdPoolingTool.tsx \
+  client/src/pages/Home.tsx \
+  client/src/pages/Play.tsx \
+  client/src/pages/Game.tsx \
+  client/src/components/AdminEventAnalytics.tsx \
+  client/src/components/ProgressiveOnboarding.tsx
+```
+
+Then re-apply any un-committed fixes on top of the restored files.
+
+---
+
+## ALREADY FIXED by Cowork (2026-06-20)
+
+### Fix A: Select component text contrast (was Fix 8 partial)
+**Status:** FIXED
+**File:** `client/src/components/ui/select.tsx`
+**Change:** Replaced hardcoded `text-[#1a472a]`, `data-[placeholder]:text-[#1a472a]/80`, and `[&_svg]:text-[#1a472a]/80` with theme-aware `text-foreground`, `data-[placeholder]:text-muted-foreground/90`, and `[&_svg]:text-foreground/80`. Now matches Input/Textarea/Label which already use `text-foreground`.
+
+### Fix B: Plays nav link added to Navigation
+**Status:** FIXED
+**File:** `client/src/components/Navigation.tsx`
+**Change:** Added "Plays" link (with Layers icon and "New" badge) to both the desktop "Play the Game" dropdown and the mobile expandable menu. Links to `/plays`. Placed after the "Play" (singular) item.
 
 ---
 
 ## Fix 1: Apply page form text readability (High)
 
-**Status:** CODED
+**Status:** INVESTIGATE AFTER RESTORE
 
-**Symptom:** On `/apply` (Apply.tsx), form field labels ("Project Name *", "Project Type *", "Location *", "Project Vision *"), in-field text, and helper text are too light. Hard to read on mobile. Headers need to be darker. Input text needs more contrast against the light form backgrounds.
+**Symptom:** On `/apply`, form labels and input text are too light on mobile.
 
-**Fix:** In Apply.tsx, find all label/header elements and form input styling. Ensure:
-- Section headers like "Basic Information" use `text-gray-900` or `text-foreground` (not gray-500/600)
-- Form field labels use `text-gray-800` or darker
-- Input text (both placeholder and entered value) uses `text-gray-900` for values, `text-gray-500` for placeholders (not lighter)
-- Helper text below fields uses at least `text-gray-600`
-- The select dropdown text ("Select project type") should be dark when a value is selected
+**Audit findings:**
+- Apply.tsx is TRUNCATED. Must restore first.
+- Section headers use `text-[#1a472a]` (which maps to `--foreground`), so contrast should be fine.
+- Most Labels have NO explicit text color class, inheriting from the Label component which uses `text-foreground`.
+- Helper text uses `text-[#1a472a]/80` (80% opacity), which may be too light on mobile.
+- Input/Textarea components already use `text-foreground`. Select now fixed (see Fix A above).
+- The `apply-form-dark` CSS class referenced in code (line 318) has NO definition anywhere. This was supposed to scope form styling for dark-on-parchment readability.
 
-**Files to check:** `client/src/pages/Apply.tsx`, and any shared form component styles in `client/src/components/ui/` (input.tsx, select.tsx, label.tsx, textarea.tsx)
+**Fix after restore:** Add the `apply-form-dark` CSS class definition to `index.css` or remove the dead className. Boost helper text from `text-[#1a472a]/80` to `text-[#1a472a]` (full opacity). Verify on mobile after deploy.
+
+**Files to change:** `client/src/pages/Apply.tsx`, `client/src/index.css`
 
 ---
 
 ## Fix 2: Remove LOI suggestion box from Apply page (High)
 
-**Status:** CODED
+**Status:** INVESTIGATE AFTER RESTORE
 
-**Symptom:** At the top of `/apply`, there's a callout box that says "Early stage and just exploring? Send a brief Letter of Intent. We will follow up to see if the program is a fit." with a "Send a Letter of Intent" button. Rye wants this removed entirely.
+**Audit finding:** The text "Early stage and just exploring? Send a brief Letter of Intent" does NOT exist in Apply.tsx. The only "Early stage" reference is a SelectItem helper text (line 370) describing project types. The LOI suggestion box may be rendered by a different component, may have already been removed, or may only appear on mobile. Check the live site on mobile to confirm.
 
-**Fix:** In Apply.tsx, find and remove the LOI suggestion callout. Look for text content matching "Early stage and just exploring" or "Letter of Intent". Remove the entire containing div/section. The LOI route itself can stay, just remove the callout from the apply form page.
-
-**Files to change:** `client/src/pages/Apply.tsx`
+**Files to check:** Search codebase for "Letter of Intent" in component files. May be in a child component or conditional render block that's in the truncated portion of Apply.tsx.
 
 ---
 
 ## Fix 3: Quest detail modal scroll bug (Critical)
 
-**Status:** CODED
+**Status:** PARTIALLY IMPLEMENTED, VERIFY AFTER RESTORE
 
-**Symptom:** When scrolling inside the quest detail modal (the popup showing quest details like "Quest 5: Rites of Love"), the scroll passes through to the main page behind it. The modal content doesn't scroll independently.
+**Audit findings:**
+- QuestDetailModal.tsx already has `document.body.style.overflow = "hidden"` useEffect (lines 484-491)
+- Content container already has `overflow-y-auto overscroll-contain max-h-[50vh]` (line 563)
+- File is TRUNCATED at line 758 so the full component state is unknown
+- The existing scroll prevention code looks correct. Bug may be specific to certain mobile browsers or may be in the truncated footer section.
 
-**Fix:** In QuestDetailModal.tsx, the modal overlay needs `overscroll-behavior: contain` and the modal body needs `overflow-y: auto` with a `max-height`. The backdrop should also prevent scroll passthrough. Common fix pattern:
-
-1. On the modal overlay/backdrop: add `overflow-hidden` to the body element when modal opens (or use a portal with scroll lock)
-2. On the modal content container: add `overflow-y-auto overscroll-contain` and set `max-h-[90vh]` or similar
-3. Ensure the scrollable area is the content div inside the modal, not the entire overlay
-
-Also check if there's a useEffect that disables body scroll when the modal is open. If missing, add:
-```tsx
-useEffect(() => {
-  document.body.style.overflow = 'hidden';
-  return () => { document.body.style.overflow = ''; };
-}, []);
-```
+**Fix after restore:** Verify the full component compiles. If scroll bug persists on mobile, add `touch-action: none` to the backdrop overlay and `-webkit-overflow-scrolling: touch` to the scrollable content container. Also consider adding `overscroll-behavior: contain` inline style (not just Tailwind class) for broader mobile support.
 
 **Files to change:** `client/src/components/QuestDetailModal.tsx`
 
@@ -59,95 +105,85 @@ useEffect(() => {
 
 ## Fix 4: Homepage welcome section layout (Medium)
 
-**Status:** CODED
+**Status:** ALREADY PARTIALLY FIXED, VERIFY AFTER RESTORE
 
-**Symptom:** On the homepage (Home.tsx), the "Welcome Beautiful Human" section has text overlaying the fantasy map image. The text reads "regen civics is a fund and an in-real-life game for supporting regenerative land projects..." overlaid on the map, but the text is hard to read because it's directly on the image with minimal contrast.
+**Audit findings:**
+- Home.tsx is TRUNCATED at line 807
+- The first paragraph ("regen civics is a fund...") is ALREADY in a card above the map (lines 374-385, `rounded-2xl bg-[#f8f5f0]/95`)
+- The second paragraph ("We create quests...") stays on the map with a radial-gradient overlay for contrast
+- Code comment at lines 362-365 confirms this restructuring was intentional (moved from parchment overlay due to mobile washout)
+- The 2x2 path cards (lines 468-571) already use the compact design with PathCardImage, "Go ->", "MORE" expander
 
-**Fix:** Rye wants the layout restructured:
-- The first paragraph ("regen civics is a fund and an in-real-life game for supporting regenerative land projects and the ReGenerative Renaissance...") should be in a card/box ABOVE the map, with a solid or semi-transparent background for readability
-- The second paragraph ("We create quests and Infinite Games that help people heal...Welcome to the Infinite Game.") should stay on/in the map
-- Scale the map and text so it renders better on mobile
+**Fix after restore:** This may already be fixed. Verify on mobile after file restoration. If the card is still hard to read on mobile, increase the bg opacity from `bg-[#f8f5f0]/95` to `bg-[#f8f5f0]` (full opacity) and ensure the map section has enough padding.
 
-Look for the relevant section in Home.tsx. It likely uses a `PageBackground` or a styled div with a background image. Restructure so the first paragraph is in its own container with `bg-card` or `bg-background/90` styling, placed above the map image, and only the second paragraph overlays the map.
-
-**Files to change:** `client/src/pages/Home.tsx`
+**Files to change:** `client/src/pages/Home.tsx` (verify only, may need no changes)
 
 ---
 
 ## Fix 5: Landing screen 2x2 path cards redesign (Medium)
 
-**Status:** CODED
+**Status:** ALREADY DONE
 
-**Symptom:** The main landing page has a 2x2 grid of path cards (Investors, Land Projects, Alliance Partners, ReGen Players). The current design for first-time visitors shows expanded cards with subtitles ("FUND THE RENAISSANCE"), long descriptions, and "Explore the Fund ->" links. Rye prefers the design used for returning users: compact cards with character art images, titles, "YOUR PATH" badge, "Go ->" links, and a collapsible "MORE" section.
+**Audit findings:** Both first-visit (Home.tsx lines 468-571) and return-visitor (ProgressiveOnboarding.tsx) already use the compact card design with PathCardImage, "Go ->" links, and "MORE" expandable sections. The return-visitor version adds contextual "YOUR PATH" badges based on user data. The first-visit version omits those badges but uses the same layout. Condition at line 232: all logged-out visitors see ProgressiveOnboarding by default.
 
-**Fix:** In Home.tsx, find the two versions of the 2x2 path grid. Replace the first-visit/default version with the returning-user version's design. The returning version has:
-- Larger character art images filling the card top
-- "YOUR PATH" badges (for returning users with selected paths)
-- Title + subtitle underneath the image
-- "Go ->" link
-- Expandable "v MORE" toggle
-- More compact overall
-
-The new design should still work for both first-time and returning visitors. For first-time visitors, omit the "YOUR PATH" badge but keep the compact card layout.
-
-**Files to change:** `client/src/pages/Home.tsx`
+**No action needed.** Close this fix.
 
 ---
 
 ## Fix 6: Token page readability (High)
 
-**Status:** CODED
+**Status:** PARTIALLY FIXED, VERIFY ON MOBILE AFTER RESTORE
 
-**Symptom:** On the economy/tokens page (Economy.tsx), the "ReGen Game Tokens + RGVoice" section and the "NOTE: These tokens are unique from... Fund tokens!" text are hard to read. Text is overlaid on a busy background image with insufficient contrast. This is a site-wide readability issue on pages with text-over-image sections.
+**Audit findings:**
+- The token content is in `Play.tsx` (not Economy.tsx as originally noted)
+- Play.tsx line 540 already has `bg-black/55 backdrop-blur-md` panel behind the "ReGen Game Tokens + RGVoice" heading
+- The "NOTE" box at line 554 has `bg-amber-400/20 border border-amber-400/50`
+- Play.tsx is TRUNCATED at line 612
+- Economy.tsx has NO background images, uses solid `background: "#1a472a"` throughout. Economy.tsx is NOT truncated.
 
-**Fix:** For the immediate fix, add semi-transparent background panels behind text sections on the economy page. Look for sections with text overlaying background images and add `bg-black/50 backdrop-blur-sm` or `bg-card/80` behind the text content, with appropriate padding and rounded corners.
+**Fix after restore:** The backdrop panel is already present. If still hard to read on mobile, increase `bg-black/55` to `bg-black/70` and the NOTE box from `bg-amber-400/20` to `bg-amber-400/30`. Verify on mobile.
 
-For a thorough approach: audit all pages that use text over background images and apply the same treatment. Key pages to check: Economy.tsx, Home.tsx, and any page using the PageBackground component with overlaid text.
-
-**Files to change:** `client/src/pages/Economy.tsx` (primary), and potentially a shared utility class
+**Files to change:** `client/src/pages/Play.tsx`
 
 ---
 
 ## Fix 7: Save button broken on contribution form (Critical)
 
-**Status:** CODED
+**Status:** INVESTIGATE AFTER RESTORE
 
-**Symptom:** On the crowd pooling page, the "Save Contribution Form" dialog appears (with a name field showing "Generic Contribution" and a "Set as default form" checkbox), but the Save button doesn't work when clicked. The Cancel button may also be affected.
+**Audit findings:**
+- CrowdPoolingTool.tsx is TRUNCATED at line 1412
+- Save button (line 769) has `onClick={confirmSaveToProfile}` and `type="button"`, which looks correct
+- `confirmSaveToProfile` (lines 272-298) validates name, normalizes email, calls `createSavedContribution.mutate()`
+- The mutation has `onSuccess`/`onError` handlers (lines 158-168)
+- Button has `disabled={createSavedContribution.isPending}`
+- No `<form>` wrapping the dialog, both buttons have `type="button"`
+- The code structure looks correct. The bug may be:
+  (a) the mutation endpoint failing silently (check tRPC server route)
+  (b) state issue where `saveName` is empty when it shouldn't be
+  (c) the truncated file causing a build error that prevents the component from rendering properly
 
-**Fix:** In CrowdPoolingTool.tsx (around line 726 based on earlier search), find the Save Contribution Form dialog. Debug why the Save button's onClick handler doesn't fire or doesn't complete. Common causes:
-- Missing onClick handler
-- Handler references stale state
-- The button is inside a form that submits instead of calling the handler
-- The dialog's event handling conflicts with the parent form
-- z-index issues with the button click target
+**Fix after restore:** First restore the file and verify it compiles. Then test the save flow. If the mutation fails, check `server/routes/` for the `savedContributions.create` endpoint. Add error logging if missing.
 
-Check the save handler logic. Make sure it calls the appropriate tRPC mutation or local state update and closes the dialog.
-
-**Files to change:** `client/src/components/CrowdPoolingTool.tsx`
+**Files to change:** `client/src/components/CrowdPoolingTool.tsx`, potentially server route
 
 ---
 
 ## Fix 8: Form text contrast site-wide (High)
 
-**Status:** CODED
+**Status:** PARTIALLY FIXED
 
-**Symptom:** Across multiple forms (Apply page, CrowdPooling contributions, tools submission), input text is too light against the light-colored form backgrounds. The input fields have a light green/gray tint with white or very light text, making entered values hard to read.
+**Audit findings:**
+- `input.tsx`: uses `text-foreground` (correct)
+- `textarea.tsx`: uses `text-foreground` (correct)
+- `label.tsx`: uses `text-foreground` (correct)
+- `select.tsx`: WAS using hardcoded `text-[#1a472a]`, NOW FIXED to `text-foreground` (see Fix A above)
+- CSS variable `--foreground` resolves to `oklch(0.33 0.07 155)` which is `#1a472a` (dark forest green), plenty of contrast on white backgrounds
+- The remaining contrast issue is likely page-specific: Apply.tsx helper text uses `text-[#1a472a]/80` (80% opacity) which is lighter on mobile
 
-**Fix:** This is likely a global CSS issue with form input styling. Check:
-1. `client/src/components/ui/input.tsx` and `textarea.tsx` for the base text color class
-2. `client/src/index.css` or `globals.css` for CSS variable definitions (`--input`, `--foreground`, etc.)
-3. Any Tailwind theme overrides in `tailwind.config.ts`
+**Remaining work:** After restoring truncated files, audit Apply.tsx helper text opacity values. Change any `text-[#1a472a]/80` to `text-[#1a472a]` for full contrast. Check if the dead `apply-form-dark` CSS class needs a definition or should be removed.
 
-The input text color should be `text-foreground` (mapped to near-black/dark color). If the inputs currently use a custom color that's too light, change to standard foreground. Placeholder text should be `text-muted-foreground`.
-
-Ensure these elements all use dark text:
-- Input values (what the user typed)
-- Select dropdown selected values
-- Textarea content
-- Form labels
-- Section headers within forms
-
-**Files to change:** `client/src/components/ui/input.tsx`, `client/src/components/ui/textarea.tsx`, `client/src/components/ui/select.tsx`, possibly `client/src/index.css`
+**Files to change:** `client/src/pages/Apply.tsx`, possibly `client/src/index.css`
 
 ---
 
@@ -158,24 +194,32 @@ Ensure these elements all use dark text:
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
 | - | Run Plays migrations 0137-0140 | Railway DB access | `npx tsx scripts/run-migration.ts --all` (after deploy) |
-| 7 | Reproduce Save button bug | Browser interaction needed | Click Save on crowd pooling form, check console for errors |
+| - | Push to git after Claude Code commits | git push requires auth | `git push origin main` |
+| 7 | Reproduce Save button bug on live site | Browser interaction needed | Click Save on crowd pooling form, check console |
 
-### CLAUDE CODE: already done or can be done without you
+### CLAUDE CODE: can be done without you
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Apply page form text readability | CODED |
-| 2 | Remove LOI suggestion box | CODED |
-| 3 | Quest detail modal scroll bug | CODED |
-| 4 | Homepage welcome section layout | CODED |
-| 5 | Landing 2x2 path cards redesign | CODED |
-| 6 | Token page readability | CODED |
-| 7 | Save button broken investigation | CODED |
-| 8 | Form text contrast site-wide | CODED |
+| - | Restore 6 truncated files from git | MUST DO FIRST |
+| - | Clean NUL bytes from 2 files | MUST DO FIRST |
+| A | Select component text-foreground fix | FIXED (by Cowork) |
+| B | Plays nav link in Navigation.tsx | FIXED (by Cowork) |
+| 1 | Apply page form readability tweaks | AFTER RESTORE |
+| 2 | LOI box investigation | AFTER RESTORE |
+| 3 | Quest modal scroll verification | AFTER RESTORE |
+| 4 | Homepage layout verification | AFTER RESTORE |
+| 5 | 2x2 path cards | ALREADY DONE, CLOSE |
+| 6 | Token page readability tweaks | AFTER RESTORE |
+| 7 | Save button debugging | AFTER RESTORE |
+| 8 | Form text contrast (remaining) | AFTER RESTORE |
+| - | Run ship gate (truncation + typecheck + build) | AFTER ALL FIXES |
 
 ### PRIORITY ORDER
 
-1. Fix 3 (quest modal scroll) and Fix 7 (save button): Critical, blocking user interaction
-2. Fix 1, 6, 8 (readability/contrast): High, affects all mobile users
-3. Fix 2 (remove LOI box): High, quick removal
-4. Fix 4, 5 (homepage layout): Medium, visual improvement
+1. **RESTORE TRUNCATED FILES** (blocking everything else)
+2. Fix 7 (save button) + Fix 3 (quest modal scroll): Critical
+3. Fix 1 + 6 + 8 (readability/contrast): High
+4. Fix 2 (LOI box investigation): High
+5. Fix 4 (homepage verification): Medium
+6. Ship gate, commit, push
