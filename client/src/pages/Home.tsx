@@ -325,43 +325,31 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Mission Description: one seamless mirrored parchment band
-             carrying ALL the intro copy in a single centered scrim. The
-             prior layout split text across two stacked map images; now
-             both maps mirror to form a single wide map and every word
-             sits inside it, centered on every device. */}
+        {/* Mission Description: one parchment band per breakpoint.
+             Desktop (md+) uses the original landscape village-map-scroll
+             as a single wide map with all the copy centered inside it.
+             Mobile uses a new portrait parchment (9:16) tall enough to
+             hold all three text blocks comfortably, split across the
+             height so nothing gets cropped on small screens. */}
         <section className="relative py-10 md:py-14">
           <div className="container max-w-6xl">
             <AnimatedSection animation="fade-in">
-              <div className="max-w-6xl mx-auto">
+              {/* Desktop band: single landscape map */}
+              <div className="hidden md:block max-w-6xl mx-auto">
                 <div className="relative w-full overflow-hidden rounded-2xl shadow-xl">
-                  <div
+                  <img
                     aria-hidden="true"
-                    className="flex w-full"
+                    src="/images/village-map-scroll.webp?v=5"
+                    alt=""
+                    className="w-full h-auto block"
                     style={{
                       filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.35))",
                     }}
-                  >
-                    <img
-                      src="/images/village-map-scroll.webp?v=5"
-                      alt=""
-                      className="w-1/2 h-auto block"
-                      style={{ objectFit: "cover" }}
-                    />
-                    <img
-                      src="/images/village-map-scroll.webp?v=5"
-                      alt=""
-                      className="w-1/2 h-auto block"
-                      style={{ objectFit: "cover", transform: "scaleX(-1)" }}
-                    />
-                  </div>
-                  {/* All copy centered in the band. ReadableScrim keeps
-                      every line legible against the parchment + page
-                      background at every viewport. */}
-                  <div className="absolute inset-0 flex items-center justify-center px-3 sm:px-6 md:px-10">
-                    <ReadableScrim block className="max-w-2xl text-center space-y-3 md:space-y-4 py-4 md:py-5">
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center px-8 lg:px-12">
+                    <ReadableScrim block className="max-w-2xl text-center space-y-4 py-5">
                       <p
-                        className="text-white text-sm sm:text-base md:text-lg leading-relaxed"
+                        className="text-white text-lg leading-relaxed"
                         style={{
                           fontFamily:
                             "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
@@ -379,7 +367,7 @@ export default function Home() {
                         </span>
                       </p>
                       <p
-                        className="text-white text-sm sm:text-base md:text-lg leading-relaxed"
+                        className="text-white text-lg leading-relaxed"
                         style={{
                           fontFamily:
                             "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
@@ -394,7 +382,70 @@ export default function Home() {
                         land projects across our movement.
                       </p>
                       <p
-                        className="text-[#f5b942] font-bold text-base sm:text-lg md:text-xl tracking-[0.01em]"
+                        className="text-[#f5b942] font-bold text-xl tracking-[0.01em]"
+                        style={{
+                          fontFamily:
+                            "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                        }}
+                      >
+                        Welcome to the Infinite Game.
+                      </p>
+                    </ReadableScrim>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile band: portrait parchment, text inside a single
+                  centered scrim so every line stays legible against the
+                  hand-drawn art. */}
+              <div className="md:hidden max-w-md mx-auto">
+                <div className="relative w-full overflow-hidden rounded-2xl shadow-xl">
+                  <img
+                    aria-hidden="true"
+                    src="/images/village-map-scroll-portrait.webp"
+                    alt=""
+                    className="w-full h-auto block"
+                    style={{
+                      filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.35))",
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center px-4">
+                    <ReadableScrim block className="w-full text-center space-y-3 py-4">
+                      <p
+                        className="text-white text-sm leading-relaxed"
+                        style={{
+                          fontFamily:
+                            "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                        }}
+                      >
+                        <span className="text-[#9de89d] font-bold">regen-civics</span>{" "}
+                        is a fund and an in-real-life game for supporting
+                        regenerative land projects and the{" "}
+                        <span className="text-[#f5b942] font-bold italic">
+                          ReGenerative Renaissance
+                        </span>{" "}
+                        <span className="text-white/90">
+                          (a movement to heal ourselves, our earth, our communities,
+                          and our bioregions).
+                        </span>
+                      </p>
+                      <p
+                        className="text-white text-sm leading-relaxed"
+                        style={{
+                          fontFamily:
+                            "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
+                        }}
+                      >
+                        We create quests and{" "}
+                        <span className="text-[#f5b942] font-bold italic">
+                          Infinite Games
+                        </span>{" "}
+                        that help people heal, and in doing so build new financial,
+                        economic, and governance systems that support and network
+                        land projects across our movement.
+                      </p>
+                      <p
+                        className="text-[#f5b942] font-bold text-base tracking-[0.01em]"
                         style={{
                           fontFamily:
                             "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', ui-serif, serif",
@@ -501,11 +552,19 @@ export default function Home() {
                         </div>
                       </Link>
 
+                      {/* Desktop (md+) always shows the description inline,
+                          no collapsible. Mobile keeps the More/Less toggle
+                          so the grid stays scannable on small screens. */}
+                      <div className="hidden md:block mt-3 pt-3 border-t border-white/15">
+                        <p className="text-white/85 text-sm leading-relaxed">
+                          {card.description}
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setExpandedPathCard(isExpanded ? null : card.id)}
                         aria-expanded={isExpanded}
-                        className="mt-3 inline-flex items-center gap-1 text-[10px] md:text-xs font-semibold uppercase tracking-wider text-white/65 hover:text-white transition-colors"
+                        className="md:hidden mt-3 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-white/65 hover:text-white transition-colors"
                       >
                         <ChevronDown
                           className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -515,8 +574,8 @@ export default function Home() {
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-3 pt-3 border-t border-white/15">
-                          <p className="text-white/85 text-xs md:text-sm leading-relaxed">
+                        <div className="md:hidden mt-3 pt-3 border-t border-white/15">
+                          <p className="text-white/85 text-xs leading-relaxed">
                             {card.description}
                           </p>
                         </div>

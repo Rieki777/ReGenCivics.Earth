@@ -36,6 +36,7 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
       // the explainer page; /community/decisions is the operational
       // pipeline mission control.
       { label: "Governance", sub: "How decisions get made", href: "/governance", icon: "Vote" },
+      { label: "Proposals", sub: "Submit and vote on community proposals", href: "/proposals", icon: "Vote" },
       { label: "Decisions", sub: "Decisions, proposals, and the pipeline", href: "/community/decisions", icon: "Vote" },
       { label: "The Game", sub: "Bionomics: how it all fits together", href: "/bionomics", icon: "wizards" },
       { label: "Game Mechanics", sub: "Tune the simulator", href: "/game-mechanics", icon: "SlidersHorizontal" },

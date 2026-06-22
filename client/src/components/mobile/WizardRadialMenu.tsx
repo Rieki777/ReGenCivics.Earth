@@ -28,7 +28,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench,
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote,
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
@@ -168,12 +168,17 @@ export function WizardRadialMenu() {
   // Tools shortcut, surfaced for land-steward and investor journeys.
   const toolsAction: Action = { key: "tools", label: "Tools", href: "/tools", Icon: Wrench };
 
+  // Proposals shortcut: every signed-in member can vote, Co-Creators can
+  // submit. The radial menu is the easiest place to reach it from any page.
+  const proposalsAction: Action = { key: "proposals", label: "Proposals", href: "/proposals", Icon: Vote };
+
   // Vertical stack order, top -> bottom. The list is rendered as a column
   // that grows upward from the trigger, so the LAST item sits closest to the
   // thumb. Quests is the primary anchor, so it lands nearest the trigger.
   const ACTIONS: Action[] = [
     musicAction,
     profileAction,
+    proposalsAction,
     communityAction,
     contextAction,
     ...(onLandOrInvestor ? [toolsAction] : []),

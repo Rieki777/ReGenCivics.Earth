@@ -118,16 +118,11 @@ const glossaryEntries: GlossaryEntry[] = [
     definition: "A governance token in the ReGen Civics ecosystem used for voting on proposals and community decisions. Earned through participation and contributions.",
     category: "Governance & Technology",
   },
-  {
-    term: "$Regen Token",
-    definition: "A utility token used within the ReGen Civics ecosystem to track contributions, reward participation, and facilitate value exchange between players, projects, and the fund.",
-    category: "Governance & Technology",
-  },
-  {
-    term: "$RCivics Token",
-    definition: "A utility token representing civic participation in the ReGen Civics ecosystem. Used for tracking engagement and earning governance privileges.",
-    category: "Governance & Technology",
-  },
+  // $Regen Token and $RCivics Token entries removed: the prior
+  // glossary copy described both as generic "utility tokens" which
+  // didn't reflect the Fund/Game split documented in
+  // CONTEXT_THE_TWO_GAMES.md. Token model lives on /tokenomics and
+  // /bionomics where the full picture is canonical.
 
   // Program & Community
   {

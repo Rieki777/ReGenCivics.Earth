@@ -151,18 +151,42 @@ export default function Proposals() {
               </p>
             </AnimatedSection>
 
-            {isCoCreatorPlus ? (
+            {isAuthenticated ? (
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full">
+                  <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-6 py-3 rounded-full min-h-[44px]">
                     <Plus className="w-4 h-4 mr-2" />
-                    New Proposal
+                    Submit a Proposal
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-[#1a472a] border border-white/20 text-white max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="text-white text-lg font-bold">Submit a Proposal</DialogTitle>
                   </DialogHeader>
+                  {!isCoCreatorPlus ? (
+                    <div className="mt-2 space-y-4">
+                      <p className="text-white/85 text-sm leading-relaxed">
+                        Submitting a proposal is reserved for the Co-Creator citizenship tier and above. Co-Creators have completed the Welcome Aboard quests, made their first contribution claim, and stepped into shared decision-making for the movement.
+                      </p>
+                      <p className="text-white/85 text-sm leading-relaxed">
+                        You can still vote on existing proposals and help shape the direction by signaling your support.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <a
+                          href="/quest"
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold text-sm min-h-[44px]"
+                        >
+                          Start the Welcome Quests
+                        </a>
+                        <a
+                          href="/profile?tab=citizenship"
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full border border-white/20 text-white hover:bg-white/10 font-semibold text-sm min-h-[44px]"
+                        >
+                          Check your tier
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
                   <div className="space-y-4 mt-2">
                     <input
                       value={title}
@@ -209,17 +233,21 @@ export default function Proposals() {
                       <p className="text-red-400 text-sm">{createMutation.error?.message || "Something went wrong."}</p>
                     )}
                   </div>
+                  )}
                 </DialogContent>
               </Dialog>
-            ) : isAuthenticated ? (
-              <p className="text-white/60 text-sm">Co-Creator tier or above required to submit proposals.</p>
             ) : (
               <a
                 href={getLoginUrl()}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold min-h-[44px]"
               >
                 Sign In to Participate
               </a>
+            )}
+            {isAuthenticated && !isCoCreatorPlus && (
+              <p className="text-white/60 text-xs mt-3">
+                Submitting needs the Co-Creator tier; voting is open to every signed-in member.
+              </p>
             )}
           </div>
         </section>

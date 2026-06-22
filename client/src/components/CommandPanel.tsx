@@ -166,8 +166,8 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
                 <p className="text-[11px] text-white/30 text-center py-4">No page-specific tools on this page.</p>
               )}
 
-              {/* Guide + Search quick buttons */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+              {/* Guide + Proposals + Search quick buttons */}
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10">
                 <button
                   onClick={guide.toggle}
                   aria-label="Guide"
@@ -180,6 +180,14 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
                   <span className="text-sm">?</span>
                   <span className="text-[9px]">Guide</span>
                 </button>
+                <a
+                  href="/proposals"
+                  aria-label="Proposals"
+                  className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80"
+                >
+                  <NavIcon name="Vote" className="w-4 h-4" />
+                  <span className="text-[9px]">Proposals</span>
+                </a>
                 <button onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))} aria-label="Search" className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80">
                   <Search className="w-4 h-4" />
                   <span className="text-[9px]">Search</span>
