@@ -54,4 +54,10 @@ export const ENV = {
   farcasterHandle: process.env.FARCASTER_HANDLE ?? "",
   // Riverside.fm webhook signing secret
   riversideWebhookSecret: process.env.RIVERSIDE_WEBHOOK_SECRET ?? "",
+  // Movement Coordination Engine trigger: the YouTube channel whose
+  // upload RSS feed the worker polls every 10 min to discover new
+  // recordings. Default is @SEEDSRegenerativeEconomies (confirmed in
+  // CLAUDE_CODE_BUILD_PROMPT_MOVEMENT_ENGINE.md). Override via Railway
+  // when the canonical channel handle changes.
+  youtubeChannelId: process.env.YOUTUBE_CHANNEL_ID ?? "UCzuomEZ3aNbr2LEreGlvWGQ",
 };

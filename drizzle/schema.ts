@@ -2247,16 +2247,115 @@ export const recordings = mysqlTable("recordings", {
   // Raw webhook payload for debugging
   rawWebhook: json("rawWebhook"),
 
+  // Movement Coordination Engine columns (migration 0142). Old rows
+  // read as recordingKind='raw' with all other coordination fields null.
+  youtubeVideoId: varchar("youtubeVideoId", { length: 32 }),
+  recordingKind: mysqlEnum("recordingKind", ["raw", "edited"]).default("raw").notNull(),
+  editedYoutubeUrl: varchar("editedYoutubeUrl", { length: 512 }),
+  overview: text("overview"),
+  decisionsJson: json("decisionsJson"),
+  actionItemsJson: json("actionItemsJson"),
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
   index("recordings_riversideId_idx").on(table.riversideId),
   index("recordings_sessionDate_idx").on(table.sessionDate),
   index("recordings_featured_idx").on(table.featured),
+  index("recordings_youtubeVideoId_idx").on(table.youtubeVideoId),
 ]));
 
 export type Recording = typeof recordings.$inferSelect;
 export type InsertRecording = typeof recordings.$inferInsert;
+
+/**
+ * roleHolders: closes Gap A in the Movement Coordination Engine spec.
+ * One row per sociocratic role from `client/src/data/gameRoles.ts`. A
+ * filled `userId` ties a real human to a role so a task mentioned in a
+ * call can route to a profile. Null `userId` means the role is open and
+ * any task targeting it lands on the Opportunity board.
+ *
+ * `aliases` stores name + handle variants the LLM may hear in a
+ * transcript ("the Gardener", first name, nickname). The extract-tasks
+ * pass matches these alongside `roleSlug` so role attribution survives
+ * loose spoken language.
+ */
+export const roleHolders = mysqlTable("roleHolders", {
+  id: int("id").autoincrement().primaryKey(),
+  roleSlug: varchar("roleSlug", { length: 64 }).notNull(),
+  roleTitle: varchar("roleTitle", { length: 128 }).notNull(),
+  kind: mysqlEnum("kind", ["game", "fund"]).default("game").notNull(),
+  circle: varchar("circle", { length: 128 }),
+  userId: int("userId"),
+  season: varchar("season", { length: 50 }),
+  isActive: tinyint("isActive").default(1).notNull(),
+  notifyEmail: tinyint("notifyEmail").default(1).notNull(),
+  notifyInApp: tinyint("notifyInApp").default(1).notNull(),
+  aliases: json("aliases"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  bySlug: index("roleHolders_roleSlug_idx").on(t.roleSlug),
+  byUser: index("roleHolders_userId_idx").on(t.userId),
+}));
+export type RoleHolder = typeof roleHolders.$inferSelect;
+export type InsertRoleHolder = typeof roleHolders.$inferInsert;
+
+/**
+ * callTasks: closes Gap B in the Movement Coordination Engine spec.
+ * Data-driven tasks an LLM (or a human) writes into the system from a
+ * recorded call. Lifecycle:
+ *   proposed -> approved -> open -> claimed -> submitted -> completed
+ *                                                       \-> declined
+ *                                                       \-> expired
+ * The two human gates are approval (admin gate before any token-bearing
+ * task reaches a person) and consent (circle steward gate before the
+ * bounty is credited). On `completed` the `rewardLedgerId` carries the
+ * `user_token_ledger` row id created by `creditPrivateTokens` with
+ * source tag `call_task_bounty`.
+ */
+export const callTasks = mysqlTable("callTasks", {
+  id: int("id").autoincrement().primaryKey(),
+  recordingId: int("recordingId").notNull(),
+  sourceVideoId: varchar("sourceVideoId", { length: 32 }).notNull(),
+  roleSlug: varchar("roleSlug", { length: 64 }),
+  assigneeUserId: int("assigneeUserId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  summary: text("summary"),
+  sociocraticOverview: json("sociocraticOverview"),
+  bountyTokenType: varchar("bountyTokenType", { length: 16 }).default("regen").notNull(),
+  bountyAmount: int("bountyAmount").default(0).notNull(),
+  evidenceQuote: text("evidenceQuote"),
+  evidenceTimestampSeconds: int("evidenceTimestampSeconds"),
+  status: mysqlEnum("status", [
+    "proposed",
+    "approved",
+    "open",
+    "claimed",
+    "submitted",
+    "completed",
+    "declined",
+    "expired",
+  ]).default("proposed").notNull(),
+  createdByAgent: varchar("createdByAgent", { length: 64 }).default("coordination-engine").notNull(),
+  approvedBy: int("approvedBy"),
+  claimedAt: timestamp("claimedAt"),
+  submittedArtifactUrl: varchar("submittedArtifactUrl", { length: 512 }),
+  submittedArtifactText: text("submittedArtifactText"),
+  consentedBy: int("consentedBy"),
+  completedAt: timestamp("completedAt"),
+  rewardLedgerId: int("rewardLedgerId"),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  byAssignee: index("callTasks_assignee_idx").on(t.assigneeUserId, t.status),
+  byRole: index("callTasks_role_idx").on(t.roleSlug, t.status),
+  byRecording: index("callTasks_recording_idx").on(t.recordingId),
+  byStatus: index("callTasks_status_idx").on(t.status),
+}));
+export type CallTask = typeof callTasks.$inferSelect;
+export type InsertCallTask = typeof callTasks.$inferInsert;
 
 /**
  * Events table

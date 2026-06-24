@@ -194,7 +194,7 @@ Every economic feature on ReGen Civics operates against the **private ledger** f
 
 **4. One-way flow private → public.** Tokens move from private to public when the user clicks Claim on the profile dialog and completes a Hypha redeem-tokens proposal. Once on-chain, they live on Base: tradable, transferable, burnable on Base markets. The system is single-direction; on-chain holdings stay on chain and don't re-enter the private ledger.
 
-**Default for new economic features.** Use `creditPrivateTokens` with a new `source` tag (free string; pick one matching the existing pattern: `gratitude_received`, `harvest`, `quest_completion`, `seeds_claim`, `claim_pending`, `claimed_to_base`, `claim_released`, `manual`). On-chain reads happen only via the claim bridge (`playerProfiles.requestClaim`) or the periodic balance sync (`playerProfiles.syncTokens`). Look for an existing pattern (gratitude.ts, game.ts harvest, players.ts quest_completion) before writing anything new.
+**Default for new economic features.** Use `creditPrivateTokens` with a new `source` tag (free string; pick one matching the existing pattern: `gratitude_received`, `harvest`, `quest_completion`, `seeds_claim`, `claim_pending`, `claimed_to_base`, `claim_released`, `call_task_bounty`, `manual`). On-chain reads happen only via the claim bridge (`playerProfiles.requestClaim`) or the periodic balance sync (`playerProfiles.syncTokens`). Look for an existing pattern (gratitude.ts, game.ts harvest, players.ts quest_completion, callTasks.ts call_task_bounty) before writing anything new.
 
 **Key surfaces:**
 - `db.creditPrivateTokens(...)` — the only legitimate write to private balances

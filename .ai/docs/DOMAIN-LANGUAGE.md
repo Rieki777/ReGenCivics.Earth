@@ -175,6 +175,18 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 ---
 
+## Movement Coordination Engine (Phase 1 onwards)
+
+**Call task** (always two words, "call" as in "the recorded call", not "phone call"). A data-driven task that lives in the `callTasks` table, written into the system either by the LLM understanding pass on a recorded session or by a human in the admin form. Carries a sociocratic overview (purpose, steps, definition of done, consent circle), a $ReGen or $RCivics bounty, and an evidence quote + timestamp pointing back to the moment in the call that produced it. Lifecycle: proposed -> approved -> open -> claimed -> submitted -> completed (or declined / expired). Reward path always goes through `creditPrivateTokens` with source tag `call_task_bounty`.
+
+**Role holder.** A row in `roleHolders` that ties one sociocratic role (from `client/src/data/gameRoles.ts`) to one `userId`. The "table for sending unique messages" Rye asked for. A filled holder means a call task targeting that role routes to that person's profile; an empty holder means the task surfaces on the Opportunity board for the circle to pick up. Aliases on the row let the LLM match transcript variants ("the Gardener", first name) back to the right role.
+
+**Two human gates.** The Movement Coordination Engine has exactly two human checkpoints between a recorded call and a token payout. (1) Admin approval at `status: proposed` so an LLM misreading "Sam, can you look at the water rights" cannot silently mint tokens or spam a holder. (2) Circle steward consent at `status: submitted` so the definition of done is met before the bounty credits. Both are designed to be bulk and fast, not bureaucratic.
+
+**Coordination engine.** Shorthand for the whole pipeline: YouTube RSS poll, ingest + transcribe, two LLM passes (synthesize + extract-tasks), admin gate, route to holder or Opportunity board, claim / submit / consent, `creditPrivateTokens(..., "call_task_bounty", callTaskId)`. Spec: `MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`. Video pipeline stages: `CLAUDE_CODE_PROMPT_2026-06-23_RIVERSIDE_YOUTUBE_PIPELINE.md`.
+
+---
+
 ## Things we don't say
 
 - "Ecosystem" by itself is too vague. Say "the ReGen Civics network" or "this alliance" or "the Fund + Game system".
