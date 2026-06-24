@@ -80,6 +80,16 @@ pnpm build
 
 A build pass is the strongest evidence available without a browser.
 
+### Gate 4 — Link and anchor integrity
+
+Run whenever you add, change, or remove a route, a `<Link>`/`navigate()`/`href`, or an in-page anchor. Catches links that point at routes which do not exist (they 404 to the NotFound page) and `#fragment` links with no matching target.
+
+```bash
+node scripts/audit-links.mjs
+```
+
+Exit code 0 means every internal link and anchor resolves. Exit 1 lists each broken link as `raw <- file:line`. Fix it, or add a justified entry to the `ALLOW` list at the top of `scripts/audit-links.mjs`. This guard found `/campaigns/${id}` and `/application/${app.id}` shipping to users as dead links on 2026-06-23.
+
 ## Required in every fixes document
 
 The `regen-fixes-handoff` skill requires a Handoff Breakdown table. Every CLAUDE CODE row needs an `Evidence` column with a concrete artifact:
@@ -128,6 +138,7 @@ All of these mean: run the gates.
 python3 scripts/audit-truncation.py   # gate 1
 rg -g '*.css' '<className-you-added>' client/src/   # gate 2, per change
 pnpm typecheck                                         # gate 3
+node scripts/audit-links.mjs           # gate 4, when routes/links/anchors changed
 ```
 
-Three commands. Less than two minutes. Prevents the pattern that shipped 15 truncated files and 5 no-op CSS references to production.
+Four checks. Less than two minutes. Prevents the patterns that shipped 15 truncated files, 5 no-op CSS references, and dead route links to production.

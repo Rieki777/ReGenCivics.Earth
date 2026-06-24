@@ -637,10 +637,17 @@ export const callTasksRouter = router({
         .where(eq(recordings.id, input.recordingId))
         .limit(1);
       if (!rec) throw new TRPCError({ code: "NOT_FOUND" });
-      const normalized = input.editedYoutubeUrl?.trim() || null;
-      if (normalized && normalized.length > 0) {
-        try { new URL(normalized.startsWith("http") ? normalized : `https://www.youtube.com/watch?v=${normalized}`); }
+      const raw = input.editedYoutubeUrl?.trim() ?? "";
+      let normalized: string | null = null;
+      if (raw.length > 0) {
+        // Accept either a full URL or a bare 11-char YouTube videoId
+        // (the kind we extract from RSS in coordinationPipeline). Store
+        // the canonical URL form so the value is click-through anywhere
+        // it's rendered (notification link, admin tab anchor).
+        const candidate = raw.startsWith("http") ? raw : `https://www.youtube.com/watch?v=${raw}`;
+        try { new URL(candidate); }
         catch { throw new TRPCError({ code: "BAD_REQUEST", message: "Not a valid URL or video id" }); }
+        normalized = candidate;
       }
       await db
         .update(recordings)
