@@ -10,8 +10,30 @@ export function ScrollToTop() {
   const [location] = useLocation();
   const [showButton, setShowButton] = useState(false);
 
-  // Scroll to top on route change
+  // Scroll to top on route change, UNLESS the URL carries a hash fragment.
+  // When there's a hash (e.g. /bionomics#local-food-economies), scroll to that
+  // section instead of clobbering the anchor with a jump to the top. Long pages
+  // mount sections asynchronously, so retry briefly until the target exists.
   useEffect(() => {
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    if (hash && hash.length > 1) {
+      const id = decodeURIComponent(hash.slice(1));
+      const scrollToHash = () => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "instant", block: "start" });
+          return true;
+        }
+        return false;
+      };
+      if (scrollToHash()) return;
+      let attempts = 0;
+      const timer = window.setInterval(() => {
+        attempts += 1;
+        if (scrollToHash() || attempts >= 20) window.clearInterval(timer);
+      }, 100);
+      return () => window.clearInterval(timer);
+    }
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location]);
 

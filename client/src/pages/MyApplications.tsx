@@ -126,7 +126,7 @@ export default function MyApplications() {
                 <Card
                   key={app.id}
                   className="p-6 bg-white hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/application/${app.id}`)}
+                  onClick={() => navigate(`/apply/status`)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -170,7 +170,7 @@ export default function MyApplications() {
                       className="border-[#7dd87d] text-[#4a7c59] ml-4"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/application/${app.id}`);
+                        navigate(`/apply/status`);
                       }}
                     >
                       View Details

@@ -139,7 +139,7 @@ export default function CampaignManage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <Button 
-              onClick={() => navigate(`/campaigns/${id}`)}
+              onClick={() => navigate(`/campaign/${id}`)}
               variant="outline"
               className="w-full"
             >
@@ -335,7 +335,7 @@ export default function CampaignManage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`/campaigns/${id}`)}
+                onClick={() => navigate(`/campaign/${id}`)}
                 className="mb-2 -ml-2 text-[#1a472a]/80 hover:text-[#1a472a]"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
