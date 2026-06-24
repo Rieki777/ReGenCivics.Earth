@@ -532,6 +532,17 @@ export const callTasksRouter = router({
     }),
 
   /**
+   * Run the Phase 5 flywheel agents on demand. Same code path the
+   * /api/cron/coordination-flywheel endpoint uses. Lets Rye verify a
+   * config change (new threshold, new role) without waiting for the
+   * next cron tick.
+   */
+  runFlywheelNow: adminProcedure.mutation(async () => {
+    const { runCoordinationFlywheel } = await import("../jobs/coordinationFlywheel");
+    return runCoordinationFlywheel();
+  }),
+
+  /**
    * Circle steward consents and triggers the reward. Admin-gated in
    * Phase 1 (every admin can consent). Phase 4 may narrow this to "the
    * steward of the task's consentCircle" once that mapping exists.

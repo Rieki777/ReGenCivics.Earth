@@ -586,6 +586,34 @@ async function startServer() {
     }
   });
 
+  // ── Movement Coordination Engine flywheel cron endpoint ─────────────────
+  // Called daily by Railway cron: POST /api/cron/coordination-flywheel
+  // Runs the two Phase 5 agents: stale-claims (nudge at the configured
+  // window, release after the configured window) and roles-reconciliation
+  // (diff client/src/data/gameRoles.ts against the roleHolders table,
+  // insert new roles, refresh drifted titles/circles/aliases). Both
+  // agents are idempotent. Set CRON_SECRET env var and pass it as a
+  // Bearer token in the cron job command.
+  app.post("/api/cron/coordination-flywheel", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runCoordinationFlywheel } = await import("../jobs/coordinationFlywheel");
+      const report = await runCoordinationFlywheel();
+      return res.json({ ok: true, ...report });
+    } catch (err: any) {
+      log.error("cron coordination-flywheel failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Tier progression detector cron endpoint ─────────────────────────────────
   // Called every 15 minutes by Railway cron: POST /api/cron/tier-detector
   // Walks every user with at least one declared path and runs the

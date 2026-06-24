@@ -301,6 +301,7 @@ export function AdminTasksTab() {
     onSuccess: () => { setSelected(new Set()); queue.refetch(); },
   });
   const runNow = trpc.callTasks.runPipelineNow.useMutation({ onSuccess: () => queue.refetch() });
+  const runFlywheel = trpc.callTasks.runFlywheelNow.useMutation({ onSuccess: () => queue.refetch() });
 
   const rows = (queue.data ?? []) as QueueRow[];
   const allSelected = useMemo(
@@ -358,7 +359,24 @@ export function AdminTasksTab() {
             {runNow.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
             Run pipeline now
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => runFlywheel.mutate()}
+            disabled={runFlywheel.isPending}
+            title="Run the stale-claims and roles-reconciliation agents on demand"
+          >
+            {runFlywheel.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <CheckCheck className="w-3.5 h-3.5 mr-1" />}
+            Run flywheel
+          </Button>
         </div>
+
+        {runFlywheel.data && (
+          <p className="text-xs text-[#1a472a]/80 px-1">
+            Flywheel: {runFlywheel.data.staleClaims.nudged} nudged, {runFlywheel.data.staleClaims.expired} released; roles {runFlywheel.data.rolesReconcile.inserted} new, {runFlywheel.data.rolesReconcile.updated} updated, {runFlywheel.data.rolesReconcile.unchanged} unchanged.
+          </p>
+        )}
 
         {/* Bulk row, only for proposed */}
         {activeStatus === "proposed" && rows.length > 0 && (
