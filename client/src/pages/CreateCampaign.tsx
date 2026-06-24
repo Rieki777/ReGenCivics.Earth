@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import SEO, { pageSEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -825,6 +826,7 @@ export default function CreateCampaign() {
   // Main campaign creator
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f0f7f0] to-[#f0f7f0]">
+      <SEO {...pageSEO.createCampaign} />
       
       {/* Hero Image */}
       <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden">

@@ -113,12 +113,7 @@ const glossaryEntries: GlossaryEntry[] = [
     definition: "A Layer 2 blockchain built by Coinbase, offering low transaction costs and high speed. ReGen Civics chose Base for its accessibility, security, and alignment with mainstream adoption.",
     category: "Governance & Technology",
   },
-  {
-    term: "RGVoice Token",
-    definition: "A governance token in the ReGen Civics ecosystem used for voting on proposals and community decisions. Earned through participation and contributions.",
-    category: "Governance & Technology",
-  },
-  // $Regen Token and $RCivics Token entries removed: the prior
+  // $Regen Token, $RCivics Token, and RGVoice Token entries removed: the prior
   // glossary copy described both as generic "utility tokens" which
   // didn't reflect the Fund/Game split documented in
   // CONTEXT_THE_TWO_GAMES.md. Token model lives on /tokenomics and

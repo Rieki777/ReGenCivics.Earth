@@ -99,19 +99,27 @@ export function AdminNotificationCenter({ open, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex justify-end"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-notif-title"
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+    >
       <div
         className="w-full max-w-sm h-full bg-[#f8f5f0] border-l border-[#1a472a]/10 shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-[#1a472a]/10 bg-white">
           <div>
-            <h2 className="font-semibold text-[#1a472a]">Notification Center</h2>
+            <h2 id="admin-notif-title" className="font-semibold text-[#1a472a]">Notification Center</h2>
             <p className="text-xs text-[#1a472a]/80">{notifications.length} unhandled</p>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-[#1a472a]/5 text-[#1a472a]/80 transition-colors"
+            aria-label="Close"
           >
             <X className="w-4 h-4" />
           </button>

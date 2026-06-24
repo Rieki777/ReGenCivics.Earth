@@ -7,6 +7,7 @@
 
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import SEO, { pageSEO } from "@/components/SEO";
 import {
   BookOpen,
   ArrowRight,
@@ -205,6 +206,7 @@ export default function ReGenCoCreatorsGuide() {
 
   return (
     <>
+      <SEO {...pageSEO.coCreatorsGuide} />
       {/* HERO */}
       <section className="py-24 bg-gradient-to-br from-emerald-900 to-teal-800 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">

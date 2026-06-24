@@ -143,17 +143,37 @@ export const campaignsRouter = router({
       return { id: campaignId, success: true };
     }),
 
-  // Get contributions for a campaign
+  // Get contributions for a campaign — public view strips PII.
+  // Use getContributionsForOwner for management views that need full details.
   getContributions: publicProcedure
     .input(z.object({
       campaignId: z.number(),
       status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn', 'fulfilled']).optional(),
     }))
     .query(async ({ input }) => {
-      if (input.status) {
-        return await db.getContributionsByCampaignAndStatus(input.campaignId, input.status);
+      const rows = input.status
+        ? await db.getContributionsByCampaignAndStatus(input.campaignId, input.status)
+        : await db.getContributionsByCampaign(input.campaignId);
+      // Strip PII before returning to anonymous callers.
+      return rows.map(({ contributorEmail: _e, contributorPhone: _p, contributorBio: _b, contributorNotes: _n, ...safe }) => safe);
+    }),
+
+  // Get contributions with full PII — campaign owner or admin only.
+  getContributionsForOwner: protectedProcedure
+    .input(z.object({
+      campaignId: z.number(),
+      status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn', 'fulfilled']).optional(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const camp = await db2.select({ userId: campaignsTable.userId }).from(campaignsTable).where(eq(campaignsTable.id, input.campaignId)).limit(1);
+      if (!camp[0] || (camp[0].userId !== ctx.user.id && ctx.user.role !== 'admin')) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not the campaign owner' });
       }
-      return await db.getContributionsByCampaign(input.campaignId);
+      return input.status
+        ? await db.getContributionsByCampaignAndStatus(input.campaignId, input.status)
+        : await db.getContributionsByCampaign(input.campaignId);
     }),
 
   // Submit a contribution to a campaign

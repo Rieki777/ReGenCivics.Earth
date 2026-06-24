@@ -3,10 +3,12 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle2, Home, FileText } from "lucide-react";
 import { Link } from "wouter";
 import { BackButton } from "@/components/BackButton";
+import SEO from "@/components/SEO";
 
 export default function ApplySuccess() {
   return (
     <div className="min-h-screen bg-[#f0ebe3] flex items-center justify-center py-12">
+      <SEO title="Application Submitted | ReGen Civics" description="Your land project application has been submitted. We'll be in touch soon." noIndex />
       <BackButton />
       <div className="container max-w-2xl">
         <Card className="p-8 md:p-12 text-center bg-white">

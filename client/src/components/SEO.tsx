@@ -17,6 +17,7 @@ interface SEOProps {
   author?: string;
   publishedTime?: string;
   breadcrumbs?: Array<{ name: string; url: string }>;
+  noIndex?: boolean;
 }
 
 const BASE_URL = 'https://regencivics.earth';
@@ -32,7 +33,8 @@ export function SEO({
   type = 'website',
   author,
   publishedTime,
-  breadcrumbs
+  breadcrumbs,
+  noIndex = false,
 }: SEOProps) {
   const [location] = useLocation();
   const effectiveUrl = url ?? location;
@@ -70,6 +72,8 @@ export function SEO({
     setMetaTag('og:title', fullTitle, true);
     setMetaTag('og:description', description, true);
     setMetaTag('og:image', fullImage, true);
+    setMetaTag('og:image:width', '1200', true);
+    setMetaTag('og:image:height', '630', true);
     setMetaTag('og:image:alt', imageAlt, true);
     setMetaTag('og:url', fullUrl, true);
     setMetaTag('og:type', type, true);
@@ -85,7 +89,7 @@ export function SEO({
     setMetaTag('twitter:site', '@ReGenCivics');
 
     // Additional SEO tags
-    setMetaTag('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+    setMetaTag('robots', noIndex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
     
     // Article-specific tags
     if (type === 'article' && publishedTime) {
@@ -160,7 +164,7 @@ export const pageSEO = {
     title: 'Quests: Regenerative Actions & Rewards',
     description: 'Quests are how you participate. Each one moves healing into the world: your body, your land, your community. Earn rewards doing the work that actually matters.',
     keywords: 'regenerative quests, impact actions, earn tokens, food forest, gut health, regenerative lifestyle, sustainable living',
-    image: '/og/quest.webp',
+    image: '/og/quest.jpg',
     url: '/quest'
   },
   team: {
@@ -202,35 +206,35 @@ export const pageSEO = {
     title: 'Connect With Us | ReGen Civics',
     description: 'Get in touch with the ReGen Civics team. Whether you\'re an investor, land project, alliance partner, or player, we want to hear from you.',
     keywords: 'contact regenerative fund, impact investing contact, regenerative community, partnership inquiry',
-    image: 'https://regencivics.earth/og/connect.webp',
+    image: 'https://regencivics.earth/og/connect.jpg',
     url: '/connect'
   },
   map: {
     title: 'Global Project Map | ReGen Civics',
     description: 'Land projects, alliance orgs, and players mapped across the world. See where regeneration is happening right now.',
     keywords: 'regenerative projects map, ecovillage locations, sustainable communities, global regeneration, land project directory',
-    image: 'https://regencivics.earth/og/map.webp',
+    image: 'https://regencivics.earth/og/map.jpg',
     url: '/map'
   },
   fund: {
     title: 'The ReGen Civics Fund | Regenerative Land Investment',
     description: 'ReGen Civics runs a venture fund for regenerative land projects. Real land, diversified portfolio, community governed. Season 2 starts September 2026.',
     keywords: 'regenerative fund, land investment, impact fund, regenerative capital, crowd-pooling, land project funding',
-    image: 'https://regencivics.earth/og/fund.webp',
+    image: 'https://regencivics.earth/og/fund.jpg',
     url: '/fund'
   },
   crowdPooling: {
     title: 'Crowd Pooling Tool | ReGen Civics',
     description: 'Pool capital with aligned investors to fund regenerative land projects. Coordinated impact, land-backed, and community governed.',
     keywords: 'crowd pooling, regenerative investing, pool capital, land project funding, collaborative investment',
-    image: 'https://regencivics.earth/og/crowd-pooling.webp',
+    image: 'https://regencivics.earth/og/crowd-pooling.jpg',
     url: '/crowd-pooling'
   },
   crowdPoolingProjects: {
     title: 'Land Project Campaigns | ReGen Civics Crowd Pooling',
     description: 'Browse active crowd pooling campaigns from regenerative land projects. Find projects aligned with your values and contribute directly.',
     keywords: 'land project campaigns, crowd pooling projects, regenerative investment campaigns, ecovillage funding',
-    image: 'https://regencivics.earth/og/crowd-pooling.webp',
+    image: 'https://regencivics.earth/og/crowd-pooling.jpg',
     url: '/crowd-pooling-projects'
   },
   riskDisclosure: {
@@ -272,7 +276,7 @@ export const pageSEO = {
     title: 'Community Forum | ReGen Civics',
     description: 'The ReGen Civics forum. Where players, investors, land stewards, and builders connect, coordinate, and tell the truth.',
     keywords: 'regenerative community forum, impact investing discussion, ecovillage community, regenerative economy discussion, land project forum',
-    image: '/og/community.webp',
+    image: '/og/community.jpg',
     url: '/community'
   },
   land: {
@@ -399,7 +403,7 @@ export const pageSEO = {
     title: 'Regen Civilization Tools Library | ReGen Civics',
     description: 'Every tool the ReGenerative Renaissance needs. Software, hardware, governance, currency, food systems. Describe your challenge, find your tools.',
     keywords: 'regenerative tools, community tools, governance tools, DAO tools, food systems, permaculture tools, open source',
-    image: '/og/tools.webp',
+    image: '/og/tools.jpg',
     url: '/tools'
   },
   healTheLand: {

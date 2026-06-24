@@ -244,14 +244,21 @@ function ArchetypeCard({ archetype }: { archetype: typeof archetypes[0] }) {
 // Role Card Modal Component
 function RoleModal({ role, onClose }: { role: typeof openRoles[0], onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div 
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="role-modal-title"
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+    >
+      <div
         className="bg-gradient-to-br from-[#1a472a] to-[#0d2818] rounded-2xl p-8 max-w-lg w-full border border-[#7dd87d]/30 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-start mb-6">
-          <h3 className="text-2xl font-bold text-white">{role.title}</h3>
-          <button onClick={onClose} className="text-white/60 hover:text-white">
+          <h3 id="role-modal-title" className="text-2xl font-bold text-white">{role.title}</h3>
+          <button onClick={onClose} className="text-white/60 hover:text-white" aria-label="Close">
             <X className="w-6 h-6" />
           </button>
         </div>

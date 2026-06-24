@@ -223,50 +223,6 @@
   --sidebar-ring: oklch(0.60 0.15 145);
 }
 
-/* Light mode: softer overlays, lighter glass panels */
-:root:not(.dark) .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(26, 71, 42, 0.2);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-:root:not(.dark) .glass-panel-light {
-  background: rgba(255, 255, 255, 0.65);
-  border-color: rgba(26, 71, 42, 0.15);
-}
-:root:not(.dark) .glass-panel p,
-:root:not(.dark) .glass-panel li,
-:root:not(.dark) .glass-panel span:not([class*="text-"]) {
-  color: #1a472a;
-  text-shadow: none;
-}
-:root:not(.dark) .glass-panel h1,
-:root:not(.dark) .glass-panel h2,
-:root:not(.dark) .glass-panel h3,
-:root:not(.dark) .glass-panel h4 {
-  color: #1a472a;
-}
-/* Fix: inputs/textareas inside glass-panel get white text in light mode (bg becomes near-white) */
-:root:not(.dark) .glass-panel input,
-:root:not(.dark) .glass-panel textarea,
-:root:not(.dark) .glass-panel select {
-  color: #1a472a !important;
-  background: rgba(26, 71, 42, 0.06) !important;
-  border-color: rgba(26, 71, 42, 0.25) !important;
-}
-:root:not(.dark) .glass-panel input::placeholder,
-:root:not(.dark) .glass-panel textarea::placeholder {
-  color: rgba(26, 71, 42, 0.35) !important;
-}
-:root:not(.dark) .text-shadow-strong {
-  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8), 0 2px 8px rgba(255, 255, 255, 0.5);
-}
-:root:not(.dark) .text-shadow-subtle {
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
-}
-:root:not(.dark) .text-shadow-glow {
-  text-shadow: 0 0 10px rgba(26, 71, 42, 0.3), 0 1px 3px rgba(255, 255, 255, 0.5);
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;

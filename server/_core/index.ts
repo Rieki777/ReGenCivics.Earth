@@ -241,7 +241,16 @@ async function startServer() {
   // endpoint legitimately needs more than 2mb of JSON, it should mount a
   // route-specific express.json({ limit: "Nmb" }) inline rather than
   // raising the global default.
-  app.use(express.json({ limit: "2mb" }));
+  // Capture the raw bytes for webhook signature verification before json() parses them.
+  // Handlers read (req as any).rawBody; falls back to JSON.stringify(req.body) if absent.
+  app.use(express.json({
+    limit: "2mb",
+    verify: (req: any, _res, buf, encoding) => {
+      if (typeof req.url === "string" && req.url.startsWith("/api/webhooks/")) {
+        req.rawBody = buf.toString((encoding as BufferEncoding) || "utf8");
+      }
+    },
+  }));
   app.use(express.urlencoded({ limit: "2mb", extended: true }));
 
   // CSRF token endpoint, issues a CSRF token tied to the session cookie.

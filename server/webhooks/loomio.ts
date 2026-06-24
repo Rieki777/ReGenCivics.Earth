@@ -491,7 +491,7 @@ export async function syncLoomioSubgroups(userId: number): Promise<{ ok: boolean
 export function registerLoomioWebhookRoutes(app: import("express").Express) {
   app.post("/api/webhooks/loomio", async (req: import("express").Request, res: import("express").Response) => {
     const sig = req.header("x-loomio-signature") ?? req.header("X-Loomio-Signature");
-    const rawBody = JSON.stringify(req.body ?? {});
+    const rawBody = (req as any).rawBody ?? JSON.stringify(req.body ?? {});
     if (!verifyLoomioSignature(rawBody, sig)) {
       log.warn("signature verification failed");
       return res.status(401).json({ error: "invalid signature" });

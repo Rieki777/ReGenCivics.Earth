@@ -10,9 +10,10 @@
  */
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { X, ExternalLink, Link2, Leaf, AlertCircle } from "lucide-react";
+import { X, ExternalLink, Link2, Leaf, AlertCircle, LogIn } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 
 interface SubmitToDAOModalProps {
   isOpen: boolean;
@@ -71,7 +72,10 @@ export function SubmitToDAOModal({
       setTouched(true);
       return;
     }
-    if (!user) return;
+    if (!user) {
+      window.location.href = getLoginUrl();
+      return;
+    }
 
     createBridge.mutate({
       questId,
@@ -115,7 +119,24 @@ export function SubmitToDAOModal({
             </p>
           </div>
 
-          {noUrlYet ? (
+          {!user ? (
+            /* Not signed in — show auth CTA */
+            <div className="text-center py-4">
+              <div className="w-12 h-12 rounded-full bg-[#f0ebe3] flex items-center justify-center mx-auto mb-3">
+                <LogIn className="w-6 h-6 text-[#4a7c59]" />
+              </div>
+              <h3 className="font-bold text-[#1a472a] mb-2">Sign in to earn and submit</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                You'll earn +{regenReward} $ReGen when your Hypha proposal is confirmed. Sign in first to submit your deliverable.
+              </p>
+              <button
+                onClick={() => { window.location.href = getLoginUrl(); }}
+                className="w-full py-2.5 rounded-xl bg-[#4a7c59] text-white font-semibold hover:bg-[#1a472a] transition-colors"
+              >
+                Sign in to continue
+              </button>
+            </div>
+          ) : noUrlYet ? (
             /* No URL state */
             <div className="text-center py-4">
               <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">

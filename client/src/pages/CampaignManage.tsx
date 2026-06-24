@@ -52,10 +52,10 @@ export default function CampaignManage() {
     { enabled: !!id }
   );
   
-  // Fetch all contributions (not just accepted)
-  const { data: allContributions, refetch: refetchContributions } = trpc.campaigns.getContributions.useQuery(
+  // Fetch all contributions with full PII for the owner view
+  const { data: allContributions, refetch: refetchContributions } = trpc.campaigns.getContributionsForOwner.useQuery(
     { campaignId: parseInt(id!) },
-    { enabled: !!id }
+    { enabled: !!id && isAuthenticated }
   );
   
   // Update contribution status mutation

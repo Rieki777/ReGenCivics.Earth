@@ -423,7 +423,7 @@ export function registerHyphaWebhookRoutes(app: Express) {
       return res.status(429).json({ error: "Too many invalid signatures" });
     }
     const sig = req.header("x-alchemy-signature") ?? req.header("X-Alchemy-Signature");
-    const rawBody = JSON.stringify(req.body ?? {});
+    const rawBody = (req as any).rawBody ?? JSON.stringify(req.body ?? {});
     if (!verifyAlchemySignature(rawBody, sig)) {
       recordWebhookFailure(sourceIp, "hypha-alchemy");
       log.warn("signature verification failed", { ip: sourceIp });

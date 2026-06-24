@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
+import SEO from "@/components/SEO";
 import { AdminAIAssistant, type AdminAIAction } from "@/components/AdminAIAssistant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -4760,8 +4761,18 @@ export default function Admin() {
   }, []);
 
   if (!isAuthenticated) {
-    return <PasswordGate onAuthenticated={() => setIsAuthenticated(true)} />;
+    return (
+      <>
+        <SEO title="Admin" description="Admin" noIndex />
+        <PasswordGate onAuthenticated={() => setIsAuthenticated(true)} />
+      </>
+    );
   }
 
-  return <AdminDashboard />;
+  return (
+    <>
+      <SEO title="Admin" description="Admin" noIndex />
+      <AdminDashboard />
+    </>
+  );
 }

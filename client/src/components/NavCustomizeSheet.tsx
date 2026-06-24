@@ -36,7 +36,13 @@ interface NavCustomizeSheetProps {
 
 export function NavCustomizeSheet({ slotKey, onSelect, onClose, onReset }: NavCustomizeSheetProps) {
   return (
-    <div className="fixed inset-0 z-[60] md:hidden">
+    <div
+      className="fixed inset-0 z-[60] md:hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nav-customize-title"
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
@@ -44,7 +50,7 @@ export function NavCustomizeSheet({ slotKey, onSelect, onClose, onReset }: NavCu
       <div className="absolute bottom-0 left-0 right-0 bg-[#1a472a] rounded-t-3xl shadow-2xl max-h-[70vh] overflow-y-auto animate-in slide-in-from-bottom">
         {/* Header */}
         <div className="sticky top-0 bg-[#1a472a] border-b border-[#7dd87d]/20 px-4 py-4 flex items-center justify-between z-10">
-          <h3 className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
+          <h3 id="nav-customize-title" className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
             Choose a Page
           </h3>
           <div className="flex items-center gap-2">

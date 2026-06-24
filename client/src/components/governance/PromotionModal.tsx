@@ -136,7 +136,14 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
   // Success view
   if (submitState === "success") {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center px-4" onClick={handleClose}>
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+        onClick={handleClose}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Promotion submitted"
+        onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}
+      >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
         <div
           className="relative bg-[#0d2818] border border-[#7dd87d]/40 rounded-2xl shadow-2xl w-full max-w-md p-8 text-center"
@@ -168,6 +175,10 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
     <div
       className="fixed inset-0 z-[100] flex items-start justify-center pt-6 md:pt-10 px-4 overflow-hidden"
       onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="promotion-modal-title"
+      onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
@@ -242,7 +253,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-2">
               <Vote className="w-5 h-5 text-[#7dd87d]" />
-              <h2 className="text-white font-bold text-lg">Promote to a decision</h2>
+              <h2 id="promotion-modal-title" className="text-white font-bold text-lg">Promote to a decision</h2>
             </div>
             <button onClick={handleClose} className="text-white/70 hover:text-white" aria-label="Close">
               <X className="w-5 h-5" />

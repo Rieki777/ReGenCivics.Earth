@@ -607,7 +607,7 @@ export default function Play() {
                 Ready to <span className="text-[#7dd87d]">Start?</span>
               </h2>
               <p className="text-white/70 text-lg md:text-xl mb-8 max-w-2xl mx-auto safe-prose">
-                Jump straight into your first quest. No sign-up required. Just pick a quest and begin your journey in the Infinite Game.
+                Browse quests freely. Sign in to earn $ReGen and submit deliverables on Hypha.
               </p>
               <Link href="/quest">
                 <Button

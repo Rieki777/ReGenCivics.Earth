@@ -164,7 +164,7 @@ export function registerResendWebhookRoutes(app: Express): void {
     try {
       const signature = req.headers["svix-signature"] as string | undefined;
       const timestamp = req.headers["svix-timestamp"] as string | undefined;
-      const payload = JSON.stringify(req.body);
+      const payload = (req as any).rawBody ?? JSON.stringify(req.body);
       
       // Verify signature
       if (!verifyWebhookSignature(payload, signature, timestamp)) {

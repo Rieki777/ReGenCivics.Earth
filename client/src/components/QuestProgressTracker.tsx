@@ -3,6 +3,7 @@ import { Footprints, Coins, Vote, CheckCircle2, Circle, Sparkles, X, Check, Rota
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 
 interface QuestProgress {
   completedQuests: string[];
@@ -151,6 +152,10 @@ export function QuestProgressProvider({ children }: { children: React.ReactNode 
         .replace(/\bquest\b/gi, "Quest")
         .replace(/\b\w/g, (c) => c.toUpperCase());
       completeMutation.mutate({ questId, questTitle: title });
+      toast.success("Quest recorded. Submit your deliverable on Hypha to earn your reward.", {
+        description: `Your +${rewards.regen} $ReGen arrives when the proposal is confirmed.`,
+        duration: 6000,
+      });
     }
   };
 

@@ -31,14 +31,20 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
   const remaining = budget ? budget.remaining : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="gratitude-drawer-title"
+      onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
+    >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-sm bg-[#faf8f3] rounded-t-2xl sm:rounded-2xl p-6 space-y-4 shadow-xl" style={{ maxHeight: "60vh" }}>
         <div className="flex items-center justify-between">
-          <h3 className="text-[#2d2a26] font-bold" style={{ fontFamily: "var(--font-display)" }}>
+          <h3 id="gratitude-drawer-title" className="text-[#2d2a26] font-bold" style={{ fontFamily: "var(--font-display)" }}>
             Send Gratitude
           </h3>
-          <button onClick={onClose} className="text-[#1a472a]/80 hover:text-[#1a472a]">
+          <button onClick={onClose} className="text-[#1a472a]/80 hover:text-[#1a472a]" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
