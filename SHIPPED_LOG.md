@@ -13,6 +13,34 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-06-24 — QA Sprint Parts 1–4 (Parts 1–3 in prior session; Part 4 this session)
+
+**Season2 page shipped** (`/season2`): incubator invitation landing page with final approved copy — real Season One stats (46 applied, 21 shortlisted, 13 chosen), confirmed timeline (applications close September 1st rolling, pitch videos by September 10th, selection day on the Equinox), cost FAQ noting this may be the last free-to-participate season.
+
+**QA Part 4 P0–P1 fixes** (commit `934ea78`):
+- SEC-1: `campaigns.getContributions` now strips PII (email, phone, bio, notes) for anonymous callers; added `getContributionsForOwner` protectedProcedure for the manage page with ownership check
+- SEC-2: webhook HMAC signatures (loomio, resend, hypha-alchemy) now computed over raw bytes via `verify` callback on global `express.json()`, not re-serialized JSON
+- GAME-1: SubmitToDAOModal shows sign-in CTA for logged-out users instead of silently failing; Play.tsx copy updated
+- GAME-2/D1: removed immediate hardcoded +10 token credit from `quest.complete`; tokens now only credit via `cascadeQuestPassed` on Hypha confirmation; added completion toast
+- D2: removed RGVoice Token entry from Glossary
+- D3: deleted dead `:root:not(.dark)` light-mode CSS blocks from index.css
+- A11Y P1: added `role="dialog"`, `aria-modal`, `aria-labelledby`, and Escape handlers to 5 hand-rolled modals
+- SEO P0: added `<SEO>` to CreateCampaign, CoCreatorsGuide, ApplySuccess; added noindex to Admin; added `og:image:width/height` (1200×630); fixed 8 OG images from .webp to .jpg
+- PERF P1: deleted 29 MB of orphaned JPGs from client/public/images/opportunity/
+
+**Carryover for next sprint (not yet done):**
+- D4: wire up VouchSection, QuestJournalLog, ContributionTimeline in PlayerProfile
+- D3 remaining: migrate 1,559 `bg-white` uses to `bg-card`/`bg-popover` (requires visual verification)
+- Quest 3 (Healing Wholes) content authored
+- DESIGN P1: script-replace top hex values with semantic tokens; adopt z-index scale
+- Per-quest OG meta in Quest.tsx
+- SEO: auto-generate sitemap.xml from App.tsx route table
+- Real-device mobile pass
+
+Source: `archive/CLAUDE_CODE_PROMPT_2026-06-23_QA_PART4_DEEP_AUDIT.md`.
+
+---
+
 ## 2026-06-19 — Mobile screenshot round (Fixes A-E + 1-17)
 
 Walked the live site on a phone, picked up 22 fixes spanning readability, broken CTAs, navigation polish, and one cross-cutting component. Already-coded set (A-E): hook banner reworded ("The more we Play the Game the more fun and real this new world becomes."), Home hero primary-CTA section removed, Epic-filter chip emoji swapped to mountain, Governance card moved from Water to Air panel (re-themed slate), Land-page LOI nudge dropped. New cross-cutting piece: `ReadableScrim` component — a hug-the-content rgba(13,40,24,0.72) + backdrop-blur-sm backing for every text-over-image block, applied to Land (3 headers), Play (token header + note), Seasons (hero), HealTheLand (You Bring / We Bring), and Home (mirrored-map parchment band replacing the old white intro card). Form contrast: ContributionCalculator inputs forced dark on white. Role cards: head-crop fixed (h-[140px] → h-[180px], objectPosition default 50% 18%). Carousel: QuestCarousel forced flex-nowrap. Play.tsx ActionCard wired to programmatic navigation via wouter useLocation so Start Questing / Claim Contributions / Find Your Community all navigate reliably; Claim Contributions now points at /calculator and Find Your Community at /map. Quest page: w-full max-w-full overflow-x-clip on root so it can't horizontally scroll on arrival. Apply / Land collapsibles scroll their header to top on expand. usePageTools dedupes by href and filters out the current path so the command bar never offers to navigate to the page you're on. Community remembers visit state and scrolls repeat visitors to #community-section-picker. CommunityNewPost placeholders driven by selected topic (Alliance, Earth, Water, Fire, Air, Seeking-Team). QuestStartPopup card redesigned (44px close chip, 48px Start Questing + Later tap targets, real list bullets). WizardRadialMenu trigger icon swapped to lucide MapPinned. HymnBook gains a per-song ShareButton (native Web Share + copy fallback). HealTheLand You Bring / We Bring lists centered with bullet dots, wrapped in ReadableScrim. Home intro paragraph now sits on a seamless parchment band built from the village-map-scroll image + a mirrored copy (`scaleX(-1)`) so it reads as one continuous wide map with no white card.
