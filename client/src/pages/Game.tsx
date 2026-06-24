@@ -366,7 +366,7 @@ export default function Game() {
                     Second, if we get to make new economic, financial and governance systems, why not make them as fun as possible?!
                   </p>
                   <p>
-                    Imagine if the vast majority of our days were spent in authentically fulfilling and fun-to-be-part-of-ways where we're actively co-creating regenerative civilizations and the realities we inhabit...
+                    The vast majority of our days can be spent in authentically fulfilling, fun-to-be-part-of ways, actively co-creating regenerative civilizations and the realities we inhabit.
                   </p>
                   <p>
                     In our opinion this is the best Game to play. Which is also why we call it a Game. It's the best Game!
@@ -784,7 +784,7 @@ export default function Game() {
                       If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural!
                     </p>
                     <p>
-                      As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is not just the tokens, it's to form an ecosystem that represents us all, that helps us coordinate, raise capital, and move together as a whole.
+                      As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is to form an ecosystem that represents us all, helps us coordinate, raise capital, and move together as a whole.
                     </p>
                     <p>
                       For every token we give out, we receive an equal amount of value pooled here - so as you claim tokens you offer up your contribution to the whole. This could be in the form of a video on the lessons you learned (starting a community garden for example) or free access to tools and templates you've created.
@@ -1240,7 +1240,7 @@ export default function Game() {
             <CollapsibleContent className="mt-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
                 <p className="text-white/90 leading-relaxed mb-4">
-                  Traditional systems are finite games. They have winners and losers, clear endpoints, and fixed rules. But regeneration isn't about winning; it's about thriving together indefinitely.
+                  Traditional systems are finite games. They have winners and losers, clear endpoints, and fixed rules. Regeneration is about thriving together indefinitely.
                 </p>
                 <p className="text-white/80 leading-relaxed mb-4">
                   By designing ReGen Civics as an infinite game, we create a system that:
@@ -1380,7 +1380,7 @@ export default function Game() {
                       </h4>
                     </div>
                     <p className="text-[#1a472a]/80">
-                      Play isn't just effective, it's joyful. We believe the journey to regeneration should feel as good as the destination. When we design for wellbeing, everyone wins.
+                      Play is joyful, and it works. We believe the journey to regeneration should feel as good as the destination. When we design for wellbeing, everyone wins.
                     </p>
                   </div>
                   
@@ -1611,7 +1611,7 @@ export default function Game() {
                       </div>
                       <h3 className="font-bold text-[#7dd87d] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Governance Process - Ongoing Game to Create the Game</h3>
                     </div>
-                    <p className="text-white/80 text-base leading-relaxed">How do we evolve and change? Who makes decisions and how? What are the systems that allow us to continuously adapt and improve? Governance is not a one-time setup but an ongoing 'game within the game.'</p>
+                    <p className="text-white/80 text-base leading-relaxed">How do we evolve and change? Who makes decisions and how? What are the systems that allow us to continuously adapt and improve? Governance is an ongoing 'game within the game.'</p>
                     <a href="https://youtu.be/Xw2Xtk8Xyqk" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-[#7dd87d] text-sm hover:underline">
                       <Play className="w-3 h-3" /> Watch Video on Governance
                     </a>

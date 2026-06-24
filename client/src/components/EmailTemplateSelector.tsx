@@ -70,7 +70,7 @@ The ReGen Civics Team`,
 
 Great news! We're thrilled to welcome you to the ReGen Civics community!
 
-Your application has passed our initial quality check, and we're excited to have you join us on this regenerative journey.
+Your application has passed our initial quality check, and we're glad to have you in the next incubator season.
 
 Here's what happens next:
 1. Your participation in the upcoming season will be determined through our community governance process

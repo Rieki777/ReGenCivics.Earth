@@ -122,6 +122,11 @@ function PersonalizedCards() {
     typeof window !== 'undefined' &&
     localStorage.getItem('regen_visited_forum') === 'true';
 
+  // Track thumbnails that fail to load so a broken/slow image renders an
+  // intentional icon placeholder instead of an empty dark rectangle that
+  // reads as broken.
+  const [imgError, setImgError] = useState<Record<string, boolean>>({});
+
   if (!user || !profile) return null;
 
   type PersonalCard = {
@@ -179,16 +184,24 @@ function PersonalizedCards() {
                   className="glass-panel p-3 w-40 md:w-48 group hover:scale-105 transition-all duration-300 cursor-pointer overflow-hidden"
                   style={{ borderColor: `${card.accentColor}33` }}
                 >
-                  <div className="h-20 mb-2 overflow-hidden rounded-md bg-white/5">
-                    <img
-                      src={card.image}
-                      alt={card.title}
-                      className="w-full h-full object-cover"
-                      width="340"
-                      height="80"
-                      loading="eager"
-                      decoding="async"
-                    />
+                  <div
+                    className="h-20 mb-2 overflow-hidden rounded-md flex items-center justify-center"
+                    style={{ background: `linear-gradient(135deg, ${card.accentColor}33, ${card.accentColor}11)` }}
+                  >
+                    {imgError[card.id] ? (
+                      <Icon className="w-7 h-7" style={{ color: card.accentColor }} />
+                    ) : (
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        className="w-full h-full object-cover"
+                        width="340"
+                        height="80"
+                        loading="eager"
+                        decoding="async"
+                        onError={() => setImgError((e) => ({ ...e, [card.id]: true }))}
+                      />
+                    )}
                   </div>
                   <div className="flex items-center gap-1 mb-0.5">
                     <Icon className="w-3 h-3 flex-shrink-0" style={{ color: card.accentColor }} />

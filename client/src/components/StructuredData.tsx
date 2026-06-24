@@ -159,7 +159,7 @@ const faqSchema = {
       "name": "What is the Infinite Game?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The Infinite Game is our approach to regenerative development. Unlike finite games played to win, infinite games are played to continue playing. We design our systems to create lasting positive impact for generations, not just short-term returns."
+        "text": "The Infinite Game is our approach to regenerative development. Unlike finite games played to win, infinite games are played to continue playing. We design our systems to create lasting positive impact that compounds across generations."
       }
     },
     {

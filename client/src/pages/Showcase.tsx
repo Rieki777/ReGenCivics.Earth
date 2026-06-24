@@ -471,7 +471,7 @@ export default function Showcase() {
                         </Link>
                         <ShareButton
                           where="showcase_project_card"
-                          title={`${project.name} — a ReGen Civics land project`}
+                          title={`${project.name}, a ReGen Civics land project`}
                           text={`Check out ${project.name}. ${project.description ?? ""}`.trim()}
                           url={`/showcase`}
                           variant="soft"

@@ -199,7 +199,7 @@ export function QuestStoryDetailModal({ story, onClose }: QuestStoryDetailModalP
             )}
             <ShareButton
               where="quest_story_modal"
-              title={story.questTitle ? `${name} — ${story.questTitle} on ReGen Civics` : `${name} on ReGen Civics`}
+              title={story.questTitle ? `${name}: ${story.questTitle} on ReGen Civics` : `${name} on ReGen Civics`}
               text={story.caption ?? "Share your quest with the community."}
               url={story.questId ? `/quest#${story.questId}` : "/quest"}
               variant="soft"

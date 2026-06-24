@@ -246,7 +246,7 @@ export default function Ally() {
               className="text-white/60 text-center mb-8 max-w-xl mx-auto text-lg text-shadow-subtle"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Together we can do what none of us can do alone.
+              Each org brings something the others can't. Pooled, that becomes real capacity for land projects.
             </p>
           </AnimatedSection>
 

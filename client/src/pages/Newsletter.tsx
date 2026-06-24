@@ -67,44 +67,64 @@ export default function Newsletter() {
 
           {/* Newsletter Form */}
           <div className="bg-white/5 border border-[#7dd87d]/30 rounded-2xl p-8 md:p-12 backdrop-blur-sm">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="w-full px-4 py-3 bg-white/10 border border-[#7dd87d]/30 rounded-lg text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d] transition-colors"
-                />
+            {status === "success" ? (
+              /* Once subscribed, replace the form so the same address can't be
+                 submitted again with a second click. */
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-14 h-14 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
+                    <CheckCircle2 className="w-8 h-8 text-[#7dd87d]" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+                  You're subscribed
+                </h2>
+                <p className="text-white/80 mb-6">{message}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatus("idle");
+                    setMessage("");
+                  }}
+                  className="text-sm text-[#7dd87d] underline hover:text-[#ffd700] transition-colors"
+                >
+                  Subscribe another email
+                </button>
               </div>
+            ) : (
+              <>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      required
+                      className="w-full px-4 py-3 bg-white/10 border border-[#7dd87d]/30 rounded-lg text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d] transition-colors"
+                    />
+                  </div>
 
-              <Button
-                type="submit"
-                disabled={status === "loading" || subscribeMutation.isPending}
-                className="w-full bg-[#7dd87d] hover:bg-[#7dd87d]/90 text-[#1a472a] font-bold py-3 rounded-lg transition-all"
-              >
-                {(status === "loading" || subscribeMutation.isPending) ? "Subscribing..." : "Subscribe to Newsletter"}
-              </Button>
-            </form>
+                  <Button
+                    type="submit"
+                    disabled={status === "loading" || subscribeMutation.isPending}
+                    className="w-full bg-[#7dd87d] hover:bg-[#7dd87d]/90 text-[#1a472a] font-bold py-3 rounded-lg transition-all"
+                  >
+                    {(status === "loading" || subscribeMutation.isPending) ? "Subscribing..." : "Subscribe to Newsletter"}
+                  </Button>
+                </form>
 
-            {/* Status Messages */}
-            {status === "success" && (
-              <div className="mt-6 p-4 bg-[#7dd87d]/20 border border-[#7dd87d] rounded-lg flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#7dd87d] flex-shrink-0 mt-0.5" />
-                <p className="text-[#7dd87d] text-sm">{message}</p>
-              </div>
-            )}
-
-            {status === "error" && (
-              <div className="mt-6 p-4 bg-red-500/20 border border-red-500 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-red-500 text-sm">{message}</p>
-              </div>
+                {status === "error" && (
+                  <div className="mt-6 p-4 bg-red-500/20 border border-red-500 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-500 text-sm">{message}</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

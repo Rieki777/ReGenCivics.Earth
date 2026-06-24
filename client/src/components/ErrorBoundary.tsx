@@ -1,4 +1,5 @@
 import { Component, ReactNode } from "react";
+import { track } from "@/lib/analytics";
 
 interface Props {
   children: ReactNode;
@@ -67,6 +68,12 @@ class ErrorBoundary extends Component<Props, State> {
     // Log to console so we can diagnose production crashes
     console.error("[ErrorBoundary] Caught error:", error?.message || error);
     console.error("[ErrorBoundary] Component stack:", errorInfo?.componentStack);
+    // Forward to first-party analytics so production crashes surface without
+    // needing a local repro. track() is fire-and-forget and never throws.
+    track("error_boundary", {
+      message: (error?.message || String(error)).slice(0, 300),
+      path: typeof window !== "undefined" ? window.location.pathname : "",
+    });
   }
 
   render() {

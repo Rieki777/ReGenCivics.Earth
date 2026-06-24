@@ -177,13 +177,19 @@ export default function InvestorForm() {
     return param;
   })();
 
-  // Already verified - skip the form and go to wherever the user was headed
+  // Already verified: show an in-place "where to next" panel instead of
+  // auto-redirecting. The old behavior sent verified investors straight to
+  // returnTo (default /opportunity). When /opportunity crashed for a user,
+  // its error boundary redirected back to /investor, which redirected to
+  // /opportunity again, looping until the global boundary showed the Tao
+  // error screen. Letting the user pick a destination breaks that loop.
+  const [alreadyVerified, setAlreadyVerified] = useState(false);
   useEffect(() => {
-    const alreadyVerified =
+    setAlreadyVerified(
       localStorage.getItem('investor_verified') === 'true' ||
-      sessionStorage.getItem('investor_verified') === 'true';
-    if (alreadyVerified) setLocation(returnTo);
-  }, [setLocation, returnTo]);
+      sessionStorage.getItem('investor_verified') === 'true'
+    );
+  }, []);
 
   const [step, setStep] = useState(1);
   const savedEmail = localStorage.getItem('investor_email') ?? '';
@@ -316,6 +322,85 @@ export default function InvestorForm() {
       });
     }
   };
+
+  // Returning verified investor: offer the destinations directly instead of
+  // bouncing them through a redirect. `returnTo` is shown as the primary
+  // action only when it points somewhere other than the default.
+  if (alreadyVerified && !isSubmitted) {
+    const hasCustomReturn = returnTo !== "/opportunity";
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] flex items-center justify-center p-4">
+        <SEO {...pageSEO.investorForm} />
+        <BackButton fallbackPath="/fund" />
+        <div className="max-w-lg w-full">
+          <Card className="bg-white/95 backdrop-blur-sm border-4 border-[#7dd87d] shadow-2xl">
+            <CardContent className="pt-12 pb-8 text-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-[#7dd87d] to-[#4a7c59] flex items-center justify-center">
+                <CheckCircle2 className="w-12 h-12 text-white" />
+              </div>
+
+              <h2 className="text-3xl font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+                Welcome back{savedName ? `, ${savedName.split(' ')[0]}` : ''}
+              </h2>
+
+              <p className="text-[#1a472a]/80 text-lg mb-6">
+                You've already shared your investor information. Pick where you'd like to go next.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                {hasCustomReturn && (
+                  <Link href={returnTo}>
+                    <Button
+                      className="w-full rounded-xl bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffd700] hover:to-[#9de89d] text-[#1a472a]"
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                    >
+                      Continue where you left off
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                )}
+                <Link href="/opportunity">
+                  <Button
+                    className={`w-full rounded-xl ${hasCustomReturn ? 'border-2 border-[#1a472a] text-[#1a472a] hover:bg-[#1a472a]/10' : 'bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffd700] hover:to-[#9de89d] text-[#1a472a]'}`}
+                    variant={hasCustomReturn ? 'outline' : 'default'}
+                    style={{ fontFamily: 'var(--font-accent)' }}
+                  >
+                    View the Investment Memo
+                  </Button>
+                </Link>
+                <Link href="/fund">
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl border-2 border-[#1a472a] text-[#1a472a] hover:bg-[#1a472a]/10"
+                    style={{ fontFamily: 'var(--font-accent)' }}
+                  >
+                    Explore the Fund
+                  </Button>
+                </Link>
+                <Link href="/loi">
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl border-2 border-[#1a472a] text-[#1a472a] hover:bg-[#1a472a]/10"
+                    style={{ fontFamily: 'var(--font-accent)' }}
+                  >
+                    Submit a Letter of Intent
+                  </Button>
+                </Link>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setAlreadyVerified(false)}
+                className="mt-6 text-sm text-[#4a7c59] underline hover:text-[#1a472a]"
+              >
+                Update my investor information
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   // Success screen
   if (isSubmitted) {

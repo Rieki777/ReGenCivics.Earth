@@ -240,22 +240,26 @@ export default function Land() {
 
 
           <AnimatedSection animation="slide-up" delay={200}>
-            <h1
-              className="ink-reveal text-2xl md:text-4xl lg:text-5xl font-bold mb-4 text-white leading-tight text-shadow-strong"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              We help you design the economic, financial, and governance <span className="text-[#7dd87d]">Game</span> your land project needs to thrive and access diverse forms of capital to help you thrive!
-            </h1>
+            <ReadableScrim block className="max-w-3xl mx-auto mb-4">
+              <h1
+                className="ink-reveal text-2xl md:text-4xl lg:text-5xl font-bold text-white leading-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                We help you design the economic, financial, and governance <span className="text-[#7dd87d]">Game</span> your land project needs to thrive and access diverse forms of capital to help you thrive!
+              </h1>
+            </ReadableScrim>
           </AnimatedSection>
 
           <AnimatedSection animation="slide-up" delay={400}>
-            <p
-              className="text-lg md:text-xl lg:text-2xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto text-shadow-subtle"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              We help you design the economic, financial, and governance game your land project needs to
-              thrive and access capital from the regenerative fund.
-            </p>
+            <ReadableScrim block className="max-w-3xl mx-auto mb-8">
+              <p
+                className="text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                We help you design the economic, financial, and governance game your land project needs to
+                thrive and access capital from the regenerative fund.
+              </p>
+            </ReadableScrim>
           </AnimatedSection>
 
           {/* CTAs */}
@@ -1031,7 +1035,7 @@ export default function Land() {
                       summary="How do we evolve and change? Who makes decisions and how? What are the systems that allow us to continuously adapt and improve?"
                       videoLabel="Watch Video on Governance"
                       videoUrl="https://youtu.be/iH8gS_YZHAc?si=l8H4WoHPTZTOFxwM"
-                      expanded="Governance is not a one-time setup but an ongoing 'game within the game.' We design adaptive systems that allow your community to evolve its own rules over time. This includes proposal processes, voting mechanisms, and feedback loops that ensure the governance itself can be improved as you learn."
+                      expanded="Governance is an ongoing 'game within the game.' We design adaptive systems that allow your community to evolve its own rules over time. This includes proposal processes, voting mechanisms, and feedback loops that ensure the governance itself can be improved as you learn."
                     />
                   </div>
                 </div>

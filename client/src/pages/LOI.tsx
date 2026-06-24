@@ -143,7 +143,7 @@ export default function LOI() {
             Letter of Intent
           </h1>
           <p className="text-[#1a472a]/70 mb-8 safe-prose">
-            Express your interest in becoming a capital partner for the ReGen Civics Fund. This is not a binding commitment, but helps us understand the level of interest and plan accordingly.
+            Express your interest in becoming a capital partner for the ReGen Civics Fund. This is a non-binding way to tell us you're interested so we can plan accordingly.
           </p>
 
           {error && (

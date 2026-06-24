@@ -1302,7 +1302,7 @@ export default function Governance() {
             </h2>
             
             <p className="text-white/90 text-lg leading-relaxed mb-8 text-center safe-prose">
-              The governance systems we build today become the templates for tomorrow's regenerative societies. By creating transparent, participatory, and adaptive governance structures, we're not just managing a fund and a Game - we're demonstrating what's possible when we trust people to make wise decisions about their own futures.
+              The governance systems we build today become the templates for tomorrow's regenerative societies. By creating transparent, participatory, and adaptive governance structures, we're demonstrating what's possible when we trust people to make wise decisions about their own futures.
             </p>
             
             <p className="text-white/90 text-lg leading-relaxed text-center safe-prose">

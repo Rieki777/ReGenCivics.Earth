@@ -38,6 +38,7 @@ import { isNewsletterSubscribed } from "@/utils/newsletter";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
+import { ReadableScrim } from "@/components/ReadableScrim";
 import { VineDivider } from "@/components/dividers/VineDivider";
 import { Pullquote } from "@/components/Pullquote";
 import { ForYouLabel } from "@/components/ForYouLabel";
@@ -313,17 +314,19 @@ export default function Community() {
             </span>
           </div>
 
-          <h1
-            className="text-3xl md:text-5xl font-bold text-white mb-3 flex items-center justify-center gap-3"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Gathering Grove
-            <ForYouLabel label="Your Community" />
-          </h1>
-          <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto mb-6" style={{ fontFamily: 'var(--font-body)' }}>
-            Where regenerators connect, share wisdom, and grow together.
-            Every conversation plants a seed for the future.
-          </p>
+          <ReadableScrim block className="max-w-2xl mx-auto mb-6">
+            <h1
+              className="text-3xl md:text-5xl font-bold text-white mb-3 flex items-center justify-center gap-3"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              Gathering Grove
+              <ForYouLabel label="Your Community" />
+            </h1>
+            <p className="text-white/90 text-base md:text-lg max-w-2xl mx-auto" style={{ fontFamily: 'var(--font-body)' }}>
+              Where regenerators connect, share wisdom, and grow together.
+              Every conversation plants a seed for the future.
+            </p>
+          </ReadableScrim>
 
           {/* Stats bar */}
           <div className="flex items-center justify-center gap-6 text-white/90 text-sm mb-6">

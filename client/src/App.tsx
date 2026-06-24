@@ -203,19 +203,6 @@ function EB({ children }: { children: ReactNode }) {
   );
 }
 
-// ErrorBoundary wrapper that redirects to a fallback URL instead of showing
-// an error screen. Used for auth-gated pages where a crash should gracefully
-// send the visitor to the public intake form.
-function EBRedirect({ children, to }: { children: ReactNode; to: string }) {
-  return (
-    <ErrorBoundary fallback={<Redirect to={to} />}>
-      <Suspense fallback={<PageLoader />}>
-        {children}
-      </Suspense>
-    </ErrorBoundary>
-  );
-}
-
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -228,7 +215,7 @@ function Router() {
       <Route path={"/land"}><EB><Land /></EB></Route>
       <Route path={"/ally"}><EB><Ally /></EB></Route>
       <Route path={"/play"}><EB><Play /></EB></Route>
-      <Route path={"/opportunity"}><EBRedirect to="/investor"><Opportunity /></EBRedirect></Route>
+      <Route path={"/opportunity"}><EB><Opportunity /></EB></Route>
       <Route path={"/governance"}><EB><Governance /></EB></Route>
       <Route path={"/co-creators-guide"}><EB><ReGenCoCreatorsGuide /></EB></Route>
       <Route path={"/tokenomics"}><EB><Tokenomics /></EB></Route>
