@@ -558,6 +558,34 @@ async function startServer() {
     }
   });
 
+  // ── Movement Coordination Engine pipeline cron endpoint ──────────────────
+  // Called every ~10 minutes by Railway cron: POST /api/cron/coordination-pipeline
+  // Polls the YouTube channel RSS for new uploads, ingests them as
+  // recordings rows, runs the synthesize + extract-tasks LLM passes,
+  // and inserts proposed callTasks rows for the admin gate.
+  // Idempotent on `recordings.youtubeVideoId`. Set CRON_SECRET env var;
+  // pass as Bearer token in the cron job command.
+  // Spec: MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md sections 5 + 6.
+  app.post("/api/cron/coordination-pipeline", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const auth = req.headers.authorization;
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const { runCoordinationPipeline } = await import("../jobs/coordinationPipeline");
+      const report = await runCoordinationPipeline({});
+      return res.json({ ok: true, ...report });
+    } catch (err: any) {
+      log.error("cron coordination-pipeline failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Tier progression detector cron endpoint ─────────────────────────────────
   // Called every 15 minutes by Railway cron: POST /api/cron/tier-detector
   // Walks every user with at least one declared path and runs the

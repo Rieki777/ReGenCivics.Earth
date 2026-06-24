@@ -69,7 +69,7 @@ export function extractFirstVideoUrl(content: string): ParsedVideo | null {
  * it breaks, we fall back to silently skipping the summary; the post still
  * lands and renders correctly.
  */
-async function fetchYouTubeTranscript(videoId: string): Promise<string | null> {
+export async function fetchYouTubeTranscript(videoId: string): Promise<string | null> {
   const langs = ["en", "en-US", "en-GB"];
   for (const lang of langs) {
     try {

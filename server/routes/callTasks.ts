@@ -270,6 +270,22 @@ export const callTasksRouter = router({
     }),
 
   /**
+   * Admin-triggered pipeline run. Same code path the
+   * /api/cron/coordination-pipeline endpoint uses; this surface lets
+   * Rye kick it from the admin UI for a single video without waiting
+   * for the next cron tick. Returns the pipeline report.
+   */
+  runPipelineNow: adminProcedure
+    .input(z.object({
+      maxNew: z.number().int().min(1).max(20).default(5),
+      channelId: z.string().min(1).max(64).optional(),
+    }).optional())
+    .mutation(async ({ input }) => {
+      const { runCoordinationPipeline } = await import("../jobs/coordinationPipeline");
+      return runCoordinationPipeline(input ?? {});
+    }),
+
+  /**
    * Circle steward consents and triggers the reward. Admin-gated in
    * Phase 1 (every admin can consent). Phase 4 may narrow this to "the
    * steward of the task's consentCircle" once that mapping exists.
