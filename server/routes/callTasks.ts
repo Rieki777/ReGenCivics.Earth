@@ -32,8 +32,18 @@ async function payAndComplete(
   db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
   task: { id: number; title: string; sourceVideoId: string; assigneeUserId: number | null; bountyTokenType: string; bountyAmount: number },
   opts: { consentedBy: number | null; auto: boolean },
-): Promise<{ rewardLedgerId: number | null }> {
+): Promise<{ rewardLedgerId: number | null; alreadyPaid?: boolean }> {
   if (!task.assigneeUserId) throw new TRPCError({ code: "BAD_REQUEST", message: "Task has no assignee" });
+  // Compare-and-swap to win the race: only one caller flips status to
+  // 'completed', so only one caller can credit. A concurrent call sees
+  // affectedRows === 0 and short-circuits without a duplicate credit.
+  const result = await db
+    .update(callTasks)
+    .set({ status: "completed", consentedBy: opts.consentedBy, completedAt: new Date() })
+    .where(and(eq(callTasks.id, task.id), eq(callTasks.status, "submitted")));
+  const affected = (result as any)?.[0]?.affectedRows ?? (result as any)?.affectedRows ?? 0;
+  if (!affected) return { rewardLedgerId: null, alreadyPaid: true };
+
   let ledgerId: number | null = null;
   if (task.bountyAmount > 0) {
     ledgerId = await creditPrivateTokens({
@@ -44,16 +54,11 @@ async function payAndComplete(
       sourceId: task.id,
       description: `Bounty for "${task.title}" from session ${task.sourceVideoId}${opts.auto ? " (auto-pay)" : ""}`,
     });
+    await db
+      .update(callTasks)
+      .set({ rewardLedgerId: ledgerId })
+      .where(eq(callTasks.id, task.id));
   }
-  await db
-    .update(callTasks)
-    .set({
-      status: "completed",
-      consentedBy: opts.consentedBy,
-      completedAt: new Date(),
-      rewardLedgerId: ledgerId,
-    })
-    .where(eq(callTasks.id, task.id));
   if (ledgerId) {
     const tokenLabel = task.bountyTokenType === "rcivics" ? "$RCivics" : "$ReGen";
     await db.insert(notifications).values({
@@ -90,7 +95,7 @@ async function getAutoPayCeiling(): Promise<number> {
  */
 async function deliverApproval(
   db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
-  task: { id: number; title: string; assigneeUserId: number | null; roleSlug: string | null; bountyAmount: number; recordingId: number },
+  task: { id: number; title: string; assigneeUserId: number | null; roleSlug: string | null; bountyAmount: number; recordingId: number; preClaimed?: boolean },
 ): Promise<void> {
   if (!task.assigneeUserId) return; // open-to-circle, surfaces on /opportunity instead
   if (task.roleSlug) {
@@ -104,11 +109,14 @@ async function deliverApproval(
   const bountyLabel = task.bountyAmount > 0
     ? ` (${task.bountyAmount} $ReGen bounty)`
     : "";
+  const cta = task.preClaimed
+    ? "It's already in your active tasks. Submit when you're done."
+    : "Open your profile to claim it.";
   await db.insert(notifications).values({
     playerId: task.assigneeUserId,
     type: "mention",
     title: `New call task: ${task.title.slice(0, 180)}`,
-    body: `A task from a recorded session is waiting for you${bountyLabel}. Open your profile to claim it.`,
+    body: `A task from a recorded session is waiting for you${bountyLabel}. ${cta}`,
     link: `/profile?tab=tasks#call-task-${task.id}`,
   });
 }
@@ -323,12 +331,31 @@ export const callTasksRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      // Resolve the final assignee BEFORE deciding status: if a holder
+      // is already attached (proposed-with-assignee from the pipeline or
+      // explicit pre-assign in approve input), the task goes straight to
+      // 'claimed' with claimedAt stamped, otherwise it lands at 'open'.
+      // Stamping claimedAt matters because the stale-claims flywheel
+      // filters on isNotNull(claimedAt); without it, pre-assigned tasks
+      // are invisible to the nudge + auto-release loop.
+      const [current] = await db
+        .select({ assigneeUserId: callTasks.assigneeUserId })
+        .from(callTasks)
+        .where(eq(callTasks.id, input.id))
+        .limit(1);
+      if (!current) throw new TRPCError({ code: "NOT_FOUND" });
+      const finalAssignee = input.assigneeUserId !== undefined
+        ? input.assigneeUserId
+        : current.assigneeUserId;
+      const goesClaimed = finalAssignee !== null && finalAssignee !== undefined;
+
       const patch: Record<string, unknown> = {
-        status: "open" as const,
+        status: goesClaimed ? "claimed" : "open",
         approvedBy: ctx.user.id,
       };
       if (input.bountyAmount !== undefined) patch.bountyAmount = input.bountyAmount;
       if (input.assigneeUserId !== undefined) patch.assigneeUserId = input.assigneeUserId;
+      if (goesClaimed) patch.claimedAt = new Date();
       await db.update(callTasks).set(patch).where(eq(callTasks.id, input.id));
       // Re-read so the notification carries the final bounty + assignee
       // (the input might have overridden either).
@@ -344,7 +371,7 @@ export const callTasksRouter = router({
         .from(callTasks)
         .where(eq(callTasks.id, input.id))
         .limit(1);
-      if (updated) await deliverApproval(db, updated);
+      if (updated) await deliverApproval(db, { ...updated, preClaimed: goesClaimed });
       return { ok: true };
     }),
 
@@ -590,8 +617,9 @@ export const callTasksRouter = router({
    * YouTube link to a raw recording.
    */
   adminListRecordings: adminProcedure
-    .input(z.object({ limit: z.number().int().min(1).max(200).default(50) }).default({}))
+    .input(z.object({ limit: z.number().int().min(1).max(200).default(50) }).optional())
     .query(async ({ input }) => {
+      const limit = input?.limit ?? 50;
       const db = await getDb();
       if (!db) return [];
       const rows = await db
@@ -607,7 +635,7 @@ export const callTasksRouter = router({
         })
         .from(recordings)
         .orderBy(desc(recordings.createdAt))
-        .limit(input.limit);
+        .limit(limit);
       return rows;
     }),
 
