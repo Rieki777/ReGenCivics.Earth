@@ -134,3 +134,6 @@ loomio Governance Tools/
 
 # Claude Code worktrees (per-session sandboxes; never commit)
 .claude/worktrees/
+
+# Editor backup files
+*.bak
