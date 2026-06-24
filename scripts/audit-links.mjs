@@ -27,9 +27,7 @@ const appTsx = join(srcDir, "App.tsx");
 
 // --- Allowlist: links that are known-acceptable and should not fail the gate.
 // Keep this short and justified. Each entry is matched against the raw link.
-const ALLOW = [
-  "/components",        // ComponentShowcase dev page, not in the router, unreachable in prod
-];
+const ALLOW = [];
 
 // --- 1. Build the route table from App.tsx <Route path="..."> declarations.
 const appSrc = readFileSync(appTsx, "utf8");
