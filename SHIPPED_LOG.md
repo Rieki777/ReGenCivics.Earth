@@ -13,6 +13,29 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-06-24 — QA Sprint Part 5 (Mobile audit, commit d286279)
+
+**Mobile QA MOB-1 through MOB-9** (commit `d286279`):
+- MOB-1: `.text-sm` font-size bump scoped to `@media (min-width:768px)` — prevents iOS input auto-zoom across all form fields
+- MOB-2: Navigation search icon button gets `min-h/min-w 44px` (WCAG 2.5.5 touch target)
+- MOB-3: CampaignImageUpload edit/delete always visible on mobile (`opacity-100 md:opacity-0`); EmailSettings DB-load dropdown tap-accessible via `group-focus-within:block`
+- MOB-4: `DialogContent` gains `overscroll-contain` — prevents scroll chaining when bottom sheet hits its boundary
+- MOB-5: App `<main>` bottom padding accounts for `env(safe-area-inset-bottom)` above iPhone home indicator
+- MOB-6: EmailSettings recipient table wrapper gets `overflow-x-auto`
+- MOB-7: InvestorForm phone field gets `type="tel"` for mobile dial-pad
+- MOB-8: Admin layout root uses `h-[100dvh]` (dynamic viewport) instead of `h-screen`
+- MOB-9: Navigation sticky header gets `[padding-top:env(safe-area-inset-top)]` for landscape-notch devices
+- Also: Season2 "slots" → "seats" copy fix; dedicated `/og/season2.jpg` OG image wired up
+- TypeScript fix: `CampaignDetail.tsx` unique-contributor count switched from `contributorEmail` (now stripped by SEC-1) to `contributorName`
+
+**Carryover (Rye + next sprint):**
+- MOB-10: product call on tokenomics long-page navigation (Rye decides)
+- Real-device mobile pass (Rye)
+
+Source: `archive/CLAUDE_CODE_PROMPT_2026-06-23_QA_PART5_MOBILE.md`.
+
+---
+
 ## 2026-06-24 — QA Sprint Parts 1–4 (Parts 1–3 in prior session; Part 4 this session)
 
 **Season2 page shipped** (`/season2`): incubator invitation landing page with final approved copy — real Season One stats (46 applied, 21 shortlisted, 13 chosen), confirmed timeline (applications close September 1st rolling, pitch videos by September 10th, selection day on the Equinox), cost FAQ noting this may be the last free-to-participate season.
