@@ -182,20 +182,20 @@ const GET: { icon: React.ElementType; title: string; body: string }[] = [
 // ─── Selection process ──────────────────────────────────────────────────
 const SELECTION: { title: string; body: string }[] = [
   {
-    title: "Any project applies",
-    body: "Open applications. Every project that applies is taken seriously regardless of scale, geography, or stage of development.",
+    title: "Apply by September 1st",
+    body: "Open applications through September 1st. Every project that applies is taken seriously regardless of scale, geography, or stage. We approve shortlisted projects on a rolling basis, so applying earlier gives you more time to prepare.",
   },
   {
-    title: "21 projects are scored and invited to pitch",
-    body: "All projects are scored and the top 21 are invited to share during a community pitch day: a 90-minute recorded session where every project gets to tell its story.",
+    title: "21 projects are shortlisted to pitch",
+    body: "All projects are scored and 21 are shortlisted. Shortlisted projects have until September 10th to make a short pitch video telling their story. We share every pitch video publicly to give your project exposure, unless you ask us not to.",
   },
   {
-    title: "The season council selects 13",
-    body: "The council selects the thirteen projects they're best positioned to support that season. They're looking for a range of project types, scales, and geographies.",
+    title: "The season council selects 13 on the Equinox",
+    body: "Season Two opens on the Equinox with a selection day held in public. A season council, made up of members from previous seasons' projects, chooses the thirteen projects for the season. As the alliance grows, the wider community takes on more of this choice each season.",
   },
   {
     title: "The season opens",
-    body: "The thirteen selected projects are introduced in a single recording kicking off the season, used for the crowdpooling campaigns and to get word out about what's about to be built.",
+    body: "The thirteen selected projects are introduced in a recording that kicks off the season, used for the crowdpooling campaigns and to get word out about what's about to be built.",
   },
 ];
 
@@ -623,13 +623,13 @@ export default function Season2() {
             along the way.
           </p>
 
-          {/* TODO(rye): replace these placeholder stats with real Season One numbers,
-              and ideally add one short participant quote here for social proof. */}
+          {/* Season One actuals. Richer impact stats will be captured from Season Two onward.
+              TODO(rye): optional, add one short participant quote here for social proof. */}
           <div className="grid grid-cols-3 gap-4 mb-10 max-w-2xl">
             {[
-              { stat: "13", label: "projects incubated" },
-              { stat: "9+", label: "forms of capital pooled" },
-              { stat: "100%", label: "open-sourced" },
+              { stat: "46", label: "projects applied" },
+              { stat: "21", label: "shortlisted to pitch" },
+              { stat: "13", label: "chosen by the community" },
             ].map((m) => (
               <div key={m.label} className="text-center p-5 rounded-xl border border-[#7dd87d]/15 bg-[#7dd87d]/5">
                 <div className="text-3xl md:text-4xl font-bold text-[#7dd87d]" style={display}>
@@ -680,7 +680,8 @@ export default function Season2() {
           <div className="space-y-4">
             <FaqItem q="What does it cost to take part?">
               There's no fee to apply or to take part in the season. The
-              commitment is a token swap and your team's time. {/* TODO(rye): confirm cost framing */}
+              commitment is a token swap and your team's time. Season Two may be
+              our last free-to-participate season, so this is a good one to be in.
             </FaqItem>
             <FaqItem q="How much time does the season take?">
               Plan for one live weekly session across the season, plus a few hours
@@ -698,8 +699,15 @@ export default function Season2() {
               the honest baseline we look for.
             </FaqItem>
             <FaqItem q="When do applications close and when does the season start?">
-              Applications are reviewed on a rolling basis and the season begins
-              September 2026. {/* TODO(rye): confirm/replace with the real close date */}
+              Applications close September 1st, and we approve shortlisted
+              projects on a rolling basis, so applying earlier gives you more
+              time to prepare. We'll let you know if you're shortlisted (21
+              projects), and you'll have until September 10th to make a short
+              pitch video. Every pitch video is shared publicly to give your
+              project exposure, unless you ask us not to. Season Two then begins
+              on the Equinox with a selection day held in public, where a season
+              council of members from previous seasons' projects picks the 13
+              projects.
             </FaqItem>
           </div>
         </div>
@@ -739,9 +747,9 @@ export default function Season2() {
           {/* What happens next */}
           <div className="mt-10 grid sm:grid-cols-3 gap-4 text-left">
             {[
-              { icon: CheckCircle2, t: "You apply", d: "A short application about your project and team." },
-              { icon: Clock, t: "We review", d: "Rolling review. Top 21 are invited to a recorded pitch day." },
-              { icon: Sprout, t: "The season opens", d: "Thirteen projects are selected and the season begins September 2026." },
+              { icon: CheckCircle2, t: "Apply by September 1st", d: "A short application about your project and team. We approve shortlisted projects on a rolling basis, so earlier is better." },
+              { icon: Clock, t: "Pitch by September 10th", d: "If you're shortlisted (21 projects), you make a short pitch video. We share every video publicly for exposure, unless you ask us not to." },
+              { icon: Sprout, t: "Selection day on the Equinox", d: "A season council of members from previous seasons' projects picks the 13, in public, and Season Two begins." },
             ].map((s) => {
               const Icon = s.icon;
               return (
@@ -755,7 +763,7 @@ export default function Season2() {
           </div>
 
           <p className="mt-8 text-sm text-[#d4a574]/80 font-medium tracking-wide">
-            Applications open · Thirteen slots · Rolling review
+            Applications close September 1st · Thirteen slots · Rolling shortlisting
           </p>
 
           {/* Newsletter fallback */}
