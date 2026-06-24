@@ -485,6 +485,7 @@ export default function Community() {
 
           {/* General */}
           <button
+            type="button"
             onClick={() => handleSectionClick('general')}
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group col-span-2 sm:col-span-1 ${activeSection === 'general' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
           >
@@ -501,6 +502,7 @@ export default function Community() {
 
           {/* Earth */}
           <button
+            type="button"
             onClick={() => handleSectionClick('earth')}
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'earth' ? 'ring-2 ring-[#d4a574] shadow-lg shadow-[#d4a574]/20' : 'hover:shadow-md'}`}
           >
@@ -517,6 +519,7 @@ export default function Community() {
 
           {/* Water */}
           <button
+            type="button"
             onClick={() => handleSectionClick('water')}
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'water' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
           >
@@ -533,6 +536,7 @@ export default function Community() {
 
           {/* Fire */}
           <button
+            type="button"
             onClick={() => handleSectionClick('fire')}
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'fire' ? 'ring-2 ring-[#fb923c] shadow-lg shadow-[#fb923c]/20' : 'hover:shadow-md'}`}
           >
@@ -549,6 +553,7 @@ export default function Community() {
 
           {/* Air */}
           <button
+            type="button"
             onClick={() => handleSectionClick('air')}
             className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'air' ? 'ring-2 ring-slate-400 shadow-lg shadow-slate-400/20' : 'hover:shadow-md'}`}
           >

@@ -238,7 +238,7 @@ export default function CommunityNewPost() {
           >
             Start a Discussion
           </h1>
-          <p className="text-white/60 text-sm mt-1" style={{ fontFamily: 'var(--font-body)' }}>
+          <p className="text-white/85 text-sm mt-1" style={{ fontFamily: 'var(--font-body)' }}>
             Share your ideas, questions, or experiences with the community
           </p>
         </div>
@@ -258,15 +258,15 @@ export default function CommunityNewPost() {
               </SelectTrigger>
               <SelectContent className="bg-white">
                 {catsLoading ? (
-                  <SelectItem value="loading" disabled>Loading topics...</SelectItem>
+                  <SelectItem value="loading" disabled className="text-[#1a472a]/60">Loading topics...</SelectItem>
                 ) : categories?.map(cat => (
-                  <SelectItem key={cat.id} value={String(cat.id)}>
+                  <SelectItem key={cat.id} value={String(cat.id)} className="text-[#1a472a] focus:bg-[#7dd87d]/15 focus:text-[#1a472a]">
                     <span className="flex items-center gap-2">
-                      <span 
+                      <span
                         className="w-2 h-2 rounded-full inline-block"
                         style={{ backgroundColor: cat.color || '#4a7c59' }}
                       />
-                      {cat.name}
+                      <span className="text-[#1a472a] font-medium">{cat.name}</span>
                     </span>
                   </SelectItem>
                 ))}
@@ -301,12 +301,12 @@ export default function CommunityNewPost() {
               ))}
             </div>
             {postType === "seeking_team" && (
-              <p className="text-xs text-[#1a472a]/80 mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+              <p className="text-xs text-[#1a472a] mt-2" style={{ fontFamily: 'var(--font-body)' }}>
                 A structured template will be pre-filled in the content field.
               </p>
             )}
             {postType === "case_study" && (
-              <p className="text-xs text-[#1a472a]/80 mt-2" style={{ fontFamily: 'var(--font-body)' }}>
+              <p className="text-xs text-[#1a472a] mt-2" style={{ fontFamily: 'var(--font-body)' }}>
                 A case study template will be pre-filled. The #lesson tag will be applied automatically.
               </p>
             )}
@@ -325,14 +325,14 @@ export default function CommunityNewPost() {
                   onChange={e => setIsThreadChain(e.target.checked)}
                   className="accent-[#4a7c59]"
                 />
-                <span className="text-[#1a472a]/70 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+                <span className="text-[#1a472a] text-sm" style={{ fontFamily: 'var(--font-body)' }}>
                   This is part of a thread chain (Idea to Experiment to Result)
                 </span>
               </label>
               {isThreadChain && (
                 <div className="space-y-3 pl-6">
                   <div>
-                    <p className="text-[#1a472a]/80 text-xs mb-2" style={{ fontFamily: 'var(--font-body)' }}>Stage:</p>
+                    <p className="text-[#1a472a] text-xs mb-2" style={{ fontFamily: 'var(--font-body)' }}>Stage:</p>
                     <div className="flex flex-wrap gap-2">
                       {([
                         { value: "idea" as ThreadStage, label: "Idea", emoji: "Seed", color: "#1a472a", bg: "#f0f7f0" },
@@ -355,7 +355,7 @@ export default function CommunityNewPost() {
                   </div>
                   {threadStage !== "idea" && (
                     <div>
-                      <label className="text-[#1a472a]/80 text-xs mb-1 block" style={{ fontFamily: 'var(--font-body)' }}>
+                      <label className="text-[#1a472a] text-xs mb-1 block" style={{ fontFamily: 'var(--font-body)' }}>
                         Linking to chain (post ID of the original Idea, optional):
                       </label>
                       <Input
@@ -386,7 +386,7 @@ export default function CommunityNewPost() {
               className="border-[#e8e4de] focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
               style={{ fontFamily: 'var(--font-body)' }}
             />
-            <p className="text-[10px] text-[#1a472a]/75 mt-1 text-right">{title.length}/300</p>
+            <p className="text-[10px] text-[#1a472a]/85 mt-1 text-right">{title.length}/300</p>
           </div>
 
           {/* File Upload */}
@@ -418,11 +418,11 @@ export default function CommunityNewPost() {
             </div>
             
             {showPreview ? (
-              <div className="min-h-[200px] p-3 bg-[#f8f5f0] rounded-lg text-[#1a472a]/80 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+              <div className="min-h-[200px] p-3 bg-[#f8f5f0] rounded-lg text-[#1a472a] text-sm leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
                 {content ? (
                   <ForumMarkdown content={content} />
                 ) : (
-                  <p className="text-[#1a472a]/75 italic">Nothing to preview yet...</p>
+                  <p className="text-[#1a472a]/85 italic">Nothing to preview yet...</p>
                 )}
               </div>
             ) : (
@@ -435,7 +435,7 @@ export default function CommunityNewPost() {
             )}
             <div className="flex items-center justify-between mt-1">
               <MarkdownHints />
-              <p className="text-[10px] text-[#1a472a]/75">{content.length}/10,000</p>
+              <p className="text-[10px] text-[#1a472a]/85">{content.length}/10,000</p>
             </div>
             {linkPreviewUrl && (
               <LinkPreviewCard
@@ -481,7 +481,7 @@ export default function CommunityNewPost() {
                       >
                         {label}
                       </span>
-                      <span className="text-[#1a472a]/80 text-xs" style={{ fontFamily: 'var(--font-body)' }}>
+                      <span className="text-[#1a472a] text-xs" style={{ fontFamily: 'var(--font-body)' }}>
                         {description}
                         {isDisabled && " (auto-applied for Case Study)"}
                       </span>
@@ -495,9 +495,9 @@ export default function CommunityNewPost() {
           {/* C17: Bioregion tag (optional) */}
           <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
             <Label className="text-[#1a472a] font-bold text-sm mb-1 block" style={{ fontFamily: 'var(--font-display)' }}>
-              Bioregion Tag <span className="text-[#1a472a]/80 font-normal text-xs ml-1">(optional)</span>
+              Bioregion Tag <span className="text-[#1a472a] font-normal text-xs ml-1">(optional)</span>
             </Label>
-            <p className="text-xs text-[#1a472a]/80 mb-3" style={{ fontFamily: 'var(--font-body)' }}>
+            <p className="text-xs text-[#1a472a] mb-3" style={{ fontFamily: 'var(--font-body)' }}>
               Tag this post to a bioregion so others in that area can find it.
             </p>
             <BioregionSelect
@@ -511,7 +511,7 @@ export default function CommunityNewPost() {
           {/* Submit */}
           <div className="flex items-center gap-3 justify-end">
             <Link href="/community">
-              <Button type="button" variant="outline" className="border-[#e8e4de] text-[#1a472a]/80 rounded-full">
+              <Button type="button" variant="outline" className="border-[#e8e4de] text-[#1a472a] rounded-full">
                 Cancel
               </Button>
             </Link>

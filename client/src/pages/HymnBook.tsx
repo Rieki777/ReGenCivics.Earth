@@ -3,7 +3,7 @@
  * Players submit one song per season, vote on submissions, and the
  * highest-voted song is added to the Hymn Book.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useAudio, PLAYLIST } from "@/contexts/AudioContext";
@@ -39,6 +39,25 @@ export default function HymnBook() {
 
   const [form, setForm] = useState({ title: "", artist: "", audioUrl: "", description: "" });
   const [submitted, setSubmitted] = useState(false);
+
+  // Deep-link handler: ?song=<slug> selects + plays the matching track
+  // and scrolls to its row, so shared hymn links land on the right song.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const slug = new URLSearchParams(window.location.search).get("song");
+    if (!slug) return;
+    const idx = PLAYLIST.findIndex((s) => toSlug(s.title) === slug);
+    if (idx < 0) return;
+    audio.playSong(idx);
+    requestAnimationFrame(() => {
+      const row = document.getElementById(`hymn-${slug}`);
+      row?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    // Strip the query so a refresh doesn't re-trigger.
+    const clean = window.location.pathname + window.location.hash;
+    window.history.replaceState({}, "", clean);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <PageTransition>
@@ -89,7 +108,8 @@ export default function HymnBook() {
                   return (
                     <li
                       key={song.src}
-                      className={`group flex items-center gap-3 py-2.5 px-2 rounded-xl transition-colors ${
+                      id={`hymn-${toSlug(song.title)}`}
+                      className={`group flex items-center gap-3 py-2.5 px-2 rounded-xl transition-colors scroll-mt-24 ${
                         isCurrent ? "bg-[#7dd87d]/10" : "hover:bg-white/5"
                       }`}
                     >
@@ -128,7 +148,7 @@ export default function HymnBook() {
                         where="hymn_book_row"
                         title={`${song.title}: Hymns of the ReGeneration`}
                         text={`Listen to ${song.title}${song.artist ? ` by ${song.artist}` : ""} on ReGen Civics.`}
-                        url={`/hymn-player/${toSlug(song.title)}`}
+                        url={`/hymn-book?song=${toSlug(song.title)}`}
                         variant="soft"
                         label=""
                         className="!min-h-0 !px-2 !py-1 text-xs text-white/60 hover:text-white bg-transparent border-0"

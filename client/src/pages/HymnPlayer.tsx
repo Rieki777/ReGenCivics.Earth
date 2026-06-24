@@ -15,9 +15,10 @@ export default function HymnPlayer() {
       setLocation("/hymn-book", { replace: true })
       return
     }
-    audio.playSongBySlug(song.slug)
-    const t = setTimeout(() => setLocation("/", { replace: true }), 50)
-    return () => clearTimeout(t)
+    // Redirect to the canonical share URL on /hymn-book so the user
+    // lands on the song row with the full hymn book context, not on
+    // the home page. The HymnBook page reads ?song= and plays it.
+    setLocation(`/hymn-book?song=${song.slug}`, { replace: true })
   }, [song?.slug])
 
   return (

@@ -518,53 +518,45 @@ const TIMELINE: TimelineNode[] = [
 ];
 
 function TimelineRiver() {
-  const [openIdx, setOpenIdx] = useState<number | null>(0);
+  // Standard in-page layout: every entry visible at once, page scrolls
+  // naturally past the whole list. No accordion, no scroll hijacking,
+  // no step-locking. Each entry is a row with the year + dot indicator
+  // on the left and the body content on the right, flowing top to bottom.
   return (
-    <div className="space-y-3">
-      {TIMELINE.map((node, i) => {
-        const open = openIdx === i;
-        return (
-          <div
-            key={i}
-            className="rounded-xl border overflow-hidden"
-            style={{
-              background: "rgba(255,255,255,0.035)",
-              borderColor: open ? `${C.amber}55` : "rgba(255,255,255,0.08)",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenIdx(open ? null : i)}
-              className="w-full flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 text-left hover:bg-white/[0.03]"
-              aria-expanded={open}
+    <div className="space-y-6 md:space-y-8">
+      {TIMELINE.map((node, i) => (
+        <article
+          key={i}
+          className="rounded-xl border px-4 md:px-6 py-5 md:py-6"
+          style={{
+            background: "rgba(255,255,255,0.035)",
+            borderColor: "rgba(255,255,255,0.08)",
+          }}
+        >
+          <div className="flex items-start gap-3 md:gap-5">
+            <span
+              className="flex-shrink-0 w-16 md:w-24 text-right text-xs md:text-sm font-bold tracking-wide pt-0.5"
+              style={{ color: C.amber, fontFamily: "var(--font-display)" }}
             >
-              <span
-                className="flex-shrink-0 w-14 md:w-20 text-right text-xs md:text-sm font-bold tracking-wide"
-                style={{ color: C.amber, fontFamily: "var(--font-display)" }}
-              >
-                {node.year}
-              </span>
-              <span
-                className="flex-shrink-0 w-3 h-3 rounded-full"
-                style={{
-                  background: open ? C.green : "transparent",
-                  border: `2px solid ${open ? C.green : "rgba(125,216,125,0.55)"}`,
-                  boxShadow: open ? `0 0 0 4px ${C.green}22` : undefined,
-                }}
-              />
-              <span
-                className="flex-1 text-white text-sm md:text-base font-semibold leading-snug"
+              {node.year}
+            </span>
+            <span
+              aria-hidden="true"
+              className="flex-shrink-0 w-3 h-3 mt-1.5 rounded-full"
+              style={{
+                background: C.green,
+                border: `2px solid ${C.green}`,
+                boxShadow: `0 0 0 4px ${C.green}22`,
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <h3
+                className="text-white text-base md:text-lg font-semibold leading-snug mb-2"
                 style={{ fontFamily: "var(--font-accent)" }}
               >
                 {node.title}
-              </span>
-              <ChevronDown
-                className="w-4 h-4 transition-transform"
-                style={{ color: C.amber, transform: open ? "rotate(180deg)" : "rotate(0)" }}
-              />
-            </button>
-            {open && (
-              <div className="px-4 md:px-5 pb-4 pt-0 pl-[5.25rem] md:pl-[7rem] text-white/80 text-sm leading-relaxed">
+              </h3>
+              <div className="text-white/85 text-sm md:text-base leading-relaxed">
                 {i === 0 ? getBionomicsCopy('seed_2017_text') : node.body}
                 {i === 0 && (
                   <div className="mt-4">
@@ -575,10 +567,10 @@ function TimelineRiver() {
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
-        );
-      })}
+        </article>
+      ))}
     </div>
   );
 }
@@ -635,8 +627,14 @@ export default function Bionomics() {
         url="/bionomics"
       />
 
+      {/* No min-h-screen on the outer wrapper. iOS Safari recomputes
+          100vh every time its URL bar shows / hides, which triggered a
+          jarring reflow ("vibration") right after the hero on mobile.
+          The page already exceeds the viewport by a wide margin, so
+          the min-h hint isn't needed; dropping it removes the resize
+          loop. */}
       <div
-        className="min-h-screen relative"
+        className="relative"
         style={{
           background:
             "radial-gradient(ellipse at top, #1a472a 0%, #0f3320 35%, #081a10 100%)",
