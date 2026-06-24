@@ -1,0 +1,618 @@
+{
+  "generatedFrom": "client/src/App.tsx",
+  "count": 102,
+  "routes": [
+    {
+      "path": "/",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/form",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/quest/:slug",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/quest",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/fund",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/land",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/ally",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/play",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/opportunity",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/governance",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/co-creators-guide",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/tokenomics",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/loi",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/404",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/investmentform",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/investor-form",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/socials",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/seasons",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/schedule",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/checkin/:token",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/events/:id",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/series/:season",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/shape-next-session",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/team",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/game",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/calculator",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/blog",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/blog/:slug",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/apply",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/apply/success",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/apply/status",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/my-applications",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": true
+    },
+    {
+      "path": "/admin/applications",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": true
+    },
+    {
+      "path": "/admin/application/:id",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": true
+    },
+    {
+      "path": "/investor",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/investor/contact",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/claim-seeds",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/connect",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/admin",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": true
+    },
+    {
+      "path": "/showcase",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/crowd-pooling",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/crowd-pooling-projects",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/compare-projects",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/profile",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": true
+    },
+    {
+      "path": "/profile/:handle",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/bridge/hypha/:bridgeKey",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/decisions",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/decisions/stories",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/gov/create",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/gov/:slug/backfield",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/gov/:slug",
+      "hasParam": true,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/create-campaign",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/campaigns",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/campaign/:id",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/campaign/:id/manage",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/campaign/:id/analytics",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/map",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/risk-disclosure",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/terms-of-use",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/privacy-policy",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/disclaimers",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/unsubscribe",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/c/:slug",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/post/:id",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/new",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/tag/:tag",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/chains",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/seeking-team",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/members",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/guidelines",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/messages/:conversationId?",
+      "hasParam": true,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/messages",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": true
+    },
+    {
+      "path": "/community/lessons",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/seeking-support",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/offering-support",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/quests",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/community/user/:id",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/admin/moderation",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": true
+    },
+    {
+      "path": "/accessibility",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/glossary",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/features",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/newsletter",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/newsletter/confirm",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/bionomics/edit",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/bionomics",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/economy",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/local-food-economy",
+      "hasParam": false,
+      "redirectOnly": true,
+      "needsAuth": false
+    },
+    {
+      "path": "/heal-the-land",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/hymn-book/:slug",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/hymn-book",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/proposals",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/game-mechanics",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/tools",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/tools/submit",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/tools/:slug",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/plays",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/plays/submit",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/plays/:slug",
+      "hasParam": true,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/regen-games",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/custom-games",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    },
+    {
+      "path": "/marketplace",
+      "hasParam": false,
+      "redirectOnly": false,
+      "needsAuth": false
+    }
+  ]
+}

@@ -225,6 +225,7 @@ Project-specific skills live in `.claude/skills/` (committed with the repo) and 
 - `regen-ship-gate`: the audit-truncation + className grep + typecheck protocol that must pass before any "VERIFIED" or "DONE" claim
 - `regen-do-everything`: autonomous end-to-end fix execution: diagnose, code, build-check, commit, push, verify live, report
 - `regen-database-sql`: patterns for MySQL on Railway, Drizzle ORM, seed scripts, migrations
+- `regen-railway-crons`: Railway HTTP cron setup and debugging. The `sh -c` shell-expansion fix, the silent-401 trap (curl exits 0 on 401), and the `${{"ReGenCivics.Earth".CRON_SECRET}}` secret reference. Use when adding or fixing any `/api/cron/*` cron
 
 ### Game + seasons
 
