@@ -8,8 +8,8 @@
 -- and the LLM understanding outputs that subsequent phases will populate.
 --
 -- Run via the migration runner, never ad-hoc. Comments here intentionally
--- carry no semicolons because the runner splits naively on ; and that bit
--- us in 0137 and 0141. Period-only prose, please.
+-- carry no semicolons because the runner splits naively on that character
+-- and that bit us in 0137 and 0141. Period-only prose, please.
 
 CREATE TABLE IF NOT EXISTS roleHolders (
   id INT AUTO_INCREMENT PRIMARY KEY,
