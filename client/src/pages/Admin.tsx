@@ -88,6 +88,7 @@ import { AdminCrowdpoolingTab, AdminBroadcastTab, AdminLOITab, AdminBannersTab, 
 import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
 import { AdminRoleHoldersTab } from "@/components/admin/AdminRoleHoldersTab";
 import { AdminTasksTab } from "@/components/admin/AdminTasksTab";
+import AdminEditsTab from "@/components/admin/AdminEditsTab";
 
 // ─── Audit Log Tab ─────────────────────────────────────────────────────────────
 const DATE_RANGE_OPTIONS = [
@@ -3762,6 +3763,11 @@ function AdminDashboard() {
           {/* Call Tasks Queue (Movement Coordination Engine, Phase 3) */}
           <TabsContent value="call-tasks">
             <AdminTasksTab />
+          </TabsContent>
+
+          {/* Edited Cuts (Movement Coordination Engine, Phase 4) */}
+          <TabsContent value="edited-cuts">
+            <AdminEditsTab />
           </TabsContent>
 
           {/* Widgets Tab */}

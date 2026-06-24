@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Building2, Handshake, UserCheck,
   TrendingUp, FileText, Globe2, Shield, Megaphone, Search,
   BarChart3, Image, Gamepad2, Settings, ChevronLeft, ChevronRight,
-  ScrollText, Wallet, Map, ClipboardList, Video, Calendar, Coins, Award
+  ScrollText, Wallet, Map, ClipboardList, Video, Calendar, Coins, Award, Scissors
 } from 'lucide-react'
 
 const NAV_GROUPS = [
@@ -33,6 +33,7 @@ const NAV_GROUPS = [
       { id: 'recordings', label: 'Recordings', icon: Video },
       { id: 'role-holders', label: 'Role Holders', icon: Handshake },
       { id: 'call-tasks', label: 'Call Tasks', icon: ScrollText },
+      { id: 'edited-cuts', label: 'Edited Cuts', icon: Scissors },
       { id: 'moderation', label: 'Forum', icon: Shield },
       { id: 'quests', label: 'Quests', icon: ScrollText },
       { id: 'newsletter', label: 'Newsletter', icon: Megaphone },

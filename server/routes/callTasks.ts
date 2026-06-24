@@ -20,6 +20,65 @@ import { adminProcedure, protectedProcedure, publicProcedure, router } from "../
 import { getDb } from "../db";
 import { creditPrivateTokens, type TokenType } from "../db/tokens";
 import { callTasks, roleHolders, recordings, notifications } from "../../drizzle/schema";
+import { getGameVariable } from "../game";
+
+/**
+ * Credit the assignee for a submitted task and stamp the row completed.
+ * Used by both the manual consent path (consentAndReward) and the
+ * auto-pay path that fires from submit() when bounty is at or under
+ * coordination.auto_pay_bounty_max.
+ */
+async function payAndComplete(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  task: { id: number; title: string; sourceVideoId: string; assigneeUserId: number | null; bountyTokenType: string; bountyAmount: number },
+  opts: { consentedBy: number | null; auto: boolean },
+): Promise<{ rewardLedgerId: number | null }> {
+  if (!task.assigneeUserId) throw new TRPCError({ code: "BAD_REQUEST", message: "Task has no assignee" });
+  let ledgerId: number | null = null;
+  if (task.bountyAmount > 0) {
+    ledgerId = await creditPrivateTokens({
+      userId: task.assigneeUserId,
+      tokenType: task.bountyTokenType as TokenType,
+      amount: task.bountyAmount,
+      source: "call_task_bounty",
+      sourceId: task.id,
+      description: `Bounty for "${task.title}" from session ${task.sourceVideoId}${opts.auto ? " (auto-pay)" : ""}`,
+    });
+  }
+  await db
+    .update(callTasks)
+    .set({
+      status: "completed",
+      consentedBy: opts.consentedBy,
+      completedAt: new Date(),
+      rewardLedgerId: ledgerId,
+    })
+    .where(eq(callTasks.id, task.id));
+  if (ledgerId) {
+    const tokenLabel = task.bountyTokenType === "rcivics" ? "$RCivics" : "$ReGen";
+    await db.insert(notifications).values({
+      playerId: task.assigneeUserId,
+      type: "mention",
+      title: `Bounty paid: ${task.title.slice(0, 180)}`,
+      body: `${task.bountyAmount} ${tokenLabel} credited to your private balance${opts.auto ? " (auto-pay threshold)" : " after circle consent"}. View it in your profile.`,
+      link: `/profile?tab=tasks#call-task-${task.id}`,
+    });
+  }
+  return { rewardLedgerId: ledgerId };
+}
+
+/**
+ * Read coordination.auto_pay_bounty_max with a safe fallback. A missing
+ * key falls back to 0 (force every task through manual consent) so an
+ * undeployed migration cannot accidentally widen the auto-pay window.
+ */
+async function getAutoPayCeiling(): Promise<number> {
+  try {
+    return await getGameVariable("coordination.auto_pay_bounty_max");
+  } catch {
+    return 0;
+  }
+}
 
 /**
  * Create the in-app notification row that fires when a call task flips
@@ -431,7 +490,29 @@ export const callTasksRouter = router({
           submittedArtifactText: input.artifactText ?? null,
         })
         .where(eq(callTasks.id, input.id));
-      return { ok: true };
+
+      // Auto-pay path: bounty at or below coordination.auto_pay_bounty_max
+      // skips the manual circle consent step and credits immediately.
+      // A ceiling of 0 disables auto-pay entirely. Zero-bounty tasks
+      // (recognition-only) also auto-complete here because they have
+      // nothing left to gate.
+      const ceiling = await getAutoPayCeiling();
+      if (task.bountyAmount <= ceiling || task.bountyAmount === 0) {
+        const { rewardLedgerId } = await payAndComplete(
+          db,
+          {
+            id: task.id,
+            title: task.title,
+            sourceVideoId: task.sourceVideoId,
+            assigneeUserId: task.assigneeUserId,
+            bountyTokenType: task.bountyTokenType,
+            bountyAmount: task.bountyAmount,
+          },
+          { consentedBy: null, auto: true },
+        );
+        return { ok: true, autoPaid: true, rewardLedgerId };
+      }
+      return { ok: true, autoPaid: false };
     }),
 
   /**
@@ -476,31 +557,103 @@ export const callTasksRouter = router({
       if (task.status !== "submitted") {
         throw new TRPCError({ code: "CONFLICT", message: `Task is ${task.status}, not submitted` });
       }
-      if (!task.assigneeUserId) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Task has no assignee" });
-      }
+      const { rewardLedgerId } = await payAndComplete(
+        db,
+        {
+          id: task.id,
+          title: task.title,
+          sourceVideoId: task.sourceVideoId,
+          assigneeUserId: task.assigneeUserId,
+          bountyTokenType: task.bountyTokenType,
+          bountyAmount: task.bountyAmount,
+        },
+        { consentedBy: ctx.user.id, auto: false },
+      );
+      return { ok: true, rewardLedgerId };
+    }),
 
-      let ledgerId: number | null = null;
-      if (task.bountyAmount > 0) {
-        ledgerId = await creditPrivateTokens({
-          userId: task.assigneeUserId,
-          tokenType: task.bountyTokenType as TokenType,
-          amount: task.bountyAmount,
-          source: "call_task_bounty",
-          sourceId: task.id,
-          description: `Bounty for "${task.title}" from session ${task.sourceVideoId}`,
-        });
-      }
-
-      await db
-        .update(callTasks)
-        .set({
-          status: "completed",
-          consentedBy: ctx.user.id,
-          completedAt: new Date(),
-          rewardLedgerId: ledgerId,
+  /**
+   * Admin list of recordings with the editorial fields the edited-cut
+   * tab needs: ingest status, current edited URL (if any), and task
+   * count. Drives the AdminEditsTab where Rye attaches the post-cut
+   * YouTube link to a raw recording.
+   */
+  adminListRecordings: adminProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(200).default(50) }).default({}))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select({
+          id: recordings.id,
+          title: recordings.title,
+          sessionDate: recordings.sessionDate,
+          youtubeVideoId: recordings.youtubeVideoId,
+          editedYoutubeUrl: recordings.editedYoutubeUrl,
+          recordingKind: recordings.recordingKind,
+          overview: recordings.overview,
+          createdAt: recordings.createdAt,
         })
-        .where(eq(callTasks.id, input.id));
-      return { ok: true, rewardLedgerId: ledgerId };
+        .from(recordings)
+        .orderBy(desc(recordings.createdAt))
+        .limit(input.limit);
+      return rows;
+    }),
+
+  /**
+   * Attach (or update) the edited YouTube cut for a recording and
+   * notify the assignees of every completed task tied to that
+   * recording. Notifying on completed-only is deliberate: the edited
+   * cut is most meaningful as a receipt for people whose work made it
+   * into the session, and we do not want to nag the open-or-claimed
+   * crowd whose work is still in flight.
+   *
+   * Accepts a full YouTube URL or a bare videoId. Storing the URL keeps
+   * playback flexible if Rye ever wants to point at a non-YouTube host
+   * (Vimeo, PeerTube) later.
+   */
+  setEditedCut: adminProcedure
+    .input(z.object({
+      recordingId: z.number().int().positive(),
+      editedYoutubeUrl: z.string().min(1).max(512).nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [rec] = await db
+        .select({ id: recordings.id, title: recordings.title })
+        .from(recordings)
+        .where(eq(recordings.id, input.recordingId))
+        .limit(1);
+      if (!rec) throw new TRPCError({ code: "NOT_FOUND" });
+      const normalized = input.editedYoutubeUrl?.trim() || null;
+      if (normalized && normalized.length > 0) {
+        try { new URL(normalized.startsWith("http") ? normalized : `https://www.youtube.com/watch?v=${normalized}`); }
+        catch { throw new TRPCError({ code: "BAD_REQUEST", message: "Not a valid URL or video id" }); }
+      }
+      await db
+        .update(recordings)
+        .set({ editedYoutubeUrl: normalized })
+        .where(eq(recordings.id, input.recordingId));
+
+      if (!normalized) return { ok: true, notified: 0 };
+
+      const finished = await db
+        .select({ id: callTasks.id, title: callTasks.title, assigneeUserId: callTasks.assigneeUserId })
+        .from(callTasks)
+        .where(and(eq(callTasks.recordingId, input.recordingId), eq(callTasks.status, "completed")));
+      let notified = 0;
+      for (const t of finished) {
+        if (!t.assigneeUserId) continue;
+        await db.insert(notifications).values({
+          playerId: t.assigneeUserId,
+          type: "mention",
+          title: `Edited cut published: ${rec.title.slice(0, 180)}`,
+          body: `Your completed task "${t.title.slice(0, 120)}" was part of this session. Watch the edited highlight.`,
+          link: normalized,
+        });
+        notified += 1;
+      }
+      return { ok: true, notified };
     }),
 });
