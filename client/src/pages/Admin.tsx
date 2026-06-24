@@ -3321,7 +3321,7 @@ function AdminDashboard() {
   }
 
   return (
-    <div className={`admin-root flex h-screen overflow-hidden bg-[#f0ebe3] ${compact ? 'admin-compact' : ''}`}>
+    <div className={`admin-root flex h-[100dvh] overflow-hidden bg-[#f0ebe3] ${compact ? 'admin-compact' : ''}`}>
       <ShortcutHelpOverlay />
       <AdminNotificationCenter open={notifCenterOpen} onClose={() => setNotifCenterOpen(false)} />
       <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />

@@ -891,7 +891,7 @@ function BulkEmailSender() {
                     <><Database className="w-3 h-3 mr-1" /> Load from Database</>
                   )}
                 </Button>
-                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden group-hover:block">
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden group-hover:block group-focus-within:block">
                   <div className="p-1">
                     <button
                       onClick={() => handleLoadFromDatabase("newsletter")}
@@ -995,7 +995,7 @@ function BulkEmailSender() {
           
           {/* Recipient list */}
           {recipients.length > 0 && (
-            <div className="border rounded-lg max-h-[200px] overflow-y-auto">
+            <div className="border rounded-lg max-h-[200px] overflow-y-auto overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>

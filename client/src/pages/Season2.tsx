@@ -215,7 +215,7 @@ export default function Season2() {
       <SEO
         title="Season Two: Apply to the ReGen Civics Incubator"
         description="Season Two opens thirteen seats for regenerative land projects. Design the governance, economic, legal, and financial systems that let your project actually work, alongside an alliance building it in public."
-        image="/og/seasons.jpg"
+        image="/og/season2.jpg"
       />
 
       {/* ── HERO ── */}
@@ -234,7 +234,7 @@ export default function Season2() {
           <div className="inline-flex items-center gap-2 bg-[#7dd87d]/15 backdrop-blur-sm px-4 py-2 rounded-full mb-8 border border-[#7dd87d]/30">
             <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
             <span className="text-white/90 text-sm font-medium tracking-wide">
-              Season Two · 13 slots open · begins September 2026
+              Season Two · 13 seats open · begins September 2026
             </span>
           </div>
 
@@ -723,7 +723,7 @@ export default function Season2() {
         <AnimatedSection animation="scale-in" className="relative z-10 max-w-xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-[#7dd87d]/15 px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/30">
             <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
-            <span className="text-white/90 text-sm font-medium">Season Two · 13 slots</span>
+            <span className="text-white/90 text-sm font-medium">Season Two · 13 seats</span>
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-5" style={display}>
             Your project belongs <span className="italic text-[#a8e6a8]">in this game</span>
@@ -763,7 +763,7 @@ export default function Season2() {
           </div>
 
           <p className="mt-8 text-sm text-[#d4a574]/80 font-medium tracking-wide">
-            Applications close September 1st · Thirteen slots · Rolling shortlisting
+            Applications close September 1st · Thirteen seats · Rolling shortlisting
           </p>
 
           {/* Newsletter fallback */}

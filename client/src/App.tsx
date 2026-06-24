@@ -433,7 +433,7 @@ function App() {
           {!adminMode && <AnimationLayer />}
           {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
-          <main id="main-content" className="pb-20">
+          <main id="main-content" className="pb-[calc(5rem+env(safe-area-inset-bottom))]">
             <Router />
           </main>
           {!adminMode && !location.startsWith("/bionomics") && !location.startsWith("/economy") && !location.startsWith("/admin") && (

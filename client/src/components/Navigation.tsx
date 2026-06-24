@@ -115,7 +115,7 @@ export default function Navigation() {
     >
       Skip to main content
     </a>
-    <header className="sticky top-0 z-50 bg-[#1a472a]/95 backdrop-blur-sm border-b border-[#7dd87d]/20" role="banner">
+    <header className="sticky top-0 z-50 bg-[#1a472a]/95 backdrop-blur-sm border-b border-[#7dd87d]/20 [padding-top:env(safe-area-inset-top)]" role="banner">
       <div className="container">
         <nav className="flex items-center justify-between h-16" aria-label="Main navigation">
           {/* Logo / Brand */}
@@ -651,7 +651,7 @@ export default function Navigation() {
             onClick={() => {
               window.dispatchEvent(new CustomEvent("open-command-palette"));
             }}
-            className="p-2 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Search (Ctrl+K)"
           >
             <Search className="w-4 h-4" />

@@ -279,9 +279,11 @@
     font-size: 0.8125rem !important; /* 13px instead of 12px */
     line-height: 1.5 !important;
   }
-  .text-sm {
-    font-size: 0.9375rem !important; /* 15px instead of 14px */
-    line-height: 1.6 !important;
+  @media (min-width: 768px) {
+    .text-sm {
+      font-size: 0.9375rem !important; /* 15px; scoped to md+ to prevent iOS input zoom */
+      line-height: 1.6 !important;
+    }
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

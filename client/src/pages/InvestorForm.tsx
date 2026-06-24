@@ -585,6 +585,7 @@ export default function InvestorForm() {
                         </Label>
                         <Input
                           id="phone"
+                          type="tel"
                           value={formData.phone}
                           onChange={(e) => updateField("phone", e.target.value)}
                           placeholder="+1 (555) 123-4567"

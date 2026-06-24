@@ -150,7 +150,7 @@ export default function CampaignDetail() {
   const resourceItems = campaign.items.filter(item => item.category === 'resource');
   
   // Count unique contributors
-  const contributorCount = contributions ? new Set(contributions.map(c => c.contributorEmail)).size : 0;
+  const contributorCount = contributions ? new Set(contributions.map(c => c.contributorName)).size : 0;
   
   // Format currency
   const formatCurrency = (amount: number) => {
