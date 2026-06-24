@@ -99,6 +99,7 @@ import SeasonalIntention from "@/components/SeasonalIntention";
 import ContributionTimeline from "@/components/ContributionTimeline";
 import { getCurrentSeason } from "@/lib/seasons";
 import { cdnImg } from "@/lib/utils";
+import { ProfileCallTasksTab } from "@/components/profile/ProfileCallTasksTab";
 
 // Badge definitions
 const badgeDefinitions: Record<string, { name: string; icon: string; description: string; color: string }> = {
@@ -2760,12 +2761,13 @@ function QuestJournal({ userId }: { userId: number }) {
   );
 }
 
-type ProfileTab = "overview" | "submissions" | "quests" | "contributions" | "settings";
+type ProfileTab = "overview" | "submissions" | "quests" | "tasks" | "contributions" | "settings";
 
 const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
   { id: "submissions",    label: "My Submissions",  icon: FolderOpen },
   { id: "quests",         label: "Quests",         icon: Scroll },
+  { id: "tasks",          label: "Call Tasks",     icon: Scroll },
   { id: "contributions",  label: "Contributions",  icon: Leaf },
   { id: "settings",       label: "Settings",       icon: Settings },
 ];
@@ -2776,7 +2778,7 @@ export default function PlayerProfile() {
   const { data: profile, isLoading: profileLoading, refetch } = trpc.playerProfiles.me.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const _validTabs: ProfileTab[] = ["overview", "submissions", "quests", "contributions", "settings"];
+  const _validTabs: ProfileTab[] = ["overview", "submissions", "quests", "tasks", "contributions", "settings"];
   const _tabParam = new URLSearchParams(window.location.search).get("tab") as ProfileTab | null;
   const [activeTab, setActiveTab] = useState<ProfileTab>(
     _tabParam && _validTabs.includes(_tabParam) ? _tabParam : "overview"
@@ -3089,6 +3091,15 @@ export default function PlayerProfile() {
                       </div>
                     );
                   })()}
+                </AnimatedSection>
+                </ErrorBoundary>
+              )}
+
+              {/* Call Tasks tab (Movement Coordination Engine, Phase 3) */}
+              {activeTab === "tasks" && (
+                <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
+                <AnimatedSection animation="slide-up">
+                  <ProfileCallTasksTab />
                 </AnimatedSection>
                 </ErrorBoundary>
               )}

@@ -77,6 +77,7 @@ import {
 } from "lucide-react";
 import { AnimatedSection, StaggeredContainer } from "@/components/AnimatedSection";
 import { SEO, pageSEO } from "@/components/SEO";
+import { OpenToCircleCallTasks } from "@/components/OpenToCircleCallTasks";
 
 // =============================================
 // REUSABLE COMPONENTS
@@ -639,6 +640,13 @@ export default function Opportunity() {
         <div className="container mx-auto px-4">
           {/* On large screens, shift content left to make room for TOC sidebar (w-72 + 2rem gap = ~320px) */}
           <div className="max-w-4xl mx-auto lg:mr-80 xl:mr-80 min-w-0">
+
+            {/* Open-to-circle call tasks (Movement Coordination Engine,
+                Phase 3): any approved task with no assigned holder shows
+                up here so anyone in the movement can claim it. */}
+            <AnimatedSection animation="fade-in">
+              <OpenToCircleCallTasks />
+            </AnimatedSection>
 
             {/* ===== LEGAL BANNER ===== */}
             <AnimatedSection animation="fade-in">
@@ -2021,7 +2029,7 @@ export default function Opportunity() {
                 </FAQItem>
 
                 <FAQItem question="What is your deal flow advantage?">
-                  <p>Our network of 40+ alliance organizations and 50+ pipeline projects provides proprietary access institutional investors can't replicate independently. The ecosystem approach means projects seek us out for coordination infrastructure and support network, not just capital. We're invited into opportunities because we bring the entire alliance ecosystem, not just money.</p>
+                  <p>Our network of 40+ alliance organizations and 50+ pipeline projects provides proprietary access institutional investors can't replicate independently. Projects seek us out for the coordination infrastructure, the support network, and the capital. We're invited into opportunities because we bring the entire alliance ecosystem.</p>
                 </FAQItem>
 
                 <FAQItem question="How do you value ecological credits given market volatility?">

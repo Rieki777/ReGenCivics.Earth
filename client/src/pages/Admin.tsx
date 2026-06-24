@@ -87,6 +87,7 @@ import { AdminKanbanTab } from "@/components/admin/AdminKanbanTab";
 import { AdminCrowdpoolingTab, AdminBroadcastTab, AdminLOITab, AdminBannersTab, AdminImagesTab, AdminCustomGamesTab, AdminWidgetsTab } from "@/components/admin/AdminSimpleTabs";
 import { EmailHistoryPanel } from "@/components/admin/EmailHistoryPanel";
 import { AdminRoleHoldersTab } from "@/components/admin/AdminRoleHoldersTab";
+import { AdminTasksTab } from "@/components/admin/AdminTasksTab";
 
 // ─── Audit Log Tab ─────────────────────────────────────────────────────────────
 const DATE_RANGE_OPTIONS = [
@@ -3756,6 +3757,11 @@ function AdminDashboard() {
           {/* Role Holders Tab (Movement Coordination Engine, Phase 1) */}
           <TabsContent value="role-holders">
             <AdminRoleHoldersTab />
+          </TabsContent>
+
+          {/* Call Tasks Queue (Movement Coordination Engine, Phase 3) */}
+          <TabsContent value="call-tasks">
+            <AdminTasksTab />
           </TabsContent>
 
           {/* Widgets Tab */}

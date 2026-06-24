@@ -14,12 +14,45 @@
  * on `callTasks.rewardLedgerId`. Public balances are never written here.
  */
 import { z } from "zod";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { creditPrivateTokens, type TokenType } from "../db/tokens";
-import { callTasks, roleHolders, recordings } from "../../drizzle/schema";
+import { callTasks, roleHolders, recordings, notifications } from "../../drizzle/schema";
+
+/**
+ * Create the in-app notification row that fires when a call task flips
+ * to `open`. Respects `roleHolders.notifyInApp`. Email notification
+ * (notifyEmail) is intentionally deferred: in Phase 3 we ship the
+ * in-app surface only so the loop closes end to end without depending
+ * on an SMTP path. Email can layer in via the existing sendEmail
+ * helper in a follow-up when Rye wants it.
+ */
+async function deliverApproval(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  task: { id: number; title: string; assigneeUserId: number | null; roleSlug: string | null; bountyAmount: number; recordingId: number },
+): Promise<void> {
+  if (!task.assigneeUserId) return; // open-to-circle, surfaces on /opportunity instead
+  if (task.roleSlug) {
+    const [holder] = await db
+      .select({ notifyInApp: roleHolders.notifyInApp })
+      .from(roleHolders)
+      .where(eq(roleHolders.roleSlug, task.roleSlug))
+      .limit(1);
+    if (holder && holder.notifyInApp !== 1) return;
+  }
+  const bountyLabel = task.bountyAmount > 0
+    ? ` (${task.bountyAmount} $ReGen bounty)`
+    : "";
+  await db.insert(notifications).values({
+    playerId: task.assigneeUserId,
+    type: "mention",
+    title: `New call task: ${task.title.slice(0, 180)}`,
+    body: `A task from a recorded session is waiting for you${bountyLabel}. Open your profile to claim it.`,
+    link: `/profile?tab=tasks#call-task-${task.id}`,
+  });
+}
 
 const StatusEnum = z.enum([
   "proposed",
@@ -140,6 +173,51 @@ export const callTasksRouter = router({
       return rows;
     }),
 
+  /**
+   * Admin queue list with the joins the review UI needs: recording
+   * title + youtubeVideoId for the timestamped play link, plus the
+   * resolved roleHolder so the queue shows who would receive the task
+   * if approved as-is. Filterable by status (default proposed).
+   */
+  adminQueue: adminProcedure
+    .input(z.object({
+      status: StatusEnum.default("proposed"),
+      limit: z.number().int().min(1).max(200).default(50),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select({
+          id: callTasks.id,
+          recordingId: callTasks.recordingId,
+          sourceVideoId: callTasks.sourceVideoId,
+          roleSlug: callTasks.roleSlug,
+          assigneeUserId: callTasks.assigneeUserId,
+          title: callTasks.title,
+          summary: callTasks.summary,
+          sociocraticOverview: callTasks.sociocraticOverview,
+          bountyTokenType: callTasks.bountyTokenType,
+          bountyAmount: callTasks.bountyAmount,
+          evidenceQuote: callTasks.evidenceQuote,
+          evidenceTimestampSeconds: callTasks.evidenceTimestampSeconds,
+          status: callTasks.status,
+          createdByAgent: callTasks.createdByAgent,
+          createdAt: callTasks.createdAt,
+          recordingTitle: recordings.title,
+          recordingYoutubeVideoId: recordings.youtubeVideoId,
+          roleTitle: roleHolders.roleTitle,
+          roleHolderUserId: roleHolders.userId,
+        })
+        .from(callTasks)
+        .leftJoin(recordings, eq(recordings.id, callTasks.recordingId))
+        .leftJoin(roleHolders, eq(roleHolders.roleSlug, callTasks.roleSlug))
+        .where(eq(callTasks.status, input.status))
+        .orderBy(desc(callTasks.createdAt))
+        .limit(input.limit);
+      return rows;
+    }),
+
   /** Tasks belonging to the signed-in user, by status. */
   listMine: protectedProcedure
     .input(z.object({ status: StatusEnum.optional() }).default({}))
@@ -171,7 +249,12 @@ export const callTasksRouter = router({
       return rows;
     }),
 
-  /** Approve a proposed task. Bounty can be edited at gate time. */
+  /**
+   * Approve a proposed task. Stamps approvedBy, flips to `open`, and
+   * fires the in-app notification for a resolved assignee. Bounty +
+   * assignee can be edited at gate time so Rye can correct a bad
+   * suggestion before it reaches a person.
+   */
   approve: adminProcedure
     .input(z.object({
       id: z.number().int().positive(),
@@ -188,7 +271,47 @@ export const callTasksRouter = router({
       if (input.bountyAmount !== undefined) patch.bountyAmount = input.bountyAmount;
       if (input.assigneeUserId !== undefined) patch.assigneeUserId = input.assigneeUserId;
       await db.update(callTasks).set(patch).where(eq(callTasks.id, input.id));
+      // Re-read so the notification carries the final bounty + assignee
+      // (the input might have overridden either).
+      const [updated] = await db
+        .select({
+          id: callTasks.id,
+          title: callTasks.title,
+          assigneeUserId: callTasks.assigneeUserId,
+          roleSlug: callTasks.roleSlug,
+          bountyAmount: callTasks.bountyAmount,
+          recordingId: callTasks.recordingId,
+        })
+        .from(callTasks)
+        .where(eq(callTasks.id, input.id))
+        .limit(1);
+      if (updated) await deliverApproval(db, updated);
       return { ok: true };
+    }),
+
+  /** Bulk approve. Stops on the first failure so callers can retry. */
+  approveBulk: adminProcedure
+    .input(z.object({ ids: z.array(z.number().int().positive()).min(1).max(100) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      await db
+        .update(callTasks)
+        .set({ status: "open", approvedBy: ctx.user.id })
+        .where(and(inArray(callTasks.id, input.ids), eq(callTasks.status, "proposed")));
+      const rows = await db
+        .select({
+          id: callTasks.id,
+          title: callTasks.title,
+          assigneeUserId: callTasks.assigneeUserId,
+          roleSlug: callTasks.roleSlug,
+          bountyAmount: callTasks.bountyAmount,
+          recordingId: callTasks.recordingId,
+        })
+        .from(callTasks)
+        .where(inArray(callTasks.id, input.ids));
+      for (const row of rows) await deliverApproval(db, row);
+      return { ok: true, approved: rows.length };
     }),
 
   /** Decline a proposed task. Terminal. */
@@ -200,6 +323,48 @@ export const callTasksRouter = router({
       await db.update(callTasks).set({ status: "declined" }).where(eq(callTasks.id, input.id));
       return { ok: true };
     }),
+
+  /** Bulk decline. */
+  declineBulk: adminProcedure
+    .input(z.object({ ids: z.array(z.number().int().positive()).min(1).max(100) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      await db
+        .update(callTasks)
+        .set({ status: "declined" })
+        .where(and(inArray(callTasks.id, input.ids), eq(callTasks.status, "proposed")));
+      return { ok: true, declined: input.ids.length };
+    }),
+
+  /**
+   * Public-facing list of open-to-circle tasks (no assignee, status=open),
+   * rendered on the Opportunity board so anyone can pick one up. Returns
+   * the recording's youtubeVideoId so the page can deep-link into the
+   * source moment.
+   */
+  listOpenForCircle: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return [];
+    const rows = await db
+      .select({
+        id: callTasks.id,
+        title: callTasks.title,
+        summary: callTasks.summary,
+        roleSlug: callTasks.roleSlug,
+        bountyAmount: callTasks.bountyAmount,
+        bountyTokenType: callTasks.bountyTokenType,
+        sourceVideoId: callTasks.sourceVideoId,
+        evidenceTimestampSeconds: callTasks.evidenceTimestampSeconds,
+        sociocraticOverview: callTasks.sociocraticOverview,
+        createdAt: callTasks.createdAt,
+      })
+      .from(callTasks)
+      .where(and(eq(callTasks.status, "open"), isNull(callTasks.assigneeUserId)))
+      .orderBy(desc(callTasks.createdAt))
+      .limit(50);
+    return rows;
+  }),
 
   /** Holder claims an open task. */
   claim: protectedProcedure
