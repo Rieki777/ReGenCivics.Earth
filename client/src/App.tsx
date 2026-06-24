@@ -73,6 +73,7 @@ const Opportunity = lazyWithRetry(() => import("./pages/Opportunity"));
 // Form and InvestmentForm removed, both routes redirect to /connect and /investor respectively
 const Socials = lazy(() => import("./pages/Socials"));
 const Seasons = lazy(() => import("./pages/Seasons"));
+const Season2 = lazy(() => import("./pages/Season2"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
@@ -225,6 +226,7 @@ function Router() {
       <Route path={"/investor-form"}>{() => { window.location.replace('/investor'); return null; }}</Route>
       <Route path={"/socials"}><EB><Socials /></EB></Route>
       <Route path={"/seasons"}><EB><Seasons /></EB></Route>
+      <Route path={"/season2"}><EB><Season2 /></EB></Route>
       <Route path={"/schedule"}><EB><Schedule /></EB></Route>
       <Route path={"/checkin/:token"}><EB><Checkin /></EB></Route>
       <Route path={"/events/:id"}><EB><EventDetail /></EB></Route>

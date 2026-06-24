@@ -9,6 +9,7 @@ interface AnimatedSectionProps {
   delay?: number;
   className?: string;
   as?: 'div' | 'section' | 'article' | 'aside' | 'header' | 'footer';
+  id?: string;
   threshold?: number;
   staggerChildren?: boolean;
   staggerDelay?: number;
@@ -20,6 +21,7 @@ export function AnimatedSection({
   delay = 0,
   className = '',
   as: Component = 'div',
+  id,
   threshold = 0,
   staggerChildren = false,
   staggerDelay = 100,
@@ -107,6 +109,7 @@ export function AnimatedSection({
   return (
     <Component
       ref={ref as any}
+      id={id}
       className={className}
       style={getInitialStyles()}
     >
