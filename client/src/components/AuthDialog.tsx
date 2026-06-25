@@ -119,7 +119,7 @@ export function AuthDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="py-5 bg-[#0d2818] rounded-[20px] w-[400px] shadow-[0px_4px_24px_0px_rgba(0,0,0,0.4)] border border-[#7dd87d]/20 p-0 gap-0 text-center">
+      <DialogContent className="py-5 bg-[#0d2818] rounded-[20px] md:max-w-[400px] shadow-[0px_4px_24px_0px_rgba(0,0,0,0.4)] border border-[#7dd87d]/20 p-0 gap-0 text-center">
         <div className="flex flex-col items-center gap-2 p-6 pt-10">
           {logo ? (
             <div className="w-14 h-14 bg-[#1a472a] rounded-xl border border-[#7dd87d]/20 flex items-center justify-center mb-1">

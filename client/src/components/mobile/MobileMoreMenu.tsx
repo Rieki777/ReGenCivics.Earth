@@ -13,7 +13,7 @@
  * Body scroll is locked while open.
  */
 import { useEffect, useState } from "react";
-import { X, ChevronDown, Search, SkipBack, SkipForward, Play, Pause, Music, ListMusic, Plus, Sparkles } from "lucide-react";
+import { X, ChevronDown, Search, SkipBack, SkipForward, Play, Pause, Music, ListMusic, Plus, Sparkles, LogIn } from "lucide-react";
 import { MOBILE_MENU_SECTIONS, MOBILE_MENU_FOOTER } from "@/config/mobileMenu";
 import { MenuCard } from "./MenuCard";
 import { NextQuestCard } from "./NextQuestCard";
@@ -22,6 +22,10 @@ import { useSeasonTint } from "@/hooks/useSeasonTint";
 import { Link } from "wouter";
 import { useAudio } from "@/contexts/AudioContext";
 import { useReGenGuide } from "@/contexts/ReGenGuideContext";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import { cdnImg } from "@/lib/utils";
+import { AuthDialog } from "@/components/AuthDialog";
 
 type Props = { open?: boolean; onClose?: () => void };
 
@@ -33,8 +37,15 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
   const tint = useSeasonTint();
   const audio = useAudio();
   const guide = useReGenGuide();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { data: userProfile } = trpc.userProfiles.getMe.useQuery(undefined, {
+    enabled: !!user && isAuthenticated,
+    staleTime: 300_000,
+  });
+  const avatarUrl = userProfile?.avatarUrl;
   const [internalOpen, setInternalOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   const open = openProp ?? internalOpen;
   const onClose = onCloseProp ?? (() => setInternalOpen(false));
@@ -99,11 +110,49 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
         />
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/30 backdrop-blur flex items-center justify-center text-white hover:bg-black/50 transition-colors"
+          className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-black/30 backdrop-blur flex items-center justify-center text-white hover:bg-black/50 transition-colors"
           aria-label="Close menu"
         >
           <X className="w-5 h-5" />
         </button>
+
+        {/* Auth control: avatar (signed in) or Sign In button (signed out) */}
+        <div className="absolute top-4 right-4 z-10">
+          {authLoading ? (
+            <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 animate-pulse" />
+          ) : isAuthenticated && user ? (
+            <Link href="/profile" onClick={onClose} aria-label="Your profile">
+              {avatarUrl ? (
+                <img
+                  src={cdnImg(avatarUrl, 64)}
+                  alt={user.name ?? "Profile"}
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-[#7dd87d]/60 shadow-lg"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    img.style.display = "none";
+                    const fallback = img.nextElementSibling as HTMLElement | null;
+                    if (fallback) fallback.style.display = "flex";
+                  }}
+                />
+              ) : null}
+              <div
+                className="w-10 h-10 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold flex items-center justify-center text-base shadow-lg"
+                style={{ display: avatarUrl ? "none" : "flex" }}
+              >
+                {user.name?.charAt(0).toUpperCase() ?? "U"}
+              </div>
+            </Link>
+          ) : (
+            <button
+              onClick={() => setAuthDialogOpen(true)}
+              className="flex items-center gap-1.5 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-4 py-2 text-sm shadow-lg transition-colors"
+              style={{ fontFamily: "var(--font-accent)" }}
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </button>
+          )}
+        </div>
         <div className="relative z-10 flex flex-col items-center text-center">
           {/* Phoenix + circle-of-life crest used across the Connect page.
               Rye asked for this specific crest here too so the More tab
@@ -245,6 +294,13 @@ export function MobileMoreMenu({ open: openProp, onClose: onCloseProp }: Props =
           ))}
         </div>
       </div>
+
+      <AuthDialog
+        open={authDialogOpen}
+        onOpenChange={setAuthDialogOpen}
+        onLogin={() => {}}
+        title="Welcome to ReGen Civics"
+      />
     </div>
   );
 }
