@@ -85,6 +85,7 @@ export interface MapEntity {
   meetingFrequency?: string;
   dietaryPatterns?: string[]; // parsed from JSON
   forumThreadUrl?: string;
+  applicationId?: number; // set for DB-backed applicants; absent for static projects
 }
 
 // Hard-coded Season 1 Land Projects with real coordinates from slide deck
@@ -480,6 +481,119 @@ function RoleBadge({ role }: { role: OrgRole }) {
   );
 }
 
+const MEETING_FREQ_LABELS: Record<string, string> = {
+  everyday: "Everyday",
+  "2_3x_week": "2–3 times per week",
+  weekly: "Weekly",
+  "2_3x_month": "2–3 times per month",
+  monthly: "Monthly",
+  "2_3x_year": "2–3 times per year",
+  yearly_plus: "Yearly or less",
+};
+
+const LAND_STATUS_LABELS: Record<string, string> = {
+  owned: "Owned",
+  leased: "Leased",
+  committed: "Committed",
+  seeking: "Seeking land",
+};
+
+const PROJECT_TYPE_LABELS: Record<string, string> = {
+  early_stage: "Early stage",
+  mature: "Mature",
+};
+
+// Renders all public application answers for a DB-backed applicant project.
+// Fetches lazily — only when the card is selected and applicationId is set.
+function ProjectDetailPanel({ applicationId }: { applicationId: number }) {
+  const { data, isLoading } = trpc.applications.publicDetail.useQuery(
+    { id: applicationId },
+    { staleTime: 300_000 },
+  );
+
+  if (isLoading) {
+    return (
+      <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-4 bg-white/10 rounded animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+  if (!data) return null;
+
+  // Build an ordered list of [label, value] pairs, skipping empties.
+  type FieldEntry = [string, string | number | null | undefined];
+  const fields: FieldEntry[] = [
+    ["Vision", data.vision],
+    ["Project type", data.projectType ? PROJECT_TYPE_LABELS[data.projectType] ?? data.projectType : null],
+    ["Land status", data.landStatus ? LAND_STATUS_LABELS[data.landStatus] ?? data.landStatus : null],
+    ["Size (hectares)", data.projectSizeHectares],
+    ["Current residents", data.currentPeopleCount],
+    ["Current households", data.currentHouseholdCount],
+    ["Intended residents", data.intendedPeopleCount],
+    ["Intended households", data.intendedHouseholdCount],
+    ["Mixed use", data.mixedUse],
+    ["Community engagement", data.meetingFrequency ? MEETING_FREQ_LABELS[data.meetingFrequency] ?? data.meetingFrequency : null],
+    ["Regenerative practices", data.regenerativePractices],
+    ["Governance approach", data.governanceApproach],
+    ["Community engagement detail", data.communityEngagement],
+    ["Time commitment", data.timeCommitment],
+    ["Funding needs", data.fundingNeeds],
+    ["Current funding", data.currentFunding],
+    ["Team size", data.teamSize],
+    ["Team description", data.teamDescription],
+    ["Additional notes", data.additionalNotes],
+  ];
+
+  const visible = fields.filter(([, v]) => v != null && v !== "" && v !== 0);
+
+  let dietaryTags: string[] = [];
+  try {
+    dietaryTags = data.dietaryPatterns ? JSON.parse(data.dietaryPatterns) : [];
+  } catch { /* keep empty */ }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+      {/* Website button at the top */}
+      {data.websiteUrl && (
+        <a
+          href={data.websiteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center justify-center gap-2 w-full bg-[#1a472a] hover:bg-[#235c39] border border-[#7dd87d]/40 text-[#7dd87d] text-xs font-semibold rounded-xl py-2.5 transition-colors"
+        >
+          <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+          Visit website
+        </a>
+      )}
+
+      {/* Dietary tags */}
+      {dietaryTags.length > 0 && (
+        <div>
+          <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Diet</p>
+          <div className="flex flex-wrap gap-1">
+            {dietaryTags.map((d: string) => (
+              <span key={d} className="text-[10px] px-2 py-0.5 rounded-full bg-[#4a7c59]/30 text-[#7dd87d] font-medium capitalize">
+                {d.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All answer fields */}
+      {visible.map(([label, value]) => (
+        <div key={label}>
+          <p className="text-white/50 text-[10px] uppercase tracking-widest mb-0.5">{label}</p>
+          <p className="text-white/85 text-xs leading-relaxed">{String(value)}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Entity Card Component - mobile-first with image, season tag, inactive tag, role tags
 function EntityCard({
   entity,
@@ -689,6 +803,13 @@ function EntityCard({
             )}
           </div>
         )}
+
+        {/* Full application detail — DB-backed applicants only.
+            Falls back gracefully (renders nothing) for static Season-1 projects
+            that have no application record. */}
+        {isSelected && entity.applicationId != null && (
+          <ProjectDetailPanel applicationId={entity.applicationId} />
+        )}
       </div>
     </div>
   );
@@ -813,26 +934,27 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
       .filter((app) => app.latitude != null && app.longitude != null)
       .map((app) => ({
         id: `applicant-${app.id}`,
+        applicationId: app.id,
         name: app.name,
         type: "applicant" as EntityType,
         lat: app.latitude as number,
         lng: app.longitude as number,
-      location: app.location,
-      country: app.country || "",
-      description: app.vision || "A new regenerative land project applying to join the ReGen Civics alliance.",
-      size: app.projectSizeHectares ? `${app.projectSizeHectares} hectares` : undefined,
-      url: app.websiteUrl || undefined,
-      status: app.status,
-      season: "Season 2",
-      meetingFrequency: app.meetingFrequency || undefined,
-      dietaryPatterns: app.dietaryPatterns
-        ? (() => { try { return JSON.parse(app.dietaryPatterns); } catch { return []; } })()
-        : undefined,
-      forumThreadUrl: (() => {
-        const postId = threadByName.get(app.name.toLowerCase().trim());
-        return postId ? `/community/post/${postId}` : undefined;
-      })(),
-    }));
+        location: app.location,
+        country: app.country || "",
+        description: app.vision || "A new regenerative land project applying to join the ReGen Civics alliance.",
+        size: app.projectSizeHectares ? `${app.projectSizeHectares} hectares` : undefined,
+        url: app.websiteUrl || undefined,
+        status: app.status,
+        season: "Season 2",
+        meetingFrequency: app.meetingFrequency || undefined,
+        dietaryPatterns: app.dietaryPatterns
+          ? (() => { try { return JSON.parse(app.dietaryPatterns); } catch { return []; } })()
+          : undefined,
+        forumThreadUrl: (() => {
+          const postId = threadByName.get(app.name.toLowerCase().trim());
+          return postId ? `/community/post/${postId}` : undefined;
+        })(),
+      }));
   }, [applicantData, threadByName]);
 
   // Combine all entities

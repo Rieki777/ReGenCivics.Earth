@@ -447,6 +447,51 @@ export const applicationsRouter = router({
       return app;
     }),
 
+  // Public: Full detail for a single submitted/approved application.
+  // Returns all applicant-authored answer fields. Excludes contact info
+  // (userId, stewardUserId) and internal review metadata (adminSeeded, etc.).
+  // Only serves applications in submitted | under_review | approved | active.
+  publicDetail: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const app = await db.getApplicationById(input.id);
+      if (!app) return null;
+      const visibleStatuses = ["submitted", "under_review", "approved", "active"];
+      if (!visibleStatuses.includes(app.status ?? "")) return null;
+      return {
+        id: app.id,
+        projectName: app.projectName,
+        projectType: app.projectType,
+        location: app.location,
+        country: app.country,
+        vision: app.vision,
+        landStatus: app.landStatus,
+        teamSize: app.teamSize,
+        teamDescription: app.teamDescription,
+        projectSizeHectares: app.projectSizeHectares,
+        currentPeopleCount: app.currentPeopleCount,
+        currentHouseholdCount: app.currentHouseholdCount,
+        intendedPeopleCount: app.intendedPeopleCount,
+        intendedHouseholdCount: app.intendedHouseholdCount,
+        mixedUse: app.mixedUse,
+        meetingFrequency: app.meetingFrequency,
+        dietaryPatterns: app.dietaryPatterns,
+        regenerativePractices: app.regenerativePractices,
+        governanceApproach: app.governanceApproach,
+        communityEngagement: app.communityEngagement,
+        timeCommitment: app.timeCommitment,
+        currentFunding: app.currentFunding,
+        fundingNeeds: app.fundingNeeds,
+        websiteUrl: app.websiteUrl,
+        videoUrl: app.videoUrl,
+        additionalNotes: app.additionalNotes,
+        projectStatus: app.projectStatus,
+        endorsementCount: app.endorsementCount,
+        contributionCount: app.contributionCount,
+        submittedAt: app.submittedAt,
+      };
+    }),
+
   // Public: Get submitted applications for the globe map (limited fields)
   mapData: publicProcedure.query(async () => {
     const allApps = await db.getAllApplications();

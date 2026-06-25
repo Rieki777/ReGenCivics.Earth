@@ -146,7 +146,7 @@ export default function Navigation() {
               className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] hover:from-[#e0b88a] hover:to-[#ffe44d] rounded-full px-5 py-1.5 text-sm font-bold shadow-[0_0_15px_rgba(255,215,0,0.4),0_0_30px_rgba(212,165,116,0.2)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6),0_0_40px_rgba(212,165,116,0.3)] transition-all"
               style={{ fontFamily: 'var(--font-accent)' }}
             >
-              <Sparkles className="w-4 h-4 mr-1" />
+              <Sparkles className="w-5 h-5 mr-1" />
               Participate
             </Button>
           </Link>
@@ -167,9 +167,9 @@ export default function Navigation() {
                   style={{ fontFamily: 'var(--font-accent)' }}
                   onMouseEnter={() => { prefetch("/fund"); prefetch("/land"); prefetch("/ally"); prefetch("/play"); }}
                 >
-                  <SeedOfLifeIcon className="w-4 h-4" />
+                  <SeedOfLifeIcon className="w-[22px] h-[22px]" />
                   4 Paths
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
@@ -220,9 +220,9 @@ export default function Navigation() {
                   style={{ fontFamily: 'var(--font-accent)' }}
                   onMouseEnter={() => { prefetch("/game"); prefetch("/quest"); prefetch("/play"); }}
                 >
-                  <FlowerOfLifeIcon className="w-4 h-4" size={16} />
+                  <FlowerOfLifeIcon className="w-[22px] h-[22px]" size={22} />
                   Play the Game
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
@@ -334,9 +334,9 @@ export default function Navigation() {
                   }`}
                   style={{ fontFamily: 'var(--font-accent)' }}
                 >
-                  <Layers className="w-4 h-4" />
+                  <Layers className="w-[22px] h-[22px]" />
                   Seasons + Schedule
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
@@ -370,7 +370,7 @@ export default function Navigation() {
               }`}
               style={{ fontFamily: 'var(--font-accent)' }}
             >
-              <Globe className="w-4 h-4" />
+              <Globe className="w-[22px] h-[22px]" />
               Map
             </Link>
 
@@ -385,7 +385,7 @@ export default function Navigation() {
                 }`}
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                <Vote className="w-4 h-4" />
+                <Vote className="w-[22px] h-[22px]" />
                 Governance
               </Link>
             )}
@@ -400,7 +400,7 @@ export default function Navigation() {
               }`}
               style={{ fontFamily: 'var(--font-accent)' }}
             >
-              <Users className="w-4 h-4" />
+              <Users className="w-[22px] h-[22px]" />
               Team
             </Link>
 
@@ -410,7 +410,7 @@ export default function Navigation() {
                 className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] hover:from-[#e0b88a] hover:to-[#ffe44d] rounded-full px-5 font-bold shadow-[0_0_15px_rgba(255,215,0,0.4),0_0_30px_rgba(212,165,116,0.2)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6),0_0_40px_rgba(212,165,116,0.3)] transition-all"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                <Sparkles className="w-4 h-4 mr-1" />
+                <Sparkles className="w-5 h-5 mr-1" />
                 Participate
               </Button>
             </Link>
@@ -427,9 +427,9 @@ export default function Navigation() {
                   }`}
                   style={{ fontFamily: 'var(--font-accent)' }}
                 >
-                  <Users className="w-4 h-4" />
+                  <Users className="w-[22px] h-[22px]" />
                   Explore + Connect
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
@@ -583,7 +583,7 @@ export default function Navigation() {
                     <div className={`w-8 h-8 rounded-full bg-[#7dd87d] flex items-center justify-center text-[#1a472a] font-bold text-sm ${avatarUrl ? 'hidden' : ''}`}>
                       {user.name?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
@@ -640,7 +640,7 @@ export default function Navigation() {
                 style={{ fontFamily: 'var(--font-accent)' }}
                 onClick={handleSignIn}
               >
-                <LogIn className="w-4 h-4" />
+                <LogIn className="w-[22px] h-[22px]" />
                 Sign In
               </Button>
             )}
@@ -654,7 +654,7 @@ export default function Navigation() {
             className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Search (Ctrl+K)"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-[22px] h-[22px]" />
           </button>
 
           {/* Mobile-only quick actions: Messages + Notifications.
@@ -837,7 +837,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <FlowerOfLifeIcon className="w-4 h-4" size={16} />
+                      <FlowerOfLifeIcon className="w-[22px] h-[22px]" size={22} />
                       Game Overview
                     </Link>
                     <Link 
@@ -850,7 +850,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Heart className="w-4 h-4" />
+                      <Heart className="w-[22px] h-[22px]" />
                       Play
                     </Link>
                     <Link
@@ -863,7 +863,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Layers className="w-4 h-4" />
+                      <Layers className="w-[22px] h-[22px]" />
                       Plays
                       <span className="ml-auto text-[9px] bg-[#7dd87d]/30 text-[#7dd87d] px-1.5 py-0.5 rounded-full">New</span>
                     </Link>
@@ -890,7 +890,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <UsersRound className="w-4 h-4" />
+                      <UsersRound className="w-[22px] h-[22px]" />
                       Crowd Pool Campaigns
                     </Link>
                     <Link
@@ -903,7 +903,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Wrench className="w-4 h-4" />
+                      <Wrench className="w-[22px] h-[22px]" />
                       Tools Library
                     </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
@@ -917,7 +917,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Calculator className="w-4 h-4" />
+                      <Calculator className="w-[22px] h-[22px]" />
                       Crowd Pool Calculator
                     </Link>
                     <Link 
@@ -930,7 +930,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Calculator className="w-4 h-4" />
+                      <Calculator className="w-[22px] h-[22px]" />
                       Contribution Calculator
                     </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
@@ -972,7 +972,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <User className="w-4 h-4" />
+                      <User className="w-[22px] h-[22px]" />
                       Player Profile
                     </Link>
                     <Link
@@ -1018,7 +1018,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Layers className="w-4 h-4" />
+                      <Layers className="w-[22px] h-[22px]" />
                       Seasons
                     </Link>
                     <Link 
@@ -1031,7 +1031,7 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Calendar className="w-4 h-4" />
+                      <Calendar className="w-[22px] h-[22px]" />
                       Schedule
                     </Link>
                   </div>
