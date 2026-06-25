@@ -30,6 +30,11 @@ vi.mock('@/lib/trpc', () => ({
         }),
       },
     },
+    hyphaBridge: {
+      createFromQuest: {
+        useMutation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+      },
+    },
   },
 }));
 

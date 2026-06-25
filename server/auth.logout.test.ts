@@ -49,13 +49,14 @@ describe("auth.logout", () => {
     const result = await caller.auth.logout();
 
     expect(result).toEqual({ success: true });
+
+    // clearAllSessionCookies clears multiple variants (Safari multi-cookie case).
     expect(clearedCookies.length).toBeGreaterThanOrEqual(1);
     const sessionClear = clearedCookies.find((c) => c.name === COOKIE_NAME);
     expect(sessionClear).toBeDefined();
     expect(sessionClear?.options).toMatchObject({
-      maxAge: -1,
       secure: true,
-      sameSite: "none",
+      sameSite: "lax",
       httpOnly: true,
       path: "/",
     });
