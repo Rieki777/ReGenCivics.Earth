@@ -58,8 +58,9 @@ export async function creditPrivateTokens(params: {
   sourceRef?: string | null;
   tenantId?: number | null;
   description?: string | null;
+  idempotencyKey?: string | null;
 }): Promise<number | null> {
-  const { userId, tokenType, amount, source, sourceId, sourceRef, tenantId, description } = params;
+  const { userId, tokenType, amount, source, sourceId, sourceRef, tenantId, description, idempotencyKey } = params;
   if (amount === 0) return null;
   const db = await getDb();
   if (!db) return null;
@@ -75,6 +76,8 @@ export async function creditPrivateTokens(params: {
     // Always write the audit entry first. This way the ledger history
     // is preserved even for users who have no player_profiles row yet
     // (e.g., they signed up but never completed profile creation).
+    // The idempotencyKey unique constraint makes duplicate bounty credits
+    // physically impossible at the DB layer even if application logic races.
     await tx.insert(userTokenLedger).values({
       userId,
       tokenType,
@@ -84,6 +87,7 @@ export async function creditPrivateTokens(params: {
       sourceRef: sourceRef ?? null,
       tenantId: tenantId ?? null,
       description: description ?? null,
+      idempotencyKey: idempotencyKey ?? null,
     });
 
     const [profile] = await tx

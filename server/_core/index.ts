@@ -59,6 +59,7 @@ import { registerOgRoutes } from "../routes/og";
 import { registerEmbedRoutes } from "../routes/embed";
 import { registerHyphaWebhookRoutes } from "../lib/hypha-bridge/webhook-receiver";
 import { registerLoomioWebhookRoutes } from "../webhooks/loomio";
+import { registerGithubWebhookRoutes } from "../webhooks/github";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
 import { createRequire } from "module";
@@ -508,6 +509,8 @@ async function startServer() {
   registerHyphaWebhookRoutes(app);
   // Loomio governance webhook (HMAC-signed)
   registerLoomioWebhookRoutes(app);
+  // GitHub webhook: merge automation for Bounty Engine
+  registerGithubWebhookRoutes(app);
   // OIDC provider for shared auth with Loomio at gov.regencivics.earth
   registerOidcRoutes(app);
   // Presence heartbeat and count
@@ -571,7 +574,7 @@ async function startServer() {
   // Called every ~10 minutes by Railway cron: POST /api/cron/coordination-pipeline
   // Polls the YouTube channel RSS for new uploads, ingests them as
   // recordings rows, runs the synthesize + extract-tasks LLM passes,
-  // and inserts proposed callTasks rows for the admin gate.
+  // and inserts proposed bounty rows for the admin gate.
   // Idempotent on `recordings.youtubeVideoId`. Set CRON_SECRET env var;
   // pass as Bearer token in the cron job command.
   // Spec: MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md sections 5 + 6.

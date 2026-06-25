@@ -3,12 +3,13 @@
  *
  * Two agents kept on a daily cron:
  *
- * 1. Stale-claims agent. Walks every callTasks row in status 'claimed'.
- *    Older than coordination.stale_claim_nudge_days (default 7) gets
- *    one in-app nudge; older than coordination.stale_claim_expire_days
- *    (default 14) reverts to 'open' so the work can move to someone
- *    else. The nudge is one-shot per claim: we set a marker in the
- *    body so we never spam the same claim across daily runs.
+ * 1. Stale-claims agent. Walks every bounty_roles row in payStatus 'filled'
+ *    (meaning claimed but not yet submitted/paid). Older than
+ *    coordination.stale_claim_nudge_days (default 7) gets one in-app nudge;
+ *    older than coordination.stale_claim_expire_days (default 14) reverts
+ *    to 'unfilled' so the work can move to someone else. The nudge is
+ *    one-shot per claim: we set a marker in the body so we never spam
+ *    the same claim across daily runs.
  *
  * 2. Roles-reconciliation agent. Re-parses client/src/data/gameRoles.ts
  *    and diffs against the roleHolders table. New roles get inserted
@@ -24,7 +25,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { and, eq, isNotNull, lt, sql } from "drizzle-orm";
 import { getDb } from "../db";
-import { callTasks, notifications, roleHolders } from "../../drizzle/schema";
+import { bounties, bountyRoles, notifications, roleHolders } from "../../drizzle/schema";
 import { getGameVariable } from "../game";
 
 const DEFAULT_NUDGE_DAYS = 7;
@@ -62,50 +63,56 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
   const nudgeCutoff = new Date(now - nudgeDays * 24 * 60 * 60 * 1000);
   const expireCutoff = new Date(now - expireDays * 24 * 60 * 60 * 1000);
 
-  const claimed = await db
+  // Find bounty roles in 'filled' status (claimed but not yet paid) older than nudge cutoff
+  const claimedRoles = await db
     .select({
-      id: callTasks.id,
-      title: callTasks.title,
-      assigneeUserId: callTasks.assigneeUserId,
-      claimedAt: callTasks.claimedAt,
+      id: bountyRoles.id,
+      bountyId: bountyRoles.bountyId,
+      userId: bountyRoles.userId,
+      updatedAt: bountyRoles.updatedAt,
     })
-    .from(callTasks)
-    .where(and(eq(callTasks.status, "claimed"), isNotNull(callTasks.claimedAt), lt(callTasks.claimedAt, nudgeCutoff)));
+    .from(bountyRoles)
+    .where(and(eq(bountyRoles.payStatus, "filled"), isNotNull(bountyRoles.userId), lt(bountyRoles.updatedAt, nudgeCutoff)));
+
+  if (!claimedRoles.length) return { nudged: 0, expired: 0, scanned: 0 };
+
+  const bIds = [...new Set(claimedRoles.map((r) => r.bountyId))];
+  const bRows = await db
+    .select({ id: bounties.id, title: bounties.title })
+    .from(bounties)
+    .where(and(isNotNull(bounties.id)));
+  const bMap = new Map(bRows.map((b) => [b.id, b]));
 
   let nudged = 0;
   let expired = 0;
 
-  for (const t of claimed) {
-    if (!t.claimedAt || !t.assigneeUserId) continue;
-    if (t.claimedAt < expireCutoff) {
-      // Past the expire window. Notify the original assignee that we're
-      // releasing the task, then revert to open so anyone in the circle
-      // can pick it back up.
+  for (const r of claimedRoles) {
+    if (!r.userId || !r.updatedAt) continue;
+    const bounty = bMap.get(r.bountyId);
+    const title = bounty?.title ?? `Bounty #${r.bountyId}`;
+
+    if (r.updatedAt < expireCutoff) {
       await db.insert(notifications).values({
-        playerId: t.assigneeUserId,
+        playerId: r.userId,
         type: "mention",
-        title: `Released: ${t.title.slice(0, 180)}`,
-        body: `${NUDGE_MARKER} Your claim sat for over ${expireDays} days, so the task is back in the open pool for someone else. You can still re-claim it any time.`,
-        link: `/profile?tab=tasks#call-task-${t.id}`,
+        title: `Released: ${title.slice(0, 180)}`,
+        body: `${NUDGE_MARKER} Your claim sat for over ${expireDays} days, so the role is back in the open pool for someone else. You can still re-claim it any time.`,
+        link: `/bounties#bounty-${r.bountyId}`,
       });
       await db
-        .update(callTasks)
-        .set({ status: "open", assigneeUserId: null, claimedAt: null })
-        .where(eq(callTasks.id, t.id));
+        .update(bountyRoles)
+        .set({ userId: null, payStatus: "unfilled", filledByLog: null })
+        .where(eq(bountyRoles.id, r.id));
       expired += 1;
       continue;
     }
 
-    // Nudge zone. Send a single nudge per claim by checking the
-    // notifications table for our marker on this task. Spamming the
-    // same person every cron tick is exactly the failure mode this
-    // agent is trying to avoid.
-    const linkPath = `/profile?tab=tasks#call-task-${t.id}`;
+    const linkPath = `/bounties#bounty-${r.bountyId}`;
     const existing = await db
       .select({ id: notifications.id })
       .from(notifications)
       .where(and(
-        eq(notifications.playerId, t.assigneeUserId),
+        eq(notifications.playerId, r.userId),
         eq(notifications.link, linkPath),
         sql`${notifications.body} LIKE ${`%${NUDGE_MARKER}%`}`,
       ))
@@ -113,16 +120,16 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
     if (existing.length > 0) continue;
 
     await db.insert(notifications).values({
-      playerId: t.assigneeUserId,
+      playerId: r.userId,
       type: "mention",
-      title: `Still on this one? ${t.title.slice(0, 160)}`,
-      body: `${NUDGE_MARKER} You claimed this task ${nudgeDays}+ days ago. Submit when you're ready, or leave it for someone else by ignoring (auto-releases at ${expireDays} days).`,
+      title: `Still on this one? ${title.slice(0, 160)}`,
+      body: `${NUDGE_MARKER} You claimed this role ${nudgeDays}+ days ago. Link your PR when ready, or release the role so someone else can pick it up (auto-releases at ${expireDays} days).`,
       link: linkPath,
     });
     nudged += 1;
   }
 
-  return { nudged, expired, scanned: claimed.length };
+  return { nudged, expired, scanned: claimedRoles.length };
 }
 
 interface ParsedRole {

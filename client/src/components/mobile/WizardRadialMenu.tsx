@@ -316,11 +316,14 @@ export function WizardRadialMenu() {
             open ? "scale-105" : ""
           }`}
           style={{
-            backgroundColor: tint.primary,
-            color: "#0d2818",
+            // Match the bottom nav (from-[#0a1f0f] to-[#1a472a]) so the FAB
+            // reads as part of the menu, not a light/white blob. The white
+            // Flower-of-Life glyph carries the contrast.
+            background: "linear-gradient(to top, #0a1f0f, #1a472a)",
+            color: "#ffffff",
             boxShadow: open
-              ? `0 0 0 4px ${tint.primary}40, 0 12px 32px rgba(0,0,0,0.4)`
-              : "0 10px 24px rgba(0,0,0,0.3)",
+              ? `0 0 0 4px ${tint.primary}55, 0 12px 32px rgba(0,0,0,0.4)`
+              : "0 10px 24px rgba(0,0,0,0.35)",
           }}
           aria-label={open ? "Close shortcuts" : "Open shortcuts"}
           aria-expanded={open}

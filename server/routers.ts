@@ -45,6 +45,7 @@ import { adminActionsRouter } from "./routes/adminActions";
 import { adminAutomationsRouter } from "./routes/adminAutomations";
 import { roleHoldersRouter } from "./routes/roleHolders";
 import { callTasksRouter } from "./routes/callTasks";
+import { bountiesRouter } from "./routes/bounties";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -107,9 +108,10 @@ export const appRouter = router({
   adminActions: adminActionsRouter,
   adminAutomations: adminAutomationsRouter,
 
-  // Movement Coordination Engine (Phase 1).
+  // Movement Coordination Engine + Bounty Engine
   roleHolders: roleHoldersRouter,
   callTasks: callTasksRouter,
+  bounties: bountiesRouter,
   imageStudio: imageStudioRouter,
   scheduledEmails: scheduledEmailsRouter,
   banners: bannersRouter,

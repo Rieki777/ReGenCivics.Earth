@@ -178,13 +178,27 @@ Format per entry:
 ## ADR-16: Movement Coordination Engine (call tasks, role holders, gated bounties)
 
 - Date: 2026-06-23
-- Status: Accepted (Phase 1 shipped)
+- Status: Accepted (Phase 1 shipped). Superseded in part by ADR-17: the `callTasks` flow is replaced by the unified bounty engine; `roleHolders` and the recordings extensions are retained.
 - Context: the codebase had no person-to-role link (gameRoles.ts defines 20 sociocratic roles but no table said "Maya holds Forum Gardener") and no data-driven task surface (quests were hardcoded, no row an agent could write a new task into). Without those two primitives, a recorded session could not turn a named action item into routed, rewarded work.
 - Decision: add two MySQL tables, `roleHolders` (person-to-role link, seeded from gameRoles.ts) and `callTasks` (data-driven tasks with a status lifecycle: proposed, approved, open, claimed, submitted, completed, declined, expired). Extend `recordings` with `youtubeVideoId`, `recordingKind`, `editedYoutubeUrl`, `overview`, `decisionsJson`, `actionItemsJson` so the same row carries both the raw live cut and the edited cut plus the LLM understanding outputs.
 - Why: closes the two foundational gaps the audit found, gives every later phase (RSS poll, LLM extract-tasks, admin approval queue, profile rendering, reward) a single canonical table to read and write. One status lifecycle keeps the gate logic in one place. Reuses the existing token contract (creditPrivateTokens with source tag `call_task_bounty`) so the private-first model holds.
 - Trade-offs: every token-bearing task now passes through two human gates (admin approve, circle steward consent) which is slower than autonomous payout. Accepted because real $ReGen / $RCivics is at stake and an LLM misreading "Sam, can you look at the water rights" should never silently mint tokens or spam a role holder. The gates are designed to be bulk + fast, not bureaucratic.
 - Where it lives in code: `drizzle/0142_movement_coordination.sql`, `drizzle/schema.ts` (roleHolders + callTasks + recordings extensions), `server/routes/roleHolders.ts`, `server/routes/callTasks.ts`, `client/src/components/admin/AdminRoleHoldersTab.tsx`, `scripts/seed-role-holders.ts`.
 - Spec: `MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`.
+
+---
+
+## ADR-17: Unified bounty engine (replaces callTasks; two-sided contribution bounties)
+
+- Date: 2026-06-24
+- Status: Accepted (build queued; spec + execution prompt ready, not yet shipped)
+- Context: a second bounty type was needed, code contributions where one player proposes a fix or feature and another ships and merges it. Building it as a flow parallel to `callTasks` would create a second token-payout code path, doubling the surface for double-pay bugs and the number of audit surfaces. The `callTasks` payment flow is pre-launch with no live data, so it can be replaced outright.
+- Decision: one bounty engine. A bounty has one or more payable roles (a call task is one `doer` role; a contribution is a `proposer` plus a `shipper`). A single function `payRole` is the only path that credits a bounty reward. Big-bang replacement: delete the `callTasks` table and router, no migration or backfill. New tables: `bounties` (work lifecycle only), `bounty_roles` (sole owner of payment state), `bounty_events` (immutable audit log), `webhook_deliveries` (idempotency), `bounty_permissions` (canAccept, canReverse). Integrity: a unique `idempotencyKey` on `user_token_ledger` makes a duplicate credit impossible at the DB; GitHub webhook deliveries are de-duplicated; separation of duties (accepter cannot equal proposer, one user cannot auto-collect multiple roles on a bounty); a one moon cycle settlement hold (29.5 days, 708 hours) before bounty tokens can claim to Base, during which a `canReverse` admin can reverse; a season minting budget (built, off at launch) and a citizenship tier floor (built, set to `explorer` so any account qualifies). Empowerment model: only `canAccept` accounts accept proposals and only `canReverse` accounts reverse payouts; `rieki.cordon@gmail.com` is seeded with both, and the owner grants `canAccept` to others through an admin section.
+- Why: one hardened payout path instead of two is the core security win; "two-sided" generalizes to N roles so future reward shapes (reviewer, booster) are configuration rather than new systems; pre-launch status removes all migration risk from a big-bang.
+- Trade-offs: rewrites a working (if unused) payment path. The role abstraction adds a bounty-to-roles join on reads. The optional guards add config surface in `game_variables`.
+- Where it lives in code (on build): `drizzle/NNNN_bounty_engine.sql`, `drizzle/schema.ts`, `server/db` `payRole` / `reverseRole`, `server/routes/bounties.ts`, `server/_core/oauth.ts` (GitHub provider), `server/webhooks/github`, `player_profiles` GitHub columns.
+- Supersedes the `callTasks` portion of ADR-16. Builds on ADR-6 (token model) and ADR-7 (private-first ledger with claim bridge).
+- Spec: `BOUNTY_ENGINE_SPEC.md`. Execution prompt: `CLAUDE_CODE_PROMPT_2026-06-24_BOUNTY_ENGINE.md`.
 
 ---
 

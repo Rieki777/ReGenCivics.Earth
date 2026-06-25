@@ -199,6 +199,61 @@ async function getAppleUserInfo(idToken: string) {
   }
 }
 
+// ─── GitHub OAuth ────────────────────────────────────────────────────────────
+
+async function getGithubTokens(code: string, redirectUri: string) {
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort("timeout"), 10_000);
+  try {
+    const res = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+      },
+      body: new URLSearchParams({
+        code,
+        client_id: ENV.githubClientId,
+        client_secret: ENV.githubClientSecret,
+        redirect_uri: redirectUri,
+      }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "(unreadable body)");
+      throw new Error(`GitHub token exchange failed: status=${res.status} body=${body.slice(0, 300)}`);
+    }
+    const data = await res.json() as { access_token?: string; error?: string; error_description?: string };
+    if (data.error || !data.access_token) {
+      throw new Error(`GitHub token exchange error: ${data.error} — ${data.error_description}`);
+    }
+    return data as { access_token: string };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function getGithubUserInfo(accessToken: string) {
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort("timeout"), 10_000);
+  try {
+    const res = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "(unreadable body)");
+      throw new Error(`GitHub user info failed: status=${res.status} body=${body.slice(0, 300)}`);
+    }
+    return res.json() as Promise<{ id: number; login: string; name?: string | null; created_at: string }>;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 // ─── Route Registration ───────────────────────────────────────────────────────
 
 export function registerOAuthRoutes(app: Express) {
@@ -346,6 +401,64 @@ export function registerOAuthRoutes(app: Express) {
     } catch (error) {
       console.error("[OAuth] Apple callback failed", error);
       res.redirect("/?error=auth_failed");
+    }
+  });
+
+  // ── GitHub: Link account (requires existing session; not a login flow) ─────
+  // The player clicks "Link GitHub" on their profile. We redirect to GitHub
+  // OAuth with a state param encoding the user's session so the callback
+  // can identify them. This is NOT a login flow — the player must already
+  // be signed in. On success, we write githubHandle + githubId to player_profiles.
+  app.get("/api/oauth/github/link", (req: Request, res: Response) => {
+    const redirectUri = `${ENV.appUrl}/api/oauth/github/callback`;
+    if (!ENV.githubClientId) {
+      res.status(503).json({ error: "GitHub OAuth not configured" });
+      return;
+    }
+    const params = new URLSearchParams({
+      client_id: ENV.githubClientId,
+      redirect_uri: redirectUri,
+      scope: "read:user",
+    });
+    res.redirect(`https://github.com/login/oauth/authorize?${params}`);
+  });
+
+  // ── GitHub: Callback (account linking only) ─────────────────────────────────
+  app.get("/api/oauth/github/callback", async (req: Request, res: Response) => {
+    const code = getQueryParam(req, "code");
+    if (!code) {
+      res.redirect("/profile?tab=contributions&error=github_no_code");
+      return;
+    }
+    // Require an existing session — this endpoint only links, not logs in
+    const sessionCookie = req.cookies?.[COOKIE_NAME];
+    if (!sessionCookie) {
+      res.redirect("/?error=auth_required");
+      return;
+    }
+    try {
+      const redirectUri = `${ENV.appUrl}/api/oauth/github/callback`;
+      const tokens = await getGithubTokens(code, redirectUri);
+      const ghUser = await getGithubUserInfo(tokens.access_token);
+      // Resolve the current logged-in user from the session cookie
+      const session = await sdk.verifySession(sessionCookie);
+      if (!session?.openId) {
+        res.redirect("/?error=auth_required");
+        return;
+      }
+      const linked = await db.linkGithubToProfile(session.openId, {
+        githubId: ghUser.id,
+        githubHandle: ghUser.login,
+        githubLinkedAt: new Date(),
+      });
+      if (!linked) {
+        res.redirect("/profile?tab=contributions&error=github_already_linked");
+        return;
+      }
+      res.redirect("/profile?tab=contributions&github=linked");
+    } catch (err) {
+      console.error("[OAuth] GitHub callback failed:", err);
+      res.redirect("/profile?tab=contributions&error=github_failed");
     }
   });
 

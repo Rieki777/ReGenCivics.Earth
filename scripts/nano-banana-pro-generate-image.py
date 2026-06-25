@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 """
 Nano Banana Pro Image Generator
-Uses Google's Gemini 3 Pro Image API for text-to-image and image-to-image generation.
-Supports 1K, 2K, and 4K resolution outputs.
+Uses Google's Gemini 3 Pro Image API (model: gemini-3-pro-image) for
+text-to-image and image-to-image generation. Supports 1K, 2K, and 4K output
+and a configurable aspect ratio.
 
 Usage:
-  python generate_image.py --prompt "description" --filename "output.png" [--resolution 1K|2K|4K] [--input-image path] [--api-key KEY]
+  python generate_image.py --prompt "description" --filename "output.png" \
+    [--resolution 1K|2K|4K] [--aspect 1:1|16:9|4:3|3:2|9:16|2:3] \
+    [--input-image path] [--api-key KEY]
 
 Environment:
   GEMINI_API_KEY - API key for Gemini (fallback if --api-key not provided)
+
+Notes:
+  - The retired gemini-2.0-flash-exp model and the generationConfig.imageResolution
+    field are no longer accepted by the API. Resolution is now set via
+    generationConfig.imageConfig.imageSize and aspect via imageConfig.aspectRatio.
 """
 
 import argparse
@@ -19,10 +27,14 @@ import sys
 import urllib.request
 import urllib.error
 
+MODEL = "gemini-3-pro-image"
+VALID_ASPECTS = ("1:1", "16:9", "4:3", "3:2", "2:3", "9:16", "21:9", "5:4", "4:5")
+
 
 def generate_image(prompt: str, filename: str, resolution: str = "1K",
-                   input_image: str | None = None, api_key: str | None = None) -> str:
-    """Generate or edit an image using Gemini 3 Pro Image API."""
+                   aspect: str = "1:1", input_image: str | None = None,
+                   api_key: str | None = None) -> str:
+    """Generate or edit an image using the Gemini 3 Pro Image API."""
 
     # Resolve API key
     key = api_key or os.environ.get("GEMINI_API_KEY")
@@ -31,7 +43,7 @@ def generate_image(prompt: str, filename: str, resolution: str = "1K",
         sys.exit(1)
 
     # API endpoint
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={key}"
 
     # Build the request parts
     parts = []
@@ -66,17 +78,19 @@ def generate_image(prompt: str, filename: str, resolution: str = "1K",
     # Add the text prompt
     parts.append({"text": prompt})
 
+    # Build image config (aspect ratio + resolution).
+    image_config = {"aspectRatio": aspect}
+    if resolution in ("1K", "2K", "4K"):
+        image_config["imageSize"] = resolution
+
     # Build request body
     body = {
         "contents": [{"parts": parts}],
         "generationConfig": {
-            "responseModalities": ["TEXT", "IMAGE"],
+            "responseModalities": ["IMAGE"],
+            "imageConfig": image_config,
         }
     }
-
-    # Add resolution config if supported
-    if resolution in ("2K", "4K"):
-        body["generationConfig"]["imageResolution"] = resolution
 
     # Make the request
     req_data = json.dumps(body).encode("utf-8")
@@ -88,8 +102,8 @@ def generate_image(prompt: str, filename: str, resolution: str = "1K",
     )
 
     try:
-        print(f"Generating image with Gemini API (resolution: {resolution})...")
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        print(f"Generating image with {MODEL} (resolution: {resolution}, aspect: {aspect})...")
+        with urllib.request.urlopen(req, timeout=180) as resp:
             result = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         error_body = e.read().decode("utf-8") if e.fp else "No details"
@@ -139,11 +153,13 @@ def generate_image(prompt: str, filename: str, resolution: str = "1K",
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate images with Gemini 3 Pro Image API")
+    parser = argparse.ArgumentParser(description="Generate images with the Gemini 3 Pro Image API")
     parser.add_argument("--prompt", required=True, help="Image description or editing instructions")
     parser.add_argument("--filename", required=True, help="Output filename (PNG)")
     parser.add_argument("--resolution", choices=["1K", "2K", "4K"], default="1K",
                         help="Output resolution (default: 1K)")
+    parser.add_argument("--aspect", choices=list(VALID_ASPECTS), default="1:1",
+                        help="Aspect ratio (default: 1:1)")
     parser.add_argument("--input-image", help="Path to input image for editing")
     parser.add_argument("--api-key", help="Gemini API key (overrides GEMINI_API_KEY env)")
     args = parser.parse_args()
@@ -152,6 +168,7 @@ def main():
         prompt=args.prompt,
         filename=args.filename,
         resolution=args.resolution,
+        aspect=args.aspect,
         input_image=args.input_image,
         api_key=args.api_key,
     )

@@ -584,6 +584,11 @@ export const playerProfiles = mysqlTable("player_profiles", {
   capitalScoresJson: json("capitalScoresJson"),
   capitalScoresUpdatedAt: timestamp("capitalScoresUpdatedAt"),
 
+  // GitHub identity (linked during bounty contribution flow)
+  githubHandle: varchar("githubHandle", { length: 255 }),
+  githubId: int("githubId"),
+  githubLinkedAt: timestamp("githubLinkedAt"),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -631,6 +636,7 @@ export const userTokenLedger = mysqlTable("user_token_ledger", {
   // the Hypha bridge prefill and admin tools can keep using it.
   sourceRef: varchar("sourceRef", { length: 120 }),
   description: text("description"),
+  idempotencyKey: varchar("idempotencyKey", { length: 128 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ([
   index("user_token_ledger_userId_idx").on(table.userId),
@@ -3535,3 +3541,79 @@ export const proposalParties = mysqlTable("proposalParties", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type ProposalParty = typeof proposalParties.$inferSelect;
+
+// ── Bounty Engine ─────────────────────────────────────────────────────────────
+
+export const bounties = mysqlTable("bounties", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceType: mysqlEnum("sourceType", ["call_task", "contribution"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  tokenType: varchar("tokenType", { length: 16 }).notNull().default("regen"),
+  tier: mysqlEnum("tier", ["trivial", "small", "medium", "large"]),
+  workStatus: mysqlEnum("workStatus", ["proposed", "accepted", "open", "claimed", "in_review", "completed", "declined", "expired"]).notNull().default("proposed"),
+  approvedBy: int("approvedBy"),
+  declinedReason: text("declinedReason"),
+  completionChecklist: json("completionChecklist"),
+  expiresAt: timestamp("expiresAt"),
+  kind: mysqlEnum("kind", ["fix", "feature"]),
+  sourceForumPostId: int("sourceForumPostId"),
+  githubRepo: varchar("githubRepo", { length: 255 }),
+  githubIssueNumber: int("githubIssueNumber"),
+  mergedPrNumbers: json("mergedPrNumbers"),
+  recordingId: int("recordingId"),
+  roleSlug: varchar("roleSlug", { length: 64 }),
+  evidenceQuote: text("evidenceQuote"),
+  evidenceTs: int("evidenceTs"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("bounties_status_type_idx").on(table.workStatus, table.sourceType),
+]));
+export type Bounty = typeof bounties.$inferSelect;
+
+export const bountyRoles = mysqlTable("bounty_roles", {
+  id: int("id").autoincrement().primaryKey(),
+  bountyId: int("bountyId").notNull(),
+  role: mysqlEnum("role", ["doer", "proposer", "shipper", "reviewer", "booster"]).notNull(),
+  userId: int("userId"),
+  amount: int("amount").notNull().default(0),
+  payStatus: mysqlEnum("payStatus", ["unfilled", "filled", "payable", "held", "paid", "reversed", "void"]).notNull().default("unfilled"),
+  ledgerId: int("ledgerId"),
+  filledByLog: json("filledByLog"),
+  paidAt: timestamp("paidAt"),
+  claimableAt: timestamp("claimableAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("bounty_roles_bountyId_idx").on(table.bountyId),
+  index("bounty_roles_user_pay_idx").on(table.userId, table.payStatus),
+]));
+export type BountyRole = typeof bountyRoles.$inferSelect;
+
+export const bountyEvents = mysqlTable("bounty_events", {
+  id: int("id").autoincrement().primaryKey(),
+  bountyId: int("bountyId").notNull(),
+  roleId: int("roleId"),
+  actorUserId: int("actorUserId"),
+  event: varchar("event", { length: 48 }).notNull(),
+  detail: json("detail"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("bounty_events_bountyId_createdAt_idx").on(table.bountyId, table.createdAt),
+]));
+export type BountyEvent = typeof bountyEvents.$inferSelect;
+
+export const webhookDeliveries = mysqlTable("webhook_deliveries", {
+  deliveryId: varchar("deliveryId", { length: 64 }).primaryKey(),
+  receivedAt: timestamp("receivedAt").defaultNow().notNull(),
+});
+
+export const bountyPermissions = mysqlTable("bounty_permissions", {
+  userId: int("userId").primaryKey(),
+  canAccept: tinyint("canAccept").notNull().default(0),
+  canReverse: tinyint("canReverse").notNull().default(0),
+  grantedBy: int("grantedBy"),
+  grantedAt: timestamp("grantedAt").defaultNow().notNull(),
+});
+export type BountyPermission = typeof bountyPermissions.$inferSelect;

@@ -4,6 +4,7 @@ import superjson from "superjson";
 import type { TrpcContext } from "./context";
 import { validateCSRFToken } from "./security";
 import { isCacheAvailable, redisRateLimit } from "../cache";
+import { getBountyPermission } from "../db/bounties";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
@@ -143,5 +144,35 @@ export const superadminProcedure = t.procedure.use(csrfProtection).use(
         user: ctx.user,
       },
     });
+  }),
+);
+
+/**
+ * Maintainer procedure: requires canAccept in bounty_permissions.
+ * Any signed-in user empowered by the owner to accept/decline proposals.
+ */
+export const maintainerProcedure = t.procedure.use(csrfProtection).use(requireUser).use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+    const perm = await getBountyPermission(ctx.user!.id);
+    if (!perm || !perm.canAccept) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Bounty maintainer access required" });
+    }
+    return next({ ctx: { ...ctx, user: ctx.user! } });
+  }),
+);
+
+/**
+ * Reverser procedure: requires canReverse in bounty_permissions.
+ * Used for reversing payouts during the settlement hold window.
+ */
+export const reverserProcedure = t.procedure.use(csrfProtection).use(requireUser).use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+    const perm = await getBountyPermission(ctx.user!.id);
+    if (!perm || !perm.canReverse) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Bounty reverser access required" });
+    }
+    return next({ ctx: { ...ctx, user: ctx.user! } });
   }),
 );

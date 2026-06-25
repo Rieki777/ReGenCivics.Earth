@@ -269,6 +269,40 @@ export const playerProfilesRouter = router({
       return { success: true };
     }),
 
+  // Get my GitHub link status
+  getMyGithub: protectedProcedure.query(async ({ ctx }) => {
+    const db2 = await getDb();
+    if (!db2) return { linked: false };
+    const [profile] = await db2
+      .select({
+        githubHandle: playerProfiles.githubHandle,
+        githubId: playerProfiles.githubId,
+        githubLinkedAt: playerProfiles.githubLinkedAt,
+      })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.userId, ctx.user.id))
+      .limit(1);
+    if (!profile?.githubId) return { linked: false };
+    return {
+      linked: true,
+      githubHandle: profile.githubHandle,
+      githubId: profile.githubId,
+      githubLinkedAt: profile.githubLinkedAt,
+    };
+  }),
+
+  // Unlink GitHub account
+  unlinkGithub: protectedProcedure.mutation(async ({ ctx }) => {
+    const db2 = await getDb();
+    if (!db2) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+    await db2.update(playerProfiles).set({
+      githubHandle: null,
+      githubId: null,
+      githubLinkedAt: null,
+    }).where(eq(playerProfiles.userId, ctx.user.id));
+    return { ok: true };
+  }),
+
   // Admin: Verify a player profile
   verify: protectedProcedure
     .input(z.object({ id: z.number() }))

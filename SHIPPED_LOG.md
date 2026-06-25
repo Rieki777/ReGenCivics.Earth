@@ -13,6 +13,20 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-06-24: Bounty Engine (QUEUED, not yet shipped)
+
+**Status: spec and execution prompt ready, build not started.** Logged here for visibility. This entry gets rewritten as a shipped summary once the build lands and the prompt moves to `archive/`.
+
+- Unified bounty engine replacing the pre-launch `callTasks` flow. A bounty has one or more payable roles; the two-sided code-contribution bounty pays a `proposer` and a `shipper` separately, both on merge.
+- Single payout path (`payRole`) with DB-level idempotency key, GitHub webhook delivery dedup, separation of duties, and a one moon cycle (29.5 day) settlement hold with admin reversal before tokens can claim to Base.
+- GitHub OAuth profile linking; merge-triggered auto-payout via a GitHub `pull_request` webhook (CI-green and non-author-approval verified).
+- Empowerment model via `bounty_permissions` (`canAccept`, `canReverse`); `rieki.cordon@gmail.com` seeded with both. Season budget and citizenship tier gates are built but off or permissive at launch.
+- Big-bang: deletes the `callTasks` table and router, no migration or backfill.
+
+Source: `CLAUDE_CODE_PROMPT_2026-06-24_BOUNTY_ENGINE.md`, `BOUNTY_ENGINE_SPEC.md`. Decision: ADR-17.
+
+---
+
 ## 2026-06-24 — QA Sprint Part 5 (Mobile audit, commit d286279)
 
 **Mobile QA MOB-1 through MOB-9** (commit `d286279`):

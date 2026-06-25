@@ -152,6 +152,37 @@ export async function getUserByEmail(email: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+/**
+ * Link a GitHub account to the player_profiles row for a given openId.
+ * Called from the GitHub OAuth callback. De-duplicates: if another profile
+ * already holds this githubId, the call returns false without updating.
+ */
+export async function linkGithubToProfile(
+  openId: string,
+  github: { githubId: number; githubHandle: string; githubLinkedAt: Date },
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const { playerProfiles } = await import("../drizzle/schema");
+  const { eq, and } = await import("drizzle-orm");
+  // Find the user
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.openId, openId)).limit(1);
+  if (!user) return false;
+  // De-dup: reject if another profile already holds this githubId
+  const [existing] = await db
+    .select({ userId: playerProfiles.userId })
+    .from(playerProfiles)
+    .where(and(eq(playerProfiles.githubId, github.githubId)))
+    .limit(1);
+  if (existing && existing.userId !== user.id) return false;
+  await db.update(playerProfiles).set({
+    githubId: github.githubId,
+    githubHandle: github.githubHandle,
+    githubLinkedAt: github.githubLinkedAt,
+  }).where(eq(playerProfiles.userId, user.id));
+  return true;
+}
+
 export async function getUsersByIds(ids: number[]): Promise<Record<number, typeof users.$inferSelect>> {
   if (ids.length === 0) return {};
   const db = await getDb();

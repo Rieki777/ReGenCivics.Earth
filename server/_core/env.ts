@@ -52,6 +52,11 @@ export const ENV = {
   bufferAccessToken: process.env.BUFFER_ACCESS_TOKEN ?? "",
   // Farcaster
   farcasterHandle: process.env.FARCASTER_HANDLE ?? "",
+  // GitHub OAuth (for bounty shipper identity linking)
+  githubClientId: process.env.GITHUB_CLIENT_ID ?? "",
+  githubClientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+  // GitHub webhook secret (for merge automation)
+  githubWebhookSecret: process.env.GITHUB_WEBHOOK_SECRET ?? "",
   // Riverside.fm webhook signing secret
   riversideWebhookSecret: process.env.RIVERSIDE_WEBHOOK_SECRET ?? "",
   // Movement Coordination Engine trigger: the YouTube channel whose

@@ -201,6 +201,13 @@ export function AuthDialog({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onFocus={(e) => {
+                    // After the keyboard opens and the sheet lifts, pull the
+                    // field fully into view so the cursor is never below the
+                    // visible area.
+                    const el = e.currentTarget;
+                    setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 320);
+                  }}
                   placeholder="you@example.com"
                   required
                   className="w-full h-11 rounded-xl bg-[#1a472a]/40 border border-[#7dd87d]/20 text-white placeholder-white/55 px-4 text-sm focus:outline-none focus:border-[#7dd87d]/50"

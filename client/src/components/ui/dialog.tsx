@@ -99,6 +99,32 @@ function DialogContent({
   showCloseButton?: boolean;
 }) {
   const { isComposing } = useDialogComposition();
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Mobile keyboard handling. The dialog is a bottom sheet (bottom-0) under
+  // md, so when the on-screen keyboard opens it covers the sheet and the
+  // focused input ends up hidden behind it. visualViewport tells us the
+  // keyboard height; we lift the sheet to sit just above the keyboard.
+  // Desktop (md+) is centered via translate, so we only touch `bottom` on
+  // mobile and clear it otherwise.
+  React.useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const apply = () => {
+      const el = contentRef.current;
+      if (!el) return;
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      const keyboard = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      el.style.bottom = isMobile && keyboard > 0 ? `${keyboard}px` : "";
+    };
+    vv.addEventListener("resize", apply);
+    vv.addEventListener("scroll", apply);
+    apply();
+    return () => {
+      vv.removeEventListener("resize", apply);
+      vv.removeEventListener("scroll", apply);
+    };
+  }, []);
 
   const handleEscapeKeyDown = React.useCallback(
     (e: KeyboardEvent) => {
@@ -135,6 +161,7 @@ function DialogContent({
         )}
         onEscapeKeyDown={handleEscapeKeyDown}
         {...props}
+        ref={contentRef}
       >
         {/* Grab handle: signals a draggable sheet on mobile, hidden on desktop. */}
         <div

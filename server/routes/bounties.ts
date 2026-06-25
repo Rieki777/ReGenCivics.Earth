@@ -1,0 +1,581 @@
+/**
+ * Bounty Engine router.
+ *
+ * One router for every kind of rewarded work: call tasks (one role: doer)
+ * and code contributions (two roles: proposer + shipper). The tRPC surface
+ * follows three permission tiers: player procedures (anyone signed in),
+ * maintainer procedures (canAccept from bounty_permissions), and
+ * reverser procedures (canReverse from bounty_permissions).
+ *
+ * The single payout path is payRole() in server/db/bounties.ts.
+ * No credit logic lives in this file.
+ */
+import { z } from "zod";
+import { eq, and, desc, inArray, or, ne } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import {
+  publicProcedure,
+  protectedProcedure,
+  superadminProcedure,
+  maintainerProcedure,
+  reverserProcedure,
+  rateLimited,
+  router,
+} from "../_core/trpc";
+import { getDb } from "../db";
+import {
+  bounties,
+  bountyRoles,
+  bountyEvents,
+  bountyPermissions,
+  notifications,
+  users,
+} from "../../drizzle/schema";
+import { payRole, reverseRole, getTierAmounts, meetsLargeTierFloor } from "../db/bounties";
+
+// ── Shared zod schemas ───────────────────────────────────────────────────────
+
+const TierSchema = z.enum(["trivial", "small", "medium", "large"]);
+const SourceTypeSchema = z.enum(["call_task", "contribution"]);
+
+// ── Helper: build role slots for a new bounty ────────────────────────────────
+
+async function buildRolesForBounty(
+  sourceType: "call_task" | "contribution",
+  tier: "trivial" | "small" | "medium" | "large" | null | undefined,
+): Promise<Array<{ role: "doer" | "proposer" | "shipper"; amount: number }>> {
+  if (!tier) {
+    if (sourceType === "call_task") return [{ role: "doer", amount: 0 }];
+    return [{ role: "proposer", amount: 0 }, { role: "shipper", amount: 0 }];
+  }
+  const { delivery, proposal } = await getTierAmounts(tier);
+  if (sourceType === "call_task") {
+    return [{ role: "doer", amount: delivery }];
+  }
+  return [
+    { role: "proposer", amount: proposal },
+    { role: "shipper", amount: delivery },
+  ];
+}
+
+// ── Helper: write a bounty_events row ────────────────────────────────────────
+
+async function logEvent(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  bountyId: number,
+  event: string,
+  opts: { roleId?: number | null; actorUserId?: number | null; detail?: unknown } = {},
+) {
+  await db.insert(bountyEvents).values({
+    bountyId,
+    roleId: opts.roleId ?? null,
+    actorUserId: opts.actorUserId ?? null,
+    event,
+    detail: opts.detail as Record<string, unknown> | null ?? null,
+  });
+}
+
+// ── Router ───────────────────────────────────────────────────────────────────
+
+export const bountiesRouter = router({
+
+  // ── Player: propose a bounty ─────────────────────────────────────────────
+  propose: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 5 }))
+    .input(z.object({
+      sourceType: SourceTypeSchema,
+      title: z.string().min(3).max(255),
+      body: z.string().min(10).max(10000),
+      tier: TierSchema.nullable().optional(),
+      tokenType: z.enum(["regen", "rcivics", "rgvoice", "rcvoice"]).default("regen"),
+      // contribution fields
+      kind: z.enum(["fix", "feature"]).nullable().optional(),
+      githubRepo: z.string().max(255).nullable().optional(),
+      githubIssueNumber: z.number().int().positive().nullable().optional(),
+      sourceForumPostId: z.number().int().positive().nullable().optional(),
+      // call_task fields
+      recordingId: z.number().int().positive().nullable().optional(),
+      roleSlug: z.string().max(64).nullable().optional(),
+      evidenceQuote: z.string().max(2000).nullable().optional(),
+      evidenceTs: z.number().int().min(0).nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+
+      if (input.tier === "large") {
+        const meets = await meetsLargeTierFloor(ctx.user.id);
+        if (!meets) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Large bounties require a higher citizenship tier" });
+        }
+      }
+
+      const roles = await buildRolesForBounty(input.sourceType, input.tier ?? null);
+
+      const [insertResult] = await db.insert(bounties).values({
+        sourceType: input.sourceType,
+        title: input.title,
+        body: input.body,
+        tier: input.tier ?? null,
+        tokenType: input.tokenType,
+        workStatus: "proposed",
+        kind: input.kind ?? null,
+        githubRepo: input.githubRepo ?? null,
+        githubIssueNumber: input.githubIssueNumber ?? null,
+        sourceForumPostId: input.sourceForumPostId ?? null,
+        recordingId: input.recordingId ?? null,
+        roleSlug: input.roleSlug ?? null,
+        evidenceQuote: input.evidenceQuote ?? null,
+        evidenceTs: input.evidenceTs ?? null,
+      });
+      const bountyId = (insertResult as unknown as { insertId: number }).insertId;
+
+      for (const r of roles) {
+        const userId = (input.sourceType === "contribution" && r.role === "proposer")
+          ? ctx.user.id : null;
+        const payStatus = userId ? "filled" : "unfilled";
+        await db.insert(bountyRoles).values({
+          bountyId,
+          role: r.role,
+          userId,
+          amount: r.amount,
+          payStatus,
+          filledByLog: userId
+            ? [{ userId, action: "proposed", at: new Date().toISOString() }]
+            : null,
+        });
+      }
+
+      await logEvent(db, bountyId, "proposed", { actorUserId: ctx.user.id });
+      return { ok: true, bountyId };
+    }),
+
+  // ── Public: bounty board ─────────────────────────────────────────────────
+  listBoard: publicProcedure
+    .input(z.object({
+      sourceType: SourceTypeSchema.optional(),
+      tier: TierSchema.optional(),
+      limit: z.number().int().min(1).max(100).default(50),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const filters = [
+        or(eq(bounties.workStatus, "open"), eq(bounties.workStatus, "accepted")),
+        input.sourceType ? eq(bounties.sourceType, input.sourceType) : undefined,
+        input.tier ? eq(bounties.tier, input.tier) : undefined,
+      ].filter(Boolean) as ReturnType<typeof eq>[];
+      const where = filters.length === 1 ? filters[0] : and(...filters);
+      const rows = await db
+        .select()
+        .from(bounties)
+        .where(where)
+        .orderBy(desc(bounties.createdAt))
+        .limit(input.limit);
+      if (!rows.length) return [];
+      const ids = rows.map((b) => b.id);
+      const roles = await db
+        .select()
+        .from(bountyRoles)
+        .where(and(inArray(bountyRoles.bountyId, ids), eq(bountyRoles.payStatus, "unfilled")));
+      const roleMap = new Map<number, typeof roles>();
+      for (const r of roles) {
+        if (!roleMap.has(r.bountyId)) roleMap.set(r.bountyId, []);
+        roleMap.get(r.bountyId)!.push(r);
+      }
+      return rows.map((b) => ({ ...b, openRoles: roleMap.get(b.id) ?? [] }));
+    }),
+
+  // ── Player: my roles ─────────────────────────────────────────────────────
+  listMine: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(200).default(50) }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const roles = await db
+        .select()
+        .from(bountyRoles)
+        .where(eq(bountyRoles.userId, ctx.user.id))
+        .orderBy(desc(bountyRoles.createdAt))
+        .limit(input.limit);
+      if (!roles.length) return [];
+      const bIds = [...new Set(roles.map((r) => r.bountyId))];
+      const bRows = await db.select().from(bounties).where(inArray(bounties.id, bIds));
+      const bMap = new Map(bRows.map((b) => [b.id, b]));
+      return roles.map((r) => ({ ...r, bounty: bMap.get(r.bountyId) ?? null }));
+    }),
+
+  // ── Player: claim an open role ────────────────────────────────────────────
+  claimRole: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({ roleId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [role] = await db
+        .select()
+        .from(bountyRoles)
+        .where(eq(bountyRoles.id, input.roleId))
+        .limit(1);
+      if (!role) throw new TRPCError({ code: "NOT_FOUND" });
+      if (role.payStatus !== "unfilled") {
+        throw new TRPCError({ code: "CONFLICT", message: "Role is already claimed" });
+      }
+      const [bounty] = await db
+        .select({ workStatus: bounties.workStatus })
+        .from(bounties)
+        .where(eq(bounties.id, role.bountyId))
+        .limit(1);
+      if (!bounty || (bounty.workStatus !== "open" && bounty.workStatus !== "accepted")) {
+        throw new TRPCError({ code: "CONFLICT", message: "Bounty is not open for claiming" });
+      }
+      // Note: the same user can claim a role even if they also hold the proposer role —
+      // the separation-of-duties guard in payRole() will hold for maintainer review.
+      const result = await db.update(bountyRoles).set({
+        userId: ctx.user.id,
+        payStatus: "filled",
+        filledByLog: [{ userId: ctx.user.id, action: "claimed", at: new Date().toISOString() }],
+      }).where(and(eq(bountyRoles.id, input.roleId), eq(bountyRoles.payStatus, "unfilled")));
+      const affected = (result as unknown as { affectedRows?: number }[])[0]?.affectedRows
+        ?? (result as unknown as { affectedRows?: number })?.affectedRows ?? 0;
+      if (!affected) throw new TRPCError({ code: "CONFLICT", message: "Race condition: role was just claimed" });
+      await logEvent(db, role.bountyId, "claimed", { roleId: role.id, actorUserId: ctx.user.id });
+      return { ok: true };
+    }),
+
+  // ── Player: release a claimed role ────────────────────────────────────────
+  releaseRole: protectedProcedure
+    .input(z.object({ roleId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [role] = await db
+        .select()
+        .from(bountyRoles)
+        .where(eq(bountyRoles.id, input.roleId))
+        .limit(1);
+      if (!role) throw new TRPCError({ code: "NOT_FOUND" });
+      if (role.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      if (role.payStatus !== "filled") {
+        throw new TRPCError({ code: "CONFLICT", message: "Role cannot be released in its current state" });
+      }
+      await db.update(bountyRoles).set({ userId: null, payStatus: "unfilled", filledByLog: null })
+        .where(eq(bountyRoles.id, input.roleId));
+      await logEvent(db, role.bountyId, "released", { roleId: role.id, actorUserId: ctx.user.id });
+      return { ok: true };
+    }),
+
+  // ── Player: link a PR to a contribution bounty (-> in_review) ────────────
+  linkPr: protectedProcedure
+    .input(z.object({
+      bountyId: z.number().int().positive(),
+      prNumber: z.number().int().positive(),
+      githubRepo: z.string().max(255).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [bounty] = await db.select().from(bounties).where(eq(bounties.id, input.bountyId)).limit(1);
+      if (!bounty) throw new TRPCError({ code: "NOT_FOUND" });
+      if (bounty.sourceType !== "contribution") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Only contribution bounties can link PRs" });
+      }
+      const [shipperRole] = await db
+        .select()
+        .from(bountyRoles)
+        .where(and(
+          eq(bountyRoles.bountyId, input.bountyId),
+          eq(bountyRoles.role, "shipper"),
+          eq(bountyRoles.userId, ctx.user.id),
+        ))
+        .limit(1);
+      if (!shipperRole) throw new TRPCError({ code: "FORBIDDEN", message: "You must hold the shipper role" });
+      const existing = (bounty.mergedPrNumbers as number[] | null) ?? [];
+      const updated = [...new Set([...existing, input.prNumber])];
+      await db.update(bounties).set({
+        workStatus: "in_review",
+        mergedPrNumbers: updated,
+        githubRepo: input.githubRepo ?? bounty.githubRepo,
+      }).where(eq(bounties.id, input.bountyId));
+      await logEvent(db, input.bountyId, "pr_linked", {
+        actorUserId: ctx.user.id,
+        detail: { prNumber: input.prNumber },
+      });
+      return { ok: true };
+    }),
+
+  // ── Maintainer: accept a proposal ─────────────────────────────────────────
+  accept: maintainerProcedure
+    .input(z.object({
+      bountyId: z.number().int().positive(),
+      tier: TierSchema.optional(),
+      completionChecklist: z.array(z.string().max(500)).max(20).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [bounty] = await db.select().from(bounties).where(eq(bounties.id, input.bountyId)).limit(1);
+      if (!bounty) throw new TRPCError({ code: "NOT_FOUND" });
+      if (bounty.workStatus !== "proposed") {
+        throw new TRPCError({ code: "CONFLICT", message: `Bounty is ${bounty.workStatus}, not proposed` });
+      }
+      // Accepter != proposer
+      const [proposerRole] = await db
+        .select({ userId: bountyRoles.userId })
+        .from(bountyRoles)
+        .where(and(eq(bountyRoles.bountyId, input.bountyId), eq(bountyRoles.role, "proposer")))
+        .limit(1);
+      if (proposerRole?.userId === ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You cannot accept your own proposal" });
+      }
+      const tier = input.tier ?? bounty.tier;
+      if (tier) {
+        const { delivery, proposal } = await getTierAmounts(tier);
+        const allRoles = await db.select().from(bountyRoles).where(eq(bountyRoles.bountyId, input.bountyId));
+        for (const r of allRoles) {
+          const newAmount = r.role === "proposer" ? proposal : delivery;
+          await db.update(bountyRoles).set({ amount: newAmount }).where(eq(bountyRoles.id, r.id));
+        }
+      }
+      await db.update(bounties).set({
+        workStatus: "accepted",
+        approvedBy: ctx.user.id,
+        tier: tier ?? null,
+        completionChecklist: input.completionChecklist ? input.completionChecklist as unknown as null : bounty.completionChecklist,
+      }).where(eq(bounties.id, input.bountyId));
+      await logEvent(db, input.bountyId, "accepted", { actorUserId: ctx.user.id, detail: { tier } });
+      if (proposerRole?.userId) {
+        await db.insert(notifications).values({
+          playerId: proposerRole.userId,
+          type: "mention",
+          title: `Bounty accepted: ${bounty.title.slice(0, 180)}`,
+          body: "Your bounty proposal was accepted and is now open for contributors.",
+          link: `/bounties#bounty-${input.bountyId}`,
+        });
+      }
+      return { ok: true };
+    }),
+
+  // ── Maintainer: decline a proposal ────────────────────────────────────────
+  decline: maintainerProcedure
+    .input(z.object({
+      bountyId: z.number().int().positive(),
+      reason: z.string().min(1).max(2000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      await db.update(bounties).set({ workStatus: "declined", declinedReason: input.reason })
+        .where(and(eq(bounties.id, input.bountyId), eq(bounties.workStatus, "proposed")));
+      await logEvent(db, input.bountyId, "declined", { actorUserId: ctx.user.id, detail: { reason: input.reason } });
+      return { ok: true };
+    }),
+
+  // ── Maintainer: admin queue ────────────────────────────────────────────────
+  adminQueue: maintainerProcedure
+    .input(z.object({
+      filter: z.enum(["proposals", "held_payouts", "all"]).default("proposals"),
+      limit: z.number().int().min(1).max(200).default(50),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { bounties: [], heldRoles: [] };
+      let pendingBounties: typeof bounties.$inferSelect[] = [];
+      if (input.filter !== "held_payouts") {
+        pendingBounties = await db
+          .select()
+          .from(bounties)
+          .where(eq(bounties.workStatus, "proposed"))
+          .orderBy(desc(bounties.createdAt))
+          .limit(input.limit);
+      }
+      let heldRoles: Array<typeof bountyRoles.$inferSelect & { bounty: typeof bounties.$inferSelect | null }> = [];
+      if (input.filter !== "proposals") {
+        const held = await db
+          .select()
+          .from(bountyRoles)
+          .where(eq(bountyRoles.payStatus, "held"))
+          .orderBy(desc(bountyRoles.createdAt))
+          .limit(input.limit);
+        if (held.length > 0) {
+          const bIds = [...new Set(held.map((r) => r.bountyId))];
+          const bRows = await db.select().from(bounties).where(inArray(bounties.id, bIds));
+          const bMap = new Map(bRows.map((b) => [b.id, b]));
+          heldRoles = held.map((r) => ({ ...r, bounty: bMap.get(r.bountyId) ?? null }));
+        }
+      }
+      return { bounties: pendingBounties, heldRoles };
+    }),
+
+  // ── Maintainer: attach unmatched merge to a role ──────────────────────────
+  resolvePending: maintainerProcedure
+    .input(z.object({
+      roleId: z.number().int().positive(),
+      userId: z.number().int().positive(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [role] = await db.select().from(bountyRoles).where(eq(bountyRoles.id, input.roleId)).limit(1);
+      if (!role) throw new TRPCError({ code: "NOT_FOUND" });
+      await db.update(bountyRoles).set({
+        userId: input.userId,
+        payStatus: "payable",
+        filledByLog: [{ userId: input.userId, action: "admin_resolved", by: ctx.user.id, at: new Date().toISOString() }],
+      }).where(eq(bountyRoles.id, input.roleId));
+      await logEvent(db, role.bountyId, "resolved", { roleId: role.id, actorUserId: ctx.user.id, detail: { userId: input.userId } });
+      const result = await payRole(role.id, { actorUserId: ctx.user.id });
+      return { ok: result.ok, reason: result.reason };
+    }),
+
+  // ── Maintainer: release a held payout ─────────────────────────────────────
+  consentAndPay: maintainerProcedure
+    .input(z.object({ roleId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [role] = await db.select().from(bountyRoles).where(eq(bountyRoles.id, input.roleId)).limit(1);
+      if (!role) throw new TRPCError({ code: "NOT_FOUND" });
+      if (role.payStatus !== "held") {
+        throw new TRPCError({ code: "CONFLICT", message: "Role is not in held status" });
+      }
+      await db.update(bountyRoles).set({ payStatus: "payable" }).where(eq(bountyRoles.id, input.roleId));
+      await logEvent(db, role.bountyId, "consented", { roleId: role.id, actorUserId: ctx.user.id });
+      const result = await payRole(role.id, { actorUserId: ctx.user.id });
+      return { ok: result.ok, reason: result.reason };
+    }),
+
+  // ── Reverser: reverse a payout during the settlement hold ─────────────────
+  reverse: reverserProcedure
+    .input(z.object({
+      roleId: z.number().int().positive(),
+      reason: z.string().min(1).max(2000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await reverseRole(input.roleId, input.reason, ctx.user.id);
+      if (!result.ok) {
+        throw new TRPCError({ code: "CONFLICT", message: result.reason ?? "Reversal failed" });
+      }
+      return { ok: true };
+    }),
+
+  // ── Superadmin: grant maintainer permissions ───────────────────────────────
+  grantMaintainer: superadminProcedure
+    .input(z.object({
+      userId: z.number().int().positive(),
+      canAccept: z.boolean().default(true),
+      canReverse: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      await db.insert(bountyPermissions).values({
+        userId: input.userId,
+        canAccept: input.canAccept ? 1 : 0,
+        canReverse: input.canReverse ? 1 : 0,
+        grantedBy: ctx.user.id,
+        grantedAt: new Date(),
+      }).onDuplicateKeyUpdate({
+        set: {
+          canAccept: input.canAccept ? 1 : 0,
+          canReverse: input.canReverse ? 1 : 0,
+          grantedBy: ctx.user.id,
+          grantedAt: new Date(),
+        },
+      });
+      return { ok: true };
+    }),
+
+  // ── Superadmin: revoke maintainer permissions ──────────────────────────────
+  revokeMaintainer: superadminProcedure
+    .input(z.object({ userId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      await db.delete(bountyPermissions).where(eq(bountyPermissions.userId, input.userId));
+      return { ok: true };
+    }),
+
+  // ── Superadmin: list empowered accounts ───────────────────────────────────
+  listMaintainers: superadminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return [];
+    return db
+      .select({
+        userId: bountyPermissions.userId,
+        canAccept: bountyPermissions.canAccept,
+        canReverse: bountyPermissions.canReverse,
+        grantedBy: bountyPermissions.grantedBy,
+        grantedAt: bountyPermissions.grantedAt,
+        userName: users.name,
+        userEmail: users.email,
+      })
+      .from(bountyPermissions)
+      .leftJoin(users, eq(users.id, bountyPermissions.userId));
+  }),
+
+  // ── Player: my bounty permissions ─────────────────────────────────────────
+  myPermissions: protectedProcedure.query(async ({ ctx }) => {
+    const { getBountyPermission } = await import("../db/bounties");
+    const perm = await getBountyPermission(ctx.user.id);
+    return { canAccept: !!perm?.canAccept, canReverse: !!perm?.canReverse };
+  }),
+
+  // ── Maintainer: get audit events for a bounty ─────────────────────────────
+  getEvents: maintainerProcedure
+    .input(z.object({ bountyId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db
+        .select()
+        .from(bountyEvents)
+        .where(eq(bountyEvents.bountyId, input.bountyId))
+        .orderBy(bountyEvents.createdAt);
+    }),
+
+  // ── Maintainer: manually complete a call task bounty ──────────────────────
+  complete: maintainerProcedure
+    .input(z.object({
+      bountyId: z.number().int().positive(),
+      doerUserId: z.number().int().positive().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [bounty] = await db.select().from(bounties).where(eq(bounties.id, input.bountyId)).limit(1);
+      if (!bounty) throw new TRPCError({ code: "NOT_FOUND" });
+      if (bounty.sourceType === "call_task" && input.doerUserId) {
+        await db.update(bountyRoles).set({
+          userId: input.doerUserId,
+          payStatus: "payable",
+        }).where(and(eq(bountyRoles.bountyId, input.bountyId), eq(bountyRoles.role, "doer")));
+      } else {
+        await db.update(bountyRoles).set({ payStatus: "payable" })
+          .where(and(eq(bountyRoles.bountyId, input.bountyId), eq(bountyRoles.payStatus, "filled")));
+      }
+      await db.update(bounties).set({ workStatus: "completed" }).where(eq(bounties.id, input.bountyId));
+      await logEvent(db, input.bountyId, "completed", { actorUserId: ctx.user.id });
+      const payableRoles = await db
+        .select()
+        .from(bountyRoles)
+        .where(and(eq(bountyRoles.bountyId, input.bountyId), eq(bountyRoles.payStatus, "payable")));
+      const results = [];
+      for (const r of payableRoles) {
+        results.push(await payRole(r.id, { actorUserId: ctx.user.id }));
+      }
+      return { ok: true, payments: results };
+    }),
+
+  // ── Public: get a single bounty with roles ─────────────────────────────────
+  get: publicProcedure
+    .input(z.object({ bountyId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const [bounty] = await db.select().from(bounties).where(eq(bounties.id, input.bountyId)).limit(1);
+      if (!bounty) return null;
+      const roles = await db.select().from(bountyRoles).where(eq(bountyRoles.bountyId, input.bountyId));
+      return { ...bounty, roles };
+    }),
+});
