@@ -26,11 +26,6 @@ import {
   ArrowRight,
   ChevronDown,
   Sprout,
-  Home as HomeIcon,
-  Leaf,
-  FlaskConical,
-  Building2,
-  Globe,
   Gamepad2,
   Link2,
   Coins,
@@ -46,7 +41,6 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { ReadableScrim } from "@/components/ReadableScrim";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { SEO } from "@/components/SEO";
-import { cdnImg } from "@/lib/utils";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -112,34 +106,34 @@ const STEPS: { n: string; title: string; body: string }[] = [
 ];
 
 // ─── Who this is for ────────────────────────────────────────────────────
-const WHO: { icon: React.ElementType; name: string; desc: string }[] = [
+const WHO: { img: string; name: string; desc: string }[] = [
   {
-    icon: Sprout,
+    img: "/season2/who-1-gardens.jpg",
     name: "Community Gardens & Local Food Economies",
     desc: "A shared garden is already a coordination challenge. The game helps you name it and design it well from the start.",
   },
   {
-    icon: HomeIcon,
+    img: "/season2/who-2-cohousing.jpg",
     name: "Intentional Communities & Collaborative Co-Housing",
     desc: "Groups building shared life together who need clear structures for how everything actually works.",
   },
   {
-    icon: Leaf,
+    img: "/season2/who-3-ecovillage.jpg",
     name: "Eco-Villages & Permaculture Projects",
     desc: "Place-based projects with land and a vision that needs legal grounding and economic infrastructure to hold together long-term.",
   },
   {
-    icon: FlaskConical,
+    img: "/season2/who-4-lab.jpg",
     name: "Learning Labs & Regenerative Demonstration Hubs",
     desc: "Projects whose purpose is to model and teach regenerative systems, and need their own internal systems to reflect that.",
   },
   {
-    icon: Building2,
+    img: "/season2/who-5-city.jpg",
     name: "Solarpunk Cities & Regenerative Startup Towns",
     desc: "Large-scale visions for entire communities designing their own economies and governance from the ground up.",
   },
   {
-    icon: Globe,
+    img: "/season2/who-6-bioregion.jpg",
     name: "Bioregional DAOs & Purpose-Driven Organizations",
     desc: "Decentralized organizations coordinating regenerative economies at regional scale, where governance complexity tends to outpace what informal structures can handle.",
   },
@@ -200,13 +194,13 @@ const SELECTION: { title: string; body: string }[] = [
 ];
 
 // ─── Season One projects ────────────────────────────────────────────────
-const SEASON_ONE: { tag: string; name: string; loc: string }[] = [
-  { tag: "Eco-Village", name: "Liminal Village", loc: "Europe" },
-  { tag: "Regenerative Community", name: "Ubuntu Regenerative Community", loc: "Africa" },
-  { tag: "Sacred Land Farm", name: "Finca Sagrada", loc: "Ecuador" },
-  { tag: "Collective", name: "Heartland Collective", loc: "United States" },
-  { tag: "Land Project", name: "La Tierra", loc: "Latin America" },
-  { tag: "Garden Village", name: "Salt Cross Garden Village", loc: "United Kingdom" },
+const SEASON_ONE: { tag: string; name: string; loc: string; img: string }[] = [
+  { tag: "Eco-Village", name: "Liminal Village", loc: "Italy", img: "/season2/s1-liminal.jpg" },
+  { tag: "Regenerative Village", name: "Traditional Dream Factory", loc: "Portugal", img: "/season2/s1-tdf.jpg" },
+  { tag: "Sacred Land Farm", name: "Finca Sagrada", loc: "Ecuador", img: "/season2/s1-finca.jpg" },
+  { tag: "Eco-Healing Sanctuary", name: "Heartland Retreat", loc: "California", img: "/season2/s1-heartland.jpg" },
+  { tag: "Blue Zone Village", name: "La Tierra", loc: "Costa Rica", img: "/season2/s1-latierra.jpg" },
+  { tag: "Ecovillage", name: "Our NeighbourGood", loc: "New Zealand", img: "/season2/s1-neighbourgood.jpg" },
 ];
 
 export default function Season2() {
@@ -222,7 +216,7 @@ export default function Season2() {
       <section className="relative min-h-[88vh] flex flex-col items-center justify-center overflow-hidden px-4 py-24 text-center">
         <div className="absolute inset-0">
           <img
-            src={cdnImg("https://assets.regencivics.earth/dLRruVvEitjLUEgU.jpg")}
+            src="/season2/hero.jpg"
             alt=""
             aria-hidden="true"
             className="w-full h-full object-cover"
@@ -323,6 +317,13 @@ export default function Season2() {
               </p>
             </blockquote>
 
+            <img
+              src="/season2/infinite-games.jpg"
+              alt="An endless regenerative loop with no finish line"
+              loading="lazy"
+              className="w-full max-w-md mx-auto my-2 rounded-xl border border-[#7dd87d]/15"
+            />
+
             <p>
               The dominant ones were designed with flaws built in. Incentives to
               create waste, incentives to extract, incentives to concentrate
@@ -338,6 +339,8 @@ export default function Season2() {
           </div>
         </div>
       </AnimatedSection>
+
+      <img src="/season2/div-soil.jpg" alt="" aria-hidden="true" loading="lazy" className="block w-full h-16 md:h-20 object-cover opacity-60" />
 
       {/* ── ROADMAP ── */}
       <AnimatedSection as="section" animation="slide-up" id="journey" className="py-20 md:py-28 px-4 bg-[#0d2818]/50">
@@ -360,6 +363,13 @@ export default function Season2() {
             Plan for one live weekly session plus a few hours of project work
             between sessions.
           </p>
+
+          <img
+            src="/season2/roadmap.jpg"
+            alt="A seedling growing into a full canopy across the season"
+            loading="lazy"
+            className="w-full max-w-[260px] mx-auto mb-12 rounded-xl border border-[#7dd87d]/15"
+          />
 
           <div className="relative pl-8 border-l border-[#7dd87d]/25 space-y-10">
             {STEPS.map((s) => (
@@ -397,23 +407,23 @@ export default function Season2() {
           </p>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            {WHO.map((w) => {
-              const Icon = w.icon;
-              return (
-                <div
-                  key={w.name}
-                  className="flex items-start gap-4 p-5 rounded-xl border border-[#7dd87d]/15 bg-[#0d2818]/40 hover:border-[#7dd87d]/35 transition-colors"
-                >
-                  <span className="shrink-0 w-11 h-11 rounded-full bg-[#7dd87d]/12 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-[#7dd87d]" />
-                  </span>
-                  <div>
-                    <div className="text-white font-medium mb-1">{w.name}</div>
-                    <p className="text-white/65 text-sm leading-relaxed">{w.desc}</p>
-                  </div>
+            {WHO.map((w) => (
+              <div
+                key={w.name}
+                className="flex items-start gap-4 p-5 rounded-xl border border-[#7dd87d]/15 bg-[#0d2818]/40 hover:border-[#7dd87d]/35 transition-colors"
+              >
+                <img
+                  src={w.img}
+                  alt=""
+                  loading="lazy"
+                  className="shrink-0 w-16 h-16 rounded-lg object-cover border border-[#7dd87d]/20"
+                />
+                <div>
+                  <div className="text-white font-medium mb-1">{w.name}</div>
+                  <p className="text-white/65 text-sm leading-relaxed">{w.desc}</p>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </AnimatedSection>
@@ -447,6 +457,8 @@ export default function Season2() {
           </div>
         </div>
       </AnimatedSection>
+
+      <img src="/season2/div-myc.jpg" alt="" aria-hidden="true" loading="lazy" className="block w-full h-16 md:h-20 object-cover opacity-60" />
 
       {/* ── WHAT TO BRING ── */}
       <AnimatedSection as="section" animation="slide-up" id="requirements" className="py-20 md:py-28 px-4">
@@ -531,6 +543,13 @@ export default function Season2() {
             it.
           </p>
 
+          <img
+            src="/season2/token-swap.jpg"
+            alt="Two projects exchanging tokens within the alliance ring"
+            loading="lazy"
+            className="w-full max-w-lg mx-auto mt-8 rounded-xl border border-[#7dd87d]/15"
+          />
+
           <div className="mt-8 p-6 md:p-8 rounded-xl bg-[#7dd87d]/8 border border-[#7dd87d]/22 space-y-4 text-white/75 leading-relaxed">
             <p>
               <strong className="text-[#7dd87d] font-semibold">Minimum token swap:</strong>{" "}
@@ -586,6 +605,13 @@ export default function Season2() {
             Any project can apply. Here's how the selection works.
           </p>
 
+          <img
+            src="/season2/selection-day.jpg"
+            alt="Community selection day gathering at the equinox"
+            loading="lazy"
+            className="w-full mb-10 rounded-xl border border-[#7dd87d]/15 object-cover max-h-72"
+          />
+
           <div className="space-y-0">
             {SELECTION.map((s, i) => (
               <div
@@ -608,6 +634,8 @@ export default function Season2() {
         </div>
       </AnimatedSection>
 
+      <img src="/season2/div-canopy.jpg" alt="" aria-hidden="true" loading="lazy" className="block w-full h-16 md:h-20 object-cover opacity-60" />
+
       {/* ── SEASON ONE ── */}
       <AnimatedSection as="section" animation="slide-up" className="py-20 md:py-28 px-4 bg-[#0d2818]/50">
         <div className="max-w-5xl mx-auto">
@@ -622,6 +650,13 @@ export default function Season2() {
             through the same incubation roadmap and open-sourcing what they learned
             along the way.
           </p>
+
+          <img
+            src="/season2/s1map.jpg"
+            alt="Season One projects connected across the globe"
+            loading="lazy"
+            className="w-full mb-10 rounded-xl border border-[#7dd87d]/15 object-cover max-h-72"
+          />
 
           {/* Season One actuals. Richer impact stats will be captured from Season Two onward.
               TODO(rye): optional, add one short participant quote here for social proof. */}
@@ -642,12 +677,15 @@ export default function Season2() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {SEASON_ONE.map((p) => (
-              <div key={p.name} className="p-5 rounded-xl border border-[#7dd87d]/12 bg-[#0d2818]/40">
-                <span className="block text-[#7dd87d] text-[0.62rem] font-semibold tracking-[0.15em] uppercase mb-2">
-                  {p.tag}
-                </span>
-                <div className="text-white font-medium mb-1">{p.name}</div>
-                <div className="text-white/45 text-sm">{p.loc}</div>
+              <div key={p.name} className="rounded-xl border border-[#7dd87d]/12 bg-[#0d2818]/40 overflow-hidden hover:border-[#7dd87d]/30 transition-colors">
+                <img src={p.img} alt={p.name} loading="lazy" className="w-full h-40 object-cover" />
+                <div className="p-5">
+                  <span className="block text-[#7dd87d] text-[0.62rem] font-semibold tracking-[0.15em] uppercase mb-2">
+                    {p.tag}
+                  </span>
+                  <div className="text-white font-medium mb-1">{p.name}</div>
+                  <div className="text-white/45 text-sm">{p.loc}</div>
+                </div>
               </div>
             ))}
           </div>
@@ -721,6 +759,13 @@ export default function Season2() {
           style={{ background: "radial-gradient(circle, rgba(125,216,125,0.12), transparent 70%)" }}
         />
         <AnimatedSection animation="scale-in" className="relative z-10 max-w-xl mx-auto">
+          <img
+            src="/season2/cta-character.jpg"
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className="w-36 h-44 object-cover object-top rounded-2xl mx-auto mb-7 border border-[#7dd87d]/25"
+          />
           <div className="inline-flex items-center gap-2 bg-[#7dd87d]/15 px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/30">
             <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
             <span className="text-white/90 text-sm font-medium">Season Two · 13 seats</span>
