@@ -167,7 +167,7 @@ Append an ADR to `.ai/docs/DECISIONS.md` recording the unified engine and the bi
 | H2 | Add `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` to Railway | Dashboard login | Railway, ReGenCivics.Earth, Variables |
 | H3 | Create the GitHub webhook on the repo | Repo admin | Repo Settings, Webhooks, `/api/webhooks/github`, subscribe to Pull requests |
 | H4 | Add `GITHUB_WEBHOOK_SECRET` to Railway | Must match H3 | Railway Variables |
-| H5 | Confirm branch protection (require review + required checks) on the default branch | Repo admin; proof of ship depends on it | Repo Settings, Branches |
+| H5 | Set branch protection on the default branch: require a pull request, required approvals = 0, require status checks only if CI exists, keep "Allow administrators to bypass" on. The non-author-approval and CI-green payout gates are enforced in `server/webhooks/github.ts`, not by branch protection. | Repo admin | Repo Settings, Branches |
 | H6 | Run all migrations | DB only reachable from your machine | `npx tsx scripts/run-migration.ts --all` |
 | H7 | Run the game_variables + owner-permissions seed | Writes to production DB | `npx tsx scripts/seed-bounty-config.ts` (after loading .env) |
 | H8 | `git add -A && git commit && git push` per phase | Deploy gate | repo root |

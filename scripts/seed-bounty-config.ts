@@ -4,7 +4,7 @@
  * Run AFTER applying migration 0145_bounty_engine.sql:
  *   npx tsx scripts/seed-bounty-config.ts
  *
- * Idempotent: upserts on key (game_variables) and userId (bounty_permissions).
+ * Idempotent: upserts on `key` (game_variables) and userId (bounty_permissions).
  * Rye reviews tier amounts and adjusts via game_variables after launch.
  */
 import "dotenv/config";
@@ -12,20 +12,98 @@ import mysql from "mysql2/promise";
 
 const OWNER_EMAIL = "rieki.cordon@gmail.com";
 
-const GAME_VARIABLES: Array<{ key: string; value: number; description: string }> = [
-  // Tier schedule (placeholder — Rye confirms real amounts before launch)
-  { key: "bounty.tier.trivial.delivery", value: 25, description: "Trivial bounty delivery reward ($ReGen)" },
-  { key: "bounty.tier.small.delivery", value: 75, description: "Small bounty delivery reward ($ReGen)" },
-  { key: "bounty.tier.medium.delivery", value: 250, description: "Medium bounty delivery reward ($ReGen)" },
-  { key: "bounty.tier.large.delivery", value: 750, description: "Large bounty delivery reward ($ReGen)" },
-  // Proposer fraction: proposer earns 15% of the delivery amount at merge
-  { key: "bounty.proposal_fraction", value: 0.15, description: "Fraction of delivery amount paid to proposer" },
-  // Settlement hold: one moon cycle = 29.5 days = 708 hours
-  { key: "bounty.settlement_hold_hours", value: 708, description: "Hours before bounty tokens are claimable to Base" },
-  // Season budget: 0 = unlimited (set to a positive value to enable the cap)
-  { key: "bounty.season_budget", value: 0, description: "Max tokens issuable per season via bounties (0 = unlimited)" },
-  // Citizenship tier floor for large bounties: 0 = explorer (everyone qualifies)
-  { key: "bounty.large_tier_min", value: 0, description: "Min citizenship tier index for large bounties (0=explorer)" },
+type GV = {
+  key: string;
+  category: string;
+  subcategory: string;
+  displayName: string;
+  description: string;
+  value: number;
+  valueType: "integer" | "decimal" | "percentage" | "boolean" | "multiplier";
+  defaultValue: number;
+};
+
+const GAME_VARIABLES: GV[] = [
+  {
+    key: "bounty.tier.trivial.delivery",
+    category: "bounty",
+    subcategory: "tier",
+    displayName: "Trivial Tier Delivery Reward",
+    description: "Trivial bounty delivery reward ($ReGen)",
+    value: 25,
+    valueType: "integer",
+    defaultValue: 25,
+  },
+  {
+    key: "bounty.tier.small.delivery",
+    category: "bounty",
+    subcategory: "tier",
+    displayName: "Small Tier Delivery Reward",
+    description: "Small bounty delivery reward ($ReGen)",
+    value: 75,
+    valueType: "integer",
+    defaultValue: 75,
+  },
+  {
+    key: "bounty.tier.medium.delivery",
+    category: "bounty",
+    subcategory: "tier",
+    displayName: "Medium Tier Delivery Reward",
+    description: "Medium bounty delivery reward ($ReGen)",
+    value: 250,
+    valueType: "integer",
+    defaultValue: 250,
+  },
+  {
+    key: "bounty.tier.large.delivery",
+    category: "bounty",
+    subcategory: "tier",
+    displayName: "Large Tier Delivery Reward",
+    description: "Large bounty delivery reward ($ReGen)",
+    value: 750,
+    valueType: "integer",
+    defaultValue: 750,
+  },
+  {
+    key: "bounty.proposal_fraction",
+    category: "bounty",
+    subcategory: "rewards",
+    displayName: "Proposer Fraction",
+    description: "Fraction of the delivery amount paid to the proposer at merge",
+    value: 0.15,
+    valueType: "decimal",
+    defaultValue: 0.15,
+  },
+  {
+    key: "bounty.settlement_hold_hours",
+    category: "bounty",
+    subcategory: "settlement",
+    displayName: "Settlement Hold (Hours)",
+    description: "Hours before bounty tokens are claimable to Base (one moon cycle = 708 h)",
+    value: 708,
+    valueType: "integer",
+    defaultValue: 708,
+  },
+  {
+    key: "bounty.season_budget",
+    category: "bounty",
+    subcategory: "budget",
+    displayName: "Season Token Budget",
+    description: "Max tokens issuable per season via bounties (0 = unlimited)",
+    value: 0,
+    valueType: "integer",
+    defaultValue: 0,
+  },
+  {
+    key: "bounty.large_tier_min",
+    category: "bounty",
+    subcategory: "access",
+    displayName: "Large Tier Citizenship Floor",
+    description: "Min citizenship tier index for large bounties (0 = explorer, everyone qualifies)",
+    value: 0,
+    valueType: "integer",
+    defaultValue: 0,
+  },
 ];
 
 async function main() {
@@ -41,10 +119,17 @@ async function main() {
   // ── Upsert game_variables ────────────────────────────────────────────────
   for (const gv of GAME_VARIABLES) {
     await conn.execute(
-      `INSERT INTO game_variables (\`key\`, \`value\`, description, createdAt, updatedAt)
-       VALUES (?, ?, ?, NOW(), NOW())
-       ON DUPLICATE KEY UPDATE \`value\` = VALUES(\`value\`), description = VALUES(description), updatedAt = NOW()`,
-      [gv.key, gv.value, gv.description],
+      `INSERT INTO game_variables
+         (category, subcategory, \`key\`, displayName, description, \`value\`, valueType, defaultValue)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         \`value\`    = VALUES(\`value\`),
+         displayName  = VALUES(displayName),
+         description  = VALUES(description),
+         valueType    = VALUES(valueType),
+         defaultValue = VALUES(defaultValue),
+         updatedAt    = NOW()`,
+      [gv.category, gv.subcategory, gv.key, gv.displayName, gv.description, gv.value, gv.valueType, gv.defaultValue],
     );
     console.log(`  game_variables: ${gv.key} = ${gv.value}`);
   }
@@ -64,7 +149,11 @@ async function main() {
   await conn.execute(
     `INSERT INTO bounty_permissions (userId, canAccept, canReverse, grantedBy, grantedAt)
      VALUES (?, 1, 1, ?, NOW())
-     ON DUPLICATE KEY UPDATE canAccept = 1, canReverse = 1, grantedBy = VALUES(grantedBy), grantedAt = NOW()`,
+     ON DUPLICATE KEY UPDATE
+       canAccept  = 1,
+       canReverse = 1,
+       grantedBy  = VALUES(grantedBy),
+       grantedAt  = NOW()`,
     [ownerId, ownerId],
   );
   console.log(`  bounty_permissions: userId=${ownerId} (${OWNER_EMAIL}) -> canAccept=1 canReverse=1`);
