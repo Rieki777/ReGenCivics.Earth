@@ -84,14 +84,14 @@ CREATE TABLE IF NOT EXISTS `bounty_permissions` (
 
 -- ── 6. Add GitHub identity fields to player_profiles ─────────────────────────
 ALTER TABLE `player_profiles`
-  ADD COLUMN IF NOT EXISTS `githubHandle` varchar(255) NULL,
-  ADD COLUMN IF NOT EXISTS `githubId` int NULL,
-  ADD COLUMN IF NOT EXISTS `githubLinkedAt` timestamp NULL;
+  ADD COLUMN `githubHandle` varchar(255) NULL,
+  ADD COLUMN `githubId` int NULL,
+  ADD COLUMN `githubLinkedAt` timestamp NULL;
 
 -- ── 7. Add idempotency key to user_token_ledger ──────────────────────────────
 ALTER TABLE `user_token_ledger`
-  ADD COLUMN IF NOT EXISTS `idempotencyKey` varchar(128) NULL,
-  ADD UNIQUE INDEX IF NOT EXISTS `user_token_ledger_idempotencyKey_idx` (`idempotencyKey`);
+  ADD COLUMN `idempotencyKey` varchar(128) NULL,
+  ADD UNIQUE INDEX `user_token_ledger_idempotencyKey_idx` (`idempotencyKey`);
 
 -- ── 8. Drop the legacy callTasks table ───────────────────────────────────────
 DROP TABLE IF EXISTS `callTasks`;

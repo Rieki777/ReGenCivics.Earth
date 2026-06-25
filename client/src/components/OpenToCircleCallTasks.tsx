@@ -1,49 +1,49 @@
-/**
- * OpenToCircleCallTasks: the open call-tasks the circle can pick up
- * directly from the Opportunity board. Phase 3 of the Movement
- * Coordination Engine.
- *
- * Reads trpc.callTasks.listOpenForCircle (public): any task with status
- * 'open' AND no assignee. Any signed-in member can claim from here
- * (the claim mutation is protectedProcedure, so unsigned users get
- * redirected to sign-in by the standard auth boundary).
- */
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlayCircle, Sparkles, ExternalLink } from "lucide-react";
+import { ExternalLink, GitPullRequest, Loader2, Sparkles } from "lucide-react";
 
-type Row = {
-  id: number;
-  title: string;
-  summary: string | null;
-  roleSlug: string | null;
-  bountyAmount: number;
-  bountyTokenType: string;
-  sourceVideoId: string;
-  evidenceTimestampSeconds: number | null;
-  sociocraticOverview: unknown;
-  createdAt: Date | string;
+const TIER_REWARD: Record<string, string> = {
+  trivial: "25 $ReGen",
+  small: "75 $ReGen",
+  medium: "250 $ReGen",
+  large: "750 $ReGen",
 };
 
-function bountyLabel(amount: number, tokenType: string): string {
-  if (amount <= 0) return "no bounty";
-  const t = tokenType === "rcivics" ? "$RCivics" : "$ReGen";
-  return `${amount} ${t}`;
-}
+type OpenRole = {
+  id: number;
+  role: string;
+  amount: number;
+  payStatus: string;
+};
 
-function deepLink(videoId: string, seconds: number | null): string {
-  const t = Math.max(0, Math.floor(seconds ?? 0));
-  return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&t=${t}s`;
+type BountyRow = {
+  id: number;
+  title: string;
+  body: string;
+  sourceType: string;
+  tier: string | null;
+  tokenType: string;
+  githubRepo: string | null;
+  githubIssueNumber: number | null;
+  kind: string | null;
+  workStatus: string;
+  openRoles: OpenRole[];
+};
+
+function tokenLabel(type: string, amount: number): string {
+  if (amount <= 0) return "see tier";
+  const t = type === "rcivics" ? "$RCivics" : "$ReGen";
+  return `${amount} ${t}`;
 }
 
 export function OpenToCircleCallTasks() {
   const { isAuthenticated } = useAuth();
-  const list = trpc.callTasks.listOpenForCircle.useQuery(undefined, { staleTime: 30_000 });
-  const claim = trpc.callTasks.claim.useMutation({ onSuccess: () => list.refetch() });
+  const list = trpc.bounties.listBoard.useQuery({}, { staleTime: 30_000 });
+  const claimRole = trpc.bounties.claimRole.useMutation({ onSuccess: () => list.refetch() });
 
   if (list.isLoading) return null;
-  const rows = (list.data ?? []) as Row[];
+  const rows = (list.data ?? []) as BountyRow[];
   if (rows.length === 0) return null;
 
   return (
@@ -54,53 +54,75 @@ export function OpenToCircleCallTasks() {
           className="text-lg md:text-xl font-bold text-[#7dd87d]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Open call tasks for the circle
+          Open bounties
         </h2>
       </div>
       <p className="text-white/80 text-sm mb-4">
-        Tasks named in a recorded session that no holder has been assigned to. Any signed-in member can claim one.
+        Work that earns $ReGen. Claim a role, do the work, earn the bounty when it lands.
       </p>
-      <div className="space-y-3">
-        {rows.map((row) => (
+      <div className="space-y-4">
+        {rows.map((bounty) => (
           <div
-            key={row.id}
-            className="rounded-xl border border-white/15 bg-[#0d2818]/60 p-4 space-y-2"
+            key={bounty.id}
+            className="rounded-xl border border-white/15 bg-[#0d2818]/60 p-4 space-y-3"
           >
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="min-w-0">
-                <p className="font-bold text-white">{row.title}</p>
-                <p className="text-xs text-white/65 mt-0.5">
-                  Bounty: <span className="text-[#7dd87d] font-semibold">{bountyLabel(row.bountyAmount, row.bountyTokenType)}</span>
-                  {row.roleSlug && <> · role: {row.roleSlug}</>}
+                <p className="font-bold text-white">{bounty.title}</p>
+                <p className="text-xs text-white/65 mt-0.5 capitalize">
+                  {bounty.sourceType === "contribution" ? `code ${bounty.kind ?? "contribution"}` : "task"}
+                  {bounty.tier && <> · {bounty.tier} tier ({TIER_REWARD[bounty.tier] ?? ""})</>}
+                  {bounty.githubRepo && (
+                    <>
+                      {" · "}
+                      <a
+                        href={`https://github.com/${bounty.githubRepo}${bounty.githubIssueNumber ? `/issues/${bounty.githubIssueNumber}` : ""}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#7dd87d] hover:underline inline-flex items-center gap-0.5"
+                      >
+                        {bounty.githubRepo}{bounty.githubIssueNumber ? ` #${bounty.githubIssueNumber}` : ""}
+                        <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+                      </a>
+                    </>
+                  )}
                 </p>
               </div>
-              <a
-                href={deepLink(row.sourceVideoId, row.evidenceTimestampSeconds)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-[#7dd87d] hover:text-white"
-              >
-                <PlayCircle className="w-3.5 h-3.5" /> Source moment <ExternalLink className="w-3 h-3" />
-              </a>
+              <span className="text-xs text-white/50 capitalize">{bounty.workStatus}</span>
             </div>
-            {row.summary && (
-              <p className="text-sm text-white/85 leading-relaxed">{row.summary}</p>
-            )}
-            {isAuthenticated ? (
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => claim.mutate({ id: row.id })}
-                disabled={claim.isPending}
-                className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
-              >
-                {claim.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
-                Claim it
-              </Button>
-            ) : (
-              <p className="text-xs text-white/60">
-                Sign in to claim this task.
-              </p>
+
+            <p className="text-sm text-white/80 leading-relaxed line-clamp-2">{bounty.body}</p>
+
+            {bounty.openRoles.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {bounty.openRoles.map((role) => (
+                  <div key={role.id} className="inline-flex items-center gap-2">
+                    <span className="text-xs text-white/70 capitalize">
+                      {role.role} · {tokenLabel(bounty.tokenType, role.amount)}
+                    </span>
+                    {isAuthenticated ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => claimRole.mutate({ roleId: role.id })}
+                        disabled={claimRole.isPending}
+                        className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] h-7 text-xs px-2"
+                      >
+                        {claimRole.isPending ? (
+                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                        ) : bounty.sourceType === "contribution" ? (
+                          <GitPullRequest className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 mr-1" />
+                        )}
+                        Claim
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-white/40">sign in to claim</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         ))}

@@ -31,7 +31,7 @@ import {
   notifications,
   users,
 } from "../../drizzle/schema";
-import { payRole, reverseRole, getTierAmounts, meetsLargeTierFloor } from "../db/bounties";
+import { payRole, reverseRole, getTierAmounts, meetsLargeTierFloor, getBountyPermission } from "../db/bounties";
 
 // ── Shared zod schemas ───────────────────────────────────────────────────────
 
@@ -516,7 +516,6 @@ export const bountiesRouter = router({
 
   // ── Player: my bounty permissions ─────────────────────────────────────────
   myPermissions: protectedProcedure.query(async ({ ctx }) => {
-    const { getBountyPermission } = await import("../db/bounties");
     const perm = await getBountyPermission(ctx.user.id);
     return { canAccept: !!perm?.canAccept, canReverse: !!perm?.canReverse };
   }),

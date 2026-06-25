@@ -1,192 +1,163 @@
-/**
- * ProfileCallTasksTab: the holder's view of their open + in-flight call
- * tasks. Phase 3 of the Movement Coordination Engine.
- *
- * Reads trpc.callTasks.listMine grouped by status. Each task carries the
- * sociocratic overview from the LLM extract-tasks pass plus the $ReGen
- * bounty. Open tasks expose Claim; claimed tasks expose Submit (artifact
- * URL or text); submitted / completed tasks are read-only here (a steward
- * approves + rewards from the admin queue).
- */
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  GitPullRequest,
   Loader2,
-  PlayCircle,
-  Send,
-  Sparkles,
+  Lock,
+  RotateCcw,
+  Unlock,
 } from "lucide-react";
 
-type Task = {
-  id: number;
-  recordingId: number;
-  sourceVideoId: string;
-  roleSlug: string | null;
-  assigneeUserId: number | null;
-  title: string;
-  summary: string | null;
-  sociocraticOverview: unknown;
-  bountyTokenType: string;
-  bountyAmount: number;
-  evidenceQuote: string | null;
-  evidenceTimestampSeconds: number | null;
-  status: "proposed" | "approved" | "open" | "claimed" | "submitted" | "completed" | "declined" | "expired";
-  claimedAt: Date | string | null;
-  submittedArtifactUrl: string | null;
-  submittedArtifactText: string | null;
-  completedAt: Date | string | null;
+const ROLE_LABELS: Record<string, string> = {
+  doer: "task completer",
+  proposer: "proposer",
+  shipper: "shipper",
+  reviewer: "reviewer",
+  booster: "booster",
 };
 
-function bountyLabel(amount: number, tokenType: string): string {
-  if (amount <= 0) return "no bounty";
-  const t = tokenType === "rcivics" ? "$RCivics" : "$ReGen";
+function tokenLabel(type: string | null | undefined, amount: number): string {
+  if (amount <= 0) return "0 tokens";
+  const t = type === "rcivics" ? "$RCivics" : "$ReGen";
   return `${amount} ${t}`;
 }
 
-function deepLink(videoId: string, seconds: number | null): string {
-  const t = Math.max(0, Math.floor(seconds ?? 0));
-  return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&t=${t}s`;
-}
-
-function SociocraticOverview({ overview }: { overview: unknown }) {
-  if (!overview || typeof overview !== "object") return null;
-  const o = overview as {
-    purpose?: string;
-    whyThisRole?: string;
-    steps?: string[];
-    definitionOfDone?: string;
-    consentCircle?: string;
-  };
-  if (!o.purpose && !o.steps && !o.definitionOfDone) return null;
+function HoldCountdown({ claimableAt }: { claimableAt: Date | string | null }) {
+  if (!claimableAt) return null;
+  const ms = new Date(claimableAt).getTime() - Date.now();
+  if (ms <= 0) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-[#7dd87d]">
+        <Unlock className="w-3 h-3" /> Hold released — claimable to Base
+      </span>
+    );
+  }
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   return (
-    <details className="mt-3 rounded-lg bg-white/5 border border-white/10 px-3 py-2">
-      <summary className="cursor-pointer text-xs font-semibold text-white/85 hover:text-white">
-        How this one works
-      </summary>
-      <div className="mt-2 space-y-2 text-xs text-white/85">
-        {o.purpose && <p><span className="text-[#7dd87d] font-bold">Purpose: </span>{o.purpose}</p>}
-        {o.whyThisRole && <p><span className="text-[#7dd87d] font-bold">Why you: </span>{o.whyThisRole}</p>}
-        {Array.isArray(o.steps) && o.steps.length > 0 && (
-          <div>
-            <p className="text-[#7dd87d] font-bold">Steps</p>
-            <ol className="list-decimal pl-5 space-y-0.5">
-              {o.steps.map((s, i) => <li key={i}>{s}</li>)}
-            </ol>
-          </div>
-        )}
-        {o.definitionOfDone && <p><span className="text-[#7dd87d] font-bold">Done means: </span>{o.definitionOfDone}</p>}
-        {o.consentCircle && <p><span className="text-[#7dd87d] font-bold">Consent circle: </span>{o.consentCircle}</p>}
-      </div>
-    </details>
+    <span className="inline-flex items-center gap-1 text-xs text-amber-300">
+      <Lock className="w-3 h-3" /> {days}d {hours}h settlement hold
+    </span>
   );
 }
 
-function TaskCard({ task, onChanged }: { task: Task; onChanged: () => void }) {
-  const [artifactUrl, setArtifactUrl] = useState("");
-  const [artifactText, setArtifactText] = useState("");
-  const claim = trpc.callTasks.claim.useMutation({ onSuccess: onChanged });
-  const submit = trpc.callTasks.submit.useMutation({ onSuccess: onChanged });
+type Role = {
+  id: number;
+  bountyId: number;
+  role: string;
+  userId: number | null;
+  amount: number;
+  payStatus: string;
+  claimableAt: Date | string | null;
+  paidAt: Date | string | null;
+  createdAt: Date | string;
+  bounty: {
+    id: number;
+    title: string;
+    sourceType: string;
+    tokenType: string;
+    workStatus: string;
+    githubRepo: string | null;
+    mergedPrNumbers: unknown;
+  } | null;
+};
 
-  const playLink = deepLink(task.sourceVideoId, task.evidenceTimestampSeconds);
+function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
+  const [prNumber, setPrNumber] = useState("");
+  const releaseRole = trpc.bounties.releaseRole.useMutation({ onSuccess: onChanged });
+  const linkPr = trpc.bounties.linkPr.useMutation({ onSuccess: () => { setPrNumber(""); onChanged(); } });
+  const bounty = role.bounty;
+  const isContribution = bounty?.sourceType === "contribution";
+  const mergedPrs = Array.isArray(bounty?.mergedPrNumbers) ? bounty.mergedPrNumbers as number[] : [];
 
   return (
-    <article
-      id={`call-task-${task.id}`}
-      className="rounded-xl border border-white/15 bg-[#0d2818]/60 p-4 space-y-3"
-    >
-      <header className="flex items-start justify-between gap-3 flex-wrap">
+    <article className="rounded-xl border border-white/15 bg-[#0d2818]/60 p-4 space-y-2">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
-          <h4 className="font-bold text-white leading-snug">{task.title}</h4>
+          <h4 className="font-bold text-white text-sm leading-snug">{bounty?.title ?? `Bounty #${role.bountyId}`}</h4>
           <p className="text-xs text-white/65 mt-0.5">
-            Bounty: <span className="text-[#7dd87d] font-semibold">{bountyLabel(task.bountyAmount, task.bountyTokenType)}</span>
-            <span className="mx-1.5">·</span>
-            status: {task.status}
+            <span className="text-white/85 font-semibold">{ROLE_LABELS[role.role] ?? role.role}</span>
+            {" · "}
+            <span className="text-[#7dd87d] font-semibold">{tokenLabel(bounty?.tokenType, role.amount)}</span>
           </p>
         </div>
-        <a
-          href={playLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-[#7dd87d] hover:text-white"
-        >
-          <PlayCircle className="w-3.5 h-3.5" /> Listen to the moment <ExternalLink className="w-3 h-3" />
-        </a>
-      </header>
+        <span className="text-xs text-white/50 capitalize">{role.payStatus}</span>
+      </div>
 
-      {task.summary && (
-        <p className="text-sm text-white/90 leading-relaxed">{task.summary}</p>
-      )}
+      {role.payStatus === "paid" && <HoldCountdown claimableAt={role.claimableAt} />}
 
-      {task.evidenceQuote && (
-        <blockquote className="rounded-lg border-l-4 border-[#7dd87d] bg-[#7dd87d]/10 px-3 py-2 text-sm text-white/90 italic">
-          "{task.evidenceQuote}"
-        </blockquote>
-      )}
-
-      <SociocraticOverview overview={task.sociocraticOverview} />
-
-      {task.status === "open" && (
-        <div className="pt-1">
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => claim.mutate({ id: task.id })}
-            disabled={claim.isPending}
-            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
-          >
-            {claim.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
-            Claim it
-          </Button>
-        </div>
-      )}
-
-      {task.status === "claimed" && (
-        <div className="space-y-2 pt-1">
-          <p className="text-xs text-white/70 inline-flex items-center gap-1.5">
-            <Clock className="w-3 h-3" /> Claimed {task.claimedAt ? new Date(task.claimedAt).toLocaleDateString() : ""}
-          </p>
-          <Input
-            value={artifactUrl}
-            onChange={(e) => setArtifactUrl(e.target.value)}
-            placeholder="Link to the work (optional)"
-            className="text-white bg-white/5 border-white/20"
-          />
-          <Textarea
-            value={artifactText}
-            onChange={(e) => setArtifactText(e.target.value)}
-            placeholder="Brief notes on what you did (optional, but one of these two is required)"
-            className="text-white bg-white/5 border-white/20 min-h-[80px]"
-          />
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => submit.mutate({ id: task.id, artifactUrl: artifactUrl || undefined, artifactText: artifactText || undefined })}
-            disabled={submit.isPending || (!artifactUrl && !artifactText)}
-            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
-          >
-            {submit.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Send className="w-3.5 h-3.5 mr-1" />}
-            Submit for steward consent
-          </Button>
-        </div>
-      )}
-
-      {task.status === "submitted" && (
-        <p className="text-xs text-white/70 inline-flex items-center gap-1.5">
-          <Clock className="w-3 h-3" /> Waiting on steward consent.
+      {role.payStatus === "held" && (
+        <p className="text-xs text-amber-300 inline-flex items-center gap-1">
+          <Clock className="w-3 h-3" /> Payout on hold — a maintainer will review and release it.
         </p>
       )}
 
-      {task.status === "completed" && (
-        <p className="text-xs text-[#7dd87d] inline-flex items-center gap-1.5">
-          <CheckCircle2 className="w-3 h-3" /> Completed
-          {task.completedAt && <> on {new Date(task.completedAt).toLocaleDateString()}</>}.
-          {task.bountyAmount > 0 && <> {bountyLabel(task.bountyAmount, task.bountyTokenType)} credited to your private balance.</>}
+      {role.payStatus === "reversed" && (
+        <p className="text-xs text-red-400 inline-flex items-center gap-1">
+          <RotateCcw className="w-3 h-3" /> Payout reversed.
+        </p>
+      )}
+
+      {role.payStatus === "filled" && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {isContribution && role.role === "shipper" && (
+            <div className="flex items-center gap-2">
+              <Input
+                value={prNumber}
+                onChange={(e) => setPrNumber(e.target.value)}
+                placeholder="PR # (e.g. 42)"
+                className="w-32 h-8 text-xs text-white bg-white/5 border-white/20"
+                type="number"
+              />
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => linkPr.mutate({ bountyId: role.bountyId, prNumber: parseInt(prNumber, 10) })}
+                disabled={linkPr.isPending || !prNumber}
+                className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] h-8 text-xs"
+              >
+                {linkPr.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <GitPullRequest className="w-3 h-3 mr-1" />}
+                Link PR
+              </Button>
+            </div>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => releaseRole.mutate({ roleId: role.id })}
+            disabled={releaseRole.isPending}
+            className="border-white/20 text-white/70 hover:text-white h-8 text-xs"
+          >
+            {releaseRole.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RotateCcw className="w-3 h-3 mr-1" />}
+            Release role
+          </Button>
+        </div>
+      )}
+
+      {isContribution && bounty?.githubRepo && (
+        <p className="text-xs text-white/50">
+          Repo:{" "}
+          <a
+            href={`https://github.com/${bounty.githubRepo}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#7dd87d] hover:underline inline-flex items-center gap-0.5"
+          >
+            {bounty.githubRepo} <ExternalLink className="w-2.5 h-2.5" />
+          </a>
+          {mergedPrs.length > 0 && ` · merged: #${mergedPrs.join(", #")}`}
+        </p>
+      )}
+
+      {role.payStatus === "paid" && role.paidAt && (
+        <p className="text-xs text-[#7dd87d] inline-flex items-center gap-1">
+          <CheckCircle2 className="w-3 h-3" /> Paid on {new Date(role.paidAt as string).toLocaleDateString()}
         </p>
       )}
     </article>
@@ -194,56 +165,92 @@ function TaskCard({ task, onChanged }: { task: Task; onChanged: () => void }) {
 }
 
 export function ProfileCallTasksTab() {
-  const query = trpc.callTasks.listMine.useQuery({}, { staleTime: 30_000 });
-  const tasks = (query.data ?? []) as Task[];
+  const query = trpc.bounties.listMine.useQuery({ limit: 100 }, { staleTime: 30_000 });
+  const githubQuery = trpc.playerProfiles.getMyGithub.useQuery(undefined, { staleTime: 60_000 });
+  const unlinkGithub = trpc.playerProfiles.unlinkGithub.useMutation({ onSuccess: () => githubQuery.refetch() });
+
+  const roles = (query.data ?? []) as Role[];
 
   const grouped = useMemo(() => {
-    const buckets: Record<string, Task[]> = {
-      open: [], claimed: [], submitted: [], completed: [], other: [],
-    };
-    for (const t of tasks) {
-      if (t.status === "open" || t.status === "claimed" || t.status === "submitted" || t.status === "completed") {
-        buckets[t.status].push(t);
-      } else {
-        buckets.other.push(t);
-      }
+    const buckets: Record<string, Role[]> = { active: [], pending: [], paid: [], historical: [] };
+    for (const r of roles) {
+      if (r.payStatus === "filled") buckets.active.push(r);
+      else if (r.payStatus === "payable" || r.payStatus === "held") buckets.pending.push(r);
+      else if (r.payStatus === "paid") buckets.paid.push(r);
+      else buckets.historical.push(r);
     }
     return buckets;
-  }, [tasks]);
+  }, [roles]);
 
-  if (query.isLoading) {
-    return (
-      <p className="text-white/70 text-sm inline-flex items-center gap-2">
-        <Loader2 className="w-4 h-4 animate-spin" /> loading
-      </p>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-white/15 p-8 text-center text-white/70 text-sm">
-        No call tasks for you yet. They show up here when a recorded session names you or your role.
-      </div>
-    );
-  }
+  const gh = githubQuery.data;
 
   return (
     <div className="space-y-8">
-      {(["open", "claimed", "submitted", "completed", "other"] as const).map((bucket) => {
-        const list = grouped[bucket];
-        if (!list || list.length === 0) return null;
-        const label =
-          bucket === "open" ? "Open" :
-          bucket === "claimed" ? "Claimed" :
-          bucket === "submitted" ? "Submitted (awaiting consent)" :
-          bucket === "completed" ? "Completed" : "Other";
+      <section className="rounded-xl border border-white/15 bg-[#0d2818]/60 p-4 space-y-2">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-white/70">GitHub identity</h3>
+        {githubQuery.isLoading ? (
+          <p className="text-white/50 text-xs inline-flex items-center gap-1.5">
+            <Loader2 className="w-3 h-3 animate-spin" /> loading
+          </p>
+        ) : gh?.linked ? (
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm text-white">
+              Linked as <span className="text-[#7dd87d] font-semibold">@{(gh as { linked: true; githubHandle: string | null }).githubHandle}</span>
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => unlinkGithub.mutate()}
+              disabled={unlinkGithub.isPending}
+              className="border-white/20 text-white/70 hover:text-white text-xs h-8"
+            >
+              {unlinkGithub.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+              Unlink
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm text-white/70">
+              Link your GitHub to receive code contribution rewards automatically when your PR merges.
+            </p>
+            <a
+              href="/api/oauth/github/link"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7dd87d] text-[#1a472a] text-xs font-semibold hover:bg-[#9de89d]"
+            >
+              <GitPullRequest className="w-3.5 h-3.5" /> Link GitHub
+            </a>
+          </div>
+        )}
+      </section>
+
+      {query.isLoading && (
+        <p className="text-white/70 text-sm inline-flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin" /> loading
+        </p>
+      )}
+
+      {!query.isLoading && roles.length === 0 && (
+        <div className="rounded-xl border border-dashed border-white/15 p-8 text-center text-white/70 text-sm">
+          No bounty roles yet. Claim an open role from the Opportunity board, or propose a bounty to get started.
+        </div>
+      )}
+
+      {[
+        { key: "active", label: "Active" },
+        { key: "pending", label: "Pending payment" },
+        { key: "paid", label: "Paid (settlement hold)" },
+        { key: "historical", label: "Historical" },
+      ].map(({ key, label }) => {
+        const list = grouped[key];
+        if (!list?.length) return null;
         return (
-          <section key={bucket} className="space-y-3">
+          <section key={key} className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white/70">
               {label} <span className="ml-2 text-white/50 font-medium normal-case">({list.length})</span>
             </h3>
             <div className="space-y-3">
-              {list.map((t) => <TaskCard key={t.id} task={t} onChanged={() => query.refetch()} />)}
+              {list.map((r) => <RoleCard key={r.id} role={r} onChanged={() => query.refetch()} />)}
             </div>
           </section>
         );

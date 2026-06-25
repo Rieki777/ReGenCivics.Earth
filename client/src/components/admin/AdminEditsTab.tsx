@@ -41,7 +41,7 @@ function RawLink({ videoId }: { videoId: string | null }) {
 
 function RecordingCard({ row, onChanged }: { row: RecordingRow; onChanged: () => void }) {
   const [draft, setDraft] = useState(row.editedYoutubeUrl ?? "");
-  const setCut = trpc.callTasks.setEditedCut.useMutation({ onSuccess: onChanged });
+  const setCut = trpc.recordings.setEditedCut.useMutation({ onSuccess: onChanged });
   const dirty = (draft ?? "").trim() !== (row.editedYoutubeUrl ?? "").trim();
   const date = row.sessionDate ? new Date(row.sessionDate as string) : new Date(row.createdAt as string);
 
@@ -113,7 +113,7 @@ function RecordingCard({ row, onChanged }: { row: RecordingRow; onChanged: () =>
 }
 
 export default function AdminEditsTab() {
-  const list = trpc.callTasks.adminListRecordings.useQuery({ limit: 50 });
+  const list = trpc.recordings.adminListRecordings.useQuery({ limit: 50 });
   const rows = (list.data ?? []) as RecordingRow[];
 
   return (

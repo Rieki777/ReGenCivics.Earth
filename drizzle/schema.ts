@@ -2308,62 +2308,6 @@ export type RoleHolder = typeof roleHolders.$inferSelect;
 export type InsertRoleHolder = typeof roleHolders.$inferInsert;
 
 /**
- * callTasks: closes Gap B in the Movement Coordination Engine spec.
- * Data-driven tasks an LLM (or a human) writes into the system from a
- * recorded call. Lifecycle:
- *   proposed -> approved -> open -> claimed -> submitted -> completed
- *                                                       \-> declined
- *                                                       \-> expired
- * The two human gates are approval (admin gate before any token-bearing
- * task reaches a person) and consent (circle steward gate before the
- * bounty is credited). On `completed` the `rewardLedgerId` carries the
- * `user_token_ledger` row id created by `creditPrivateTokens` with
- * source tag `call_task_bounty`.
- */
-export const callTasks = mysqlTable("callTasks", {
-  id: int("id").autoincrement().primaryKey(),
-  recordingId: int("recordingId").notNull(),
-  sourceVideoId: varchar("sourceVideoId", { length: 32 }).notNull(),
-  roleSlug: varchar("roleSlug", { length: 64 }),
-  assigneeUserId: int("assigneeUserId"),
-  title: varchar("title", { length: 255 }).notNull(),
-  summary: text("summary"),
-  sociocraticOverview: json("sociocraticOverview"),
-  bountyTokenType: varchar("bountyTokenType", { length: 16 }).default("regen").notNull(),
-  bountyAmount: int("bountyAmount").default(0).notNull(),
-  evidenceQuote: text("evidenceQuote"),
-  evidenceTimestampSeconds: int("evidenceTimestampSeconds"),
-  status: mysqlEnum("status", [
-    "proposed",
-    "approved",
-    "open",
-    "claimed",
-    "submitted",
-    "completed",
-    "declined",
-    "expired",
-  ]).default("proposed").notNull(),
-  createdByAgent: varchar("createdByAgent", { length: 64 }).default("coordination-engine").notNull(),
-  approvedBy: int("approvedBy"),
-  claimedAt: timestamp("claimedAt"),
-  submittedArtifactUrl: varchar("submittedArtifactUrl", { length: 512 }),
-  submittedArtifactText: text("submittedArtifactText"),
-  consentedBy: int("consentedBy"),
-  completedAt: timestamp("completedAt"),
-  rewardLedgerId: int("rewardLedgerId"),
-  expiresAt: timestamp("expiresAt"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (t) => ({
-  byAssignee: index("callTasks_assignee_idx").on(t.assigneeUserId, t.status),
-  byRole: index("callTasks_role_idx").on(t.roleSlug, t.status),
-  byRecording: index("callTasks_recording_idx").on(t.recordingId),
-  byStatus: index("callTasks_status_idx").on(t.status),
-}));
-export type CallTask = typeof callTasks.$inferSelect;
-export type InsertCallTask = typeof callTasks.$inferInsert;
-
-/**
  * Events table
  * Stores scheduled community sessions, incubator episodes, and special events.
  * This is the source of truth for the Schedule page.

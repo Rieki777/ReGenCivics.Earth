@@ -1,288 +1,195 @@
-/**
- * AdminTasksTab: the call-task review queue (Phase 3, Movement
- * Coordination Engine).
- *
- * Shows every proposed task with its evidence quote, a timestamped
- * deep-link to the source YouTube video, the resolved assignee (if a
- * holder was matched on roleSlug), and a suggested bounty. Admin can:
- *   - approve (stamps approvedBy + flips status to open)
- *   - edit the bounty inline before approving
- *   - reassign the holder (e.g. pick a different userId, or unassign
- *     so the task surfaces on Opportunity)
- *   - decline (terminal)
- *   - bulk approve / decline selected rows
- *
- * Approve fires the in-app notification automatically (server-side, see
- * server/routes/callTasks.ts deliverApproval). Email notifications are
- * intentionally deferred to a follow-up; in-app is the Phase 3 surface.
- */
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCheck,
-  ExternalLink,
   Loader2,
-  PlayCircle,
-  Quote,
   ShieldCheck,
   ShieldX,
-  Sparkles,
-  UserCheck,
-  UserMinus,
+  Unlock,
 } from "lucide-react";
 
-type QueueRow = {
-  id: number;
-  recordingId: number;
-  sourceVideoId: string;
-  roleSlug: string | null;
-  assigneeUserId: number | null;
-  title: string;
-  summary: string | null;
-  sociocraticOverview: unknown;
-  bountyTokenType: string;
-  bountyAmount: number;
-  evidenceQuote: string | null;
-  evidenceTimestampSeconds: number | null;
-  status: string;
-  createdByAgent: string;
-  createdAt: Date | string;
-  recordingTitle: string | null;
-  recordingYoutubeVideoId: string | null;
-  roleTitle: string | null;
-  roleHolderUserId: number | null;
+const TIER_LABELS: Record<string, string> = {
+  trivial: "Trivial",
+  small: "Small",
+  medium: "Medium",
+  large: "Large",
 };
 
-const STATUS_TABS: Array<{ value: "proposed" | "open" | "claimed" | "submitted" | "completed" | "declined"; label: string }> = [
-  { value: "proposed", label: "Proposed (gate)" },
-  { value: "open", label: "Open" },
-  { value: "claimed", label: "Claimed" },
-  { value: "submitted", label: "Submitted" },
-  { value: "completed", label: "Completed" },
-  { value: "declined", label: "Declined" },
-];
+type Bounty = {
+  id: number;
+  title: string;
+  body: string;
+  sourceType: string;
+  tier: string | null;
+  tokenType: string;
+  workStatus: string;
+  githubRepo: string | null;
+  githubIssueNumber: number | null;
+  kind: string | null;
+  createdAt: Date | string;
+};
 
-function youTubeDeepLink(videoId: string | null, seconds: number | null): string | null {
-  if (!videoId) return null;
-  const t = Math.max(0, Math.floor(seconds ?? 0));
-  return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&t=${t}s`;
-}
+type HeldRole = {
+  id: number;
+  bountyId: number;
+  role: string;
+  amount: number;
+  payStatus: string;
+  bounty: Bounty | null;
+};
 
-function relativeTime(value: Date | string): string {
-  try {
-    const d = typeof value === "string" ? new Date(value) : value;
-    const diff = Date.now() - d.getTime();
-    const mins = Math.round(diff / 60_000);
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.round(mins / 60);
-    if (hrs < 48) return `${hrs}h ago`;
-    return `${Math.round(hrs / 24)}d ago`;
-  } catch {
-    return "";
-  }
-}
+function ProposalCard({ bounty, onChanged }: { bounty: Bounty; onChanged: () => void }) {
+  const [tier, setTier] = useState(bounty.tier ?? "small");
+  const [declineReason, setDeclineReason] = useState("");
+  const [declining, setDeclining] = useState(false);
 
-function SociocraticOverviewBlock({ overview }: { overview: unknown }) {
-  if (!overview || typeof overview !== "object") return null;
-  const o = overview as {
-    purpose?: string;
-    whyThisRole?: string;
-    steps?: string[];
-    definitionOfDone?: string;
-    consentCircle?: string;
-  };
-  if (!o.purpose && !o.steps && !o.definitionOfDone) return null;
-  return (
-    <details className="mt-2 group">
-      <summary className="cursor-pointer text-xs font-semibold text-[#1a472a]/80 hover:text-[#1a472a]">
-        Sociocratic overview
-      </summary>
-      <div className="mt-2 space-y-2 text-xs text-[#1a472a]/85 pl-3 border-l-2 border-[#7dd87d]/40">
-        {o.purpose && <p><span className="font-bold">Purpose:</span> {o.purpose}</p>}
-        {o.whyThisRole && <p><span className="font-bold">Why this role:</span> {o.whyThisRole}</p>}
-        {Array.isArray(o.steps) && o.steps.length > 0 && (
-          <div>
-            <p className="font-bold">Steps:</p>
-            <ol className="list-decimal pl-5 space-y-0.5">
-              {o.steps.map((s, i) => <li key={i}>{s}</li>)}
-            </ol>
-          </div>
-        )}
-        {o.definitionOfDone && <p><span className="font-bold">Definition of done:</span> {o.definitionOfDone}</p>}
-        {o.consentCircle && <p><span className="font-bold">Consent circle:</span> {o.consentCircle}</p>}
-      </div>
-    </details>
-  );
-}
-
-function QueueRowCard({ row, onChanged }: { row: QueueRow; onChanged: () => void }) {
-  const [bounty, setBounty] = useState<number>(row.bountyAmount);
-  const [reassigning, setReassigning] = useState(false);
-  const [search, setSearch] = useState("");
-
-  const lookup = trpc.roleHolders.findUsers.useQuery(
-    { q: search },
-    { enabled: reassigning && search.length >= 2, staleTime: 30_000 },
-  );
-  const approve = trpc.callTasks.approve.useMutation({ onSuccess: onChanged });
-  const decline = trpc.callTasks.decline.useMutation({ onSuccess: onChanged });
-
-  const deepLink = youTubeDeepLink(row.recordingYoutubeVideoId, row.evidenceTimestampSeconds);
-  const assigneeLabel = row.assigneeUserId
-    ? `User #${row.assigneeUserId}${row.roleTitle ? ` (${row.roleTitle})` : ""}`
-    : row.roleSlug
-    ? `Open to circle (${row.roleTitle ?? row.roleSlug})`
-    : "Open to circle";
+  const accept = trpc.bounties.accept.useMutation({ onSuccess: onChanged });
+  const decline = trpc.bounties.decline.useMutation({
+    onSuccess: () => { setDeclining(false); setDeclineReason(""); onChanged(); },
+  });
 
   return (
     <div className="rounded-xl border border-[#1a472a]/15 bg-white p-4 space-y-3">
-      {/* Title + meta */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
-          <p className="font-bold text-[#1a472a] leading-snug">{row.title}</p>
-          <p className="text-xs text-[#1a472a]/70 mt-1">
-            from <span className="font-semibold">{row.recordingTitle ?? "session"}</span>
-            <span className="mx-1.5">·</span>
-            <Sparkles className="inline w-3 h-3 mr-1" />
-            {row.createdByAgent}
-            <span className="mx-1.5">·</span>
-            {relativeTime(row.createdAt)}
+          <p className="font-bold text-[#1a472a]">{bounty.title}</p>
+          <p className="text-xs text-[#1a472a]/60 mt-0.5">
+            <span className="capitalize">{bounty.sourceType === "contribution" ? `code ${bounty.kind ?? "contribution"}` : "call task"}</span>
+            {bounty.githubRepo && <> · {bounty.githubRepo}{bounty.githubIssueNumber ? ` #${bounty.githubIssueNumber}` : ""}</>}
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold">
-          <UserCheck className="w-3 h-3" /> {assigneeLabel}
+        <span className="text-xs text-[#1a472a]/50">
+          {new Date(bounty.createdAt as string).toLocaleDateString()}
         </span>
       </div>
 
-      {row.summary && (
-        <p className="text-sm text-[#1a472a] leading-relaxed">{row.summary}</p>
-      )}
+      <p className="text-sm text-[#1a472a]/80 leading-relaxed line-clamp-3">{bounty.body}</p>
 
-      {/* Evidence quote + deep link */}
-      {row.evidenceQuote && (
-        <blockquote className="rounded-lg border-l-4 border-[#7dd87d] bg-[#7dd87d]/10 px-3 py-2 text-sm text-[#1a472a]">
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#1a472a]/70 mb-1">
-            <Quote className="w-3 h-3" /> Evidence from the call
-          </span>
-          <p className="italic">"{row.evidenceQuote}"</p>
-          {deepLink && (
-            <a
-              href={deepLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#1a472a] hover:underline"
-            >
-              <PlayCircle className="w-3.5 h-3.5" /> Play at {Math.floor((row.evidenceTimestampSeconds ?? 0) / 60)}:{String((row.evidenceTimestampSeconds ?? 0) % 60).padStart(2, "0")}
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          )}
-        </blockquote>
-      )}
-
-      <SociocraticOverviewBlock overview={row.sociocraticOverview} />
-
-      {/* Action row */}
-      {row.status === "proposed" ? (
-        <div className="flex items-center gap-3 flex-wrap pt-1">
+      {!declining ? (
+        <div className="flex flex-wrap items-center gap-3 pt-1">
           <label className="inline-flex items-center gap-1.5 text-xs text-[#1a472a]/85">
-            Bounty
-            <Input
-              type="number"
-              min={0}
-              max={1_000_000}
-              value={bounty}
-              onChange={(e) => setBounty(Number(e.target.value) || 0)}
-              className="w-24 h-8 text-[#1a472a] text-sm"
-            />
-            <span>{row.bountyTokenType === "rcivics" ? "$RCivics" : "$ReGen"}</span>
+            Tier
+            <select
+              value={tier}
+              onChange={(e) => setTier(e.target.value)}
+              className="rounded border border-[#1a472a]/20 text-[#1a472a] text-xs px-2 py-1"
+            >
+              {["trivial", "small", "medium", "large"].map((t) => (
+                <option key={t} value={t}>{TIER_LABELS[t]}</option>
+              ))}
+            </select>
           </label>
-
           <Button
             type="button"
             size="sm"
-            disabled={approve.isPending}
-            onClick={() => approve.mutate({ id: row.id, bountyAmount: bounty })}
+            disabled={accept.isPending}
+            onClick={() => accept.mutate({ bountyId: bounty.id, tier: tier as "trivial" | "small" | "medium" | "large" })}
             className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
           >
-            <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Approve
+            {accept.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <ShieldCheck className="w-3.5 h-3.5 mr-1" />}
+            Accept
           </Button>
-
           <Button
             type="button"
             size="sm"
             variant="outline"
-            disabled={decline.isPending}
-            onClick={() => decline.mutate({ id: row.id })}
+            onClick={() => setDeclining(true)}
           >
             <ShieldX className="w-3.5 h-3.5 mr-1" /> Decline
           </Button>
-
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setReassigning((v) => !v)}
-          >
-            <UserCheck className="w-3.5 h-3.5 mr-1" /> {reassigning ? "Cancel" : "Reassign"}
-          </Button>
         </div>
       ) : (
-        <p className="text-xs text-[#1a472a]/60">
-          status: {row.status}{row.bountyAmount > 0 && <> · {row.bountyAmount} {row.bountyTokenType === "rcivics" ? "$RCivics" : "$ReGen"}</>}
-        </p>
-      )}
-
-      {reassigning && row.status === "proposed" && (
-        <div className="space-y-2 rounded-lg border border-dashed border-[#1a472a]/20 p-3">
-          <div className="flex items-center gap-2">
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search holder by email or handle"
-              className="text-[#1a472a] text-sm"
-            />
+        <div className="space-y-2">
+          <Textarea
+            value={declineReason}
+            onChange={(e) => setDeclineReason(e.target.value)}
+            placeholder="Reason for declining (required)"
+            className="text-[#1a472a] text-sm min-h-[60px]"
+          />
+          <div className="flex gap-2">
             <Button
               type="button"
               size="sm"
-              variant="outline"
-              onClick={() => {
-                approve.mutate({ id: row.id, bountyAmount: bounty, assigneeUserId: null });
-                setReassigning(false);
-              }}
-              title="Approve as open-to-circle"
+              disabled={decline.isPending || !declineReason.trim()}
+              onClick={() => decline.mutate({ bountyId: bounty.id, reason: declineReason })}
+              className="bg-red-600 text-white hover:bg-red-700"
             >
-              <UserMinus className="w-3.5 h-3.5 mr-1" /> Open to circle
+              {decline.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+              Confirm decline
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setDeclining(false)}>
+              Cancel
             </Button>
           </div>
-          {search.length >= 2 && (
-            <div className="rounded-md border border-[#1a472a]/10 max-h-40 overflow-y-auto">
-              {lookup.isLoading ? (
-                <p className="p-2 text-xs text-[#1a472a]/70 inline-flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" /> searching
-                </p>
-              ) : (lookup.data ?? []).length === 0 ? (
-                <p className="p-2 text-xs text-[#1a472a]/70">No matches.</p>
-              ) : (
-                (lookup.data ?? []).map((u: { id: number; name: string | null; email: string | null; handle: string | null }) => (
-                  <button
-                    key={u.id}
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm text-[#1a472a] hover:bg-[#7dd87d]/15"
-                    onClick={() => {
-                      approve.mutate({ id: row.id, bountyAmount: bounty, assigneeUserId: u.id });
-                      setReassigning(false);
-                    }}
-                  >
-                    <span className="font-semibold">{u.name ?? u.handle ?? `User ${u.id}`}</span>
-                    {u.email && <span className="text-[#1a472a]/70 ml-2">{u.email}</span>}
-                  </button>
-                ))
-              )}
-            </div>
-          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HeldPayoutCard({ role, onChanged }: { role: HeldRole; onChanged: () => void }) {
+  const [reverseReason, setReverseReason] = useState("");
+  const [reversing, setReversing] = useState(false);
+
+  const consent = trpc.bounties.consentAndPay.useMutation({ onSuccess: onChanged });
+  const reverse = trpc.bounties.reverse.useMutation({
+    onSuccess: () => { setReversing(false); onChanged(); },
+  });
+
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p className="font-bold text-[#1a472a] text-sm">{role.bounty?.title ?? `Bounty #${role.bountyId}`}</p>
+          <p className="text-xs text-[#1a472a]/60 mt-0.5 capitalize">
+            {role.role} role · {role.amount} {role.bounty?.tokenType === "rcivics" ? "$RCivics" : "$ReGen"} held
+          </p>
+        </div>
+        <span className="text-xs text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">held</span>
+      </div>
+
+      {!reversing ? (
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            disabled={consent.isPending}
+            onClick={() => consent.mutate({ roleId: role.id })}
+            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
+          >
+            {consent.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Unlock className="w-3.5 h-3.5 mr-1" />}
+            Release payout
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setReversing(true)}>
+            <ShieldX className="w-3.5 h-3.5 mr-1" /> Reverse
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Textarea
+            value={reverseReason}
+            onChange={(e) => setReverseReason(e.target.value)}
+            placeholder="Reason for reversal (required)"
+            className="text-[#1a472a] text-sm min-h-[60px]"
+          />
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              disabled={reverse.isPending || !reverseReason.trim()}
+              onClick={() => reverse.mutate({ roleId: role.id, reason: reverseReason })}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {reverse.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+              Confirm reverse
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setReversing(false)}>
+              Cancel
+            </Button>
+          </div>
         </div>
       )}
     </div>
@@ -290,55 +197,36 @@ function QueueRowCard({ row, onChanged }: { row: QueueRow; onChanged: () => void
 }
 
 export function AdminTasksTab() {
-  const [activeStatus, setActiveStatus] = useState<typeof STATUS_TABS[number]["value"]>("proposed");
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [filter, setFilter] = useState<"proposals" | "held_payouts" | "all">("proposals");
 
-  const queue = trpc.callTasks.adminQueue.useQuery({ status: activeStatus, limit: 100 }, { staleTime: 30_000 });
-  const approveBulk = trpc.callTasks.approveBulk.useMutation({
-    onSuccess: () => { setSelected(new Set()); queue.refetch(); },
-  });
-  const declineBulk = trpc.callTasks.declineBulk.useMutation({
-    onSuccess: () => { setSelected(new Set()); queue.refetch(); },
-  });
-  const runNow = trpc.callTasks.runPipelineNow.useMutation({ onSuccess: () => queue.refetch() });
-  const runFlywheel = trpc.callTasks.runFlywheelNow.useMutation({ onSuccess: () => queue.refetch() });
-
-  const rows = (queue.data ?? []) as QueueRow[];
-  const allSelected = useMemo(
-    () => rows.length > 0 && rows.every((r) => selected.has(r.id)),
-    [rows, selected],
-  );
-
-  const toggleAll = () => {
-    if (allSelected) setSelected(new Set());
-    else setSelected(new Set(rows.map((r) => r.id)));
-  };
-  const toggleOne = (id: number) => {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    setSelected(next);
-  };
+  const queue = trpc.bounties.adminQueue.useQuery({ filter, limit: 50 }, { staleTime: 30_000 });
+  const data = queue.data ?? { bounties: [], heldRoles: [] };
+  const { bounties: proposals, heldRoles } = data as { bounties: Bounty[]; heldRoles: HeldRole[] };
+  const refetch = () => { void queue.refetch(); };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CheckCheck className="w-4 h-4" /> Call Tasks Queue
+          <CheckCheck className="w-4 h-4" /> Bounty Queue
         </CardTitle>
         <CardDescription>
-          Proposed tasks land here from the coordination pipeline. Approve, edit bounty, reassign, or decline. Approval fires the in-app notification automatically.
+          Review proposed bounties and release held payouts.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Status tabs */}
         <div className="flex flex-wrap items-center gap-2">
-          {STATUS_TABS.map((tab) => (
+          {[
+            { value: "proposals", label: "Proposals" },
+            { value: "held_payouts", label: "Held Payouts" },
+            { value: "all", label: "All" },
+          ].map((tab) => (
             <button
               key={tab.value}
               type="button"
-              onClick={() => { setActiveStatus(tab.value); setSelected(new Set()); }}
+              onClick={() => setFilter(tab.value as typeof filter)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                activeStatus === tab.value
+                filter === tab.value
                   ? "bg-[#1a472a] text-white"
                   : "bg-[#1a472a]/10 text-[#1a472a] hover:bg-[#1a472a]/20"
               }`}
@@ -347,93 +235,38 @@ export function AdminTasksTab() {
             </button>
           ))}
           <span className="ml-auto text-xs text-[#1a472a]/70">
-            {queue.isLoading ? "loading…" : `${rows.length} ${activeStatus}`}
+            {queue.isLoading ? "loading…" : `${proposals.length} proposals · ${heldRoles.length} held`}
           </span>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => runNow.mutate({ maxNew: 5 })}
-            disabled={runNow.isPending}
-          >
-            {runNow.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
-            Run pipeline now
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => runFlywheel.mutate()}
-            disabled={runFlywheel.isPending}
-            title="Run the stale-claims and roles-reconciliation agents on demand"
-          >
-            {runFlywheel.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <CheckCheck className="w-3.5 h-3.5 mr-1" />}
-            Run flywheel
-          </Button>
         </div>
 
-        {runFlywheel.data && (
-          <p className="text-xs text-[#1a472a]/80 px-1">
-            Flywheel: {runFlywheel.data.staleClaims.nudged} nudged, {runFlywheel.data.staleClaims.expired} released; roles {runFlywheel.data.rolesReconcile.inserted} new, {runFlywheel.data.rolesReconcile.updated} updated, {runFlywheel.data.rolesReconcile.unchanged} unchanged.
-          </p>
-        )}
-
-        {/* Bulk row, only for proposed */}
-        {activeStatus === "proposed" && rows.length > 0 && (
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#1a472a]/5">
-            <label className="inline-flex items-center gap-2 text-xs text-[#1a472a]">
-              <input type="checkbox" checked={allSelected} onChange={toggleAll} /> Select all on screen
-            </label>
-            <span className="text-xs text-[#1a472a]/60">{selected.size} selected</span>
-            <Button
-              type="button"
-              size="sm"
-              disabled={selected.size === 0 || approveBulk.isPending}
-              onClick={() => approveBulk.mutate({ ids: Array.from(selected) })}
-              className="ml-auto bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Approve selected
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={selected.size === 0 || declineBulk.isPending}
-              onClick={() => declineBulk.mutate({ ids: Array.from(selected) })}
-            >
-              <ShieldX className="w-3.5 h-3.5 mr-1" /> Decline selected
-            </Button>
-          </div>
-        )}
-
-        {/* Rows */}
         {queue.isLoading ? (
           <div className="text-sm text-[#1a472a]/70 inline-flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" /> loading
           </div>
-        ) : rows.length === 0 ? (
-          <p className="text-sm text-[#1a472a]/70 py-6 text-center">
-            No tasks at this status. The pipeline writes proposed rows as new recordings come in; try "Run pipeline now" or check back after the next cron tick.
-          </p>
         ) : (
-          <div className="space-y-3">
-            {rows.map((row) => (
-              <div key={row.id} className="flex gap-2">
-                {activeStatus === "proposed" && (
-                  <input
-                    type="checkbox"
-                    className="mt-5"
-                    checked={selected.has(row.id)}
-                    onChange={() => toggleOne(row.id)}
-                    aria-label={`Select ${row.title}`}
-                  />
+          <>
+            {(filter === "proposals" || filter === "all") && proposals.length > 0 && (
+              <section className="space-y-3">
+                {filter === "all" && (
+                  <h4 className="text-xs font-bold text-[#1a472a]/70 uppercase tracking-wider">Proposals</h4>
                 )}
-                <div className="flex-1 min-w-0">
-                  <QueueRowCard row={row} onChanged={() => queue.refetch()} />
-                </div>
-              </div>
-            ))}
-          </div>
+                {proposals.map((b) => <ProposalCard key={b.id} bounty={b} onChanged={refetch} />)}
+              </section>
+            )}
+            {(filter === "held_payouts" || filter === "all") && heldRoles.length > 0 && (
+              <section className="space-y-3 mt-4">
+                {filter === "all" && (
+                  <h4 className="text-xs font-bold text-[#1a472a]/70 uppercase tracking-wider">Held Payouts</h4>
+                )}
+                {heldRoles.map((r) => <HeldPayoutCard key={r.id} role={r} onChanged={refetch} />)}
+              </section>
+            )}
+            {proposals.length === 0 && heldRoles.length === 0 && (
+              <p className="text-sm text-[#1a472a]/70 py-6 text-center">
+                Nothing in the queue. Proposed bounties from players appear here for review.
+              </p>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

@@ -181,4 +181,55 @@ export const recordingsRouter = router({
       await database.delete(recordings).where(eq(recordings.id, input.id));
       return { success: true };
     }),
+
+  // Admin: list recordings with editorial fields for the edited-cut tab
+  adminListRecordings: adminProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(200).default(50) }).optional())
+    .query(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return [];
+      return database
+        .select({
+          id: recordings.id,
+          title: recordings.title,
+          sessionDate: recordings.sessionDate,
+          youtubeVideoId: recordings.youtubeVideoId,
+          editedYoutubeUrl: recordings.editedYoutubeUrl,
+          recordingKind: recordings.recordingKind,
+          overview: recordings.overview,
+          createdAt: recordings.createdAt,
+        })
+        .from(recordings)
+        .orderBy(desc(recordings.createdAt))
+        .limit(input?.limit ?? 50);
+    }),
+
+  // Admin: attach or update the edited YouTube cut for a recording
+  setEditedCut: adminProcedure
+    .input(z.object({
+      recordingId: z.number().int().positive(),
+      editedYoutubeUrl: z.string().min(1).max(512).nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      const [rec] = await database
+        .select({ id: recordings.id })
+        .from(recordings)
+        .where(eq(recordings.id, input.recordingId))
+        .limit(1);
+      if (!rec) throw new TRPCError({ code: "NOT_FOUND" });
+      const raw = input.editedYoutubeUrl?.trim() ?? "";
+      let normalized: string | null = null;
+      if (raw.length > 0) {
+        const candidate = raw.startsWith("http") ? raw : `https://www.youtube.com/watch?v=${raw}`;
+        try { new URL(candidate); } catch { throw new TRPCError({ code: "BAD_REQUEST", message: "Not a valid URL or video id" }); }
+        normalized = candidate;
+      }
+      await database
+        .update(recordings)
+        .set({ editedYoutubeUrl: normalized })
+        .where(eq(recordings.id, input.recordingId));
+      return { ok: true, notified: 0 };
+    }),
 });
