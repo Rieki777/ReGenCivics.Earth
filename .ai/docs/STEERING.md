@@ -148,6 +148,21 @@ Full list: see CLAUDE.md "Installed Skills" section.
 
 ---
 
+## 11. Deterministic-first for autonomous behavior
+
+Before building any autonomous or recurring behavior (agent, automation, cron, scheduled task, anything that runs more than once), split it into deterministic and nondeterministic parts.
+
+- Deterministic part: write a plain tool that runs without an LLM. Spend tokens once to build it, then run it forever at zero token cost. Wire it to a schedule yourself.
+- Nondeterministic part: the only place an agent or LLM call belongs. Keep it as small as possible. Call it on a schedule, only for the judgment it needs.
+
+Default to the tool. If the whole task is deterministic, there is no agent, just a tool that runs free. If a step is left unattended, the deterministic tool keeps running on its own; the agent only wakes on its schedule for the part that truly cannot be deterministic.
+
+The coordination engine already follows this: the YouTube poll, role reconciliation, stale-claim sweep, upload, and publish writes are deterministic crons and server code at zero token cost; only the transcript-understanding step spends tokens.
+
+Full reasoning and the decision checklist: the `regen-deterministic-first` skill.
+
+---
+
 ## What is NOT a hard constraint
 
 The following are preferences, not steering rules. They live in `.ai/docs/DECISIONS.md` (architectural choices) or in skills (process):

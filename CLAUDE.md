@@ -226,6 +226,7 @@ Project-specific skills live in `.claude/skills/` (committed with the repo) and 
 - `regen-do-everything`: autonomous end-to-end fix execution: diagnose, code, build-check, commit, push, verify live, report
 - `regen-database-sql`: patterns for MySQL on Railway, Drizzle ORM, seed scripts, migrations
 - `regen-railway-crons`: Railway HTTP cron setup and debugging. The `sh -c` shell-expansion fix, the silent-401 trap (curl exits 0 on 401), and the `${{"ReGenCivics.Earth".CRON_SECRET}}` secret reference. Use when adding or fixing any `/api/cron/*` cron
+- `regen-deterministic-first`: the foundational rule for any autonomous or recurring behavior. Build a deterministic tool that runs without an LLM at zero token cost first; only call an agent for the genuinely nondeterministic part, on a schedule. Also a hard constraint in `.ai/docs/STEERING.md` section 11. Read before architecting anything that runs more than once
 
 ### Game + seasons
 
