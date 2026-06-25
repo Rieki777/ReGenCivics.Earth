@@ -50,6 +50,10 @@ vi.mock('@/components/SmartBottomNav', () => ({
   default: () => <nav data-testid="smart-bottom-nav">Smart Nav</nav>,
 }));
 
+vi.mock('@/components/mobile/MobileTabBar', () => ({
+  default: () => <nav data-testid="mobile-tab-bar">Mobile Tabs</nav>,
+}));
+
 // Mock trpc (Navigation calls trpc.messages.unreadCount.useQuery and trpc.userProfiles.getMe.useQuery)
 vi.mock('@/lib/trpc', () => ({
   trpc: {

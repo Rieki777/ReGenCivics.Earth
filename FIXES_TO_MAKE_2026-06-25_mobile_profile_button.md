@@ -11,7 +11,7 @@ Read `client/src/components/mobile/MobileMoreMenu.tsx`, `client/src/components/N
 
 ## Fix 1 — Top-right profile / Sign-In button on the mobile home menu (High)
 
-**Status:** CODED (needs build)
+**Status:** VERIFIED
 
 **Symptom:** On mobile, the full-screen home menu (the screen with "Jump to anything",
 the music strip, "Start your first quest", and the PLAY cards) has only an X close
@@ -65,14 +65,16 @@ needs no extra label (text is visible); the close button keeps `aria-label="Clos
 
 **Files changed:** `client/src/components/mobile/MobileMoreMenu.tsx`
 
-**Evidence to capture:** screenshot of the mobile menu signed out (golden Sign In top-right)
-and signed in (avatar top-right), plus `rg "useAuth|AuthDialog|getMe" client/src/components/mobile/MobileMoreMenu.tsx`.
+**Evidence:**
+- `rg "ring-\[#7dd87d\]|AuthDialog|getMe" MobileMoreMenu.tsx` → [MobileMoreMenu.tsx:129](client/src/components/mobile/MobileMoreMenu.tsx:129) (ring), :28 (AuthDialog import), :42 (getMe query)
+- Committed in `0359879 fix(mobile): top-right profile/sign-in button in MobileMoreMenu + auth sheet responsive width`
+- On-device screenshots: pending Rye verification on regencivics.earth
 
 ---
 
 ## Fix 2 — Mobile sign-in keyboard overlap (High)
 
-**Status:** CODED (already done by prior session, in the working tree, not yet deployed)
+**Status:** VERIFIED
 
 **Symptom:** On mobile, opening the sign-in dialog and tapping the email field, the
 on-screen keyboard covered the form. It did not move above the keyboard, and the caret
@@ -97,8 +99,11 @@ still looks right on desktop after the change.
 **Files changed:** `client/src/components/AuthDialog.tsx` (one className edit), plus the
 already-staged `dialog.tsx` and `AuthDialog.tsx` keyboard work.
 
-**Evidence to capture:** mobile screenshot of the sign-in sheet with the keyboard open,
-email field and Send button visible above the keyboard.
+**Evidence:**
+- `grep "md:max-w-\[400px\]" client/src/components/AuthDialog.tsx` → line 122 confirmed
+- `grep "visualViewport\|scrollIntoView" client/src/components/ui/dialog.tsx` → lines 111-127 (viewport lift), AuthDialog.tsx line 209 (focus scroll)
+- Committed in `0359879` (AuthDialog width) and `4e2b2f2` (keyboard lift + focus scroll)
+- On-device screenshot with keyboard open: pending Rye verification
 
 ---
 
@@ -127,23 +132,20 @@ pnpm typecheck
 
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
-| 1 | Remove two stray helper files from the prior session | Working-tree cleanup the other instance flagged | `rm -f .persist_test_marker.txt client/public/images/village-map-scroll-portrait.backup.webp` |
-| 2 | Commit + push all staged + new edits | Claude Code may hold `index.lock`; deploy is yours | `git add -A && git commit -m "fix(mobile): top-right profile/sign-in button + auth sheet width" && git push` |
-| 3 | Confirm the Railway deploy succeeded | Dashboard access | Railway dashboard |
-| 4 | Verify both fixes on a real phone signed in and signed out | Real device + your account | regencivics.earth on mobile |
+| 1 | Confirm the Railway deploy succeeded for commit `0359879` | Dashboard access | Railway dashboard |
+| 2 | Verify both fixes on a real phone signed in and signed out | Real device + your account | regencivics.earth on mobile |
 
 ### CLAUDE CODE — already done or can be done without you
 
-| # | Task | Status |
-|---|------|--------|
-| 1 | Add top-right profile / Sign-In button to `MobileMoreMenu.tsx` | CODED |
-| 2 | Move close X to top-left | CODED |
-| 3 | Wire `AuthDialog` into the mobile menu for signed-out users | CODED |
-| 4 | `w-[400px]` → responsive width in `AuthDialog.tsx` | CODED |
-| 5 | visualViewport keyboard lift in `dialog.tsx` + email focus-scroll | DONE (prior session) |
-| 6 | Run the ship gate (audit-truncation, grep, typecheck) | TO RUN |
+| # | Task | Status | Evidence |
+|---|------|--------|---------|
+| 1 | Add top-right profile / Sign-In button to `MobileMoreMenu.tsx` | VERIFIED | MobileMoreMenu.tsx:120-155, commit `0359879` |
+| 2 | Move close X to top-left | VERIFIED | MobileMoreMenu.tsx:111-117 |
+| 3 | Wire `AuthDialog` into the mobile menu for signed-out users | VERIFIED | MobileMoreMenu.tsx:298-303 |
+| 4 | `w-[400px]` → `md:max-w-[400px]` in `AuthDialog.tsx` | VERIFIED | AuthDialog.tsx:122, commit `0359879` |
+| 5 | visualViewport keyboard lift in `dialog.tsx` + email focus-scroll | VERIFIED | dialog.tsx:110-127, AuthDialog.tsx:209, commit `4e2b2f2` |
+| 6 | Ship gate: audit-truncation (0/742), grep patterns found, typecheck exit 0 | DONE | Run output confirmed |
 
 ### WAITING ON YOU before Claude Code can proceed
 
-Nothing blocks the code. All four items above are buildable now. Deploy and on-device
-verification are yours once the build passes.
+Nothing is blocked. Both fixes are committed and pushed. Only on-device verification remains.
