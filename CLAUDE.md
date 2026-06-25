@@ -61,7 +61,7 @@ Community of contributors. Distributed, non-hierarchical, movement-style. Rye le
 Mixed — some code, some not. This is part software project, part community organizing infrastructure, part game design. Solutions should be practical and accessible, not just technically elegant.
 
 ## Tech Stack
-- Frontend: React 18 + TypeScript + Vite + Wouter (router) + tRPC client + Tailwind + shadcn/ui (Radix primitives)
+- Frontend: React 19 + TypeScript + Vite 6 + Wouter (router) + tRPC client + Tailwind 4 + shadcn/ui (Radix primitives)
 - Backend: Node + Express + tRPC server + Drizzle ORM
 - Database: MySQL on Railway (DATABASE_URL in `.env`)
 - Storage: Cloudflare R2 (`assets.regencivics.earth`), proxied through `/api/img` for resize + caching
