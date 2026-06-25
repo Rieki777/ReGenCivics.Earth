@@ -12,6 +12,30 @@ import {
 } from "@/components/ui/dialog";
 import { getGoogleLoginUrl } from "@/const";
 
+/**
+ * Google blocks OAuth inside embedded in-app browsers (Instagram, Facebook,
+ * Telegram, TikTok, the iOS WKWebView, etc.) with error 403
+ * disallowed_useragent ("Use secure browsers" policy). We detect those
+ * webviews so we can steer the user to Safari/Chrome or to the email magic
+ * link, which works fine inside a webview.
+ */
+function isInAppBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const appTokens = [
+    "FBAN", "FBAV", "FB_IAB", "Instagram", "Line/", "Twitter", "WhatsApp",
+    "MicroMessenger", "Snapchat", "musical_ly", "Bytedance", "TikTok",
+    "Telegram", "Pinterest", "LinkedInApp", "GSA/",
+  ];
+  if (appTokens.some((t) => ua.includes(t))) return true;
+  // iOS WKWebView lacks the "Safari" token that real mobile Safari, Chrome
+  // (CriOS), and Firefox (FxiOS) all carry.
+  if (/iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua)) return true;
+  // Android in-app webview carries the "; wv)" token.
+  if (/Android/.test(ua) && /; wv\)/.test(ua)) return true;
+  return false;
+}
+
 interface AuthDialogProps {
   title?: string;
   logo?: string;
@@ -33,6 +57,13 @@ export function AuthDialog({
   const [emailSent, setEmailSent] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [inAppBrowser, setInAppBrowser] = useState(false);
+
+  // Detect embedded in-app browsers on mount (client only) so we can warn
+  // that Google sign-in will be blocked and point to the email link.
+  useEffect(() => {
+    setInAppBrowser(isInAppBrowser());
+  }, []);
 
   useEffect(() => {
     if (!onOpenChange) setInternalOpen(open);
@@ -123,6 +154,17 @@ export function AuthDialog({
             </div>
           ) : (
             <>
+              {/* In-app browsers (Instagram, Telegram, the iOS WKWebView, etc.)
+                  get a 403 disallowed_useragent from Google. Warn and point to
+                  the email link, which works inside a webview. */}
+              {inAppBrowser && (
+                <div className="rounded-xl bg-amber-500/10 border border-amber-400/40 p-3 text-left">
+                  <p className="text-amber-200 text-xs leading-snug">
+                    This in-app browser blocks Google sign-in. Open regencivics.earth in Safari or Chrome to use Google, or sign in with the email link below. The email link works here.
+                  </p>
+                </div>
+              )}
+
               {/* Google. Pass the current pathname+search as returnTo so the
                   OAuth callback bounces the user back to wherever they
                   clicked Sign In (not the homepage). The server-side state

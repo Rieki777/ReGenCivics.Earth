@@ -829,7 +829,7 @@ export default function Home() {
                       <button className="w-full text-left mb-4">
                         <p className="text-white/80 text-base md:text-lg leading-relaxed flex items-center justify-between">
                           <span>
-                            What if humanity can meet all our needs and more through productive play?
+                            A space to grow a diversity of new economic, social, and organizational systems across land projects, where everyone can be unique. A growing garden of regenerative civilizations.
                           </span>
                           <ChevronDown
                             className={`w-5 h-5 text-[#7dd87d] flex-shrink-0 ml-2 transition-transform ${

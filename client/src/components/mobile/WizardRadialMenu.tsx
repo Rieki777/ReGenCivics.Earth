@@ -330,7 +330,7 @@ export function WizardRadialMenu() {
             className="transition-transform duration-300"
             style={{ transform: open ? "rotate(135deg)" : "rotate(0deg)" }}
           >
-            <SeedOfLifeIcon size={44} className="text-[#d4a574]" />
+            <SeedOfLifeIcon size={52} className="text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.35)]" />
           </span>
         </button>
       </div>

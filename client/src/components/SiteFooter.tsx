@@ -7,7 +7,7 @@
 import { Link } from "wouter";
 import { SocialLinks } from "@/components/SocialLinks";
 import { resetCookieConsent } from "@/components/CookieConsent";
-import { Cookie, Lightbulb, Mail, Heart } from "lucide-react";
+import { Cookie, Lightbulb, Mail, Heart, Info } from "lucide-react";
 import { useState } from "react";
 import { SendGratitudeModal } from "@/components/SendGratitudeModal";
 import { FooterSearch } from "@/components/FooterSearch";
@@ -83,7 +83,18 @@ export default function SiteFooter() {
             </Link>
           </div>
           <div className="px-4 py-5 rounded-2xl bg-gradient-to-br from-[#d4a574]/15 to-[#4a7c59]/10 border border-[#d4a574]/30 text-center">
-            <h3 className="text-[#d4a574] text-lg font-semibold mb-1">Send gratitude</h3>
+            <div className="flex items-center justify-center gap-1.5 mb-1">
+              <h3 className="text-[#d4a574] text-lg font-semibold">Send gratitude</h3>
+              <span className="group relative inline-flex">
+                <Info className="w-4 h-4 text-[#d4a574]/70 cursor-help" tabIndex={0} aria-label="What gratitude is" />
+                <span
+                  role="tooltip"
+                  className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-[#0f2a1a] border border-[#d4a574]/30 px-3 py-2 text-[11px] leading-snug text-[#f3e6cf] text-left opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-50 shadow-xl"
+                >
+                  Gratitude is a new way of distributing resources in this economy. We thank each other for the contributions we bring. When you see someone bring a contribution, come here and send them gratitude.
+                </span>
+              </span>
+            </div>
             <p className="text-white/70 text-sm mb-3">
               Acknowledge someone who made a difference in your journey.
             </p>
