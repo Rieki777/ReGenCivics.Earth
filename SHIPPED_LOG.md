@@ -13,17 +13,20 @@ Add new entries to the top. Format per entry:
 
 ---
 
-## 2026-06-24: Bounty Engine (QUEUED, not yet shipped)
+## 2026-06-25: Bounty Engine (SHIPPED)
 
-**Status: spec and execution prompt ready, build not started.** Logged here for visibility. This entry gets rewritten as a shipped summary once the build lands and the prompt moves to `archive/`.
+Migration 0145 applied. Commits `4e2b2f2` + `30053a2`.
 
-- Unified bounty engine replacing the pre-launch `callTasks` flow. A bounty has one or more payable roles; the two-sided code-contribution bounty pays a `proposer` and a `shipper` separately, both on merge.
-- Single payout path (`payRole`) with DB-level idempotency key, GitHub webhook delivery dedup, separation of duties, and a one moon cycle (29.5 day) settlement hold with admin reversal before tokens can claim to Base.
-- GitHub OAuth profile linking; merge-triggered auto-payout via a GitHub `pull_request` webhook (CI-green and non-author-approval verified).
-- Empowerment model via `bounty_permissions` (`canAccept`, `canReverse`); `rieki.cordon@gmail.com` seeded with both. Season budget and citizenship tier gates are built but off or permissive at launch.
-- Big-bang: deletes the `callTasks` table and router, no migration or backfill.
+- Unified bounty engine replaces the pre-launch `callTasks` flow. Bounties have one or more payable roles; two-sided code-contribution bounties pay `proposer` and `shipper` separately on merge.
+- Single payout path (`payRole`) with DB-level idempotency key on `user_token_ledger`, GitHub webhook delivery dedup via `webhook_deliveries`, separation of duties, and a one moon cycle (29.5 day) settlement hold with admin reversal before tokens claim to Base.
+- GitHub OAuth profile linking (`/api/oauth/github`); merge-triggered auto-payout via GitHub `pull_request` webhook at `/api/webhooks/github`.
+- `bounty_permissions` table seeds `rieki.cordon@gmail.com` with `canAccept` and `canReverse` via `scripts/seed-bounty-config.ts`. Season budget and citizenship tier gates built but permissive at launch.
+- All client surfaces migrated: AdminTasksTab, AdminEditsTab, OpenToCircleCallTasks, ProfileCallTasksTab now use `trpc.bounties.*`. `callTasks` router and schema table deleted.
+- Migration fixed: `ADD COLUMN IF NOT EXISTS` not supported in MySQL 8; changed to plain `ADD COLUMN`.
 
 Source: `CLAUDE_CODE_PROMPT_2026-06-24_BOUNTY_ENGINE.md`, `BOUNTY_ENGINE_SPEC.md`. Decision: ADR-17.
+
+**Follow-up (Rye):** seed bounty-permissions row: `npx tsx scripts/seed-bounty-config.ts`. Connect GitHub webhook in Repo Settings → Webhooks → `/api/webhooks/github`, subscribe to Pull requests, add `GITHUB_WEBHOOK_SECRET` to Railway env.
 
 ---
 
