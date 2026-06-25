@@ -321,7 +321,11 @@ export default function Season2() {
               src="/season2/infinite-games.jpg"
               alt="An endless regenerative loop with no finish line"
               loading="lazy"
-              className="w-full max-w-md mx-auto my-2 rounded-xl border border-[#7dd87d]/15"
+              className="w-full max-w-lg mx-auto my-4 select-none drop-shadow-[0_0_45px_rgba(125,216,125,0.18)]"
+              style={{
+                WebkitMaskImage: "radial-gradient(ellipse at center, #000 55%, transparent 78%)",
+                maskImage: "radial-gradient(ellipse at center, #000 55%, transparent 78%)",
+              }}
             />
 
             <p>
@@ -368,7 +372,11 @@ export default function Season2() {
             src="/season2/roadmap.jpg"
             alt="A seedling growing into a full canopy across the season"
             loading="lazy"
-            className="w-full max-w-[260px] mx-auto mb-12 rounded-xl border border-[#7dd87d]/15"
+            className="w-full max-w-[280px] mx-auto mb-12 select-none drop-shadow-[0_0_40px_rgba(125,216,125,0.16)]"
+            style={{
+              WebkitMaskImage: "linear-gradient(to bottom, #000 82%, transparent)",
+              maskImage: "linear-gradient(to bottom, #000 82%, transparent)",
+            }}
           />
 
           <div className="relative pl-8 border-l border-[#7dd87d]/25 space-y-10">
@@ -406,21 +414,24 @@ export default function Season2() {
             are welcome.
           </p>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {WHO.map((w) => (
               <div
                 key={w.name}
-                className="flex items-start gap-4 p-5 rounded-xl border border-[#7dd87d]/15 bg-[#0d2818]/40 hover:border-[#7dd87d]/35 transition-colors"
+                className="group relative min-h-[20rem] rounded-2xl overflow-hidden border border-[#7dd87d]/15 hover:border-[#7dd87d]/45 transition-all duration-300"
               >
                 <img
                   src={w.img}
                   alt=""
                   loading="lazy"
-                  className="shrink-0 w-16 h-16 rounded-lg object-cover border border-[#7dd87d]/20"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div>
-                  <div className="text-white font-medium mb-1">{w.name}</div>
-                  <p className="text-white/65 text-sm leading-relaxed">{w.desc}</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0d2818] via-[#0d2818]/75 to-[#0d2818]/15" />
+                <div className="absolute inset-x-0 bottom-0 p-5">
+                  <h3 className="text-white font-semibold text-lg leading-snug mb-1.5" style={display}>
+                    {w.name}
+                  </h3>
+                  <p className="text-white/80 text-sm leading-relaxed">{w.desc}</p>
                 </div>
               </div>
             ))}
@@ -547,7 +558,11 @@ export default function Season2() {
             src="/season2/token-swap.jpg"
             alt="Two projects exchanging tokens within the alliance ring"
             loading="lazy"
-            className="w-full max-w-lg mx-auto mt-8 rounded-xl border border-[#7dd87d]/15"
+            className="w-full max-w-xl mx-auto mt-8 select-none drop-shadow-[0_0_50px_rgba(125,216,125,0.16)]"
+            style={{
+              WebkitMaskImage: "radial-gradient(ellipse at center, #000 56%, transparent 80%)",
+              maskImage: "radial-gradient(ellipse at center, #000 56%, transparent 80%)",
+            }}
           />
 
           <div className="mt-8 p-6 md:p-8 rounded-xl bg-[#7dd87d]/8 border border-[#7dd87d]/22 space-y-4 text-white/75 leading-relaxed">
@@ -605,12 +620,15 @@ export default function Season2() {
             Any project can apply. Here's how the selection works.
           </p>
 
-          <img
-            src="/season2/selection-day.jpg"
-            alt="Community selection day gathering at the equinox"
-            loading="lazy"
-            className="w-full mb-10 rounded-xl border border-[#7dd87d]/15 object-cover max-h-72"
-          />
+          <div className="relative mb-10 rounded-2xl overflow-hidden border border-[#7dd87d]/15">
+            <img
+              src="/season2/selection-day.jpg"
+              alt="Community selection day gathering at the equinox"
+              loading="lazy"
+              className="w-full max-h-72 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d2818]/70 via-transparent to-transparent" />
+          </div>
 
           <div className="space-y-0">
             {SELECTION.map((s, i) => (
@@ -651,40 +669,56 @@ export default function Season2() {
             along the way.
           </p>
 
-          <img
-            src="/season2/s1map.jpg"
-            alt="Season One projects connected across the globe"
-            loading="lazy"
-            className="w-full mb-10 rounded-xl border border-[#7dd87d]/15 object-cover max-h-72"
-          />
-
-          {/* Season One actuals. Richer impact stats will be captured from Season Two onward.
-              TODO(rye): optional, add one short participant quote here for social proof. */}
-          <div className="grid grid-cols-3 gap-4 mb-10 max-w-2xl">
-            {[
-              { stat: "46", label: "projects applied" },
-              { stat: "21", label: "shortlisted to pitch" },
-              { stat: "13", label: "chosen by the community" },
-            ].map((m) => (
-              <div key={m.label} className="text-center p-5 rounded-xl border border-[#7dd87d]/15 bg-[#7dd87d]/5">
-                <div className="text-3xl md:text-4xl font-bold text-[#7dd87d]" style={display}>
-                  {m.stat}
-                </div>
-                <div className="text-white/60 text-xs md:text-sm mt-1">{m.label}</div>
+          {/* Cinematic Season One map band with the actual stats overlaid.
+              Richer impact stats will be captured from Season Two onward.
+              TODO(rye): optional, add one short participant quote nearby for social proof. */}
+          <div className="relative mb-10 rounded-2xl overflow-hidden border border-[#7dd87d]/15">
+            <img
+              src="/season2/s1map.jpg"
+              alt="Season One projects connected across the globe"
+              loading="lazy"
+              className="w-full h-64 md:h-80 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0d2818] via-[#0d2818]/45 to-[#0d2818]/10" />
+            <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
+              <div className="grid grid-cols-3 gap-4 max-w-2xl">
+                {[
+                  { stat: "46", label: "projects applied" },
+                  { stat: "21", label: "shortlisted to pitch" },
+                  { stat: "13", label: "chosen by the community" },
+                ].map((m) => (
+                  <div key={m.label} className="text-center">
+                    <div className="text-3xl md:text-5xl font-bold text-[#7dd87d] drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]" style={display}>
+                      {m.stat}
+                    </div>
+                    <div className="text-white/75 text-xs md:text-sm mt-1">{m.label}</div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {SEASON_ONE.map((p) => (
-              <div key={p.name} className="rounded-xl border border-[#7dd87d]/12 bg-[#0d2818]/40 overflow-hidden hover:border-[#7dd87d]/30 transition-colors">
-                <img src={p.img} alt={p.name} loading="lazy" className="w-full h-40 object-cover" />
-                <div className="p-5">
-                  <span className="block text-[#7dd87d] text-[0.62rem] font-semibold tracking-[0.15em] uppercase mb-2">
+              <div
+                key={p.name}
+                className="group relative aspect-[3/2] rounded-2xl overflow-hidden border border-[#7dd87d]/12 hover:border-[#7dd87d]/40 transition-all duration-300"
+              >
+                <img
+                  src={p.img}
+                  alt={p.name}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0d2818] via-[#0d2818]/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <span className="block text-[#7dd87d] text-[0.62rem] font-semibold tracking-[0.15em] uppercase mb-1">
                     {p.tag}
                   </span>
-                  <div className="text-white font-medium mb-1">{p.name}</div>
-                  <div className="text-white/45 text-sm">{p.loc}</div>
+                  <div className="text-white font-semibold leading-tight" style={display}>
+                    {p.name}
+                  </div>
+                  <div className="text-white/60 text-sm">{p.loc}</div>
                 </div>
               </div>
             ))}
@@ -759,13 +793,16 @@ export default function Season2() {
           style={{ background: "radial-gradient(circle, rgba(125,216,125,0.12), transparent 70%)" }}
         />
         <AnimatedSection animation="scale-in" className="relative z-10 max-w-xl mx-auto">
-          <img
-            src="/season2/cta-character.jpg"
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            className="w-36 h-44 object-cover object-top rounded-2xl mx-auto mb-7 border border-[#7dd87d]/25"
-          />
+          <div className="relative mx-auto mb-7 w-40 h-48">
+            <div aria-hidden="true" className="absolute -inset-3 rounded-3xl bg-[#7dd87d]/15 blur-2xl" />
+            <img
+              src="/season2/cta-character.jpg"
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              className="relative w-40 h-48 object-cover object-top rounded-2xl border border-[#7dd87d]/30 shadow-[0_10px_40px_rgba(0,0,0,0.45)]"
+            />
+          </div>
           <div className="inline-flex items-center gap-2 bg-[#7dd87d]/15 px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/30">
             <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
             <span className="text-white/90 text-sm font-medium">Season Two · 13 seats</span>

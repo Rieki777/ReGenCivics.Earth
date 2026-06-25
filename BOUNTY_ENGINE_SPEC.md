@@ -1,8 +1,8 @@
 # Bounty Engine Spec
 
-**Status:** Draft for build. Created 2026-06-24. Revised 2026-06-24 to a unified engine.
+**Status:** Draft for build. Created 2026-06-24. Revised 2026-06-24 (unified engine; integrity hardening; big-bang build since the payment system is pre-launch and has no live data to preserve).
 
-One bounty engine that handles every kind of rewarded work in ReGen Civics. The first two kinds it serves are call tasks (already live) and code contributions (the new two-sided propose-and-ship flow). The engine is built so a third or fourth kind is a small adapter, not a new system.
+One bounty engine for every kind of rewarded work in ReGen Civics. The first two kinds it serves are call tasks and code contributions, the latter being the two-sided propose-and-ship flow. The engine is built so a third or fourth kind is a small adapter rather than a new system, and so the part that mints real tokens is correct by construction.
 
 This spec assumes the token model in `CLAUDE.md` (private-first ledger, `creditPrivateTokens`, one-way claim bridge to Base).
 
@@ -10,180 +10,222 @@ This spec assumes the token model in `CLAUDE.md` (private-first ledger, `creditP
 
 ## 1. Why one engine
 
-Today there is one bounty flow, in `server/routes/callTasks.ts`. The first draft of this spec was going to add a second, parallel flow for code contributions, with its own table and its own payout code. That would mean two copies of the most safety-critical logic in the system: the part that credits real tokens.
+There is one bounty flow today, in `server/routes/callTasks.ts`, and it is not yet serving live users. The first draft of this spec was going to add a second, parallel flow for code contributions with its own table and its own payout code. Two payout paths means two copies of the most safety-critical logic in the system, the part that credits real tokens, which is two places to get idempotency right and two audit surfaces to reason about.
 
-Two payout paths is two places to get idempotency right, two places a redelivered webhook or a double-click can double-pay, and two audit surfaces to reason about. One engine with a single hardened payout path is the core security argument for unifying.
+One engine with a single hardened payout path is the core security argument. The simplicity argument is the same shape: one lifecycle, one approval gate, one notification pattern, one `game_variables` namespace, one admin queue, reused by every kind.
 
-The simplicity argument is the same shape. One lifecycle state machine, one approval gate, one notification pattern, one `game_variables` namespace for thresholds, one admin queue. Each new bounty kind reuses all of it.
+This is not a single wide table with a column for every field and a pile of `if kind == ...` branches. The design keeps a small shared core and pushes everything kind-specific into typed adapter logic.
 
-What this is not: a single wide table with a column for every possible field and a pile of `if kind == ...` branches. That is the failure mode of naive unification. The design below keeps a small shared core and pushes everything kind-specific into typed adapters.
+**Big-bang, no migration.** Because the existing call-task flow has no live data, the build replaces it outright. The legacy `callTasks` table and router are deleted in the same overhaul. There is no backfill, no dual-write window, and no read-only transition table. The engine is the only payment path that ever exists.
 
 ---
 
 ## 2. The shared idea: a bounty has payable roles
 
-Every rewarded unit of work is a **bounty**. A bounty has one or more **payable roles**. A role is a slot a player can fill and get credited for.
+Every rewarded unit of work is a **bounty**. A bounty has one or more **payable roles**. A role is a slot a player fills and gets credited for.
 
 - A **call task** is a bounty with one role: the doer.
 - A **code contribution** is a bounty with two roles: the proposer (who suggested the fix or feature) and the shipper (who built it and got it merged).
-- A future **reviewed contribution** is the same bounty with a third role: the reviewer.
-- A **community-boosted** bounty is the same bounty with extra contributor roles that add to the pot.
+- A **reviewed contribution** adds a third role: the reviewer.
+- A **community-boosted** bounty adds booster roles that increase the pot.
 
-"Two-sided" is just "two roles." The engine never knows or cares how many sides a bounty has. It pays roles. This is what lets the proposer and the shipper each earn their own reward from one piece of work, and what lets future reward shapes drop in without a schema change.
+"Two-sided" is "two roles." The engine pays roles and never knows how many sides a bounty has. This is what lets the proposer and the shipper each earn from one piece of work, and what lets new reward shapes drop in without a schema change.
 
 ---
 
 ## 3. Data model
 
-Three core tables, plus typed source metadata.
+Four tables. Source-specific fields live as typed columns on the core, so there is no 1:1 JSON sidecar table and no extra join on every read.
 
-### `bounties` (the core)
+### `bounties` (core, work lifecycle only)
 
 ```
 bounties
-  id              int PK autoincrement
-  sourceType      enum [call_task, contribution]   -- the kind; extend as kinds are added
-  title           varchar(255)
-  body            text
-  tokenType       varchar(16) default "regen"
-  status          enum [proposed, accepted, open, claimed, in_progress,
-                        in_review, completed, declined, expired]
-  approvedBy      int nullable        -- maintainer who accepted (gate 1)
-  declinedReason  text nullable
-  autoPayMaxKey   varchar(64)         -- game_variables key for this kind's auto-pay ceiling
-  externalRef     varchar(255) nullable  -- indexed lookup key (e.g. github PR url) for webhooks
-  expiresAt       timestamp nullable
-  createdAt, updatedAt timestamps
+  id                  int PK autoincrement
+  sourceType          enum [call_task, contribution]
+  title               varchar(255)
+  body                text
+  tokenType           varchar(16) default "regen"
+  tier                enum [trivial, small, medium, large] nullable
+  workStatus          enum [proposed, accepted, open, claimed, in_review,
+                            completed, declined, expired]
+  approvedBy          int nullable            -- maintainer who accepted (gate 1)
+  declinedReason      text nullable
+  completionChecklist json nullable           -- definition of done (sec. 11)
+  expiresAt           timestamp nullable
 
-  index on (status, sourceType)
-  index on externalRef
+  -- contribution adapter fields (null for call_task)
+  kind                enum [fix, feature] nullable
+  sourceForumPostId   int nullable
+  githubRepo          varchar(255) nullable
+  githubIssueNumber   int nullable
+  mergedPrNumbers     json nullable           -- one or more PRs (sec. 11)
+
+  -- call_task adapter fields (null for contribution)
+  recordingId         int nullable
+  roleSlug            varchar(64) nullable
+  evidenceQuote       text nullable
+  evidenceTs          int nullable
+
+  createdAt, updatedAt timestamps
+  index (workStatus, sourceType)
+  index (githubRepo, githubIssueNumber)
 ```
 
-### `bounty_roles` (the payable slots, the generalization of two-sided)
+`workStatus` describes the work only. It never encodes whether money moved. Payment state lives on the role, and only there.
+
+### `bounty_roles` (payable slots; the only owner of payment state)
 
 ```
 bounty_roles
-  id          int PK autoincrement
-  bountyId    int FK -> bounties.id
-  role        enum [doer, proposer, shipper, reviewer, booster]
-  userId      int nullable        -- null until the slot is filled / claimed
-  amount      int default 0       -- this role's reward
-  status      enum [unfilled, filled, payable, paid, void]
-  ledgerId    int nullable        -- FK into user_token_ledger once paid
-  paidAt      timestamp nullable
+  id           int PK autoincrement
+  bountyId     int FK -> bounties.id
+  role         enum [doer, proposer, shipper, reviewer, booster]
+  userId       int nullable          -- null until claimed/filled
+  amount       int default 0
+  payStatus    enum [unfilled, filled, payable, held, paid, reversed, void]
+  ledgerId     int nullable          -- FK into user_token_ledger once paid
+  filledByLog  json nullable         -- who filled it, when, by what action
+  paidAt       timestamp nullable
+  claimableAt  timestamp nullable    -- settlement hold expiry (sec. 9)
   createdAt, updatedAt timestamps
-
-  index on (bountyId)
-  index on (userId, status)
+  index (bountyId)
+  index (userId, payStatus)
 ```
 
-### `bounty_source_meta` (typed adapter data, one row per bounty)
-
-Kind-specific fields stay out of the core. Each source type validates its own shape with zod before write.
+### `bounty_events` (immutable audit log of every transition)
 
 ```
-bounty_source_meta
-  bountyId    int PK FK -> bounties.id
-  meta        json
+bounty_events
+  id          int PK autoincrement
+  bountyId    int FK
+  roleId      int nullable
+  actorUserId int nullable
+  event       varchar(48)   -- proposed, accepted, claimed, pr_linked, merged,
+                            -- paid, held, reversed, declined, expired, disputed
+  detail      json nullable
+  createdAt   timestamp
+  index (bountyId, createdAt)
 ```
 
-For `call_task`, `meta` holds the existing fields: `recordingId`, `sourceVideoId`, `roleSlug`, `evidenceQuote`, `evidenceTimestampSeconds`, `sociocraticOverview`.
+Every state change writes one row here. Disputes, separation-of-duties checks, and debugging all read from it.
 
-For `contribution`, `meta` holds: `kind` (fix | feature), `sourceForumPostId`, `githubRepo`, `githubIssueNumber`, `githubPrNumber`, `prMergedAt`.
+### `webhook_deliveries` (event-level idempotency)
 
-The few fields a webhook or board query must filter on fast (like the PR identifier) are mirrored to the indexed `bounties.externalRef` column so lookups never scan JSON.
+```
+webhook_deliveries
+  deliveryId  varchar(64) PK   -- GitHub X-GitHub-Delivery UUID
+  receivedAt  timestamp
+```
+
+A redelivered GitHub event is dropped before it reaches matching.
+
+### `bounty_permissions` (who is empowered)
+
+```
+bounty_permissions
+  userId       int PK FK -> users.id
+  canAccept    tinyint default 0   -- accept/decline proposals, manage the queue
+  canReverse   tinyint default 0   -- reverse a payout during the settlement hold
+  grantedBy    int nullable        -- which admin granted it
+  grantedAt    timestamp
+```
+
+At launch, `rieki.cordon@gmail.com` is seeded with both `canAccept` and `canReverse`. The admin section (sec. 12) lets that owner grant `canAccept` to other trusted accounts as the community grows. Merge rights to the protected branch are controlled separately on GitHub, by who holds repo write access.
 
 ### Profile additions on `player_profiles`
 
 ```
-githubHandle    varchar(255) nullable
-githubId        int nullable          -- numeric GitHub id, stable across handle renames
-githubLinkedAt  timestamp nullable
+githubHandle      varchar(255) nullable
+githubId          int nullable          -- numeric GitHub id, stable across renames
+githubLinkedAt    timestamp nullable
 ```
 
-`githubId` is the join key for automated payout. It does not change when a player renames their GitHub handle.
+### Ledger idempotency
+
+Add a nullable, unique `idempotencyKey` to `user_token_ledger`. Bounty credits set it to `bounty:{bountyId}:{role}`. Non-bounty credits leave it null (MySQL unique indexes permit multiple nulls). A second attempt to credit the same role on the same bounty hits a constraint violation instead of minting twice. Money correctness does not depend on application logic being perfect.
 
 ---
 
 ## 4. The single payout path
 
-Every credit in the system flows through one function. This is the heart of the security case for one engine.
+Every credit in the system flows through one function. This is the heart of the integrity case.
 
 ```
 payRole(roleId):
-  1. compare-and-swap bounty_roles.status: payable -> paid   (atomic; a second call no-ops)
-  2. if the swap did not apply, return early (already paid; idempotent)
-  3. resolve the role's userId; if unfilled, move to a pending queue, do not pay
-  4. if role.amount > game_variables[bounty.autoPayMax for this kind]:
-        leave status payable, flag for maintainer consent, stop
-  5. ledgerId = creditPrivateTokens({
+  1. load role + bounty + all roles on the bounty
+  2. separation-of-duties check (sec. 10). If violated, set payStatus=held,
+     log, require maintainer consent, stop.
+  3. season budget check (sec. 9). If this credit would exceed the season's
+     bounty budget, set payStatus=held, log, stop.
+  4. compare-and-swap payStatus: payable -> paid   (atomic; second call no-ops)
+  5. if the swap did not apply, return (already paid; idempotent)
+  6. ledgerId = creditPrivateTokens({
         userId, tokenType, amount: role.amount,
-        source: sourceTagFor(role),    // bounty_proposal | bounty_delivery | call_task_bounty | ...
+        source: sourceTagFor(role),          // call_task_bounty | bounty_proposal | bounty_delivery
         sourceId: bounty.id,
+        idempotencyKey: `bounty:${bounty.id}:${role.role}`,
         description: bounty.title })
-  6. write ledgerId and paidAt onto the role
-  7. notify the player
+     // the unique key makes a duplicate credit physically impossible
+  7. set role.ledgerId, paidAt, and claimableAt = now + settlement hold (sec. 9)
+  8. write a `paid` event; notify the player
 ```
 
-No other code path writes a bounty reward. Webhooks, manual admin consent, and auto-pay all converge here. The compare-and-swap on role status is the same guard `callTasks.ts` uses today, lifted to the shared layer so it is written and audited once.
+No other code path writes a bounty reward. Webhooks, manual admin consent, and auto-pay all converge here, so the double-pay guard, the budget cap, the separation-of-duties rule, and the settlement hold apply automatically to every kind.
 
-Source tags stay per-role so the ledger keeps its current vocabulary: `call_task_bounty` for the doer role, `bounty_proposal` for the proposer role, `bounty_delivery` for the shipper role.
+Source tags stay per-role so the ledger keeps its current vocabulary: `call_task_bounty` for the doer, `bounty_proposal` for the proposer, `bounty_delivery` for the shipper.
 
 ---
 
-## 5. Lifecycle and completion triggers
+## 5. Lifecycle
 
-One state machine on the core. What differs per kind is the trigger that moves a role to `payable`.
+One work-lifecycle state machine on the bounty. Payment state is tracked separately on each role.
 
 ```
-  proposed   -- someone suggests work (contribution) or it is seeded (call task)
-     | accept (gate 1, admin)
+  proposed   -- suggested (contribution) or seeded (call task)
+     | accept (gate 1, admin, sec. 10)
      v
-  accepted   -- proposer role becomes payable (if pay-on-accept), bounty opens
-     |
+  accepted   -- bounty opens; proposer role becomes payable only if pay-on-merge is off
      v
   open       -- claimable on the board
      | a player claims a role
      v
-  claimed / in_progress
-     | work submitted: artifact (call task) or PR opened (contribution)
+  claimed
+     | work submitted: artifact (call task) or PR linked (contribution)
      v
   in_review
-     | completion trigger fires (see below)
+     | completion trigger fires (sec. 11)
      v
-  completed  -- remaining payable roles run through payRole
+  completed  -- remaining roles set payable, run through payRole
 ```
 
-Completion triggers, per source adapter:
+Side paths shared by all kinds: `declined` (rejected with a reason) and `expired` (claimed but never completed inside the window; the role returns to `unfilled` and the bounty to `open`, mirroring the nightly stale-claim job already in the token system).
 
-- **call_task:** circle consent, or auto-pay when under the ceiling. Same as today.
-- **contribution:** a `pull_request` merged event from GitHub, matched to the bounty. The merge into a protected branch is the proof, since it passed review and CI. Nothing pays on a self-report of "done."
-
-Side paths shared by all kinds: `declined` (rejected with a reason) and `expired` (claimed but never completed inside the window, role goes back to `unfilled` and the bounty back to `open`). This mirrors the nightly stale-claim job already in the token system.
+Completion triggers per kind: call tasks complete on circle consent or auto-pay under the ceiling; contributions complete on a verified merge (sec. 6) plus a satisfied definition of done (sec. 11).
 
 ---
 
 ## 6. Proof of ship for contributions
 
-The contribution adapter pays the shipper on one verifiable event: a PR merged into the repo's protected main branch.
+The shipper is paid on a merge that actually means something, checked from GitHub itself rather than from a self-report.
 
-Matching a merged PR to a bounty, checked in order:
+A merge qualifies only when all of these hold:
 
-1. A line in the PR body: `Bounty: #<bountyId>` (explicit, preferred).
-2. A linked issue (`Closes #<issue>`) whose number matches the bounty's stored `githubIssueNumber`.
-3. A label `bounty-<id>` on the PR.
+1. The PR merged into the repo's protected default branch.
+2. Required CI checks on the merge commit passed (read the check-suite conclusion from the webhook payload; a green branch-protection config is verified, not assumed).
+3. At least one approving review came from a human other than the PR author (this is the separation-of-duties proof, sec. 10).
 
-The PR author's numeric GitHub id is matched to `player_profiles.githubId` to find the shipper role's user. If no profile matches, the merge lands in a pending queue for a maintainer to resolve. No silent drops.
+Matching a merged PR to a bounty, checked in order: an explicit `Bounty: #<id>` line in the PR body, then a linked issue (`Closes #<issue>`) whose number matches the bounty, then a `bounty-<id>` label. The PR author's numeric GitHub id is matched to `player_profiles.githubId` to find the shipper. An unmatched merge lands in a pending queue for a maintainer. No silent drops.
 
 ---
 
-## 7. Linking a GitHub profile
+## 7. GitHub linking
 
-To receive a shipper reward, a player links GitHub to their profile, following the same shape as the existing `linkBaseAccount` in `server/routes/players.ts`.
+To receive a shipper reward, a player links GitHub to their profile, following the existing `linkBaseAccount` shape in `server/routes/players.ts`.
 
-**GitHub OAuth (recommended).** Add a GitHub provider alongside Google and Apple in `server/_core/oauth.ts`. The player clicks "Link GitHub," authorizes, and the callback writes `githubHandle`, `githubId`, `githubLinkedAt`. OAuth proves the player controls that account, which is what makes automated payout safe. De-duplication guard: one GitHub id maps to one profile, same as the Base-account guard.
+Add a GitHub OAuth provider alongside Google and Apple in `server/_core/oauth.ts`. The player clicks "Link GitHub," authorizes, and the callback writes `githubHandle`, `githubId`, `githubLinkedAt`, and `githubAccountAge`. OAuth proves the player controls the account, which is what makes automated payout safe. One GitHub id maps to one profile, the same de-duplication guard the Base-account link uses.
 
-Linking is required only for the shipper role. Proposing needs no GitHub link, since proposals live inside ReGen Civics.
+Linking is required only for the shipper role. Proposing needs no link, since proposals live inside ReGen Civics.
 
 ---
 
@@ -191,165 +233,214 @@ Linking is required only for the shipper role. Proposing needs no GitHub link, s
 
 ```
   GitHub --(pull_request: closed, merged=true)--> webhook receiver (server/webhooks/)
-                                                       |
-                              verify HMAC (X-Hub-Signature-256)
-                                                       |
-                              match PR -> bounty (sec. 6), via externalRef / body / label
-                                                       |
-                              match author githubId -> profile -> shipper role
-                                                       |
-                              bounty.status -> completed; mark roles payable
-                                                       |
-                              payRole(shipper); payRole(proposer if pay-on-merge)
+       |
+   1. verify HMAC (X-Hub-Signature-256)
+   2. drop if X-GitHub-Delivery already in webhook_deliveries  (idempotency)
+   3. match PR -> bounty (sec. 6)
+   4. verify CI green + non-author approval (sec. 6); else hold for maintainer
+   5. match author githubId -> profile -> shipper role
+   6. bounty.workStatus -> completed; mark roles payable
+   7. payRole(shipper); payRole(proposer) if pay-on-merge
+       |
+   also subscribe to revert detection on the default branch (sec. 9)
 ```
 
-The webhook only decides which roles are payable. It then calls the shared `payRole`. It holds no payout logic of its own, so the double-pay guard and the auto-pay ceiling apply automatically.
+The webhook decides which roles are payable and then calls the shared `payRole`. It holds no payout logic of its own, so every integrity rule applies without being re-implemented.
 
 ---
 
-## 9. tRPC surface
+## 9. Economic integrity
 
-One router, `server/routes/bounties.ts`, registered in `server/routers.ts` as `bounties`. Kind-specific creation is a typed input, shared verbs are generic.
+Bounties mint private tokens that count toward scores, voice weight, and citizenship tier, and can be claimed to Base. The engine treats issuance as a controlled supply, not a faucet.
+
+**Pay for shipped value.** `bounty.pay_proposal_on` defaults to `merge`. The proposer is paid only when the work actually lands, so nothing is minted for ideas that never ship.
+
+**Tiered pricing, no free-form amounts.** A bounty's reward is set by its `tier`, mapped to fixed amounts in `game_variables`. Maintainers pick a tier rather than typing a number, so total issuance is bounded by a small known schedule. Example schedule (set the real values in `game_variables`):
 
 ```
-propose         protected   create a bounty (sourceType + typed meta)
-listBoard       public      open + accepted bounties, filterable by sourceType
+bounty.tier.trivial.delivery = 25
+bounty.tier.small.delivery   = 75
+bounty.tier.medium.delivery  = 250
+bounty.tier.large.delivery   = 750
+bounty.proposal_fraction     = 0.15   // proposer earns 15% of the delivery amount
+```
+
+**Season minting budget (built, off by default).** `game_variables` holds `bounty.season_budget`, unset at launch, which means unlimited issuance. When a positive value is set, `payRole` sums bounty issuance for the active season and holds any payout that would cross the cap, pending maintainer consent, rather than minting past it. The cap mechanism ships now; the limit stays off until you choose one.
+
+**Settlement hold before claimability (one moon cycle).** Both the proposer and the shipper are credited to the private ledger at merge, but the tokens are not claimable to Base until `claimableAt`, set to one moon cycle (29.5 days, `bounty.settlement_hold_hours = 708`) after payout. The claim bridge checks `claimableAt` before letting bounty-sourced tokens cross to Base. The hold is the review window: during the moon cycle an empowered admin can reverse a payout, and after it the tokens are the contributor's to cash out.
+
+**Reversal and clawback.** Because the ledger is append-only, a reversal is a compensating negative `creditPrivateTokens` entry with source `bounty_reversed`, plus the role moving to `reversed`. A reversal fires when a merged PR is reverted on the default branch within the hold window, or when a maintainer upholds a dispute. After tokens have crossed to Base they cannot be clawed back (the bridge is one-way), which is the entire reason the settlement hold sits in front of the bridge.
+
+---
+
+## 10. Integrity rules: separation of duties and sybil resistance
+
+The proof of ship assumes the people in the loop are distinct humans. In a small pre-launch community that assumption fails by default, so it is enforced rather than trusted.
+
+**Separation of duties (one identity, multiple roles).**
+- The accept gate counts only if the accepter is a different user than the proposer.
+- Auto-pay is blocked, and maintainer consent is required, whenever one user fills more than one paid role on the same bounty.
+- The shipper auto-payout requires an approving PR review from someone other than the author (sec. 6).
+- `filledByLog` and `bounty_events` record which user filled each role, so any overlap is visible and auditable.
+
+A solo contributor still earns legitimately. What is blocked is the unchecked loop where one account proposes, accepts, ships, reviews, and collects every role.
+
+**Sybil resistance through empowerment, not account heuristics.** New contributors are welcome, so there is no account-age or history gate on participation. Any new account can propose, claim a role, and earn. The defense against one person wearing two identities to collect both sides sits at the two points that actually release value, and both are gated to empowered humans:
+- Only an empowered maintainer (`canAccept`) can accept a proposal, and a maintainer cannot accept their own proposal. A self-made second identity cannot self-approve its way to a payout.
+- Only an empowered maintainer can merge code to the protected branch (controlled by GitHub repo write access). The merge is the proof of ship, so the act that triggers the shipper payout is already in trusted hands.
+- The moon-cycle settlement hold (sec. 9) gives an admin a full review window to catch and reverse anything that slips through before tokens become irreversible.
+
+Optional guards that ship in the code but stay off at launch, switchable in `game_variables` when you want them:
+- A citizenship-tier floor for large bounties (`bounty.large_tier_min`, default `explorer` so every account qualifies now). The tier system is built and read; the floor is simply set to the lowest tier.
+- Per-account velocity limits on open roles and earnings per period (unset by default).
+
+---
+
+## 11. Completion is not "one PR merged"
+
+The naive model of one bounty equals one PR equals done is wrong for real engineering work. A fix can take several PRs, a feature can land in stages, and a merge can be incomplete.
+
+- A bounty can reference more than one merged PR (`mergedPrNumbers`).
+- Accepting a bounty can attach a `completionChecklist` (the definition of done). The bounty completes when the linked PRs are merged and the checklist is satisfied, confirmed by the reviewer or maintainer. For a simple bounty the checklist is empty and a single qualifying merge completes it.
+- A reverted merge inside the hold window reopens the bounty and reverses the payout (sec. 9).
+
+This keeps the trigger honest: payout follows work that is actually finished and actually passing, not work that merely touched the branch.
+
+---
+
+## 12. tRPC surface
+
+One router, `server/routes/bounties.ts`, registered in `server/routers.ts` as `bounties`.
+
+```
+propose         protected   create a bounty (sourceType + typed fields)
+listBoard       public      open + accepted bounties, filterable by sourceType / tier
 listMine        protected   roles I hold, across all kinds
-claimRole       protected   fill a role on a bounty (e.g. take the shipper slot)
+claimRole       protected   fill a role (e.g. take the shipper slot)
 releaseRole     protected   give up a claimed role
 linkPr          protected   attach a PR to a contribution bounty (-> in_review)
 
-accept          admin       gate 1: accept a proposal
-decline         admin       reject with reason
-adminQueue      admin       proposals to review + held payouts + unmatched merges
-resolvePending  admin       manually attach an unmatched merge to a role
-consentAndPay   admin       release a held over-ceiling payout (calls payRole)
+accept          maintainer  gate 1: accept a proposal (enforces accepter != proposer; needs canAccept)
+decline         maintainer  reject with reason (needs canAccept)
+adminQueue      maintainer  proposals to review, held payouts, unmatched merges, disputes
+resolvePending  maintainer  attach an unmatched merge to a role
+consentAndPay   maintainer  release a held payout (budget / role-overlap)
+reverse         maintainer  reverse a payout during the hold (needs canReverse; writes bounty_reversed)
+
+grantMaintainer  superadmin grant canAccept / canReverse to a user
+revokeMaintainer superadmin remove a user's bounty permissions
+listMaintainers  superadmin current empowered accounts
 ```
 
-Profile procedures in `server/routes/players.ts`: `linkGithub`, `unlinkGithub`, `getMyGithub`.
-
-The existing `callTasks` procedures keep working during migration (Phase 4); they become thin wrappers that create a `call_task` bounty with one `doer` role.
+Maintainer procedures check `bounty_permissions` (`canAccept` for the queue, `canReverse` for reversal), not the generic admin role. The grant / revoke / list procedures are superadmin-only, so the owner controls who is empowered. Profile procedures in `server/routes/players.ts`: `linkGithub`, `unlinkGithub`, `getMyGithub`.
 
 ---
 
-## 10. Profile UI and board
+## 13. Profile UI and board
 
-Profile "Contributions" tab: Link GitHub button and state, my proposals, my claimed deliveries, linked PRs and merge state, and a running total earned per role type.
+Profile "Contributions" tab: Link GitHub button and state, my proposals, my claimed deliveries, linked PRs and merge state, settlement-hold countdown on held tokens, and a running total earned per role type.
 
-Public **Bounty Board**: open and accepted bounties with title, kind, the reward on each role, and a Claim button per open role. It reads as a live contribution roadmap the community can pull from.
-
----
-
-## 11. Ten ideas to improve and refine the system
-
-The engine makes several of these cheap, since they are new roles or new triggers rather than new systems.
-
-1. **Difficulty tiers with set payouts.** Tag a bounty `small`, `medium`, or `large` at accept time, each mapped to a fixed role amount in `game_variables`. Maintainers pick a tier, which keeps rewards consistent and removes per-bounty haggling.
-
-2. **Review reward.** Add a `reviewer` role with a small amount, credited to whoever reviews and approves the merged PR. In the engine this is one extra role, not a feature. Code review is real work and it is where quality is held.
-
-3. **Shipper reputation and streaks.** Track merged-contribution count and a reputation score on `player_profiles`, surfaced as a badge and fed into the citizenship tier loop, so consistent shippers climb from Explorer toward Steward through real work.
-
-4. **Community boosting.** Let players add tokens from their own private balance to an open bounty as a `booster` role, raising its payout. Popular fixes rise on the board on their own. This is a crowdpool for code, and it shows maintainers what the community wants built. Again, just another role.
-
-5. **Auto-draft the tracking issue.** On accept, generate a GitHub issue from the proposal body and store its number on the bounty. The shipper gets a ready issue and PR-to-bounty matching via `Closes #issue` becomes automatic.
-
-6. **Definition of done on every bounty.** Require an acceptance checklist at accept time. It sets expectations for the claimant up front and gives reviewers an objective bar, which cuts disputes over whether work is finished.
-
-7. **First-merge onboarding quest.** Make "ship your first merged contribution" a Welcome Aboard quest over a curated `good-first-issue` set with a guaranteed starter bounty. New technical players get a guided path from signup to a merged PR and their first tokens.
-
-8. **Anti-gaming guards in one place.** Because payout is one function, the guards live in one place: require the PR to touch real files for auto-pay, cap how many roles one player can hold open at once, exclude self-merges on unprotected branches, and keep the append-only ledger as the audit trail. Hardening the engine hardens every kind at once.
-
-9. **Seasonal contribution leaderboard.** Roll completed bounties into the seasons system so each season has a contributor leaderboard and a Harvest moment, tying contribution into the game's seasonal rhythm.
-
-10. **Stale-role auto-release and nudges.** If a claimed role has no progress after N days, nudge; after the window, return the role to `unfilled` and reopen the bounty. Mirrors the nightly `cancelStaleClaimBridges` job, so good bounties never sit locked behind someone who moved on.
+Public **Bounty Board**: open and accepted bounties with title, kind, tier, the reward per open role, and a Claim button per role. It reads as a live contribution roadmap the community can pull from.
 
 ---
 
-## 12. Build plan
+## 14. Further refinements (optional, post-core)
 
-Phased so the engine proves itself on new, low-risk work before the live call-task flow is moved onto it.
+Several earlier ideas are now in the core: tiered pricing, the review role, separation-of-duties guards, definition of done. These remain optional:
 
-### Phase 1: The engine + contribution bounties, manual completion
-- Migrations for `bounties`, `bounty_roles`, `bounty_source_meta`.
-- Implement `payRole` (the single payout path) and the shared lifecycle.
-- `bounties` router with `propose`, `listBoard`, `listMine`, `claimRole`, `accept`, `decline`, `consentAndPay`.
-- Add `bounty_proposal` and `bounty_delivery` source tags.
-- `game_variables` keys: `bounty.contribution.proposal_amount`, `bounty.contribution.delivery_amount`, `bounty.contribution.auto_pay_max`, `bounty.contribution.pay_proposal_on`.
-- Profile Contributions tab and public Bounty Board.
-- A maintainer marks a contribution `completed` by hand to fire payout. Fully working, human-driven on the merge step.
+1. **Community boosting.** Players add tokens from their own private balance as a `booster` role to raise an open bounty, a crowdpool for code that surfaces what the community wants built.
+2. **Auto-draft the tracking issue.** On accept, generate a GitHub issue from the proposal body so PR matching via `Closes #issue` is automatic.
+3. **Shipper reputation and streaks.** Track merged-contribution count and a reputation score, surfaced as a badge and fed into the citizenship tier loop.
+4. **First-merge onboarding quest.** A Welcome Aboard quest over a curated `good-first-issue` set with a guaranteed starter bounty, guiding new technical players from signup to a merged PR.
+5. **Seasonal contribution leaderboard.** Roll completed bounties into the seasons system with a per-season leaderboard and a Harvest moment.
+6. **Stale-role auto-release and nudges.** Nudge an idle claimed role, then return it to `unfilled` after the window, mirroring `cancelStaleClaimBridges`.
+7. **Dynamic pricing.** Auto-escalate the tier of a bounty that sits unclaimed too long until it clears.
+8. **Maintainer SLA and escalation.** Nudge maintainers when proposals sit unaccepted, so contributors keep faith in the queue.
+
+---
+
+## 15. Build plan (big-bang, single path)
+
+No migration phase. The engine ships as one coherent overhaul and replaces the legacy call-task flow.
+
+### Phase 1: Engine core
+- Migrations: `bounties`, `bounty_roles`, `bounty_events`, `webhook_deliveries`, `bounty_permissions`, the `player_profiles` GitHub columns, and the `user_token_ledger` `idempotencyKey` unique index.
+- Delete the legacy `callTasks` table and `server/routes/callTasks.ts`.
+- Implement `payRole` (single payout path) with idempotency key, separation-of-duties check, season-budget check, and settlement hold.
+- Shared lifecycle + `bounty_events` logging.
+- `bounties` router: full surface from section 12.
+- Source tags `bounty_proposal`, `bounty_delivery`, `bounty_reversed`; keep `call_task_bounty`.
+- `game_variables` keys: tier schedule, `bounty.proposal_fraction`, `bounty.pay_proposal_on` (= `merge`), `bounty.season_budget` (unset = unlimited), `bounty.settlement_hold_hours` (= 708), `bounty.large_tier_min` (= `explorer`), optional velocity limits, auto-pay ceiling.
+- Both call-task and contribution bounties run through the engine from day one.
 
 ### Phase 2: GitHub identity
-- `githubHandle`, `githubId`, `githubLinkedAt` on `player_profiles`.
-- GitHub OAuth provider and `linkGithub` / `unlinkGithub` / `getMyGithub`.
+- GitHub OAuth provider and `linkGithub` / `unlinkGithub` / `getMyGithub`, capturing `githubAccountAge`.
 - Link GitHub UI on the profile.
 
 ### Phase 3: Merge automation
-- GitHub webhook receiver in `server/webhooks/` with HMAC verification.
-- PR-to-bounty and author-to-profile matching; auto-credit through `payRole`.
-- Pending queue and `resolvePending` for unmatched merges.
+- GitHub webhook receiver with HMAC verification and delivery dedup.
+- PR-to-bounty matching, CI-green + non-author-approval verification, author-to-profile matching, revert detection.
+- Auto-credit through `payRole`; pending queue and `resolvePending` for unmatched merges.
 
-### Phase 4: Migrate call tasks onto the engine
-- Write the `call_task` adapter (one `doer` role; recording/evidence fields into `bounty_source_meta`).
-- Backfill existing `callTasks` rows into `bounties` + `bounty_roles`.
-- Repoint the `callTasks` procedures to thin wrappers over the engine.
-- Keep the old `callTasks` table read-only until the new path is verified, then deprecate. Append an ADR to `.ai/docs/DECISIONS.md` recording the unification.
+### Phase 4: Refinements
+- Pull from section 14 as desired. Suggested first: community boosting (1) and first-merge onboarding quest (4).
 
-### Phase 5: Refinements
-- Pull in the highest-value ideas from section 11. Suggested first three: difficulty tiers (1), review reward (2), first-merge onboarding quest (7).
+### Verification (every phase)
+- Run the ship gate: `python3 scripts/audit-truncation.py`, the className grep for any new CSS, and `pnpm typecheck` at exit 0.
+- Money-path tests: a redelivered webhook pays once; a duplicate `payRole` call pays once; an over-budget payout holds; a role overlap holds; a revert inside the hold window reverses; the claim bridge refuses bounty tokens before `claimableAt`.
 
 ---
 
-## 13. Handoff Breakdown, Who Does What
+## 16. Handoff Breakdown, Who Does What
 
 ### YOU (Rye), things only you can do
 
 | # | Task | Why only you | Command / Where |
 |---|------|-------------|-----------------|
 | H1 | Create a GitHub OAuth App | Needs your GitHub account and org access | github.com/settings/developers, callback `https://regencivics.earth/api/oauth/github/callback` |
-| H2 | Add `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` to Railway | Railway dashboard login required | Railway, ReGenCivics.Earth service, Variables |
-| H3 | Create the GitHub webhook on the repo | Repo admin access required | Repo Settings, Webhooks, point at `/api/webhooks/github`, subscribe to Pull requests |
-| H4 | Add `GITHUB_WEBHOOK_SECRET` to Railway | Same secret used to sign the webhook | Railway Variables, must match H3 |
-| H5 | Run the engine migrations | DB only reachable from your machine | `npx tsx scripts/run-migration.ts drizzle/<NNNN>_bounty_engine.sql` |
-| H6 | Run the `player_profiles` GitHub-columns migration | Same DB reachability constraint | `npx tsx scripts/run-migration.ts drizzle/<NNNN>_profile_github.sql` |
-| H7 | Run the `game_variables` bounty seed | Writes to production DB | Seed script (Claude Code writes it; you run it) |
-| H8 | Run the call-task backfill (Phase 4) | Writes to production DB | Backfill script (Claude Code writes it; you run it) |
-| H9 | `git add -A && git commit && git push` after each phase | Deploy gate | repo root |
-| H10 | Confirm Railway deploy is green before testing live | Dashboard access | Railway deploy logs |
+| H2 | Add `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` to Railway | Railway dashboard login | Railway, ReGenCivics.Earth service, Variables |
+| H3 | Create the GitHub webhook on the repo | Repo admin access | Repo Settings, Webhooks, point at `/api/webhooks/github`, subscribe to Pull requests |
+| H4 | Add `GITHUB_WEBHOOK_SECRET` to Railway | Must match the webhook secret in H3 | Railway Variables |
+| H5 | Run the engine migrations | DB only reachable from your machine | `npx tsx scripts/run-migration.ts --all` |
+| H6 | Run the `game_variables` + owner-permissions seed | Writes to production DB | Seed script (Claude Code writes it; you run it). Seeds the moon-cycle hold, tier schedule, and `canAccept` + `canReverse` for `rieki.cordon@gmail.com` |
+| H7 | Confirm branch protection on the default branch | Repo admin; the proof of ship depends on it | Repo Settings, Branches (require review + required checks) |
+| H8 | `git add -A && git commit && git push` after each phase | Deploy gate | repo root |
+| H9 | Confirm Railway deploy is green before live testing | Dashboard access | Railway deploy logs |
 
 ### CLAUDE CODE, can be done without you
 
 | # | Task | Status |
 |---|------|--------|
-| C1 | Write engine migrations (`bounties`, `bounty_roles`, `bounty_source_meta`) | TODO |
-| C2 | Write `player_profiles` GitHub-columns migration | TODO |
-| C3 | Implement `payRole` single payout path + shared lifecycle | TODO |
+| C1 | Write all engine migrations + ledger idempotency index | TODO |
+| C2 | Delete legacy `callTasks` table + router | TODO |
+| C3 | Implement `payRole` with all four integrity gates | TODO |
 | C4 | Build `server/routes/bounties.ts` and register it | TODO |
-| C5 | Add `bounty_proposal` / `bounty_delivery` source tags | TODO |
+| C5 | Add `bounty_proposal` / `bounty_delivery` / `bounty_reversed` source tags | TODO |
 | C6 | Add GitHub OAuth provider + link procedures | TODO |
-| C7 | Build the GitHub webhook receiver with HMAC verify | TODO |
+| C7 | Build the webhook receiver: HMAC, dedup, CI + approval checks, revert detection | TODO |
 | C8 | PR-to-bounty + author-to-profile matching | TODO |
 | C9 | Profile Contributions tab + public Bounty Board | TODO |
-| C10 | Write `game_variables` seed script | TODO |
-| C11 | Write the `call_task` adapter + backfill script (Phase 4) | TODO |
-| C12 | Append the unification ADR to `.ai/docs/DECISIONS.md` | TODO |
-| C13 | Run the ship gate (audit-truncation, className grep, typecheck) | TODO |
+| C9b | Admin Bounty Maintainers section (grant/revoke canAccept, canReverse) + held-payout review/reverse UI | TODO |
+| C10 | Write the `game_variables` + owner-permissions seed script | TODO |
+| C11 | Write money-path tests (sec. 15) | TODO |
+| C12 | Append the engine ADR to `.ai/docs/DECISIONS.md` | TODO |
+| C13 | Run the ship gate | TODO |
 
 ### WAITING ON YOU before Claude Code can proceed
 
-- Live OAuth testing is blocked until H1, H2, H9.
-- Live merge-payout testing is blocked until H3, H4, and a real test PR merge.
-- Phase 4 backfill (C11) should run only after Phase 1 to 3 are verified in production.
-- All of Phase 1 can be built and typecheck-verified by Claude Code; the only human steps in Phase 1 are the migration run (H5) and the deploy (H9).
+- Live OAuth testing is blocked until H1, H2, H8.
+- Live merge-payout testing is blocked until H3, H4, H7, and a real test PR merge.
+- All of Phase 1 builds and typecheck-verifies with no human step except the migration run (H5) and the deploy (H8).
 
 ---
 
-## 14. Open questions for Rye
+## 17. Open questions for Rye
 
-Defaults are chosen so Phase 1 can start. Change any in `game_variables` later.
+Defaults are chosen so the build can start. The economic ones carry real consequences, so confirm or adjust before launch. All live in `game_variables` and move without a code change.
 
-1. Proposal vs delivery split for contributions. Default: small proposal amount, delivery several times larger.
-2. `bounty.contribution.pay_proposal_on`: pay the proposer on `accept` or on `merge`. Default `accept`.
-3. Token type. Default `regen`, matching the call-task default.
-4. Repos in scope for automated payout. Default the main `regen-civics` repo, expand later.
-5. Phase 4 appetite. Migrating call tasks onto the engine is optional. The engine works fine serving only contributions if you would rather leave the live call-task flow untouched for now.
+Decisions locked for this build: settlement hold is one moon cycle (29.5 days), the season budget ships unlimited (cap mechanism built, off), both proposer and shipper are paid on merge and held for the moon cycle, the owner (`rieki.cordon@gmail.com`) holds `canAccept` and `canReverse`, and any new account can participate with no account-age or tier gate (tier floor built but set to the lowest tier). Remaining to confirm:
+
+1. **Tier amounts.** The example schedule (25 / 75 / 250 / 750 delivery, proposer at 15%) is a placeholder. What are the real numbers in your token scale?
+2. **Token type.** Default `regen`, matching the call-task default. Confirm or change.
+3. **Repos in scope** for automated payout. Default the main `regen-civics` repo, expand later.
+4. **First empowered accounts.** Beyond the owner, who (if anyone) should get `canAccept` at launch?
