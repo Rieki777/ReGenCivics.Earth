@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
-const Streamdown = lazy(() => import('streamdown').then(m => ({ default: m.Streamdown })));
+const MarkdownRenderer = lazy(() => import('@/components/MarkdownRenderer'));
 
 interface BannerEditorProps {
   bannerKey: string;
@@ -184,7 +184,7 @@ export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
             <div className="bg-gradient-to-r from-[#7dd87d] via-[#4a7c59] to-[#7dd87d] text-[#1a472a] py-6 px-4 rounded-lg">
               <div className="text-sm sm:text-base font-semibold">
                 <Suspense fallback={<span>...</span>}>
-                  <Streamdown>{content}</Streamdown>
+                  <MarkdownRenderer>{content}</MarkdownRenderer>
                 </Suspense>
               </div>
               {displayEndDate && (

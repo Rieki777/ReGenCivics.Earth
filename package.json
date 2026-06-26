@@ -17,7 +17,8 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server/_core/index.ts",
     "validate:html": "node scripts/validate-html.mjs",
-    "build": "node scripts/validate-html.mjs && tsc --noEmit && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node scripts/prerender-blog.mjs",
+    "build": "node scripts/validate-html.mjs && node scripts/check-unoptimized-images.mjs && tsc --noEmit && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node scripts/prerender-blog.mjs",
+    "check:images": "node scripts/check-unoptimized-images.mjs",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "check:palette": "tsx scripts/check-palette.ts",

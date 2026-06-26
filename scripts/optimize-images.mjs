@@ -116,7 +116,7 @@ const questNames = [
   'quest-04-dreaming-spaces-of-love','quest-05-rites-of-love','quest-06-healing-circles',
   'quest-07-wild-foraging','quest-08-medicine-journey','quest-09-tree-talk',
   'quest-10-communication-patterns','quest-11-coordination-patterns','quest-12-breathplay-future-dreaming',
-  'quest-hero','quest-acts','quest-remembers',
+  'quest-hero','quest-acts','quest-remembers','roles-dialogue',
 ];
 for (const name of questNames) {
   let converted = false;

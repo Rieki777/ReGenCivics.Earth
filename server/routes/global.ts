@@ -221,13 +221,18 @@ export function registerImageOptimization(app: Express) {
       }
 
       const accept = req.headers.accept || '';
+      const supportsAvif = accept.includes('image/avif');
       const supportsWebp = accept.includes('image/webp');
-      const cacheKey = `${url}-${width ?? ''}-${height ?? ''}-${quality}-${supportsWebp ? 'webp' : 'orig'}`;
+      const fmt = supportsAvif ? 'avif' : supportsWebp ? 'webp' : 'orig';
+      const cacheKey = `${url}-${width ?? ''}-${height ?? ''}-${quality}-${fmt}`;
 
       // Check LRU cache first
       const cached = imageCache.get(cacheKey);
       if (cached) {
-        const ct = supportsWebp ? 'image/webp' : (cached[0] === 0x89 ? 'image/png' : 'image/jpeg');
+        let ct: string;
+        if (fmt === 'avif') ct = 'image/avif';
+        else if (fmt === 'webp') ct = 'image/webp';
+        else ct = cached[0] === 0x89 ? 'image/png' : 'image/jpeg';
         res.set({
           'Content-Type': ct,
           'Cache-Control': 'public, max-age=31536000, immutable',
@@ -244,7 +249,10 @@ export function registerImageOptimization(app: Express) {
 
       const pipeline = sharp(buffer).resize(width, height, { fit: 'cover', withoutEnlargement: true });
 
-      if (supportsWebp) {
+      if (supportsAvif) {
+        optimized = await pipeline.avif({ quality: Math.min(quality, 60), effort: 4 }).toBuffer();
+        contentType = 'image/avif';
+      } else if (supportsWebp) {
         optimized = await pipeline.webp({ quality }).toBuffer();
         contentType = 'image/webp';
       } else if (hasAlpha) {
