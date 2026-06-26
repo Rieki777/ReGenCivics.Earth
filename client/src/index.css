@@ -129,6 +129,25 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   
+  /* Design token color palette — use these as bg-forest-deep, text-spring-base, etc. */
+  --color-forest-deepest: #0a1f14;
+  --color-forest-deep: #0d2818;
+  --color-forest-base: #1a472a;
+  --color-forest-moss: #2d5a3d;
+  --color-forest-sage: #4a7c59;
+  --color-spring-base: #7dd87d;
+  --color-spring-hover: #9de89d;
+  --color-spring-soft: #a8e6a8;
+  --color-parchment-base: #f0ebe3;
+  --color-parchment-soft: #e8e4de;
+  --color-parchment-warm: #f8f5f0;
+  --color-parchment-whisper: #f0f7f0;
+  --color-amber-tan: #d4a574;
+  --color-amber-gold: #ffd700;
+  --color-amber-dim: #d4a017;
+  --color-alliance-teal: #4a9f9f;
+  --color-alert-red: #ef6f6c;
+
   /* Custom font families - Enchanted Forest Storybook */
   --font-display: 'Quicksand', sans-serif;
   --font-body: 'Nunito', sans-serif;

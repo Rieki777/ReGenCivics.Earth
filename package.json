@@ -19,6 +19,7 @@
     "validate:html": "node scripts/validate-html.mjs",
     "build": "node scripts/validate-html.mjs && node scripts/check-unoptimized-images.mjs && tsc --noEmit && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node scripts/prerender-blog.mjs",
     "check:images": "node scripts/check-unoptimized-images.mjs",
+    "check:colors": "node scripts/check-hardcoded-colors.mjs",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "check:palette": "tsx scripts/check-palette.ts",

@@ -365,7 +365,7 @@ export default function BlogPost() {
             </div>
           )}
           <AnimatedSection animation="fade-in">
-            <article className="prose prose-lg prose-invert max-w-none">
+            <article className="prose prose-lg prose-invert max-w-[70ch] mx-auto">
               <div
                 className="drop-cap text-white/80 leading-relaxed space-y-6"
                 style={{ fontFamily: 'var(--font-body)' }}
@@ -456,7 +456,8 @@ export default function BlogPost() {
 
           {/* Social Share Buttons */}
           <AnimatedSection animation="fade-in">
-            <div className="mt-12 pt-8 border-t border-white/10">
+            <div className="mt-12">
+              <hr className="border-0 border-t border-[#4a7c59]/30 mb-8" aria-hidden="true" />
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-2 text-white/60">
                   <Share2 className="w-5 h-5" />
