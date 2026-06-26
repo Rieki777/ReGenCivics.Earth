@@ -26,7 +26,7 @@ Commits `b30a2e1` (prior session) + `8b15ad2` (this session). Source docs: `arch
 - Fix 5 (editor overhaul): RichEditor rebuilt with full toolbar, slash-command menu, image upload to R2, preview toggle, mobile sticky toolbar.
 - Fix 8 process (dialogue improvements): 3 migrations (0146/0147/0148); forumRouter procedures (sensing, perspectives); GovernanceLifecycleStrip + PerspectiveControl UI; Loomio receipt reply on close.
 
-Pending: Rye to run migrations 0146/0147/0148 against Railway, push, and verify on device. Investor deck PDF still missing from `public/`.
+All 146 migrations applied to Railway. Pending: verify governance lifecycle UI on device. Investor deck PDF still missing from `public/`.
 
 ---
 
