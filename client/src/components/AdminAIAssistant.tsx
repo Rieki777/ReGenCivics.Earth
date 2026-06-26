@@ -230,8 +230,8 @@ export function AdminAIAssistant({ context, onAction }: AdminAIAssistantProps) {
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 w-[380px] rounded-2xl shadow-2xl border border-[#4a7c59]/30 bg-white flex flex-col overflow-hidden"
-      style={{ height: panelHeight, maxWidth: "calc(100vw - 24px)" }}
+      className="fixed bottom-6 right-6 z-50 w-full max-w-[380px] rounded-2xl shadow-2xl border border-[#4a7c59]/30 bg-white flex flex-col overflow-hidden"
+      style={{ height: panelHeight, maxWidth: "min(380px, calc(100vw - 2rem))" }}
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] flex-shrink-0">

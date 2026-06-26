@@ -24,7 +24,7 @@ export function MycelialBackground() {
       <svg
         className="w-full h-full"
         viewBox="0 0 1920 1080"
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="none"
       >
         <defs>
           <linearGradient id="myceliumGradient" x1="0%" y1="0%" x2="100%" y2="100%">

@@ -5,6 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { eq, and, desc, lt, sql, isNull } from "drizzle-orm";
 import { getDb } from "../db";
 import { conversations, conversationParticipants, directMessages, users } from "../../drizzle/schema";
+import { pushToUser } from "../_core/sse";
 
 export const messagesRouter = router({
   conversations: router({
@@ -351,6 +352,18 @@ export const messagesRouter = router({
           .select()
           .from(directMessages)
           .where(eq(directMessages.id, messageId));
+
+        // Push SSE invalidation to all other participants so their unread
+        // badge updates without waiting for the polling fallback.
+        const allParticipants = await db2
+          .select({ userId: conversationParticipants.userId })
+          .from(conversationParticipants)
+          .where(eq(conversationParticipants.conversationId, conversationId));
+        for (const p of allParticipants) {
+          if (p.userId !== ctx.user.id) {
+            pushToUser(p.userId, { type: 'invalidate', keys: ['messages'] });
+          }
+        }
 
         return message;
       }),

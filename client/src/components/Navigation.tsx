@@ -77,7 +77,7 @@ export default function Navigation() {
 
   const { data: _msgUnreadData } = trpc.messages.unreadCount.useQuery(
     undefined,
-    { enabled: !!user && isAuthenticated, refetchInterval: 10_000 }
+    { enabled: !!user && isAuthenticated, refetchInterval: 120_000 }
   );
   const messagesUnreadCount = _msgUnreadData?.count ?? 0;
 

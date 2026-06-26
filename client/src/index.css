@@ -2637,4 +2637,18 @@ html[data-contrast="high"] *:focus-visible {
 .apply-form-dark [data-slot="select-value"][data-placeholder] {
   color: rgba(26, 71, 42, 0.55);
 }
+
+/* ════════════════════════════════════════════════════════════
+   Reduced-motion: stop decorative looping animations.
+   Functional loaders (animate-spin on Loader2) pause too — the
+   static icon still communicates loading state.
+   ════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-bounce,
+  .animate-ping,
+  .animate-spin {
+    animation: none !important;
+  }
+}
                                                                                        
