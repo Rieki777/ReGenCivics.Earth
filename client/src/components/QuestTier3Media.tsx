@@ -55,6 +55,7 @@ export function QuestTier3Media({ questId, slug, videoUrl, title }: Props) {
       <video
         src={videoUrl}
         controls
+        playsInline
         preload="metadata"
         poster={imgError ? questImageFallback(questId, slug) : questImageUrl(questId, slug)}
         className="w-full aspect-video rounded-xl bg-black"

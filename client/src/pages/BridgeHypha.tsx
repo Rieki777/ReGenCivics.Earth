@@ -67,17 +67,15 @@ export default function BridgeHypha() {
       }
     | null;
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
+    const url = redirectQuery.data?.url;
+    if (!url) return;
+    // Open Hypha synchronously on the user gesture so iOS Safari does not
+    // treat the popup as unsolicited. The URL is already available from the
+    // query; markSent is fire-and-forget.
+    window.open(url, "_blank", "noopener,noreferrer");
     setRedirecting(true);
-    try {
-      await markSent.mutateAsync({ bridgeKey });
-    } catch { /* non-blocking */ }
-    if (redirectQuery.data?.url) {
-      // Open Hypha in a new tab so the player can come back to ReGen Civics
-      // without losing their place.
-      window.open(redirectQuery.data.url, "_blank", "noopener,noreferrer");
-      setRedirecting(false);
-    }
+    markSent.mutate({ bridgeKey });
   };
 
   return (

@@ -4,6 +4,8 @@
  * Powered by cmdk. Searches static pages + live blog/forum/campaign results.
  */
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { Command } from "cmdk";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -62,6 +64,8 @@ const PAGES: PageEntry[] = [
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
+  useBodyScrollLock(open);
+  const trapRef = useFocusTrap(open);
   const [query, setQuery] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,6 +146,7 @@ export function CommandPalette() {
            prevents content from disappearing under the keyboard or below
            the fold. */}
       <div
+        ref={trapRef}
         className="relative w-full max-w-lg max-w-[calc(100vw-1rem)] max-h-[80vh] overflow-y-auto rounded-2xl border border-[#7dd87d]/30 bg-[#0d2818] shadow-2xl"
         role="dialog"
         aria-modal="true"

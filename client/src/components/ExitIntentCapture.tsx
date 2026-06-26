@@ -5,6 +5,8 @@
  * Messaging adapts to the current page context.
  */
 import { useState, useEffect, useCallback } from "react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { X, Mail, FileText, Shield, Leaf, Handshake, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,6 +99,8 @@ export function ExitIntentCapture() {
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  useBodyScrollLock(show);
+  const trapRef = useFocusTrap(show);
   const [dismissed, setDismissed] = useState(false);
 
   const { user } = useAuth();
@@ -226,6 +230,7 @@ export function ExitIntentCapture() {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
 
       <div
+        ref={trapRef}
         className={`relative bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 max-w-md w-full shadow-2xl transition-all duration-300 ${
           visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-5"
         }`}

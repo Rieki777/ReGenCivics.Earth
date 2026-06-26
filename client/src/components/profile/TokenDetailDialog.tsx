@@ -128,18 +128,22 @@ export function TokenDetailDialog({
 
   const runClaim = async (tokens: TokenKey[]) => {
     setClaimError(null);
+    // Open a placeholder tab synchronously on the gesture so iOS Safari does
+    // not treat the eventual window.open as unsolicited. We set its location
+    // once the mutation returns the Hypha URL. If the request fails, close it.
+    const w = window.open("about:blank", "_blank", "noopener,noreferrer");
     try {
       const res = await requestClaim.mutateAsync({ tokens });
-      if (res.hyphaUrl) {
-        // Open Hypha in a new tab. Private balance has already been
-        // debited at request time; if the user closes Hypha without
-        // finishing they can use the Cancel button below to refund.
-        window.open(res.hyphaUrl, "_blank", "noopener,noreferrer");
+      if (res.hyphaUrl && w) {
+        w.location.href = res.hyphaUrl;
+      } else if (w) {
+        w.close();
       }
       utils.playerProfiles.myPendingClaims.invalidate();
       utils.playerProfiles.getMyTokens.invalidate();
       utils.playerProfiles.myTokenLedger.invalidate();
     } catch (err: any) {
+      if (w) w.close();
       setClaimError(err?.message ?? "Could not start the claim. Try again.");
     }
   };

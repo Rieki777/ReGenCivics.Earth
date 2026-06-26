@@ -6,6 +6,8 @@ import { useState } from "react";
 import { X, Send, Leaf } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 interface Props {
   recipientId: number;
@@ -17,6 +19,9 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
   const [amount, setAmount] = useState(1);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+
+  useBodyScrollLock(true);
+  const trapRef = useFocusTrap(true);
 
   const { data: budget } = trpc.game.myGratitudeBudget.useQuery();
   const sendMutation = trpc.game.sendGratitude.useMutation({
@@ -32,6 +37,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
 
   return (
     <div
+      ref={trapRef}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
       role="dialog"
       aria-modal="true"
@@ -39,7 +45,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
       onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
     >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-[#faf8f3] rounded-t-2xl sm:rounded-2xl p-6 space-y-4 shadow-xl" style={{ maxHeight: "60vh" }}>
+      <div className="relative w-full max-w-sm bg-[#faf8f3] rounded-t-2xl sm:rounded-2xl p-6 space-y-4 shadow-xl" style={{ maxHeight: "60dvh" }}>
         <div className="flex items-center justify-between">
           <h3 id="gratitude-drawer-title" className="text-[#2d2a26] font-bold" style={{ fontFamily: "var(--font-display)" }}>
             Send Gratitude
@@ -80,7 +86,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
             placeholder="What are you grateful for?"
             maxLength={280}
             rows={3}
-            className="w-full bg-white border border-[#1a472a]/10 rounded-xl px-3 py-2.5 text-sm text-[#2d2a26] placeholder:text-[#1a472a]/75 outline-none focus:ring-1 focus:ring-[#4a7c59]/50 resize-none"
+            className="w-full bg-white border border-[#1a472a]/10 rounded-xl px-3 py-2.5 text-base md:text-sm text-[#2d2a26] placeholder:text-[#1a472a]/75 outline-none focus:ring-1 focus:ring-[#4a7c59]/50 resize-none"
           />
           <span className="absolute bottom-2 right-3 text-[10px] text-[#1a472a]/75">{message.length}/280</span>
         </div>

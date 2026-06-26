@@ -12,6 +12,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, Play } from "lucide-react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 const VIDEO_SRC = "/videos/quest-how-to.mp4";
 
@@ -19,6 +21,8 @@ export function QuestHowToVideoModal() {
   const [open, setOpen] = useState(false);
   const [videoMissing, setVideoMissing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  useBodyScrollLock(open);
+  const trapRef = useFocusTrap(open);
 
   // Listen for the open event from WizardRadialMenu.
   useEffect(() => {
@@ -62,6 +66,7 @@ export function QuestHowToVideoModal() {
 
   return (
     <div
+      ref={trapRef}
       className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={() => setOpen(false)}
       role="dialog"
@@ -105,6 +110,8 @@ export function QuestHowToVideoModal() {
               src={VIDEO_SRC}
               controls
               autoPlay
+              muted
+              playsInline
               preload="metadata"
               className="w-full h-full"
               onError={() => setVideoMissing(true)}

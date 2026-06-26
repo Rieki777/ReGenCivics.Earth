@@ -4,6 +4,8 @@
  * Mobile: scrollable map + bottom sheet with path switcher.
  */
 import { useState } from "react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { X, ChevronRight, ExternalLink } from "lucide-react";
 import { Link } from "wouter";
 import { PATHS, type MapNode, type PathId } from "./mapData";
@@ -20,6 +22,8 @@ export default function ProgressMap({ onClose }: Props) {
   const progress = useProgressMap();
   const [selectedPath, setSelectedPath] = useState<PathId | null>(null);
   const [selectedNode, setSelectedNode] = useState<MapNode | null>(null);
+  useBodyScrollLock(true);
+  const trapRef = useFocusTrap(true);
 
   const activePath = selectedPath
     ? PATHS.find(p => p.id === selectedPath)
@@ -29,7 +33,7 @@ export default function ProgressMap({ onClose }: Props) {
     : null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0a1a10] flex flex-col" data-map-overlay>
+    <div ref={trapRef} className="fixed inset-0 z-[100] bg-[#0a1a10] flex flex-col" data-map-overlay>
       {/* Preload village canvas (Fix 5) */}
       <link rel="preload" href={MAP_ASSETS.village_canvas.lg} as="image" type="image/webp" />
       {/* Header */}

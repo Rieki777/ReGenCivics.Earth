@@ -36,11 +36,22 @@ export default defineConfig(({ mode }): UserConfig => ({
         clientsClaim: true,
         runtimeCaching: [
           {
-            urlPattern: /\/api\//,
+            // Auth, session, SSE, and mutation endpoints must never be served
+            // from cache. iOS can get stuck in a stale logged-in/out state if
+            // NetworkFirst caches a session response. NetworkOnly bypasses the
+            // cache entirely for these sensitive paths.
+            urlPattern: /\/api\/(trpc|csrf-token|oauth|auth|sse)/,
+            handler: "NetworkOnly",
+          },
+          {
+            // Genuinely read-only, public API responses (blog posts, public
+            // maps, etc.) can use NetworkFirst with a short timeout.
+            urlPattern: /\/api\/(?!trpc|csrf-token|oauth|auth|sse)/,
             handler: "NetworkFirst",
             options: {
-              cacheName: "api-cache",
+              cacheName: "api-public-cache",
               networkTimeoutSeconds: 10,
+              cacheableResponse: { statuses: [200] },
             },
           },
           {

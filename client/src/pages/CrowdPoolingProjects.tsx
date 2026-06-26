@@ -314,12 +314,19 @@ const AVATAR_INITIALS = ["RY", "JD", "AM", "KC", "SP"];
 // ────────────────────────────────────────────────────────────────────────────────
 // Helper: parse deadline string to Date
 // ────────────────────────────────────────────────────────────────────────────────
+const MONTH_NAMES = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+
 function parseDeadline(deadline: string): Date | null {
   const d = new Date(deadline);
   if (!isNaN(d.getTime())) return d;
-  // "June 2026" style
-  const parsed = new Date(`1 ${deadline}`);
-  if (!isNaN(parsed.getTime())) return parsed;
+  // "June 2026" style — new Date("1 June 2026") is non-standard and returns
+  // Invalid Date on Safari. Parse explicitly instead.
+  const parts = deadline.trim().split(/\s+/);
+  if (parts.length === 2) {
+    const monthIdx = MONTH_NAMES.indexOf(parts[0].toLowerCase());
+    const year = parseInt(parts[1], 10);
+    if (monthIdx !== -1 && !isNaN(year)) return new Date(year, monthIdx, 1);
+  }
   return null;
 }
 

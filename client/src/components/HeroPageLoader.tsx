@@ -34,14 +34,19 @@ export function HeroPageLoader({
     }
 
     let mounted = true;
+    // Pick only the image that matches the current viewport so phones do not
+    // download the full-resolution desktop hero. Callers pass [desktop, mobile]
+    // in that order; we pick the last entry on narrow screens.
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    const toPreload = images.length > 1 ? (isMobile ? [images[images.length - 1]] : [images[0]]) : images;
     let loaded = 0;
-    const total = images.length;
+    const total = toPreload.length;
     const onDone = () => {
       loaded++;
       if (loaded >= total && mounted) setImagesReady(true);
     };
 
-    images.forEach((src) => {
+    toPreload.forEach((src) => {
       const img = new window.Image();
       img.onload = onDone;
       img.onerror = onDone;

@@ -5,6 +5,8 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { Link } from "wouter";
 import { X, ChevronRight, Leaf, Users, BookOpen, Coins, MapPin, Droplets, Zap, Wheat, Landmark, Music, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -270,6 +272,8 @@ export interface OnboardingWizardProps {
 
 export function OnboardingWizard({ user }: OnboardingWizardProps) {
   const [visible, setVisible] = useState(false);
+  useBodyScrollLock(visible);
+  const trapRef = useFocusTrap(visible);
   const [step, setStep] = useState(0); // 0-based: 0=Welcome 1=Role 2=Focus 3=GetStarted
   const [role, setRole] = useState<Role | null>(null);
   const [focusAreas, setFocusAreas] = useState<FocusArea[]>([]);
@@ -370,6 +374,7 @@ export function OnboardingWizard({ user }: OnboardingWizardProps) {
   return (
     // Backdrop
     <div
+      ref={trapRef}
       className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       aria-modal="true"
       role="dialog"

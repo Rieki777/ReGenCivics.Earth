@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { X, ExternalLink, CheckCircle2, Clock, Coins, Vote, Sparkles, ArrowRight, PlayCircle, Send, Info, Download, FileDown } from "lucide-react";
 import { QuestTier3Media } from "@/components/QuestTier3Media";
 import { Button } from "@/components/ui/button";
@@ -478,6 +479,7 @@ export const questDetailsData: Record<string, QuestDetails> = {
 
 export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalProps) {
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const trapRef = useFocusTrap(isOpen);
 
   // Lock body scroll while the modal is open so touch scrolling stays
   // inside the modal instead of leaking to the page behind it.
@@ -500,6 +502,7 @@ export function QuestDetailModal({ quest, isOpen, onClose }: QuestDetailModalPro
       role="presentation"
     >
       <div
+        ref={trapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="quest-modal-title"
