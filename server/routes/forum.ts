@@ -4,8 +4,8 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql, count } from "drizzle-orm";
-import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, ForumCategory } from "../../drizzle/schema";
+import { eq, sql, count, and, desc } from "drizzle-orm";
+import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, ForumCategory, forumPerspectives } from "../../drizzle/schema";
 import { sanitizeInput } from "../_core/security";
 import { assertSafeExternalUrl } from "../_core/ssrf";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
@@ -828,6 +828,161 @@ export const forumRouter = router({
         }).filter(r => r.count > 0);
 
         return result;
+      }),
+  }),
+
+  // ─── Governance lifecycle ──────────────────────────────────────────────────
+
+  // Move a thread into the Sensing stage (gated by tier, idempotent).
+  enterSensing: protectedProcedure
+    .input(z.object({ threadId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const dbd = await getDb();
+      if (!dbd) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Tier gate: read required tier from game_variables
+      const [tierRows] = await dbd.execute(
+        sql`SELECT value FROM game_variables WHERE key_name = 'governance.sensing_min_citizen_tier' LIMIT 1`
+      );
+      const minTier = parseInt((tierRows as any)?.[0]?.value ?? "1", 10);
+      const [profileRows] = await dbd.execute(
+        sql`SELECT citizenshipTier FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1`
+      );
+      const userTier = (profileRows as any)?.[0]?.citizenshipTier ?? 0;
+      if (userTier < minTier) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You need a higher citizenship tier to enter Sensing." });
+      }
+      await dbd.execute(
+        sql`UPDATE forumPosts
+            SET governanceStage = 'sensing',
+                sensingStartedAt = COALESCE(sensingStartedAt, NOW()),
+                sensingStartedBy = COALESCE(sensingStartedBy, ${ctx.user.id})
+            WHERE id = ${input.threadId} AND governanceStage = 'dialogue'`
+      );
+      return { ok: true };
+    }),
+
+  // Deterministic convergence snapshot for the Sensing summary panel.
+  getSensingSummary: publicProcedure
+    .input(z.object({ threadId: z.number() }))
+    .query(async ({ input }) => {
+      const dbd = await getDb();
+      if (!dbd) return { perspectives: [], topReplies: [], openQuestions: [], timeline: null };
+
+      // Perspective tallies
+      const [perspRows] = await dbd.execute(
+        sql`SELECT perspective,
+                   COUNT(*) AS count,
+                   SUM(weight) AS weightedTotal
+            FROM forumPerspectives
+            WHERE threadId = ${input.threadId}
+            GROUP BY perspective`
+      );
+
+      // Top 5 replies by weighted reaction total
+      const [topReplyRows] = await dbd.execute(
+        sql`SELECT fr.id, fr.content, fr.authorId,
+                   COALESCE(SUM(pr.reactionWeight), 0) AS weightedReactions
+            FROM forumReplies fr
+            LEFT JOIN postReactions pr ON pr.targetId = fr.id AND pr.targetType = 'reply'
+            WHERE fr.postId = ${input.threadId}
+            GROUP BY fr.id, fr.content, fr.authorId
+            ORDER BY weightedReactions DESC
+            LIMIT 5`
+      );
+
+      // Open questions: flagged replies + heuristic (ends with ?)
+      const [openQuestionRows] = await dbd.execute(
+        sql`SELECT id, content, authorId FROM forumReplies
+            WHERE postId = ${input.threadId}
+              AND (isOpenQuestion = 1 OR content LIKE '%?')
+            ORDER BY createdAt ASC
+            LIMIT 10`
+      );
+
+      // Timeline
+      const [timelineRows] = await dbd.execute(
+        sql`SELECT
+              p.createdAt AS startedAt,
+              COUNT(r.id) AS replyCount,
+              COUNT(DISTINCT r.authorId) AS participantCount
+            FROM forumPosts p
+            LEFT JOIN forumReplies r ON r.postId = p.id
+            WHERE p.id = ${input.threadId}
+            GROUP BY p.id, p.createdAt`
+      );
+
+      return {
+        perspectives: (perspRows as any) ?? [],
+        topReplies: (topReplyRows as any) ?? [],
+        openQuestions: (openQuestionRows as any) ?? [],
+        timeline: (timelineRows as any)?.[0] ?? null,
+      };
+    }),
+
+  // Flag a reply as an open question (author or moderator only).
+  setReplyOpenQuestion: protectedProcedure
+    .input(z.object({ replyId: z.number(), isOpenQuestion: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const dbd = await getDb();
+      if (!dbd) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [replyRows] = await dbd.execute(
+        sql`SELECT authorId FROM forumReplies WHERE id = ${input.replyId} LIMIT 1`
+      );
+      const authorId = (replyRows as any)?.[0]?.authorId;
+      const isAdmin = ctx.user.role === "admin" || ctx.user.role === "superadmin";
+      if (authorId !== ctx.user.id && !isAdmin) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the author or an admin can flag this." });
+      }
+      await dbd.execute(
+        sql`UPDATE forumReplies SET isOpenQuestion = ${input.isOpenQuestion ? 1 : 0} WHERE id = ${input.replyId}`
+      );
+      return { ok: true };
+    }),
+
+  // ─── Perspectives sub-router ───────────────────────────────────────────────
+  perspectives: router({
+    // Upsert the calling user's current perspective on a thread.
+    set: protectedProcedure
+      .input(z.object({
+        threadId: z.number(),
+        perspective: z.enum(["support", "can_live_with", "see_differently", "need_to_understand", "serious_concern"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const dbd = await getDb();
+        if (!dbd) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        // Reputation weight: use regenBalance as a simple proxy (same source as reaction weight)
+        const [profileRows] = await dbd.execute(
+          sql`SELECT regenBalance FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1`
+        );
+        const weight = Math.max(1, Math.log1p((profileRows as any)?.[0]?.regenBalance ?? 0));
+        await dbd.execute(
+          sql`INSERT INTO forumPerspectives (threadId, userId, perspective, weight, createdAt, updatedAt)
+              VALUES (${input.threadId}, ${ctx.user.id}, ${input.perspective}, ${weight}, NOW(), NOW())
+              ON DUPLICATE KEY UPDATE perspective = ${input.perspective}, weight = ${weight}, updatedAt = NOW()`
+        );
+        return { ok: true };
+      }),
+
+    // Get perspective tallies and the caller's current stance.
+    get: publicProcedure
+      .input(z.object({ threadId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const dbd = await getDb();
+        if (!dbd) return { tallies: [], myPerspective: null };
+        const [rows] = await dbd.execute(
+          sql`SELECT perspective, COUNT(*) AS count, SUM(weight) AS weightedTotal
+              FROM forumPerspectives WHERE threadId = ${input.threadId}
+              GROUP BY perspective`
+        );
+        let myPerspective: string | null = null;
+        if (ctx.user) {
+          const [mine] = await dbd.execute(
+            sql`SELECT perspective FROM forumPerspectives
+                WHERE threadId = ${input.threadId} AND userId = ${ctx.user.id} LIMIT 1`
+          );
+          myPerspective = (mine as any)?.[0]?.perspective ?? null;
+        }
+        return { tallies: (rows as any) ?? [], myPerspective };
       }),
   }),
 });

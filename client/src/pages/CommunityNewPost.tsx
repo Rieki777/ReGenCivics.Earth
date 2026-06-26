@@ -19,7 +19,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { ForumMarkdown, MarkdownHints } from "@/components/ForumMarkdown";
+import { ForumMarkdown } from "@/components/ForumMarkdown";
 import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownToolbar";
 import { RichEditor } from "@/components/RichEditor";
 import { PageTransition } from "@/components/PageTransition";
@@ -433,8 +433,7 @@ export default function CommunityNewPost() {
                 className="min-h-[200px] text-[#1a472a]"
               />
             )}
-            <div className="flex items-center justify-between mt-1">
-              <MarkdownHints />
+            <div className="flex justify-end mt-1">
               <p className="text-[10px] text-[#1a472a]/85">{content.length}/10,000</p>
             </div>
             {linkPreviewUrl && (

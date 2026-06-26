@@ -106,6 +106,8 @@ export function QuestStoryDetailModal({ story, onClose }: QuestStoryDetailModalP
               poster={story.videoThumbnailUrl ?? undefined}
               controls
               autoPlay
+              muted
+              playsInline
               preload="metadata"
               className="w-full max-h-[55vh] object-contain bg-black"
             />

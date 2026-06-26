@@ -1463,6 +1463,10 @@ export const forumPosts = mysqlTable("forumPosts", {
   linkPreviews: json("linkPreviews"),
   // Seed post flag (B.3)
   isSeed: tinyint("isSeed").default(0).notNull(),
+  // Dialogue governance lifecycle (2026-06-25 dialogue process)
+  governanceStage: mysqlEnum("governanceStage", ["dialogue", "sensing", "proposal", "decided"]).default("dialogue"),
+  sensingStartedAt: timestamp("sensingStartedAt"),
+  sensingStartedBy: int("sensingStartedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -1486,6 +1490,7 @@ export const forumReplies = mysqlTable("forumReplies", {
   content: text("content").notNull(),
   parentReplyId: int("parentReplyId"), // for nested replies
   triedThis: tinyint("triedThis").default(0).notNull(), // "I tried this" follow-up flag
+  isOpenQuestion: tinyint("isOpenQuestion").default(0).notNull(), // moderator/author flag for sensing summary
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -2962,6 +2967,29 @@ export const forumPromotionRequests = mysqlTable("forumPromotionRequests", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ForumPromotionRequest = typeof forumPromotionRequests.$inferSelect;
+
+/** Governance perspective signal — one row per (threadId, userId), updated in place.
+ *  Records where a member stands on a thread in Sensing or Proposal stage. */
+export const forumPerspectives = mysqlTable("forumPerspectives", {
+  id: int("id").autoincrement().primaryKey(),
+  threadId: int("threadId").notNull(),
+  userId: int("userId").notNull(),
+  perspective: mysqlEnum("perspective", [
+    "support",
+    "can_live_with",
+    "see_differently",
+    "need_to_understand",
+    "serious_concern",
+  ]).notNull(),
+  weight: double("weight").notNull().default(1.0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  threadUserUnique: unique("forumPerspectives_thread_user").on(t.threadId, t.userId),
+  threadIdIdx: index("forumPerspectives_threadId_idx").on(t.threadId),
+  userIdIdx: index("forumPerspectives_userId_idx").on(t.userId),
+}));
+export type ForumPerspective = typeof forumPerspectives.$inferSelect;
 
 /** Decisions that originated from a forum thread. One row per (thread, decision) pair. */
 export const forumPostDecisions = mysqlTable("forumPostDecisions", {

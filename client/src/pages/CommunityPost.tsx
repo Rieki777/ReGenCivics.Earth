@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ForumMarkdown, MarkdownHints } from "@/components/ForumMarkdown";
+import { ForumMarkdown } from "@/components/ForumMarkdown";
 import { MarkdownToolbar } from "@/components/MarkdownToolbar";
 import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
 import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
@@ -32,6 +32,8 @@ import { CitizenshipBadge } from "@/components/game/TierBadge";
 import { EmojiReactions } from "@/components/EmojiReactions";
 import { GratitudeButton } from "@/components/GratitudeButton";
 import { ForumThreadDecisionBanner } from "@/components/governance/ForumThreadDecisionBanner";
+import { GovernanceLifecycleStrip } from "@/components/governance/GovernanceLifecycleStrip";
+import { PerspectiveControl } from "@/components/governance/PerspectiveControl";
 import { PromotionModal } from "@/components/governance/PromotionModal";
 import { Vote } from "lucide-react";
 import ThreadRoots from "@/components/ThreadRoots";
@@ -601,6 +603,18 @@ export default function CommunityPost() {
             </div>
             )}
 
+            {/* Governance lifecycle strip — shows stage for all threads */}
+            <div className="px-4 md:px-6 pb-2 space-y-3">
+              <GovernanceLifecycleStrip
+                threadId={post.id}
+                governanceStage={(post as any).governanceStage}
+              />
+              {/* Perspective control — visible during Sensing and Proposal */}
+              {((post as any).governanceStage === "sensing" || (post as any).governanceStage === "proposal") && (
+                <PerspectiveControl threadId={post.id} />
+              )}
+            </div>
+
             {/* Living backlink banner: shows if this thread has been promoted to a Loomio decision */}
             <div className="px-4 md:px-6 pb-2">
               <ForumThreadDecisionBanner threadId={post.id} />
@@ -975,8 +989,7 @@ export default function CommunityPost() {
                 loading={replyLinkPreviewLoading}
               />
             )}
-            <div className="flex items-center justify-between">
-              <MarkdownHints />
+            <div className="flex justify-end">
               <Button
                 onClick={handleSubmitReply}
                 disabled={!replyContent.trim() || createReplyMutation.isPending}

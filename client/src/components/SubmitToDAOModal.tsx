@@ -8,12 +8,33 @@
  *
  * If they don't have a URL yet, we show an encouraging message and close.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { X, ExternalLink, Link2, Leaf, AlertCircle, LogIn } from "lucide-react";
+import { X, ExternalLink, Link2, Leaf, AlertCircle, LogIn, Video, FileText } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+
+type ArtifactType = "video" | "link";
+
+function detectArtifactType(url: string): ArtifactType {
+  const lower = url.toLowerCase();
+  if (
+    lower.includes("youtube.com") ||
+    lower.includes("youtu.be") ||
+    lower.includes("riverside.fm") ||
+    lower.includes("loom.com") ||
+    lower.includes("vimeo.com") ||
+    lower.includes("wistia.com") ||
+    lower.includes("/watch?") ||
+    lower.endsWith(".mp4") ||
+    lower.endsWith(".webm") ||
+    lower.endsWith(".mov")
+  ) {
+    return "video";
+  }
+  return "link";
+}
 
 interface SubmitToDAOModalProps {
   isOpen: boolean;
@@ -41,6 +62,9 @@ export function SubmitToDAOModal({
   const [url, setUrl] = useState("");
   const [touched, setTouched] = useState(false);
   const [noUrlYet, setNoUrlYet] = useState(false);
+  const [artifactType, setArtifactType] = useState<ArtifactType>("link");
+
+  const logCompletion = trpc.quest.logCompletion.useMutation();
 
   const createBridge = trpc.hyphaBridge.createFromQuest.useMutation({
     onSuccess(data) {
@@ -77,6 +101,13 @@ export function SubmitToDAOModal({
       return;
     }
 
+    logCompletion.mutate({
+      questId,
+      questTitle,
+      artifactType,
+      artifactUrl: url.trim(),
+      isPublic: true,
+    });
     createBridge.mutate({
       questId,
       questTitle,
@@ -171,7 +202,7 @@ export function SubmitToDAOModal({
                 <input
                   type="url"
                   value={url}
-                  onChange={(e) => { setUrl(e.target.value); setTouched(true); }}
+                  onChange={(e) => { const v = e.target.value; setUrl(v); setTouched(true); setArtifactType(detectArtifactType(v)); }}
                   placeholder="https://youtube.com/watch?v=..."
                   className={`w-full pl-9 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/40 transition-colors ${
                     showError
@@ -186,6 +217,33 @@ export function SubmitToDAOModal({
                   That doesn't look like a valid URL. Make sure it starts with https://
                 </p>
               )}
+
+              {/* Type selector — auto-detected, player can override */}
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs text-gray-500">Type:</span>
+                <button
+                  type="button"
+                  onClick={() => setArtifactType("video")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    artifactType === "video"
+                      ? "bg-[#1a472a] text-white border-[#1a472a]"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <Video className="w-3 h-3" /> Video
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setArtifactType("link")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    artifactType === "link"
+                      ? "bg-[#1a472a] text-white border-[#1a472a]"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <FileText className="w-3 h-3" /> Article
+                </button>
+              </div>
 
               <div className="mt-5 flex flex-col gap-2">
                 <button

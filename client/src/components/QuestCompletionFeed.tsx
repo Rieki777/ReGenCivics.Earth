@@ -166,8 +166,21 @@ function FeedCard({ entry, onOpen }: { entry: any; onOpen: (entry: any) => void 
             <p className="text-[#1a472a] font-semibold text-sm truncate">{name}</p>
             <p className="text-[#1a472a]/80 text-xs truncate">{entry.questTitle}</p>
           </div>
-          {isPhoto && <ImageIcon className="w-4 h-4 text-[#4a7c59]/60 flex-shrink-0" />}
-          {isVideo && <VideoIcon className="w-4 h-4 text-[#4a7c59]/60 flex-shrink-0" />}
+          {isVideo && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#4a7c59]/10 text-[#4a7c59] border border-[#4a7c59]/20 flex-shrink-0">
+              <VideoIcon className="w-3 h-3" /> Video
+            </span>
+          )}
+          {isPhoto && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#4a7c59]/10 text-[#4a7c59] border border-[#4a7c59]/20 flex-shrink-0">
+              <ImageIcon className="w-3 h-3" /> Photo
+            </span>
+          )}
+          {isLink && (
+            <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#4a7c59]/10 text-[#4a7c59] border border-[#4a7c59]/20 flex-shrink-0">
+              <ExternalLink className="w-3 h-3" /> Link
+            </span>
+          )}
         </div>
         {(entry.caption || (isText && entry.artifactText)) && !isText && (
           <p className="text-[#1a472a]/70 text-xs leading-relaxed line-clamp-3">

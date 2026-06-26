@@ -20,6 +20,8 @@ import { getDb } from "../db";
 import {
   forumPostDecisions,
   forumPromotionRequests,
+  forumReplies,
+  forumPosts,
   governanceAgreements,
   governanceTokenLedger,
   users,
@@ -28,6 +30,77 @@ import { bridgeToHypha } from "../lib/hypha-bridge";
 import { logger } from "../_core/logger";
 
 const log = logger("loomio-webhook");
+
+/**
+ * Post a templated bot receipt reply to a forum thread when a governance
+ * decision closes. Idempotent: keyed by a sentinel string in the reply body
+ * so re-fired webhooks do not double-post.
+ */
+async function postDecisionReceiptReply(
+  db: Awaited<ReturnType<typeof getDb>>,
+  {
+    threadId,
+    outcomeSummary,
+    ratified,
+    decisionUrl,
+    reversibility,
+    sunsetAt,
+    loomioPollKey,
+  }: {
+    threadId: number;
+    outcomeSummary?: string | null;
+    ratified: boolean;
+    decisionUrl?: string | null;
+    reversibility?: string | null;
+    sunsetAt?: Date | null;
+    loomioPollKey?: string | null;
+  }
+) {
+  if (!db) return;
+  // Idempotency: check if a receipt reply already exists for this poll
+  const sentinel = `[DecisionReceipt:${loomioPollKey ?? threadId}]`;
+  const existing = await db.execute(
+    sql`SELECT id FROM forumReplies WHERE postId = ${threadId} AND content LIKE ${`%${sentinel}%`} LIMIT 1`
+  );
+  if ((existing as any)[0]?.length > 0) {
+    log.info("receipt reply already posted, skipping", { threadId });
+    return;
+  }
+
+  // Find or fall back to proposer for the ReGen Guide system account
+  const guideRows = await db.select({ id: users.id }).from(users).where(eq(users.openId, "regen-guide-system")).limit(1);
+  const decisionRows = await db.select().from(forumPostDecisions).where(eq(forumPostDecisions.forumPostId, threadId)).limit(1);
+  const authorId = guideRows[0]?.id ?? decisionRows[0]?.proposerId ?? 1;
+
+  const outcomeLabel = ratified ? "Ratified" : "Not ratified";
+  const reversibilityLabel = reversibility === "one_way_door"
+    ? "One-way door (hard to undo)"
+    : reversibility === "semi_reversible"
+    ? "Semi-reversible"
+    : "Reversible";
+
+  const lines = [
+    `**[Governance receipt] ${outcomeLabel}**`,
+    "",
+    outcomeSummary ? `**What was decided:** ${outcomeSummary}` : "",
+    `**Reversibility:** ${reversibilityLabel}`,
+    sunsetAt ? `**Revisits on:** ${sunsetAt.toLocaleDateString()}` : "",
+    decisionUrl ? `[View the decision](${decisionUrl})` : "",
+    "",
+    `_This is an automated receipt. ${sentinel}_`,
+  ].filter((l) => l !== "").join("\n");
+
+  try {
+    await db.insert(forumReplies).values({
+      postId: threadId,
+      authorId,
+      content: lines,
+    } as any);
+    log.info("posted decision receipt reply", { threadId });
+  } catch (err) {
+    log.error("failed to post receipt reply", err);
+  }
+}
 
 const LOOMIO_HMAC_SECRET = process.env.LOOMIO_WEBHOOK_HMAC_SECRET ?? "";
 
@@ -114,6 +187,10 @@ async function handleLoomioEvent(event: LoomioEvent): Promise<{ ok: boolean; not
         proposerId: r.proposerId,
         coSignerId: r.coSignerId,
       } as any);
+      // Advance thread to proposal stage
+      await db.execute(
+        sql`UPDATE forumPosts SET governanceStage = 'proposal' WHERE id = ${event.forumThreadId}`
+      );
       return { ok: true };
     }
 
@@ -148,6 +225,20 @@ async function handleLoomioEvent(event: LoomioEvent): Promise<{ ok: boolean; not
           outcomeReasoning: event.outcomeReasoning ?? null,
         } as any)
         .where(eq(forumPostDecisions.loomioPollKey, event.pollKey));
+
+      // Mark forum thread as decided and post the receipt reply (Improvement 5)
+      await db.execute(
+        sql`UPDATE forumPosts SET governanceStage = 'decided' WHERE id = ${d.forumPostId}`
+      );
+      await postDecisionReceiptReply(db, {
+        threadId: d.forumPostId,
+        outcomeSummary: event.outcomeSummary,
+        ratified: !!event.ratified,
+        decisionUrl: event.decisionUrl,
+        reversibility: (d as any).reversibility,
+        sunsetAt: (d as any).sunsetAt ? new Date((d as any).sunsetAt as any) : null,
+        loomioPollKey: event.pollKey,
+      });
 
       // Storyteller check: if internal token value > storyteller_threshold_tokens
       if (event.tokenAmount) {
