@@ -162,12 +162,21 @@ interface ForumMarkdownProps {
 /**
  * Convert bare URLs to markdown links so they render as clickable links.
  * Skips URLs already inside a markdown link [text](url) or angle-bracket <url>.
+ *
+ * Uses a capture-group approach instead of a negative lookbehind because
+ * lookbehind (?<! ... ) was not supported in Safari until 16.4 (March 2023)
+ * and throws a SyntaxError at module-evaluation time on earlier iOS versions,
+ * which white-screens the forum for those users.
  */
 function linkifyBareUrls(text: string): string {
-  // Match bare URLs: http(s):// or www. not already inside []() or <>
+  // Capture the character before each URL. If it is "](" or "<" the URL
+  // is already inside a link construct, so re-emit it unchanged.
   return text.replace(
-    /(?<!\]\(|<)(https?:\/\/[^\s\)\]>]+)/g,
-    (url) => `[${url}](${url})`
+    /(]\(|<)?(https?:\/\/[^\s\)\]>]+)/g,
+    (_, prefix, url) => {
+      if (prefix) return prefix + url;
+      return `[${url}](${url})`;
+    }
   );
 }
 

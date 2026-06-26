@@ -20,6 +20,7 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { copyToClipboard } from "@/lib/clipboard";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -272,9 +273,8 @@ export default function CommunityPost() {
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    copyToClipboard(window.location.href).then((ok) => {
+      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
     });
   };
 

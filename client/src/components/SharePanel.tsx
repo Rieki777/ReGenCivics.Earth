@@ -3,6 +3,7 @@
  * Flips the card to reveal share options with a 3D CSS transform.
  */
 import { useState } from "react";
+import { copyToClipboard } from "@/lib/clipboard";
 import { X, Copy, Check, Share2 } from "lucide-react";
 import {
   XShareButton,
@@ -29,16 +30,14 @@ export function SharePanel({ questTitle, questTagline, forumUrl }: SharePanelPro
   const shareText = `${questTagline} Doing the "${questTitle}" quest at @ReGenCivics 🌿`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    copyToClipboard(shareUrl).then((ok) => {
+      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
     });
   };
 
   const handleCopyInstagram = () => {
-    navigator.clipboard.writeText(`${shareText} ${shareUrl}`).then(() => {
-      setCopiedText(true);
-      setTimeout(() => setCopiedText(false), 2000);
+    copyToClipboard(`${shareText} ${shareUrl}`).then((ok) => {
+      if (ok) { setCopiedText(true); setTimeout(() => setCopiedText(false), 2000); }
     });
   };
 

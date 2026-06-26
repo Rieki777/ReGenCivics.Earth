@@ -1056,6 +1056,10 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         globe.width(w);
         globe.height(h);
 
+        // Clamp DPR to 2 so the backing store stays inside iOS Safari's
+        // canvas memory limit on retina iPhones (DPR 3 = 9x the pixel count).
+        globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
         globeInstanceRef.current = globe;
         setGlobeReady(true);
 

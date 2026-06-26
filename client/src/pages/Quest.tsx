@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
+import { copyToClipboard } from "@/lib/clipboard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
@@ -129,9 +130,8 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    copyToClipboard(text).then((ok) => {
+      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
     });
   };
   

@@ -3,6 +3,7 @@
  * Used on the Team page for the 13 Infinite Game roles.
  */
 import { useState, useCallback } from "react";
+import { copyToClipboard } from "@/lib/clipboard";
 import { Copy, Check } from "lucide-react";
 import {
   Dialog,
@@ -89,9 +90,8 @@ function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    copyToClipboard(text).then((ok) => {
+      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
     });
   }, [text]);
 

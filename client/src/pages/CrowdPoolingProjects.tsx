@@ -29,6 +29,7 @@ import { pageCopy } from "@/data/pageCopy";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useState, useEffect, useRef, useCallback, lazy, Suspense, useMemo } from "react";
 import { toast } from "sonner";
+import { copyToClipboard } from "@/lib/clipboard";
 import { trpc } from "@/lib/trpc";
 import { BackButton } from "@/components/BackButton";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -569,9 +570,9 @@ function ProjectShareSheet({ project }: { project: typeof sampleProjects[0] }) {
   const shareText = `I'm contributing to ${project.name}. ${project.description} They're ${pct}% funded. ${url}`;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    copyToClipboard(url).then((ok) => {
+      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    });
   };
 
   const handleNativeShare = () => {
@@ -652,8 +653,9 @@ function RoleCard({
 
   const copyToProposal = () => {
     const data = { type: "role", roleName: role.title, weeks: role.weeks, hoursPerWeek: role.hoursPerWeek, hourlyRate: role.hourlyRate, totalValue: role.totalValue, project: projectName };
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    setCopied(true);
+    copyToClipboard(JSON.stringify(data, null, 2)).then((ok) => {
+      if (ok) setCopied(true);
+    });
     toast.success("Role copied to clipboard!", { description: "Paste this into the Crowd Pooling Tool to add to your proposal" });
     setTimeout(() => setCopied(false), 2000);
   };

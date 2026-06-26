@@ -12,6 +12,7 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { copyToClipboard } from "@/lib/clipboard";
 import { computeImpactSummaries } from "@/config/impactRules";
 import { Sparkline } from "@/components/simulator/Sparkline";
 import { Link } from "wouter";
@@ -751,7 +752,7 @@ function GameSimulator() {
   const copyPermalink = useCallback(() => {
     const hash = buildPermalinkHash();
     const url = window.location.origin + window.location.pathname + hash;
-    navigator.clipboard.writeText(url);
+    copyToClipboard(url);
     if (typeof window !== "undefined") window.history.replaceState(null, "", url);
     setCopyToast("Link copied");
     setTimeout(() => setCopyToast(null), 1500);
@@ -771,7 +772,7 @@ function GameSimulator() {
     }
     const link = window.location.origin + window.location.pathname + buildPermalinkHash();
     lines.push("", `Permalink: ${link}`);
-    navigator.clipboard.writeText(lines.join("\n"));
+    copyToClipboard(lines.join("\n"));
     setCopyToast("Markdown copied");
     setTimeout(() => setCopyToast(null), 1500);
   }, [sim, baseline, impactSummaries, buildPermalinkHash]);
@@ -1269,14 +1270,15 @@ function MiniSectionSimulator({
     lines.push("", "Rationale:");
     lines.push(`  ${rationale.trim() || "(add a rationale before posting)"}`);
     const text = lines.join("\n");
-    navigator.clipboard.writeText(text).then(
-      () => {
+    copyToClipboard(text).then((ok) => {
+      if (ok) {
         toast.success("Copied to clipboard", { description: "Paste into a forum post or Hypha proposal." });
         setCopied(text);
         setTimeout(() => setCopied(null), 2000);
-      },
-      () => toast.error("Copy failed"),
-    );
+      } else {
+        toast.error("Copy failed");
+      }
+    });
   }, [sectionTitle, variables, state, changedKeys, rationale, summary]);
 
   return (

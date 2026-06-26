@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { copyToClipboard } from "@/lib/clipboard";
 import { useParams, Link } from 'wouter';
 import {
   Calendar,
@@ -83,9 +84,9 @@ export default function EventDetail() {
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    copyToClipboard(window.location.href).then((ok) => {
+      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    });
   };
 
   const shareTwitter = () => {

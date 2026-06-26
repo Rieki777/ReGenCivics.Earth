@@ -210,7 +210,9 @@ export function AuthDialog({
                   }}
                   placeholder="you@example.com"
                   required
-                  className="w-full h-11 rounded-xl bg-[#1a472a]/40 border border-[#7dd87d]/20 text-white placeholder-white/55 px-4 text-sm focus:outline-none focus:border-[#7dd87d]/50"
+                  autoComplete="email"
+                  enterKeyHint="go"
+                  className="w-full h-11 rounded-xl bg-[#1a472a]/40 border border-[#7dd87d]/20 text-white placeholder-white/55 px-4 text-base md:text-sm focus:outline-none focus:border-[#7dd87d]/50"
                 />
                 {emailError && (
                   <p className="text-red-400 text-xs text-left">{emailError}</p>
