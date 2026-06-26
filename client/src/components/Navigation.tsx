@@ -35,6 +35,7 @@ import { cdnImg } from "@/lib/utils";
 import SmartBottomNav from "@/components/SmartBottomNav";
 import MobileTabBar from "@/components/mobile/MobileTabBar";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Prefetch a route chunk on hover  -  import() is cached by the module system
 const prefetch = (path: string) => {
@@ -656,6 +657,8 @@ export default function Navigation() {
           >
             <Search className="w-[22px] h-[22px]" />
           </button>
+
+          <ThemeToggle />
 
           {/* Mobile-only quick actions: Messages + Notifications.
               Both gated on auth so signed-out users don't see chrome that
