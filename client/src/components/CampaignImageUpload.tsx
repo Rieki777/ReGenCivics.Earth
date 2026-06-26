@@ -300,6 +300,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
                       onClick={() => handleSetCover(img.id)}
                       className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-white/80 text-[#1a472a] p-1.5 rounded-full hover:bg-white"
                       title="Set as cover image"
+                      aria-label="Set as cover image"
                     >
                       <StarOff className="w-3 h-3" />
                     </button>
@@ -310,6 +311,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
                     onClick={() => handleDelete(img.id)}
                     className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-red-500/80 text-white p-1.5 rounded-full hover:bg-red-600"
                     title="Remove image"
+                    aria-label="Remove image"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>

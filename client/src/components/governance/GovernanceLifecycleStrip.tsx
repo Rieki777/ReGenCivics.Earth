@@ -135,8 +135,14 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, onEnterSen
                 <span
                   className="text-[11px] text-white/50 bg-white/5 border border-white/10 rounded-full px-2.5 py-0.5"
                   title={REVERSIBILITY_LABELS[reversibility].tooltip}
+                  aria-label={`${REVERSIBILITY_LABELS[reversibility].label}: ${REVERSIBILITY_LABELS[reversibility].tooltip}`}
                 >
                   {REVERSIBILITY_LABELS[reversibility].label}
+                </span>
+              )}
+              {reversibility && REVERSIBILITY_LABELS[reversibility] && (
+                <span className="md:hidden text-[10px] text-white/40 w-full">
+                  {REVERSIBILITY_LABELS[reversibility].tooltip}
                 </span>
               )}
               {sunsetAt && (

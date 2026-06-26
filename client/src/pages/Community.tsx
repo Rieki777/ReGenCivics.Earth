@@ -686,6 +686,7 @@ export default function Community() {
                                   onClick={() => { setEditingCategoryId(category.id); setEditCategoryName(category.name); setEditCategoryDesc(category.description || ""); }}
                                   className="p-1 rounded hover:bg-[#f0f7f0] text-[#4a7c59]/60 hover:text-[#4a7c59] transition-colors"
                                   title="Edit category"
+                                  aria-label="Edit category"
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>

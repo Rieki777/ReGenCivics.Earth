@@ -2191,6 +2191,24 @@
   }
 }
 
+/* 22a. STICKY-HOVER FIX.
+   On touch-primary devices (hover:none) iOS keeps :hover active after a tap
+   until the next touch lands elsewhere, making cards appear permanently
+   elevated. Resetting to initial prevents that. The reduced-motion block
+   above already strips transform-based effects; this catches the rest. */
+@media (hover: none) {
+  .game-card:hover,
+  .btn-game:hover,
+  .hover-lift:hover,
+  .hover-scale:hover,
+  .hover-glow:hover,
+  .glass-panel-interactive:hover,
+  .card-tilt:hover {
+    transform: none;
+    box-shadow: revert;
+  }
+}
+
 /* 22. IMAGE BLUR-UP. Apply .blur-up to <img>, then JS adds
    .blur-up-loaded once the image fires its load event. */
 .blur-up {

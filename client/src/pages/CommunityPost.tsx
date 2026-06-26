@@ -492,6 +492,7 @@ export default function CommunityPost() {
                       onClick={() => setShowFlagMenu(!showFlagMenu)}
                       className="flex items-center gap-1 text-[#1a472a]/75 hover:text-amber-500 p-1 transition-colors"
                       title="Flag this content"
+                      aria-label="Flag this content"
                     >
                       <Flag className="w-3.5 h-3.5" />
                     </button>
@@ -530,6 +531,7 @@ export default function CommunityPost() {
                     onClick={() => { setEditTitle(post.title); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
                     className="text-[#4a7c59] hover:text-[#1a472a] p-1 transition-colors"
                     title="Edit post"
+                    aria-label="Edit post"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
@@ -539,6 +541,7 @@ export default function CommunityPost() {
                     onClick={() => setDeleteTarget({ type: 'post', id: post.id })}
                     className="text-red-400 hover:text-red-600 p-1 transition-colors"
                     title="Delete post"
+                    aria-label="Delete post"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -885,6 +888,7 @@ export default function CommunityPost() {
                                 onClick={() => setShowReplyFlagMenu(showReplyFlagMenu === reply.id ? null : reply.id)}
                                 className="text-[#1a472a]/20 hover:text-amber-500 text-xs flex items-center gap-1 transition-colors"
                                 title="Flag this reply"
+                                aria-label="Flag this reply"
                               >
                                 <Flag className="w-3 h-3" />
                               </button>

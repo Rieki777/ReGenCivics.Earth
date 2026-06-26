@@ -881,12 +881,16 @@ export default function Apply() {
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
                   <Label className="text-base font-semibold text-[#1a472a]">Dietary Patterns</Label>
-                  <div className="group relative cursor-help">
+                  <button
+                    type="button"
+                    aria-label="Dietary pattern info"
+                    className="group relative cursor-help focus:outline-none"
+                  >
                     <HelpCircle className="w-4 h-4 text-[#1a472a]/80 mt-0.5" />
-                    <div className="absolute left-0 bottom-full mb-2 w-64 bg-[#1a472a] text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
-                      Dietary alignment matters for community cohesion. Shared meals are central to regenerative living  -  knowing the community's dietary culture helps prospective members assess fit before applying.
+                    <div className="absolute left-0 bottom-full mb-2 w-64 bg-[#1a472a] text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-10 shadow-lg pointer-events-none">
+                      Dietary alignment matters for community cohesion. Shared meals are central to regenerative living. Knowing the community's dietary culture helps prospective members assess fit before applying.
                     </div>
-                  </div>
+                  </button>
                 </div>
                 <p className="text-sm text-[#1a472a]/80">Select all that apply to your community. This helps prospective members find aligned communities.</p>
                 <div className="grid grid-cols-2 gap-2">
