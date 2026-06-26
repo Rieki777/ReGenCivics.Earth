@@ -348,7 +348,7 @@ export default function Community() {
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Start a Discussion
+                Start a Dialogue
               </Button>
             ) : (
               <Button
@@ -603,12 +603,12 @@ export default function Community() {
                 <Trees className="w-16 h-16 text-[#7dd87d]/75 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[#1a472a] mb-2">The forest is quiet here</h3>
                 <p className="text-[#1a472a]/80 mb-4">
-                  {searchQuery ? 'No discussions match your search yet. Be the first to start one.' : 'No categories yet. Check back soon!'}
+                  {searchQuery ? 'No dialogues match your search yet. Be the first to start one.' : 'No categories yet. Check back soon!'}
                 </p>
                 {searchQuery && (
                   isAuthenticated ? (
                     <Link href="/community/new">
-                      <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">Start a Discussion</Button>
+                      <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">Start a Dialogue</Button>
                     </Link>
                   ) : (
                     <Button onClick={() => window.location.href = getLoginUrl()} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">

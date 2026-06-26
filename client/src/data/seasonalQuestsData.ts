@@ -239,7 +239,7 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     tagline: "The stories we tell about reality shape the reality we live in.",
     description:
       "Read The Fifth Agreement by Don Miguel Ruiz and Don Jose Ruiz. This book extends the Four Agreements into a full manual for breaking old agreements about reality and making new ones. Join the monthly book club on the forum. After reading and putting the lessons into practice, share your perspective as an article, video, or voice recording.",
-    deliverable: "A reflection shared with the community: what you want others in this game to understand from your reading.",
+    deliverable: "A reflection shared with the community: what you want others in this Game to understand from your reading.",
     estimatedTime: "2-4 weeks reading, ongoing practice",
     element: "air",
     reward: { regen: 99, rvoice: 1 },

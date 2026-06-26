@@ -14,9 +14,11 @@ interface QuestCarouselProps {
   children: React.ReactNode[];
   /** Show a "see all" count badge */
   totalCount?: number;
+  /** Color to blend into at carousel edges — match the section background */
+  fadeColor?: string;
 }
 
-export function QuestCarousel({ children, totalCount }: QuestCarouselProps) {
+export function QuestCarousel({ children, totalCount, fadeColor = "#f0ebe3" }: QuestCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -127,10 +129,16 @@ export function QuestCarousel({ children, totalCount }: QuestCarouselProps) {
 
       {/* Fade edges to hint at more content */}
       {canScrollLeft && (
-        <div className="absolute left-0 top-0 bottom-4 w-8 md:w-16 bg-gradient-to-r from-[#f0ebe3] to-transparent pointer-events-none z-[5] hidden md:block" />
+        <div
+          className="absolute left-0 top-0 bottom-4 w-8 md:w-16 pointer-events-none z-[5] hidden md:block"
+          style={{ background: `linear-gradient(to right, ${fadeColor}, transparent)` }}
+        />
       )}
       {canScrollRight && (
-        <div className="absolute right-0 top-0 bottom-4 w-8 md:w-16 bg-gradient-to-l from-[#f0ebe3] to-transparent pointer-events-none z-[5] hidden md:block" />
+        <div
+          className="absolute right-0 top-0 bottom-4 w-8 md:w-16 pointer-events-none z-[5] hidden md:block"
+          style={{ background: `linear-gradient(to left, ${fadeColor}, transparent)` }}
+        />
       )}
     </div>
   );

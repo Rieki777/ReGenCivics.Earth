@@ -49,7 +49,7 @@ const TAG_STYLES: Record<string, { label: string; color: string; bg: string }> =
 const POST_TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   case_study: { label: "Case Study", color: "#92400e", bg: "#f0ebe3" },
   seeking_team: { label: "Seeking Team", color: "#5b21b6", bg: "#ede9fe" },
-  discussion: { label: "Discussion", color: "#1a472a", bg: "#f0f7f0" },
+  discussion: { label: "Dialogue", color: "#1a472a", bg: "#f0f7f0" },
 };
 
 const THREAD_STAGE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
@@ -125,7 +125,7 @@ export default function CommunityCategory() {
             Join to participate in this forum
           </h2>
           <p className="text-white/60 text-sm">
-            Create a free account to read and reply to forum discussions, share your land project, and connect with the ReGen Civics community.
+            Create a free account to read and reply to forum dialogues, share your land project, and connect with the ReGen Civics community.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <button
@@ -167,7 +167,7 @@ export default function CommunityCategory() {
             Category Not Found
           </h2>
           <p className="text-[#1a472a]/80 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
-            This discussion topic doesn't exist.
+            This dialogue topic doesn't exist.
           </p>
           <Link href="/community">
             <Button variant="outline" className="border-[#4a7c59] text-[#4a7c59]">

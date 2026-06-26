@@ -137,7 +137,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
             <div>
               <h3 className="text-2xl font-bold text-purple-400 mb-2">RGVoice: Game Governance</h3>
               <p className="text-white/80 leading-relaxed">
-                In the ReGen Game, RGVoice works differently. It is earned through completing quests and contributing to the game ecosystem. Voice decays 3% monthly, ensuring governance always stays with those who are currently active and engaged.
+                In the ReGen Game, RGVoice works differently. It is earned through completing quests and contributing to the Game ecosystem. Voice decays 3% monthly, ensuring governance always stays with those who are currently active and engaged.
               </p>
             </div>
           </div>

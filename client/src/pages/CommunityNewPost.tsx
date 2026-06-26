@@ -236,7 +236,7 @@ export default function CommunityNewPost() {
             className="text-2xl md:text-3xl font-bold text-white"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Start a Discussion
+            Start a Dialogue
           </h1>
           <p className="text-white/85 text-sm mt-1" style={{ fontFamily: 'var(--font-body)' }}>
             Share your ideas, questions, or experiences with the community
@@ -281,7 +281,7 @@ export default function CommunityNewPost() {
             </Label>
             <div className="flex flex-wrap gap-2">
               {([
-                { value: "discussion", label: "Discussion" },
+                { value: "discussion", label: "Dialogue" },
                 { value: "case_study", label: "Case Study" },
                 { value: "seeking_team", label: "Seeking Team" },
               ] as { value: PostType; label: string }[]).map(opt => (

@@ -162,7 +162,7 @@ Season 1 was as much about learning as it was about doing. We discovered that di
 
 Many Season 1 projects continue to thrive today. Some have become mentors for newer projects. All of them contributed to the collective wisdom that now informs ReGen Civics.
 
-To all the Season 1 land stewards: thank you for being the first to play this game with us.`,
+To all the Season 1 land stewards: thank you for being the first to play this Game with us.`,
     author: 'ReGen Civics Team',
     date: 'Jan 30, 2025',
     readTime: '1 hr 22 min watch',

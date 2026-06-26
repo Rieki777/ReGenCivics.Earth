@@ -373,7 +373,7 @@ export default function CommunityPost() {
             Thread Not Found
           </h2>
           <p className="text-white/65 mb-4" style={{ fontFamily: 'var(--font-body)' }}>
-            This discussion thread doesn't exist or has been removed.
+            This dialogue thread doesn't exist or has been removed.
           </p>
           <Link href="/community">
             <Button variant="outline" className="border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10">

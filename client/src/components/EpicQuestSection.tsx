@@ -309,7 +309,7 @@ export function EpicQuestSection() {
               </a>
             </div>
           ) : (
-            <QuestCarousel totalCount={reveal.visible.length + reveal.locked.length}>
+            <QuestCarousel totalCount={reveal.visible.length + reveal.locked.length} fadeColor="#0a1f0f">
               {reveal.visible.map((quest, i) => (
                 <div
                   key={quest.id}

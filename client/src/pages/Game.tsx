@@ -326,7 +326,7 @@ export default function Game() {
 
             {/* Teaser line */}
             <p className="text-lg text-[#1a472a]/80 leading-relaxed mb-4">
-              One simple way to describe what's happening here is "we're co-creating an infinite game to do the thing" - which of course we'll need to explain each part of this...
+              One simple way to describe what's happening here is "we're co-creating an Infinite Game to do the thing" - which of course we'll need to explain each part of this...
             </p>
 
             {/* Collapsible body */}
@@ -1708,7 +1708,7 @@ export default function Game() {
                 <CollapsibleContent>
                   <div className="bg-white border-2 border-t-0 border-[#7dd87d]/50 rounded-b-2xl p-5 -mt-1">
                     <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">
-                      The ReGen Token represents a share of the regenerative economy. It is earned through verified contributions to land projects, the community, and the game. It can be used to participate in fund distributions as the ecosystem grows.
+                      The ReGen Token represents a share of the regenerative economy. It is earned through verified contributions to land projects, the community, and the Game. It can be used to participate in fund distributions as the ecosystem grows.
                     </p>
                     <ul className="space-y-2">
                       <li className="flex items-start gap-2 text-sm text-[#1a472a]/70">

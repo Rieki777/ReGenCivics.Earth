@@ -201,7 +201,7 @@ function TokenSystemCollapsible() {
                 </h3>
               </div>
               <p className="text-white/70 text-base leading-relaxed">
-                Our in-game currency earned through every action in the game. Trade them, spend them in the bioregional marketplace, or use them to access premium game features. These tokens flow through the regenerative economy.
+                Our in-game currency earned through every action in the Game. Trade them, spend them in the bioregional marketplace, or use them to access premium game features. These tokens flow through the regenerative economy.
               </p>
               <Link href="/tokenomics" className="inline-block mt-3 text-[#7dd87d] hover:text-white underline text-sm">Explore tokenomics →</Link>
             </div>
@@ -219,7 +219,7 @@ function TokenSystemCollapsible() {
                 </h3>
               </div>
               <p className="text-white/70 text-base leading-relaxed">
-                1 RGVoice token for each action. These represent your governance voice in the ReGen Civics ecosystem. They give you voting power on fund allocation, project selection, alliance governance, and the evolution of the game itself.
+                1 RGVoice token for each action. These represent your governance voice in the ReGen Civics ecosystem. They give you voting power on fund allocation, project selection, alliance governance, and the evolution of the Game itself.
               </p>
               <Link href="/governance" className="inline-block mt-3 text-[#7dd87d] hover:text-white underline text-sm">Explore governance →</Link>
             </div>

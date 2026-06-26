@@ -54,7 +54,7 @@ export const pageCopy = {
     ],
     submit: {
       heading: "Ready to Submit Your Contribution?",
-      body: "Take your project contributions straight to the project's during their Crowd Pooling game.",
+      body: "Take your project contributions straight to the project's during their Crowd Pooling Game.",
       submitLabel: "Submit Proposal to Projects",
       viewProjectsLabel: "View Projects Crowd Pooling",
       footer: "Click \"View Projects Actively Crowd Pooling\" to see the list of projects currently accepting contributions",
