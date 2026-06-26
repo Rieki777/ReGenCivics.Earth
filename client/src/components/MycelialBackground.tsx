@@ -9,7 +9,8 @@
  */
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
-const blurStyle = { filter: 'blur(1.5px)' };
+const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
+const blurStyle = isMobileViewport ? {} : { filter: 'blur(1.5px)' };
 
 export function MycelialBackground() {
   const skipAnim = useReducedMotion();

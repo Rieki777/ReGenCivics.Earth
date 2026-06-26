@@ -101,7 +101,9 @@ export default function Checkin() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/60"
-                    autoFocus
+                    autoComplete="email"
+                    inputMode="email"
+                    enterKeyHint="go"
                   />
                 </div>
 

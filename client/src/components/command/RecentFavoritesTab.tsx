@@ -11,11 +11,11 @@ export function RecentFavoritesTab() {
     <div className="space-y-3 py-2">
       {/* Favorites section */}
       <div>
-        <h3 className="text-[10px] uppercase tracking-wider text-white/40 mb-1.5 flex items-center gap-1.5">
+        <h3 className="text-[10px] uppercase tracking-wider text-white/60 mb-1.5 flex items-center gap-1.5">
           <Star className="w-3 h-3" /> Favorites
         </h3>
         {favorites.length === 0 ? (
-          <p className="text-[11px] text-white/30 pl-4">No favorites yet. Star a recent page below.</p>
+          <p className="text-[11px] text-white/50 pl-4">No favorites yet. Star a recent page below.</p>
         ) : (
           <ul className="space-y-0.5">
             {favorites.map(fav => (
@@ -41,11 +41,11 @@ export function RecentFavoritesTab() {
 
       {/* Recent section */}
       <div>
-        <h3 className="text-[10px] uppercase tracking-wider text-white/40 mb-1.5 flex items-center gap-1.5">
+        <h3 className="text-[10px] uppercase tracking-wider text-white/60 mb-1.5 flex items-center gap-1.5">
           <Clock className="w-3 h-3" /> Recent
         </h3>
         {recentPages.length === 0 ? (
-          <p className="text-[11px] text-white/30 pl-4">No recent pages yet.</p>
+          <p className="text-[11px] text-white/50 pl-4">No recent pages yet.</p>
         ) : (
           <ul className="space-y-0.5">
             {recentPages.map(page => (

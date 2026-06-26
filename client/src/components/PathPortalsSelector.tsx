@@ -152,7 +152,7 @@ function Portal({ portal, declared, active, shimmerDelay, shimmered, onClick }: 
         {portal.label}
       </div>
       {!declared && (
-        <div className="text-[9px] text-white/30 mt-0.5">tap to add</div>
+        <div className="text-[10px] text-white/50 mt-0.5">tap to add</div>
       )}
     </button>
   );

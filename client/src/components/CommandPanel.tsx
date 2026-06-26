@@ -163,7 +163,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
                   ))}
                 </div>
               ) : (
-                <p className="text-[11px] text-white/30 text-center py-4">No page-specific tools on this page.</p>
+                <p className="text-[11px] text-white/50 text-center py-4">No page-specific tools on this page.</p>
               )}
 
               {/* Guide + Proposals + Search quick buttons */}

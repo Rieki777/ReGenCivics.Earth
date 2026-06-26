@@ -10,6 +10,8 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 
+const particleScale = typeof window !== "undefined" && window.innerWidth < 768 ? 1 / 3 : 1;
+
 // ─── Theme Animation Types ───────────────────────────────────────────────
 export type PageTheme =
   | "forest"
@@ -74,7 +76,7 @@ interface PageBackgroundProps {
 
 function ForestParticles() {
   const [particles] = useState(() =>
-    Array.from({ length: 30 }, (_, i) => ({
+    Array.from({ length: Math.round(30 * particleScale) }, (_, i) => ({
       id: i,
       type: i < 15 ? "firefly" : "leaf",
       left: Math.random() * 100,
@@ -176,7 +178,7 @@ function LeavesOnlyParticles() {
 
 function OceanParticles() {
   const [particles] = useState(() =>
-    Array.from({ length: 25 }, (_, i) => ({
+    Array.from({ length: Math.round(25 * particleScale) }, (_, i) => ({
       id: i,
       type: i < 10 ? "lightray" : i < 18 ? "fish" : "bubble-tiny",
       left: Math.random() * 100,
@@ -248,7 +250,7 @@ function OceanParticles() {
 
 function GardenParticles() {
   const [particles] = useState(() =>
-    Array.from({ length: 25 }, (_, i) => ({
+    Array.from({ length: Math.round(25 * particleScale) }, (_, i) => ({
       id: i,
       type: i < 12 ? "butterfly" : "pollen",
       left: Math.random() * 100,
@@ -306,7 +308,7 @@ function GardenParticles() {
 
 function SkyParticles() {
   const [particles] = useState(() =>
-    Array.from({ length: 20 }, (_, i) => ({
+    Array.from({ length: Math.round(20 * particleScale) }, (_, i) => ({
       id: i,
       type: i < 10 ? "cloud" : "energy",
       left: Math.random() * 100,
@@ -362,7 +364,7 @@ function SkyParticles() {
 
 function MagicParticles() {
   const [particles] = useState(() =>
-    Array.from({ length: 30 }, (_, i) => ({
+    Array.from({ length: Math.round(30 * particleScale) }, (_, i) => ({
       id: i,
       type: i < 15 ? "sparkle" : "magic-trail",
       left: Math.random() * 100,
@@ -423,7 +425,7 @@ function MagicParticles() {
 // shooting-star streaks (rare, bright moments).
 function CosmosParticles() {
   const [particles] = useState(() =>
-    Array.from({ length: 26 }, (_, i) => ({
+    Array.from({ length: Math.round(26 * particleScale) }, (_, i) => ({
       id: i,
       // 20 twinkles (ambient), 6 shooting stars (moments). Comet count cut
       // roughly in half so the sky mostly twinkles with occasional streaks.

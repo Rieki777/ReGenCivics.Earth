@@ -710,7 +710,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                             }
                           }}
                           disabled={deleteMessage.isPending}
-                          className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1.5 rounded-full bg-[#f0ebe3] border border-[#1a472a]/20 text-[#1a472a] hover:text-red-600 shadow-sm"
+                          className="absolute -top-2 -right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 transition-opacity p-1.5 rounded-full bg-[#f0ebe3] border border-[#1a472a]/20 text-[#1a472a] hover:text-red-600 shadow-sm"
                           aria-label="Delete message"
                           title="Delete message"
                         >
@@ -889,7 +889,7 @@ export default function Messages() {
     const showThread = selectedConversationId !== null;
 
     return (
-      <div className="h-screen bg-[#f0ebe3] flex flex-col overflow-hidden">
+      <div className="h-dvh bg-[#f0ebe3] flex flex-col overflow-hidden">
         <SEO {...pageSEO.messages} />
         {showCompose && (
           <ComposeModal
@@ -921,7 +921,7 @@ export default function Messages() {
 
   // ── Desktop split layout ───────────────────────────────────────────────────
   return (
-    <div className="h-screen bg-[#f0ebe3] flex overflow-hidden">
+    <div className="h-dvh bg-[#f0ebe3] flex overflow-hidden">
       {showCompose && (
         <ComposeModal
           onClose={() => setShowCompose(false)}

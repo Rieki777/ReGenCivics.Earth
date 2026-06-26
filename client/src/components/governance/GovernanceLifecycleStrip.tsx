@@ -112,7 +112,7 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, onEnterSen
               >
                 <p
                   className={`text-xs font-semibold ${
-                    isActive ? "text-[#7dd87d]" : isPast ? "text-white/60" : "text-white/30"
+                    isActive ? "text-[#7dd87d]" : isPast ? "text-white/60" : "text-white/50"
                   }`}
                 >
                   {cfg.label}
@@ -133,7 +133,7 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, onEnterSen
             <div className="flex flex-wrap gap-3 mt-2">
               {reversibility && REVERSIBILITY_LABELS[reversibility] && (
                 <span
-                  className="text-[11px] text-white/50 bg-white/5 border border-white/10 rounded-full px-2.5 py-0.5"
+                  className="text-[11px] text-white/70 bg-white/5 border border-white/10 rounded-full px-2.5 py-0.5"
                   title={REVERSIBILITY_LABELS[reversibility].tooltip}
                   aria-label={`${REVERSIBILITY_LABELS[reversibility].label}: ${REVERSIBILITY_LABELS[reversibility].tooltip}`}
                 >

@@ -807,7 +807,7 @@ function ProjectDetailModal({
               {project.overviewVideoUrl && videoPlaying && (
                 <iframe
                   className="absolute inset-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${project.overviewVideoUrl.split("youtu.be/").pop()?.split("?")[0] || project.overviewVideoUrl.split("v=")[1]?.split("&")[0]}?autoplay=1`}
+                  src={`https://www.youtube.com/embed/${project.overviewVideoUrl.split("youtu.be/").pop()?.split("?")[0] || project.overviewVideoUrl.split("v=")[1]?.split("&")[0]}?autoplay=1&playsinline=1`}
                   allow="autoplay; fullscreen"
                   title={project.name}
                 />
@@ -1055,7 +1055,7 @@ function HowCrowdPoolingWorks() {
             ) : (
               <iframe
                 className="w-full h-full"
-                src={`https://www.youtube.com/embed/${YT_ID}?autoplay=1`}
+                src={`https://www.youtube.com/embed/${YT_ID}?autoplay=1&playsinline=1`}
                 title="Crowd Pooling Explainer"
                 allow="autoplay; fullscreen"
               />

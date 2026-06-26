@@ -566,7 +566,7 @@ export default function PlaySubmit() {
                   {pricingModel === "paid" && (
                     <div className="mt-3 space-y-3 pl-2 border-l-2 border-[#7dd87d]/30">
                       <div>
-                        <label className="block text-white/50 text-xs mb-1">
+                        <label className="block text-white/70 text-xs mb-1">
                           Price in $REGEN tokens
                         </label>
                         <Input
@@ -584,7 +584,7 @@ export default function PlaySubmit() {
                         />
                       </div>
                       <div>
-                        <label className="block text-white/50 text-xs mb-1">
+                        <label className="block text-white/70 text-xs mb-1">
                           External payment URL
                         </label>
                         <Input
@@ -597,7 +597,7 @@ export default function PlaySubmit() {
                         />
                       </div>
                       <div>
-                        <label className="block text-white/50 text-xs mb-1">
+                        <label className="block text-white/70 text-xs mb-1">
                           Price label (shown to visitors)
                         </label>
                         <Input
@@ -682,7 +682,7 @@ export default function PlaySubmit() {
                       {name || "Untitled Play"}
                     </h3>
                     {creatorProjectName && (
-                      <p className="text-white/50 text-xs mb-2">
+                      <p className="text-white/70 text-xs mb-2">
                         by {creatorProjectName}
                       </p>
                     )}

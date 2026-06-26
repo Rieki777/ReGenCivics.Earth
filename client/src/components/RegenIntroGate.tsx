@@ -61,7 +61,7 @@ export function RegenIntroGate() {
               <iframe
                 width="100%"
                 height="100%"
-                src={`https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1&rel=0`}
+                src={`https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1&rel=0&playsinline=1`}
                 title="What is Regeneration?"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -278,7 +278,7 @@ export default function PlaysLibrary() {
                         {play.categories.slice(0, 3).map((cat: any) => (
                           <span
                             key={cat.slug}
-                            className="px-2 py-0.5 rounded-full text-xs bg-white/5 text-white/50 border border-white/10"
+                            className="px-2 py-0.5 rounded-full text-xs bg-white/5 text-white/70 border border-white/10"
                           >
                             {cat.name}
                           </span>
@@ -287,10 +287,10 @@ export default function PlaysLibrary() {
                     )}
                     {/* Footer */}
                     <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/10">
-                      <span className="text-white/40 text-xs">
+                      <span className="text-white/60 text-xs">
                         {play.totalAdoptions || 0} adopted
                       </span>
-                      <span className="text-white/40 text-xs">
+                      <span className="text-white/60 text-xs">
                         {play.totalViews || 0} views
                       </span>
                     </div>

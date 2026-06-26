@@ -156,7 +156,7 @@ export function PerspectiveControl({ threadId }: Props) {
                 )}
               </span>
               {count > 0 && (
-                <span className="text-[11px] text-white/40 flex-shrink-0">{count}</span>
+                <span className="text-[11px] text-white/60 flex-shrink-0">{count}</span>
               )}
             </button>
           );

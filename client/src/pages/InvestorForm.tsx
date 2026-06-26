@@ -574,6 +574,9 @@ export default function InvestorForm() {
                           onChange={(e) => updateField("email", e.target.value)}
                           placeholder="your@email.com"
                           className="border-2 border-[#1a472a]/20 focus:border-[#7dd87d]"
+                          autoComplete="email"
+                          inputMode="email"
+                          enterKeyHint="next"
                         />
                       </div>
                     </div>
@@ -590,6 +593,9 @@ export default function InvestorForm() {
                           onChange={(e) => updateField("phone", e.target.value)}
                           placeholder="+1 (555) 123-4567"
                           className="border-2 border-[#1a472a]/20 focus:border-[#7dd87d]"
+                          autoComplete="tel"
+                          inputMode="tel"
+                          enterKeyHint="next"
                         />
                       </div>
                       <div className="space-y-2">

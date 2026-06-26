@@ -104,6 +104,7 @@ export function QuestCarousel({ children, totalCount, fadeColor = "#f0ebe3" }: Q
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-x',
         }}
       >
         <style>{`

@@ -230,10 +230,10 @@ export function MarkCompleteButton({ questId, size = "sm" }: { questId: string; 
         }}
         className={`flex items-center ${sizeClasses} bg-[#7dd87d]/20 text-[#4a7c59] rounded-full font-semibold border-2 border-[#7dd87d] hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors group`}
       >
-        <CheckCircle2 className="w-4 h-4 group-hover:hidden" />
-        <X className="w-4 h-4 hidden group-hover:block" />
-        <span className="group-hover:hidden">Completed ({count}x)</span>
-        <span className="hidden group-hover:block">Reset</span>
+        <CheckCircle2 className="w-4 h-4 hidden md:block md:group-hover:hidden" />
+        <X className="w-4 h-4 block md:hidden md:group-hover:block" />
+        <span className="hidden md:block md:group-hover:hidden">Completed ({count}x)</span>
+        <span className="block md:hidden md:group-hover:block">Reset</span>
       </button>
     );
   }

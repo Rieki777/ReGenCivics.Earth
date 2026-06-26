@@ -81,7 +81,7 @@ function PlaySection({
               {content}
             </div>
           ) : (
-            <p className="text-white/40 text-sm italic pt-4">
+            <p className="text-white/60 text-sm italic pt-4">
               This section has not been filled in yet.
             </p>
           )}

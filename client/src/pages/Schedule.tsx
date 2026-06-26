@@ -1009,7 +1009,9 @@ export default function Schedule() {
                               onChange={(e) => setReminderEmail(e.target.value)}
                               onKeyDown={(e) => e.key === 'Enter' && submitReminder(event)}
                               className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-[#7dd87d]/60"
-                              autoFocus
+                              autoComplete="email"
+                              inputMode="email"
+                              enterKeyHint="go"
                             />
                             <button
                               onClick={() => submitReminder(event)}
@@ -1032,6 +1034,9 @@ export default function Schedule() {
                             value={reminderPhone}
                             onChange={(e) => setReminderPhone(e.target.value)}
                             className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-white/55 text-xs focus:outline-none focus:border-[#7dd87d]/40"
+                            autoComplete="tel"
+                            inputMode="tel"
+                            enterKeyHint="go"
                           />
                         </div>
                       ) : (
@@ -1066,6 +1071,9 @@ export default function Schedule() {
                               value={agendaEmail}
                               onChange={(e) => setAgendaEmail(e.target.value)}
                               className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-purple-400/60"
+                              autoComplete="email"
+                              inputMode="email"
+                              enterKeyHint="go"
                             />
                             <button
                               onClick={() => submitAgenda(event.id)}

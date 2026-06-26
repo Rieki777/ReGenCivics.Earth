@@ -184,6 +184,9 @@ export default function LOI() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
+                    autoComplete="email"
+                    inputMode="email"
+                    enterKeyHint="next"
                   />
                 </div>
 
@@ -196,6 +199,9 @@ export default function LOI() {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
+                    autoComplete="tel"
+                    inputMode="tel"
+                    enterKeyHint="next"
                   />
                 </div>
 

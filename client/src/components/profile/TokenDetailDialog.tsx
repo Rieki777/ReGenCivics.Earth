@@ -286,7 +286,7 @@ export function TokenDetailDialog({
                       {e.description && (
                         <p className="text-[11px] text-white/70 truncate">{e.description}</p>
                       )}
-                      <p className="text-[10px] text-white/40 mt-0.5">
+                      <p className="text-[10px] text-white/60 mt-0.5">
                         {new Date(e.createdAt).toLocaleDateString()}
                       </p>
                     </div>

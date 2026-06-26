@@ -2264,7 +2264,7 @@ function ContributionsTab({
                       <button
                         onClick={() => deleteMutation.mutate({ id: item.id })}
                         disabled={deleteMutation.isPending}
-                        className="opacity-0 group-hover/row:opacity-100 text-white/70 hover:text-red-400 transition-all p-1 shrink-0"
+                        className="opacity-100 md:opacity-0 md:group-hover/row:opacity-100 text-white/70 hover:text-red-400 transition-all p-1 shrink-0"
                         aria-label="Delete contribution"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

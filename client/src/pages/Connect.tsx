@@ -1289,6 +1289,9 @@ export default function Connect() {
                     placeholder="your@email.com"
                     className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]"
                     required
+                    autoComplete="email"
+                    inputMode="email"
+                    enterKeyHint="go"
                   />
                 </div>
 
