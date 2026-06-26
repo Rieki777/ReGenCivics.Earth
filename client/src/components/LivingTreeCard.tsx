@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { LivingTree, type CapitalScores } from "@/components/LivingTree";
+import { LivingTreeV2, type CapitalScores } from "@/components/LivingTreeV2";
 import { TreeDeciduous, X } from "lucide-react";
 
 const CAPITAL_KEYS: (keyof CapitalScores)[] = [
@@ -88,7 +88,7 @@ export function LivingTreeCard() {
                 className="w-full max-w-[320px] hover:scale-[1.02] transition-transform"
                 aria-label="Open Living Tree detail"
               >
-                <LivingTree
+                <LivingTreeV2
                   capitalScores={scores}
                   seasonsCompleted={seasonsCompleted}
                   totalContributionScore={total}
@@ -179,13 +179,14 @@ export function LivingTreeCard() {
                       background: "radial-gradient(ellipse at center, rgba(255, 220, 130, 0.55) 0%, rgba(255, 220, 130, 0) 70%)",
                     }}
                   />
-                  <LivingTree
+                  <LivingTreeV2
                     capitalScores={scores}
                     seasonsCompleted={seasonsCompleted}
                     totalContributionScore={total}
                     currentSeasonActions={Math.min(total, 16)}
                     width={320}
                     height={440}
+                    showRootLabels
                   />
                 </div>
                 <div className="space-y-2">

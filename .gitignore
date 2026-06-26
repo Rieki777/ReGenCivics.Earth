@@ -137,3 +137,6 @@ loomio Governance Tools/
 
 # Editor backup files
 *.bak
+
+# Generated assets (large source files before R2 upload)
+generated/
