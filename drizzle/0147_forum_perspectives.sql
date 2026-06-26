@@ -1,6 +1,7 @@
--- Migration 0147: forumPerspectives table — governance stance signal
--- One row per (threadId, userId): a member's current perspective on a thread.
--- Single-choice; changing updates in-place (upsert). weight = reputation at set time.
+-- Migration 0147: forumPerspectives table for governance stance signal
+-- One row per (threadId + userId) updated in place
+-- Single choice: a member holds one current perspective that they can change
+-- weight stores reputation at set time
 
 CREATE TABLE forumPerspectives (
   id          INT AUTO_INCREMENT PRIMARY KEY,

@@ -841,7 +841,7 @@ export const forumRouter = router({
       if (!dbd) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       // Tier gate: read required tier from game_variables
       const [tierRows] = await dbd.execute(
-        sql`SELECT value FROM game_variables WHERE key_name = 'governance.sensing_min_citizen_tier' LIMIT 1`
+        sql`SELECT value FROM game_variables WHERE \`key\` = 'governance.sensing_min_citizen_tier' LIMIT 1`
       );
       const minTier = parseInt((tierRows as any)?.[0]?.value ?? "1", 10);
       const [profileRows] = await dbd.execute(
