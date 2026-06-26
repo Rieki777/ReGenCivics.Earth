@@ -13,6 +13,23 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-06-25: Field Report Batch — 10 fixes + editor + dialogue process (SHIPPED)
+
+Commits `b30a2e1` (prior session) + `8b15ad2` (this session). Source docs: `archive/CLAUDE_CODE_PROMPT_2026-06-25_FIELD_REPORT_BATCH.md`, `archive/FIXES_TO_MAKE_2026-06-25_field-report-batch.md`, `archive/DIALOGUE_PROCESS_SPEC_2026-06-25.md`.
+
+- Fix 9 (investor buttons): `Button asChild` pattern on Fund.tsx + InvestorJourney.tsx; external links via real `<a>` tags; corrected thesis href.
+- Fix 10 (alliance accordions): lifted `useState` out of `.map()` in Ally.tsx; also fixed hero + bottom CTA nesting.
+- Fix 4/6/7 (Tools Explore, forum overflow, tap lag): Explore is a real external `<a>`; `overflow-x-hidden` on grid; `touch-manipulation` + rAF scroll.
+- Fix 2 (Epic Quests gradient): `fadeColor` prop on QuestCarousel, passed dark value from EpicQuestSection.
+- Fix 3 (Game capitalization): 11 edits across 7 files. Fix 8 rename: Discussion replaced with Dialogue in UI labels.
+- Fix 1 (Quest Stories media): artifactType auto-detection in SubmitToDAOModal; labeled media badges in QuestCompletionFeed; muted+playsInline on video.
+- Fix 5 (editor overhaul): RichEditor rebuilt with full toolbar, slash-command menu, image upload to R2, preview toggle, mobile sticky toolbar.
+- Fix 8 process (dialogue improvements): 3 migrations (0146/0147/0148); forumRouter procedures (sensing, perspectives); GovernanceLifecycleStrip + PerspectiveControl UI; Loomio receipt reply on close.
+
+Pending: Rye to run migrations 0146/0147/0148 against Railway, push, and verify on device. Investor deck PDF still missing from `public/`.
+
+---
+
 ## 2026-06-25: Bounty Engine (SHIPPED)
 
 Migration 0145 applied. Commits `4e2b2f2` + `30053a2`.
