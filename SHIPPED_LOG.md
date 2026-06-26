@@ -13,6 +13,24 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-06-26: Safari + Mobile Compatibility Sprint (SHIPPED)
+
+Commits `b30a2e1` (CI green) + `98405e2` (Batch 0+1) + `459ba57` (Batch 2) + `021f761` (Batch 3) + `99230f7` (Batches 4-8). Source doc: `archive/SAFARI_MOBILE_AUDIT_2026-06-26.md`. Prompt: `archive/CLAUDE_CODE_PROMPT_2026-06-26_SAFARI_MOBILE.md`.
+
+- Critical popup + video: Hypha claim popup fixed for iOS (synchronous `window.open` before `await` in BridgeHypha; `about:blank` placeholder in TokenDetailDialog); `playsInline`+`muted` on GratitudeDrawer video and QuestTier3Media; YouTube iframes get `playsinline=1`.
+- Scroll-lock + focus-trap: new `useBodyScrollLock` hook; `useFocusTrap` wired to 7 hand-rolled overlays (GratitudeDrawer, QuestHowToVideoModal, ExitIntentCapture, CommandPalette, ProgressMap, QuestDetailModal, OnboardingWizard); `60dvh` max-height on GratitudeDrawer.
+- Safari compat: negative-lookbehind regex in ForumMarkdown replaced with capture-group; `new Date("1 June 2026")` deadline parse replaced with explicit month-index parse in CrowdPoolingProjects; `copyToClipboard` fallback helper created and wired to 8 copy sites; DPR clamped to 2 on GlobeMap.
+- CSS: `-webkit-text-size-adjust: 100%` + `text-size-adjust: 100%` on `html`; `color-scheme: dark` on `:root` and `<meta>`; `season-tint` `background-attachment: fixed` gated to `min-width: 768px`; custom hover classes (`.game-card`, `.hover-lift`, `.card-tilt`, etc.) gated behind `@media (hover: hover) and (pointer: fine)`; mobile `glass-panel` blur reduced from 28px to 12px; `h-screen` to `h-dvh` in Messages.
+- Contrast: raised faint info-bearing text across 10 components from /20-/50 to /50-/70 range.
+- Forms: `autoComplete`/`inputMode`/`enterKeyHint` added to email+tel inputs in LOI, Checkin, Connect, Schedule, InvestorForm. Drop `autoFocus` from Checkin + Schedule reminder.
+- Accessibility: `aria-label` added to all icon-only buttons in CommunityPost, CampaignImageUpload, Community; GovernanceLifecycleStrip tooltip inline on mobile; Apply help bubble keyboard-accessible via `group-focus-within`; delete/reset controls visible on touch in Messages, PlayerProfile, QuestProgressTracker.
+- Performance: PageBackground particle count cut to 1/3 on mobile across all 6 particle functions; MycelialBackground blur disabled on mobile; QuestCarousel `touchAction: pan-x` prevents iOS back-swipe conflict.
+- CI: three broken test assertions fixed (Element guard in test-setup, missing `hyphaBridge` tRPC mock, stale logout cookie assertion).
+
+Pending (Rye verify on physical device): Hypha tab popup, scroll-lock behavior, video playback inline, keyboard lift in GratitudeDrawer.
+
+---
+
 ## 2026-06-25: Field Report Batch — 10 fixes + editor + dialogue process (SHIPPED)
 
 Commits `b30a2e1` (prior session) + `8b15ad2` (this session). Source docs: `archive/CLAUDE_CODE_PROMPT_2026-06-25_FIELD_REPORT_BATCH.md`, `archive/FIXES_TO_MAKE_2026-06-25_field-report-batch.md`, `archive/DIALOGUE_PROCESS_SPEC_2026-06-25.md`.
