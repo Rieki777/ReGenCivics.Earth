@@ -69,6 +69,7 @@ export default function ToolsLibrary() {
   );
 
   const aiMatch = trpc.tools.aiMatch.useMutation();
+  const trackClick = trpc.tools.trackClick.useMutation();
 
   const handleMatch = () => {
     if (!matcherInput.trim()) return;
@@ -319,8 +320,9 @@ export default function ToolsLibrary() {
                   ? "Open Source"
                   : pricingModel.charAt(0).toUpperCase() + pricingModel.slice(1);
               return (
-              <Link key={tool.id} href={`/tools/${tool.slug}`}>
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-[#7dd87d]/30 transition-colors cursor-pointer h-full flex flex-col">
+              <div key={tool.id} className="bg-white/5 border border-white/10 rounded-2xl hover:border-[#7dd87d]/30 transition-colors h-full flex flex-col">
+                {/* Card body links to internal detail page */}
+                <Link href={`/tools/${tool.slug}`} className="flex-1 p-5 flex flex-col">
                   {/* Logo + Name */}
                   <div className="flex items-start gap-3 mb-3">
                     {tool.logoUrl ? (
@@ -358,7 +360,7 @@ export default function ToolsLibrary() {
                   </p>
 
                   {/* Category pills */}
-                  <div className="flex flex-wrap gap-1 mb-3">
+                  <div className="flex flex-wrap gap-1">
                     {categories.slice(0, 3).map((cat, i) => (
                       <span
                         key={cat.slug ?? `${cat.name}-${i}`}
@@ -368,18 +370,33 @@ export default function ToolsLibrary() {
                       </span>
                     ))}
                   </div>
+                </Link>
 
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                    <span className="text-white/70 text-xs flex items-center gap-1">
-                      <Users className="w-3 h-3" /> {clickCount} views
-                    </span>
+                {/* Footer: views count + Explore external link (separate from the card Link) */}
+                <div className="flex items-center justify-between px-5 pb-4 pt-3 border-t border-white/5">
+                  <span className="text-white/70 text-xs flex items-center gap-1">
+                    <Users className="w-3 h-3" /> {clickCount} views
+                  </span>
+                  {tool.websiteUrl ? (
+                    <a
+                      href={tool.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        trackClick.mutate({ toolId: tool.id });
+                      }}
+                      className="text-[#7dd87d] text-xs font-medium flex items-center gap-1 hover:underline"
+                    >
+                      Explore <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : (
                     <span className="text-[#7dd87d] text-xs font-medium flex items-center gap-1">
                       Explore <ExternalLink className="w-3 h-3" />
                     </span>
-                  </div>
+                  )}
                 </div>
-              </Link>
+              </div>
               );
             })}
           </div>

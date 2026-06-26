@@ -143,6 +143,9 @@ const allianceCategories = [
 
 export default function Ally() {
   const heroImages = [cdnImg("https://assets.regencivics.earth/eXNPGpLcSCSGimHX.webp", 1920), cdnImg("https://assets.regencivics.earth/koFosXIQDWqRuiaq.webp", 900)];
+  const [openHowToJoin, setOpenHowToJoin] = useState<Record<number, boolean>>({});
+  const toggleHowToJoin = (i: number) =>
+    setOpenHowToJoin(prev => ({ ...prev, [i]: !prev[i] }));
 
   return (
     <HeroPageLoader images={heroImages}>
@@ -208,25 +211,27 @@ export default function Ally() {
           {/* CTAs */}
           <AnimatedSection animation="slide-up" delay={600}>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/connect?path=alliance">
-                <Button
-                  className="bg-cyan-400 text-[#1a472a] hover:bg-cyan-300 font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto"
-                  style={{ fontFamily: "var(--font-accent)" }}
-                >
+              <Button
+                asChild
+                className="bg-cyan-400 text-[#1a472a] hover:bg-cyan-300 font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto"
+                style={{ fontFamily: "var(--font-accent)" }}
+              >
+                <Link href="/connect?path=alliance">
                   <Handshake className="w-5 h-5 mr-2" />
                   Apply as Alliance Partner
-                </Button>
-              </Link>
-              <Link href="/tools">
-                <Button
-                  variant="outline"
-                  className="border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto"
-                  style={{ fontFamily: "var(--font-accent)" }}
-                >
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto"
+                style={{ fontFamily: "var(--font-accent)" }}
+              >
+                <Link href="/tools">
                   <Plus className="w-5 h-5 mr-2" />
                   Add Your Tool
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </AnimatedSection>
         </div>
@@ -391,10 +396,10 @@ export default function Ally() {
                 icon: Heart,
               },
             ].map((item, i) => {
-              const [isOpen, setIsOpen] = useState(false);
+              const isOpen = !!openHowToJoin[i];
               return (
                 <AnimatedSection key={i} animation="slide-up" delay={i * 100}>
-                  <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                  <Collapsible open={isOpen} onOpenChange={() => toggleHowToJoin(i)}>
                     <CollapsibleTrigger asChild>
                       <div className="flex items-start gap-4 p-5 md:p-6 glass-panel cursor-pointer hover:bg-white/5 transition-all">
                         <div className="w-12 h-12 rounded-full bg-cyan-400/20 flex items-center justify-center flex-shrink-0">
@@ -458,25 +463,27 @@ export default function Ally() {
                 Or reach out to explore collaboration.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/connect?path=alliance">
-                  <Button
-                    className="bg-cyan-400 text-[#1a472a] hover:bg-cyan-300 font-bold px-8 py-4 text-lg h-auto"
-                    style={{ fontFamily: "var(--font-accent)" }}
-                  >
+                <Button
+                  asChild
+                  className="bg-cyan-400 text-[#1a472a] hover:bg-cyan-300 font-bold px-8 py-4 text-lg h-auto"
+                  style={{ fontFamily: "var(--font-accent)" }}
+                >
+                  <Link href="/connect?path=alliance">
                     Apply as Alliance Partner
                     <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <Link href="/tools">
-                  <Button
-                    variant="outline"
-                    className="border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 font-bold px-8 py-4 text-lg h-auto"
-                    style={{ fontFamily: "var(--font-accent)" }}
-                  >
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 font-bold px-8 py-4 text-lg h-auto"
+                  style={{ fontFamily: "var(--font-accent)" }}
+                >
+                  <Link href="/tools">
                     <Plus className="w-5 h-5 mr-2" />
                     Add Your Tool
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           </AnimatedSection>

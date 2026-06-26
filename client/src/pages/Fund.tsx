@@ -186,14 +186,13 @@ export default function Fund() {
               <span>Fund In Formation, Currently Accepting LOIs</span>
             </div>
             <span className="hidden sm:inline text-[#1a472a]">|</span>
-            <Link href="/loi">
-              <Button
-                size="sm"
-                className="breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] text-xs sm:text-sm px-5 py-3 min-h-[44px] h-auto font-bold"
-              >
-                Submit LOI
-              </Button>
-            </Link>
+            <Button
+              asChild
+              size="sm"
+              className="breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] text-xs sm:text-sm px-5 py-3 min-h-[44px] h-auto font-bold"
+            >
+              <Link href="/loi">Submit LOI</Link>
+            </Button>
             <span className="hidden sm:inline text-[#1a472a]/50">|</span>
             <Link
               href="/risk-disclosure"
@@ -245,15 +244,16 @@ export default function Fund() {
               which read as a 404 to anyone expecting the thesis content. */}
           <AnimatedSection animation="slide-up" delay={600}>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/opportunity">
-                <Button
-                  className="bg-amber-400 text-[#1a472a] hover:bg-amber-300 font-bold px-10 py-5 text-lg w-full sm:w-auto h-auto shadow-[0_0_20px_rgba(251,191,36,0.5),0_0_40px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.7),0_0_60px_rgba(251,191,36,0.35)] transition-shadow"
-                  style={{ fontFamily: "var(--font-accent)" }}
-                >
+              <Button
+                asChild
+                className="bg-amber-400 text-[#1a472a] hover:bg-amber-300 font-bold px-10 py-5 text-lg w-full sm:w-auto h-auto shadow-[0_0_20px_rgba(251,191,36,0.5),0_0_40px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.7),0_0_60px_rgba(251,191,36,0.35)] transition-shadow"
+                style={{ fontFamily: "var(--font-accent)" }}
+              >
+                <Link href="/opportunity">
                   <FileText className="w-5 h-5 mr-2" />
                   View Investment Thesis
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </AnimatedSection>
         </div>
@@ -390,6 +390,7 @@ export default function Fund() {
                 desc: "Schedule a conversation to explore alignment between your investment goals and our regenerative projects. We walk you through the fund structure, current portfolio, and governance model.",
                 icon: Calendar,
                 buttons: [
+                  // TODO: drop regen-civics-investor-deck.pdf into public/ — currently 404
                   { label: "Download Pitch Deck", href: "/regen-civics-investor-deck.pdf", icon: FileText, external: true },
                   { label: "Book a Call", href: "https://calendly.com/rieki-cordon/30min", icon: Calendar, external: true }
                 ]
@@ -400,7 +401,7 @@ export default function Fund() {
                 desc: "Receive detailed information on thesis, financial projections, governance structure, and impact metrics. Review at your own pace with support from our team.",
                 icon: FileText,
                 buttons: [
-                  { label: "Access Investment Thesis", href: "/investor", icon: FileText }
+                  { label: "Access Investment Thesis", href: "/opportunity", icon: FileText }
                 ]
               },
               {
@@ -458,23 +459,27 @@ export default function Fund() {
                               btn.external ? (
                                 <Button
                                   key={btnIdx}
+                                  asChild
                                   size="sm"
                                   className="bg-amber-400/20 hover:bg-amber-400/30 text-amber-400 border border-amber-400/40"
-                                  onClick={() => window.open(btn.href, '_blank')}
                                 >
-                                  <btn.icon className="w-4 h-4 mr-2" />
-                                  {btn.label}
-                                </Button>
-                              ) : (
-                                <Link key={btnIdx} href={btn.href}>
-                                  <Button
-                                    size="sm"
-                                    className="bg-amber-400/20 hover:bg-amber-400/30 text-amber-400 border border-amber-400/40"
-                                  >
+                                  <a href={btn.href} target="_blank" rel="noopener noreferrer">
                                     <btn.icon className="w-4 h-4 mr-2" />
                                     {btn.label}
-                                  </Button>
-                                </Link>
+                                  </a>
+                                </Button>
+                              ) : (
+                                <Button
+                                  key={btnIdx}
+                                  asChild
+                                  size="sm"
+                                  className="bg-amber-400/20 hover:bg-amber-400/30 text-amber-400 border border-amber-400/40"
+                                >
+                                  <Link href={btn.href}>
+                                    <btn.icon className="w-4 h-4 mr-2" />
+                                    {btn.label}
+                                  </Link>
+                                </Button>
                               )
                             ))}
                           </div>
@@ -679,16 +684,17 @@ export default function Fund() {
                 Or, if you are already in, signal your support by signing a Letter of Intent.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/opportunity">
-                  <Button
-                    className="bg-amber-400 text-[#1a472a] hover:bg-amber-300 font-bold px-10 py-5 text-lg h-auto shadow-[0_0_20px_rgba(251,191,36,0.5),0_0_40px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.7),0_0_60px_rgba(251,191,36,0.35)] transition-shadow"
-                    style={{ fontFamily: "var(--font-accent)" }}
-                  >
+                <Button
+                  asChild
+                  className="bg-amber-400 text-[#1a472a] hover:bg-amber-300 font-bold px-10 py-5 text-lg h-auto shadow-[0_0_20px_rgba(251,191,36,0.5),0_0_40px_rgba(251,191,36,0.25)] hover:shadow-[0_0_30px_rgba(251,191,36,0.7),0_0_60px_rgba(251,191,36,0.35)] transition-shadow"
+                  style={{ fontFamily: "var(--font-accent)" }}
+                >
+                  <Link href="/opportunity">
                     <FileText className="w-5 h-5 mr-2" />
                     View Investment Thesis
                     <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           </AnimatedSection>

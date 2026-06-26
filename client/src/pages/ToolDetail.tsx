@@ -25,6 +25,8 @@ export default function ToolDetail() {
     { enabled: !!slug, staleTime: 30_000 }
   );
 
+  const trackClick = trpc.tools.trackClick.useMutation();
+
   const endorseMutation = trpc.tools.endorse.useMutation({
     onSuccess: () => {
       setEndorseText("");
@@ -160,11 +162,16 @@ export default function ToolDetail() {
               {/* Stats + CTA */}
               <div className="flex flex-wrap items-center gap-4">
                 {tool.websiteUrl && (
-                  <a href={tool.websiteUrl} target="_blank" rel="noopener noreferrer">
-                    <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
+                  <Button asChild className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
+                    <a
+                      href={tool.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackClick.mutate({ toolId: tool.id })}
+                    >
                       <ExternalLink className="w-4 h-4 mr-2" /> Visit Website
-                    </Button>
-                  </a>
+                    </a>
+                  </Button>
                 )}
                 <span className="text-white/70 text-xs flex items-center gap-1">
                   <Users className="w-3 h-3" /> {tool.clickCount ?? 0} views

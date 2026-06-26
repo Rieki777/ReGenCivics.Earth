@@ -189,16 +189,17 @@ export default function InvestorJourney() {
 
                     {/* Action button */}
                     {!isCompleted && (
-                      <Link href={step.href}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-transparent rounded-lg flex-shrink-0"
-                        >
+                      <Button
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        className="text-xs border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-transparent rounded-lg flex-shrink-0"
+                      >
+                        <Link href={step.href}>
                           {step.action}
                           <ArrowRight className="w-3 h-3 ml-1" />
-                        </Button>
-                      </Link>
+                        </Link>
+                      </Button>
                     )}
                   </div>
                 </div>

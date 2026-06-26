@@ -113,10 +113,9 @@ export default function Community() {
     const next = activeSection === id ? null : id;
     setActiveSection(next);
     if (next) {
-      // Slight delay so the panel renders before scrolling
-      setTimeout(() => {
-        sectionPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 50);
+      requestAnimationFrame(() => {
+        sectionPanelRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+      });
     }
   };
   // Debounce search query for post full-text search (300ms)
@@ -484,13 +483,13 @@ export default function Community() {
         ) : null}
 
         {/* ── Section Cards ───────────────────────────────────────────── */}
-        <div id="community-section-picker" className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 mt-6">
+        <div id="community-section-picker" className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 mt-6 overflow-x-hidden">
 
           {/* General */}
           <button
             type="button"
             onClick={() => handleSectionClick('general')}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group col-span-2 sm:col-span-1 ${activeSection === 'general' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group col-span-2 sm:col-span-1 min-w-0 touch-manipulation ${activeSection === 'general' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] to-[#2d5a3d]" />
             <img src="/game-infinite-forest.webp" alt="Infinite Forest game world" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -507,7 +506,7 @@ export default function Community() {
           <button
             type="button"
             onClick={() => handleSectionClick('earth')}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'earth' ? 'ring-2 ring-[#d4a574] shadow-lg shadow-[#d4a574]/20' : 'hover:shadow-md'}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group min-w-0 touch-manipulation ${activeSection === 'earth' ? 'ring-2 ring-[#d4a574] shadow-lg shadow-[#d4a574]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#1a472a] to-[#4a7c59]" />
             <img src="/community/finca-sagrada.webp" alt="Finca Sagrada land project" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -524,7 +523,7 @@ export default function Community() {
           <button
             type="button"
             onClick={() => handleSectionClick('water')}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'water' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group min-w-0 touch-manipulation ${activeSection === 'water' ? 'ring-2 ring-[#7dd87d] shadow-lg shadow-[#7dd87d]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a5f] to-[#2d5a7f]" />
             <img src="/community/liminal-village.webp" alt="Liminal Village land project" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:opacity-45 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -541,7 +540,7 @@ export default function Community() {
           <button
             type="button"
             onClick={() => handleSectionClick('fire')}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'fire' ? 'ring-2 ring-[#fb923c] shadow-lg shadow-[#fb923c]/20' : 'hover:shadow-md'}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group min-w-0 touch-manipulation ${activeSection === 'fire' ? 'ring-2 ring-[#fb923c] shadow-lg shadow-[#fb923c]/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#7c2d12] to-[#9a3412]" />
             <img src="/images/quests/quest-00-fire.webp" alt="Fire quest challenge" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-45 group-hover:opacity-55 transition-opacity" width={800} height={600} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
@@ -558,7 +557,7 @@ export default function Community() {
           <button
             type="button"
             onClick={() => handleSectionClick('air')}
-            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group ${activeSection === 'air' ? 'ring-2 ring-slate-400 shadow-lg shadow-slate-400/20' : 'hover:shadow-md'}`}
+            className={`relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 h-44 text-left group min-w-0 touch-manipulation ${activeSection === 'air' ? 'ring-2 ring-slate-400 shadow-lg shadow-slate-400/20' : 'hover:shadow-md'}`}
           >
             <div className="absolute inset-0 bg-gradient-to-b from-[#374151] to-[#4b5563]" />
             <img src="/images/community/air-governance-circle.webp" alt="A community gathered in a sacred circle for shared governance, soft sunlight through a temple of wood and living vines" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-35 transition-opacity" width={2752} height={1536} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} />
