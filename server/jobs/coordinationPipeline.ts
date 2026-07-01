@@ -35,7 +35,7 @@ import { sql, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { ENV } from "../_core/env";
-import { fetchYouTubeTranscript, fetchYouTubeTranscriptSegments } from "../lib/videoSummary";
+import { fetchYouTubeTranscript, fetchYouTubeTranscriptSegments, transcribeFallback } from "../lib/videoSummary";
 import { recordings, roleHolders, bounties, bountyRoles } from "../../drizzle/schema";
 import { finalizeRecording } from "../lib/recording-finalize";
 
@@ -445,15 +445,23 @@ export async function runCoordinationPipeline(opts: {
     if (!rec) continue;
 
     // Transcript (best effort).
-    const transcript = await fetchYouTubeTranscript(entry.videoId);
+    // Timestamped segments (best effort) so chapters + the transcript panel
+    // deep-link into the player. Null when captions carry no timing.
+    let transcript = await fetchYouTubeTranscript(entry.videoId);
+    let transcriptSegments = transcript ? await fetchYouTubeTranscriptSegments(entry.videoId) : null;
+    if (!transcript) {
+      // No YouTube captions: try the configured Whisper fallback worker (Phase 4).
+      const fb = await transcribeFallback(entry.videoId);
+      if (fb) {
+        transcript = fb.text;
+        transcriptSegments = fb.segments;
+      }
+    }
     if (!transcript) {
       processed += 1;
       continue;
     }
     report.transcribed += 1;
-    // Timestamped segments (best effort) so chapters + the transcript panel
-    // deep-link into the player. Null when captions carry no timing.
-    const transcriptSegments = await fetchYouTubeTranscriptSegments(entry.videoId);
     await db
       .update(recordings)
       .set({ transcript, transcriptJson: transcriptSegments ?? null })

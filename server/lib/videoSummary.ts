@@ -149,6 +149,42 @@ function decodeCaptionText(raw: string): string {
     .trim();
 }
 
+/**
+ * Whisper (or equivalent) transcript fallback for caption-less videos.
+ *
+ * Deterministic wiring only: if a transcription worker is configured
+ * (TRANSCRIPTION_WORKER_URL + TRANSCRIPTION_API_KEY), POST the video id and get
+ * back { text, segments }. The worker (Rye-deployed) does the audio extraction
+ * + Whisper call; keeping it external means no heavy audio dependency here and
+ * matches deterministic-first (no new LLM reasoning call in-process). Returns
+ * null when unconfigured or on any failure, so the pipeline degrades safely.
+ */
+export async function transcribeFallback(
+  videoId: string
+): Promise<{ text: string; segments: TranscriptSegment[] } | null> {
+  const url = process.env.TRANSCRIPTION_WORKER_URL;
+  const key = process.env.TRANSCRIPTION_API_KEY;
+  if (!url || !key) return null;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ videoId, youtubeUrl: `https://www.youtube.com/watch?v=${videoId}` }),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { text?: string; segments?: Array<{ start?: number; text?: string }> };
+    if (!data.text || data.text.length < 50) return null;
+    const segments: TranscriptSegment[] = Array.isArray(data.segments)
+      ? data.segments
+          .map((s) => ({ start: Math.max(0, Math.floor(s.start || 0)), text: String(s.text || "").trim() }))
+          .filter((s) => s.text)
+      : [];
+    return { text: data.text, segments };
+  } catch {
+    return null;
+  }
+}
+
 // ── Rate limiting (in-memory, resets at midnight UTC) ───────────────────────
 
 type DayKey = string; // "YYYY-MM-DD"
