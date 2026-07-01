@@ -2266,6 +2266,8 @@ export const recordings = mysqlTable("recordings", {
   overview: text("overview"),
   decisionsJson: json("decisionsJson"),
   actionItemsJson: json("actionItemsJson"),
+  chaptersJson: json("chaptersJson"),         // [{ tSeconds, title }] from the synthesize pass
+  transcriptJson: json("transcriptJson"),     // [{ start, text }] timestamped transcript segments
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

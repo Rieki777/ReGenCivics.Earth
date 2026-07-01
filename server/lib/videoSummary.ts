@@ -97,6 +97,58 @@ export async function fetchYouTubeTranscript(videoId: string): Promise<string | 
   return null;
 }
 
+export interface TranscriptSegment {
+  start: number; // seconds
+  text: string;
+}
+
+/**
+ * Like fetchYouTubeTranscript but preserves per-caption timing, so chapters
+ * and the Schedule-page transcript can deep-link into the player. Returns
+ * [{ start, text }] segments (start in whole seconds), or null if no timed
+ * captions are available. Same unofficial timedtext endpoint + caveats.
+ */
+export async function fetchYouTubeTranscriptSegments(
+  videoId: string
+): Promise<TranscriptSegment[] | null> {
+  const langs = ["en", "en-US", "en-GB"];
+  for (const lang of langs) {
+    try {
+      const res = await fetch(
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}`,
+        { headers: { "User-Agent": "Mozilla/5.0 (compatible; ReGenCivicsBot/1.0)" } }
+      );
+      if (!res.ok) continue;
+      const xml = await res.text();
+      if (!xml || xml.length < 80) continue;
+      const segments: TranscriptSegment[] = [];
+      const re = /<text[^>]*\bstart="([\d.]+)"[^>]*>([\s\S]*?)<\/text>/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(xml)) !== null) {
+        const start = Math.max(0, Math.floor(parseFloat(m[1]) || 0));
+        const text = decodeCaptionText(m[2]);
+        if (text) segments.push({ start, text });
+      }
+      if (segments.length > 0) return segments;
+    } catch {
+      // try next lang
+    }
+  }
+  return null;
+}
+
+function decodeCaptionText(raw: string): string {
+  return raw
+    .replace(/<\/?[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ── Rate limiting (in-memory, resets at midnight UTC) ───────────────────────
 
 type DayKey = string; // "YYYY-MM-DD"

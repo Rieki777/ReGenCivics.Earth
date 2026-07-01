@@ -26,6 +26,7 @@ export const recordingsRouter = router({
           youtubeUrl: recordings.youtubeUrl,
           thumbnailUrl: recordings.thumbnailUrl,
           aiSummary: recordings.aiSummary,
+          overview: recordings.overview,
           forumPostId: recordings.forumPostId,
           featured: recordings.featured,
           createdAt: recordings.createdAt,
@@ -33,6 +34,36 @@ export const recordingsRouter = router({
         .from(recordings)
         .orderBy(desc(recordings.sessionDate))
         .limit(input?.limit ?? 20);
+    }),
+
+  // Public: full detail for the Schedule page. Overview, chapters (deep-link
+  // into the YouTube player), decisions, action items, and the timestamped
+  // transcript. Fetched on demand when a recording card is expanded.
+  getPublic: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return null;
+      const [rec] = await database
+        .select({
+          id: recordings.id,
+          title: recordings.title,
+          sessionDate: recordings.sessionDate,
+          durationSeconds: recordings.durationSeconds,
+          youtubeUrl: recordings.youtubeUrl,
+          riversideUrl: recordings.riversideUrl,
+          thumbnailUrl: recordings.thumbnailUrl,
+          overview: recordings.overview,
+          decisionsJson: recordings.decisionsJson,
+          actionItemsJson: recordings.actionItemsJson,
+          chaptersJson: recordings.chaptersJson,
+          transcriptJson: recordings.transcriptJson,
+          forumPostId: recordings.forumPostId,
+        })
+        .from(recordings)
+        .where(eq(recordings.id, input.id))
+        .limit(1);
+      return rec ?? null;
     }),
 
   // Public: get recording linked to a specific event

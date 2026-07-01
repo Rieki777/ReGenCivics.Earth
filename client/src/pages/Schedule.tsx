@@ -52,13 +52,121 @@ function ReplayButton({ eventId }: { eventId: number }) {
   );
 }
 
+// Format a second offset as m:ss or h:mm:ss.
+function fmtTs(sec: number): string {
+  const s = Math.max(0, Math.floor(sec));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = s % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`
+    : `${m}:${String(ss).padStart(2, "0")}`;
+}
+
+// Deep-link into the YouTube player at a given second.
+function chapterUrl(youtubeUrl: string, tSeconds: number): string {
+  const sep = youtubeUrl.includes("?") ? "&" : "?";
+  return `${youtubeUrl}${sep}t=${Math.max(0, Math.floor(tSeconds))}s`;
+}
+
 /**
- * RecordingsSection: shows the most recent episode recordings published via
- * the Riverside webhook. Pulled from the recordings table on the server.
+ * RecordingDetail: the understanding produced by the coordination pipeline for
+ * a recording. Overview, chapters (deep-linked into the player), decisions,
+ * action items, and a collapsible timestamped transcript. Fetched on demand.
+ */
+function RecordingDetail({ id }: { id: number }) {
+  const { data, isLoading } = trpc.recordings.getPublic.useQuery({ id });
+  const [showTranscript, setShowTranscript] = useState(false);
+  if (isLoading) return <p className="text-white/50 text-sm px-3 pb-3">Loading…</p>;
+  if (!data) return null;
+  const chapters = (data.chaptersJson as Array<{ tSeconds: number; title: string }> | null) ?? [];
+  const decisions = (data.decisionsJson as string[] | null) ?? [];
+  const actionItems = (data.actionItemsJson as Array<{ owner: string; item: string }> | null) ?? [];
+  const transcript = (data.transcriptJson as Array<{ start: number; text: string }> | null) ?? [];
+  const yt = data.youtubeUrl;
+
+  if (!data.overview && chapters.length === 0 && decisions.length === 0 && actionItems.length === 0 && transcript.length === 0) {
+    return <p className="text-white/40 text-sm px-3 pb-3">No summary yet for this session.</p>;
+  }
+
+  return (
+    <div className="px-3 pb-4 pt-1 space-y-4 text-sm border-t border-white/10">
+      {data.overview && <p className="text-white/80 leading-relaxed pt-3">{data.overview}</p>}
+
+      {chapters.length > 0 && (
+        <div>
+          <h5 className="text-[#7dd87d] font-semibold text-[11px] uppercase tracking-wide mb-2">Chapters</h5>
+          <ul className="space-y-1">
+            {chapters.map((c, i) => (
+              <li key={i}>
+                {yt ? (
+                  <a href={chapterUrl(yt, c.tSeconds)} target="_blank" rel="noopener noreferrer" className="text-white/80 hover:text-[#7dd87d] transition-colors">
+                    <span className="text-[#7dd87d]/70 font-mono mr-2">{fmtTs(c.tSeconds)}</span>{c.title}
+                  </a>
+                ) : (
+                  <span className="text-white/80"><span className="text-white/40 font-mono mr-2">{fmtTs(c.tSeconds)}</span>{c.title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {decisions.length > 0 && (
+        <div>
+          <h5 className="text-[#7dd87d] font-semibold text-[11px] uppercase tracking-wide mb-2">Decisions</h5>
+          <ul className="list-disc list-inside space-y-1 text-white/80">
+            {decisions.map((d, i) => <li key={i}>{d}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {actionItems.length > 0 && (
+        <div>
+          <h5 className="text-[#7dd87d] font-semibold text-[11px] uppercase tracking-wide mb-2">Action items</h5>
+          <ul className="space-y-1 text-white/80">
+            {actionItems.map((a, i) => (
+              <li key={i}><span className="text-[#7dd87d]/80 font-medium">{a.owner}:</span> {a.item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {transcript.length > 0 && (
+        <div>
+          <button onClick={() => setShowTranscript((v) => !v)} className="text-white/60 hover:text-white text-xs inline-flex items-center gap-1">
+            {showTranscript ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {showTranscript ? "Hide transcript" : "Show transcript"}
+          </button>
+          {showTranscript && (
+            <div className="mt-2 max-h-64 overflow-y-auto space-y-1 pr-2">
+              {transcript.map((seg, i) => (
+                <p key={i} className="text-white/60 leading-relaxed">
+                  {yt ? (
+                    <a href={chapterUrl(yt, seg.start)} target="_blank" rel="noopener noreferrer" className="text-[#7dd87d]/60 font-mono mr-2 hover:text-[#7dd87d]">{fmtTs(seg.start)}</a>
+                  ) : (
+                    <span className="text-white/40 font-mono mr-2">{fmtTs(seg.start)}</span>
+                  )}
+                  {seg.text}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * RecordingsSection: the most recent session recordings, ingested by the
+ * coordination pipeline (YouTube poll) or the Riverside webhook. Each card
+ * expands to show the pipeline's understanding (RecordingDetail).
  * Renders nothing if there are no recordings yet.
  */
 function RecordingsSection() {
   const { data: recordings = [] } = trpc.recordings.list.useQuery({ limit: 12 });
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   if (!recordings || recordings.length === 0) return null;
 
   return (
@@ -67,43 +175,53 @@ function RecordingsSection() {
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/20">
           <h3 className="text-2xl font-bold text-white mb-1">Episode Recordings</h3>
           <p className="text-white/60 text-sm mb-5">Catch up on past sessions.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {recordings.map((r: any) => {
               const url = r.youtubeUrl ?? null;
               const date = r.sessionDate ? new Date(r.sessionDate).toLocaleDateString() : null;
+              const expanded = expandedId === r.id;
               return (
-                <a
-                  key={r.id}
-                  href={url ?? (r.forumPostId ? `/community/post/${r.forumPostId}` : "#")}
-                  target={url ? "_blank" : undefined}
-                  rel={url ? "noopener noreferrer" : undefined}
-                  className="group flex gap-3 bg-white/5 hover:bg-white/8 rounded-xl p-3 border border-white/10 hover:border-[#7dd87d]/40 transition-colors"
-                >
-                  {r.thumbnailUrl ? (
-                    <img
-                      src={r.thumbnailUrl}
-                      alt=""
-                      width={120}
-                      height={68}
-                      className="w-30 h-17 rounded-lg object-cover flex-shrink-0"
-                      loading="lazy"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  ) : (
-                    <div className="w-30 h-17 rounded-lg bg-[#1a472a] flex-shrink-0 flex items-center justify-center">
-                      <Video className="w-6 h-6 text-[#7dd87d]/80" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-white font-semibold text-sm group-hover:text-[#7dd87d] transition-colors line-clamp-2">
-                      {r.title || "Untitled session"}
-                    </h4>
-                    {date && <p className="text-white/70 text-xs mt-1">{date}</p>}
-                    {r.forumPostId && (
-                      <p className="text-[#7dd87d]/70 text-[11px] mt-1">Discuss in forum</p>
+                <div key={r.id} className="bg-white/5 rounded-xl border border-white/10 hover:border-[#7dd87d]/30 transition-colors overflow-hidden">
+                  <div className="flex gap-3 p-3">
+                    {r.thumbnailUrl ? (
+                      <img
+                        src={r.thumbnailUrl}
+                        alt=""
+                        width={120}
+                        height={68}
+                        className="w-30 h-17 rounded-lg object-cover flex-shrink-0"
+                        loading="lazy"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-30 h-17 rounded-lg bg-[#1a472a] flex-shrink-0 flex items-center justify-center">
+                        <Video className="w-6 h-6 text-[#7dd87d]/80" />
+                      </div>
                     )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white font-semibold text-sm line-clamp-2">{r.title || "Untitled session"}</h4>
+                      {date && <p className="text-white/70 text-xs mt-1">{date}</p>}
+                      <div className="flex items-center gap-3 mt-2">
+                        {url && (
+                          <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 text-xs font-semibold">
+                            <Video className="w-3.5 h-3.5" /> Watch
+                          </a>
+                        )}
+                        {r.forumPostId && (
+                          <Link href={`/community/post/${r.forumPostId}`} className="text-[#7dd87d]/80 hover:text-[#7dd87d] text-xs">Discuss</Link>
+                        )}
+                        <button
+                          onClick={() => setExpandedId(expanded ? null : r.id)}
+                          className="ml-auto inline-flex items-center gap-1 text-white/60 hover:text-white text-xs"
+                        >
+                          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          {expanded ? "Less" : "Details"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </a>
+                  {expanded && <RecordingDetail id={r.id} />}
+                </div>
               );
             })}
           </div>
