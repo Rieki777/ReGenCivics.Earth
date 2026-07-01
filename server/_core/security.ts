@@ -6,7 +6,7 @@
 import crypto from 'node:crypto';
 import sanitizeHtml from 'sanitize-html';
 import { Request, Response, NextFunction } from 'express';
-import { cacheGet, cacheSet, isCacheAvailable } from '../cache';
+import { cacheGet, cacheSet, cacheDel, isCacheAvailable } from '../cache';
 import { generateNonce } from './nonce';
 
 // In-memory fallback store for when Redis is unavailable
@@ -193,7 +193,16 @@ const webhookFailureBuckets = new Map<string, { count: number; resetAt: number }
 const WEBHOOK_FAIL_LIMIT = 5;
 const WEBHOOK_FAIL_WINDOW_MS = 60 * 1000;
 
-export function isWebhookFailureBlocked(ip: string, scope: string): boolean {
+const WEBHOOK_FAIL_WINDOW_SEC = Math.ceil(WEBHOOK_FAIL_WINDOW_MS / 1000);
+const webhookFailKey = (scope: string, ip: string) => `webhookfail:${scope}:${ip}`;
+
+export async function isWebhookFailureBlocked(ip: string, scope: string): Promise<boolean> {
+  // Redis-backed when available so the failure count holds across replicas;
+  // in-memory fallback (per-instance) when Redis is down.
+  if (isCacheAvailable()) {
+    const entry = await cacheGet<{ count: number }>(webhookFailKey(scope, ip));
+    return (entry?.count ?? 0) >= WEBHOOK_FAIL_LIMIT;
+  }
   const key = `${scope}:${ip}`;
   const now = Date.now();
   const entry = webhookFailureBuckets.get(key);
@@ -201,7 +210,15 @@ export function isWebhookFailureBlocked(ip: string, scope: string): boolean {
   return entry.count >= WEBHOOK_FAIL_LIMIT;
 }
 
-export function recordWebhookFailure(ip: string, scope: string): void {
+export async function recordWebhookFailure(ip: string, scope: string): Promise<void> {
+  if (isCacheAvailable()) {
+    // Fixed-window counter, TTL = window. A small read-modify-write race is
+    // acceptable for a failure limiter (worst case a couple of extra attempts).
+    const k = webhookFailKey(scope, ip);
+    const entry = await cacheGet<{ count: number }>(k);
+    await cacheSet(k, { count: (entry?.count ?? 0) + 1 }, WEBHOOK_FAIL_WINDOW_SEC);
+    return;
+  }
   const key = `${scope}:${ip}`;
   const now = Date.now();
   const entry = webhookFailureBuckets.get(key);
@@ -235,23 +252,42 @@ export function timingSafeEqualStr(a: string | undefined | null, b: string): boo
   return crypto.timingSafeEqual(aBuf, bBuf);
 }
 
-export function generateCSRFToken(sessionId: string): string {
+const CSRF_TTL_SEC = Math.ceil(CSRF_TTL / 1000);
+const csrfKey = (sessionId: string) => `csrf:${sessionId}`;
+
+export async function generateCSRFToken(sessionId: string): Promise<string> {
   const token = crypto.randomBytes(32).toString('hex');
-  csrfTokens.set(sessionId, { token, createdAt: Date.now() });
+  const record = { token, createdAt: Date.now() };
+  // Redis-backed when available so the token is shared across instances/replicas
+  // (a token minted on one Railway replica validates on another). Falls back to
+  // the in-memory map (single-instance) when Redis is unavailable.
+  if (isCacheAvailable()) {
+    await cacheSet(csrfKey(sessionId), record, CSRF_TTL_SEC);
+  } else {
+    csrfTokens.set(sessionId, record);
+  }
   return token;
 }
 
-export function validateCSRFToken(sessionId: string, token: string): boolean {
+export async function validateCSRFToken(sessionId: string, token: string): Promise<boolean> {
+  if (isCacheAvailable()) {
+    const record = await cacheGet<{ token: string; createdAt: number }>(csrfKey(sessionId));
+    if (!record) return false;
+    // Redis TTL already expires the key; this is a defensive second check.
+    if (Date.now() - record.createdAt > CSRF_TTL) {
+      await cacheDel(csrfKey(sessionId));
+      return false;
+    }
+    return timingSafeEqualStr(token, record.token);
+  }
+
   const record = csrfTokens.get(sessionId);
-  
   if (!record) return false;
-  
   if (Date.now() - record.createdAt > CSRF_TTL) {
     csrfTokens.delete(sessionId);
     return false;
   }
-  
-  return record.token === token;
+  return timingSafeEqualStr(token, record.token);
 }
 
 /**

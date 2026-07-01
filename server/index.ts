@@ -13,7 +13,7 @@ async function startServer() {
   const server = createServer(app);
 
   // CSRF token endpoint - must come before static/catch-all routes
-  app.get("/api/csrf-token", (req, res) => {
+  app.get("/api/csrf-token", async (req, res) => {
     // Use existing session cookie or create a new session id
     let sessionId = (req.cookies && req.cookies["session_id"]) as string | undefined;
     if (!sessionId) {
@@ -24,7 +24,7 @@ async function startServer() {
         secure: process.env.NODE_ENV === "production",
       });
     }
-    const csrfToken = generateCSRFToken(sessionId);
+    const csrfToken = await generateCSRFToken(sessionId);
     res.cookie("csrf_token", csrfToken, {
       httpOnly: true,
       sameSite: "strict",

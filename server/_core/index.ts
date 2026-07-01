@@ -256,7 +256,7 @@ async function startServer() {
 
   // CSRF token endpoint, issues a CSRF token tied to the session cookie.
   // The tRPC CSRF middleware validates this token on mutations.
-  app.get("/api/csrf-token", (req, res) => {
+  app.get("/api/csrf-token", async (req, res) => {
     const cookies = parseCookieHeader(req.headers.cookie || "");
     let sessionId = cookies["session_id"];
     if (!sessionId) {
@@ -267,7 +267,7 @@ async function startServer() {
         secure: process.env.NODE_ENV === "production",
       });
     }
-    const csrfToken = generateCSRFToken(sessionId);
+    const csrfToken = await generateCSRFToken(sessionId);
     res.cookie("csrf_token", csrfToken, {
       httpOnly: true,
       sameSite: "strict",

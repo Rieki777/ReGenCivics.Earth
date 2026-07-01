@@ -125,7 +125,7 @@ Last reviewed: 2026-06-30 (full codebase re-audit; corrections tagged `2026-06-3
 - Session revocation: today, the only revocation is cookie expiry. No global "log out everywhere" flow.
 - OAuth `state` is HMAC-signed (done 2026-06-30). Remaining hardening: a browser-bound nonce cookie would fully close login-CSRF, but Apple's cross-site `form_post` callback won't send a `SameSite=lax` cookie and this codebase avoids `SameSite=none` (Safari drops it — see `cookies.ts`). Deferred.
 - Session cookie is 1-year, `SameSite=lax`, HttpOnly, `secure` forced true in prod. Long-lived credential; consider shorter expiry + refresh.
-- CSRF token store (`validateCSRFToken`) and one rate-limit fallback are in-memory (per-instance). They don't hold across Railway replicas or restarts; Redis-back them for multi-instance correctness.
+- CSRF token store + webhook-failure rate-limit buckets are Redis-backed. **Update (2026-07-01):** `generate/validateCSRFToken` and `isWebhookFailureBlocked/recordWebhookFailure` now read/write through the shared `../cache` Redis layer when `REDIS_URL` is set (keys `csrf:*`, `webhookfail:*`), so they hold across Railway replicas and restarts; they fall back to the per-instance in-memory maps only when Redis is unavailable. The functions are now async; CSRF compare also upgraded to `timingSafeEqualStr`. The main `rateLimitMiddleware` was already Redis-backed via the same layer. (Blocked until `REDIS_URL` is set in the environment — code is live and type-checked, activates automatically once Redis is configured.)
 
 **Code**: `server/_core/oauth.ts`, `server/routes/auth.ts`, `server/_core/cookies.ts`.
 

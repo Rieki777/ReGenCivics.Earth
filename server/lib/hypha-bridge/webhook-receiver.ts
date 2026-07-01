@@ -419,13 +419,13 @@ async function cascadeClaimFailed(bridgeRow: any): Promise<void> {
 export function registerHyphaWebhookRoutes(app: Express) {
   app.post("/api/webhooks/hypha-alchemy", async (req: Request, res: Response) => {
     const sourceIp = req.ip || req.socket.remoteAddress || "unknown";
-    if (isWebhookFailureBlocked(sourceIp, "hypha-alchemy")) {
+    if (await isWebhookFailureBlocked(sourceIp, "hypha-alchemy")) {
       return res.status(429).json({ error: "Too many invalid signatures" });
     }
     const sig = req.header("x-alchemy-signature") ?? req.header("X-Alchemy-Signature");
     const rawBody = (req as any).rawBody ?? JSON.stringify(req.body ?? {});
     if (!verifyAlchemySignature(rawBody, sig)) {
-      recordWebhookFailure(sourceIp, "hypha-alchemy");
+      await recordWebhookFailure(sourceIp, "hypha-alchemy");
       log.warn("signature verification failed", { ip: sourceIp });
       return res.status(401).json({ error: "invalid signature" });
     }

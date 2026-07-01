@@ -81,7 +81,7 @@ const csrfProtection = t.middleware(async ({ ctx, next, type }) => {
     // Without a session cookie there is no credential to hijack, so no CSRF risk.
     // This also allows server-to-server calls and test contexts that have no cookie.
     if (sessionId) {
-      if (!csrfHeader || !validateCSRFToken(sessionId, csrfHeader)) {
+      if (!csrfHeader || !(await validateCSRFToken(sessionId, csrfHeader))) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Invalid or missing CSRF token",
