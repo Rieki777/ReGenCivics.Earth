@@ -6,7 +6,10 @@ buildCommand = "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm
 startCommand = "node dist/index.js"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
-preDeployCommand = "pnpm exec drizzle-kit migrate"
+# Migrations are applied manually via scripts/run-migration.ts (the custom
+# runner + _migrations_applied table, migrations 0048+). The old
+# `drizzle-kit migrate` preDeployCommand was a vestigial no-op (its journal
+# stops at 0047) and misleadingly ran on other services; removed.
 
 [[services]]
 name = "web"
