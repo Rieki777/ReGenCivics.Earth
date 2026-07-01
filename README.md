@@ -90,15 +90,17 @@ The project uses Drizzle ORM with MySQL. Schema lives in `drizzle/schema.ts`.
 Migrations live in `drizzle/` (numbered `0000_...sql` through `0100_...sql`).
 
 ```bash
-# Push schema changes to your database
+# Apply all migrations (fresh DB or catch-up). Alias for run-migration.ts --all
 npm run db:push
-
-# Generate a new migration after schema changes
-npx drizzle-kit generate
 
 # Seed the forum
 npm run seed:forum
 ```
+
+Migrations are hand-written `drizzle/NNNN_*.sql` applied by
+`scripts/run-migration.ts`. Do NOT run `drizzle-kit generate` / `migrate` (see
+`drizzle/README.md` for why). schema.ts is the type source of truth, not a
+migration driver.
 
 **Running migrations manually** (if `db:push` isn't enough for data migrations):
 Write a `.mjs` script and run it directly against the database. See
