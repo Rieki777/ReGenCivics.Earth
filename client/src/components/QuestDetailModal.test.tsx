@@ -35,6 +35,11 @@ vi.mock('@/lib/trpc', () => ({
         useMutation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
       },
     },
+    quest: {
+      logCompletion: {
+        useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+      },
+    },
   },
 }));
 

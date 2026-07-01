@@ -50,6 +50,12 @@ vi.mock('@/components/SmartBottomNav', () => ({
   default: () => <nav data-testid="smart-bottom-nav">Smart Nav</nav>,
 }));
 
+// Mock the theme context so children calling useTheme don't require a provider.
+vi.mock('@/contexts/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn(), switchable: false }),
+  ThemeProvider: ({ children }: any) => <>{children}</>,
+}));
+
 vi.mock('@/components/mobile/MobileTabBar', () => ({
   default: () => <nav data-testid="mobile-tab-bar">Mobile Tabs</nav>,
 }));

@@ -71,7 +71,8 @@ describe('ForumMarkdown', () => {
     );
     
     expect(communityPostSource).toContain('ForumMarkdown');
-    expect(communityPostSource).toContain('MarkdownHints');
+    // MarkdownHints is editor-only (CommunityNewPost); the post view renders
+    // through ForumMarkdown and no longer embeds the hints UI.
     // Should NOT contain the old renderContent function
     expect(communityPostSource).not.toContain('function renderContent');
   });
