@@ -113,6 +113,23 @@ npx tsx scripts/run-migration.ts --status     # what's applied
 
 The runner connects via DATABASE_URL, tracks applied migrations in `_migrations_applied` (idempotent), splits SQL safely, and skips already-applied files. Migration files are hand-written `drizzle/NNNN_description.sql`; `schema.ts` is the TypeScript type source, not a migration driver. `pnpm db:push` is now an alias for `--all`. Do NOT run `drizzle-kit generate` / `migrate` (its journal is frozen at 0047 and would try to recreate existing tables). Full details: `drizzle/README.md`. Deeper patterns: `regen-database-sql` skill.
 
+## Deployment (Railway)
+
+The production site is the Railway **`ReGenCivics.Earth`** service (regencivics.earth) in the **`ReGen Civics` / production** project+environment. The governance app is a separate service, `ReGen Governance App` (gov.regencivics.earth). Deploys are **triggered by pushing to `main`** on GitHub — Railway watches the branch and auto-builds using `railway.toml` (nixpacks builder, `pnpm run build`, start `node dist/index.js`). Follow `docs/GOLDEN_RULE.md`: run `/ship` before pushing.
+
+The Railway CLI is installed and logged in, and this repo is linked to the `ReGenCivics.Earth` service, so deploy status can be checked directly (commands default to the linked service):
+
+```bash
+pnpm railway:deploys   # railway deployment list — each deploy's status (SUCCESS / FAILED / BUILDING / CRASHED)
+pnpm railway:logs      # railway logs — live build + deploy logs for the linked service
+pnpm railway:status    # linked project / environment / service + all resources
+pnpm railway:deploy    # railway up — manual deploy of the working tree (bypasses the GitHub trigger)
+```
+
+To check the governance app instead, append `-s "ReGen Governance App"` to any command (e.g. `railway logs -s "ReGen Governance App"`), or re-link with `railway link -s "ReGen Governance App"`.
+
+**After every push to `main`, verify the deploy:** run `pnpm railway:deploys` and confirm the newest deployment reaches `SUCCESS`. If it shows `FAILED` or `CRASHED`, pull the reason with `pnpm railway:logs`. Migrations are NOT run by the deploy (see above) — apply them manually with the migration runner before or after the deploy as the change requires.
+
 ## Hypha Bridge
 
 Any handoff from ReGen Civics to Hypha (on-chain action on Base) MUST go through the Hypha Bridge module (`server/lib/hypha-bridge/`). Don't hand-roll redirect logic; extend the bridge with a new intent type. Full detail (11 creation routes, token contract addresses, env var names, DHO slugs, pre-fill strategies): **`.ai/docs/HYPHA-BRIDGE.md`**. Summary rule: `STEERING.md` section 6.
