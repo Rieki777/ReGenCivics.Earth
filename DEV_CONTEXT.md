@@ -333,7 +333,7 @@ The migration runner uses a `_migrations_applied` tracking table. It's idempoten
 3. Write plain SQL (CREATE TABLE, ALTER TABLE, INSERT, UPDATE, etc.)
 4. Also update `drizzle/schema.ts` to match (the Drizzle schema is the source of truth for TypeScript types)
 
-For Drizzle ORM schema changes that generate migrations automatically: `npm run db:push` (runs `drizzle-kit generate && drizzle-kit migrate`).
+Apply migrations with `npm run db:push` (an alias for `scripts/run-migration.ts --all`). Migrations are hand-written SQL; do NOT run `drizzle-kit generate` / `migrate`. See `drizzle/README.md`.
 
 ## Build and Run
 

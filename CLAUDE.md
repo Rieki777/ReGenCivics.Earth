@@ -111,7 +111,7 @@ npx tsx scripts/run-migration.ts --all       # all unapplied, in order
 npx tsx scripts/run-migration.ts --status     # what's applied
 ```
 
-The runner connects via DATABASE_URL, tracks applied migrations in `_migrations_applied` (idempotent), splits SQL safely, and skips already-applied files. Migration files: `drizzle/NNNN_description.sql`. For Drizzle schema changes: `pnpm db:push` (`drizzle-kit generate && drizzle-kit migrate`). Deeper patterns: `regen-database-sql` skill.
+The runner connects via DATABASE_URL, tracks applied migrations in `_migrations_applied` (idempotent), splits SQL safely, and skips already-applied files. Migration files are hand-written `drizzle/NNNN_description.sql`; `schema.ts` is the TypeScript type source, not a migration driver. `pnpm db:push` is now an alias for `--all`. Do NOT run `drizzle-kit generate` / `migrate` (its journal is frozen at 0047 and would try to recreate existing tables). Full details: `drizzle/README.md`. Deeper patterns: `regen-database-sql` skill.
 
 ## Hypha Bridge
 

@@ -139,19 +139,15 @@ ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxx
 
 ## 9. Database Migrations
 
-**Status:** Auto-runs on Railway deploy via `preDeployCommand`.
+**Status:** Run manually against Railway MySQL. NOT auto-run on deploy.
 
-Confirm your `railway.toml` contains:
-
-```toml
-[deploy]
-preDeployCommand = "pnpm exec drizzle-kit migrate"
-```
-
-To run migrations manually (if needed):
+Migrations are hand-written `drizzle/NNNN_*.sql` applied by the custom runner
+`scripts/run-migration.ts` (tracked in `_migrations_applied`, idempotent). Do
+NOT use `drizzle-kit generate` / `migrate` (see `drizzle/README.md` for why).
 
 ```bash
-pnpm exec drizzle-kit migrate
+pnpm db:migrate:status   # what's applied vs pending
+pnpm db:push             # apply all pending (alias for run-migration.ts --all)
 ```
 
 ---
