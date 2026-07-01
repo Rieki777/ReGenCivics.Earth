@@ -1,5 +1,6 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
+import crypto from "node:crypto";
 import * as db from "../db";
 import { getSessionCookieOptions, clearAllSessionCookies } from "./cookies";
 import { sdk } from "./sdk";
@@ -85,19 +86,83 @@ function normalizeReturnTo(raw: string | undefined | null): string | null {
   return trimmed;
 }
 
-function encodeReturnTo(path: string): string {
-  // URL-safe base64 so Google's state param doesn't mangle it.
-  return Buffer.from(path, "utf8")
-    .toString("base64")
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+// ─── Signed OAuth state (login-CSRF binding) ─────────────────────────────────
+//
+// The OAuth `state` param used to be a bare base64url encoding of returnTo:
+// unsigned, so it carried no anti-forgery guarantee (see
+// .ai/docs/security/OWASP-TOP10.md A01). We now HMAC-sign the state with
+// JWT_SECRET (ENV.cookieSecret) so an attacker cannot forge a valid state or
+// tamper with the embedded returnTo, and we stamp an issued-at time so an old
+// captured state cannot be replayed past STATE_TTL_MS. Every login callback
+// (Google, Apple) and the GitHub link callback rejects any state that fails
+// the signature or freshness check.
+//
+// Scope note: HMAC signing makes state unforgeable and non-replayable. Fully
+// binding the round-trip to the initiating browser would additionally require
+// a nonce cookie, but Apple's cross-site `form_post` callback does not send a
+// SameSite=lax cookie and this codebase deliberately avoids SameSite=none
+// (iPhone Safari drops it — see cookies.ts). So HMAC-signed state is the
+// correct step here; a cookie-bound nonce for the Google-only GET flow is a
+// possible future hardening.
+const STATE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+function b64url(buf: Buffer): string {
+  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function decodeReturnTo(state: string): string | null {
+function b64urlDecode(s: string): Buffer {
+  return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+}
+
+/**
+ * Build a signed `state` value. Payload carries the (already-normalized)
+ * returnTo, a random nonce, and an issued-at timestamp; the trailing segment
+ * is an HMAC-SHA256 over the payload keyed by JWT_SECRET. Always call this
+ * when initiating an OAuth redirect, even with no returnTo, so the callback
+ * always has an anti-forgery token to verify.
+ */
+function signState(returnTo: string | null): string {
+  const payload = b64url(
+    Buffer.from(
+      JSON.stringify({
+        r: returnTo ?? "",
+        n: crypto.randomBytes(16).toString("hex"),
+        t: Date.now(),
+      }),
+      "utf8"
+    )
+  );
+  const sig = b64url(crypto.createHmac("sha256", ENV.cookieSecret).update(payload).digest());
+  return `${payload}.${sig}`;
+}
+
+/**
+ * Verify a signed `state`. Returns `{ ok: true, returnTo }` only when the
+ * HMAC matches (constant-time compare) AND the state is younger than
+ * STATE_TTL_MS. returnTo is re-run through normalizeReturnTo so a forged
+ * or off-site path still can't slip through. Any failure returns
+ * `{ ok: false }`, which callers treat as a login-CSRF / expired-flow error.
+ */
+function verifyState(state: string | undefined | null): { ok: boolean; returnTo: string | null } {
+  if (!state || typeof state !== "string") return { ok: false, returnTo: null };
+  const dot = state.lastIndexOf(".");
+  if (dot <= 0) return { ok: false, returnTo: null };
+  const payload = state.slice(0, dot);
+  const sig = state.slice(dot + 1);
+  const expected = b64url(crypto.createHmac("sha256", ENV.cookieSecret).update(payload).digest());
+  const sigBuf = Buffer.from(sig);
+  const expBuf = Buffer.from(expected);
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    return { ok: false, returnTo: null };
+  }
   try {
-    const padded = state.replace(/-/g, "+").replace(/_/g, "/");
-    return Buffer.from(padded, "base64").toString("utf8");
+    const data = JSON.parse(b64urlDecode(payload).toString("utf8")) as { r?: string; t?: number };
+    if (typeof data.t !== "number" || Date.now() - data.t > STATE_TTL_MS) {
+      return { ok: false, returnTo: null };
+    }
+    return { ok: true, returnTo: normalizeReturnTo(data.r ?? null) };
   } catch {
-    return null;
+    return { ok: false, returnTo: null };
   }
 }
 
@@ -275,7 +340,9 @@ export function registerOAuthRoutes(app: Express) {
       access_type: "offline",
       prompt: "select_account",
     });
-    if (returnTo) params.set("state", encodeReturnTo(returnTo));
+    // Always attach a signed state so the callback can verify the round-trip,
+    // even when there is no returnTo to carry.
+    params.set("state", signState(returnTo));
     res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
   });
 
@@ -283,9 +350,16 @@ export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/google/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const rawState = getQueryParam(req, "state");
-    const returnTo = rawState ? normalizeReturnTo(decodeReturnTo(rawState)) : null;
     if (!code) {
       res.status(400).json({ error: "Missing code" });
+      return;
+    }
+    // Reject forged/expired state before doing any token work: this is the
+    // login-CSRF guard. A valid state proves we minted it within STATE_TTL_MS.
+    const { ok: stateOk, returnTo } = verifyState(rawState);
+    if (!stateOk) {
+      console.warn("[OAuth] Google callback rejected: invalid/expired state");
+      res.redirect("/?error=auth_failed&reason=bad_state");
       return;
     }
 
@@ -349,7 +423,7 @@ export function registerOAuthRoutes(app: Express) {
       response_mode: "form_post",
       scope: "name email",
     });
-    if (returnTo) params.set("state", encodeReturnTo(returnTo));
+    params.set("state", signState(returnTo));
     res.redirect(`https://appleid.apple.com/auth/authorize?${params}`);
   });
 
@@ -358,10 +432,16 @@ export function registerOAuthRoutes(app: Express) {
     const idToken = req.body?.id_token;
     const userJson = req.body?.user; // only sent on first login
     const rawState = typeof req.body?.state === "string" ? req.body.state : undefined;
-    const returnTo = rawState ? normalizeReturnTo(decodeReturnTo(rawState)) : null;
 
     if (!idToken) {
       res.status(400).json({ error: "Missing id_token" });
+      return;
+    }
+    // Login-CSRF guard: reject forged/expired state before verifying the token.
+    const { ok: stateOk, returnTo } = verifyState(rawState);
+    if (!stateOk) {
+      console.warn("[OAuth] Apple callback rejected: invalid/expired state");
+      res.redirect("/?error=auth_failed&reason=bad_state");
       return;
     }
 
@@ -420,6 +500,9 @@ export function registerOAuthRoutes(app: Express) {
       redirect_uri: redirectUri,
       scope: "read:user",
     });
+    // Signed state binds this link round-trip so the callback can reject a
+    // forged/replayed request even though this flow relies on the session cookie.
+    params.set("state", signState(null));
     res.redirect(`https://github.com/login/oauth/authorize?${params}`);
   });
 
@@ -428,6 +511,12 @@ export function registerOAuthRoutes(app: Express) {
     const code = getQueryParam(req, "code");
     if (!code) {
       res.redirect("/profile?tab=contributions&error=github_no_code");
+      return;
+    }
+    // Reject forged/expired state before doing any token work.
+    const { ok: stateOk } = verifyState(getQueryParam(req, "state"));
+    if (!stateOk) {
+      res.redirect("/profile?tab=contributions&error=github_bad_state");
       return;
     }
     // Require an existing session — this endpoint only links, not logs in

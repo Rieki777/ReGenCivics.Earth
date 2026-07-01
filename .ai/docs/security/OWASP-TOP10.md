@@ -48,13 +48,13 @@ Last reviewed: 2026-06-30 (full codebase re-audit; corrections tagged `2026-06-3
 **Posture**:
 - Drizzle ORM parameterizes queries by default. The few raw `sql\`\`` template literals use `${var}` parameterization (e.g., `db.execute(sql\`UPDATE users SET ...\${userId}\`)`).
 - No `child_process` or shell spawning in user-input paths.
-- `sanitizeInput` (`server/_core/security.ts`) strips tags + escapes entities. **Correction (2026-06-30 audit):** it is NOT applied uniformly. Coverage is only forum posts/replies (`server/routes/forum.ts`); profile, message, and campaign free-text are stored without it. It is a hand-rolled regex, not a vetted library (no DOMPurify/sanitize-html). Widening coverage + moving to a library is open.
+- `sanitizeInput` (`server/_core/security.ts`) strips all tags + escapes entities. **Update (2026-06-30):** now backed by the vetted `sanitize-html` library (strict `allowedTags: []`), replacing the hand-rolled regex. Coverage widened: forum posts/replies, campaigns, features, gratitude, agreements, claims, plus (new this pass) profiles (`server/routes/players.ts`) and direct messages (`server/routes/messages.ts`). A `sanitizeRichText` variant with a markdown-safe tag allowlist is provided for future rich-text fields (not yet wired).
 - HTML output in forum posts: rendered via `react-markdown` with `sanitizeForClient` from `client/src/utils/sanitize.ts`. Limited to a known-safe markdown subset.
 - URLs in markdown `<a>` components: protocol allowlisted (http, https, mailto only) in `client/src/components/ForumMarkdown.tsx`.
 
 **Open / monitored**:
 - The XML-strip regex in `server/lib/videoSummary.ts:fetchYouTubeTranscript` is for trusted YouTube response content only; if we ever feed user-controlled XML through it, revisit.
-- `sanitizeInput` is currently both stripping tags AND escaping entities (double-escape). Audited 2026-04-25 as low-priority cleanup; functional but worth simplifying.
+- `sanitizeInput` entity-encodes stray `<`/`>`/`&` in text after tag-stripping (via `sanitize-html`). Fields rendered through React/`react-markdown` are also output-escaped; the belt-and-suspenders double-encode is intentional for non-HTML sinks (email, plain-text). Low priority.
 
 **Code**: `server/_core/security.ts:sanitizeInput`, `client/src/utils/sanitize.ts`.
 
@@ -117,13 +117,13 @@ Last reviewed: 2026-06-30 (full codebase re-audit; corrections tagged `2026-06-3
 **Posture**:
 - No passwords (OAuth + magic link only). Removes the entire credential-stuffing surface.
 - Magic link: 32-char nanoid token, 15-minute expiry, single-use (consumed on first verify). Stored in `email_tokens` table.
-- OAuth `state` is base64url-ENCODED (not signed) and decoded server-side. **Correction (2026-06-30 audit):** there is no cryptographic anti-forgery token binding the login round-trip. `normalizeReturnTo()` defends returnTo poisoning (commit `cf1fb25`), but `state` itself carries no HMAC/nonce, so it does not defend against login CSRF. Signing/nonce-binding the state is open.
+- OAuth `state` is HMAC-SHA256 signed. **Update (2026-06-30):** `state` now carries `{ returnTo, nonce, issued-at }` with an HMAC keyed by `JWT_SECRET`; every callback (Google, Apple, GitHub link) verifies the signature constant-time and rejects states older than a 15-min TTL before any token exchange. `normalizeReturnTo()` still defends returnTo poisoning (commit `cf1fb25`). An attacker can no longer forge or replay a `state`. `oauth.ts:signState/verifyState`.
 - Cookie clearing on logout removes ALL three variant cookies (host-only, `.regencivics.earth`, no-dot) so a corrupt cookie state can self-recover (commit `b767d54`).
 
 **Open / monitored**:
 - Magic-link rate-limit: not yet rate-limited per email. A spammer could flood a target's inbox. To-do.
 - Session revocation: today, the only revocation is cookie expiry. No global "log out everywhere" flow.
-- OAuth `state` is unsigned (see posture). Add an HMAC or nonce to bind the round-trip against login CSRF.
+- OAuth `state` is HMAC-signed (done 2026-06-30). Remaining hardening: a browser-bound nonce cookie would fully close login-CSRF, but Apple's cross-site `form_post` callback won't send a `SameSite=lax` cookie and this codebase avoids `SameSite=none` (Safari drops it — see `cookies.ts`). Deferred.
 - Session cookie is 1-year, `SameSite=lax`, HttpOnly, `secure` forced true in prod. Long-lived credential; consider shorter expiry + refresh.
 - CSRF token store (`validateCSRFToken`) and one rate-limit fallback are in-memory (per-instance). They don't hold across Railway replicas or restarts; Redis-back them for multi-instance correctness.
 

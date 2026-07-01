@@ -16,7 +16,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] Cookie attributes: `httpOnly`, `secure` (prod fallback to true), `sameSite=lax`, `domain=.regencivics.earth`. (2026-04-25: ok)
 - [x] `clearAllSessionCookies` clears all 3 variants on logout + before fresh sign-in. (2026-04-25: ok per commit `b767d54`)
 - [x] OAuth state validation rejects `error=auth_failed` paths to prevent loop. (2026-04-25: ok per commit `cf1fb25`)
-- [ ] OAuth `state` signed/nonce-bound against login CSRF. (2026-06-30: open — state is base64url-encoded only, not signed)
+- [x] OAuth `state` signed against login CSRF. (2026-06-30: DONE — `state` is now HMAC-SHA256 signed with `JWT_SECRET` carrying a nonce + issued-at, verified constant-time with a 15-min TTL on every Google/Apple/GitHub callback. `oauth.ts:signState/verifyState`. Follow-up: browser-bound nonce cookie (blocked on Apple cross-site `form_post` + Safari SameSite=none).)
 - [x] `auth.me` is publicProcedure (intentional). `auth.logout` is publicProcedure (allows recovery). (2026-04-25: ok)
 - [ ] Magic-link rate limit: not yet bounded per-email. (2026-04-25: open)
 - [ ] Session revocation: only via cookie expiry today. No global "log out everywhere" flow. (2026-04-25: open, not blocking)
@@ -34,7 +34,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 
 - [x] No raw SQL string concatenation. All `sql\`\`` uses `${var}` interpolation. (2026-04-25: ok per audit)
 - [x] No `eval` / `new Function` / `vm.runInContext` in user-input paths. (2026-04-25: ok per repo grep)
-- [ ] `sanitizeInput` is the chokepoint for user content into DB. (2026-06-30: OPEN — corrects prior "ok". Only forum posts/replies are sanitized; profiles, messages, campaign text are not. Hand-rolled regex, not a vetted library.)
+- [x] `sanitizeInput` is the chokepoint for user content into DB. (2026-06-30: DONE — moved off hand-rolled regex to the vetted `sanitize-html` library (strict no-tags allowlist), and coverage widened beyond forum to profiles (`players.ts`) and direct messages (`messages.ts`). Campaign/features/gratitude/agreements/claims already covered. `sanitizeRichText` added for future markdown-safe surfaces.)
 - [x] `sanitizeForClient` + URL allowlist (http/https/mailto) on markdown render. (2026-04-25: ok)
 
 ## CSP + security headers

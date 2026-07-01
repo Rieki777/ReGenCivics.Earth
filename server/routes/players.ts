@@ -8,6 +8,12 @@ import { eq, sql, count, and } from "drizzle-orm";
 import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions } from "../../drizzle/schema";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 import { invokeLLM } from "../_core/llm";
+import { sanitizeInput } from "../_core/security";
+
+// Sanitize free-text prose fields while preserving null/undefined (so an
+// unset field is not accidentally overwritten with an empty string).
+const cleanText = <T extends string | null | undefined>(v: T): T =>
+  (typeof v === "string" ? (sanitizeInput(v) as T) : v);
 
 // ─── Player Profiles ──────────────────────────────────────────────────────────
 export const playerProfilesRouter = router({
@@ -61,9 +67,9 @@ export const playerProfilesRouter = router({
 
       const id = await db.createPlayerProfile({
         userId: ctx.user.id,
-        displayName: input.displayName,
+        displayName: sanitizeInput(input.displayName),
         email: ctx.user.email || null,
-        bio: input.bio || null,
+        bio: input.bio ? sanitizeInput(input.bio) : null,
         avatarUrl: input.avatarUrl || null,
         baseAccountName: input.baseAccountName || null,
         hyphaProfileUrl: input.hyphaProfileUrl || null,
@@ -75,7 +81,7 @@ export const playerProfilesRouter = router({
         rgenBalance: 0,
         isVerified: 0,
         isActive: 1,
-        ...(input.dreamingOf ? { dreamingOf: input.dreamingOf } : {}),
+        ...(input.dreamingOf ? { dreamingOf: sanitizeInput(input.dreamingOf) } : {}),
         ...(input.bioregionId != null ? { bioregionId: input.bioregionId } : {}),
       });
       return { id, success: true };
@@ -155,23 +161,23 @@ export const playerProfilesRouter = router({
       }
 
       await db.updatePlayerProfile(profile.id, {
-        displayName: input.displayName,
-        bio: input.bio,
+        displayName: cleanText(input.displayName),
+        bio: cleanText(input.bio),
         avatarUrl: input.avatarUrl,
         baseAccountName: input.baseAccountName,
         hyphaProfileUrl: input.hyphaProfileUrl,
         walletAddress: input.walletAddress,
         questsCompleted: input.questsCompleted,
-        ...(input.collaborationStatus !== undefined && { collaborationStatus: input.collaborationStatus }),
-        ...(input.dreamingOf !== undefined && { dreamingOf: input.dreamingOf }),
+        ...(input.collaborationStatus !== undefined && { collaborationStatus: cleanText(input.collaborationStatus) }),
+        ...(input.dreamingOf !== undefined && { dreamingOf: cleanText(input.dreamingOf) }),
         ...(input.bioregionId !== undefined && { bioregionId: input.bioregionId }),
         ...(input.locationLat !== undefined && { locationLat: input.locationLat }),
         ...(input.locationLng !== undefined && { locationLng: input.locationLng }),
         ...(input.locationPrecision !== undefined && { locationPrecision: input.locationPrecision }),
-        ...(input.locationLabel !== undefined && { locationLabel: input.locationLabel }),
+        ...(input.locationLabel !== undefined && { locationLabel: cleanText(input.locationLabel) }),
         ...(input.locationNomadic !== undefined && { locationNomadic: input.locationNomadic }),
         ...(input.locationEarth !== undefined && { locationEarth: input.locationEarth }),
-        ...(input.currentlyWorkingOn !== undefined && { currentlyWorkingOn: input.currentlyWorkingOn }),
+        ...(input.currentlyWorkingOn !== undefined && { currentlyWorkingOn: cleanText(input.currentlyWorkingOn) }),
       });
 
       // Auto-award Welcome Aboard badge when all 10 quests are complete

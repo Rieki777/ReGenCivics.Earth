@@ -6,6 +6,7 @@ import { eq, and, desc, lt, sql, isNull } from "drizzle-orm";
 import { getDb } from "../db";
 import { conversations, conversationParticipants, directMessages, users } from "../../drizzle/schema";
 import { pushToUser } from "../_core/sse";
+import { sanitizeInput } from "../_core/security";
 
 export const messagesRouter = router({
   conversations: router({
@@ -336,7 +337,7 @@ export const messagesRouter = router({
         const insertResult = await db2.insert(directMessages).values({
           conversationId,
           senderId: ctx.user.id,
-          content,
+          content: sanitizeInput(content),
           createdAt: now,
         });
 

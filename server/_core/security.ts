@@ -4,6 +4,7 @@
  */
 
 import crypto from 'node:crypto';
+import sanitizeHtml from 'sanitize-html';
 import { Request, Response, NextFunction } from 'express';
 import { cacheGet, cacheSet, isCacheAvailable } from '../cache';
 import { generateNonce } from './nonce';
@@ -255,31 +256,43 @@ export function validateCSRFToken(sessionId: string, token: string): boolean {
 
 /**
  * Input Sanitization
- * Removes potentially harmful HTML/JavaScript from user input
+ *
+ * Backed by the vetted `sanitize-html` library instead of hand-rolled regex.
+ * Two strictness levels:
+ *   - sanitizeInput  — PLAIN TEXT. Strips every tag and its dangerous content
+ *     (script/style/iframe bodies are discarded, not just the tag), drops all
+ *     attributes, and entity-encodes stray `<`/`>`/`&` in the remaining text.
+ *     Use for names, titles, messages, profile bios, and any field rendered as
+ *     text. This is the default chokepoint for user content into the DB.
+ *   - sanitizeRichText — a narrow markdown-safe tag allowlist for the rare
+ *     field that must keep basic formatting. Not wired to any route today;
+ *     provided so a future rich-text surface doesn't hand-roll its own.
  */
+const PLAIN_TEXT_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [],
+  allowedAttributes: {},
+  disallowedTagsMode: 'discard',
+  // Discard the CONTENT of these tags, not just the tag wrapper, so
+  // `<script>alert(1)</script>` leaves nothing behind.
+  nonTextTags: ['script', 'style', 'textarea', 'noscript', 'iframe', 'object', 'embed'],
+};
+
+const RICH_TEXT_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'h1', 'h2', 'h3', 'h4'],
+  allowedAttributes: { a: ['href', 'title'] },
+  // Only safe link schemes; blocks javascript:/vbscript:/data: URLs.
+  allowedSchemes: ['http', 'https', 'mailto'],
+  disallowedTagsMode: 'discard',
+};
+
 export function sanitizeInput(input: string): string {
   if (typeof input !== 'string') return '';
-  
-  // Remove dangerous tags and event handlers
-  let sanitized = input
-    .replace(/<(script|style|iframe|object|embed|form|base|link|meta)[^>]*>[\s\S]*?<\/\1>/gi, '')
-    .replace(/<(script|style|iframe|object|embed|form|base|link|meta)[^>]*\/?>/gi, '')
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
-    .replace(/on\w+\s*=\s*[^\s>]*/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/vbscript:/gi, '')
-    .replace(/data:\s*text\/html/gi, '');
-  
-  // Escape HTML entities for safety
-  const htmlEscapes: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  };
-  
-  return sanitized.replace(/[&<>"']/g, char => htmlEscapes[char] || char);
+  return sanitizeHtml(input, PLAIN_TEXT_OPTIONS);
+}
+
+export function sanitizeRichText(input: string): string {
+  if (typeof input !== 'string') return '';
+  return sanitizeHtml(input, RICH_TEXT_OPTIONS);
 }
 
 /**
