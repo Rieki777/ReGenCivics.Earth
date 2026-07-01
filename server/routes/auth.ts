@@ -7,6 +7,10 @@ import { TRPCError } from "@trpc/server";
 import { eq, sql, desc } from "drizzle-orm";
 import { clearAllSessionCookies } from "../_core/cookies";
 import { newsletterSubscribers, userProfiles } from "../../drizzle/schema";
+import { sanitizeInput } from "../_core/security";
+
+const cleanText = <T extends string | null | undefined>(v: T): T =>
+  (typeof v === "string" ? (sanitizeInput(v) as T) : v);
 
 // Debounce lastActiveAt writes, only update once per 5 minutes per user
 const lastActivePings = new Map<number, number>();
@@ -98,7 +102,21 @@ export const userProfilesRouter = router({
       website: z.string().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await db.upsertUserProfile(ctx.user.id, input);
+      // Plain-text fields go through sanitizeInput (strips tags, discards
+      // script/style content) before they ever reach the DB. URL fields
+      // (avatarUrl, bannerUrl, projectUrl, website) are left as-is, matching
+      // the existing players.ts:update pattern. They're rendered as href
+      // attributes, not innerHTML, and go through isValidUrl elsewhere.
+      await db.upsertUserProfile(ctx.user.id, {
+        ...input,
+        displayName: cleanText(input.displayName),
+        bio: cleanText(input.bio),
+        location: cleanText(input.location),
+        investmentRange: cleanText(input.investmentRange),
+        projectName: cleanText(input.projectName),
+        organizationName: cleanText(input.organizationName),
+        questInterests: cleanText(input.questInterests),
+      });
       return { success: true };
     }),
 
