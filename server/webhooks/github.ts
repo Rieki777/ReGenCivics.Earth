@@ -177,7 +177,14 @@ export function registerGithubWebhookRoutes(app: Express) {
       const rawBody = req.body as Buffer;
 
       // ── 1. Verify HMAC signature (all event types) ────────────────────────
-      if (GITHUB_WEBHOOK_SECRET && !verifyGithubSignature(rawBody, sigHeader)) {
+      // Fail closed: reject when the secret is unset instead of skipping the
+      // check. An unset secret must not let unauthenticated payloads through.
+      if (!GITHUB_WEBHOOK_SECRET) {
+        console.warn("[GitHub webhook] GITHUB_WEBHOOK_SECRET not set — rejecting (fail closed)");
+        res.status(401).json({ error: "webhook_not_configured" });
+        return;
+      }
+      if (!verifyGithubSignature(rawBody, sigHeader)) {
         console.warn("[GitHub webhook] Invalid signature — rejected");
         res.status(401).json({ error: "invalid_signature" });
         return;

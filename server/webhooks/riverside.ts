@@ -162,14 +162,15 @@ export function registerRiversideWebhookRoutes(app: Express) {
       const signature = req.headers["x-riverside-signature"] as string | undefined;
       const secret = process.env.RIVERSIDE_WEBHOOK_SECRET;
 
-      // Verify signature if secret is configured
-      if (secret) {
-        if (!verifySignature(rawBody, signature, secret)) {
-          log.warn("Invalid signature, rejected");
-          return res.status(401).json({ error: "Invalid signature" });
-        }
-      } else {
-        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check");
+      // Fail closed: reject when the secret is unset instead of skipping the
+      // check. An unset secret must not let unauthenticated payloads through.
+      if (!secret) {
+        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, rejecting (fail closed)");
+        return res.status(401).json({ error: "webhook_not_configured" });
+      }
+      if (!verifySignature(rawBody, signature, secret)) {
+        log.warn("Invalid signature, rejected");
+        return res.status(401).json({ error: "Invalid signature" });
       }
 
       let payload: RiversideWebhookPayload;
