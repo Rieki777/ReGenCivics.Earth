@@ -13,6 +13,22 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-01: Reprocess path + Whisper worker + CI green (commit c1a3fde)
+
+- Added `reprocessRecording(id)` to `coordinationPipeline.ts`: runs the full transcript + synthesize + extract-tasks + finalize path for one existing recording so admins can force-understand any of the 15 caption-less production recordings once the Whisper worker is deployed.
+- Extracted `loadHolders(db)` from the main loop so both paths share one query and cannot drift.
+- Added `recordings.reprocess` admin mutation in the tRPC router (dynamic import).
+- Added `TRANSCRIPTION_WORKER_URL` and `TRANSCRIPTION_API_KEY` to `ENV` (previously read raw from `process.env`).
+- Committed `transcription-worker/` (FastAPI + yt-dlp + faster-whisper, Groq/OpenAI optional backends) so Railway can deploy it as a standalone service.
+- Added `scripts/cleanup-test-data-2026-07-01.ts` to delete the Cowork verification throwaway rows from production (id-guarded, Rye runs).
+- Stopped CI failure emails: 4 test patches (package.json excludes, scrollIntoView stub, MobileTabBar mock, logout assertion) + action version bumps (checkout/setup-node v5, lighthouse-ci v12).
+
+**Rye still needs to:** deploy `transcription-worker/` on Railway, set `WORKER_API_KEY` + `TRANSCRIPTION_WORKER_URL` + `TRANSCRIPTION_API_KEY`, run `npx tsx scripts/cleanup-test-data-2026-07-01.ts`, then trigger `recordings.reprocess({ id: 9 })` to verify.
+
+Source: `archive/FIXES_TO_MAKE_2026-07-01_reprocess-and-whisper.md`.
+
+---
+
 ## 2026-07-01: Movement Coordination Engine (pipeline live, workflow canonicalized)
 
 - YouTube-poll recording pipeline and daily flywheel are live on Railway as `cron-coordination-pipeline` (every 10 min) and `cron-coordination-flywheel` (09:00 UTC). Both are curl crons, `sh -c` wrapped, sending `${{"ReGenCivics.Earth".CRON_SECRET}}`. Also fixed the pre-existing tier-detector cron, which had been silently returning 401 on every run.
