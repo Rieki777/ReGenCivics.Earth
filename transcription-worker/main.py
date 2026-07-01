@@ -56,28 +56,40 @@ def resolve_backend() -> str:
 
 
 def download_audio(video_id: str, dest_dir: str) -> str:
-    """Pull the audio track with yt-dlp. Returns the path to the mp3."""
+    """Pull the audio track with yt-dlp. Returns the path to the mp3.
+
+    YouTube blocks datacenter IPs hard, so we try a few extractor clients that
+    tend to survive the block, and surface yt-dlp's real stderr on failure.
+    """
     out_tmpl = os.path.join(dest_dir, "audio.%(ext)s")
     url = f"https://www.youtube.com/watch?v={video_id}"
-    cmd = [
-        "yt-dlp",
-        "-x",
-        "--audio-format", "mp3",
-        "--audio-quality", "5",
-        "--no-playlist",
-        "--quiet",
-        "--no-warnings",
-        "-o", out_tmpl,
-        url,
-    ]
-    # A cookies file lets the worker reach age- or login-gated videos.
     cookies = os.environ.get("YTDLP_COOKIES_FILE")
-    if cookies and Path(cookies).exists():
-        cmd[1:1] = ["--cookies", cookies]
-    subprocess.run(cmd, check=True, timeout=600)
+    # Player clients to try in order. Some survive datacenter-IP blocking when
+    # the default web client is refused with "Sign in to confirm you're not a bot".
+    client_args = os.environ.get(
+        "YTDLP_PLAYER_CLIENTS", "default,android,ios,web_safari,tv"
+    )
+
+    def build_cmd() -> list[str]:
+        cmd = [
+            "yt-dlp",
+            "-x",
+            "--audio-format", "mp3",
+            "--audio-quality", "5",
+            "--no-playlist",
+            "--extractor-args", f"youtube:player_client={client_args}",
+            "-o", out_tmpl,
+            url,
+        ]
+        if cookies and Path(cookies).exists():
+            cmd[1:1] = ["--cookies", cookies]
+        return cmd
+
+    result = subprocess.run(build_cmd(), capture_output=True, text=True, timeout=600)
     mp3 = os.path.join(dest_dir, "audio.mp3")
-    if not Path(mp3).exists():
-        raise RuntimeError("yt-dlp did not produce audio.mp3")
+    if result.returncode != 0 or not Path(mp3).exists():
+        tail = (result.stderr or result.stdout or "").strip()[-800:]
+        raise RuntimeError(f"yt-dlp failed (exit {result.returncode}): {tail}")
     return mp3
 
 
@@ -141,7 +153,10 @@ def transcribe(req: TranscribeRequest, authorization: str = Header(default="")) 
 
     backend = resolve_backend()
     with tempfile.TemporaryDirectory() as tmp:
-        audio = download_audio(video_id, tmp)
+        try:
+            audio = download_audio(video_id, tmp)
+        except Exception as e:  # surface the real yt-dlp reason to the caller + logs
+            raise HTTPException(status_code=502, detail=str(e))
         if backend == "groq":
             result = transcribe_hosted(
                 audio, "https://api.groq.com/openai/v1", GROQ_API_KEY, "whisper-large-v3-turbo"
