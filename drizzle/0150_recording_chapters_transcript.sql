@@ -3,14 +3,11 @@
 --
 -- Phase 1 of the coordination-engine completion. The synthesize pass already
 -- produces chapters, but they were discarded because there was no column.
--- transcriptJson stores timestamped { start, text } segments so the Schedule
--- page's chapters and transcript can deep-link into the YouTube player.
--- Both are nullable; existing rows read as NULL.
+-- transcriptJson stores timestamped start/text segments so the Schedule page
+-- chapters and transcript can deep-link into the YouTube player.
+-- Both are nullable, so existing rows read as NULL. The runner records applied
+-- migrations, so this is not re-run once it succeeds.
 
 ALTER TABLE recordings
-  ADD COLUMN IF NOT EXISTS chaptersJson JSON DEFAULT NULL
-    COMMENT 'Synthesize-pass chapters: [{ tSeconds, title }]';
-
-ALTER TABLE recordings
-  ADD COLUMN IF NOT EXISTS transcriptJson JSON DEFAULT NULL
-    COMMENT 'Timestamped transcript segments: [{ start, text }]';
+  ADD COLUMN chaptersJson JSON NULL COMMENT 'Synthesize-pass chapters: array of tSeconds + title',
+  ADD COLUMN transcriptJson JSON NULL COMMENT 'Timestamped transcript segments: array of start + text';
