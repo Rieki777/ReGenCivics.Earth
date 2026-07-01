@@ -235,11 +235,12 @@ We don't have a long incident history yet: that's a good thing. Keep it that way
 
 ---
 
-## Finding 2026-06-30: fail-open webhook signature verification
+## Finding 2026-06-30: GitHub webhook delivery timeout (double body-parse)
 
-- Reported: internal codebase re-audit, 2026-06-30. No live exploit observed.
-- Symptom: none user-visible. `POST /api/webhooks/github` and `POST /api/webhooks/riverside` skipped HMAC verification entirely when their secret env var was unset, processing unauthenticated payloads (fail-open). Resend fails open in non-production only.
-- Diagnosis: the guard was `if (GITHUB_WEBHOOK_SECRET && !verify(...))` (GitHub) and `if (secret) { verify } else { skip }` (Riverside), so an empty secret bypassed verification.
-- Fix: reject with 401 when the secret is unset — `server/webhooks/github.ts`, `server/webhooks/riverside.ts`. Now consistent with Alchemy + Loomio, which already fail closed.
-- REQUIRED human follow-up: set `GITHUB_WEBHOOK_SECRET` and `RIVERSIDE_WEBHOOK_SECRET` in Railway. Until then, these endpoints return 401 and the GitHub merge-automation + Riverside recording pipeline are paused. This is the correct trade-off: an unauthenticated webhook is worse than a disabled one. Setting the secrets restores verified operation.
-- Prevention: CHECKLIST "Webhooks" + "Input handling" updated; OWASP-TOP10 A03/A04/A07/A08 corrected.
+- Reported: diagnosed live from the GitHub webhook delivery log + Railway panel, 2026-06-30. Every delivery to `/api/webhooks/github` timed out — never a 401, so the signature was never the question.
+- Symptom: GitHub shows "timed out" on every delivery (`check_suite.completed`, `pull_request.*`) with the service Online at 2/2 replicas. Riverside carried the same latent bug (silent 401) but no live traffic.
+- Diagnosis: DOUBLE BODY-PARSE. The global `express.json({ verify })` in `server/_core/index.ts` consumes the stream and captures the raw string as `req.rawBody`. `github.ts` and `riverside.ts` still mounted their own route-level `express.raw()`, which no-ops after the body is already consumed, so `req.body` stayed a parsed object. GitHub then called `crypto.createHmac().update(object)` → TypeError thrown inside an async handler Express 4 does not catch → no response → GitHub's 10s timeout. Riverside re-serialized via `JSON.stringify(req.body)`, so its HMAC never matched → 401.
+- NOT a secrets problem: both webhook secrets are set (Riverside's is intentionally absent, handler is secret-optional). An earlier same-day "fail-open secrets" framing was wrong and is superseded by this entry.
+- Fix: read `req.rawBody` and drop the route-level `express.raw()` in both handlers, matching `resend`/`loomio`/`hypha`. Files: `server/webhooks/github.ts`, `server/webhooks/riverside.ts`.
+- Verify: redeliver the latest `check_suite.completed` in GitHub → expect 200 (not a timeout, not a 401).
+- Prevention: never mount a route-level body parser after the global `express.json()`. CHECKLIST "Webhooks" updated; OWASP-TOP10 A04/A08 corrected.

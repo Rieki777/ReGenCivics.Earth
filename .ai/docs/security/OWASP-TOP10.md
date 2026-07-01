@@ -67,7 +67,7 @@ Last reviewed: 2026-06-30 (full codebase re-audit; corrections tagged `2026-06-3
 **Posture**:
 - Token writes are private-only on the server. Public chain writes are user-initiated only. (See ADR-7.) Insecure design here would be "server can write to chain on user's behalf"; we explicitly don't.
 - No password resets via email-link-then-set-new-password. Instead the email magic link IS the auth path; no shared secret to leak.
-- Webhook endpoints fail closed when their secret is missing: Alchemy + Loomio always; Resend in production; GitHub + Riverside fixed to fail closed on **2026-06-30**. **Correction (2026-06-30 audit):** before that fix, GitHub (`server/webhooks/github.ts`) and Riverside (`server/webhooks/riverside.ts`) skipped signature verification entirely when their secret env var was unset (fail-open). Resend still fails OPEN in non-production (dev convenience, accepted).
+- Webhooks verify HMAC over the raw request string captured once by the global `express.json({ verify })` in `server/_core/index.ts` (stored as `req.rawBody`). **Finding + fix (2026-06-30):** GitHub + Riverside handlers additionally mounted their own route-level `express.raw()`, which no-ops after the global parser has consumed the stream, leaving `req.body` a parsed object. GitHub then called `createHmac().update(object)` → TypeError throw → no response → GitHub's 10s delivery timeout; Riverside re-serialized with `JSON.stringify(req.body)` → HMAC never matched → silent 401. Fixed by reading `req.rawBody` and removing the route-level parser (matching `resend`/`loomio`/`hypha`). Note: both webhook secrets ARE configured in Railway; Riverside's is intentionally absent and its handler is secret-optional (secondary ingest path). Resend fails open in non-production only.
 - Logout uses a multi-variant cookie clear (commit `b767d54`) because cross-deploy cookie attribute drift was creating stuck-session bugs.
 
 **Open / monitored**:
@@ -137,7 +137,7 @@ Last reviewed: 2026-06-30 (full codebase re-audit; corrections tagged `2026-06-3
 
 **Posture**:
 - Railway pulls from GitHub on push. Branch protection on `main` is the human gate.
-- Webhooks verify HMAC signatures (Alchemy, Loomio, Resend, GitHub, Riverside). All fail closed when the secret is set. GitHub + Riverside were fixed on 2026-06-30 to also fail closed when the secret is UNSET (previously fail-open — see A04). Resend still fails open in non-production only.
+- Webhooks verify HMAC signatures (Alchemy, Loomio, Resend, GitHub, Riverside) over `req.rawBody`. GitHub + Riverside were fixed on 2026-06-30 (double body-parse crash/401; see A04). **Anti-pattern to avoid:** mounting a route-level `express.raw()` after the global `express.json()` — it no-ops and breaks signature verification. Riverside is secret-optional by design; Resend fails open in non-production only.
 - The `cron-governance-jobs` and `cron-event-reminders` endpoints validate a Bearer token via `crypto.timingSafeEqual` (commits `76dc0ab` + `c1dc9d8`).
 - No `eval()` or `new Function()` in the codebase. Verified by repo-wide grep.
 - JSON body parsing is sanity-bounded (`limit: "50mb"`).

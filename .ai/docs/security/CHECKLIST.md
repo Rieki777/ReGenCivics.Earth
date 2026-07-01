@@ -24,7 +24,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 ## Webhooks
 
 - [x] Resend webhook signature verification fails closed in production. (2026-04-25: ok per commit `76dc0ab`; fails open in non-production by design)
-- [x] GitHub + Riverside webhooks fail closed when their signing secret is unset. (2026-06-30: FIXED — were fail-open before. Requires `GITHUB_WEBHOOK_SECRET` / `RIVERSIDE_WEBHOOK_SECRET` set in Railway, or these endpoints now return 401)
+- [x] GitHub + Riverside webhooks verify over `req.rawBody`, not a route-level `express.raw()`. (2026-06-30: FIXED double body-parse — GitHub was timing out, Riverside 401ing every delivery. `GITHUB_WEBHOOK_SECRET` is set; `RIVERSIDE_WEBHOOK_SECRET` is intentionally absent / secret-optional.)
 - [x] CRON_SECRET timing-safe comparison via `timingSafeEqualStr`. (2026-04-25: ok per commit `c1dc9d8`)
 - [x] x-admin-secret on `buffer.ts`, `farcaster.ts`, riverside resend-email: timing-safe. (2026-04-25: ok per commit `c1dc9d8`)
 - [x] Webhook signature failure rate-limit: 5/min per IP. (2026-04-25: ok per commit `c1dc9d8`)
