@@ -239,6 +239,25 @@ const SYSTEM_PROMPT = [
   "Cap output at ~200 words. The point is to help a forum reader decide whether to watch the video.",
 ].join("\n\n");
 
+/**
+ * Deterministic backstop for the writing rules on LLM output. SYSTEM_PROMPT
+ * asks the model to avoid em-dashes, but models slip. This guarantees the
+ * punctuation rule: dash family -> comma, then tidy the spacing it creates.
+ * Duplicated from coordinationPipeline.ts rather than shared, since that
+ * module imports from this one and a shared import would be circular.
+ */
+function scrubVoice(text: string): string {
+  if (typeof text !== "string") return text;
+  return text
+    .replace(/\s*[‒–—―]\s*/g, ", ")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^\s*,\s*/, "")
+    .replace(/\s*,\s*$/, "")
+    .trim();
+}
+
 async function summariseTranscript(transcript: string, videoUrl: string): Promise<string | null> {
   // Trim to a sensible window for Claude. Auto-captions tend to be talky; 12k
   // chars is roughly 30 minutes of captions and stays well under the model's
@@ -256,7 +275,7 @@ async function summariseTranscript(transcript: string, videoUrl: string): Promis
       maxTokens: 800,
     });
     const out = result.choices?.[0]?.message?.content?.trim();
-    return out || null;
+    return out ? scrubVoice(out) : null;
   } catch (err) {
     console.error("[videoSummary] invokeLLM failed", err);
     return null;

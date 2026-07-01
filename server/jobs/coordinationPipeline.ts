@@ -174,7 +174,25 @@ const VOICE_RULES = [
   "Write in Rye's voice: direct, grounded, specific.",
   "Banned: em-dashes (zero, ever), contrast framing ('not X but Y'), AI tells (delve, foster, leverage, vibrant, transformative, unlock, seamless, robust, comprehensive, utilize, navigate as metaphor, empower, beacon of, testament to, embark, in conclusion, it's worth noting).",
   "Never invent details. If something is not in the transcript, leave it out.",
+  "Use commas, periods, or shorter sentences in place of any dash. Never output the — or – character.",
 ].join("\n");
+
+/**
+ * Deterministic backstop for the writing rules on LLM output. VOICE_RULES
+ * asks the model to avoid em-dashes, but models slip. This guarantees the
+ * punctuation rule: dash family -> comma, then tidy the spacing it creates.
+ */
+export function scrubVoice(text: string): string {
+  if (typeof text !== "string") return text;
+  return text
+    .replace(/\s*[‒–—―]\s*/g, ", ")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^\s*,\s*/, "")
+    .replace(/\s*,\s*$/, "")
+    .trim();
+}
 
 /**
  * Strip a fenced code block (```json ... ```) if present, then parse.
@@ -233,10 +251,16 @@ export async function runSynthesizePass(input: {
   const parsed = tryParseJson<SynthesizeOutput>(raw);
   if (!parsed) return null;
   return {
-    overview: typeof parsed.overview === "string" ? parsed.overview : "",
-    chapters: Array.isArray(parsed.chapters) ? parsed.chapters : [],
-    decisions: Array.isArray(parsed.decisions) ? parsed.decisions : [],
-    actionItems: Array.isArray(parsed.actionItems) ? parsed.actionItems : [],
+    overview: scrubVoice(typeof parsed.overview === "string" ? parsed.overview : ""),
+    chapters: (Array.isArray(parsed.chapters) ? parsed.chapters : []).map((c) => ({
+      ...c,
+      title: scrubVoice(c.title),
+    })),
+    decisions: (Array.isArray(parsed.decisions) ? parsed.decisions : []).map(scrubVoice),
+    actionItems: (Array.isArray(parsed.actionItems) ? parsed.actionItems : []).map((a) => ({
+      owner: scrubVoice(a.owner),
+      item: scrubVoice(a.item),
+    })),
   };
 }
 
@@ -315,7 +339,28 @@ export async function runExtractTasksPass(input: {
   // Drop any task without an evidence quote, per spec.
   return tasks
     .filter((t) => typeof t?.evidenceQuote === "string" && t.evidenceQuote.trim().length > 0)
-    .slice(0, MAX_TASKS_PER_RUN);
+    .slice(0, MAX_TASKS_PER_RUN)
+    .map((t) => ({
+      ...t,
+      title: scrubVoice(t.title),
+      summary: scrubVoice(t.summary),
+      sociocraticOverview: {
+        ...t.sociocraticOverview,
+        purpose: scrubVoice(t.sociocraticOverview?.purpose),
+        whyThisRole: t.sociocraticOverview?.whyThisRole !== undefined
+          ? scrubVoice(t.sociocraticOverview.whyThisRole)
+          : t.sociocraticOverview?.whyThisRole,
+        steps: Array.isArray(t.sociocraticOverview?.steps)
+          ? t.sociocraticOverview.steps.map(scrubVoice)
+          : t.sociocraticOverview?.steps,
+        definitionOfDone: t.sociocraticOverview?.definitionOfDone !== undefined
+          ? scrubVoice(t.sociocraticOverview.definitionOfDone)
+          : t.sociocraticOverview?.definitionOfDone,
+        consentCircle: t.sociocraticOverview?.consentCircle !== undefined
+          ? scrubVoice(t.sociocraticOverview.consentCircle)
+          : t.sociocraticOverview?.consentCircle,
+      },
+    }));
 }
 
 // ── Orchestrator ─────────────────────────────────────────────────────
