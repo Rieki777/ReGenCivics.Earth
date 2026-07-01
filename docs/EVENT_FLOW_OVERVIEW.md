@@ -1,7 +1,9 @@
 # ReGen Civics Event Flow — Full Overview
 
 > Last updated: March 2026. Reference this before touching anything related to events, schedule, recordings, or reminders.
-> Email copy section added — proofread and update text directly in this file, then ask Claude to push the changes.
+> Email copy section added, proofread and update text directly in this file, then ask Claude to push the changes.
+
+> OUTDATED SECTION: the recording flow shown below (Riverside fires a webhook) is superseded. The recording pipeline is now YouTube-poll-primary and is defined in `COORDINATION_ENGINE_WORKFLOW.md`. The Riverside webhook is kept only as a secondary ingest path. The event, reminder, and schedule parts of this doc are still accurate.
 
 ---
 

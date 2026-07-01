@@ -2,7 +2,7 @@
 
 Date: 2026-06-23
 Author: Rye + Claude (Cowork CTO planning session)
-Supersedes the trigger design in `CLAUDE_CODE_PROMPT_2026-06-23_RIVERSIDE_YOUTUBE_PIPELINE.md`. That document's pipeline stages still apply for the video handling; this document is the larger system that wraps them and turns a recorded session into coordinated work across the movement.
+This is the design and vision for the coordination engine. For what actually shipped and runs today (the YouTube-poll pipeline, the two crons, and the current data model), see `COORDINATION_ENGINE_WORKFLOW.md`, the canonical current-state doc. This document is the larger system that turns a recorded session into coordinated work across the movement; some parts here (the edited-cut, clips, and thumbnail stages) are deferred and not built.
 
 Read `CLAUDE.md`, `.ai/docs/STEERING.md`, `.ai/docs/security/AI-AUTOMATION-RISKS.md`, and `CONTEXT_THE_TWO_GAMES.md` before building. The token model rules in `CLAUDE.md` (private-first, `creditPrivateTokens`) are binding for every bounty in this spec.
 

@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-01: Movement Coordination Engine (pipeline live, workflow canonicalized)
+
+- YouTube-poll recording pipeline and daily flywheel are live on Railway as `cron-coordination-pipeline` (every 10 min) and `cron-coordination-flywheel` (09:00 UTC). Both are curl crons, `sh -c` wrapped, sending `${{"ReGenCivics.Earth".CRON_SECRET}}`. Also fixed the pre-existing tier-detector cron, which had been silently returning 401 on every run.
+- Canonical workflow doc: `COORDINATION_ENGINE_WORKFLOW.md` (renamed from the old Riverside pipeline prompt, now a stub). Vision: `MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`. Active build for remaining work: `CLAUDE_CODE_PROMPT_2026-07-01_COMPLETE_COORDINATION_ENGINE.md`.
+- New skills: `regen-railway-crons` (the `sh -c` shell-expansion and silent-401 traps) and `regen-deterministic-first` (also STEERING section 11).
+- Retired the old Riverside-webhook framing. The recording pipeline is YouTube-poll-primary, webhook secondary. Updated `docs/EVENT_FLOW_OVERVIEW.md` and neutralized the old kickoff prompt `CLAUDE_CODE_BUILD_PROMPT_MOVEMENT_ENGINE.md`.
+- Carryover: remaining work sections A to F in the workflow doc (community publish, task lifecycle to reward, roles-in-database plus invite flow, Whisper fallback). Handed to Claude Code via the 2026-07-01 build prompt.
+
+---
+
 ## 2026-06-26: Safari + Mobile Compatibility Sprint (SHIPPED)
 
 Commits `b30a2e1` (CI green) + `98405e2` (Batch 0+1) + `459ba57` (Batch 2) + `021f761` (Batch 3) + `99230f7` (Batches 4-8). Source doc: `archive/SAFARI_MOBILE_AUDIT_2026-06-26.md`. Prompt: `archive/CLAUDE_CODE_PROMPT_2026-06-26_SAFARI_MOBILE.md`.
