@@ -20,6 +20,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] `auth.me` is publicProcedure (intentional). `auth.logout` is publicProcedure (allows recovery). (2026-04-25: ok)
 - [ ] Magic-link rate limit: not yet bounded per-email. (2026-04-25: open)
 - [ ] Session revocation: only via cookie expiry today. No global "log out everywhere" flow. (2026-04-25: open, not blocking)
+- [x] Redis-backed CSRF token store + webhook-failure rate-limit buckets. (2026-07-01: DONE — confirmed live, `/health` shows `cache:connected`. Required both the missing `initCacheOnStartup()` wiring and a Redis container redeploy on Railway. See OWASP-TOP10 A07.)
 
 ## Webhooks
 
