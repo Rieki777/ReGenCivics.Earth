@@ -67,6 +67,7 @@ const _require = createRequire(import.meta.url);
 import { sendEmail } from "./email";
 import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
 import { isCacheAvailable } from "../cache";
+import { initCacheOnStartup, setupCacheShutdownHandlers } from "../cacheInit";
 import path from "path";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -938,6 +939,14 @@ async function startServer() {
   if (port !== preferredPort) {
     log.warn("port busy, falling back", { preferredPort, port });
   }
+
+  // Connect Redis (if REDIS_URL is set) before accepting traffic. This was
+  // previously defined in cacheInit.ts but never invoked, so CSRF tokens,
+  // webhook-failure buckets, and rate limits silently ran on the in-memory
+  // fallback in production even after REDIS_URL was configured. isCacheAvailable()
+  // gates all of those call sites, so this is safe to no-op when unset.
+  await initCacheOnStartup();
+  setupCacheShutdownHandlers();
 
   server.listen(port, () => {
     log.info(`Server running on http://localhost:${port}/`);
