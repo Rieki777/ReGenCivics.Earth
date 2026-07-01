@@ -235,6 +235,15 @@ export const recordingsRouter = router({
         .limit(input?.limit ?? 50);
     }),
 
+  // Admin: force an already-ingested recording through the understand + publish path.
+  // Runs transcript -> synthesize -> extract-tasks -> finalize; idempotent.
+  reprocess: adminProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const { reprocessRecording } = await import("../jobs/coordinationPipeline");
+      return reprocessRecording(input.id);
+    }),
+
   // Admin: attach or update the edited YouTube cut for a recording
   setEditedCut: adminProcedure
     .input(z.object({

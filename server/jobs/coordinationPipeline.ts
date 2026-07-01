@@ -39,6 +39,8 @@ import { fetchYouTubeTranscript, fetchYouTubeTranscriptSegments, transcribeFallb
 import { recordings, roleHolders, bounties, bountyRoles } from "../../drizzle/schema";
 import { finalizeRecording } from "../lib/recording-finalize";
 
+type DbInstance = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+
 // ── Tunables ─────────────────────────────────────────────────────────
 
 const DEFAULT_TITLE_SKIP_PATTERN =
@@ -331,6 +333,32 @@ export interface PipelineReport {
   errors: string[];
 }
 
+/**
+ * Load active role holders from the DB. Shared by the main pipeline loop
+ * and reprocessRecording so they always read the same data and cannot drift.
+ */
+export async function loadHolders(db: DbInstance) {
+  const rows = await db
+    .select({
+      roleSlug: roleHolders.roleSlug,
+      roleTitle: roleHolders.roleTitle,
+      circle: roleHolders.circle,
+      aliases: roleHolders.aliases,
+      userId: roleHolders.userId,
+      isActive: roleHolders.isActive,
+    })
+    .from(roleHolders);
+  return rows
+    .filter((h) => h.isActive === 1)
+    .map((h) => ({
+      roleSlug: h.roleSlug,
+      roleTitle: h.roleTitle,
+      aliases: Array.isArray(h.aliases) ? (h.aliases as string[]) : [],
+      circle: h.circle,
+      userId: h.userId,
+    }));
+}
+
 export async function runCoordinationPipeline(opts: {
   channelId?: string;
   maxNew?: number;
@@ -370,25 +398,7 @@ export async function runCoordinationPipeline(opts: {
 
   // Pre-fetch every roleHolders row once (cheap, ~20 rows) and pass
   // into the extract-tasks pass instead of querying per-video.
-  const holdersRaw = await db
-    .select({
-      roleSlug: roleHolders.roleSlug,
-      roleTitle: roleHolders.roleTitle,
-      circle: roleHolders.circle,
-      aliases: roleHolders.aliases,
-      userId: roleHolders.userId,
-      isActive: roleHolders.isActive,
-    })
-    .from(roleHolders);
-  const holders = holdersRaw
-    .filter((h) => h.isActive === 1)
-    .map((h) => ({
-      roleSlug: h.roleSlug,
-      roleTitle: h.roleTitle,
-      aliases: Array.isArray(h.aliases) ? (h.aliases as string[]) : [],
-      circle: h.circle,
-      userId: h.userId,
-    }));
+  const holders = await loadHolders(db);
   const holderByRole = new Map(holders.map((h) => [h.roleSlug, h] as const));
 
   for (const entry of entries) {
@@ -537,6 +547,106 @@ export async function runCoordinationPipeline(opts: {
   rollDayIfNeeded();
   report.llmCallsToday = counters.siteCount;
   return report;
+}
+
+/**
+ * Force one already-ingested recording through the understand + publish path.
+ *
+ * Same steps as the main loop — transcript, synthesize, extract tasks, finalize
+ * — but against one existing row instead of a freshly polled RSS entry. Used
+ * by the admin recordings.reprocess mutation. Idempotent: finalize guards on
+ * emailSent + forumPostId, and re-running overwrites the synthesize columns.
+ */
+export async function reprocessRecording(recordingId: number): Promise<{
+  ok: boolean;
+  transcript: boolean;
+  synthesized: boolean;
+  tasksProposed: number;
+  reason?: string;
+}> {
+  const db = await getDb();
+  if (!db) return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: "no_db" };
+
+  const [rec] = await db
+    .select({ id: recordings.id, title: recordings.title, youtubeVideoId: recordings.youtubeVideoId })
+    .from(recordings)
+    .where(eq(recordings.id, recordingId))
+    .limit(1);
+  if (!rec || !rec.youtubeVideoId) {
+    return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: "not_found_or_no_video" };
+  }
+
+  const holders = await loadHolders(db);
+  const holderByRole = new Map(holders.map((h) => [h.roleSlug, h] as const));
+
+  // Captions first, Whisper worker second.
+  let transcript = await fetchYouTubeTranscript(rec.youtubeVideoId);
+  let transcriptSegments = transcript ? await fetchYouTubeTranscriptSegments(rec.youtubeVideoId) : null;
+  if (!transcript) {
+    const fb = await transcribeFallback(rec.youtubeVideoId);
+    if (fb) { transcript = fb.text; transcriptSegments = fb.segments; }
+  }
+  if (!transcript) {
+    return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: "no_transcript" };
+  }
+  await db.update(recordings)
+    .set({ transcript, transcriptJson: transcriptSegments ?? null })
+    .where(eq(recordings.id, rec.id));
+
+  // Synthesize.
+  let synthesized = false;
+  const synth = await runSynthesizePass({ title: rec.title, transcript });
+  if (synth) {
+    await db.update(recordings).set({
+      overview: synth.overview || null,
+      decisionsJson: synth.decisions,
+      actionItemsJson: synth.actionItems,
+      chaptersJson: synth.chapters.map((c) => ({
+        tSeconds: Math.max(0, Math.floor(c.timestampSeconds || 0)),
+        title: c.title,
+      })),
+      aiSummary: synth.overview || null,
+    }).where(eq(recordings.id, rec.id));
+    synthesized = true;
+  }
+
+  // Extract tasks -> proposed bounties, same as the main loop.
+  let tasksProposed = 0;
+  const drafts = await runExtractTasksPass({ title: rec.title, transcript, holders });
+  for (const draft of drafts) {
+    const matched = draft.roleSlug ? holderByRole.get(draft.roleSlug) : null;
+    try {
+      const [bResult] = await db.insert(bounties).values({
+        sourceType: "call_task",
+        title: draft.title.slice(0, 255),
+        body: draft.summary,
+        tokenType: "regen",
+        workStatus: "proposed",
+        recordingId: rec.id,
+        roleSlug: draft.roleSlug ?? null,
+        evidenceQuote: draft.evidenceQuote,
+        evidenceTs: Math.max(0, Math.floor(draft.evidenceTimestampSeconds || 0)),
+      });
+      const bountyId = (bResult as unknown as { insertId: number }).insertId;
+      const assigneeUserId = matched?.userId ?? null;
+      await db.insert(bountyRoles).values({
+        bountyId,
+        role: "doer",
+        userId: assigneeUserId,
+        amount: Math.max(0, Math.min(1_000_000, Math.floor(draft.bountyAmount))),
+        payStatus: assigneeUserId ? "filled" : "unfilled",
+        filledByLog: assigneeUserId
+          ? [{ userId: assigneeUserId, action: "pipeline_assigned", agent: AGENT_NAME, at: new Date().toISOString() }]
+          : null,
+      });
+      tasksProposed += 1;
+    } catch { /* skip on insert error, same as main loop */ }
+  }
+
+  // Publish once. Guards on emailSent + forumPostId make this idempotent.
+  try { await finalizeRecording(rec.id); } catch { /* finalize errors are non-fatal */ }
+
+  return { ok: true, transcript: true, synthesized, tasksProposed };
 }
 
 // Suppress unused-import warning when sql is only referenced by a future helper.

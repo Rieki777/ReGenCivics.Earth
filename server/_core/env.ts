@@ -65,4 +65,10 @@ export const ENV = {
   // CLAUDE_CODE_BUILD_PROMPT_MOVEMENT_ENGINE.md). Override via Railway
   // when the canonical channel handle changes.
   youtubeChannelId: process.env.YOUTUBE_CHANNEL_ID ?? "UCzuomEZ3aNbr2LEreGlvWGQ",
+  // Transcription fallback worker (FastAPI + yt-dlp + faster-whisper).
+  // Leave unset to skip Whisper transcription. Set both to enable:
+  //   TRANSCRIPTION_WORKER_URL  -> full base URL of the worker (e.g. https://worker.railway.app)
+  //   TRANSCRIPTION_API_KEY     -> matches WORKER_API_KEY on the worker service
+  transcriptionWorkerUrl: process.env.TRANSCRIPTION_WORKER_URL ?? "",
+  transcriptionApiKey: process.env.TRANSCRIPTION_API_KEY ?? "",
 };
