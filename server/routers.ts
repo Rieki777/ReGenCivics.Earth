@@ -44,6 +44,7 @@ import { analyticsRouter } from "./routes/analytics";
 import { adminActionsRouter } from "./routes/adminActions";
 import { adminAutomationsRouter } from "./routes/adminAutomations";
 import { roleHoldersRouter } from "./routes/roleHolders";
+import { rolesRouter } from "./routes/roles";
 import { bountiesRouter } from "./routes/bounties";
 
 export const appRouter = router({
@@ -109,6 +110,7 @@ export const appRouter = router({
 
   // Movement Coordination Engine + Bounty Engine
   roleHolders: roleHoldersRouter,
+  roles: rolesRouter,
   bounties: bountiesRouter,
   imageStudio: imageStudioRouter,
   scheduledEmails: scheduledEmailsRouter,

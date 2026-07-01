@@ -135,6 +135,127 @@ function AliasEditor({
   );
 }
 
+function HoldersOverviewPanel({
+  holders,
+  onChanged,
+}: {
+  holders: Array<{ id: number; roleTitle: string }>;
+  onChanged: () => void;
+}) {
+  const coverage = trpc.roleHolders.coverage.useQuery(undefined, { staleTime: 30_000 });
+  const pending = trpc.roleHolders.listPending.useQuery(undefined, { staleTime: 30_000 });
+  const audit = trpc.roleHolders.auditLog.useQuery({ limit: 20 }, { staleTime: 30_000 });
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [roleHolderId, setRoleHolderId] = useState("");
+  const [showAudit, setShowAudit] = useState(false);
+  const [newRoleTitle, setNewRoleTitle] = useState("");
+  const [newRoleCircle, setNewRoleCircle] = useState("");
+  const [newRoleKind, setNewRoleKind] = useState<"game" | "fund">("game");
+
+  const invite = trpc.roleHolders.invite.useMutation({
+    onSuccess: () => { setName(""); setEmail(""); setRoleHolderId(""); void pending.refetch(); onChanged(); },
+  });
+  const createRole = trpc.roles.create.useMutation({
+    onSuccess: () => { setNewRoleTitle(""); setNewRoleCircle(""); onChanged(); },
+  });
+
+  const cov = coverage.data;
+  const pendingRows = (pending.data as Array<{ id: number; name: string; email: string; status: string }> | undefined) ?? [];
+  const auditRows = (audit.data as Array<{ id: number; createdAt: string; action: string; roleSlug: string; targetLabel: string | null }> | undefined) ?? [];
+  const selectCls = "rounded-md border border-[#1a472a]/20 text-[#1a472a] text-sm px-2 py-1.5 bg-white";
+
+  return (
+    <div className="space-y-4">
+      {cov && (
+        <div className="rounded-xl border border-[#1a472a]/15 bg-[#1a472a]/[0.03] p-4">
+          <p className="text-sm font-semibold text-[#1a472a]">
+            {cov.filled} of {cov.total} roles filled · {cov.open} open
+          </p>
+          {cov.uncoveredCircles.length > 0 && (
+            <p className="text-xs text-[#1a472a]/60 mt-1">Uncovered circles: {cov.uncoveredCircles.join(", ")}</p>
+          )}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-[#1a472a]/15 bg-white p-4 space-y-2">
+        <p className="text-sm font-semibold text-[#1a472a]">Invite a new member</p>
+        <div className="flex flex-wrap gap-2 items-center">
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="text-[#1a472a] w-40" />
+          <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="text-[#1a472a] w-56" />
+          <select value={roleHolderId} onChange={(e) => setRoleHolderId(e.target.value)} className={selectCls}>
+            <option value="">Assign to role (optional)</option>
+            {holders.map((h) => <option key={h.id} value={h.id}>{h.roleTitle}</option>)}
+          </select>
+          <Button
+            size="sm"
+            disabled={invite.isPending || !name || !email}
+            onClick={() => invite.mutate({ name, email, roleHolderId: roleHolderId ? Number(roleHolderId) : undefined })}
+            className="bg-[#1a472a] text-white hover:bg-[#2d5a3d]"
+          >
+            {invite.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <UserPlus className="w-3.5 h-3.5 mr-1" />} Invite
+          </Button>
+        </div>
+        {invite.error && <p className="text-xs text-red-600">{invite.error.message}</p>}
+        <p className="text-xs text-[#1a472a]/50">The member gets a magic-link email. When they sign in with that email, their account links to this invite automatically.</p>
+      </div>
+
+      {pendingRows.length > 0 && (
+        <div className="rounded-xl border border-[#1a472a]/15 bg-white p-4">
+          <p className="text-sm font-semibold text-[#1a472a] mb-2">Invited members</p>
+          <ul className="space-y-1 text-sm text-[#1a472a]/80">
+            {pendingRows.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-2">
+                <span>{p.name} <span className="text-[#1a472a]/50">({p.email})</span></span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${p.status === "accepted" ? "bg-[#7dd87d]/30 text-[#1a472a]" : "bg-amber-100 text-amber-800"}`}>{p.status}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="rounded-xl border border-[#1a472a]/15 bg-white p-4 space-y-2">
+        <p className="text-sm font-semibold text-[#1a472a]">Add a role</p>
+        <div className="flex flex-wrap gap-2 items-center">
+          <Input value={newRoleTitle} onChange={(e) => setNewRoleTitle(e.target.value)} placeholder="Role title" className="text-[#1a472a] w-48" />
+          <Input value={newRoleCircle} onChange={(e) => setNewRoleCircle(e.target.value)} placeholder="Circle" className="text-[#1a472a] w-40" />
+          <select value={newRoleKind} onChange={(e) => setNewRoleKind(e.target.value as "game" | "fund")} className={selectCls}>
+            <option value="game">game</option>
+            <option value="fund">fund</option>
+          </select>
+          <Button
+            size="sm"
+            disabled={createRole.isPending || !newRoleTitle}
+            onClick={() => createRole.mutate({ title: newRoleTitle, circle: newRoleCircle || undefined, kind: newRoleKind })}
+            className="bg-[#1a472a] text-white hover:bg-[#2d5a3d]"
+          >
+            Add role
+          </Button>
+        </div>
+        {createRole.error && <p className="text-xs text-red-600">{createRole.error.message}</p>}
+        <p className="text-xs text-[#1a472a]/50">A holder row appears on the next flywheel run (or reload).</p>
+      </div>
+
+      <div>
+        <button type="button" onClick={() => setShowAudit((v) => !v)} className="text-xs text-[#1a472a]/60 hover:text-[#1a472a]">
+          {showAudit ? "Hide" : "Show"} assignment history
+        </button>
+        {showAudit && (
+          <ul className="mt-2 space-y-1 text-xs text-[#1a472a]/70">
+            {auditRows.map((a) => (
+              <li key={a.id}>
+                {new Date(a.createdAt).toLocaleString()} · {a.action} · {a.roleSlug}{a.targetLabel ? ` → ${a.targetLabel}` : ""}
+              </li>
+            ))}
+            {auditRows.length === 0 && <li className="text-[#1a472a]/40">No assignments yet.</li>}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function AdminRoleHoldersTab() {
   const list = trpc.roleHolders.list.useQuery(undefined, { staleTime: 30_000 });
   const setPrefs = trpc.roleHolders.setNotificationPrefs.useMutation({ onSuccess: () => list.refetch() });
@@ -159,6 +280,7 @@ export function AdminRoleHoldersTab() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
+        <HoldersOverviewPanel holders={list.data ?? []} onChanged={() => list.refetch()} />
         {list.isLoading ? (
           <div className="text-sm text-[#1a472a]/70 flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" /> loading

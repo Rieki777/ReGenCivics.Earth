@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { gameRoles } from '@/data/gameRoles';
+import { trpc } from '@/lib/trpc';
 import { RolePortalCard } from '@/components/RolePortalCard';
 import { SeasonalRhythmSection } from '@/components/SeasonalRhythmSection';
 import { HowToApplySection } from '@/components/HowToApplySection';
@@ -376,8 +377,14 @@ export default function Team() {
     window.history.replaceState(null, "", newUrl);
   };
 
-  const gameOnly = gameRoles.filter((r) => r.kind !== "fund");
-  const fundOnly = gameRoles.filter((r) => r.kind === "fund");
+  // Roles come from the DB (seeded from gameRoles.ts). Fall back to the static
+  // seed data if the query is empty or errors, so the page always renders.
+  const rolesQuery = trpc.roles.list.useQuery(undefined, { staleTime: 60_000 });
+  const allRoles = rolesQuery.data && rolesQuery.data.length > 0
+    ? (rolesQuery.data as unknown as typeof gameRoles)
+    : gameRoles;
+  const gameOnly = allRoles.filter((r) => r.kind !== "fund");
+  const fundOnly = allRoles.filter((r) => r.kind === "fund");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">

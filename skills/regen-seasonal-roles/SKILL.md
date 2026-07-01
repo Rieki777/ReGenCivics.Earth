@@ -10,9 +10,20 @@ You're helping Rye prepare the next season of game roles for the ReGen Civics Te
 
 ## What This Skill Produces
 
+> **Updated 2026-07-01: roles now live in the `roles` database table** (source of
+> truth), seeded from `client/src/data/gameRoles.ts` via `scripts/seed-roles.ts`
+> and edited from `/admin -> Role Holders`. Do NOT edit an inline array in
+> `Team.tsx` (it reads the table via `trpc.roles.list`, falling back to
+> `gameRoles.ts`). To add or change a role, either use the admin UI, or produce
+> the field values and either (a) `INSERT`/`UPDATE` a row in `roles`
+> (`slug` = kebab-case of `title`), or (b) update `client/src/data/gameRoles.ts`
+> and re-run `scripts/seed-roles.ts` (idempotent upsert by slug). The Team page
+> and coordination pipeline read the table; `roleHolders` is kept in sync by the
+> daily flywheel's reconciliation against `roles`.
+
 For each new season, you generate:
 
-1. **Updated `gameRoles` TypeScript array** for `client/src/pages/Team.tsx`
+1. **Role rows for the `roles` table** (title, characterName, tagline, purpose, circle, powers, rights, responsibilities, band, tokenAward, aliases, kind, and so on), applied via the admin UI or a seed upsert. `gameRoles.ts` stays as the human-readable seed-of-record.
 2. **Updated `seasons` TypeScript array** with the new season marked as current
 3. **A CHARACTER_ART execution prompt** for Claude Code to generate all character illustrations via nano-banana-pro (Gemini)
 4. **An entry in `SEASONS_HISTORY.md`** recording the full details for posterity and learning

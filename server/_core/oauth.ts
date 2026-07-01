@@ -7,6 +7,7 @@ import { sdk } from "./sdk";
 import { ENV } from "./env";
 import { nanoid } from "nanoid";
 import { sendEmail } from "./email";
+import { linkPendingMembersByEmail } from "../routes/roleHolders";
 
 // ─── Chat System Prompt (shared with streaming endpoint) ─────────────────────
 export const CHAT_SYSTEM_PROMPT = `You are "Your ReGen Guide", a warm and knowledgeable personal assistant on the ReGen Civics website. You help visitors understand the ReGen Civics Fund and Infinite Game.
@@ -610,6 +611,17 @@ export function registerOAuthRoutes(app: Express) {
         loginMethod: "email",
         lastSignedIn: new Date(),
       });
+
+      // Link any pending role invites sent to this email to the now-real user.
+      try {
+        const database = await db.getDb();
+        const linkedUser = await db.getUserByOpenId(openId);
+        if (database && linkedUser?.id) {
+          await linkPendingMembersByEmail(database, linkedUser.id, emailToken.email);
+        }
+      } catch (e) {
+        console.error("[Auth] pending-invite link failed:", e);
+      }
 
       const sessionToken = await sdk.createSessionToken(openId, {
         name: "",

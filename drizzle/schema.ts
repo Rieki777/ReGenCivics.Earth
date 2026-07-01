@@ -2300,6 +2300,7 @@ export const roleHolders = mysqlTable("roleHolders", {
   kind: mysqlEnum("kind", ["game", "fund"]).default("game").notNull(),
   circle: varchar("circle", { length: 128 }),
   userId: int("userId"),
+  pendingMemberId: int("pendingMemberId"),
   season: varchar("season", { length: 50 }),
   isActive: tinyint("isActive").default(1).notNull(),
   notifyEmail: tinyint("notifyEmail").default(1).notNull(),
@@ -2313,6 +2314,81 @@ export const roleHolders = mysqlTable("roleHolders", {
 }));
 export type RoleHolder = typeof roleHolders.$inferSelect;
 export type InsertRoleHolder = typeof roleHolders.$inferInsert;
+
+// Canonical role catalog. Source of truth for the 20 sociocratic roles,
+// seeded once from client/src/data/gameRoles.ts (migration + seed-roles.ts),
+// then edited directly from admin. slug matches roleHolders.roleSlug so the
+// person-to-role mapping joins cleanly. The Team page + pipeline read here.
+export const roles = mysqlTable("roles", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  title: varchar("title", { length: 128 }).notNull(),
+  characterName: varchar("characterName", { length: 128 }),
+  tagline: varchar("tagline", { length: 500 }),
+  emoji: varchar("emoji", { length: 16 }),
+  characterImage: varchar("characterImage", { length: 512 }),
+  sceneImage: varchar("sceneImage", { length: 512 }),
+  purpose: text("purpose"),
+  circle: varchar("circle", { length: 128 }),
+  powers: json("powers"),
+  rights: json("rights"),
+  responsibilities: json("responsibilities"),
+  domains: text("domains"),
+  band: int("band"),
+  tokenAward: varchar("tokenAward", { length: 128 }),
+  maxTokenAward: varchar("maxTokenAward", { length: 128 }),
+  hoursPerWeek: int("hoursPerWeek"),
+  deliverables: json("deliverables"),
+  seed: text("seed"),
+  harvest: text("harvest"),
+  seasons: json("seasons"),
+  assignment: varchar("assignment", { length: 255 }),
+  color: varchar("color", { length: 32 }),
+  cardImagePosition: varchar("cardImagePosition", { length: 64 }),
+  kind: mysqlEnum("kind", ["game", "fund"]).notNull().default("game"),
+  specialContent: json("specialContent"),
+  aliases: json("aliases"),
+  active: tinyint("active").notNull().default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  byKind: index("roles_kind_idx").on(t.kind),
+}));
+export type RoleRow = typeof roles.$inferSelect;
+export type InsertRole = typeof roles.$inferInsert;
+
+// Invited members who do not yet have a user account. Assignable to a role
+// immediately; linked to the real user on magic-link acceptance.
+export const pendingMembers = mysqlTable("pending_members", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  inviteToken: varchar("inviteToken", { length: 64 }).notNull(),
+  status: mysqlEnum("status", ["pending", "accepted"]).notNull().default("pending"),
+  userId: int("userId"),
+  invitedBy: int("invitedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+}, (t) => ({
+  byToken: index("pending_members_token_idx").on(t.inviteToken),
+  byEmail: index("pending_members_email_idx").on(t.email),
+}));
+export type PendingMember = typeof pendingMembers.$inferSelect;
+
+// Audit trail for role-holder assignments (who assigned/removed/invited, when).
+export const roleAssignmentLog = mysqlTable("role_assignment_log", {
+  id: int("id").autoincrement().primaryKey(),
+  roleSlug: varchar("roleSlug", { length: 64 }).notNull(),
+  action: mysqlEnum("action", ["assigned", "removed", "invited"]).notNull(),
+  targetUserId: int("targetUserId"),
+  targetPendingId: int("targetPendingId"),
+  targetLabel: varchar("targetLabel", { length: 200 }),
+  actorUserId: int("actorUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  bySlug: index("role_assignment_log_slug_idx").on(t.roleSlug),
+}));
+export type RoleAssignmentLog = typeof roleAssignmentLog.$inferSelect;
 
 /**
  * Events table

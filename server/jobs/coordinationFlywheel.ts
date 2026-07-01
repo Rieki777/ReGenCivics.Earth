@@ -25,7 +25,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { and, eq, isNotNull, lt, sql } from "drizzle-orm";
 import { getDb } from "../db";
-import { bounties, bountyRoles, notifications, roleHolders } from "../../drizzle/schema";
+import { bounties, bountyRoles, notifications, roleHolders, roles } from "../../drizzle/schema";
 import { getGameVariable } from "../game";
 
 const DEFAULT_NUDGE_DAYS = 7;
@@ -252,7 +252,25 @@ function mergeAliases(existing: unknown, fresh: string[]): { merged: string[]; c
 export async function runRolesReconciliationAgent(): Promise<RolesReconcileReport> {
   const db = await getDb();
   if (!db) return { inserted: 0, updated: 0, unchanged: 0, total: 0 };
-  const parsed = parseGameRoles();
+  // Source of truth is the roles table (seeded from gameRoles.ts). The disk
+  // parser (parseGameRoles) is retired to a fallback used only if the table is
+  // empty, so a fresh DB still reconciles.
+  const roleRows = await db
+    .select({ slug: roles.slug, title: roles.title, circle: roles.circle, kind: roles.kind, aliases: roles.aliases })
+    .from(roles)
+    .where(eq(roles.active, 1));
+  const parsed: ParsedRole[] = roleRows.length > 0
+    ? roleRows.map((r) => ({
+        slug: r.slug,
+        title: r.title,
+        characterName: "",
+        circle: r.circle ?? "",
+        kind: r.kind as "game" | "fund",
+        aliases: Array.isArray(r.aliases)
+          ? (r.aliases as string[])
+          : buildAliases({ title: r.title, characterName: "", circle: r.circle ?? "", kind: r.kind as "game" | "fund" }),
+      }))
+    : parseGameRoles();
   if (parsed.length === 0) return { inserted: 0, updated: 0, unchanged: 0, total: 0 };
 
   let inserted = 0;
