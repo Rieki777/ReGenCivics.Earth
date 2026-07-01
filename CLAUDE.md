@@ -128,7 +128,18 @@ pnpm railway:deploy    # railway up — manual deploy of the working tree (bypas
 
 To check the governance app instead, append `-s "ReGen Governance App"` to any command (e.g. `railway logs -s "ReGen Governance App"`), or re-link with `railway link -s "ReGen Governance App"`.
 
-**After every push to `main`, verify the deploy:** run `pnpm railway:deploys` and confirm the newest deployment reaches `SUCCESS`. If it shows `FAILED` or `CRASHED`, pull the reason with `pnpm railway:logs`. Migrations are NOT run by the deploy (see above) — apply them manually with the migration runner before or after the deploy as the change requires.
+### Standard deploy flow — Claude owns this end to end
+
+When a change is ready to ship, Claude runs the whole loop without handing steps back to Rye:
+
+1. **Test** — run the checks the change touches: `pnpm check` (typecheck), `pnpm test` (and `pnpm test:integration` when server logic changed), and `pnpm build` for anything that affects the bundle. Fix failures before proceeding; don't ship red.
+2. **Migrations** — if the change adds `drizzle/NNNN_*.sql`, apply it with the migration runner (`npx tsx scripts/run-migration.ts --all`). Deploys do NOT run migrations.
+3. **Ship gate** — run `/ship` per `docs/GOLDEN_RULE.md`. Never push without it.
+4. **Commit + push** — commit with a `type(scope): subject` message, then push to `main`. Rye has standing authorization for Claude to push to `main` for this project; no need to ask each time.
+5. **Verify the deploy automatically** — a push to `main` auto-triggers a Railway build. Immediately after pushing, poll `pnpm railway:deploys` until the newest deployment leaves `BUILDING` and confirm it reaches `SUCCESS`. If it lands `FAILED` or `CRASHED`, pull the reason with `pnpm railway:logs`, fix, and repeat.
+6. **Report** — tell Rye the outcome: commit pushed, deploy status, and (if it failed) what broke and the fix.
+
+Only pause for Rye when a step needs a human decision (a failing test that implies a design change, a risky migration, a security question). Otherwise carry the flow to a green deploy and report the result.
 
 ## Hypha Bridge
 
