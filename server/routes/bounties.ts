@@ -27,11 +27,13 @@ import {
   bounties,
   bountyRoles,
   bountyEvents,
+  bountyArtifacts,
   bountyPermissions,
   notifications,
   users,
 } from "../../drizzle/schema";
 import { payRole, reverseRole, getTierAmounts, meetsLargeTierFloor, getBountyPermission } from "../db/bounties";
+import { sanitizeInput } from "../_core/security";
 
 // ── Shared zod schemas ───────────────────────────────────────────────────────
 
@@ -304,6 +306,66 @@ export const bountiesRouter = router({
       return { ok: true };
     }),
 
+  // ── Player: submit proof-of-work for a claimed call task (-> in_review) ────
+  submitArtifact: protectedProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
+    .input(z.object({
+      bountyId: z.number().int().positive(),
+      artifactType: z.enum(["photo", "text", "link", "video"]),
+      artifactUrl: z.string().url().max(1000).optional(),
+      artifactText: z.string().max(5000).optional(),
+      caption: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" });
+      if (!input.artifactUrl && !input.artifactText) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Add a link or a written summary of the work" });
+      }
+      const [bounty] = await db.select().from(bounties).where(eq(bounties.id, input.bountyId)).limit(1);
+      if (!bounty) throw new TRPCError({ code: "NOT_FOUND" });
+      if (bounty.sourceType !== "call_task") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Only call tasks take work artifacts" });
+      }
+      if (bounty.workStatus !== "accepted" && bounty.workStatus !== "in_review") {
+        throw new TRPCError({ code: "CONFLICT", message: `Task is ${bounty.workStatus}, not open for submission` });
+      }
+      // Caller must hold the filled doer role.
+      const [doerRole] = await db.select().from(bountyRoles).where(and(
+        eq(bountyRoles.bountyId, input.bountyId),
+        eq(bountyRoles.role, "doer"),
+        eq(bountyRoles.userId, ctx.user.id),
+      )).limit(1);
+      if (!doerRole) throw new TRPCError({ code: "FORBIDDEN", message: "Claim the task before submitting work" });
+
+      await db.insert(bountyArtifacts).values({
+        bountyId: input.bountyId,
+        roleId: doerRole.id,
+        userId: ctx.user.id,
+        artifactType: input.artifactType,
+        artifactUrl: input.artifactUrl ?? null,
+        artifactText: input.artifactText ? sanitizeInput(input.artifactText) : null,
+        caption: input.caption ? sanitizeInput(input.caption) : null,
+      });
+      await db.update(bounties).set({ workStatus: "in_review" }).where(eq(bounties.id, input.bountyId));
+      await logEvent(db, input.bountyId, "artifact_submitted", {
+        roleId: doerRole.id,
+        actorUserId: ctx.user.id,
+        detail: { artifactType: input.artifactType },
+      });
+      // Nudge the maintainer who accepted it that work is ready for review.
+      if (bounty.approvedBy) {
+        await db.insert(notifications).values({
+          playerId: bounty.approvedBy,
+          type: "mention",
+          title: `Work ready for review: ${bounty.title.slice(0, 160)}`,
+          body: "A contributor submitted work on a call task. Review it in the admin queue.",
+          link: `/admin`,
+        });
+      }
+      return { ok: true };
+    }),
+
   // ── Maintainer: accept a proposal ─────────────────────────────────────────
   accept: maintainerProcedure
     .input(z.object({
@@ -374,7 +436,7 @@ export const bountiesRouter = router({
   // ── Maintainer: admin queue ────────────────────────────────────────────────
   adminQueue: maintainerProcedure
     .input(z.object({
-      filter: z.enum(["proposals", "held_payouts", "all"]).default("proposals"),
+      filter: z.enum(["proposals", "held_payouts", "review", "all"]).default("proposals"),
       limit: z.number().int().min(1).max(200).default(50),
     }))
     .query(async ({ input }) => {
@@ -404,7 +466,39 @@ export const bountiesRouter = router({
           heldRoles = held.map((r) => ({ ...r, bounty: bMap.get(r.bountyId) ?? null }));
         }
       }
-      return { bounties: pendingBounties, heldRoles };
+      // Call tasks awaiting maintainer review (doer submitted work).
+      let reviewBounties: Array<typeof bounties.$inferSelect & {
+        doer: typeof bountyRoles.$inferSelect | null;
+        artifacts: typeof bountyArtifacts.$inferSelect[];
+      }> = [];
+      if (input.filter === "review" || input.filter === "all") {
+        const inReview = await db
+          .select()
+          .from(bounties)
+          .where(and(eq(bounties.workStatus, "in_review"), eq(bounties.sourceType, "call_task")))
+          .orderBy(desc(bounties.updatedAt))
+          .limit(input.limit);
+        if (inReview.length > 0) {
+          const ids = inReview.map((b) => b.id);
+          const doerRows = await db.select().from(bountyRoles)
+            .where(and(inArray(bountyRoles.bountyId, ids), eq(bountyRoles.role, "doer")));
+          const artRows = await db.select().from(bountyArtifacts)
+            .where(inArray(bountyArtifacts.bountyId, ids)).orderBy(desc(bountyArtifacts.createdAt));
+          const doerByBounty = new Map(doerRows.map((r) => [r.bountyId, r]));
+          const artsByBounty = new Map<number, typeof bountyArtifacts.$inferSelect[]>();
+          for (const a of artRows) {
+            const arr = artsByBounty.get(a.bountyId) ?? [];
+            arr.push(a);
+            artsByBounty.set(a.bountyId, arr);
+          }
+          reviewBounties = inReview.map((b) => ({
+            ...b,
+            doer: doerByBounty.get(b.id) ?? null,
+            artifacts: artsByBounty.get(b.id) ?? [],
+          }));
+        }
+      }
+      return { bounties: pendingBounties, heldRoles, reviewBounties };
     }),
 
   // ── Maintainer: attach unmatched merge to a role ──────────────────────────
@@ -575,6 +669,8 @@ export const bountiesRouter = router({
       const [bounty] = await db.select().from(bounties).where(eq(bounties.id, input.bountyId)).limit(1);
       if (!bounty) return null;
       const roles = await db.select().from(bountyRoles).where(eq(bountyRoles.bountyId, input.bountyId));
-      return { ...bounty, roles };
+      const artifacts = await db.select().from(bountyArtifacts)
+        .where(eq(bountyArtifacts.bountyId, input.bountyId)).orderBy(desc(bountyArtifacts.createdAt));
+      return { ...bounty, roles, artifacts };
     }),
 });

@@ -3578,6 +3578,25 @@ export const bountyEvents = mysqlTable("bounty_events", {
 ]));
 export type BountyEvent = typeof bountyEvents.$inferSelect;
 
+// Proof-of-work a call-task doer submits before a maintainer completes + pays.
+// Mirrors the quest_completions artifact shape. Keyed to the bounty + submitter.
+export const bountyArtifacts = mysqlTable("bounty_artifacts", {
+  id: int("id").autoincrement().primaryKey(),
+  bountyId: int("bountyId").notNull(),
+  roleId: int("roleId"),
+  userId: int("userId").notNull(),
+  artifactType: mysqlEnum("artifactType", ["photo", "text", "link", "video"]).notNull().default("text"),
+  artifactUrl: varchar("artifactUrl", { length: 1000 }),
+  artifactText: text("artifactText"),
+  caption: varchar("caption", { length: 500 }),
+  videoThumbnailUrl: varchar("videoThumbnailUrl", { length: 1000 }),
+  videoDurationSeconds: int("videoDurationSeconds"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("bounty_artifacts_bountyId_idx").on(table.bountyId),
+]));
+export type BountyArtifact = typeof bountyArtifacts.$inferSelect;
+
 export const webhookDeliveries = mysqlTable("webhook_deliveries", {
   deliveryId: varchar("deliveryId", { length: 64 }).primaryKey(),
   receivedAt: timestamp("receivedAt").defaultNow().notNull(),

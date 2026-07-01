@@ -41,6 +41,20 @@ type HeldRole = {
   bounty: Bounty | null;
 };
 
+type Artifact = {
+  id: number;
+  artifactType: string;
+  artifactUrl: string | null;
+  artifactText: string | null;
+  caption: string | null;
+  createdAt: Date | string;
+};
+
+type ReviewBounty = Bounty & {
+  doer: { id: number; userId: number | null } | null;
+  artifacts: Artifact[];
+};
+
 function ProposalCard({ bounty, onChanged }: { bounty: Bounty; onChanged: () => void }) {
   const [tier, setTier] = useState(bounty.tier ?? "small");
   const [declineReason, setDeclineReason] = useState("");
@@ -196,12 +210,63 @@ function HeldPayoutCard({ role, onChanged }: { role: HeldRole; onChanged: () => 
   );
 }
 
+function ReviewCard({ bounty, onChanged }: { bounty: ReviewBounty; onChanged: () => void }) {
+  const complete = trpc.bounties.complete.useMutation({ onSuccess: onChanged });
+  const doerUserId = bounty.doer?.userId ?? undefined;
+  return (
+    <div className="rounded-xl border border-[#1a472a]/15 bg-white p-4 space-y-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <p className="font-bold text-[#1a472a]">{bounty.title}</p>
+          <p className="text-xs text-[#1a472a]/60 mt-0.5">call task · awaiting review</p>
+        </div>
+        <span className="text-xs text-[#1a472a]/50">{new Date(bounty.createdAt as string).toLocaleDateString()}</span>
+      </div>
+
+      {bounty.artifacts.length === 0 ? (
+        <p className="text-sm text-[#1a472a]/60">No work artifact submitted yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {bounty.artifacts.map((a) => (
+            <div key={a.id} className="rounded-lg border border-[#1a472a]/10 bg-[#1a472a]/[0.03] p-3 text-sm">
+              {a.artifactUrl && (
+                <a href={a.artifactUrl} target="_blank" rel="noopener noreferrer" className="text-[#1a472a] font-semibold hover:underline break-all">
+                  {a.artifactUrl}
+                </a>
+              )}
+              {a.artifactText && <p className="text-[#1a472a]/80 mt-1 whitespace-pre-wrap">{a.artifactText}</p>}
+              <p className="text-[10px] text-[#1a472a]/40 mt-1">{new Date(a.createdAt as string).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 pt-1">
+        <Button
+          type="button"
+          size="sm"
+          disabled={complete.isPending}
+          onClick={() => complete.mutate({ bountyId: bounty.id, doerUserId })}
+          className="bg-[#1a472a] text-white hover:bg-[#2d5a3d]"
+        >
+          {complete.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <CheckCheck className="w-3.5 h-3.5 mr-1" />}
+          Approve + pay reward
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function AdminTasksTab() {
-  const [filter, setFilter] = useState<"proposals" | "held_payouts" | "all">("proposals");
+  const [filter, setFilter] = useState<"proposals" | "held_payouts" | "review" | "all">("proposals");
 
   const queue = trpc.bounties.adminQueue.useQuery({ filter, limit: 50 }, { staleTime: 30_000 });
-  const data = queue.data ?? { bounties: [], heldRoles: [] };
-  const { bounties: proposals, heldRoles } = data as { bounties: Bounty[]; heldRoles: HeldRole[] };
+  const data = queue.data ?? { bounties: [], heldRoles: [], reviewBounties: [] };
+  const { bounties: proposals, heldRoles, reviewBounties } = data as {
+    bounties: Bounty[];
+    heldRoles: HeldRole[];
+    reviewBounties: ReviewBounty[];
+  };
   const refetch = () => { void queue.refetch(); };
 
   return (
@@ -218,6 +283,7 @@ export function AdminTasksTab() {
         <div className="flex flex-wrap items-center gap-2">
           {[
             { value: "proposals", label: "Proposals" },
+            { value: "review", label: "Awaiting Review" },
             { value: "held_payouts", label: "Held Payouts" },
             { value: "all", label: "All" },
           ].map((tab) => (
@@ -235,7 +301,7 @@ export function AdminTasksTab() {
             </button>
           ))}
           <span className="ml-auto text-xs text-[#1a472a]/70">
-            {queue.isLoading ? "loading…" : `${proposals.length} proposals · ${heldRoles.length} held`}
+            {queue.isLoading ? "loading…" : `${proposals.length} proposals · ${reviewBounties.length} in review · ${heldRoles.length} held`}
           </span>
         </div>
 
@@ -253,6 +319,14 @@ export function AdminTasksTab() {
                 {proposals.map((b) => <ProposalCard key={b.id} bounty={b} onChanged={refetch} />)}
               </section>
             )}
+            {(filter === "review" || filter === "all") && reviewBounties.length > 0 && (
+              <section className="space-y-3 mt-4">
+                {filter === "all" && (
+                  <h4 className="text-xs font-bold text-[#1a472a]/70 uppercase tracking-wider">Awaiting Review</h4>
+                )}
+                {reviewBounties.map((b) => <ReviewCard key={b.id} bounty={b} onChanged={refetch} />)}
+              </section>
+            )}
             {(filter === "held_payouts" || filter === "all") && heldRoles.length > 0 && (
               <section className="space-y-3 mt-4">
                 {filter === "all" && (
@@ -261,7 +335,7 @@ export function AdminTasksTab() {
                 {heldRoles.map((r) => <HeldPayoutCard key={r.id} role={r} onChanged={refetch} />)}
               </section>
             )}
-            {proposals.length === 0 && heldRoles.length === 0 && (
+            {proposals.length === 0 && heldRoles.length === 0 && reviewBounties.length === 0 && (
               <p className="text-sm text-[#1a472a]/70 py-6 text-center">
                 Nothing in the queue. Proposed bounties from players appear here for review.
               </p>

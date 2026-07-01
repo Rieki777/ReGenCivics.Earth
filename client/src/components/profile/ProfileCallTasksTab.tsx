@@ -11,6 +11,7 @@ import {
   Lock,
   RotateCcw,
   Unlock,
+  Upload,
 } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -71,8 +72,14 @@ function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
   const [prNumber, setPrNumber] = useState("");
   const releaseRole = trpc.bounties.releaseRole.useMutation({ onSuccess: onChanged });
   const linkPr = trpc.bounties.linkPr.useMutation({ onSuccess: () => { setPrNumber(""); onChanged(); } });
+  const [workUrl, setWorkUrl] = useState("");
+  const [workNote, setWorkNote] = useState("");
+  const submitArtifact = trpc.bounties.submitArtifact.useMutation({
+    onSuccess: () => { setWorkUrl(""); setWorkNote(""); onChanged(); },
+  });
   const bounty = role.bounty;
   const isContribution = bounty?.sourceType === "contribution";
+  const isCallTask = bounty?.sourceType === "call_task";
   const mergedPrs = Array.isArray(bounty?.mergedPrNumbers) ? bounty.mergedPrNumbers as number[] : [];
 
   return (
@@ -136,6 +143,44 @@ function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
           >
             {releaseRole.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RotateCcw className="w-3 h-3 mr-1" />}
             Release role
+          </Button>
+        </div>
+      )}
+
+      {role.payStatus === "filled" && isCallTask && role.role === "doer" && (
+        <div className="space-y-2 pt-1 w-full">
+          {bounty?.workStatus === "in_review" && (
+            <p className="text-xs text-[#7dd87d] inline-flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Work submitted. A maintainer will review and release the reward.
+            </p>
+          )}
+          <Input
+            value={workUrl}
+            onChange={(e) => setWorkUrl(e.target.value)}
+            placeholder="Link to your work (doc, image, repo, video)"
+            className="h-8 text-xs text-white bg-white/5 border-white/20"
+          />
+          <textarea
+            value={workNote}
+            onChange={(e) => setWorkNote(e.target.value)}
+            placeholder="A short note on what you did"
+            rows={2}
+            className="w-full rounded-md text-xs text-white bg-white/5 border border-white/20 px-2 py-1.5 placeholder:text-white/40"
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => submitArtifact.mutate({
+              bountyId: role.bountyId,
+              artifactType: workUrl ? "link" : "text",
+              artifactUrl: workUrl || undefined,
+              artifactText: workNote || undefined,
+            })}
+            disabled={submitArtifact.isPending || (!workUrl && !workNote)}
+            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] h-8 text-xs"
+          >
+            {submitArtifact.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Upload className="w-3 h-3 mr-1" />}
+            {bounty?.workStatus === "in_review" ? "Update submission" : "Submit work"}
           </Button>
         </div>
       )}
