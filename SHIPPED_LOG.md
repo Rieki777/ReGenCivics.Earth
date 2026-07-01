@@ -13,6 +13,18 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-01: Redis cache wiring + profile sanitization + yt-dlp hardening
+
+- Wired `initCacheOnStartup()`/`setupCacheShutdownHandlers()` (`server/cacheInit.ts`) into the server bootstrap, called before `server.listen()`. The functions existed but were never invoked, so Redis never connected even after `REDIS_URL` was set on Railway; CSRF tokens, webhook-failure buckets, and rate limits silently ran on the in-memory fallback. Same `isCacheAvailable()` gating everywhere else made this a safe no-op when unset.
+- Fixed `userProfiles.updateProfile` in `server/routes/auth.ts` (Settings > Edit Profile): `displayName`/`bio`/`location`/`investmentRange`/`projectName`/`organizationName`/`questInterests` were written to the DB with no sanitization. Confirmed live with a stored `<script>` payload in the location field. Added the same `cleanText()`/`sanitizeInput()` wrapper `players.ts` already used; URL fields left untouched.
+- Root cause on the Redis side was two-fold: the missing bootstrap wiring above, and separately the Redis container itself had exited on Railway and needed a manual redeploy. Confirmed live 2026-07-01 via `/health` returning `cache:connected`.
+- Hardened `transcription-worker/`: unpinned `yt-dlp` in `requirements.txt` (YouTube bot-detection fixes ship faster than any pin), dropped `--no-warnings` so failures surface real stderr, and wrapped the `download_audio()` call in `main.py`'s transcribe endpoint so failures return a clean 502 instead of crashing.
+- Updated `.ai/docs/security/OWASP-TOP10.md` (A07) and `.ai/docs/security/CHECKLIST.md` to reflect Redis confirmed live in production.
+
+Commits: `5cefb8f`, `6e082f0`, `97f6a76`, `e15ef33`.
+
+Source: `archive/claude-code-prompt-redis-and-sanitization-fix.md`.
+
 ## 2026-07-01: Reprocess path + Whisper worker + CI green (commit c1a3fde)
 
 - Added `reprocessRecording(id)` to `coordinationPipeline.ts`: runs the full transcript + synthesize + extract-tasks + finalize path for one existing recording so admins can force-understand any of the 15 caption-less production recordings once the Whisper worker is deployed.
