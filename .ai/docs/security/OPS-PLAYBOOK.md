@@ -232,3 +232,14 @@ When something breaks, append a section like this at the bottom of OPS-PLAYBOOK:
 ```
 
 We don't have a long incident history yet: that's a good thing. Keep it that way.
+
+---
+
+## Finding 2026-06-30: fail-open webhook signature verification
+
+- Reported: internal codebase re-audit, 2026-06-30. No live exploit observed.
+- Symptom: none user-visible. `POST /api/webhooks/github` and `POST /api/webhooks/riverside` skipped HMAC verification entirely when their secret env var was unset, processing unauthenticated payloads (fail-open). Resend fails open in non-production only.
+- Diagnosis: the guard was `if (GITHUB_WEBHOOK_SECRET && !verify(...))` (GitHub) and `if (secret) { verify } else { skip }` (Riverside), so an empty secret bypassed verification.
+- Fix: reject with 401 when the secret is unset — `server/webhooks/github.ts`, `server/webhooks/riverside.ts`. Now consistent with Alchemy + Loomio, which already fail closed.
+- REQUIRED human follow-up: set `GITHUB_WEBHOOK_SECRET` and `RIVERSIDE_WEBHOOK_SECRET` in Railway. Until then, these endpoints return 401 and the GitHub merge-automation + Riverside recording pipeline are paused. This is the correct trade-off: an unauthenticated webhook is worse than a disabled one. Setting the secrets restores verified operation.
+- Prevention: CHECKLIST "Webhooks" + "Input handling" updated; OWASP-TOP10 A03/A04/A07/A08 corrected.

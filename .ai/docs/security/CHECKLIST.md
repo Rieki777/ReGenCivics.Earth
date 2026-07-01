@@ -3,6 +3,7 @@
 The list of things to verify haven't drifted. Run quarterly + after every significant deploy.
 
 Last full pass: 2026-04-25.
+Partial re-audit: 2026-06-30 (corrections tagged inline).
 Next due: 2026-07-25.
 
 Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
@@ -15,13 +16,15 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] Cookie attributes: `httpOnly`, `secure` (prod fallback to true), `sameSite=lax`, `domain=.regencivics.earth`. (2026-04-25: ok)
 - [x] `clearAllSessionCookies` clears all 3 variants on logout + before fresh sign-in. (2026-04-25: ok per commit `b767d54`)
 - [x] OAuth state validation rejects `error=auth_failed` paths to prevent loop. (2026-04-25: ok per commit `cf1fb25`)
+- [ ] OAuth `state` signed/nonce-bound against login CSRF. (2026-06-30: open — state is base64url-encoded only, not signed)
 - [x] `auth.me` is publicProcedure (intentional). `auth.logout` is publicProcedure (allows recovery). (2026-04-25: ok)
 - [ ] Magic-link rate limit: not yet bounded per-email. (2026-04-25: open)
 - [ ] Session revocation: only via cookie expiry today. No global "log out everywhere" flow. (2026-04-25: open, not blocking)
 
 ## Webhooks
 
-- [x] Resend webhook signature verification fails closed in production. (2026-04-25: ok per commit `76dc0ab`)
+- [x] Resend webhook signature verification fails closed in production. (2026-04-25: ok per commit `76dc0ab`; fails open in non-production by design)
+- [x] GitHub + Riverside webhooks fail closed when their signing secret is unset. (2026-06-30: FIXED — were fail-open before. Requires `GITHUB_WEBHOOK_SECRET` / `RIVERSIDE_WEBHOOK_SECRET` set in Railway, or these endpoints now return 401)
 - [x] CRON_SECRET timing-safe comparison via `timingSafeEqualStr`. (2026-04-25: ok per commit `c1dc9d8`)
 - [x] x-admin-secret on `buffer.ts`, `farcaster.ts`, riverside resend-email: timing-safe. (2026-04-25: ok per commit `c1dc9d8`)
 - [x] Webhook signature failure rate-limit: 5/min per IP. (2026-04-25: ok per commit `c1dc9d8`)
@@ -31,7 +34,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 
 - [x] No raw SQL string concatenation. All `sql\`\`` uses `${var}` interpolation. (2026-04-25: ok per audit)
 - [x] No `eval` / `new Function` / `vm.runInContext` in user-input paths. (2026-04-25: ok per repo grep)
-- [x] `sanitizeInput` is the chokepoint for user content into DB. (2026-04-25: ok)
+- [ ] `sanitizeInput` is the chokepoint for user content into DB. (2026-06-30: OPEN — corrects prior "ok". Only forum posts/replies are sanitized; profiles, messages, campaign text are not. Hand-rolled regex, not a vetted library.)
 - [x] `sanitizeForClient` + URL allowlist (http/https/mailto) on markdown render. (2026-04-25: ok)
 
 ## CSP + security headers
