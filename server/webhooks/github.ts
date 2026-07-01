@@ -25,7 +25,6 @@
  */
 import type { Express, Request, Response } from "express";
 import crypto from "crypto";
-import express from "express";
 import { eq, and } from "drizzle-orm";
 import { getDb } from "../db";
 import {
@@ -101,7 +100,7 @@ interface CheckSuitePayload {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function verifyGithubSignature(rawBody: Buffer, sigHeader: string | undefined): boolean {
+function verifyGithubSignature(rawBody: Buffer | string, sigHeader: string | undefined): boolean {
   if (!GITHUB_WEBHOOK_SECRET || !sigHeader) return false;
   const computed = `sha256=${crypto.createHmac("sha256", GITHUB_WEBHOOK_SECRET).update(rawBody).digest("hex")}`;
   try {
@@ -169,21 +168,20 @@ async function findBountyByRef(
 export function registerGithubWebhookRoutes(app: Express) {
   app.post(
     "/api/webhooks/github",
-    express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
       const deliveryId = req.headers["x-github-delivery"] as string | undefined;
       const sigHeader = req.headers["x-hub-signature-256"] as string | undefined;
       const event = req.headers["x-github-event"] as string | undefined;
-      const rawBody = req.body as Buffer;
+      // The global express.json({ verify }) in server/_core/index.ts already
+      // consumed the stream and captured the raw string as req.rawBody. Verify
+      // the HMAC over those exact bytes. A route-level express.raw() here would
+      // no-op (body already parsed) and leave req.body a parsed object, which
+      // makes createHmac().update(object) throw and hang the request.
+      const rawBody: string = (req as any).rawBody ?? JSON.stringify(req.body);
 
       // ── 1. Verify HMAC signature (all event types) ────────────────────────
-      // Fail closed: reject when the secret is unset instead of skipping the
-      // check. An unset secret must not let unauthenticated payloads through.
-      if (!GITHUB_WEBHOOK_SECRET) {
-        console.warn("[GitHub webhook] GITHUB_WEBHOOK_SECRET not set — rejecting (fail closed)");
-        res.status(401).json({ error: "webhook_not_configured" });
-        return;
-      }
+      // verifyGithubSignature returns false when the secret is unset, so an
+      // unset secret fails closed via the invalid-signature path below.
       if (!verifyGithubSignature(rawBody, sigHeader)) {
         console.warn("[GitHub webhook] Invalid signature — rejected");
         res.status(401).json({ error: "invalid_signature" });
@@ -193,7 +191,7 @@ export function registerGithubWebhookRoutes(app: Express) {
       // ── 2a. Handle pull_request_review: track non-author approvals ────────
       if (event === "pull_request_review") {
         try {
-          const rv = JSON.parse(rawBody.toString("utf-8")) as PullRequestReviewPayload;
+          const rv = JSON.parse(rawBody) as PullRequestReviewPayload;
           if (rv.action === "submitted" && rv.review.state === "approved") {
             const reviewerLogin = rv.review.user.login;
             const authorLogin = rv.pull_request.user.login;
@@ -219,7 +217,7 @@ export function registerGithubWebhookRoutes(app: Express) {
       // ── 2b. Handle check_suite: track CI conclusion by commit SHA ─────────
       if (event === "check_suite") {
         try {
-          const cs = JSON.parse(rawBody.toString("utf-8")) as CheckSuitePayload;
+          const cs = JSON.parse(rawBody) as CheckSuitePayload;
           if (cs.action === "completed" && cs.check_suite.head_sha) {
             const sha = cs.check_suite.head_sha;
             const passed =
@@ -269,7 +267,7 @@ export function registerGithubWebhookRoutes(app: Express) {
 
       let payload: PullRequestPayload;
       try {
-        payload = JSON.parse(rawBody.toString("utf-8")) as PullRequestPayload;
+        payload = JSON.parse(rawBody) as PullRequestPayload;
       } catch {
         res.status(400).json({ error: "invalid_json" });
         return;
@@ -413,7 +411,6 @@ export function registerGithubWebhookRoutes(app: Express) {
   // improvement; this stub exists to keep the route registered.
   app.post(
     "/api/webhooks/github/revert-check",
-    express.raw({ type: "application/json" }),
     (_req: Request, res: Response) => {
       res.status(200).json({ ok: true });
     },

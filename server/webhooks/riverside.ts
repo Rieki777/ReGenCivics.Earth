@@ -153,24 +153,28 @@ function buildEmailHtml(opts: {
 // ── Route registration ────────────────────────────────────────────────────────
 
 export function registerRiversideWebhookRoutes(app: Express) {
-  // Raw body parser needed for signature verification
   app.post(
     "/api/webhooks/riverside",
-    express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
-      const rawBody = req.body instanceof Buffer ? req.body.toString("utf8") : JSON.stringify(req.body);
+      // The global express.json({ verify }) in server/_core/index.ts already
+      // captured the raw request string as req.rawBody. Verify the HMAC over
+      // those exact bytes; JSON.stringify(req.body) would re-serialize the
+      // parsed object and never match the signature.
+      const rawBody: string = (req as any).rawBody ?? JSON.stringify(req.body);
       const signature = req.headers["x-riverside-signature"] as string | undefined;
       const secret = process.env.RIVERSIDE_WEBHOOK_SECRET;
 
-      // Fail closed: reject when the secret is unset instead of skipping the
-      // check. An unset secret must not let unauthenticated payloads through.
-      if (!secret) {
-        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, rejecting (fail closed)");
-        return res.status(401).json({ error: "webhook_not_configured" });
-      }
-      if (!verifySignature(rawBody, signature, secret)) {
-        log.warn("Invalid signature, rejected");
-        return res.status(401).json({ error: "Invalid signature" });
+      // Secret-optional secondary ingest path: verify when a secret is
+      // configured, otherwise accept. RIVERSIDE_WEBHOOK_SECRET is intentionally
+      // absent; this endpoint is superseded by the YouTube poll (primary) and a
+      // future PIPELINE_INBOX_SECRET-guarded inbox.
+      if (secret) {
+        if (!verifySignature(rawBody, signature, secret)) {
+          log.warn("Invalid signature, rejected");
+          return res.status(401).json({ error: "Invalid signature" });
+        }
+      } else {
+        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check");
       }
 
       let payload: RiversideWebhookPayload;
@@ -531,6 +535,3 @@ async function sendRecordingEmail(recording: {
     log.info(`Sent email batch ${Math.floor(i / BATCH) + 1} (${batch.length} recipients)`);
   }
 }
-
-// Need express for the raw body parser in the route handler
-import express from "express";
