@@ -29,15 +29,19 @@ import {
   bountyEvents,
   bountyArtifacts,
   bountyPermissions,
+  bountyDemandFactors,
   notifications,
   users,
 } from "../../drizzle/schema";
 import { payRole, reverseRole, getTierAmounts, meetsLargeTierFloor, getBountyPermission } from "../db/bounties";
+import { computeBountyAmount, getCommittedEmission, type ImpactLevel, type ValuationBreakdown } from "../db/bountyValuation";
+import { getGameVariable } from "../game";
 import { sanitizeInput } from "../_core/security";
 
 // ── Shared zod schemas ───────────────────────────────────────────────────────
 
 const TierSchema = z.enum(["trivial", "small", "medium", "large"]);
+const ImpactSchema = z.enum(["low", "normal", "high"]);
 const SourceTypeSchema = z.enum(["call_task", "contribution"]);
 
 // ── Helper: build role slots for a new bounty ────────────────────────────────
@@ -371,6 +375,12 @@ export const bountiesRouter = router({
     .input(z.object({
       bountyId: z.number().int().positive(),
       tier: TierSchema.optional(),
+      // The human consent on value: confirm/adjust the impact, flag hard-to-fill,
+      // or override the computed amount with a logged reason. Then the amount locks.
+      impactLevel: ImpactSchema.optional(),
+      priorityBoost: z.boolean().optional(),
+      overrideAmount: z.number().int().min(0).max(100000).optional(),
+      overrideReason: z.string().max(500).optional(),
       completionChecklist: z.array(z.string().max(500)).max(20).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -390,22 +400,45 @@ export const bountiesRouter = router({
       if (proposerRole?.userId === ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You cannot accept your own proposal" });
       }
-      const tier = input.tier ?? bounty.tier;
-      if (tier) {
-        const { delivery, proposal } = await getTierAmounts(tier);
+      // Value the bounty through the deterministic engine and lock the breakdown.
+      // Later weight or demand changes never touch an accepted bounty.
+      const scopeTier = input.tier ?? bounty.tier;
+      const priority = input.priorityBoost ?? Boolean(bounty.priorityBoost);
+      const storedBreakdown = (bounty.valuationBreakdown as ValuationBreakdown | null) ?? null;
+      let lockedBreakdown: ValuationBreakdown | null = null;
+      if (scopeTier) {
+        const impactLevel: ImpactLevel = input.impactLevel ?? storedBreakdown?.impactLevel ?? "normal";
+        const computed = await computeBountyAmount({ scopeTier, impactLevel, priority, roleSlug: bounty.roleSlug });
+        const finalAmount = input.overrideAmount != null ? input.overrideAmount : computed.amount;
+        lockedBreakdown = input.overrideAmount != null
+          ? { ...computed, amount: finalAmount, override: { by: ctx.user.id, reason: input.overrideReason ?? null, suggested: computed.amount } }
+          : computed;
+        const proposalFraction = await getGameVariable("bounty.proposal_fraction").catch(() => 0.15);
+        const proposerAmount = Math.round(finalAmount * proposalFraction);
         const allRoles = await db.select().from(bountyRoles).where(eq(bountyRoles.bountyId, input.bountyId));
         for (const r of allRoles) {
-          const newAmount = r.role === "proposer" ? proposal : delivery;
+          const newAmount = r.role === "proposer" ? proposerAmount : finalAmount;
           await db.update(bountyRoles).set({ amount: newAmount }).where(eq(bountyRoles.id, r.id));
         }
       }
       await db.update(bounties).set({
         workStatus: "accepted",
         approvedBy: ctx.user.id,
-        tier: tier ?? null,
+        tier: scopeTier ?? null,
+        priorityBoost: priority,
+        valuationBreakdown: lockedBreakdown
+          ? (lockedBreakdown as unknown as Record<string, unknown>)
+          : bounty.valuationBreakdown,
         completionChecklist: input.completionChecklist ? input.completionChecklist as unknown as null : bounty.completionChecklist,
       }).where(eq(bounties.id, input.bountyId));
-      await logEvent(db, input.bountyId, "accepted", { actorUserId: ctx.user.id, detail: { tier } });
+      await logEvent(db, input.bountyId, "accepted", {
+        actorUserId: ctx.user.id,
+        detail: {
+          tier: scopeTier,
+          amount: lockedBreakdown?.amount ?? null,
+          override: input.overrideAmount != null ? { suggested: lockedBreakdown?.override?.suggested ?? null, reason: input.overrideReason ?? null } : undefined,
+        },
+      });
       if (proposerRole?.userId) {
         await db.insert(notifications).values({
           playerId: proposerRole.userId,
@@ -673,4 +706,40 @@ export const bountiesRouter = router({
         .where(eq(bountyArtifacts.bountyId, input.bountyId)).orderBy(desc(bountyArtifacts.createdAt));
       return { ...bounty, roles, artifacts };
     }),
+
+  // ── Public: run the real valuation engine for the mechanics-page simulator ──
+  // A server query, not client math, so the shown number can never drift from
+  // what the engine actually computes.
+  simulateValuation: publicProcedure
+    .input(z.object({
+      scopeTier: TierSchema,
+      impactLevel: ImpactSchema,
+      circle: z.string().max(128).optional(),
+      priority: z.boolean().optional(),
+    }))
+    .query(async ({ input }) => {
+      return await computeBountyAmount({
+        scopeTier: input.scopeTier,
+        impactLevel: input.impactLevel,
+        priority: input.priority ?? false,
+        circle: input.circle ?? null,
+      });
+    }),
+
+  // ── Public: learned demand factors + season budget for the mechanics page ──
+  valuationInfo: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return { demandFactors: [], committed: 0, seasonBudget: null as number | null };
+    const demandFactors = await db
+      .select()
+      .from(bountyDemandFactors)
+      .orderBy(bountyDemandFactors.circle, bountyDemandFactors.scopeTier);
+    const committed = await getCommittedEmission();
+    let seasonBudget: number | null = null;
+    try {
+      const v = await getGameVariable("bounty.season_budget");
+      seasonBudget = Number.isFinite(v) && v > 0 ? v : null;
+    } catch { seasonBudget = null; }
+    return { demandFactors, committed, seasonBudget };
+  }),
 });

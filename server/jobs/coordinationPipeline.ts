@@ -38,6 +38,13 @@ import { ENV } from "../_core/env";
 import { fetchYouTubeTranscript, fetchYouTubeTranscriptSegments, transcribeFallback } from "../lib/videoSummary";
 import { recordings, roleHolders, bounties, bountyRoles } from "../../drizzle/schema";
 import { finalizeRecording } from "../lib/recording-finalize";
+import {
+  computeBountyAmount,
+  SCOPE_TIERS,
+  IMPACT_LEVELS,
+  type ScopeTier,
+  type ImpactLevel,
+} from "../db/bountyValuation";
 
 type DbInstance = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
@@ -275,9 +282,22 @@ export interface ProposedTaskDraft {
     definitionOfDone?: string;
     consentCircle?: string;
   };
-  bountyAmount: number;
+  // The LLM classifies the work; the deterministic valuation engine prices it.
+  scopeTier: ScopeTier;
+  impactLevel: ImpactLevel;
+  urgency: string | null;
   evidenceQuote: string;
   evidenceTimestampSeconds: number;
+}
+
+const SCOPE_TIER_SET = new Set<string>(SCOPE_TIERS);
+const IMPACT_LEVEL_SET = new Set<string>(IMPACT_LEVELS);
+
+function coerceScopeTier(v: unknown): ScopeTier {
+  return typeof v === "string" && SCOPE_TIER_SET.has(v) ? (v as ScopeTier) : "small";
+}
+function coerceImpactLevel(v: unknown): ImpactLevel {
+  return typeof v === "string" && IMPACT_LEVEL_SET.has(v) ? (v as ImpactLevel) : "normal";
 }
 
 export async function runExtractTasksPass(input: {
@@ -318,10 +338,13 @@ export async function runExtractTasksPass(input: {
     `      "definitionOfDone": string,`,
     `      "consentCircle": string`,
     `    },`,
-    `    "bountyAmount": number (integer $ReGen units, suggest 25 for a small ask, 100 for an afternoon, 500 for a multi-day build),`,
+    `    "scopeTier": "trivial" | "small" | "medium" | "large" (size of the work in outcomes, never hours: trivial = a quick favor, small = one clear deliverable, medium = a real piece of work, large = a substantial build),`,
+    `    "impactLevel": "low" | "normal" | "high" (high = directly serves a land project, unblocks a season, or heals a real relationship or system in the movement; normal = moves the movement forward, most work is here; low = internal polish or nice-to-have),`,
+    `    "urgency": string | null (a short note if the call framed this as time-sensitive or hard to fill, else null),`,
     `    "evidenceQuote": string (exact quote from the transcript that produced this task),`,
     `    "evidenceTimestampSeconds": number (approx seconds from the start)`,
     `  }`,
+    `Classify the work. Do not propose a reward amount; the system computes that from your classification.`,
     `Cap the response at ${MAX_TASKS_PER_RUN} tasks. Return only the JSON.`,
   ].join("\n");
 
@@ -344,6 +367,9 @@ export async function runExtractTasksPass(input: {
       ...t,
       title: scrubVoice(t.title),
       summary: scrubVoice(t.summary),
+      scopeTier: coerceScopeTier((t as { scopeTier?: unknown }).scopeTier),
+      impactLevel: coerceImpactLevel((t as { impactLevel?: unknown }).impactLevel),
+      urgency: typeof (t as { urgency?: unknown }).urgency === "string" ? scrubVoice((t as { urgency: string }).urgency) : null,
       sociocraticOverview: {
         ...t.sociocraticOverview,
         purpose: scrubVoice(t.sociocraticOverview?.purpose),
@@ -361,6 +387,53 @@ export async function runExtractTasksPass(input: {
           : t.sociocraticOverview?.consentCircle,
       },
     }));
+}
+
+/**
+ * Persist one proposed call_task bounty: price it through the deterministic
+ * valuation engine (from the LLM's classification), store the full breakdown
+ * and the sociocratic overview, and create the doer role at the computed
+ * amount. Shared by the poll loop and reprocessRecording so both price bounties
+ * identically. Returns true on success.
+ */
+async function persistProposedBounty(
+  db: DbInstance,
+  draft: ProposedTaskDraft,
+  recordingId: number,
+  matched: { userId: number | null } | null | undefined,
+): Promise<void> {
+  const breakdown = await computeBountyAmount({
+    scopeTier: draft.scopeTier,
+    impactLevel: draft.impactLevel,
+    priority: false, // hard-to-fill boost is a maintainer/flywheel decision, never proposal-time
+    roleSlug: draft.roleSlug,
+  });
+  const [bResult] = await db.insert(bounties).values({
+    sourceType: "call_task",
+    title: draft.title.slice(0, 255),
+    body: draft.summary,
+    tokenType: breakdown.token,
+    tier: draft.scopeTier,
+    workStatus: "proposed",
+    recordingId,
+    roleSlug: draft.roleSlug ?? null,
+    evidenceQuote: draft.evidenceQuote,
+    evidenceTs: Math.max(0, Math.floor(draft.evidenceTimestampSeconds || 0)),
+    valuationBreakdown: breakdown as unknown as Record<string, unknown>,
+    sociocraticOverviewJson: draft.sociocraticOverview as unknown as Record<string, unknown>,
+  });
+  const bountyId = (bResult as unknown as { insertId: number }).insertId;
+  const assigneeUserId = matched?.userId ?? null;
+  await db.insert(bountyRoles).values({
+    bountyId,
+    role: "doer",
+    userId: assigneeUserId,
+    amount: breakdown.amount,
+    payStatus: assigneeUserId ? "filled" : "unfilled",
+    filledByLog: assigneeUserId
+      ? [{ userId: assigneeUserId, action: "pipeline_assigned", agent: AGENT_NAME, at: new Date().toISOString() }]
+      : null,
+  });
 }
 
 // ── Orchestrator ─────────────────────────────────────────────────────
@@ -548,29 +621,7 @@ export async function runCoordinationPipeline(opts: {
     for (const draft of drafts) {
       const matched = draft.roleSlug ? holderByRole.get(draft.roleSlug) : null;
       try {
-        const [bResult] = await db.insert(bounties).values({
-          sourceType: "call_task",
-          title: draft.title.slice(0, 255),
-          body: draft.summary,
-          tokenType: "regen",
-          workStatus: "proposed",
-          recordingId: rec.id,
-          roleSlug: draft.roleSlug ?? null,
-          evidenceQuote: draft.evidenceQuote,
-          evidenceTs: Math.max(0, Math.floor(draft.evidenceTimestampSeconds || 0)),
-        });
-        const bountyId = (bResult as unknown as { insertId: number }).insertId;
-        const assigneeUserId = matched?.userId ?? null;
-        await db.insert(bountyRoles).values({
-          bountyId,
-          role: "doer",
-          userId: assigneeUserId,
-          amount: Math.max(0, Math.min(1_000_000, Math.floor(draft.bountyAmount))),
-          payStatus: assigneeUserId ? "filled" : "unfilled",
-          filledByLog: assigneeUserId
-            ? [{ userId: assigneeUserId, action: "pipeline_assigned", agent: AGENT_NAME, at: new Date().toISOString() }]
-            : null,
-        });
+        await persistProposedBounty(db, draft, rec.id, matched);
         report.tasksProposed += 1;
       } catch (e) {
         report.errors.push(`insert task for ${entry.videoId}: ${(e as Error).message}`);
@@ -661,29 +712,7 @@ export async function reprocessRecording(recordingId: number): Promise<{
   for (const draft of drafts) {
     const matched = draft.roleSlug ? holderByRole.get(draft.roleSlug) : null;
     try {
-      const [bResult] = await db.insert(bounties).values({
-        sourceType: "call_task",
-        title: draft.title.slice(0, 255),
-        body: draft.summary,
-        tokenType: "regen",
-        workStatus: "proposed",
-        recordingId: rec.id,
-        roleSlug: draft.roleSlug ?? null,
-        evidenceQuote: draft.evidenceQuote,
-        evidenceTs: Math.max(0, Math.floor(draft.evidenceTimestampSeconds || 0)),
-      });
-      const bountyId = (bResult as unknown as { insertId: number }).insertId;
-      const assigneeUserId = matched?.userId ?? null;
-      await db.insert(bountyRoles).values({
-        bountyId,
-        role: "doer",
-        userId: assigneeUserId,
-        amount: Math.max(0, Math.min(1_000_000, Math.floor(draft.bountyAmount))),
-        payStatus: assigneeUserId ? "filled" : "unfilled",
-        filledByLog: assigneeUserId
-          ? [{ userId: assigneeUserId, action: "pipeline_assigned", agent: AGENT_NAME, at: new Date().toISOString() }]
-          : null,
-      });
+      await persistProposedBounty(db, draft, rec.id, matched);
       tasksProposed += 1;
     } catch { /* skip on insert error, same as main loop */ }
   }

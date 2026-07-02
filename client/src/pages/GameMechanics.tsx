@@ -241,6 +241,33 @@ const VARIABLE_HELP: Record<string, string> = {
   "governance.load.warning_threshold": "Rolling 30-day decision count above which the community load bar turns yellow. Signals the community is getting busy.",
   "governance.load.critical_threshold": "Rolling 30-day decision count above which the load bar turns red and suggests a pause. Prevents governance burnout.",
   "governance.backfield.review_cadence_days": "Days between Steward reviews of the Back Field backlog. The Back Field is an agricultural metaphor for fallow ideas resting until they are ready.",
+
+  // Bounty valuation (added 2026-07-01)
+  "bounty.tier.trivial.base": "Base $ReGen for a trivial bounty, a quick favor. The valuation starts here and is raised or lowered by impact and demand.",
+  "bounty.tier.small.base": "Base $ReGen for a small bounty, one clear deliverable.",
+  "bounty.tier.medium.base": "Base $ReGen for a medium bounty, a real piece of work.",
+  "bounty.tier.large.base": "Base $ReGen for a large bounty, a substantial build.",
+  "bounty.impact.low": "Multiplier for internal polish or nice-to-have work. Below 1, so it lowers the reward.",
+  "bounty.impact.normal": "Multiplier for work that moves the movement forward. Most work lands here.",
+  "bounty.impact.high": "Multiplier when work directly serves a land project, unblocks a season, or heals a real relationship or system.",
+  "bounty.priority.boost": "The nudge a specific hard-to-fill bounty gets to attract someone. Applies only when the bounty is flagged hard to fill.",
+  "bounty.anchor.weight": "How strongly a reward is pulled toward what similar work has actually paid. Zero ignores precedent, one matches it.",
+  "bounty.learning.window_days": "How far back the engine looks when it learns precedent and demand.",
+  "bounty.learning.unclaimed_days": "How long a bounty sits open before it counts as an unclaimed signal that the reward may be too low.",
+  "bounty.learning.raise_sensitivity": "How boldly the reward rises when a kind of bounty keeps going unclaimed. This is the bolder nudge, because work going undone is the worst outcome.",
+  "bounty.learning.lower_sensitivity": "How gently the reward falls when bounties are claimed instantly. Kept small, because a fast claim often just means good work.",
+  "bounty.learning.factor_min": "The lowest the learned demand factor can go.",
+  "bounty.learning.factor_max": "The highest the learned demand factor can go.",
+  "bounty.max": "A safety ceiling in $ReGen on any single bounty, whatever the factors work out to.",
+  "bounty.round_to": "Rewards round to clean multiples of this many $ReGen.",
+  "bounty.proposal_fraction": "Fraction of the delivery amount paid to the proposer when the work is delivered.",
+  "bounty.season_budget": "An optional cap on total $ReGen issued through bounties per season. Zero means no cap.",
+  "bounty.settlement_hold_hours": "Hours before bounty tokens become claimable to Base, one moon cycle by default.",
+  "bounty.large_tier_min": "Minimum citizenship tier to take on large bounties.",
+  "bounty.tier.trivial.delivery": "Legacy flat delivery amount for a trivial bounty. Superseded by the valuation engine, kept for older code paths.",
+  "bounty.tier.small.delivery": "Legacy flat delivery amount for a small bounty. Superseded by the valuation engine.",
+  "bounty.tier.medium.delivery": "Legacy flat delivery amount for a medium bounty. Superseded by the valuation engine.",
+  "bounty.tier.large.delivery": "Legacy flat delivery amount for a large bounty. Superseded by the valuation engine.",
 };
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
@@ -1435,6 +1462,199 @@ function CollapsibleSection({ title, intro, children, titleClassName }: Collapsi
   );
 }
 
+/* ─── How Bounties Are Valued ────────────────────────────────────────────
+ * Transparency surface for the deterministic bounty valuation engine: the
+ * governance explainer, the live weights, the learned demand factors per
+ * circle, the season budget, and a simulator that calls the real engine on
+ * the server (so the shown math can never drift from what pays out).
+ */
+
+const SCOPE_TIER_OPTIONS: Array<{ value: "trivial" | "small" | "medium" | "large"; label: string }> = [
+  { value: "trivial", label: "Trivial (a quick favor)" },
+  { value: "small", label: "Small (one deliverable)" },
+  { value: "medium", label: "Medium (a real piece of work)" },
+  { value: "large", label: "Large (a substantial build)" },
+];
+const IMPACT_OPTIONS: Array<{ value: "low" | "normal" | "high"; label: string }> = [
+  { value: "low", label: "Low (internal polish)" },
+  { value: "normal", label: "Normal (moves us forward)" },
+  { value: "high", label: "High (serves a land project)" },
+];
+
+function BountyValuationSection() {
+  const { data: variables = [] } = trpc.game.listVariables.useQuery(undefined, { staleTime: 60_000 });
+  const { data: info } = trpc.bounties.valuationInfo.useQuery(undefined, { staleTime: 60_000 });
+
+  const [scopeTier, setScopeTier] = useState<"trivial" | "small" | "medium" | "large">("medium");
+  const [impactLevel, setImpactLevel] = useState<"low" | "normal" | "high">("normal");
+  const [circle, setCircle] = useState<string>("general");
+  const [priority, setPriority] = useState(false);
+
+  const { data: sim } = trpc.bounties.simulateValuation.useQuery(
+    { scopeTier, impactLevel, circle, priority },
+    { placeholderData: (prev) => prev },
+  );
+
+  const bountyVars = (variables as GameVariable[])
+    .filter((v) => v.category === "bounty")
+    .sort((a, b) => a.key.localeCompare(b.key));
+
+  const demandFactors = (info?.demandFactors ?? []) as Array<{
+    circle: string; scopeTier: string; factor: number; precedentMedian: number | null; sampleSize: number;
+  }>;
+  const circleOptions = Array.from(new Set(["general", ...demandFactors.map((d) => d.circle)]));
+
+  const fmtNum = (n: number) => Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+  return (
+    <div className="space-y-8">
+      {/* Governance explainer, verbatim */}
+      <blockquote className="border-l-2 border-[#7dd87d]/40 pl-4 text-white/70 text-sm leading-relaxed max-w-3xl">
+        <span className="font-semibold text-white/90">How these values are set.</span> Every number here is public and
+        lives in the game's shared settings. Stewards can make small adjustments within published limits to keep the
+        board healthy day to day. The engine also learns on its own: when a kind of bounty keeps going unclaimed, it
+        raises the reward, and it calibrates toward what the community has actually paid for similar work. Larger or
+        structural changes go to a community vote on Hypha, and the whole table is reviewed and ratified together at
+        each Season Festival. Nothing here is fixed by decree; it is tended by the community and by the movement's real
+        activity.
+      </blockquote>
+
+      <p className="text-white/60 text-sm max-w-3xl leading-relaxed">
+        A bounty's reward is a base amount for its size, raised or lowered by how much it serves the movement and by
+        what the community is actually claiming, then kept within the season's budget.
+      </p>
+
+      {/* Live weights */}
+      <div>
+        <h3 className="text-white/90 font-semibold mb-3">The weights, live</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {bountyVars.map((v) => (
+            <div key={v.key} className="flex items-center justify-between gap-2 rounded-md bg-white/5 px-3 py-2">
+              <span className="flex items-center gap-1.5 text-white/70 text-sm min-w-0">
+                <span className="truncate">{v.displayName || v.key}</span>
+                <HelpTip text={VARIABLE_HELP[v.key] ?? v.description} />
+              </span>
+              <span className="text-[#7dd87d] font-mono text-sm shrink-0">{formatValue(Number(v.value), v.valueType)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Learned demand factors */}
+      <div>
+        <h3 className="text-white/90 font-semibold mb-1">What the engine has learned</h3>
+        <p className="text-white/50 text-xs mb-3 max-w-2xl">
+          Demand factors per circle and size. Above 1 means that kind of bounty kept going unclaimed, so the reward
+          rose. Precedent is the median of what similar work has actually paid.
+        </p>
+        {demandFactors.length === 0 ? (
+          <p className="text-white/40 text-sm italic">No learned factors yet. The engine starts everything at 1.0x and calibrates as bounties are claimed and completed.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-white/50 text-left border-b border-white/10">
+                  <th className="py-2 pr-4 font-medium">Circle</th>
+                  <th className="py-2 pr-4 font-medium">Size</th>
+                  <th className="py-2 pr-4 font-medium">Demand</th>
+                  <th className="py-2 pr-4 font-medium">Precedent</th>
+                  <th className="py-2 font-medium">Samples</th>
+                </tr>
+              </thead>
+              <tbody>
+                {demandFactors.map((d) => (
+                  <tr key={`${d.circle}-${d.scopeTier}`} className="border-b border-white/5">
+                    <td className="py-2 pr-4 text-white/80">{d.circle}</td>
+                    <td className="py-2 pr-4 text-white/70 capitalize">{d.scopeTier}</td>
+                    <td className="py-2 pr-4 font-mono text-[#7dd87d]">{Number(d.factor).toFixed(2)}x</td>
+                    <td className="py-2 pr-4 font-mono text-white/70">{d.precedentMedian != null ? `${fmtNum(d.precedentMedian)} $ReGen` : "—"}</td>
+                    <td className="py-2 text-white/50">{d.sampleSize}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Season budget */}
+      <div className="rounded-md bg-white/5 px-4 py-3 max-w-md">
+        <h3 className="text-white/90 font-semibold mb-1 text-sm">Season budget</h3>
+        {info?.seasonBudget ? (
+          <p className="text-white/70 text-sm">
+            <span className="font-mono text-[#7dd87d]">{fmtNum(info.committed)}</span> committed of{" "}
+            <span className="font-mono">{fmtNum(info.seasonBudget)}</span> $ReGen
+            <span className="text-white/50"> ({fmtNum(Math.max(0, info.seasonBudget - info.committed))} available)</span>
+          </p>
+        ) : (
+          <p className="text-white/60 text-sm">
+            No season cap set. <span className="font-mono text-[#7dd87d]">{fmtNum(info?.committed ?? 0)}</span> $ReGen
+            committed to live and paid bounties so far. Per-bounty and demand bounds keep amounts in check.
+          </p>
+        )}
+      </div>
+
+      {/* Simulator (server-backed) */}
+      <div className="rounded-lg border border-[#7dd87d]/20 bg-white/5 p-4 max-w-2xl">
+        <div className="flex items-center gap-2 mb-4">
+          <Calculator className="w-4 h-4 text-[#7dd87d]" />
+          <h3 className="text-white/90 font-semibold">Valuation simulator</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          <label className="text-xs text-white/60">
+            Size
+            <select
+              value={scopeTier}
+              onChange={(e) => setScopeTier(e.target.value as typeof scopeTier)}
+              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/15 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
+            >
+              {SCOPE_TIER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-white/60">
+            Impact
+            <select
+              value={impactLevel}
+              onChange={(e) => setImpactLevel(e.target.value as typeof impactLevel)}
+              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/15 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
+            >
+              {IMPACT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-white/60">
+            Circle
+            <select
+              value={circle}
+              onChange={(e) => setCircle(e.target.value)}
+              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/15 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
+            >
+              {circleOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-white/60 mb-4 cursor-pointer">
+          <input type="checkbox" checked={priority} onChange={(e) => setPriority(e.target.checked)} className="accent-[#7dd87d]" />
+          Hard to fill (priority boost)
+        </label>
+        {sim ? (
+          <div className="border-t border-white/10 pt-4">
+            <div className="text-3xl font-bold text-[#7dd87d]" style={{ fontFamily: "var(--font-display)" }}>
+              {sim.amount.toLocaleString()} $ReGen
+            </div>
+            <p className="text-white/60 text-xs mt-2 leading-relaxed">
+              base {fmtNum(sim.base)} × impact {fmtNum(sim.impact)}× × priority {fmtNum(sim.priority)}× × demand {fmtNum(sim.demand)}×
+              {sim.precedentMedian != null ? `, anchored ${Math.round(sim.anchorWeight * 100)}% toward the precedent median of ${fmtNum(sim.precedentMedian)}` : ""}
+              , rounded to the nearest {formatValue(Number((bountyVars.find((b) => b.key === "bounty.round_to")?.value) ?? 25), "integer")}.
+            </p>
+          </div>
+        ) : (
+          <p className="text-white/40 text-sm">Computing…</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Page ──────────────────────────────────────────────────────── */
 
 export default function GameMechanics() {
@@ -1733,6 +1953,24 @@ export default function GameMechanics() {
                   }}
                 />
               </div>
+            </CollapsibleSection>
+          </AnimatedSection>
+        </section>
+
+        {/* Section A2: How Bounties Are Valued */}
+        <section id="how-bounties-are-valued" className="container mx-auto px-4 pb-16 scroll-mt-24">
+          <AnimatedSection animation="slide-up">
+            <CollapsibleSection
+              title={
+                <h2
+                  className="text-2xl md:text-3xl font-bold text-white mb-0"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  How Bounties Are Valued
+                </h2>
+              }
+            >
+              <BountyValuationSection />
             </CollapsibleSection>
           </AnimatedSection>
         </section>

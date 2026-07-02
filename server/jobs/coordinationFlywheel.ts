@@ -25,12 +25,23 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { and, eq, isNotNull, lt, sql } from "drizzle-orm";
 import { getDb } from "../db";
-import { bounties, bountyRoles, notifications, roleHolders, roles } from "../../drizzle/schema";
+import { bounties, bountyRoles, bountyDemandFactors, notifications, roleHolders, roles } from "../../drizzle/schema";
 import { getGameVariable } from "../game";
+import {
+  computeDemandFactor,
+  DEFAULT_LEARNING,
+  SCOPE_TIERS,
+  type ScopeTier,
+  type DemandSignals,
+} from "../db/bountyValuation";
 
 const DEFAULT_NUDGE_DAYS = 7;
 const DEFAULT_EXPIRE_DAYS = 14;
 const NUDGE_MARKER = "[flywheel-nudge]";
+// How fast a claim must land to read as a fast-claim signal, and how many
+// bounties a (circle, scopeTier) needs before the factor is allowed to move.
+const FAST_CLAIM_DAYS = 2;
+const MIN_SAMPLE = 3;
 
 export interface StaleClaimsReport {
   nudged: number;
@@ -331,11 +342,157 @@ export async function runRolesReconciliationAgent(): Promise<RolesReconcileRepor
   return { inserted, updated, unchanged, total: parsed.length };
 }
 
+export interface DemandPrecedentReport {
+  groupsUpdated: number;
+  boostedBounties: number;
+}
+
+async function getNum(key: string, fallback: number): Promise<number> {
+  try {
+    const v = await getGameVariable(key);
+    return Number.isFinite(v) ? v : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+const median = (nums: number[]): number | null => {
+  if (!nums.length) return null;
+  const s = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+};
+
+interface DoerRow {
+  circle: string;
+  scopeTier: ScopeTier;
+  workStatus: string;
+  payStatus: string;
+  amount: number;
+  ageDays: number; // days since the bounty was created
+  claimLagDays: number | null; // days from creation to when the doer role was filled
+}
+
+/**
+ * Demand + precedent learning agent. For each (circle, scopeTier) it recomputes,
+ * over a rolling window, the precedent median (what the community has actually
+ * paid) and a bounded demand factor that rises when bounties go unclaimed and
+ * eases down when they are claimed fast. It also flags hard-to-fill bounties
+ * (unfilled past the unclaimed threshold) with priorityBoost. The valuation
+ * engine reads both. See BOUNTY_VALUATION_ENGINE_SPEC.md.
+ */
+export async function runDemandPrecedentAgent(): Promise<DemandPrecedentReport> {
+  const db = await getDb();
+  if (!db) return { groupsUpdated: 0, boostedBounties: 0 };
+
+  const windowDays = await getDays("bounty.learning.window_days", DEFAULT_LEARNING.windowDays);
+  const unclaimedDays = await getDays("bounty.learning.unclaimed_days", DEFAULT_LEARNING.unclaimedDays);
+  const learning = {
+    raiseSensitivity: await getNum("bounty.learning.raise_sensitivity", DEFAULT_LEARNING.raiseSensitivity),
+    lowerSensitivity: await getNum("bounty.learning.lower_sensitivity", DEFAULT_LEARNING.lowerSensitivity),
+    factorMin: await getNum("bounty.learning.factor_min", DEFAULT_LEARNING.factorMin),
+    factorMax: await getNum("bounty.learning.factor_max", DEFAULT_LEARNING.factorMax),
+    minSample: MIN_SAMPLE,
+  };
+
+  // Auto-flag hard-to-fill bounties: still-unfilled doer role, open past the
+  // unclaimed threshold. This sets the priority factor the engine reads.
+  const boostRes = await db.execute(sql`
+    UPDATE bounties b
+    JOIN bounty_roles r ON r.bountyId = b.id AND r.role = 'doer' AND r.payStatus = 'unfilled'
+    SET b.priorityBoost = 1
+    WHERE b.priorityBoost = 0
+      AND b.workStatus IN ('proposed', 'accepted', 'open')
+      AND b.createdAt < (NOW() - INTERVAL ${unclaimedDays} DAY)
+  `);
+  const boostedBounties = Number((boostRes as any)?.[0]?.affectedRows ?? 0);
+
+  // Pull one row per doer role in the window, with its bounty's circle + tier.
+  const raw = await db.execute(sql`
+    SELECT
+      COALESCE(NULLIF(TRIM(ro.circle), ''), 'general') AS circle,
+      b.tier AS scopeTier,
+      b.workStatus AS workStatus,
+      r.payStatus AS payStatus,
+      r.amount AS amount,
+      DATEDIFF(NOW(), b.createdAt) AS ageDays,
+      CASE WHEN r.userId IS NOT NULL THEN DATEDIFF(r.updatedAt, b.createdAt) ELSE NULL END AS claimLagDays
+    FROM bounties b
+    JOIN bounty_roles r ON r.bountyId = b.id AND r.role = 'doer'
+    LEFT JOIN roles ro ON ro.slug = b.roleSlug
+    WHERE b.tier IS NOT NULL
+      AND b.createdAt >= (NOW() - INTERVAL ${windowDays} DAY)
+  `);
+  const rows: DoerRow[] = ((raw as any)?.[0] ?? []).map((r: any) => ({
+    circle: String(r.circle ?? "general"),
+    scopeTier: r.scopeTier as ScopeTier,
+    workStatus: String(r.workStatus ?? ""),
+    payStatus: String(r.payStatus ?? ""),
+    amount: Number(r.amount ?? 0),
+    ageDays: Number(r.ageDays ?? 0),
+    claimLagDays: r.claimLagDays == null ? null : Number(r.claimLagDays),
+  }));
+
+  // Group by circle|scopeTier.
+  const groups = new Map<string, DoerRow[]>();
+  for (const row of rows) {
+    if (!SCOPE_TIERS.includes(row.scopeTier)) continue;
+    const key = `${row.circle}|${row.scopeTier}`;
+    let bucket = groups.get(key);
+    if (!bucket) { bucket = []; groups.set(key, bucket); }
+    bucket.push(row);
+  }
+
+  const PAID = new Set(["paid", "payable", "held"]);
+  let groupsUpdated = 0;
+
+  for (const [key, g] of groups) {
+    const [circle, scopeTier] = key.split("|") as [string, ScopeTier];
+
+    // Precedent: median amount of bounties that actually paid out.
+    const paidAmounts = g.filter((r) => r.workStatus === "completed" || PAID.has(r.payStatus)).map((r) => r.amount).filter((n) => n > 0);
+    const precedentMedian = median(paidAmounts);
+
+    // Unclaimed signal: still-unfilled past the threshold, or expired unclaimed.
+    const offerable = g.filter((r) => ["proposed", "accepted", "open", "expired"].includes(r.workStatus));
+    const unclaimedCount = offerable.filter(
+      (r) => (r.payStatus === "unfilled" && r.ageDays >= unclaimedDays) || (r.workStatus === "expired" && r.payStatus === "unfilled"),
+    ).length;
+    const unclaimedRate = offerable.length ? unclaimedCount / offerable.length : 0;
+
+    // Fast-claim signal: of the ones that got claimed, how many landed quickly.
+    const claimed = g.filter((r) => r.claimLagDays != null);
+    const fastClaims = claimed.filter((r) => (r.claimLagDays as number) <= FAST_CLAIM_DAYS).length;
+    const fastClaimSignal = claimed.length ? fastClaims / claimed.length : 0;
+
+    const signals: DemandSignals = { sampleSize: g.length, unclaimedRate, fastClaimSignal };
+
+    const [prevRow] = await db
+      .select({ factor: bountyDemandFactors.factor })
+      .from(bountyDemandFactors)
+      .where(and(eq(bountyDemandFactors.circle, circle), eq(bountyDemandFactors.scopeTier, scopeTier)))
+      .limit(1);
+    const prev = prevRow ? Number(prevRow.factor) : 1;
+
+    const factor = computeDemandFactor(prev, signals, learning);
+
+    await db
+      .insert(bountyDemandFactors)
+      .values({ circle, scopeTier, factor, precedentMedian: precedentMedian ?? null, sampleSize: g.length })
+      .onDuplicateKeyUpdate({ set: { factor, precedentMedian: precedentMedian ?? null, sampleSize: g.length } });
+    groupsUpdated += 1;
+  }
+
+  return { groupsUpdated, boostedBounties };
+}
+
 export async function runCoordinationFlywheel(): Promise<{
   staleClaims: StaleClaimsReport;
   rolesReconcile: RolesReconcileReport;
+  demandPrecedent: DemandPrecedentReport;
 }> {
   const staleClaims = await runStaleClaimsAgent();
   const rolesReconcile = await runRolesReconciliationAgent();
-  return { staleClaims, rolesReconcile };
+  const demandPrecedent = await runDemandPrecedentAgent();
+  return { staleClaims, rolesReconcile, demandPrecedent };
 }

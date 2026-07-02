@@ -3615,6 +3615,14 @@ export const bounties = mysqlTable("bounties", {
   roleSlug: varchar("roleSlug", { length: 64 }),
   evidenceQuote: text("evidenceQuote"),
   evidenceTs: int("evidenceTs"),
+  // Valuation engine (migration 0153). The full breakdown that produced the
+  // amount (base/impact/priority/demand/anchor/precedentMedian/token), stored
+  // so every reward is explainable; the sociocratic overview the extract-tasks
+  // pass generates (purpose/whyThisRole/steps/definitionOfDone/consentCircle);
+  // and the hard-to-fill flag the priority factor reads.
+  valuationBreakdown: json("valuationBreakdown"),
+  sociocraticOverviewJson: json("sociocraticOverviewJson"),
+  priorityBoost: boolean("priorityBoost").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
@@ -3653,6 +3661,26 @@ export const bountyEvents = mysqlTable("bounty_events", {
   index("bounty_events_bountyId_createdAt_idx").on(table.bountyId, table.createdAt),
 ]));
 export type BountyEvent = typeof bountyEvents.$inferSelect;
+
+// Learned per (circle, scopeTier) by the daily coordination flywheel
+// (migration 0153). `factor` is the bounded demand multiplier that rises when
+// bounties of this kind go unclaimed and falls gently when they are claimed
+// fast; `precedentMedian` is the median amount of completed bounties in the
+// rolling window. computeBountyAmount reads both. See
+// BOUNTY_VALUATION_ENGINE_SPEC.md, "the self-learning loop".
+export const bountyDemandFactors = mysqlTable("bounty_demand_factors", {
+  id: int("id").autoincrement().primaryKey(),
+  circle: varchar("circle", { length: 128 }).notNull(),
+  scopeTier: mysqlEnum("scopeTier", ["trivial", "small", "medium", "large"]).notNull(),
+  factor: double("factor").notNull().default(1),
+  precedentMedian: double("precedentMedian"),
+  sampleSize: int("sampleSize").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("bounty_demand_factors_circle_tier").on(table.circle, table.scopeTier),
+]));
+export type BountyDemandFactor = typeof bountyDemandFactors.$inferSelect;
 
 // Proof-of-work a call-task doer submits before a maintainer completes + pays.
 // Mirrors the quest_completions artifact shape. Keyed to the bounty + submitter.
