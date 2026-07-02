@@ -156,6 +156,11 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
   const [slashFilter, setSlashFilter] = useState('')
   const [slashPos, setSlashPos] = useState<{ top: number; left: number } | null>(null)
   const [slashActiveIdx, setSlashActiveIdx] = useState(0)
+  // @mention menu (mirrors the slash-command menu below).
+  const [mentionOpen, setMentionOpen] = useState(false)
+  const [mentionQuery, setMentionQuery] = useState('')
+  const [mentionPos, setMentionPos] = useState<{ top: number; left: number } | null>(null)
+  const [mentionActiveIdx, setMentionActiveIdx] = useState(0)
   const [linkPanelOpen, setLinkPanelOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [isUploading, setIsUploading] = useState(false)
@@ -163,6 +168,14 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
   const uploadMutation = trpc.files.upload.useMutation()
   const uploadRef = useRef(uploadMutation.mutateAsync)
   useEffect(() => { uploadRef.current = uploadMutation.mutateAsync }, [uploadMutation.mutateAsync])
+
+  // @mention suggestions. Only fetches while the mention menu is open; matches
+  // members and the AI elders by handle prefix or name.
+  const mentionSearch = trpc.playerProfiles.searchMentions.useQuery(
+    { query: mentionQuery },
+    { enabled: mentionOpen, staleTime: 30_000, placeholderData: (prev) => prev },
+  )
+  const mentionResults = mentionOpen ? (mentionSearch.data ?? []) : []
 
   const editorContainerRef = useRef<HTMLDivElement>(null)
 
@@ -182,25 +195,48 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
       const { from } = editor.state.selection
       const resolvedPos = editor.state.doc.resolve(from)
       const nodeText = resolvedPos.parent.textContent
+      const containerRect = editorContainerRef.current?.getBoundingClientRect()
+      const coords = editor.view.coordsAtPos(from)
+      const posAtCursor = () =>
+        containerRect ? { top: coords.bottom - containerRect.top + 4, left: coords.left - containerRect.left } : null
+
       if (nodeText.startsWith('/')) {
-        const filter = nodeText.slice(1)
-        setSlashFilter(filter)
+        setSlashFilter(nodeText.slice(1))
         setSlashActiveIdx(0)
-        // Position menu at cursor
-        const coords = editor.view.coordsAtPos(from)
-        const containerRect = editorContainerRef.current?.getBoundingClientRect()
-        if (containerRect) {
-          setSlashPos({
-            top: coords.bottom - containerRect.top + 4,
-            left: coords.left - containerRect.left,
-          })
-        }
+        setSlashPos(posAtCursor())
         setSlashOpen(true)
+        setMentionOpen(false)
+        return
+      }
+      setSlashOpen(false)
+
+      // @mention detection: an @token immediately before the caret, at the
+      // start of the line or after whitespace (so email-style text is ignored).
+      const textBefore = editor.state.doc.textBetween(resolvedPos.start(), from, '\n', '￼')
+      const m = textBefore.match(/(?:^|\s)@([\w-]{0,30})$/)
+      if (m) {
+        setMentionQuery(m[1])
+        setMentionActiveIdx(0)
+        setMentionPos(posAtCursor())
+        setMentionOpen(true)
       } else {
-        setSlashOpen(false)
+        setMentionOpen(false)
       }
     },
   })
+
+  // Replace the trailing @token before the caret with @handle and a space.
+  const insertMention = useCallback((handle: string) => {
+    if (!editor) return
+    const { from } = editor.state.selection
+    const resolved = editor.state.doc.resolve(from)
+    const textBefore = editor.state.doc.textBetween(resolved.start(), from, '\n', '￼')
+    const m = textBefore.match(/@([\w-]*)$/)
+    const delFrom = m ? from - m[0].length : from
+    editor.chain().focus().deleteRange({ from: delFrom, to: from }).insertContent(`@${handle} `).run()
+    setMentionOpen(false)
+    setMentionQuery('')
+  }, [editor])
 
   useImperativeHandle(ref, () => ({
     focus: () => { editor?.commands.focus() },
@@ -252,8 +288,24 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
     }
   }, [editor, handleImageFile])
 
-  // Slash menu keyboard navigation
+  // Menu keyboard navigation (mention menu takes priority when open, then slash)
   const handleSlashKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (mentionOpen) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setMentionActiveIdx((i) => Math.min(i + 1, mentionResults.length - 1))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setMentionActiveIdx((i) => Math.max(i - 1, 0))
+      } else if ((e.key === 'Enter' || e.key === 'Tab') && mentionResults[mentionActiveIdx]) {
+        e.preventDefault()
+        insertMention(mentionResults[mentionActiveIdx].handle)
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        setMentionOpen(false)
+      }
+      return
+    }
     if (!slashOpen) return
     const filtered = SLASH_COMMANDS.filter((c) =>
       c.label.toLowerCase().includes(slashFilter.toLowerCase())
@@ -271,7 +323,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
     } else if (e.key === 'Escape') {
       setSlashOpen(false)
     }
-  }, [slashOpen, slashFilter, slashActiveIdx, editor])
+  }, [mentionOpen, mentionResults, mentionActiveIdx, insertMention, slashOpen, slashFilter, slashActiveIdx, editor])
 
   // Apply link
   const applyLink = useCallback(() => {
@@ -533,6 +585,40 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
       <div className="sm:hidden flex gap-0.5 p-1.5 border-t border-white/10 flex-wrap items-center overflow-x-auto sticky bottom-0 bg-[#1a472a]/95 backdrop-blur-sm rounded-b-lg">
         <ToolbarContents />
       </div>
+
+      {/* @mention menu */}
+      {mentionOpen && mentionResults.length > 0 && mentionPos && !isPreview && (
+        <div
+          className="absolute z-50 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl overflow-hidden w-64"
+          style={{ top: mentionPos.top, left: mentionPos.left }}
+        >
+          <div className="px-3 py-1.5 border-b border-white/10">
+            <p className="text-white/50 text-[10px] font-semibold uppercase tracking-wider">Mention someone</p>
+          </div>
+          {mentionResults.map((u, i) => (
+            <button
+              key={u.handle}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); insertMention(u.handle) }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+                i === mentionActiveIdx ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10'
+              }`}
+            >
+              {u.avatarUrl ? (
+                <img src={u.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <span className="w-6 h-6 rounded-full bg-[#7dd87d]/30 text-[#7dd87d] flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {(u.name || u.handle).charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="min-w-0">
+                <span className="text-sm font-medium block truncate">{u.name}</span>
+                <span className="text-[11px] text-white/40 block leading-none">@{u.handle}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Slash command menu */}
       {slashOpen && slashFiltered.length > 0 && slashPos && !isPreview && (

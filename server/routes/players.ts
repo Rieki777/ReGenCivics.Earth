@@ -4,7 +4,7 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql, count, and } from "drizzle-orm";
+import { eq, sql, count, and, or, like, isNotNull } from "drizzle-orm";
 import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions } from "../../drizzle/schema";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
 import { invokeLLM } from "../_core/llm";
@@ -21,6 +21,40 @@ export const playerProfilesRouter = router({
   list: publicProcedure.query(async () => {
     return db.getAllPlayerProfiles();
   }),
+
+  // Typeahead for @mentions in the forum composer. Returns handled accounts
+  // (community members and the AI elders alike, since elders are user rows)
+  // whose handle prefix or name matches the query. protectedProcedure because
+  // it is only used while composing, which already requires sign-in.
+  searchMentions: protectedProcedure
+    .input(z.object({ query: z.string().max(40), limit: z.number().min(1).max(10).default(6) }))
+    .query(async ({ input }) => {
+      const database = await getDb();
+      if (!database) return [] as Array<{ handle: string; name: string; avatarUrl: string | null }>;
+      const q = input.query.trim().toLowerCase();
+      const rows = await database
+        .select({ handle: users.handle, name: users.name, avatarUrl: playerProfiles.avatarUrl })
+        .from(users)
+        .leftJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+        .where(
+          and(
+            isNotNull(users.handle),
+            q ? or(like(sql`lower(${users.handle})`, `${q}%`), like(sql`lower(${users.name})`, `%${q}%`)) : undefined,
+          ),
+        )
+        // Handle-prefix matches first, then the rest.
+        .orderBy(sql`(lower(${users.handle}) like ${q + "%"}) desc`, users.handle)
+        .limit(input.limit * 3);
+      const seen = new Set<string>();
+      const out: Array<{ handle: string; name: string; avatarUrl: string | null }> = [];
+      for (const r of rows) {
+        if (!r.handle || seen.has(r.handle)) continue;
+        seen.add(r.handle);
+        out.push({ handle: r.handle, name: r.name ?? r.handle, avatarUrl: r.avatarUrl ?? null });
+        if (out.length >= input.limit) break;
+      }
+      return out;
+    }),
 
   // Get verified players (leaderboard)
   leaderboard: publicProcedure.query(async () => {

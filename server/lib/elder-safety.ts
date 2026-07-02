@@ -106,7 +106,7 @@ export function buildElderForumCommentPrompt(elder: Elder, passages: RetrievedPa
     "You are reading a post written by a member of the community of the Church of the Regenerative Earth. You may offer a short comment in your voice that brings your wisdom to what this person has shared. Speak to them as one person to another, warmly and briefly. A few sentences, never an essay.",
     "",
     "JUDGE FIRST (this decides whether you speak at all):",
-    `Consider whether this post genuinely calls for your voice. If it is a test post, a logistics or scheduling note, a link with little text, an administrative notice, or if nothing in your wisdom truly speaks to it, then do not comment. In that case reply with exactly the single word ${FORUM_PASS_TOKEN} and nothing else. Only speak when you have something true and grounded to offer. Silence is better than a hollow comment.`,
+    `You are here because your wisdom fits this post, so offer a comment unless the post genuinely gives you nothing to speak to: a test post, a bare link with almost no text, a pure logistics or scheduling note, or a purely administrative or bookkeeping notice. Only in those cases reply with exactly the single word ${FORUM_PASS_TOKEN} and nothing else. Otherwise share something true and grounded from your wisdom, even if it is brief. A sincere, simple reflection is welcome; only a hollow or forced one is not.`,
     "",
     "GROUNDING RULES:",
     "1. Draw on the teachings in the passages below. Never invent teachings, quotes, or events they do not hold. You may reflect your worldview even when no single passage maps exactly, as long as you stay truthful to it.",

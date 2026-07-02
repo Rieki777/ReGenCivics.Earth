@@ -170,3 +170,6 @@ _tmp_404_*
 *.bat
 *-log.txt
 imports-log.txt
+
+# Elder backfill review artifact (generated, not source)
+ELDER_BACKFILL_REVIEW.md
