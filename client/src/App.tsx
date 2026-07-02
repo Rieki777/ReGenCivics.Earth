@@ -66,6 +66,18 @@ const ADMIN_ROUTES = ["/admin", "/admin/"];
 function isAdminRoute(path: string) {
   return path === "/admin" || path.startsWith("/admin/");
 }
+
+/**
+ * CORE subdomain (core.regencivics.earth) detection. The host is fixed for the
+ * lifetime of the page, so App() can branch on this before its hooks without
+ * violating the rules of hooks. See ADR: "CORE as a subdomain inside the
+ * regen-civics monorepo" in .ai/docs/DECISIONS.md.
+ */
+function isCoreHost() {
+  return typeof window !== "undefined" && window.location.hostname.startsWith("core.");
+}
+// The whole church app is one lazily-loaded chunk so it never bloats the main bundle.
+const CoreApp = lazyWithRetry(() => import("./pages/core/CoreApp"));
 // Lazy load pages for better initial load performance
 const Home = lazy(() => import("./pages/Home"));
 const Quest = lazy(() => import("./pages/Quest"));
@@ -210,6 +222,8 @@ function Router() {
     <Switch>
       <Route path={"/"}><EB><Home /></EB></Route>
       <Route path={"/form"}>{() => { window.location.replace('/connect'); return null; }}</Route>
+      {/* CORE lives on its own subdomain; on the main domain, /church sends users there. */}
+      <Route path={"/church"}>{() => { window.location.replace('https://core.regencivics.earth'); return null; }}</Route>
       <Route path={"/quest/:slug"}><EB><Quest /></EB></Route>
       <Route path={"/quest"}><EB><Quest /></EB></Route>
       <Route path={"/fund"}><EB><Fund /></EB></Route>
@@ -383,7 +397,7 @@ function StripStaleAuthErrorParams() {
   return null;
 }
 
-function App() {
+function MainApp() {
   const [location] = useLocation();
   const adminMode = isAdminRoute(location);
   // Track page visits for progress map milestones
@@ -471,6 +485,28 @@ function App() {
       </AudioProvider>
     </ErrorBoundary>
   );
+}
+
+/**
+ * Top-level branch. On the CORE subdomain we mount the church app shell; on the
+ * main domain we mount the full regencivics.earth app. This wrapper calls no
+ * hooks, so each branch keeps a stable, independent hook order (rules of hooks).
+ */
+function CoreShell() {
+  return (
+    <ErrorBoundary fallback={<TaoErrorState />}>
+      <TooltipProvider>
+        <Toaster />
+        <Suspense fallback={<TaoSpinner size={72} fullPage={true} />}>
+          <CoreApp />
+        </Suspense>
+      </TooltipProvider>
+    </ErrorBoundary>
+  );
+}
+
+function App() {
+  return isCoreHost() ? <CoreShell /> : <MainApp />;
 }
 
 export default App;
