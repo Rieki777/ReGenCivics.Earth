@@ -46,6 +46,9 @@ import { adminAutomationsRouter } from "./routes/adminAutomations";
 import { roleHoldersRouter } from "./routes/roleHolders";
 import { rolesRouter } from "./routes/roles";
 import { bountiesRouter } from "./routes/bounties";
+import { churchRolesRouter } from "./routes/churchRoles";
+import { churchDonationsRouter } from "./routes/churchDonations";
+import { elderChatRouter } from "./routes/elderChat";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -195,6 +198,13 @@ export const appRouter = router({
 
   // Sprint 7: Historical Contributions Claims
   claims: claimsRouter,
+
+  // Church of the Regenerative Earth (CORE): Steward roles + payment rights
+  churchRoles: churchRolesRouter,
+  // CORE: donations (Stripe checkout), payout ledger, reconciliation
+  churchDonations: churchDonationsRouter,
+  // CORE: Ask Anastasia elder chat (retrieval-grounded)
+  elderChat: elderChatRouter,
 });
 
 export type AppRouter = typeof appRouter;
