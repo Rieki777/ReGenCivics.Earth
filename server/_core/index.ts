@@ -60,6 +60,8 @@ import { registerEmbedRoutes } from "../routes/embed";
 import { registerHyphaWebhookRoutes } from "../lib/hypha-bridge/webhook-receiver";
 import { registerLoomioWebhookRoutes } from "../webhooks/loomio";
 import { registerGithubWebhookRoutes } from "../webhooks/github";
+import { registerStripeWebhookRoutes } from "../webhooks/stripe";
+import { registerZeffyWebhookRoutes } from "../webhooks/zeffy";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
 import { createRequire } from "module";
@@ -512,6 +514,10 @@ async function startServer() {
   registerLoomioWebhookRoutes(app);
   // GitHub webhook: merge automation for Bounty Engine
   registerGithubWebhookRoutes(app);
+  // Stripe webhook: CORE church donations (checkout + subscription lifecycle)
+  registerStripeWebhookRoutes(app);
+  // Zeffy webhook: CORE church donations (preferred, zero-fee processor)
+  registerZeffyWebhookRoutes(app);
   // OIDC provider for shared auth with Loomio at gov.regencivics.earth
   registerOidcRoutes(app);
   // Presence heartbeat and count

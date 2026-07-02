@@ -71,4 +71,27 @@ export const ENV = {
   //   TRANSCRIPTION_API_KEY     -> matches WORKER_API_KEY on the worker service
   transcriptionWorkerUrl: process.env.TRANSCRIPTION_WORKER_URL ?? "",
   transcriptionApiKey: process.env.TRANSCRIPTION_API_KEY ?? "",
+
+  // Church of the Regenerative Earth (CORE) - core.regencivics.earth
+  // Stripe (server-side only for the secret + webhook signing secret). The
+  // hosted Checkout redirect flow does not need the publishable key on the
+  // client, so it is intentionally not exposed here. Rye sets these on Railway.
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  coreDonationSuccessUrl:
+    process.env.CORE_DONATION_SUCCESS_URL ?? "https://core.regencivics.earth/donate/thank-you",
+  coreDonationCancelUrl:
+    process.env.CORE_DONATION_CANCEL_URL ?? "https://core.regencivics.earth/donate",
+  // Voyage AI embeddings for the elder retrieval corpus (Phase 4, optional).
+  voyageApiKey: process.env.VOYAGE_API_KEY ?? "",
+
+  // Zeffy: preferred donation processor (zero platform fees for nonprofits).
+  // Zeffy forms are built and hosted in the Zeffy dashboard, not created via
+  // API, so integration is: embed the dashboard-generated form URL, and
+  // reconcile via Zeffy's webhook. ZEFFY_WEBHOOK_TOKEN is a shared secret we
+  // choose ourselves and put in the webhook URL path, since Zeffy's webhook
+  // does not document HMAC signature verification.
+  zeffyEmbedUrl: process.env.ZEFFY_EMBED_URL ?? "",
+  zeffyApiKey: process.env.ZEFFY_API_KEY ?? "",
+  zeffyWebhookToken: process.env.ZEFFY_WEBHOOK_TOKEN ?? "",
 };
