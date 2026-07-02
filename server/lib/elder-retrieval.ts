@@ -10,9 +10,14 @@
  *
  * The pure functions here (cosineSimilarity, topKByEmbedding) are unit-tested.
  */
+import { and, eq, sql } from "drizzle-orm";
 import { ENV } from "../_core/env";
+import { getDb } from "../db";
+import { elderCorpusChunks } from "../../drizzle/schema";
 
 export const VOYAGE_MODEL = "voyage-3";
+
+export type RetrievedChunk = { id: number; book: string; section: string; content: string };
 
 export function isVoyageConfigured(): boolean {
   return Boolean(ENV.voyageApiKey);
@@ -73,4 +78,43 @@ export async function embedTexts(texts: string[], inputType: "query" | "document
   }
   const json = (await resp.json()) as { data: Array<{ embedding: number[] }> };
   return json.data.map((d) => d.embedding);
+}
+
+/**
+ * Retrieve the top-k most relevant canon chunks for a free-text query. Uses
+ * Voyage embeddings when configured and the chunks carry vectors, otherwise
+ * falls back to MySQL FULLTEXT. Shared by the Ask Anastasia chat and her
+ * community comments so both draw on the canon identically.
+ */
+export async function retrieveCanonPassages(elder: string, query: string, topK: number): Promise<RetrievedChunk[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Mode A: embeddings, if Voyage is configured and chunks carry vectors.
+  if (isVoyageConfigured()) {
+    const rows = await db
+      .select({ id: elderCorpusChunks.id, book: elderCorpusChunks.book, section: elderCorpusChunks.section, content: elderCorpusChunks.content, embedding: elderCorpusChunks.embedding })
+      .from(elderCorpusChunks)
+      .where(eq(elderCorpusChunks.elder, elder));
+    const embedded = rows.filter((r) => Array.isArray(r.embedding) && (r.embedding as number[]).length > 0);
+    if (embedded.length > 0) {
+      const [queryVec] = await embedTexts([query.slice(0, 2000)], "query");
+      const top = topKByEmbedding(
+        queryVec,
+        embedded.map((r) => ({ ...r, embedding: r.embedding as number[] })),
+        topK,
+      );
+      return top.map((r) => ({ id: r.id, book: r.book ?? "", section: r.section ?? "", content: r.content }));
+    }
+  }
+
+  // Mode B: MySQL FULLTEXT keyword fallback.
+  const q = query.slice(0, 512);
+  const rows = await db
+    .select({ id: elderCorpusChunks.id, book: elderCorpusChunks.book, section: elderCorpusChunks.section, content: elderCorpusChunks.content })
+    .from(elderCorpusChunks)
+    .where(and(eq(elderCorpusChunks.elder, elder), sql`MATCH(content) AGAINST(${q} IN NATURAL LANGUAGE MODE)`))
+    .orderBy(sql`MATCH(content) AGAINST(${q} IN NATURAL LANGUAGE MODE) DESC`)
+    .limit(topK);
+  return rows.map((r) => ({ id: r.id, book: r.book ?? "", section: r.section ?? "", content: r.content }));
 }

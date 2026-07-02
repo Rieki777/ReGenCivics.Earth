@@ -12,7 +12,7 @@
  * the model to treat it as data. No tools are exposed to the model.
  */
 import { z } from "zod";
-import { and, eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -20,12 +20,10 @@ import { elderChatMessages, elderCorpusChunks } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { invokeLLM } from "../_core/llm";
 import { checkRateLimit } from "../rate-limit";
-import { embedTexts, isVoyageConfigured, topKByEmbedding } from "../lib/elder-retrieval";
-import { buildAnastasiaSystemPrompt, CRISIS_RESPONSE, detectCrisis, type RetrievedPassage } from "../lib/elder-safety";
+import { retrieveCanonPassages, type RetrievedChunk } from "../lib/elder-retrieval";
+import { buildAnastasiaSystemPrompt, CRISIS_RESPONSE, detectCrisis } from "../lib/elder-safety";
 
 const TOP_K = 6;
-
-type RetrievedChunk = RetrievedPassage & { id: number };
 
 // Lightweight per-session limiter (in addition to the IP limiter). Deterministic,
 // in-process; resets on restart, which is fine for abuse dampening.
@@ -49,39 +47,6 @@ async function corpusHasRows(elder: string): Promise<boolean> {
   if (!db) return false;
   const rows = await db.select({ id: elderCorpusChunks.id }).from(elderCorpusChunks).where(eq(elderCorpusChunks.elder, elder)).limit(1);
   return rows.length > 0;
-}
-
-async function retrieveChunks(elder: string, question: string): Promise<RetrievedChunk[]> {
-  const db = await getDb();
-  if (!db) return [];
-
-  // Mode A: embeddings, if Voyage is configured and chunks carry vectors.
-  if (isVoyageConfigured()) {
-    const rows = await db
-      .select({ id: elderCorpusChunks.id, book: elderCorpusChunks.book, section: elderCorpusChunks.section, content: elderCorpusChunks.content, embedding: elderCorpusChunks.embedding })
-      .from(elderCorpusChunks)
-      .where(eq(elderCorpusChunks.elder, elder));
-    const embedded = rows.filter((r) => Array.isArray(r.embedding) && (r.embedding as number[]).length > 0);
-    if (embedded.length > 0) {
-      const [queryVec] = await embedTexts([question], "query");
-      const top = topKByEmbedding(
-        queryVec,
-        embedded.map((r) => ({ ...r, embedding: r.embedding as number[] })),
-        TOP_K,
-      );
-      return top.map((r) => ({ id: r.id, book: r.book ?? "", section: r.section ?? "", content: r.content }));
-    }
-  }
-
-  // Mode B: MySQL FULLTEXT keyword fallback.
-  const q = question.slice(0, 512);
-  const rows = await db
-    .select({ id: elderCorpusChunks.id, book: elderCorpusChunks.book, section: elderCorpusChunks.section, content: elderCorpusChunks.content })
-    .from(elderCorpusChunks)
-    .where(and(eq(elderCorpusChunks.elder, elder), sql`MATCH(content) AGAINST(${q} IN NATURAL LANGUAGE MODE)`))
-    .orderBy(sql`MATCH(content) AGAINST(${q} IN NATURAL LANGUAGE MODE) DESC`)
-    .limit(TOP_K);
-  return rows.map((r) => ({ id: r.id, book: r.book ?? "", section: r.section ?? "", content: r.content }));
 }
 
 function uniqueCitations(chunks: RetrievedChunk[]): Array<{ book: string; section: string }> {
@@ -145,7 +110,7 @@ export const elderChatRouter = router({
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Anastasia is not available yet. Please return soon." });
       }
 
-      const chunks = await retrieveChunks(elder, question);
+      const chunks = await retrieveCanonPassages(elder, question, TOP_K);
       const systemPrompt = buildAnastasiaSystemPrompt(chunks);
 
       let answer: string;
