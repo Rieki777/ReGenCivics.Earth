@@ -20,8 +20,9 @@ import { elderChatMessages, elderCorpusChunks } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { invokeLLM } from "../_core/llm";
 import { checkRateLimit } from "../rate-limit";
-import { retrieveCanonPassages, type RetrievedChunk } from "../lib/elder-retrieval";
-import { buildAnastasiaSystemPrompt, CRISIS_RESPONSE, detectCrisis } from "../lib/elder-safety";
+import { retrieveCanonPassages } from "../lib/elder-retrieval";
+import { buildElderSystemPrompt, CRISIS_RESPONSE, detectCrisis } from "../lib/elder-safety";
+import { getElder } from "../lib/elders";
 
 const TOP_K = 6;
 
@@ -49,18 +50,6 @@ async function corpusHasRows(elder: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-function uniqueCitations(chunks: RetrievedChunk[]): Array<{ book: string; section: string }> {
-  const seen = new Set<string>();
-  const out: Array<{ book: string; section: string }> = [];
-  for (const c of chunks) {
-    const key = `${c.book}|${c.section}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ book: c.book, section: c.section });
-  }
-  return out;
-}
-
 async function logMessage(sessionId: string, elder: string, role: "user" | "assistant", content: string, chunkIds: number[] | null) {
   try {
     const db = await getDb();
@@ -76,8 +65,9 @@ export const elderChatRouter = router({
   elderChatEnabled: publicProcedure
     .input(z.object({ elder: z.string().max(64).default("anastasia") }).optional())
     .query(async ({ input }) => {
-      const elder = input?.elder ?? "anastasia";
-      const enabled = Boolean(ENV.anthropicApiKey) && (await corpusHasRows(elder));
+      const elderId = input?.elder ?? "anastasia";
+      if (!getElder(elderId)) return { enabled: false };
+      const enabled = Boolean(ENV.anthropicApiKey) && (await corpusHasRows(elderId));
       return { enabled };
     }),
 
@@ -90,7 +80,12 @@ export const elderChatRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { sessionId, question, elder } = input;
+      const { sessionId, question } = input;
+      const elderObj = getElder(input.elder);
+      if (!elderObj) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "That elder is not part of the circle." });
+      }
+      const elder = elderObj.id;
 
       // Rate limit: per IP (shared helper) and per session (in-process).
       await checkRateLimit(ctx, "elder_chat");
@@ -103,15 +98,15 @@ export const elderChatRouter = router({
       // Crisis path: step out of persona, no model call, no invented canon.
       if (detectCrisis(question)) {
         await logMessage(sessionId, elder, "assistant", CRISIS_RESPONSE, null);
-        return { answer: CRISIS_RESPONSE, citations: [], isCrisis: true };
+        return { answer: CRISIS_RESPONSE, isCrisis: true };
       }
 
       if (!ENV.anthropicApiKey) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Anastasia is not available yet. Please return soon." });
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: `${elderObj.displayName} is not available yet. Please return soon.` });
       }
 
       const chunks = await retrieveCanonPassages(elder, question, TOP_K);
-      const systemPrompt = buildAnastasiaSystemPrompt(chunks);
+      const systemPrompt = buildElderSystemPrompt(elderObj, chunks);
 
       let answer: string;
       try {
@@ -125,14 +120,14 @@ export const elderChatRouter = router({
         answer = result.choices?.[0]?.message?.content?.trim() || "";
       } catch (err) {
         console.error("[elderChat] LLM error:", err);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Anastasia is quiet just now. Please try again in a moment." });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `${elderObj.displayName} is quiet just now. Please try again in a moment.` });
       }
 
       if (!answer) {
-        answer = "The canon does not hold a clear answer to that just now. Ask me again, perhaps in different words, and we will look together.";
+        answer = "There is not a clear answer to that just now. Ask me again, perhaps in different words, and we will look together.";
       }
 
       await logMessage(sessionId, elder, "assistant", answer, chunks.map((c) => c.id));
-      return { answer, citations: uniqueCitations(chunks), isCrisis: false };
+      return { answer, isCrisis: false };
     }),
 });

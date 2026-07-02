@@ -20,7 +20,7 @@ function parseCookieHeader(str: string): Record<string, string> {
 }
 import * as Sentry from "@sentry/node";
 import { runDigestJob } from "../jobs/digestJob";
-import { runAnastasiaForumJob } from "../jobs/anastasiaForumJob";
+import { runElderForumJob } from "../jobs/elderForumJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
 if (process.env.SENTRY_DSN) {
@@ -1065,17 +1065,18 @@ setTimeout(async () => {
   }, 7 * 24 * 60 * 60 * 1000);
 }, 60 * 1000); // first run after 1 minute
 
-// ─── Anastasia community presence (CORE) ─────────────────────────────────────
-// She comments on new community posts and replies once to replies to her, in
-// her canon voice. Deterministic-first: the poll is a plain DB query; only the
-// comment text costs a model call. Runs a few times a day. Silenced by setting
-// ANASTASIA_FORUM_ENABLED=false. Bounded by per-run caps in anastasiaForumJob.
-const ANASTASIA_FORUM_INTERVAL_MS = 6 * 60 * 60 * 1000; // every 6 hours (~4x/day)
+// ─── Elders' community presence (CORE) ───────────────────────────────────────
+// The elders comment on new community posts (routed to the best-fit elder, or
+// called by an @mention) and reply once to replies to their comments, in their
+// own voice. Deterministic-first: the poll is a plain DB query; only routing and
+// the comment text cost a model call. Runs a few times a day. Silenced by setting
+// ELDER_FORUM_ENABLED=false. Bounded by per-run caps in elderForumJob.
+const ELDER_FORUM_INTERVAL_MS = 6 * 60 * 60 * 1000; // every 6 hours (~4x/day)
 setTimeout(async () => {
-  try { await runAnastasiaForumJob(); } catch (e) { log.error("AnastasiaForumJob error", e); }
+  try { await runElderForumJob(); } catch (e) { log.error("ElderForumJob error", e); }
   setInterval(async () => {
-    try { await runAnastasiaForumJob(); } catch (e) { log.error("AnastasiaForumJob error", e); }
-  }, ANASTASIA_FORUM_INTERVAL_MS);
+    try { await runElderForumJob(); } catch (e) { log.error("ElderForumJob error", e); }
+  }, ELDER_FORUM_INTERVAL_MS);
 }, 3 * 60 * 1000); // first run after 3 minutes
 
 // ─── Weekly glossary job ─────────────────────────────────────

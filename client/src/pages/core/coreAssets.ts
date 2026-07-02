@@ -20,6 +20,7 @@ export type CoreAssetId =
   | "program-ceremony"
   | "program-song"
   | "elders-anastasia"
+  | "elders-yeshua"
   | "donate-seed-to-tree"
   | "transparency-open-hand"
   | "core-emblem"
@@ -46,6 +47,7 @@ export const CORE_ASSETS: Record<CoreAssetId, CoreAsset> = {
   "program-ceremony": { id: "program-ceremony", alt: "People around a small fire under a starlit sky in a forest clearing.", aspect: [1, 1], widths: [800, 480] },
   "program-song": { id: "program-song", alt: "People singing together with open, joyful faces.", aspect: [1, 1], widths: [800, 480] },
   "elders-anastasia": { id: "elders-anastasia", alt: "A symbolic figure standing in a sunlit cedar forest, seen softly from behind.", aspect: [3, 4], widths: [900, 600] },
+  "elders-yeshua": { id: "elders-yeshua", alt: "A symbolic figure walking a sunlit path through a green garden at dawn, seen softly.", aspect: [3, 4], widths: [900, 600] },
   "donate-seed-to-tree": { id: "donate-seed-to-tree", alt: "A seed passing between two hands and growing into a great tree of light.", aspect: [16, 9], widths: [1600, 1000, 640] },
   "transparency-open-hand": { id: "transparency-open-hand", alt: "An open hand holding a small glowing ledger of light.", aspect: [16, 9], widths: [1600, 1000, 640] },
   "core-emblem": { id: "core-emblem", alt: "The CORE emblem, a sprouting seed inside a circle.", aspect: [1, 1], widths: [256, 128, 64] },

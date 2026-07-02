@@ -102,7 +102,6 @@ describe("elderChat guards", () => {
     const caller = appRouter.createCaller(makeCtx());
     const res = await caller.elderChat.ask({ sessionId: "session-abcdef12", question: "I want to kill myself" });
     expect(res.isCrisis).toBe(true);
-    expect(res.citations).toEqual([]);
     expect(res.answer).toMatch(/988|crisis|not alone/i);
   });
 
