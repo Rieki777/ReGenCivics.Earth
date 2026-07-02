@@ -27,6 +27,8 @@ export default function GetInvolved() {
 
       <section>
         <div className="wrap" style={{ maxWidth: 820 }}>
+          {/* Keeps the heading outline contiguous (h1 -> h2 -> the h3 steps). */}
+          <h2 className="sr-only">How to begin</h2>
           <div className="steps reveal">
             <div className="step">
               <div>

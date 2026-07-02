@@ -78,6 +78,8 @@ export default function Programs() {
 
       <section>
         <div className="wrap">
+          {/* Keeps the heading outline contiguous (h1 -> h2 -> the h3 cards). */}
+          <h2 className="sr-only">Our programs</h2>
           <div className="grid grid-2 reveal">
             {PROGRAMS.map((p) => (
               <div className="card" key={p.title}>

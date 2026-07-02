@@ -61,8 +61,14 @@
 .core-root .section-tight { padding: 48px 0; }
 .core-root .center { text-align: center; }
 .core-root .lead { font-size: 1.2rem; color: var(--forest-moss); max-width: 62ch; }
-.core-root .center .lead { margin-left: auto; margin-right: auto; }
-.core-root .eyebrow { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; font-size: .78rem; color: var(--forest-sage); margin-bottom: 12px; }
+/* Center the constrained lead BLOCK (not just its text) wherever the context is
+   centered: as a descendant of .center, with the class on the element itself,
+   or inside a hero. Without the auto margins the 62ch block sat flush-left
+   under centered headings, which read as broken centering on wide screens. */
+.core-root .center .lead, .core-root .lead.center, .core-root .hero .lead { margin-left: auto; margin-right: auto; }
+/* Slightly deepened from --forest-sage so this small uppercase text meets WCAG
+   AA (>=4.5:1) on every light band; the band-forest variant below stays bright. */
+.core-root .eyebrow { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; font-size: .78rem; color: #3d6a4e; margin-bottom: 12px; }
 
 /* Nav */
 .core-root .core-nav {
@@ -81,7 +87,8 @@
 .core-root .nav-links a { color: var(--forest-base); }
 .core-root .nav-links a:hover { color: var(--forest-sage); }
 .core-root .nav-links a.active { color: var(--forest-sage); }
-.core-root .nav-toggle { display: none; background: none; border: 0; font-size: 1.5rem; color: var(--forest-deep); cursor: pointer; line-height: 1; }
+/* 44x44 minimum tap target (WCAG 2.2 / mobile best practice). */
+.core-root .nav-toggle { display: none; background: none; border: 0; font-size: 1.5rem; color: var(--forest-deep); cursor: pointer; line-height: 1; width: 44px; height: 44px; align-items: center; justify-content: center; }
 
 /* Buttons */
 .core-root .btn { display: inline-block; font-family: var(--font-display); font-weight: 700; padding: 13px 26px; border-radius: 999px; transition: transform .15s ease, box-shadow .2s ease; cursor: pointer; border: 0; font-size: 1rem; }
@@ -90,7 +97,9 @@
 .core-root .btn-ghost { background: transparent; color: var(--forest-deep); border: 2px solid var(--forest-sage); }
 .core-root .btn-ghost:hover { background: var(--forest-sage); color: var(--parchment-warm); transform: translateY(-2px); }
 .core-root .btn-row { display: flex; gap: 14px; flex-wrap: wrap; }
-.core-root .center .btn-row { justify-content: center; }
+/* Heroes are centered contexts too; without this, hero buttons sat flush-left
+   under centered text (visible on the home page hero). */
+.core-root .center .btn-row, .core-root .hero .btn-row { justify-content: center; }
 
 /* Hero */
 .core-root .hero { position: relative; padding: 96px 0 84px; text-align: center; overflow: hidden;
@@ -145,7 +154,7 @@
 /* Quote / verse */
 .core-root .verse { font-family: var(--font-display); font-weight: 500; font-size: 1.35rem; color: var(--forest-moss); max-width: 60ch; margin: 0 auto; font-style: italic; }
 .core-root .band-forest .verse { color: var(--spring-soft); }
-.core-root .attrib { font-family: var(--font-body); font-style: normal; font-weight: 700; font-size: .95rem; letter-spacing: 1px; text-transform: uppercase; color: var(--forest-sage); margin-top: 18px; }
+.core-root .attrib { font-family: var(--font-body); font-style: normal; font-weight: 700; font-size: .95rem; letter-spacing: 1px; text-transform: uppercase; color: #3d6a4e; margin-top: 18px; }
 .core-root .band-forest .attrib { color: var(--spring-base); }
 
 /* Elder profile */
@@ -202,12 +211,16 @@
 
 /* Footer */
 .core-root .core-footer { background: var(--forest-deepest); color: var(--spring-soft); padding: 56px 0 34px; }
-.core-root .core-footer h4 { color: var(--parchment-warm); font-family: var(--font-accent); }
+/* .footer-h are styled like headings but are plain <p>: real h4s here created
+   h2->h4 jumps in every page's heading outline. */
+.core-root .core-footer .footer-h { color: var(--parchment-warm); font-family: var(--font-accent); font-size: 1rem; margin: 0 0 .5em; letter-spacing: .5px; }
 .core-root .core-footer a { color: var(--spring-soft); }
 .core-root .core-footer a:hover { color: var(--spring-hover); }
 .core-root .core-footer .cols { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 30px; }
 .core-root .core-footer .cols nav { display: grid; gap: 8px; }
-.core-root .core-footer .fine { margin-top: 34px; padding-top: 20px; border-top: 1px solid rgba(168,230,168,.2); font-size: .85rem; color: var(--forest-sage); }
+/* #8fb896 (not --forest-sage) so the legal line reads at >=4.5:1 on the
+   deepest-forest footer background (WCAG AA for small text). */
+.core-root .core-footer .fine { margin-top: 34px; padding-top: 20px; border-top: 1px solid rgba(168,230,168,.2); font-size: .85rem; color: #8fb896; }
 .core-root .core-footer .verse-foot { font-family: var(--font-display); font-style: italic; font-size: 1.1rem; color: var(--spring-soft); }
 
 /* Blur-up image placeholder (LQIP) */
@@ -224,8 +237,26 @@
   .core-root .amount-grid { grid-template-columns: repeat(3, 1fr); }
   .core-root .nav-links { position: fixed; inset: var(--core-nav-h) 0 auto 0; background: var(--parchment-warm); flex-direction: column; padding: 18px 22px; gap: 16px; border-bottom: 1px solid var(--parchment-soft); display: none; z-index: 49; }
   .core-root .nav-links.open { display: flex; }
-  .core-root .nav-toggle { display: block; }
+  .core-root .nav-toggle { display: flex; }
 }
+
+/* Comfortable tap size for inline step links without changing the text look. */
+.core-root .step a:not(.btn) { display: inline-block; padding: 6px 0; margin: -6px 0; }
+
+/* Visually hidden, available to assistive tech. */
+.core-root .sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Skip link: hidden until keyboard focus, then a clear on-brand pill. */
+.core-root .skip-link {
+  position: absolute; left: -9999px; top: 12px; z-index: 100;
+  background: var(--spring-base); color: var(--forest-deep);
+  font-family: var(--font-display); font-weight: 700;
+  padding: 10px 20px; border-radius: 999px;
+}
+.core-root .skip-link:focus { left: 12px; }
 
 /* Accessibility: a clear, on-brand focus ring for keyboard users on every
    interactive element. Mouse clicks don't trigger :focus-visible, so this stays

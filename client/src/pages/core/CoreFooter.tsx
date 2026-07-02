@@ -6,14 +6,16 @@ export default function CoreFooter() {
       <div className="wrap">
         <div className="cols">
           <div>
-            <h4>Church of the Regenerative Earth</h4>
+            {/* Styled like headings, but plain <p>: real h4s here put an
+                h2->h4 jump in every page's heading outline. */}
+            <p className="footer-h">Church of the Regenerative Earth</p>
             <p className="verse-foot">We are the Land.</p>
             <p style={{ fontSize: ".9rem" }}>
               A 508(c)(1)(a) faith ministry. Our home is the Earth herself.
             </p>
           </div>
           <nav aria-label="Church pages">
-            <h4>Explore</h4>
+            <p className="footer-h">Explore</p>
             <Link href="/faith">Our Faith</Link>
             <Link href="/programs">Programs</Link>
             <Link href="/elders">Elders</Link>
@@ -22,7 +24,7 @@ export default function CoreFooter() {
             <Link href="/transparency">Transparency</Link>
           </nav>
           <nav aria-label="ReGen Civics links">
-            <h4>ReGen Civics</h4>
+            <p className="footer-h">ReGen Civics</p>
             <a href="https://regencivics.earth">regencivics.earth</a>
             <a href="https://regencivics.earth/schedule">Schedule &amp; events</a>
             <a href="https://regencivics.earth">Community</a>

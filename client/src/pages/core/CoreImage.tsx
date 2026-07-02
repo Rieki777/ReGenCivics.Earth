@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { CORE_ASSETS, coreImgUrl, coreSrcSet, type CoreAssetId } from "./coreAssets";
 import manifest from "./asset-manifest.json";
 
@@ -20,12 +20,14 @@ type Props = {
 /**
  * Renders a CORE illustration as a responsive WebP served through /api/img,
  * over a blurred LQIP placeholder, with the alt text from the registry. Before
- * an asset exists (empty manifest), it renders `fallback` so the page is whole.
+ * an asset exists (empty manifest), and if the network fetch fails at runtime,
+ * it renders `fallback` so the page never shows a broken image or raw alt text.
  */
 export default function CoreImage({ id, fallback, sizes, className, imgClassName, imgStyle, priority }: Props) {
+  const [failed, setFailed] = useState(false);
   const entry = ASSETS[id];
   const asset = CORE_ASSETS[id];
-  if (!entry?.ready || !asset) {
+  if (!entry?.ready || !asset || failed) {
     return <>{fallback}</>;
   }
   const largest = asset.widths[0];
@@ -50,6 +52,7 @@ export default function CoreImage({ id, fallback, sizes, className, imgClassName
         fetchpriority={priority ? "high" : undefined}
         className={imgClassName}
         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", ...imgStyle }}
+        onError={() => setFailed(true)}
       />
     </span>
   );

@@ -31,6 +31,31 @@ function CoreScrollToTop() {
   return null;
 }
 
+/**
+ * Give the church tab its own identity: the CORE seed emblem as favicon (served
+ * same-origin through /api/img) and a parchment theme-color for mobile browser
+ * chrome. Runs once; the main site's icons are untouched on its own host.
+ */
+function useCoreIdentity() {
+  useEffect(() => {
+    const href = "/api/img?url=" + encodeURIComponent("https://assets.regencivics.earth/core/core-emblem-64.webp") + "&w=64";
+    document.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach((l) => l.remove());
+    const icon = document.createElement("link");
+    icon.rel = "icon";
+    icon.type = "image/webp";
+    icon.href = href;
+    document.head.appendChild(icon);
+
+    let theme = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!theme) {
+      theme = document.createElement("meta");
+      theme.name = "theme-color";
+      document.head.appendChild(theme);
+    }
+    theme.content = "#f8f5f0";
+  }, []);
+}
+
 export default function CoreApp() {
   // Only opt into hide-then-reveal when JS is running, IntersectionObserver
   // exists, and the user allows motion. Computed during the first render (before
@@ -42,9 +67,11 @@ export default function CoreApp() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
     return true;
   });
+  useCoreIdentity();
 
   return (
     <div className={`core-root${revealReady ? " reveal-ready" : ""}`}>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <CoreJsonLd id="org" data={CHURCH_ORG_JSONLD} />
       <CoreScrollToTop />
       <CoreNav />
