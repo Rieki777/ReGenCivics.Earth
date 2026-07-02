@@ -80,6 +80,7 @@ export const PATHS: MapPath[] = [
       { id: "play-4", pathId: "play", index: 3, label: "Join the Forum", landmark: "Speaking Circle", trigger: "forum:post-or-reply", href: "/community", x: 900, y: 370 },
       { id: "play-5", pathId: "play", index: 4, label: "Complete 10 Quests", landmark: "The High Ring", trigger: "quest:10", href: "/quest", x: 1000, y: 200 },
       { id: "play-6", pathId: "play", index: 5, label: "Complete All Quests", landmark: "The Ancient Tree", trigger: "quest:14", href: "/quest", x: 1050, y: 130 },
+      { id: "play-7", pathId: "play", index: 6, label: "Claim a Bounty", landmark: "The Bounty Board", trigger: "visit:/bounties", href: "/bounties", x: 1110, y: 250 },
     ],
   },
   {

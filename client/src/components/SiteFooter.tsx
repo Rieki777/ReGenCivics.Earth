@@ -50,6 +50,9 @@ export default function SiteFooter() {
               Quests
             </Link>
           </HoverPreview>
+          <Link href="/bounties" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+            Bounties
+          </Link>
           <Link href="/crowd-pooling" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
             Crowd Pooling
           </Link>

@@ -77,7 +77,6 @@ import {
 } from "lucide-react";
 import { AnimatedSection, StaggeredContainer } from "@/components/AnimatedSection";
 import { SEO, pageSEO } from "@/components/SEO";
-import { OpenToCircleCallTasks } from "@/components/OpenToCircleCallTasks";
 
 // =============================================
 // REUSABLE COMPONENTS
@@ -640,13 +639,6 @@ export default function Opportunity() {
         <div className="container mx-auto px-4">
           {/* On large screens, shift content left to make room for TOC sidebar (w-72 + 2rem gap = ~320px) */}
           <div className="max-w-4xl mx-auto lg:mr-80 xl:mr-80 min-w-0">
-
-            {/* Open-to-circle call tasks (Movement Coordination Engine,
-                Phase 3): any approved task with no assigned holder shows
-                up here so anyone in the movement can claim it. */}
-            <AnimatedSection animation="fade-in">
-              <OpenToCircleCallTasks />
-            </AnimatedSection>
 
             {/* ===== LEGAL BANNER ===== */}
             <AnimatedSection animation="fade-in">

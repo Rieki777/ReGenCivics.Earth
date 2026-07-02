@@ -39,6 +39,7 @@ const PAGES: PageEntry[] = [
   // Play
   { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <Scroll className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
+  { label: "Bounties", description: "Earn $ReGen for real work", href: "/bounties", icon: <Sparkles className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Crowd Pool Campaigns", description: "Browse active campaigns", href: "/crowd-pooling-projects", icon: <Users className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Schedule", description: "Book a call or join a session", href: "/schedule", icon: <Calendar className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   // Community

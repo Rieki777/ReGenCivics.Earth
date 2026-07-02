@@ -99,6 +99,12 @@ const siteNavigationSchema = {
     },
     {
       "@type": "SiteNavigationElement",
+      "name": "Bounties",
+      "description": "Claim a bounty and earn $ReGen for real regenerative work, with transparent, community-governed rewards.",
+      "url": `${BASE_URL}/bounties`
+    },
+    {
+      "@type": "SiteNavigationElement",
       "name": "Crowd Pooling",
       "description": "Pool capital with aligned contributors to fund regenerative land projects directly.",
       "url": `${BASE_URL}/crowd-pooling`

@@ -100,7 +100,7 @@ export default function Navigation() {
   const is4PathsActive = location === '/fund' || location === '/land' || location === '/ally' || location === '/play';
   
   // Check if current location is in Play the Game section
-  const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/') || location === '/local-food-economy' || location === '/tools' || location.startsWith('/tools/');
+  const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location.startsWith('/bounties') || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/') || location === '/local-food-economy' || location === '/tools' || location.startsWith('/tools/');
   
   // Check if current location is in Seasons + Schedule section
   const isSeasonsActive = location === '/seasons' || location === '/schedule';
@@ -219,7 +219,7 @@ export default function Navigation() {
                       : 'text-[#ffd700] border-[#ffd700]/60 hover:bg-[#ffd700]/10 hover:text-[#ffd700] hover:border-[#ffd700] shadow-[0_0_8px_rgba(255,215,0,0.15)]'
                   }`}
                   style={{ fontFamily: 'var(--font-accent)' }}
-                  onMouseEnter={() => { prefetch("/game"); prefetch("/quest"); prefetch("/play"); }}
+                  onMouseEnter={() => { prefetch("/game"); prefetch("/quest"); prefetch("/play"); prefetch("/bounties"); }}
                 >
                   <FlowerOfLifeIcon className="w-[22px] h-[22px]" size={22} />
                   Play the Game
@@ -259,7 +259,14 @@ export default function Navigation() {
                   <TreeOfLifeIcon size={20} className="mr-3 text-[#7dd87d]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Explore Quests</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/bounties'}
+                >
+                  <Sparkles className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Bounties</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/crowd-pooling-projects'}
                 >
@@ -883,7 +890,20 @@ export default function Navigation() {
                       <TreeOfLifeIcon size={18} />
                       Explore Quests
                     </Link>
-                    <Link 
+                    <Link
+                      href="/bounties"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location.startsWith('/bounties')
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Sparkles size={18} />
+                      Bounties
+                    </Link>
+                    <Link
                       href="/crowd-pooling-projects"
                       className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
                         location === '/crowd-pooling-projects' 

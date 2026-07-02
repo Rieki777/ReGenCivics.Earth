@@ -28,7 +28,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote,
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote, Sparkles,
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
@@ -133,6 +133,9 @@ export function WizardRadialMenu() {
     ? { key: "how-to", label: "Watch how-to", event: "open-quest-how-to", Icon: Play }
     : { key: "quests", label: "Quests", href: "/quest", Icon: Scroll };
 
+  // Bounties slot: paid work born from community sessions, next to Quests.
+  const bountiesAction: Action = { key: "bounties", label: "Bounties", href: "/bounties", Icon: Sparkles };
+
   // Anchor slot: Profile. When on /profile, swap to "Edit".
   const profileAction: Action = onProfile
     ? { key: "profile-edit", label: "Edit profile", href: "/profile/edit", Icon: Edit3 }
@@ -183,6 +186,7 @@ export function WizardRadialMenu() {
     contextAction,
     ...(onLandOrInvestor ? [toolsAction] : []),
     questsAction,
+    bountiesAction,
   ];
 
   // Springy easing so the rows feel like they pop up from the Flower.

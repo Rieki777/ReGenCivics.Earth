@@ -10,12 +10,12 @@ describe('mapData', () => {
   it('each path has the expected node count', () => {
     expect(getPath('land')?.nodes).toHaveLength(5);
     expect(getPath('ally')?.nodes).toHaveLength(5);
-    expect(getPath('play')?.nodes).toHaveLength(6);
+    expect(getPath('play')?.nodes).toHaveLength(7);
     expect(getPath('fund')?.nodes).toHaveLength(7);
   });
 
-  it('getAllNodes returns all 23 nodes', () => {
-    expect(getAllNodes()).toHaveLength(23);
+  it('getAllNodes returns all 24 nodes', () => {
+    expect(getAllNodes()).toHaveLength(24);
   });
 
   it('each node has unique id', () => {

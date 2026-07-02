@@ -50,6 +50,7 @@ const searchItems: { group: string; items: SearchItem[] }[] = [
     group: "Game & Tools",
     items: [
       { label: "Start Questing", href: "/quest", keywords: "quest mission task earn tokens", icon: <Scroll className="w-4 h-4" /> },
+      { label: "Bounties", href: "/bounties", keywords: "bounty task earn tokens work reward", icon: <Coins className="w-4 h-4" /> },
       { label: "Crowd Pooling", href: "/crowd-pooling", keywords: "crowd pool calculator contribute", icon: <Coins className="w-4 h-4" /> },
       { label: "Crowd Pool Campaigns", href: "/crowd-pooling-campaigns", keywords: "campaigns active crowd pool", icon: <Coins className="w-4 h-4" /> },
       { label: "Contribution Calculator", href: "/calculator", keywords: "calculator contribution 8 forms capital", icon: <Coins className="w-4 h-4" /> },

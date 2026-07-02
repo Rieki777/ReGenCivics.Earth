@@ -53,8 +53,8 @@ describe('ProgressMapMini', () => {
 
   it('renders correct number of dot indicators per path', () => {
     const { container } = render(<ProgressMapMini onExpand={mockOnExpand} />);
-    // Each path renders dots equal to its total nodes (5+5+6+7 = 23)
+    // Each path renders dots equal to its total nodes (5+5+7+7 = 24)
     const dots = container.querySelectorAll('.rounded-full.w-1\\.5');
-    expect(dots.length).toBe(23);
+    expect(dots.length).toBe(24);
   });
 });

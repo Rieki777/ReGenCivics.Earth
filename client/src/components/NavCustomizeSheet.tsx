@@ -9,6 +9,7 @@ import { NavIcon } from "./SmartBottomNav";
 
 const AVAILABLE_PAGES = [
   { path: "/quest", icon: "Scroll", label: "Quests", category: "Game" },
+  { path: "/bounties", icon: "Sparkles", label: "Bounties", category: "Game" },
   { path: "/play", icon: "Sprout", label: "Play", category: "Game" },
   { path: "/game", icon: "Leaf", label: "Game", category: "Game" },
   { path: "/community", icon: "Users", label: "Community", category: "Game" },
