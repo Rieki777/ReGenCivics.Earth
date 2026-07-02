@@ -187,6 +187,18 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 ---
 
+## Church of the Regenerative Earth (CORE)
+
+**CORE** (all caps). The Church of the Regenerative Earth, a 508(c)(1)(a) faith ministry, EIN 42-3198293, founded 2026, constitutional home the SEEDS Constitution. Lives at `core.regencivics.earth` (a subdomain inside this monorepo, ADR-18). CORE is the spiritual "why"; ReGen Civics is the "how". Public copy carries no founder names, no SSN, no home address; the church's home is the whole Earth, not any particular place.
+
+**Steward.** A member who tends the church and may be granted the right to accept and/or make payments on its behalf. Formerly split into priest/priestess (renamed to this single, gender-neutral title, ADR-20). This is the (single-value) `role` enum in the `church_role_holders` table (`role` enum `steward`). Payment rights (`canAcceptPayments`, `canMakePayments`) are DATA-DRIVEN per holder, never hardcoded names or user IDs, so governance can grant and revoke through the community tools without a code change. A holder is active while `revokedAt IS NULL`. Server gate: `assertCanAcceptPayments` / `assertCanMakePayments` in `server/lib/church-permissions.ts`. The two initial holders are seeded by Rye after deploy, not in source.
+
+**Elder chat / Ask Anastasia.** The retrieval-grounded chatbot on the Elders page. Answers only from the retrieved canon (`anastasia_canon.md`, chunked into `elder_corpus_chunks`), cites book and section, credits Vladimir Megre and The Ringing Cedars of Russia, and steps out of persona for a crisis fallback. Elder-agnostic by design: a second elder is another `elder` value plus its own corpus, no new plumbing. Transcript logged to `elder_chat_messages` for moderation, rate limiting, and tuning.
+
+**Zeffy.** The preferred CORE donation processor (ADR-19): zero platform fees for nonprofits, unlike Stripe's standard cut. Integration is a dashboard-built, embedded form (`ZEFFY_EMBED_URL`), not an API-created checkout session; reconciled into `church_donations` (`provider = 'zeffy'`) via `server/webhooks/zeffy.ts`. Stripe remains the secondary fallback path on the Donate page, shown behind a "prefer to give by card directly?" disclosure.
+
+---
+
 ## Things we don't say
 
 - "Ecosystem" by itself is too vague. Say "the ReGen Civics network" or "this alliance" or "the Fund + Game system".

@@ -150,3 +150,14 @@ second-brain/
 
 # Generated assets (large source files before R2 upload)
 generated/
+
+# CORE church raw image sources (nano-banana-pro output before R2 upload).
+# Only the optimized AVIF/WebP on R2 are referenced by the site.
+client/public/core/raw/
+
+# CORE sensitive source documents (IRS filings contain SSN + home address).
+# NEVER commit these. The public, redacted formation document that the site
+# serves lives at client/public/core/formation-document.docx and IS committed.
+/CP_575*.pdf
+/IRS Application*.pdf
+/Church_of_the_Regenerative_Earth_Formation_v2.docx

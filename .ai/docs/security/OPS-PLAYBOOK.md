@@ -216,6 +216,26 @@ History: this exact failure happened 2026-04-26 with 100% failure rate observed 
 
 ---
 
+## Procedure 12: CORE (core.regencivics.earth) go-live + rollback
+
+The church subdomain ships inside this repo (ADR-18) and turns on feature by feature as its keys and data land. Order:
+
+1. **DNS + domain**: add `core.regencivics.earth` as a Railway custom domain; point a CNAME at it. Confirm SSL issues. The runtime host switch (`isCoreHost()` in `client/src/App.tsx`) renders the church app once the host resolves.
+2. **Migrations, in order**: `npx tsx scripts/run-migration.ts drizzle/0153_core_church.sql` (creates the five church tables + the corpus FULLTEXT index), then `drizzle/0154_core_zeffy.sql` (adds the `provider`/Zeffy columns to `church_donations`), then `drizzle/0155_core_steward_rename.sql` (renames the role title priest/priestess -> Steward, ADR-20). Or run all three at once with `--all`.
+3. **Zeffy** (preferred donation processor, zero platform fees, ADR-19): create a nonprofit account at zeffy.com, build a donation Campaign/form, get its embed URL (Campaigns -> ... -> Share -> Embed), and register a webhook at `https://core.regencivics.earth/api/webhooks/zeffy/<a-secret-token-you-choose>` (Settings -> Integrations -> Webhook). Set `ZEFFY_EMBED_URL` and `ZEFFY_WEBHOOK_TOKEN` (must match the token in that URL) on Railway; optional `ZEFFY_API_KEY` for `scripts/reconcile-zeffy.ts`. `churchDonations.zeffyEnabled` flips the Zeffy embed live automatically once `ZEFFY_EMBED_URL` is present.
+4. **Stripe** (secondary fallback, optional): create the account + bank link, register the webhook endpoint `https://core.regencivics.earth/api/webhooks/stripe`, copy its signing secret into `STRIPE_WEBHOOK_SECRET`. Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `CORE_DONATION_SUCCESS_URL`, `CORE_DONATION_CANCEL_URL`. `churchDonations.donationsEnabled` flips the Stripe fallback form live once `STRIPE_SECRET_KEY` is present; it stays reachable behind a "prefer to give by card directly?" disclosure under the Zeffy embed.
+5. **Env vars, the rest**: optional `VOYAGE_API_KEY`; `ANTHROPIC_API_KEY` if not already set. `GEMINI_API_KEY` is build-time only (illustrations), not a runtime var.
+6. **Elder corpus**: `npx tsx scripts/build-elder-corpus.ts` (embeds if `VOYAGE_API_KEY` is set, else FULLTEXT-only). `elderChat.elderChatEnabled` flips Ask Anastasia live once the corpus has rows and `ANTHROPIC_API_KEY` is set.
+7. **Role seeds**: grant the two initial Steward holders via `churchRoles.grantRole` with real user IDs. Never hardcode names/IDs; this is a governance act.
+8. **Illustrations** (optional, quality): `GEMINI_API_KEY=... npx tsx scripts/generate-core-assets.ts` then `npx tsx scripts/process-core-assets.ts`. CoreImage swaps placeholders for the real art via `asset-manifest.json`.
+9. **Smoke test** live: load each page; test a small real gift through Zeffy, and through Stripe if enabled (one-time + monthly), confirm each webhook marks the donation `succeeded` and a receipt sends; ask Anastasia a question and confirm a grounded, cited answer plus the crisis fallback.
+
+**Rollback**: the church is isolated behind the host switch, so the main site is never affected. To take CORE down without a redeploy, unset the feature keys: clearing `ZEFFY_EMBED_URL` (and `STRIPE_SECRET_KEY` if also set) reverts the Donate page to its coming-soon state; an empty corpus or unset `ANTHROPIC_API_KEY` reverts Ask Anastasia to the coming-soon placeholder. To pull the whole subdomain, remove the Railway custom domain (the code path only activates for a `core.` host). The migrations are additive/renaming only (new tables, then new columns, then a safe enum rename); no main-site data is touched.
+
+**Known limitation flagged at build**: OG card rendering (`server/routes/og.ts`) is broken repo-wide because `getFont()` loads a `.woff2` and satori 0.26 only parses TTF/OTF/WOFF. This affects all OG cards, not just CORE. Fix: vendor a TTF (e.g. Quicksand) and point `getFont()` at it. The CORE card composition (`coreTemplate`) is done and unit-tested; it renders as soon as the font is fixed.
+
+---
+
 ## Incident log template
 
 When something breaks, append a section like this at the bottom of OPS-PLAYBOOK:
