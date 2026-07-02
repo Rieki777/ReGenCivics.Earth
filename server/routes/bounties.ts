@@ -11,7 +11,7 @@
  * No credit logic lives in this file.
  */
 import { z } from "zod";
-import { eq, and, desc, inArray, or, ne } from "drizzle-orm";
+import { eq, and, desc, inArray, or, ne, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import {
   publicProcedure,
@@ -32,17 +32,94 @@ import {
   bountyDemandFactors,
   notifications,
   users,
+  recordings,
+  roles as rolesCatalog,
+  playerProfiles,
 } from "../../drizzle/schema";
 import { payRole, reverseRole, getTierAmounts, meetsLargeTierFloor, getBountyPermission } from "../db/bounties";
 import { computeBountyAmount, getCommittedEmission, type ImpactLevel, type ValuationBreakdown } from "../db/bountyValuation";
 import { getGameVariable } from "../game";
 import { sanitizeInput } from "../_core/security";
 
+type DbInstance = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+
 // ── Shared zod schemas ───────────────────────────────────────────────────────
 
 const TierSchema = z.enum(["trivial", "small", "medium", "large"]);
 const ImpactSchema = z.enum(["low", "normal", "high"]);
 const SourceTypeSchema = z.enum(["call_task", "contribution"]);
+
+// ── Shared enrichment: source recording + role display, and gratitude tally ──
+
+interface BountyRowLike { id: number; recordingId: number | null; roleSlug: string | null }
+type BountyEnrichment = {
+  recordingTitle: string | null;
+  recordingVideoId: string | null;
+  roleName: string | null;
+  roleCircle: string | null;
+  roleColor: string | null;
+};
+
+/** Batch-fetch the source recording title and role display for a set of bounty rows. */
+async function enrichBounties<T extends BountyRowLike>(db: DbInstance, rows: T[]): Promise<Array<T & BountyEnrichment>> {
+  const recIds = [...new Set(rows.map((r) => r.recordingId).filter((x): x is number => x != null))];
+  const slugs = [...new Set(rows.map((r) => r.roleSlug).filter((x): x is string => x != null))];
+
+  const recMap = new Map<number, { title: string; videoId: string | null }>();
+  if (recIds.length) {
+    const recs = await db
+      .select({ id: recordings.id, title: recordings.title, videoId: recordings.youtubeVideoId })
+      .from(recordings)
+      .where(inArray(recordings.id, recIds));
+    for (const r of recs) recMap.set(r.id, { title: r.title, videoId: r.videoId ?? null });
+  }
+
+  const roleMap = new Map<string, { title: string; circle: string | null; color: string | null }>();
+  if (slugs.length) {
+    const rs = await db
+      .select({ slug: rolesCatalog.slug, title: rolesCatalog.title, circle: rolesCatalog.circle, color: rolesCatalog.color })
+      .from(rolesCatalog)
+      .where(inArray(rolesCatalog.slug, slugs));
+    for (const r of rs) roleMap.set(r.slug, { title: r.title, circle: r.circle, color: r.color });
+  }
+
+  return rows.map((r) => {
+    const rec = r.recordingId != null ? recMap.get(r.recordingId) : null;
+    const meta = r.roleSlug ? roleMap.get(r.roleSlug) : null;
+    return {
+      ...r,
+      recordingTitle: rec?.title ?? null,
+      recordingVideoId: rec?.videoId ?? null,
+      roleName: meta?.title ?? null,
+      roleCircle: meta?.circle ?? null,
+      roleColor: meta?.color ?? null,
+    };
+  });
+}
+
+/** Sum of gratitude gifts (private $ReGen credited with source 'gratitude_bounty') per bounty. */
+async function gratitudeTallyForBounties(db: DbInstance, bountyIds: number[]): Promise<Map<number, { total: number; count: number }>> {
+  const out = new Map<number, { total: number; count: number }>();
+  if (!bountyIds.length) return out;
+  const refs = bountyIds.map((id) => `bounty:${id}`);
+  const rows = await db.execute(sql`
+    SELECT sourceRef, COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt
+    FROM user_token_ledger
+    WHERE source = 'gratitude_bounty' AND sourceRef IN (${sql.join(refs, sql`, `)})
+    GROUP BY sourceRef
+  `).then((r: any) => r[0] ?? []);
+  for (const row of rows) {
+    const id = Number(String(row.sourceRef).split(":")[1]);
+    if (Number.isFinite(id)) out.set(id, { total: Number(row.total) || 0, count: Number(row.cnt) || 0 });
+  }
+  return out;
+}
+
+/** The locked reward amount for a bounty, from its stored valuation breakdown. */
+function breakdownAmount(b: { valuationBreakdown?: unknown }): number {
+  const bd = b.valuationBreakdown as ValuationBreakdown | null | undefined;
+  return bd && Number.isFinite(bd.amount) ? bd.amount : 0;
+}
 
 // ── Helper: build role slots for a new bounty ────────────────────────────────
 
@@ -161,15 +238,27 @@ export const bountiesRouter = router({
     .input(z.object({
       sourceType: SourceTypeSchema.optional(),
       tier: TierSchema.optional(),
+      roleSlug: z.string().max(64).optional(),
+      circle: z.string().max(128).optional(),
+      sort: z.enum(["newest", "reward", "closing"]).default("newest"),
       limit: z.number().int().min(1).max(100).default(50),
     }))
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
+      // A circle filter resolves to the role slugs that belong to it.
+      let circleSlugs: string[] | null = null;
+      if (input.circle) {
+        const rs = await db.select({ slug: rolesCatalog.slug }).from(rolesCatalog).where(eq(rolesCatalog.circle, input.circle));
+        circleSlugs = rs.map((r) => r.slug);
+        if (!circleSlugs.length) return [];
+      }
       const filters = [
         or(eq(bounties.workStatus, "open"), eq(bounties.workStatus, "accepted")),
         input.sourceType ? eq(bounties.sourceType, input.sourceType) : undefined,
         input.tier ? eq(bounties.tier, input.tier) : undefined,
+        input.roleSlug ? eq(bounties.roleSlug, input.roleSlug) : undefined,
+        circleSlugs ? inArray(bounties.roleSlug, circleSlugs) : undefined,
       ].filter(Boolean) as ReturnType<typeof eq>[];
       const where = filters.length === 1 ? filters[0] : and(...filters);
       const rows = await db
@@ -189,7 +278,20 @@ export const bountiesRouter = router({
         if (!roleMap.has(r.bountyId)) roleMap.set(r.bountyId, []);
         roleMap.get(r.bountyId)!.push(r);
       }
-      return rows.map((b) => ({ ...b, openRoles: roleMap.get(b.id) ?? [] }));
+      const enriched = await enrichBounties(db, rows);
+      const withRoles = enriched.map((b) => ({ ...b, openRoles: roleMap.get(b.id) ?? [] }));
+      // Sort within the fetched window (the board is small; reward/closing need
+      // the joined amount/expiry that SQL ordering by createdAt can't give here).
+      if (input.sort === "reward") {
+        withRoles.sort((a, b) => breakdownAmount(b) - breakdownAmount(a));
+      } else if (input.sort === "closing") {
+        withRoles.sort((a, b) => {
+          const ax = a.expiresAt ? new Date(a.expiresAt).getTime() : Infinity;
+          const bx = b.expiresAt ? new Date(b.expiresAt).getTime() : Infinity;
+          return ax - bx;
+        });
+      }
+      return withRoles;
     }),
 
   // ── Player: my roles ─────────────────────────────────────────────────────
@@ -207,7 +309,8 @@ export const bountiesRouter = router({
       if (!roles.length) return [];
       const bIds = [...new Set(roles.map((r) => r.bountyId))];
       const bRows = await db.select().from(bounties).where(inArray(bounties.id, bIds));
-      const bMap = new Map(bRows.map((b) => [b.id, b]));
+      const enriched = await enrichBounties(db, bRows);
+      const bMap = new Map(enriched.map((b) => [b.id, b]));
       return roles.map((r) => ({ ...r, bounty: bMap.get(r.bountyId) ?? null }));
     }),
 
@@ -704,7 +807,67 @@ export const bountiesRouter = router({
       const roles = await db.select().from(bountyRoles).where(eq(bountyRoles.bountyId, input.bountyId));
       const artifacts = await db.select().from(bountyArtifacts)
         .where(eq(bountyArtifacts.bountyId, input.bountyId)).orderBy(desc(bountyArtifacts.createdAt));
-      return { ...bounty, roles, artifacts };
+      const [enriched] = await enrichBounties(db, [bounty]);
+      const tally = (await gratitudeTallyForBounties(db, [bounty.id])).get(bounty.id) ?? { total: 0, count: 0 };
+      // sociocraticOverviewJson is already on the row; expose it under a stable name.
+      return {
+        ...enriched,
+        roles,
+        artifacts,
+        sociocraticOverview: bounty.sociocraticOverviewJson ?? null,
+        gratitude: tally,
+      };
+    }),
+
+  // ── Public: recently completed bounties, with doer + gratitude tally ───────
+  recentCompleted: publicProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(50).default(12) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      // Paid delivery roles (shipper for contributions, else doer), newest first.
+      const paidRoles = await db
+        .select()
+        .from(bountyRoles)
+        .where(and(inArray(bountyRoles.role, ["doer", "shipper"]), eq(bountyRoles.payStatus, "paid")))
+        .orderBy(desc(bountyRoles.paidAt))
+        .limit(input.limit);
+      if (!paidRoles.length) return [];
+      const bIds = [...new Set(paidRoles.map((r) => r.bountyId))];
+      const bRows = await db.select().from(bounties).where(inArray(bounties.id, bIds));
+      const enriched = await enrichBounties(db, bRows);
+      const bMap = new Map(enriched.map((b) => [b.id, b]));
+      const tally = await gratitudeTallyForBounties(db, bIds);
+
+      const userIds = [...new Set(paidRoles.map((r) => r.userId).filter((x): x is number => x != null))];
+      const doerMap = new Map<number, { name: string | null; handle: string | null; avatarUrl: string | null; displayName: string | null }>();
+      if (userIds.length) {
+        const people = await db
+          .select({
+            id: users.id,
+            name: users.name,
+            handle: users.handle,
+            displayName: playerProfiles.displayName,
+            avatarUrl: playerProfiles.avatarUrl,
+          })
+          .from(users)
+          .leftJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+          .where(inArray(users.id, userIds));
+        for (const p of people) doerMap.set(p.id, { name: p.name, handle: p.handle, avatarUrl: p.avatarUrl ?? null, displayName: p.displayName ?? null });
+      }
+
+      return paidRoles.map((r) => {
+        const bounty = bMap.get(r.bountyId) ?? null;
+        const doer = r.userId != null ? doerMap.get(r.userId) ?? null : null;
+        return {
+          bounty,
+          role: r.role,
+          amount: r.amount,
+          paidAt: r.paidAt,
+          doer,
+          gratitude: tally.get(r.bountyId) ?? { total: 0, count: 0 },
+        };
+      });
     }),
 
   // ── Public: run the real valuation engine for the mechanics-page simulator ──
