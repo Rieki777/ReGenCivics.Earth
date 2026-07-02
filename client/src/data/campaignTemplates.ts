@@ -54,7 +54,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
       { category: 'agriculture', name: 'Tractor (40-60 HP)', quantity: 1, description: 'Multi-purpose farm tractor', estimatedValue: 35000 },
       { category: 'energy', name: 'Solar Panel System (50kW)', quantity: 1, description: 'Community solar power system', estimatedValue: 75000 },
       { category: 'water', name: 'Water Filtration System', quantity: 1, description: 'Community water treatment', estimatedValue: 25000 },
-      { category: 'tools', name: 'Hand Tool Set (Complete)', quantity: 10, description: 'Comprehensive tool sets for residents', estimatedValue: 5000 },
+      { category: 'tools', name: 'Hand Tool Set (Complete)', quantity: 10, description: 'Full hand-tool kits for residents', estimatedValue: 5000 },
     ],
     roles: [
       { title: 'Permaculture Designer', category: 'Design & Planning', description: 'Site design and implementation oversight', hoursPerWeek: 20, weeksNeeded: 52, hourlyRate: 65 },

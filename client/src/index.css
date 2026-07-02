@@ -2693,5 +2693,33 @@ html[data-contrast="high"] *:focus-visible {
   .animate-spin {
     animation: none !important;
   }
+  /* Belt-and-suspenders: also neutralize CSS transitions and any custom
+     keyframe animations for visitors who ask for reduced motion. Component
+     animations are gated in JS via useReducedMotion; this covers pure-CSS
+     motion (hover transitions, background keyframes) that the hook can't see. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Global keyboard focus ring. Guarantees focus is never invisible,
+   including on hand-rolled interactive elements (custom buttons,
+   clickable cards, links) that use outline-none or set no ring.
+   :focus-visible so pointer clicks don't show it. shadcn/Radix
+   components keep their own ring (their utilities win on specificity);
+   this is the safety net for everything else. Dual ring so it stays
+   visible on BOTH the light and dark-forest backgrounds the site uses.
+   ════════════════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid #0a3d1f;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(125, 216, 125, 0.85);
+  border-radius: 3px;
 }
                                                                                        
