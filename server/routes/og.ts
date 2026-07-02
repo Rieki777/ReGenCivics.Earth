@@ -25,7 +25,10 @@ let fontData: ArrayBuffer | null = null;
 function getFont(): ArrayBuffer {
   if (fontData) return fontData;
   try {
-    const fontPath = path.resolve(process.cwd(), "client/public/fonts/quicksand-latin.woff2");
+    // satori's font parser cannot read woff2 (throws "Unsupported OpenType
+    // signature wOF2"), so we vendor a static TTF instanced from the same
+    // Quicksand variable font at weight 700. Keep this a .ttf, not .woff2.
+    const fontPath = path.resolve(process.cwd(), "client/public/fonts/quicksand-latin.ttf");
     fontData = fs.readFileSync(fontPath).buffer as ArrayBuffer;
   } catch {
     // Fallback: empty buffer, satori will use system font
@@ -150,6 +153,65 @@ async function renderOgImage(element: any): Promise<Buffer> {
   return resvg.render().asPng();
 }
 
+// Church of the Regenerative Earth (CORE) share card. Text-composed (no art
+// dependency) so it works before the illustrations exist; forest + parchment
+// palette to match the subdomain.
+export const CORE_OG: Record<string, { eyebrow: string; title: string }> = {
+  home: { eyebrow: "Church of the Regenerative Earth", title: "The spiritual heart of ReGen Civics" },
+  faith: { eyebrow: "Our Faith", title: "We are the Earth, choosing to heal itself" },
+  programs: { eyebrow: "Programs", title: "Worship you can put your hands into" },
+  elders: { eyebrow: "Our Elders", title: "We honor the wisdom keepers" },
+  "get-involved": { eyebrow: "Get Involved", title: "There is a place for you here" },
+  donate: { eyebrow: "Give", title: "Giving is worship" },
+  transparency: { eyebrow: "Transparency", title: "Held in the open" },
+};
+
+export function coreTemplate(id: string): any {
+  const meta = CORE_OG[id] ?? { eyebrow: "Church of the Regenerative Earth", title: "The spiritual heart of ReGen Civics" };
+  return {
+    type: "div",
+    props: {
+      style: {
+        width: WIDTH,
+        height: HEIGHT,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        background: "linear-gradient(160deg, #0d2818, #1a472a)",
+        padding: "64px",
+        fontFamily: "Quicksand",
+        color: "#f8f5f0",
+      },
+      children: [
+        {
+          type: "div",
+          props: {
+            style: { display: "flex", alignItems: "center", gap: 18, fontSize: 26, color: "#7dd87d", letterSpacing: 2 },
+            children: [
+              { type: "div", props: { style: { width: 40, height: 40, borderRadius: 20, background: "#7dd87d" } } },
+              { type: "span", props: { children: "CORE" } },
+            ],
+          },
+        },
+        {
+          type: "div",
+          props: {
+            style: { display: "flex", flexDirection: "column", gap: 16 },
+            children: [
+              { type: "div", props: { style: { fontSize: 22, color: "#a8e6a8", letterSpacing: 3, textTransform: "uppercase" }, children: meta.eyebrow } },
+              { type: "div", props: { style: { fontSize: 60, fontWeight: 700, lineHeight: 1.15 }, children: truncate(meta.title, 70) } },
+            ],
+          },
+        },
+        {
+          type: "div",
+          props: { style: { fontSize: 20, color: "rgba(248,245,240,0.6)" }, children: "core.regencivics.earth" },
+        },
+      ],
+    },
+  };
+}
+
 export function registerOgRoutes(app: Express) {
   app.get("/api/og", async (req: Request, res: Response) => {
     const { type, id } = req.query as { type?: string; id?: string };
@@ -214,6 +276,10 @@ export function registerOgRoutes(app: Express) {
             author: "ReGen Civics Team",
             date: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
           });
+          break;
+        }
+        case "core": {
+          element = coreTemplate(id || "home");
           break;
         }
         default:
