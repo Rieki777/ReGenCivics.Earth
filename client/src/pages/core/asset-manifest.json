@@ -118,6 +118,185 @@
         1000,
         640
       ]
+    },
+    "home-village-abundance": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAAAwBACdASoYAA0APu1iqU2ppaOiMAgBMB2JZACdMoACsnJEGcaeYeugggAA/bBXNjH7KxFXo3Sbh1lxc3dXivrSztvRgKv3vgclld3bB3gOZ6swX7qjqY+jk24wMzqpqgA=",
+      "widths": [
+        2000,
+        1200,
+        720
+      ]
+    },
+    "home-temple-grove": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAADwAwCdASoYAA0APu1iqk4ppaQiMAgBMB2JZAC06BjYdRTuH5vVrN0gAP7Rx7R5zhFrfzAmV0+VnR6Se4uwuhnPic5Ag/95bIr3Eg2Bl0Iy7mQStbLeqaOH3ATETEkauaFOzi1IAAA=",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "home-night-ceremony": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAACQAwCdASoYAA0APu1kqk4ppaQiMAgBMB2JQBOgBDBtRBYGDSUAAP7l5KcisOwVnHzgV7hN+NR0izmvg/Iv49kI4hvp1SZk4JYjyHIpdBZaTwxdxCpTXcpvflCEAA==",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "faith-cathedral-canopy": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAAAwBACdASoYAA0APu1kq04ppaQiMAgBMB2JagCdL1yBpjsaN01IovZYGYAA/rpdRGLGS6ZEt4LDJp3lBd1X1CIGayJGxcyQWlk1jt9dGw+Ujx4PtDr5ggQWgtxs95HMO6WS9r7VBK5AAA==",
+      "widths": [
+        2400,
+        1600,
+        1000,
+        640
+      ]
+    },
+    "faith-root-communion": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAACwBACdASoYABIAPu1mpk2ppaMiMBgMATAdiUAXYAILL/fX8+7h+MjTm36bZphAAPua0rpIjuauTBSD7Cx8/ak4M+XZaTipWkdWqIw0addardmjPswTP2NlMtmmFZWRgN1+ToyIy4uBcH1b4l/Y3BwiDO+/TTbYAAA=",
+      "widths": [
+        1200,
+        800,
+        480
+      ]
+    },
+    "faith-animals-abundance": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADQAwCdASoYAA0APu1iqk4ppaQiMAgBMB2JZgDCgBitNyITz94BzoAA/sAwIxN49jy2vn4GPs/BuqDvryHbEmcWHLc8eow7YQYbVRWRuOSpezpVHN76mAAA",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "programs-hero": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAQBACdASoYAA0APu1kqU4ppaOiMAgBMB2JbAC7H8AC4v5Bhx77tP/vlAD+3MzYNw4pwX/BK1D74d/OgxsLE5yBalFGK8sy6t6kvjBVcQ+7HJyxn6YPWQv8fPY0z3iYRrvXkAAA",
+      "widths": [
+        2400,
+        1600,
+        1000,
+        640
+      ]
+    },
+    "program-stewardship": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRqQAAABXRUJQVlA4IJgAAACQBQCdASoYABgAPu1oqk+ppiOiKA1RMB2JZACdMoABXKjQAAZixDrpc7iuOKtbtX7mlhRXAAD+zt+jsZcy9wxRIdH5Xq1j83/x5w7TJQA5rT7FpjcQ1WepufsGhqI4kKG+rnXPWimD1oHemGZaJwMrsP5dvDQbEn4+YEjAdHdYHsSB0KhZPeiBLU6oBPwW79xEsWpbYgAAAA==",
+      "widths": [
+        800,
+        480
+      ]
+    },
+    "elders-hero": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAAAQBACdASoYAA0APu1kqk4ppaQiMAgBMB2JZgC/OBjcU/PKrWzDtso1AAD+wTxBEqxmWaDtGbpKVy+F+YGAOEh1Q6/WW5Q+qV7xImRajgVKUTpIrbh3SWpvPJYHc4Ot5AA=",
+      "widths": [
+        2400,
+        1600,
+        1000,
+        640
+      ]
+    },
+    "elders-future-lantern": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAACwBACdASoYABIAPu1krFAppSQisBgIATAdiUAXYAIQPADYRVKoQQtFFB43yBEgAP6HVXnUo64geqD7IztAsnqVjwpUJXcspVkxIaWjA3aOTcfvrfqPfjmw45z8n+c9b6JWMqtwfnv9s5Zxm4pxaG+D7yB2B4yRUeR1ROKIkPEIIAQAAAA=",
+      "widths": [
+        1000,
+        640
+      ]
+    },
+    "get-involved-hero": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAABQBACdASoYAA0APu1iqk2ppaQiMAgBMB2JZgC7LwABe2Iy+IEzTV1lMgIAAP7lkM/+q4w+50az2ARgAnbH/kLX2xdiusQbvqU6axVS6dXq7eSbZI4aPmePtQAAAA==",
+      "widths": [
+        2400,
+        1600,
+        1000,
+        640
+      ]
+    },
+    "get-involved-community-life": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAAAwBACdASoYAA0APu1kqU2ppaQiMAgBMB2JbACdMoACQ4+cOWHvTa3e59AA/qKadUTVAZhwF6U2Isn436rVL/n2EU7+Vni3hfYti81f1kdAfLAvJotulsz4POWtk2QnaiYu7H3Mr8AAAA==",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "get-involved-sanctuary": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAADwAwCdASoYAA0APu1iqU2ppaOiMAgBMB2JZACdACKF5HFj7elUDEwgAP5OWQGVyVJJlNn2sT1YLjeduUwWZOZGBNx2rJuO3gPbeyganXTj074SKgHAYNCODRlLIO63j4/efzu8/6L4AA==",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "get-involved-path": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAAAQBQCdASoYABIAPu1kqE2ppaOiMBgMATAdiWIAuwANGoSHxyIiu9jn3YrppnQBAQwAAP7o79rPpnr60RZkrqnMaEQBkYYa6lYETqg6jm8OlKJUEhi19Y0erLxrBOR7Yxvytj3frxkqVIO+HcpT3zaNqBmGvAAA",
+      "widths": [
+        1000,
+        640
+      ]
+    },
+    "donate-temple-offering": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAAAQBACdASoYAA0APu1iqU2ppaOiMAgBMB2JZACdMoADEZNsLnGZUV/6IAD+wEWo6BmYJeD2dNg8FKLrlFqr93PKdxK2KVaJlaYS6pNCLzUu/xgakZfM3GzlYV0mHtcr01Ofx9MjbKLQY3CHSAA=",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "transparency-roots-of-trust": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAAAQBACdASoYAA0APu1iqU2ppaQiMAgBMB2JaAC7MoAC+a/TlEpaQXXqMAD+qZmJ3DcSbas9qod2sm5UO6S0DuaRA9GMBSl8mIM06CX8siHkVGz5woGaNPhxYCKb+XL1EAA=",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "elder-chat-threshold": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRpwAAABXRUJQVlA4IJAAAABwBQCdASoYABgAPu1wsFKppiSiqAgBMB2JZgC7MoR7KBLOnHWYqDeMkNZwkUReD03nzo4AAOJwsXQ7Swm+S4sVqKCFrovqajfaSzNrqFh62b4CCRji6aAJnmtzq4PKrjCCNsuH5eE6jtZ6yfwJzEDzzmIHMKa8RIvbr0lN5W7M4vnQqVpVysQykptA2fCuAAA=",
+      "widths": [
+        480,
+        320
+      ]
+    },
+    "thank-you-blossom": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAwBACdASoYAA0APu1kqk4ppaQiMAgBMB2JZgCsLwABdsMLtjlpRXm+mwAA/uQK63Fzzrs5vk1IDcbk6HkBI4/Oam5HMhyIF0Tq1DAvgvPCA0tZAModqurHdk2oEsD1vTJlTQgA",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "reconciliation-ledger-grove": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAABQBACdASoYAA0APu1kqk4ppaQiMAgBMB2JQBOmUABeIPUZD73+r2dSaekAAP5OGcmM+YLkCHuidFJhVLUoqfxEpTCAM+SOBavZCda9L3wpZ1ErKlQxjgxKyW60AA==",
+      "widths": [
+        1600,
+        1000,
+        640
+      ]
+    },
+    "footer-canopy-band": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRk4AAABXRUJQVlA4IEIAAABwAwCdASoYAAoAPu1krU2ppaSiMAgBMB2JZQC06C0I34KOoIAA/u+n389BU4DV99M7yrf0syMIBxYfrRBVLYdVwAA=",
+      "widths": [
+        1600,
+        1000
+      ]
     }
   }
 }
