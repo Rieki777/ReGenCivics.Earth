@@ -3686,3 +3686,119 @@ export const bountyPermissions = mysqlTable("bounty_permissions", {
   grantedAt: timestamp("grantedAt").defaultNow().notNull(),
 });
 export type BountyPermission = typeof bountyPermissions.$inferSelect;
+
+// ---------------------------------------------------------------------------
+// Church of the Regenerative Earth (CORE) - core.regencivics.earth
+// Tables for the church subdomain: data-driven Steward payment rights,
+// donations + payouts ledger, elder chat log, and the elder retrieval corpus.
+// DDL applied by drizzle/0153_core_church.sql (Rye runs the migration); the
+// role enum was renamed priest/priestess -> steward by drizzle/0155_core_steward_rename.sql
+// (ADR-20). ADR-18 in .ai/docs/DECISIONS.md.
+// ---------------------------------------------------------------------------
+
+// Who may accept and make payments on behalf of the church (the church's
+// Stewards). The role check is DATA-DRIVEN (this table), never hardcoded
+// names or user IDs, so governance can grant and revoke through the
+// community tools without a code change. A holder is active when revokedAt
+// IS NULL. The two initial holders are seeded by Rye after deploy (see
+// handoff), not committed to source.
+export const churchRoleHolders = mysqlTable("church_role_holders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["steward"]).notNull(),
+  canAcceptPayments: tinyint("canAcceptPayments").notNull().default(0),
+  canMakePayments: tinyint("canMakePayments").notNull().default(0),
+  grantedBy: int("grantedBy"),
+  grantedAt: timestamp("grantedAt").defaultNow().notNull(),
+  revokedAt: timestamp("revokedAt"),
+}, (table) => ([
+  index("church_role_holders_userId_idx").on(table.userId),
+  index("church_role_holders_active_idx").on(table.userId, table.revokedAt),
+]));
+export type ChurchRoleHolder = typeof churchRoleHolders.$inferSelect;
+
+// Donations and tithes through Zeffy (preferred, zero platform fees) or Stripe
+// (secondary fallback). Append-only in spirit: once a row is `succeeded`, never
+// mutate amountCents. Giving can be anonymous (donorUserId and donorEmail both
+// nullable). `giftInterval` avoids the MySQL reserved word `interval`. See
+// ADR-19 for the provider decision.
+export const churchDonations = mysqlTable("church_donations", {
+  id: int("id").autoincrement().primaryKey(),
+  provider: mysqlEnum("provider", ["stripe", "zeffy"]).notNull().default("stripe"),
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }),
+  stripePaymentIntent: varchar("stripePaymentIntent", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  zeffyPaymentId: varchar("zeffyPaymentId", { length: 255 }),
+  zeffyCampaignId: varchar("zeffyCampaignId", { length: 255 }),
+  donorUserId: int("donorUserId"),
+  donorEmail: varchar("donorEmail", { length: 320 }),
+  amountCents: int("amountCents").notNull(),
+  currency: varchar("currency", { length: 8 }).notNull().default("usd"),
+  giftInterval: mysqlEnum("giftInterval", ["one_time", "monthly"]).notNull().default("one_time"),
+  status: mysqlEnum("status", ["pending", "succeeded", "failed", "refunded"]).notNull().default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("church_donations_session_uq").on(table.stripeSessionId),
+  unique("church_donations_zeffy_payment_uq").on(table.zeffyPaymentId),
+  index("church_donations_donor_idx").on(table.donorUserId),
+  index("church_donations_status_idx").on(table.status),
+  index("church_donations_provider_idx").on(table.provider, table.status),
+]));
+export type ChurchDonation = typeof churchDonations.$inferSelect;
+
+// Ledger of payments MADE by the church. This records intent and reconciliation
+// only; actual money movement happens through the church bank account and Stripe
+// balance as a human action by a Steward. Guarded by
+// assertCanMakePayments. No autonomous external transfer is ever initiated here.
+export const churchPayouts = mysqlTable("church_payouts", {
+  id: int("id").autoincrement().primaryKey(),
+  initiatedByUserId: int("initiatedByUserId").notNull(),
+  amountCents: int("amountCents").notNull(),
+  currency: varchar("currency", { length: 8 }).notNull().default("usd"),
+  purpose: varchar("purpose", { length: 500 }).notNull(),
+  destinationRef: varchar("destinationRef", { length: 500 }),
+  status: mysqlEnum("status", ["recorded", "reconciled", "void"]).notNull().default("recorded"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("church_payouts_initiator_idx").on(table.initiatedByUserId),
+]));
+export type ChurchPayout = typeof churchPayouts.$inferSelect;
+
+// Ask Anastasia transcript log, for moderation, rate limiting, and retrieval
+// tuning. Stores only what the user types plus the model reply; no PII beyond
+// that. `elder` defaults to anastasia so a second elder is just another value.
+export const elderChatMessages = mysqlTable("elder_chat_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: varchar("sessionId", { length: 64 }).notNull(),
+  elder: varchar("elder", { length: 64 }).notNull().default("anastasia"),
+  role: mysqlEnum("role", ["user", "assistant"]).notNull(),
+  content: text("content").notNull(),
+  retrievedChunkIds: json("retrievedChunkIds"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("elder_chat_session_idx").on(table.sessionId, table.createdAt),
+  index("elder_chat_elder_idx").on(table.elder, table.createdAt),
+]));
+export type ElderChatMessage = typeof elderChatMessages.$inferSelect;
+
+// The elder retrieval corpus. Chunks of anastasia_canon.md with metadata.
+// `embedding` holds a Voyage vector (Option A) and is null until the corpus
+// script runs with VOYAGE_API_KEY; a MySQL FULLTEXT index on `content` (added
+// in the SQL migration) powers the keyword fallback (Option B). Retrieval
+// prefers embeddings when present and falls back to FULLTEXT otherwise.
+export const elderCorpusChunks = mysqlTable("elder_corpus_chunks", {
+  id: int("id").autoincrement().primaryKey(),
+  elder: varchar("elder", { length: 64 }).notNull().default("anastasia"),
+  book: varchar("book", { length: 255 }),
+  section: varchar("section", { length: 512 }),
+  chunkIndex: int("chunkIndex").notNull(),
+  content: text("content").notNull(),
+  contentTokens: int("contentTokens"),
+  embedding: json("embedding"),
+  embeddingModel: varchar("embeddingModel", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("elder_corpus_elder_idx").on(table.elder, table.chunkIndex),
+]));
+export type ElderCorpusChunk = typeof elderCorpusChunks.$inferSelect;
