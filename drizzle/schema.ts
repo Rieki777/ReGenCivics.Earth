@@ -829,7 +829,12 @@ export const emailLogs = mysqlTable("email_logs", {
   openedAt: timestamp("openedAt"),
   clickedAt: timestamp("clickedAt"),
   bounceReason: text("bounceReason"),
-});
+  // Resend message id, stamped after send so the delivery webhook can match
+  // the exact row instead of guessing by recipient.
+  resendEmailId: varchar("resendEmailId", { length: 255 }),
+}, (table) => [
+  index("email_logs_resendEmailId_idx").on(table.resendEmailId),
+]);
 
 export type EmailLog = typeof emailLogs.$inferSelect;
 export type InsertEmailLog = typeof emailLogs.$inferInsert;

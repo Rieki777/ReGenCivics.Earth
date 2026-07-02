@@ -107,12 +107,18 @@ async function findEmailLogByResendId(resendEmailId: string, recipientEmail?: st
   const db = await getDb();
   if (!db) return null;
   
-  // emailLogs doesn't store the Resend message id yet, so match by recipient.
-  // Order by MOST RECENT send (desc) — the previous ascending order matched the
-  // oldest email to the address, so a delivery/bounce event updated the wrong
-  // (first-ever) log row. Matching by resendEmailId would need a stored-id
-  // column + wiring the send path; tracked as a follow-up.
-  void resendEmailId;
+  // Prefer an exact match on the Resend message id (stamped at send time).
+  if (resendEmailId) {
+    const byId = await db
+      .select({ id: emailLogs.id })
+      .from(emailLogs)
+      .where(eq(emailLogs.resendEmailId, resendEmailId))
+      .limit(1);
+    if (byId.length > 0) return byId[0].id;
+  }
+
+  // Fallback for rows sent before the id was stored: match by recipient, most
+  // recent send (desc) — ascending matched the oldest email to the address.
   if (recipientEmail) {
     const logs = await db
       .select()

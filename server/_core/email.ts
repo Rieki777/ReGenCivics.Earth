@@ -327,7 +327,14 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
     }
     
     log.info('Sent successfully', { messageId: response.data?.id });
-    
+
+    // If the caller pre-created a log row, stamp the Resend message id on it so
+    // the delivery webhook can match the exact row later.
+    if (emailLogId && response.data?.id) {
+      const { setEmailLogResendId } = await import("../emailTracking");
+      void setEmailLogResendId(emailLogId, response.data.id);
+    }
+
     // Return tracking data for logging
     return {
       id: response.data?.id || null,

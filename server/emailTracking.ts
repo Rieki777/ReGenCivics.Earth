@@ -108,6 +108,20 @@ export async function createEmailLog(data: {
 }
 
 /**
+ * Stamp the Resend message id on a log row after a successful send, so the
+ * delivery webhook can match the exact row by id instead of by recipient.
+ */
+export async function setEmailLogResendId(emailLogId: number, resendEmailId: string): Promise<void> {
+  try {
+    const db = await getDb();
+    if (!db) return;
+    await db.update(emailLogs).set({ resendEmailId }).where(eq(emailLogs.id, emailLogId));
+  } catch (err) {
+    console.error("[emailTracking] setEmailLogResendId failed", err);
+  }
+}
+
+/**
  * Update email delivery status from Resend webhook
  * @param emailLogId - The ID of the email log entry
  * @param status - The delivery status
