@@ -94,7 +94,21 @@ export function registerZeffyWebhookRoutes(app: Express) {
       res.status(200).json({ ok: true, duplicate: true });
       return;
     }
-    await db.insert(webhookDeliveries).values({ deliveryId });
+    // Claim the delivery. Wrapped so a concurrent duplicate (deliveryId is a
+    // PRIMARY KEY) is treated as already-handled instead of throwing an
+    // unhandledRejection that would crash the process.
+    try {
+      await db.insert(webhookDeliveries).values({ deliveryId });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/duplicate/i.test(msg) || /unique/i.test(msg)) {
+        res.status(200).json({ ok: true, duplicate: true });
+        return;
+      }
+      console.error("[zeffy webhook] could not record delivery:", err);
+      res.status(500).json({ error: "delivery_record_failed" });
+      return;
+    }
 
     try {
       const existingDonation = await db
@@ -133,9 +147,13 @@ export function registerZeffyWebhookRoutes(app: Express) {
       }
     } catch (err) {
       console.error("[zeffy webhook] handler error:", err);
-      // Idempotency row is already recorded; ack anyway so Zeffy does not
-      // hammer retries on a handler bug. Logged above for manual follow-up.
-      res.status(200).json({ ok: true, handled: false });
+      // Roll back the delivery claim so Zeffy's retry reprocesses instead of
+      // hitting the dedupe and silently dropping the donation.
+      await db
+        .delete(webhookDeliveries)
+        .where(eq(webhookDeliveries.deliveryId, deliveryId))
+        .catch((delErr) => console.error("[zeffy webhook] delivery rollback failed:", delErr));
+      res.status(500).json({ ok: false, handled: false });
       return;
     }
 

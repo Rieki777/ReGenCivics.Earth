@@ -85,7 +85,13 @@ export function registerStripeWebhookRoutes(app: Express) {
       return;
     }
 
-    // 2. Idempotency: skip if we've already recorded this event id.
+    // 2. Idempotency: skip if we've already recorded this event id. The
+    // insert doubles as a lock — it must land BEFORE processing so two
+    // concurrent deliveries can't both process (deliveryId is a PRIMARY KEY).
+    // Wrap it: a concurrent delivery losing the race throws a duplicate-key
+    // error, which we treat as "already handled" rather than letting it bubble
+    // into an unhandledRejection (which the process-level handler turns into
+    // process.exit, crashing the whole server on a mere duplicate webhook).
     const existing = await db
       .select({ deliveryId: webhookDeliveries.deliveryId })
       .from(webhookDeliveries)
@@ -95,7 +101,19 @@ export function registerStripeWebhookRoutes(app: Express) {
       res.status(200).json({ ok: true, duplicate: true });
       return;
     }
-    await db.insert(webhookDeliveries).values({ deliveryId: event.id });
+    try {
+      await db.insert(webhookDeliveries).values({ deliveryId: event.id });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/duplicate/i.test(msg) || /unique/i.test(msg)) {
+        res.status(200).json({ ok: true, duplicate: true });
+        return;
+      }
+      // Real DB error claiming the delivery: 500 so Stripe retries.
+      console.error("[stripe webhook] could not record delivery:", err);
+      res.status(500).json({ error: "delivery_record_failed" });
+      return;
+    }
 
     // 3. Handle the events we care about.
     try {
@@ -165,9 +183,15 @@ export function registerStripeWebhookRoutes(app: Express) {
       }
     } catch (err) {
       console.error("[stripe webhook] handler error:", err);
-      // We already recorded idempotency; return 200 so Stripe does not hammer
-      // retries on a handler bug. The event id is logged for manual follow-up.
-      res.status(200).json({ ok: true, handled: false });
+      // Roll back the delivery claim so Stripe's retry actually reprocesses.
+      // Previously this returned 200 after recording the id, which silently
+      // dropped the donation on any transient handler failure (deadlock,
+      // deploy restart) because the retry hit the dedupe and skipped it.
+      await db
+        .delete(webhookDeliveries)
+        .where(eq(webhookDeliveries.deliveryId, event.id))
+        .catch((delErr) => console.error("[stripe webhook] delivery rollback failed:", delErr));
+      res.status(500).json({ ok: false, handled: false });
       return;
     }
 

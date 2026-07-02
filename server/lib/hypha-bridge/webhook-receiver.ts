@@ -188,7 +188,10 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
       updates.basescanUrl = `${BASESCAN_TX_BASE}${event.txHash}`;
     }
   } else if (event.type === "ProposalExecuted") {
-    updates.status = "passed";
+    // The status transition to "passed" is claimed by the guarded CAS below,
+    // not set here, so a redelivered event or the paired Transfer can't
+    // cascade twice and a cancelled/failed bridge can't be resurrected. Only
+    // enrich the record with the on-chain details here.
     updates.hyphaPassedAt = new Date();
     if (event.amount) updates.hyphaTokenAmount = Number(event.amount);
     if (event.tokenSymbol) updates.hyphaTokenSymbol = event.tokenSymbol;
@@ -205,8 +208,31 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
     await db.update(hyphaBridges).set(updates as any).where(eq(hyphaBridges.bridgeKey, bridgeKey));
   }
 
-  // Fire cascades — best-effort, non-blocking. Each cascade is gated
-  // by the relevant event type so refunds only fire on rejections, etc.
+  // Guarded transition to "passed". Both ProposalExecuted and the on-chain
+  // Transfer signal success and can arrive in either order, and webhooks get
+  // redelivered. This compare-and-swap fires the transition from a
+  // non-terminal state only, so `claimedPassed` is true for EXACTLY ONE event.
+  // That makes the passed-cascades (token credit, claim reconciliation) run
+  // once instead of on every duplicate (was double-crediting quest rewards),
+  // and refuses to flip a cancelled/failed claim to passed (the C1
+  // cancelled-then-confirmed double-mint path).
+  let claimedPassed = false;
+  if (event.type === "ProposalExecuted" || event.type === "Transfer") {
+    const casResult = await db
+      .update(hyphaBridges)
+      .set({ status: "passed", hyphaPassedAt: new Date() } as any)
+      .where(and(
+        eq(hyphaBridges.bridgeKey, bridgeKey),
+        sql`status NOT IN ('passed','cancelled','failed')`,
+      ));
+    const affected = (casResult as unknown as { affectedRows?: number }[])[0]?.affectedRows
+      ?? (casResult as unknown as { affectedRows?: number })?.affectedRows
+      ?? 0;
+    claimedPassed = affected > 0;
+  }
+
+  // Fire cascades — best-effort, non-blocking. Passed-cascades only fire on the
+  // single event that won the transition; rejection refunds fire on reject.
   const [bridgeRow] = await db
     .select()
     .from(hyphaBridges)
@@ -215,7 +241,7 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
     .catch(() => []);
   if (bridgeRow) {
     const bridgeSource = (bridgeRow as any).source;
-    if (event.type === "ProposalExecuted" || event.type === "Transfer") {
+    if (claimedPassed) {
       if (bridgeSource === "quest_completion") {
         cascadeQuestPassed(bridgeRow, event.txHash).catch((err: any) =>
           log.error("cascadeQuestPassed top-level error", err),

@@ -212,18 +212,28 @@ async function fireTierEvent(
         ? "tier_bonus_steward"
         : "tier_bonus_sage";
 
-  await creditPrivateTokens({
-    userId,
-    tokenType: "rgvoice",
-    amount,
-    source: sourceTag,
-    sourceId: eventId,
-    sourceRef: path ?? "cross_path",
-    description:
-      eventType === "sage_earned"
-        ? `Sage tier earned across all paths`
-        : `${eventType === "co_creator_earned" ? "Co-Creator" : "Steward"} tier earned on ${path} path`,
-  });
+  try {
+    await creditPrivateTokens({
+      userId,
+      tokenType: "rgvoice",
+      amount,
+      source: sourceTag,
+      sourceId: eventId,
+      sourceRef: path ?? "cross_path",
+      // Once-only per (user, tier, path): the 15-min tier cron racing the
+      // user's own completion would otherwise both pass the tier_events
+      // pre-check and double-credit the bonus. Keyed like `alreadyFired`.
+      idempotencyKey: `tier:${userId}:${eventType}:${path ?? "_"}`,
+      description:
+        eventType === "sage_earned"
+          ? `Sage tier earned across all paths`
+          : `${eventType === "co_creator_earned" ? "Co-Creator" : "Steward"} tier earned on ${path} path`,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // A concurrent run already credited this exact tier bonus; not an error.
+    if (!/duplicate/i.test(msg) && !/unique/i.test(msg)) throw err;
+  }
 }
 
 // ---------------------------------------------------------------------------
