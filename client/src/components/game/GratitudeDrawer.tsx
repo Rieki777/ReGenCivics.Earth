@@ -13,9 +13,12 @@ interface Props {
   recipientId: number;
   recipientName: string;
   onClose: () => void;
+  // When set, the gift is tagged to this completed bounty (source
+  // 'gratitude_bounty', sourceRef bounty:{id}) so the board can tally it.
+  bountyId?: number;
 }
 
-export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) {
+export function GratitudeDrawer({ recipientId, recipientName, onClose, bountyId }: Props) {
   const [amount, setAmount] = useState(1);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
@@ -92,7 +95,7 @@ export function GratitudeDrawer({ recipientId, recipientName, onClose }: Props) 
         </div>
 
         <button
-          onClick={() => sendMutation.mutate({ receiverId: recipientId, amount, message })}
+          onClick={() => sendMutation.mutate({ receiverId: recipientId, amount, message, ...(bountyId ? { bountyId } : {}) })}
           disabled={!message.trim() || sendMutation.isPending || sent || remaining < amount}
           className="w-full py-3 rounded-xl bg-[#4a7c59] text-white font-semibold text-sm hover:bg-[#6a8a6e] transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
         >

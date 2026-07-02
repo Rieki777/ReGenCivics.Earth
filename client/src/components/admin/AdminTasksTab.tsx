@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { RewardAmount } from "@/components/bounty/RewardAmount";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -158,9 +159,11 @@ function HeldPayoutCard({ role, onChanged }: { role: HeldRole; onChanged: () => 
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <p className="font-bold text-[#1a472a] text-sm">{role.bounty?.title ?? `Bounty #${role.bountyId}`}</p>
-          <p className="text-xs text-[#1a472a]/60 mt-0.5 capitalize">
-            {role.role} role · {role.amount} {role.bounty?.tokenType === "rcivics" ? "$RCivics" : "$ReGen"} held
-          </p>
+          <div className="text-xs text-[#1a472a]/60 mt-0.5 flex items-center gap-1 flex-wrap">
+            <span className="capitalize">{role.role} role ·</span>
+            <RewardAmount amount={role.amount} tokenType={role.bounty?.tokenType} breakdown={(role.bounty as any)?.valuationBreakdown ?? null} tone="light" size="sm" />
+            <span>held</span>
+          </div>
         </div>
         <span className="text-xs text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">held</span>
       </div>

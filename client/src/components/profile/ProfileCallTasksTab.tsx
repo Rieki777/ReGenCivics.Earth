@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RewardAmount } from "@/components/bounty/RewardAmount";
 import {
   CheckCircle2,
   Clock,
@@ -90,7 +91,11 @@ function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
           <p className="text-xs text-white/65 mt-0.5">
             <span className="text-white/85 font-semibold">{ROLE_LABELS[role.role] ?? role.role}</span>
             {" · "}
-            <span className="text-[#7dd87d] font-semibold">{tokenLabel(bounty?.tokenType, role.amount)}</span>
+            {role.amount > 0 ? (
+              <RewardAmount amount={role.amount} tokenType={bounty?.tokenType} breakdown={(bounty as any)?.valuationBreakdown ?? null} size="sm" />
+            ) : (
+              <span className="text-white/50">see tier</span>
+            )}
           </p>
         </div>
         <span className="text-xs text-white/50 capitalize">{role.payStatus}</span>

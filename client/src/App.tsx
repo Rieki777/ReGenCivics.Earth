@@ -101,6 +101,8 @@ const ToolDetail = lazy(() => import("./pages/ToolDetail"));
 const ToolSubmit = lazy(() => import("./pages/ToolSubmit"));
 const PlaysLibrary = lazy(() => import("./pages/PlaysLibrary"));
 const PlayDetail = lazy(() => import("./pages/PlayDetail"));
+const Bounties = lazy(() => import("./pages/Bounties"));
+const BountyDetail = lazy(() => import("./pages/BountyDetail"));
 const PlaySubmit = lazy(() => import("./pages/PlaySubmit"));
 const Calculator = lazy(() => import("./pages/Calculator"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -322,6 +324,8 @@ function Router() {
       <Route path={"/plays"}><EB><PlaysLibrary /></EB></Route>
       <Route path={"/plays/submit"}><EB><PlaySubmit /></EB></Route>
       <Route path={"/plays/:slug"}><EB><PlayDetail /></EB></Route>
+      <Route path={"/bounties"}><EB><Bounties /></EB></Route>
+      <Route path={"/bounties/:id"}><EB><BountyDetail /></EB></Route>
       <Route path={"/regen-games"}><EB><ReGenGames /></EB></Route>
       <Route path={"/custom-games"}><EB><CustomGames /></EB></Route>
       <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>

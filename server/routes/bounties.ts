@@ -34,6 +34,7 @@ import {
   users,
   recordings,
   roles as rolesCatalog,
+  roleHolders,
   playerProfiles,
 } from "../../drizzle/schema";
 import { payRole, reverseRole, getTierAmounts, meetsLargeTierFloor, getBountyPermission } from "../db/bounties";
@@ -819,6 +820,17 @@ export const bountiesRouter = router({
       };
     }),
 
+  // ── Player: the role slugs the viewer holds (for the "For your role" badge) ─
+  myRoles: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [] as string[];
+    const rows = await db
+      .select({ roleSlug: roleHolders.roleSlug })
+      .from(roleHolders)
+      .where(and(eq(roleHolders.userId, ctx.user.id), eq(roleHolders.isActive, 1)));
+    return [...new Set(rows.map((r) => r.roleSlug))];
+  }),
+
   // ── Public: recently completed bounties, with doer + gratitude tally ───────
   recentCompleted: publicProcedure
     .input(z.object({ limit: z.number().int().min(1).max(50).default(12) }))
@@ -840,7 +852,7 @@ export const bountiesRouter = router({
       const tally = await gratitudeTallyForBounties(db, bIds);
 
       const userIds = [...new Set(paidRoles.map((r) => r.userId).filter((x): x is number => x != null))];
-      const doerMap = new Map<number, { name: string | null; handle: string | null; avatarUrl: string | null; displayName: string | null }>();
+      const doerMap = new Map<number, { userId: number; name: string | null; handle: string | null; avatarUrl: string | null; displayName: string | null }>();
       if (userIds.length) {
         const people = await db
           .select({
@@ -853,7 +865,7 @@ export const bountiesRouter = router({
           .from(users)
           .leftJoin(playerProfiles, eq(playerProfiles.userId, users.id))
           .where(inArray(users.id, userIds));
-        for (const p of people) doerMap.set(p.id, { name: p.name, handle: p.handle, avatarUrl: p.avatarUrl ?? null, displayName: p.displayName ?? null });
+        for (const p of people) doerMap.set(p.id, { userId: p.id, name: p.name, handle: p.handle, avatarUrl: p.avatarUrl ?? null, displayName: p.displayName ?? null });
       }
 
       return paidRoles.map((r) => {
