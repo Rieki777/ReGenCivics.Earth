@@ -143,9 +143,15 @@ async function startServer() {
       const level = res.statusCode >= 500 ? "err" : res.statusCode >= 400 ? "wrn" : "inf";
       // Skip noisy health checks and static assets from logs
       if (req.path !== "/health" && !req.path.startsWith("/assets/")) {
+        // Redact webhook paths: some carry the shared secret as a URL
+        // segment (e.g. /api/webhooks/zeffy/:token), which would otherwise
+        // land in Railway logs and leak the secret to anyone with log access.
+        const loggedPath = req.path.startsWith("/api/webhooks/")
+          ? req.path.replace(/^(\/api\/webhooks\/[^/]+).*/, "$1/[redacted]")
+          : req.path;
         // Request log line. Skip the structured logger here so the
         // request log keeps its single-line, easy-to-grep shape.
-        console.log(`[${level}] ${(req as any).id ?? '-'} ${req.method} ${req.path} ${res.statusCode} ${ms}ms`);
+        console.log(`[${level}] ${(req as any).id ?? '-'} ${req.method} ${loggedPath} ${res.statusCode} ${ms}ms`);
       }
     });
     next();
@@ -219,6 +225,10 @@ async function startServer() {
   app.use('/api/trpc/governance.revokeDelegation', rateLimitMiddleware(60 * 60 * 1000, 10));
   app.use('/api/trpc/governance.promoteFromBackField', rateLimitMiddleware(60 * 60 * 1000, 5));
   app.use('/api/trpc/players.setStoryteller', rateLimitMiddleware(60 * 60 * 1000, 10));
+  // Token claim touches the private ledger and the Hypha bridge, so throttle
+  // hard to blunt race/replay attempts. (seedsClaims.submit is rate-limited
+  // at the tRPC layer in server/routes/seedsClaims.ts.)
+  app.use('/api/trpc/players.requestClaim', rateLimitMiddleware(60 * 1000, 5));
   app.use('/api/trpc/hyphaBridge.create', rateLimitMiddleware(60 * 60 * 1000, 5));
   app.use('/api/trpc/proposals.signalVote', rateLimitMiddleware(60 * 1000, 20));
   // Referrals: throttle the public landing endpoint and the
@@ -429,7 +439,7 @@ async function startServer() {
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
       ...staticUrls.map(u => urlTag(u.loc, u.changefreq, u.priority)),
       ...blogSlugs.map(slug => urlTag(`/blog/${slug}`, 'monthly', '0.6')),
-      ...campaignIds.map(id => urlTag(`/crowd-pooling-projects/${id}`, 'weekly', '0.7')),
+      ...campaignIds.map(id => urlTag(`/campaign/${id}`, 'weekly', '0.7')),
       // Community posts excluded from sitemap to save crawl budget (thin user-generated content)
       '</urlset>',
     ];
@@ -671,7 +681,12 @@ async function startServer() {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
     const auth = req.headers.authorization;
-    if (!auth || auth !== `Bearer ${secret}`) {
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     try {
@@ -780,7 +795,12 @@ async function startServer() {
       return res.status(500).json({ error: "CRON_SECRET not configured" });
     }
     const auth = req.headers.authorization;
-    if (!auth || auth !== `Bearer ${secret}`) {
+    const expected = `Bearer ${secret}`;
+    const ok =
+      typeof auth === "string" &&
+      auth.length === expected.length &&
+      crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(expected));
+    if (!ok) {
       return res.status(401).json({ error: "Unauthorized" });
     }
     try {

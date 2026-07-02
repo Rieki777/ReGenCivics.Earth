@@ -546,11 +546,17 @@ async function cancelStaleClaimBridges(
           source: "claim_released",
           sourceId: bridge.id,
           sourceRef: `bridge:${bridge.bridgeKey}`,
+          // Once-only across cancelClaim / this cleanup / failure webhook.
+          idempotencyKey: `claim_released:${bridge.bridgeKey}`,
           description: `Claim of ${requestedAmount} ${tokenType} timed out after ${staleAfterHours}h, refunded`,
         });
         refunded++;
       } catch (err: any) {
-        console.error(`[stale-claim-cleanup] refund failed for bridge ${bridge.bridgeKey}:`, err);
+        const msg = err instanceof Error ? err.message : String(err);
+        // A concurrent writer already refunded this bridge; not an error.
+        if (!/duplicate/i.test(msg) && !/unique/i.test(msg)) {
+          console.error(`[stale-claim-cleanup] refund failed for bridge ${bridge.bridgeKey}:`, err);
+        }
       }
     }
 

@@ -147,7 +147,6 @@
     "@types/react-dom": "^19.2.1",
     "@types/sanitize-html": "^2.16.1",
     "@vitejs/plugin-react": "^5.0.4",
-    "add": "^2.0.6",
     "autoprefixer": "^10.5.0",
     "cross-env": "^10.1.0",
     "csv-parse": "^6.2.1",
@@ -178,7 +177,9 @@
   "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af",
   "pnpm": {
     "overrides": {
-      "tailwindcss>nanoid": "3.3.7"
+      "tailwindcss>nanoid": "3.3.7",
+      "express>path-to-regexp": "0.1.13",
+      "ws": ">=8.21.0"
     },
     "onlyBuiltDependencies": [
       "@reown/appkit",

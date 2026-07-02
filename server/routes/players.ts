@@ -540,6 +540,33 @@ export const playerProfilesRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Link a Base wallet on your profile before claiming." });
       }
 
+      // Guard against concurrent / duplicate claims. Two requestClaim calls
+      // fired in parallel would each read the same private balance, each open
+      // a Hypha bridge for the full amount, and each debit it, driving the
+      // private ledger negative and creating multiple full-value pending
+      // claims. Reject if the user already has an open redeem bridge. States
+      // created/handoff_sent/on_chain_detected are "in flight"; passed/failed/
+      // cancelled are settled and don't block a new claim.
+      {
+        const { hyphaBridges } = await import("../../drizzle/schema");
+        const { inArray } = await import("drizzle-orm");
+        const openBridges = await drizzleDb
+          .select({ id: hyphaBridges.id })
+          .from(hyphaBridges)
+          .where(and(
+            eq(hyphaBridges.initiatorUserId, ctx.user.id),
+            eq(hyphaBridges.source, "redeem_tokens"),
+            inArray(hyphaBridges.status, ["created", "handoff_sent", "on_chain_detected"]),
+          ))
+          .limit(1);
+        if (openBridges.length > 0) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "You already have a claim in progress. Finish or cancel it on Hypha before starting another.",
+          });
+        }
+      }
+
       // Resolve the requested token list. pair shorthand expands here.
       const requestedTokenTypes: ("rgvoice" | "regen" | "rcvoice" | "rcivics")[] = input.tokens ?? (
         input.pair === "game"
@@ -719,15 +746,25 @@ export const playerProfilesRouter = router({
         const tokenType = payload?.metadata?.tokenType as ("rgvoice" | "regen" | "rcvoice" | "rcivics" | undefined);
         const requestedAmount = Number(payload?.metadata?.requestedAmount ?? 0);
         if (tokenType && requestedAmount > 0) {
-          await db.creditPrivateTokens({
-            userId: ctx.user.id,
-            tokenType,
-            amount: requestedAmount,
-            source: "claim_released",
-            sourceId: (bridge as any).id,
-            sourceRef: `bridge:${input.bridgeKey}`,
-            description: `Cancelled claim of ${requestedAmount} ${tokenType}, balance refunded`,
-          });
+          try {
+            // idempotencyKey makes the refund once-only at the DB layer even
+            // if cancelClaim races the nightly stale-cleanup or a failure
+            // webhook (all three write claim_released for the same bridge).
+            await db.creditPrivateTokens({
+              userId: ctx.user.id,
+              tokenType,
+              amount: requestedAmount,
+              source: "claim_released",
+              sourceId: (bridge as any).id,
+              sourceRef: `bridge:${input.bridgeKey}`,
+              idempotencyKey: `claim_released:${input.bridgeKey}`,
+              description: `Cancelled claim of ${requestedAmount} ${tokenType}, balance refunded`,
+            });
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (!/duplicate/i.test(msg) && !/unique/i.test(msg)) throw err;
+            // Another writer already refunded this bridge; treat as done.
+          }
         }
       }
 

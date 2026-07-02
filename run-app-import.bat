@@ -1,6 +1,0 @@
-@echo off
-REM Set your DATABASE_URL before running
-set DATABASE_URL=mysql://root:YOUR_PASSWORD@YOUR_HOST:YOUR_PORT/railway
-echo Starting applications import at %TIME% >> app-import-log.txt
-npx tsx scripts/import-applications.ts >> app-import-log.txt 2>&1
-echo Finished at %TIME% with exit code %ERRORLEVEL% >> app-import-log.txt

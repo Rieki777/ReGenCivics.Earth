@@ -405,8 +405,16 @@ async function cascadeClaimFailed(bridgeRow: any): Promise<void> {
     source: "claim_released",
     sourceId: bridgeRow.id,
     sourceRef: `bridge:${bridgeRow.bridgeKey}`,
+    // Once-only across cancelClaim / nightly cleanup / this failure webhook.
+    idempotencyKey: `claim_released:${bridgeRow.bridgeKey}`,
     description: `Hypha rejected the claim, ${requestedAmount} ${tokenType} refunded to your private balance`,
-  }).catch((err: any) => log.error("cascadeClaimFailed: refund failed", err));
+  }).catch((err: any) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    // A concurrent writer already refunded this bridge; not an error.
+    if (!/duplicate/i.test(msg) && !/unique/i.test(msg)) {
+      log.error("cascadeClaimFailed: refund failed", err);
+    }
+  });
 
   await createUserNotification({
     userId: bridgeRow.initiatorUserId,

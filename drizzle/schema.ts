@@ -1,4 +1,4 @@
-import { bigint, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique } from "drizzle-orm/mysql-core";
+import { bigint, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -644,6 +644,10 @@ export const userTokenLedger = mysqlTable("user_token_ledger", {
   index("user_token_ledger_source_idx").on(table.source),
   index("user_token_ledger_tenantId_idx").on(table.tenantId),
   index("user_token_ledger_claimedAt_idx").on(table.claimedAt),
+  // UNIQUE: makes duplicate credits (bounty payouts, claim refunds) physically
+  // impossible even if application logic races. Added in migration 0145; also
+  // declared here so a fresh env built from schema.ts keeps the guard.
+  uniqueIndex("user_token_ledger_idempotencyKey_idx").on(table.idempotencyKey),
 ]));
 
 export type UserTokenLedgerEntry = typeof userTokenLedger.$inferSelect;
@@ -2867,7 +2871,7 @@ export const seedsClaims = mysqlTable("seeds_claims", {
   originalUsdTotal: double("originalUsdTotal").notNull(), // Total USD from our records
   spentUsdAmount: double("spentUsdAmount").default(0).notNull(), // USD they say they spent/sold
   claimedUsdAmount: double("claimedUsdAmount").notNull(), // Final USD claim (original - spent, or custom)
-  regenAmount: double("regenAmount").notNull(), // $ReGen = claimedUsdAmount * 100
+  regenAmount: double("regenAmount").notNull(), // $ReGen = claimedUsdAmount * SEEDS_REGEN_PER_USD (server-derived)
   baseWalletAddress: varchar("baseWalletAddress", { length: 42 }).notNull(), // 0x + 40 hex chars
   isDispute: boolean("isDispute").default(false).notNull(), // True if claiming different amount
   disputeReason: text("disputeReason"), // Why their claim differs (dispute only)

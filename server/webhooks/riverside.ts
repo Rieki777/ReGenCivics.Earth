@@ -106,17 +106,20 @@ export function registerRiversideWebhookRoutes(app: Express) {
       const signature = req.headers["x-riverside-signature"] as string | undefined;
       const secret = process.env.RIVERSIDE_WEBHOOK_SECRET;
 
-      // Secret-optional secondary ingest path: verify when a secret is
-      // configured, otherwise accept. RIVERSIDE_WEBHOOK_SECRET is intentionally
-      // absent; this endpoint is superseded by the YouTube poll (primary) and a
-      // future PIPELINE_INBOX_SECRET-guarded inbox.
+      // This endpoint can create a forum post and email every active
+      // newsletter subscriber (finalizeRecording), so an unauthenticated
+      // caller could trigger a mass mail blast. Require the shared secret in
+      // production; only allow the unsigned path in non-prod for local testing.
       if (secret) {
         if (!verifySignature(rawBody, signature, secret)) {
           log.warn("Invalid signature, rejected");
           return res.status(401).json({ error: "Invalid signature" });
         }
+      } else if (process.env.NODE_ENV === "production") {
+        log.error("RIVERSIDE_WEBHOOK_SECRET not set in production, rejecting");
+        return res.status(503).json({ error: "Webhook not configured" });
       } else {
-        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check");
+        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check (non-prod)");
       }
 
       let payload: RiversideWebhookPayload;

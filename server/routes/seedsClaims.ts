@@ -1,10 +1,19 @@
 // server/routes/seedsClaims.ts
-import { publicProcedure, adminProcedure, router } from "../_core/trpc";
+import { publicProcedure, adminProcedure, rateLimited, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, and, like, or, desc, sql, count } from "drizzle-orm";
 import { seedsClaims, seedsContributions } from "../../drizzle/schema";
+
+// $ReGen credited per $1 USD of SEEDS contribution. The claim amount is
+// ALWAYS derived from this server-side constant times the authoritative USD
+// total; it is never taken from client input (that was an unauthenticated
+// minting hole). NOTE: SEEDS_CLAIM_SPEC.md and the claim page copy say 100,
+// but the shipped credit path has always used 1:1 — the effective live rate.
+// Changing this multiplies every future credit, so it is a deliberate
+// economics decision for Rye, tracked separately, not a silent code change.
+const SEEDS_REGEN_PER_USD = 1;
 
 // Validation schemas
 const seedsAccountSchema = z
@@ -69,24 +78,37 @@ export const seedsClaimsRouter = router({
     }),
 
   /**
-   * PUBLIC: Submit or update a SEEDS claim
+   * PUBLIC: Submit or update a SEEDS claim.
+   *
+   * Security model: guests may RECORD a claim (stored for the post-window
+   * batch mint Rye runs after on-chain verification), but the private-ledger
+   * auto-credit only fires for an AUTHENTICATED user and credits that user,
+   * never an email lookup. Every monetary figure is recomputed server-side
+   * from the authoritative `seeds_contributions` table; client-supplied USD
+   * and $ReGen amounts are treated as untrusted and ignored. The claim is
+   * bound to the first authenticated submitter (`userId`) so it cannot be
+   * resubmitted by another account and credited twice.
    */
   submit: publicProcedure
+    .use(rateLimited({ windowMs: 60 * 1000, max: 5 }))
     .input(
       z.object({
         seedsAccount: seedsAccountSchema,
         email: emailSchema,
+        // The USD/regen numbers below are advisory only. The server derives
+        // the real values from seeds_contributions and ignores these for any
+        // money movement; spentUsdAmount is the one genuine user input.
         originalUsdTotal: z.number().positive("Original USD must be positive"),
         spentUsdAmount: z.number().min(0, "Spent amount cannot be negative"),
         claimedUsdAmount: z.number().positive("Claimed USD must be positive"),
         regenAmount: z.number().positive("Regen amount must be positive"),
         baseWalletAddress: ethereumAddressSchema,
         isDispute: z.boolean().default(false),
-        disputeReason: z.string().optional(),
-        evidenceUrls: z.string().optional(), // JSON array string
+        disputeReason: z.string().max(5000).optional(),
+        evidenceUrls: z.string().max(5000).optional(), // JSON array string
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) {
         throw new TRPCError({
@@ -95,22 +117,31 @@ export const seedsClaimsRouter = router({
         });
       }
 
-      // Validate: spentUsdAmount cannot exceed originalUsdTotal
-      if (input.spentUsdAmount > input.originalUsdTotal) {
+      // AUTHORITATIVE USD: recompute from our contribution records. Never
+      // trust the client's originalUsdTotal. An account with no recorded
+      // contributions cannot claim anything.
+      const contributions = await db
+        .select()
+        .from(seedsContributions)
+        .where(eq(seedsContributions.recipientAccount, input.seedsAccount));
+      if (contributions.length === 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Spent amount cannot exceed original USD total",
+          message: "No SEEDS contributions are on record for that account.",
         });
       }
+      const serverTotalUsd = contributions.reduce((sum, c) => sum + c.usdValue, 0);
 
-      // Validate: claimedUsdAmount must be reasonable (original - spent, or custom)
-      const maxClaimable = input.originalUsdTotal - input.spentUsdAmount;
-      if (input.claimedUsdAmount > input.originalUsdTotal) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Claimed amount cannot exceed original total",
-        });
-      }
+      // spentUsdAmount is the one honest user input (what they sold/spent).
+      // Clamp it into [0, serverTotalUsd]; claimed is derived, not trusted.
+      const spentUsdAmount = Math.min(Math.max(input.spentUsdAmount, 0), serverTotalUsd);
+      const maxClaimable = serverTotalUsd - spentUsdAmount;
+      // Claimed amount is clamped to what they're actually entitled to.
+      const claimedUsdAmount = Math.min(Math.max(input.claimedUsdAmount, 0), maxClaimable);
+      // $ReGen is DERIVED, never taken from input.
+      const regenAmount = claimedUsdAmount * SEEDS_REGEN_PER_USD;
+
+      const currentUserId: number | null = ctx.user?.id ?? null;
 
       // Check for existing claim
       const existing = await db
@@ -121,15 +152,13 @@ export const seedsClaimsRouter = router({
 
       const now = new Date();
 
-      // Auto-approve: when the user accepts the shown amount (claim
-      // equals original minus what they've already spent) AND isn't
-      // disputing, the claim is auto-approved and the matching $ReGen
-      // lands on their private ledger immediately. Disputed or partial
-      // claims stay pending for admin review.
-      // (`maxClaimable` was already computed above for the validation
-      // step at line 107; reuse it instead of redeclaring.)
-      const acceptsShownAmount = !input.isDispute && input.claimedUsdAmount === maxClaimable;
-      const autoStatus: "approved" | "pending" = acceptsShownAmount ? "approved" : "pending";
+      // Auto-approve only when: the user accepts the full entitled amount,
+      // isn't disputing, there's something to claim, AND they're signed in
+      // (so we know who to credit). Guests get a stored pending claim.
+      const acceptsShownAmount =
+        !input.isDispute && claimedUsdAmount === maxClaimable && maxClaimable > 0;
+      const canAutoCredit = acceptsShownAmount && currentUserId != null;
+      const autoStatus: "approved" | "pending" = canAutoCredit ? "approved" : "pending";
 
       let claimId: number;
       let wasUpdate = false;
@@ -140,18 +169,17 @@ export const seedsClaimsRouter = router({
           .update(seedsClaims)
           .set({
             email: input.email,
-            originalUsdTotal: input.originalUsdTotal,
-            spentUsdAmount: input.spentUsdAmount,
-            claimedUsdAmount: input.claimedUsdAmount,
-            regenAmount: input.regenAmount,
+            originalUsdTotal: serverTotalUsd,
+            spentUsdAmount,
+            claimedUsdAmount,
+            regenAmount,
             baseWalletAddress: input.baseWalletAddress,
             isDispute: input.isDispute,
             disputeReason: input.disputeReason || null,
             evidenceUrls: input.evidenceUrls || null,
             updatedAt: now,
             status: autoStatus,
-            reviewedAt: acceptsShownAmount ? now : null,
-            reviewedBy: acceptsShownAmount ? null : null, // auto, not a reviewer
+            reviewedAt: canAutoCredit ? now : null,
           })
           .where(eq(seedsClaims.seedsAccount, input.seedsAccount));
 
@@ -162,16 +190,16 @@ export const seedsClaimsRouter = router({
         const result = await db.insert(seedsClaims).values({
           seedsAccount: input.seedsAccount,
           email: input.email,
-          originalUsdTotal: input.originalUsdTotal,
-          spentUsdAmount: input.spentUsdAmount,
-          claimedUsdAmount: input.claimedUsdAmount,
-          regenAmount: input.regenAmount,
+          originalUsdTotal: serverTotalUsd,
+          spentUsdAmount,
+          claimedUsdAmount,
+          regenAmount,
           baseWalletAddress: input.baseWalletAddress,
           isDispute: input.isDispute,
           disputeReason: input.disputeReason || null,
           evidenceUrls: input.evidenceUrls || null,
           status: autoStatus,
-          reviewedAt: acceptsShownAmount ? now : null,
+          reviewedAt: canAutoCredit ? now : null,
           createdAt: now,
           updatedAt: now,
         });
@@ -186,42 +214,56 @@ export const seedsClaimsRouter = router({
         claimId = insertId;
       }
 
-      // If auto-approved and the email maps to a known user, credit
-      // their private $ReGen ledger with the claim amount. On a resubmit
-      // we only credit the *delta* versus what's already been credited
-      // for this claim, so users can't double-dip by resubmitting.
+      // Auto-credit the AUTHENTICATED user's private $ReGen ledger.
       let autoCredited = false;
       let privateBalanceAfter: number | null = null;
-      if (acceptsShownAmount) {
+      if (canAutoCredit && currentUserId != null) {
         try {
-          const { creditPrivateTokens } = await import("../db");
-          const { getUserByEmail, getUserTokenLedger } = await import("../db");
-          const user = await getUserByEmail(input.email.toLowerCase().trim());
-          if (user?.id) {
-            // How much we already credited for this exact claim (sums to a
-            // non-negative integer). regenAmount in schema is a float of
-            // ReGen tokens; the private ledger stores integer tokens so we
-            // round to nearest int.
-            const existingEntries = await getUserTokenLedger(user.id, 200);
-            const alreadyCredited = existingEntries
-              .filter((e: any) => e.source === "seeds_claim" && e.sourceId === claimId)
-              .reduce((sum: number, e: any) => sum + (e.amount ?? 0), 0);
-            const wantedCredit = Math.round(input.regenAmount);
-            const delta = wantedCredit - alreadyCredited;
-            if (delta !== 0) {
-              privateBalanceAfter = await creditPrivateTokens({
-                userId: user.id,
-                tokenType: "regen",
-                amount: delta,
-                source: "seeds_claim",
-                sourceId: claimId,
-                description: `SEEDS claim auto-approved (${input.seedsAccount})`,
-              });
-              autoCredited = true;
-            }
+          const { creditPrivateTokens, getUserTokenLedger } = await import("../db");
+          const { getDb: getRawDb } = await import("../db");
+
+          // Ownership check WITHOUT a schema column: has this claim already
+          // been credited to a DIFFERENT user? If so, refuse. This blocks
+          // account-B from resubmitting account-A's SEEDS claim and being
+          // credited a second time for the same claim.
+          const rawDb = await getRawDb();
+          const priorCredits = rawDb
+            ? await rawDb.execute(sql`
+                SELECT DISTINCT userId FROM user_token_ledger
+                WHERE source = 'seeds_claim' AND sourceId = ${claimId}
+              `).then((r: any) => (r?.[0] ?? []) as Array<{ userId: number }>)
+            : [];
+          const creditedToOther = priorCredits.some((row) => row.userId !== currentUserId);
+          if (creditedToOther) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message:
+                "This SEEDS claim has already been credited to another member. Contact support if this is an error.",
+            });
+          }
+
+          // How much we already credited to THIS user for this exact claim,
+          // so a resubmit only tops up the delta (no double-dip).
+          const existingEntries = await getUserTokenLedger(currentUserId, 200);
+          const alreadyCredited = existingEntries
+            .filter((e: any) => e.source === "seeds_claim" && e.sourceId === claimId)
+            .reduce((sum: number, e: any) => sum + (e.amount ?? 0), 0);
+          const wantedCredit = Math.round(regenAmount);
+          const delta = wantedCredit - alreadyCredited;
+          if (delta !== 0) {
+            privateBalanceAfter = await creditPrivateTokens({
+              userId: currentUserId,
+              tokenType: "regen",
+              amount: delta,
+              source: "seeds_claim",
+              sourceId: claimId,
+              description: `SEEDS claim auto-approved (${input.seedsAccount})`,
+            });
+            autoCredited = true;
           }
         } catch (err) {
-          console.error("[seedsClaims.submit] auto-credit failed for", input.email, err);
+          if (err instanceof TRPCError) throw err;
+          console.error("[seedsClaims.submit] auto-credit failed for user", currentUserId, err);
           // Don't fail the whole submit if the credit failed; admin can
           // retry. The claim row is still written.
         }
@@ -229,9 +271,9 @@ export const seedsClaimsRouter = router({
 
       return {
         claimId,
-        regenAmount: input.regenAmount,
+        regenAmount,
         isUpdate: wasUpdate,
-        autoApproved: acceptsShownAmount,
+        autoApproved: canAutoCredit,
         autoCredited,
         privateBalanceAfter,
       };

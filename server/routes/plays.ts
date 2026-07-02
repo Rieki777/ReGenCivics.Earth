@@ -218,10 +218,18 @@ export const playsRouter = router({
       if (play.pricingModel === 'open_source' && play.creatorUserId) {
         try {
           const { creditPrivateTokens } = await import("../db/tokens");
+          // Read the reward from the game variable so the mechanics page and
+          // the engine share one source of truth. Falls back to 500 (the
+          // seeded value) if the variable is missing.
+          const { getGameVariable } = await import("../game");
+          let adoptionReward = 500;
+          try {
+            adoptionReward = await getGameVariable("plays.adoption_reward");
+          } catch { /* variable missing; keep seeded fallback */ }
           await creditPrivateTokens({
             userId: play.creatorUserId,
             tokenType: 'regen',
-            amount: 500,
+            amount: adoptionReward,
             source: 'play_adoption',
             sourceRef: `play:${play.id}`,
             description: `Play "${play.name}" adopted`,

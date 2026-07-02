@@ -4,6 +4,11 @@ buildCommand = "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm
 
 [deploy]
 startCommand = "node dist/index.js"
+# Gate promotion on the app actually serving. Without this Railway marks a
+# deploy healthy as soon as the process starts, so a boot that binds but
+# can't serve (bad env, DB unreachable) would still go live.
+healthcheckPath = "/health"
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 # Migrations are applied manually via scripts/run-migration.ts (the custom

@@ -8,9 +8,25 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { sql, desc, eq } from "drizzle-orm";
-import { getGameVariable, invalidateGameVariable, getCurrentSeason, recordScoreEvent, logActivityEvent, getTierFromPercentile } from "../game";
+import { getGameVariable, getGameVariables, invalidateGameVariable, getCurrentSeason, recordScoreEvent, logActivityEvent, getTierFromPercentile } from "../game";
+import {
+  MECHANICS_VARIABLE_KEYS,
+  buildGameMechanicsSnapshot,
+  type GameMechanicsSnapshot,
+} from "@shared/gameMechanics";
 
 export const gameRouter = router({
+  /**
+   * PUBLIC: the single typed snapshot the game-mechanics pages render. Every
+   * number comes from the live game_variables table (with seeded fallbacks)
+   * plus a few structural constants, so the pages can never drift from the
+   * engine. Cached 5 min per key via getGameVariables; an admin edit through
+   * game.updateVariable busts that cache, so this is fresh within ~5 min.
+   */
+  getMechanics: publicProcedure.query(async (): Promise<GameMechanicsSnapshot> => {
+    const vars = await getGameVariables(MECHANICS_VARIABLE_KEYS);
+    return buildGameMechanicsSnapshot(vars, Date.now());
+  }),
   // ─── Season snapshots (public, for the Game Mechanics simulator ghost curve) ─
 
   /**
@@ -65,9 +81,22 @@ export const gameRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Database unavailable" });
-      // Get current value for history
-      const [current] = await db.execute(sql`SELECT value, \`key\` FROM game_variables WHERE id = ${input.id}`).then((r: any) => r[0] ?? []);
+      // Get current value + safety bounds for history and validation
+      const [current] = await db.execute(sql`SELECT value, \`key\`, minValue, maxValue FROM game_variables WHERE id = ${input.id}`).then((r: any) => r[0] ?? []);
       if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Game variable not found" });
+
+      // Enforce the seeded min/max bounds. These are the safety rails the
+      // valuation/scoring engines rely on; without this check an admin typo
+      // (e.g. impact weight 100 instead of 1.0) silently pegs every payout to
+      // the cap. Null bounds mean "unbounded" for that side.
+      const minV = current.minValue == null ? null : Number(current.minValue);
+      const maxV = current.maxValue == null ? null : Number(current.maxValue);
+      if ((minV != null && input.value < minV) || (maxV != null && input.value > maxV)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Value ${input.value} is outside the allowed range for ${current.key} (${minV ?? "-∞"} to ${maxV ?? "∞"}).`,
+        });
+      }
 
       // Write history
       await db.execute(sql`INSERT INTO game_variable_history (variableId, previousValue, newValue, changedBy, reason) VALUES (${input.id}, ${current.value}, ${input.value}, ${ctx.user.id}, ${input.reason})`);

@@ -128,13 +128,18 @@ export async function payRole(
   // ── Guard 2: Season budget ────────────────────────────────────────────────
   const budget = await getSeasonBudget();
   if (budget !== null) {
-    const [sumRow] = await db.execute<{ total: number }[]>(sql`
+    // db.execute returns mysql2's [rows, fields] tuple, so the rows are at
+    // [0] and the single aggregate row at [0][0]. The previous
+    // `const [sumRow]` unwrap bound sumRow to the rows ARRAY, whose `.total`
+    // is always undefined, so `spent` was always 0 and this budget cap never
+    // fired unless one role alone exceeded the whole budget.
+    const budgetRes = await db.execute(sql`
       SELECT COALESCE(SUM(br.amount), 0) AS total
       FROM bounty_roles br
       JOIN bounties b ON b.id = br.bountyId
       WHERE br.payStatus IN ('paid') AND b.tokenType = ${bounty.tokenType}
     `);
-    const spent = (sumRow as unknown as { total: number })?.total ?? 0;
+    const spent = Number((budgetRes as any)?.[0]?.[0]?.total ?? 0);
     if (spent + role.amount > budget) {
       await db.update(bountyRoles).set({ payStatus: "held" }).where(eq(bountyRoles.id, roleId));
       await writeEvent(db, bounty.id, "held", {

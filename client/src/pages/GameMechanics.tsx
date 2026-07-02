@@ -17,6 +17,7 @@ import { computeImpactSummaries } from "@/config/impactRules";
 import { Sparkline } from "@/components/simulator/Sparkline";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useGameMechanics } from "@/hooks/useGameMechanics";
 import { SEO } from "@/components/SEO";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
@@ -192,7 +193,7 @@ const VARIABLE_HELP: Record<string, string> = {
   "quests.tier_steward_min": "Contribution percentile required to access Steward-tier quests.",
   "quests.tier_elder_min": "Contribution percentile required to access Elder-tier quests.",
   "quests.tier_guardian_min": "Contribution percentile required to access Guardian-tier quests.",
-  "quests.require_rites_complete": "Whether all 13 Rites of Passage must be complete before tier quests become available.",
+  "quests.require_rites_complete": "Whether all Rites of Passage must be complete before tier quests become available.",
 
   "governance.council_seats": "Seats on the seasonal council each season.",
   "governance.council_min_score": "Minimum contribution percentile needed to qualify for the council.",
@@ -359,7 +360,9 @@ const SIM_DEFAULTS: SimState = {
   gratitudeRecipients: 10,
   streakCycles: 0,
   regenDistributionPool: 10000,
-  claimThreshold: 333,
+  // Matches the live governance.claim_threshold_regen game variable. The
+  // simulator sliders let visitors model other values from here.
+  claimThreshold: 1000,
 };
 
 /* ─── Section A: Live Variables Dashboard ──────────────────────────────
@@ -1658,6 +1661,12 @@ function BountyValuationSection() {
 /* ─── Main Page ──────────────────────────────────────────────────────── */
 
 export default function GameMechanics() {
+  // Live figures from the engine (game_variables). Rendered into the tier and
+  // gratitude copy below so these pages never drift from the real values.
+  const { mechanics: m } = useGameMechanics();
+  const tiers = m?.citizenship.tiers;
+  const fmtX = (n: number | undefined, fallback: string) =>
+    n == null ? fallback : `${n}x`;
   return (
     <PageTransition>
       <div className="min-h-screen bg-gradient-to-br from-[#0d2818] via-[#1a472a] to-[#0d2818]">
@@ -1733,11 +1742,13 @@ export default function GameMechanics() {
                   requirements: [
                     "Complete onboarding quests",
                     "Invite at least 1 person",
-                    "Active for 1+ season",
+                    `Active for ${tiers?.coCreator.minSeasons ?? 2}+ season${(tiers?.coCreator.minSeasons ?? 2) === 1 ? "" : "s"}`,
+                    `Reputation above ${tiers?.coCreator.minPercentile ?? 15}th percentile`,
                   ],
                   powers: [
                     "Harvest share based on contribution score",
-                    "Full gratitude budget (100/cycle, 2.0x multiplier)",
+                    `Full gratitude budget (${fmtX(tiers?.coCreator.gratitudeMultiplier, "1.2x")} multiplier)`,
+                    `Harvest multiplier ${fmtX(tiers?.coCreator.harvestMultiplier, "1.5x")}`,
                     "Endorsement power for land projects",
                     "Marketplace access on LocalScale.org",
                   ],
@@ -1748,14 +1759,15 @@ export default function GameMechanics() {
                   emoji: "🌳",
                   description: "Earned through deeper contribution and longer participation. Stewards carry governance weight. You can propose, vote, and shape the rules.",
                   requirements: [
-                    "Sustained contribution across 3+ seasons",
-                    "Reputation score above 50th percentile",
+                    `Sustained contribution across ${tiers?.steward.minSeasons ?? 3}+ seasons`,
+                    `Reputation score above ${tiers?.steward.minPercentile ?? 50}th percentile`,
                     "Vouching from existing Stewards",
                   ],
                   powers: [
                     "Trust Tokens for governance voting",
                     "Proposal creation rights",
-                    "Enhanced gratitude budget (3.0x multiplier)",
+                    `Enhanced gratitude budget (${fmtX(tiers?.steward.gratitudeMultiplier, "1.5x")} multiplier)`,
+                    `Harvest multiplier ${fmtX(tiers?.steward.harvestMultiplier, "2.0x")}`,
                     "Land project evaluation access",
                     "Governance on Hypha (app.hypha.earth)",
                   ],
@@ -1766,8 +1778,8 @@ export default function GameMechanics() {
                   emoji: "🏔️",
                   description: "The long-game players. Sages have demonstrated deep, consistent contribution across many seasons. Their voice carries the most weight in governance.",
                   requirements: [
-                    "Sustained contribution across 6+ seasons",
-                    "Reputation score above 80th percentile",
+                    `Sustained contribution across ${tiers?.sage.minSeasons ?? 6}+ seasons`,
+                    `Reputation score above ${tiers?.sage.minPercentile ?? 90}th percentile`,
                     "Track record of successful proposals",
                     "Community recognition through gratitude",
                   ],
@@ -1776,7 +1788,7 @@ export default function GameMechanics() {
                     "Seasonal council participation",
                     "Endorse or flag proposals",
                     "Mentor matching for newer players",
-                    "Enhanced Harvest multiplier (5.0x gratitude)",
+                    `Harvest multiplier ${fmtX(tiers?.sage.harvestMultiplier, "3.0x")} (${fmtX(tiers?.sage.gratitudeMultiplier, "2.0x")} gratitude)`,
                   ],
                   accent: "#e0b0ff",
                 },
@@ -2068,26 +2080,26 @@ export default function GameMechanics() {
                   <GratVarRow
                     label="Explorer"
                     value="1.0x"
-                    detail="100 effective budget"
-                    help="Explorers get the base budget with no multiplier. You can still send gratitude, you just don't carry extra weight yet."
+                    detail="Base weight"
+                    help="Explorers carry the base gratitude weight with no multiplier. You can still send gratitude, you just don't carry extra weight yet."
                   />
                   <GratVarRow
                     label="Co-Creator"
-                    value="2.0x"
-                    detail="200 effective budget"
-                    help="Co-Creators double the base budget. Earned by completing onboarding quests, inviting at least one person, and staying active for a season."
+                    value={fmtX(tiers?.coCreator.gratitudeMultiplier, "1.2x")}
+                    detail="Weighted gratitude"
+                    help="Co-Creators carry more gratitude weight. Earned by completing onboarding quests, inviting at least one person, and staying active for a season."
                   />
                   <GratVarRow
                     label="Steward"
-                    value="3.0x"
-                    detail="300 effective budget"
-                    help="Stewards triple the base budget. Earned by sustained contribution across 3+ seasons and reputation above the 50th percentile."
+                    value={fmtX(tiers?.steward.gratitudeMultiplier, "1.5x")}
+                    detail="Weighted gratitude"
+                    help={`Stewards carry more gratitude weight. Earned by sustained contribution across ${tiers?.steward.minSeasons ?? 3}+ seasons and reputation above the ${tiers?.steward.minPercentile ?? 50}th percentile.`}
                   />
                   <GratVarRow
                     label="Sage"
-                    value="5.0x"
-                    detail="500 effective budget"
-                    help="Sages get five times the base budget. The long-game tier, earned through 6+ seasons of deep contribution and community recognition."
+                    value={fmtX(tiers?.sage.gratitudeMultiplier, "2.0x")}
+                    detail="Weighted gratitude"
+                    help={`Sages carry the most gratitude weight. The long-game tier, earned through ${tiers?.sage.minSeasons ?? 6}+ seasons of deep contribution and community recognition.`}
                   />
                 </CardContent>
               </Card>
@@ -2109,9 +2121,9 @@ export default function GameMechanics() {
                   />
                   <GratVarRow
                     label="Claim Threshold"
-                    value="333 $ReGen"
+                    value={`${(m?.claims.thresholds.regen ?? 1000).toLocaleString()} $ReGen`}
                     detail="Accumulate before claiming on Hypha"
-                    help="You need to have accumulated at least 333 $ReGen before you can claim it on Hypha. Prevents tiny dust claims and encourages meaningful withdrawals."
+                    help={`You need to have accumulated at least ${(m?.claims.thresholds.regen ?? 1000).toLocaleString()} $ReGen before you can claim it on Hypha. Prevents tiny dust claims and encourages meaningful withdrawals.`}
                   />
                   <GratVarRow
                     label="Distribution"

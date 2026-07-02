@@ -161,3 +161,12 @@ client/public/core/raw/
 /CP_575*.pdf
 /IRS Application*.pdf
 /Church_of_the_Regenerative_Earth_Formation_v2.docx
+
+# Operational debris (untracked 2026-07-01 audit)
+credential-replacements.txt
+seed_out.txt
+seed_err.txt
+_tmp_404_*
+*.bat
+*-log.txt
+imports-log.txt
