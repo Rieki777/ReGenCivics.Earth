@@ -58,23 +58,6 @@ export function YourPaths() {
     },
     onError: (err) => toast.error(err.message ?? "Could not add path."),
   });
-  // Reuse the existing Hypha claim flow. The player has 77 (or 144 or
-  // 233) RGVoice waiting in their private ledger; requestClaim
-  // packages the redeem-tokens proposal and redirects to Hypha.
-  const claimMutation = trpc.playerProfiles.requestClaim.useMutation({
-    onSuccess: (data) => {
-      // requestClaim returns { parentClaimId, bridges, hyphaUrl }.
-      // hyphaUrl is the deep link to the Hypha proposal flow when one
-      // bridge was created; nullable when there's nothing to redeem yet.
-      if (data?.hyphaUrl) {
-        window.location.href = data.hyphaUrl;
-      } else {
-        toast.success("Claim started.");
-        void utils.playerPaths.getMyPaths.invalidate();
-      }
-    },
-    onError: (err) => toast.error(err.message ?? "Could not start the claim."),
-  });
   const [addOpen, setAddOpen] = useState(false);
 
   if (isLoading) {
@@ -146,15 +129,7 @@ export function YourPaths() {
 
       <div className="space-y-3">
         {(paths ?? []).map((p) => (
-          <PathBlock
-            key={p.path}
-            data={p}
-            onClaim={() => {
-              // Claim the user's RGVoice via existing Hypha flow.
-              claimMutation.mutate({ tokens: ["rgvoice"] });
-            }}
-            claiming={claimMutation.isPending}
-          />
+          <PathBlock key={p.path} data={p} />
         ))}
       </div>
     </div>
@@ -172,11 +147,9 @@ interface PathBlockProps {
     coCreatorEarnedAt: string | null;
     stewardEarnedAt: string | null;
   };
-  onClaim: () => void;
-  claiming: boolean;
 }
 
-function PathBlock({ data, onClaim, claiming }: PathBlockProps) {
+function PathBlock({ data }: PathBlockProps) {
   const meta = PATH_META[data.path as PathSlug];
   const Icon = meta?.Icon ?? Sparkles;
   const earnedDate = (iso: string | null) => {
@@ -189,40 +162,19 @@ function PathBlock({ data, onClaim, claiming }: PathBlockProps) {
   };
 
   const stewardClaimed = data.tier === "steward_claimed";
-  const stewardEarned = data.tier === "steward_earned";
-  const coCreatorClaimed = data.tier === "co_creator_claimed" || stewardClaimed || stewardEarned;
-  const coCreatorEarned = data.tier === "co_creator_earned" || coCreatorClaimed;
+  const stewardReached = data.tier === "steward_earned" || stewardClaimed;
+  const coCreatorClaimed = data.tier === "co_creator_claimed";
+  const coCreatorReached = data.tier === "co_creator_earned" || coCreatorClaimed || stewardReached;
 
-  // State B: criteria met for whichever tier is next, bonus unclaimed.
-  // The detector landed RGVoice in private ledger; claim button uses
-  // existing requestClaim flow.
-  if (data.unclaimedBonusAmount > 0) {
-    const tierLabel = stewardEarned ? "Steward" : "Co-Creator";
-    return (
-      <div className="border border-[#7dd87d]/30 bg-gradient-to-br from-[#1a472a]/40 to-[#2d5a3d]/40 rounded-xl p-5">
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
-            <Icon className="w-6 h-6 text-[#7dd87d] flex-shrink-0" />
-            <div>
-              <div className="text-base font-bold text-white">{meta?.label ?? data.path}</div>
-              <div className="text-sm text-[#7dd87d]">{tierLabel} earned</div>
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={onClaim}
-          disabled={claiming}
-          className="w-full py-3 rounded-lg bg-gradient-to-r from-[#7dd87d] to-[#4a7c59] text-[#0a1f15] font-bold text-base hover:from-[#8de89d] hover:to-[#5a8c69] transition-all shadow-lg disabled:opacity-50 inline-flex items-center justify-center gap-2"
-        >
-          {claiming ? "Starting claim..." : `Claim ${data.unclaimedBonusAmount} RGVoice on Hypha`}
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </div>
-    );
-  }
-
-  // State C: claimed. Calm earned banner + next tier checklist if any.
-  if (coCreatorClaimed) {
+  // Earned banner: covers both earned-and-unclaimed and claimed states.
+  // The tier bonus RGVoice lands in the player's private balance
+  // automatically. Claiming happens from the token totals area, which
+  // gates on the claim threshold. No claim button here on purpose.
+  if (coCreatorReached) {
+    const earnedTierLabel = stewardReached ? "Steward" : "Co-Creator";
+    const earnedAtIso = stewardReached ? data.stewardEarnedAt : data.coCreatorEarnedAt;
+    const d = earnedDate(earnedAtIso);
+    const showStewardChecklist = !stewardReached && data.stewardSteps.length > 0;
     return (
       <div className="border border-white/10 bg-white/[0.02] rounded-xl p-5">
         <div className="flex items-center gap-3 mb-3">
@@ -231,16 +183,18 @@ function PathBlock({ data, onClaim, claiming }: PathBlockProps) {
             <div className="text-base font-bold text-white">{meta?.label ?? data.path}</div>
             <div className="text-xs text-white/60 inline-flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#7dd87d]" />
-              {stewardClaimed ? "Steward" : "Co-Creator"} earned
-              {(() => {
-                const d = earnedDate(stewardClaimed ? data.stewardEarnedAt : data.coCreatorEarnedAt);
-                return d ? <span className="text-white/40"> · {d}</span> : null;
-              })()}
+              {earnedTierLabel} earned
+              {d ? <span className="text-white/40"> · {d}</span> : null}
             </div>
           </div>
         </div>
+        {data.unclaimedBonusAmount > 0 && (
+          <div className="text-xs text-white/50 mb-1">
+            +{data.unclaimedBonusAmount} RGVoice added to your balance. Claim it with your other tokens from your token totals once you reach the claim threshold.
+          </div>
+        )}
         {/* Next-tier checklist if applicable */}
-        {data.stewardSteps.length > 0 && (
+        {showStewardChecklist && (
           <div className="border-t border-white/10 pt-3 mt-2 space-y-2">
             <div className="text-xs text-white/60 mb-2">Working toward Steward (+{144} RGVoice)</div>
             {data.stewardSteps.map((step, i) => (

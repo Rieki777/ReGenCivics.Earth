@@ -35,17 +35,9 @@ import {
   Leaf,
   Settings,
   Plus,
-  Trash2,
-  BadgeCheck,
-  DollarSign,
   Users as UsersIcon,
-  Palette,
   Sprout,
-  Lightbulb,
-  Zap,
-  Hammer,
   Heart,
-  HeartPulse,
   FolderOpen,
   MapPin,
   Layers,
@@ -53,7 +45,6 @@ import {
   TrendingUp,
   Building2,
   RefreshCw,
-  ChevronDown,
   Compass,
   Flame,
   Scroll,
@@ -1674,21 +1665,6 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
   );
 }
 
-// ─── 9 Forms of Capital ─────────────────────────────────────────────────────
-const CAPITAL_TYPES = [
-  { value: "financial",     label: "Financial",     icon: DollarSign, color: "#d4a574", desc: "Money, investments, grants, loans" },
-  { value: "social",        label: "Social",        icon: UsersIcon,  color: "#7dd87d", desc: "Networks, relationships, trust" },
-  { value: "cultural",      label: "Cultural",      icon: Palette,    color: "#f97316", desc: "Art, stories, rituals, values" },
-  { value: "living",        label: "Living",        icon: Sprout,     color: "#22c55e", desc: "Land, ecosystems, biodiversity" },
-  { value: "intellectual",  label: "Intellectual",  icon: Lightbulb,  color: "#a78bfa", desc: "Knowledge, skills, IP, research" },
-  { value: "experiential",  label: "Experiential",  icon: Zap,        color: "#d4a574", desc: "Skills gained through doing" },
-  { value: "material",      label: "Material",      icon: Hammer,     color: "#94a3b8", desc: "Tools, equipment, infrastructure" },
-  { value: "spiritual",     label: "Spiritual",     icon: Heart,      color: "#f43f5e", desc: "Vision, meaning, purpose" },
-  { value: "health",        label: "Health",        icon: HeartPulse, color: "#f87171", desc: "Body vitality, wellness, rest" },
-] as const;
-
-type CapitalType = typeof CAPITAL_TYPES[number]["value"];
-
 // ─── #23. Event Attendance Token Balance ────────────────────────────────────
 function EventAttendanceBalance() {
   const { data: tokenData } = trpc.events.myTokenBalance.useQuery(undefined);
@@ -1838,52 +1814,7 @@ function ContributionsTab({
   onSyncTokens?: () => void;
   syncIsPending?: boolean;
 }) {
-  const { data: contributions, isLoading, refetch } = trpc.playerContributions.list.useQuery(undefined, { staleTime: 2 * 60_000 });
   const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery(undefined, { staleTime: 5 * 60_000 });
-  const [showForm, setShowForm] = useState(false);
-  const [showManualLog, setShowManualLog] = useState(false);
-  const [capitalType, setCapitalType] = useState<CapitalType>("financial");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [estimatedValue, setEstimatedValue] = useState("");
-  const [projectName, setProjectName] = useState("");
-  const [evidenceUrl, setEvidenceUrl] = useState("");
-
-  const createMutation = trpc.playerContributions.create.useMutation({
-    onSuccess: () => {
-      toast.success("Contribution logged");
-      refetch();
-      setShowForm(false);
-      setTitle(""); setDescription(""); setEstimatedValue(""); setProjectName(""); setEvidenceUrl("");
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const deleteMutation = trpc.playerContributions.delete.useMutation({
-    onSuccess: () => { toast.success("Contribution removed"); refetch(); },
-    onError: (e) => toast.error(e.message),
-  });
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim()) { toast.error("Title is required"); return; }
-    createMutation.mutate({
-      capitalType,
-      title: title.trim(),
-      description: description.trim() || undefined,
-      estimatedValue: estimatedValue ? parseInt(estimatedValue) : undefined,
-      projectName: projectName.trim() || undefined,
-      evidenceUrl: evidenceUrl.trim() || undefined,
-    });
-  }
-
-  const totalValue = contributions?.reduce((s, c) => s + (c.estimatedValue ?? 0), 0) ?? 0;
-
-  // Group by capital type for display
-  const byType = CAPITAL_TYPES.map(ct => ({
-    ...ct,
-    items: contributions?.filter(c => c.capitalType === ct.value) ?? [],
-  })).filter(g => g.items.length > 0);
 
   return (
     <div className="space-y-6">
@@ -2015,270 +1946,6 @@ function ContributionsTab({
         )}
       </div>
 
-      {/* Self-Reported Contributions section header */}
-      <div>
-        <button
-          onClick={() => setShowManualLog(!showManualLog)}
-          className="w-full flex items-center justify-between py-2 text-white/60 hover:text-white/80 transition-colors text-sm font-medium"
-        >
-          <span className="flex items-center gap-2">
-            <Leaf className="w-4 h-4" /> Self-Reported Contributions
-            {contributions && contributions.length > 0 && (
-              <span className="text-[#7dd87d] text-xs">({contributions.length})</span>
-            )}
-          </span>
-          <ChevronDown className={`w-4 h-4 transition-transform ${showManualLog ? "rotate-180" : ""}`} />
-        </button>
-        {!showManualLog && (
-          <p className="text-white/70 text-xs">Contributions logged here can be verified by admins. For more quantified contributions, use the calculator above.</p>
-        )}
-      </div>
-
-      {showManualLog && (
-      <div className="space-y-4">
-
-      {/* Summary bar */}
-      {contributions && contributions.length > 0 && (
-        <div className="glass-panel rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <p className="text-white/70 text-xs mb-0.5">Total Logged Value</p>
-            <p className="text-2xl font-bold text-[#7dd87d]">${totalValue.toLocaleString()}</p>
-          </div>
-          <div className="flex gap-4">
-            <div className="text-center">
-              <p className="text-white font-bold text-lg">{contributions.length}</p>
-              <p className="text-white/70 text-xs">Entries</p>
-            </div>
-            <div className="text-center">
-              <p className="text-white font-bold text-lg">{byType.length}</p>
-              <p className="text-white/70 text-xs">Capital types</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[#7dd87d] font-bold text-lg">
-                {contributions.filter(c => c.status === "verified").length}
-              </p>
-              <p className="text-white/70 text-xs">Verified</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add contribution button / form */}
-      {!showForm ? (
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-[#7dd87d]/30 text-[#7dd87d]/70 hover:border-[#7dd87d]/60 hover:text-[#7dd87d] hover:bg-[#7dd87d]/5 transition-all text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" /> Log a Contribution
-        </button>
-      ) : (
-        <form onSubmit={handleSubmit} className="glass-panel rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="text-white font-semibold">Log a Contribution</h3>
-            <button type="button" onClick={() => setShowForm(false)} className="text-white/60 hover:text-white/70">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Capital type picker */}
-          <div>
-            <label className="text-white/60 text-xs mb-2 block">Form of Capital *</label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {CAPITAL_TYPES.map(ct => {
-                const Icon = ct.icon;
-                const selected = capitalType === ct.value;
-                return (
-                  <button
-                    key={ct.value}
-                    type="button"
-                    onClick={() => setCapitalType(ct.value)}
-                    className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-all text-xs font-medium ${
-                      selected
-                        ? "border-[#7dd87d] bg-[#7dd87d]/10 text-white"
-                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white/70"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" style={{ color: selected ? ct.color : undefined }} />
-                    {ct.label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-white/60 text-xs mt-1.5">
-              {CAPITAL_TYPES.find(c => c.value === capitalType)?.desc}
-            </p>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="text-white/60 text-xs mb-1.5 block">What did you contribute? *</label>
-            <input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="e.g. Designed brand identity for ReGen Civics"
-              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="text-white/60 text-xs mb-1.5 block">Details (optional)</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              rows={2}
-              placeholder="More context about this contribution..."
-              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55 resize-none"
-            />
-          </div>
-
-          {/* Value + project row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-white/60 text-xs mb-1.5 block">Est. Value USD (optional)</label>
-              <input
-                type="number"
-                min="0"
-                value={estimatedValue}
-                onChange={e => setEstimatedValue(e.target.value)}
-                placeholder="0"
-                className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55"
-              />
-            </div>
-            <div>
-              <label className="text-white/60 text-xs mb-1.5 block">Project / Org (optional)</label>
-              <input
-                value={projectName}
-                onChange={e => setProjectName(e.target.value)}
-                placeholder="e.g. ReGen Civics"
-                className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55"
-              />
-            </div>
-          </div>
-
-          {/* Evidence URL */}
-          <div>
-            <label className="text-white/60 text-xs mb-1.5 block">Evidence link (optional)</label>
-            <input
-              value={evidenceUrl}
-              onChange={e => setEvidenceUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#7dd87d] placeholder-white/55"
-            />
-          </div>
-
-          <div className="flex gap-2 pt-1">
-            <button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="flex-1 py-2.5 rounded-xl bg-[#7dd87d] text-[#1a472a] font-semibold text-sm disabled:opacity-50 hover:bg-[#9de89d] transition-colors"
-            >
-              {createMutation.isPending ? "Logging…" : "Log Contribution"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2.5 rounded-xl bg-white/10 text-white/60 text-sm hover:bg-white/20 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Contribution log grouped by capital type */}
-      {isLoading ? (
-        <div className="space-y-4 py-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="animate-pulse bg-white/10 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-6 h-6 rounded-full bg-white/10" />
-                <div className="h-4 bg-white/10 rounded w-1/4" />
-              </div>
-              <div className="h-3 bg-white/10 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-white/10 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
-      ) : byType.length === 0 ? (
-        <div className="text-center py-12">
-          <Leaf className="w-10 h-10 text-white/70 mx-auto mb-3" />
-          <p className="text-white/60 text-sm">No contributions logged yet.</p>
-          <p className="text-white/70 text-xs mt-1">Use the button above to record your first contribution.</p>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {byType.map(group => {
-            const Icon = group.icon;
-            return (
-              <div key={group.value}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Icon className="w-4 h-4" style={{ color: group.color }} />
-                  <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">{group.label} Capital</span>
-                  <span className="text-white/70 text-xs ml-auto">
-                    {group.items.filter(i => i.estimatedValue).reduce((s, i) => s + (i.estimatedValue ?? 0), 0) > 0
-                      ? `$${group.items.reduce((s, i) => s + (i.estimatedValue ?? 0), 0).toLocaleString()}`
-                      : ""}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {group.items.map(item => (
-                    <div
-                      key={item.id}
-                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-start gap-3 group/row"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-white text-sm font-medium">{item.title}</p>
-                          {item.status === "verified" && (
-                            <span className="inline-flex items-center gap-0.5 text-[10px] text-[#7dd87d] bg-[#7dd87d]/10 border border-[#7dd87d]/20 px-1.5 py-0.5 rounded-full">
-                              <BadgeCheck className="w-2.5 h-2.5" /> Verified
-                            </span>
-                          )}
-                        </div>
-                        {item.description && (
-                          <p className="text-white/70 text-xs mt-0.5 line-clamp-2">{item.description}</p>
-                        )}
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          {item.projectName && (
-                            <span className="text-white/60 text-xs">{item.projectName}</span>
-                          )}
-                          {item.estimatedValue && item.estimatedValue > 0 && (
-                            <span className="text-[#d4a574] text-xs font-medium">${item.estimatedValue.toLocaleString()}</span>
-                          )}
-                          {item.evidenceUrl && (
-                            <a
-                              href={item.evidenceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-white/60 hover:text-[#7dd87d] text-xs flex items-center gap-0.5 transition-colors"
-                            >
-                              <ExternalLink className="w-3 h-3" /> evidence
-                            </a>
-                          )}
-                          <span className="text-white/70 text-xs ml-auto">
-                            {new Date(item.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => deleteMutation.mutate({ id: item.id })}
-                        disabled={deleteMutation.isPending}
-                        className="opacity-100 md:opacity-0 md:group-hover/row:opacity-100 text-white/70 hover:text-red-400 transition-all p-1 shrink-0"
-                        aria-label="Delete contribution"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      </div>
-      )}
     </div>
   );
 }
@@ -3113,10 +2780,10 @@ export default function PlayerProfile() {
                   </div>
                   <div className="glass-panel p-6 rounded-xl">
                     <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                      <Leaf className="w-5 h-5 text-[#7dd87d]" /> Contribution Log
+                      <Leaf className="w-5 h-5 text-[#7dd87d]" /> Your Contributions
                     </h2>
                     <p className="text-white/70 text-sm mb-5">
-                      Record contributions across the 9 forms of capital. Self-reported values can be verified by admins.
+                      Your on-chain activity, token balances, and contribution tools across the nine forms of capital.
                     </p>
                     <ContributionsTab
                       walletAddress={profile?.walletAddress || profile?.baseAccountName}
@@ -3283,9 +2950,17 @@ export default function PlayerProfile() {
                     <Wallet className="w-6 h-6 text-[#1a472a]" />
                   </div>
                   <h3 className="text-white font-semibold mb-2">2. Link Base Account</h3>
-                  <p className="text-white/60 text-sm">
+                  <p className="text-white/60 text-sm mb-4">
                     Connect your Hypha/Base account to verify your identity and track tokens
                   </p>
+                  <a
+                    href="https://app.hypha.earth/en/network"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] text-sm font-semibold hover:bg-[#8de89d] transition-colors"
+                  >
+                    Set up on Hypha <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 </CardContent>
               </Card>
               
