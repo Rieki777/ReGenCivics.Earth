@@ -38,6 +38,7 @@ import {
   PLAYER_STEWARD_VOTE_COUNT,
   TIER_BONUS,
   isRiteOfPassage,
+  canonicalQuestKey,
 } from "@shared/questPools";
 
 const PATH_VALUES = ["investor", "land_project", "ally", "player"] as const;
@@ -125,14 +126,17 @@ export const playerPathsRouter = router({
       .where(eq(proposalVotes.userId, userId));
 
     // Derived counts.
+    // Canonicalize questIds so a quest logged in two id formats ("quest-3"
+    // and "3") counts once, matching tierDetector's counting.
     const ritesCompleted = new Set<string>(
       completedQuests
         .map((r: { questId: string | null }) => r.questId)
-        .filter((id: string | null): id is string => typeof id === "string" && isRiteOfPassage(id)),
+        .filter((id: string | null): id is string => typeof id === "string" && isRiteOfPassage(id))
+        .map((id: string) => canonicalQuestKey(id) as string),
     ).size;
     const distinctQuestCount = new Set<string>(
       completedQuests
-        .map((r: { questId: string | null }) => r.questId)
+        .map((r: { questId: string | null }) => canonicalQuestKey(r.questId))
         .filter((q: string | null): q is string => q !== null),
     ).size;
     const voteCount = voteRows.length;

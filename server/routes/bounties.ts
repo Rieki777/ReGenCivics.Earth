@@ -672,7 +672,9 @@ export const bountiesRouter = router({
       }
       await db.update(bountyRoles).set({ payStatus: "payable" }).where(eq(bountyRoles.id, input.roleId));
       await logEvent(db, role.bountyId, "consented", { roleId: role.id, actorUserId: ctx.user.id });
-      const result = await payRole(role.id, { actorUserId: ctx.user.id });
+      // The maintainer has reviewed the separation-of-duties conflict and
+      // consented, so skip Guard 1 (which would otherwise re-hold immediately).
+      const result = await payRole(role.id, { actorUserId: ctx.user.id, skipSeparationOfDuties: true });
       return { ok: result.ok, reason: result.reason };
     }),
 

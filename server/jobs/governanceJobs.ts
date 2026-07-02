@@ -62,10 +62,14 @@ export async function sendSignedPromotionsToLoomio(): Promise<JobReport> {
   try {
     const db = await getDb();
     if (!db) return { job: "sendSignedPromotionsToLoomio", ok: false, error: "no db" };
+    // Only pick up requests we haven't already shipped. Without the
+    // loomioSentAt guard this job re-sent every signed request each hour until
+    // Loomio's poll_created webhook created the decision row, spawning a
+    // duplicate Loomio discussion+poll on every run if that webhook lagged.
     const signed = await db
       .select()
       .from(forumPromotionRequests)
-      .where(eq(forumPromotionRequests.status, "signed"))
+      .where(and(eq(forumPromotionRequests.status, "signed"), isNull(forumPromotionRequests.loomioSentAt)))
       .limit(20);
     let sent = 0;
     for (const req of signed) {
@@ -77,7 +81,15 @@ export async function sendSignedPromotionsToLoomio(): Promise<JobReport> {
         .limit(1);
       if (existing.length > 0) continue;
       const result = await sendPromotionToLoomio(req.id);
-      if (result.ok) sent += 1;
+      if (result.ok) {
+        // Mark as sent so we don't re-ship on the next run. A genuine send
+        // failure leaves it null so it retries.
+        await db
+          .update(forumPromotionRequests)
+          .set({ loomioSentAt: new Date() } as any)
+          .where(eq(forumPromotionRequests.id, req.id));
+        sent += 1;
+      }
     }
     return { job: "sendSignedPromotionsToLoomio", ok: true, count: sent };
   } catch (err: any) {

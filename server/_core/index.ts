@@ -776,7 +776,48 @@ async function startServer() {
         await database.update(eventsTable).set({ reminderSent: 1 }).where(dbEq(eventsTable.id, event.id));
       }
 
-      res.json({ ok: true, eventsProcessed: upcomingEvents.length, remindersSent: totalSent });
+      // Durable admin-scheduled custom reminders (persisted by
+      // events.sendReminders instead of an in-memory setTimeout). Send any
+      // whose scheduled time has passed and that haven't been sent yet.
+      let scheduledSent = 0;
+      const dueScheduled = await database
+        .select()
+        .from(eventsTable)
+        .where(dbAnd(
+          dbIsNotNull(eventsTable.reminderScheduledFor),
+          dbLte(eventsTable.reminderScheduledFor as any, now),
+          dbEq(eventsTable.reminderSent, 0),
+        ));
+      for (const event of dueScheduled) {
+        const signups = await database
+          .select()
+          .from(signupsTable)
+          .where(dbAnd(
+            dbEq(signupsTable.eventId, event.id),
+            dbEq(signupsTable.signupType, "reminder"),
+            dbSql`${signupsTable.cancelledAt} IS NULL`,
+          ));
+        if (signups.length) {
+          const dateStr = event.startTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+          const timeStr = event.startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+          const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? "";
+          const subj = event.reminderCustomSubject?.trim() || `Reminder: ${event.title}`;
+          const bodyText = event.reminderCustomBody?.trim() || (event.description ?? "");
+          const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"><div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;"><h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1><p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Event reminder</p></div><div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;"><h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.title}</h2><p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}</p>${bodyText ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${bodyText}</p>` : ""}<a href="${joinUrl}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Join on Riverside</a></div><div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;"><p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/><a href="${appUrl}/schedule" style="color:#7dd87d;">View all events</a></p></div></div>`;
+          const emailSignups = signups.filter(s => s.email);
+          const BATCH = 50;
+          for (let i = 0; i < emailSignups.length; i += BATCH) {
+            const batch = emailSignups.slice(i, i + BATCH).map(s => s.email);
+            await sendResend({ to: batch, subject: subj, html, template: "event_reminder" });
+            scheduledSent += batch.length;
+          }
+        }
+        await database.update(eventsTable)
+          .set({ reminderSent: 1, reminderScheduledFor: null })
+          .where(dbEq(eventsTable.id, event.id));
+      }
+
+      res.json({ ok: true, eventsProcessed: upcomingEvents.length, remindersSent: totalSent, scheduledSent });
     } catch (err: any) {
       log.error("cron/event-reminders", err);
       res.status(500).json({ error: err.message });

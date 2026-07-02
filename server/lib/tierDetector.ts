@@ -44,6 +44,7 @@ import {
   PLAYER_STEWARD_VOTE_COUNT,
   TIER_BONUS,
   isRiteOfPassage,
+  canonicalQuestKey,
 } from "@shared/questPools";
 
 export type TierPath = "investor" | "land_project" | "ally" | "player";
@@ -281,10 +282,13 @@ async function checkPlayerCoCreator(userId: number): Promise<CriterionResult> {
     .from(questCompletions)
     .where(eq(questCompletions.userId, userId));
 
+  // Canonicalize so "quest-3" and "3" (the same rite in two id formats)
+  // collapse to one entry instead of inflating the count.
   const completedRiteIds = new Set<string>(
     rows
       .map((r: { questId: string | null }) => r.questId)
-      .filter((id: string | null): id is string => typeof id === "string" && isRiteOfPassage(id)),
+      .filter((id: string | null): id is string => typeof id === "string" && isRiteOfPassage(id))
+      .map((id: string) => canonicalQuestKey(id) as string),
   );
 
   return {
@@ -305,7 +309,7 @@ async function checkPlayerSteward(userId: number): Promise<CriterionResult> {
     .where(eq(questCompletions.userId, userId));
   const distinctQuests = new Set<string>(
     questRows
-      .map((r: { questId: string | null }) => r.questId)
+      .map((r: { questId: string | null }) => canonicalQuestKey(r.questId))
       .filter((q: string | null): q is string => q !== null),
   ).size;
 

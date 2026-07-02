@@ -130,3 +130,16 @@ export function isRiteOfPassage(storedQuestId: string | null | undefined): boole
   if (id === null) return false;
   return (RITES_OF_PASSAGE_IDS as readonly number[]).includes(id);
 }
+
+/**
+ * Canonical de-dupe key for a stored questId. Numeric forms ("quest-1" and
+ * "1") collapse to the same key so the same quest can't be counted twice by
+ * submitting it in two formats; slug-based ids ("fire") are kept verbatim
+ * (they're genuinely distinct quests). Returns null for empty input.
+ * Use this whenever building a Set of distinct completed quests.
+ */
+export function canonicalQuestKey(stored: string | null | undefined): string | null {
+  if (!stored) return null;
+  const n = parseQuestIdToNumber(stored);
+  return n === null ? stored : `quest-${n}`;
+}

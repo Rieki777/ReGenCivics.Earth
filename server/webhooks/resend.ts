@@ -17,7 +17,7 @@ import crypto from "crypto";
 import { updateEmailStatus } from "../emailTracking";
 import { getDb } from "../db";
 import { emailLogs } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { logger } from "../_core/logger";
 
 const log = logger("resend-webhook");
@@ -51,14 +51,12 @@ interface ResendWebhookEvent {
  */
 function verifyWebhookSignature(
   payload: string,
-  signature: string | undefined,
-  timestamp: string | undefined
+  svixId: string | undefined,
+  svixTimestamp: string | undefined,
+  svixSignature: string | undefined,
 ): boolean {
-  // Tighter check: empty-string is treated the same as unset. Without this,
-  // a misconfigured Railway env that sets WEBHOOK_SECRET="" (which can happen
-  // on copy-paste accidents) would pass the falsy check at line 1 and then
-  // generate an HMAC over the empty string for every request, making the
-  // signature predictable. Found in 2026-04-25 deep security audit.
+  // Empty-string is treated the same as unset (a copy-paste-blank env var
+  // would otherwise sign over a predictable empty secret).
   if (!WEBHOOK_SECRET || WEBHOOK_SECRET.trim() === "") {
     if (process.env.NODE_ENV === "production") {
       log.error("WEBHOOK_SECRET not set in production, rejecting");
@@ -67,23 +65,39 @@ function verifyWebhookSignature(
     log.warn("WEBHOOK_SECRET not set (dev only), allowing");
     return true;
   }
-  if (!signature || !timestamp) {
-    log.warn("Missing signature or timestamp header, rejecting");
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    log.warn("Missing svix-id/svix-timestamp/svix-signature header, rejecting");
     return false;
   }
 
-  const signedPayload = `${timestamp}.${payload}`;
-  const expectedSignature = crypto
-    .createHmac("sha256", WEBHOOK_SECRET)
-    .update(signedPayload)
-    .digest("hex");
+  // Reject stale timestamps (>5 min) to blunt replay. Svix sends unix seconds.
+  const tsSeconds = Number(svixTimestamp);
+  if (!Number.isFinite(tsSeconds) || Math.abs(Date.now() / 1000 - tsSeconds) > 300) {
+    log.warn("svix-timestamp out of tolerance, rejecting");
+    return false;
+  }
 
-  // timingSafeEqual requires equal-length buffers. Length mismatch is a fast
-  // reject, length is not the secret.
-  const sigBuf = Buffer.from(signature);
-  const expBuf = Buffer.from(expectedSignature);
-  if (sigBuf.length !== expBuf.length) return false;
-  return crypto.timingSafeEqual(sigBuf, expBuf);
+  // Resend uses Svix. The signing secret is `whsec_<base64>`; the HMAC key is
+  // the base64-decoded portion after the prefix. The signed content is
+  // `${svixId}.${svixTimestamp}.${payload}` and the signature is base64.
+  const secretKey = WEBHOOK_SECRET.startsWith("whsec_") ? WEBHOOK_SECRET.slice(6) : WEBHOOK_SECRET;
+  const secretBytes = Buffer.from(secretKey, "base64");
+  const signedContent = `${svixId}.${svixTimestamp}.${payload}`;
+  const expected = crypto.createHmac("sha256", secretBytes).update(signedContent).digest("base64");
+  const expBuf = Buffer.from(expected);
+
+  // The svix-signature header is a space-separated list of `v1,<base64sig>`
+  // entries (there can be more than one during secret rotation). Accept if any
+  // v1 entry matches, timing-safely.
+  return svixSignature.split(" ").some((entry) => {
+    const comma = entry.indexOf(",");
+    if (comma === -1) return false;
+    const version = entry.slice(0, comma);
+    const sig = entry.slice(comma + 1);
+    if (version !== "v1" || !sig) return false;
+    const sigBuf = Buffer.from(sig);
+    return sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+  });
 }
 
 /**
@@ -93,21 +107,25 @@ async function findEmailLogByResendId(resendEmailId: string, recipientEmail?: st
   const db = await getDb();
   if (!db) return null;
   
-  // First try to find by resend_id if we stored it
-  // For now, we'll match by recipient email and recent timestamp
+  // emailLogs doesn't store the Resend message id yet, so match by recipient.
+  // Order by MOST RECENT send (desc) — the previous ascending order matched the
+  // oldest email to the address, so a delivery/bounce event updated the wrong
+  // (first-ever) log row. Matching by resendEmailId would need a stored-id
+  // column + wiring the send path; tracked as a follow-up.
+  void resendEmailId;
   if (recipientEmail) {
     const logs = await db
       .select()
       .from(emailLogs)
       .where(eq(emailLogs.recipientEmail, recipientEmail))
-      .orderBy(emailLogs.sentAt)
+      .orderBy(desc(emailLogs.sentAt))
       .limit(1);
-    
+
     if (logs.length > 0) {
       return logs[0].id;
     }
   }
-  
+
   return null;
 }
 
@@ -162,12 +180,13 @@ async function processWebhookEvent(event: ResendWebhookEvent): Promise<void> {
 export function registerResendWebhookRoutes(app: Express): void {
   app.post("/api/webhooks/resend", async (req: Request, res: Response) => {
     try {
+      const svixId = req.headers["svix-id"] as string | undefined;
       const signature = req.headers["svix-signature"] as string | undefined;
       const timestamp = req.headers["svix-timestamp"] as string | undefined;
       const payload = (req as any).rawBody ?? JSON.stringify(req.body);
-      
+
       // Verify signature
-      if (!verifyWebhookSignature(payload, signature, timestamp)) {
+      if (!verifyWebhookSignature(payload, svixId, timestamp, signature)) {
         log.error("Invalid signature");
         return res.status(401).json({ error: "Invalid signature" });
       }

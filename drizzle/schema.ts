@@ -644,6 +644,10 @@ export const userTokenLedger = mysqlTable("user_token_ledger", {
   index("user_token_ledger_source_idx").on(table.source),
   index("user_token_ledger_tenantId_idx").on(table.tenantId),
   index("user_token_ledger_claimedAt_idx").on(table.claimedAt),
+  // Claim/webhook/refund lookups scan by (sourceRef, source).
+  index("user_token_ledger_sourceRef_source_idx").on(table.sourceRef, table.source),
+  // Private-balance cache recompute sums by (userId, tokenType).
+  index("user_token_ledger_user_token_idx").on(table.userId, table.tokenType),
   // UNIQUE: makes duplicate credits (bounty payouts, claim refunds) physically
   // impossible even if application logic races. Added in migration 0145; also
   // declared here so a fresh env built from schema.ts keeps the guard.
@@ -1285,10 +1289,13 @@ export const userNotifications = mysqlTable("user_notifications", {
   
   // Status
   read: boolean("read").default(false).notNull(),
-  
+
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => [
+  // Unread-count query runs on nearly every authenticated page load.
+  index("user_notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
+]);
 
 export type UserNotification = typeof userNotifications.$inferSelect;
 export type InsertUserNotification = typeof userNotifications.$inferInsert;
@@ -2043,7 +2050,12 @@ export const questCompletions = mysqlTable("quest_completions", {
   visibility: mysqlEnum("visibility", ["public", "private"]).default("public").notNull(),
   completedAt: timestamp("completedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => [
+  // Tier/rite counting selects all completions for a user.
+  index("quest_completions_userId_idx").on(table.userId),
+  // Public completion feeds order by completedAt within a visibility.
+  index("quest_completions_visibility_completedAt_idx").on(table.visibility, table.completedAt),
+]);
 export type QuestCompletion = typeof questCompletions.$inferSelect;
 export type InsertQuestCompletion = typeof questCompletions.$inferInsert;
 
@@ -2437,6 +2449,12 @@ export const events = mysqlTable("events", {
 
   // Reminder tracking
   reminderSent: tinyint("reminderSent").default(0).notNull(), // 1 once 24h reminder has been sent
+
+  // Durable admin-scheduled custom reminder (replaces an in-memory setTimeout).
+  // When reminderScheduledFor is set and due, the event-reminders cron sends it.
+  reminderScheduledFor: timestamp("reminderScheduledFor"),
+  reminderCustomSubject: varchar("reminderCustomSubject", { length: 200 }),
+  reminderCustomBody: text("reminderCustomBody"),
 
   // #16 — Self-service check-in QR code token
   checkinToken: varchar("checkinToken", { length: 64 }),
@@ -3046,6 +3064,9 @@ export const forumPromotionRequests = mysqlTable("forumPromotionRequests", {
   status: mysqlEnum("status", ["pending", "signed", "expired", "cancelled"]).default("pending").notNull(),
   coSignedAt: timestamp("coSignedAt"),
   expiresAt: timestamp("expiresAt").notNull(),
+  // Set once the signed request has been shipped to Loomio, so the hourly job
+  // doesn't re-send it while waiting for the poll_created webhook.
+  loomioSentAt: timestamp("loomioSentAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ForumPromotionRequest = typeof forumPromotionRequests.$inferSelect;

@@ -75,7 +75,7 @@ async function getSeasonBudget(): Promise<number | null> {
  */
 export async function payRole(
   roleId: number,
-  opts: { actorUserId?: number | null } = {},
+  opts: { actorUserId?: number | null; skipSeparationOfDuties?: boolean } = {},
 ): Promise<{ ok: boolean; reason?: string }> {
   const db = await getDb();
   if (!db) return { ok: false, reason: "db_unavailable" };
@@ -111,8 +111,11 @@ export async function payRole(
 
   // ── Guard 1: Separation of duties ──────────────────────────────────────────
   // If this user fills more than one paid role on the bounty, hold for
-  // maintainer consent rather than paying automatically.
-  const paidRoles = allRoles.filter(
+  // maintainer consent rather than paying automatically. skipSeparationOfDuties
+  // is set by consentAndPay, where a maintainer has already reviewed the
+  // conflict and explicitly approved the payout — without this bypass the guard
+  // re-held the role immediately and the payout deadlocked forever.
+  const paidRoles = opts.skipSeparationOfDuties ? [] : allRoles.filter(
     (r) => r.id !== roleId && r.userId === role.userId && r.payStatus !== "unfilled" && r.payStatus !== "void",
   );
   if (paidRoles.length > 0) {

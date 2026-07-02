@@ -601,63 +601,27 @@ export const eventsRouter = router({
         .limit(1);
       if (!event) throw new TRPCError({ code: "NOT_FOUND" });
 
-      // #24. If scheduledFor is provided, defer sending via setTimeout
+      // #24. If scheduledFor is provided, persist the scheduled send on the
+      // event. The /api/cron/event-reminders job sends it when due. This
+      // replaces an in-memory setTimeout that every deploy silently dropped.
       if (input.scheduledFor) {
         const scheduledTime = new Date(input.scheduledFor).getTime();
+        if (Number.isNaN(scheduledTime)) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid scheduled time" });
         const delayMs = scheduledTime - Date.now();
         const MAX_DELAY = 7 * 24 * 60 * 60 * 1000; // 7 days max
         if (delayMs < 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Scheduled time is in the past" });
         if (delayMs > MAX_DELAY) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot schedule more than 7 days out" });
 
-        const eventId = input.id;
-        const savedSubject = input.customSubject;
-        const savedBody = input.customBody;
-        console.log(`[events.sendReminders] Scheduled reminder for event #${eventId} at ${input.scheduledFor} (${Math.round(delayMs / 60000)} min from now)`);
-
-        setTimeout(async () => {
-          try {
-            const db2 = await getDb();
-            if (!db2) return;
-            const sups = await db2.select().from(eventSignups)
-              .where(and(eq(eventSignups.eventId, eventId), eq(eventSignups.signupType, "reminder"), isNull(eventSignups.cancelledAt)));
-            if (!sups.length) return;
-            const [ev] = await db2.select().from(events).where(eq(events.id, eventId)).limit(1);
-            if (!ev) return;
-            const d = ev.startTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-            const tm = ev.startTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
-            const jUrl = ev.riversideRoomUrl ?? ev.zoomUrl ?? "";
-            const jLabel = "Join on Riverside";
-            const jColor = "#7c3aed";
-            const subj = savedSubject?.trim() || `Reminder: ${ev.title} is tomorrow`;
-            const body = savedBody?.trim() || (ev.description ?? "");
-            for (const signup of sups) {
-              const unsub = `${APP_BASE_URL}/schedule?unsubscribe=${eventId}&email=${encodeURIComponent(signup.email)}`;
-              const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-                <div style="background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-                  <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-                  <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Event reminder</p>
-                </div>
-                <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
-                  <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${ev.title}</h2>
-                  <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${d} at ${tm}</p>
-                  ${body ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${body}</p>` : ""}
-                  <a href="${jUrl}" style="display:inline-block;background:${jColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${jLabel}</a>
-                  <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
-                </div>
-                <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-                  <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder for this event.<br/>
-                  <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${unsub}" style="color:#999;">Unsubscribe from this event</a></p>
-                </div>
-              </div>`;
-              await sendEmail({ to: [signup.email], subject: subj, html, template: "event_reminder" })
-                .catch(err => console.error(`[events.sendReminders:scheduled] error for ${signup.email}:`, err));
-            }
-            await db2.update(events).set({ reminderSent: 1 }).where(eq(events.id, eventId));
-            console.log(`[events.sendReminders:scheduled] Sent ${sups.length} reminders for event #${eventId}`);
-          } catch (err) {
-            console.error(`[events.sendReminders:scheduled] Error for event #${eventId}:`, err);
-          }
-        }, delayMs);
+        await database
+          .update(events)
+          .set({
+            reminderScheduledFor: new Date(scheduledTime),
+            reminderCustomSubject: input.customSubject?.trim() || null,
+            reminderCustomBody: input.customBody?.trim() || null,
+            reminderSent: 0,
+          })
+          .where(eq(events.id, input.id));
+        console.log(`[events.sendReminders] Persisted scheduled reminder for event #${input.id} at ${input.scheduledFor}`);
 
         return { sent: 0, scheduled: true, scheduledFor: input.scheduledFor };
       }

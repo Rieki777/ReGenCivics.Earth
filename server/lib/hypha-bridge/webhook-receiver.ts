@@ -258,9 +258,76 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
         log.error("cascadeClaimFailed top-level error", err),
       );
     }
+    // C1 compensating debit: a redeem claim that was already refunded
+    // (claim_released, e.g. by the nightly stale-cleanup) but then actually
+    // executed on-chain. The transition CAS above refuses to flip a
+    // cancelled/failed bridge to passed, so no double-cascade — but the user
+    // now holds BOTH the refunded private balance and the real Base tokens.
+    // Reverse the refund so the ledger reflects reality.
+    if (
+      (event.type === "ProposalExecuted" || event.type === "Transfer") &&
+      !claimedPassed &&
+      bridgeSource === "redeem_tokens" &&
+      ((bridgeRow as any).status === "cancelled" || (bridgeRow as any).status === "failed")
+    ) {
+      reconcileRefundedThenConfirmed(bridgeRow).catch((err: any) =>
+        log.error("reconcileRefundedThenConfirmed top-level error", err),
+      );
+    }
   }
 
   return { matched: true, bridgeKey };
+}
+
+/**
+ * A redeem claim was refunded (claim_released) and later confirmed on-chain.
+ * Debit the refunded amount back out so the user doesn't keep both the refund
+ * and the real tokens. Idempotent via idempotencyKey; no-op if there was no
+ * refund to reverse.
+ */
+async function reconcileRefundedThenConfirmed(bridgeRow: any): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const { userTokenLedger } = await import("../../../drizzle/schema");
+  const { eq: eqDrizzle, and: andDrizzle } = await import("drizzle-orm");
+
+  // Only compensate if a refund actually exists for this bridge.
+  const refund = await db
+    .select({ id: userTokenLedger.id })
+    .from(userTokenLedger)
+    .where(andDrizzle(
+      eqDrizzle(userTokenLedger.sourceRef, `bridge:${bridgeRow.bridgeKey}`),
+      eqDrizzle(userTokenLedger.source, "claim_released"),
+    ))
+    .limit(1)
+    .catch(() => []);
+  if (refund.length === 0) return;
+
+  let payload: any = null;
+  try {
+    payload = typeof bridgeRow.payload === "string" ? JSON.parse(bridgeRow.payload) : bridgeRow.payload;
+  } catch { /* ignore */ }
+  const tokenType = payload?.metadata?.tokenType as ("rgvoice" | "regen" | "rcvoice" | "rcivics" | undefined);
+  const requestedAmount = Number(payload?.metadata?.requestedAmount ?? 0);
+  if (!tokenType || requestedAmount <= 0) return;
+
+  const { creditPrivateTokens } = await import("../../db");
+  await creditPrivateTokens({
+    userId: bridgeRow.initiatorUserId,
+    tokenType,
+    amount: -requestedAmount,
+    source: "claim_reconciled_debit",
+    sourceId: bridgeRow.id,
+    sourceRef: `bridge:${bridgeRow.bridgeKey}`,
+    // Once-only: only ever reverse the refund a single time for this bridge.
+    idempotencyKey: `claim_reconciled_debit:${bridgeRow.bridgeKey}`,
+    description: `Claim was refunded but later confirmed on-chain; refund reversed`,
+  }).catch((err: any) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!/duplicate/i.test(msg) && !/unique/i.test(msg)) {
+      log.error("reconcileRefundedThenConfirmed: debit failed", err);
+    }
+  });
 }
 
 /**
