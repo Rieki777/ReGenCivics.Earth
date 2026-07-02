@@ -6,14 +6,21 @@ import { TRPCError } from "@trpc/server";
 import { eq, and, like, or, desc, sql, count } from "drizzle-orm";
 import { seedsClaims, seedsContributions } from "../../drizzle/schema";
 
-// $ReGen credited per $1 USD of SEEDS contribution. The claim amount is
-// ALWAYS derived from this server-side constant times the authoritative USD
-// total; it is never taken from client input (that was an unauthenticated
-// minting hole). NOTE: SEEDS_CLAIM_SPEC.md and the claim page copy say 100,
-// but the shipped credit path has always used 1:1 — the effective live rate.
-// Changing this multiplies every future credit, so it is a deliberate
-// economics decision for Rye, tracked separately, not a silent code change.
-const SEEDS_REGEN_PER_USD = 1;
+import { getGameVariable } from "../game";
+import { SEEDS_REGEN_PER_USD as SEEDS_REGEN_PER_USD_FALLBACK } from "@shared/gameMechanics";
+
+// $ReGen credited per $1 USD of SEEDS contribution. Read from the
+// `seeds.regen_per_usd` game variable (tunable in the admin UI) so the claim
+// page and the credit path share one source of truth. The claim amount is
+// ALWAYS derived server-side as authoritative USD * this rate; it is never
+// taken from client input (that was the unauthenticated minting hole).
+async function getSeedsRegenPerUsd(): Promise<number> {
+  try {
+    return await getGameVariable("seeds.regen_per_usd");
+  } catch {
+    return SEEDS_REGEN_PER_USD_FALLBACK;
+  }
+}
 
 // Validation schemas
 const seedsAccountSchema = z
@@ -138,8 +145,9 @@ export const seedsClaimsRouter = router({
       const maxClaimable = serverTotalUsd - spentUsdAmount;
       // Claimed amount is clamped to what they're actually entitled to.
       const claimedUsdAmount = Math.min(Math.max(input.claimedUsdAmount, 0), maxClaimable);
-      // $ReGen is DERIVED, never taken from input.
-      const regenAmount = claimedUsdAmount * SEEDS_REGEN_PER_USD;
+      // $ReGen is DERIVED from the live rate, never taken from input.
+      const regenPerUsd = await getSeedsRegenPerUsd();
+      const regenAmount = claimedUsdAmount * regenPerUsd;
 
       const currentUserId: number | null = ctx.user?.id ?? null;
 

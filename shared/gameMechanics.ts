@@ -20,11 +20,10 @@ import {
 // Mean synodic lunar month. The gratitude/harvest cadence is one lunar cycle.
 export const LUNAR_CYCLE_DAYS = 29.53;
 
-// $ReGen credited per $1 USD of SEEDS contribution. Mirrors the server-side
-// constant in server/routes/seedsClaims.ts. See the note there: spec says 100,
-// the shipped credit path uses 1:1 — changing it is a deliberate economics
-// decision, so both sides read this one constant.
-export const SEEDS_REGEN_PER_USD = 1;
+// Fallback for the SEEDS -> $ReGen claim rate ($ReGen per $1 USD) when the
+// `seeds.regen_per_usd` game variable is missing. Live value is tunable in the
+// admin UI. Decision (2026-07-02): $ReGen = $0.10, so the rate is 10.
+export const SEEDS_REGEN_PER_USD = 10;
 
 /**
  * Every game_variables key the snapshot exposes, with the value to fall back
@@ -73,6 +72,8 @@ export const MECHANICS_VARIABLE_FALLBACKS: Record<string, number> = {
   "plays.adoption_reward": 500,
   "hymnSubmissionWinnerReward": 3333,
   "trust.composting_rate": 5,
+  // SEEDS -> $ReGen claim rate ($ReGen per $1 USD)
+  "seeds.regen_per_usd": SEEDS_REGEN_PER_USD,
 };
 
 export const MECHANICS_VARIABLE_KEYS = Object.keys(MECHANICS_VARIABLE_FALLBACKS);
@@ -222,7 +223,7 @@ export function buildGameMechanicsSnapshot(
     rewards: {
       playAdoption: get("plays.adoption_reward"),
       hymnWinner: get("hymnSubmissionWinnerReward"),
-      seedsRegenPerUsd: SEEDS_REGEN_PER_USD,
+      seedsRegenPerUsd: get("seeds.regen_per_usd"),
     },
     meta: {
       lunarCycleDays: LUNAR_CYCLE_DAYS,

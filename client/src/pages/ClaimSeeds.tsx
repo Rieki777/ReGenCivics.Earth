@@ -11,6 +11,7 @@
 import { useState, useEffect, useRef } from "react";
 import { PageWrapper } from "@/components/PageWrapper";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useGameMechanics } from "@/hooks/useGameMechanics";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -97,6 +98,11 @@ const INITIAL_FORM_DATA: ClaimFormData = {
 
 export default function ClaimSeeds() {
   const { isAuthenticated, user } = useAuth();
+  // Live SEEDS -> $ReGen rate from the server (seeds.regen_per_usd game
+  // variable). Display and the submitted amount both use it, so what the
+  // claimant is shown always matches what the server credits.
+  const { mechanics } = useGameMechanics();
+  const regenPerUsd = mechanics?.rewards.seedsRegenPerUsd ?? 10;
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<ClaimFormData>(() => {
     const draft = loadDraft();
@@ -214,7 +220,7 @@ export default function ClaimSeeds() {
     );
   };
 
-  const regenAmount = (formData.adjustedUsd || 0) * 100;
+  const regenAmount = (formData.adjustedUsd || 0) * regenPerUsd;
 
   if (isSubmitted) {
     return (
@@ -388,7 +394,7 @@ export default function ClaimSeeds() {
                   <p className="text-sm font-medium text-foreground">Original USD Contribution</p>
                   <p className="text-3xl font-bold text-primary">${formData.totalUsd.toFixed(2)}</p>
                   <p className="text-sm text-primary">
-                    Equivalent: {(formData.totalUsd * 100).toLocaleString()} $ReGen tokens
+                    Equivalent: {(formData.totalUsd * regenPerUsd).toLocaleString()} $ReGen tokens
                   </p>
                 </div>
 
@@ -560,7 +566,7 @@ export default function ClaimSeeds() {
                     placeholder="0.00"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Equivalent: {(formData.spentAmount * 100).toLocaleString()} $ReGen tokens
+                    Equivalent: {(formData.spentAmount * regenPerUsd).toLocaleString()} $ReGen tokens
                   </p>
                 </div>
 
@@ -840,7 +846,7 @@ export default function ClaimSeeds() {
                         originalUsdTotal: formData.totalUsd,
                         spentUsdAmount: formData.spentAmount,
                         claimedUsdAmount: formData.adjustedUsd,
-                        regenAmount: formData.adjustedUsd, // 1:1 USD to $ReGen
+                        regenAmount: formData.adjustedUsd * regenPerUsd, // advisory; server re-derives from the live rate
                         baseWalletAddress: formData.baseWalletAddress,
                         isDispute: formData.isOnDisputePath,
                         disputeReason: formData.disputeExplanation || undefined,

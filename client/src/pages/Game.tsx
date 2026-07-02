@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
+import { useGameMechanics } from "@/hooks/useGameMechanics";
 // State for Why Games dropdown
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -245,6 +246,8 @@ function TypewriterText({ className }: { className?: string }) {
 }
 
 export default function Game() {
+  const { mechanics } = useGameMechanics();
+  const seedsRegenPerUsd = mechanics?.rewards.seedsRegenPerUsd ?? 10;
   const [whatIsGameOpen, setWhatIsGameOpen] = useState(false);
   const [whyOpen, setWhyOpen] = useState(false);
   const [infiniteOpen, setInfiniteOpen] = useState(false);
@@ -844,7 +847,7 @@ export default function Game() {
                   </p>
                   <div className="bg-white p-3 rounded-lg border border-amber-300">
                     <p className="text-sm font-semibold text-amber-700">
-                      💰 Receive <span className="text-lg">100 tokens</span> per $1 contributed
+                      💰 Receive <span className="text-lg">{seedsRegenPerUsd} tokens</span> per $1 contributed
                     </p>
                   </div>
                 </div>

@@ -8,7 +8,7 @@
 
 ## Overview
 
-People who bought SEEDS tokens on the Telos blockchain can claim $ReGen tokens on Base (via Hypha). The conversion rate is **100 $ReGen per $1 USD contributed**. Claims are open from now until the **September 2026 equinox** (September 22, 2026). After the deadline, unclaimed tokens are forfeited.
+People who bought SEEDS tokens on the Telos blockchain can claim $ReGen tokens on Base (via Hypha). $ReGen is valued at **$0.10**, so the conversion rate is **10 $ReGen per $1 USD contributed** (x10). The rate is held in the `seeds.regen_per_usd` game variable and shown live on the claim page, so retuning it is an admin edit, not a code change. Claims are open from now until the **September 2026 equinox** (September 22, 2026). After the deadline, unclaimed tokens are forfeited.
 
 We have a CSV of 1,372 transactions across 801 unique accounts totaling ~$845,427 USD. This data comes from the `tlosto.seeds` contract on Telos. After the claim window closes, Rye will verify all claims against the live blockchain, then mint $ReGen in one batch.
 
