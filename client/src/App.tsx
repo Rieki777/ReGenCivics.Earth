@@ -26,8 +26,10 @@ function lazyWithRetry<T extends ComponentType<any>>(
 }
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Navigation from "./components/Navigation";
-import { MycelialBackground } from "./components/MycelialBackground";
-import { AnimationLayer } from "./components/AnimationLayer";
+// Decorative shell layers — lazy so they stay out of the initial bundle and
+// don't delay first paint. They're purely ambient, so a null fallback is fine.
+const MycelialBackground = lazy(() => import("./components/MycelialBackground").then(m => ({ default: m.MycelialBackground })));
+const AnimationLayer = lazy(() => import("./components/AnimationLayer").then(m => ({ default: m.AnimationLayer })));
 import { WizardRadialMenu } from "./components/mobile/WizardRadialMenu";
 import { MobileMoreMenu } from "./components/mobile/MobileMoreMenu";
 import { StructuredData } from "./components/StructuredData";
@@ -447,8 +449,12 @@ function MainApp() {
             </a>
           )}
           {!adminMode && <div className={`seasonal-wash seasonal-wash--${getCurrentSeason()}`} />}
-          {!adminMode && <MycelialBackground />}
-          {!adminMode && <AnimationLayer />}
+          {!adminMode && (
+            <Suspense fallback={null}>
+              <MycelialBackground />
+              <AnimationLayer />
+            </Suspense>
+          )}
           {!adminMode && <AMABanner />}
           {!adminMode && <Navigation />}
           <main id="main-content" className="pb-20">

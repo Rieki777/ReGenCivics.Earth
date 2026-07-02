@@ -29,8 +29,10 @@ export function LinkPreviewCard({ url, title, description, image, siteName, load
   if (!title) return null;
 
   return (
-    <div
-      onClick={() => window.open(url, '_blank', 'noopener')}
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
       className="flex bg-white/5 border border-white/10 rounded-lg overflow-hidden hover:border-[#7dd87d]/30 transition-colors cursor-pointer mt-3"
     >
       {image && (
@@ -56,6 +58,6 @@ export function LinkPreviewCard({ url, title, description, image, siteName, load
           </p>
         )}
       </div>
-    </div>
+    </a>
   );
 }
