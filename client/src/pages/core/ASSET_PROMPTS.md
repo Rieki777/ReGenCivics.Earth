@@ -90,6 +90,14 @@ All six: Composition square 1:1 | Resolution 2K | Output widths 800, 480 | Aspec
 - Prompt (preamble + this):
 > Vertical 3:4 portrait composition. A symbolic, non-identifiable figure standing barefoot in a sunlit cedar forest, seen softly from behind or in gentle silhouette, long hair catching golden light, one hand resting on a tall cedar whose bark holds a faint thread of bioluminescent moss. Ferns, small mushrooms, and wildflowers grow at the roots, and a deer or fox is glimpsed softly in the background. She reads as a spirit of the forest and the land rather than a portrait of any specific person. Fully human, no pointed ears. Do not show a clear, recognizable face. Serene, luminous, timeless.
 
+## 9b. Elders (Yeshua)
+- File: `elders-yeshua` | Composition: vertical 3:4 portrait | Resolution: 4K | Output widths 900, 600 | Aspect target 3:4
+- Used: Elders page, the Yeshua profile block.
+- IMPORTANT: symbolic and non-identifiable. Do not depict a specific, recognizable real person, and do not use the iconic conventional image of Jesus. Represent a spirit of peace and the living law of love.
+- Alt: "A symbolic figure walking a sunlit path through a green garden at dawn, seen softly."
+- Prompt (preamble + this):
+> Vertical 3:4 portrait composition. A symbolic, non-identifiable male figure walking a sunlit path through a green garden at dawn, seen softly from behind or in gentle silhouette, robed in simple flowing cloth, one hand open at his side. Around him a thriving garden of fig and olive trees heavy with fruit, running water catching the light, doves and small birds, a faint bioluminescent glow in the moss along the path. He reads as a spirit of peace and the living law of love rather than a portrait of any specific person. Fully human. Do not show a clear, recognizable face, and do not depict the iconic conventional image of Jesus. Calm, luminous, timeless.
+
 ## 10. Donate
 - File: `donate-seed-to-tree` | Composition: wide 16:9 | Resolution: 2K | Output widths 1600, 1000, 640 | Aspect target 16:9
 - Used: Donate page hero.
