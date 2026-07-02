@@ -23,7 +23,6 @@ export interface LivingTreeV2Props {
   currentSeasonActions?: number;
   width?: number;
   height?: number;
-  showRootLabels?: boolean;
   /** Override the base plate URL (for local dev before R2 upload). */
   basePlateSrc?: string;
 }
@@ -63,18 +62,6 @@ const ROOT_COLORS: Record<keyof CapitalScores, string> = {
   spiritual:    "#A78BFA",
   experiential: "#14B8A6",
   healthVital:  "#F43F5E",
-};
-
-const CAPITAL_LABELS: Record<keyof CapitalScores, string> = {
-  intellectual: "Intellectual",
-  social:       "Social",
-  material:     "Material",
-  financial:    "Financial",
-  living:       "Living",
-  cultural:     "Cultural",
-  spiritual:    "Spiritual",
-  experiential: "Experiential",
-  healthVital:  "Health & Vitality",
 };
 
 /** Seasonal flower palette (bioluminescent hues per season). */
@@ -194,7 +181,6 @@ export function LivingTreeV2({
   currentSeasonActions = 0,
   width = 300,
   height = 400,
-  showRootLabels = false,
   basePlateSrc,
 }: LivingTreeV2Props) {
   const [imgError, setImgError] = useState(false);
@@ -233,7 +219,6 @@ export function LivingTreeV2({
         currentSeasonActions={currentSeasonActions}
         width={width}
         height={height}
-        showRootLabels={showRootLabels}
       />
     );
   }
@@ -324,20 +309,6 @@ export function LivingTreeV2({
                 fill={r.color}
                 opacity={r.opacity * 0.9}
               />
-            )}
-            {/* Root label (shown in detail modal) */}
-            {showRootLabels && (
-              <text
-                x={r.x2}
-                y={r.y2 + 13}
-                textAnchor="middle"
-                fontSize={8}
-                fill={r.color}
-                opacity={0.9}
-                style={{ fontFamily: "var(--font-accent, sans-serif)" }}
-              >
-                {CAPITAL_LABELS[r.key]}
-              </text>
             )}
           </g>
         ))}

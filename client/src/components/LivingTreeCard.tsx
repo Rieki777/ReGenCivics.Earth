@@ -186,7 +186,6 @@ export function LivingTreeCard() {
                     currentSeasonActions={Math.min(total, 16)}
                     width={320}
                     height={440}
-                    showRootLabels
                   />
                 </div>
                 <div className="space-y-2">
