@@ -6,6 +6,7 @@
  * shared link previews well.
  */
 import { useParams, Link } from "wouter";
+import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -136,7 +137,7 @@ export default function BountyDetail() {
                     Claim {role.role}
                   </Button>
                 ) : (
-                  <Link key={role.id} href="/login" className="text-[#7dd87d] hover:underline text-sm">Sign in to claim</Link>
+                  <a key={role.id} href={getLoginUrl()} className="text-[#7dd87d] hover:underline text-sm">Sign in to claim</a>
                 )
               ))}
             </div>

@@ -4,8 +4,10 @@
  *
  * Scans client/src for internal navigation targets and in-page anchors, then
  * verifies every one resolves:
- *   - internal route links must match a <Route path> in client/src/App.tsx
- *     (static or :param), or be a real static file under client/public.
+ *   - internal route links must match a <Route path> in the app route trees
+ *     (client/src/App.tsx for the main site, plus client/src/pages/core/CoreApp.tsx
+ *     for the core.regencivics.earth subdomain), or be a real static file under
+ *     client/public.
  *   - #fragment links must have a matching id / name / getElementById somewhere
  *     in the source (a place they can land).
  *
@@ -23,26 +25,33 @@ import { dirname, join, extname, resolve } from "node:path";
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = join(repo, "client/src");
 const publicDir = join(repo, "client/public");
-const appTsx = join(srcDir, "App.tsx");
+// Every file that declares a <Route path> route tree. The CORE subdomain
+// (core.regencivics.earth) has its own Switch in CoreApp.tsx, so its routes
+// (/faith, /donate, /elders, ...) live there, not in App.tsx. They are real
+// routes on that host; the main site never links to them.
+const routeFiles = [join(srcDir, "App.tsx"), join(srcDir, "pages/core/CoreApp.tsx")];
 
 // --- Allowlist: links that are known-acceptable and should not fail the gate.
 // Keep this short and justified. Each entry is matched against the raw link.
 const ALLOW = [];
 
-// --- 1. Build the route table from App.tsx <Route path="..."> declarations.
-const appSrc = readFileSync(appTsx, "utf8");
+// --- 1. Build the route table from every route tree's <Route path="..."> decls.
 const staticRoutes = new Set();
 const paramMatchers = [];
-for (const m of appSrc.matchAll(/<Route\s+path=(?:\{)?["'`]([^"'`]+)["'`]/g)) {
-  const p = m[1];
-  if (p.includes(":")) {
-    const rx =
-      "^" +
-      p.replace(/:[^/]+\?/g, "[^/]*").replace(/:[^/]+/g, "[^/]+").replace(/\//g, "\\/") +
-      "\\/?$";
-    paramMatchers.push(new RegExp(rx));
-  } else {
-    staticRoutes.add((p.replace(/\/$/, "") || "/"));
+for (const rf of routeFiles) {
+  if (!existsSync(rf)) continue;
+  const routeSrc = readFileSync(rf, "utf8");
+  for (const m of routeSrc.matchAll(/<Route\s+path=(?:\{)?["'`]([^"'`]+)["'`]/g)) {
+    const p = m[1];
+    if (p.includes(":")) {
+      const rx =
+        "^" +
+        p.replace(/:[^/]+\?/g, "[^/]*").replace(/:[^/]+/g, "[^/]+").replace(/\//g, "\\/") +
+        "\\/?$";
+      paramMatchers.push(new RegExp(rx));
+    } else {
+      staticRoutes.add((p.replace(/\/$/, "") || "/"));
+    }
   }
 }
 
