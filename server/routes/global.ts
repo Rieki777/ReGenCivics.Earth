@@ -220,6 +220,48 @@ export function registerImageOptimization(app: Express) {
         buffer = Buffer.from(await upstream.arrayBuffer());
       }
 
+      // ── Fast path for pre-optimized CORE assets ──────────────────────────
+      // CORE illustrations are uploaded to R2 as .webp AND .avif at every
+      // registered width (scripts/process-core-assets.ts), so re-encoding them
+      // here is redundant. Worse: when a CORE page loads it fires ~6-10 <img>
+      // requests at once, all sending `Accept: image/avif,...`, so each takes
+      // the sharp AVIF branch below. Those encodes saturate the CPU and the
+      // requests hang long enough that the browser gives up and CoreImage
+      // falls back to nothing. So for these, stream the pre-made file straight
+      // from R2 with no sharp re-encode: the browser gets AVIF when it accepts
+      // it, WebP otherwise, in milliseconds.
+      if (
+        parsedUrl.hostname === 'assets.regencivics.earth' &&
+        /^\/?core\/[^/]+\.webp$/i.test(parsedUrl.pathname)
+      ) {
+        const webpKey = parsedUrl.pathname.replace(/^\/+/, '');
+        const readKey = async (key: string): Promise<Buffer | null> => {
+          try {
+            const { body } = await storageStream(key);
+            const chunks: Buffer[] = [];
+            for await (const chunk of body) {
+              chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+            }
+            return Buffer.concat(chunks);
+          } catch {
+            return null;
+          }
+        };
+        let out: Buffer | null = null;
+        let ct = 'image/webp';
+        if ((req.headers.accept || '').includes('image/avif')) {
+          out = await readKey(webpKey.replace(/\.webp$/i, '.avif'));
+          if (out) ct = 'image/avif';
+        }
+        if (!out) out = buffer; // the .webp we already fetched above
+        res.set({
+          'Content-Type': ct,
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          'Vary': 'Accept',
+        });
+        return res.send(out);
+      }
+
       const accept = req.headers.accept || '';
       const supportsAvif = accept.includes('image/avif');
       const supportsWebp = accept.includes('image/webp');
