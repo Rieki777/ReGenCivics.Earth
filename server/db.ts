@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schemaTables from "../drizzle/schema";
 import * as schemaRelations from "../drizzle/relations";
-import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
+import { applications, InsertApplication, InsertReview, InsertUser, reviews, users, savedContributions, InsertSavedContribution, SavedContribution, campaigns, Campaign, campaignItems, CampaignItem, campaignContributions, CampaignContribution, InsertCampaignContribution, campaignAnalytics, InsertCampaignAnalytic, userNotifications, InsertUserNotification, UserNotification, notifications, Notification, letterOfIntent, InsertLetterOfIntent, LetterOfIntent, notificationPreferences, NotificationPreferences, InsertNotificationPreferences, emailTemplates, EmailTemplate, InsertEmailTemplate, campaignImages, CampaignImage, InsertCampaignImage, forumCategories, ForumCategory, forumPosts, ForumPost, forumReplies, ForumReply, forumLikes, ForumLike, forumReports, ForumReport, forumModerators, ForumModerator, forumBans, ForumBan, questSuggestions, QuestSuggestion, questSuggestionVotes, QuestSuggestionVote, translationCache, TranslationCacheEntry, userProfiles, UserProfile, emailTokens, InsertEmailToken, EmailToken, projectJoinRequests, ProjectJoinRequest, InsertProjectJoinRequest, orgClaims, OrgClaim, InsertOrgClaim, projectConnections, InsertProjectConnection, ProjectConnection, digests, Digest, glossaryTerms, GlossaryTerm, InsertGlossaryTerm, knowledgeMapEntries, KnowledgeMapEntry, InsertKnowledgeMapEntry, siteSettings, questCompletions, QuestCompletion, InsertQuestCompletion, bannedEmails, adminAuditLog, InsertAdminAuditLog, eventAttendance, EventAttendance, InsertEventAttendance, regenTokenLedger, RegenTokenLedger, InsertRegenTokenLedger, communityAgreements, CommunityAgreement, communityAgreementVotes, CommunityAgreementVote } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 /**
@@ -1854,8 +1854,42 @@ export async function getCampaignConversionRate(campaignId: number): Promise<{
 // ============================================
 // User Notifications Queries
 // ============================================
+// As of migration 0162, all in-app notifications live in the consolidated
+// `notifications` table (user_notifications rows were back-filled there).
+// These helpers keep their legacy names so existing writers (campaigns,
+// hypha-bridge webhooks) work unchanged.
 
-export async function createUserNotification(data: InsertUserNotification): Promise<number> {
+/** Legacy type → in-app destination, mirroring the old NotificationBell map.
+ * New forum notifications set an explicit deep link instead. */
+function legacyNotificationLink(type: string, campaignId?: number | null): string | null {
+  switch (type) {
+    case 'contribution_accepted':
+    case 'contribution_rejected':
+    case 'new_contribution':
+      return '/profile?tab=contributions';
+    case 'campaign_milestone':
+      return campaignId ? `/campaigns/${campaignId}` : '/crowdpooling';
+    case 'quest_complete':
+      return '/quest';
+    case 'claim_complete':
+    case 'claim_failed':
+      return '/profile';
+    default:
+      return null;
+  }
+}
+
+const NOTIFICATION_TYPES = new Set(notifications.type.enumValues as readonly string[]);
+
+export async function createUserNotification(data: {
+  userId: number;
+  type: string;
+  title: string;
+  message: string;
+  campaignId?: number | null;
+  contributionId?: number | null;
+  link?: string | null;
+}): Promise<number> {
   // Skip writing in-app notifications during test runs to prevent test data leaking to real users
   if (process.env.VITEST || process.env.NODE_ENV === 'test') {
     return 0;
@@ -1863,14 +1897,23 @@ export async function createUserNotification(data: InsertUserNotification): Prom
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(userNotifications).values(data);
+  const result = await db.insert(notifications).values({
+    userId: data.userId,
+    // Unknown types land as 'system' instead of failing the enum.
+    type: (NOTIFICATION_TYPES.has(data.type) ? data.type : 'system') as typeof notifications.$inferInsert.type,
+    title: data.title,
+    body: data.message,
+    link: data.link ?? legacyNotificationLink(data.type, data.campaignId),
+    campaignId: data.campaignId ?? null,
+    contributionId: data.contributionId ?? null,
+  });
 
   // Push an SSE invalidate event so the recipient's UI updates without
   // waiting for the polling fallback. Lazy import to avoid pulling the
   // SSE broadcaster into test contexts.
   if (data.userId) {
     import('./_core/sse')
-      .then(({ pushToUser }) => pushToUser(data.userId as number, {
+      .then(({ pushToUser }) => pushToUser(data.userId, {
         type: 'invalidate',
         keys: ['notifications', 'unreadCount'],
       }))
@@ -1880,49 +1923,49 @@ export async function createUserNotification(data: InsertUserNotification): Prom
   return result[0].insertId;
 }
 
-export async function getUserNotifications(userId: number, limit = 50): Promise<UserNotification[]> {
+export async function getUserNotifications(userId: number, limit = 50): Promise<Notification[]> {
   const db = await getDb();
   if (!db) return [];
-  
-  return db.select().from(userNotifications)
-    .where(eq(userNotifications.userId, userId))
-    .orderBy(desc(userNotifications.createdAt))
+
+  return db.select().from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt), desc(notifications.id))
     .limit(limit);
 }
 
 export async function getUnreadNotificationCount(userId: number): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
-  
-  const result = await db.select().from(userNotifications)
-    .where(and(eq(userNotifications.userId, userId), eq(userNotifications.read, false)));
-  return result.length;
+
+  const result = await db.select({ c: sql<number>`COUNT(*)` }).from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, 0)));
+  return Number(result[0]?.c ?? 0);
 }
 
 export async function markNotificationAsRead(id: number, userId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  await db.update(userNotifications)
-    .set({ read: true })
-    .where(and(eq(userNotifications.id, id), eq(userNotifications.userId, userId)));
+
+  await db.update(notifications)
+    .set({ isRead: 1 })
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
 }
 
 export async function markAllNotificationsAsRead(userId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  await db.update(userNotifications)
-    .set({ read: true })
-    .where(eq(userNotifications.userId, userId));
+
+  await db.update(notifications)
+    .set({ isRead: 1 })
+    .where(eq(notifications.userId, userId));
 }
 
 export async function deleteNotification(id: number, userId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  await db.delete(userNotifications)
-    .where(and(eq(userNotifications.id, id), eq(userNotifications.userId, userId)));
+
+  await db.delete(notifications)
+    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
 }
 
 

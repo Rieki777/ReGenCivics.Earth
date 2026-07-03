@@ -5,13 +5,20 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { eq, sql, count, and, desc } from "drizzle-orm";
-import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, ForumCategory, forumPerspectives } from "../../drizzle/schema";
+import { forumPosts, forumReplies, forumCategories, postReactions, bioregions, ForumCategory, forumPerspectives, notifications, forumSubscriptions, forumUserMutes } from "../../drizzle/schema";
 import { sanitizeInput } from "../_core/security";
 import { assertSafeExternalUrl } from "../_core/ssrf";
 import { cacheGet, cacheSet, cacheDel } from "../cache";
 import { generateImage } from "../_core/imageGeneration";
 import ogs from "open-graph-scraper";
 import { maybePostVideoSummary } from "../lib/videoSummary";
+import {
+  handleForumPostCreated,
+  handleForumPostEdited,
+  handleForumReplyCreated,
+  handleReactionAdded,
+  handleGovernanceStage,
+} from "../lib/forum-notify";
 
 // In-memory cache for link preview OG data (TTL 24 hours)
 const linkPreviewCache = new Map<string, { data: any; timestamp: number }>();
@@ -485,17 +492,26 @@ export const forumRouter = router({
       if (input.postType === "case_study" && !tags.includes("lesson")) {
         tags = [...tags, "lesson"];
       }
+      const cleanTitle = sanitizeInput(input.title);
+      const cleanContent = sanitizeInput(input.content);
       const postId = await db.createForumPost({
         categoryId: input.categoryId,
         authorId: ctx.user.id,
-        title: sanitizeInput(input.title),
-        content: sanitizeInput(input.content),
+        title: cleanTitle,
+        content: cleanContent,
         tags,
         postType: input.postType,
         threadStage: input.threadStage,
         chainId: input.chainId,
         bioregionId: input.bioregionId,
       });
+      // Fire-and-forget notification fan-out (@mentions, author auto-follow).
+      handleForumPostCreated({
+        postId,
+        authorId: ctx.user.id,
+        title: cleanTitle,
+        content: cleanContent,
+      }).catch((err) => console.error(`[forum.createPost] notify fan-out failed for ${postId}`, err));
       // Fire-and-forget image generation -- don't block mutation response
       generateImage({
         contentType: "forum",
@@ -546,12 +562,22 @@ export const forumRouter = router({
       parentReplyId: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const cleanContent = sanitizeInput(input.content);
       const replyId = await db.createForumReply({
         postId: input.postId,
         authorId: ctx.user.id,
-        content: sanitizeInput(input.content),
+        content: cleanContent,
         parentReplyId: input.parentReplyId,
       });
+      // Fire-and-forget fan-out: mentions, post author, parent-reply author,
+      // thread followers. Never blocks the mutation response.
+      handleForumReplyCreated({
+        replyId,
+        postId: input.postId,
+        parentReplyId: input.parentReplyId ?? null,
+        authorId: ctx.user.id,
+        content: cleanContent,
+      }).catch((err) => console.error(`[forum.createReply] notify fan-out failed for ${replyId}`, err));
       return { id: replyId };
     }),
 
@@ -585,9 +611,20 @@ export const forumRouter = router({
       if (post.authorId !== ctx.user.id && !isAdminOrSuper) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized to edit this post' });
       }
-      const updateData: any = { title: input.title, content: input.content };
+      // Same sanitizer chokepoint as createPost (edits previously bypassed it).
+      const cleanTitle = sanitizeInput(input.title);
+      const cleanContent = sanitizeInput(input.content);
+      const updateData: any = { title: cleanTitle, content: cleanContent };
       if (input.generatedImageUrl !== undefined) updateData.generatedImageUrl = input.generatedImageUrl;
       await db.updateForumPost(input.id, updateData);
+      // Re-parse mentions; only handles new to this post notify (unique key
+      // in forum_mentions makes the re-parse idempotent).
+      handleForumPostEdited({
+        postId: input.id,
+        authorId: post.authorId,
+        title: cleanTitle,
+        content: cleanContent,
+      }).catch((err) => console.error(`[forum.updatePost] notify fan-out failed for ${input.id}`, err));
       return { success: true };
     }),
 
@@ -791,6 +828,13 @@ export const forumRouter = router({
             emoji: input.emoji,
             reactionWeight: weight,
           });
+          // Milestone notification (1st, 5th, 10th, 25th reaction), computed
+          // at toggle time; never one notification per reaction.
+          handleReactionAdded({
+            actorId: ctx.user.id,
+            postId: input.postId ?? null,
+            replyId: input.replyId ?? null,
+          }).catch((err) => console.error('[forum.reactions] milestone fan-out failed', err));
           return { reacted: true };
         }
       }),
@@ -851,13 +895,22 @@ export const forumRouter = router({
       if (userTier < minTier) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You need a higher citizenship tier to enter Sensing." });
       }
-      await dbd.execute(
+      const [updateResult]: any = await dbd.execute(
         sql`UPDATE forumPosts
             SET governanceStage = 'sensing',
                 sensingStartedAt = COALESCE(sensingStartedAt, NOW()),
                 sensingStartedBy = COALESCE(sensingStartedBy, ${ctx.user.id})
             WHERE id = ${input.threadId} AND governanceStage = 'dialogue'`
       );
+      // Notify thread followers only when the stage actually transitioned
+      // (the WHERE clause makes repeat calls no-ops).
+      if ((updateResult?.affectedRows ?? 0) > 0) {
+        handleGovernanceStage({
+          postId: input.threadId,
+          stage: 'sensing',
+          actorId: ctx.user.id,
+        }).catch((err) => console.error('[forum.enterSensing] notify fan-out failed', err));
+      }
       return { ok: true };
     }),
 
@@ -1153,12 +1206,109 @@ export const moderationRouter = router({
   }),
 });
 
+/** A notification as served to the client: the raw row plus actor identity
+ * and grouping ("3 new replies on X" collapses to one item). */
+export interface NotificationListItem {
+  id: number;
+  type: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  isRead: number;
+  postId: number | null;
+  replyId: number | null;
+  createdAt: Date;
+  actor: { id: number; name: string; avatarUrl: string | null } | null;
+  /** Total collapsed events (1 = not grouped). */
+  groupCount: number;
+  /** Up to 3 distinct actors across the group, newest first. */
+  actors: { id: number; name: string; avatarUrl: string | null }[];
+}
+
+/** Types that collapse into one bell item per (type, postId) within a page. */
+const GROUPABLE_TYPES = new Set(["thread_followed_activity", "forum_reply"]);
+const GROUP_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 export const notificationsRouter = router({
-  // Get user's notifications
+  // Cursor-paginated notifications, actor-enriched and grouped.
   list: protectedProcedure
-    .input(z.object({ limit: z.number().optional() }).optional())
+    .input(z.object({
+      cursor: z.number().optional(), // last notification ID seen
+      limit: z.number().min(1).max(100).default(20),
+      unreadOnly: z.boolean().optional(),
+      types: z.array(z.string()).optional(), // filter chips on /notifications
+    }).optional())
     .query(async ({ ctx, input }) => {
-      return await db.getUserNotifications(ctx.user.id, input?.limit || 50);
+      const limit = input?.limit ?? 20;
+      const db2 = await getDb();
+      if (!db2) return { items: [] as NotificationListItem[], nextCursor: null as number | null };
+
+      const conditions = [eq(notifications.userId, ctx.user.id)];
+      if (input?.cursor !== undefined) conditions.push(sql`${notifications.id} < ${input.cursor}`);
+      if (input?.unreadOnly) conditions.push(eq(notifications.isRead, 0));
+      if (input?.types && input.types.length > 0) {
+        conditions.push(sql`${notifications.type} IN (${sql.join(input.types.map(t => sql`${t}`), sql`, `)})`);
+      }
+
+      const rows = await db2.select().from(notifications)
+        .where(and(...conditions))
+        .orderBy(desc(notifications.id))
+        .limit(limit + 1);
+
+      const hasMore = rows.length > limit;
+      const page = hasMore ? rows.slice(0, limit) : rows;
+      const nextCursor = hasMore && page.length > 0 ? page[page.length - 1].id : null;
+
+      // Actor enrichment in two batch queries.
+      const actorIds = [...new Set(page.map(r => r.actorId).filter((x): x is number => !!x))];
+      const [actorsMap, profilesMap] = await Promise.all([
+        db.getUsersByIds(actorIds),
+        db.getPlayerProfilesByUserIds(actorIds),
+      ]);
+      const actorOf = (actorId: number | null) => {
+        if (!actorId) return null;
+        const u = actorsMap[actorId];
+        if (!u) return null;
+        return { id: actorId, name: u.name || 'Someone', avatarUrl: profilesMap[actorId]?.avatarUrl ?? null };
+      };
+
+      // Collapse same-(type, postId) rows within 24h into one item.
+      const items: NotificationListItem[] = [];
+      const groupIndex = new Map<string, number>();
+      for (const r of page) {
+        const actor = actorOf(r.actorId);
+        const groupable = GROUPABLE_TYPES.has(r.type) && r.postId;
+        const key = groupable ? `${r.type}:${r.postId}` : null;
+        if (key && groupIndex.has(key)) {
+          const item = items[groupIndex.get(key)!];
+          if (new Date(item.createdAt).getTime() - new Date(r.createdAt).getTime() < GROUP_WINDOW_MS) {
+            item.groupCount += 1;
+            if (actor && item.actors.length < 3 && !item.actors.some(a => a.id === actor.id)) {
+              item.actors.push(actor);
+            }
+            if (!r.isRead) item.isRead = 0;
+            continue;
+          }
+        }
+        const item: NotificationListItem = {
+          id: r.id,
+          type: r.type,
+          title: r.title,
+          body: r.body,
+          link: r.link,
+          isRead: r.isRead,
+          postId: r.postId,
+          replyId: r.replyId,
+          createdAt: r.createdAt,
+          actor,
+          groupCount: 1,
+          actors: actor ? [actor] : [],
+        };
+        if (key) groupIndex.set(key, items.length);
+        items.push(item);
+      }
+
+      return { items, nextCursor };
     }),
 
   // Get unread count
@@ -1180,6 +1330,19 @@ export const notificationsRouter = router({
     return { success: true };
   }),
 
+  // Mark every notification for one thread as read (used when a grouped
+  // bell item is opened).
+  markThreadRead: protectedProcedure
+    .input(z.object({ postId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db2 = await getDb();
+      if (!db2) return { success: false };
+      await db2.update(notifications)
+        .set({ isRead: 1 })
+        .where(and(eq(notifications.userId, ctx.user.id), eq(notifications.postId, input.postId)));
+      return { success: true };
+    }),
+
   // Delete notification
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
@@ -1187,6 +1350,129 @@ export const notificationsRouter = router({
       await db.deleteNotification(input.id, ctx.user.id);
       return { success: true };
     }),
+
+  // ─── Thread subscriptions (follow / mute a thread) ─────────────────────────
+  subscriptions: router({
+    // Follow or unfollow-by-mute a thread. Upserts the subscription row:
+    // following=true subscribes (reason manual), muted=true keeps the row but
+    // silences thread_followed_activity (direct mentions still notify).
+    set: protectedProcedure
+      .input(z.object({ postId: z.number(), muted: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        const db2 = await getDb();
+        if (!db2) return { success: false };
+        await db2.insert(forumSubscriptions)
+          .values({ userId: ctx.user.id, postId: input.postId, reason: 'manual', muted: input.muted ? 1 : 0 })
+          .onDuplicateKeyUpdate({ set: { muted: input.muted ? 1 : 0 } });
+        return { success: true };
+      }),
+
+    // The caller's subscription for one thread (null when not following).
+    forThread: protectedProcedure
+      .input(z.object({ postId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const db2 = await getDb();
+        if (!db2) return null;
+        const rows = await db2.select().from(forumSubscriptions)
+          .where(and(eq(forumSubscriptions.userId, ctx.user.id), eq(forumSubscriptions.postId, input.postId)))
+          .limit(1);
+        return rows[0] ?? null;
+      }),
+
+    listMine: protectedProcedure.query(async ({ ctx }) => {
+      const db2 = await getDb();
+      if (!db2) return [];
+      const rows = await db2.select({
+        id: forumSubscriptions.id,
+        postId: forumSubscriptions.postId,
+        reason: forumSubscriptions.reason,
+        muted: forumSubscriptions.muted,
+        createdAt: forumSubscriptions.createdAt,
+        postTitle: forumPosts.title,
+      }).from(forumSubscriptions)
+        .leftJoin(forumPosts, eq(forumPosts.id, forumSubscriptions.postId))
+        .where(eq(forumSubscriptions.userId, ctx.user.id))
+        .orderBy(desc(forumSubscriptions.createdAt))
+        .limit(200);
+      return rows;
+    }),
+  }),
+
+  // ─── Person-level mutes ────────────────────────────────────────────────────
+  mutes: router({
+    set: protectedProcedure
+      .input(z.object({
+        mutedUserId: z.number(),
+        scope: z.enum(['notifications', 'feed', 'both']).default('both'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (input.mutedUserId === ctx.user.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'You cannot mute yourself' });
+        }
+        const db2 = await getDb();
+        if (!db2) return { success: false };
+        await db2.insert(forumUserMutes)
+          .values({ userId: ctx.user.id, mutedUserId: input.mutedUserId, scope: input.scope })
+          .onDuplicateKeyUpdate({ set: { scope: input.scope } });
+        return { success: true };
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({ mutedUserId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db2 = await getDb();
+        if (!db2) return { success: false };
+        await db2.delete(forumUserMutes)
+          .where(and(eq(forumUserMutes.userId, ctx.user.id), eq(forumUserMutes.mutedUserId, input.mutedUserId)));
+        return { success: true };
+      }),
+
+    listMine: protectedProcedure.query(async ({ ctx }) => {
+      const db2 = await getDb();
+      if (!db2) return [];
+      const rows = await db2.select().from(forumUserMutes)
+        .where(eq(forumUserMutes.userId, ctx.user.id))
+        .orderBy(desc(forumUserMutes.createdAt));
+      const usersMap = await db.getUsersByIds(rows.map(r => r.mutedUserId));
+      return rows.map(r => ({
+        ...r,
+        mutedUserName: usersMap[r.mutedUserId]?.name || 'Unknown',
+        mutedUserHandle: usersMap[r.mutedUserId]?.handle || null,
+      }));
+    }),
+  }),
+
+  // ─── Notification preferences (playerProfiles.notificationPrefs JSON) ─────
+  prefs: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const { resolvePrefs } = await import("../lib/notification-email");
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      return {
+        ...resolvePrefs(profile?.notificationPrefs),
+        emailDigestFrequency: profile?.emailDigestFrequency ?? 'monthly',
+      };
+    }),
+
+    set: protectedProcedure
+      .input(z.object({
+        mentionsEmail: z.enum(['immediate', 'daily', 'off']).optional(),
+        repliesEmail: z.enum(['immediate', 'daily', 'off']).optional(),
+        gratitudeEmail: z.enum(['daily', 'off']).optional(),
+        forumInApp: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { resolvePrefs } = await import("../lib/notification-email");
+        const db2 = await getDb();
+        if (!db2) return { success: false };
+        const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+        const merged = { ...resolvePrefs(profile?.notificationPrefs), ...input };
+        const { playerProfiles } = await import("../../drizzle/schema");
+        await db2.update(playerProfiles)
+          .set({ notificationPrefs: merged })
+          .where(eq(playerProfiles.userId, ctx.user.id));
+        return { success: true, prefs: merged };
+      }),
+  }),
 });
 
 export const projectJoinRequestsRouter = router({

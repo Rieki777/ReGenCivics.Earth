@@ -209,7 +209,7 @@ export async function payRole(
   const tokenLabel = bounty.tokenType === "rcivics" ? "$RCivics" : "$ReGen";
   const roleLabel = role.role === "proposer" ? "proposed" : role.role === "shipper" ? "shipped" : "completed";
   await db.insert(notifications).values({
-    playerId: role.userId,
+    userId: role.userId,
     type: "mention",
     title: `Bounty paid: ${bounty.title.slice(0, 180)}`,
     body: `${role.amount} ${tokenLabel} credited for work you ${roleLabel}. Claimable to Base after ${claimableAt.toLocaleDateString()}.`,
@@ -286,7 +286,7 @@ export async function reverseRole(
   // Notify the player
   const tokenLabel = bounty.tokenType === "rcivics" ? "$RCivics" : "$ReGen";
   await db.insert(notifications).values({
-    playerId: role.userId,
+    userId: role.userId,
     type: "mention",
     title: `Bounty reversed: ${bounty.title.slice(0, 180)}`,
     body: `${role.amount} ${tokenLabel} has been reversed from your balance. Reason: ${reason}`,

@@ -2592,20 +2592,102 @@ export const regenTokenLedger = mysqlTable("regen_token_ledger", {
 export type RegenTokenLedger = typeof regenTokenLedger.$inferSelect;
 export type InsertRegenTokenLedger = typeof regenTokenLedger.$inferInsert;
 
-// Notifications (A.7)
+// Notifications (A.7) — the single notification spine as of 0162.
+// user_notifications rows were back-filled here and its writers repointed;
+// `link` is always a canonical in-app URL (forum events deep-link to
+// /community/post/:id#reply-:replyId). `dedupeKey` + INSERT IGNORE makes
+// fire-and-forget fan-out idempotent under retries/restarts.
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
-  playerId: int("playerId").notNull(),
-  type: mysqlEnum("type", ["forum_reply", "quest_complete", "fund_update", "vouch", "mention"]).notNull(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", [
+    "forum_reply",
+    "quest_complete",
+    "fund_update",
+    "vouch",
+    "mention",
+    "gratitude",
+    "reaction_milestone",
+    "guide_reply",
+    "elder_reply",
+    "thread_followed_activity",
+    "governance_stage",
+    "system",
+    "contribution_accepted",
+    "contribution_rejected",
+    "campaign_milestone",
+    "new_contribution",
+    "claim_complete",
+    "claim_failed",
+  ]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body"),
   link: varchar("link", { length: 500 }),
   isRead: tinyint("isRead").default(0).notNull(),
+  // Who did the thing (for the avatar in the bell)
+  actorId: int("actorId"),
+  // Denormalized forum source (grouping: "3 new replies on X")
+  postId: int("postId"),
+  replyId: int("replyId"),
+  // Legacy campaign/contribution relations (carried over from user_notifications)
+  campaignId: int("campaignId"),
+  contributionId: int("contributionId"),
+  // Delivery stamps: set when the email/push copy went out (dedupe per channel)
+  emailedAt: timestamp("emailedAt"),
+  pushedAt: timestamp("pushedAt"),
+  // Idempotency key, e.g. "mention:reply:8821:u42". Unique; inserts use
+  // ON DUPLICATE KEY so double-fired hooks are no-ops.
+  dedupeKey: varchar("dedupeKey", { length: 191 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => ([
-  index("notifications_player_unread_idx").on(t.playerId, t.isRead, t.createdAt),
+  index("notifications_player_unread_idx").on(t.userId, t.isRead, t.createdAt),
+  unique("notifications_dedupe_uq").on(t.dedupeKey),
 ]));
 export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+// Forum @mentions. The unique key makes re-parsing on edit idempotent:
+// only handles not already recorded for a source produce notifications.
+export const forumMentions = mysqlTable("forum_mentions", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceType: mysqlEnum("sourceType", ["post", "reply"]).notNull(),
+  sourceId: int("sourceId").notNull(),
+  mentionedUserId: int("mentionedUserId").notNull(),
+  mentionerUserId: int("mentionerUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("forum_mentions_source_user_uq").on(t.sourceType, t.sourceId, t.mentionedUserId),
+  index("forum_mentions_mentioned_idx").on(t.mentionedUserId),
+]));
+export type ForumMention = typeof forumMentions.$inferSelect;
+
+// Thread-level follows. Auto-created on author/reply/mention; `muted` stops
+// thread_followed_activity for that thread (direct mentions still notify).
+export const forumSubscriptions = mysqlTable("forum_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  postId: int("postId").notNull(),
+  reason: mysqlEnum("reason", ["authored", "replied", "mentioned", "manual"]).notNull(),
+  muted: tinyint("muted").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("forum_subscriptions_user_post_uq").on(t.userId, t.postId),
+  index("forum_subscriptions_post_idx").on(t.postId),
+]));
+export type ForumSubscription = typeof forumSubscriptions.$inferSelect;
+
+// Person-level mute. scope 'notifications': their mentions/replies never
+// notify or email you. scope 'feed': reserved for the Phase 2 feed ranking.
+export const forumUserMutes = mysqlTable("forum_user_mutes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  mutedUserId: int("mutedUserId").notNull(),
+  scope: mysqlEnum("scope", ["notifications", "feed", "both"]).default("both").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("forum_user_mutes_user_muted_uq").on(t.userId, t.mutedUserId),
+]));
+export type ForumUserMute = typeof forumUserMutes.$inferSelect;
 
 // Quest Journal (C.3)
 export const questJournal = mysqlTable("quest_journal", {

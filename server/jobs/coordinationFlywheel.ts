@@ -104,7 +104,7 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
 
     if (r.updatedAt < expireCutoff) {
       await db.insert(notifications).values({
-        playerId: r.userId,
+        userId: r.userId,
         type: "mention",
         title: `Released: ${title.slice(0, 180)}`,
         body: `${NUDGE_MARKER} Your claim sat for over ${expireDays} days, so the role is back in the open pool for someone else. You can still re-claim it any time.`,
@@ -123,7 +123,7 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
       .select({ id: notifications.id })
       .from(notifications)
       .where(and(
-        eq(notifications.playerId, r.userId),
+        eq(notifications.userId, r.userId),
         eq(notifications.link, linkPath),
         sql`${notifications.body} LIKE ${`%${NUDGE_MARKER}%`}`,
       ))
@@ -131,7 +131,7 @@ export async function runStaleClaimsAgent(): Promise<StaleClaimsReport> {
     if (existing.length > 0) continue;
 
     await db.insert(notifications).values({
-      playerId: r.userId,
+      userId: r.userId,
       type: "mention",
       title: `Still on this one? ${title.slice(0, 160)}`,
       body: `${NUDGE_MARKER} You claimed this role ${nudgeDays}+ days ago. Link your PR when ready, or release the role so someone else can pick it up (auto-releases at ${expireDays} days).`,

@@ -6,7 +6,8 @@ import { Link, useLocation, useParams } from "wouter";
 import {
   MessageCircle, ArrowLeft, Heart, Eye, Clock, Send,
   ChevronRight, Pin, Lock, Loader2, Trash2, CornerDownRight,
-  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save, Link2, Sparkles
+  AlertCircle, Flag, Shield, User, Globe2, Languages, Check, Pencil, X, Save, Link2, Sparkles,
+  BellRing, BellOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -239,6 +240,14 @@ export default function CommunityPost() {
           !!threadDecision),
     }
   );
+  // Thread follow state (bell toggle in the post header). Null = not following.
+  const { data: subscription } = trpc.notifications.subscriptions.forThread.useQuery(
+    { postId },
+    { enabled: postId > 0 && !!user }
+  );
+  const setThreadSubscription = trpc.notifications.subscriptions.set.useMutation({
+    onSuccess: () => utils.notifications.subscriptions.forThread.invalidate({ postId }),
+  });
 
   // Detect if this is a land project or alliance org forum space
   const isEntitySpace = post?.categorySlug === 'land-projects' || post?.categorySlug === 'alliance-partners';
@@ -354,6 +363,31 @@ export default function CommunityPost() {
       }, 50);
     }
   }, [replyingTo]);
+
+  // Notification deep-link landing: /community/post/:id#reply-:rid scrolls to
+  // that exact comment once replies are loaded and pulses it. A deleted reply
+  // shows a small inline note instead of failing silently.
+  const [missingReplyNote, setMissingReplyNote] = useState(false);
+  const deepLinkedRef = useRef(false);
+  useEffect(() => {
+    if (deepLinkedRef.current || !replies || replies.length === 0) return;
+    const match = window.location.hash.match(/^#reply-(\d+)$/);
+    if (!match) return;
+    deepLinkedRef.current = true;
+    const targetId = parseInt(match[1]);
+    if (!replies.some((r: any) => r.id === targetId)) {
+      setMissingReplyNote(true);
+      return;
+    }
+    setTimeout(() => {
+      const el = document.getElementById(`reply-${targetId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('reply-highlight-pulse');
+        setTimeout(() => el.classList.remove('reply-highlight-pulse'), 2500);
+      }
+    }, 150);
+  }, [replies]);
 
   const handleSubmitReply = () => {
     if (!replyContent.trim()) return;
@@ -538,6 +572,26 @@ export default function CommunityPost() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                {isAuthenticated && (
+                  <button
+                    onClick={() => {
+                      const nextMuted = subscription ? !subscription.muted : false;
+                      setThreadSubscription.mutate({ postId, muted: nextMuted });
+                    }}
+                    className={`flex items-center gap-1 p-1 transition-colors ${
+                      subscription && !subscription.muted
+                        ? 'text-[#4a7c59] hover:text-[#1a472a]'
+                        : 'text-[#1a472a]/50 hover:text-[#4a7c59]'
+                    }`}
+                    title={subscription && !subscription.muted ? 'Following this thread. Tap to mute.' : 'Get notified about new replies'}
+                    aria-label={subscription && !subscription.muted ? 'Mute this thread' : 'Follow this thread'}
+                    aria-pressed={!!subscription && !subscription.muted}
+                  >
+                    {subscription && !subscription.muted
+                      ? <BellRing className="w-3.5 h-3.5" />
+                      : <BellOff className="w-3.5 h-3.5" />}
+                  </button>
+                )}
                 {isAuthenticated && (
                   <div className="relative">
                     <button
@@ -846,6 +900,11 @@ export default function CommunityPost() {
         )}
 
         {/* Replies */}
+        {missingReplyNote && (
+          <div className="mb-4 bg-[#f0ebe3] border border-[#d4a574]/40 rounded-lg px-4 py-3 text-sm text-[#92400e]">
+            That reply is no longer here.
+          </div>
+        )}
         {repliesLoading ? (
           <div className="space-y-3">
             {[1, 2].map(i => (

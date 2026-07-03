@@ -121,6 +121,21 @@ export const gratitudeRouter = router({
         console.warn("[gratitude.send] private ledger credit failed (non-fatal):", err);
       }
 
+      // Fire-and-forget notification: "{name} sent you gratitude", deep-linked
+      // to the post/reply that earned it.
+      import("../lib/forum-notify")
+        .then(({ handleGratitudeSent }) =>
+          handleGratitudeSent({
+            gratitudeId: (result as any).insertId ?? 0,
+            senderId: ctx.user.id,
+            recipientId: recipient.id,
+            message: input.message,
+            sourceType: input.sourceType ?? null,
+            sourceId: input.sourceId ?? null,
+          })
+        )
+        .catch((err) => console.error("[gratitude.send] notify fan-out failed:", err));
+
       return { ok: true };
     }),
 

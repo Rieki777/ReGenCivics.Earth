@@ -464,7 +464,7 @@ export const bountiesRouter = router({
       // Nudge the maintainer who accepted it that work is ready for review.
       if (bounty.approvedBy) {
         await db.insert(notifications).values({
-          playerId: bounty.approvedBy,
+          userId: bounty.approvedBy,
           type: "mention",
           title: `Work ready for review: ${bounty.title.slice(0, 160)}`,
           body: "A contributor submitted work on a call task. Review it in the admin queue.",
@@ -545,7 +545,7 @@ export const bountiesRouter = router({
       });
       if (proposerRole?.userId) {
         await db.insert(notifications).values({
-          playerId: proposerRole.userId,
+          userId: proposerRole.userId,
           type: "mention",
           title: `Bounty accepted: ${bounty.title.slice(0, 180)}`,
           body: "Your bounty proposal was accepted and is now open for contributors.",

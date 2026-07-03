@@ -151,6 +151,8 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Disclaimers = lazy(() => import("./pages/Disclaimers"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const Community = lazy(() => import("./pages/Community"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const CommunityCategory = lazy(() => import("./pages/CommunityCategory"));
 const CommunityPost = lazy(() => import("./pages/CommunityPost"));
 const CommunityNewPost = lazy(() => import("./pages/CommunityNewPost"));
@@ -288,6 +290,8 @@ function Router() {
       <Route path={"/privacy-policy"}><EB><PrivacyPolicy /></EB></Route>
       <Route path={"/disclaimers"}><EB><Disclaimers /></EB></Route>
       <Route path={"/unsubscribe"}><EB><Unsubscribe /></EB></Route>
+      <Route path={"/notifications"}><EB><Notifications /></EB></Route>
+      <Route path={"/settings/notifications"}><EB><NotificationSettings /></EB></Route>
       <Route path={"/community"}><EB><Community /></EB></Route>
       <Route path={"/community/c/:slug"}><EB><CommunityCategory /></EB></Route>
       <Route path={"/community/post/:id"}><EB><CommunityPost /></EB></Route>

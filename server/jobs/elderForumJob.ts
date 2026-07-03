@@ -157,8 +157,19 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
         stats.skipped++;
         continue;
       }
-      await db.createForumReply({ postId: job.post.id, authorId: job.bot.userId, content: comment });
+      const commentReplyId = await db.createForumReply({ postId: job.post.id, authorId: job.bot.userId, content: comment });
       stats.commented++;
+      // Notify the post author: an elder responded (deep-links to the comment).
+      import("../lib/forum-notify")
+        .then(({ handleElderReplied }) =>
+          handleElderReplied({
+            postId: job.post.id,
+            replyId: commentReplyId,
+            elderUserId: job.bot.userId,
+            elderName: job.elder.displayName,
+          })
+        )
+        .catch((err) => console.error(`[elderForum] notify fan-out failed for post ${job.post.id}`, err));
     } catch (err) {
       console.error(`[elderForum] ${job.elder.id} comment on post ${job.post.id} failed:`, err);
     }
@@ -166,7 +177,7 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
 
   // ── 2. Replies to elders + mentions in replies ───────────────────────────
   const recentReplies = await database
-    .select({ id: forumReplies.id, postId: forumReplies.postId, parentReplyId: forumReplies.parentReplyId, content: forumReplies.content })
+    .select({ id: forumReplies.id, postId: forumReplies.postId, parentReplyId: forumReplies.parentReplyId, content: forumReplies.content, authorId: forumReplies.authorId })
     .from(forumReplies)
     .where(and(gt(forumReplies.createdAt, earliestCutoff), notInArray(forumReplies.authorId, botUserIds)))
     .orderBy(desc(forumReplies.createdAt))
@@ -226,8 +237,20 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
         stats.skipped++;
         continue;
       }
-      await db.createForumReply({ postId: job.reply.postId, authorId: job.bot.userId, content: answer, parentReplyId: job.reply.id });
+      const answerReplyId = await db.createForumReply({ postId: job.reply.postId, authorId: job.bot.userId, content: answer, parentReplyId: job.reply.id });
       stats.replied++;
+      // Notify the person the elder answered (deep-links to the elder's reply).
+      import("../lib/forum-notify")
+        .then(({ handleElderReplied }) =>
+          handleElderReplied({
+            postId: job.reply.postId,
+            replyId: answerReplyId,
+            elderUserId: job.bot.userId,
+            elderName: job.elder.displayName,
+            repliedToUserId: job.reply.authorId,
+          })
+        )
+        .catch((err) => console.error(`[elderForum] notify fan-out failed for reply ${job.reply.id}`, err));
     } catch (err) {
       console.error(`[elderForum] ${job.elder.id} reply to ${job.reply.id} failed:`, err);
     }

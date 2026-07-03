@@ -48,8 +48,10 @@ export async function postGuideReply(threadId: number, content: string): Promise
     SELECT value FROM game_variables WHERE \`key\` = 'governance.guide.proactive_posts_per_week' LIMIT 1
   `).then((r: any) => r[0] ?? []);
   const weeklyLimit = Number(limitRows[0]?.value ?? 5);
+  // Table is forumReplies (camelCase); the old forum_replies name made this
+  // count query error and the weekly rate limit never actually applied.
   const recentRows = await db.execute(sql`
-    SELECT COUNT(*) AS c FROM forum_replies WHERE authorId = ${guideId} AND createdAt > (NOW() - INTERVAL 7 DAY)
+    SELECT COUNT(*) AS c FROM forumReplies WHERE authorId = ${guideId} AND createdAt > (NOW() - INTERVAL 7 DAY)
   `).then((r: any) => r[0] ?? []);
   const recentCount = Number(recentRows[0]?.c ?? 0);
   if (recentCount >= weeklyLimit) {
@@ -69,7 +71,16 @@ export async function postGuideReply(threadId: number, content: string): Promise
       authorId: guideId,
       content: body,
     } as any);
-    return result?.[0]?.insertId ?? result?.insertId ?? null;
+    const replyId = result?.[0]?.insertId ?? result?.insertId ?? null;
+    if (replyId) {
+      // Notify the thread author that the Guide responded (deep-links to the comment).
+      import("./forum-notify")
+        .then(({ handleGuideReplied }) =>
+          handleGuideReplied({ postId: threadId, replyId, guideUserId: guideId })
+        )
+        .catch((err) => console.error("[regen-guide] notify fan-out failed", err));
+    }
+    return replyId;
   } catch (err) {
     console.error("[regen-guide] failed to post reply", err);
     return null;

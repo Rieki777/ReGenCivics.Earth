@@ -2723,3 +2723,22 @@ html[data-contrast="high"] *:focus-visible {
   border-radius: 3px;
 }
                                                                                        
+/* ════════════════════════════════════════════════════════════
+   Notification deep-link landing: pulse the comment the user was
+   brought to (#reply-N). Class is added on scroll-in and removed
+   after 2.5s by CommunityPost. Fades a soft canopy-green wash.
+   ════════════════════════════════════════════════════════════ */
+@keyframes reply-highlight-fade {
+  0% { background-color: rgba(125, 216, 125, 0.35); }
+  60% { background-color: rgba(125, 216, 125, 0.2); }
+  100% { background-color: transparent; }
+}
+.reply-highlight-pulse {
+  animation: reply-highlight-fade 2.5s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reply-highlight-pulse {
+    animation: none;
+    background-color: rgba(125, 216, 125, 0.2);
+  }
+}

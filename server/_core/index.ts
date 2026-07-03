@@ -20,6 +20,7 @@ function parseCookieHeader(str: string): Record<string, string> {
 }
 import * as Sentry from "@sentry/node";
 import { runDigestJob } from "../jobs/digestJob";
+import { runNotificationDigestJob } from "../jobs/notificationDigestJob";
 import { runElderForumJob } from "../jobs/elderForumJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
@@ -1061,6 +1062,17 @@ setTimeout(async () => {
     try { await runDigestJob(); } catch (e) { log.error("DigestJob error", e); }
   }, 7 * 24 * 60 * 60 * 1000);
 }, 60 * 1000); // first run after 1 minute
+
+// ─── Daily notification digest ───────────────────────────────────────────────
+// Batches unread, un-emailed forum notifications (mentions, replies,
+// gratitude) into one email per user per day, honoring per-type prefs.
+// Deterministic aggregation, no LLM. Idempotent via emailedAt stamps.
+setTimeout(async () => {
+  try { await runNotificationDigestJob(); } catch (e) { log.error("NotificationDigestJob error", e); }
+  setInterval(async () => {
+    try { await runNotificationDigestJob(); } catch (e) { log.error("NotificationDigestJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 5 * 60 * 1000); // first run after 5 minutes
 
 // ─── Elders' community presence (CORE) ───────────────────────────────────────
 // The elders comment on new community posts (routed to the best-fit elder, or
