@@ -382,22 +382,6 @@ export default function Navigation() {
               Map
             </Link>
 
-            {/* Governance Link (authenticated only) */}
-            {isAuthenticated && user && (
-              <Link
-                href="/governance"
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
-                  location === '/governance' || location.startsWith('/governance/')
-                    ? 'bg-[#7dd87d] text-[#1a472a]'
-                    : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
-                }`}
-                style={{ fontFamily: 'var(--font-accent)' }}
-              >
-                <Vote className="w-[22px] h-[22px]" />
-                Governance
-              </Link>
-            )}
-
             {/* Team Link */}
             <Link
               href="/team"

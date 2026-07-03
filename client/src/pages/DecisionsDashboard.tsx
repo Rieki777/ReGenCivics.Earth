@@ -17,7 +17,7 @@ import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { Link } from "wouter";
 import {
-  Vote, Activity, CheckCircle2, AlertTriangle, Layers, ExternalLink, Sparkles, ArrowRight, Coins,
+  Vote, Activity, CheckCircle2, AlertTriangle, Layers, ExternalLink, Sparkles, ArrowRight,
 } from "lucide-react";
 
 const TRACK_LABEL: Record<string, string> = {
@@ -33,7 +33,6 @@ export default function DecisionsDashboard() {
   const recentlyRatifiedQuery = trpc.governance.recentlyRatified.useQuery({ limit: 8 });
   const loadQuery = trpc.governance.communityLoad.useQuery();
   const tenantsQuery = trpc.governance.myTenants.useQuery(undefined, { enabled: isAuthenticated });
-  const balanceQuery = trpc.governance.myUnclaimedBalance.useQuery(undefined, { enabled: isAuthenticated });
 
   const load = loadQuery.data;
   const loadColor = load?.level === "critical"
@@ -89,10 +88,10 @@ export default function DecisionsDashboard() {
         </div>
       </section>
 
-      {/* Your queue + balance */}
+      {/* Your queue */}
       {isAuthenticated && (
-        <section className="px-4 max-w-5xl mx-auto mb-8 grid md:grid-cols-3 gap-4">
-          <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl p-5">
+        <section className="px-4 max-w-5xl mx-auto mb-8">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Vote className="w-4 h-4 text-[#7dd87d]" />
               <h2 className="font-bold text-white text-base">Your queue</h2>
@@ -123,24 +122,6 @@ export default function DecisionsDashboard() {
                 ))}
               </ul>
             )}
-          </div>
-          <div className="bg-white/5 border border-amber-500/30 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Coins className="w-4 h-4 text-amber-300" />
-              <h2 className="font-bold text-white text-base">Internal balance</h2>
-            </div>
-            <p className="text-3xl font-bold text-amber-300 mb-1">
-              {balanceQuery.data?.total.toLocaleString() ?? 0}
-            </p>
-            <p className="text-white/65 text-xs leading-relaxed safe-prose">
-              Internal tokens accumulated across all your tenants. Claim to Hypha when you cross the threshold.
-            </p>
-            <Link
-              href="/profile"
-              className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 text-xs font-bold mt-3"
-            >
-              View profile <ArrowRight className="w-3 h-3" />
-            </Link>
           </div>
         </section>
       )}
