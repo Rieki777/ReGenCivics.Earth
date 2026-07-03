@@ -18,7 +18,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { eq, sql, inArray } from "drizzle-orm";
-import { proposals, proposalSignals, proposalSynthesis, forumPosts, forumReplies } from "../../drizzle/schema";
+import { proposals, proposalSignals, proposalSynthesis, forumPosts, forumReplies, governanceExecutions } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
 import { requireCoCreatorPlus } from "./proposals";
 import { bridgeToHypha } from "../lib/hypha-bridge";
@@ -397,12 +397,26 @@ export const assemblyRouter = router({
         category: z
           .enum(["fund_allocation", "game_variable", "new_quest", "food_economy", "platform_feature", "community", "bff_initiative", "partnership", "community_agreement", "other"])
           .default("community"),
+        executionPayload: z
+          .object({
+            kind: z.literal("variable_change"),
+            variableKey: z.string().min(3).max(120),
+            newValue: z.number(),
+          })
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
       await requireCoCreatorPlus(db, ctx.user.id);
+
+      // A payload that could never execute is rejected at raise time
+      if (input.executionPayload) {
+        const { validateExecutionPayload } = await import("../lib/evolution");
+        const check = await validateExecutionPayload(input.executionPayload);
+        if (!check.ok) throw new TRPCError({ code: "BAD_REQUEST", message: check.error });
+      }
 
       const posts = await db.select({ id: forumPosts.id, title: forumPosts.title, content: forumPosts.content }).from(forumPosts).where(eq(forumPosts.id, input.forumPostId)).limit(1);
       if (posts.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Thread not found" });
@@ -417,11 +431,84 @@ export const assemblyRouter = router({
       }
 
       const [ins] = await db.execute(
-        sql`INSERT INTO proposals (authorId, title, description, category, status, forumThreadId, aim, lane)
-            VALUES (${ctx.user.id}, ${input.title ?? posts[0].title}, ${input.description ?? clampText(posts[0].content, 2000)}, ${input.category}, 'signaling', ${input.forumPostId}, ${input.aim.trim()}, ${input.lane})`
+        sql`INSERT INTO proposals (authorId, title, description, category, status, forumThreadId, aim, lane, executionPayload)
+            VALUES (${ctx.user.id}, ${input.title ?? posts[0].title}, ${input.description ?? clampText(posts[0].content, 2000)}, ${input.category}, 'signaling', ${input.forumPostId}, ${input.aim.trim()}, ${input.lane}, ${input.executionPayload ? JSON.stringify(input.executionPayload) : null})`
       );
       const proposalId = Number((ins as any).insertId);
       return { ok: true, proposalId };
+    }),
+
+  /** Confirm a Hypha outcome and run the Evolution Engine dispatcher.
+   * Admin-gated stub until the ratification event arrives by webhook: the
+   * binding vote already happened on Hypha, this records its outcome here
+   * and executes the payload (Rung 1). Gap logged in SHIPPED_LOG.md. */
+  confirmRatification: protectedProcedure
+    .input(z.object({ proposalId: z.number().int().positive(), outcome: z.enum(["ratified", "declined"]) }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin" && ctx.user.role !== "superadmin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Recording a Hypha outcome is admin-only until the webhook carries ratification." });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const props = await db.select({ status: proposals.status }).from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
+      if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+      if (props[0].status !== "in_governance") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `This proposal is ${props[0].status}; only a proposal at a binding vote can be confirmed.` });
+      }
+
+      if (input.outcome === "declined") {
+        await db.execute(sql`UPDATE proposals SET status = 'declined' WHERE id = ${input.proposalId}`);
+        return { ok: true, outcome: "declined", execution: null };
+      }
+
+      await db.execute(sql`UPDATE proposals SET status = 'passed' WHERE id = ${input.proposalId}`);
+      const { dispatchExecution } = await import("../lib/evolution");
+      const execution = await dispatchExecution(input.proposalId);
+      if (execution.status === "applied") {
+        await db.execute(sql`UPDATE proposals SET status = 'implemented' WHERE id = ${input.proposalId}`);
+        void notifyGovernanceSubscribers(
+          "The game just evolved",
+          `<p>A ratified proposal executed automatically: <strong>${execution.detail ?? ""}</strong></p>
+           <p><a href="https://regencivics.earth/assembly">See the full trail in the Record</a></p>`
+        );
+      }
+      return { ok: true, outcome: "ratified", execution };
+    }),
+
+  /** The Record: ratified and executed proposals with their provenance trail. */
+  record: publicProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(50).default(12) }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const limit = input?.limit ?? 12;
+      const rows = await db
+        .select()
+        .from(proposals)
+        .where(sql`${proposals.status} IN ('passed', 'implemented', 'declined')`)
+        .orderBy(sql`${proposals.updatedAt} DESC`)
+        .limit(limit);
+      const ids = rows.map((p) => p.id);
+      const execRows = ids.length
+        ? await db.select().from(governanceExecutions).where(inArray(governanceExecutions.proposalId, ids))
+        : [];
+      const execMap = new Map(execRows.map((e) => [e.proposalId, e]));
+      return rows.map((p) => {
+        const exec = execMap.get(p.id) ?? null;
+        return {
+          id: p.id,
+          title: p.title,
+          aim: p.aim,
+          status: p.status,
+          lane: p.lane,
+          forumThreadId: p.forumThreadId,
+          hyphaBridgeKey: p.hyphaBridgeKey,
+          updatedAt: p.updatedAt,
+          execution: exec
+            ? { kind: exec.kind, status: exec.status, detail: exec.detail, executedAt: exec.executedAt }
+            : null,
+        };
+      });
     }),
 
   /** Owner moves a forming proposal into last call. Every gate re-checked

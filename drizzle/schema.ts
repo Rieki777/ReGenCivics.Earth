@@ -2802,6 +2802,22 @@ export const proposalSynthesis = mysqlTable("proposal_synthesis", {
 ]));
 export type ProposalSynthesis = typeof proposalSynthesis.$inferSelect;
 
+// Append-only record of Evolution Engine executions (0167). Rows only ever
+// transition status/detail/executedAt, never disappear.
+export const governanceExecutions = mysqlTable("governance_executions", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  kind: mysqlEnum("kind", ["variable_change", "content", "feature"]).notNull(),
+  payload: json("payload").notNull(),
+  status: mysqlEnum("status", ["pending", "applied", "shipping", "shipped", "paused", "failed", "rolled_back"]).default("pending").notNull(),
+  detail: json("detail"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  executedAt: timestamp("executedAt"),
+}, (t) => ([
+  index("idx_execution_proposal").on(t.proposalId),
+]));
+export type GovernanceExecution = typeof governanceExecutions.$inferSelect;
+
 export const proposalUpdates = mysqlTable("proposal_updates", {
   id: int("id").autoincrement().primaryKey(),
   proposalId: int("proposalId").notNull(),

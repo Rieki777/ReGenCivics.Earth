@@ -13,6 +13,19 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-03: Forum governance evolution + Assembly Phases 1-6 (Evolution Rung 1)
+
+- Forum on-ramp reshaped per `FIXES_TO_MAKE_2026-07-02_forum-governance-evolution.md`: lifecycle strip gated to sensing+, two quiet entry doors under the post, confirm + participation-aware undo (`forum.returnToDialogue`, silent while the starter is alone, visible reply once others weighed in), light-surface restyle of the strip and PerspectiveControl (they were dark-surface components on the white card), consent copy, concerns-vs-objections legibility, and coSignPromotion now advances `governanceStage` to proposal. Migration 0163 opened Sensing to any signed-in member (Rye's call).
+- `/assembly` shipped as the Game's community-governed space (spec `ASSEMBLY_PAGE_SPEC.md`), replacing `/proposals` and `/community/decisions` (permanent redirects, nav updated, old pages retired from routing). The Signal (-3..+3, aggregate-only, migration 0164), AI synthesis with cooldown + daily caps + `ASSEMBLY_SYNTHESIS_ENABLED` kill switch, lifecycle lanes (aim line required, minor lazy-consent lane, 48h last call, resting strip; migration 0165), governance email subscriptions batched to one per person per day, digest Assembly block, and Evolution Rung 1 (migration 0167): ratified variable changes execute through the same bounds-checked path as `game.updateVariable`, attributed to the provisioned "The Evolution Engine" bot user, recorded append-only in `governance_executions`, and shown in Record with before/after.
+- Game Mechanics page is fully database-driven (migration 0166): `VARIABLE_HELP` and `SIM_DEFAULTS` deleted, 151 descriptions moved into `game_variables.description`, unit column added, bounds filled for all 214 rows (these are also the governance auto-apply hard bounds), phantom gratitude simulator keys seeded for real.
+- Open-item decisions made in flight (spec section 16): the Hypha handoff uses a new bridge intent `assembly-proposal-to-contribution` with source `other` (no enum migration needed); the ratification event does NOT arrive by webhook today, so `assembly.confirmRatification` is an admin-gated stub that records the Hypha outcome and runs the dispatcher — wire the real event when Hypha/Alchemy carries it; last-call launch is owner-initiated through the bridge (any member after 7 idle days) rather than automatic, per AI-AUTOMATION-RISKS Risk 7; notification prefs live on `player_profiles.notificationPrefs` (not `users`) because that is where the existing prefs live.
+- Known quirks: the migration runner splits on every semicolon including inside comments and string literals, so migration files must avoid embedded semicolons entirely; `MAXVALUE` is a MySQL reserved word and needs backticks; `game_variables.value` DECIMAL arrives as a string over the wire (Number() everywhere).
+- Phase 7 (Rung 3 feature auto-ship) is NOT built, by design. Hard stop for human go-ahead.
+
+Migrations applied to prod: 0163, 0164, 0165, 0166, 0167. Still deliberately pending: 0149 (DO-NOT-RUN note), 0162_forum_notifications (belongs to unshipped work stranded in the WSL2 ~/regen-civics working copy).
+
+Source specs: `ASSEMBLY_PAGE_SPEC.md`, `FIXES_TO_MAKE_2026-07-02_forum-governance-evolution.md` (both in root).
+
 ## 2026-07-01: Redis cache wiring + profile sanitization + yt-dlp hardening
 
 - Wired `initCacheOnStartup()`/`setupCacheShutdownHandlers()` (`server/cacheInit.ts`) into the server bootstrap, called before `server.listen()`. The functions existed but were never invoked, so Redis never connected even after `REDIS_URL` was set on Railway; CSRF tokens, webhook-failure buckets, and rate limits silently ran on the in-memory fallback. Same `isCacheAvailable()` gating everywhere else made this a safe no-op when unset.

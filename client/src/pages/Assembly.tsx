@@ -59,6 +59,7 @@ export default function Assembly() {
   const formingQuery = trpc.assembly.forming.useQuery(undefined, { refetchInterval: 15_000, staleTime: 10_000 });
   const decidingQuery = trpc.proposals.list.useQuery({ status: "in_governance", limit: 25 });
   const recentlyRatifiedQuery = trpc.governance.recentlyRatified.useQuery({ limit: 8 });
+  const recordQuery = trpc.assembly.record.useQuery({ limit: 12 }, { staleTime: 60_000 });
 
   const load = loadQuery.data;
   const loadLevelColor = load?.level === "critical"
@@ -238,9 +239,45 @@ export default function Assembly() {
 
       {/* Record */}
       <SectionShell icon={<CheckCircle2 className="w-4 h-4 text-emerald-400" />} title="Record">
+        {((recordQuery.data as any[]) ?? []).length > 0 && (
+          <ul className="space-y-2 mb-4">
+            {((recordQuery.data as any[]) ?? []).map((p: any) => (
+              <li key={`prop-${p.id}`} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className={`w-4 h-4 flex-shrink-0 mt-0.5 ${p.status === "declined" ? "text-red-400" : "text-emerald-400"}`} />
+                  <div className="flex-1 min-w-0 safe-prose">
+                    <p className="text-white text-sm font-semibold">{p.title}</p>
+                    {p.aim && <p className="text-white/60 text-[11px] mt-0.5">This serves the Game by {p.aim}</p>}
+                    <div className="flex items-center gap-2 mt-2 text-[10px] text-white/70 flex-wrap">
+                      <span className={`capitalize font-semibold ${p.status === "declined" ? "text-red-300" : "text-emerald-300"}`}>{p.status}</span>
+                      {p.lane === "minor" && <span>· passed by lazy consent</span>}
+                      {p.forumThreadId && (
+                        <Link href={`/community/post/${p.forumThreadId}`} className="text-[#7dd87d] hover:underline">· the conversation</Link>
+                      )}
+                      {p.hyphaBridgeKey && (
+                        <Link href={`/bridge/hypha/${p.hyphaBridgeKey}`} className="text-amber-300 hover:underline">· the Hypha vote</Link>
+                      )}
+                      {p.updatedAt && <span>· {new Date(p.updatedAt).toLocaleDateString()}</span>}
+                    </div>
+                    {p.execution && (
+                      <p className={`text-[11px] mt-1.5 ${p.execution.status === "applied" ? "text-[#7dd87d]" : p.execution.status === "failed" ? "text-red-300" : "text-white/60"}`}>
+                        {p.execution.status === "applied" && p.execution.detail?.variableKey
+                          ? `Executed automatically: ${p.execution.detail.variableKey} moved ${p.execution.detail.before} to ${p.execution.detail.after}`
+                          : p.execution.status === "failed"
+                          ? `Execution failed: ${p.execution.detail?.error ?? "see the execution log"}`
+                          : `Execution ${p.execution.status}`}
+                        {p.execution.executedAt && ` · ${new Date(p.execution.executedAt).toLocaleDateString()}`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
         {recentlyRatifiedQuery.isLoading ? (
           <p className="text-white/70 text-sm">Loading...</p>
-        ) : (recentlyRatifiedQuery.data?.length ?? 0) === 0 ? (
+        ) : (recentlyRatifiedQuery.data?.length ?? 0) === 0 && ((recordQuery.data as any[]) ?? []).length === 0 ? (
           <p className="text-white/65 text-sm safe-prose">
             Ratified outcomes and their full trail (conversation, proposal, vote, execution) are
             recorded here so the community can always trace how the Game changed.
