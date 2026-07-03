@@ -132,6 +132,22 @@ function takeSynthesisBudget(userId: number): { ok: boolean; reason?: string } {
 
 const clampText = (v: unknown, max: number): string => String(v ?? "").slice(0, max);
 
+/** Steward-or-above check for the Rung 3 pause/rollback controls. Reads the
+ * citizenship tier (2 = steward, 3 = guardian); admins always qualify. */
+async function isStewardPlus(userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const [rows] = await db.execute(
+    sql`SELECT pp.citizenshipTier AS tier, u.role AS role
+        FROM player_profiles pp JOIN users u ON u.id = pp.userId
+        WHERE pp.userId = ${userId} LIMIT 1`
+  );
+  const row = (rows as unknown as any[])?.[0];
+  if (!row) return false;
+  if (row.role === "admin" || row.role === "superadmin") return true;
+  return Number(row.tier) >= 2;
+}
+
 // ─── Lifecycle gates (spec section 4) ──────────────────────────────────────
 
 interface GateReport {
@@ -398,11 +414,19 @@ export const assemblyRouter = router({
           .enum(["fund_allocation", "game_variable", "new_quest", "food_economy", "platform_feature", "community", "bff_initiative", "partnership", "community_agreement", "other"])
           .default("community"),
         executionPayload: z
-          .object({
-            kind: z.literal("variable_change"),
-            variableKey: z.string().min(3).max(120),
-            newValue: z.number(),
-          })
+          .union([
+            z.object({
+              kind: z.literal("variable_change"),
+              variableKey: z.string().min(3).max(120),
+              newValue: z.number(),
+            }),
+            z.object({
+              kind: z.literal("feature"),
+              specMarkdown: z.string().min(20).max(20000),
+              acceptanceCriteria: z.array(z.string().min(3).max(300)).min(1).max(20),
+              scopePaths: z.array(z.string().min(1).max(200)).min(1).max(40),
+            }),
+          ])
           .optional(),
       })
     )
@@ -509,6 +533,69 @@ export const assemblyRouter = router({
             : null,
         };
       });
+    }),
+
+  /** The Evolution Engine's dashboard: the autonomy tier, the two dials, and
+   * any feature executions in flight (paused, shipping, shipped). Public read
+   * so the community always sees exactly how much the game may evolve itself. */
+  evolutionStatus: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return { tier: 1, launchWindowHours: 24, circuitBreakerFailures: 2, inFlight: [] };
+    const readVar = async (key: string, fallback: number) => {
+      const [r] = await db.execute(sql`SELECT value FROM game_variables WHERE \`key\` = ${key} LIMIT 1`);
+      const v = Number((r as any)?.[0]?.value);
+      return Number.isFinite(v) ? v : fallback;
+    };
+    const [tier, launchWindowHours, circuitBreakerFailures] = await Promise.all([
+      readVar("evolution.max_autonomy_tier", 1),
+      readVar("evolution.launch_window_hours", 24),
+      readVar("evolution.circuit_breaker_failures", 2),
+    ]);
+    const inFlight = await db
+      .select()
+      .from(governanceExecutions)
+      .where(sql`${governanceExecutions.kind} = 'feature' AND ${governanceExecutions.status} IN ('pending','shipping','paused','shipped')`)
+      .orderBy(sql`${governanceExecutions.id} DESC`)
+      .limit(25);
+    return {
+      tier: Math.trunc(tier),
+      launchWindowHours,
+      circuitBreakerFailures,
+      inFlight: inFlight.map((e) => ({
+        id: e.id,
+        proposalId: e.proposalId,
+        status: e.status,
+        detail: e.detail,
+        createdAt: e.createdAt,
+        executedAt: e.executedAt,
+      })),
+    };
+  }),
+
+  /** A Steward+ pauses a shipping feature during its launch window. */
+  pauseShip: protectedProcedure
+    .input(z.object({ executionId: z.number().int().positive(), reason: z.string().min(5).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      if (!(await isStewardPlus(ctx.user.id))) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only a Steward or above can pause a ship." });
+      }
+      const { pauseShip } = await import("../lib/evolution");
+      const res = await pauseShip(input.executionId, ctx.user.id, input.reason.trim());
+      if (!res.ok) throw new TRPCError({ code: "BAD_REQUEST", message: res.error });
+      return { ok: true };
+    }),
+
+  /** A Steward+ rolls back a shipped feature. Opens a human-completed revert. */
+  rollbackShip: protectedProcedure
+    .input(z.object({ executionId: z.number().int().positive(), reason: z.string().min(5).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      if (!(await isStewardPlus(ctx.user.id))) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only a Steward or above can roll back a ship." });
+      }
+      const { rollbackShip } = await import("../lib/evolution");
+      const res = await rollbackShip(input.executionId, ctx.user.id, input.reason.trim());
+      if (!res.ok) throw new TRPCError({ code: "BAD_REQUEST", message: res.error });
+      return { ok: true, revertUrl: res.revertUrl };
     }),
 
   /** Owner moves a forming proposal into last call. Every gate re-checked

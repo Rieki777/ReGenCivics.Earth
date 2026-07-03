@@ -105,6 +105,19 @@ export async function markResting(): Promise<JobReport> {
   }
 }
 
+/** Rung 3: move gated feature PRs through their launch window and merge.
+ * Dark below autonomy tier 3, so this is a no-op until the community votes
+ * the tier up (ASSEMBLY_PAGE_SPEC.md section 7.3). */
+export async function advanceEvolutionLaunchWindows(): Promise<JobReport> {
+  try {
+    const { advanceLaunchWindows } = await import("../lib/evolution");
+    const res = await advanceLaunchWindows();
+    return { job: "advanceEvolutionLaunchWindows", ok: true, count: res.merged };
+  } catch (err: any) {
+    return { job: "advanceEvolutionLaunchWindows", ok: false, error: err.message };
+  }
+}
+
 export async function runAssemblyLifecycleJobs(): Promise<JobReport[]> {
-  return [await expireLastCall(), await passQuietMinorLane(), await markResting()];
+  return [await expireLastCall(), await passQuietMinorLane(), await markResting(), await advanceEvolutionLaunchWindows()];
 }
