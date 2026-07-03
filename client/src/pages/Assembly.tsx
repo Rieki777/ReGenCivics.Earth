@@ -25,6 +25,7 @@ import {
   Landmark, Hourglass, Users, MessageCircle, ExternalLink,
 } from "lucide-react";
 import { SignalControl, SignalReadout } from "@/components/assembly/SignalControl";
+import { ProsConsPanel } from "@/components/assembly/ProsConsPanel";
 
 const HYPHA_DHO_URL = "https://app.hypha.earth/en/dho/regen-games/";
 const HYPHA_MEMBERS_URL = "https://app.hypha.earth/en/dho/regen-games/members/";
@@ -174,6 +175,12 @@ export default function Assembly() {
                   </div>
                   <SignalReadout signal={p.signal} />
                 </div>
+                <ProsConsPanel
+                  proposalId={p.id}
+                  synthesis={p.synthesis}
+                  isOwner={!!p.isOwner}
+                  isAuthenticated={isAuthenticated}
+                />
                 <div className="mt-3">
                   <SignalControl proposalId={p.id} signal={p.signal} />
                 </div>
