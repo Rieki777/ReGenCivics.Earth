@@ -23,6 +23,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BlurImage } from "@/components/BlurImage";
 import { ShareButton } from "@/components/ShareButton";
+import { EightFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
 
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
@@ -374,16 +375,9 @@ export default function BlogPost() {
                   const SPECIAL_MARKERS: Record<string, React.ReactElement> = {
                     '[FOOD_PRODUCTION_INFOGRAPHIC]': <FoodProductionInfographic />,
                     '[ANIMAL_POPULATION_INFOGRAPHIC]': <AnimalPopulationInfographic />,
-                    '[CLAIM_SEEDS_BUTTON]': (
-                      <div className="flex justify-center my-6">
-                        <a
-                          href="/claim-seeds"
-                          className="inline-flex items-center gap-2 px-8 py-4 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all font-bold text-lg shadow-[0_0_24px_rgba(245,158,11,0.4)] hover:shadow-[0_0_36px_rgba(245,158,11,0.6)]"
-                        >
-                          Claim Your SEEDS Financial Contributions
-                        </a>
-                      </div>
-                    ),
+                    '[CLAIM_SEEDS_BUTTON]': <ClaimSeedsCTA />,
+                    '[EIGHT_FORMS_OF_CAPITAL]': <EightFormsOfCapital />,
+                    '[FRAUD_WARNING]': <FraudWarningCallout />,
                   };
 
                   const hasMarkers = Object.keys(SPECIAL_MARKERS).some(
@@ -394,13 +388,13 @@ export default function BlogPost() {
                     ol: ({children}: {children?: React.ReactNode}) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
                     ul: ({children}: {children?: React.ReactNode}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
                     li: ({children}: {children?: React.ReactNode}) => <li className="ml-2">{children}</li>,
-                    h1: ({children}: {children?: React.ReactNode}) => <h1 className="text-3xl font-bold mb-4 mt-6">{children}</h1>,
-                    h2: ({children}: {children?: React.ReactNode}) => <h2 className="text-2xl font-bold mb-3 mt-5 scroll-mt-24">{children}</h2>,
-                    h3: ({children}: {children?: React.ReactNode}) => <h3 className="text-xl font-semibold mb-2 mt-4 scroll-mt-24">{children}</h3>,
-                    p: ({children}: {children?: React.ReactNode}) => <p className="mb-4 leading-relaxed">{children}</p>,
+                    h1: ({children}: {children?: React.ReactNode}) => <h1 className="text-3xl font-bold text-white mb-4 mt-8">{children}</h1>,
+                    h2: ({children}: {children?: React.ReactNode}) => <h2 className="text-2xl font-bold text-white mb-4 mt-10 pb-2 border-b border-[#7dd87d]/20 scroll-mt-24">{children}</h2>,
+                    h3: ({children}: {children?: React.ReactNode}) => <h3 className="text-xl font-semibold text-[#7dd87d] mb-2 mt-6 scroll-mt-24">{children}</h3>,
+                    p: ({children}: {children?: React.ReactNode}) => <p className="mb-5 leading-relaxed">{children}</p>,
                     a: ({href, children}: {href?: string; children?: React.ReactNode}) => <a href={href} className="text-green-400 hover:text-green-300 underline">{children}</a>,
-                    blockquote: ({children}: {children?: React.ReactNode}) => <blockquote className="border-l-4 border-green-500 pl-4 italic my-4 text-white/70">{children}</blockquote>,
-                    strong: ({children}: {children?: React.ReactNode}) => <strong className="font-semibold">{children}</strong>,
+                    blockquote: ({children}: {children?: React.ReactNode}) => <blockquote className="border-l-4 border-[#7dd87d] pl-4 italic my-6 text-white/70">{children}</blockquote>,
+                    strong: ({children}: {children?: React.ReactNode}) => <strong className="font-semibold text-white">{children}</strong>,
                     em: ({children}: {children?: React.ReactNode}) => <em className="italic">{children}</em>,
                     code: ({children}: {children?: React.ReactNode}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
                     pre: ({children}: {children?: React.ReactNode}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
