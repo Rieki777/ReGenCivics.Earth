@@ -24,6 +24,9 @@ export type HyphaFormKind =
 
 /** Source systems inside ReGen Civics that hand off to Hypha. */
 export type HyphaBridgeSource =
+  // "loomio_decision" is a leftover from the removed Loomio integration
+  // (ADR-23), kept to avoid a live enum migration. Safe to rename to a
+  // gov-neutral value when the gov app is rebuilt; see ADR-23 + memory.
   | "loomio_decision"
   | "crowdpool"
   | "contribution_claim"

@@ -23,6 +23,12 @@ import { eq } from "drizzle-orm";
 
 const ISSUER = process.env.OIDC_ISSUER ?? "https://regencivics.earth";
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? "rc_session";
+// NOTE (2026-07): the OIDC_LOOMIO_* names + the "loomio-gov" client id are
+// leftovers from the removed Loomio integration (ADR-23), kept only so the
+// current ReGen Gov app keeps signing in. The gov app is unused and being
+// rebuilt to share regencivics' own login, so when you next touch this,
+// rename these to gov-neutral names (e.g. OIDC_GOV_*) — no need to preserve
+// "loomio". Update the matching Railway vars on ReGenCivics.Earth in step.
 const CLIENT_ID = process.env.OIDC_LOOMIO_CLIENT_ID ?? "loomio-gov";
 const CLIENT_SECRET = process.env.OIDC_LOOMIO_CLIENT_SECRET ?? "";
 const REDIRECT_URIS = (process.env.OIDC_LOOMIO_REDIRECT_URIS ?? "https://gov.regencivics.earth/auth/oidc/callback").split(",").map((s) => s.trim());
