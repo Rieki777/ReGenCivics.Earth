@@ -22,6 +22,7 @@ import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
 import { governanceRouter } from "./routes/governance";
+import { assemblyRouter } from "./routes/assembly";
 import { walletRouter } from "./routes/wallet";
 import { govProposalsRouter } from "./routes/govProposals";
 import { govBioregionRouter } from "./routes/govBioregion";
@@ -159,6 +160,7 @@ export const appRouter = router({
 
   // Governance pipeline (Stage 1: forum readiness + promotion patterns)
   governance: governanceRouter,
+  assembly: assemblyRouter,
 
   // Wallet on-chain balance reads
   wallet: walletRouter,

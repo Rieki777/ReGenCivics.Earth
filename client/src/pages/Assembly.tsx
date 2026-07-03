@@ -24,6 +24,7 @@ import {
   Vote, Activity, CheckCircle2, AlertTriangle, Sparkles, ArrowRight,
   Landmark, Hourglass, Users, MessageCircle, ExternalLink,
 } from "lucide-react";
+import { SignalControl, SignalReadout } from "@/components/assembly/SignalControl";
 
 const HYPHA_DHO_URL = "https://app.hypha.earth/en/dho/regen-games/";
 const HYPHA_MEMBERS_URL = "https://app.hypha.earth/en/dho/regen-games/members/";
@@ -53,7 +54,7 @@ export default function Assembly() {
 
   const queueQuery = trpc.governance.myDecisionQueue.useQuery(undefined, { enabled: isAuthenticated });
   const loadQuery = trpc.governance.communityLoad.useQuery();
-  const formingQuery = trpc.proposals.list.useQuery({ status: "signaling", limit: 50 });
+  const formingQuery = trpc.assembly.forming.useQuery(undefined, { refetchInterval: 15_000, staleTime: 10_000 });
   const decidingQuery = trpc.proposals.list.useQuery({ status: "in_governance", limit: 25 });
   const recentlyRatifiedQuery = trpc.governance.recentlyRatified.useQuery({ limit: 8 });
 
@@ -153,11 +154,11 @@ export default function Assembly() {
             </p>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {forming.map((p: any) => (
-              <li key={p.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0 safe-prose">
+              <li key={p.id} className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[220px] safe-prose">
                     <p className="text-white text-sm font-semibold">{p.title}</p>
                     {p.description && (
                       <p className="text-white/65 text-xs mt-1 leading-relaxed">{String(p.description).slice(0, 180)}</p>
@@ -171,6 +172,10 @@ export default function Assembly() {
                       )}
                     </div>
                   </div>
+                  <SignalReadout signal={p.signal} />
+                </div>
+                <div className="mt-3">
+                  <SignalControl proposalId={p.id} signal={p.signal} />
                 </div>
               </li>
             ))}

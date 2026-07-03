@@ -2757,6 +2757,42 @@ export const proposalVotes = mysqlTable("proposal_votes", {
 ]));
 export type ProposalVote = typeof proposalVotes.$inferSelect;
 
+// ─── Assembly: the Signal + AI synthesis cache (ASSEMBLY_PAGE_SPEC.md) ─────
+// One adjustable -3..+3 signal per member per proposal. Aggregate-only:
+// individual scores are never shown to anyone. moveNote is stored only for
+// negative scores ("what would move you") and surfaces unattributed.
+export const proposalSignals = mysqlTable("proposal_signals", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  userId: int("userId").notNull(),
+  score: tinyint("score").notNull(),
+  moveNote: varchar("moveNote", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ([
+  unique("unique_proposal_signal").on(t.proposalId, t.userId),
+  index("idx_signal_proposal").on(t.proposalId),
+]));
+export type ProposalSignal = typeof proposalSignals.$inferSelect;
+
+export const proposalSynthesis = mysqlTable("proposal_synthesis", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  pros: json("pros"),
+  cons: json("cons"),
+  steelman: text("steelman"),
+  steelmanAddressed: json("steelmanAddressed"),
+  summary: text("summary"),
+  sourceReplyCount: int("sourceReplyCount").default(0).notNull(),
+  changelog: json("changelog"),
+  lastSyncedAt: timestamp("lastSyncedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ([
+  unique("unique_synthesis_proposal").on(t.proposalId),
+]));
+export type ProposalSynthesis = typeof proposalSynthesis.$inferSelect;
+
 export const proposalUpdates = mysqlTable("proposal_updates", {
   id: int("id").autoincrement().primaryKey(),
   proposalId: int("proposalId").notNull(),
