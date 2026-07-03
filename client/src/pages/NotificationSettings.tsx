@@ -4,6 +4,7 @@
  * emailDigestFrequency 'never' (managed on the profile page); this page
  * covers the forum notification channels.
  */
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -12,7 +13,98 @@ import { BackButton } from '@/components/BackButton';
 import { TaoSpinner } from '@/components/TaoSpinner';
 import { PageTransition } from '@/components/PageTransition';
 import { toast } from 'sonner';
-import { X, BellOff, Bell } from 'lucide-react';
+import { X, BellOff, Bell, Smartphone } from 'lucide-react';
+import {
+  isPushSupported,
+  isIosBrowserContext,
+  subscribeToPush,
+  unsubscribeFromPush,
+  hasLocalSubscription,
+} from '@/lib/pushManager';
+
+/** Push opt-in toggle. Permission is requested only from this explicit tap. */
+function PushSection() {
+  const utils = trpc.useUtils();
+  const { data: keyData } = trpc.notifications.push.publicKey.useQuery();
+  const [localSubscribed, setLocalSubscribed] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    hasLocalSubscription().then(setLocalSubscribed);
+  }, []);
+
+  const subscribeMutation = trpc.notifications.push.subscribe.useMutation();
+  const unsubscribeMutation = trpc.notifications.push.unsubscribe.useMutation();
+
+  if (!keyData?.enabled) return null;
+
+  if (!isPushSupported()) {
+    return (
+      <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
+        <h2 className="font-bold text-[#1a472a] mb-1">Push notifications</h2>
+        <p className="text-sm text-[#1a472a]/60">This browser does not support push notifications.</p>
+      </section>
+    );
+  }
+
+  if (isIosBrowserContext()) {
+    return (
+      <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
+        <h2 className="font-bold text-[#1a472a] mb-1">Push notifications</h2>
+        <p className="text-sm text-[#1a472a]/70 flex items-start gap-2">
+          <Smartphone className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          On iPhone, push works once the app is on your home screen: tap the share button in Safari, then "Add to Home Screen", and turn push on from the installed app.
+        </p>
+      </section>
+    );
+  }
+
+  const toggle = async () => {
+    setBusy(true);
+    try {
+      if (localSubscribed) {
+        const endpoint = await unsubscribeFromPush();
+        if (endpoint) await unsubscribeMutation.mutateAsync({ endpoint });
+        setLocalSubscribed(false);
+        toast.success('Push notifications are off for this browser');
+      } else {
+        const keys = await subscribeToPush(keyData.key!);
+        if (!keys) {
+          toast.error('Push permission was not granted');
+          return;
+        }
+        await subscribeMutation.mutateAsync({ ...keys, userAgent: navigator.userAgent.slice(0, 255) });
+        setLocalSubscribed(true);
+        toast.success('Push notifications are on for this browser');
+      }
+      utils.notifications.push.status.invalidate();
+    } catch (err) {
+      console.error('[push] toggle failed', err);
+      toast.error('Something went wrong setting up push');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
+      <h2 className="font-bold text-[#1a472a] mb-1">Push notifications</h2>
+      <p className="text-xs text-[#1a472a]/70 mb-3">
+        Mentions, replies, and gratitude reach this device even when the site is closed.
+      </p>
+      <Button
+        variant={localSubscribed ? 'outline' : 'default'}
+        size="sm"
+        disabled={busy}
+        onClick={toggle}
+        aria-pressed={localSubscribed}
+        className={localSubscribed ? 'border-[#7dd87d]/50 text-[#1a472a]' : 'bg-[#1a472a] hover:bg-[#2d5a3d] text-white'}
+      >
+        {busy ? 'Working…' : localSubscribed ? 'Turn off on this browser' : 'Turn on push'}
+      </Button>
+    </section>
+  );
+}
 
 type Cadence = 'immediate' | 'daily' | 'off';
 
@@ -120,6 +212,8 @@ export default function NotificationSettings() {
                   </p>
                 )}
               </section>
+
+              <PushSection />
 
               <section className="bg-white rounded-xl border border-[#e8e4de] p-5">
                 <h2 className="font-bold text-[#1a472a] mb-1">Muted people</h2>

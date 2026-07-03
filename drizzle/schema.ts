@@ -2676,6 +2676,24 @@ export const forumSubscriptions = mysqlTable("forum_subscriptions", {
 ]));
 export type ForumSubscription = typeof forumSubscriptions.$inferSelect;
 
+// Web push subscriptions (0164). One row per browser endpoint; endpoint is
+// unique so re-subscribing upserts. Pruned on 410/404 or repeated failures.
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  endpoint: varchar("endpoint", { length: 500 }).notNull(),
+  p256dh: varchar("p256dh", { length: 255 }).notNull(),
+  auth: varchar("auth", { length: 255 }).notNull(),
+  userAgent: varchar("userAgent", { length: 255 }),
+  failureCount: int("failureCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastSeenAt: timestamp("lastSeenAt"),
+}, (t) => ([
+  unique("push_subscriptions_endpoint_uq").on(t.endpoint),
+  index("push_subscriptions_user_idx").on(t.userId),
+]));
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
 // Person-level mute. scope 'notifications': their mentions/replies never
 // notify or email you. scope 'feed': reserved for the Phase 2 feed ranking.
 export const forumUserMutes = mysqlTable("forum_user_mutes", {

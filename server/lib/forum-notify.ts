@@ -147,6 +147,12 @@ export async function insertNotification(input: NotificationInput): Promise<bool
     import("./notification-email")
       .then(({ maybeSendImmediateEmail }) => maybeSendImmediateEmail(input))
       .catch((err) => console.error("[forum-notify] immediate email failed", err));
+
+    // Web push copy (Phase 1B). No-ops unless VAPID keys are configured and
+    // the user has a subscription; per-type prefs checked inside.
+    import("./push")
+      .then(({ maybeSendPush }) => maybeSendPush(input))
+      .catch((err) => console.error("[forum-notify] push failed", err));
   }
 
   return inserted;

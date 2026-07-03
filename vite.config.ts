@@ -13,6 +13,11 @@ export default defineConfig(({ mode }): UserConfig => ({
       registerType: "autoUpdate",
       strategies: "generateSW",
       workbox: {
+        // Web push lives in an isolated hand-written file that the generated
+        // SW merely imports — push logic stays structurally separate from
+        // Workbox's caching (the part that caused a past outage). Bump the
+        // filename when its logic changes (imported scripts cache with the SW).
+        importScripts: ["push-sw-v1.js"],
         // 5 MB limit to accommodate large vendor JS chunks
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // Exclude OG images — social crawlers always fetch fresh, no offline value.

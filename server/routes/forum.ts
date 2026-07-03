@@ -1442,6 +1442,45 @@ export const notificationsRouter = router({
     }),
   }),
 
+  // ─── Web push subscriptions (Phase 1B) ─────────────────────────────────────
+  push: router({
+    // VAPID public key for pushManager.subscribe. Public: the key is not a
+    // secret, and the client needs it before sign-in state settles.
+    publicKey: publicProcedure.query(async () => {
+      const { getVapidPublicKey, isPushConfigured } = await import("../lib/push");
+      return { key: getVapidPublicKey(), enabled: isPushConfigured() };
+    }),
+
+    subscribe: protectedProcedure
+      .input(z.object({
+        endpoint: z.string().url().max(500),
+        p256dh: z.string().min(1).max(255),
+        auth: z.string().min(1).max(255),
+        userAgent: z.string().max(255).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { saveSubscription } = await import("../lib/push");
+        await saveSubscription({ userId: ctx.user.id, ...input });
+        return { success: true };
+      }),
+
+    unsubscribe: protectedProcedure
+      .input(z.object({ endpoint: z.string().url().max(500) }))
+      .mutation(async ({ ctx, input }) => {
+        const { removeSubscription } = await import("../lib/push");
+        await removeSubscription(ctx.user.id, input.endpoint);
+        return { success: true };
+      }),
+
+    status: protectedProcedure.query(async ({ ctx }) => {
+      const { countSubscriptions, isPushConfigured } = await import("../lib/push");
+      return {
+        configured: isPushConfigured(),
+        subscriptions: await countSubscriptions(ctx.user.id),
+      };
+    }),
+  }),
+
   // ─── Notification preferences (playerProfiles.notificationPrefs JSON) ─────
   prefs: router({
     get: protectedProcedure.query(async ({ ctx }) => {
