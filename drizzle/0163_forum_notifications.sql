@@ -1,7 +1,8 @@
 -- Forum notification spine (Phase 1 of the forum upgrade).
 -- Consolidates the two parallel notification tables onto `notifications`:
---   1. Rename playerId -> userId (it always held users.id; the split name let
---      the two tables drift).
+--   1. Rename playerId -> userId (it always held users.id, and the split
+--      name is what let the two tables drift). NOTE: no semicolons inside
+--      comments -- the runner splits statements on every semicolon.
 --   2. Widen the type enum to cover forum events + every legacy
 --      user_notifications type (including claim_complete / claim_failed,
 --      which writers already pushed past the old enum via `as any`).
