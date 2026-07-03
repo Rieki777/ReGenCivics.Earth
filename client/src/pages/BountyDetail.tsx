@@ -35,7 +35,7 @@ export default function BountyDetail() {
   const { data: bounty, isLoading } = trpc.bounties.get.useQuery({ bountyId: id }, { enabled: Number.isFinite(id) });
 
   const claim = trpc.bounties.claimRole.useMutation({
-    onSuccess: () => { toast.success("Claimed. Find it under your Profile, Call Tasks."); utils.bounties.get.invalidate({ bountyId: id }); },
+    onSuccess: () => { toast.success("Claimed. Find it under your Profile, Tasks."); utils.bounties.get.invalidate({ bountyId: id }); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -154,8 +154,8 @@ export default function BountyDetail() {
               <li key={i} className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-[#7dd87d] shrink-0 mt-0.5" /> {step}</li>
             ))}
           </ol>
-          <Link href="/profile?tab=call-tasks" className="mt-4 inline-flex items-center gap-1 text-[#7dd87d] hover:underline text-sm">
-            Track your work in Profile, Call Tasks <ArrowRight className="w-4 h-4" />
+          <Link href="/profile?tab=tasks" className="mt-4 inline-flex items-center gap-1 text-[#7dd87d] hover:underline text-sm">
+            Track your work in Profile, Tasks <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

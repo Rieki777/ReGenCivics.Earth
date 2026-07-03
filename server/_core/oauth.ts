@@ -493,7 +493,9 @@ export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/github/link", (req: Request, res: Response) => {
     const redirectUri = `${ENV.appUrl}/api/oauth/github/callback`;
     if (!ENV.githubClientId) {
-      res.status(503).json({ error: "GitHub OAuth not configured" });
+      // Redirect back to the profile with an error rather than dumping raw JSON,
+      // so the player lands where they started with a clear message.
+      res.redirect("/profile?tab=tasks&error=github_not_configured");
       return;
     }
     const params = new URLSearchParams({
@@ -511,19 +513,19 @@ export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/github/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     if (!code) {
-      res.redirect("/profile?tab=contributions&error=github_no_code");
+      res.redirect("/profile?tab=tasks&error=github_no_code");
       return;
     }
     // Reject forged/expired state before doing any token work.
     const { ok: stateOk } = verifyState(getQueryParam(req, "state"));
     if (!stateOk) {
-      res.redirect("/profile?tab=contributions&error=github_bad_state");
+      res.redirect("/profile?tab=tasks&error=github_bad_state");
       return;
     }
     // Require an existing session — this endpoint only links, not logs in
     const sessionCookie = req.cookies?.[COOKIE_NAME];
     if (!sessionCookie) {
-      res.redirect("/?error=auth_required");
+      res.redirect("/profile?tab=tasks&error=github_auth_required");
       return;
     }
     try {
@@ -533,7 +535,7 @@ export function registerOAuthRoutes(app: Express) {
       // Resolve the current logged-in user from the session cookie
       const session = await sdk.verifySession(sessionCookie);
       if (!session?.openId) {
-        res.redirect("/?error=auth_required");
+        res.redirect("/profile?tab=tasks&error=github_auth_required");
         return;
       }
       const linked = await db.linkGithubToProfile(session.openId, {
@@ -542,13 +544,15 @@ export function registerOAuthRoutes(app: Express) {
         githubLinkedAt: new Date(),
       });
       if (!linked) {
-        res.redirect("/profile?tab=contributions&error=github_already_linked");
+        res.redirect("/profile?tab=tasks&error=github_already_linked");
         return;
       }
-      res.redirect("/profile?tab=contributions&github=linked");
+      res.redirect("/profile?tab=tasks&github=linked");
     } catch (err) {
       console.error("[OAuth] GitHub callback failed:", err);
-      res.redirect("/profile?tab=contributions&error=github_failed");
+      // Surface the underlying reason to the player so a failure is diagnosable.
+      const reason = err instanceof Error ? err.message.slice(0, 120) : "unknown";
+      res.redirect(`/profile?tab=tasks&error=github_failed&reason=${encodeURIComponent(reason)}`);
     }
   });
 

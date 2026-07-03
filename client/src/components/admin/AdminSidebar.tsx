@@ -32,7 +32,7 @@ const NAV_GROUPS = [
       { id: 'events', label: 'Events', icon: Calendar },
       { id: 'recordings', label: 'Recordings', icon: Video },
       { id: 'role-holders', label: 'Role Holders', icon: Handshake },
-      { id: 'call-tasks', label: 'Call Tasks', icon: ScrollText },
+      { id: 'call-tasks', label: 'Tasks', icon: ScrollText },
       { id: 'edited-cuts', label: 'Edited Cuts', icon: Scissors },
       { id: 'moderation', label: 'Forum', icon: Shield },
       { id: 'quests', label: 'Quests', icon: ScrollText },

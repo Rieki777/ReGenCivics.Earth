@@ -133,9 +133,9 @@ export default function Bounties() {
       {/* My work rail */}
       {isAuthenticated && activeMine > 0 ? (
         <section className="max-w-6xl mx-auto px-4 mb-4">
-          <Link href="/profile?tab=call-tasks" className="flex items-center justify-between rounded-xl border border-[#7dd87d]/25 bg-[#7dd87d]/[0.06] px-4 py-3 text-sm hover:bg-[#7dd87d]/10">
+          <Link href="/profile?tab=tasks" className="flex items-center justify-between rounded-xl border border-[#7dd87d]/25 bg-[#7dd87d]/[0.06] px-4 py-3 text-sm hover:bg-[#7dd87d]/10">
             <span className="text-white/85">You are working on {activeMine} {activeMine === 1 ? "bounty" : "bounties"}</span>
-            <span className="inline-flex items-center gap-1 text-[#7dd87d]">Go to your Call Tasks <ArrowRight className="w-4 h-4" /></span>
+            <span className="inline-flex items-center gap-1 text-[#7dd87d]">Go to your Tasks <ArrowRight className="w-4 h-4" /></span>
           </Link>
         </section>
       ) : null}

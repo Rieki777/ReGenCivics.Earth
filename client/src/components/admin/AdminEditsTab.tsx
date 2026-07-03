@@ -134,7 +134,7 @@ export default function AdminEditsTab() {
           </div>
         )}
         {!list.isLoading && rows.length === 0 && (
-          <p className="text-sm text-stone-500">No recordings yet. Run the pipeline from the Call Tasks tab to ingest your first session.</p>
+          <p className="text-sm text-stone-500">No recordings yet. Run the pipeline from the Tasks tab to ingest your first session.</p>
         )}
         <div className="space-y-3">
           {rows.map((row) => (

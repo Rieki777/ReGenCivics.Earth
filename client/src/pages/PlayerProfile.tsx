@@ -2434,7 +2434,7 @@ const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[]
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
   { id: "submissions",    label: "My Submissions",  icon: FolderOpen },
   { id: "quests",         label: "Quests",         icon: Scroll },
-  { id: "tasks",          label: "Call Tasks",     icon: Scroll },
+  { id: "tasks",          label: "Tasks",          icon: Scroll },
   { id: "contributions",  label: "Contributions",  icon: Leaf },
   { id: "settings",       label: "Settings",       icon: Settings },
 ];
