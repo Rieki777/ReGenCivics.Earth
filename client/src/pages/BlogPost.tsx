@@ -166,9 +166,14 @@ export default function BlogPost() {
         <ReadingProgressRing progress={scrollProgress} className="md:hidden" />
       </div>
 
-      {/* Table of Contents - Collapsible */}
+      {/* Table of Contents - Collapsible. Sits below the floating Share button
+          (which pins at safe-area + 73px and is ~44px tall) so the two no
+          longer overlap in the top-right. */}
       {tableOfContents.length > 0 && (
-        <div className="fixed right-4 top-24 z-40 max-w-xs hidden lg:block">
+        <div
+          className="fixed right-4 z-40 max-w-xs hidden lg:block"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 128px)" }}
+        >
           <div className="bg-[#1a472a]/90 backdrop-blur-sm rounded-lg border border-[#7dd87d]/30 overflow-hidden">
             <button
               onClick={() => setTocOpen(!tocOpen)}

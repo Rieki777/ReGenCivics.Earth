@@ -20,6 +20,7 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { PageTransition } from "@/components/PageTransition";
 import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { isNewsletterSubscribed } from "@/utils/newsletter";
+import { decodeEntities } from "@/utils/sanitize";
 import KnowledgeMapPanel from "@/components/KnowledgeMapPanel";
 
 function timeAgo(date: Date | string): string {
@@ -304,7 +305,7 @@ export default function CommunityCategory() {
                             className="font-semibold text-[#1a472a] text-sm md:text-base group-hover:text-[#4a7c59] transition-colors truncate"
                             style={{ fontFamily: 'var(--font-display)' }}
                           >
-                            {post.title}
+                            {decodeEntities(post.title)}
                           </h3>
                         </div>
 

@@ -40,6 +40,7 @@ import { RaiseModal } from "@/components/assembly/RaiseModal";
 import { Vote } from "lucide-react";
 import ThreadRoots from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
+import { decodeEntities } from "@/utils/sanitize";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
 
 function timeAgo(date: Date | string): string {
@@ -494,7 +495,7 @@ export default function CommunityPost() {
     <PageTransition>
     <div className="min-h-screen bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
       <SEO
-        title={`${post.title} | ReGen Civics Community`}
+        title={`${decodeEntities(post.title)} | ReGen Civics Community`}
         description={post.content?.slice(0, 155) || `A forum post by ${post.authorName} in the ReGen Civics community.`}
         url={`/community/post/${post.id}`}
         type="article"
@@ -513,7 +514,7 @@ export default function CommunityPost() {
               {post.categoryName}
             </Link>
             <ChevronRight className="w-3 h-3" />
-            <span className="text-white/80 truncate max-w-[200px]">{post.title}</span>
+            <span className="text-white/80 truncate max-w-[200px]">{decodeEntities(post.title)}</span>
           </div>
 
           {/* Type + stage badges */}
@@ -544,7 +545,7 @@ export default function CommunityPost() {
               className="text-xl md:text-2xl font-bold text-white"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              {post.title}
+              {decodeEntities(post.title)}
             </h1>
           </div>
         </div>
@@ -648,7 +649,7 @@ export default function CommunityPost() {
                 )}
                 {canDeletePost && !editingPost && (
                   <button
-                    onClick={() => { setEditTitle(post.title); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
+                    onClick={() => { setEditTitle(decodeEntities(post.title)); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
                     className="text-[#4a7c59] hover:text-[#1a472a] p-1 transition-colors"
                     title="Edit post"
                     aria-label="Edit post"
@@ -1112,9 +1113,9 @@ export default function CommunityPost() {
             })}
           </div>
         ) : (
-          <div className="text-center py-8 mb-6">
-            <MessageCircle className="w-10 h-10 text-[#4a7c59]/20 mx-auto mb-2" />
-            <p className="text-[#1a472a]/80 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
+          <div className="text-center py-8 mb-6 bg-white/5 border border-white/10 rounded-xl">
+            <MessageCircle className="w-10 h-10 text-white/30 mx-auto mb-2" />
+            <p className="text-white/75 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
               No replies yet. Be the first to respond!
             </p>
           </div>

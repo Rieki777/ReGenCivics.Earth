@@ -438,7 +438,7 @@ function MainApp() {
     <ErrorBoundary fallback={<TaoErrorState />}>
       <AudioProvider>
       <ReGenGuideProvider>
-      <ThemeProvider defaultTheme="dark" switchable={true}>
+      <ThemeProvider defaultTheme="dark" switchable={false}>
         <TooltipProvider>
           <Toaster />
           {!adminMode && <StructuredData />}

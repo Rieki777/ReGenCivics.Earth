@@ -10,7 +10,8 @@ import { Check } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FlowerOfLifeIcon } from '@/components/FlowerOfLifeIcon';
+import { SeedOfLifeIcon } from '@/components/SeedOfLifeIcon';
+import { decodeEntities } from '@/utils/sanitize';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
 
@@ -148,7 +149,7 @@ export function NotificationBell() {
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <FlowerOfLifeIcon size={20} className="text-[#1a472a]" />
+        <SeedOfLifeIcon size={22} animate={false} className="text-amber-400" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -171,7 +172,7 @@ export function NotificationBell() {
           <div className="overflow-y-auto max-h-80">
             {items.length === 0 ? (
               <div className="p-6 text-center text-[#1a472a]/80">
-                <FlowerOfLifeIcon size={32} className="mx-auto mb-2 opacity-30 text-[#1a472a]" />
+                <SeedOfLifeIcon size={32} animate={false} className="mx-auto mb-2 opacity-30 text-[#1a472a]" />
                 <p className="text-sm">Nothing here yet. When someone mentions you or replies to your posts, it lands here.</p>
               </div>
             ) : (
@@ -189,10 +190,10 @@ export function NotificationBell() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <h4 className={`text-sm ${!item.isRead ? 'font-semibold' : ''} text-[#1a472a]`}>
-                        {item.groupCount > 1 ? `${item.groupCount} new replies: ${item.title.replace(/^New reply in /, '')}` : item.title}
+                        {decodeEntities(item.groupCount > 1 ? `${item.groupCount} new replies: ${item.title.replace(/^New reply in /, '')}` : item.title)}
                       </h4>
                       {item.body && (
-                        <p className="text-xs text-[#1a472a]/70 mt-1 line-clamp-2">{item.body}</p>
+                        <p className="text-xs text-[#1a472a]/70 mt-1 line-clamp-2">{decodeEntities(item.body)}</p>
                       )}
                       <p className="text-xs text-[#1a472a]/80 mt-1">
                         {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}

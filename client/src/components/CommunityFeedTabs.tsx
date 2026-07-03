@@ -12,6 +12,7 @@ import { MessageCircle, Info, Sparkles } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { FEED_REASON_LABELS, type FeedTab } from '@shared/forumFeed';
+import { decodeEntities } from '@/utils/sanitize';
 
 const TABS: { key: Exclude<FeedTab, 'latest'>; label: string }[] = [
   { key: 'for_you', label: 'For You' },
@@ -45,7 +46,7 @@ function FeedRow({ post, showWhy }: { post: any; showWhy: boolean }) {
       {neverRead && <span className="w-2 h-2 rounded-full bg-[#4a7c59] flex-shrink-0" aria-label="Unread" />}
       <Link href={`/community/post/${post.id}`} className="flex-1 min-w-0">
         <span className={`block text-sm text-[#1a472a] truncate group-hover:text-[#4a7c59] ${neverRead || unread > 0 ? 'font-bold' : 'font-medium'}`}>
-          {post.title}
+          {decodeEntities(post.title)}
         </span>
         <span className="block text-xs text-[#1a472a]/60 truncate">
           {post.authorName} · {post.categoryName}
