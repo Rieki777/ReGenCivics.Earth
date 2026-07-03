@@ -4,7 +4,7 @@
  * caps), excerpts, deep links, and email preference resolution.
  *
  * The fan-out itself is guarded by DB unique keys (notifications.dedupeKey,
- * forum_mentions source+user) created in migration 0162; insert idempotency
+ * forum_mentions source+user) created in migration 0163; insert idempotency
  * is enforced by the database, not by logic these tests could cover.
  */
 import { describe, it, expect } from "vitest";

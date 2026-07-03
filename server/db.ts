@@ -1854,7 +1854,7 @@ export async function getCampaignConversionRate(campaignId: number): Promise<{
 // ============================================
 // User Notifications Queries
 // ============================================
-// As of migration 0162, all in-app notifications live in the consolidated
+// As of migration 0163, all in-app notifications live in the consolidated
 // `notifications` table (user_notifications rows were back-filled there).
 // These helpers keep their legacy names so existing writers (campaigns,
 // hypha-bridge webhooks) work unchanged.

@@ -277,6 +277,18 @@ Format per entry:
 
 ---
 
+## ADR-24: One notification spine on `notifications`; deterministic forum fan-out
+
+- Date: 2026-07-03
+- Status: Accepted (coded; live once migration 0163 runs)
+- Context: Two parallel notification tables had drifted: `user_notifications` (campaign/contribution events, read by NotificationBell, no link column) and `notifications` (bounty/coordination events keyed on `playerId`, with a `link` column almost nothing populated). No forum event notified anyone: mentions, replies, gratitude, and elder/Guide responses all went unseen unless the user happened to revisit the thread. Phase 1 of the forum upgrade plan (2026-07-02, decisions locked by Rye) called for one spine, deep links to the exact comment, and email delivery.
+- Decision: `notifications` is the single spine. Migration 0163 renames `playerId` to `userId` (its writers always stored `users.id`), widens the type enum to forum + legacy types, adds actor/source columns (`actorId`, `postId`, `replyId`), delivery stamps (`emailedAt`, `pushedAt` for the coming web-push phase), and a unique `dedupeKey`; back-fills every `user_notifications` row with owner, read state, timestamps, and a link matching the old bell's navigation; and seeds `forum_subscriptions` from existing authors/repliers so live threads notify from day one. All fan-out is deterministic (STEERING 11) in `server/lib/forum-notify.ts`, runs fire-and-forget after mutations commit, and is idempotent end to end: `dedupeKey` for notification inserts, a unique key on `forum_mentions` for edit re-parses, `emailedAt` for email sends. One person gets one notification per event (mention wins over direct reply wins over thread activity). Person-level mutes (`forum_user_mutes`) and thread mutes gate delivery server-side. Email goes through the existing Resend path with per-type prefs on `playerProfiles.notificationPrefs`, immediate or daily-digest cadence, a 20/day hard cap, and never to banned users. `user_notifications` stays in the schema until a follow-up migration drops it after a soak period.
+- Why: leaving two tables is what made the bell lie (forum events invisible, contribution events un-linkable). Consolidating in one migration, back-fill included, avoids a half-state where old unread rows vanish. Deterministic fan-out costs zero tokens forever and the dedupe keys make Railway restarts and retried hooks harmless, the same scar the token ledger already carries (`idempotencyKey`).
+- Trade-offs: between the migration running and the next deploy finishing, the previously-deployed code writes `playerId` and fails (caught + logged) for bounty/coordination notifications, a window of a few minutes. The migration must run before push since deploys do not run migrations. Grouping in the bell is computed per page server-side rather than materialized; fine at current scale.
+- Where it lives in code: `drizzle/0163_forum_notifications.sql`, `server/lib/forum-notify.ts`, `server/lib/notification-email.ts`, `server/jobs/notificationDigestJob.ts`, notificationsRouter in `server/routes/forum.ts`, hooks in `forum.ts`/`gratitude.ts`/`regenGuide.ts`/`elderForumJob.ts`, `client/src/components/NotificationBell.tsx`, `client/src/pages/{Notifications,NotificationSettings}.tsx`.
+
+---
+
 ## Adding new ADRs
 
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.
