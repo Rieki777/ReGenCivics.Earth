@@ -17,8 +17,7 @@ import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { elderChatMessages, elderCorpusChunks } from "../../drizzle/schema";
-import { ENV } from "../_core/env";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, isLLMConfigured } from "../_core/llm";
 import { checkRateLimit } from "../rate-limit";
 import { retrieveCanonPassages } from "../lib/elder-retrieval";
 import { buildElderSystemPrompt, CRISIS_RESPONSE, detectCrisis } from "../lib/elder-safety";
@@ -67,7 +66,7 @@ export const elderChatRouter = router({
     .query(async ({ input }) => {
       const elderId = input?.elder ?? "anastasia";
       if (!getElder(elderId)) return { enabled: false };
-      const enabled = Boolean(ENV.anthropicApiKey) && (await corpusHasRows(elderId));
+      const enabled = isLLMConfigured() && (await corpusHasRows(elderId));
       return { enabled };
     }),
 
@@ -101,7 +100,7 @@ export const elderChatRouter = router({
         return { answer: CRISIS_RESPONSE, isCrisis: true };
       }
 
-      if (!ENV.anthropicApiKey) {
+      if (!isLLMConfigured()) {
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: `${elderObj.displayName} is not available yet. Please return soon.` });
       }
 

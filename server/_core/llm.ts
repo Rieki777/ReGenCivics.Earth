@@ -48,6 +48,19 @@ export type InvokeResult = {
 
 let _client: Anthropic | null = null;
 
+// OpenRouter serves the Anthropic Messages protocol at /api/v1/messages, so the
+// SDK works unchanged: baseURL swaps the host, authToken sends the OpenRouter
+// key as a Bearer header (OpenRouter rejects x-api-key auth).
+const OPENROUTER_BASE_URL = "https://openrouter.ai/api";
+
+export function isLLMConfigured(): boolean {
+  return Boolean(ENV.openrouterApiKey || ENV.anthropicApiKey);
+}
+
+function getModel(): string {
+  return ENV.openrouterApiKey ? ENV.aiModel : "claude-sonnet-4-6";
+}
+
 async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
@@ -66,10 +79,20 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
 
 function getClient(): Anthropic {
   if (!_client) {
-    if (!ENV.anthropicApiKey) {
-      throw new Error("ANTHROPIC_API_KEY is not configured");
+    if (ENV.openrouterApiKey) {
+      _client = new Anthropic({
+        authToken: ENV.openrouterApiKey,
+        baseURL: OPENROUTER_BASE_URL,
+        defaultHeaders: {
+          "HTTP-Referer": "https://regencivics.earth",
+          "X-Title": "ReGen Civics",
+        },
+      });
+    } else if (ENV.anthropicApiKey) {
+      _client = new Anthropic({ apiKey: ENV.anthropicApiKey });
+    } else {
+      throw new Error("Neither OPENROUTER_API_KEY nor ANTHROPIC_API_KEY is configured");
     }
-    _client = new Anthropic({ apiKey: ENV.anthropicApiKey });
   }
   return _client;
 }
@@ -87,7 +110,7 @@ export async function streamLLM(
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
   const stream = await withRetry(() => Promise.resolve(client.messages.stream({
-    model: "claude-sonnet-4-6",
+    model: getModel(),
     max_tokens: maxTokens,
     ...(systemMessage ? { system: systemMessage } : {}),
     messages: conversationMessages,
@@ -142,7 +165,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     };
 
     const response = await withRetry(() => client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: getModel(),
       max_tokens: maxTokens,
       ...(systemMessage ? { system: systemMessage } : {}),
       messages: conversationMessages,
@@ -157,7 +180,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     responseText = JSON.stringify(toolUse.input);
   } else {
     const response = await withRetry(() => client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: getModel(),
       max_tokens: maxTokens,
       ...(systemMessage ? { system: systemMessage } : {}),
       messages: conversationMessages,
@@ -170,7 +193,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   return {
     id: `msg_${Date.now()}`,
     created: Math.floor(Date.now() / 1000),
-    model: "claude-sonnet-4-6",
+    model: getModel(),
     choices: [
       {
         index: 0,

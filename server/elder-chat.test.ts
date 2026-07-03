@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
+import { ENV } from "./_core/env";
 import type { TrpcContext } from "./_core/context";
 import { parseCanon, estimateTokens } from "./lib/elder-corpus";
 import { cosineSimilarity, topKByEmbedding } from "./lib/elder-retrieval";
@@ -93,6 +94,22 @@ describe("crisis detection", () => {
 });
 
 describe("elderChat guards", () => {
+  // Clear both provider keys on the ENV object so the guards are exercised the
+  // same way regardless of what the ambient shell environment carries
+  // (OPENROUTER_API_KEY is exported in ~/.bashrc on dev machines).
+  let savedAnthropicKey = "";
+  let savedOpenrouterKey = "";
+  beforeEach(() => {
+    savedAnthropicKey = ENV.anthropicApiKey;
+    savedOpenrouterKey = ENV.openrouterApiKey;
+    ENV.anthropicApiKey = "";
+    ENV.openrouterApiKey = "";
+  });
+  afterEach(() => {
+    ENV.anthropicApiKey = savedAnthropicKey;
+    ENV.openrouterApiKey = savedOpenrouterKey;
+  });
+
   it("elderChatEnabled reports not-ready without an API key / corpus", async () => {
     const caller = appRouter.createCaller(makeCtx());
     await expect(caller.elderChat.elderChatEnabled()).resolves.toEqual({ enabled: false });

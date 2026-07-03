@@ -43,8 +43,13 @@ export const ENV = {
   applePrivateKey: process.env.APPLE_PRIVATE_KEY ?? "",
   // App URL
   appUrl: process.env.APP_URL ?? "http://localhost:3000",
-  // AI
+  // AI. OPENROUTER_API_KEY routes all LLM calls through OpenRouter's
+  // Anthropic-compatible endpoint; ANTHROPIC_API_KEY is the direct-to-Anthropic
+  // fallback when no OpenRouter key is set. AI_MODEL only applies on the
+  // OpenRouter path (direct Anthropic keeps its pinned Claude model).
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
+  openrouterApiKey: process.env.OPENROUTER_API_KEY ?? "",
+  aiModel: process.env.AI_MODEL ?? "openrouter/auto",
   // Cloudflare Workers AI image generation
   imageGenWorkerUrl: process.env.IMAGE_GEN_WORKER_URL ?? "",
   imageGenSecret: process.env.IMAGE_GEN_SECRET ?? "",
