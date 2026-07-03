@@ -1,8 +1,8 @@
 -- Remove the dormant Loomio integration columns. Loomio was never brought
 -- live (the API key stayed a placeholder), so these columns hold no real
--- data. Governance deliberation now happens in the ReGen Gov app at
--- gov.regencivics.earth; the Loomio webhook receiver, API sender, and
--- subgroup sync have all been removed from the codebase.
+-- data. Governance deliberation now happens in the ReGen Gov app, and the
+-- Loomio webhook receiver, API sender, and subgroup sync have all been
+-- removed from the codebase. See ADR-23.
 ALTER TABLE forumPromotionRequests DROP COLUMN loomioSentAt;
 
 ALTER TABLE forumPostDecisions DROP COLUMN loomioGroupKey;
