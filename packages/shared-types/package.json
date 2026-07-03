@@ -9,5 +9,5 @@
     ".": "./src/index.ts"
   },
   "license": "AGPL-3.0-or-later",
-  "description": "Cross-app TypeScript types shared between apps/web (main) and apps/gov (Loomio bridge UI). Source-only package — consumers compile through their own toolchain (Vite for web, Next for gov)."
+  "description": "Cross-app TypeScript types shared between apps/web (main) and apps/gov (ReGen Gov UI). Source-only package — consumers compile through their own toolchain (Vite for web, Next for gov)."
 }

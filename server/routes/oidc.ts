@@ -1,6 +1,6 @@
 /**
- * Minimal OIDC provider for shared auth between regencivics.earth and Loomio
- * at gov.regencivics.earth.
+ * Minimal OIDC provider for shared auth between regencivics.earth and the
+ * ReGen Gov app at gov.regencivics.earth.
  *
  * Endpoints:
  *   GET  /api/auth/oidc/.well-known/openid-configuration   discovery doc
@@ -8,8 +8,6 @@
  *   GET  /api/auth/oidc/authorize                          reads session, returns code
  *   POST /api/auth/oidc/token                              exchanges code for id_token
  *   GET  /api/auth/oidc/userinfo                           returns regencivics claims block
- *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md sections "Shared auth" + 1004.
  *
  * RS256 signing key is loaded from OIDC_PRIVATE_KEY_JWK env var. If unset on
  * boot in development, a fresh key pair is generated and logged so the dev can
@@ -30,8 +28,8 @@ const CLIENT_SECRET = process.env.OIDC_LOOMIO_CLIENT_SECRET ?? "";
 const REDIRECT_URIS = (process.env.OIDC_LOOMIO_REDIRECT_URIS ?? "https://gov.regencivics.earth/auth/oidc/callback").split(",").map((s) => s.trim());
 
 // In-memory authorization-code store. Codes are single-use, expire in 60s.
-// Production should move this to Redis if multi-instance, but Loomio is the
-// only consumer and a single Node process is fine for the volume.
+// Production should move this to Redis if multi-instance, but the ReGen Gov
+// app is the only consumer and a single Node process is fine for the volume.
 interface AuthCode {
   userId: number;
   clientId: string;

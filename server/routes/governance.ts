@@ -2,10 +2,8 @@
  * Governance pipeline tRPC router.
  *
  * Stage 1 (forum) patterns: readiness checks, dual-key promotion, decision status.
- * Stage 2 hand-off: webhook side ships in server/webhooks/loomio.ts
+ * Stage 2 hand-off: decisions are deliberated in the ReGen Gov app at gov.regencivics.earth.
  * Stage 3 hand-off: see server/lib/hypha-bridge/
- *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md
  */
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
@@ -224,10 +222,8 @@ export const governanceRouter = router({
         .set({ status: "signed", coSignerId: ctx.user.id, coSignedAt: new Date() } as any)
         .where(eq(forumPromotionRequests.id, input.promotionRequestId));
 
-      // The Loomio webhook sender lives in server/webhooks/loomio.ts via
-      // sendPromotionToLoomio. The cron-style worker that calls it will pick
-      // this up on its next pass. We do not call it inline to avoid blocking
-      // the co-sign action on a third-party API.
+      // Signing marks the request ready. Deliberation happens in the ReGen Gov
+      // app; the decision row is created there and reconciled back to this thread.
       return { ok: true };
     }),
 
@@ -251,7 +247,6 @@ export const governanceRouter = router({
         id: d.id,
         status: d.status,
         track: d.track,
-        loomioDecisionUrl: d.loomioDecisionUrl,
         closesAt: d.closesAt,
         closedAt: d.closedAt,
         outcomeSummary: d.outcomeSummary,
@@ -787,7 +782,7 @@ export const governanceRouter = router({
 
   // ─── Phase 2: ReGen Guide drafting ───────────────────────────────────────
 
-  /** Suggest a Loomio poll template based on the forum thread content. */
+  /** Suggest a decision poll template based on the forum thread content. */
   suggestTemplate: protectedProcedure
     .input(z.object({ threadId: z.number().int().positive() }))
     .mutation(async ({ input }) => {
@@ -811,7 +806,7 @@ export const governanceRouter = router({
               role: "system",
               content:
                 "You are ReGen Guide, the systems-thinking AI companion for the ReGen Civics governance pipeline. " +
-                "Your job is to suggest the right Loomio poll template for a forum thread that's about to be promoted to a formal decision. " +
+                "Your job is to suggest the right poll template for a forum thread that's about to be promoted to a formal decision. " +
                 "Available templates: consent (sociocratic, surfaces objections, best for policies and agreements), proposal (agree/abstain/disagree/block, for budget and token decisions), dot_vote (rank or pick top N), ranked_choice (full ranking), meeting (time-pick), sense_check (lightweight non-binding temperature check). " +
                 "Return your answer as JSON with template (one of the values above), reasoning (one sentence), confidence (0-1).",
             },
@@ -869,7 +864,7 @@ export const governanceRouter = router({
             {
               role: "system",
               content:
-                "You are ReGen Guide, drafting a Loomio decision page from a forum thread for the ReGen Civics governance pipeline. " +
+                "You are ReGen Guide, drafting a decision page from a forum thread for the ReGen Civics governance pipeline. " +
                 "Stay neutral. No spin. Lead with the affirmative. No em-dashes. No contrast framing. No AI words like delve, foster, leverage, vibrant, transformative, unlock, seamless, robust, comprehensive, utilize, navigate. Direct, grounded, specific. " +
                 "Generate a structured draft the proposer can edit before opening the formal decision. " +
                 `The poll template is "${input.template}". Tailor the structure to that template.`,

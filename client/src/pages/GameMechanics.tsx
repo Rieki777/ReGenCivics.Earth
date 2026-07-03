@@ -211,7 +211,7 @@ const VARIABLE_HELP: Record<string, string> = {
   "proposals.signal_threshold": "Upvotes a proposal needs before it graduates from the community forum to Hypha governance.",
 
   // Governance Mechanics (added 2026-04-09)
-  "governance.vote_weight.visitor": "How much a Visitor's stance counts in a Loomio decision. Visitors are still finding their footing, so their vote carries the base weight.",
+  "governance.vote_weight.visitor": "How much a Visitor's stance counts in a governance decision. Visitors are still finding their footing, so their vote carries the base weight.",
   "governance.vote_weight.citizen": "How much a Citizen's stance counts. Citizens have rooted in and carry a slightly stronger voice.",
   "governance.vote_weight.contributor": "How much a Contributor's stance counts. Contributors are actively running quests and holding work.",
   "governance.vote_weight.steward": "How much a Steward's stance counts. Stewards are the elders of the community and hold the most governance weight.",

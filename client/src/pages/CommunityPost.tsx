@@ -618,7 +618,7 @@ export default function CommunityPost() {
               )}
             </div>
 
-            {/* Living backlink banner: shows if this thread has been promoted to a Loomio decision */}
+            {/* Living backlink banner: shows if this thread has been promoted to a formal decision */}
             <div className="px-4 md:px-6 pb-2">
               <ForumThreadDecisionBanner threadId={post.id} />
               {isAuthenticated && (
@@ -627,7 +627,7 @@ export default function CommunityPost() {
                     type="button"
                     onClick={() => setPromotionOpen(true)}
                     className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#7dd87d] hover:text-[#9de89d] transition-colors"
-                    title="Promote this thread to a formal Loomio decision"
+                    title="Promote this thread to a formal decision"
                   >
                     <Vote className="w-3 h-3" />
                     Promote to decision

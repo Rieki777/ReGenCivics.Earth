@@ -59,7 +59,6 @@ import { registerSseRoutes } from "../routes/sse";
 import { registerOgRoutes } from "../routes/og";
 import { registerEmbedRoutes } from "../routes/embed";
 import { registerHyphaWebhookRoutes } from "../lib/hypha-bridge/webhook-receiver";
-import { registerLoomioWebhookRoutes } from "../webhooks/loomio";
 import { registerGithubWebhookRoutes } from "../webhooks/github";
 import { registerStripeWebhookRoutes } from "../webhooks/stripe";
 import { registerZeffyWebhookRoutes } from "../webhooks/zeffy";
@@ -521,15 +520,13 @@ async function startServer() {
   registerRiversideWebhookRoutes(app);
   // Hypha Bridge: Alchemy webhook for Base chain governance events
   registerHyphaWebhookRoutes(app);
-  // Loomio governance webhook (HMAC-signed)
-  registerLoomioWebhookRoutes(app);
   // GitHub webhook: merge automation for Bounty Engine
   registerGithubWebhookRoutes(app);
   // Stripe webhook: CORE church donations (checkout + subscription lifecycle)
   registerStripeWebhookRoutes(app);
   // Zeffy webhook: CORE church donations (preferred, zero-fee processor)
   registerZeffyWebhookRoutes(app);
-  // OIDC provider for shared auth with Loomio at gov.regencivics.earth
+  // OIDC provider for shared auth with the ReGen Gov app at gov.regencivics.earth
   registerOidcRoutes(app);
   // Presence heartbeat and count
   registerPresenceRoutes(app);
@@ -538,9 +535,9 @@ async function startServer() {
 
   // ── Governance jobs cron endpoint ──────────────────────────────────────────
   // Called hourly by Railway cron: POST /api/cron/governance-jobs
-  // Runs the full sweep: expire promotions, ship signed ones to Loomio,
-  // mark closing-soon, assign storytellers, create renewal threads, reconcile
-  // stuck Hypha bridges. Set CRON_SECRET env var; pass as Bearer token.
+  // Runs the full sweep: expire promotions, mark closing-soon, assign
+  // storytellers, create renewal threads, reconcile stuck Hypha bridges.
+  // Set CRON_SECRET env var; pass as Bearer token.
   app.post("/api/cron/governance-jobs", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });

@@ -2,13 +2,11 @@
  * ForumThreadDecisionBanner
  *
  * The living backlink banner that sits at the top of a forum thread once it
- * has been promoted to a Loomio decision. Polls governance.getDecisionStatus
+ * has been promoted to a formal decision. Polls governance.getDecisionStatus
  * for live status updates and shows the right call-to-action for each state.
- *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 1.4
  */
 import { trpc } from "@/lib/trpc";
-import { Vote, ExternalLink, Clock, CheckCircle2, XCircle, AlertCircle, Sparkles } from "lucide-react";
+import { Vote, Clock, CheckCircle2, XCircle, AlertCircle, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 
 interface Props {
@@ -74,16 +72,6 @@ export function ForumThreadDecisionBanner({ threadId }: Props) {
           )}
         </div>
         <div className="flex-shrink-0 flex flex-col gap-1.5">
-          {decision.loomioDecisionUrl && (
-            <a
-              href={decision.loomioDecisionUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/15 transition-colors"
-            >
-              Open <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-          )}
           {decision.hyphaBridgeId && (
             <Link
               href={`/bridge/hypha/${decision.hyphaBridgeId}`}

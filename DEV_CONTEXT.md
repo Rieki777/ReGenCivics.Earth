@@ -303,7 +303,6 @@ Webhook routes are registered as raw Express routes (not tRPC) in `server/_core/
 ```typescript
 registerRiversideWebhookRoutes(app);
 registerResendWebhookRoutes(app);
-registerLoomioWebhookRoutes(app);
 registerHyphaWebhookRoutes(app);
 ```
 

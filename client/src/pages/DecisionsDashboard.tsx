@@ -17,7 +17,7 @@ import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { Link } from "wouter";
 import {
-  Vote, Activity, CheckCircle2, AlertTriangle, Layers, ExternalLink, Sparkles, ArrowRight,
+  Vote, Activity, CheckCircle2, AlertTriangle, Layers, Sparkles, ArrowRight,
 } from "lucide-react";
 
 const TRACK_LABEL: Record<string, string> = {
@@ -159,16 +159,6 @@ export default function DecisionsDashboard() {
                       )}
                     </div>
                   </div>
-                  {d.loomioDecisionUrl && (
-                    <a
-                      href={d.loomioDecisionUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white/70 hover:text-[#7dd87d]"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
                 </li>
               ))}
             </ul>
@@ -196,9 +186,6 @@ export default function DecisionsDashboard() {
         </section>
       )}
 
-      <p className="text-white/35 text-[11px] text-center pb-8 px-4">
-        Governance powered by Loomio. <a href="https://loomio.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/70">Support their work at loomio.com</a>.
-      </p>
     </div>
   );
 }

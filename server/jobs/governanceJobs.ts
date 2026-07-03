@@ -3,7 +3,6 @@
  *
  * Hourly Railway cron POSTs to /api/cron/governance-jobs and we run all of:
  *   - expirePromotionRequests: close out unsigned dual-key requests after the window
- *   - sendSignedPromotionsToLoomio: ship signed promotion requests to Loomio API
  *   - assignStorytellers: pick storytellers for high-stakes ratified decisions
  *   - checkSunsetting: create renewal threads for decisions sunsetting in T-7
  *   - reconcileHyphaBridges: re-check stuck handoff_sent bridges via Base RPC
@@ -21,7 +20,6 @@ import {
   governanceTenants,
   users,
 } from "../../drizzle/schema";
-import { sendPromotionToLoomio } from "../webhooks/loomio";
 
 interface JobReport {
   job: string;
@@ -52,48 +50,6 @@ export async function expirePromotionRequests(): Promise<JobReport> {
     return { job: "expirePromotionRequests", ok: true, count: result?.[0]?.affectedRows ?? 0 };
   } catch (err: any) {
     return { job: "expirePromotionRequests", ok: false, error: err.message };
-  }
-}
-
-/** Find any signed promotion requests that don't yet have a forumPostDecisions
- * row, and ship them to Loomio. The Loomio webhook receiver will create the
- * decision row when poll_created fires back. */
-export async function sendSignedPromotionsToLoomio(): Promise<JobReport> {
-  try {
-    const db = await getDb();
-    if (!db) return { job: "sendSignedPromotionsToLoomio", ok: false, error: "no db" };
-    // Only pick up requests we haven't already shipped. Without the
-    // loomioSentAt guard this job re-sent every signed request each hour until
-    // Loomio's poll_created webhook created the decision row, spawning a
-    // duplicate Loomio discussion+poll on every run if that webhook lagged.
-    const signed = await db
-      .select()
-      .from(forumPromotionRequests)
-      .where(and(eq(forumPromotionRequests.status, "signed"), isNull(forumPromotionRequests.loomioSentAt)))
-      .limit(20);
-    let sent = 0;
-    for (const req of signed) {
-      // Skip if a decision already exists for this thread
-      const existing = await db
-        .select({ id: forumPostDecisions.id })
-        .from(forumPostDecisions)
-        .where(eq(forumPostDecisions.forumPostId, req.forumPostId))
-        .limit(1);
-      if (existing.length > 0) continue;
-      const result = await sendPromotionToLoomio(req.id);
-      if (result.ok) {
-        // Mark as sent so we don't re-ship on the next run. A genuine send
-        // failure leaves it null so it retries.
-        await db
-          .update(forumPromotionRequests)
-          .set({ loomioSentAt: new Date() } as any)
-          .where(eq(forumPromotionRequests.id, req.id));
-        sent += 1;
-      }
-    }
-    return { job: "sendSignedPromotionsToLoomio", ok: true, count: sent };
-  } catch (err: any) {
-    return { job: "sendSignedPromotionsToLoomio", ok: false, error: err.message };
   }
 }
 
@@ -313,7 +269,6 @@ export async function reconcileHyphaBridges(): Promise<JobReport> {
 export async function runAllGovernanceJobs(): Promise<JobReport[]> {
   const reports: JobReport[] = [];
   reports.push(await expirePromotionRequests());
-  reports.push(await sendSignedPromotionsToLoomio());
   reports.push(await markClosingSoon());
   reports.push(await assignStorytellers());
   reports.push(await checkSunsetting());

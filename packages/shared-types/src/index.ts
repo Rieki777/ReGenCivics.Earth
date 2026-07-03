@@ -2,7 +2,7 @@
  * Cross-app type definitions for ReGen Civics.
  *
  * Single source of truth for types that both `apps/web` (the main site)
- * and `apps/gov` (the Loomio bridge Next.js app) need to talk about
+ * and `apps/gov` (the ReGen Gov Next.js app) need to talk about
  * the same shape of data. New types are added here when both apps
  * touch them; types unique to one app stay local to that app.
  *

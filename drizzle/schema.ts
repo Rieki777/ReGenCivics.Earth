@@ -3022,9 +3022,8 @@ export const songSubmissionVotes = mysqlTable("song_submission_votes", {
 export type SongSubmissionVote = typeof songSubmissionVotes.$inferSelect;
 
 /* ════════════════════════════════════════════════════════════════════
- * Governance Pipeline (Forum -> Loomio -> Hypha)
+ * Governance Pipeline (Forum -> ReGen Gov -> Hypha)
  * Migration: 0109_governance_pipeline.sql
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md
  * ════════════════════════════════════════════════════════════════════ */
 
 /** Computed readiness fields per forum thread. Persisted so the gate checks
@@ -3069,9 +3068,6 @@ export const forumPromotionRequests = mysqlTable("forumPromotionRequests", {
   status: mysqlEnum("status", ["pending", "signed", "expired", "cancelled"]).default("pending").notNull(),
   coSignedAt: timestamp("coSignedAt"),
   expiresAt: timestamp("expiresAt").notNull(),
-  // Set once the signed request has been shipped to Loomio, so the hourly job
-  // doesn't re-send it while waiting for the poll_created webhook.
-  loomioSentAt: timestamp("loomioSentAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ForumPromotionRequest = typeof forumPromotionRequests.$inferSelect;
@@ -3103,10 +3099,6 @@ export type ForumPerspective = typeof forumPerspectives.$inferSelect;
 export const forumPostDecisions = mysqlTable("forumPostDecisions", {
   id: int("id").autoincrement().primaryKey(),
   forumPostId: int("forumPostId").notNull(),
-  loomioGroupKey: varchar("loomioGroupKey", { length: 40 }),
-  loomioDiscussionId: varchar("loomioDiscussionId", { length: 80 }),
-  loomioPollKey: varchar("loomioPollKey", { length: 80 }),
-  loomioDecisionUrl: varchar("loomioDecisionUrl", { length: 500 }),
   track: mysqlEnum("track", ["fund", "game", "both"]).default("game").notNull(),
   reversibility: mysqlEnum("reversibility", ["reversible", "semi_reversible", "one_way_door"]).default("reversible").notNull(),
   bioregionScope: json("bioregionScope"),
@@ -3139,7 +3131,6 @@ export const governanceTenants = mysqlTable("governanceTenants", {
   bannerUrl: varchar("bannerUrl", { length: 400 }),
   accentColor: varchar("accentColor", { length: 20 }),
   hyphaDhoSlug: varchar("hyphaDhoSlug", { length: 80 }),
-  loomioGroupKey: varchar("loomioGroupKey", { length: 40 }),
   parentTenantId: int("parentTenantId"),
   ownerUserId: int("ownerUserId").notNull(),
   allowedBioregions: json("allowedBioregions"),
@@ -3175,12 +3166,10 @@ export const governanceTokenLedger = mysqlTable("governanceTokenLedger", {
 });
 export type GovernanceTokenLedger = typeof governanceTokenLedger.$inferSelect;
 
-/** Ratified agreements that came out of a Loomio decision. The living rule book per tenant. */
+/** Ratified agreements that came out of a governance decision. The living rule book per tenant. */
 export const governanceAgreements = mysqlTable("governanceAgreements", {
   id: int("id").autoincrement().primaryKey(),
   tenantId: int("tenantId").notNull(),
-  loomioDecisionId: varchar("loomioDecisionId", { length: 80 }),
-  loomioPollKey: varchar("loomioPollKey", { length: 80 }),
   forumPostDecisionId: int("forumPostDecisionId"),
   title: varchar("title", { length: 300 }).notNull(),
   text: text("text").notNull(),

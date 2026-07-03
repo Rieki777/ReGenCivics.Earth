@@ -137,7 +137,7 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 **Railway**. The hosting platform. ReGen Civics runs as two services: ReGenCivics.Earth (main) and zealous-enchantment (gov.regencivics.earth Next.js app under `apps/gov`).
 
-**Loomio**. Pre-Hypha governance tool that runs at gov.regencivics.earth. Replaced/wrapped by Hypha bridge for on-chain decisions.
+**Loomio**. Removed (2026-07). Was evaluated as a pre-Hypha deliberation tool but never brought live (the API key stayed a placeholder). gov.regencivics.earth runs the custom **ReGen Gov** Next.js app (`apps/gov`), not Loomio. See ADR-23. Formal on-chain decisions still go through the Hypha bridge.
 
 **SHIPPED_LOG.md**. Rolling reference index of past sprints, fixes batches, and execution prompts. Each entry summarizes what shipped + points at the archived source doc.
 

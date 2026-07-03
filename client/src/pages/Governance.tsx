@@ -783,7 +783,7 @@ export default function Governance() {
         <TLDR points={[
           "Two governance tokens serve two purposes: RCVoice for Fund decisions, RGVoice for Game decisions",
           "Four actor classes hold voice over Fund governance: Council, Investors, Land Projects, Alliance Partners",
-          "Proposals start in the community forum, graduate to Loomio for voting, then formalize on Hypha",
+          "Proposals start in the community forum, move to the ReGen Gov app for voting, then formalize on Hypha",
         ]} />
       </div>
 
