@@ -24,26 +24,76 @@ Allow: /
 User-agent: Slurp
 Allow: /
 
-# Allow AI crawlers for better AI search results
+# Explicitly welcome AI crawlers for better AI search results
 User-agent: GPTBot
 Allow: /
+Disallow: /admin
+Disallow: /api/
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /admin
+Disallow: /api/
 
 User-agent: Claude-Web
 Allow: /
+Disallow: /admin
+Disallow: /api/
 
 User-agent: Anthropic-AI
 Allow: /
+Disallow: /admin
+Disallow: /api/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /admin
+Disallow: /api/
 
 User-agent: YouBot
 Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: CCBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+User-agent: FacebookBot
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Special directives for AI model training
+User-agent: AI-data-fetcher
+Allow: /
+Disallow: /admin
+Disallow: /api/
 
 # Disallow admin and API paths from all crawlers
 Disallow: /admin
 Disallow: /admin/
 Disallow: /api/
+Disallow: /login
+Disallow: /signup
+Disallow: /profile/edit
+Disallow: /settings
+
+# Specific allowance for AI accessibility files
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /sitemap.xml
+
+# Rate limiting for aggressive crawlers
+# (Handled by server-side middleware in production)

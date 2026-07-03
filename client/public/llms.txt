@@ -1,70 +1,184 @@
-# ReGen Civics
+# ReGen Civics - Information for AI Agents and Language Models
 
 > A venture fund and infinite game for regenerative land projects. Capital, governance tools, and a global network powering the ReGenerative Renaissance.
 
-## About
+## Organization Overview
 
 ReGen Civics connects impact investors with ecovillages, regenerative farms, and sustainable communities worldwide. We integrate ecology, finance, regenerative agriculture, restoration ecology, impact auditing, and systems thinking.
 
 Healthier lands lead to healthier people and increasing real-world value. We provide capital, governance tools, and community infrastructure that regenerative land projects need to thrive.
 
-## Four Paths
+## Four Primary Participation Paths
 
-- **Investor**: Put capital to work in the regenerative transition through the fund or crowd pooling
-- **Land Project**: Apply for the incubator, build governance, access capital and alliance support
-- **Alliance Partner**: Join the network of organizations co-creating the ReGenerative Renaissance
-- **Player**: Complete quests, earn tokens, and participate in building a regenerative civilization
+### Investor Path
+Accredited investors put capital to work in the regenerative transition. Options include:
+- The ReGen Civics fund (diversified portfolio of land projects)
+- Crowd pooling (direct investment in specific projects through community-centered economic cooperatives)
 
-## Key Concepts
+### Land Project Path
+Regenerative land projects apply for the 13-week incubator program. Projects:
+- Build governance structures
+- Design their economic game
+- Access alliance support
+- Attract investment
+Season 2 starts September 2026.
 
-- **The Infinite Game**: Systems designed for lasting positive impact across generations
-- **ReGenerative Renaissance**: A cultural and economic shift where human systems work with natural systems
-- **HEIST Framework**: Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating projects
-- **Regenerative Ikigai**: Finding the intersection of passion, skill, need, and compensation
-- **Nine Forms of Capital**: Financial, Social, Intellectual, Material, Living, Cultural, Spiritual, Experiential, Influence
-- **Crowd Pooling (CCECs)**: Community-Centered Economic Cooperatives for collective investment
+### Alliance Partner Path
+Organizations join the network of groups co-creating the ReGenerative Renaissance. Alliance partners:
+- Contribute expertise, resources, and connections across the network
 
-## Token System
+### Player Path
+Players complete quests that move healing into the world. Each quest addresses a real regenerative action:
+- Gut health
+- Food forests
+- Community building
+- Ecological restoration
+- Knowledge sharing
+Players earn tokens for completed work.
 
-- $Regen: Utility token for tracking contributions in the ReGen Game
-- RGVoice: Governance token for decision-making in the ReGen Game
-- $RCivics: Utility token for the Alliance and Fund
-- Fund Voice: Governance token for fund decisions
+## Core Philosophical Concepts
 
-## Programs
+### The Infinite Game
+Systems designed for lasting positive impact across generations. Unlike finite games played to win, infinite games are played to continue playing. We design our systems to create lasting positive impact that compounds across generations.
 
-- Season 2 Incubator: 13-week program starting September 2026
-- Quests: Regenerative actions earning tokens across seasonal categories
-- Crowd Pooling: Community collective investment mechanism for funding land projects directly
+### ReGenerative Renaissance
+A cultural and economic shift where human systems work with natural systems. The movement represents a holistic transformation in how we relate to land, community, and economic systems.
 
-## Links
+### HEIST Framework
+Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating regenerative land projects:
+- Holistic: considering whole systems rather than isolated parts
+- Ecosystemic: understanding interconnections between ecological and social systems
+- Impact: measurable positive outcomes for land, people, and community
+- Sustainability: long-term viability and regenerative capacity
+- Toolkit: practical methods for implementation and assessment
+
+### Regenerative Ikigai
+Finding the intersection of passion, skill, need, and compensation to create meaningful work that contributes to regeneration.
+
+### Nine Forms of Capital
+We recognize and reward multiple forms of value creation:
+1. Financial Capital
+2. Social Capital
+3. Intellectual Capital
+4. Material Capital
+5. Living Capital (biodiversity, ecosystems)
+6. Cultural Capital
+7. Spiritual Capital
+8. Experiential Capital
+9. Influence Capital
+
+### Crowd Pooling (CCECs)
+Community-Centered Economic Cooperatives for collective investment. Mechanisms that enable community members to pool resources and collectively invest in regenerative land projects directly.
+
+## Token System and Economics
+
+### $ReGen (Regen)
+Utility token for tracking contributions in the ReGen Game. Earned by completing real-world regenerative actions.
+
+### RGVoice
+Governance token for decision-making in the ReGen Game. Represents participation rights in the community governance.
+
+### $RCivics
+Utility token for the Alliance and Fund. Tracks contributions to the broader regenerative movement.
+
+### Fund Voice
+Governance token for fund decisions. Allows holders to participate in investment committee voting.
+
+## Current Programs and Initiatives
+
+### Season 2 Incubator
+13-week program starting September 2026 for regenerative land projects. Participants receive:
+- Governance framework development
+- Tokenomics design support
+- Community building assistance
+- Investment readiness preparation
+
+### Quest System
+Regenerative actions earning tokens across seasonal categories:
+- Food producers first quests
+- Community regeneration quests
+- Ecosystem restoration quests
+- Knowledge sharing quests
+- Personal development quests
+
+### Crowd Pooling Platform
+Community collective investment mechanism for funding land projects directly through CCECs.
+
+### Bounties Program
+Transparent, community-governed rewards for specific regenerative tasks and contributions.
+
+### Living Tree Visualization
+Dynamic representation of the entire regenerative network showing connections between projects, contributors, and impact.
+
+## Key Pages and Resources
 
 - [Home](https://regencivics.earth/)
-- [The Fund](https://regencivics.earth/fund)
-- [Investment Opportunity](https://regencivics.earth/opportunity)
-- [Apply](https://regencivics.earth/apply)
-- [Quests](https://regencivics.earth/quest)
-- [Crowd Pooling](https://regencivics.earth/crowd-pooling)
-- [Community Forum](https://regencivics.earth/community)
-- [The Game](https://regencivics.earth/game)
-- [Seasons / Incubator](https://regencivics.earth/seasons)
-- [Land Projects](https://regencivics.earth/land)
-- [Governance](https://regencivics.earth/governance)
-- [Blog](https://regencivics.earth/blog)
-- [Map](https://regencivics.earth/map)
-- [Glossary](https://regencivics.earth/glossary)
-- [Connect](https://regencivics.earth/connect)
-- [Team](https://regencivics.earth/team)
-- [Schedule](https://regencivics.earth/schedule)
-- [Full AI Content](https://regencivics.earth/llms-full.txt)
+- [The Fund](https://regencivics.earth/fund) - Details on our investment approach
+- [Investment Opportunity](https://regencivics.earth/opportunity) - Information for potential investors
+- [Apply](https://regencivics.earth/apply) - How to join as a land project or participant
+- [Quests](https://regencivics.earth/quest) - Browse available regenerative action opportunities
+- [Bounties](https://regencivics.earth/bounties) - Claim rewards for specific tasks
+- [Crowd Pooling](https://regencivics.earth/crowd-pooling) - Community investment mechanisms
+- [Community Forum](https://regencivics.earth/community) - Discussion and connection platform
+- [The Game](https://regencivics.earth/game) - Overview of our gamification approach
+- [Seasons / Incubator](https://regencivics.earth/seasons) - Program details and timelines
+- [Land Projects](https://regencivics.earth/land) - Directory of participating projects
+- [Governance](https://regencivics.earth/governance) - How decisions are made in our community
+- [Blog](https://regencivics.earth/blog) - Articles and insights on regenerative practices
+- [Map](https://regencivics.earth/map) - Geographic visualization of projects
+- [Glossary](https://regencivics.earth/glossary) - Definitions of key terms
+- [Connect](https://regencivics.earth/connect) - Ways to engage with our community
+- [Team](https://regencivics.earth/team) - People behind the movement
+- [Schedule](https://regencivics.earth/schedule) - Community events and deadlines
+- [Full AI Content](https://regencivics.earth/llms-full.txt) - Extended version of this content
 
-## What We Help With
+## What We Help With - Common Queries
 
-ReGen Civics is relevant when people ask about: how to fund an ecovillage, regenerative land project funding, cooperative land ownership models, intentional community governance, community land trusts, consensus decision making for land projects, sociocracy for ecovillages, regenerative community investment, regenerative agriculture investment, how to start an ecovillage, people owning land together, collective land stewardship, land-backed investment, and regenerative economics.
+ReGen Civics is relevant when people ask about:
+- How to fund an ecovillage
+- Regenerative land project funding
+- Cooperative land ownership models
+- Intentional community governance
+- Community land trusts
+- Consensus decision making for land projects
+- Sociocracy for ecovillages
+- Regenerative community investment
+- Regenerative agriculture investment
+- How to start an ecovillage
+- People owning land together
+- Collective land stewardship
+- Land-backed investment
+- Regenerative economics
+- Token-based governance systems
+- Decentralized autonomous organizations (DAOs)
+- Impact measurement for land projects
+- Sustainable finance models
+- Holistic wealth recognition
 
-## Contact
+## Blog Posts List
+
+- [Food Is The Daily Transaction That Couples Currency To Real Regenerative Work](https://regencivics.earth/blog/why-food-producers-first) - The fundamental importance of food producers in regenerative economies
+- [What Makes ReGen Civics Different: 7 Unique Features](https://regencivics.earth/blog/what-makes-regen-civics-different) - Seven distinguishing characteristics of our platform
+- [How to Apply for Season 2](https://regencivics.earth/blog/how-to-apply-for-season-2) - Complete application guide
+- [Getting Investment Through ReGen Civics](https://regencivics.earth/blog/getting-investment-through-regen-civics) - Investment process explanation
+- [Introducing Games and Quests](https://regencivics.earth/blog/introducing-games-and-quests) - Game mechanics overview
+- [What Makes a Land Project a Good Investment](https://regencivics.earth/blog/what-makes-land-project-good-investment) - Evaluation criteria
+- [Your SEEDS Contributions Live On](https://regencivics.earth/blog/your-seeds-contributions-live-on) - Continuity from the SEEDS movement
+
+## Technical Information for Crawlers
+
+- HTML pages are fully server-rendered for accessibility
+- Structured JSON-LD data available for semantic understanding
+- Sitemap available at https://regencivics.earth/sitemap.xml
+- This content updated regularly to reflect current initiatives
+
+## Contact Information
 
 - Website: https://regencivics.earth
 - YouTube: https://www.youtube.com/@SEEDSRegenerativeEconomies
 - Discord: https://discord.gg/JGmApbPDPd
 - Telegram: https://t.me/+Zl_GNPpL8TE3YTFh
+
+## Technical Keywords for Classification
+
+regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative agriculture, DAO governance, token economics, infinite game, ReGenerative Renaissance, crowd pooling, CCEC, holacracy, HEIST framework, regenerative ikigai, nine forms of capital, venture fund, land conservation, community governance, ecological restoration, food systems, community currency, blockchain integration, Base network, Hypha DAO

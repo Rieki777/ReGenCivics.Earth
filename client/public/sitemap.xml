@@ -7,6 +7,7 @@
   <url><loc>https://regencivics.earth/apply</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://regencivics.earth/community</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
   <url><loc>https://regencivics.earth/map</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+
   <!-- About / info pages -->
   <url><loc>https://regencivics.earth/game</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://regencivics.earth/quest</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
@@ -22,46 +23,65 @@
   <url><loc>https://regencivics.earth/regen-games</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://regencivics.earth/custom-games</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://regencivics.earth/marketplace</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+
   <!-- Investing / crowd pooling -->
   <url><loc>https://regencivics.earth/crowd-pooling</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
   <url><loc>https://regencivics.earth/crowd-pooling-projects</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://regencivics.earth/compare-projects</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
   <url><loc>https://regencivics.earth/calculator</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://regencivics.earth/showcase</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+
   <!-- Blog -->
   <url><loc>https://regencivics.earth/blog</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
   <!-- Community sub-pages -->
   <url><loc>https://regencivics.earth/community/seeking-team</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
   <url><loc>https://regencivics.earth/community/chains</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
   <url><loc>https://regencivics.earth/community/quests</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+
   <!-- Connect -->
   <url><loc>https://regencivics.earth/connect</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
   <!-- Profile -->
   <url><loc>https://regencivics.earth/profile</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+
   <!-- Investment form (redirects to /investor) -->
   <url><loc>https://regencivics.earth/investmentform</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+
   <!-- Investor journey -->
   <url><loc>https://regencivics.earth/investor</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
   <!-- LOI -->
   <url><loc>https://regencivics.earth/loi</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
   <!-- Apply success -->
   <url><loc>https://regencivics.earth/apply/success</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+
   <!-- Campaigns -->
   <url><loc>https://regencivics.earth/crowd-pooling-projects</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://regencivics.earth/create-campaign</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+
   <!-- Newsletter -->
   <url><loc>https://regencivics.earth/newsletter</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+
   <!-- Unsubscribe -->
   <url><loc>https://regencivics.earth/unsubscribe</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+
   <!-- One-pagers -->
   <url><loc>https://regencivics.earth/one-pager/land</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://regencivics.earth/one-pager/alliance</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://regencivics.earth/one-pager/player</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+
   <!-- Blog posts -->
   <url><loc>https://regencivics.earth/blog/introducing-games-and-quests</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://regencivics.earth/blog/what-makes-regen-civics-different</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://regencivics.earth/blog/the-regenerative-renaissance</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://regencivics.earth/blog/land-projects-season-2</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
+  <!-- AI Accessibility Files -->
+  <url><loc>https://regencivics.earth/llms.txt</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://regencivics.earth/llms-full.txt</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
   <!-- Legal -->
   <url><loc>https://regencivics.earth/risk-disclosure</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>https://regencivics.earth/terms-of-use</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>

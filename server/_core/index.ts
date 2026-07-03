@@ -398,6 +398,9 @@ async function startServer() {
       { loc: '/terms-of-use',            changefreq: 'monthly', priority: '0.3' },
       { loc: '/privacy-policy',          changefreq: 'monthly', priority: '0.3' },
       { loc: '/disclaimers',             changefreq: 'monthly', priority: '0.3' },
+      // AI Accessibility Files
+      { loc: '/llms.txt',                changefreq: 'weekly',  priority: '0.8' },
+      { loc: '/llms-full.txt',           changefreq: 'weekly',  priority: '0.7' },
     ];
 
     // Static blog post slugs (content is hardcoded in client/src/data/blogPosts.ts)
@@ -457,6 +460,9 @@ async function startServer() {
   });
   app.get('/llms.txt', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/public/llms.txt'));
+  });
+  app.get('/llms-full.txt', (_req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/public/llms-full.txt'));
   });
   app.get('/llms-full.txt', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/public/llms-full.txt'));
