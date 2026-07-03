@@ -37,7 +37,7 @@ instrument; Assembly's −3..+3 Signal is the *proposal-level* instrument.
 
 ## Fix 1 — Gate the lifecycle strip (stop showing it on casual threads) (High)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: CommunityPost.tsx:662 renders governance chrome only when `inGovernance`; GovernanceLifecycleStrip.tsx:85 `if (!inGovernance) return null`.
 
 **Symptom:** The four-stage strip plus "Ready to sense the room?" renders on every
 thread, including chit-chat, because the stage defaults to "dialogue". It reads
@@ -57,7 +57,7 @@ row (Fix 2).
 
 ## Fix 2 — Two quiet entry doors under the post (Medium)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: CommunityPost.tsx:685-716 ("Sense the room" beside "Promote to decision" in the action row); migration 0163 applied, `governance.sensing_min_citizen_tier` verified = 0 in prod DB.
 
 **Symptom:** Entry into governance is currently a prominent in-strip prompt on every
 thread. It should be a low-key option under the post, since most threads never enter
@@ -92,7 +92,7 @@ the DB, no deploy). Without it, tier-0 users see the door and get a 403.
 
 ## Fix 3 — Confirm + undo on "Sense the room" (Medium)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: CommunityPost.tsx:686 inline confirm before `enterSensing`; server `forum.returnToDialogue` at forum.ts:867 clears sensingStartedAt/By.
 
 **Symptom:** `enterSensing.mutate` fires immediately on click
 (`GovernanceLifecycleStrip.tsx:161`) and advances the stage for everyone viewing the
@@ -118,7 +118,7 @@ kept in both cases; they reappear if sensing restarts.
 
 ## Fix 4 — Fix link contrast on the light post card (High)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: GovernanceLifecycleStrip + PerspectiveControl rebuilt on light palette (border-[#e8e4de], text-[#1a472a]/[#4a7c59]); action links now text-[#4a7c59] hover:text-[#1a472a].
 
 **Symptom:** The governance actions and prompt render dark-on-dark / faint and are
 barely legible on `/community/post/*`. Most important visual complaint in the
@@ -143,7 +143,7 @@ PerspectiveControl is the most illegible piece; include it, not just the strip.
 
 ## Fix 5 — Tooltip on "Sense the room" (Low)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: CommunityPost.tsx:712 title="Gauge where we stand as we move to a formal proposal."
 
 **Symptom:** "Sense the room" is in-voice but out of context does not read as "start a
 group decision process".
@@ -159,7 +159,7 @@ proposal."**
 
 ## Fix 6 — Name the consent bar: "good enough for now, safe enough to try" (Low)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: GovernanceLifecycleStrip.tsx:36 proposal description carries "good enough for now, safe enough to try"; can_live_with helper matches.
 
 **Rationale (research):** Sociocratic consent is defined as "no objections", and the
 working test groups use is "good enough for now, safe enough to try". Groups stall when
@@ -176,7 +176,7 @@ enthusiasm, it is safe-enough-to-try. One line of copy.
 
 ## Fix 7 — Make concerns vs objections legible (Low)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: PerspectiveControl.tsx:108,173 (block tooltip + legend); PromotionModal sensing-context notice when a serious concern is active.
 
 **Rationale (research):** In consent-based governance a concern is not a block; only an
 objection blocks. The system is already half-built: `serious_concern` triggers "Block
@@ -193,7 +193,7 @@ model change.
 
 ## Fix 8 — Participation-aware undo / return to dialogue (Medium)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: forum.ts:867 returnToDialogue counts other distinct voices; posts a visible reply via db.createForumReply when others > 0, silent otherwise.
 
 **Rationale (research):** Shared state that others have touched should not vanish
 silently. Consent culture: do not unilaterally erase input others have contributed.
@@ -212,7 +212,7 @@ dialogue"), same server-side authored-post pattern the elder bot uses. No new ta
 
 ## Fix 9 — Show participation before allowing a decision (fast follow) (Medium)
 
-**Status:** DESIGN
+**Status:** CODED. Evidence: CommunityPost.tsx:680 "N people have weighed in" near Promote; PromotionModal shows the same count inside the modal.
 
 **Rationale (research):** A decision with one voice is not legitimate. Rye chose
 "anyone can advance", so add a soft social check rather than a gate.
@@ -241,7 +241,7 @@ migration.
 
 ## Fix 11 — Advance governanceStage past Sensing (High, added 2026-07-03)
 
-**Status:** TO BUILD
+**Status:** CODED. Evidence: governance.ts:229 coSignPromotion sets governanceStage=proposal; CommunityPost derives decided/proposal from getDecisionStatus (effectiveStage).
 
 **Symptom:** Nothing on the server ever sets `governanceStage` to `proposal` or
 `decided`; the only transition in the codebase is `dialogue → sensing`
@@ -296,17 +296,17 @@ gate → migrate → commit → push → poll Railway to SUCCESS.
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Gate the lifecycle strip to sensing+ | TO BUILD |
-| 2 | Two entry doors + tier variable flip to 0 | TO BUILD |
-| 3 | Confirm + undo on "Sense the room" | TO BUILD |
-| 4 | Light-surface restyle of strip + PerspectiveControl + links | TO BUILD |
-| 5 | Tooltip on "Sense the room" | TO BUILD |
-| 6 | Consent-bar framing copy at Proposal | TO BUILD |
-| 7 | Concerns vs objections legibility | TO BUILD |
-| 8 | Participation-aware return to dialogue (+ server `returnToDialogue`) | TO BUILD |
-| 9 | Participation count near promotion | DESIGN |
+| 1 | Gate the lifecycle strip to sensing+ | CODED |
+| 2 | Two entry doors + tier variable flip to 0 | CODED |
+| 3 | Confirm + undo on "Sense the room" | CODED |
+| 4 | Light-surface restyle of strip + PerspectiveControl + links | CODED |
+| 5 | Tooltip on "Sense the room" | CODED |
+| 6 | Consent-bar framing copy at Proposal | CODED |
+| 7 | Concerns vs objections legibility | CODED |
+| 8 | Participation-aware return to dialogue (+ server `returnToDialogue`) | CODED |
+| 9 | Participation count near promotion | CODED |
 | 10 | Folded into Assembly build | MOVED |
-| 11 | Advance governanceStage on promotion / decision close | TO BUILD |
+| 11 | Advance governanceStage on promotion / decision close | CODED |
 
 ---
 

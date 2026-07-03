@@ -843,7 +843,7 @@ export const forumRouter = router({
       const [tierRows] = await dbd.execute(
         sql`SELECT value FROM game_variables WHERE \`key\` = 'governance.sensing_min_citizen_tier' LIMIT 1`
       );
-      const minTier = parseInt((tierRows as any)?.[0]?.value ?? "1", 10);
+      const minTier = parseInt((tierRows as any)?.[0]?.value ?? "0", 10);
       const [profileRows] = await dbd.execute(
         sql`SELECT citizenshipTier FROM player_profiles WHERE userId = ${ctx.user.id} LIMIT 1`
       );
@@ -859,6 +859,48 @@ export const forumRouter = router({
             WHERE id = ${input.threadId} AND governanceStage = 'dialogue'`
       );
       return { ok: true };
+    }),
+
+  // Undo of enterSensing, participation-aware. Silent while the starter is the
+  // only voice; once anyone else has set a perspective, the return is recorded
+  // as a visible reply on the thread. Only the starter or an admin can return.
+  returnToDialogue: protectedProcedure
+    .input(z.object({ threadId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const dbd = await getDb();
+      if (!dbd) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const post = await db.getForumPost(input.threadId);
+      if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "Thread not found" });
+      if ((post as any).governanceStage !== "sensing") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Only a thread in Sensing can return to dialogue." });
+      }
+      const isAdminOrSuper = ctx.user.role === "admin" || ctx.user.role === "superadmin";
+      if ((post as any).sensingStartedBy !== ctx.user.id && !isAdminOrSuper) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the person who started Sensing (or an admin) can return this thread to dialogue." });
+      }
+      // Distinct voices other than the person undoing
+      const [otherRows] = await dbd.execute(
+        sql`SELECT COUNT(DISTINCT userId) AS others
+            FROM forumPerspectives
+            WHERE threadId = ${input.threadId} AND userId != ${ctx.user.id}`
+      );
+      const others = Number((otherRows as any)?.[0]?.others ?? 0);
+      await dbd.execute(
+        sql`UPDATE forumPosts
+            SET governanceStage = 'dialogue',
+                sensingStartedAt = NULL,
+                sensingStartedBy = NULL
+            WHERE id = ${input.threadId} AND governanceStage = 'sensing'`
+      );
+      // Perspectives are kept; they reappear if Sensing restarts.
+      if (others > 0) {
+        await db.createForumReply({
+          postId: input.threadId,
+          authorId: ctx.user.id,
+          content: `Returned this thread to dialogue. ${others === 1 ? "One person had" : `${others} people had`} shared a perspective; those perspectives are kept and will show again if sensing restarts.`,
+        });
+      }
+      return { ok: true, logged: others > 0 };
     }),
 
   // Deterministic convergence snapshot for the Sensing summary panel.

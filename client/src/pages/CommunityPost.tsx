@@ -138,10 +138,31 @@ export default function CommunityPost() {
   const [editContent, setEditContent] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
   const [promotionOpen, setPromotionOpen] = useState(false);
+  const [confirmingSensing, setConfirmingSensing] = useState(false);
   const replyRef = useRef<RichEditorHandle>(null);
   const replyFormRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
   const { language } = useLanguage();
+
+  // Governance entry: "Sense the room" moves a dialogue thread into Sensing.
+  const enterSensing = trpc.forum.enterSensing.useMutation({
+    onSuccess: () => {
+      setConfirmingSensing(false);
+      utils.forum.postById.invalidate({ id: postId });
+      utils.forum.perspectives.get.invalidate({ threadId: postId });
+    },
+    onError: (err) => {
+      setConfirmingSensing(false);
+      toast.error(err.message || "Could not enter Sensing");
+    },
+  });
+
+  // The decision row (when one exists) outranks the thread's stored stage:
+  // the ReGen Gov app moves decisions without writing back to forumPosts.
+  const { data: threadDecision } = trpc.governance.getDecisionStatus.useQuery(
+    { threadId: postId },
+    { staleTime: 30_000, enabled: postId > 0 }
+  );
   
   // Translation state
   const [translatedPost, setTranslatedPost] = useState<string | null>(null);
@@ -204,6 +225,19 @@ export default function CommunityPost() {
   const { data: likes } = trpc.forum.likes.useQuery(
     { postId, userId: user?.id },
     { enabled: postId > 0 }
+  );
+
+  // Participation context for the governance actions ("N people have weighed in")
+  const { data: threadPerspectives } = trpc.forum.perspectives.get.useQuery(
+    { threadId: postId },
+    {
+      staleTime: 30_000,
+      enabled:
+        postId > 0 &&
+        ((post as any)?.governanceStage === "sensing" ||
+          (post as any)?.governanceStage === "proposal" ||
+          !!threadDecision),
+    }
   );
 
   // Detect if this is a land project or alliance org forum space
@@ -389,6 +423,24 @@ export default function CommunityPost() {
 
   const isAdminOrSuper = user?.role === 'admin' || user?.role === 'superadmin';
   const canDeletePost = user && (user.id === post.authorId || isAdminOrSuper);
+
+  // Effective governance stage. A live decision row outranks the stored stage
+  // because the ReGen Gov app advances decisions without writing forumPosts.
+  const storedStage = (post as any).governanceStage as string | null | undefined;
+  const decisionStatus = threadDecision ? String((threadDecision as any).status) : null;
+  const decisionTerminal = decisionStatus !== null && ["ratified", "declined", "cancelled"].includes(decisionStatus);
+  const effectiveStage = decisionTerminal
+    ? "decided"
+    : threadDecision
+    ? "proposal"
+    : storedStage === "sensing" || storedStage === "proposal" || storedStage === "decided"
+    ? storedStage
+    : null;
+  const inGovernance = effectiveStage !== null;
+  const perspectiveVoices = ((threadPerspectives as any)?.tallies ?? []).reduce(
+    (sum: number, t: any) => sum + Number(t.count ?? 0),
+    0
+  );
 
   return (
     <PageTransition>
@@ -606,27 +658,69 @@ export default function CommunityPost() {
             </div>
             )}
 
-            {/* Governance lifecycle strip — shows stage for all threads */}
-            <div className="px-4 md:px-6 pb-2 space-y-3">
-              <GovernanceLifecycleStrip
-                threadId={post.id}
-                governanceStage={(post as any).governanceStage}
-              />
-              {/* Perspective control — visible during Sensing and Proposal */}
-              {((post as any).governanceStage === "sensing" || (post as any).governanceStage === "proposal") && (
-                <PerspectiveControl threadId={post.id} />
-              )}
-            </div>
+            {/* Governance lifecycle — only once the thread has entered the pipeline */}
+            {inGovernance && (
+              <div className="px-4 md:px-6 pb-2 space-y-3">
+                <GovernanceLifecycleStrip
+                  threadId={post.id}
+                  governanceStage={effectiveStage as any}
+                  sensingStartedBy={(post as any).sensingStartedBy ?? null}
+                />
+                {(effectiveStage === "sensing" || effectiveStage === "proposal") && (
+                  <PerspectiveControl threadId={post.id} />
+                )}
+              </div>
+            )}
 
             {/* Living backlink banner: shows if this thread has been promoted to a formal decision */}
             <div className="px-4 md:px-6 pb-2">
               <ForumThreadDecisionBanner threadId={post.id} />
               {isAuthenticated && (
-                <div className="flex items-center justify-end mt-1">
+                <div className="flex items-center justify-end gap-4 mt-1 flex-wrap">
+                  {inGovernance && perspectiveVoices > 0 && (
+                    <span className="text-[11px] text-[#4a7c59]/80">
+                      {perspectiveVoices === 1 ? "1 person has" : `${perspectiveVoices} people have`} weighed in
+                    </span>
+                  )}
+                  {!inGovernance && (
+                    confirmingSensing ? (
+                      <span className="flex items-center gap-3 flex-wrap text-[11px]">
+                        <span className="text-[#1a472a]/80">
+                          Start sensing the room on this thread? This invites everyone to share where they stand.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => enterSensing.mutate({ threadId: post.id })}
+                          disabled={enterSensing.isPending}
+                          className="inline-flex items-center gap-1 font-bold text-[#1a472a] underline hover:text-[#4a7c59] transition-colors"
+                        >
+                          {enterSensing.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                          Start sensing
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingSensing(false)}
+                          className="text-[#4a7c59]/80 hover:text-[#4a7c59] transition-colors"
+                        >
+                          Not yet
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingSensing(true)}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
+                        title="Gauge where we stand as we move to a formal proposal."
+                      >
+                        <Eye className="w-3 h-3" />
+                        Sense the room
+                      </button>
+                    )
+                  )}
                   <button
                     type="button"
                     onClick={() => setPromotionOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#7dd87d] hover:text-[#9de89d] transition-colors"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
                     title="Promote this thread to a formal decision"
                   >
                     <Vote className="w-3 h-3" />

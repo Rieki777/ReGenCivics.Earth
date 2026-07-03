@@ -4,12 +4,16 @@
  * A calm four-stage status strip for governance threads:
  *   Dialogue → Sensing → Proposal → Decision
  *
- * Shows the current stage highlighted, the rest quiet. In Proposal and
- * Decision stages also shows reversibility and sunset date. On mobile,
- * collapses to current stage with a tap to expand.
+ * Renders only once a thread has actually entered governance (sensing and
+ * beyond). Casual threads show nothing; the way in is a quiet action under
+ * the post (CommunityPost). Styled for the light post card it lives on.
  *
- * Extends ForumThreadDecisionBanner to cover the full pipeline instead
- * of just the promoted-to-decision state.
+ * In Proposal and Decision stages also shows reversibility and sunset date.
+ * On mobile, collapses to current stage with a tap to expand.
+ *
+ * While a thread is in Sensing, the person who started it (or an admin) can
+ * return it to dialogue. The server keeps that undo participation-aware: it
+ * posts a visible note on the thread once other people have weighed in.
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -21,7 +25,7 @@ type GovernanceStage = "dialogue" | "sensing" | "proposal" | "decided";
 const STAGE_CONFIG: Record<GovernanceStage, { label: string; description: string }> = {
   dialogue: {
     label: "Dialogue",
-    description: "Open conversation — sharing perspectives and building understanding.",
+    description: "Open conversation, sharing perspectives and building understanding.",
   },
   sensing: {
     label: "Sensing",
@@ -29,7 +33,7 @@ const STAGE_CONFIG: Record<GovernanceStage, { label: string; description: string
   },
   proposal: {
     label: "Proposal",
-    description: "A formal proposal is open for stances.",
+    description: "A formal proposal is open for stances. The bar to move forward: good enough for now, safe enough to try.",
   },
   decided: {
     label: "Decision",
@@ -48,53 +52,74 @@ const REVERSIBILITY_LABELS: Record<string, { label: string; tooltip: string }> =
 interface Props {
   threadId: number;
   governanceStage?: GovernanceStage | null;
-  onEnterSensing?: () => void;
+  sensingStartedBy?: number | null;
 }
 
-export function GovernanceLifecycleStrip({ threadId, governanceStage, onEnterSensing }: Props) {
+export function GovernanceLifecycleStrip({ threadId, governanceStage, sensingStartedBy }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [confirmingReturn, setConfirmingReturn] = useState(false);
   const { user } = useAuth();
   const utils = trpc.useUtils();
 
+  const inGovernance =
+    governanceStage === "sensing" || governanceStage === "proposal" || governanceStage === "decided";
+
   const { data: decision } = trpc.governance.getDecisionStatus.useQuery(
     { threadId },
-    { staleTime: 30_000, enabled: (governanceStage === "proposal" || governanceStage === "decided") }
+    { staleTime: 30_000, enabled: governanceStage === "proposal" || governanceStage === "decided" }
   );
 
-  const enterSensing = trpc.forum.enterSensing.useMutation({
+  const { data: perspectiveData } = trpc.forum.perspectives.get.useQuery(
+    { threadId },
+    { staleTime: 30_000, enabled: governanceStage === "sensing" }
+  );
+
+  const returnToDialogue = trpc.forum.returnToDialogue.useMutation({
     onSuccess: () => {
+      setConfirmingReturn(false);
+      utils.forum.postById.invalidate({ id: threadId });
       utils.forum.perspectives.get.invalidate({ threadId });
-      onEnterSensing?.();
     },
   });
 
-  const currentStage: GovernanceStage = governanceStage ?? "dialogue";
+  if (!inGovernance) return null;
+
+  const currentStage: GovernanceStage = governanceStage as GovernanceStage;
   const currentIdx = STAGE_ORDER.indexOf(currentStage);
 
   const reversibility = (decision as any)?.reversibility as string | undefined;
   const sunsetAt = (decision as any)?.sunsetAt ? new Date((decision as any).sunsetAt as any) : null;
 
-  const stageLabel = STAGE_CONFIG[currentStage]?.label ?? "Dialogue";
+  const stageLabel = STAGE_CONFIG[currentStage]?.label ?? "Sensing";
+
+  // Participation-aware undo: how many people besides me have weighed in
+  const tallies = (perspectiveData as any)?.tallies ?? [];
+  const totalVoices = tallies.reduce((sum: number, t: any) => sum + Number(t.count ?? 0), 0);
+  const othersCount = Math.max(0, totalVoices - ((perspectiveData as any)?.myPerspective ? 1 : 0));
+
+  const isAdminOrSuper = user?.role === "admin" || user?.role === "superadmin";
+  const canReturn =
+    currentStage === "sensing" && !!user && (user.id === sensingStartedBy || isAdminOrSuper);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
+    <div className="rounded-xl border border-[#e8e4de] bg-[#fbfaf7] overflow-hidden">
       {/* Mobile: collapsed — shows current stage + tap to expand */}
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
         className="sm:hidden w-full flex items-center justify-between px-4 py-2.5 text-left"
       >
-        <span className="text-white/80 text-sm font-semibold">{stageLabel}</span>
+        <span className="text-[#1a472a] text-sm font-semibold">{stageLabel}</span>
         {expanded ? (
-          <ChevronUp className="w-4 h-4 text-white/40" />
+          <ChevronUp className="w-4 h-4 text-[#4a7c59]/60" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-white/40" />
+          <ChevronDown className="w-4 h-4 text-[#4a7c59]/60" />
         )}
       </button>
 
       {/* Stage strip — always visible on desktop, expandable on mobile */}
       <div className={`${expanded ? "block" : "hidden"} sm:block`}>
-        <div className="flex items-stretch border-b border-white/8">
+        <div className="flex items-stretch border-b border-[#e8e4de]">
           {STAGE_ORDER.map((stage, i) => {
             const isActive = stage === currentStage;
             const isPast = i < currentIdx;
@@ -102,17 +127,17 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, onEnterSen
             return (
               <div
                 key={stage}
-                className={`flex-1 px-3 py-2.5 text-center border-r border-white/8 last:border-r-0 transition-colors ${
+                className={`flex-1 px-3 py-2.5 text-center border-r border-[#e8e4de] last:border-r-0 transition-colors ${
                   isActive
-                    ? "bg-[#7dd87d]/10 border-b-2 border-b-[#7dd87d]"
+                    ? "bg-[#7dd87d]/15 border-b-2 border-b-[#4a7c59]"
                     : isPast
-                    ? "bg-white/[0.02]"
+                    ? "bg-[#f0f7f0]"
                     : ""
                 }`}
               >
                 <p
                   className={`text-xs font-semibold ${
-                    isActive ? "text-[#7dd87d]" : isPast ? "text-white/60" : "text-white/50"
+                    isActive ? "text-[#1a472a]" : isPast ? "text-[#4a7c59]" : "text-[#4a7c59]/50"
                   }`}
                 >
                   {cfg.label}
@@ -124,7 +149,7 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, onEnterSen
 
         {/* Current stage description + meta */}
         <div className="px-4 py-3">
-          <p className="text-white/60 text-xs leading-relaxed">
+          <p className="text-[#4a7c59] text-xs leading-relaxed">
             {STAGE_CONFIG[currentStage]?.description}
           </p>
 
@@ -133,7 +158,7 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, onEnterSen
             <div className="flex flex-wrap gap-3 mt-2">
               {reversibility && REVERSIBILITY_LABELS[reversibility] && (
                 <span
-                  className="text-[11px] text-white/70 bg-white/5 border border-white/10 rounded-full px-2.5 py-0.5"
+                  className="text-[11px] text-[#1a472a]/80 bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-full px-2.5 py-0.5"
                   title={REVERSIBILITY_LABELS[reversibility].tooltip}
                   aria-label={`${REVERSIBILITY_LABELS[reversibility].label}: ${REVERSIBILITY_LABELS[reversibility].tooltip}`}
                 >
@@ -141,34 +166,59 @@ export function GovernanceLifecycleStrip({ threadId, governanceStage, onEnterSen
                 </span>
               )}
               {reversibility && REVERSIBILITY_LABELS[reversibility] && (
-                <span className="md:hidden text-[10px] text-white/40 w-full">
+                <span className="md:hidden text-[10px] text-[#4a7c59]/70 w-full">
                   {REVERSIBILITY_LABELS[reversibility].tooltip}
                 </span>
               )}
               {sunsetAt && (
-                <span className="text-[11px] text-white/50 bg-white/5 border border-white/10 rounded-full px-2.5 py-0.5">
+                <span className="text-[11px] text-[#4a7c59] bg-[#f0f7f0] border border-[#7dd87d]/30 rounded-full px-2.5 py-0.5">
                   Revisits {sunsetAt.toLocaleDateString()}
                 </span>
               )}
             </div>
           )}
 
-          {/* "Ready to sense the room?" prompt (shown when dialogue, user is signed in) */}
-          {currentStage === "dialogue" && user && (
-            <div className="mt-3 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => enterSensing.mutate({ threadId })}
-                disabled={enterSensing.isPending}
-                className="flex items-center gap-1.5 text-xs text-[#7dd87d] hover:text-[#9de89d] transition-colors"
-              >
-                {enterSensing.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
-                Ready to sense the room?
-              </button>
-              {enterSensing.isError && (
-                <span className="text-xs text-red-400">
-                  {(enterSensing.error as any)?.message ?? "Could not enter Sensing"}
-                </span>
+          {/* Return to dialogue (Sensing only, starter or admin) */}
+          {canReturn && (
+            <div className="mt-3">
+              {confirmingReturn ? (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-xs text-[#1a472a]/80">
+                    {othersCount > 0
+                      ? `Return this thread to dialogue? ${othersCount === 1 ? "One person has" : `${othersCount} people have`} shared a perspective, so a note will be posted on the thread. Perspectives are kept.`
+                      : "Return this thread to dialogue?"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => returnToDialogue.mutate({ threadId })}
+                    disabled={returnToDialogue.isPending}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1a472a] underline hover:text-[#4a7c59] transition-colors"
+                  >
+                    {returnToDialogue.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                    Yes, return it
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingReturn(false)}
+                    className="text-xs text-[#4a7c59]/80 hover:text-[#4a7c59] transition-colors"
+                  >
+                    Keep sensing
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingReturn(true)}
+                  className="text-xs text-[#4a7c59]/80 hover:text-[#1a472a] underline transition-colors"
+                  title="Undo Sensing and return this thread to open conversation."
+                >
+                  Return to dialogue
+                </button>
+              )}
+              {returnToDialogue.isError && (
+                <p className="text-xs text-red-600 mt-1">
+                  {(returnToDialogue.error as any)?.message ?? "Could not return to dialogue"}
+                </p>
               )}
             </div>
           )}

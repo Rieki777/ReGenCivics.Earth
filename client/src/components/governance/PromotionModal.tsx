@@ -53,6 +53,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
   const [threadExpanded, setThreadExpanded] = useState(false);
 
   const readinessQuery = trpc.governance.checkPromotionReadiness.useQuery({ threadId }, { enabled: open });
+  const perspectivesQuery = trpc.forum.perspectives.get.useQuery({ threadId }, { enabled: open, staleTime: 30_000 });
 
   // Fetch thread content for the left-side preview
   const threadQuery = trpc.forum.postById.useQuery(
@@ -299,6 +300,26 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
                 )}
               </div>
             ) : null}
+
+            {/* Sensing context: who has weighed in, and whether a concern blocks */}
+            {(() => {
+              const tallies = (perspectivesQuery.data as any)?.tallies ?? [];
+              const voices = tallies.reduce((sum: number, t: any) => sum + Number(t.count ?? 0), 0);
+              const hasBlock = tallies.some((t: any) => t.perspective === "serious_concern" && Number(t.count ?? 0) > 0);
+              if (voices === 0 && !hasBlock) return null;
+              return (
+                <div className={`rounded-xl border p-3 text-xs ${hasBlock ? "bg-red-500/10 border-red-500/40 text-red-200" : "bg-white/5 border-white/15 text-white/75"}`}>
+                  {voices > 0 && (
+                    <p>{voices === 1 ? "1 person has" : `${voices} people have`} sensed the room on this thread.</p>
+                  )}
+                  {hasBlock && (
+                    <p className="mt-1 font-semibold">
+                      A serious concern is active. It must be resolved before this decision proceeds; the other perspectives inform the proposal while it moves.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Decision question */}
             <div>

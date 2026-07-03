@@ -222,6 +222,13 @@ export const governanceRouter = router({
         .set({ status: "signed", coSignerId: ctx.user.id, coSignedAt: new Date() } as any)
         .where(eq(forumPromotionRequests.id, input.promotionRequestId));
 
+      // A signed promotion means a formal proposal is in motion, so the
+      // thread's lifecycle stage advances past Sensing.
+      await db
+        .update(forumPosts)
+        .set({ governanceStage: "proposal" } as any)
+        .where(eq(forumPosts.id, req.forumPostId));
+
       // Signing marks the request ready. Deliberation happens in the ReGen Gov
       // app; the decision row is created there and reconciled back to this thread.
       return { ok: true };

@@ -7,8 +7,10 @@
  *
  * Single-choice, one perspective per person per thread. Changing it upserts
  * the row. Uses the same optimistic-update pattern as EmojiReactions.
+ *
+ * Styled for the light post card it renders on. A serious concern is the only
+ * perspective that pauses promotion; the legend under the buttons says so.
  */
-import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
@@ -19,31 +21,31 @@ const PERSPECTIVE_META: Record<Perspective, { label: string; helper: string; col
   support: {
     label: "I support this",
     helper: "Ready to move forward",
-    color: "bg-emerald-500/15 border-emerald-500/40 text-emerald-300",
-    barColor: "bg-emerald-400",
+    color: "bg-emerald-50 border-emerald-300 text-emerald-800",
+    barColor: "bg-emerald-500",
   },
   can_live_with: {
     label: "I can live with this",
-    helper: "Not my first choice, but I won't block it",
-    color: "bg-[#7dd87d]/15 border-[#7dd87d]/40 text-[#7dd87d]",
+    helper: "Good enough for now, safe enough to try",
+    color: "bg-[#7dd87d]/15 border-[#4a7c59]/40 text-[#1a472a]",
     barColor: "bg-[#7dd87d]",
   },
   see_differently: {
     label: "I see it differently",
     helper: "Different perspective worth exploring",
-    color: "bg-amber-500/15 border-amber-500/40 text-amber-300",
+    color: "bg-amber-50 border-amber-300 text-amber-800",
     barColor: "bg-amber-400",
   },
   need_to_understand: {
     label: "I need to understand more",
     helper: "Questions remain before I can decide",
-    color: "bg-blue-500/15 border-blue-500/40 text-blue-300",
+    color: "bg-blue-50 border-blue-300 text-blue-800",
     barColor: "bg-blue-400",
   },
   serious_concern: {
     label: "I have a serious concern",
     helper: "A concern that needs to be addressed before we proceed",
-    color: "bg-red-500/15 border-red-500/40 text-red-300",
+    color: "bg-red-50 border-red-300 text-red-800",
     barColor: "bg-red-400",
   },
 };
@@ -97,11 +99,14 @@ export function PerspectiveControl({ threadId }: Props) {
   const tallyFor = (p: Perspective) => tallies.find((t: any) => t.perspective === p);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-xl border border-[#e8e4de] bg-[#fbfaf7] p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-white/80 text-sm font-semibold">Where do you stand?</p>
+        <p className="text-[#1a472a] text-sm font-semibold">Where do you stand?</p>
         {hasBlock && (
-          <span className="text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 rounded-full px-2 py-0.5">
+          <span
+            className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-full px-2 py-0.5"
+            title="A serious concern pauses promotion until it is addressed."
+          >
             Block active
           </span>
         )}
@@ -146,7 +151,7 @@ export function PerspectiveControl({ threadId }: Props) {
               className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-left transition-all ${
                 isActive
                   ? meta.color
-                  : "bg-white/[0.03] border-white/8 text-white/60 hover:bg-white/8 hover:text-white/80"
+                  : "bg-white border-[#e8e4de] text-[#1a472a]/70 hover:bg-[#f0f7f0] hover:text-[#1a472a]"
               }`}
             >
               <span>
@@ -156,16 +161,22 @@ export function PerspectiveControl({ threadId }: Props) {
                 )}
               </span>
               {count > 0 && (
-                <span className="text-[11px] text-white/60 flex-shrink-0">{count}</span>
+                <span className="text-[11px] text-[#4a7c59] flex-shrink-0">{count}</span>
               )}
             </button>
           );
         })}
       </div>
 
+      {/* Concerns and blocks read differently by design */}
+      <p className="text-[#4a7c59]/80 text-[11px] mt-3 leading-relaxed">
+        A serious concern pauses promotion until it is addressed. Every other perspective guides the
+        proposal while it moves.
+      </p>
+
       {!user && (
-        <p className="text-white/40 text-xs mt-3 text-center">
-          <a href={getLoginUrl()} className="text-[#7dd87d] hover:underline">Sign in</a> to share your perspective.
+        <p className="text-[#4a7c59] text-xs mt-2 text-center">
+          <a href={getLoginUrl()} className="text-[#1a472a] font-semibold hover:underline">Sign in</a> to share your perspective.
         </p>
       )}
     </div>
