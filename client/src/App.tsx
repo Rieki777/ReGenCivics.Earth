@@ -96,7 +96,7 @@ const BionomicsEdit = lazy(() => import("./pages/BionomicsEdit"));
 const HealTheLand = lazy(() => import("./pages/HealTheLand"));
 const HymnBook = lazy(() => import("./pages/HymnBook"));
 const HymnPlayer = lazy(() => import("./pages/HymnPlayer"));
-const Proposals = lazy(() => import("./pages/Proposals"));
+const Assembly = lazy(() => import("./pages/Assembly"));
 const GameMechanics = lazy(() => import("./pages/GameMechanics"));
 const ToolsLibrary = lazy(() => import("./pages/ToolsLibrary"));
 const ToolDetail = lazy(() => import("./pages/ToolDetail"));
@@ -131,7 +131,6 @@ const CrowdPoolingProjects = lazy(() => import("./pages/CrowdPoolingProjects"));
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 const PlayerProfileByHandle = lazy(() => import("./pages/PlayerProfileByHandle"));
 const BridgeHypha = lazy(() => import("./pages/BridgeHypha"));
-const DecisionsDashboard = lazy(() => import("./pages/DecisionsDashboard"));
 const GovCreate = lazy(() => import("./pages/GovCreate"));
 const GovTenant = lazy(() => import("./pages/GovTenant"));
 const StorytellerStories = lazy(() => import("./pages/StorytellerStories"));
@@ -273,7 +272,7 @@ function Router() {
       <Route path={"/profile"}><EB><PlayerProfile /></EB></Route>
       <Route path={"/profile/:handle"}><EB><PlayerProfileByHandle /></EB></Route>
       <Route path={"/bridge/hypha/:bridgeKey"}><EB><BridgeHypha /></EB></Route>
-      <Route path={"/community/decisions"}><EB><DecisionsDashboard /></EB></Route>
+      <Route path={"/community/decisions"}>{() => <Redirect to="/assembly" />}</Route>
       <Route path={"/community/decisions/stories"}><EB><StorytellerStories /></EB></Route>
       <Route path={"/gov/create"}><EB><GovCreate /></EB></Route>
       <Route path={"/gov/:slug/backfield"}><EB><GovBackField /></EB></Route>
@@ -318,7 +317,8 @@ function Router() {
       <Route path={"/heal-the-land"}><EB><HealTheLand /></EB></Route>
       <Route path={"/hymn-book/:slug"}><EB><HymnPlayer /></EB></Route>
       <Route path={"/hymn-book"}><EB><HymnBook /></EB></Route>
-      <Route path={"/proposals"}><EB><Proposals /></EB></Route>
+      <Route path={"/assembly"}><EB><Assembly /></EB></Route>
+      <Route path={"/proposals"}>{() => <Redirect to="/assembly" />}</Route>
       <Route path={"/game-mechanics"}><EB><GameMechanics /></EB></Route>
       <Route path={"/tools"}><EB><ToolsLibrary /></EB></Route>
       <Route path={"/tools/submit"}><EB><ToolSubmit /></EB></Route>

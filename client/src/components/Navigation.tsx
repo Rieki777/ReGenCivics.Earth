@@ -442,13 +442,6 @@ export default function Navigation() {
                   <MessageCircle className="w-5 h-5 mr-3 text-[#7dd87d]" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Community Forum</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
-                  onClick={() => window.location.href = '/proposals'}
-                >
-                  <Vote className="w-5 h-5 mr-3 text-[#7dd87d]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Proposals</span>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 <div className="px-2 pt-2 pb-1 flex items-center gap-2">
                   <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0">
@@ -492,10 +485,10 @@ export default function Navigation() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
-                  onClick={() => window.location.href = '/community/decisions'}
+                  onClick={() => window.location.href = '/assembly'}
                 >
                   <Vote className="w-5 h-5 mr-3 text-[#7dd87d]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Decisions</span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Assembly</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
@@ -1120,19 +1113,6 @@ export default function Navigation() {
                       Community Forum
                     </Link>
                     <Link
-                      href="/proposals"
-                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
-                        location.startsWith('/proposals')
-                          ? 'bg-[#7dd87d] text-[#1a472a]'
-                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
-                      }`}
-                      style={{ fontFamily: 'var(--font-accent)' }}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Vote className="w-4 h-4 text-[#7dd87d]" />
-                      Proposals
-                    </Link>
-                    <Link
                       href="/governance"
                       className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
                         location === '/governance'
@@ -1144,6 +1124,19 @@ export default function Navigation() {
                     >
                       <Vote className="w-4 h-4 text-[#7dd87d]" />
                       Governance
+                    </Link>
+                    <Link
+                      href="/assembly"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location.startsWith('/assembly')
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Vote className="w-4 h-4 text-[#7dd87d]" />
+                      Assembly
                     </Link>
                     <Link
                       href="/game-mechanics"

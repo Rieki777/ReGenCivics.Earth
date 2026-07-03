@@ -807,7 +807,7 @@ export default function Governance() {
                 <div className="text-2xl mb-2">📜</div>
                 <h3 className="text-white font-bold mb-1">Proposals</h3>
                 <p className="text-white/60 text-sm safe-prose">Any Co-Creator can submit a proposal. The community signals support. Proposals that reach threshold move to <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a> for formal governance.</p>
-                <Link href="/proposals" className="text-[#7dd87d] text-xs mt-2 block hover:underline">View proposals</Link>
+                <Link href="/assembly" className="text-[#7dd87d] text-xs mt-2 block hover:underline">Visit the Assembly</Link>
               </div>
             </div>
           </div>

@@ -34,11 +34,10 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
       { label: "Schedule", sub: "Upcoming and past sessions", href: "/schedule", icon: "Calendar" },
       // Label correction (2026-04-24): swapped sub-lines so each label
       // matches what the destination page actually does. /governance is
-      // the explainer page; /community/decisions is the operational
+      // the explainer page; /assembly is the operational
       // pipeline mission control.
       { label: "Governance", sub: "How decisions get made", href: "/governance", icon: "Vote" },
-      { label: "Proposals", sub: "Submit and vote on community proposals", href: "/proposals", icon: "Vote" },
-      { label: "Decisions", sub: "Decisions, proposals, and the pipeline", href: "/community/decisions", icon: "Vote" },
+      { label: "Assembly", sub: "Raise proposals, signal where you stand, decide together", href: "/assembly", icon: "Vote" },
       { label: "The Game", sub: "Bionomics: how it all fits together", href: "/bionomics", icon: "wizards" },
       { label: "Game Mechanics", sub: "Tune the simulator", href: "/game-mechanics", icon: "SlidersHorizontal" },
       { label: "Tools", sub: "Things we use and recommend", href: "/tools", icon: "Wrench" },

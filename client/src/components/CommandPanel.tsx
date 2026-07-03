@@ -181,7 +181,7 @@ export function CommandPanel({ isOpen, onClose, toggleRef }: CommandPanelProps) 
                   <span className="text-[9px]">Guide</span>
                 </button>
                 <a
-                  href="/proposals"
+                  href="/assembly"
                   aria-label="Proposals"
                   className="flex flex-col items-center gap-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/60 hover:text-white/80"
                 >

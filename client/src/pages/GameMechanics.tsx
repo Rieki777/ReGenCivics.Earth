@@ -1170,7 +1170,7 @@ function GameSimulator() {
 
       {/* Export as Proposal */}
       <div className="text-center">
-        <Link href={`/proposals?${proposalParams.toString()}`}>
+        <Link href={`/assembly?${proposalParams.toString()}`}>
           <Button
             size="lg"
             className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] font-bold px-8 hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all"
@@ -1409,7 +1409,7 @@ function MiniSectionSimulator({
           Copy proposed changes
         </Button>
         {copied && <span className="text-[11px] text-[#7dd87d]">Copied</span>}
-        <Link href="/proposals?category=game_variable" className="ml-auto">
+        <Link href="/assembly?category=game_variable" className="ml-auto">
           <Button size="sm" variant="ghost" className="text-white/60 hover:text-white/90 text-xs">
             Open proposal form
             <ArrowRight className="w-3 h-3 ml-1" />
