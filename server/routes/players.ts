@@ -267,6 +267,7 @@ export const playerProfilesRouter = router({
     .input(z.object({
       communityUpdates: z.boolean(),
       questAnnouncements: z.boolean(),
+      governanceUpdates: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
       const profile = await db.getPlayerProfileByUserId(ctx.user.id);
@@ -277,6 +278,7 @@ export const playerProfilesRouter = router({
         notificationPrefs: JSON.stringify({
           communityUpdates: input.communityUpdates,
           questAnnouncements: input.questAnnouncements,
+          governanceUpdates: input.governanceUpdates,
         }),
       });
       return { success: true };

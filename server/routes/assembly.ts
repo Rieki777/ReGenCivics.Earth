@@ -20,6 +20,9 @@ import { getDb } from "../db";
 import { eq, sql, inArray } from "drizzle-orm";
 import { proposals, proposalSignals, proposalSynthesis, forumPosts, forumReplies } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
+import { requireCoCreatorPlus } from "./proposals";
+import { bridgeToHypha } from "../lib/hypha-bridge";
+import { notifyGovernanceSubscribers } from "../jobs/assemblyNotify";
 
 // ─── Shared helpers ────────────────────────────────────────────────────────
 
@@ -45,6 +48,55 @@ interface SignalAggregate {
 }
 
 const EMPTY_AGGREGATE: SignalAggregate = { netPoints: 0, avg: null, count: 0, histogram: [0, 0, 0, 0, 0, 0, 0] };
+
+/** Aggregate signals for a set of proposals. Never exposes an individual row. */
+async function signalAggregates(proposalIds: number[]): Promise<Map<number, SignalAggregate>> {
+  const out = new Map<number, SignalAggregate>();
+  if (proposalIds.length === 0) return out;
+  const db = await getDb();
+  if (!db) return out;
+  const rows = await db
+    .select({
+      proposalId: proposalSignals.proposalId,
+      score: proposalSignals.score,
+      cnt: sql<number>`COUNT(*)`,
+    })
+    .from(proposalSignals)
+    .where(inArray(proposalSignals.proposalId, proposalIds))
+    .groupBy(proposalSignals.proposalId, proposalSignals.score);
+  for (const r of rows) {
+    const agg = out.get(r.proposalId) ?? { netPoints: 0, avg: null, count: 0, histogram: [0, 0, 0, 0, 0, 0, 0] };
+    const score = Number(r.score);
+    const cnt = Number(r.cnt);
+    agg.netPoints += score * cnt;
+    agg.count += cnt;
+    agg.histogram[score + 3] = cnt;
+    out.set(r.proposalId, agg);
+  }
+  for (const agg of out.values()) {
+    agg.avg = agg.count > 0 ? agg.netPoints / agg.count : null;
+  }
+  return out;
+}
+
+/** LLM output is untrusted: clamp shapes and lengths before caching. */
+function sanitizeSynthesis(raw: any) {
+  const points = (arr: any, cap: number) =>
+    Array.isArray(arr)
+      ? arr.slice(0, cap).map((x: any) => ({
+          point: clampText(x?.point, 300),
+          voiceCount: Math.max(1, Math.min(500, Number(x?.voiceCount) || 1)),
+        }))
+      : [];
+  return {
+    pros: points(raw?.pros, 8),
+    cons: points(raw?.cons, 8),
+    steelman: raw?.steelman ? clampText(raw.steelman, 600) : null,
+    steelmanStillStands: raw?.steelmanStillStands === true,
+    summary: clampText(raw?.summary, 1200),
+    changelog: clampText(raw?.changelog, 400),
+  };
+}
 
 // ─── Synthesis cost controls (AI-AUTOMATION-RISKS Risk 3) ──────────────────
 // In-memory daily counters: per-user 10/day, global 50/day. Reset on process
@@ -80,53 +132,85 @@ function takeSynthesisBudget(userId: number): { ok: boolean; reason?: string } {
 
 const clampText = (v: unknown, max: number): string => String(v ?? "").slice(0, max);
 
-/** LLM output is untrusted: clamp shapes and lengths before caching. */
-function sanitizeSynthesis(raw: any) {
-  const points = (arr: any, cap: number) =>
-    Array.isArray(arr)
-      ? arr.slice(0, cap).map((x: any) => ({
-          point: clampText(x?.point, 300),
-          voiceCount: Math.max(1, Math.min(500, Number(x?.voiceCount) || 1)),
-        }))
-      : [];
-  return {
-    pros: points(raw?.pros, 8),
-    cons: points(raw?.cons, 8),
-    steelman: raw?.steelman ? clampText(raw.steelman, 600) : null,
-    steelmanStillStands: raw?.steelmanStillStands === true,
-    summary: clampText(raw?.summary, 1200),
-    changelog: clampText(raw?.changelog, 400),
-  };
+// ─── Lifecycle gates (spec section 4) ──────────────────────────────────────
+
+interface GateReport {
+  readiness: { met: boolean; ageHours: number; neededHours: number; voices: number; neededVoices: number };
+  points: { met: boolean; value: number; needed: number };
+  avg: { met: boolean; value: number | null; needed: number };
+  objection: { met: boolean; steelman: string | null };
+  allMet: boolean;
 }
 
-/** Aggregate signals for a set of proposals. Never exposes an individual row. */
-async function signalAggregates(proposalIds: number[]): Promise<Map<number, SignalAggregate>> {
-  const out = new Map<number, SignalAggregate>();
-  if (proposalIds.length === 0) return out;
+/** Server-side re-check of every advance gate. The client's canMoveToDecide
+ * is display-only; this is the enforcement path. */
+async function checkAdvanceGates(proposalId: number): Promise<{ proposal: any; gates: GateReport }> {
   const db = await getDb();
-  if (!db) return out;
-  const rows = await db
-    .select({
-      proposalId: proposalSignals.proposalId,
-      score: proposalSignals.score,
-      cnt: sql<number>`COUNT(*)`,
-    })
-    .from(proposalSignals)
-    .where(inArray(proposalSignals.proposalId, proposalIds))
-    .groupBy(proposalSignals.proposalId, proposalSignals.score);
-  for (const r of rows) {
-    const agg = out.get(r.proposalId) ?? { netPoints: 0, avg: null, count: 0, histogram: [0, 0, 0, 0, 0, 0, 0] };
-    const score = Number(r.score);
-    const cnt = Number(r.cnt);
-    agg.netPoints += score * cnt;
-    agg.count += cnt;
-    agg.histogram[score + 3] = cnt;
-    out.set(r.proposalId, agg);
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+  const props = await db.select().from(proposals).where(eq(proposals.id, proposalId)).limit(1);
+  if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+  const proposal = props[0];
+
+  const [neededHours, neededVoices, neededPoints, neededAvg] = await Promise.all([
+    readGameVariable("governance.promotion.min_thread_age_hours", 48),
+    readGameVariable("governance.promotion.min_unique_voices", 3),
+    readGameVariable("governance.signal_advance_points", 12),
+    readGameVariable("governance.signal_advance_avg", 1.0),
+  ]);
+
+  // Readiness: judged on the linked forum thread. A proposal raised without a
+  // thread is judged on its own age, with the voice gate carried by signals.
+  let ageHours = (Date.now() - new Date(proposal.createdAt as any).getTime()) / 3_600_000;
+  let voices = 0;
+  if (proposal.forumThreadId) {
+    const posts = await db
+      .select({ createdAt: forumPosts.createdAt })
+      .from(forumPosts)
+      .where(eq(forumPosts.id, proposal.forumThreadId))
+      .limit(1);
+    if (posts.length) ageHours = (Date.now() - new Date(posts[0].createdAt as any).getTime()) / 3_600_000;
+    const [voiceRows] = await db.execute(
+      sql`SELECT COUNT(DISTINCT authorId) AS voices FROM forumReplies WHERE postId = ${proposal.forumThreadId}`
+    );
+    voices = Number((voiceRows as any)?.[0]?.voices ?? 0);
+  } else {
+    const [sigRows] = await db.execute(
+      sql`SELECT COUNT(DISTINCT userId) AS voices FROM proposal_signals WHERE proposalId = ${proposalId}`
+    );
+    voices = Number((sigRows as any)?.[0]?.voices ?? 0);
   }
-  for (const agg of out.values()) {
-    agg.avg = agg.count > 0 ? agg.netPoints / agg.count : null;
-  }
-  return out;
+
+  const aggs = await signalAggregates([proposalId]);
+  const agg = aggs.get(proposalId) ?? EMPTY_AGGREGATE;
+
+  const synth = await db
+    .select({ steelman: proposalSynthesis.steelman, steelmanAddressed: proposalSynthesis.steelmanAddressed })
+    .from(proposalSynthesis)
+    .where(eq(proposalSynthesis.proposalId, proposalId))
+    .limit(1);
+  const openSteelman = synth.length && synth[0].steelman && !synth[0].steelmanAddressed ? synth[0].steelman : null;
+
+  const gates: GateReport = {
+    readiness: {
+      met: ageHours >= neededHours && voices >= neededVoices,
+      ageHours: Math.round(ageHours),
+      neededHours,
+      voices,
+      neededVoices,
+    },
+    points: { met: agg.netPoints >= neededPoints, value: agg.netPoints, needed: neededPoints },
+    avg: { met: agg.avg !== null && agg.avg >= neededAvg, value: agg.avg, needed: neededAvg },
+    objection: { met: !openSteelman, steelman: openSteelman as string | null },
+    allMet: false,
+  };
+  gates.allMet = gates.readiness.met && gates.points.met && gates.avg.met && gates.objection.met;
+  return { proposal, gates };
+}
+
+function appendObjection(existing: unknown, entry: Record<string, unknown>): string {
+  const log = Array.isArray(existing) ? existing : [];
+  log.push(entry);
+  return JSON.stringify(log.slice(-20));
 }
 
 export const assemblyRouter = router({
@@ -165,10 +249,32 @@ export const assemblyRouter = router({
       for (const m of mine) myMap.set(m.proposalId, { score: Number(m.score), updatedAt: m.updatedAt as any });
     }
 
-    const [advancePoints, advanceAvg] = await Promise.all([
+    const [advancePoints, advanceAvg, neededHours, neededVoices, minorQuietDays, lastCallHours] = await Promise.all([
       readGameVariable("governance.signal_advance_points", 12),
       readGameVariable("governance.signal_advance_avg", 1.0),
+      readGameVariable("governance.promotion.min_thread_age_hours", 48),
+      readGameVariable("governance.promotion.min_unique_voices", 3),
+      readGameVariable("governance.minor_lane_quiet_days", 7),
+      readGameVariable("governance.last_call_hours", 48),
     ]);
+
+    // Batched readiness inputs: thread ages + distinct reply voices
+    const threadIds = rows.map((p) => p.forumThreadId).filter((t): t is number => !!t);
+    const threadAgeMap = new Map<number, Date>();
+    const threadVoiceMap = new Map<number, number>();
+    if (threadIds.length) {
+      const threads = await db
+        .select({ id: forumPosts.id, createdAt: forumPosts.createdAt })
+        .from(forumPosts)
+        .where(inArray(forumPosts.id, threadIds));
+      for (const t of threads) threadAgeMap.set(t.id, t.createdAt as any);
+      const voiceRows = await db
+        .select({ postId: forumReplies.postId, voices: sql<number>`COUNT(DISTINCT authorId)` })
+        .from(forumReplies)
+        .where(inArray(forumReplies.postId, threadIds))
+        .groupBy(forumReplies.postId);
+      for (const v of voiceRows) threadVoiceMap.set(v.postId, Number(v.voices));
+    }
 
     const cards = rows.map((p) => {
       const agg = aggs.get(p.id) ?? EMPTY_AGGREGATE;
@@ -178,14 +284,45 @@ export const assemblyRouter = router({
       const mySignalStale = !!(
         mine && lastSyncedAt && new Date(lastSyncedAt as any).getTime() > new Date(mine.updatedAt as any).getTime()
       );
+
+      const threadCreated = p.forumThreadId ? threadAgeMap.get(p.forumThreadId) : null;
+      const ageHours = (Date.now() - new Date((threadCreated ?? p.createdAt) as any).getTime()) / 3_600_000;
+      const voices = p.forumThreadId ? (threadVoiceMap.get(p.forumThreadId) ?? 0) : agg.count;
+      const openSteelman = synth?.steelman && !synth?.steelmanAddressed ? synth.steelman : null;
+
+      const gates = {
+        readiness: { met: ageHours >= neededHours && voices >= neededVoices, ageHours: Math.round(ageHours), neededHours, voices, neededVoices },
+        points: { met: agg.netPoints >= advancePoints, value: agg.netPoints, needed: advancePoints },
+        avg: { met: agg.avg !== null && agg.avg >= advanceAvg, value: agg.avg, needed: advanceAvg },
+        objection: { met: !openSteelman, steelman: (openSteelman as string | null) ?? null },
+      };
+      const allMet = gates.readiness.met && gates.points.met && gates.avg.met && gates.objection.met;
+      const isOwner = userId ? p.authorId === userId : false;
+
+      const lastCallEndsAt = p.lastCallStartedAt
+        ? new Date(new Date(p.lastCallStartedAt as any).getTime() + lastCallHours * 3_600_000)
+        : null;
+      const minorPassesAt =
+        p.lane === "minor"
+          ? new Date(new Date(p.createdAt as any).getTime() + minorQuietDays * 86_400_000)
+          : null;
+
       return {
         id: p.id,
         title: p.title,
         description: p.description,
+        aim: p.aim,
+        lane: p.lane,
         category: p.category,
         forumThreadId: p.forumThreadId,
         createdAt: p.createdAt,
-        isOwner: userId ? p.authorId === userId : false,
+        lastCallStartedAt: p.lastCallStartedAt,
+        lastCallEndsAt,
+        restingSince: p.restingSince,
+        minorPassesAt,
+        objectionLog: p.objectionLog ?? [],
+        isOwner,
+        canMoveToDecide: isOwner && allMet && !p.lastCallStartedAt,
         synthesis: synth
           ? {
               pros: synth.pros,
@@ -206,15 +343,268 @@ export const assemblyRouter = router({
           mySignal: mine ? mine.score : null,
           mySignalStale,
         },
-        gates: {
-          points: { met: agg.netPoints >= advancePoints, value: agg.netPoints, needed: advancePoints },
-          avg: { met: agg.avg !== null && agg.avg >= advanceAvg, value: agg.avg, needed: advanceAvg },
-        },
+        gates: { ...gates, allMet },
       };
     });
 
     cards.sort((a, b) => b.signal.netPoints - a.signal.netPoints);
     return cards;
+  }),
+
+  /** Proposals in the last-call window plus those ready to launch on Hypha. */
+  lastCall: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return { inWindow: [], readyToLaunch: [] };
+    const lastCallHours = await readGameVariable("governance.last_call_hours", 48);
+    const inWindowRows = await db
+      .select()
+      .from(proposals)
+      .where(sql`${proposals.status} = 'signaling' AND ${proposals.lastCallStartedAt} IS NOT NULL`)
+      .limit(50);
+    const readyRows = await db
+      .select()
+      .from(proposals)
+      .where(eq(proposals.status, "threshold_reached"))
+      .limit(50);
+    return {
+      inWindow: inWindowRows.map((p) => ({
+        id: p.id,
+        title: p.title,
+        aim: p.aim,
+        forumThreadId: p.forumThreadId,
+        endsAt: new Date(new Date(p.lastCallStartedAt as any).getTime() + lastCallHours * 3_600_000),
+      })),
+      readyToLaunch: readyRows.map((p) => ({
+        id: p.id,
+        title: p.title,
+        aim: p.aim,
+        forumThreadId: p.forumThreadId,
+        readyToLaunchAt: p.readyToLaunchAt,
+      })),
+    };
+  }),
+
+  /** Raise a forum thread into a forming proposal. Co-Creator and above.
+   * The aim line is required at raise time, no exceptions (spec section 2). */
+  raiseFromThread: protectedProcedure
+    .input(
+      z.object({
+        forumPostId: z.number().int().positive(),
+        aim: z.string().min(10).max(300),
+        lane: z.enum(["full", "minor"]).default("full"),
+        title: z.string().min(5).max(200).optional(),
+        description: z.string().max(5000).optional(),
+        category: z
+          .enum(["fund_allocation", "game_variable", "new_quest", "food_economy", "platform_feature", "community", "bff_initiative", "partnership", "community_agreement", "other"])
+          .default("community"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      await requireCoCreatorPlus(db, ctx.user.id);
+
+      const posts = await db.select({ id: forumPosts.id, title: forumPosts.title, content: forumPosts.content }).from(forumPosts).where(eq(forumPosts.id, input.forumPostId)).limit(1);
+      if (posts.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Thread not found" });
+
+      const existing = await db
+        .select({ id: proposals.id })
+        .from(proposals)
+        .where(sql`${proposals.forumThreadId} = ${input.forumPostId} AND ${proposals.status} IN ('signaling', 'threshold_reached', 'in_governance')`)
+        .limit(1);
+      if (existing.length > 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This thread already has an active proposal in the Assembly." });
+      }
+
+      const [ins] = await db.execute(
+        sql`INSERT INTO proposals (authorId, title, description, category, status, forumThreadId, aim, lane)
+            VALUES (${ctx.user.id}, ${input.title ?? posts[0].title}, ${input.description ?? clampText(posts[0].content, 2000)}, ${input.category}, 'signaling', ${input.forumPostId}, ${input.aim.trim()}, ${input.lane})`
+      );
+      const proposalId = Number((ins as any).insertId);
+      return { ok: true, proposalId };
+    }),
+
+  /** Owner moves a forming proposal into last call. Every gate re-checked
+   * server-side; an open objection needs an explicit recorded override. */
+  moveToDecide: protectedProcedure
+    .input(
+      z.object({
+        proposalId: z.number().int().positive(),
+        overrideObjection: z.boolean().default(false),
+        overrideNote: z.string().max(500).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const { proposal, gates } = await checkAdvanceGates(input.proposalId);
+      if (proposal.authorId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the proposal owner can move it to Decide." });
+      }
+      if (proposal.status !== "signaling") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `This proposal is ${proposal.status}, so it cannot move to Decide.` });
+      }
+      if (proposal.lastCallStartedAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal is already in last call." });
+      }
+
+      const unmet: string[] = [];
+      if (!gates.readiness.met) unmet.push(`readiness (${gates.readiness.voices}/${gates.readiness.neededVoices} voices, ${gates.readiness.ageHours}/${gates.readiness.neededHours}h)`);
+      if (!gates.points.met) unmet.push(`net points (${gates.points.value}/${gates.points.needed})`);
+      if (!gates.avg.met) unmet.push(`average (${gates.avg.value?.toFixed(1) ?? "none"} vs ${gates.avg.needed} floor)`);
+      if (unmet.length > 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Gates unmet: ${unmet.join("; ")}` });
+      }
+      if (!gates.objection.met) {
+        if (!input.overrideObjection || !input.overrideNote?.trim()) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "The strongest objection is unaddressed. Address it, or override with a recorded note." });
+        }
+      }
+
+      const overrideEntry =
+        !gates.objection.met && input.overrideObjection
+          ? appendObjection(proposal.objectionLog, {
+              type: "owner_override",
+              by: ctx.user.id,
+              reason: input.overrideNote!.trim(),
+              steelman: gates.objection.steelman,
+              at: new Date().toISOString(),
+            })
+          : null;
+
+      await db.execute(
+        overrideEntry
+          ? sql`UPDATE proposals SET lastCallStartedAt = NOW(), restingSince = NULL, objectionLog = ${overrideEntry} WHERE id = ${input.proposalId}`
+          : sql`UPDATE proposals SET lastCallStartedAt = NOW(), restingSince = NULL WHERE id = ${input.proposalId}`
+      );
+
+      const lastCallHours = await readGameVariable("governance.last_call_hours", 48);
+      void notifyGovernanceSubscribers(
+        `Last call: ${proposal.title}`,
+        `<p><strong>${proposal.title}</strong> is in last call for the next ${lastCallHours} hours.</p>
+         <p>Aim: ${proposal.aim ?? "(none recorded)"}</p>
+         <p>This is the final window to raise an objection before the binding vote opens on Hypha.</p>
+         <p><a href="https://regencivics.earth/assembly">Read it on the Assembly</a></p>`
+      );
+
+      return { ok: true, lastCallHours };
+    }),
+
+  /** A reasoned objection during last call pulls the proposal back to forming. */
+  objectLastCall: protectedProcedure
+    .input(z.object({ proposalId: z.number().int().positive(), reason: z.string().min(10).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const props = await db.select().from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
+      if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+      const p = props[0];
+      if (!p.lastCallStartedAt || p.status !== "signaling") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal is not in last call." });
+      }
+      const log = appendObjection(p.objectionLog, {
+        type: "last_call",
+        by: ctx.user.id,
+        reason: input.reason.trim(),
+        at: new Date().toISOString(),
+      });
+      await db.execute(
+        sql`UPDATE proposals SET lastCallStartedAt = NULL, objectionLog = ${log} WHERE id = ${input.proposalId}`
+      );
+      return { ok: true };
+    }),
+
+  /** One click bumps a minor-lane proposal to the full lane, with a reason. */
+  objectMinor: protectedProcedure
+    .input(z.object({ proposalId: z.number().int().positive(), reason: z.string().min(5).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const props = await db.select().from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
+      if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+      const p = props[0];
+      if (p.lane !== "minor" || p.status !== "signaling") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal is not in the minor lane." });
+      }
+      const log = appendObjection(p.objectionLog, {
+        type: "minor_lane",
+        by: ctx.user.id,
+        reason: input.reason.trim(),
+        at: new Date().toISOString(),
+      });
+      await db.execute(sql`UPDATE proposals SET lane = 'full', objectionLog = ${log} WHERE id = ${input.proposalId}`);
+      return { ok: true };
+    }),
+
+  /** Revive a resting proposal. Any signed-in member; the work belongs to the community. */
+  revive: protectedProcedure
+    .input(z.object({ proposalId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      await db.execute(sql`UPDATE proposals SET restingSince = NULL WHERE id = ${input.proposalId} AND restingSince IS NOT NULL`);
+      return { ok: true };
+    }),
+
+  /** Launch the binding vote on Hypha through the bridge. Owner-initiated
+   * (AI-AUTOMATION-RISKS Risk 7 keeps the human confirmation); after 7 idle
+   * days in ready-to-launch, any signed-in member can carry it over. */
+  launchOnHypha: protectedProcedure
+    .input(z.object({ proposalId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const props = await db.select().from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
+      if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+      const p = props[0];
+      if (p.status !== "threshold_reached") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal is not ready to launch." });
+      }
+      const idleDays = p.readyToLaunchAt ? (Date.now() - new Date(p.readyToLaunchAt as any).getTime()) / 86_400_000 : 0;
+      if (p.authorId !== ctx.user.id && idleDays < 7) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "The owner launches the vote. If it sits for 7 days, anyone can carry it over." });
+      }
+
+      const { bridgeKey, bridgeUrl } = await bridgeToHypha("assembly-proposal-to-contribution", {
+        sourceId: String(p.id),
+        targetDhoSlug: "regen-games",
+        title: p.title,
+        description: [p.aim ? `This serves the Game by ${p.aim}` : "", clampText(p.description, 1500)].filter(Boolean).join("\n\n"),
+        initiatorUserId: ctx.user.id,
+        metadata: { assemblyProposalId: p.id, forumThreadId: p.forumThreadId },
+      });
+      await db.execute(
+        sql`UPDATE proposals SET status = 'in_governance', hyphaBridgeKey = ${bridgeKey} WHERE id = ${input.proposalId}`
+      );
+      return { ok: true, bridgeUrl };
+    }),
+
+  /** Everything waiting on the signed-in member (spec section 3.1). */
+  needsYou: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { unsignaled: [], readyToMove: [], minorPending: [], inLastCall: [] };
+    const [unsignaledRows] = await db.execute(
+      sql`SELECT p.id, p.title FROM proposals p
+          WHERE p.status = 'signaling' AND p.restingSince IS NULL
+            AND NOT EXISTS (SELECT 1 FROM proposal_signals s WHERE s.proposalId = p.id AND s.userId = ${ctx.user.id})
+          ORDER BY p.createdAt DESC LIMIT 10`
+    );
+    const [minorRows] = await db.execute(
+      sql`SELECT id, title, createdAt FROM proposals WHERE status = 'signaling' AND lane = 'minor' ORDER BY createdAt ASC LIMIT 10`
+    );
+    const [mineReady] = await db.execute(
+      sql`SELECT id, title, status, readyToLaunchAt FROM proposals
+          WHERE authorId = ${ctx.user.id} AND status IN ('signaling', 'threshold_reached') ORDER BY createdAt DESC LIMIT 10`
+    );
+    const quietDays = await readGameVariable("governance.minor_lane_quiet_days", 7);
+    return {
+      unsignaled: unsignaledRows as unknown as any[],
+      minorPending: (minorRows as unknown as any[]).map((m) => ({
+        ...m,
+        passesAt: new Date(new Date(m.createdAt).getTime() + quietDays * 86_400_000),
+      })),
+      mine: mineReady as unknown as any[],
+    };
   }),
 
   /** Set (or move) my signal on a proposal. Upserts on (proposalId, userId). */

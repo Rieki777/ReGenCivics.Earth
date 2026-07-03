@@ -176,6 +176,41 @@ async function sendDigestEmails(
         </div>`;
     }
 
+    // ── Assembly section (weekly governance movement) ────────────────────────
+    let assemblySection = "";
+    try {
+      const { getDb } = await import("../db");
+      const { sql } = await import("drizzle-orm");
+      const dbc = await getDb();
+      if (dbc) {
+        const [counts] = await dbc.execute(sql`
+          SELECT
+            SUM(CASE WHEN status = 'signaling' AND createdAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS newForming,
+            SUM(CASE WHEN status = 'signaling' AND lastCallStartedAt IS NOT NULL THEN 1 ELSE 0 END) AS inLastCall,
+            SUM(CASE WHEN status = 'threshold_reached' THEN 1 ELSE 0 END) AS readyToLaunch,
+            SUM(CASE WHEN status = 'in_governance' THEN 1 ELSE 0 END) AS deciding,
+            SUM(CASE WHEN status IN ('passed', 'implemented') AND updatedAt >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS passedThisWeek
+          FROM proposals`);
+        const c: any = (counts as any)?.[0] ?? {};
+        const parts: string[] = [];
+        if (Number(c.newForming) > 0) parts.push(`${c.newForming} new forming`);
+        if (Number(c.inLastCall) > 0) parts.push(`${c.inLastCall} in last call`);
+        if (Number(c.readyToLaunch) > 0) parts.push(`${c.readyToLaunch} ready to launch`);
+        if (Number(c.deciding) > 0) parts.push(`${c.deciding} at a binding vote`);
+        if (Number(c.passedThisWeek) > 0) parts.push(`${c.passedThisWeek} passed this week`);
+        if (parts.length > 0) {
+          assemblySection = `
+      <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 32px;">
+        <p style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #7dd87d; margin: 0 0 6px; font-weight: bold;">The Assembly</p>
+        <p style="font-size: 14px; color: #1a472a; margin: 0 0 12px; line-height: 1.6;">${parts.join(" · ")}</p>
+        <a href="${APP_BASE_URL}/assembly?utm_source=email&utm_medium=digest&utm_campaign=weekly" style="font-size: 13px; color: #1a472a; font-weight: bold; text-decoration: underline;">Visit the Assembly</a>
+      </div>`;
+        }
+      }
+    } catch (err) {
+      console.error("[DigestJob] assembly section failed", err);
+    }
+
     // ── "Have you seen this?" section ─────────────────────────────────────────
     const sitePick = rotatePick(SITE_HIGHLIGHTS, 1, weekNum + 3)[0];
     const sitePickUrl = `${APP_BASE_URL}${sitePick.url}?utm_source=email&utm_medium=digest&utm_campaign=site-explore`;
@@ -208,6 +243,7 @@ async function sendDigestEmails(
         </div>
         <div style="padding: 32px 40px;">
           ${mainSection}
+          ${assemblySection}
           ${siteSection}
           ${connectSection}
         </div>

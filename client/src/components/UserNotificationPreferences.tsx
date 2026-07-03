@@ -10,11 +10,13 @@ import { toast } from "sonner";
 interface NotificationPrefs {
   communityUpdates: boolean;
   questAnnouncements: boolean;
+  governanceUpdates: boolean;
 }
 
 const DEFAULTS: NotificationPrefs = {
   communityUpdates: true,
   questAnnouncements: true,
+  governanceUpdates: false,
 };
 
 function parsePrefs(raw: unknown): NotificationPrefs {
@@ -23,6 +25,7 @@ function parsePrefs(raw: unknown): NotificationPrefs {
   return {
     communityUpdates: typeof obj.communityUpdates === "boolean" ? obj.communityUpdates : DEFAULTS.communityUpdates,
     questAnnouncements: typeof obj.questAnnouncements === "boolean" ? obj.questAnnouncements : DEFAULTS.questAnnouncements,
+    governanceUpdates: typeof obj.governanceUpdates === "boolean" ? obj.governanceUpdates : DEFAULTS.governanceUpdates,
   };
 }
 
@@ -62,6 +65,11 @@ export function UserNotificationPreferences({ currentPrefs }: Props) {
       key: "questAnnouncements",
       label: "Quest & Event Announcements",
       description: "New quests, seasonal events, and game updates",
+    },
+    {
+      key: "governanceUpdates",
+      label: "Governance Updates",
+      description: "Email me when a proposal reaches last call or ships. At most one email a day",
     },
   ];
 

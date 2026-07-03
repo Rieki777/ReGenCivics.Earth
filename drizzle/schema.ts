@@ -2742,6 +2742,15 @@ export const proposals = mysqlTable("proposals", {
   forumThreadId: int("forumThreadId"),
   signalVoteCount: int("signalVoteCount").default(0),
   bioregionId: int("bioregionId"),
+  // Assembly lifecycle (0165): aim line, lanes, last call, resting, launch
+  aim: varchar("aim", { length: 300 }),
+  lane: mysqlEnum("lane", ["full", "minor"]).default("full").notNull(),
+  lastCallStartedAt: timestamp("lastCallStartedAt"),
+  restingSince: timestamp("restingSince"),
+  readyToLaunchAt: timestamp("readyToLaunchAt"),
+  hyphaBridgeKey: varchar("hyphaBridgeKey", { length: 32 }),
+  executionPayload: json("executionPayload"),
+  objectionLog: json("objectionLog"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

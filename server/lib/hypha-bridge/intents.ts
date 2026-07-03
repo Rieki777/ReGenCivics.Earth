@@ -12,6 +12,7 @@
 import type { HyphaBridgeSource, HyphaFormKind } from "./types";
 
 export type IntentName =
+  | "assembly-proposal-to-contribution"
   | "decision-to-contribution"
   | "crowdpool-to-contribution"
   | "claim-historical-contribution"
@@ -30,6 +31,12 @@ export interface IntentDescriptor {
 }
 
 export const KNOWN_INTENTS: Record<IntentName, IntentDescriptor> = {
+  "assembly-proposal-to-contribution": {
+    name: "assembly-proposal-to-contribution",
+    source: "other",
+    formKind: "propose_contribution",
+    description: "Launch the binding vote on an Assembly proposal in the ReGen Games DHO",
+  },
   "decision-to-contribution": {
     name: "decision-to-contribution",
     source: "loomio_decision",

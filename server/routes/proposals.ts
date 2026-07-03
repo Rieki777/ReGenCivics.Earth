@@ -16,7 +16,7 @@ const PROPOSAL_CATEGORIES = [
 ] as const;
 
 /** Verify that the user holds Co-Creator tier or above. Throws FORBIDDEN otherwise. */
-async function requireCoCreatorPlus(db: any, userId: number) {
+export async function requireCoCreatorPlus(db: any, userId: number) {
   const [row] = await db.execute(
     sql`SELECT citizenshipTier FROM player_profiles WHERE userId = ${userId} LIMIT 1`
   ).then((r: any) => r[0] ?? []);

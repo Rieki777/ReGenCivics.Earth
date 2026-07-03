@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { SignalControl, SignalReadout } from "@/components/assembly/SignalControl";
 import { ProsConsPanel } from "@/components/assembly/ProsConsPanel";
+import { MoveToDecideButton, MinorLaneRow, LastCallSection, RestingStrip } from "@/components/assembly/LifecycleControls";
 
 const HYPHA_DHO_URL = "https://app.hypha.earth/en/dho/regen-games/";
 const HYPHA_MEMBERS_URL = "https://app.hypha.earth/en/dho/regen-games/members/";
@@ -66,7 +67,9 @@ export default function Assembly() {
       ? "text-amber-300"
       : "text-[#7dd87d]";
 
-  const forming = (formingQuery.data as any[]) ?? [];
+  const formingAll = (formingQuery.data as any[]) ?? [];
+  const forming = formingAll.filter((p) => !p.lastCallStartedAt && !p.restingSince);
+  const resting = formingAll.filter((p) => !!p.restingSince);
   const deciding = (decidingQuery.data as any[]) ?? [];
 
   return (
@@ -161,6 +164,9 @@ export default function Assembly() {
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-[220px] safe-prose">
                     <p className="text-white text-sm font-semibold">{p.title}</p>
+                    {p.aim && (
+                      <p className="text-[#7dd87d]/90 text-[11px] mt-0.5">This serves the Game by {p.aim}</p>
+                    )}
                     {p.description && (
                       <p className="text-white/65 text-xs mt-1 leading-relaxed">{String(p.description).slice(0, 180)}</p>
                     )}
@@ -184,19 +190,18 @@ export default function Assembly() {
                 <div className="mt-3">
                   <SignalControl proposalId={p.id} signal={p.signal} />
                 </div>
+                <MinorLaneRow proposal={p} />
+                <MoveToDecideButton proposal={p} />
               </li>
             ))}
           </ul>
         )}
+        <RestingStrip resting={resting} />
       </SectionShell>
 
       {/* Last call */}
       <SectionShell icon={<Hourglass className="w-4 h-4 text-amber-300" />} title="Last call">
-        <p className="text-white/65 text-sm safe-prose">
-          Proposals about to move to a binding vote pause here for a final 48 hours, one last chance
-          for a late objection before the vote opens. When a proposal reaches this stage it appears
-          here with its countdown.
-        </p>
+        <LastCallSection isAuthenticated={isAuthenticated} />
       </SectionShell>
 
       {/* Deciding */}

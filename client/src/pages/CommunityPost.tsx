@@ -35,7 +35,7 @@ import { GratitudeButton } from "@/components/GratitudeButton";
 import { ForumThreadDecisionBanner } from "@/components/governance/ForumThreadDecisionBanner";
 import { GovernanceLifecycleStrip } from "@/components/governance/GovernanceLifecycleStrip";
 import { PerspectiveControl } from "@/components/governance/PerspectiveControl";
-import { PromotionModal } from "@/components/governance/PromotionModal";
+import { RaiseModal } from "@/components/assembly/RaiseModal";
 import { Vote } from "lucide-react";
 import ThreadRoots from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
@@ -721,15 +721,15 @@ export default function CommunityPost() {
                     type="button"
                     onClick={() => setPromotionOpen(true)}
                     className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
-                    title="Promote this thread to a formal decision"
+                    title="Raise this thread as a proposal in the Assembly, the Game's community-governed space."
                   >
                     <Vote className="w-3 h-3" />
-                    Promote to decision
+                    Raise in Assembly
                   </button>
                 </div>
               )}
             </div>
-            <PromotionModal threadId={post.id} open={promotionOpen} onClose={() => setPromotionOpen(false)} />
+            <RaiseModal threadId={post.id} threadTitle={post.title} open={promotionOpen} onClose={() => setPromotionOpen(false)} />
 
             {/* Emoji Reactions + Gratitude on post */}
             <div className="px-4 md:px-6 pb-2 flex items-center gap-2 flex-wrap">
