@@ -1457,6 +1457,9 @@ export const forumCategories = mysqlTable("forumCategories", {
   color: varchar("color", { length: 20 }), // hex color for category badge
   imageUrl: varchar("imageUrl", { length: 500 }),
   sortOrder: int("sortOrder").default(0).notNull(),
+  // How this board orders its threads: "activity" = latest reply first (default),
+  // "numerical" = by each post's sortOrder ascending (quest number order).
+  sortMode: varchar("sortMode", { length: 20 }).default("activity").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type ForumCategory = typeof forumCategories.$inferSelect;
@@ -1489,6 +1492,8 @@ export const forumPosts = mysqlTable("forumPosts", {
   linkPreviews: json("linkPreviews"),
   // Seed post flag (B.3)
   isSeed: tinyint("isSeed").default(0).notNull(),
+  // Explicit ascending position for boards in "numerical" sortMode (lower shows first).
+  sortOrder: int("sortOrder").default(0).notNull(),
   // Dialogue governance lifecycle (2026-06-25 dialogue process)
   governanceStage: mysqlEnum("governanceStage", ["dialogue", "sensing", "proposal", "decided"]).default("dialogue"),
   sensingStartedAt: timestamp("sensingStartedAt"),

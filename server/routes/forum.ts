@@ -112,10 +112,21 @@ export const forumRouter = router({
       color: z.string().max(20).optional(),
       imageUrl: z.string().max(500).optional(),
       sortOrder: z.number().optional(),
+      sortMode: z.enum(["activity", "numerical"]).optional(),
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
       await db.updateForumCategory(id, data);
+      return { success: true };
+    }),
+
+  // Admin: set a thread's explicit sort position (used by boards in numerical mode)
+  setPostSortOrder: adminProcedure
+    .input(z.object({ id: z.number(), sortOrder: z.number().int() }))
+    .mutation(async ({ input }) => {
+      const db2 = await getDb();
+      if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      await db2.update(forumPosts).set({ sortOrder: input.sortOrder }).where(eq(forumPosts.id, input.id));
       return { success: true };
     }),
 
@@ -149,28 +160,41 @@ export const forumRouter = router({
       // Fetch one extra to determine if there's a next page
       const fetchLimit = limit + 1;
 
+      // A board sorts by latest activity (default) or by an explicit numerical
+      // position (quest number order). Look up the category's mode when one is
+      // named. Cursor pagination is keyed on id; numerical boards are small
+      // (quests fit one page), so the id-cursor never engages there in practice.
+      const activityOrder = sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`;
+      const numericalOrder = sql`${forumPosts.isPinned} DESC, ${forumPosts.sortOrder} ASC, ${forumPosts.createdAt} ASC`;
+      let orderClause = activityOrder;
+      if (categoryId !== undefined) {
+        const [cat] = await db2.select({ sortMode: forumCategories.sortMode })
+          .from(forumCategories).where(eq(forumCategories.id, categoryId)).limit(1);
+        if (cat?.sortMode === "numerical") orderClause = numericalOrder;
+      }
+
       let rows: (typeof forumPosts.$inferSelect)[];
       if (categoryId !== undefined) {
         if (cursor !== undefined) {
           rows = await db2.select().from(forumPosts)
             .where(sql`${forumPosts.categoryId} = ${categoryId} AND ${forumPosts.id} < ${cursor}`)
-            .orderBy(sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`)
+            .orderBy(orderClause)
             .limit(fetchLimit);
         } else {
           rows = await db2.select().from(forumPosts)
             .where(eq(forumPosts.categoryId, categoryId))
-            .orderBy(sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`)
+            .orderBy(orderClause)
             .limit(fetchLimit);
         }
       } else {
         if (cursor !== undefined) {
           rows = await db2.select().from(forumPosts)
             .where(sql`${forumPosts.id} < ${cursor}`)
-            .orderBy(sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`)
+            .orderBy(orderClause)
             .limit(fetchLimit);
         } else {
           rows = await db2.select().from(forumPosts)
-            .orderBy(sql`${forumPosts.isPinned} DESC, ${forumPosts.lastReplyAt} DESC, ${forumPosts.createdAt} DESC`)
+            .orderBy(orderClause)
             .limit(fetchLimit);
         }
       }

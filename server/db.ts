@@ -2278,7 +2278,7 @@ export async function createForumCategory(data: { name: string; slug: string; de
   return asMutationResult(result).insertId;
 }
 
-export async function updateForumCategory(id: number, data: { name?: string; description?: string; icon?: string; color?: string; imageUrl?: string; sortOrder?: number }) {
+export async function updateForumCategory(id: number, data: { name?: string; description?: string; icon?: string; color?: string; imageUrl?: string; sortOrder?: number; sortMode?: string }) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   await db.update(forumCategories).set(data).where(eq(forumCategories.id, id));
