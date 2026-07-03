@@ -142,7 +142,7 @@ after so it does not get committed.
 - Questions about ReGen Civics the project: read `CLAUDE.md` at the repo
   root. Start with the "What This Project Is" section.
 - Questions about the Hypha bridge (for anything touching on-chain work):
-  `FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md` has the full flow.
+  `.ai/docs/HYPHA-BRIDGE.md` has the full flow.
 
 Welcome aboard. This codebase is a living thing, grown by a distributed
 community. The more you play with it, the better it gets for everyone.
