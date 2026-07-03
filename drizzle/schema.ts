@@ -544,6 +544,16 @@ export const playerProfiles = mysqlTable("player_profiles", {
   // User notification preferences (JSON: { communityUpdates, questAnnouncements })
   notificationPrefs: json("notificationPrefs"),
 
+  // Forum profile fields folded in from userProfiles (0169, Phase 2B). The
+  // forum reads these from playerProfiles now; userProfiles keeps its
+  // onboarding-only fields and is kept in symmetric sync via upsertUserProfile.
+  website: varchar("website", { length: 500 }),
+  forumLocation: varchar("forumLocation", { length: 255 }),
+  preferredLanguage: varchar("preferredLanguage", { length: 10 }).default("en"),
+  reputation: int("reputation").default(0).notNull(),
+  onboardingComplete: tinyint("onboardingComplete").default(0).notNull(),
+  forumLastActiveAt: timestamp("forumLastActiveAt"),
+
   // Profile layer (Phase 3)
   collaborationStatus: text("collaborationStatus"), // null | "seeking_collaborators" | "looking_to_join"
   dreamingOf: text("dreamingOf"),                  // Open text: what are you dreaming of building?
@@ -1781,6 +1791,18 @@ export const userProfiles = mysqlTable("userProfiles", {
   lastActiveAt: timestamp("lastActiveAt"),
 });
 export type UserProfile = typeof userProfiles.$inferSelect;
+
+// Display-field disagreements found during the Phase 2B back-fill (0169).
+// Empty in the current data; kept so future reconciliations are inspectable.
+export const profileMergeConflicts = mysqlTable("profile_merge_conflicts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  field: varchar("field", { length: 64 }).notNull(),
+  playerProfilesValue: text("playerProfilesValue"),
+  userProfilesValue: text("userProfilesValue"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProfileMergeConflict = typeof profileMergeConflicts.$inferSelect;
 
 /**
  * Site Banner Configuration

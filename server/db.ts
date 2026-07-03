@@ -2800,12 +2800,18 @@ export async function upsertUserProfile(userId: number, data: {
     });
   }
 
-  // Sync shared fields (avatar, banner, displayName, bio) to playerProfiles
-  // so the Overview card and member directory stay in sync with Settings.
-  const syncFields: Record<string, string | undefined> = {};
+  // Forward-sync shared fields to playerProfiles (0169, Phase 2B). The forum
+  // reads profile data from playerProfiles now, so an onboarding/settings save
+  // to userProfiles must mirror across. Symmetric with the reverse sync in
+  // updatePlayerProfile; both write the other table DIRECTLY (no recursion).
+  const syncFields: Record<string, string | number | undefined> = {};
   if (data.avatarUrl !== undefined) syncFields.avatarUrl = data.avatarUrl;
   if (data.displayName !== undefined) syncFields.displayName = data.displayName;
   if (data.bio !== undefined) syncFields.bio = data.bio;
+  if (data.website !== undefined) syncFields.website = data.website;
+  if (data.location !== undefined) syncFields.forumLocation = data.location;
+  if (data.preferredLanguage !== undefined) syncFields.preferredLanguage = data.preferredLanguage;
+  if (data.onboardingComplete !== undefined) syncFields.onboardingComplete = data.onboardingComplete;
   if (Object.keys(syncFields).length > 0) {
     try {
       const pp = await getPlayerProfileByUserId(userId);
@@ -2819,9 +2825,68 @@ export async function upsertUserProfile(userId: number, data: {
   }
 }
 
+/**
+ * The forum's view of a user's profile, read from playerProfiles (the unified
+ * model as of 0169). Field names match the old userProfiles shape the forum
+ * client expects (location = forumLocation) so no client change is needed.
+ * Returns null when the user has no playerProfiles row.
+ */
+export async function getForumProfile(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const pp = await getPlayerProfileByUserId(userId);
+  if (!pp) return null;
+  return {
+    userId,
+    displayName: pp.displayName ?? null,
+    bio: pp.bio ?? null,
+    location: (pp as any).forumLocation ?? null,
+    website: (pp as any).website ?? null,
+    avatarUrl: pp.avatarUrl ?? null,
+    bannerUrl: pp.bannerUrl ?? null,
+    reputation: (pp as any).reputation ?? 0,
+    preferredLanguage: (pp as any).preferredLanguage ?? "en",
+  };
+}
+
+/**
+ * Update the forum-editable profile fields on playerProfiles, mirroring to
+ * userProfiles so onboarding/settings surfaces stay consistent.
+ */
+export async function updateForumProfile(userId: number, data: {
+  bio?: string;
+  location?: string;
+  website?: string;
+  preferredLanguage?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const ppFields: Record<string, string | undefined> = {};
+  if (data.bio !== undefined) ppFields.bio = data.bio;
+  if (data.location !== undefined) ppFields.forumLocation = data.location;
+  if (data.website !== undefined) ppFields.website = data.website;
+  if (data.preferredLanguage !== undefined) ppFields.preferredLanguage = data.preferredLanguage;
+  if (Object.keys(ppFields).length > 0) {
+    const pp = await getPlayerProfileByUserId(userId);
+    if (pp) {
+      await db.update(playerProfiles).set(ppFields).where(eq(playerProfiles.userId, userId));
+    }
+  }
+  // Mirror to userProfiles (kept alive for onboarding fields).
+  await upsertUserProfile(userId, data);
+}
+
 export async function incrementUserReputation(userId: number, amount: number) {
   const db = await getDb();
   if (!db) return;
+  // Reputation lives on playerProfiles now (0169). Mirror to userProfiles for
+  // as long as that table is kept.
+  const pp = await getPlayerProfileByUserId(userId);
+  if (pp) {
+    await db.update(playerProfiles)
+      .set({ reputation: ((pp as any).reputation ?? 0) + amount })
+      .where(eq(playerProfiles.userId, userId));
+  }
   const profile = await getUserProfile(userId);
   if (profile) {
     await db.update(userProfiles).set({ reputation: profile.reputation + amount }).where(eq(userProfiles.userId, userId));
@@ -2857,12 +2922,14 @@ export async function getUserForumStats(userId: number) {
   const db = await getDb();
   if (!db) return { postCount: 0, replyCount: 0, reputation: 0, likesReceived: 0 };
   
-  const profile = await getUserProfile(userId);
-  
+  // Reputation reads from playerProfiles now (0169); post/reply counts have
+  // always been computed live from the row counts below.
+  const forumProfile = await getForumProfile(userId);
+
   // Count likes received on user's posts and replies
   const userPosts = await db.select().from(forumPosts).where(eq(forumPosts.authorId, userId));
   const userReplies = await db.select().from(forumReplies).where(eq(forumReplies.authorId, userId));
-  
+
   let likesReceived = 0;
   for (const post of userPosts) {
     const likes = await db.select().from(forumLikes).where(eq(forumLikes.postId, post.id));
@@ -2872,11 +2939,11 @@ export async function getUserForumStats(userId: number) {
     const likes = await db.select().from(forumLikes).where(eq(forumLikes.replyId, reply.id));
     likesReceived += likes.length;
   }
-  
+
   return {
-    postCount: profile?.postCount || userPosts.length,
-    replyCount: profile?.replyCount || userReplies.length,
-    reputation: profile?.reputation || 0,
+    postCount: userPosts.length,
+    replyCount: userReplies.length,
+    reputation: forumProfile?.reputation || 0,
     likesReceived,
   };
 }

@@ -301,6 +301,18 @@ Format per entry:
 
 ---
 
+## ADR-26: Profile unification scoped to symmetric sync, not a table merge (Phase 2B)
+
+- Date: 2026-07-03
+- Status: Accepted (coded; migration 0169 applied)
+- Context: The forum upgrade plan's Phase 2B called for merging userProfiles into playerProfiles because both "hold conflicting copies of display name / bio / avatar" and the forum read one table while the game read the other. Before writing the migration I checked the live data: 9 userProfiles rows, 6 playerProfiles, ZERO display-field conflicts, ZERO non-zero forum stats (reputation all 0; postCount/replyCount are recomputed live from row counts anyway), and 4 userProfiles rows with no playerProfiles row. userProfiles also holds onboarding-only fields (path, investmentRange, projectName, projectUrl, organizationName, questInterests) that have no home in playerProfiles and are actively written by the OnboardingWizard.
+- Decision: scope Phase 2B to the safe, reversible slice that its actual goal (Phase 3 builds against one model) needs, and skip the risky full merge the data does not justify. Migration 0169 ADDS the forum-relevant columns to playerProfiles (website, forumLocation, preferredLanguage, reputation, onboardingComplete, forumLastActiveAt), back-fills them from userProfiles (straight copy; display fields only where playerProfiles is empty), and creates an empty profile_merge_conflicts audit table. The forum now reads playerProfiles via new db.getForumProfile / writes via db.updateForumProfile, and reputation lives on playerProfiles. userProfiles is KEPT (onboarding depends on it) and the two tables are held identical by SYMMETRIC sync: updatePlayerProfile mirrors pp->up (pre-existing) and upsertUserProfile now mirrors up->pp for all shared fields. No table drop, no data move, no touch to auth/onboarding writers.
+- Why: the plan's premise (conflicting copies) was empirically false, so the expensive, irreversible merge + drop carried real risk (auth, onboarding, every profile surface; 4 orphan rows; onboarding fields with nowhere to go) for no current benefit. Symmetric sync makes drift impossible going forward, which is the actual concern the plan raised, without a data migration. Phase 3 can build UserForumProfile / ForumPostCard against playerProfiles as intended.
+- Trade-offs: userProfiles is not eliminated, so two tables persist (kept identical by sync). A future migration can drop userProfiles once onboarding fields are relocated and grep confirms zero reads; that is deferred, not lost. The symmetric writes double a profile-save's row updates (negligible at this scale). If the two sync paths ever diverge in field coverage they could drift again; both cover the same shared-field set today and are commented as a pair.
+- Where it lives in code: drizzle/0169_profile_unify.sql, drizzle/schema.ts (playerProfiles columns + profile_merge_conflicts), server/db.ts (getForumProfile, updateForumProfile, upsertUserProfile forward sync, reputation on playerProfiles, getUserForumStats), server/routes/forum.ts (userProfile reader + updateProfile writer). Supersedes the Phase 2B plan's merge-and-drop approach with a scoped symmetric-sync approach; extends ADR-25.
+
+---
+
 ## Adding new ADRs
 
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.

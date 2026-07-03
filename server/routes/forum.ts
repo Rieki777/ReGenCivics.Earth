@@ -729,7 +729,7 @@ export const forumRouter = router({
     .query(async ({ input }) => {
       const [user, profile, stats, recentPosts, recentReplies] = await Promise.all([
         db.getUserById(input.userId),
-        db.getUserProfile(input.userId),
+        db.getForumProfile(input.userId), // unified model (playerProfiles) as of 0169
         db.getUserForumStats(input.userId),
         db.getUserRecentPosts(input.userId, 5),
         db.getUserRecentReplies(input.userId, 5),
@@ -752,7 +752,7 @@ export const forumRouter = router({
       preferredLanguage: z.string().max(10).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await db.upsertUserProfile(ctx.user.id, input);
+      await db.updateForumProfile(ctx.user.id, input);
       return { success: true };
     }),
 
