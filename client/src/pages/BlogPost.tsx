@@ -24,6 +24,7 @@ import remarkGfm from 'remark-gfm';
 import { BlurImage } from "@/components/BlurImage";
 import { ShareButton } from "@/components/ShareButton";
 import { EightFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
+import { ReadingProgressRing } from "@/components/blog/ReadingProgressRing";
 
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
@@ -144,11 +145,12 @@ export default function BlogPost() {
         />
       </div>
 
-      {/* Floating Share button. Mirrors the Submit-LOI floating-pill pattern
-          used on the fund/thesis pages: fixed, below the top nav, z-40,
-          safe-area aware. Uses native Web Share with a copy-link fallback. */}
+      {/* Floating Share button, pinned top-right just below the top nav
+          (z-40, safe-area aware). On mobile a circular reading-progress ring
+          sits directly below it. The flower-of-life command menu is a separate
+          global element (bottom-right) and is intentionally left untouched. */}
       <div
-        className="fixed right-4 z-40"
+        className="fixed right-4 z-40 flex flex-col items-end gap-3"
         style={{ top: "calc(env(safe-area-inset-top, 0px) + 73px)" }}
       >
         <ShareButton
@@ -160,6 +162,8 @@ export default function BlogPost() {
           label="Share"
           className="shadow-lg"
         />
+        {/* Reading-progress ring — mobile only (desktop uses the TOC panel). */}
+        <ReadingProgressRing progress={scrollProgress} className="md:hidden" />
       </div>
 
       {/* Table of Contents - Collapsible */}
