@@ -609,6 +609,48 @@
 
 ---
 
+### 14. Assembly Steward
+
+| Field | Value |
+|---|---|
+| **Character name** | The Convener |
+| **Tagline** | Tends the pipeline where the game evolves |
+| **Circle** | Community Circle |
+| **Band** | 2 |
+| **Base** | 400,000 $ReGen ($4,000) |
+| **Max w/ bonus** | 520,000 $ReGen ($5,200) |
+| **Est. hours/week** | 5 |
+| **Assignment** | Open |
+| **Active seasons** | Winter, Spring, Summer |
+| **Card image** | `/images/roles/assembly-steward-card.webp` |
+| **Scene image** | `/images/roles/assembly-steward-scene.webp` |
+
+**Deliverables:**
+- Nudge resting proposals back to life or help them close with dignity
+- Help first-time raisers write a clear aim line and pick the right lane
+- Close Record loops: confirm outcomes, chase impact updates, keep the provenance trail whole
+- Watch the last-call strip and make sure objections get a fair hearing
+
+**Seed:** Proposals shepherded through the pipeline (target: every forming proposal has a synthesis and a signal count above the readiness floor).
+**Harvest:** Ratified decisions with complete Record trails and impact updates.
+
+**Powers:**
+- Revive resting proposals and flag stale ones for the community
+- Coach raisers on aim lines, lanes, and the consent bar
+- Request impact updates from proposal owners after execution
+
+**Rights:**
+- A standing voice in governance-variable tuning conversations
+- Input on Assembly copy and empty-state teaching text
+
+**Domains:** The Assembly (/assembly), proposal lifecycle, Record integrity, governance onboarding
+
+**Character description:** Warm-eyed person with deep brown skin and silver-streaked locs gathered loosely. Woven living-fiber shawl in greens and ambers. Holds a lantern whose light is a slowly turning seven-segment spectrum. Standing at a round table that grows from the floor like a tree stump, its rings glowing where decisions were made.
+
+**Scene description:** Open-air council grove at dusk. A circle of moss seats around the ring-table. Fireflies drifting in patterns that echo the signal histogram. A stream runs through the grove carrying small paper boats, each one a proposal on its way. An owl watches from a branch. Night-blooming jasmine climbing the stones.
+
+---
+
 ## Season 1 Summary
 
 | Metric | Value |
@@ -642,6 +684,7 @@ _Each role holder rates 1-5. Blank means the role was unfilled._
 | Quest Steward | | | | | |
 | Outreach Writer | | | | | |
 | Skills Builder | | | | | |
+| Assembly Steward | | | | | |
 
 ## Lessons (fill at Season Festival)
 

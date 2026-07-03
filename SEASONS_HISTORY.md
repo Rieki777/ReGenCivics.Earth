@@ -31,10 +31,10 @@ A living index of every season's roles, characters, compensation, and lessons. F
 ### Season 1: The First Build
 - **Dates:** Winter 2025-2026 (Dec 2025 to Spring Equinox 2026)
 - **Theme:** Building and Preparing
-- **Roles:** 13 (4 partially filled, 9 open)
+- **Roles:** 14 (4 partially filled, 10 open)
 - **Art style:** Solarpunk / elven / regenerative future
-- **Key changes:** First season. Established all 13 roles, compensation bands, Seed/Harvest model.
-- **Total base budget:** 7,400,000 $ReGen ($74,000) per season across all 13 roles
+- **Key changes:** First season. Established the roles, compensation bands, Seed/Harvest model. Assembly Steward (role 14) added mid-season when the Assembly shipped 2026-07-03.
+- **Total base budget:** 7,800,000 $ReGen ($78,000) per season across all 14 roles
 - **Full details:** [`seasons/season-1-the-first-build.md`](seasons/season-1-the-first-build.md)
 
 ---
