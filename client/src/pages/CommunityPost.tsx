@@ -249,6 +249,20 @@ export default function CommunityPost() {
     onSuccess: () => utils.notifications.subscriptions.forThread.invalidate({ postId }),
   });
 
+  // Read tracking (Phase 2): viewing the thread clears its unread state
+  // everywhere. Fires once per visit, after replies settle.
+  const markPostRead = trpc.forumFeed.markPostRead.useMutation();
+  const markedReadRef = useRef(false);
+  useEffect(() => {
+    if (markedReadRef.current || !user || postId <= 0 || repliesLoading) return;
+    markedReadRef.current = true;
+    const timer = setTimeout(() => {
+      markPostRead.mutate({ postId, replyCount: replies?.length ?? 0 });
+    }, 2000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, postId, repliesLoading]);
+
   // Detect if this is a land project or alliance org forum space
   const isEntitySpace = post?.categorySlug === 'land-projects' || post?.categorySlug === 'alliance-partners';
   const entityOrgName = post?.title

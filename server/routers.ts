@@ -10,6 +10,7 @@ import { investorInquiriesRouter, generalInquiriesRouter, loiRouter, reviewerEma
 import { newsletterRouter, videoSuggestionsRouter, emailRouter } from "./routes/newsletter";
 import { campaignsRouter, crowdPoolingProjectsRouter, crowdPoolingProposalsRouter, savedContributionsRouter } from "./routes/campaigns";
 import { forumRouter, moderationRouter, notificationsRouter, projectJoinRequestsRouter } from "./routes/forum";
+import { forumFeedRouter } from "./routes/forumFeed";
 import { playerProfilesRouter, playerContributionsRouter, questsRouter, questRouter, siteTourRouter } from "./routes/players";
 import { adminRouter, adminAIRouter, imageStudioRouter, scheduledEmailsRouter, bannersRouter, discoveryRouter } from "./routes/admin";
 import { marketplaceRouter, amasRouter, projectConnectionsRouter, communityRouter } from "./routes/community";
@@ -94,6 +95,7 @@ export const appRouter = router({
 
   // Forum / Moderation
   forum: forumRouter,
+  forumFeed: forumFeedRouter,
   moderation: moderationRouter,
   notifications: notificationsRouter,
   projectJoinRequests: projectJoinRequestsRouter,

@@ -11,6 +11,7 @@ import { TaoSpinner } from "@/components/TaoSpinner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/BackButton";
+import { FollowButton } from "@/components/FollowButton";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
@@ -208,6 +209,7 @@ export default function CommunityCategory() {
                 </p>
               )}
             </div>
+            <FollowButton targetType="category" targetId={String(category.id)} targetLabel={category.name} className="flex-shrink-0" />
           </div>
 
           {/* New Thread Button */}

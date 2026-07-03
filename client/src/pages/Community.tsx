@@ -37,6 +37,7 @@ import { NewsletterSignupInline } from "@/components/NewsletterSignup";
 import { isNewsletterSubscribed } from "@/utils/newsletter";
 import { BannerDisplay } from "@/components/BannerDisplay";
 import { PageTransition, ScrollRevealMotion } from "@/components/PageTransition";
+import { CommunityFeedTabs } from "@/components/CommunityFeedTabs";
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 import { ReadableScrim } from "@/components/ReadableScrim";
 import { VineDivider } from "@/components/dividers/VineDivider";
@@ -481,6 +482,9 @@ export default function Community() {
             </div>
           </div>
         ) : null}
+
+        {/* Personalized feed tabs (signed-in only; Phase 2) */}
+        <CommunityFeedTabs />
 
         {/* ── Section Cards ───────────────────────────────────────────── */}
         <div id="community-section-picker" className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6 mt-6 overflow-x-hidden">

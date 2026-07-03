@@ -289,6 +289,18 @@ Format per entry:
 
 ---
 
+## ADR-25: Deterministic For You feed (affinity tables + frozen-clock cursor)
+
+- Date: 2026-07-03
+- Status: Accepted (coded; live once migration 0168 runs)
+- Context: The forum feed was pinned-then-chronological only while rich player signals (bioregion, category/author engagement, citizenship tier, capitals) sat unused. Phase 2 of the forum upgrade plan calls for a personalized feed with zero LLM in the ranking path (STEERING 11) and Rye's locked decision: For You default for signed-in users, Latest for signed-out.
+- Decision: ranking is pure SQL over nightly-precomputed signals. `forumAffinityJob` (24h interval) aggregates 90 days of posts/replies/reactions/gratitude into `user_forum_affinity` (category/user/tag dimensions, recency-decayed, normalized 0..1, full refresh each run). `forum_post_tags` is a maintained projection of the JSON-string `forumPosts.tags` column so tag scoring is an indexed join instead of LIKE scans. `forumFeed.feed` scores a bounded candidate window (90 days activity, cap 500) with score = base x freshness x relevance x unread, constants in `shared/forumFeed.ts` shared with the client's "why am I seeing this" tooltip so the explanation is honest. Cursor stability: freshness depends on now(), so page one stamps an asOf timestamp and every subsequent page recomputes against that frozen clock, paging by (score, id). Latest keeps the untouched `forum.posts` procedure as the regression guard. `forum_post_reads` powers unread state; `user_follows` is one polymorphic follow table (user/category/bioregion/tag). Person-mutes (scope feed/both) exclude authors from For You and Following. Newcomer mode (account under 14 days or under 3 interactions) blends seed posts. The capitals boost ships disabled: posts carry a nullable `capital` column but nothing writes it until the composer picker (Phase 3.3); the feed must not fake it with keyword matching.
+- Why: precomputing affinity nightly makes the read-time query one indexed round trip and costs zero tokens forever. The frozen-clock cursor prevents the duplicate/skipped posts a live-recomputed score causes mid-scroll. Sharing constants between scorer and tooltip keeps the ranking explainable, which is a trust feature in a community product.
+- Trade-offs: affinity is up to 24h stale (fine for a low-traffic forum); the candidate window means posts idle longer than 90 days never surface in For You (reachable via Latest, search, categories); the affinity job is a full refresh (delete + rewrite), simple over incremental at current scale.
+- Where it lives in code: `drizzle/0168_forum_feed.sql`, `shared/forumFeed.ts`, `server/jobs/forumAffinityJob.ts`, `server/routes/forumFeed.ts`, `client/src/components/{CommunityFeedTabs,FollowButton}.tsx`, read tracking in `client/src/pages/CommunityPost.tsx`. Extends ADR-24.
+
+---
+
 ## Adding new ADRs
 
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.

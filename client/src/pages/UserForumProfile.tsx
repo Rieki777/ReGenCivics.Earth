@@ -16,6 +16,7 @@ import {
   VolumeX, Volume2
 } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
+import { FollowButton } from "@/components/FollowButton";
 
 export default function UserForumProfile() {
   const params = useParams<{ id: string }>();
@@ -130,6 +131,9 @@ export default function UserForumProfile() {
               >
                 <Edit2 className="w-3 h-3 mr-1" /> Edit
               </Button>
+            )}
+            {!isOwnProfile && isAuthenticated && (
+              <FollowButton targetType="user" targetId={String(userId)} />
             )}
             {!isOwnProfile && isAuthenticated && (
               <Button

@@ -21,6 +21,7 @@ function parseCookieHeader(str: string): Record<string, string> {
 import * as Sentry from "@sentry/node";
 import { runDigestJob } from "../jobs/digestJob";
 import { runNotificationDigestJob } from "../jobs/notificationDigestJob";
+import { runForumAffinityJob } from "../jobs/forumAffinityJob";
 import { runElderForumJob } from "../jobs/elderForumJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
 import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
@@ -1079,6 +1080,16 @@ setTimeout(async () => {
     try { await runNotificationDigestJob(); } catch (e) { log.error("NotificationDigestJob error", e); }
   }, 24 * 60 * 60 * 1000);
 }, 5 * 60 * 1000); // first run after 5 minutes
+
+// ─── Nightly forum affinity computation ─────────────────────────────────────
+// Builds per-user category/author/tag relevance scores for the For You feed.
+// Pure SQL aggregation with recency decay; idempotent full refresh.
+setTimeout(async () => {
+  try { await runForumAffinityJob(); } catch (e) { log.error("ForumAffinityJob error", e); }
+  setInterval(async () => {
+    try { await runForumAffinityJob(); } catch (e) { log.error("ForumAffinityJob error", e); }
+  }, 24 * 60 * 60 * 1000);
+}, 7 * 60 * 1000); // first run after 7 minutes
 
 // ─── Elders' community presence (CORE) ───────────────────────────────────────
 // The elders comment on new community posts (routed to the best-fit elder, or

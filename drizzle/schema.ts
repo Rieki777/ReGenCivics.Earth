@@ -1,4 +1,4 @@
-import { bigint, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
+import { bigint, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -1483,6 +1483,9 @@ export const forumPosts = mysqlTable("forumPosts", {
   governanceStage: mysqlEnum("governanceStage", ["dialogue", "sensing", "proposal", "decided"]).default("dialogue"),
   sensingStartedAt: timestamp("sensingStartedAt"),
   sensingStartedBy: int("sensingStartedBy"),
+  // Optional Root-of-Capital a seeking-support post declares (0168). Feeds
+  // the capitals-matching boost once the composer picker ships (Phase 3.3).
+  capital: mysqlEnum("capital", ["intellectual", "social", "material", "financial", "living", "cultural", "spiritual", "experiential", "health"]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -2675,6 +2678,61 @@ export const forumSubscriptions = mysqlTable("forum_subscriptions", {
   index("forum_subscriptions_post_idx").on(t.postId),
 ]));
 export type ForumSubscription = typeof forumSubscriptions.$inferSelect;
+
+// Unread state per user per thread (0168). lastSeenReplyCount powers the
+// "N new" pill; a row missing entirely means never read.
+export const forumPostReads = mysqlTable("forum_post_reads", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  postId: int("postId").notNull(),
+  lastReadAt: timestamp("lastReadAt").defaultNow().notNull(),
+  lastSeenReplyCount: int("lastSeenReplyCount").default(0).notNull(),
+}, (t) => ([
+  unique("forum_post_reads_user_post_uq").on(t.userId, t.postId),
+  index("forum_post_reads_user_read_idx").on(t.userId, t.lastReadAt),
+]));
+export type ForumPostRead = typeof forumPostReads.$inferSelect;
+
+// One polymorphic follow table (0168): users, categories, bioregions, tags.
+// targetId is VARCHAR so tag slugs and numeric ids share one column.
+export const userFollows = mysqlTable("user_follows", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  targetType: mysqlEnum("targetType", ["user", "category", "bioregion", "tag"]).notNull(),
+  targetId: varchar("targetId", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("user_follows_uq").on(t.userId, t.targetType, t.targetId),
+  index("user_follows_target_idx").on(t.targetType, t.targetId),
+]));
+export type UserFollow = typeof userFollows.$inferSelect;
+
+// Nightly-computed relevance scores (0168), written by forumAffinityJob.
+// Read-optimized: the feed query joins these, never recomputes them.
+export const userForumAffinity = mysqlTable("user_forum_affinity", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  dimension: mysqlEnum("dimension", ["category", "user", "tag"]).notNull(),
+  targetId: varchar("targetId", { length: 64 }).notNull(),
+  score: decimal("score", { precision: 8, scale: 4 }).default("0").notNull(),
+  computedAt: timestamp("computedAt").defaultNow().notNull(),
+}, (t) => ([
+  unique("user_forum_affinity_uq").on(t.userId, t.dimension, t.targetId),
+  index("user_forum_affinity_user_idx").on(t.userId, t.dimension),
+]));
+export type UserForumAffinity = typeof userForumAffinity.$inferSelect;
+
+// Query projection of forumPosts.tags (a TEXT column holding a JSON string,
+// otherwise only matchable via LIKE scans). Maintained on createPost.
+export const forumPostTags = mysqlTable("forum_post_tags", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(),
+  tag: varchar("tag", { length: 64 }).notNull(),
+}, (t) => ([
+  unique("forum_post_tags_uq").on(t.postId, t.tag),
+  index("forum_post_tags_tag_idx").on(t.tag),
+]));
+export type ForumPostTag = typeof forumPostTags.$inferSelect;
 
 // Web push subscriptions (0164). One row per browser endpoint; endpoint is
 // unique so re-subscribing upserts. Pruned on 410/404 or repeated failures.
