@@ -6,7 +6,7 @@
  * 66% with at least 5 votes, a green "Promote to formal decision" button appears
  * inviting the creator to open the PromotionModal.
  *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 2.8
+ * Spec: archive/FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 2.8 (superseded by ADR-23)
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";

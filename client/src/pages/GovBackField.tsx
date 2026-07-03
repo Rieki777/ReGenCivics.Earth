@@ -6,7 +6,7 @@
  * per Rye, echoing fallow agricultural fields. Stewards review the backlog on
  * a quarterly cadence (governance.backfield.review_cadence_days game var).
  *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md improvement #6
+ * Spec: archive/FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md improvement #6 (superseded by ADR-23)
  */
 import { useState } from "react";
 import { useParams } from "wouter";

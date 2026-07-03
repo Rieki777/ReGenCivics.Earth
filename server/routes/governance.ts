@@ -70,7 +70,7 @@ interface ReadinessReport {
 
 export const governanceRouter = router({
   /** Stage 1, Improvement #1: check the four readiness gates for promoting
-   * a forum thread to a Loomio decision. Returns a structured report so the
+   * a forum thread to a formal decision. Returns a structured report so the
    * UI can show exactly which gates are missing. */
   checkPromotionReadiness: publicProcedure
     .input(z.object({ threadId: z.number().int().positive() }))

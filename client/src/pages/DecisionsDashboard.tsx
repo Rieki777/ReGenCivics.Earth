@@ -9,7 +9,7 @@
  *   4. Community load indicator
  *   5. Your tenants
  *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 2.9
+ * Spec: archive/FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 2.9 (superseded by ADR-23)
  */
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";

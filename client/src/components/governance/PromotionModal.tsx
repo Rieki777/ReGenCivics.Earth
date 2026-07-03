@@ -10,7 +10,7 @@
  * Desktop: split-screen layout (thread preview left, form right).
  * Mobile: single-column with thread context collapsed.
  *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md sections 1.1-1.7
+ * Spec: archive/FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md sections 1.1-1.7 (superseded by ADR-23)
  */
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";

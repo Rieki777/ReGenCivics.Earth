@@ -4,7 +4,7 @@
  * The Guide is a real user in the database with openId='regen-guide-system'
  * and handle='regen-guide'. Its posts render with an AI badge in the forum.
  *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 5.
+ * Spec: archive/FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 5 (superseded by ADR-23).
  *
  * The Guide:
  *   - Never casts a stance on behalf of a user

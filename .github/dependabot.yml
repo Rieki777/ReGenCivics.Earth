@@ -32,7 +32,7 @@ updates:
       prefix: chore
       include: scope
 
-  # apps/gov (Next.js + Loomio bridge)
+  # apps/gov (ReGen Gov Next.js app)
   - package-ecosystem: npm
     directory: "/apps/gov"
     schedule:

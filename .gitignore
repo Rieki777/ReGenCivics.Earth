@@ -123,7 +123,6 @@ temp/
 
 # Gemini API key file
 Nano Photos/.gemini_api_key
-loomio Governance Tools/
 
 # Human-only private space. Personal notes, drafts, raw transcripts, anything
 # not ready to be in the codebase or seen by AI agents. See .human/README.md.

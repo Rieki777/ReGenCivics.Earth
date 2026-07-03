@@ -6,7 +6,7 @@
  * non-voting community members assigned to high-stakes decisions to write
  * a 300-600 word narrative after ratification. This page lists them.
  *
- * Spec: FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 2.5
+ * Spec: archive/FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md section 2.5 (superseded by ADR-23)
  */
 import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";

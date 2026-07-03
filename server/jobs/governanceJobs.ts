@@ -83,8 +83,8 @@ export async function assignStorytellers(): Promise<JobReport> {
     if (!db) return { job: "assignStorytellers", ok: false, error: "no db" };
 
     // Find ratified decisions without a storyteller assigned. We don't enforce
-    // the token threshold here because the Loomio webhook receiver already
-    // marks decisions as needing one. The job just picks the actual user.
+    // the token threshold here because the decision flow already marks
+    // decisions as needing one when they ratify. The job just picks the user.
     const candidates = await db
       .select()
       .from(forumPostDecisions)
