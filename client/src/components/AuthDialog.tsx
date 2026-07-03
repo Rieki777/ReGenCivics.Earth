@@ -200,6 +200,7 @@ export function AuthDialog({
                 <input
                   type="email"
                   value={email}
+                  aria-label="Email address"
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={(e) => {
                     // After the keyboard opens and the sheet lifts, pull the

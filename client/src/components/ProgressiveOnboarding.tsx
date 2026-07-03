@@ -222,6 +222,11 @@ function PersonalizedCards() {
 
 export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () => void }) {
   const { user } = useAuth();
+  const isReturnVisitor = useIsReturnVisitor();
+  // A brand-new, logged-out visitor. They should get a real "what is this"
+  // greeting, not "Welcome back" (the card selector shows to everyone, but the
+  // copy must fit a first-timer).
+  const isNewcomer = !user && !isReturnVisitor;
   const { data: profile } = trpc.userProfiles.getMe.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
   const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
   const { data: myClaims } = trpc.orgClaims.mine.useQuery(undefined, { enabled: !!user, staleTime: 300_000 });
@@ -250,10 +255,16 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
             className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 text-shadow-strong"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Welcome Back to <span className="text-[#7dd87d]">ReGen</span> Civics
+            {isNewcomer ? (
+              <>Welcome to <span className="text-[#7dd87d]">ReGen</span> Civics</>
+            ) : (
+              <>Welcome Back to <span className="text-[#7dd87d]">ReGen</span> Civics</>
+            )}
           </h1>
           <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto text-shadow-subtle">
-            Where would you like to go?
+            {isNewcomer
+              ? "A venture fund and alliance helping regenerative land projects pool resources, grow their economies, and co-create thriving communities. Pick a path to start."
+              : "Where would you like to go?"}
           </p>
         </div>
       </AnimatedSection>

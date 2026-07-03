@@ -92,6 +92,8 @@ export default function ToolDetail() {
                   <img
                     src={tool.logoUrl}
                     alt={tool.name}
+                    loading="lazy"
+                    decoding="async"
                     className="w-16 h-16 rounded-xl object-cover border border-white/10 flex-shrink-0"
                   />
                 ) : (

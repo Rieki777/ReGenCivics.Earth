@@ -211,9 +211,14 @@ function ArchetypeCard({ archetype }: { archetype: typeof archetypes[0] }) {
   const [isFlipped, setIsFlipped] = useState(false);
   
   return (
-    <div 
+    <div
       className="relative h-64 cursor-pointer perspective-1000"
+      role="button"
+      tabIndex={0}
+      aria-pressed={isFlipped}
+      aria-label="Flip card for details"
       onClick={() => setIsFlipped(!isFlipped)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsFlipped(!isFlipped); } }}
     >
       <div className={`relative w-full h-full transition-transform duration-500 transform-style-preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
         {/* Front */}

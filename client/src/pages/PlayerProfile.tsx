@@ -295,7 +295,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                 <label className="text-sm text-[#1a472a]/90">Base Blockchain Account</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button type="button" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
+                    <button type="button" aria-label="What is a Base Blockchain account?" className="text-[#7dd87d] hover:text-[#4a7c59] transition-colors">
                       <HelpCircle className="w-4 h-4" />
                     </button>
                   </PopoverTrigger>

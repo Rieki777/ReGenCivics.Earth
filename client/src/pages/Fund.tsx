@@ -390,8 +390,8 @@ export default function Fund() {
                 desc: "Schedule a conversation to explore alignment between your investment goals and our regenerative projects. We walk you through the fund structure, current portfolio, and governance model.",
                 icon: Calendar,
                 buttons: [
-                  // TODO: drop regen-civics-investor-deck.pdf into public/ — currently 404
-                  { label: "Download Pitch Deck", href: "/regen-civics-investor-deck.pdf", icon: FileText, external: true },
+                  // Pitch-deck download removed until the PDF asset exists in
+                  // public/ (was shipping a 404 on the investor page).
                   { label: "Book a Call", href: "https://calendly.com/rieki-cordon/30min", icon: Calendar, external: true }
                 ]
               },

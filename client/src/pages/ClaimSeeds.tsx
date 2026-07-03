@@ -56,6 +56,7 @@ type ClaimFormData = {
   adjustedUsd: number;
   spentAmount: number;
   hasSpentTokens: boolean;
+  confirmedAccurate: boolean;
   transactions: Transaction[];
   baseWalletAddress: string;
   email: string;
@@ -91,6 +92,7 @@ const INITIAL_FORM_DATA: ClaimFormData = {
   adjustedUsd: 0,
   spentAmount: 0,
   hasSpentTokens: false,
+  confirmedAccurate: false,
   transactions: [],
   baseWalletAddress: "",
   email: "",
@@ -172,9 +174,17 @@ export default function ClaimSeeds() {
     }
 
     setSubmitError(null);
-    const result = await lookupMutation.mutateAsync({
-      seedsAccount: formData.seedsAccount.trim(),
-    });
+    let result;
+    try {
+      result = await lookupMutation.mutateAsync({
+        seedsAccount: formData.seedsAccount.trim(),
+      });
+    } catch (err: any) {
+      // A genuine server/network error (distinct from "account not found",
+      // which returns found:false below). Surface it instead of failing silent.
+      setSubmitError(err?.message || "We couldn't look up that account. Please try again.");
+      return;
+    }
 
     if (result.found && result.totalUsd !== undefined && result.transactions) {
       updateField("totalUsd", result.totalUsd);
@@ -522,7 +532,6 @@ export default function ClaimSeeds() {
                   </Button>
                   <Button
                     onClick={() => setStep(3)}
-                    disabled={!formData.hasSpentTokens && step === 2}
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Continue
@@ -861,9 +870,9 @@ export default function ClaimSeeds() {
                   <div className="flex items-start gap-3">
                     <Checkbox
                       id="confirm"
-                      checked={formData.hasSpentTokens}
+                      checked={formData.confirmedAccurate}
                       onCheckedChange={(checked) =>
-                        updateField("hasSpentTokens", checked === true)
+                        updateField("confirmedAccurate", checked === true)
                       }
                     />
                     <label htmlFor="confirm" className="text-sm leading-relaxed text-foreground">
@@ -895,7 +904,7 @@ export default function ClaimSeeds() {
                         evidenceUrls: formData.disputeEvidence.length > 0 ? JSON.stringify(formData.disputeEvidence.map(f => f.url)) : undefined,
                       });
                     }}
-                    disabled={!formData.hasSpentTokens || submitMutation.isPending}
+                    disabled={!formData.confirmedAccurate || submitMutation.isPending}
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     {submitMutation.isPending ? (

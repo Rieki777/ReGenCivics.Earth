@@ -283,7 +283,7 @@ export default function Navigation() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
-                  onClick={() => window.location.href = '/local-food-economy'}
+                  onClick={() => window.location.href = '/bionomics#local-food-economies'}
                 >
                   <Sprout className="w-5 h-5 mr-3 text-green-400" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Local Food Economy</span>

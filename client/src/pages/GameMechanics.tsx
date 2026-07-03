@@ -1487,7 +1487,7 @@ function BountyValuationSection() {
           rose. Precedent is the median of what similar work has actually paid.
         </p>
         {demandFactors.length === 0 ? (
-          <p className="text-white/40 text-sm italic">No learned factors yet. The engine starts everything at 1.0x and calibrates as bounties are claimed and completed.</p>
+          <p className="text-white/70 text-sm italic">No learned factors yet. The engine starts everything at 1.0x and calibrates as bounties are claimed and completed.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

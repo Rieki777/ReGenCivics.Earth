@@ -472,7 +472,7 @@ export function ContributionCalculator() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button type="button" className="text-[#4a7c59] hover:text-[#1a472a]">
+                      <button type="button" aria-label="More information" className="text-[#4a7c59] hover:text-[#1a472a]">
                         <Info className="w-3.5 h-3.5" />
                       </button>
                     </TooltipTrigger>
@@ -507,7 +507,7 @@ export function ContributionCalculator() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button type="button" className="text-[#4a7c59] hover:text-[#1a472a]">
+                  <button type="button" aria-label="More information" className="text-[#4a7c59] hover:text-[#1a472a]">
                     <Info className="w-3.5 h-3.5" />
                   </button>
                 </TooltipTrigger>

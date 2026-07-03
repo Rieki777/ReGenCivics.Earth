@@ -792,6 +792,8 @@ function ProjectDetailModal({
               <img
                 src={project.image || cdnImg("https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg")}
                 alt={project.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
               {project.overviewVideoUrl && !videoPlaying && (

@@ -173,7 +173,7 @@ export default function NotificationSettings() {
                 )}
               </section>
 
-              <p className="text-xs text-[#1a472a]/50 flex items-center gap-1.5">
+              <p className="text-xs text-[#1a472a]/75 flex items-center gap-1.5">
                 <BellOff className="w-3.5 h-3.5" />
                 A hard cap of 20 notification emails per day protects your inbox no matter what.
               </p>

@@ -136,7 +136,6 @@ const GovTenant = lazy(() => import("./pages/GovTenant"));
 const StorytellerStories = lazy(() => import("./pages/StorytellerStories"));
 const GovBackField = lazy(() => import("./pages/GovBackField"));
 const CreateCampaign = lazy(() => import("./pages/CreateCampaign"));
-const CrowdPoolingCampaigns = lazy(() => import("./pages/CrowdPoolingCampaigns"));
 const CampaignDetail = lazy(() => import("./pages/CampaignDetail"));
 const CampaignManage = lazy(() => import("./pages/CampaignManage"));
 const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
@@ -335,8 +334,7 @@ function Router() {
       <Route path={"/regen-games"}><EB><ReGenGames /></EB></Route>
       <Route path={"/custom-games"}><EB><CustomGames /></EB></Route>
       <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>
-      <Route path="/404"><EB><NotFound /></EB></Route>
-      {/* Final fallback route */}
+      {/* Final fallback route (also serves /404; the earlier explicit /404 route handles direct hits) */}
       <Route><EB><NotFound /></EB></Route>
     </Switch>
   );
