@@ -3522,14 +3522,17 @@ function AdminDashboard() {
         </div>
       </div>
 
-      <AdminAlertBanner onTabChange={setActiveTab} />
+      {/* The standup banner belongs to the landing view only, not every tab. */}
+      {activeTab === "overview" && <AdminAlertBanner onTabChange={setActiveTab} />}
       {/* Scrollable main content */}
       <div className="flex-1 overflow-y-auto">
       {/* Stats */}
       <div className="container py-8">
+        {/* Summary stat cards live on the landing view only, so deeper tabs stay focused. */}
+        {activeTab === "overview" && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
-          <StatsCard 
-            title="Project Applications" 
+          <StatsCard
+            title="Project Applications"
             value={stats.totalApplications} 
             icon={Sprout} 
             color="bg-[#4a7c59]"
@@ -3585,6 +3588,7 @@ function AdminDashboard() {
             linkTo="/admin/applications"
           />
         </div>
+        )}
 
         {/* Main Tabs - navigation is handled by AdminSidebar */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

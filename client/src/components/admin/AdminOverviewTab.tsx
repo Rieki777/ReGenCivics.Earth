@@ -71,7 +71,7 @@ export function AdminOverviewTab({
   return (
     <div className="space-y-6">
       {/* C-suite briefing + ecosystem KPIs: the AI-assisted front door. */}
-      <AdminCSuiteBriefing />
+      <AdminCSuiteBriefing onSelectTab={setActiveTab} />
 
       {/* Pending Items Alert */}
       {stats.pendingReview > 0 && (

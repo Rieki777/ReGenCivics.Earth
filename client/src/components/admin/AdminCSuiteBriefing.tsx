@@ -11,6 +11,7 @@
  * a recommended action hands off to the admin AI assistant via a window event.
  */
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import {
   Sparkles, Loader2, RefreshCw, Building2, TrendingUp, Inbox, Users, Megaphone,
@@ -39,25 +40,43 @@ type Chief = {
 };
 type Briefing = { headline?: string; chiefs?: Chief[] };
 
-function Kpi({ icon: Icon, label, value, sub, attention }: {
-  icon: React.ElementType; label: string; value: number; sub?: string; attention?: boolean;
+function Kpi({ icon: Icon, label, value, sub, attention, onClick }: {
+  icon: React.ElementType; label: string; value: number; sub?: string; attention?: boolean; onClick?: () => void;
 }) {
-  return (
-    <div className={`rounded-2xl border p-4 min-w-0 ${attention ? "border-amber-400/50 bg-amber-50" : "border-[#1a472a]/12 bg-white"}`}>
+  const body = (
+    <>
       <div className="flex items-center gap-1.5 text-[#1a472a]/60 mb-1">
         <Icon className="w-4 h-4 flex-shrink-0" />
         <span className="text-[11px] font-semibold uppercase tracking-wide truncate">{label}</span>
+        {onClick && <ChevronRight className="w-3.5 h-3.5 ml-auto flex-shrink-0 text-[#1a472a]/30" />}
       </div>
       <div className="text-2xl font-bold text-[#1a472a] tabular-nums leading-none">{value.toLocaleString()}</div>
       {sub && <div className={`text-xs mt-1 truncate ${attention ? "text-amber-700 font-semibold" : "text-[#1a472a]/55"}`}>{sub}</div>}
-    </div>
+    </>
   );
+  const base = `rounded-2xl border p-4 min-w-0 text-left ${attention ? "border-amber-400/50 bg-amber-50" : "border-[#1a472a]/12 bg-white"}`;
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={`${base} w-full min-h-[48px] transition-all hover:border-[#7dd87d] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/40`}>
+        {body}
+      </button>
+    );
+  }
+  return <div className={base}>{body}</div>;
 }
 
-export function AdminCSuiteBriefing() {
+export function AdminCSuiteBriefing({ onSelectTab }: { onSelectTab?: (tab: string) => void }) {
   const snapQuery = trpc.admin.ecosystemSnapshot.useQuery(undefined, { staleTime: 60_000 });
   const brief = trpc.admin.briefing.useMutation();
   const automations = trpc.adminActions.suggestAutomations.useQuery(undefined, { staleTime: 120_000 });
+  const [, navigate] = useLocation();
+
+  // Each KPI card is a button that jumps to the section that owns it. A target
+  // starting with "/" routes to a page; otherwise it selects an admin tab.
+  const go = (target: string) => {
+    if (target.startsWith("/")) navigate(target);
+    else onSelectTab?.(target);
+  };
 
   const [focus, setFocus] = useState("");
 
@@ -116,14 +135,14 @@ export function AdminCSuiteBriefing() {
       {/* KPI grid */}
       {snap && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          <Kpi icon={Building2} label="Applications" value={snap.applications.total} sub={`${snap.applications.pending} pending review`} attention={snap.applications.pending > 0} />
-          <Kpi icon={TrendingUp} label="Investors" value={snap.investors.total} sub={`${snap.investors.new} new`} attention={snap.investors.new > 0} />
-          <Kpi icon={Inbox} label="Inquiries" value={snap.inquiries.total} sub={`${snap.inquiries.needsReview} need review`} attention={snap.inquiries.needsReview > 0} />
-          <Kpi icon={Shield} label="Moderation" value={snap.moderation?.pendingReports ?? 0} sub={`${snap.moderation?.pendingReports ?? 0} reports open`} attention={(snap.moderation?.pendingReports ?? 0) > 0} />
-          <Kpi icon={Users} label="Players" value={snap.community.players} sub={`${snap.community.forumPosts.toLocaleString()} forum posts`} />
-          <Kpi icon={Vote} label="Governance" value={snap.governance?.openProposals ?? 0} sub="open proposals" attention={(snap.governance?.openProposals ?? 0) > 0} />
-          <Kpi icon={Mail} label="Newsletter" value={snap.community?.newsletterActive ?? 0} sub="active subscribers" />
-          <Kpi icon={Megaphone} label="Campaigns" value={snap.campaigns.total} sub={`${snap.events?.upcoming ?? 0} events upcoming`} />
+          <Kpi icon={Building2} label="Applications" value={snap.applications.total} sub={`${snap.applications.pending} pending review`} attention={snap.applications.pending > 0} onClick={() => go("applications")} />
+          <Kpi icon={TrendingUp} label="Investors" value={snap.investors.total} sub={`${snap.investors.new} new`} attention={snap.investors.new > 0} onClick={() => go("investors")} />
+          <Kpi icon={Inbox} label="Inquiries" value={snap.inquiries.total} sub={`${snap.inquiries.needsReview} need review`} attention={snap.inquiries.needsReview > 0} onClick={() => go("live")} />
+          <Kpi icon={Shield} label="Moderation" value={snap.moderation?.pendingReports ?? 0} sub={`${snap.moderation?.pendingReports ?? 0} reports open`} attention={(snap.moderation?.pendingReports ?? 0) > 0} onClick={() => go("/admin/moderation")} />
+          <Kpi icon={Users} label="Players" value={snap.community.players} sub={`${snap.community.forumPosts.toLocaleString()} forum posts`} onClick={() => go("roles")} />
+          <Kpi icon={Vote} label="Governance" value={snap.governance?.openProposals ?? 0} sub="open proposals" attention={(snap.governance?.openProposals ?? 0) > 0} onClick={() => go("/assembly")} />
+          <Kpi icon={Mail} label="Newsletter" value={snap.community?.newsletterActive ?? 0} sub="active subscribers" onClick={() => go("newsletter")} />
+          <Kpi icon={Megaphone} label="Campaigns" value={snap.campaigns.total} sub={`${snap.events?.upcoming ?? 0} events upcoming`} onClick={() => go("crowdpooling")} />
         </div>
       )}
 
