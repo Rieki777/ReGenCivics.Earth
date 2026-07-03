@@ -1,5 +1,7 @@
 import { Link } from "wouter";
 import { useCoreSeo } from "./useCoreSeo";
+import CoreImage from "./CoreImage";
+import { isCoreAssetReady } from "./coreAssets";
 
 export default function NotFound() {
   useCoreSeo({
@@ -8,7 +10,10 @@ export default function NotFound() {
   });
 
   return (
-    <section className="hero" style={{ minHeight: "70vh", display: "grid", placeItems: "center" }}>
+    <section className={`hero${isCoreAssetReady("not-found-404") ? " hero-image" : ""}`} style={{ minHeight: "70vh", display: "grid", placeItems: "center" }}>
+      <div className="hero-media">
+        <CoreImage id="not-found-404" priority fallback={null} />
+      </div>
       <div className="wrap">
         <p className="eyebrow">A little lost</p>
         <h1>This path is still growing</h1>

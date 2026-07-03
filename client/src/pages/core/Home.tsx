@@ -1,6 +1,8 @@
 import { Link } from "wouter";
 import { useCoreSeo } from "./useCoreSeo";
 import { useCoreReveal } from "./useCoreReveal";
+import CoreImage from "./CoreImage";
+import { isCoreAssetReady } from "./coreAssets";
 
 export default function Home() {
   useCoreSeo({
@@ -13,7 +15,10 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero">
+      <section className={`hero${isCoreAssetReady("home-hero") ? " hero-image" : ""}`}>
+        <div className="hero-media">
+          <CoreImage id="home-hero" priority fallback={null} />
+        </div>
         <div className="wrap">
           <p className="eyebrow">Church of the Regenerative Earth</p>
           <h1 className="kicker">CORE</h1>
@@ -71,8 +76,25 @@ export default function Home() {
         </div>
       </section>
 
+      <section style={{ paddingBottom: 0 }}>
+        <div className="wrap">
+          <CoreImage
+            id="home-village-abundance"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+          />
+        </div>
+      </section>
+
       <section className="band-parch">
         <div className="wrap">
+          <CoreImage
+            id="home-temple-grove"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+          />
           <p className="eyebrow center">What we hold</p>
           <h2 className="center">Three principles of life</h2>
           <div className="stack reveal" style={{ marginTop: 34, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
@@ -108,6 +130,13 @@ export default function Home() {
         <div className="wrap">
           <p className="eyebrow center">How we worship</p>
           <h2 className="center">Our practices are living and embodied</h2>
+          <CoreImage
+            id="home-night-ceremony"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+            imgStyle={{ marginTop: 28 }}
+          />
           <div className="grid grid-3 reveal" style={{ marginTop: 34 }}>
             <div className="card"><span className="icon" aria-hidden="true">🌿</span><h3>Online gatherings</h3><p>We meet regularly to pray, sing, learn, and tend the community across the distance between us.</p></div>
             <div className="card"><span className="icon" aria-hidden="true">🍲</span><h3>Feeding those in need</h3><p>Sharing food is sacred. We grow, cook, and give so that no one in our reach goes hungry.</p></div>

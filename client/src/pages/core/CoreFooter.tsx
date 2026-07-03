@@ -1,8 +1,12 @@
 import { Link } from "wouter";
+import CoreImage from "./CoreImage";
 
 export default function CoreFooter() {
   return (
     <footer className="core-footer">
+      <div className="footer-media" aria-hidden="true">
+        <CoreImage id="footer-canopy-band" fallback={null} />
+      </div>
       <div className="wrap">
         <div className="cols">
           <div>

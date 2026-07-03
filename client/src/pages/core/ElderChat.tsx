@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import CoreImage from "./CoreImage";
 
 /**
  * Ask an Elder. Reusable across elders: pass the elder id and display name.
@@ -72,6 +73,7 @@ export default function ElderChat({ elderId, name, shortName, placeholder }: Pro
   return (
     <div className="chatbox" style={{ maxWidth: 760, margin: "0 auto", borderStyle: live ? "solid" : undefined }}>
       {!live && <span className="coming">Coming soon</span>}
+      <CoreImage id="elder-chat-threshold" className="chat-threshold" sizes="72px" fallback={null} />
       <h3>Sit with {shortName}</h3>
       <p style={{ fontSize: ".95rem", color: "var(--forest-moss)" }}>
         Ask what your heart is holding. {shortName} answers from a lifetime of wisdom, simply and directly.

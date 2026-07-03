@@ -1,6 +1,8 @@
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useCoreSeo } from "./useCoreSeo";
+import CoreImage from "./CoreImage";
+import { isCoreAssetReady } from "./coreAssets";
 
 function useSessionId(): string | null {
   if (typeof window === "undefined") return null;
@@ -26,7 +28,10 @@ export default function ThankYou() {
   const monthly = status.data?.giftInterval === "monthly";
 
   return (
-    <section className="hero" style={{ minHeight: "70vh", display: "grid", placeItems: "center" }}>
+    <section className={`hero${isCoreAssetReady("thank-you-blossom") ? " hero-image" : ""}`} style={{ minHeight: "70vh", display: "grid", placeItems: "center" }}>
+      <div className="hero-media">
+        <CoreImage id="thank-you-blossom" priority fallback={null} />
+      </div>
       <div className="wrap">
         <p className="eyebrow">Giving is worship</p>
         <h1>Thank you</h1>

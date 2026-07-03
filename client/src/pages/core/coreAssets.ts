@@ -10,6 +10,8 @@
  * processed, and marked ready in the manifest, CoreImage renders its fallback,
  * so the site is whole before and after generation.
  */
+import manifest from "./asset-manifest.json";
+
 export type CoreAssetId =
   | "home-hero"
   | "faith-seed"
@@ -24,7 +26,27 @@ export type CoreAssetId =
   | "donate-seed-to-tree"
   | "transparency-open-hand"
   | "core-emblem"
-  | "not-found-404";
+  | "not-found-404"
+  | "home-village-abundance"
+  | "home-temple-grove"
+  | "home-night-ceremony"
+  | "faith-cathedral-canopy"
+  | "faith-root-communion"
+  | "faith-animals-abundance"
+  | "programs-hero"
+  | "program-stewardship"
+  | "elders-hero"
+  | "elders-future-lantern"
+  | "get-involved-hero"
+  | "get-involved-community-life"
+  | "get-involved-sanctuary"
+  | "get-involved-path"
+  | "donate-temple-offering"
+  | "transparency-roots-of-trust"
+  | "elder-chat-threshold"
+  | "thank-you-blossom"
+  | "reconciliation-ledger-grove"
+  | "footer-canopy-band";
 
 export type CoreAsset = {
   id: CoreAssetId;
@@ -52,6 +74,27 @@ export const CORE_ASSETS: Record<CoreAssetId, CoreAsset> = {
   "transparency-open-hand": { id: "transparency-open-hand", alt: "An open hand holding a small glowing ledger of light.", aspect: [16, 9], widths: [1600, 1000, 640] },
   "core-emblem": { id: "core-emblem", alt: "The CORE emblem, a sprouting seed inside a circle.", aspect: [1, 1], widths: [256, 128, 64] },
   "not-found-404": { id: "not-found-404", alt: "A small glowing seedling on a forked forest path at dusk.", aspect: [4, 3], widths: [1000, 640] },
+
+  "home-village-abundance": { id: "home-village-abundance", alt: "A thriving village of living-roofed homes among terraced food-forest gardens.", aspect: [16, 9], widths: [2000, 1200, 720] },
+  "home-temple-grove": { id: "home-temple-grove", alt: "An ancient grove of trees whose canopy arches overhead like a cathedral ceiling.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "home-night-ceremony": { id: "home-night-ceremony", alt: "Living-roof dwellings glowing at night under a starlit sky, people gathered by fires.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "faith-cathedral-canopy": { id: "faith-cathedral-canopy", alt: "Looking up through a soaring canopy of cathedral trees with light falling like stained glass.", aspect: [16, 9], widths: [2400, 1600, 1000, 640] },
+  "faith-root-communion": { id: "faith-root-communion", alt: "A tree's roots glowing in rainbow colors underground, threaded with mycelium.", aspect: [4, 3], widths: [1200, 800, 480] },
+  "faith-animals-abundance": { id: "faith-animals-abundance", alt: "Animals and people at ease together in an orchard and terraced garden.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "programs-hero": { id: "programs-hero", alt: "A living village of domed structures encircled by food-forest gardens.", aspect: [16, 9], widths: [2400, 1600, 1000, 640] },
+  "program-stewardship": { id: "program-stewardship", alt: "An elder and a child planting together in a terraced garden.", aspect: [1, 1], widths: [800, 480] },
+  "elders-hero": { id: "elders-hero", alt: "The interior of an ancient tree cathedral with an empty circle of stones at its base.", aspect: [16, 9], widths: [2400, 1600, 1000, 640] },
+  "elders-future-lantern": { id: "elders-future-lantern", alt: "A hand passing a small glowing lantern of light to another hand.", aspect: [4, 3], widths: [1000, 640] },
+  "get-involved-hero": { id: "get-involved-hero", alt: "A figure walking toward a warmly lit village gate at dusk.", aspect: [16, 9], widths: [2400, 1600, 1000, 640] },
+  "get-involved-community-life": { id: "get-involved-community-life", alt: "A sunlit earthen village with raised garden beds and people tending plants.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "get-involved-sanctuary": { id: "get-involved-sanctuary", alt: "A small sanctuary campus among pines beside a calm mountain lake at dawn.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "get-involved-path": { id: "get-involved-path", alt: "A forest path leading toward a warmly lit village at dusk.", aspect: [4, 3], widths: [1000, 640] },
+  "donate-temple-offering": { id: "donate-temple-offering", alt: "Hands placing fruit and seeds on a stone altar beneath a great tree.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "transparency-roots-of-trust": { id: "transparency-roots-of-trust", alt: "A visible network of glowing roots and mycelium beneath open soil.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "elder-chat-threshold": { id: "elder-chat-threshold", alt: "A doorway formed by two living trees grown and bent together.", aspect: [1, 1], widths: [480, 320] },
+  "thank-you-blossom": { id: "thank-you-blossom", alt: "A tree bursting into blossom with petals and birds rising into golden light.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "reconciliation-ledger-grove": { id: "reconciliation-ledger-grove", alt: "Hands resting over a glowing ledger on a wooden table in a forest clearing.", aspect: [16, 9], widths: [1600, 1000, 640] },
+  "footer-canopy-band": { id: "footer-canopy-band", alt: "A silhouette of a tree-of-life canopy and its roots at dusk.", aspect: [21, 9], widths: [1600, 1000] },
 };
 
 /** Build a /api/img URL (returns WebP) for an asset at a given width. */
@@ -62,4 +105,16 @@ export function coreImgUrl(id: CoreAssetId, width: number): string {
 
 export function coreSrcSet(asset: CoreAsset): string {
   return asset.widths.map((w) => `${coreImgUrl(asset.id, w)} ${w}w`).join(", ");
+}
+
+/**
+ * Whether an asset is generated, processed, and live on R2. Hero sections use
+ * this to decide whether to apply the light-on-dark `.hero-image` text treatment:
+ * that treatment assumes a dark photo sits behind the text, so it must stay off
+ * until the asset is actually ready, or headline text would render unreadably
+ * light-on-light over the plain gradient hero background.
+ */
+export function isCoreAssetReady(id: CoreAssetId): boolean {
+  const entry = (manifest as { assets?: Record<string, { ready?: boolean }> }).assets?.[id];
+  return entry?.ready === true;
 }

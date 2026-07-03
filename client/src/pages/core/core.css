@@ -131,6 +131,10 @@
 .core-root .card p:last-child { margin-bottom: 0; }
 .core-root .card-media { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: calc(var(--core-radius) - 4px); margin-bottom: 16px; background: var(--parchment-base); }
 
+/* Standalone full-width content illustration inside a section (not a hero). */
+.core-root .section-media { border-radius: var(--core-radius); overflow: hidden; box-shadow: 0 10px 30px rgba(26, 71, 42, .12); }
+.core-root .section-media.media-sm { max-width: 640px; margin-left: auto; margin-right: auto; }
+
 /* Bands */
 .core-root .band-forest { background: linear-gradient(160deg, var(--forest-deep), var(--forest-base)); color: var(--parchment-warm); }
 .core-root .band-forest h1, .core-root .band-forest h2, .core-root .band-forest h3 { color: var(--parchment-warm); }
@@ -168,6 +172,7 @@
 
 /* Chatbot */
 .core-root .chatbox { background: #fff; border: 2px dashed var(--forest-sage); border-radius: var(--core-radius); padding: 28px; }
+.core-root .chat-threshold { width: 72px !important; height: 72px; border-radius: 50%; overflow: hidden; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(26,71,42,.16); }
 .core-root .chat-input { display: flex; gap: 10px; margin-top: 16px; }
 .core-root .chat-input input { flex: 1; border: 1px solid var(--parchment-soft); border-radius: 999px; padding: 12px 18px; font-family: var(--font-body); font-size: 1rem; background: var(--parchment-warm); color: var(--forest-base); }
 .core-root .chat-input input:focus { outline: 2px solid var(--spring-base); }
@@ -210,7 +215,11 @@
 .core-root .zeffy-embed { border-radius: var(--core-radius); overflow: hidden; background: var(--parchment-whisper); }
 
 /* Footer */
-.core-root .core-footer { background: var(--forest-deepest); color: var(--spring-soft); padding: 56px 0 34px; }
+.core-root .core-footer { position: relative; background: var(--forest-deepest); color: var(--spring-soft); padding: 56px 0 34px; overflow: hidden; }
+.core-root .core-footer .footer-media { position: absolute; inset: 0; z-index: 0; opacity: .32; }
+.core-root .core-footer .footer-media img { width: 100%; height: 100%; object-fit: cover; }
+.core-root .core-footer .footer-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--forest-deepest) 0%, rgba(9,26,16,.55) 45%, var(--forest-deepest) 100%); }
+.core-root .core-footer .wrap { position: relative; z-index: 1; }
 /* .footer-h are styled like headings but are plain <p>: real h4s here created
    h2->h4 jumps in every page's heading outline. */
 .core-root .core-footer .footer-h { color: var(--parchment-warm); font-family: var(--font-accent); font-size: 1rem; margin: 0 0 .5em; letter-spacing: .5px; }

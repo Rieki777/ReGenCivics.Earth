@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useCoreSeo } from "./useCoreSeo";
+import CoreImage from "./CoreImage";
+import { isCoreAssetReady } from "./coreAssets";
 
 function usd(cents: number, currency = "usd") {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: currency.toUpperCase() });
@@ -63,7 +65,10 @@ export default function Reconciliation() {
 
   return (
     <>
-      <section className="hero" style={{ padding: "64px 0 40px" }}>
+      <section className={`hero${isCoreAssetReady("reconciliation-ledger-grove") ? " hero-image" : ""}`} style={{ padding: "64px 0 40px" }}>
+        <div className="hero-media">
+          <CoreImage id="reconciliation-ledger-grove" priority fallback={null} />
+        </div>
         <div className="wrap">
           <p className="eyebrow">Reconciliation</p>
           <h1>The ledger, held in the open</h1>

@@ -1,6 +1,8 @@
 import { Link } from "wouter";
 import { useCoreSeo } from "./useCoreSeo";
 import { useCoreReveal } from "./useCoreReveal";
+import CoreImage from "./CoreImage";
+import { isCoreAssetReady } from "./coreAssets";
 
 export default function GetInvolved() {
   useCoreSeo({
@@ -13,7 +15,10 @@ export default function GetInvolved() {
 
   return (
     <>
-      <section className="hero" style={{ padding: "76px 0 60px" }}>
+      <section className={`hero${isCoreAssetReady("get-involved-hero") ? " hero-image" : ""}`} style={{ padding: "76px 0 60px" }}>
+        <div className="hero-media">
+          <CoreImage id="get-involved-hero" priority fallback={null} />
+        </div>
         <div className="wrap">
           <p className="eyebrow">Get Involved</p>
           <h1>There is a place for you here</h1>
@@ -25,10 +30,23 @@ export default function GetInvolved() {
         </div>
       </section>
 
+      <section style={{ paddingBottom: 0 }}>
+        <div className="wrap" style={{ maxWidth: 500 }}>
+          <CoreImage id="get-involved-path" className="section-media media-sm" sizes="500px" fallback={null} />
+        </div>
+      </section>
+
       <section>
         <div className="wrap" style={{ maxWidth: 820 }}>
           {/* Keeps the heading outline contiguous (h1 -> h2 -> the h3 steps). */}
           <h2 className="sr-only">How to begin</h2>
+          <CoreImage
+            id="get-involved-community-life"
+            className="section-media"
+            sizes="820px"
+            fallback={null}
+            imgStyle={{ marginBottom: 34 }}
+          />
           <div className="steps reveal">
             <div className="step">
               <div>
@@ -41,7 +59,7 @@ export default function GetInvolved() {
               <div>
                 <h3>Take up your first quest</h3>
                 <p>Our practices take the form of quests: land connection, food growing, community care, and more. Each one is a step of the path and a way to root yourself in the work.</p>
-                <p style={{ marginTop: 8 }}><a href="https://regencivics.earth">Explore quests</a></p>
+                <p style={{ marginTop: 8 }}><a href="https://regencivics.earth/quests">Explore quests</a></p>
               </div>
             </div>
             <div className="step">
@@ -63,6 +81,13 @@ export default function GetInvolved() {
 
       <section className="band-forest">
         <div className="wrap center">
+          <CoreImage
+            id="get-involved-sanctuary"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+            imgStyle={{ marginBottom: 34 }}
+          />
           <p className="eyebrow">Governed by the people</p>
           <h2>Your voice shapes this church</h2>
           <p className="lead center">

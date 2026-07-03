@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { useCoreSeo } from "./useCoreSeo";
 import { useCoreReveal } from "./useCoreReveal";
 import CoreImage from "./CoreImage";
-import type { CoreAssetId } from "./coreAssets";
+import { isCoreAssetReady, type CoreAssetId } from "./coreAssets";
 
 /**
  * Program cards. `asset` names the illustration generated in Phase 4.5 from
@@ -64,7 +64,10 @@ export default function Programs() {
 
   return (
     <>
-      <section className="hero" style={{ padding: "76px 0 60px" }}>
+      <section className={`hero${isCoreAssetReady("programs-hero") ? " hero-image" : ""}`} style={{ padding: "76px 0 60px" }}>
+        <div className="hero-media">
+          <CoreImage id="programs-hero" priority fallback={null} />
+        </div>
         <div className="wrap">
           <p className="eyebrow">Programs</p>
           <h1>Worship you can put your hands into</h1>

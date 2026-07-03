@@ -21,7 +21,9 @@ The `--resolution` flag sets the pixel budget (1K, 2K, 4K), not the aspect ratio
 
 Prepend this exact block to every scene prompt so the whole set shares one art style:
 
-> Painterly storybook illustration in an enchanted-forest solarpunk style, a regenerative future where nature and gentle living technology have grown into one, magical and hopeful without ever feeling artificial. Hand-painted texture with soft edges, subtle grain, and luminous highlights. Warm, reverent, hopeful, alive, touched with quiet wonder. Soft golden dawn light and gentle atmosphere, with a delicate bioluminescent glow woven through the living world: moss and mycelium that hold a faint inner light, motes of light drifting like slow fireflies, a crystalline clarity to the air. Where architecture or tools appear, they are grown rather than built: living wood, woven vine, and soft crystal, never metal or machinery. Color palette centered on deep forest greens (#0d2818, #1a472a, #2d5a3d), spring green (#7dd87d), warm parchment cream (#f8f5f0, #f0ebe3), and amber-gold accents (#d4a574, #ffd700), with a soft bioluminescent teal (#4a9f9f) used sparingly as a hint of magic, never dominant. A sense of living systems, reciprocity, and abundance. Where people appear they are fully human, ordinary and dignified, no pointed ears and no fantasy creatures, simply touched by the same soft magic and light as the world around them. Diverse, tender, warm. No text, no lettering, no logos, no watermarks, no UI elements, no borders. One cohesive art style across the whole set.
+> Painterly storybook illustration in an enchanted-forest solarpunk style, a regenerative future where nature and gentle living technology have grown into one, magical and hopeful without ever feeling artificial. Hand-painted texture with soft edges, subtle grain, and luminous highlights. Warm, reverent, hopeful, alive, touched with quiet wonder. Soft golden dawn light and gentle atmosphere, with a delicate bioluminescent glow woven through the living world: moss and mycelium that hold a faint inner light, motes of light drifting like slow fireflies, a crystalline clarity to the air. Where architecture or tools appear, they are grown rather than built: living wood, woven vine, and soft crystal, never metal or machinery. The Earth herself is a temple, and her great trees are living cathedrals: canopies meet and arch overhead like vaulted ceilings, trunks stand like a nave's columns, and dawn light falls through leaves in shafts like stained glass, dappling moss and soil below. Where people build a home or a village, it rises from the land itself, domed and vaulted like something raised in prayer, walls of woven wood and living roof, nestled unhurried among orchards, raised garden beds, and animals (goats, chickens, deer, doves) at ease in the company of people. Color palette centered on deep forest greens (#0d2818, #1a472a, #2d5a3d), spring green (#7dd87d), warm parchment cream (#f8f5f0, #f0ebe3), and amber-gold accents (#d4a574, #ffd700), with a soft bioluminescent teal (#4a9f9f) used sparingly as a hint of magic, never dominant. A sense of living systems, reciprocity, and abundance. Where people appear they are fully human, ordinary and dignified, no pointed ears and no fantasy creatures, simply touched by the same soft magic and light as the world around them. Diverse, tender, warm. No text, no lettering, no logos, no watermarks, no UI elements, no borders. One cohesive art style across the whole set.
+
+Note on the temple/cathedral theme (added Round 2): drawn from reference imagery of a tree with glowing rainbow roots, domed eco-villages under starry skies, earthen abundance communities, and mountain sanctuary campuses. The site's imagery treats the Earth as a temple and trees as its cathedrals — soaring canopies, columned trunks, light like stained glass — blended with the existing food-forest abundance and grown-not-built architecture. Keep every new prompt in this spirit.
 
 Note on tone: this borrows the "solarpunk meets elven meets regenerative future" feeling used for the ReGen Civics role character art (grown-not-built materials, bioluminescence, crystal and mycelium instead of leather and iron), but CORE keeps its people fully human. No pointed ears, no fantasy creatures. The magic lives in the light and the living world around them, not in the people themselves.
 
@@ -125,6 +127,37 @@ All six: Composition square 1:1 | Resolution 2K | Output widths 800, 480 | Aspec
 - Alt: "A small glowing seedling on a forked forest path at dusk."
 - Prompt (preamble + this):
 > 4:3 composition. A single small glowing seedling growing at a gentle fork in a mossy forest path at dusk, the path edged with faintly bioluminescent moss and small glowing mushrooms, fireflies drifting, a rabbit pausing at the fork, inviting rather than sad. A quiet sense of being a little lost but safe, the path ahead soft and green.
+
+---
+
+## Round 2: temple/cathedral theme + more site imagery
+
+Same generation and post-processing pipeline as above. Filenames, sizes, and alt text below; full prompts live in `scripts/generate-core-assets.ts` (search each id).
+
+| # | File | Page / placement | Composition | Resolution | Widths |
+|---|---|---|---|---|---|
+| 14 | `home-village-abundance` | Home, inline section | 16:9 | 4K | 2000, 1200, 720 |
+| 15 | `home-temple-grove` | Home, inline section (Three principles) | 16:9 | 2K | 1600, 1000, 640 |
+| 16 | `home-night-ceremony` | Home, inline section (How we worship) | 16:9 | 2K | 1600, 1000, 640 |
+| 17 | `faith-cathedral-canopy` | Faith, hero | 16:9 | 4K | 2400, 1600, 1000, 640 |
+| 18 | `faith-root-communion` | Faith, inline (We are one) | 4:3 | 2K | 1200, 800, 480 |
+| 19 | `faith-animals-abundance` | Faith, inline (values band) | 16:9 | 2K | 1600, 1000, 640 |
+| 20 | `programs-hero` | Programs, hero | 16:9 | 4K | 2400, 1600, 1000, 640 |
+| 21 | `program-stewardship` | Donate, "Healing the land" card | 1:1 | 2K | 800, 480 |
+| 22 | `elders-hero` | Elders, hero | 16:9 | 4K | 2400, 1600, 1000, 640 |
+| 23 | `elders-future-lantern` | Elders, inline (growing circle) | 4:3 | 2K | 1000, 640 |
+| 24 | `get-involved-hero` | Get Involved, hero | 16:9 | 4K | 2400, 1600, 1000, 640 |
+| 25 | `get-involved-community-life` | Get Involved, inline (steps) | 16:9 | 2K | 1600, 1000, 640 |
+| 26 | `get-involved-sanctuary` | Get Involved, inline (governance band) | 16:9 | 2K | 1600, 1000, 640 |
+| 27 | `get-involved-path` | Get Involved, inline (post-hero) | 4:3 | 2K | 1000, 640 |
+| 28 | `donate-temple-offering` | Donate, inline (where your gift goes) | 16:9 | 2K | 1600, 1000, 640 |
+| 29 | `transparency-roots-of-trust` | Transparency, inline (rights of nature) | 16:9 | 2K | 1600, 1000, 640 |
+| 30 | `elder-chat-threshold` | ElderChat component (every instance) | 1:1 | 2K | 480, 320 |
+| 31 | `thank-you-blossom` | Thank You, hero | 16:9 | 2K | 1600, 1000, 640 |
+| 32 | `reconciliation-ledger-grove` | Reconciliation, hero | 16:9 | 2K | 1600, 1000, 640 |
+| 33 | `footer-canopy-band` | CoreFooter background (every page) | 21:9 | 2K | 1600, 1000 |
+
+Also newly placed this round (already generated in Round 1, previously unused): `home-hero` (Home hero), `faith-seed` (Faith, inline top section), `donate-seed-to-tree` (Donate hero), `transparency-open-hand` (Transparency hero), `not-found-404` (404 hero).
 
 ---
 

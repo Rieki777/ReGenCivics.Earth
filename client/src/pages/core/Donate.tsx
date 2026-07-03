@@ -2,6 +2,8 @@ import { Link } from "wouter";
 import { useCoreSeo } from "./useCoreSeo";
 import { useCoreReveal } from "./useCoreReveal";
 import DonateOptions from "./DonateOptions";
+import CoreImage from "./CoreImage";
+import { isCoreAssetReady } from "./coreAssets";
 
 export default function Donate() {
   useCoreSeo({
@@ -14,7 +16,10 @@ export default function Donate() {
 
   return (
     <>
-      <section className="hero" style={{ padding: "76px 0 60px" }}>
+      <section className={`hero${isCoreAssetReady("donate-seed-to-tree") ? " hero-image" : ""}`} style={{ padding: "76px 0 60px" }}>
+        <div className="hero-media">
+          <CoreImage id="donate-seed-to-tree" priority fallback={null} />
+        </div>
         <div className="wrap">
           <p className="eyebrow">Give</p>
           <h1>Giving is worship</h1>
@@ -34,10 +39,19 @@ export default function Donate() {
 
       <section>
         <div className="wrap">
+          <CoreImage
+            id="donate-temple-offering"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+            imgStyle={{ marginBottom: 34 }}
+          />
           <p className="eyebrow center">Where your gift goes</p>
           <h2 className="center">Every dollar is a seed</h2>
           <div className="grid grid-3 reveal" style={{ marginTop: 34 }}>
-            <div className="card"><span className="icon" aria-hidden="true">🌎</span><h3>Healing the land</h3><p>Your giving helps steward and acquire land, plant food forests, and hold ground in trust for the Earth and the generations to come.</p></div>
+            <div className="card">
+              <CoreImage id="program-stewardship" className="card-media" sizes="(max-width: 860px) 100vw, 33vw" fallback={<span className="icon" aria-hidden="true">🌎</span>} />
+              <h3>Healing the land</h3><p>Your giving helps steward and acquire land, plant food forests, and hold ground in trust for the Earth and the generations to come.</p></div>
             <div className="card"><span className="icon" aria-hidden="true">🍲</span><h3>Feeding people</h3><p>Gifts sustain our work of feeding those in need and keeping abundance moving through the community.</p></div>
             <div className="card"><span className="icon" aria-hidden="true">🤝</span><h3>Holding community</h3><p>Your support keeps our gatherings, healing circles, and sacred music alive and open to all who need them.</p></div>
           </div>

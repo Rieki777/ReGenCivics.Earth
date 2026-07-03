@@ -2,6 +2,8 @@ import { Link } from "wouter";
 import { useCoreSeo } from "./useCoreSeo";
 import { useCoreReveal } from "./useCoreReveal";
 import CoreJsonLd from "./CoreJsonLd";
+import CoreImage from "./CoreImage";
+import { isCoreAssetReady } from "./coreAssets";
 
 const FAITH_FAQ: Record<string, unknown> = {
   "@context": "https://schema.org",
@@ -57,7 +59,10 @@ export default function Faith() {
   return (
     <>
       <CoreJsonLd id="faith-faq" data={FAITH_FAQ} />
-      <section className="hero" style={{ padding: "76px 0 60px" }}>
+      <section className={`hero${isCoreAssetReady("faith-cathedral-canopy") ? " hero-image" : ""}`} style={{ padding: "76px 0 60px" }}>
+        <div className="hero-media">
+          <CoreImage id="faith-cathedral-canopy" priority fallback={null} />
+        </div>
         <div className="wrap">
           <p className="eyebrow">Our Faith</p>
           <h1>We are the Earth, choosing to heal itself</h1>
@@ -76,6 +81,12 @@ export default function Faith() {
             people who believe that healing her is healing ourselves."
           </p>
           <p className="attrib">Founding Declaration</p>
+        </div>
+      </section>
+
+      <section style={{ paddingBottom: 0 }}>
+        <div className="wrap" style={{ maxWidth: 500 }}>
+          <CoreImage id="faith-seed" className="section-media media-sm" sizes="500px" fallback={null} />
         </div>
       </section>
 
@@ -106,6 +117,13 @@ export default function Faith() {
               </div>
             </div>
           </div>
+          <CoreImage
+            id="faith-root-communion"
+            className="section-media media-sm"
+            sizes="500px"
+            fallback={null}
+            imgStyle={{ marginTop: 34 }}
+          />
         </div>
       </section>
 
@@ -144,6 +162,13 @@ export default function Faith() {
 
       <section className="band-soft">
         <div className="wrap">
+          <CoreImage
+            id="faith-animals-abundance"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+            imgStyle={{ marginBottom: 34 }}
+          />
           <p className="eyebrow center">Our compass</p>
           <h2 className="center">Eight core values</h2>
           <div className="chips reveal" style={{ justifyContent: "center", marginTop: 28, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>

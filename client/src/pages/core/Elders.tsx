@@ -3,7 +3,7 @@ import { useCoreSeo } from "./useCoreSeo";
 import { useCoreReveal } from "./useCoreReveal";
 import ElderChat from "./ElderChat";
 import CoreImage from "./CoreImage";
-import type { CoreAssetId } from "./coreAssets";
+import { isCoreAssetReady, type CoreAssetId } from "./coreAssets";
 
 type ElderProfile = {
   id: string;
@@ -56,7 +56,10 @@ export default function Elders() {
 
   return (
     <>
-      <section className="hero" style={{ padding: "76px 0 60px" }}>
+      <section className={`hero${isCoreAssetReady("elders-hero") ? " hero-image" : ""}`} style={{ padding: "76px 0 60px" }}>
+        <div className="hero-media">
+          <CoreImage id="elders-hero" priority fallback={null} />
+        </div>
         <div className="wrap">
           <p className="eyebrow">Our Elders</p>
           <h1>We honor the wisdom keepers</h1>
@@ -97,7 +100,8 @@ export default function Elders() {
       ))}
 
       <section className="center">
-        <div className="wrap">
+        <div className="wrap" style={{ maxWidth: 500 }}>
+          <CoreImage id="elders-future-lantern" className="section-media media-sm" sizes="500px" fallback={null} imgStyle={{ marginBottom: 34 }} />
           <p className="eyebrow center">A growing circle</p>
           <h2>More elders will join this circle</h2>
           <p className="lead center">

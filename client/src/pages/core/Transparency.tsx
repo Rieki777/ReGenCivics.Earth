@@ -1,6 +1,8 @@
 import { Link } from "wouter";
 import { useCoreSeo } from "./useCoreSeo";
 import { useCoreReveal } from "./useCoreReveal";
+import CoreImage from "./CoreImage";
+import { isCoreAssetReady } from "./coreAssets";
 
 const FACTS = [
   ["Legal name", "Church of the Regenerative Earth"],
@@ -25,7 +27,10 @@ export default function Transparency() {
 
   return (
     <>
-      <section className="hero" style={{ padding: "76px 0 60px" }}>
+      <section className={`hero${isCoreAssetReady("transparency-open-hand") ? " hero-image" : ""}`} style={{ padding: "76px 0 60px" }}>
+        <div className="hero-media">
+          <CoreImage id="transparency-open-hand" priority fallback={null} />
+        </div>
         <div className="wrap">
           <p className="eyebrow">Transparency</p>
           <h1>Held in the open</h1>
@@ -102,6 +107,13 @@ export default function Transparency() {
 
       <section className="center">
         <div className="wrap">
+          <CoreImage
+            id="transparency-roots-of-trust"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+            imgStyle={{ marginBottom: 34 }}
+          />
           <p className="eyebrow center">The Earth has a voice</p>
           <h2>We honor the rights of nature</h2>
           <p className="lead center">
