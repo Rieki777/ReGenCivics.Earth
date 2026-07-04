@@ -13,6 +13,17 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-04: The dark Rung 3 pipeline is complete — docs, CI gates, builder workflow, human approval gate
+
+- `docs/EVOLUTION-ENGINE.md`: canonical explainer of the whole flow for any human or LLM — what is live (Rung 1), what is built dark (Rung 3), and the exact remaining steps to full autonomy in dependency order.
+- `assembly-gates` CI job (ci.yml): runs only on `assembly/*` PRs, fetches the ratified scope from the production server via the new public `assembly.proposalScope` query (never from a file on the branch — the machine cannot write its own permission slip), runs the fail-closed protected-paths check, applies `gates-passed`.
+- `.github/workflows/assembly-builder.yml`: the builder agent, triple-locked dark (tier < 3, GITHUB_GOVERNANCE_TOKEN unset, ASSEMBLY_BUILDER_ENABLED unset). Treats ratified specs as untrusted data, builds only in scope, never merges.
+- `evolution.launch_require_approval` (migration 0173_evolution_provenance_and_approval, applied): even at tier 3 a machine PR needs a human `approved-for-launch` label until the community votes that requirement off. `game_variable_history.proposalId` links every governed change to its vote.
+- Note: two 0173 migrations exist (this one + gratitude budget vars from the parallel session). Both applied; the runner tracks full filenames so this is benign. Next migration is 0174.
+- Evolution suite now 20 tests. Remaining for full autonomy: ratification webhook (blocked on confirming what Hypha/Alchemy emit), secrets (Rye), tier-3 rehearsal, community vote.
+
+---
+
 ## 2026-07-03 (later): Gratitude tab — urgency band, real claim button, shareable summary card
 
 - **Cycle urgency band** under the hero (`CycleBand` in `GratitudeTab.tsx`): a prominent full-width strip with the moon, a cycle-aware line ("3 full-power sends left before the new moon" / budget-reset / spent-all), a "new moon / cycle closes in N days" countdown that turns amber inside 3 days, and a Send button right there.
