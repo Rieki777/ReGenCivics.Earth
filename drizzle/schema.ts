@@ -2992,14 +2992,14 @@ export type ProposalSynthesis = typeof proposalSynthesis.$inferSelect;
 export const governanceExecutions = mysqlTable("governance_executions", {
   id: int("id").autoincrement().primaryKey(),
   proposalId: int("proposalId").notNull(),
-  kind: mysqlEnum("kind", ["variable_change", "content", "feature"]).notNull(),
+  kind: mysqlEnum("kind", ["variable_change", "bounds_change", "content", "feature"]).notNull(),
   payload: json("payload").notNull(),
   status: mysqlEnum("status", ["pending", "applied", "shipping", "shipped", "paused", "failed", "rolled_back"]).default("pending").notNull(),
   detail: json("detail"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   executedAt: timestamp("executedAt"),
 }, (t) => ([
-  index("idx_execution_proposal").on(t.proposalId),
+  unique("idx_execution_proposal").on(t.proposalId), // 0172: one execution per proposal, DB-enforced
 ]));
 export type GovernanceExecution = typeof governanceExecutions.$inferSelect;
 

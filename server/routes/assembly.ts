@@ -421,6 +421,12 @@ export const assemblyRouter = router({
               newValue: z.number(),
             }),
             z.object({
+              kind: z.literal("bounds_change"),
+              variableKey: z.string().min(3).max(120),
+              newMin: z.number(),
+              newMax: z.number(),
+            }),
+            z.object({
               kind: z.literal("feature"),
               specMarkdown: z.string().min(20).max(20000),
               acceptanceCriteria: z.array(z.string().min(3).max(300)).min(1).max(20),
@@ -467,7 +473,13 @@ export const assemblyRouter = router({
    * binding vote already happened on Hypha, this records its outcome here
    * and executes the payload (Rung 1). Gap logged in SHIPPED_LOG.md. */
   confirmRatification: protectedProcedure
-    .input(z.object({ proposalId: z.number().int().positive(), outcome: z.enum(["ratified", "declined"]) }))
+    .input(z.object({
+      proposalId: z.number().int().positive(),
+      outcome: z.enum(["ratified", "declined"]),
+      // Provenance for the human relay: link the Hypha agreement so the
+      // Record can show where the binding vote lives.
+      hyphaAgreementUrl: z.string().url().max(500).optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin" && ctx.user.role !== "superadmin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Recording a Hypha outcome is admin-only until the webhook carries ratification." });
@@ -488,6 +500,30 @@ export const assemblyRouter = router({
       await db.execute(sql`UPDATE proposals SET status = 'passed' WHERE id = ${input.proposalId}`);
       const { dispatchExecution } = await import("../lib/evolution");
       const execution = await dispatchExecution(input.proposalId);
+
+      // Stamp WHO relayed the Hypha outcome (and the agreement link when
+      // given) onto the execution row, so the Record's audit trail covers
+      // the human bridge, not just the machine's part.
+      try {
+        const [rows] = await db.execute(
+          sql`SELECT id, detail FROM governance_executions WHERE proposalId = ${input.proposalId} LIMIT 1`
+        );
+        const row = (rows as unknown as any[])?.[0];
+        if (row) {
+          let detail: Record<string, unknown> = {};
+          try {
+            detail = row.detail ? (typeof row.detail === "string" ? JSON.parse(row.detail) : row.detail) : {};
+          } catch { detail = {}; }
+          const merged = JSON.stringify({
+            ...detail,
+            confirmedBy: ctx.user.id,
+            ...(input.hyphaAgreementUrl ? { hyphaAgreementUrl: input.hyphaAgreementUrl } : {}),
+          });
+          await db.execute(sql`UPDATE governance_executions SET detail = ${merged} WHERE id = ${row.id}`);
+        }
+      } catch (_e) {
+        // Provenance stamping never blocks the ratification itself.
+      }
       if (execution.status === "applied") {
         await db.execute(sql`UPDATE proposals SET status = 'implemented' WHERE id = ${input.proposalId}`);
         void notifyGovernanceSubscribers(

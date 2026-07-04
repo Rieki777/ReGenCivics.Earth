@@ -13,6 +13,7 @@ import * as db from "./db";
 import { getDb } from "./db";
 import { proposals, governanceExecutions, users } from "../drizzle/schema";
 import {
+  applyBoundsChange,
   applyVariableChange,
   dispatchExecution,
   getAutonomyTier,
@@ -31,6 +32,7 @@ let testUserId: number;
 let testVarId: number;
 let varProposalId: number;
 let featureProposalId: number;
+let boundsProposalId: number;
 
 async function fetchTestVar() {
   const database = await getDb();
@@ -79,13 +81,21 @@ beforeAll(async () => {
                 ${JSON.stringify({ kind: "feature", specMarkdown: "toy spec", acceptanceCriteria: ["it parks"], scopePaths: ["client/src/pages/Assembly*"] })})`
   );
   featureProposalId = Number((featIns as any).insertId);
+
+  const [boundsIns] = await database.execute(
+    sql`INSERT INTO proposals (authorId, title, category, status, aim, executionPayload)
+        VALUES (${testUserId}, 'Evolution suite test: bounds change', 'game_variable', 'passed',
+                'Prove the community can widen its own sandbox',
+                ${JSON.stringify({ kind: "bounds_change", variableKey: TEST_VAR_KEY, newMin: 3, newMax: 12 })})`
+  );
+  boundsProposalId = Number((boundsIns as any).insertId);
 });
 
 afterAll(async () => {
   if (skipIfNoDb || !testUserId) return;
   const database = await getDb();
   if (!database) return;
-  for (const pid of [varProposalId, featureProposalId]) {
+  for (const pid of [varProposalId, featureProposalId, boundsProposalId]) {
     if (!pid) continue;
     await database.delete(governanceExecutions).where(eq(governanceExecutions.proposalId, pid));
     await database.delete(proposals).where(eq(proposals.id, pid));
@@ -198,6 +208,56 @@ describe("dispatchExecution (ratification dispatcher, Rung 1)", () => {
     const r = await dispatchExecution(pid);
     expect(r.status).toBe("skipped");
     await database!.delete(proposals).where(eq(proposals.id, pid));
+  });
+});
+
+describe("bounds_change (the community widens its own sandbox)", () => {
+  it.skipIf(skipIfNoDb)("raise-time: rejects evolution.* bounds (leash geometry is code-owned)", async () => {
+    const r = await validateExecutionPayload({ kind: "bounds_change", variableKey: "evolution.max_autonomy_tier", newMin: 0, newMax: 5 } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/code-owned/);
+  });
+
+  it.skipIf(skipIfNoDb)("raise-time: rejects min at or above max", async () => {
+    const r = await validateExecutionPayload({ kind: "bounds_change", variableKey: TEST_VAR_KEY, newMin: 8, newMax: 8 } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it.skipIf(skipIfNoDb)("raise-time: rejects bounds that strand the current value", async () => {
+    // value is 7 by this point in the suite
+    const r = await validateExecutionPayload({ kind: "bounds_change", variableKey: TEST_VAR_KEY, newMin: 8, newMax: 20 } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/falls outside the proposed bounds/);
+  });
+
+  it.skipIf(skipIfNoDb)("raise-time: accepts bounds containing the current value", async () => {
+    const r = await validateExecutionPayload({ kind: "bounds_change", variableKey: TEST_VAR_KEY, newMin: 3, newMax: 12 } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it.skipIf(skipIfNoDb)("dispatch applies ratified bounds end to end, and the new bounds govern", async () => {
+    const r = await dispatchExecution(boundsProposalId);
+    expect(r.status).toBe("applied");
+    expect(r.detail).toMatch(/bounds: 0..10 -> 3..12/);
+
+    const database = await getDb();
+    const [rows] = await database!.execute(
+      sql`SELECT \`minValue\`, \`maxValue\` FROM game_variables WHERE \`key\` = ${TEST_VAR_KEY} LIMIT 1`
+    );
+    const v = (rows as unknown as any[])[0];
+    expect(Number(v.minValue)).toBe(3);
+    expect(Number(v.maxValue)).toBe(12);
+
+    // The widened ceiling is live for value changes; the old one is gone.
+    const up = await applyVariableChange({ variableKey: TEST_VAR_KEY, newValue: 12, changedBy: testUserId, reason: "new max works" });
+    expect(up.ok).toBe(true);
+    const down = await applyVariableChange({ variableKey: TEST_VAR_KEY, newValue: 2, changedBy: testUserId, reason: "below new min" });
+    expect(down.ok).toBe(false);
+  });
+
+  it.skipIf(skipIfNoDb)("applyBoundsChange refuses evolution.* directly too", async () => {
+    const r = await applyBoundsChange({ variableKey: "evolution.circuit_breaker_failures", newMin: 0, newMax: 10, changedBy: testUserId, reason: "must fail" });
+    expect(r.ok).toBe(false);
   });
 });
 
