@@ -22,11 +22,12 @@ import { BackButton } from "@/components/BackButton";
 import { Link } from "wouter";
 import {
   Vote, Activity, CheckCircle2, AlertTriangle, Sparkles, ArrowRight,
-  Landmark, Hourglass, Users, MessageCircle, ExternalLink,
+  Landmark, Hourglass, Users, MessageCircle, ExternalLink, Bot,
 } from "lucide-react";
 import { SignalControl, SignalReadout } from "@/components/assembly/SignalControl";
 import { ProsConsPanel } from "@/components/assembly/ProsConsPanel";
 import { MoveToDecideButton, MinorLaneRow, LastCallSection, RestingStrip } from "@/components/assembly/LifecycleControls";
+import { EvolutionEngineSection, HyphaLinkRow } from "@/components/assembly/EvolutionEngine";
 
 const HYPHA_DHO_URL = "https://app.hypha.earth/en/dho/regen-games/";
 const HYPHA_MEMBERS_URL = "https://app.hypha.earth/en/dho/regen-games/members/";
@@ -52,7 +53,8 @@ function SectionShell({ icon, title, children }: { icon: React.ReactNode; title:
 }
 
 export default function Assembly() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
 
   const queueQuery = trpc.governance.myDecisionQueue.useQuery(undefined, { enabled: isAuthenticated });
   const loadQuery = trpc.governance.communityLoad.useQuery();
@@ -218,23 +220,31 @@ export default function Assembly() {
         ) : (
           <ul className="space-y-2">
             {deciding.map((p: any) => (
-              <li key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="flex-1 min-w-0 safe-prose">
-                  <p className="text-white text-sm font-semibold">{p.title}</p>
-                  <p className="text-white/70 text-[11px] capitalize">{String(p.category ?? "").replace(/_/g, " ")}</p>
+              <li key={p.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0 safe-prose">
+                    <p className="text-white text-sm font-semibold">{p.title}</p>
+                    <p className="text-white/70 text-[11px] capitalize">{String(p.category ?? "").replace(/_/g, " ")}</p>
+                  </div>
+                  <a
+                    href={HYPHA_DHO_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7dd87d] hover:text-[#9de89d] transition-colors flex-shrink-0"
+                  >
+                    Vote on Hypha <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
-                <a
-                  href={HYPHA_DHO_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7dd87d] hover:text-[#9de89d] transition-colors flex-shrink-0"
-                >
-                  Vote on Hypha <ExternalLink className="w-3 h-3" />
-                </a>
+                <HyphaLinkRow proposal={p} currentUserId={user?.id ?? null} isAdmin={isAdmin} />
               </li>
             ))}
           </ul>
         )}
+      </SectionShell>
+
+      {/* The Evolution Engine */}
+      <SectionShell icon={<Bot className="w-4 h-4 text-[#7dd87d]" />} title="The Evolution Engine">
+        <EvolutionEngineSection isAuthenticated={isAuthenticated} />
       </SectionShell>
 
       {/* Record */}
