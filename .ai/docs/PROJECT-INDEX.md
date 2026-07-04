@@ -11,6 +11,8 @@ Annotated index of the root-level reference docs. Referenced from `/CLAUDE.md`. 
 ## Standing specs (always-on references)
 
 - `CONTEXT_THE_TWO_GAMES.md` — **essential context** on the Fund vs. Game distinction. Read before writing anything about governance, finance, or tokens.
+- `docs/EVOLUTION-ENGINE.md` — **how the game evolves itself.** The as-built map of the Assembly + Evolution Engine: the full ratification flow, what is live (Rung 1, machine ratification), what is built dark (Rung 3 auto-ship), and the remaining steps to full autonomy. Read BEFORE touching `server/lib/evolution*`, `server/lib/ratification.ts`, the hypha-bridge webhook receiver, or the assembly workflows.
+- `ASSEMBLY_PAGE_SPEC.md` — the Assembly + Evolution Engine build spec (V2). Phases 1-6 shipped; design source of truth for what is not yet built. Locked decisions in §15 are not re-litigated without Rye; ADR-27/28/29 record the load-bearing choices.
 - `REGEN_GAMES_SPEC_V1.md` — **the game spec.** 24 features across 5 phases. Single source of truth for game features.
 - `SEEDS_VISION_IMPLEMENTATION_SPEC.md` — SEEDS economic vision translated to ReGen Civics. Read alongside `REGEN_GAMES_SPEC_V1`.
 - `CITIZENSHIP_TIERS_SPEC.md` — standalone reference for the 4-tier citizenship system.

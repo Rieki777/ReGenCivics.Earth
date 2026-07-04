@@ -1,6 +1,9 @@
 # Assembly + The Evolution Engine — Comprehensive Build Spec (V2)
 
-Status: **READY TO BUILD**. Owner: Rye. Route: `/assembly`. Written 2026-07-02, evolved same day.
+Status: **PHASES 1-6 SHIPPED** (2026-07-03); Phase 7 (Rung 3) built dark 2026-07-04, awaiting
+human go-ahead + community tier vote. **The as-built state lives in `docs/EVOLUTION-ENGINE.md`
+— read that first**; this spec remains the design source of truth for anything not yet built.
+Owner: Rye. Route: `/assembly`. Written 2026-07-02, evolved same day.
 Amended 2026-07-03 after whole-build review: last-call launch is owner-initiated through the
 bridge, not automatic (§2, §11); synthesis carries a global cost cap and kill switch (§5);
 migration numbering starts at 0163 (§9); phantom-key and sweep-list notes corrected against the
