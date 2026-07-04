@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import {
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 import { BulkActionBar } from "./BulkActionBar";
 import { ApplicationTimeline } from "./ApplicationTimeline";
 
@@ -126,7 +127,16 @@ export function AdminApplicationsTab({
   EmailHistoryPanelComp,
 }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [seasonFilter, setSeasonFilter] = useState<string>("all");
+  // Persist the season filter so it survives tab switches and reloads.
+  const [seasonFilter, setSeasonFilter] = useState<string>(() => {
+    try { return localStorage.getItem("admin_app_season_filter") || "all"; } catch { return "all"; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("admin_app_season_filter", seasonFilter); } catch { /* storage blocked */ }
+  }, [seasonFilter]);
+  const utils = trpc.useUtils();
+  const updateStatus = trpc.applications.updateStatus.useMutation();
+  const [bulkPending, setBulkPending] = useState(false);
 
   // Season date ranges (approximate)
   const SEASON_RANGES: Record<string, { start: Date; end: Date }> = {
@@ -154,12 +164,40 @@ export function AdminApplicationsTab({
     });
   }
 
-  function handleBulkAction(action: string) {
+  async function handleBulkAction(action: string) {
     if (action === 'export-csv') {
       const selected = (applications || []).filter((a: any) => selectedIds.has(a.id));
       exportToCSV(selected, 'selected_applications');
+      setSelectedIds(new Set());
+      return;
     }
-    setSelectedIds(new Set());
+
+    const statusMap: Record<string, "under_review" | "approved" | "rejected"> = {
+      'move-reviewed': 'under_review',
+      'approve': 'approved',
+      'reject': 'rejected',
+    };
+    const status = statusMap[action];
+    const ids = Array.from(selectedIds);
+    if (!status || ids.length === 0) { setSelectedIds(new Set()); return; }
+
+    // Approve/reject change an applicant's outcome, so confirm them.
+    if (action === 'approve' || action === 'reject') {
+      const verb = action === 'approve' ? 'Approve' : 'Reject';
+      if (!window.confirm(`${verb} ${ids.length} application${ids.length === 1 ? '' : 's'}? This changes their status.`)) return;
+    }
+
+    setBulkPending(true);
+    try {
+      await Promise.all(ids.map((id) => updateStatus.mutateAsync({ id, status })));
+      await utils.applications.list.invalidate();
+      toast.success(`Updated ${ids.length} application${ids.length === 1 ? '' : 's'} to ${status.replace(/_/g, ' ')}`);
+      setSelectedIds(new Set());
+    } catch (e: any) {
+      toast.error(`Bulk update failed: ${e?.message || 'unknown error'}`);
+    } finally {
+      setBulkPending(false);
+    }
   }
 
   return (
@@ -458,6 +496,7 @@ export function AdminApplicationsTab({
       entityType="applications"
       onAction={handleBulkAction}
       onClear={() => setSelectedIds(new Set())}
+      busy={bulkPending}
     />
     </>
   );
