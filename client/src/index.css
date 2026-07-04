@@ -2722,4 +2722,23 @@ html[data-contrast="high"] *:focus-visible {
   box-shadow: 0 0 0 4px rgba(125, 216, 125, 0.85);
   border-radius: 3px;
 }
+
+/* ════════════════════════════════════════════════════════════
+   Gratitude tab (GratitudeTab.tsx). Deep-link bloom: when a note is
+   opened from a "sent you gratitude" notification it pulses a gold
+   ring, then settles into a steady highlight. Reduced motion is
+   handled by the global neutralizer above.
+   ════════════════════════════════════════════════════════════ */
+@keyframes gratitude-bloom-pulse {
+  0% {
+    box-shadow: 0 0 0 10px rgba(255, 215, 0, 0.55), 0 0 44px rgba(255, 215, 0, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 2px #ffd700, 0 0 26px rgba(255, 215, 0, 0.38), 0 10px 26px rgba(0, 0, 0, 0.28);
+  }
+}
+.gratitude-bloom {
+  box-shadow: 0 0 0 2px #ffd700, 0 0 26px rgba(255, 215, 0, 0.38), 0 10px 26px rgba(0, 0, 0, 0.28);
+  animation: gratitude-bloom-pulse 2.2s ease-out;
+}
                                                                                        

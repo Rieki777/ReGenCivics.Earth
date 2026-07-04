@@ -13,15 +13,20 @@ import { FlowerOfLifeIcon } from '@/components/FlowerOfLifeIcon';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
 
-// Map notification types to nav links
-function getNotificationLink(type: string, metadata?: any): string | null {
-  switch (type) {
+// Resolve where a notification navigates. Rows created since migration 0163
+// carry an explicit deep link (notification.link); the type map below is the
+// fallback for older rows.
+function getNotificationLink(notification: { type: string; link?: string | null; metadata?: any }): string | null {
+  if (notification.link) return notification.link;
+  switch (notification.type) {
+    case 'gratitude':
+      return '/profile?tab=gratitude';
     case 'contribution_accepted':
     case 'contribution_rejected':
     case 'new_contribution':
       return '/profile?tab=contributions';
     case 'campaign_milestone':
-      return metadata?.campaignId ? `/campaigns/${metadata.campaignId}` : '/crowdpooling';
+      return notification.metadata?.campaignId ? `/campaigns/${notification.metadata.campaignId}` : '/crowdpooling';
     case 'quest_complete':
       return '/quest';
     case 'governance':
@@ -33,6 +38,7 @@ function getNotificationLink(type: string, metadata?: any): string | null {
 
 function getNotificationIcon(type: string) {
   switch (type) {
+    case 'gratitude':             return <span className="text-lg" role="img" aria-label="Gratitude">🙏</span>;
     case 'contribution_accepted': return <span className="text-green-500 text-lg">✓</span>;
     case 'contribution_rejected': return <span className="text-red-500 text-lg">✗</span>;
     case 'campaign_milestone':    return <span className="text-amber-500 text-lg">★</span>;
@@ -76,11 +82,20 @@ export function NotificationBell() {
 
   const handleNotificationClick = (notification: any) => {
     if (!notification.read) markReadMutation.mutate({ id: notification.id });
+    // Rows with a deep link (gratitude, and anything else created since
+    // 0163) navigate straight to their destination — the click IS the
+    // action. Legacy rows keep the detail dialog.
+    if (notification.link || notification.type === 'gratitude') {
+      const link = getNotificationLink(notification);
+      setIsOpen(false);
+      if (link) navigate(link);
+      return;
+    }
     setSelected(notification);
   };
 
   const handleNavigate = (notification: any) => {
-    const link = getNotificationLink(notification.type, notification.metadata);
+    const link = getNotificationLink(notification);
     setSelected(null);
     setIsOpen(false);
     if (link) navigate(link);
@@ -182,14 +197,14 @@ export function NotificationBell() {
               <p className="text-xs text-[#1a472a]/80">
                 {formatDistanceToNow(new Date(selected.createdAt), { addSuffix: true })}
               </p>
-              {getNotificationLink(selected.type, selected.metadata) && (
+              {getNotificationLink(selected) && (
                 <Button
                   onClick={() => handleNavigate(selected)}
                   className="w-full bg-[#1a472a] hover:bg-[#2d5a3d] text-white"
                   size="sm"
                 >
                   <ExternalLink className="w-3.5 h-3.5 mr-2" />
-                  Go to {getNotificationLink(selected.type, selected.metadata)}
+                  Go to {getNotificationLink(selected)}
                 </Button>
               )}
             </div>

@@ -644,6 +644,18 @@ export const batchJobsRouter = router({
       staleClaimsRefunded = result.refunded;
     } catch (e: any) { errors.push(`Step 7 (stale claims): ${e.message}`); }
 
+    let gratitudeCyclesClosed = 0;
+    let gratitudeCredited = 0;
+    try {
+      // Step 8: Gratitude lunar cycles. Close any cycle whose new moon has
+      // passed (writes acknowledgment weights, distributes the $ReGen pool
+      // to recipients) and open the current lunation. Idempotent.
+      const { closeDueCycles } = await import("../lib/gratitude-cycles");
+      const result = await closeDueCycles(db);
+      gratitudeCyclesClosed = result.closed;
+      gratitudeCredited = result.credited;
+    } catch (e: any) { errors.push(`Step 8 (gratitude cycles): ${e.message}`); }
+
     // Log job completion
     const status = errors.length === 0 ? "success" : "partial_failure";
     if (jobId) {
@@ -657,7 +669,7 @@ export const batchJobsRouter = router({
       `);
     }
 
-    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded };
+    return { status, playersProcessed, promotions, demotions, errors, staleClaimsCancelled, staleClaimsRefunded, gratitudeCyclesClosed, gratitudeCredited };
   }),
 
   // Manual trigger for the stale-claim cleanup (admin-only). Useful for

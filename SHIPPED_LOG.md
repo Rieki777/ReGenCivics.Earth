@@ -13,6 +13,18 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-03: Gratitude tab + lunar-cycle proportional economy (ADR-24)
+
+- Built the profile **Gratitude tab** (`client/src/components/profile/GratitudeTab.tsx`, wired into `PlayerProfile.tsx` as `?tab=gratitude`): hero band with live moon phase + lifetime signature line, glass stat trio (power meter with golden full-power notch, received + per-cycle sparkline, $ReGen progress ring toward the claim threshold), and the Gratitude Wall — parchment note cards with sender avatar, message, source chip, search and received/sent filters. Mobile-first single-column; all motion respects reduced-motion. Deliberately **no reciprocity affordances** (no send-back, no exchange counts) per Rye's call — spec §12.5.
+- **Economy cutover**: `gratitude.send` no longer credits a flat 5 $ReGen. Sends are free acknowledgments tagged with a lunar `cycleId` (one per recipient per cycle, `uniq_ack_per_cycle`); recipients earn from a per-cycle pool at cycle close, proportional to sender-budget-weighted gratitude received. Deterministic lunation math in `shared/lunar.ts`; engine in `server/lib/gratitude-cycles.ts`; distribution runs as Step 8 of the nightly batch job + `gratitude.closeCycles` admin mutation. Full rationale in ADR-24.
+- New read procedures `gratitude.myOverview` / `myJournal` / `publicJournal` (public wall shows kind messages only — totals and $ReGen stay private, spec visibility rule).
+- Gratitude notifications now actually exist: `gratitude.send` writes a `user_notifications` row (new `gratitude` enum value) with a `link` deep link to `/profile?tab=gratitude&highlight=<id>`; the bell navigates straight there on click and the target note blooms gold (`.gratitude-bloom`).
+- Migration `drizzle/0163_gratitude_cycles.sql` (applied to prod): `gratitude_cycles`, `gratitude_cycle_budgets`, `gratitude_distributions`, `gratitudeLog.cycleId/weight` + unique key, `user_notifications` enum + `link` column. 12 new unit tests (`server/gratitudeCycles.test.ts`) verify the spec's tier/streak/split/pool tables and lunar math; full suite 240 green.
+- Specs: `GRATITUDE_TAB_BUILD_SPEC.md` (build plan + Part II experience design), extends `GRATITUDE_SYSTEM_SPEC.md`.
+- Carryover: bounty gratitude (`game.sendGratitude`, 1–5 amounts) still credits at send time — folding it into acknowledgments needs a GratitudeDrawer UI change; preset phrases in SendGratitudeModal; celebratory moments (send bloom, full-power burst, cycle-close reveal); satori share cards; Game Mechanics page exposure of `gratitude.*` variables.
+
+---
+
 ## 2026-07-01: Redis cache wiring + profile sanitization + yt-dlp hardening
 
 - Wired `initCacheOnStartup()`/`setupCacheShutdownHandlers()` (`server/cacheInit.ts`) into the server bootstrap, called before `server.listen()`. The functions existed but were never invoked, so Redis never connected even after `REDIS_URL` was set on Railway; CSRF tokens, webhook-failure buckets, and rate limits silently ran on the in-memory fallback. Same `isCacheAvailable()` gating everywhere else made this a safe no-op when unset.

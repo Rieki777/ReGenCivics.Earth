@@ -1,4 +1,4 @@
-import { bigint, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
+import { bigint, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -1283,11 +1283,16 @@ export const userNotifications = mysqlTable("user_notifications", {
     "contribution_rejected",
     "campaign_milestone",
     "new_contribution",
-    "system"
+    "system",
+    "quest_complete",
+    "gratitude"
   ]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
-  
+  // Optional deep link the bell navigates to directly (0163). Preferred over
+  // the client-side type map when present.
+  link: varchar("link", { length: 500 }),
+
   // Related entities
   campaignId: int("campaignId"),
   contributionId: int("contributionId"),
@@ -1660,9 +1665,83 @@ export const gratitudeLog = mysqlTable("gratitudeLog", {
   message: varchar("message", { length: 500 }).notNull(),
   sourceType: varchar("sourceType", { length: 32 }),
   sourceId: int("sourceId"),
+  // Lunar-cycle acknowledgment model (0163). Legacy flat-5 rows keep NULL.
+  cycleId: int("cycleId"),
+  // Sender's per-person budget share, written at cycle close.
+  weight: double("weight"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => ([
+  index("idx_grat_cycle_recipient").on(t.cycleId, t.recipientId),
+  index("idx_grat_cycle_sender").on(t.cycleId, t.senderId),
+  // One acknowledgment per (sender, recipient, cycle). NULL cycleId rows
+  // (legacy) are exempt because MySQL composite UNIQUE ignores NULLs.
+  uniqueIndex("uniq_ack_per_cycle").on(t.senderId, t.recipientId, t.cycleId),
+]));
 export type GratitudeLog = typeof gratitudeLog.$inferSelect;
+
+/**
+ * Gratitude Cycles — one row per lunation (new moon to new moon).
+ * cycleNumber is the lunation count since the 2000-01-06 reference new moon
+ * (shared/lunar.ts), so every environment derives the same key.
+ * Lifecycle: open -> distributing -> closed.
+ */
+export const gratitudeCycles = mysqlTable("gratitude_cycles", {
+  id: int("id").autoincrement().primaryKey(),
+  cycleNumber: int("cycleNumber").notNull(),
+  startsAt: timestamp("startsAt").notNull(),
+  endsAt: timestamp("endsAt").notNull(),
+  poolPerCycle: int("poolPerCycle").default(10000).notNull(),
+  status: varchar("status", { length: 16 }).default("open").notNull(),
+  distributedAt: timestamp("distributedAt"),
+  totalWeight: double("totalWeight"),
+}, (t) => ([
+  uniqueIndex("uniq_cycle_number").on(t.cycleNumber),
+  index("idx_gratitude_cycle_status").on(t.status),
+]));
+export type GratitudeCycle = typeof gratitudeCycles.$inferSelect;
+
+/**
+ * Per-user per-cycle gratitude budget, snapshotted at first send of the
+ * cycle: tier, multiplier, streak bonus, and the resulting effective budget
+ * that gets split across unique recipients.
+ */
+export const gratitudeCycleBudgets = mysqlTable("gratitude_cycle_budgets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  cycleId: int("cycleId").notNull(),
+  tier: varchar("tier", { length: 16 }).notNull(),
+  baseBudget: int("baseBudget").notNull(),
+  multiplier: decimal("multiplier", { precision: 4, scale: 2 }).notNull(),
+  streakCycles: int("streakCycles").default(0).notNull(),
+  streakBonus: decimal("streakBonus", { precision: 4, scale: 3 }).default("0").notNull(),
+  effectiveBudget: int("effectiveBudget").notNull(),
+  uniqueRecipients: int("uniqueRecipients").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  uniqueIndex("uniq_user_cycle").on(t.userId, t.cycleId),
+  index("idx_grat_budget_cycle").on(t.cycleId),
+]));
+export type GratitudeCycleBudget = typeof gratitudeCycleBudgets.$inferSelect;
+
+/**
+ * End-of-cycle $ReGen distribution ledger. One row per recipient per cycle;
+ * uniq_dist + a user_token_ledger idempotencyKey make re-running the close
+ * job a no-op. creditedAmount is the whole-token amount actually credited
+ * (user_token_ledger.amount is INT); poolShare keeps the exact figure.
+ */
+export const gratitudeDistributions = mysqlTable("gratitude_distributions", {
+  id: int("id").autoincrement().primaryKey(),
+  cycleId: int("cycleId").notNull(),
+  userId: int("userId").notNull(),
+  weightReceived: double("weightReceived").notNull(),
+  poolShare: decimal("poolShare", { precision: 18, scale: 6 }).notNull(),
+  creditedAmount: int("creditedAmount").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ([
+  uniqueIndex("uniq_dist").on(t.cycleId, t.userId),
+  index("idx_grat_dist_user").on(t.userId),
+]));
+export type GratitudeDistribution = typeof gratitudeDistributions.$inferSelect;
 
 /**
  * Season Snapshots

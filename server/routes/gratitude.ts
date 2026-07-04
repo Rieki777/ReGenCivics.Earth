@@ -1,21 +1,33 @@
 // server/routes/gratitude.ts
-// Forum + command-palette surface for sending gratitude. Lunar-cycle budget and
-// $ReGen distribution batch jobs come later (see GRATITUDE_SYSTEM_SPEC.md).
-import { protectedProcedure, router } from "../_core/trpc";
+// Gratitude acknowledgments on the lunar-cycle proportional model
+// (GRATITUDE_SYSTEM_SPEC.md + GRATITUDE_TAB_BUILD_SPEC.md).
+//
+// Economy cutover 2026-07-03: sends no longer credit a flat 5 $ReGen.
+// A send is a free acknowledgment; recipients earn $ReGen at cycle close,
+// proportional to weighted gratitude received (server/lib/gratitude-cycles.ts).
+import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getDb, getUserByHandle } from "../db";
-import { gratitudeLog, users, playerProfiles } from "../../drizzle/schema";
-import { eq, or, like, sql, and, gte } from "drizzle-orm";
+import { gratitudeLog, gratitudeCycles, gratitudeCycleBudgets, users, playerProfiles, userTokenLedger } from "../../drizzle/schema";
+import { eq, sql, and, gte, desc, lt } from "drizzle-orm";
 import { sanitizeInput } from "../_core/security";
+import {
+  getOrCreateCurrentCycle,
+  getOrCreateCycleBudget,
+  getGratitudeVars,
+  computePerPersonShare,
+  closeDueCycles,
+} from "../lib/gratitude-cycles";
+import { moonPhase, daysRemainingInCycle } from "../../shared/lunar";
 
 export const gratitudeRouter = router({
-  // Send a gratitude message to another user identified by handle.
+  // Send a gratitude acknowledgment to another user identified by handle.
   send: protectedProcedure
     .input(z.object({
       recipientHandle: z.string().min(3).max(40),
       message: z.string().min(3).max(500),
-      sourceType: z.enum(["forum_post", "forum_reply", "profile", "command_center"]).optional(),
+      sourceType: z.enum(["forum_post", "forum_reply", "profile", "command_center", "bounty"]).optional(),
       sourceId: z.number().int().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -57,9 +69,8 @@ export const gratitudeRouter = router({
         }
       }
 
-      // Spam guard: at most 30 sends per hour per sender. The lunar-cycle
-      // budget system in GRATITUDE_SYSTEM_SPEC.md will replace this with a
-      // proper budget once it ships, but until then we need a hard ceiling.
+      // Spam guard: at most 30 sends per hour per sender, hard ceiling under
+      // the cycle model too (acknowledgments are free, the ceiling stops bots).
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       const recentSends = await db
         .select({ id: gratitudeLog.id })
@@ -72,57 +83,274 @@ export const gratitudeRouter = router({
         });
       }
 
-      // Same recipient cooldown: at most 3 messages to the same person per hour.
-      const recentToRecipient = recentSends.length === 0 ? [] : await db
+      // Lunar cycle: one acknowledgment per person per cycle.
+      const cycle = await getOrCreateCurrentCycle(db);
+      const [alreadyThisCycle] = await db
         .select({ id: gratitudeLog.id })
         .from(gratitudeLog)
         .where(and(
           eq(gratitudeLog.senderId, ctx.user.id),
           eq(gratitudeLog.recipientId, recipient.id),
-          gte(gratitudeLog.createdAt, oneHourAgo),
-        ));
-      if (recentToRecipient.length >= 3) {
+          eq(gratitudeLog.cycleId, cycle.id),
+        ))
+        .limit(1);
+      if (alreadyThisCycle) {
         throw new TRPCError({
-          code: "TOO_MANY_REQUESTS",
-          message: "You've already sent this person several thank-yous recently. Try again in a little while.",
+          code: "CONFLICT",
+          message: "You've already acknowledged this person this cycle. Your appreciation is already counted at full strength.",
         });
       }
 
-      const [result] = await db.insert(gratitudeLog).values({
-        senderId: ctx.user.id,
-        recipientId: recipient.id,
-        message: sanitizeInput(input.message),
-        sourceType: input.sourceType ?? null,
-        sourceId: input.sourceId ?? null,
-      });
+      // Budget row (created lazily; snapshots tier + streak on first send).
+      const budget = await getOrCreateCycleBudget(db, ctx.user.id, cycle);
 
-      // Private ledger credit: bump the recipient's $ReGen private
-      // balance by 5 so the profile's $ReGen total reflects gratitude
-      // earned in real time. Gratitude is an earnings signal (not a
-      // governance-weight signal), so it credits the economic token.
-      // When the player later claims on Hypha, the private balance is
-      // debited and matched on-chain.
-      //
-      // (The superseded governanceTokenLedger insert was removed in the
-      // 2026-04-24 supersede pass; user_token_ledger is the single
-      // source of truth now.)
+      let insertId: number | null = null;
       try {
-        const { creditPrivateTokens } = await import("../db");
-        await creditPrivateTokens({
-          userId: recipient.id,
-          tokenType: "regen",
-          amount: 5,
-          source: "gratitude_received",
-          sourceId: (result as any).insertId ?? null,
-          sourceRef: `gratitude:${(result as any).insertId ?? 0}`,
-          description: `Gratitude received from @${ctx.user.handle ?? ctx.user.id}`,
+        const [result] = await db.insert(gratitudeLog).values({
+          senderId: ctx.user.id,
+          recipientId: recipient.id,
+          message: sanitizeInput(input.message),
+          sourceType: input.sourceType ?? null,
+          sourceId: input.sourceId ?? null,
+          cycleId: cycle.id,
         });
-      } catch (err) {
-        console.warn("[gratitude.send] private ledger credit failed (non-fatal):", err);
+        insertId = (result as any).insertId ?? null;
+      } catch (err: any) {
+        // uniq_ack_per_cycle backstop for the race the pre-check missed.
+        if (String(err?.message ?? err).includes("uniq_ack_per_cycle") || err?.code === "ER_DUP_ENTRY") {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "You've already acknowledged this person this cycle. Your appreciation is already counted at full strength.",
+          });
+        }
+        throw err;
       }
 
-      return { ok: true };
+      // Count the new unique recipient toward this cycle's split.
+      await db
+        .update(gratitudeCycleBudgets)
+        .set({ uniqueRecipients: sql`${gratitudeCycleBudgets.uniqueRecipients} + 1` })
+        .where(eq(gratitudeCycleBudgets.id, budget.id));
+
+      // NOTE: no token credit here. $ReGen flows to recipients at cycle
+      // close via the distribution job (closeDueCycles). This is the
+      // economy cutover from the flat 5-per-send model.
+
+      // Notify the recipient, deep-linking to their Gratitude tab.
+      try {
+        const { createUserNotification } = await import("../db");
+        const senderName = (ctx.user as any).name || `@${(ctx.user as any).handle ?? ctx.user.id}`;
+        await createUserNotification({
+          userId: recipient.id,
+          type: "gratitude",
+          title: `${senderName} sent you gratitude`,
+          message: input.message.slice(0, 280),
+          link: insertId ? `/profile?tab=gratitude&highlight=${insertId}` : `/profile?tab=gratitude`,
+        } as any);
+      } catch (err) {
+        console.warn("[gratitude.send] notification failed (non-fatal):", err);
+      }
+
+      const uniqueAfter = budget.uniqueRecipients + 1;
+      const vars = await getGratitudeVars();
+      return {
+        ok: true,
+        peopleThisCycle: uniqueAfter,
+        perPersonShare: Math.round(computePerPersonShare(budget.effectiveBudget, uniqueAfter)),
+        fullPowerRemaining: Math.max(0, vars.fullPowerThreshold - uniqueAfter),
+      };
     }),
+
+  // Everything the Gratitude tab header needs in one call.
+  myOverview: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+    const now = new Date();
+    const cycle = await getOrCreateCurrentCycle(db);
+    const vars = await getGratitudeVars();
+
+    const [budget] = await db
+      .select()
+      .from(gratitudeCycleBudgets)
+      .where(and(eq(gratitudeCycleBudgets.userId, ctx.user.id), eq(gratitudeCycleBudgets.cycleId, cycle.id)))
+      .limit(1);
+    // Budget row may not exist until the first send; compute a preview.
+    const effective = budget?.effectiveBudget
+      ?? (await getOrCreateCycleBudget(db, ctx.user.id, cycle)).effectiveBudget;
+    const peopleThisCycle = budget?.uniqueRecipients ?? 0;
+    const streakCycles = budget?.streakCycles ?? 0;
+
+    // Received last cycle (distinct senders), by cycleNumber - 1.
+    const [prevCycle] = await db
+      .select({ id: gratitudeCycles.id })
+      .from(gratitudeCycles)
+      .where(eq(gratitudeCycles.cycleNumber, cycle.cycleNumber - 1))
+      .limit(1);
+    let peopleLastCycle = 0;
+    if (prevCycle) {
+      const [row] = await db
+        .select({ n: sql<number>`COUNT(DISTINCT ${gratitudeLog.senderId})` })
+        .from(gratitudeLog)
+        .where(and(eq(gratitudeLog.recipientId, ctx.user.id), eq(gratitudeLog.cycleId, prevCycle.id)));
+      peopleLastCycle = Number(row?.n ?? 0);
+    }
+
+    const [lifetime] = await db
+      .select({
+        people: sql<number>`COUNT(DISTINCT ${gratitudeLog.senderId})`,
+        times: sql<number>`COUNT(*)`,
+      })
+      .from(gratitudeLog)
+      .where(eq(gratitudeLog.recipientId, ctx.user.id));
+
+    // Received-per-cycle trend for the sparkline (last 8 tagged cycles).
+    const trend = await db
+      .select({
+        cycleNumber: gratitudeCycles.cycleNumber,
+        people: sql<number>`COUNT(DISTINCT ${gratitudeLog.senderId})`,
+      })
+      .from(gratitudeLog)
+      .innerJoin(gratitudeCycles, eq(gratitudeLog.cycleId, gratitudeCycles.id))
+      .where(eq(gratitudeLog.recipientId, ctx.user.id))
+      .groupBy(gratitudeCycles.cycleNumber)
+      .orderBy(desc(gratitudeCycles.cycleNumber))
+      .limit(8);
+
+    // $ReGen earned from gratitude = positive ledger credits with the
+    // gratitude source (covers legacy flat-5 credits AND cycle distributions).
+    const [earned] = await db
+      .select({ total: sql<number>`COALESCE(SUM(${userTokenLedger.amount}), 0)` })
+      .from(userTokenLedger)
+      .where(and(
+        eq(userTokenLedger.userId, ctx.user.id),
+        eq(userTokenLedger.tokenType, "regen"),
+        eq(userTokenLedger.source, "gratitude_received"),
+        gte(userTokenLedger.amount, 0),
+      ));
+    const earnedFromGratitude = Number(earned?.total ?? 0);
+
+    return {
+      cycle: {
+        number: cycle.cycleNumber,
+        endsAt: cycle.endsAt,
+        daysRemaining: daysRemainingInCycle(now),
+        moonPhase: moonPhase(now),
+      },
+      sends: {
+        peopleThisCycle,
+        effectiveBudget: effective,
+        fullPowerThreshold: vars.fullPowerThreshold,
+        fullPowerRemaining: Math.max(0, vars.fullPowerThreshold - peopleThisCycle),
+        perPersonShare: Math.round(computePerPersonShare(effective, Math.max(peopleThisCycle, 1))),
+      },
+      received: {
+        peopleLastCycle,
+        lifetimePeople: Number(lifetime?.people ?? 0),
+        lifetimeTimes: Number(lifetime?.times ?? 0),
+        trend: trend.reverse().map((t: any) => ({ cycleNumber: t.cycleNumber, people: Number(t.people) })),
+      },
+      streak: {
+        cycles: streakCycles,
+        bonusPct: Math.round(Math.min(streakCycles * vars.streakBonusPerCycle, vars.streakBonusMax) * 100),
+      },
+      regen: {
+        earnedFromGratitude,
+        claimThreshold: vars.claimThreshold,
+        claimEligible: earnedFromGratitude >= vars.claimThreshold,
+        moreToClaim: Math.max(0, vars.claimThreshold - earnedFromGratitude),
+      },
+    };
+  }),
+
+  // Paginated journal, received or sent. Private to the signed-in user.
+  myJournal: protectedProcedure
+    .input(z.object({
+      direction: z.enum(["received", "sent"]),
+      cursor: z.number().int().optional(),
+      limit: z.number().int().min(1).max(50).default(20),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { entries: [], nextCursor: null };
+
+      const mine = input.direction === "received"
+        ? eq(gratitudeLog.recipientId, ctx.user.id)
+        : eq(gratitudeLog.senderId, ctx.user.id);
+      const otherIdCol = input.direction === "received" ? gratitudeLog.senderId : gratitudeLog.recipientId;
+
+      const rows = await db
+        .select({
+          id: gratitudeLog.id,
+          message: gratitudeLog.message,
+          sourceType: gratitudeLog.sourceType,
+          sourceId: gratitudeLog.sourceId,
+          createdAt: gratitudeLog.createdAt,
+          otherUserId: otherIdCol,
+          otherHandle: users.handle,
+          otherName: users.name,
+          otherDisplayName: playerProfiles.displayName,
+          otherAvatarUrl: playerProfiles.avatarUrl,
+        })
+        .from(gratitudeLog)
+        .innerJoin(users, eq(users.id, otherIdCol))
+        .leftJoin(playerProfiles, eq(playerProfiles.userId, otherIdCol))
+        .where(input.cursor ? and(mine, lt(gratitudeLog.id, input.cursor)) : mine)
+        .orderBy(desc(gratitudeLog.id))
+        .limit(input.limit + 1);
+
+      const hasMore = rows.length > input.limit;
+      const entries = hasMore ? rows.slice(0, input.limit) : rows;
+      return {
+        entries,
+        nextCursor: hasMore ? entries[entries.length - 1]!.id : null,
+      };
+    }),
+
+  // Public wall for someone else's profile: received messages only.
+  // Visibility rule (spec §15): kind messages are public, totals and
+  // $ReGen stay private — so this returns no counts and no aggregates.
+  publicJournal: protectedProcedure
+    .input(z.object({
+      handle: z.string().min(3).max(40),
+      cursor: z.number().int().optional(),
+      limit: z.number().int().min(1).max(30).default(15),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { entries: [], nextCursor: null };
+      const target = await getUserByHandle(input.handle);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "No one with that handle" });
+
+      const base = eq(gratitudeLog.recipientId, target.id);
+      const rows = await db
+        .select({
+          id: gratitudeLog.id,
+          message: gratitudeLog.message,
+          createdAt: gratitudeLog.createdAt,
+          senderHandle: users.handle,
+          senderName: users.name,
+          senderDisplayName: playerProfiles.displayName,
+          senderAvatarUrl: playerProfiles.avatarUrl,
+        })
+        .from(gratitudeLog)
+        .innerJoin(users, eq(users.id, gratitudeLog.senderId))
+        .leftJoin(playerProfiles, eq(playerProfiles.userId, gratitudeLog.senderId))
+        .where(input.cursor ? and(base, lt(gratitudeLog.id, input.cursor)) : base)
+        .orderBy(desc(gratitudeLog.id))
+        .limit(input.limit + 1);
+
+      const hasMore = rows.length > input.limit;
+      const entries = hasMore ? rows.slice(0, input.limit) : rows;
+      return { entries, nextCursor: hasMore ? entries[entries.length - 1]!.id : null };
+    }),
+
+  // Admin/cron: close due cycles and distribute the pool.
+  closeCycles: adminProcedure.mutation(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    return closeDueCycles(db);
+  }),
 
   // Search users by handle, name, or display name. Used by the command palette People group.
   searchUsers: protectedProcedure
