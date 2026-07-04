@@ -62,7 +62,7 @@ async function main() {
       continue;
     }
     const [aw, ah] = asset.aspect;
-    const isEmblem = id === "core-emblem";
+    const isEmblem = id === "core-emblem" || id === "core-crest";
     const input = readFileSync(raw);
 
     for (const w of asset.widths) {

@@ -38,7 +38,7 @@ function CoreScrollToTop() {
  */
 function useCoreIdentity() {
   useEffect(() => {
-    const href = "/api/img?url=" + encodeURIComponent("https://assets.regencivics.earth/core/core-emblem-64.webp") + "&w=64";
+    const href = "/api/img?url=" + encodeURIComponent("https://assets.regencivics.earth/core/core-crest-128.webp") + "&w=128";
     document.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach((l) => l.remove());
     const icon = document.createElement("link");
     icon.rel = "icon";

@@ -26,6 +26,7 @@ export type CoreAssetId =
   | "donate-seed-to-tree"
   | "transparency-open-hand"
   | "core-emblem"
+  | "core-crest"
   | "not-found-404"
   | "home-village-abundance"
   | "home-temple-grove"
@@ -73,6 +74,7 @@ export const CORE_ASSETS: Record<CoreAssetId, CoreAsset> = {
   "donate-seed-to-tree": { id: "donate-seed-to-tree", alt: "A seed passing between two hands and growing into a great tree of light.", aspect: [16, 9], widths: [1600, 1000, 640] },
   "transparency-open-hand": { id: "transparency-open-hand", alt: "An open hand holding a small glowing ledger of light.", aspect: [16, 9], widths: [1600, 1000, 640] },
   "core-emblem": { id: "core-emblem", alt: "The CORE emblem, a sprouting seed inside a circle.", aspect: [1, 1], widths: [256, 128, 64] },
+  "core-crest": { id: "core-crest", alt: "The CORE crest: a tree of life within a wreath of vines and DNA, over a krystic spiral.", aspect: [1, 1], widths: [512, 256, 128, 64] },
   "not-found-404": { id: "not-found-404", alt: "A small glowing seedling on a forked forest path at dusk.", aspect: [4, 3], widths: [1000, 640] },
 
   "home-village-abundance": { id: "home-village-abundance", alt: "A thriving village of living-roofed homes among terraced food-forest gardens.", aspect: [16, 9], widths: [2000, 1200, 720] },

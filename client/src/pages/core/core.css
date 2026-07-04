@@ -81,7 +81,7 @@
 }
 .core-root .core-nav .wrap { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .core-root .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-accent); font-size: 1.35rem; color: var(--forest-deep); }
-.core-root .brand .seed { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 40% 35%, var(--spring-hover), var(--forest-sage)); color: var(--forest-deep); font-size: 1rem; overflow: hidden; }
+.core-root .brand .seed { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: #fff; color: var(--forest-deep); font-size: 1rem; overflow: hidden; }
 .core-root .brand .seed img { width: 100%; height: 100%; object-fit: contain; }
 .core-root .nav-links { display: flex; gap: 22px; align-items: center; font-family: var(--font-display); font-weight: 600; font-size: .96rem; }
 .core-root .nav-links a { color: var(--forest-base); }

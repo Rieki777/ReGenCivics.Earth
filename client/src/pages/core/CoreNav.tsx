@@ -20,7 +20,7 @@ export default function CoreNav() {
     <header className="core-nav">
       <div className="wrap">
         <Link href="/" className="brand" onClick={() => setOpen(false)}>
-          <span className="seed" aria-hidden="true"><CoreImage id="core-emblem" sizes="30px" fallback={<>🌱</>} /></span> CORE
+          <span className="seed" aria-hidden="true"><CoreImage id="core-crest" sizes="40px" fallback={<>🌱</>} /></span> CORE
         </Link>
         <nav className={`nav-links${open ? " open" : ""}`} aria-label="Church navigation">
           {NAV.map((item) => (

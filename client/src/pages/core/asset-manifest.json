@@ -111,6 +111,16 @@
         64
       ]
     },
+    "core-crest": {
+      "ready": true,
+      "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAAAwBQCdASoYABgAPu1ys1MppqSiqAgBMB2JZQDE2A9qqhw9qNdHRSCk4XoQlQjE/CItOAD+8eDBnN6aTdDvk7Jug5gJbaJc0wEOwVjOZ3zbJHOaFCYdWaDFjGu46uIo3MQIXFWAJicAAA==",
+      "widths": [
+        512,
+        256,
+        128,
+        64
+      ]
+    },
     "not-found-404": {
       "ready": true,
       "lqip": "data:image/webp;base64,UklGRnwAAABXRUJQVlA4IHAAAABQBQCdASoYABIAPu1iqE2ppaOiMBgMATAdiWIAuzMYATCIMk9dq0dJ7DFgujRXVmbyLgAA/sIdk0AGCmMYaKl3VNyZGiCydm2IxFVbEOJWynam52sRZPdL8/EZ/TXxPX+tNPGX67xNI6oOvWpOgAAA",
