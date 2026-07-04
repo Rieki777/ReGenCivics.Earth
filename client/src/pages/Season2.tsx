@@ -788,6 +788,17 @@ export default function Season2() {
         </div>
       </AnimatedSection>
 
+      {/* Community gathering — a celebratory band leading into who this is for */}
+      <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
+        <img
+          src="/season2/season2-gathering.webp"
+          alt="A large diverse community gathered around a fire at golden dusk, holding lanterns and seedlings, celebrating beneath banners reading A New Season and Community Returning"
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818] via-transparent to-[#0d2818]/95" />
+      </figure>
+
       {/* ── WHO ── */}
       <AnimatedSection as="section" animation="slide-up" id="who" className="py-20 md:py-28 px-4">
         <div className="max-w-4xl mx-auto">
@@ -980,6 +991,22 @@ export default function Season2() {
           </p>
         </div>
       </AnimatedSection>
+
+      {/* Cohort constellation — a band leading into how thirteen get chosen */}
+      <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
+        <img
+          src="/season2/season2-constellation.webp"
+          alt="Thirteen glowing project-worlds arranged in a circle around a radiant tree of light in a forest, connected by golden threads into one living constellation"
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0d2818] via-transparent to-[#0d2818]/95" />
+        <figcaption className="absolute inset-x-0 bottom-0 p-6 md:p-10 text-center">
+          <p className="text-white text-lg md:text-2xl font-medium max-w-2xl mx-auto drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]" style={display}>
+            Thirteen projects. One season. One growing network.
+          </p>
+        </figcaption>
+      </figure>
 
       {/* ── SELECTION ── */}
       <AnimatedSection as="section" animation="slide-up" id="process" className="py-20 md:py-28 px-4">
