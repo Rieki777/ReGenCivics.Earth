@@ -653,7 +653,7 @@ export default function Season2() {
               graphic (the numbered project-logos map) in at this path. */}
           <figure className="mt-12">
             <img
-              src="/season2/s1-projects-map.jpg"
+              src="/season2/s1-projects-map.webp"
               alt="The thirteen Season One projects: Ubuntu, Finca Sagrada, Tabi, Liminal Village, collaborative housing, TDF, TioGA, la tierra, StarSeed Village, Nyx, ReGen Campus, LaLa Gardens Cooperative, and more, growing out from ReGen Civics"
               loading="lazy"
               onError={(e) => {
@@ -1106,7 +1106,7 @@ export default function Season2() {
                 Amora is a regenerative village rising in Costa Rica. Together we
                 built their Infinite Game: four journeys into the village for
                 Investors, Village Stewards, Residents, and Prosperity Creators,
-                with their own HEARTS and VOICE tokens, circles, quests, roles,
+                with their own GRATITUDE and VOICE tokens, circles, quests, roles,
                 and rites of passage.
               </p>
               <p>
@@ -1178,10 +1178,10 @@ export default function Season2() {
                 </div>
               </a>
 
-              {/* HEARTS + VOICE token coins */}
+              {/* GRATITUDE + VOICE token coins */}
               <img
-                src="/season2/amora-hearts.webp"
-                alt="Amora HEARTS token"
+                src="/season2/amora-gratitude.webp"
+                alt="Amora GRATITUDE token"
                 width={480}
                 height={480}
                 className="absolute -bottom-8 -left-6 w-20 md:w-24 h-auto rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] rotate-[-8deg]"
