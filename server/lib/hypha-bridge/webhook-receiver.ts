@@ -82,6 +82,68 @@ interface AlchemyHyphaEvent {
   tokenSymbol?: string;
   txHash?: string;
   blockTimeMs?: number;
+  /** ProposalExecuted carries the outcome on-chain: executed-and-failed-quorum
+   * arrives as passed=false. Absent means "assume passed" (legacy shape). */
+  passed?: boolean;
+}
+
+// ─── Hypha DAO proposals contract (Base) log decoding ───────────────────────
+// The governance contract emits ProposalExecuted(proposalId, passed, yes, no)
+// when a binding vote concludes. Alchemy Custom Webhooks (GraphQL) deliver
+// raw logs under event.data.block.logs; we decode the ones from this contract
+// with viem and turn them into normalized events. Address is env-overridable;
+// the default is Hypha's DAOProposals deployment on Base (chain 8453), read
+// from hypha-dao/hypha-web packages/core/src/generated.ts.
+import { decodeEventLog, parseAbi } from "viem";
+
+const HYPHA_DAO_PROPOSALS_CONTRACT = (
+  process.env.HYPHA_DAO_PROPOSALS_CONTRACT ?? "0x001bA7a00a259Fb12d7936455e292a60FC2bef14"
+).toLowerCase();
+
+const HYPHA_PROPOSALS_ABI = parseAbi([
+  "event ProposalCreated(uint256 indexed proposalId, uint256 indexed spaceId, uint256 startTime, uint256 duration, address creator, bytes executionData)",
+  "event ProposalExecuted(uint256 indexed proposalId, bool passed, uint256 yesVotes, uint256 noVotes)",
+  "event ProposalRejected(uint256 indexed proposalId, uint256 yesVotes, uint256 noVotes)",
+  "event ProposalExpired(uint256 indexed proposalId)",
+]);
+
+/** Decode one raw log from an Alchemy GraphQL custom-webhook payload into a
+ * normalized event, or null if it isn't a Hypha proposals-contract log we
+ * care about. Never throws. */
+export function decodeHyphaProposalLog(logEntry: {
+  account?: { address?: string };
+  address?: string;
+  topics?: string[];
+  data?: string;
+  transaction?: { hash?: string };
+  transactionHash?: string;
+}): AlchemyHyphaEvent | null {
+  const addr = (logEntry.account?.address ?? logEntry.address ?? "").toLowerCase();
+  if (addr !== HYPHA_DAO_PROPOSALS_CONTRACT) return null;
+  if (!Array.isArray(logEntry.topics) || logEntry.topics.length === 0) return null;
+  try {
+    const decoded = decodeEventLog({
+      abi: HYPHA_PROPOSALS_ABI,
+      topics: logEntry.topics as [`0x${string}`, ...`0x${string}`[]],
+      data: (logEntry.data ?? "0x") as `0x${string}`,
+    });
+    const txHash = logEntry.transaction?.hash ?? logEntry.transactionHash;
+    if (decoded.eventName === "ProposalExecuted") {
+      const args = decoded.args as unknown as { proposalId: bigint; passed: boolean };
+      return { type: "ProposalExecuted", proposalId: String(args.proposalId), passed: args.passed, txHash };
+    }
+    if (decoded.eventName === "ProposalRejected" || decoded.eventName === "ProposalExpired") {
+      const args = decoded.args as unknown as { proposalId: bigint };
+      return { type: "ProposalRejected", proposalId: String(args.proposalId), txHash };
+    }
+    if (decoded.eventName === "ProposalCreated") {
+      const args = decoded.args as unknown as { proposalId: bigint };
+      return { type: "ProposalCreated", proposalId: String(args.proposalId), txHash };
+    }
+    return null;
+  } catch {
+    return null; // not one of ours, or malformed — never break the webhook
+  }
 }
 
 /**
@@ -161,13 +223,80 @@ async function cascadeQuestPassed(
   log.info(`cascade complete for bridge ${bridgeRow.bridgeKey} quest ${questId}`);
 }
 
+/**
+ * The machine path for Assembly ratification (Evolution Engine, Rung 1).
+ * A ProposalExecuted log from Hypha's DAO proposals contract concluded the
+ * binding vote; find the Assembly proposal that launched this bridge and
+ * apply the outcome through the same shared path the admin relay uses.
+ * Idempotent: applyRatificationOutcome refuses anything not in_governance,
+ * and dispatch is one-per-proposal at the DB level (0172).
+ */
+async function cascadeAssemblyRatified(
+  bridgeRow: any,
+  outcome: "ratified" | "declined",
+  txHash: string | undefined,
+): Promise<void> {
+  if (bridgeRow.source !== "other") return;
+  const db = await getDb();
+  if (!db) {
+    log.warn("cascadeAssemblyRatified: no db connection");
+    return;
+  }
+  const { proposals } = await import("../../../drizzle/schema");
+  const props = await db
+    .select({ id: proposals.id, status: proposals.status })
+    .from(proposals)
+    .where(eq(proposals.hyphaBridgeKey, bridgeRow.bridgeKey))
+    .limit(1);
+  if (props.length === 0) {
+    log.info(`bridge ${bridgeRow.bridgeKey} passed on-chain but no Assembly proposal carries it; nothing to ratify`);
+    return;
+  }
+  const { getOrCreateGovernanceActor } = await import("../evolution");
+  const actorId = await getOrCreateGovernanceActor();
+  if (!actorId) {
+    log.error("cascadeAssemblyRatified: governance actor unavailable; outcome NOT applied — admin can confirm manually");
+    return;
+  }
+  const { applyRatificationOutcome } = await import("../ratification");
+  const result = await applyRatificationOutcome(props[0].id, outcome, {
+    confirmedBy: actorId,
+    relay: "alchemy-webhook",
+    ...(txHash ? { txHash } : {}),
+  });
+  if (result.ok) {
+    log.info(`assembly proposal ${props[0].id} ${outcome} via webhook: execution ${result.execution?.status ?? "none"}`);
+  } else {
+    log.warn(`assembly ratification skipped for proposal ${props[0].id}: ${result.error}`);
+  }
+}
+
 /** Handle one normalized Hypha event. Idempotent: re-processing the same event
  * should not double-update. */
 export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matched: boolean; bridgeKey?: string }> {
   const db = await getDb();
   if (!db) return { matched: false };
 
+  // ProposalExecuted with passed=false is a rejection in Hypha's contract;
+  // normalize it so every downstream branch sees one rejection shape.
+  if (event.type === "ProposalExecuted" && event.passed === false) {
+    event = { ...event, type: "ProposalRejected" };
+  }
+
   let bridgeKey = extractBridgeKey(event.title);
+  if (!bridgeKey && event.proposalId) {
+    // Deterministic: the on-chain proposal id, linked at launch by the
+    // proposer (assembly.recordHyphaProposal) or by a ProposalCreated event.
+    // This is the ONLY matcher that works for governance logs — they carry
+    // the numeric id, never the title marker.
+    const [byId] = await db
+      .select()
+      .from(hyphaBridges)
+      .where(eq(hyphaBridges.hyphaProposalId, event.proposalId))
+      .limit(1)
+      .catch(() => []);
+    if (byId) bridgeKey = (byId as any).bridgeKey;
+  }
   if (!bridgeKey) {
     const fuzzy = await fuzzyMatchBridge({
       recipient: event.recipient,
@@ -252,10 +381,24 @@ export async function handleHyphaEvent(event: AlchemyHyphaEvent): Promise<{ matc
           log.error("cascadeClaimPassed top-level error", err),
         );
       }
+      // Assembly ratification arriving machine-to-machine: the binding vote
+      // concluded on Hypha and the Evolution Engine takes it from here. Only
+      // ProposalExecuted (a governance outcome) triggers this — a bare token
+      // Transfer must never ratify a proposal.
+      if (bridgeSource === "other" && event.type === "ProposalExecuted") {
+        cascadeAssemblyRatified(bridgeRow, "ratified", event.txHash).catch((err: any) =>
+          log.error("cascadeAssemblyRatified top-level error", err),
+        );
+      }
     }
     if (event.type === "ProposalRejected" && bridgeSource === "redeem_tokens") {
       cascadeClaimFailed(bridgeRow).catch((err: any) =>
         log.error("cascadeClaimFailed top-level error", err),
+      );
+    }
+    if (event.type === "ProposalRejected" && bridgeSource === "other") {
+      cascadeAssemblyRatified(bridgeRow, "declined", event.txHash).catch((err: any) =>
+        log.error("cascadeAssemblyRatified (declined) top-level error", err),
       );
     }
     // C1 compensating debit: a redeem claim that was already refunded
@@ -537,18 +680,28 @@ export function registerHyphaWebhookRoutes(app: Express) {
       // type we configure. For now we accept either a single normalized event
       // or an array under event.activity.
       const body = req.body ?? {};
-      const events: AlchemyHyphaEvent[] = Array.isArray(body?.event?.activity)
-        ? body.event.activity.map((a: any) => ({
-            type: a.type ?? "Transfer",
-            proposalId: a.proposalId,
-            title: a.title ?? a.metadata?.title,
-            recipient: a.toAddress ?? a.recipient,
-            amount: a.value ?? a.amount,
-            tokenSymbol: a.asset ?? a.tokenSymbol,
-            txHash: a.hash ?? a.txHash,
-            blockTimeMs: a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : undefined,
-          }))
-        : Array.isArray(body) ? body : [body];
+      let events: AlchemyHyphaEvent[];
+      if (Array.isArray(body?.event?.data?.block?.logs)) {
+        // Alchemy Custom Webhook (GraphQL): raw logs. Decode the Hypha DAO
+        // proposals contract's governance events; ignore everything else.
+        events = body.event.data.block.logs
+          .map((l: any) => decodeHyphaProposalLog(l))
+          .filter((e: AlchemyHyphaEvent | null): e is AlchemyHyphaEvent => e !== null);
+      } else if (Array.isArray(body?.event?.activity)) {
+        // Alchemy Address Activity: token transfers and friends.
+        events = body.event.activity.map((a: any) => ({
+          type: a.type ?? "Transfer",
+          proposalId: a.proposalId,
+          title: a.title ?? a.metadata?.title,
+          recipient: a.toAddress ?? a.recipient,
+          amount: a.value ?? a.amount,
+          tokenSymbol: a.asset ?? a.tokenSymbol,
+          txHash: a.hash ?? a.txHash,
+          blockTimeMs: a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : undefined,
+        }));
+      } else {
+        events = Array.isArray(body) ? body : [body];
+      }
 
       const results = [];
       for (const ev of events) {
