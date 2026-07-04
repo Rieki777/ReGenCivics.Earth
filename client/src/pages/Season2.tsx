@@ -35,6 +35,7 @@ import {
   Heart,
   Clock,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -174,14 +175,22 @@ const GET: { icon: React.ElementType; title: string; body: string }[] = [
 ];
 
 // ─── Selection process ──────────────────────────────────────────────────
-const SELECTION: { title: string; body: string }[] = [
+const PITCH_EXAMPLES_URL =
+  "https://pie.yt/?v=https://youtu.be/AJZI0OiRPeU?si=bHPcwIEA1HHBq-IV&pieshare=1";
+
+const SELECTION: {
+  title: string;
+  body: string;
+  cta?: { href: string; label: string; external?: boolean };
+}[] = [
   {
     title: "Apply by September 1st",
-    body: "Open applications through September 1st. Every project that applies is taken seriously regardless of scale, geography, or stage. We approve shortlisted projects on a rolling basis, so applying earlier gives you more time to prepare.",
+    body: "Applications close September 1st. Every project that applies is taken seriously regardless of scale, geography, or stage. We approve shortlisted projects on a rolling basis, so applying earlier gives you more time to prepare.",
   },
   {
-    title: "21 projects are shortlisted to pitch",
-    body: "All projects are scored and 21 are shortlisted. Shortlisted projects have until September 10th to make a short pitch video telling their story. We share every pitch video publicly to give your project exposure, unless you ask us not to.",
+    title: "Shortlisted projects make a pitch video",
+    body: "All projects are scored, and we let shortlisted projects know by September 5th, or sooner if you apply early. Shortlisted projects then have until September 14th to submit a short pitch video telling their story, so about nine days to finalize it. We encourage making one in advance since it is a great thing to have anyway. We share every pitch video publicly to give your project exposure, unless you ask us not to.",
+    cta: { href: PITCH_EXAMPLES_URL, label: "Watch Season One pitch video examples", external: true },
   },
   {
     title: "The season council selects 13 on the Equinox",
@@ -190,6 +199,7 @@ const SELECTION: { title: string; body: string }[] = [
   {
     title: "The season opens",
     body: "The thirteen selected projects are introduced in a recording that kicks off the season, used for the crowdpooling campaigns and to get word out about what's about to be built.",
+    cta: { href: "/crowd-pooling", label: "See our crowdpooling page" },
   },
 ];
 
@@ -306,7 +316,9 @@ export default function Season2() {
                 actually work.
               </strong>{" "}
               We call these systems Infinite Games. The goal is to keep playing,
-              and to grow the number of people who can play.
+              and to grow the number of people who can play. The main idea behind
+              any Infinite Game is to help us meet our needs in the most joyful and
+              beautiful way we can.
             </p>
 
             <blockquote className="border-l-2 border-[#7dd87d] bg-[#7dd87d]/8 rounded-r-lg pl-6 pr-5 py-5 my-2">
@@ -341,6 +353,25 @@ export default function Season2() {
               opens thirteen new seats.
             </p>
           </div>
+
+          {/* Season One projects map — the thirteen that went through.
+              TODO(rye): drop the "Growing the Diversity of Regenerative Realities"
+              graphic (the numbered project-logos map) in at this path. */}
+          <figure className="mt-12">
+            <img
+              src="/season2/s1-projects-map.jpg"
+              alt="The thirteen Season One projects: Ubuntu, Finca Sagrada, Tabi, Liminal Village, collaborative housing, TDF, TioGA, la tierra, StarSeed Village, Nyx, ReGen Campus, LaLa Gardens Cooperative, and more, growing out from ReGen Civics"
+              loading="lazy"
+              onError={(e) => {
+                // Hide the figure until the projects-map graphic is dropped in.
+                (e.currentTarget.closest("figure") as HTMLElement | null)?.style.setProperty("display", "none");
+              }}
+              className="w-full rounded-2xl border border-[#7dd87d]/15"
+            />
+            <figcaption className="mt-3 text-center text-white/55 text-sm">
+              The Season One cohort. More ReGen projects join each season.
+            </figcaption>
+          </figure>
         </div>
       </AnimatedSection>
 
@@ -362,11 +393,24 @@ export default function Season2() {
             projects have finalized their models for a given step, the whole
             cohort moves forward together.
           </p>
-          <p className="inline-flex items-center gap-2 text-[#7dd87d] text-sm font-medium mb-10">
+          <p className="inline-flex items-center gap-2 text-[#7dd87d] text-sm font-medium mb-8">
             <Clock className="w-4 h-4" />
-            Plan for one live weekly session plus a few hours of project work
-            between sessions.
+            Plan for one live weekly session, plus a few to many more hours of
+            project work between sessions depending on how prepared and advanced
+            your team and project already are.
           </p>
+
+          <div className="mb-10">
+            <Link href="/schedule">
+              <Button
+                size="lg"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
+              >
+                See the full season schedule
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
 
           <img
             src="/season2/roadmap.jpg"
@@ -392,6 +436,40 @@ export default function Season2() {
                 <p className="text-white/70 leading-relaxed">{s.body}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </AnimatedSection>
+
+      {/* ── NEW FOR SEASON TWO: launch your own Infinite Game ── */}
+      <AnimatedSection as="section" animation="slide-up" className="px-4 pb-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative overflow-hidden rounded-3xl border border-[#7dd87d]/40 bg-gradient-to-br from-[#7dd87d]/15 via-[#0d2818]/60 to-[#0d2818]/80 p-8 md:p-12">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
+              style={{ background: "radial-gradient(circle, rgba(125,216,125,0.22), transparent 70%)" }}
+            />
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 bg-[#7dd87d]/20 px-4 py-2 rounded-full mb-6 border border-[#7dd87d]/40">
+                <Sparkles className="w-4 h-4 text-[#7dd87d]" />
+                <span className="text-white/90 text-xs font-semibold tracking-[0.18em] uppercase">
+                  New for Season Two
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-5" style={display}>
+                Launch your own <span className="italic text-[#a8e6a8]">Infinite Game</span>
+              </h2>
+              <p className="text-white/80 text-lg leading-relaxed mb-4">
+                This season we help you use AI tools and templates, starting from an
+                open-source blueprint we have spent a lot of time building, to launch
+                your own Infinite Game. The same kind of system we built for ReGen
+                Civics, purpose-built for your land project and owned by you.
+              </p>
+              <p className="text-white/70 leading-relaxed">
+                It is one of the biggest things we are adding for Season Two, and a
+                huge value for every project that comes through.
+              </p>
+            </div>
           </div>
         </div>
       </AnimatedSection>
@@ -495,7 +573,7 @@ export default function Season2() {
                 {[
                   "Existing land or assets under contract",
                   "Ready to fundraise with a pitch and timeline",
-                  "Basic organizational structure already formed",
+                  "A lot of passion and dedication to your vision",
                   "A team with existing social presence and storytelling capacity",
                   "Core project management team in place",
                 ].map((item) => (
@@ -515,8 +593,6 @@ export default function Season2() {
                   "Interoperable technology stack (Hypha DAO tools or equivalent)",
                   "Regenerative business plan with a capital model",
                   "A framework for measuring what regeneration means for your project",
-                  "Evidence that the model can succeed, scale, or replicate",
-                  "Contribution incentives designed (tokens, NFTs, access, etc)",
                   "Ability to edify others: courses, resources, documentation",
                   "Cooperative or distributed power and value structures",
                 ].map((item) => (
@@ -533,7 +609,7 @@ export default function Season2() {
             <strong className="text-white font-semibold">A note on scale:</strong>{" "}
             We look for regenerative diversity across housing, food, wellbeing, and
             more. A small garden with clear purpose and a real team can score
-            higher than a large project without governance foundations.
+            higher than a large project without a regenerative mindset.
           </div>
         </div>
       </AnimatedSection>
@@ -645,6 +721,26 @@ export default function Season2() {
                 <div>
                   <div className="text-white font-medium mb-1">{s.title}</div>
                   <p className="text-white/65 leading-relaxed">{s.body}</p>
+                  {s.cta &&
+                    (s.cta.external ? (
+                      <a
+                        href={s.cta.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#7dd87d]/40 bg-[#7dd87d]/10 px-5 py-2.5 text-sm font-semibold text-[#7dd87d] hover:bg-[#7dd87d]/20 hover:text-white transition-colors"
+                      >
+                        {s.cta.label}
+                        <ArrowRight className="w-4 h-4" />
+                      </a>
+                    ) : (
+                      <Link
+                        href={s.cta.href}
+                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#7dd87d] px-5 py-2.5 text-sm font-semibold text-[#1a472a] hover:bg-[#9de89d] transition-colors"
+                      >
+                        {s.cta.label}
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    ))}
                 </div>
               </div>
             ))}
@@ -756,9 +852,10 @@ export default function Season2() {
               our last free-to-participate season, so this is a good one to be in.
             </FaqItem>
             <FaqItem q="How much time does the season take?">
-              Plan for one live weekly session across the season, plus a few hours
-              of project work between sessions. Projects move forward together as a
-              cohort.
+              Plan for one live weekly session across the season, plus a few to
+              many more hours of project work between sessions depending on how
+              prepared and advanced your team and project are. Projects move
+              forward together as a cohort.
             </FaqItem>
             <FaqItem q="Do we need crypto or DAO experience?">
               No. We help you choose and set up your tooling (Hypha, Gardens,
@@ -773,13 +870,13 @@ export default function Season2() {
             <FaqItem q="When do applications close and when does the season start?">
               Applications close September 1st, and we approve shortlisted
               projects on a rolling basis, so applying earlier gives you more
-              time to prepare. We'll let you know if you're shortlisted (21
-              projects), and you'll have until September 10th to make a short
-              pitch video. Every pitch video is shared publicly to give your
-              project exposure, unless you ask us not to. Season Two then begins
-              on the Equinox with a selection day held in public, where a season
-              council of members from previous seasons' projects picks the 13
-              projects.
+              time to prepare. We'll let you know by September 5th (or sooner if
+              you apply early) whether you're shortlisted, and you'll have until
+              September 14th to submit a short pitch video. Every pitch video is
+              shared publicly to give your project exposure, unless you ask us not
+              to. Season Two then begins on the Equinox with a selection day held
+              in public, where a season council of members from previous seasons'
+              projects picks the 13 projects.
             </FaqItem>
           </div>
         </div>
@@ -830,7 +927,7 @@ export default function Season2() {
           <div className="mt-10 grid sm:grid-cols-3 gap-4 text-left">
             {[
               { icon: CheckCircle2, t: "Apply by September 1st", d: "A short application about your project and team. We approve shortlisted projects on a rolling basis, so earlier is better." },
-              { icon: Clock, t: "Pitch by September 10th", d: "If you're shortlisted (21 projects), you make a short pitch video. We share every video publicly for exposure, unless you ask us not to." },
+              { icon: Clock, t: "Pitch by September 14th", d: "We let shortlisted projects know by September 5th, then you have until September 14th to submit a short pitch video. We share every video publicly for exposure, unless you ask us not to." },
               { icon: Sprout, t: "Selection day on the Equinox", d: "A season council of members from previous seasons' projects picks the 13, in public, and Season Two begins." },
             ].map((s) => {
               const Icon = s.icon;
