@@ -3,14 +3,19 @@ interface BulkActionBarProps {
   entityType: 'applications' | 'inquiries' | 'players'
   onAction: (action: string) => void
   onClear: () => void
+  busy?: boolean
 }
 
-export function BulkActionBar({ selectedCount, entityType, onAction, onClear }: BulkActionBarProps) {
+type BulkAction = { id: string; label: string; tone?: 'default' | 'danger' }
+
+export function BulkActionBar({ selectedCount, entityType, onAction, onClear, busy = false }: BulkActionBarProps) {
   if (selectedCount === 0) return null
 
-  const actions: Record<string, { id: string; label: string }[]> = {
+  const actions: Record<string, BulkAction[]> = {
     applications: [
       { id: 'move-reviewed', label: 'Move to Reviewed' },
+      { id: 'approve', label: 'Approve' },
+      { id: 'reject', label: 'Reject', tone: 'danger' },
       { id: 'export-csv', label: 'Export CSV' },
     ],
     inquiries: [
@@ -31,12 +36,15 @@ export function BulkActionBar({ selectedCount, entityType, onAction, onClear }: 
         <button
           key={action.id}
           onClick={() => onAction(action.id)}
-          className="text-sm text-green-400 hover:text-green-300 transition-colors"
+          disabled={busy}
+          className={`text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            action.tone === 'danger' ? 'text-red-400 hover:text-red-300' : 'text-green-400 hover:text-green-300'
+          }`}
         >
           {action.label}
         </button>
       ))}
-      <button onClick={onClear} className="text-sm text-white/60 hover:text-white/60 ml-2">Clear</button>
+      <button onClick={onClear} disabled={busy} className="text-sm text-white/60 hover:text-white/80 ml-2 disabled:opacity-50">Clear</button>
     </div>
   )
 }
