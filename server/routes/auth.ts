@@ -23,6 +23,11 @@ function pingLastActive(userId: number) {
     if (!db2) return;
     db2.execute(sql`UPDATE userProfiles SET lastActiveAt = NOW() WHERE userId = ${userId}`)
       .catch(() => {}); // graceful, column may not exist until migration runs
+    // Mirror to the unified forum profile (0169, Phase 2B): the forum reads
+    // activity from playerProfiles.forumLastActiveAt, which was back-filled
+    // once by the migration and drifts unless every ping lands on both tables.
+    db2.execute(sql`UPDATE player_profiles SET forumLastActiveAt = NOW() WHERE userId = ${userId}`)
+      .catch(() => {});
   }).catch(() => {});
 }
 

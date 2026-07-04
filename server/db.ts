@@ -767,12 +767,19 @@ export async function updatePlayerProfile(id: number, data: Partial<InsertPlayer
 
   await db.update(playerProfiles).set(data).where(eq(playerProfiles.id, id));
 
-  // Reverse sync: push avatar, displayName, bio changes to userProfiles
-  // so both tables stay consistent regardless of which form saves.
-  const syncToUser: Record<string, string | undefined> = {};
+  // Reverse sync: push shared display fields to userProfiles so both tables
+  // stay consistent regardless of which form saves. Mirrors the same field
+  // set as the forward sync in upsertUserProfile (0169, Phase 2B) — keep the
+  // two lists in lockstep or the tables drift.
+  const syncToUser: Record<string, string | number | undefined> = {};
   if (data.avatarUrl !== undefined) syncToUser.avatarUrl = data.avatarUrl ?? undefined;
   if (data.displayName !== undefined) syncToUser.displayName = data.displayName;
   if (data.bio !== undefined) syncToUser.bio = data.bio ?? undefined;
+  if (data.bannerUrl !== undefined) syncToUser.bannerUrl = data.bannerUrl ?? undefined;
+  if (data.website !== undefined) syncToUser.website = data.website ?? undefined;
+  if (data.forumLocation !== undefined) syncToUser.location = data.forumLocation ?? undefined;
+  if (data.preferredLanguage !== undefined) syncToUser.preferredLanguage = data.preferredLanguage ?? undefined;
+  if (data.onboardingComplete !== undefined) syncToUser.onboardingComplete = data.onboardingComplete;
   if (Object.keys(syncToUser).length > 0) {
     try {
       const [pp] = await db.select({ userId: playerProfiles.userId })
@@ -2785,6 +2792,7 @@ export async function upsertUserProfile(userId: number, data: {
   questInterests?: string;
   displayName?: string;
   avatarUrl?: string;
+  bannerUrl?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2808,6 +2816,7 @@ export async function upsertUserProfile(userId: number, data: {
   if (data.avatarUrl !== undefined) syncFields.avatarUrl = data.avatarUrl;
   if (data.displayName !== undefined) syncFields.displayName = data.displayName;
   if (data.bio !== undefined) syncFields.bio = data.bio;
+  if (data.bannerUrl !== undefined) syncFields.bannerUrl = data.bannerUrl;
   if (data.website !== undefined) syncFields.website = data.website;
   if (data.location !== undefined) syncFields.forumLocation = data.location;
   if (data.preferredLanguage !== undefined) syncFields.preferredLanguage = data.preferredLanguage;
