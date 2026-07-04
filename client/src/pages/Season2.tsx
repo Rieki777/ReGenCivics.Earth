@@ -421,7 +421,7 @@ const GET: { icon: React.ElementType; title: string; body: string }[] = [
   {
     icon: Link2,
     title: "The $RCivics Token Swap",
-    body: "A minimum 100k $RCivics equivalent token swap that makes every project co-invested in every other. ReGen Civics holds a piece of your project. Your project holds a piece of the alliance.",
+    body: "A token swap that makes every project co-invested in every other. ReGen Civics takes a minority stake, usually under 10%, sized uniquely to your project. You hold a piece of the alliance. The alliance holds a piece of you.",
   },
   {
     icon: Coins,
@@ -952,18 +952,19 @@ export default function Season2() {
 
           <div className="mt-8 p-6 md:p-8 rounded-xl bg-[#7dd87d]/8 border border-[#7dd87d]/22 space-y-4 text-white/75 leading-relaxed">
             <p>
-              <strong className="text-[#7dd87d] font-semibold">Minimum token swap:</strong>{" "}
-              100k $RCivics equivalent. ReGen Civics sends $RCivics tokens to your
-              project. Your project sends an equivalent value in your own tokens to
-              ReGen Civics. Neither is sold on the open market. They represent
-              ownership and alignment.
+              <strong className="text-[#7dd87d] font-semibold">How the swap works:</strong>{" "}
+              There is no fixed minimum. ReGen Civics sends $RCivics tokens to your
+              project, and your project sends an equivalent value in your own tokens
+              back. Neither is sold on the open market. They represent ownership and
+              alignment. The intention is for ReGen Civics to hold a minority stake
+              in your project, usually under 10%.
             </p>
             <p>
-              <strong className="text-[#7dd87d] font-semibold">What this means in practice:</strong>{" "}
-              If $RCivics is valued at €10 and your project's tokens are valued at
-              €1, ReGen Civics would send 100k $RCivics and receive 1 million of
-              your project's tokens. You hold a piece of the alliance. The alliance
-              holds a piece of you.
+              <strong className="text-[#7dd87d] font-semibold">Unique to each project:</strong>{" "}
+              Projects vary widely, so the swap is different for every one. We work
+              through it together with each chosen project to design something that
+              works for everyone: good for your project, good for the alliance, and
+              good for the land and the people it holds.
             </p>
             <p>
               <strong className="text-[#7dd87d] font-semibold">Funding flows:</strong>{" "}
@@ -981,8 +982,8 @@ export default function Season2() {
           </p>
 
           <p className="mt-6 text-sm text-white/55 leading-relaxed">
-            Token figures are illustrative and describe alignment, not a financial
-            return or investment promise. Token values can move and may be illiquid.
+            The token swap describes alignment, not a financial return or
+            investment promise. Token values can move and may be illiquid.
             Read the full{" "}
             <Link href="/risk-disclosure" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
               risk disclosure
