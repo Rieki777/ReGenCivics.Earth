@@ -313,6 +313,42 @@ Format per entry:
 
 ---
 
+## ADR-27: The Assembly as the one door for Game governance (stacked page, Hypha keeps the binding vote)
+
+- Date: 2026-07-03
+- Status: Accepted (shipped; Phases 1-6 of ASSEMBLY_PAGE_SPEC.md live)
+- Context: Game governance was split across `/proposals`, `/community/decisions`, and forum threads, so members never knew where a decision actually lived. The spec (ASSEMBLY_PAGE_SPEC.md) locked a set of decisions: Game-only scope (the Fund never appears), a stacked single-scroll page with no tabs, an aim line required at raise time, two lanes (full + minor lazy-consent), 48h last call, 30d resting, and delegation that links out to Hypha rather than rebuilding voting.
+- Decision: `/assembly` is the single surface for the whole proposal lifecycle (Forming, Last call, Deciding, Record); the old routes redirect permanently. Deliberation happens here and in the forum; the BINDING vote stays on Hypha, reached through the Hypha Bridge with the `assembly-proposal-to-contribution` intent. `proposal_votes` is deprecated but never dropped in this build.
+- Why: one door means one mental model for members who are not governance nerds; keeping the binding vote on Hypha means ReGen Civics never becomes a shadow voting system and on-chain legitimacy stays where the DAO already is.
+- Trade-offs: the page carries a lot of lifecycle state in one scroll; Hypha remains a hard dependency for ratification; members must cross an app boundary to cast the binding vote.
+- Where it lives in code: `client/src/pages/AssemblyPage.tsx` (+ section components), `server/routes/assembly.ts`, `server/jobs/assemblyLifecycleJob.ts`, migrations 0164-0165, redirects in the router config. Extends ADR-23 (deliberation in our stack, decisions on Hypha).
+
+---
+
+## ADR-28: The Signal — aggregate-only -3..+3 sensing, never a vote
+
+- Date: 2026-07-03
+- Status: Accepted (shipped; migration 0164)
+- Context: Proposals needed a temperature read long before a binding vote, and up/down voting was rejected: it polarizes early, rewards mobilization over insight, and duplicates what Hypha does. Locked decisions: 7-point scale (-3..+3), open to any signed-in member (tier gate built but off), ranking by net points with an average floor of +1.0 as an advance gate.
+- Decision: one adjustable signal per member per proposal, stored individually but surfaced ONLY as aggregates (histogram, net points, count). Negative scores prompt an optional "what would move you" note that surfaces unattributed and feeds the AI synthesis. Signals decay to a stale badge when old; a second signal overwrites the first.
+- Why: aggregate-only display keeps early sensing honest (nobody performs their score for an audience); the moveNote turns opposition into design input instead of a fight; net points ranking surfaces both enthusiasm and breadth without pretending to be a mandate.
+- Trade-offs: individual signals exist in the DB (aggregate-only is a display rule, enforced in code review, not cryptography); a 7-point scale is more cognitive load than up/down; the advance gates are tunable game variables, so governance can change its own thresholds (by design, but worth knowing).
+- Where it lives in code: `proposal_signals` table (migration 0164), signal procedures in `server/routes/assembly.ts`, pill row + histogram in the Assembly page components. Extends ADR-27.
+
+---
+
+## ADR-29: The Evolution Engine — ratified decisions execute themselves, autonomy is community-governed
+
+- Date: 2026-07-03
+- Status: Accepted (Rung 1 live; Rung 3 coded dark, gated, NOT approved to ship; Rung 2 design placeholder)
+- Context: Ratified proposals used to wait for a human (Rye) to apply them, which made the community's authority theoretical and Rye a bottleneck. The spec's ladder: Rung 0 humans apply by hand, Rung 1 ratified variable changes auto-apply, Rung 2 content auto-applies (later), Rung 3 features auto-build/auto-ship via GitHub (dark launch only). The machine's leash must itself be governed by the same mechanism as every other game rule.
+- Decision: proposals carry a structured `executionPayload` validated at raise time (bounds for variable changes; scopePaths + acceptance criteria for features, protected paths rejected immediately). On a confirmed ratification, `dispatchExecution` runs the payload idempotently (one applied execution per proposal, recorded append-only in `governance_executions`): variable changes go through `applyVariableChange`, the same bounds-checked path as `game.updateVariable`, attributed to the provisioned "The Evolution Engine" bot user. Autonomy is governed by `evolution.max_autonomy_tier` (default 1), `evolution.launch_window_hours`, and `evolution.circuit_breaker_failures` (migration 0170) — raising the tier is an act of meta-governance, not a deploy. Below tier 3 a ratified feature parks in `paused` and nothing is created on GitHub. Protected paths (`.github/assembly-protected-paths.json`, enforced fail-closed by `scripts/check-protected-paths.mjs`) and the circuit breaker are code-enforced and NOT community-tunable below their floors. The ratification event does not arrive by webhook yet, so `assembly.confirmRatification` is an admin-gated stub that records the Hypha outcome and runs the dispatcher (gap logged in SHIPPED_LOG.md).
+- Why: Rung 1 makes community authority real for the safest change class (bounded numbers the game already exposes) while keeping one shared write path, one audit trail, and one attribution story. Governing the tier with a game variable means the community, not the maintainer, decides how much power the machine holds — which is the point of the project. Building Rung 3 dark lets the whole pipeline be tested without any path to production until both the community votes the tier up AND a human ships the go-ahead.
+- Trade-offs: the admin-confirm stub means a human still relays the Hypha outcome (trust bridge until the webhook exists); Rung 3's dark code is maintenance surface that cannot fire; tier 3, when someday enabled, lets an LLM merge to main off a community vote — the protected paths, machine gates, launch window with Steward pause, and circuit breaker exist precisely to bound that, and Phase 7 still requires explicit human go-ahead before any of it is finished.
+- Where it lives in code: `server/lib/evolution.ts`, `server/lib/github-governance.ts` (dark), `scripts/check-protected-paths.mjs` + `.github/assembly-protected-paths.json`, `governance_executions` (migration 0167), autonomy variables (migration 0170), `confirmRatification` + `evolutionStatus` in `server/routes/assembly.ts`, launch-window advance in `server/jobs/assemblyLifecycleJob.ts` (inert below tier 3). Tests: `server/evolution.test.ts`, `server/evolution-guard.test.ts`. Extends ADR-27; the spec's locked decision 10 is canonical.
+
+---
+
 ## Adding new ADRs
 
 When you make a load-bearing decision (something a future contributor would re-litigate without context), add an entry. Keep it terse. The "Why" section is the most valuable part: it captures the reasoning that's invisible from the code alone.
