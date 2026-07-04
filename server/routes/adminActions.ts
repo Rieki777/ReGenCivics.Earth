@@ -119,6 +119,42 @@ const ACTIONS: ActionDef[] = [
       };
     },
   },
+  {
+    id: "application_mark_reviewed",
+    label: "Mark application under review",
+    tier: "safe",
+    description: "Set a land project application's status to under_review. Reversible. Never approves, activates, or rejects.",
+    input: z.object({ id: z.number().int().positive() }),
+    run: async ({ id }) => {
+      const app = await db.getApplicationById(id);
+      const prev = ((app?.status as string) ?? "submitted");
+      await db.updateApplication(id, { status: "under_review" as never });
+      // Only ever offer a non-terminal restore; undo must not re-open an
+      // approve/activate/reject decision through a "safe" action.
+      const safePrev = ["submitted", "under_review", "changes_requested", "inactive"].includes(prev) ? prev : "submitted";
+      return {
+        summary: `Application #${id} marked under review.`,
+        undo: { actionId: "application_restore_status", input: { id, status: safePrev } },
+      };
+    },
+  },
+  {
+    id: "application_restore_status",
+    label: "Restore application status",
+    tier: "safe",
+    description: "Restore an application to a non-terminal status (undo target). Cannot approve, activate, or reject.",
+    // Enum floor: the terminal, high-stakes statuses (approved/active/rejected)
+    // are intentionally not accepted here, so this "safe" action can never
+    // escalate an outcome even if called directly.
+    input: z.object({
+      id: z.number().int().positive(),
+      status: z.enum(["submitted", "under_review", "changes_requested", "inactive"]),
+    }),
+    run: async ({ id, status }) => {
+      await db.updateApplication(id, { status: status as never });
+      return { summary: `Application #${id} status set to ${status}.` };
+    },
+  },
   // The first criteria-based registry action: archive general inquiries that
   // have not been touched in N days. Tier=confirm so the human must approve
   // once per execute call. When wired into an admin_automations row, the
@@ -190,6 +226,28 @@ const ACTIONS: ActionDef[] = [
 ];
 
 const ACTION_MAP = new Map(ACTIONS.map((a) => [a.id, a]));
+
+// The subset of registry actions the AI assistant is allowed to propose, with
+// the arg shape it should fill. Internal helpers (batch restores, automation
+// sweeps, undo-only targets) are deliberately excluded so the EA can never
+// surface them, and blocked-tier actions are filtered out structurally. This
+// is the single source of truth for the "Executable actions" prompt section,
+// so the model's known catalog can never drift from the real registry.
+const EA_CATALOG: { id: string; args: string }[] = [
+  { id: "inquiry_mark_reviewed", args: "{id}" },
+  { id: "inquiry_archive", args: "{id}" },
+  { id: "investor_set_status", args: "{id, status}" },
+  { id: "application_mark_reviewed", args: "{id}" },
+  { id: "banner_toggle", args: "{key}" },
+];
+
+export function executableActionCatalog(): string {
+  return EA_CATALOG
+    .map((e) => ({ def: ACTION_MAP.get(e.id), args: e.args }))
+    .filter((x): x is { def: ActionDef; args: string } => !!x.def && x.def.tier !== "blocked")
+    .map(({ def, args }) => `- ${def.id} ${args} - ${def.description} (${def.tier})`)
+    .join("\n");
+}
 
 function adminId(ctx: { user?: { id?: number } }): number {
   const id = ctx.user?.id;

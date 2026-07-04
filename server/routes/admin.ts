@@ -4,6 +4,7 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
+import { executableActionCatalog } from "./adminActions";
 import { eq, sql, count, like, gte, and, inArray } from "drizzle-orm";
 import { applicationEvents, adminNotifications, forumPosts, forumReplies, forumReports, campaigns as campaignsTable, gifts, playerProfiles, govProposals, events as eventsTable, recordings, newsletterSubscribers } from "../../drizzle/schema";
 import { applications as applicationsTable } from "../../drizzle/schema";
@@ -510,10 +511,7 @@ Examples:
 
 ## Executable actions (you can actually do these)
 For reversible operational work, use the "execute" action. The UI runs it through a safety-checked registry: it auto-runs safe actions, asks the admin to confirm medium ones, and refuses high-stakes ones. Available actions:
-- inquiry_mark_reviewed {id} - mark a general inquiry reviewed (safe)
-- inquiry_archive {id} - archive a general inquiry (safe)
-- investor_set_status {id, status} - move an investor to a stage like contacted, in_discussion, committed (confirm)
-- banner_toggle {key} - turn a site banner on or off (safe)
+${executableActionCatalog()}
 
 Example:
 <action>{"type":"execute","actionId":"inquiry_archive","input":{"id":42},"label":"Archive inquiry #42"}</action>
