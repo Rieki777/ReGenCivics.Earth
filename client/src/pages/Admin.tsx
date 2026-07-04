@@ -70,7 +70,6 @@ const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then
 import KnowledgeMapAdminPanel from "@/components/KnowledgeMapAdminPanel";
 import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { AdminAlertBanner } from "@/components/admin/AdminAlertBanner";
 import { ShortcutHelpOverlay } from "@/components/admin/ShortcutHelpOverlay";
 import { BulkActionBar } from "@/components/admin/BulkActionBar";
 import { AdminNotificationCenter } from "@/components/admin/AdminNotificationCenter";
@@ -3165,7 +3164,31 @@ function AdminPlayersTab() {
 }
 
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("tab") || "overview"; } catch { return "overview"; }
+  });
+  // Mirror the active tab into the URL (?tab=) so admin sections are
+  // bookmarkable, shareable, survive a refresh, and respond to browser
+  // back/forward. Query-only, so wouter stays on /admin and existing
+  // /admin/* routes are untouched.
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (activeTab === "overview") url.searchParams.delete("tab");
+      else url.searchParams.set("tab", activeTab);
+      const next = url.pathname + url.search;
+      if (next !== window.location.pathname + window.location.search) {
+        window.history.pushState(null, "", next);
+      }
+    } catch { /* history unavailable */ }
+  }, [activeTab]);
+  useEffect(() => {
+    const onPop = () => {
+      try { setActiveTab(new URLSearchParams(window.location.search).get("tab") || "overview"); } catch { /* noop */ }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const [investorSearch, setInvestorSearch] = useState('');
   const [appSearch, setAppSearch] = useState('');
   const [investorStatusFilter, setInvestorStatusFilter] = useState<string>('all');
@@ -3535,8 +3558,8 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* The standup banner belongs to the landing view only, not every tab. */}
-      {activeTab === "overview" && <AdminAlertBanner onTabChange={setActiveTab} />}
+      {/* The old alert banner is replaced by the richer "Needs you" queue at
+          the top of the Overview tab (AdminNeedsYou). */}
       {/* Scrollable main content */}
       <div className="flex-1 overflow-y-auto">
       {/* Stats */}

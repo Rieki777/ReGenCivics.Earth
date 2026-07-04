@@ -16,6 +16,7 @@ import {
 import { ActivitySparkline } from "./ActivitySparkline";
 import { AdminGovernancePanel } from "./AdminGovernancePanel";
 import { AdminCSuiteBriefing } from "./AdminCSuiteBriefing";
+import { AdminNeedsYou } from "./AdminNeedsYou";
 
 // Path type config subset needed for the overview
 const pathTypeConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -70,6 +71,9 @@ export function AdminOverviewTab({
 }: Props) {
   return (
     <div className="space-y-6">
+      {/* One prioritized action queue: what is waiting on the operator, first. */}
+      <AdminNeedsYou onSelectTab={setActiveTab} />
+
       {/* C-suite briefing + ecosystem KPIs: the AI-assisted front door. */}
       <AdminCSuiteBriefing onSelectTab={setActiveTab} />
 
