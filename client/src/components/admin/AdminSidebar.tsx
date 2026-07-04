@@ -8,8 +8,8 @@ import {
 } from 'lucide-react'
 
 // route items navigate to a real page instead of switching an in-page tab.
-type NavItem = { id: string; label: string; icon: typeof LayoutDashboard; route?: string }
-const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+export type NavItem = { id: string; label: string; icon: typeof LayoutDashboard; route?: string }
+export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: 'Ecosystem',
     items: [

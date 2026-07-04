@@ -70,6 +70,7 @@ const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then
 import KnowledgeMapAdminPanel from "@/components/KnowledgeMapAdminPanel";
 import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { ShortcutHelpOverlay } from "@/components/admin/ShortcutHelpOverlay";
 import { BulkActionBar } from "@/components/admin/BulkActionBar";
 import { AdminNotificationCenter } from "@/components/admin/AdminNotificationCenter";
@@ -3361,6 +3362,7 @@ function AdminDashboard() {
       <ShortcutHelpOverlay />
       <AdminNotificationCenter open={notifCenterOpen} onClose={() => setNotifCenterOpen(false)} />
       <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <AdminCommandPalette onSelectTab={setActiveTab} />
       <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] text-white py-4 md:py-6">
