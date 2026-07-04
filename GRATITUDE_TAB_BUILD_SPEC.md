@@ -8,6 +8,9 @@ Decisions locked with Rye (2026-07-03):
 1. **Full spec vision** — history, totals, power meter, progress ring, moon phase, streak, proportional budget. Not a lean slice.
 2. **Build the proportional model for real** — evolve the backend so the whole economy works, not a flat-5 placeholder.
 3. **Public messages, private totals** — other people can read the kind messages on your profile; your counts and earned-$ReGen stay private to you.
+4. **No reciprocity mechanics** (added mid-build) — see §12.5.
+
+> **As-shipped note (2026-07-03, ADR-30):** phases 1–4 plus the write-path cutover and batch job shipped in commits `d4751d2` + merge `679dab0`. One deviation from §7 below: notifications go through the forum-notify spine (`server/lib/forum-notify.ts:handleGratitudeSent` → the unified `notifications` table, ADR-24) rather than a `user_notifications.link` column — main had landed that spine mid-build, and it already carries dedupe, email prefs, and the bell UI. The deep link still lands on `/profile?tab=gratitude&highlight=<id>` exactly as specced. Migration shipped as `0163_gratitude_cycles.sql`; the ADR is **ADR-30** (main had claimed 24–29). Remaining phases: celebratory moments, share cards, Game Mechanics exposure, bounty-flow fold-in, send-modal presets.
 
 ---
 
