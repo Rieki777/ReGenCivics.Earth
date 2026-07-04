@@ -28,6 +28,7 @@ export interface GratitudeTheme {
  * Labels are human, first-person-neutral phrases that read well on a card.
  */
 export const THEME_LEXICON: Array<{ key: string; label: string; patterns: string[] }> = [
+  { key: "encouragement", label: "lifting others up", patterns: ["power to you", "power to ya", "you got this", "keep going", "cheering you on", "rooting for you", "proud of you", "keep shining", "you inspire"] },
   { key: "welcoming", label: "welcoming newcomers", patterns: ["welcom", "made me feel", "belong", "first week", "greeted", "included me"] },
   { key: "holding_space", label: "holding space", patterns: ["held space", "holding space", "hold space", "presence", "safe space", "grounded us", "calm"] },
   { key: "clarity", label: "bringing clarity", patterns: ["clear", "clarity", "clarified", "made sense", "explained", "cut through", "articulat"] },

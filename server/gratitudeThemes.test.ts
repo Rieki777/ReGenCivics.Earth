@@ -34,6 +34,13 @@ describe("extractThemes", () => {
     expect(themes[0].label).toBe("holding space");
   });
 
+  it("matches 'Power to You' — the signature ReGen phrase — including with an emoji", () => {
+    const themes = extractThemes(["Power to You 💚", "power to ya friend"]);
+    expect(themes[0].key).toBe("encouragement");
+    expect(themes[0].label).toBe("lifting others up");
+    expect(themes[0].count).toBe(2);
+  });
+
   it("is injection-proof: instructions in a message only match on their real words", () => {
     // Contains an injection attempt + a genuine 'help' signal. The injection
     // text is treated as plain words, never as instructions, and doesn't

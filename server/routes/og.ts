@@ -170,7 +170,11 @@ function gratitudeTemplate(data: { name: string; themes: string[]; peopleCount: 
       children: [
         { type: "div", props: { style: { fontSize: 22, color: "#ffd700", letterSpacing: 3, textTransform: "uppercase" }, children: "Gratitude" } },
         { type: "div", props: { style: { display: "flex", flexDirection: "column" }, children: [
-          { type: "div", props: { style: { fontSize: 30, color: "rgba(240,235,227,0.75)", marginBottom: 18 }, children: data.peopleCount > 0 ? `What ${data.peopleCount} ${data.peopleCount === 1 ? "person keeps" : "people keep"} thanking ${truncate(data.name, 24)} for` : `${truncate(data.name, 24)} in the ReGen Civics movement` } },
+          // Only promise a theme list when there are themes to show. Otherwise
+          // fall back to a warm standalone line so the card never dangles.
+          { type: "div", props: { style: { fontSize: data.themes.length > 0 ? 30 : 44, fontWeight: data.themes.length > 0 ? 400 : 700, color: data.themes.length > 0 ? "rgba(240,235,227,0.75)" : "#f8f5f0", marginBottom: 18, lineHeight: 1.2 }, children: data.themes.length > 0
+            ? `What ${data.peopleCount} ${data.peopleCount === 1 ? "person keeps" : "people keep"} thanking ${truncate(data.name, 24)} for`
+            : `${truncate(data.name, 28)} is appreciated in the ReGen Civics movement` } },
           ...themeRows,
         ] } },
         { type: "div", props: { style: { fontSize: 22, color: "rgba(248,245,240,0.55)" }, children: "regencivics.earth" } },
