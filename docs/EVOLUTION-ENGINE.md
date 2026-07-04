@@ -139,9 +139,11 @@ In dependency order:
 5. **Later, if trust is earned:** the community votes
    `evolution.launch_require_approval` to 0, removing the last human from
    the feature path. Variable/bounds changes are already human-free.
-6. **Nice-to-haves that deepen trust, not autonomy:** the Assembly dashboard
-   for in-flight ships (server data already public via `evolutionStatus`),
-   Rung 2 (content auto-apply), a staging DB for the integration suites.
+6. **Nice-to-haves that deepen trust, not autonomy:** Rung 2 (content
+   auto-apply) and a staging DB for the integration suites. The Assembly
+   page's Evolution Engine panel (tier ladder, guardrails, in-flight ships
+   with Steward pause, the proposer's Hypha link row) shipped 2026-07-04 —
+   `client/src/components/assembly/EvolutionEngine.tsx`.
 
 ## For LLMs working on this system
 

@@ -13,6 +13,13 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-04 (later): The Evolution Engine on the page
+
+- New Assembly section between Deciding and Record (`client/src/components/assembly/EvolutionEngine.tsx`): the autonomy tier as a 0-3 ladder with plain-language meaning per tier, the three guardrails at a glance (launch window hours, human-approval requirement, circuit breaker threshold), in-flight machine ships with a Steward pause control, recently shipped features. Reads `assembly.evolutionStatus` (now includes `launchRequireApproval`). Governance transparency: the community watches its own machine.
+- Deciding proposals carry the one-paste `HyphaLinkRow` for the proposer/admins — the missing UI for `assembly.recordHyphaProposal`, which arms machine ratification per proposal.
+
+---
+
 ## 2026-07-04: Ratification arrives machine-to-machine — Rung 1's last human relay is now optional
 
 - Confirmed on-chain reality from hypha-dao/hypha-web: Hypha's DAOProposals contract on Base (`0x001bA7a00a259Fb12d7936455e292a60FC2bef14`) emits `ProposalExecuted(proposalId indexed, passed, yesVotes, noVotes)` when a binding vote concludes. The proposal title (and our `[rc:key]` marker) never touches the chain, so matching is by numeric id.
