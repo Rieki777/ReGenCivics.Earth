@@ -8,7 +8,7 @@ import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import * as db from "../db";
 import { getDb } from "../db";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { forumPosts, recordings, gratitudeLog } from "../../drizzle/schema";
 import { extractThemes, validThemeKeys, labelForThemeKey } from "../../shared/gratitude-themes";
 import fs from "fs";
@@ -139,11 +139,12 @@ function blogTemplate(blog: { title: string; author: string; date: string; readT
 }
 
 // Gratitude summary card. AGGREGATE and ANONYMOUS by construction: it shows
-// the themes people keep thanking this person for, plus a people count —
-// never a quote, never a sender name. Themes come from the deterministic
-// lexicon (shared/gratitude-themes.ts), so nothing a sender wrote can inject
-// text into the image.
-function gratitudeTemplate(data: { name: string; themes: string[]; peopleCount: number }): any {
+// the themes people keep thanking this person for — never a quote, never a
+// sender name, and NO COUNTS (this endpoint is public for social crawlers,
+// and the visibility rule is "public messages, private totals"). Themes come
+// from the deterministic lexicon (shared/gratitude-themes.ts), so nothing a
+// sender wrote can inject text into the image.
+function gratitudeTemplate(data: { name: string; themes: string[] }): any {
   const themeRows = data.themes.slice(0, 4).map((label, i) => ({
     type: "div",
     props: {
@@ -172,8 +173,9 @@ function gratitudeTemplate(data: { name: string; themes: string[]; peopleCount: 
         { type: "div", props: { style: { display: "flex", flexDirection: "column" }, children: [
           // Only promise a theme list when there are themes to show. Otherwise
           // fall back to a warm standalone line so the card never dangles.
+          // No counts here — the endpoint is public.
           { type: "div", props: { style: { fontSize: data.themes.length > 0 ? 30 : 44, fontWeight: data.themes.length > 0 ? 400 : 700, color: data.themes.length > 0 ? "rgba(240,235,227,0.75)" : "#f8f5f0", marginBottom: 18, lineHeight: 1.2 }, children: data.themes.length > 0
-            ? `What ${data.peopleCount} ${data.peopleCount === 1 ? "person keeps" : "people keep"} thanking ${truncate(data.name, 24)} for`
+            ? `What people keep thanking ${truncate(data.name, 24)} for`
             : `${truncate(data.name, 28)} is appreciated in the ReGen Civics movement` } },
           ...themeRows,
         ] } },
@@ -266,13 +268,17 @@ export function registerOgRoutes(app: Express) {
       return res.status(400).json({ error: "type and id required" });
     }
 
-    // Check cache. Gratitude cards vary by selected themes, so fold that into
-    // the key.
+    // Cache policy: gratitude cards change as new gratitude arrives, so they
+    // get a short TTL; custom theme-combo variants are rendered on demand and
+    // never stored (keeps the in-memory map bounded — theme combos are
+    // attacker-enumerable). Everything else keeps the 24h TTL.
     const themesParam = typeof req.query.themes === "string" ? req.query.themes : "";
-    const cacheKey = `${type}-${id}${themesParam ? `-${themesParam}` : ""}`;
-    const cached = ogCache.get(cacheKey);
-    if (cached && Date.now() - cached.generatedAt < CACHE_TTL) {
-      res.set({ "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" });
+    const ttl = type === "gratitude" ? 10 * 60 * 1000 : CACHE_TTL;
+    const cacheable = !(type === "gratitude" && themesParam);
+    const cacheKey = `${type}-${id}`;
+    const cached = cacheable ? ogCache.get(cacheKey) : undefined;
+    if (cached && Date.now() - cached.generatedAt < ttl) {
+      res.set({ "Content-Type": "image/png", "Cache-Control": `public, max-age=${Math.floor(ttl / 1000)}` });
       return res.send(cached.png);
     }
 
@@ -297,10 +303,13 @@ export function registerOgRoutes(app: Express) {
           if (!database) break;
           const userId = Number(id);
           if (!Number.isFinite(userId)) break;
+          // Newest 500, matching gratitude.myThemes so the in-tab preview and
+          // the public card agree on which messages feed the themes.
           const rows = await database
-            .select({ senderId: gratitudeLog.senderId, message: gratitudeLog.message })
+            .select({ message: gratitudeLog.message })
             .from(gratitudeLog)
             .where(eq(gratitudeLog.recipientId, userId))
+            .orderBy(desc(gratitudeLog.id))
             .limit(500);
           const users = await db.getUsersByIds([userId]);
           const name = users[userId]?.name || "A ReGen player";
@@ -313,8 +322,7 @@ export function registerOgRoutes(app: Express) {
           const selected = requested.filter((k) => earnedKeys.has(k));
           const keys = (selected.length > 0 ? selected : earned.map((t) => t.key)).slice(0, 4);
           const labels = keys.map((k) => labelForThemeKey(k)!).filter(Boolean);
-          const peopleCount = new Set(rows.map((r: any) => r.senderId)).size;
-          element = gratitudeTemplate({ name, themes: labels, peopleCount });
+          element = gratitudeTemplate({ name, themes: labels });
           break;
         }
         case "quest": {
@@ -363,9 +371,9 @@ export function registerOgRoutes(app: Express) {
       }
 
       const png = await renderOgImage(element);
-      ogCache.set(cacheKey, { png, generatedAt: Date.now() });
+      if (cacheable) ogCache.set(cacheKey, { png, generatedAt: Date.now() });
 
-      res.set({ "Content-Type": "image/png", "Cache-Control": "public, max-age=86400, s-maxage=3600" });
+      res.set({ "Content-Type": "image/png", "Cache-Control": `public, max-age=${Math.floor(ttl / 1000)}, s-maxage=3600` });
       res.send(png);
     } catch (err: any) {
       console.error("[og] Generation failed:", err?.message);

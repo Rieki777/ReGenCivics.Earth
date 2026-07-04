@@ -13,7 +13,7 @@
  *  - All motion respects prefers-reduced-motion.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Heart, Send, Sparkles, ExternalLink, Search, Moon, Share2, Download, Copy, Check, RefreshCw, Loader2 } from "lucide-react";
+import { Heart, Send, Sparkles, Search, Moon, Share2, Download, Copy, Check, RefreshCw, Loader2 } from "lucide-react";
 import { XShareButton, LinkedinShareButton, FacebookShareButton, BlueskyShareButton } from "react-share";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -218,9 +218,16 @@ function NoteCard({ entry, direction, highlighted, index }: {
           ) : initials(entry)}
         </div>
         <div className="min-w-0">
-          <Link href={`/profile/${entry.otherUserId}`} className="block text-sm font-bold text-[#1a472a] hover:underline truncate" style={{ fontFamily: "var(--font-display)" }}>
-            {direction === "sent" ? `To ${name}` : name}
-          </Link>
+          {/* App route is /profile/:handle — link by handle, plain text if absent */}
+          {entry.otherHandle ? (
+            <Link href={`/profile/${entry.otherHandle}`} className="block text-sm font-bold text-[#1a472a] hover:underline truncate" style={{ fontFamily: "var(--font-display)" }}>
+              {direction === "sent" ? `To ${name}` : name}
+            </Link>
+          ) : (
+            <span className="block text-sm font-bold text-[#1a472a] truncate" style={{ fontFamily: "var(--font-display)" }}>
+              {direction === "sent" ? `To ${name}` : name}
+            </span>
+          )}
           <span className="text-[11px] text-[#8a8577]">{timeAgo(entry.createdAt)}</span>
         </div>
       </div>
