@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { TrendingUp, Download, Search, Filter, DollarSign, Clock, ChevronRight, CheckCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
@@ -141,8 +141,8 @@ export function AdminInvestorsTab({
           ) : (
           <div className="divide-y divide-[#1a472a]/10">
             {filteredInvestors.map((investor: any) => (
-              <Dialog key={investor.id}>
-                <DialogTrigger asChild>
+              <Sheet key={investor.id}>
+                <SheetTrigger asChild>
                   <div className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
@@ -208,10 +208,10 @@ export function AdminInvestorsTab({
                       </div>
                     </div>
                   </div>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-3">
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
                         <TrendingUp className="w-5 h-5 text-amber-600" />
                       </div>
@@ -219,8 +219,8 @@ export function AdminInvestorsTab({
                         <span className="text-[#1a472a]">{investor.fullName}</span>
                         <p className="text-sm font-normal text-[#1a472a]/80">Investor Inquiry</p>
                       </div>
-                    </DialogTitle>
-                  </DialogHeader>
+                    </SheetTitle>
+                  </SheetHeader>
 
                   <div className="space-y-6 py-4">
                     {/* Contact Info */}
@@ -347,7 +347,7 @@ export function AdminInvestorsTab({
                     <ReminderPanelComp contactType="investor" contactId={investor.id} />
                   </div>
 
-                  <DialogFooter className="flex-col gap-3">
+                  <SheetFooter className="flex-col gap-3">
                     {/* Assignee */}
                     <AssigneeSelectComp contactType="investor" contactId={investor.id} />
                     {/* Status update */}
@@ -405,9 +405,9 @@ export function AdminInvestorsTab({
                         Mark as Reviewed
                       </Button>
                     </div>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
             ))}
           </div>
           )

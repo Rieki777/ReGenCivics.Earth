@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { HelpCircle, Clock, ChevronRight, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
@@ -59,8 +59,8 @@ export function AdminOtherInquiriesTab({
             const Icon = config.icon;
             const ageOther = getAgeInfo(inquiry.createdAt);
             return (
-              <Dialog key={inquiry.id}>
-                <DialogTrigger asChild>
+              <Sheet key={inquiry.id}>
+                <SheetTrigger asChild>
                   <div className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
@@ -98,10 +98,10 @@ export function AdminOtherInquiriesTab({
                       </div>
                     </div>
                   </div>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-3">
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full ${config.color}/20 flex items-center justify-center`}>
                         <Icon className="w-5 h-5 text-[#1a472a]" />
                       </div>
@@ -109,8 +109,8 @@ export function AdminOtherInquiriesTab({
                         <span className="text-[#1a472a]">{inquiry.fullName}</span>
                         <p className="text-sm font-normal text-[#1a472a]/80 capitalize">{inquiry.pathType?.replace(/_/g, ' ') || 'General'} Inquiry</p>
                       </div>
-                    </DialogTitle>
-                  </DialogHeader>
+                    </SheetTitle>
+                  </SheetHeader>
 
                   <div className="space-y-6 py-4">
                     {/* Contact Info */}
@@ -159,7 +159,7 @@ export function AdminOtherInquiriesTab({
                     <ReminderPanelComp contactType="general_inquiry" contactId={inquiry.id} />
                   </div>
 
-                  <DialogFooter className="flex-col gap-3">
+                  <SheetFooter className="flex-col gap-3">
                     <AssigneeSelectComp contactType="general_inquiry" contactId={inquiry.id} />
                     <div className="w-full flex items-center gap-2">
                       <span className="text-xs text-[#1a472a]/80 shrink-0">Status:</span>
@@ -209,9 +209,9 @@ export function AdminOtherInquiriesTab({
                         Mark as Reviewed
                       </Button>
                     </div>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
             );
           })}
           {(!inquiries || inquiries.filter((i: any) => ['other', 'learn', 'finance'].includes(i.pathType)).length === 0) && (

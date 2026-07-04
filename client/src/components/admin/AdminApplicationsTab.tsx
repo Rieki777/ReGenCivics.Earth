@@ -4,14 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Sprout,
   Download,
@@ -293,8 +293,8 @@ export function AdminApplicationsTab({
             {applySeasonFilter(filteredApps).map((app: any) => {
               const ageApp = getAgeInfo(app.submittedAt || app.createdAt || new Date());
               return (
-                <Dialog key={app.id}>
-                  <DialogTrigger asChild>
+                <Sheet key={app.id}>
+                  <SheetTrigger asChild>
                     <div className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
@@ -355,17 +355,17 @@ export function AdminApplicationsTab({
                         </div>
                       </div>
                     </div>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+                    <SheetHeader>
+                      <SheetTitle
                         className="text-[#1a472a]"
                         style={{ fontFamily: "var(--font-display)" }}
                       >
                         {app.projectName}
-                      </DialogTitle>
-                      <DialogDescription>{app.location}</DialogDescription>
-                    </DialogHeader>
+                      </SheetTitle>
+                      <SheetDescription>{app.location}</SheetDescription>
+                    </SheetHeader>
                     <div className="space-y-4 py-4">
                       {app.vision && (
                         <div>
@@ -422,7 +422,7 @@ export function AdminApplicationsTab({
                       <ContactTagsPanel contactType="project_application" contactId={app.id} />
                       <ReminderPanel contactType="project_application" contactId={app.id} />
                     </div>
-                    <DialogFooter className="flex-col gap-2">
+                    <SheetFooter className="flex-col gap-2">
                       <AssigneeSelect contactType="project_application" contactId={app.id} />
                       <div className="flex flex-col sm:flex-row gap-2">
                         <EmailTemplateSelector
@@ -439,9 +439,9 @@ export function AdminApplicationsTab({
                           </Button>
                         </Link>
                       </div>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    </SheetFooter>
+                  </SheetContent>
+                </Sheet>
               );
             })}
           </div>
