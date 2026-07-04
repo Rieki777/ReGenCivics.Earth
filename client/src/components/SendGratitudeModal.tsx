@@ -49,6 +49,7 @@ type Props = {
 
 export function SendGratitudeModal({ open, onOpenChange }: Props) {
   const { isAuthenticated } = useAuth();
+  const utils = trpc.useUtils();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [recipient, setRecipient] = useState<Recipient | null>(null);
@@ -79,6 +80,10 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
     onSuccess: () => {
       setSent(true);
       setMessage("");
+      // Refresh the Gratitude tab live: power meter, per-person share,
+      // full-power count, and the Sent journal all change on send.
+      utils.gratitude.myOverview.invalidate();
+      utils.gratitude.myJournal.invalidate();
       window.setTimeout(() => {
         setSent(false);
         setRecipient(null);

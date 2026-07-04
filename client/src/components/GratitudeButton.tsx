@@ -22,6 +22,7 @@ type Props = {
 
 export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact = false }: Props) {
   const { user, isAuthenticated } = useAuth();
+  const utils = trpc.useUtils();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
@@ -91,6 +92,9 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
     onSuccess: () => {
       setSent(true);
       setMessage("");
+      // Keep the profile Gratitude tab fresh if it's mounted anywhere.
+      utils.gratitude.myOverview.invalidate();
+      utils.gratitude.myJournal.invalidate();
       setTimeout(() => {
         setSent(false);
         setOpen(false);
