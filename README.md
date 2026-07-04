@@ -27,6 +27,25 @@ distribution, governance proposals).
 
 ---
 
+## The game evolves itself
+
+The rules of the game live in a database and the players change them through
+governance. Proposals form in the Assembly (`/assembly`), the community
+signals and refines them, the binding vote happens on Hypha DAO (Base), and
+ratified changes **execute themselves**: variable and bounds changes apply
+automatically the moment the on-chain vote concludes, and larger feature
+changes flow through a gated machine pipeline that is built, dark, and waiting
+on a community vote to activate. How much power the machine holds is itself a
+community-governed variable.
+
+**Start here: [`docs/EVOLUTION-ENGINE.md`](docs/EVOLUTION-ENGINE.md)** — the
+full flow, what is live, what is dark, and the exact remaining steps to full
+autonomy. The build spec is [`ASSEMBLY_PAGE_SPEC.md`](ASSEMBLY_PAGE_SPEC.md);
+the load-bearing decisions are ADR-27/28/29 in
+[`.ai/docs/DECISIONS.md`](.ai/docs/DECISIONS.md).
+
+---
+
 ## Tech Stack
 
 | Layer | Tech |

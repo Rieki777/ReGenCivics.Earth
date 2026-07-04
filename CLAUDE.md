@@ -20,6 +20,7 @@ Personal working preferences live in `~/.claude/CLAUDE.md` (global) and the `cus
 | Reverse, sidestep, or revisit an architectural choice | `.ai/docs/DECISIONS.md` | Read the prior ADR. If committing to the new direction, append an ADR that supersedes the old one. |
 | Hard-block a request because it conflicts with a hard rule | `.ai/docs/STEERING.md` | Surface the conflict, quote the section, ask Rye before proceeding. |
 | Move a player or their data from ReGen Civics to Hypha | `.ai/docs/HYPHA-BRIDGE.md` | Use the bridge; extend it with a new intent type. Never hand-roll redirects. |
+| Touch the Evolution Engine, Assembly, ratification, or the machine-governance pipeline (`server/lib/evolution*`, `server/lib/ratification.ts`, hypha-bridge webhook, `assembly-*.yml` workflows) | `docs/EVOLUTION-ENGINE.md` | Read the as-built map first. ADR-27/28/29 record the decisions; `ASSEMBLY_PAGE_SPEC.md` §15 decisions are locked. New execution payload kinds must validate at raise AND execution, stay idempotent under concurrent dispatch, and extend `server/evolution.test.ts`. |
 | Find the right skill for a task | `.ai/docs/SKILLS-INDEX.md` | Skills self-surface, but this is the curated catalog. |
 | Find a standing spec, planning doc, or season record | `.ai/docs/PROJECT-INDEX.md` | Annotated map of the root-level reference docs. |
 | Touch auth, OAuth, the cookie module, or JWT verification | `.ai/docs/security/OWASP-TOP10.md` (A01, A07) + `OPS-PLAYBOOK.md` Procedure 10 | Confirm the posture. Verify the flow in production. |

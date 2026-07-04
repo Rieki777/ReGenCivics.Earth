@@ -1,5 +1,13 @@
 # The Evolution Engine — how the game evolves itself
 
+> **Status (2026-07-04):** Rung 1 fully live, including machine ratification —
+> `ProposalExecuted` from Hypha's contract on Base ratifies with no human, once
+> the Alchemy subscription includes the DAO contract's logs (one dashboard
+> step) and the proposer has linked their Hypha proposal id
+> (`assembly.recordHyphaProposal`; admin relay is the fallback). Rung 3 is
+> fully built and dark behind three locks. Keep this banner current when the
+> state changes.
+
 This document explains, for any human or LLM picking up this codebase, how a
 community decision becomes a change to the running game with no maintainer in
 the loop — what works today, what is built but dark, and exactly what remains
