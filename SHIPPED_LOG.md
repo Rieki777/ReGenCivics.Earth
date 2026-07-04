@@ -13,6 +13,17 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-04: Ratification arrives machine-to-machine — Rung 1's last human relay is now optional
+
+- Confirmed on-chain reality from hypha-dao/hypha-web: Hypha's DAOProposals contract on Base (`0x001bA7a00a259Fb12d7936455e292a60FC2bef14`) emits `ProposalExecuted(proposalId indexed, passed, yesVotes, noVotes)` when a binding vote concludes. The proposal title (and our `[rc:key]` marker) never touches the chain, so matching is by numeric id.
+- `webhook-receiver.ts` now decodes DAO-contract logs with viem (Alchemy GraphQL custom-webhook shape, address-filtered, never throws), matches bridges by `hyphaProposalId`, and a new `cascadeAssemblyRatified` applies the outcome. `passed=false` normalizes to a decline. A bare token Transfer can never ratify.
+- New shared `server/lib/ratification.ts`: one `applyRatificationOutcome` used by BOTH the webhook and the admin `confirmRatification` (now the documented fallback, no longer a stub) — status transitions, dispatch, provenance (`relay: admin | alchemy-webhook`, txHash), and the governance notification can't drift between paths. Idempotent end to end.
+- New `assembly.recordHyphaProposal`: the proposer pastes the Hypha proposal URL once after launching; the parsed numeric id lands on the bridge row and arms the machine path. Admin relay covers anything unlinked.
+- 7 new tests (`server/ratification.test.ts`): full machine loop against the live DB (ratify -> implemented + applied + provenance; redelivery no-op; decline path) plus viem round-trip decoding with foreign-contract and malformed-log rejection. Suite: 300 green.
+- Operational remainder (dashboard-side): point the existing Alchemy webhook (`ALCHEMY_WEBHOOK_ID`, signing key already on Railway) at the DAO proposals contract's logs. Then Rung 1 runs with zero humans.
+
+---
+
 ## 2026-07-04: The dark Rung 3 pipeline is complete — docs, CI gates, builder workflow, human approval gate
 
 - `docs/EVOLUTION-ENGINE.md`: canonical explainer of the whole flow for any human or LLM — what is live (Rung 1), what is built dark (Rung 3), and the exact remaining steps to full autonomy in dependency order.

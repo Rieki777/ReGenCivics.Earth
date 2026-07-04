@@ -59,7 +59,9 @@ outcome (`confirmedBy`), and — for variable changes — a `proposalId` column 
 | Variable changes: bounds re-checked, history + provenance written, cache busted | `applyVariableChange` |
 | Bounds changes: the community widens/narrows a variable's own sandbox; current value must fit; `evolution.*` bounds refused at both layers | `applyBoundsChange` |
 | The machine's leash as game variables: `evolution.max_autonomy_tier` (0-3, default 1), `evolution.launch_window_hours`, `evolution.circuit_breaker_failures`, `evolution.launch_require_approval` | migrations 0170 + 0173 |
-| Admin relay of the Hypha outcome, stamped with who + agreement link | `assembly.confirmRatification` |
+| **Machine ratification**: the Alchemy webhook decodes `ProposalExecuted(proposalId, passed, ...)` from Hypha's DAOProposals contract on Base (`0x001bA7a0...bef14`), matches the bridge by `hyphaProposalId`, and applies the outcome with no human involved | `server/lib/hypha-bridge/webhook-receiver.ts` (`decodeHyphaProposalLog`, `cascadeAssemblyRatified`) → `server/lib/ratification.ts` |
+| The one-paste link that arms the machine path: the proposer pastes the Hypha proposal URL after launching, storing the on-chain id (the log carries only the numeric id, never our title marker) | `assembly.recordHyphaProposal` |
+| Admin relay of the Hypha outcome — now the FALLBACK for unlinked bridges or webhook downtime; same shared path, idempotent against the machine | `assembly.confirmRatification` → `server/lib/ratification.ts` |
 | Public status: tier, window, breaker, in-flight ships | `assembly.evolutionStatus` |
 | Tests: 24 across `server/evolution.test.ts` (live-DB, end to end) and `server/evolution-guard.test.ts` (pure) | |
 
@@ -107,12 +109,16 @@ positions mean.
 
 In dependency order:
 
-1. **The ratification webhook** (the one gap that also affects Rung 1).
-   Today a human admin relays the Hypha outcome via `confirmRatification`.
-   Full autonomy needs the ratification event to arrive machine-to-machine:
-   either the existing Alchemy webhook receiver (`server/webhooks/`) starts
-   carrying Hypha agreement events, or a new subscription is wired. Blocked
-   on confirming what Hypha/Alchemy actually emit, not on our code.
+1. **The ratification webhook: server side DONE.** `ProposalExecuted` decoding,
+   bridge matching, and the ratification cascade are live and tested
+   (`server/ratification.test.ts`). Two operational steps remain:
+   (a) the Alchemy webhook subscription (dashboard) must deliver the DAO
+   proposals contract's logs — a GraphQL custom webhook on
+   `HYPHA_DAO_PROPOSALS_CONTRACT`, signing with the existing
+   `ALCHEMY_HYPHA_WEBHOOK_SIGNING_KEY`; and (b) proposers paste their Hypha
+   proposal link after launching (`assembly.recordHyphaProposal`) so the
+   numeric on-chain id is linked — the admin relay remains the fallback for
+   anything unlinked.
 2. **Secrets + switches, deliberately human.** Set `GITHUB_GOVERNANCE_TOKEN`
    (fine-grained PAT: issues, PRs, contents on this repo only), repo secret
    `ANTHROPIC_API_KEY`, repo variable `ASSEMBLY_BUILDER_ENABLED=true`.

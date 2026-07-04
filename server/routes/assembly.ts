@@ -468,10 +468,6 @@ export const assemblyRouter = router({
       return { ok: true, proposalId };
     }),
 
-  /** Confirm a Hypha outcome and run the Evolution Engine dispatcher.
-   * Admin-gated stub until the ratification event arrives by webhook: the
-   * binding vote already happened on Hypha, this records its outcome here
-   * and executes the payload (Rung 1). Gap logged in SHIPPED_LOG.md. */
   /** Server-truth scope for CI. The protected-paths gate on an assembly/*
    * PR fetches the ratified scopePaths from HERE, never from a file on the
    * branch under review — the machine must not write its own permission
@@ -494,6 +490,12 @@ export const assemblyRouter = router({
       return { kind: "feature", status: rows[0].status, scopePaths: payload.scopePaths ?? [] };
     }),
 
+  /** Confirm a Hypha outcome and run the Evolution Engine dispatcher.
+   * The FALLBACK relay: the machine path is the Alchemy webhook decoding
+   * ProposalExecuted from Hypha's DAO contract (webhook-receiver.ts), which
+   * funnels into the same applyRatificationOutcome. This admin action stays
+   * for proposals whose bridge never got a hyphaProposalId link, or when the
+   * webhook is down. Both paths are idempotent against each other. */
   confirmRatification: protectedProcedure
     .input(z.object({
       proposalId: z.number().int().positive(),
@@ -504,57 +506,69 @@ export const assemblyRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin" && ctx.user.role !== "superadmin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Recording a Hypha outcome is admin-only until the webhook carries ratification." });
+        throw new TRPCError({ code: "FORBIDDEN", message: "Recording a Hypha outcome is admin-only; the webhook is the machine path." });
       }
+      const { applyRatificationOutcome } = await import("../lib/ratification");
+      const result = await applyRatificationOutcome(input.proposalId, input.outcome, {
+        confirmedBy: ctx.user.id,
+        relay: "admin",
+        ...(input.hyphaAgreementUrl ? { hyphaAgreementUrl: input.hyphaAgreementUrl } : {}),
+      });
+      if (!result.ok) {
+        throw new TRPCError({
+          code: result.error === "Proposal not found" ? "NOT_FOUND" : "BAD_REQUEST",
+          message: result.error ?? "Could not record the outcome.",
+        });
+      }
+      return { ok: true, outcome: result.outcome, execution: result.execution };
+    }),
+
+  /** The proposer (or an admin) links the launched Hypha proposal back to us
+   * by pasting the Hypha proposal URL or numeric id — once. This stores the
+   * on-chain proposal id on the bridge row, which is what lets the Alchemy
+   * ProposalExecuted event ratify machine-to-machine: the on-chain log
+   * carries only the numeric id, never the title marker. */
+  recordHyphaProposal: protectedProcedure
+    .input(z.object({
+      proposalId: z.number().int().positive(),
+      hyphaProposal: z.string().min(1).max(500), // URL or numeric id
+    }))
+    .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-      const props = await db.select({ status: proposals.status }).from(proposals).where(eq(proposals.id, input.proposalId)).limit(1);
+
+      const props = await db
+        .select({ authorId: proposals.authorId, status: proposals.status, hyphaBridgeKey: proposals.hyphaBridgeKey })
+        .from(proposals)
+        .where(eq(proposals.id, input.proposalId))
+        .limit(1);
       if (props.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
-      if (props[0].status !== "in_governance") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: `This proposal is ${props[0].status}; only a proposal at a binding vote can be confirmed.` });
+      const p = props[0];
+      const isAdmin = ctx.user.role === "admin" || ctx.user.role === "superadmin";
+      if (p.authorId !== ctx.user.id && !isAdmin) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only the proposer or an admin can link the Hypha proposal." });
+      }
+      if (p.status !== "in_governance") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `This proposal is ${p.status}; link the Hypha proposal while the binding vote is live.` });
+      }
+      if (!p.hyphaBridgeKey) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This proposal was never launched through the bridge." });
       }
 
-      if (input.outcome === "declined") {
-        await db.execute(sql`UPDATE proposals SET status = 'declined' WHERE id = ${input.proposalId}`);
-        return { ok: true, outcome: "declined", execution: null };
+      // Accept a bare number or any Hypha URL whose last path/query number is
+      // the proposal id (e.g. .../proposal/123).
+      const matches = input.hyphaProposal.match(/\d+/g);
+      const hyphaProposalId = matches ? matches[matches.length - 1] : null;
+      if (!hyphaProposalId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Could not find a proposal number in that link." });
       }
 
-      await db.execute(sql`UPDATE proposals SET status = 'passed' WHERE id = ${input.proposalId}`);
-      const { dispatchExecution } = await import("../lib/evolution");
-      const execution = await dispatchExecution(input.proposalId);
-
-      // Stamp WHO relayed the Hypha outcome (and the agreement link when
-      // given) onto the execution row, so the Record's audit trail covers
-      // the human bridge, not just the machine's part.
-      try {
-        const [rows] = await db.execute(
-          sql`SELECT id, detail FROM governance_executions WHERE proposalId = ${input.proposalId} LIMIT 1`
-        );
-        const row = (rows as unknown as any[])?.[0];
-        if (row) {
-          let detail: Record<string, unknown> = {};
-          try {
-            detail = row.detail ? (typeof row.detail === "string" ? JSON.parse(row.detail) : row.detail) : {};
-          } catch { detail = {}; }
-          const merged = JSON.stringify({
-            ...detail,
-            confirmedBy: ctx.user.id,
-            ...(input.hyphaAgreementUrl ? { hyphaAgreementUrl: input.hyphaAgreementUrl } : {}),
-          });
-          await db.execute(sql`UPDATE governance_executions SET detail = ${merged} WHERE id = ${row.id}`);
-        }
-      } catch (_e) {
-        // Provenance stamping never blocks the ratification itself.
-      }
-      if (execution.status === "applied") {
-        await db.execute(sql`UPDATE proposals SET status = 'implemented' WHERE id = ${input.proposalId}`);
-        void notifyGovernanceSubscribers(
-          "The game just evolved",
-          `<p>A ratified proposal executed automatically: <strong>${execution.detail ?? ""}</strong></p>
-           <p><a href="https://regencivics.earth/assembly">See the full trail in the Record</a></p>`
-        );
-      }
-      return { ok: true, outcome: "ratified", execution };
+      const { hyphaBridges } = await import("../../drizzle/schema");
+      await db
+        .update(hyphaBridges)
+        .set({ hyphaProposalId } as any)
+        .where(eq(hyphaBridges.bridgeKey, p.hyphaBridgeKey));
+      return { ok: true, hyphaProposalId };
     }),
 
   /** The Record: ratified and executed proposals with their provenance trail. */
