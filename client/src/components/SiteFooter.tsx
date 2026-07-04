@@ -8,7 +8,7 @@ import { Link } from "wouter";
 import { SocialLinks } from "@/components/SocialLinks";
 import { resetCookieConsent } from "@/components/CookieConsent";
 import { Cookie, Lightbulb, Mail, Heart, Info } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SendGratitudeModal } from "@/components/SendGratitudeModal";
 import { FooterSearch } from "@/components/FooterSearch";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
@@ -17,6 +17,17 @@ import { HoverPreview } from "@/components/HoverPreview";
 
 export default function SiteFooter() {
   const [gratitudeOpen, setGratitudeOpen] = useState(false);
+
+  // Global open hook: the mobile FAB (WizardRadialMenu) and anything else
+  // can open the send-gratitude flow from any page by dispatching
+  // `open-send-gratitude`. The footer is mounted site-wide, so its modal
+  // doubles as the app-level gratitude composer.
+  useEffect(() => {
+    const openIt = () => setGratitudeOpen(true);
+    window.addEventListener("open-send-gratitude", openIt);
+    return () => window.removeEventListener("open-send-gratitude", openIt);
+  }, []);
+
   return (
     <footer className="relative py-8 md:py-10 border-t border-white/10" role="contentinfo" aria-label="Site footer">
       <div className="container">

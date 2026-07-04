@@ -1959,9 +1959,11 @@ export default function GameMechanics() {
               }
             >
             <p className="text-white/60 text-sm max-w-3xl mb-6 leading-relaxed">
-              Gratitude is the lunar-cycle pulse of the game: every player gets a budget, sends thank-yous, and the
-              receiving side carries forward as trust weight. The variables below shape the budget size, the
-              redistribution pool, and how strongly received gratitude lifts your trust score.
+              Gratitude is the lunar-cycle pulse of the game. Every new moon your budget resets. Sending a thank-you
+              is free and always will be: you acknowledge someone with a message, once per person per cycle. Your
+              budget splits equally across everyone you acknowledge, and when the cycle closes, the $ReGen pool is
+              distributed to the people who <em>received</em> gratitude, weighted by their senders' budgets. Every
+              number below is live from the database; changing one changes the game.
             </p>
             <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
               {/* Cycle & Budget */}
@@ -1981,21 +1983,27 @@ export default function GameMechanics() {
                   />
                   <GratVarRow
                     label="Base Budget"
-                    value={varNum(vars, "gratitude.budget_base", 100).toLocaleString()}
-                    detail="Same for all tiers"
-                    help={varHelp(vars, "gratitude.budget_base")}
+                    value={varNum(vars, "gratitude.base_budget", 100).toLocaleString()}
+                    detail="Same for all tiers, before multipliers"
+                    help={varHelp(vars, "gratitude.base_budget")}
                   />
                   <GratVarRow
                     label="Full-Power Threshold"
-                    value="10 people"
+                    value={`${varNum(vars, "gratitude.full_power_threshold", 10)} people`}
                     detail="Max impact per person"
-                    help="The first 10 people you acknowledge each cycle receive your full per-person impact. After 10, your budget starts diluting so each additional person gets a smaller share."
+                    help={varHelp(vars, "gratitude.full_power_threshold")}
                   />
                   <GratVarRow
                     label="Streak Bonus"
-                    value="+3% / cycle"
-                    detail="Max 30% (10 cycles)"
-                    help="Each cycle in a row where you acknowledge at least 10 people adds 3% to your effective budget. Caps at 30% after 10 consecutive cycles. Rewards showing up consistently."
+                    value={`+${asPercent(varNum(vars, "gratitude.streak_bonus_per_cycle", 0.03))}% / cycle`}
+                    detail={`Max +${asPercent(varNum(vars, "gratitude.streak_bonus_max", 0.3))}%`}
+                    help={varHelp(vars, "gratitude.streak_bonus_per_cycle")}
+                  />
+                  <GratVarRow
+                    label="Sending"
+                    value="Free"
+                    detail="One acknowledgment per person per cycle"
+                    help="Sending gratitude never costs you tokens and never mints them on the spot. It records your appreciation; the value flows to receivers when the cycle closes."
                   />
                 </CardContent>
               </Card>
@@ -2005,33 +2013,33 @@ export default function GameMechanics() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-white text-base flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#d4a017]" />
-                    Tier Multipliers
+                    Tier Budget Multipliers
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <GratVarRow
                     label="Explorer"
-                    value="1.0x"
-                    detail="Base weight"
-                    help="Explorers carry the base gratitude weight with no multiplier. You can still send gratitude, you just don't carry extra weight yet."
+                    value={`${varNum(vars, "gratitude.budget_multiplier.explorer", 1)}x`}
+                    detail="Base budget"
+                    help={varHelp(vars, "gratitude.budget_multiplier.explorer")}
                   />
                   <GratVarRow
                     label="Co-Creator"
-                    value={fmtX(tiers?.coCreator.gratitudeMultiplier, "1.2x")}
-                    detail="Weighted gratitude"
-                    help="Co-Creators carry more gratitude weight. Earned by completing onboarding quests, inviting at least one person, and staying active for a season."
+                    value={`${varNum(vars, "gratitude.budget_multiplier.co_creator", 2)}x`}
+                    detail="Double budget"
+                    help={varHelp(vars, "gratitude.budget_multiplier.co_creator")}
                   />
                   <GratVarRow
                     label="Steward"
-                    value={fmtX(tiers?.steward.gratitudeMultiplier, "1.5x")}
-                    detail="Weighted gratitude"
-                    help={`Stewards carry more gratitude weight. Earned by sustained contribution across ${tiers?.steward.minSeasons ?? 3}+ seasons and reputation above the ${tiers?.steward.minPercentile ?? 50}th percentile.`}
+                    value={`${varNum(vars, "gratitude.budget_multiplier.steward", 3)}x`}
+                    detail="Triple budget"
+                    help={varHelp(vars, "gratitude.budget_multiplier.steward")}
                   />
                   <GratVarRow
                     label="Sage"
-                    value={fmtX(tiers?.sage.gratitudeMultiplier, "2.0x")}
-                    detail="Weighted gratitude"
-                    help={`Sages carry the most gratitude weight. The long-game tier, earned through ${tiers?.sage.minSeasons ?? 6}+ seasons of deep contribution and community recognition.`}
+                    value={`${varNum(vars, "gratitude.budget_multiplier.sage", 5)}x`}
+                    detail="Most weight in the game"
+                    help={varHelp(vars, "gratitude.budget_multiplier.sage")}
                   />
                 </CardContent>
               </Card>
@@ -2095,9 +2103,9 @@ export default function GameMechanics() {
                   />
                   <GratVarRow
                     label="Reciprocity"
-                    value="Tracked"
-                    detail="Two-way edges are stronger"
-                    help="When two people both send gratitude to each other, the connection counts more than a one-way edge. Rewards mutual recognition."
+                    value="Never required"
+                    detail="Gratitude flows forward"
+                    help="There is no send-back mechanic and no bonus for mutual exchange, by design. Gratitude is a gift, not a debt: acknowledge whoever moved you, and let what you receive arrive on its own."
                   />
                 </CardContent>
               </Card>
@@ -2107,12 +2115,12 @@ export default function GameMechanics() {
                 sectionTitle="Gratitude System"
                 variables={[
                   {
-                    key: "gratitude.budget_base",
+                    key: "gratitude.base_budget",
                     label: "Base budget per cycle",
-                    ...varBounds(vars, "gratitude.budget_base", 50, 300),
+                    ...varBounds(vars, "gratitude.base_budget", 10, 1000),
                     step: 10,
-                    baseline: varNum(vars, "gratitude.budget_base", 100),
-                    help: varHelp(vars, "gratitude.budget_base"),
+                    baseline: varNum(vars, "gratitude.base_budget", 100),
+                    help: varHelp(vars, "gratitude.base_budget"),
                   },
                   {
                     key: "gratitude.pool_per_cycle",
@@ -2127,9 +2135,9 @@ export default function GameMechanics() {
                     key: "gratitude.claim_threshold",
                     label: "Claim threshold",
                     unit: " $ReGen",
-                    ...varBounds(vars, "gratitude.claim_threshold", 100, 1000),
-                    step: 10,
-                    baseline: varNum(vars, "gratitude.claim_threshold", 333),
+                    ...varBounds(vars, "gratitude.claim_threshold", 100, 10000),
+                    step: 50,
+                    baseline: varNum(vars, "gratitude.claim_threshold", 1000),
                     help: varHelp(vars, "gratitude.claim_threshold"),
                   },
                   {
@@ -2142,7 +2150,7 @@ export default function GameMechanics() {
                   },
                 ]}
                 summary={(s) => {
-                  const base = s["gratitude.budget_base"];
+                  const base = s["gratitude.base_budget"];
                   const pool = s["gratitude.pool_per_cycle"];
                   const threshold = s["gratitude.claim_threshold"];
                   const sageBudget = Math.round(base * 5);

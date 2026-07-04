@@ -28,7 +28,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote, Sparkles,
+  MessageCircle, User, Music, Pause, Search, PenLine, Edit3, Play, Scroll, Wrench, Vote, Sparkles, Heart,
 } from "lucide-react";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useSeasonTint } from "@/hooks/useSeasonTint";
@@ -175,9 +175,20 @@ export function WizardRadialMenu() {
   // submit. The radial menu is the easiest place to reach it from any page.
   const proposalsAction: Action = { key: "assembly", label: "Assembly", href: "/assembly", Icon: Vote };
 
+  // Send gratitude: opens the site-wide composer (SiteFooter listens for
+  // this event and opens SendGratitudeModal, which has member search built
+  // in). Placed last so it sits closest to the thumb — appreciating someone
+  // should be the easiest action in the game.
+  const gratitudeAction: Action = {
+    key: "gratitude",
+    label: "Send gratitude",
+    event: "open-send-gratitude",
+    Icon: Heart,
+  };
+
   // Vertical stack order, top -> bottom. The list is rendered as a column
   // that grows upward from the trigger, so the LAST item sits closest to the
-  // thumb. Quests is the primary anchor, so it lands nearest the trigger.
+  // thumb. Gratitude lands nearest the trigger — the game's easiest action.
   const ACTIONS: Action[] = [
     musicAction,
     profileAction,
@@ -187,6 +198,7 @@ export function WizardRadialMenu() {
     ...(onLandOrInvestor ? [toolsAction] : []),
     questsAction,
     bountiesAction,
+    gratitudeAction,
   ];
 
   // Springy easing so the rows feel like they pop up from the Flower.
