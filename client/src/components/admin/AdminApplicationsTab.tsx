@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -127,7 +127,13 @@ export function AdminApplicationsTab({
   EmailHistoryPanelComp,
 }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [seasonFilter, setSeasonFilter] = useState<string>("all");
+  // Persist the season filter so it survives tab switches and reloads.
+  const [seasonFilter, setSeasonFilter] = useState<string>(() => {
+    try { return localStorage.getItem("admin_app_season_filter") || "all"; } catch { return "all"; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("admin_app_season_filter", seasonFilter); } catch { /* storage blocked */ }
+  }, [seasonFilter]);
   const utils = trpc.useUtils();
   const updateStatus = trpc.applications.updateStatus.useMutation();
   const [bulkPending, setBulkPending] = useState(false);
