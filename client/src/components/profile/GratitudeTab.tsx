@@ -309,7 +309,10 @@ export function GratitudeTab({ userId }: { userId?: number }) {
         ) : (
           <h2 className="mt-1.5 text-white leading-tight text-[26px] sm:text-4xl" style={{ fontFamily: "var(--font-accent)", textShadow: "0 2px 14px rgba(0,0,0,0.3)" }}>
             {o && o.received.lifetimeTimes > 0 ? (
-              <><CountUp value={o.received.lifetimeTimes} /> thanks from <CountUp value={o.received.lifetimePeople} /> people</>
+              <>
+                <CountUp value={o.received.lifetimeTimes} /> {o.received.lifetimeTimes === 1 ? "thank" : "thanks"} from{" "}
+                <CountUp value={o.received.lifetimePeople} /> {o.received.lifetimePeople === 1 ? "person" : "people"}
+              </>
             ) : (
               <>Your gratitude story starts here</>
             )}
@@ -375,7 +378,7 @@ export function GratitudeTab({ userId }: { userId?: number }) {
           {o && <Sparkline points={o.received.trend} />}
           {o && (
             <p className="text-xs text-[#f0ebe3]/60 mt-2">
-              Lifetime · {o.received.lifetimePeople} people, {o.received.lifetimeTimes} times
+              Lifetime · {o.received.lifetimePeople} {o.received.lifetimePeople === 1 ? "person" : "people"}, {o.received.lifetimeTimes} {o.received.lifetimeTimes === 1 ? "time" : "times"}
             </p>
           )}
         </div>
