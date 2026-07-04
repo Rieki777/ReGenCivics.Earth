@@ -1195,6 +1195,52 @@ export default function Season2() {
               />
             </div>
           </div>
+
+          {/* Custom game: hire the core team 1 on 1 */}
+          <div className="relative mt-16 overflow-hidden rounded-3xl border-2 border-[#d4a574]/50 bg-gradient-to-br from-[#d4a574]/15 via-[#0d2818]/70 to-[#0d2818]/90 p-8 md:p-12">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-20 -left-20 w-72 h-72 rounded-full"
+              style={{ background: "radial-gradient(circle, rgba(212,165,116,0.25), transparent 70%)" }}
+            />
+            <div className="relative grid md:grid-cols-[1fr_auto] gap-8 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-[#d4a574]/20 px-4 py-2 rounded-full mb-5 border border-[#d4a574]/45">
+                  <Sparkles className="w-4 h-4 text-[#d4a574]" />
+                  <span className="text-white/90 text-xs font-semibold tracking-[0.18em] uppercase">
+                    One project at a time
+                  </span>
+                </div>
+                <h3 className="text-2xl md:text-4xl font-bold text-white leading-tight mb-4" style={display}>
+                  Don't want to wait for{" "}
+                  <span className="italic text-[#d4a574]">selection?</span>
+                </h3>
+                <p className="text-white/80 text-lg leading-relaxed mb-2">
+                  You can hire the ReGen Civics core team to go through this
+                  whole process 1 on 1 with your project. We take on one project
+                  at a time and go deep. That's exactly what we did with Amora.
+                </p>
+                <p className="text-white/65 leading-relaxed">
+                  When a spot opens, it goes to the next project in line. Apply
+                  now to claim yours.
+                </p>
+              </div>
+              <div className="md:text-right">
+                <Link
+                  href="/custom-games"
+                  className="inline-block rounded-xl shadow-[0_8px_30px_rgba(212,165,116,0.35)]"
+                >
+                  <Button
+                    size="lg"
+                    className="bg-[#d4a574] hover:bg-[#e3bd93] text-[#1a2818] font-bold rounded-xl px-8"
+                  >
+                    Build your custom game with us
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </AnimatedSection>
 
