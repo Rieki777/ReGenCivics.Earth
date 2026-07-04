@@ -618,10 +618,11 @@ export const assemblyRouter = router({
       const v = Number((r as any)?.[0]?.value);
       return Number.isFinite(v) ? v : fallback;
     };
-    const [tier, launchWindowHours, circuitBreakerFailures] = await Promise.all([
+    const [tier, launchWindowHours, circuitBreakerFailures, launchRequireApproval] = await Promise.all([
       readVar("evolution.max_autonomy_tier", 1),
       readVar("evolution.launch_window_hours", 24),
       readVar("evolution.circuit_breaker_failures", 2),
+      readVar("evolution.launch_require_approval", 1),
     ]);
     const inFlight = await db
       .select()
@@ -633,6 +634,7 @@ export const assemblyRouter = router({
       tier: Math.trunc(tier),
       launchWindowHours,
       circuitBreakerFailures,
+      launchRequireApproval: launchRequireApproval >= 1,
       inFlight: inFlight.map((e) => ({
         id: e.id,
         proposalId: e.proposalId,
