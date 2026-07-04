@@ -56,6 +56,54 @@ jobs:
           path: dist/public
           retention-days: 1
 
+  # ── Evolution Engine machine gates (ASSEMBLY_PAGE_SPEC.md section 7.3) ──
+  # Runs ONLY for PRs whose head branch is assembly/<proposalId>: the branches
+  # the Rung 3 builder agent opens. Verifies the diff against the ratified
+  # scope fetched from the PRODUCTION SERVER (never from a file on the branch
+  # under review — the machine must not write its own permission slip), then
+  # applies the gates-passed label the launch window waits for. Inert today:
+  # no assembly/* branches exist below autonomy tier 3.
+  assembly-gates:
+    name: Assembly machine gates
+    if: ${{ github.event_name == 'pull_request' && startsWith(github.head_ref, 'assembly/') }}
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Fetch ratified scope from the server (source of truth)
+        run: |
+          PROPOSAL_ID="${GITHUB_HEAD_REF#assembly/}"
+          if ! [[ "$PROPOSAL_ID" =~ ^[0-9]+$ ]]; then
+            echo "Branch does not carry a numeric proposal id; failing closed."
+            exit 1
+          fi
+          INPUT=$(jq -cn --argjson id "$PROPOSAL_ID" '{json:{proposalId:$id}}' | jq -sRr @uri)
+          SCOPE=$(curl -sf --max-time 30 "https://regencivics.earth/api/trpc/assembly.proposalScope?input=${INPUT}" \
+            | jq -c '.result.data.json.scopePaths')
+          if [ -z "$SCOPE" ] || [ "$SCOPE" = "null" ] || [ "$SCOPE" = "[]" ]; then
+            echo "No ratified feature scope on proposal #$PROPOSAL_ID; failing closed."
+            exit 1
+          fi
+          jq -n --argjson sp "$SCOPE" '{scopePaths: $sp}' > .assembly-scope.json
+          echo "Server scope for proposal #$PROPOSAL_ID: $SCOPE"
+
+      - name: Protected-paths check (fail closed)
+        run: node scripts/check-protected-paths.mjs "origin/${GITHUB_BASE_REF}" "${GITHUB_SHA}"
+
+      - name: Apply gates-passed label
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr edit "${{ github.event.pull_request.number }}" --add-label gates-passed --repo "${{ github.repository }}"
+
   lighthouse:
     name: Lighthouse CI
     runs-on: ubuntu-latest

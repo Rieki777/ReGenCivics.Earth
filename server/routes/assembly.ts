@@ -472,6 +472,28 @@ export const assemblyRouter = router({
    * Admin-gated stub until the ratification event arrives by webhook: the
    * binding vote already happened on Hypha, this records its outcome here
    * and executes the payload (Rung 1). Gap logged in SHIPPED_LOG.md. */
+  /** Server-truth scope for CI. The protected-paths gate on an assembly/*
+   * PR fetches the ratified scopePaths from HERE, never from a file on the
+   * branch under review — the machine must not write its own permission
+   * slip. Public: proposals and their scopes are community-visible facts. */
+  proposalScope: publicProcedure
+    .input(z.object({ proposalId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const rows = await db
+        .select({ status: proposals.status, executionPayload: proposals.executionPayload })
+        .from(proposals)
+        .where(eq(proposals.id, input.proposalId))
+        .limit(1);
+      if (rows.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Proposal not found" });
+      const payload = rows[0].executionPayload as { kind?: string; scopePaths?: string[] } | null;
+      if (!payload || payload.kind !== "feature") {
+        return { kind: payload?.kind ?? null, status: rows[0].status, scopePaths: [] };
+      }
+      return { kind: "feature", status: rows[0].status, scopePaths: payload.scopePaths ?? [] };
+    }),
+
   confirmRatification: protectedProcedure
     .input(z.object({
       proposalId: z.number().int().positive(),

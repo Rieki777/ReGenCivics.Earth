@@ -178,6 +178,12 @@ describe("dispatchExecution (ratification dispatcher, Rung 1)", () => {
       .where(eq(governanceExecutions.proposalId, varProposalId));
     expect(execs.length).toBe(1);
     expect(execs[0].status).toBe("applied");
+
+    // Provenance (0173): the history row is linked to the vote that caused it.
+    const [hist] = await database!.execute(
+      sql`SELECT proposalId FROM game_variable_history WHERE variableId = ${testVarId} ORDER BY id DESC LIMIT 1`
+    );
+    expect(Number((hist as unknown as any[])[0].proposalId)).toBe(varProposalId);
   });
 
   it.skipIf(skipIfNoDb)("is idempotent: a second dispatch does not re-apply", async () => {
@@ -258,6 +264,23 @@ describe("bounds_change (the community widens its own sandbox)", () => {
   it.skipIf(skipIfNoDb)("applyBoundsChange refuses evolution.* directly too", async () => {
     const r = await applyBoundsChange({ variableKey: "evolution.circuit_breaker_failures", newMin: 0, newMax: 10, changedBy: testUserId, reason: "must fail" });
     expect(r.ok).toBe(false);
+  });
+});
+
+describe("proposalScope (server-truth scope for CI)", () => {
+  it.skipIf(skipIfNoDb)("serves a feature proposal's ratified scopePaths", async () => {
+    const { appRouter } = await import("./routers");
+    const caller = appRouter.createCaller({ user: null, req: { protocol: "https", headers: {} }, res: { clearCookie: () => {} } } as any);
+    const scope = await caller.assembly.proposalScope({ proposalId: featureProposalId });
+    expect(scope.kind).toBe("feature");
+    expect(scope.scopePaths).toEqual(["client/src/pages/Assembly*"]);
+  });
+
+  it.skipIf(skipIfNoDb)("returns empty scope for a non-feature proposal (CI fails closed on it)", async () => {
+    const { appRouter } = await import("./routers");
+    const caller = appRouter.createCaller({ user: null, req: { protocol: "https", headers: {} }, res: { clearCookie: () => {} } } as any);
+    const scope = await caller.assembly.proposalScope({ proposalId: varProposalId });
+    expect(scope.scopePaths).toEqual([]);
   });
 });
 
