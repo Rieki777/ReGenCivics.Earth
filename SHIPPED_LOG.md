@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-03 (evening): Crash recovery hardening — profile sync made symmetric, Evolution Rung 1 tested, ADRs 27-29
+
+- Recovered work from the crashed 2026-07-03 sessions was consolidated to main earlier in the day (profile unification Phase 2B, Evolution autonomy prep). This batch finishes it honestly.
+- Profile sync (0169) was asymmetric: forward mirrored 7 shared fields, reverse mirrored 3, bannerUrl was covered by neither, and forumLastActiveAt was back-filled once then never written. All fixed; both paths now mirror the same set and the lastActiveAt ping lands on both tables. New `server/profile-sync.test.ts` (integration lane) covers both directions, round-trip, the unified read/write model, and the reputation dual-write.
+- Evolution Rung 1 got its first test coverage: `server/evolution.test.ts` (integration) proves raise-time bounds validation, the shared applyVariableChange path (bounds + history + cache bust), dispatcher idempotency, and that a ratified FEATURE parks in `paused` at tier 1 with zero GitHub side effects. `server/evolution-guard.test.ts` (fast lane, pure) locks the fail-closed protected-paths checker and the config's teeth.
+- Migration 0170 (evolution.* autonomy variables) confirmed applied; the three variables are live with tier at the default 1.
+- ADR-27 (Assembly one-door), ADR-28 (the Signal), ADR-29 (Evolution Engine + community-governed autonomy) added to `.ai/docs/DECISIONS.md` per the spec's section 16 requirement.
+- Phase 7 (Rung 3 auto-ship) remains NOT built beyond the recovered dark prep, by design: no builder Action, no CI wiring, no webhook, no UI. Hard stop for human go-ahead stands.
+
 ## 2026-07-03: Forum governance evolution + Assembly Phases 1-6 (Evolution Rung 1)
 
 - Forum on-ramp reshaped per `FIXES_TO_MAKE_2026-07-02_forum-governance-evolution.md`: lifecycle strip gated to sensing+, two quiet entry doors under the post, confirm + participation-aware undo (`forum.returnToDialogue`, silent while the starter is alone, visible reply once others weighed in), light-surface restyle of the strip and PerspectiveControl (they were dark-surface components on the white card), consent copy, concerns-vs-objections legibility, and coSignPromotion now advances `governanceStage` to proposal. Migration 0163 opened Sensing to any signed-in member (Rye's call).
