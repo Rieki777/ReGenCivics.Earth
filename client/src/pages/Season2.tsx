@@ -767,14 +767,15 @@ export default function Season2() {
                   Launch your own <span className="italic text-[#a8e6a8]">Infinite Game</span>
                 </h2>
                 <p className="text-white/80 text-lg leading-relaxed mb-4">
-                  This season we help you use AI tools and templates, starting from an
-                  open-source blueprint we have spent a lot of time building, to launch
-                  your own Infinite Game. The same kind of system we built for ReGen
-                  Civics, purpose-built for your land project and owned by you.
+                  This season we hand you the foundations we have spent years
+                  building: an open-source blueprint that is easy to adapt to your
+                  own land, your own people, and your own way of doing things. The
+                  same kind of system we built for ReGen Civics, purpose-built for
+                  your project and owned by you.
                 </p>
                 <p className="text-white/70 leading-relaxed">
-                  It is one of the biggest things we are adding for Season Two, and a
-                  huge value for every project that comes through.
+                  You are not starting from a blank page, and you are not doing it
+                  alone. We help you shape it to fit, every step of the way.
                 </p>
               </div>
               <img
