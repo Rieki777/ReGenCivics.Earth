@@ -30,12 +30,6 @@ export default function GetInvolved() {
         </div>
       </section>
 
-      <section style={{ paddingBottom: 0 }}>
-        <div className="wrap" style={{ maxWidth: 500 }}>
-          <CoreImage id="get-involved-path" className="section-media media-sm" sizes="500px" fallback={null} />
-        </div>
-      </section>
-
       <section>
         <div className="wrap" style={{ maxWidth: 820 }}>
           {/* Keeps the heading outline contiguous (h1 -> h2 -> the h3 steps). */}
@@ -99,6 +93,13 @@ export default function GetInvolved() {
             <a className="btn btn-primary" href="https://regencivics.earth">Step in</a>
             <Link href="/transparency" className="btn btn-ghost">How we govern</Link>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="wrap" style={{ maxWidth: 820 }}>
+          <CoreImage id="get-involved-path" className="section-media" sizes="820px" fallback={null} />
+          <p className="lead center" style={{ marginTop: 26 }}>The path is open. However you arrive, we are glad you are here.</p>
         </div>
       </section>
     </>

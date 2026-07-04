@@ -83,7 +83,7 @@ export default function Transparency() {
         </div>
       </section>
 
-      <section className="band-parch">
+      <section>
         <div className="wrap" style={{ maxWidth: 760 }}>
           <p className="eyebrow center">Our elders and their sources</p>
           <h2 className="center">Where the elders' wisdom comes from</h2>

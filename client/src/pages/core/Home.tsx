@@ -89,12 +89,6 @@ export default function Home() {
 
       <section className="band-parch">
         <div className="wrap">
-          <CoreImage
-            id="home-temple-grove"
-            className="section-media"
-            sizes="(max-width: 860px) 100vw, 1080px"
-            fallback={null}
-          />
           <p className="eyebrow center">What we hold</p>
           <h2 className="center">Three principles of life</h2>
           <div className="stack reveal" style={{ marginTop: 34, maxWidth: 820, marginLeft: "auto", marginRight: "auto" }}>
@@ -120,6 +114,13 @@ export default function Home() {
               </div>
             </div>
           </div>
+          <CoreImage
+            id="home-temple-grove"
+            className="section-media"
+            sizes="(max-width: 860px) 100vw, 1080px"
+            fallback={null}
+            imgStyle={{ marginTop: 34 }}
+          />
           <div className="center" style={{ marginTop: 30 }}>
             <Link href="/faith" className="btn btn-ghost">Read our full faith</Link>
           </div>

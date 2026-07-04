@@ -110,9 +110,24 @@
 .core-root .hero .kicker { font-family: var(--font-accent); font-size: clamp(3rem, 2rem + 5vw, 6rem); color: var(--forest-sage); letter-spacing: 6px; margin: 0; }
 .core-root .hero .tagline { font-family: var(--font-display); font-weight: 600; font-size: 1.35rem; color: var(--forest-moss); margin: .4em auto 1em; max-width: 40ch; }
 .core-root .hero.hero-image { color: var(--parchment-warm); }
+/* Photo heroes: the base dark-green heading/lead colors sit green-on-green over
+   the foliage imagery, so force light, high-contrast text with a soft shadow. */
+.core-root .hero.hero-image .eyebrow { color: var(--spring-base); }
+.core-root .hero.hero-image h1,
+.core-root .hero.hero-image .kicker,
+.core-root .hero.hero-image .tagline,
+.core-root .hero.hero-image .lead { color: var(--parchment-whisper); }
+.core-root .hero.hero-image h1,
+.core-root .hero.hero-image .tagline,
+.core-root .hero.hero-image .lead { text-shadow: 0 2px 16px rgba(6, 20, 12, .6); }
+.core-root .hero.hero-image .btn-ghost { color: var(--parchment-warm); border-color: rgba(248, 245, 240, .75); background: rgba(9, 28, 17, .28); }
+.core-root .hero.hero-image .btn-ghost:hover { background: var(--parchment-warm); color: var(--forest-deep); border-color: var(--parchment-warm); }
 .core-root .hero-media { position: absolute; inset: 0; z-index: 0; }
 .core-root .hero-media img { width: 100%; height: 100%; object-fit: cover; }
-.core-root .hero-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(13,40,24,.25) 0%, rgba(13,40,24,.10) 40%, rgba(248,245,240,.92) 100%); }
+/* Darken the photo enough that light hero text reads cleanly across the upper
+   ~70%, easing to parchment only at the very bottom so the hero still melts
+   into the page below. */
+.core-root .hero-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(9,28,17,.58) 0%, rgba(9,28,17,.46) 45%, rgba(9,28,17,.42) 70%, rgba(248,245,240,.88) 100%); }
 .core-root .hero .wrap { position: relative; z-index: 1; }
 
 /* Cards */
@@ -186,7 +201,7 @@
 .core-root .chat-note { margin-top: 14px; color: var(--forest-moss); font-style: italic; }
 
 /* Steps */
-.core-root .steps { counter-reset: step; display: grid; gap: 18px; }
+.core-root .steps { counter-reset: step; display: grid; gap: 34px; }
 .core-root .step { display: flex; gap: 18px; align-items: flex-start; }
 .core-root .step::before { counter-increment: step; content: counter(step); flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; background: var(--forest-sage); color: var(--parchment-warm); display: grid; place-items: center; font-family: var(--font-accent); }
 .core-root .step h3 { margin: 4px 0 .2em; }
