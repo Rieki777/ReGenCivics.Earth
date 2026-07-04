@@ -83,17 +83,22 @@ const TIER_MULTIPLIER_DEFAULTS: Record<string, number> = {
 };
 
 export async function getGratitudeVars() {
+  // Canonical keys are the ones seeded in the DB: budget vars in 0173, pool +
+  // claim in 0166. The claim threshold shown on the tab aligns with the live
+  // Hypha gate (governance.claim_threshold_regen = 1000). The budget model
+  // uses gratitude.budget_multiplier.* — NOT gratitude.multiplier.* (which
+  // drives the separate trust-graph bonus at different values).
   const vars = await getGameVariables([
     "gratitude.base_budget",
     "gratitude.full_power_threshold",
     "gratitude.streak_bonus_per_cycle",
     "gratitude.streak_bonus_max",
-    "gratitude.multiplier.explorer",
-    "gratitude.multiplier.co_creator",
-    "gratitude.multiplier.steward",
-    "gratitude.multiplier.sage",
-    "gratitude.regen_distribution.pool_per_cycle",
-    "gratitude.regen_distribution.claim_threshold",
+    "gratitude.budget_multiplier.explorer",
+    "gratitude.budget_multiplier.co_creator",
+    "gratitude.budget_multiplier.steward",
+    "gratitude.budget_multiplier.sage",
+    "gratitude.pool_per_cycle",
+    "gratitude.claim_threshold",
   ]);
   return {
     baseBudget: vars["gratitude.base_budget"] ?? 100,
@@ -101,13 +106,13 @@ export async function getGratitudeVars() {
     streakBonusPerCycle: vars["gratitude.streak_bonus_per_cycle"] ?? 0.03,
     streakBonusMax: vars["gratitude.streak_bonus_max"] ?? 0.3,
     multipliers: {
-      explorer: vars["gratitude.multiplier.explorer"] ?? TIER_MULTIPLIER_DEFAULTS.explorer,
-      co_creator: vars["gratitude.multiplier.co_creator"] ?? TIER_MULTIPLIER_DEFAULTS.co_creator,
-      steward: vars["gratitude.multiplier.steward"] ?? TIER_MULTIPLIER_DEFAULTS.steward,
-      sage: vars["gratitude.multiplier.sage"] ?? TIER_MULTIPLIER_DEFAULTS.sage,
+      explorer: vars["gratitude.budget_multiplier.explorer"] ?? TIER_MULTIPLIER_DEFAULTS.explorer,
+      co_creator: vars["gratitude.budget_multiplier.co_creator"] ?? TIER_MULTIPLIER_DEFAULTS.co_creator,
+      steward: vars["gratitude.budget_multiplier.steward"] ?? TIER_MULTIPLIER_DEFAULTS.steward,
+      sage: vars["gratitude.budget_multiplier.sage"] ?? TIER_MULTIPLIER_DEFAULTS.sage,
     } as Record<string, number>,
-    poolPerCycle: vars["gratitude.regen_distribution.pool_per_cycle"] ?? 10000,
-    claimThreshold: vars["gratitude.regen_distribution.claim_threshold"] ?? 333,
+    poolPerCycle: vars["gratitude.pool_per_cycle"] ?? 10000,
+    claimThreshold: vars["gratitude.claim_threshold"] ?? 1000,
   };
 }
 

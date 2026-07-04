@@ -13,12 +13,15 @@
  *  - All motion respects prefers-reduced-motion.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Heart, Send, Sparkles, ExternalLink, Search } from "lucide-react";
+import { Heart, Send, Sparkles, ExternalLink, Search, Moon, Share2, Download, Copy, Check, RefreshCw, Loader2 } from "lucide-react";
+import { XShareButton, LinkedinShareButton, FacebookShareButton, BlueskyShareButton } from "react-share";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { SendGratitudeModal } from "@/components/SendGratitudeModal";
 import { moonPhaseName } from "@shared/lunar";
+import { copyToClipboard } from "@/lib/clipboard";
 import { Link } from "wouter";
 
 /* ─── Small pieces ──────────────────────────────────────────────────── */
@@ -233,20 +236,41 @@ function NoteCard({ entry, direction, highlighted, index }: {
 
 /* ─── Main tab ──────────────────────────────────────────────────────── */
 
-export function GratitudeTab() {
+export function GratitudeTab({ userId }: { userId?: number }) {
   const [direction, setDirection] = useState<"received" | "sent">("received");
   const [search, setSearch] = useState("");
   const [sendOpen, setSendOpen] = useState(false);
   const [cursor, setCursor] = useState<number | undefined>(undefined);
   const [accumulated, setAccumulated] = useState<JournalEntry[]>([]);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   const highlightId = useMemo(() => {
     const raw = new URLSearchParams(window.location.search).get("highlight");
     return raw ? Number(raw) : null;
   }, []);
 
+  const utils = trpc.useUtils();
   const overview = trpc.gratitude.myOverview.useQuery();
   const journal = trpc.gratitude.myJournal.useQuery({ direction, cursor, limit: 20 });
+
+  const requestClaim = trpc.playerProfiles.requestClaim.useMutation();
+  const runClaim = async () => {
+    setClaimError(null);
+    // Open a tab synchronously on the gesture so iOS Safari allows the
+    // eventual redirect to Hypha (same pattern as TokenDetailDialog).
+    const w = window.open("about:blank", "_blank", "noopener,noreferrer");
+    try {
+      const res: any = await requestClaim.mutateAsync({ tokens: ["regen"] });
+      if (res?.hyphaUrl && w) w.location.href = res.hyphaUrl;
+      else if (w) w.close();
+      toast.success("Claim started on Hypha");
+      utils.gratitude.myOverview.invalidate();
+      utils.playerProfiles.getMyTokens?.invalidate?.();
+    } catch (err: any) {
+      if (w) w.close();
+      setClaimError(err?.message ?? "Could not start the claim. Try again.");
+    }
+  };
 
   // Accumulate pages; reset on direction change.
   useEffect(() => { setCursor(undefined); setAccumulated([]); }, [direction]);
@@ -311,6 +335,9 @@ export function GratitudeTab() {
         </div>
       </div>
 
+      {/* ── Cycle urgency band ── */}
+      {o && <CycleBand overview={o} onSend={() => setSendOpen(true)} />}
+
       {/* ── Stat trio ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         {/* Power this cycle */}
@@ -362,17 +389,30 @@ export function GratitudeTab() {
             {o ? <ProgressRing value={o.regen.earnedFromGratitude} max={o.regen.claimThreshold} /> : <div className="w-[104px] h-[104px] rounded-full bg-white/5 animate-pulse" />}
           </div>
           {o && (
-            o.regen.claimEligible ? (
-              <a
-                href="https://app.hypha.earth"
-                target="_blank" rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-[#ffd700] hover:underline min-h-[44px] items-center"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                Claim on Hypha <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+            (o.regen.claimEligible || o.regen.canClaimNow) ? (
+              <div className="mt-3 flex flex-col items-center gap-1 w-full">
+                <Button
+                  size="sm"
+                  onClick={runClaim}
+                  disabled={requestClaim.isPending}
+                  className="w-full bg-[#ffd700] hover:bg-[#ffdf33] text-[#0a1f14] font-bold rounded-xl min-h-[44px] animate-[gratitude-bloom-pulse_2.2s_ease-out]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {requestClaim.isPending ? (
+                    <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Starting…</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4 mr-1.5" /> Claim your $ReGen on Hypha</>
+                  )}
+                </Button>
+                <p className="text-[10.5px] text-[#f0ebe3]/55 text-center leading-tight mt-0.5">
+                  Moves your earned $ReGen on-chain through Hypha.
+                </p>
+                {claimError && <p className="text-[11px] text-[#ef6f6c] text-center">{claimError}</p>}
+              </div>
             ) : (
-              <p className="text-xs text-[#f0ebe3]/70 mt-2 text-center">{o.regen.moreToClaim} more to claim on Hypha</p>
+              <p className="text-xs text-[#f0ebe3]/70 mt-2 text-center">
+                <span className="text-[#7dd87d] font-bold">{o.regen.moreToClaim}</span> more to unlock your claim
+              </p>
             )
           )}
         </div>
@@ -472,7 +512,190 @@ export function GratitudeTab() {
         </>
       )}
 
+      {/* ── Shareable gratitude summary ── */}
+      {userId != null && <ShareCard userId={userId} />}
+
       <SendGratitudeModal open={sendOpen} onOpenChange={setSendOpen} />
+    </div>
+  );
+}
+
+/* ─── Cycle urgency band ────────────────────────────────────────────── */
+
+interface CycleBandData {
+  sends: { peopleThisCycle: number; fullPowerThreshold: number; fullPowerRemaining: number };
+  cycle: { daysRemaining: number };
+}
+
+function CycleBand({ overview, onSend }: { overview: CycleBandData; onSend: () => void }) {
+  const { sends, cycle } = overview;
+  const urgent = cycle.daysRemaining <= 3;
+  let line: React.ReactNode;
+  if (sends.peopleThisCycle === 0) {
+    line = <>Your gratitude budget resets at the new moon. Acknowledge up to <b className="text-white">{sends.fullPowerThreshold}</b> people at full power.</>;
+  } else if (sends.fullPowerRemaining > 0) {
+    line = <><b className="text-white">{sends.fullPowerRemaining}</b> full-power {sends.fullPowerRemaining === 1 ? "send" : "sends"} left before the new moon.</>;
+  } else {
+    line = <>You've spent your {sends.fullPowerThreshold} full-power sends. More still land, at a lighter touch.</>;
+  }
+  return (
+    <div
+      className="rounded-2xl border px-4 py-3 sm:px-5 flex items-center gap-3 flex-wrap"
+      style={{
+        borderColor: urgent ? "rgba(255,215,0,0.4)" : "rgba(125,216,125,0.28)",
+        background: urgent
+          ? "linear-gradient(90deg, rgba(255,215,0,0.14), rgba(212,160,23,0.08))"
+          : "linear-gradient(90deg, rgba(125,216,125,0.1), rgba(74,124,89,0.06))",
+      }}
+    >
+      <Moon className="w-5 h-5 flex-shrink-0" style={{ color: urgent ? "#ffd700" : "#7dd87d" }} />
+      <div className="flex-1 min-w-[180px]">
+        <p className="text-sm text-[#f0ebe3] leading-snug">{line}</p>
+        <p className="text-[11px] font-semibold mt-0.5" style={{ color: urgent ? "#ffd700" : "#d4a574", fontFamily: "var(--font-display)" }}>
+          {urgent ? "Cycle closes" : "New moon"} in {cycle.daysRemaining} {cycle.daysRemaining === 1 ? "day" : "days"}
+        </p>
+      </div>
+      <Button
+        size="sm"
+        onClick={onSend}
+        className={`min-h-[44px] rounded-xl font-bold px-4 ${urgent ? "bg-[#ffd700] hover:bg-[#ffdf33] text-[#0a1f14]" : "bg-[#7dd87d] hover:bg-[#9de89d] text-[#0a1f14]"}`}
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        <Send className="w-4 h-4 mr-1.5" /> Send gratitude
+      </Button>
+    </div>
+  );
+}
+
+/* ─── Shareable summary card ────────────────────────────────────────── */
+
+function ShareCard({ userId }: { userId: number }) {
+  const themesQ = trpc.gratitude.myThemes.useQuery();
+  const [disabled, setDisabled] = useState<Set<string>>(new Set());
+  const [caption, setCaption] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [bust, setBust] = useState(0);
+
+  const data = themesQ.data;
+  const activeThemes = useMemo(
+    () => (data?.themes ?? []).filter((t) => !disabled.has(t.key)),
+    [data, disabled],
+  );
+
+  if (themesQ.isLoading) {
+    return <div className="glass-panel rounded-2xl h-40 animate-pulse" />;
+  }
+  if (!data || data.messageCount === 0) {
+    return null; // nothing to summarize yet — the empty wall already teaches
+  }
+
+  const themeKeys = activeThemes.map((t) => t.key).join(",");
+  const imgUrl = `/api/og?type=gratitude&id=${userId}${themeKeys ? `&themes=${themeKeys}` : ""}&v=${bust}`;
+  const shareText = caption ?? data.blurb;
+  const shareUrl = "https://regencivics.earth";
+
+  const toggle = (key: string) =>
+    setDisabled((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+
+  const copyCaption = () =>
+    copyToClipboard(`${shareText} ${shareUrl}`).then((ok) => {
+      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    });
+
+  return (
+    <div className="glass-panel rounded-2xl p-4 sm:p-5">
+      <div className="flex items-center gap-2 mb-1">
+        <Share2 className="w-4 h-4 text-[#ffd700]" />
+        <h3 className="text-base font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>Share your gratitude</h3>
+      </div>
+      <p className="text-xs text-[#f0ebe3]/60 mb-3">
+        A summary of what people keep thanking you for. No names, no quotes — just the themes. Tune it, then share.
+      </p>
+
+      {/* Live preview */}
+      <div className="rounded-xl overflow-hidden border border-[#7dd87d]/20 bg-[#0a1f14] mb-3">
+        <img
+          key={imgUrl}
+          src={imgUrl}
+          alt="Your gratitude summary card"
+          className="w-full block"
+          style={{ aspectRatio: "1200 / 630" }}
+          loading="lazy"
+        />
+      </div>
+
+      {/* Theme toggles */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {(data.themes ?? []).map((t) => {
+          const on = !disabled.has(t.key);
+          return (
+            <button
+              key={t.key}
+              onClick={() => { toggle(t.key); setBust((b) => b + 1); }}
+              className={`text-xs font-semibold rounded-full px-3 py-1.5 border transition-colors ${on ? "bg-[#7dd87d]/15 border-[#7dd87d]/40 text-[#a8e6a8]" : "bg-white/5 border-white/10 text-[#f0ebe3]/40 line-through"}`}
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Editable caption */}
+      <label className="block text-[11px] uppercase tracking-wider text-[#f0ebe3]/50 font-semibold mb-1" style={{ fontFamily: "var(--font-display)" }}>
+        Caption
+      </label>
+      <textarea
+        value={shareText}
+        onChange={(e) => setCaption(e.target.value)}
+        rows={2}
+        maxLength={280}
+        className="w-full text-sm text-white bg-white/5 border border-[#7dd87d]/20 rounded-xl p-2.5 resize-none focus:outline-none focus:border-[#7dd87d]/50"
+      />
+      <div className="flex items-center justify-between mt-1 mb-3">
+        <button
+          onClick={() => { setCaption(data.blurb); setBust((b) => b + 1); }}
+          className="text-[11px] text-[#7dd87d] hover:text-white inline-flex items-center gap-1"
+        >
+          <RefreshCw className="w-3 h-3" /> Reset to suggested
+        </button>
+        <span className="text-[10.5px] text-[#f0ebe3]/40">{shareText.length}/280</span>
+      </div>
+
+      {/* Share actions */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <XShareButton url={shareUrl} title={shareText}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/8 hover:bg-white/14 border border-white/10 text-[#f0ebe3] rounded-xl px-3 min-h-[40px]" style={{ fontFamily: "var(--font-display)" }}>Post to X</span>
+        </XShareButton>
+        <LinkedinShareButton url={shareUrl} title={shareText} summary={shareText}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/8 hover:bg-white/14 border border-white/10 text-[#f0ebe3] rounded-xl px-3 min-h-[40px]" style={{ fontFamily: "var(--font-display)" }}>LinkedIn</span>
+        </LinkedinShareButton>
+        <BlueskyShareButton url={shareUrl} title={shareText}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/8 hover:bg-white/14 border border-white/10 text-[#f0ebe3] rounded-xl px-3 min-h-[40px]" style={{ fontFamily: "var(--font-display)" }}>Bluesky</span>
+        </BlueskyShareButton>
+        <FacebookShareButton url={shareUrl}>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/8 hover:bg-white/14 border border-white/10 text-[#f0ebe3] rounded-xl px-3 min-h-[40px]" style={{ fontFamily: "var(--font-display)" }}>Facebook</span>
+        </FacebookShareButton>
+        <button
+          onClick={copyCaption}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/8 hover:bg-white/14 border border-white/10 text-[#f0ebe3] rounded-xl px-3 min-h-[40px]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {copied ? <><Check className="w-3.5 h-3.5 text-[#7dd87d]" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
+        </button>
+        <a
+          href={imgUrl}
+          download="my-gratitude.png"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white/8 hover:bg-white/14 border border-white/10 text-[#f0ebe3] rounded-xl px-3 min-h-[40px]"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          <Download className="w-3.5 h-3.5" /> Image
+        </a>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,8 @@ import { Resvg } from "@resvg/resvg-js";
 import * as db from "../db";
 import { getDb } from "../db";
 import { eq } from "drizzle-orm";
-import { forumPosts, recordings } from "../../drizzle/schema";
+import { forumPosts, recordings, gratitudeLog } from "../../drizzle/schema";
+import { extractThemes, validThemeKeys, labelForThemeKey } from "../../shared/gratitude-themes";
 import fs from "fs";
 import path from "path";
 
@@ -137,6 +138,47 @@ function blogTemplate(blog: { title: string; author: string; date: string; readT
   ]);
 }
 
+// Gratitude summary card. AGGREGATE and ANONYMOUS by construction: it shows
+// the themes people keep thanking this person for, plus a people count —
+// never a quote, never a sender name. Themes come from the deterministic
+// lexicon (shared/gratitude-themes.ts), so nothing a sender wrote can inject
+// text into the image.
+function gratitudeTemplate(data: { name: string; themes: string[]; peopleCount: number }): any {
+  const themeRows = data.themes.slice(0, 4).map((label, i) => ({
+    type: "div",
+    props: {
+      style: {
+        display: "flex", alignItems: "center", gap: 16,
+        fontSize: 30, color: i === 0 ? "#ffd700" : "#f0ebe3",
+        marginBottom: 6,
+      },
+      children: [
+        { type: "div", props: { style: { width: 10, height: 10, borderRadius: 5, backgroundColor: i === 0 ? "#ffd700" : "#7dd87d" } } },
+        { type: "span", props: { children: label } },
+      ],
+    },
+  }));
+  return {
+    type: "div",
+    props: {
+      style: {
+        width: WIDTH, height: HEIGHT, display: "flex", flexDirection: "column",
+        justifyContent: "space-between",
+        background: "linear-gradient(150deg, #10331f 0%, #0d2818 60%, #0a1f14 100%)",
+        padding: "60px", fontFamily: "Quicksand", color: "#f8f5f0",
+      },
+      children: [
+        { type: "div", props: { style: { fontSize: 22, color: "#ffd700", letterSpacing: 3, textTransform: "uppercase" }, children: "Gratitude" } },
+        { type: "div", props: { style: { display: "flex", flexDirection: "column" }, children: [
+          { type: "div", props: { style: { fontSize: 30, color: "rgba(240,235,227,0.75)", marginBottom: 18 }, children: data.peopleCount > 0 ? `What ${data.peopleCount} ${data.peopleCount === 1 ? "person keeps" : "people keep"} thanking ${truncate(data.name, 24)} for` : `${truncate(data.name, 24)} in the ReGen Civics movement` } },
+          ...themeRows,
+        ] } },
+        { type: "div", props: { style: { fontSize: 22, color: "rgba(248,245,240,0.55)" }, children: "regencivics.earth" } },
+      ],
+    },
+  };
+}
+
 async function renderOgImage(element: any): Promise<Buffer> {
   const font = getFont();
   const svg = await satori(element, {
@@ -220,8 +262,10 @@ export function registerOgRoutes(app: Express) {
       return res.status(400).json({ error: "type and id required" });
     }
 
-    // Check cache
-    const cacheKey = `${type}-${id}`;
+    // Check cache. Gratitude cards vary by selected themes, so fold that into
+    // the key.
+    const themesParam = typeof req.query.themes === "string" ? req.query.themes : "";
+    const cacheKey = `${type}-${id}${themesParam ? `-${themesParam}` : ""}`;
     const cached = ogCache.get(cacheKey);
     if (cached && Date.now() - cached.generatedAt < CACHE_TTL) {
       res.set({ "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" });
@@ -243,6 +287,30 @@ export function registerOgRoutes(app: Express) {
             authorName: authors[post.authorId]?.name || "Anonymous",
             replyCount: post.replyCount,
           });
+          break;
+        }
+        case "gratitude": {
+          if (!database) break;
+          const userId = Number(id);
+          if (!Number.isFinite(userId)) break;
+          const rows = await database
+            .select({ senderId: gratitudeLog.senderId, message: gratitudeLog.message })
+            .from(gratitudeLog)
+            .where(eq(gratitudeLog.recipientId, userId))
+            .limit(500);
+          const users = await db.getUsersByIds([userId]);
+          const name = users[userId]?.name || "A ReGen player";
+          // Extract this user's real themes, then intersect with the caller's
+          // selection (validated against the lexicon) so the image can only
+          // ever show themes the user actually earned.
+          const earned = extractThemes(rows.map((r: any) => r.message), 8);
+          const requested = validThemeKeys(themesParam ? themesParam.split(",") : []);
+          const earnedKeys = new Set(earned.map((t) => t.key));
+          const selected = requested.filter((k) => earnedKeys.has(k));
+          const keys = (selected.length > 0 ? selected : earned.map((t) => t.key)).slice(0, 4);
+          const labels = keys.map((k) => labelForThemeKey(k)!).filter(Boolean);
+          const peopleCount = new Set(rows.map((r: any) => r.senderId)).size;
+          element = gratitudeTemplate({ name, themes: labels, peopleCount });
           break;
         }
         case "quest": {

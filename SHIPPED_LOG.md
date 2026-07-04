@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-07-03 (later): Gratitude tab — urgency band, real claim button, shareable summary card
+
+- **Cycle urgency band** under the hero (`CycleBand` in `GratitudeTab.tsx`): a prominent full-width strip with the moon, a cycle-aware line ("3 full-power sends left before the new moon" / budget-reset / spent-all), a "new moon / cycle closes in N days" countdown that turns amber inside 3 days, and a Send button right there.
+- **Claim button that unlocks**: the $ReGen ring now fills toward the real threshold and, when eligible, shows a gold "Claim your $ReGen on Hypha" button that calls `playerProfiles.requestClaim({ tokens: ['regen'] })` (same window-open-on-gesture pattern as `TokenDetailDialog`). Surfaces whenever a claim would actually succeed (`canClaimNow` = total private $ReGen ≥ live gate), not only when gratitude-earned crosses the bar.
+- **Settings-alignment fix**: `getGratitudeVars` was reading nonexistent `gratitude.regen_distribution.*` keys and silently defaulting the claim threshold to 333. Now reads the seeded keys — claim threshold is **1000** (matching the live `governance.claim_threshold_regen` gate), pool 10000. Budget multipliers moved to new `gratitude.budget_multiplier.*` keys (1/2/3/5) so they don't collide with the trust-graph `gratitude.multiplier.*` (1.2/1.5/2.0). Migration `drizzle/0173_gratitude_budget_vars.sql` (applied to prod) seeds budget vars for the Game Mechanics page.
+- **Shareable summary card** — aggregate and anonymous by construction: a summary of *what people keep thanking you for* as recurring themes, never a quote and never a sender name. Deterministic extraction from a curated lexicon (`shared/gratitude-themes.ts`, Rye's call — no LLM, injection-proof), rendered via the existing satori OG route (`GET /api/og?type=gratitude&id=<uid>&themes=...`, themes validated server-side against the lexicon so only earned themes can appear). The tab (`ShareCard`) shows a live preview, toggleable theme chips, an editable caption, and X/LinkedIn/Bluesky/Facebook/copy/download actions. No minimum message count; user edits before sharing.
+- Backlog change: **preset phrases dropped** (Rye: no preset phrases). 11 new theme-extraction unit tests (`server/gratitudeThemes.test.ts`); full suite 299 green.
+
+---
+
 ## 2026-07-03: Gratitude tab + lunar-cycle proportional economy (ADR-30)
 
 - Built the profile **Gratitude tab** (`client/src/components/profile/GratitudeTab.tsx`, wired into `PlayerProfile.tsx` as `?tab=gratitude`): hero band with live moon phase + lifetime signature line, glass stat trio (power meter with golden full-power notch, received + per-cycle sparkline, $ReGen progress ring toward the claim threshold), and the Gratitude Wall — parchment note cards with sender avatar, message, source chip, search and received/sent filters. Mobile-first single-column; all motion respects reduced-motion. Deliberately **no reciprocity affordances** (no send-back, no exchange counts) per Rye's call — spec §12.5.

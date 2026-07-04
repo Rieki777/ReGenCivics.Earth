@@ -2777,7 +2777,7 @@ export default function PlayerProfile() {
               {activeTab === "gratitude" && (
                 <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
                   <AnimatedSection animation="slide-up">
-                    <GratitudeTab />
+                    <GratitudeTab userId={profile?.userId ?? undefined} />
                   </AnimatedSection>
                 </ErrorBoundary>
               )}

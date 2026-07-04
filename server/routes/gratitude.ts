@@ -20,6 +20,8 @@ import {
   closeDueCycles,
 } from "../lib/gratitude-cycles";
 import { moonPhase, daysRemainingInCycle } from "../../shared/lunar";
+import { extractThemes, themeBlurb } from "../../shared/gratitude-themes";
+import { getGameVariables } from "../game";
 
 export const gratitudeRouter = router({
   // Send a gratitude acknowledgment to another user identified by handle.
@@ -230,6 +232,20 @@ export const gratitudeRouter = router({
       ));
     const earnedFromGratitude = Number(earned?.total ?? 0);
 
+    // Whether a claim would actually succeed right now: the live Hypha gate
+    // checks TOTAL private $ReGen (all sources), not just gratitude-earned.
+    // So surface the button whenever a claim is genuinely available, even if
+    // the gratitude ring hasn't filled (e.g. quests already pushed them over).
+    const [profileRow] = await db
+      .select({ regenPrivate: playerProfiles.regenPrivate })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.userId, ctx.user.id))
+      .limit(1);
+    const totalPrivateRegen = Number(profileRow?.regenPrivate ?? 0);
+    const gateVars = await getGameVariables(["governance.claim_threshold_regen"]);
+    const liveGate = gateVars["governance.claim_threshold_regen"] ?? vars.claimThreshold;
+    const canClaimNow = totalPrivateRegen >= liveGate;
+
     return {
       cycle: {
         number: cycle.cycleNumber,
@@ -259,7 +275,34 @@ export const gratitudeRouter = router({
         claimThreshold: vars.claimThreshold,
         claimEligible: earnedFromGratitude >= vars.claimThreshold,
         moreToClaim: Math.max(0, vars.claimThreshold - earnedFromGratitude),
+        // True when a Hypha claim would actually go through right now.
+        canClaimNow,
       },
+    };
+  }),
+
+  // Deterministic theme summary for the shareable card: what people keep
+  // thanking this user for, as recurring themes (never quotes, never sender
+  // names). No LLM — see shared/gratitude-themes.ts. Private to the user;
+  // the public/shareable render goes through GET /api/og?type=gratitude.
+  myThemes: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { themes: [], blurb: themeBlurb([]), peopleCount: 0, messageCount: 0 };
+
+    const rows = await db
+      .select({ senderId: gratitudeLog.senderId, message: gratitudeLog.message })
+      .from(gratitudeLog)
+      .where(eq(gratitudeLog.recipientId, ctx.user.id))
+      .orderBy(desc(gratitudeLog.id))
+      .limit(500);
+
+    const themes = extractThemes(rows.map((r: any) => r.message));
+    const peopleCount = new Set(rows.map((r: any) => r.senderId)).size;
+    return {
+      themes,
+      blurb: themeBlurb(themes),
+      peopleCount,
+      messageCount: rows.length,
     };
   }),
 
